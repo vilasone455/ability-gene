@@ -5,7 +5,7 @@
        accelerated pawn ticks its own hediffs N times per game tick, so a Disappears comp
        would expire N times too early - Square Accel would last a quarter of its stated
        6 seconds. The comp counts game ticks instead. -->
-  <HediffDef Name="AG_TimeAlterBase" Abstract="True">
+  <HediffDef Name="AG_TimeAlterHediffBase" Abstract="True">
     <hediffClass>HediffWithComps</hediffClass>
     <scenarioCanAdd>false</scenarioCanAdd>
     <makesSickThought>false</makesSickThought>
@@ -16,7 +16,7 @@
     </comps>
   </HediffDef>
 
-  <HediffDef ParentName="AG_TimeAlterBase">
+  <HediffDef ParentName="AG_TimeAlterHediffBase">
     <defName>AG_TimeAlterDouble</defName>
     <label>double accel</label>
     <description>This person's internal time is running at twice its normal rate. Everything about them - stride, aim, heartbeat, the speed at which they bleed - is happening twice as fast as it is for anyone watching.</description>
@@ -33,7 +33,7 @@
     </comps>
   </HediffDef>
 
-  <HediffDef ParentName="AG_TimeAlterBase">
+  <HediffDef ParentName="AG_TimeAlterHediffBase">
     <defName>AG_TimeAlterSquare</defName>
     <label>square accel</label>
     <description>This person's internal time is running at four times its normal rate. The body was not built to be driven this hard and is coming apart while it runs.</description>
@@ -50,7 +50,7 @@
     </comps>
   </HediffDef>
 
-  <HediffDef ParentName="AG_TimeAlterBase">
+  <HediffDef ParentName="AG_TimeAlterHediffBase">
     <defName>AG_TimeAlterStagnate</defName>
     <label>stagnate</label>
     <description>This person's internal time is running at a third of its normal rate. They can barely act - but their bleeding, their infections and any poison in them have slowed by exactly the same factor.</description>

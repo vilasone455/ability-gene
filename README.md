@@ -228,6 +228,23 @@ dotnet build Source/AbilityGenes/AbilityGenes.csproj \
 Harmony is referenced with `ExcludeAssets="runtime"` so `0Harmony.dll` is never copied
 into `Assemblies/` — shipping a second copy alongside the Harmony mod causes load errors.
 
+## Validating
+
+```bash
+python3 validate.py
+```
+
+Checks XML well-formedness, that every def and texture reference resolves in Core or
+Biotech only, that custom `Class=` values exist in the built assembly, and that every
+`Translate` key used in C# is defined.
+
+It also checks for **duplicate `Name=` declarations**, which is worth calling out because
+it is not obvious: RimWorld's `Name` attribute is a single namespace shared by *every def
+type in a mod*. An abstract `HediffDef` and an abstract `AbilityDef` cannot share a name.
+The second one is dropped with one error, and its children then silently inherit the wrong
+base — which surfaces as a cascade of confusing "doesn't correspond to any field in type
+HediffDef" errors against your AbilityDefs.
+
 ## Testing
 
 `./deploy.sh` copies the mod into the local RimWorld `Mods/` folder.
