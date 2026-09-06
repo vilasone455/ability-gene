@@ -13,4 +13,7 @@
 
   <AG_StrainInjury>{0}'s temporal strain tore something in their {1}. The damage is permanent.</AG_StrainInjury>
 
+  <AG_ReflectionUp>{0} reversed their vectors. Nothing aimed at them will land - and nothing can reach them, including help.</AG_ReflectionUp>
+  <AG_ShoveNeedsPawn>Must target a person, animal or mech.</AG_ShoveNeedsPawn>
+
 </LanguageData>

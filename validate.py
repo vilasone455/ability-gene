@@ -12,7 +12,8 @@ runtime, in the order they have actually bitten this project:
   4. Def and texture references that do not resolve in Core or Biotech (anything
      Royalty-only would break for players without that DLC)
   5. Custom Class= values that do not exist in the built assembly
-  6. Translate keys used in C# but not defined in Languages/
+  6. Comp classes a def ends up with twice once inheritance is applied
+  7. Translate keys used in C# but not defined in Languages/
 
 Usage: python3 validate.py [path/to/RimWorld/Data]
 """
@@ -120,7 +121,43 @@ if os.path.exists(dll):
 else:
     print("warning: " + dll + " not built -- skipping class check")
 
-# 6. translate keys
+# 6. duplicate comp classes, counting what a def inherits
+#    A child's <comps> list is MERGED with its parent's rather than replacing it, so a comp
+#    declared on both an abstract base and its child ends up on the hediff twice. RimWorld
+#    reports it only at load, as "two comps with same compClass".
+#    Inheritance resolves through Name=, which is one namespace across every def type, so
+#    the parent lookup is keyed on that -- defName is not unique across types (an AbilityDef
+#    and a HediffDef may share one) and keying on it would double-report.
+parents, all_defs = {}, []
+for f in my_files:
+    for el in ET.parse(f).getroot():
+        comps = el.find("comps")
+        entry = {
+            "file": f,
+            "label": el.get("Name") or (el.findtext("defName") or "").strip() or el.tag,
+            "parent": el.get("ParentName"),
+            "inherit": comps is None or comps.get("Inherit", "True").lower() != "false",
+            "classes": [c.get("Class") for c in comps if c.get("Class")] if comps is not None else [],
+            "abstract": (el.get("Abstract") or "").lower() == "true",
+        }
+        if el.get("Name"): parents[el.get("Name")] = entry
+        all_defs.append(entry)
+
+for entry in all_defs:
+    if entry["abstract"]: continue
+    chain, node = list(entry["classes"]), entry
+    while node["inherit"] and node["parent"] in parents:
+        node = parents[node["parent"]]
+        chain += node["classes"]
+    seen = set()
+    for c in chain:
+        if c in seen:
+            fail("duplicate comp class", entry["file"],
+                 entry["label"] + " ends up with two " + c
+                 + " -- a child's <comps> merges with its parent's, it does not replace it")
+        seen.add(c)
+
+# 7. translate keys
 used = set()
 for f in glob.glob("Source/**/*.cs", recursive=True):
     used.update(re.findall(r'"(AG_[A-Za-z0-9_]+)"\s*\.Translate', open(f).read()))

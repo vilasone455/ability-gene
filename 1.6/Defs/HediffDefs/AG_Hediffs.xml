@@ -2,7 +2,11 @@
 <Defs>
 
   <!-- Duration comes from each ability's Ability_Duration stat, so
-       HediffCompProperties_Disappears needs no explicit tick count. -->
+       HediffCompProperties_Disappears needs no explicit tick count.
+
+       The shared comps live here and ONLY here: a child's <comps> list is merged with its
+       parent's, not substituted for it, so repeating one in a child gives the hediff two
+       copies of that comp and a config error at load. -->
   <HediffDef Name="AG_AbilityHediffBase" Abstract="True">
     <hediffClass>HediffWithComps</hediffClass>
     <scenarioCanAdd>false</scenarioCanAdd>
@@ -22,10 +26,6 @@
     <defaultLabelColor>(1, 0.7, 0.35)</defaultLabelColor>
     <isBad>false</isBad>
     <comps>
-      <li Class="HediffCompProperties_Disappears">
-        <showRemainingTime>true</showRemainingTime>
-      </li>
-      <li Class="HediffCompProperties_DisappearsOnDeath" />
       <li Class="AbilityGenes.HediffCompProperties_MetabolicOverdrive">
         <intervalTicks>60</intervalTicks>
         <nutritionPerInterval>0.05</nutritionPerInterval>
@@ -52,10 +52,6 @@
     <defaultLabelColor>(1, 0.4, 0.35)</defaultLabelColor>
     <isBad>false</isBad>
     <comps>
-      <li Class="HediffCompProperties_Disappears">
-        <showRemainingTime>true</showRemainingTime>
-      </li>
-      <li Class="HediffCompProperties_DisappearsOnDeath" />
       <li Class="AbilityGenes.HediffCompProperties_Provoke">
         <radius>12.9</radius>
         <intervalTicks>60</intervalTicks>

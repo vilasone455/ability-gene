@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Duration lives on HediffCompProperties_Reflection rather than on a Disappears comp:
+       an accelerated pawn ticks its own hediffs several times per game tick, so a Disappears
+       comp would expire early for anyone also carrying the time lattice. -->
+  <HediffDef>
+    <defName>AG_VectorReflection</defName>
+    <label>reflection</label>
+    <description>Every vector reaching this person is being reversed. Nothing aimed at them lands; it is returned, at strength, to whatever sent it.\n\nThe reflex does not distinguish. While it holds, this person cannot be tended, fed, rescued, arrested or touched at all, and can barely move - handling their own momentum is the one thing the organ is not doing.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.6, 0.85, 1)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <makesSickThought>false</makesSickThought>
+    <isBad>false</isBad>
+    <maxSeverity>1</maxSeverity>
+    <comps>
+      <li Class="HediffCompProperties_DisappearsOnDeath" />
+      <li Class="AbilityGenes.HediffCompProperties_Reflection">
+        <durationTicks>1800</durationTicks>
+        <reflectProjectiles>true</reflectProjectiles>
+        <catchRadius>1.5</catchRadius>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <!-- Rooted. A move speed of zero clamps Pawn.TicksPerMove to its 450-tick ceiling,
+             which is 7.5 seconds a cell - about four cells over the whole reflection. -->
+        <statFactors>
+          <MoveSpeed>0</MoveSpeed>
+        </statFactors>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

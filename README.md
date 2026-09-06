@@ -1,6 +1,6 @@
 # Ability Genes
 
-A RimWorld **1.6** mod adding five genes, each granting active abilities that do
+A RimWorld **1.6** mod adding six genes, each granting active abilities that do
 something no vanilla gene — and as far as I can tell, no popular gene mod — does.
 
 ## Dependencies
@@ -8,7 +8,7 @@ something no vanilla gene — and as far as I can tell, no popular gene mod — 
 | Dependency | Required | Why |
 |---|---|---|
 | **Biotech DLC** | **Yes** | Genes do not exist without it |
-| **Harmony** (`brrainz.harmony`) | **Yes** | The stasis field patches `Thing.DoTick` and `Thing.TakeDamage` |
+| **Harmony** (`brrainz.harmony`) | **Yes** | Patches `Thing.DoTick`, `Thing.TakeDamage` and `ReservationManager.CanReserve` |
 | Royalty / Ideology / Anomaly | No | Deliberately not referenced — no def or texture in this mod resolves to a DLC other than Core or Biotech |
 | Any framework (VEF, EBSG, …) | No | — |
 
@@ -63,6 +63,25 @@ Because acceleration is implemented as extra ticks, hunger, rest, bleeding and i
 *also* run at the multiplier. That emergent penalty may be a better balance lever than the
 strain numbers, and wants watching before either is tuned.
 
+### Vector reflex organ → *reflection*, *vector shove*
+A redundant nervous system that answers incoming momentum by reversing it. Met −3, Cpx 5.
+
+| Ability | Effect | Cooldown |
+|---|---|---|
+| Reflection | 30s. Every damage instance aimed at the carrier is returned to whatever caused it | 1 in-game day |
+| Vector shove | Throws one pawn ~6 cells away from the carrier, stunned, hurt by how far they went | 20s |
+
+**Reflection is not a shield.** Bullets, blades, blasts and a fire burning on the carrier
+are all cancelled and re-applied to their instigator — the fire case works because a
+`Fire`'s damage carries the fire itself as instigator, so reflected flame destroys the
+fire that was doing the burning. Damage with no live instigator is cancelled rather than
+returned; there is nothing to hand it back to.
+
+The cost is that the reflex cannot tell what it is reversing. For the whole 30 seconds the
+carrier is **rooted** and **untouchable**: no tending, no feeding, no rescue, no arrest,
+nobody hauling them to a bed. It is a decision to stop being a person and be a wall, and
+the way to beat it is to stop shooting and wait.
+
 ### Stasis organ → *stasis field* (archite)
 Collapses a 6.9-cell sphere of stopped time around the caster for 20 seconds. Inside it:
 pawns, projectiles in flight, fire and gas all halt, and **nothing can be harmed**.
@@ -70,6 +89,53 @@ pawns, projectiles in flight, fire and gas all halt, and **nothing can be harmed
 It does not spare your own colonists and it does not spare the caster, who is at the
 centre and always inside. What you buy is twenty seconds for everyone standing outside
 the bubble. Cpx 4, Arc 1, five-day cooldown.
+
+## How reflection works
+
+Three mechanisms, one for each thing the reflex has to do.
+
+**Returning damage is a single choke point.** A prefix on `Thing.TakeDamage` cancels the
+instance and re-applies it to `dinfo.Instigator`, with the reflecting pawn as the new
+instigator so kills are credited correctly. Doing it at the damage layer rather than per
+projectile means melee, explosions, EMP and fire are covered by the same six lines, with
+no per-`Projectile`-subclass patching.
+
+A static guard wraps the re-application. Without it two reflecting pawns hitting each other
+would bounce one damage instance between them forever; with it, the second one takes the hit.
+
+Precedence against the stasis field is free: the bubble's prefix sits at `Priority.First`
+and returns false for anything frozen, and a prefix returning false skips the rest. A frozen
+pawn is simply immune and never reflects.
+
+**Being untouchable is a reservation problem.** Every friendly job that wants to reach a pawn
+— tend, feed, rescue, arrest, haul to bed — goes through `ReservationManager.CanReserve`
+first. Refusing there stops all of them without patching one WorkGiver per interaction.
+Melee reserves nothing and still connects, which is exactly right: attacks arrive and are
+returned, doctors never set out.
+
+**Rooting is one stat.** A `MoveSpeed` factor of 0 clamps `Pawn.TicksPerMove` to its 450-tick
+ceiling — 7.5 seconds a cell, about four cells over the whole reflection. No patch, no
+capacity mod, and no risk of the pawn being counted as downed the way a zeroed `Moving`
+capacity would.
+
+### Bouncing the actual bullets is cosmetic
+
+Damage return already sends a bullet's damage back to whoever fired it, so the round turning
+around is a visual only. `HediffComp_Reflection` scans for hostile projectiles within
+`catchRadius` (1.5 cells) each game tick and re-launches them at their launcher; anything
+that steps over the check between ticks still lands and is returned as damage. Friendly
+rounds are deliberately left alone — a colonist shooting past the reflector would otherwise
+get their own bullet back.
+
+`reflectProjectiles` on the hediff comp turns the visual off without touching the mechanic.
+
+### Shoving
+
+`VectorPush` walks the target outward a cell at a time and stops at the first cell it cannot
+stand in or cannot see from where it started, so a shove into a wall moves them up to the
+wall rather than through it. Being stopped early is what makes it hurt: distance travelled
+pays `damagePerCell`, and a blocked throw adds `slamDamage` on top. Pushes are divided by
+body size, so a thrumbo barely moves.
 
 ## How time alter works
 
@@ -199,9 +265,9 @@ field you can flip rather than a decision baked into the code.
 ```
 About/About.xml                  metadata, Biotech + Harmony dependencies
 loadFolders.xml                  1.6 only
-1.6/Defs/AbilityDefs/            4 AbilityDefs + AG_Genetic category
-1.6/Defs/GeneDefs/               4 GeneDefs
-1.6/Defs/HediffDefs/             2 hediffs (overdrive, provoking)
+1.6/Defs/AbilityDefs/            9 AbilityDefs + AG_Genetic category
+1.6/Defs/GeneDefs/               6 GeneDefs
+1.6/Defs/HediffDefs/             7 hediffs
 1.6/Assemblies/AbilityGenes.dll  built output, committed
 Languages/English/Keyed/         message strings
 Source/AbilityGenes/             C# source
@@ -235,8 +301,14 @@ python3 validate.py
 ```
 
 Checks XML well-formedness, that every def and texture reference resolves in Core or
-Biotech only, that custom `Class=` values exist in the built assembly, and that every
-`Translate` key used in C# is defined.
+Biotech only, that custom `Class=` values exist in the built assembly, that no def ends up
+carrying the same comp class twice, and that every `Translate` key used in C# is defined.
+
+The duplicate-comp check exists because a child's `<comps>` list is **merged** with its
+parent's rather than replacing it. Declaring a comp on both an abstract base and its child
+silently gives the hediff two copies, and RimWorld only says so at load time, as
+`two comps with same compClass`. Note that the parent lookup is keyed on `Name=`, not
+`defName` — an AbilityDef and a HediffDef may legitimately share a defName.
 
 It also checks for **duplicate `Name=` declarations**, which is worth calling out because
 it is not obvious: RimWorld's `Name` attribute is a single namespace shared by *every def
@@ -267,3 +339,8 @@ Still unverified:
 - disarm spit against mechs
 - whether the metabolic overdrive exchange rate feels right; a full stomach buys about
   20 seconds, which is the number most likely to need tuning
+- **everything in the vector reflex organ.** It compiles and validates, and none of it has
+  been in front of the game yet. The parts most likely to bite: whether refusing
+  `CanReserve` produces job-giver spam in the log, whether a re-launched projectile behaves
+  when it is spawned less than a cell from its new target, and whether 30 seconds of rooted
+  invulnerability reads as a wall or as a win button

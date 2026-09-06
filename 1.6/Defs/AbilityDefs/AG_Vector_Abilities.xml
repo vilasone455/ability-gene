@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Self-cast: the reflex acts on the carrier's own surface, so there is nothing to aim at. -->
+  <AbilityDef>
+    <defName>AG_VectorReflection</defName>
+    <label>reflection</label>
+    <description>Open the reflex all the way for thirty seconds. Every vector arriving at the carrier is reversed - bullets are sent back down their own line, blades and blasts are returned to whoever swung them, and a fire burning on them is turned on itself.\n\nThe reflex cannot tell what it is reversing. While it holds, the carrier is rooted in place and no one can reach them for any reason: no tending, no feeding, no rescue, no hand on the shoulder. Anyone who wants them dead has to stop shooting and wait.\n\nPress this to hold a doorway, not to win a fight.</description>
+    <iconPath>UI/Gizmos/ShieldMech</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>60000</cooldownTicksRange>
+    <jobDef>CastAbilityOnThingWithoutWeapon</jobDef>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityGiveHediff">
+        <compClass>CompAbilityEffect_GiveHediff</compClass>
+        <hediffDef>AG_VectorReflection</hediffDef>
+        <onlyApplyToSelf>true</onlyApplyToSelf>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Consciousness</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef>
+    <defName>AG_VectorShove</defName>
+    <label>vector shove</label>
+    <description>Take hold of one body's momentum and spend all of it moving them away from the carrier. They are thrown several cells, knocked off balance, and hurt in proportion to how far they went - or a great deal more if something solid stopped them early.\n\nHeavier bodies carry more momentum and move less. It deals no damage worth speaking of on open ground; it is for breaking a melee grip, for putting a sapper back out in the open, and for introducing people to walls.</description>
+    <iconPath>UI/Abilities/Longjump</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>1200</cooldownTicksRange>
+    <aiCanUse>true</aiCanUse>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>12.9</range>
+      <warmupTime>0.5</warmupTime>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetMechs>true</canTargetMechs>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="AbilityGenes.CompProperties_AbilityVectorShove">
+        <pushCells>6</pushCells>
+        <stunTicks>60</stunTicks>
+        <damagePerCell>1.5</damagePerCell>
+        <slamDamage>8</slamDamage>
+        <scaleByBodySize>true</scaleByBodySize>
+        <goodwillImpact>-15</goodwillImpact>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>
