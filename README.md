@@ -16,7 +16,7 @@ something no vanilla gene — and as far as I can tell, no popular gene mod — 
 
 ### Corrosive glands → *disarm spit*
 Spit contact acid at a target's weapon; they drop it and it lands a few cells away,
-forbidden. **Deals no damage at all.** Two charges, ~5.5 in-game hours each.
+forbidden. **Deals no damage at all.** Two charges, 8 in-game hours each.
 Works on mechs. Met −2, Cpx 1.
 
 The point is removing a threat without removing the body — a raider you would rather
