@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Severity is the breath. HediffComp_Recursion drives it from 0 to 1 over suffocationTicks,
+       counting game ticks rather than pawn ticks so a carrier who is also running the time
+       lattice does not suffocate at the multiplier. The stages below turn that into Breathing,
+       and the last one takes Breathing to zero - which kills, because Breathing is a required
+       capacity. That is the ability's only real limit; the cooldown is incidental.
+
+       Duration is therefore not a number anywhere. The membrane stays open until the carrier
+       closes it with the gizmo on this hediff, or until it closes them. -->
+  <HediffDef>
+    <defName>AG_Recursion</defName>
+    <label>recursion</label>
+    <description>Every approach to this person is being halved. Nothing has been stopped and nothing has been deflected; it is all still coming, in steps too small to finish.\n\nThey are not breathing. The membrane does not distinguish between a bullet and the next breath, and it is holding both at the same distance - which is to say, always nearly here.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.75, 0.8, 0.95)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <makesSickThought>false</makesSickThought>
+    <isBad>false</isBad>
+    <maxSeverity>1</maxSeverity>
+    <comps>
+      <li Class="HediffCompProperties_DisappearsOnDeath" />
+      <li Class="AbilityGenes.HediffCompProperties_Recursion">
+        <fieldRadius>3.9</fieldRadius>
+        <projectileHalfLifeTicks>360</projectileHalfLifeTicks>
+        <projectileMinDistance>0.35</projectileMinDistance>
+        <meleeHalfLifeTicks>60</meleeHalfLifeTicks>
+        <verblessDamageFactor>0.15</verblessDamageFactor>
+        <suffocationTicks>2400</suffocationTicks>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <label>holding</label>
+      </li>
+      <li>
+        <!-- ~14 seconds in. -->
+        <label>holding, straining</label>
+        <minSeverity>0.35</minSeverity>
+        <capMods>
+          <li>
+            <capacity>Breathing</capacity>
+            <offset>-0.25</offset>
+          </li>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.10</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <!-- ~24 seconds in. Past here a carrier needs time to recover afterwards. -->
+        <label>oxygen-starved</label>
+        <minSeverity>0.60</minSeverity>
+        <capMods>
+          <li>
+            <capacity>Breathing</capacity>
+            <offset>-0.55</offset>
+          </li>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.30</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <!-- ~32 seconds in. Consciousness this low will usually down the carrier, which removes
+             nothing - the membrane is not held consciously and stays up while they are out. -->
+        <label>asphyxiating</label>
+        <minSeverity>0.80</minSeverity>
+        <capMods>
+          <li>
+            <capacity>Breathing</capacity>
+            <offset>-0.85</offset>
+          </li>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.60</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <!-- ~39 seconds in. Breathing reaches zero and the carrier dies standing up. -->
+        <label>anoxic</label>
+        <minSeverity>0.97</minSeverity>
+        <capMods>
+          <li>
+            <capacity>Breathing</capacity>
+            <offset>-1.0</offset>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

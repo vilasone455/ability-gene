@@ -13,6 +13,11 @@
 
   <AG_StrainInjury>{0}'s temporal strain tore something in their {1}. The damage is permanent.</AG_StrainInjury>
 
+  <AG_RecursionUp>{0} opened the halving membrane. Nothing will reach them - and they have stopped breathing.</AG_RecursionUp>
+  <AG_RecursionCollapsed>{0}'s halving membrane closed. Everything that was on its way arrived at once.</AG_RecursionCollapsed>
+  <AG_RecursionCloseLabel>Close membrane</AG_RecursionCloseLabel>
+  <AG_RecursionCloseDesc>Let the membrane collapse and start breathing again. Everything currently held short - every round drifting in, every blow still arriving - lands in the same instant.</AG_RecursionCloseDesc>
+
   <AG_ReflectionUp>{0} reversed their vectors. Nothing aimed at them will land - and nothing can reach them, including help.</AG_ReflectionUp>
   <AG_ShoveNeedsPawn>Must target a person, animal or mech.</AG_ShoveNeedsPawn>
 

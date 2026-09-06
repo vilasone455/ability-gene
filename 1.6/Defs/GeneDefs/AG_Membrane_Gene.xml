@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <GeneDef>
+    <defName>AG_HalvingMembrane</defName>
+    <label>halving membrane</label>
+    <description>A membrane the carrier can hold open across their own surface. It does not stop what is coming - it divides the distance. Anything approaching crosses half the remaining gap, then half of what is left, then half of that. The steps get smaller forever and the last one is never taken.\n\nNothing lands while it is held. Rounds slow and drift and hang short of the skin; a fist that has been swinging for ten seconds is a thousand times less likely to arrive than the first one was. None of it is blocked, deflected or absorbed - all of it is simply still on its way.\n\nThe membrane cannot tell that air is also approaching. It halves that too.</description>
+    <iconPath>UI/Icons/Genes/Gene_Deathless</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>170</displayOrderInCategory>
+    <marketValueFactor>2.5</marketValueFactor>
+    <abilities>
+      <li>AG_Recursion</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_Recursion</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-4</biostatMet>
+    <biostatCpx>6</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>half</symbol></li>
+        <li><symbol>near</symbol></li>
+        <li><symbol>zeno</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>brane</symbol></li>
+        <li><symbol>half</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+</Defs>

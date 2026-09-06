@@ -1,6 +1,6 @@
 # Ability Genes
 
-A RimWorld **1.6** mod adding six genes, each granting active abilities that do
+A RimWorld **1.6** mod adding seven genes, each granting active abilities that do
 something no vanilla gene — and as far as I can tell, no popular gene mod — does.
 
 ## Dependencies
@@ -81,6 +81,42 @@ The cost is that the reflex cannot tell what it is reversing. For the whole 30 s
 carrier is **rooted** and **untouchable**: no tending, no feeding, no rescue, no arrest,
 nobody hauling them to a bed. It is a decision to stop being a person and be a wall, and
 the way to beat it is to stop shooting and wait.
+
+### Halving membrane → *recursion*
+
+Holds a boundary that divides distance instead of blocking it. Met −4, Cpx 6.
+
+| Path | What the membrane does | Half-life |
+|---|---|---|
+| Projectiles | Round is taken off the engine's clock; its reported position halves its remaining distance to the point it was caught heading for, forever | 6s |
+| Melee | Attacker's chance to connect halves for every second spent inside the field | 1s |
+| Verbless damage | Explosions, fire, collapsing roofs and point-blank rounds are scaled to 15% | — |
+
+**Nothing is ever cancelled.** Every path is a continuous scaling toward zero that never
+arrives, which is the whole point — the moment any of it becomes a hard "this does not
+apply", the membrane stops being a receding distance and becomes an invulnerability
+shield, which is the vector reflex organ's job. A round held by the membrane is still in
+flight, and when the membrane closes it resumes from exactly where it was drawn and
+finishes the trip. Everything queued against the carrier's face lands in the same tick.
+
+A held round's anchor is fixed in world space at the moment of capture, not re-read from
+the carrier. A round is a thing travelling its own straight line; re-anchoring it every
+tick would drag held rounds along behind a walking carrier. Stepping out from behind your
+own membrane therefore releases everything it was holding on that spot — the rounds were
+never stopped, and the line they are on no longer has anyone standing on it.
+
+The membrane cannot tell that air is also approaching. `Breathing` drops on a ramp from
+the moment it opens: ~14s to the first stage, ~24s to oxygen-starved, ~32s to
+asphyxiating, and at ~39s Breathing reaches zero and the carrier dies standing up.
+There is no duration field anywhere — the membrane stays open until the player closes it
+with the gizmo on the hediff, or until it closes them. That, not the one-hour cooldown,
+is the limit.
+
+Melee is the interesting case, because a swing in RimWorld has no position and no travel —
+`Verb_MeleeAttack` resolves damage in the instant it is cast, so there is no object for the
+curve to move. What there is instead is the roll the game already makes to decide whether
+the blow connects, and a failed roll is something RimWorld already renders: a miss mote, a
+miss sound, a combat log line. Scaling that roll gives the entire presentation for free.
 
 ### Stasis organ → *stasis field* (archite)
 Collapses a 6.9-cell sphere of stopped time around the caster for 20 seconds. Inside it:
