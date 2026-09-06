@@ -1,6 +1,6 @@
 # Ability Genes
 
-A RimWorld **1.6** mod adding four genes, each granting an active ability that does
+A RimWorld **1.6** mod adding five genes, each granting active abilities that do
 something no vanilla gene — and as far as I can tell, no popular gene mod — does.
 
 ## Dependencies
@@ -12,7 +12,7 @@ something no vanilla gene — and as far as I can tell, no popular gene mod — 
 | Royalty / Ideology / Anomaly | No | Deliberately not referenced — no def or texture in this mod resolves to a DLC other than Core or Biotech |
 | Any framework (VEF, EBSG, …) | No | — |
 
-## The four genes
+## The genes
 
 ### Corrosive glands → *disarm spit*
 Spit contact acid at a target's weapon; they drop it and it lands a few cells away,
@@ -39,6 +39,30 @@ interrupting their current job once so their AI re-acquires; `enemyTarget` is th
 re-pointed every second to keep it sticky without thrashing their job queue. Ranged
 pawns stay ranged rather than being forced into melee.
 
+### Innate time lattice → *time alter* (three abilities)
+Alters the flow of time **inside one body**. No field, no radius — nothing around the
+carrier changes rate. Met −2, Cpx 4.
+
+| Ability | Rate | Duration | Cooldown | Strain |
+|---|---|---|---|---|
+| Double accel | ×2 | 20s | 1 in-game hour | +0.020/s → 0.40 |
+| Square accel | ×4 | 6s | 1 in-game day | +0.150/s → 0.90 |
+| Stagnate | ×1/3 | 60s | 6 in-game hours | none |
+
+`AG_TemporalStrain` accrues while accelerating and sheds only **0.15/day**, so it outlives
+the fight — a full Square Accel takes ~6 days to clear, and repeated use stacks. At
+severity 0.85 it starts applying **permanent** scars to internal parts; without that a
+competent doctor would make the whole cost temporary.
+
+**Stagnate** is the inverse and the part nothing else in RimWorld does: at 1/3 rate the
+pawn is nearly useless, but bleeding, infection and toxic buildup all slow by the same
+factor. It's what you press when someone is bleeding out and no doctor is free. Costs no
+strain.
+
+Because acceleration is implemented as extra ticks, hunger, rest, bleeding and infection
+*also* run at the multiplier. That emergent penalty may be a better balance lever than the
+strain numbers, and wants watching before either is tuned.
+
 ### Stasis organ → *stasis field* (archite)
 Collapses a 6.9-cell sphere of stopped time around the caster for 20 seconds. Inside it:
 pawns, projectiles in flight, fire and gas all halt, and **nothing can be harmed**.
@@ -46,6 +70,42 @@ pawns, projectiles in flight, fire and gas all halt, and **nothing can be harmed
 It does not spare your own colonists and it does not spare the caster, who is at the
 centre and always inside. What you buy is twenty seconds for everyone standing outside
 the bubble. Cpx 4, Arc 1, five-day cooldown.
+
+## How time alter works
+
+Two directions, two mechanisms, and the harder-sounding one is the easier.
+
+**Acceleration needs no Harmony patch.** `MapComponent_TimeAlter.MapComponentTick` runs once
+per game tick and calls `Pawn.DoTick()` the extra times the multiplier owes. Driving it off a
+hediff means save/load is free and the ability is a vanilla `GiveHediff`.
+
+**Stagnation reuses the stasis field's `Thing.DoTick` prefix**, which now answers a rate
+rather than a yes/no: a stagnating pawn ticks when
+`(TicksGame + thingIDNumber) % 3 == 0`. The `thingIDNumber` offset matters — without it every
+stagnating thing would tick on the same game tick, which reads as synchronised stuttering
+rather than slow motion.
+
+Precedence is correct by construction: a pawn in a stasis field has `DoTick` prefixed to
+false, and the extra acceleration calls go through the same prefix, so stopped beats
+accelerated with no special case.
+
+### Two traps this design walks into
+
+**`HediffCompProperties_Disappears` cannot own the duration.** An accelerated pawn ticks its
+own hediffs N times per game tick, so a Disappears comp expires N times too early — Square
+Accel would last 1.5 seconds instead of 6. `HediffCompProperties_TimeAlter.durationTicks`
+counts *game* ticks instead.
+
+**Anything rate-sensitive needs a game-tick guard.** Strain accrual, strain decay and the
+permanent-injury roll all run inside comps that tick N times per game tick, which would
+silently scale them by the multiplier. Each guards on `Find.TickManager.TicksGame`.
+
+### Afterimages
+
+`PawnRenderer.RenderPawnAt` exposes no alpha, so these are **solid** copies of the pawn drawn
+at recorded positions, not fading ghosts. Ghost count tracks the tier, so you can read how
+hard someone is pushing without opening the gizmo bar. If it looks wrong in play, set
+`drawAfterimages` false on the hediff comp rather than rebuilding.
 
 ## How the stasis field works
 

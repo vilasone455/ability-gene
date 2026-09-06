@@ -11,4 +11,6 @@
   <AG_OverdriveOutOfFood>{0}'s metabolic overdrive ran out of food reserves and shut down.</AG_OverdriveOutOfFood>
   <AG_OverdriveNothingToHeal>{0}'s metabolic overdrive shut down with nothing left to heal.</AG_OverdriveNothingToHeal>
 
+  <AG_StrainInjury>{0}'s temporal strain tore something in their {1}. The damage is permanent.</AG_StrainInjury>
+
 </LanguageData>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- All three are self-cast and target nothing. The lattice acts on one body only;
+       nothing around the carrier changes rate. -->
+  <AbilityDef Name="AG_TimeAlterBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <jobDef>CastAbilityOnThingWithoutWeapon</jobDef>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_TimeAlterBase">
+    <defName>AG_TimeAlterDouble</defName>
+    <label>time alter: double accel</label>
+    <description>Open the lattice to twice normal rate for 20 seconds. Fast enough to cross open ground before a volley lands, or to finish a melee before it starts properly.\n\nCosts a little of the body every time. The strain heals off over about three days, so this is the one you can afford to use regularly - but it stacks, and using it twice in an afternoon is not the same as using it twice in a week.</description>
+    <iconPath>UI/Icons/Genes/Gene_QuickMovespeed</iconPath>
+    <cooldownTicksRange>2500</cooldownTicksRange>
+    <comps>
+      <li Class="CompProperties_AbilityGiveHediff">
+        <compClass>CompAbilityEffect_GiveHediff</compClass>
+        <hediffDef>AG_TimeAlterDouble</hediffDef>
+        <onlyApplyToSelf>true</onlyApplyToSelf>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Consciousness</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_TimeAlterBase">
+    <defName>AG_TimeAlterSquare</defName>
+    <label>time alter: square accel</label>
+    <description>Open the lattice all the way - four times normal rate, for six seconds.\n\nSix seconds is enough to cross a killzone, reach a downed colonist, or end a fight outright. It is also very nearly enough to ruin the person doing it: a single full use takes strain most of the way to critical, where the lattice begins leaving damage that never heals.\n\nPress this when the alternative is losing someone.</description>
+    <iconPath>UI/Abilities/MechLongJump</iconPath>
+    <cooldownTicksRange>60000</cooldownTicksRange>
+    <comps>
+      <li Class="CompProperties_AbilityGiveHediff">
+        <compClass>CompAbilityEffect_GiveHediff</compClass>
+        <hediffDef>AG_TimeAlterSquare</hediffDef>
+        <onlyApplyToSelf>true</onlyApplyToSelf>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Consciousness</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_TimeAlterBase">
+    <defName>AG_TimeAlterStagnate</defName>
+    <label>time alter: stagnate</label>
+    <description>Run the lattice backwards - a third of normal rate, for a full minute.\n\nThe carrier can barely move or act. In exchange, everything happening to them slows by the same factor: blood loss, infection, poison, all of it crawls.\n\nThis is what you press when someone is bleeding out and there is no doctor free. Slowing down is the direction the body tolerates, so it costs no strain at all.</description>
+    <iconPath>UI/Icons/Genes/Gene_SlowMovespeed</iconPath>
+    <cooldownTicksRange>15000</cooldownTicksRange>
+    <comps>
+      <li Class="CompProperties_AbilityGiveHediff">
+        <compClass>CompAbilityEffect_GiveHediff</compClass>
+        <hediffDef>AG_TimeAlterStagnate</hediffDef>
+        <onlyApplyToSelf>true</onlyApplyToSelf>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

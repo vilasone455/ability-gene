@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Duration lives on HediffCompProperties_TimeAlter, not on a Disappears comp. An
+       accelerated pawn ticks its own hediffs N times per game tick, so a Disappears comp
+       would expire N times too early - Square Accel would last a quarter of its stated
+       6 seconds. The comp counts game ticks instead. -->
+  <HediffDef Name="AG_TimeAlterBase" Abstract="True">
+    <hediffClass>HediffWithComps</hediffClass>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <makesSickThought>false</makesSickThought>
+    <isBad>false</isBad>
+    <maxSeverity>1</maxSeverity>
+    <comps>
+      <li Class="HediffCompProperties_DisappearsOnDeath" />
+    </comps>
+  </HediffDef>
+
+  <HediffDef ParentName="AG_TimeAlterBase">
+    <defName>AG_TimeAlterDouble</defName>
+    <label>double accel</label>
+    <description>This person's internal time is running at twice its normal rate. Everything about them - stride, aim, heartbeat, the speed at which they bleed - is happening twice as fast as it is for anyone watching.</description>
+    <defaultLabelColor>(0.45, 0.85, 1)</defaultLabelColor>
+    <comps>
+      <li Class="HediffCompProperties_DisappearsOnDeath" />
+      <li Class="AbilityGenes.HediffCompProperties_TimeAlter">
+        <rateMultiplier>2</rateMultiplier>
+        <durationTicks>1200</durationTicks>
+        <strainPerSecond>0.020</strainPerSecond>
+        <strainHediff>AG_TemporalStrain</strainHediff>
+        <drawAfterimages>true</drawAfterimages>
+      </li>
+    </comps>
+  </HediffDef>
+
+  <HediffDef ParentName="AG_TimeAlterBase">
+    <defName>AG_TimeAlterSquare</defName>
+    <label>square accel</label>
+    <description>This person's internal time is running at four times its normal rate. The body was not built to be driven this hard and is coming apart while it runs.</description>
+    <defaultLabelColor>(0.55, 0.95, 1)</defaultLabelColor>
+    <comps>
+      <li Class="HediffCompProperties_DisappearsOnDeath" />
+      <li Class="AbilityGenes.HediffCompProperties_TimeAlter">
+        <rateMultiplier>4</rateMultiplier>
+        <durationTicks>360</durationTicks>
+        <strainPerSecond>0.150</strainPerSecond>
+        <strainHediff>AG_TemporalStrain</strainHediff>
+        <drawAfterimages>true</drawAfterimages>
+      </li>
+    </comps>
+  </HediffDef>
+
+  <HediffDef ParentName="AG_TimeAlterBase">
+    <defName>AG_TimeAlterStagnate</defName>
+    <label>stagnate</label>
+    <description>This person's internal time is running at a third of its normal rate. They can barely act - but their bleeding, their infections and any poison in them have slowed by exactly the same factor.</description>
+    <defaultLabelColor>(0.6, 0.65, 0.85)</defaultLabelColor>
+    <comps>
+      <li Class="HediffCompProperties_DisappearsOnDeath" />
+      <li Class="AbilityGenes.HediffCompProperties_TimeAlter">
+        <rateMultiplier>0.333</rateMultiplier>
+        <durationTicks>3600</durationTicks>
+        <strainPerSecond>0</strainPerSecond>
+        <drawAfterimages>false</drawAfterimages>
+      </li>
+    </comps>
+  </HediffDef>
+
+  <HediffDef>
+    <defName>AG_TemporalStrain</defName>
+    <label>temporal strain</label>
+    <description>Tissue damage from being driven faster than it was built to run. Vessels, muscle and connective tissue all tear a little every time the lattice is opened up, and the body repairs it slowly.\n\nIt does not reset between fights. Leaning on acceleration repeatedly, even gently, will stack this into something serious.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.85, 0.35, 0.3)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <makesSickThought>false</makesSickThought>
+    <isBad>true</isBad>
+    <maxSeverity>1</maxSeverity>
+    <initialSeverity>0.001</initialSeverity>
+    <comps>
+      <li Class="HediffCompProperties_DisappearsOnDeath" />
+      <li Class="AbilityGenes.HediffCompProperties_TemporalStrain">
+        <decayPerDay>0.15</decayPerDay>
+        <permanentInjuryThreshold>0.85</permanentInjuryThreshold>
+        <injuryCheckIntervalTicks>300</injuryCheckIntervalTicks>
+        <injuryChance>0.35</injuryChance>
+        <injurySeverity>4~9</injurySeverity>
+        <injuryDef>Cut</injuryDef>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <label>minor</label>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.05</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <label>torn fibre</label>
+        <minSeverity>0.30</minSeverity>
+        <painOffset>0.10</painOffset>
+        <capMods>
+          <li>
+            <capacity>Manipulation</capacity>
+            <offset>-0.15</offset>
+          </li>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.10</offset>
+          </li>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.05</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <label>vascular strain</label>
+        <minSeverity>0.60</minSeverity>
+        <painOffset>0.22</painOffset>
+        <capMods>
+          <li>
+            <capacity>Manipulation</capacity>
+            <offset>-0.25</offset>
+          </li>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.20</offset>
+          </li>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.10</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <label>critical</label>
+        <minSeverity>0.85</minSeverity>
+        <painOffset>0.35</painOffset>
+        <capMods>
+          <li>
+            <capacity>Manipulation</capacity>
+            <offset>-0.40</offset>
+          </li>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.35</offset>
+          </li>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.15</offset>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

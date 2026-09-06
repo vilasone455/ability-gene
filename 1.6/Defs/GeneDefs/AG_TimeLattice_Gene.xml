@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <GeneDef>
+    <defName>AG_TimeLattice</defName>
+    <label>innate time lattice</label>
+    <description>A lattice grown through the carrier's nervous system lets them change the rate at which their own body experiences time. Nothing around them is affected - no field, no radius. Only they speed up, and only they slow down.\n\nRunning fast tears the tissue doing the running. The damage accumulates across days rather than clearing after a fight, and pushed all the way to four times normal the lattice will leave scars that never heal.\n\nRun the other way and the same principle protects: at a third speed, a wound bleeds at a third the rate.</description>
+    <iconPath>UI/Icons/Genes/Gene_VeryQuickMovespeed</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>150</displayOrderInCategory>
+    <marketValueFactor>1.8</marketValueFactor>
+    <abilities>
+      <li>AG_TimeAlterDouble</li>
+      <li>AG_TimeAlterSquare</li>
+      <li>AG_TimeAlterStagnate</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_TimeAlterDouble</AbilityDef>
+      <AbilityDef>AG_TimeAlterSquare</AbilityDef>
+      <AbilityDef>AG_TimeAlterStagnate</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-2</biostatMet>
+    <biostatCpx>4</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>chrono</symbol></li>
+        <li><symbol>tempo</symbol></li>
+        <li><symbol>swift</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>chron</symbol></li>
+        <li><symbol>pace</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+</Defs>
