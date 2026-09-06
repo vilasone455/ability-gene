@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Base for hediffs applied by an ability. Duration comes from the ability's
+       Ability_Duration stat, so HediffCompProperties_Disappears needs no explicit tick count. -->
+  <HediffDef Name="AG_AbilityHediffBase" Abstract="True">
+    <hediffClass>HediffWithComps</hediffClass>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <makesSickThought>false</makesSickThought>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+      <li Class="HediffCompProperties_DisappearsOnDeath" />
+    </comps>
+  </HediffDef>
+
+  <HediffDef ParentName="AG_AbilityHediffBase">
+    <defName>AG_AdrenalSurge</defName>
+    <label>adrenal surge</label>
+    <description>A flood of engineered catecholamines is saturating this person's bloodstream. Reflexes, strength and pain tolerance are all sharply elevated.</description>
+    <defaultLabelColor>(1, 0.55, 0.3)</defaultLabelColor>
+    <isBad>false</isBad>
+    <stages>
+      <li>
+        <painFactor>0.35</painFactor>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>0.25</offset>
+          </li>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>0.10</offset>
+          </li>
+        </capMods>
+        <statOffsets>
+          <MeleeHitChance>2</MeleeHitChance>
+          <MeleeDodgeChance>4</MeleeDodgeChance>
+        </statOffsets>
+        <statFactors>
+          <MeleeCooldownFactor>0.75</MeleeCooldownFactor>
+          <MeleeDamageFactor>1.2</MeleeDamageFactor>
+        </statFactors>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <HediffDef ParentName="AG_AbilityHediffBase">
+    <defName>AG_ReflexOverdrive</defName>
+    <label>reflex overdrive</label>
+    <description>An accessory ganglion is firing at full rate, shortcutting the normal path from eye to trigger finger.</description>
+    <defaultLabelColor>(0.5, 0.85, 1)</defaultLabelColor>
+    <isBad>false</isBad>
+    <stages>
+      <li>
+        <statOffsets>
+          <ShootingAccuracyPawn>2</ShootingAccuracyPawn>
+        </statOffsets>
+        <statFactors>
+          <AimingDelayFactor>0.6</AimingDelayFactor>
+          <RangedCooldownFactor>0.7</RangedCooldownFactor>
+        </statFactors>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <HediffDef ParentName="AG_AbilityHediffBase">
+    <defName>AG_Paralysis</defName>
+    <label>neurotoxic paralysis</label>
+    <description>A fast-acting neurotoxin is blocking signals to the major muscle groups. It wears off without lasting harm.</description>
+    <defaultLabelColor>(0.6, 1, 0.4)</defaultLabelColor>
+    <isBad>true</isBad>
+    <stages>
+      <li>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <setMax>0.25</setMax>
+          </li>
+          <li>
+            <capacity>Manipulation</capacity>
+            <setMax>0.4</setMax>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

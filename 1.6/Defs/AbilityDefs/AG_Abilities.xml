@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <AbilityCategoryDef>
+    <defName>AG_Genetic</defName>
+    <label>genetic</label>
+    <displayOrder>900</displayOrder>
+  </AbilityCategoryDef>
+
+  <!-- Abstract base: a self-cast ability with no target, usable while undrafted. -->
+  <AbilityDef Name="AG_SelfCastBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <jobDef>CastAbilityOnThingWithoutWeapon</jobDef>
+    <targetRequired>false</targetRequired>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+  </AbilityDef>
+
+  <!-- ===================== SELF BUFFS ===================== -->
+
+  <AbilityDef ParentName="AG_SelfCastBase">
+    <defName>AG_AdrenalSurge</defName>
+    <label>adrenal surge</label>
+    <description>Dump the contents of an oversized adrenal reserve into the bloodstream. For a short time the carrier moves faster, swings harder, and barely registers pain.\n\nThe reserve takes most of a day to refill.</description>
+    <iconPath>UI/Abilities/FireBurst</iconPath>
+    <cooldownTicksRange>45000</cooldownTicksRange>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <statBases>
+      <Ability_Duration>60</Ability_Duration>
+    </statBases>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityGiveHediff">
+        <compClass>CompAbilityEffect_GiveHediff</compClass>
+        <hediffDef>AG_AdrenalSurge</hediffDef>
+        <onlyApplyToSelf>true</onlyApplyToSelf>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>BloodPumping</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_SelfCastBase">
+    <defName>AG_ReflexOverdrive</defName>
+    <label>reflex overdrive</label>
+    <description>Fire an accessory ganglion at its maximum rate, shortening the path from eye to trigger finger. Aiming and weapon recovery both become much faster for a short time.</description>
+    <iconPath>UI/Icons/Genes/Gene_ElongatedFingers</iconPath>
+    <cooldownTicksRange>45000</cooldownTicksRange>
+    <statBases>
+      <Ability_Duration>45</Ability_Duration>
+    </statBases>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityGiveHediff">
+        <compClass>CompAbilityEffect_GiveHediff</compClass>
+        <hediffDef>AG_ReflexOverdrive</hediffDef>
+        <onlyApplyToSelf>true</onlyApplyToSelf>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Sight</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- ===================== MOBILITY ===================== -->
+
+  <AbilityDef>
+    <defName>AG_KineticLeap</defName>
+    <label>kinetic leap</label>
+    <description>Discharge a coiled tendon in each leg to leap a moderate distance. Unlike hemogen-powered longjump legs, this costs the carrier nothing but a short recovery.</description>
+    <iconPath>UI/Abilities/MechLongJump</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>1200</cooldownTicksRange>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <jobDef>CastJump</jobDef>
+    <verbProperties>
+      <verbClass>Verb_CastAbilityJump</verbClass>
+      <label>leap</label>
+      <violent>false</violent>
+      <forceNormalTimeSpeed>false</forceNormalTimeSpeed>
+      <warmupTime>0.5</warmupTime>
+      <range>13.9</range>
+      <requireLineOfSight>true</requireLineOfSight>
+      <soundCast>Longjump_Jump</soundCast>
+      <soundLanding>Longjump_Land</soundLanding>
+      <targetParams>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>false</canTargetPawns>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Moving</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- ===================== OFFENSE ===================== -->
+
+  <AbilityDef>
+    <defName>AG_BarbVolley</defName>
+    <label>barb volley</label>
+    <description>Launch a small keratin barb from a pressurised sac under the forearm. Each barb is weak on its own, but the sac holds several and reloads quickly.</description>
+    <iconPath>UI/Abilities/PiercingSpine</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>600</cooldownTicksRange>
+    <charges>3</charges>
+    <cooldownPerCharge>true</cooldownPerCharge>
+    <aiCanUse>true</aiCanUse>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>12.9</range>
+      <warmupTime>0.4</warmupTime>
+      <soundCast>PiercingSpine_Launch</soundCast>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityLaunchProjectile">
+        <projectileDef>AG_Proj_Barb</projectileDef>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Manipulation</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef>
+    <defName>AG_HemoLance</defName>
+    <label>hemo lance</label>
+    <description>Drive stored hemogen into a hardened bone lance and fire it at high velocity. Punishing against armor, but it burns a noticeable share of the carrier's hemogen.</description>
+    <iconPath>UI/Icons/Genes/Gene_Hemogenic</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>300</cooldownTicksRange>
+    <aiCanUse>true</aiCanUse>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>16.9</range>
+      <warmupTime>0.6</warmupTime>
+      <soundCast>PiercingSpine_Launch</soundCast>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityHemogenCost">
+        <hemogenCost>0.25</hemogenCost>
+      </li>
+      <li Class="CompProperties_AbilityLaunchProjectile">
+        <projectileDef>AG_Proj_HemoLance</projectileDef>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef>
+    <defName>AG_ParalyticSpit</defName>
+    <label>paralytic spit</label>
+    <description>Spit a fast-acting neurotoxin at a target. It does no lasting damage, but the victim can barely move or use their hands until it wears off.\n\nUseful for taking prisoners alive.</description>
+    <iconPath>UI/Abilities/AcidSpray</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>30000</cooldownTicksRange>
+    <aiCanUse>true</aiCanUse>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <statBases>
+      <Ability_Duration>30</Ability_Duration>
+    </statBases>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>9.9</range>
+      <warmupTime>1</warmupTime>
+      <soundCast>AcidSpray_Resolve</soundCast>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetMechs>false</canTargetMechs>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityGiveHediff">
+        <compClass>CompAbilityEffect_GiveHediff</compClass>
+        <hediffDef>AG_Paralysis</hediffDef>
+        <applicableToMechs>false</applicableToMechs>
+        <goodwillImpact>-15</goodwillImpact>
+      </li>
+      <li Class="CompProperties_AbilityFleckOnTarget">
+        <fleckDef>BloodSplash</fleckDef>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef>
+    <defName>AG_TerrorShriek</defName>
+    <label>terror shriek</label>
+    <description>Produce a shriek pitched to trigger a primal flight response. The target abandons whatever it was doing and runs.</description>
+    <iconPath>UI/Icons/Genes/Gene_VoiceRoar</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>60000</cooldownTicksRange>
+    <aiCanUse>true</aiCanUse>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <statBases>
+      <Ability_Duration>25</Ability_Duration>
+    </statBases>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>14.9</range>
+      <warmupTime>1</warmupTime>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetMechs>false</canTargetMechs>
+        <neverTargetIncapacitated>true</neverTargetIncapacitated>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityGiveMentalState">
+        <compClass>CompAbilityEffect_GiveMentalState</compClass>
+        <stateDef>PanicFlee</stateDef>
+        <goodwillImpact>-40</goodwillImpact>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Talking</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- ===================== DEFENCE / UTILITY ===================== -->
+
+  <AbilityDef ParentName="AG_SelfCastBase">
+    <defName>AG_SmokeBurst</defName>
+    <label>smoke burst</label>
+    <description>Vent a dense chemical smoke from pores across the back and shoulders. The cloud blocks incoming fire and hides everyone standing in it.</description>
+    <iconPath>UI/Abilities/MechSmokepop</iconPath>
+    <cooldownTicksRange>15000</cooldownTicksRange>
+    <charges>2</charges>
+    <cooldownPerCharge>true</cooldownPerCharge>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilitySmokepop">
+        <smokeRadius>4.9</smokeRadius>
+        <clamorType>Ability</clamorType>
+        <clamorRadius>15</clamorRadius>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_SelfCastBase">
+    <defName>AG_FirefoamBurst</defName>
+    <label>firefoam burst</label>
+    <description>Rupture a set of retardant bladders under the skin, throwing fire-suppressing foam over everything nearby. Unlike a directional foam spray, this covers the carrier's own position first.</description>
+    <iconPath>UI/Abilities/MechFirefoamPop</iconPath>
+    <cooldownTicksRange>30000</cooldownTicksRange>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityFirefoampop">
+        <firefoamRadius>4.9</firefoamRadius>
+        <clamorType>Ability</clamorType>
+        <clamorRadius>15</clamorRadius>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef>
+    <defName>AG_CalmingPheromones</defName>
+    <label>calming pheromones</label>
+    <description>Release a blend of pheromones that shuts down a panic or rage response in another person, ending their mental break.</description>
+    <iconPath>UI/Icons/Genes/Gene_DeadCalm</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>30000</cooldownTicksRange>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>9.9</range>
+      <warmupTime>1.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetMechs>false</canTargetMechs>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityStopMentalState">
+        <exceptions>
+          <li>Jailbreaker</li>
+          <li>SocialFighting</li>
+        </exceptions>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef>
+    <defName>AG_RallyingCall</defName>
+    <label>rallying call</label>
+    <description>Deliver a burst of pheromone-laced speech that pushes another person into a flash of inspiration.</description>
+    <iconPath>UI/Icons/Genes/Gene_KindInstinct</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>300000</cooldownTicksRange>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>9.9</range>
+      <warmupTime>2</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetAnimals>false</canTargetAnimals>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetMechs>false</canTargetMechs>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityGiveInspiration">
+        <canTargetBaby>false</canTargetBaby>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Talking</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef>
+    <defName>AG_BoneWall</defName>
+    <label>osseous bulwark</label>
+    <description>Force a lattice of mineralised bone up out of the ground in a small cross-shaped pattern, forming instant cover.</description>
+    <iconPath>UI/Icons/Genes/Gene_HeadboneCenterhorn</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>60000</cooldownTicksRange>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>14.9</range>
+      <warmupTime>1.5</warmupTime>
+      <targetParams>
+        <canTargetPawns>false</canTargetPawns>
+        <canTargetLocations>true</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityWallraise">
+        <compClass>CompAbilityEffect_Wallraise</compClass>
+        <pattern>
+          <li>(0, 0)</li>
+          <li>(1, 0)</li>
+          <li>(-1, 0)</li>
+          <li>(0, 1)</li>
+          <li>(0, -1)</li>
+        </pattern>
+        <screenShakeIntensity>1.0</screenShakeIntensity>
+        <clamorType>Ability</clamorType>
+        <clamorRadius>20</clamorRadius>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef>
+    <defName>AG_CoolantBurst</defName>
+    <label>coolant burst</label>
+    <description>Dump a bladder of chilled fluid over a target area, snuffing out any fire it touches.</description>
+    <iconPath>UI/Icons/Genes/Gene_MaxTemperatureLargeIncrease</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>20000</cooldownTicksRange>
+    <charges>2</charges>
+    <cooldownPerCharge>true</cooldownPerCharge>
+    <hostile>false</hostile>
+    <canUseAoeToGetTargets>false</canUseAoeToGetTargets>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <statBases>
+      <Ability_EffectRadius>2.9</Ability_EffectRadius>
+    </statBases>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>12.9</range>
+      <warmupTime>1</warmupTime>
+      <targetParams>
+        <canTargetPawns>false</canTargetPawns>
+        <canTargetLocations>true</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityWaterskip">
+        <screenShakeIntensity>0.5</screenShakeIntensity>
+        <clamorType>Ability</clamorType>
+        <clamorRadius>10</clamorRadius>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- ===================== ARCHITE TIER ===================== -->
+
+  <AbilityDef>
+    <defName>AG_StormCall</defName>
+    <label>storm call</label>
+    <description>Archites seeded through the carrier's nervous system reach out and destabilise the local atmosphere, calling down a flashstorm on a distant area.</description>
+    <iconPath>UI/Abilities/FireSpew</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>600000</cooldownTicksRange>
+    <aiCanUse>false</aiCanUse>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>29.9</range>
+      <warmupTime>3</warmupTime>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetPawns>false</canTargetPawns>
+        <canTargetLocations>true</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityFlashstorm">
+        <goodwillImpact>-35</goodwillImpact>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef>
+    <defName>AG_Fold</defName>
+    <label>fold</label>
+    <description>Collapse the space between here and the colony, sending the carrier and everyone standing near them home in an instant. The organ that does this needs a very long time to recover.</description>
+    <iconPath>UI/Abilities/Resurrect</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>900000</cooldownTicksRange>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>3.9</range>
+      <warmupTime>4</warmupTime>
+      <targetParams>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetSelf>true</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityFarskip">
+        <stunTicks>18~60</stunTicks>
+        <clamorType>Ability</clamorType>
+        <clamorRadius>10</clamorRadius>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

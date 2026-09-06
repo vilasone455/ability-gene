@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>Ability Genes</name>
+  <author>vilasone455</author>
+  <packageId>vilasone455.abilitygenes</packageId>
+  <supportedVersions>
+    <li>1.6</li>
+  </supportedVersions>
+
+  <modDependencies>
+    <li>
+      <packageId>Ludeon.RimWorld.Biotech</packageId>
+      <displayName>Biotech</displayName>
+    </li>
+  </modDependencies>
+
+  <loadAfter>
+    <li>Ludeon.RimWorld</li>
+    <li>Ludeon.RimWorld.Royalty</li>
+    <li>Ludeon.RimWorld.Ideology</li>
+    <li>Ludeon.RimWorld.Biotech</li>
+    <li>Ludeon.RimWorld.Anomaly</li>
+  </loadAfter>
+
+  <description>Biotech gives you only a handful of genes that grant an active ability. This mod expands that list.
+
+Every gene in this mod appears under the "Ability" category in the gene assembler and grants its carrier a usable ability gizmo, balanced with a metabolism / complexity cost and a cooldown.
+
+Requires Biotech. No other mods, frameworks, or DLC are required.</description>
+</ModMetaData>

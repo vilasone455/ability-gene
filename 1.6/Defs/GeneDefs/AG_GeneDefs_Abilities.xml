@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- All genes here sit in the vanilla "Ability" display category so they show up
+       next to fire spew, foam spray and longjump legs in the gene assembler. -->
+
+  <GeneDef>
+    <defName>AG_AdrenalGlands</defName>
+    <label>adrenal reserve</label>
+    <description>Carriers grow an oversized secondary adrenal gland that stores a large hormone charge. Dumping the charge briefly makes them faster, stronger and almost insensible to pain. Refilling the reserve takes most of a day.</description>
+    <iconPath>UI/Icons/Genes/Gene_Aggressive</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>100</displayOrderInCategory>
+    <marketValueFactor>1.4</marketValueFactor>
+    <abilities>
+      <li>AG_AdrenalSurge</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_AdrenalSurge</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-2</biostatMet>
+    <biostatCpx>1</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>adren</symbol></li>
+        <li><symbol>surge</symbol></li>
+        <li><symbol>rush</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>surge</symbol></li>
+        <li><symbol>rush</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_ReflexNode</defName>
+    <label>reflex node</label>
+    <description>An accessory ganglion sits at the base of the carrier's neck, able to drive the arms directly without waiting on the conscious mind. Firing it wide open makes them shoot noticeably faster and straighter for a short time.</description>
+    <iconPath>UI/Icons/Genes/Gene_ElongatedFingers</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>110</displayOrderInCategory>
+    <marketValueFactor>1.4</marketValueFactor>
+    <abilities>
+      <li>AG_ReflexOverdrive</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_ReflexOverdrive</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-2</biostatMet>
+    <biostatCpx>1</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>reflex</symbol></li>
+        <li><symbol>quick</symbol></li>
+        <li><symbol>snap</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>shot</symbol></li>
+        <li><symbol>eye</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_SpringLegs</defName>
+    <label>spring tendons</label>
+    <description>Elastic tendons run the length of the carrier's legs, storing energy that can be released all at once for a long leap. Weaker than hemogen-powered longjump legs, but it costs nothing to use.</description>
+    <iconPath>UI/Icons/Genes/Gene_LongJumpLegs</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>120</displayOrderInCategory>
+    <abilities>
+      <li>AG_KineticLeap</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_KineticLeap</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-2</biostatMet>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>spring</symbol></li>
+        <li><symbol>leap</symbol></li>
+        <li><symbol>bound</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>leaper</symbol></li>
+        <li><symbol>spring</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_BarbGland</defName>
+    <label>barb sac</label>
+    <description>A pressurised sac under each forearm grows and stores small keratin barbs. The carrier can fire them in quick succession at short range. Each barb is minor on its own, but the sac reloads fast.</description>
+    <iconPath>UI/Icons/Genes/Gene_PiercingSpine</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>200</displayOrderInCategory>
+    <marketValueFactor>1.3</marketValueFactor>
+    <abilities>
+      <li>AG_BarbVolley</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_BarbVolley</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-2</biostatMet>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>barb</symbol></li>
+        <li><symbol>quill</symbol></li>
+        <li><symbol>thorn</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>barb</symbol></li>
+        <li><symbol>quill</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_HemoLance</defName>
+    <label>hemo lance</label>
+    <description>The carrier can harden a bone lance and drive it out at high velocity using stored hemogen. It cuts through armor that stops ordinary fire, at the cost of a substantial share of their hemogen.</description>
+    <iconPath>UI/Icons/Genes/Gene_Hemogenic</iconPath>
+    <prerequisite>Hemogenic</prerequisite>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>210</displayOrderInCategory>
+    <marketValueFactor>1.5</marketValueFactor>
+    <abilities>
+      <li>AG_HemoLance</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_HemoLance</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-1</biostatMet>
+    <biostatCpx>1</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>hemo</symbol></li>
+        <li><symbol>lance</symbol></li>
+        <li><symbol>gore</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>lance</symbol></li>
+        <li><symbol>spike</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_VenomGlands</defName>
+    <label>venom glands</label>
+    <description>Glands at the back of the throat brew a fast-acting neurotoxin. The carrier can spit it at a target, leaving them barely able to move or hold a weapon without doing any lasting damage.\n\nUseful for taking prisoners intact.</description>
+    <iconPath>UI/Icons/Genes/Gene_AcidSpray</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>220</displayOrderInCategory>
+    <marketValueFactor>1.5</marketValueFactor>
+    <abilities>
+      <li>AG_ParalyticSpit</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_ParalyticSpit</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-2</biostatMet>
+    <biostatCpx>1</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>venom</symbol></li>
+        <li><symbol>toxi</symbol></li>
+        <li><symbol>numb</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>fang</symbol></li>
+        <li><symbol>venom</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_ShriekSacs</defName>
+    <label>shriek sacs</label>
+    <description>Resonant air sacs in the carrier's chest let them produce a shriek pitched to trigger a primal flight response in anyone who hears it. The target drops what they are doing and runs.</description>
+    <iconPath>UI/Icons/Genes/Gene_VoiceRoar</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>230</displayOrderInCategory>
+    <marketValueFactor>1.4</marketValueFactor>
+    <abilities>
+      <li>AG_TerrorShriek</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_TerrorShriek</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-2</biostatMet>
+    <biostatCpx>1</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>shriek</symbol></li>
+        <li><symbol>howl</symbol></li>
+        <li><symbol>wail</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>shriek</symbol></li>
+        <li><symbol>howler</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_SmokeGlands</defName>
+    <label>smoke glands</label>
+    <description>Pores across the carrier's back and shoulders can vent a dense chemical smoke on command, breaking line of fire for everyone standing in it.</description>
+    <iconPath>UI/Abilities/MechSmokepop</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>300</displayOrderInCategory>
+    <abilities>
+      <li>AG_SmokeBurst</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_SmokeBurst</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-1</biostatMet>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>smoke</symbol></li>
+        <li><symbol>haze</symbol></li>
+        <li><symbol>fog</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>smoke</symbol></li>
+        <li><symbol>shroud</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_RetardantBladders</defName>
+    <label>retardant bladders</label>
+    <description>Bladders of fire-retardant foam sit just under the carrier's skin. Rupturing them throws suppressant over everything nearby, starting with the carrier themselves.</description>
+    <iconPath>UI/Abilities/MechFirefoamPop</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>310</displayOrderInCategory>
+    <abilities>
+      <li>AG_FirefoamBurst</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_FirefoamBurst</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-1</biostatMet>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>foam</symbol></li>
+        <li><symbol>quench</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>foam</symbol></li>
+        <li><symbol>quench</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_CoolantBladder</defName>
+    <label>coolant bladder</label>
+    <description>A large bladder of chilled fluid runs along the carrier's spine. They can dump it over a nearby area to put out fires at a distance.</description>
+    <iconPath>UI/Icons/Genes/Gene_MaxTemperatureLargeIncrease</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>320</displayOrderInCategory>
+    <abilities>
+      <li>AG_CoolantBurst</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_CoolantBurst</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-2</biostatMet>
+    <biostatCpx>1</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>frost</symbol></li>
+        <li><symbol>chill</symbol></li>
+        <li><symbol>cool</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>frost</symbol></li>
+        <li><symbol>douser</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_OsseousBulwark</defName>
+    <label>osseous bulwark</label>
+    <description>The carrier's marrow can seed a rapid mineralisation reaction in the ground at a distance, forcing up a lattice of bone that hardens into instant cover.</description>
+    <iconPath>UI/Icons/Genes/Gene_HeadboneCenterhorn</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>330</displayOrderInCategory>
+    <marketValueFactor>1.5</marketValueFactor>
+    <abilities>
+      <li>AG_BoneWall</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_BoneWall</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-3</biostatMet>
+    <biostatCpx>2</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>bone</symbol></li>
+        <li><symbol>bul</symbol></li>
+        <li><symbol>osse</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>wall</symbol></li>
+        <li><symbol>bone</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_CalmingPheromones</defName>
+    <label>calming pheromones</label>
+    <description>The carrier can release a pheromone blend that shuts down someone else's panic or rage response, ending a mental break on the spot.</description>
+    <iconPath>UI/Icons/Genes/Gene_DeadCalm</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>400</displayOrderInCategory>
+    <marketValueFactor>1.4</marketValueFactor>
+    <abilities>
+      <li>AG_CalmingPheromones</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_CalmingPheromones</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-1</biostatMet>
+    <biostatCpx>1</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>calm</symbol></li>
+        <li><symbol>sooth</symbol></li>
+        <li><symbol>still</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>calm</symbol></li>
+        <li><symbol>balm</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_RallyingVoice</defName>
+    <label>rallying voice</label>
+    <description>Carriers exhale a pheromone-laced aerosol while speaking. Directed at one person, it can push them into a flash of inspiration. The glands take days to restock.</description>
+    <iconPath>UI/Icons/Genes/Gene_KindInstinct</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>410</displayOrderInCategory>
+    <marketValueFactor>1.6</marketValueFactor>
+    <abilities>
+      <li>AG_RallyingCall</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_RallyingCall</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-2</biostatMet>
+    <biostatCpx>2</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>rally</symbol></li>
+        <li><symbol>herald</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>voice</symbol></li>
+        <li><symbol>herald</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_StormGland</defName>
+    <label>storm gland</label>
+    <description>An archite colony seeded through the carrier's nervous system can reach out and destabilise the local atmosphere, calling a flashstorm down on a distant area. Nobody has satisfactorily explained how a gland does this.</description>
+    <iconPath>UI/Abilities/FireSpew</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>500</displayOrderInCategory>
+    <marketValueFactor>1.8</marketValueFactor>
+    <abilities>
+      <li>AG_StormCall</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_StormCall</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatCpx>3</biostatCpx>
+    <biostatArc>1</biostatArc>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>storm</symbol></li>
+        <li><symbol>thunder</symbol></li>
+        <li><symbol>levin</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>storm</symbol></li>
+        <li><symbol>bolt</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_FoldOrgan</defName>
+    <label>fold organ</label>
+    <description>An archite structure wrapped around the carrier's spine can collapse the distance between where they stand and the colony they came from, taking everyone nearby with them. It needs the better part of a season to recover afterwards.</description>
+    <iconPath>UI/Icons/Genes/Gene_XenogermReimplanter</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>510</displayOrderInCategory>
+    <marketValueFactor>2</marketValueFactor>
+    <abilities>
+      <li>AG_Fold</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_Fold</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatCpx>4</biostatCpx>
+    <biostatArc>1</biostatArc>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>fold</symbol></li>
+        <li><symbol>far</symbol></li>
+        <li><symbol>skip</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>fold</symbol></li>
+        <li><symbol>walker</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+</Defs>

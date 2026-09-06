@@ -1,0 +1,10 @@
+# Build output
+Source/**/bin/
+Source/**/obj/
+*.user
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vs/
+.idea/
