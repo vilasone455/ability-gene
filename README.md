@@ -1,6 +1,6 @@
 # Ability Genes
 
-A RimWorld **1.6** mod adding seven genes, each granting active abilities that do
+A RimWorld **1.6** mod adding eight genes, each granting active abilities that do
 something no vanilla gene — and as far as I can tell, no popular gene mod — does.
 
 ## Dependencies
@@ -118,6 +118,32 @@ curve to move. What there is instead is the roll the game already makes to decid
 the blow connects, and a failed roll is something RimWorld already renders: a miss mote, a
 miss sound, a combat log line. Scaling that roll gives the entire presentation for free.
 
+### Anchor organ → *mark*, *clap*, *double clap*
+Leaves marks on people and on ground, then exchanges two marked places. Met −2, Cpx 4.
+
+| Ability | Effect | Range | Cooldown |
+|---|---|---|---|
+| Mark | Places or lifts a mark on a pawn or a standable cell. Three held at once, fading after one in-game day | 9.9 | 10s |
+| Clap | Carrier and one mark change places. A pawn mark is a swap; a tile mark is a one-way move | map-wide, no LOS | 30s |
+| Double clap | Any two marks change places with each other, both picked at cast. Carrier does not move | map-wide, no LOS | 30s |
+
+**The clap takes both hands, so the carrier never holds a weapon.** That is the whole cost, and
+it is a permanent decision about what that colonist is rather than a number on a stat. It is
+enforced in `EquipmentUtility.CanEquip` rather than by dropping weapons afterwards, so the game
+never offers the player a gun it is about to take away. `banWeapons` on the gene's mod extension
+turns it off, which leaves only the check at cast time and makes this a support ability on an
+armed pawn — a large balance swing, hence a field.
+
+The other cost is that **marking needs range 9.9 and line of sight**. Distance is the thing this
+gene does not care about; getting there in the first place is. A clap is a plan made earlier, not
+an answer to what is happening now, and marking a raider means walking an unarmed pawn to within
+ten cells of them.
+
+Double clap is the one that will define it: pull a bleeding colonist out and leave whoever
+dropped them standing in your firing line, without the carrier going anywhere. It spends the two
+marks it was given, which is why the carrier holds three — one survives, so a double clap does
+not leave them completely empty.
+
 ### Stasis organ → *stasis field* (archite)
 Collapses a 6.9-cell sphere of stopped time around the caster for 20 seconds. Inside it:
 pawns, projectiles in flight, fire and gas all halt, and **nothing can be harmed**.
@@ -208,6 +234,67 @@ silently scale them by the multiplier. Each guards on `Find.TickManager.TicksGam
 at recorded positions, not fading ghosts. Ghost count tracks the tier, so you can read how
 hard someone is pushing without opening the gizmo bar. If it looks wrong in play, set
 `drawAfterimages` false on the hediff comp rather than rebuilding.
+
+## How the anchor organ works
+
+**Marks live on the gene, not on a hediff or a map component.** They belong to a person: they
+save and load with the pawn, they travel between maps with them, and they are gone the moment the
+gene is. `Gene_Anchors` overrides `ExposeData`, which makes persistence free the same way driving
+time alter off a hediff did.
+
+**Nothing prunes on the draw path.** A mark stops holding when it fades, or when the pawn wearing
+it dies, despawns or changes map, and every reader has to cope with that. The trap is that both
+the overlay and the ability gizmos are evaluated every frame, so pruning inside them would drop a
+mark long before anything could tell the player it had gone. `Prune` is therefore called only
+from `MapComponent_Anchors`, once a second; every other reader filters with `StillHolds` and
+mutates nothing.
+
+**Double clap picks both ends.** It is a two-target ability of exactly the shape the Skip psycast
+uses — `CompAbilityEffect_WithDest` with `destination` set to `Selected`, so the targeter asks
+twice and the second pick belongs to the player rather than being derived from the first. The
+second pick has no `throwMessages` parameter to explain a refusal, so an invalid pair is simply
+not clickable; the two rules that make a pair invalid (both ends must be marked, at least one must
+be something that can move) are stated in the ability description instead.
+
+**The destination highlight had to be taken over.** `CompAbilityEffect_WithDest.DrawHighlight`
+always draws a radius ring from its own `range`, and `GenDraw.DrawRadiusRing` works off a
+precalculated cell list that runs out far below a map-wide number — it logs
+`not enough squares in the precalculated list` every frame the targeter is open. That method is
+not virtual, so the only way past it is a Harmony prefix. What replaces it outlines every mark
+still being held while the targeter is open, which is also the answer to the second pick having
+no way to explain a refusal.
+
+**`CanApplyOn` is called twice and means different things each time.** The first call is the
+targeter validating the *first* click, and it passes `LocalTargetInfo.Invalid` as the destination
+because the player has not been offered a second pick yet. A comp that insists on a valid far end
+at that point refuses the first click, so the destination step never opens and the ability
+silently does nothing at all — no error, no message, no cast. The pair check has to be skipped
+whenever `dest` is invalid.
+
+**The second pick is a cell, not a thing.** `CompAbilityEffect_WithDest` supplies its own
+targeting parameters for the destination step and they are `canTargetLocations` only, so the far
+end of a double clap comes back as the clicked cell with no `Thing` attached. A mark therefore has
+to answer to its current position as well as to its identity — matching on the pawn alone means a
+marked pawn silently cannot be chosen as the far end, and the click does nothing at all.
+
+**The swap is two position writes.** `Pawn.Position` on a spawned pawn re-registers them with the
+map grids and regions, and `Notify_Teleported` drops the job and resets the pather so nobody keeps
+walking a route that started on the other side of the map. Both ends are read before either is
+written. A tile mark is a move rather than a swap, because a marked cell has nothing standing on
+it to send back — and a double clap between two tile marks is refused for the same reason.
+
+**Only the player's own colonists have their marks drawn.** A hostile carrier's marks are
+deliberately invisible: the mark is the thing the whole ability is planned around, and reading an
+enemy's plan off the map would give the gene away before it did anything.
+
+The overlay is the Core `Things/Mote/PsycastSkipFlash` texture under `MoteGlow`, tinted the same
+off-white-blue as the stasis dome, plus a `GenDraw.DrawFieldEdges` outline so the exact cell is
+readable — a tile mark on open ground is otherwise a glow with no edge. The material is resolved
+lazily in `AnchorGraphics` for the same reason `TimeBubbleGraphics` does it.
+
+The teleport plays Core's `Skip_EntryNoDelay` and `Skip_ExitNoDelay` effecters, looked up by name
+and cached rather than through a `DefOf`, so a missing def leaves the clap silent instead of
+throwing at startup.
 
 ## How the stasis field works
 
@@ -301,9 +388,9 @@ field you can flip rather than a decision baked into the code.
 ```
 About/About.xml                  metadata, Biotech + Harmony dependencies
 loadFolders.xml                  1.6 only
-1.6/Defs/AbilityDefs/            9 AbilityDefs + AG_Genetic category
-1.6/Defs/GeneDefs/               6 GeneDefs
-1.6/Defs/HediffDefs/             7 hediffs
+1.6/Defs/AbilityDefs/            13 AbilityDefs + AG_Genetic category
+1.6/Defs/GeneDefs/               8 GeneDefs
+1.6/Defs/HediffDefs/             8 hediffs
 1.6/Assemblies/AbilityGenes.dll  built output, committed
 Languages/English/Keyed/         message strings
 Source/AbilityGenes/             C# source
@@ -375,6 +462,11 @@ Still unverified:
 - disarm spit against mechs
 - whether the metabolic overdrive exchange rate feels right; a full stomach buys about
   20 seconds, which is the number most likely to need tuning
+- **everything in the anchor organ.** It compiles and validates and has never been in front of
+  the game. The parts most likely to bite: whether `CanEquip` refusal produces log spam from job
+  givers that expect a weapon, whether a map-wide `range` of 9999 upsets the targeter, whether
+  clapping a pawn out of a bed or out of a caravan-forming job leaves anything stuck, and whether
+  two marks is too few to be interesting or exactly right
 - **everything in the vector reflex organ.** It compiles and validates, and none of it has
   been in front of the game yet. The parts most likely to bite: whether refusing
   `CanReserve` produces job-giver spam in the log, whether a re-launched projectile behaves

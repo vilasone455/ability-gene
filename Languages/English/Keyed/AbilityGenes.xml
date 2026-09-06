@@ -21,4 +21,16 @@
   <AG_ReflectionUp>{0} reversed their vectors. Nothing aimed at them will land - and nothing can reach them, including help.</AG_ReflectionUp>
   <AG_ShoveNeedsPawn>Must target a person, animal or mech.</AG_ShoveNeedsPawn>
 
+  <AG_AnchorTileLabel>that spot</AG_AnchorTileLabel>
+  <AG_AnchorPlaced>{0} marked {1}.</AG_AnchorPlaced>
+  <AG_AnchorLifted>{0} took back their mark on {1}.</AG_AnchorLifted>
+  <AG_AnchorFaded>{0}'s mark on {1} has faded.</AG_AnchorFaded>
+  <AG_AnchorFull>{0} is already holding {1} marks. Take one back first.</AG_AnchorFull>
+  <AG_AnchorBadTile>Nothing can stand there.</AG_AnchorBadTile>
+  <AG_AnchorNotMarked>That is not marked.</AG_AnchorNotMarked>
+  <AG_AnchorNeedTwo>{0} needs two marks to clap them together.</AG_AnchorNeedTwo>
+  <AG_AnchorTwoTiles>Two marked patches of ground have nothing to exchange.</AG_AnchorTwoTiles>
+  <AG_AnchorNoWeapon>The clap needs both hands. {0} is holding {1}.</AG_AnchorNoWeapon>
+  <AG_AnchorCannotEquip>Needs both hands free to clap.</AG_AnchorCannotEquip>
+
 </LanguageData>
