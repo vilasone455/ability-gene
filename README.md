@@ -172,12 +172,21 @@ into `Assemblies/` — shipping a second copy alongside the Harmony mod causes l
 
 `./deploy.sh` copies the mod into the local RimWorld `Mods/` folder.
 
-**Not yet tested in-game.** Everything here is verified statically: the C# compiles
-against the real 1.6 assembly, every def/texture reference is checked to resolve in Core
-or Biotech, and every custom `Class=` in XML is checked against the built DLL. None of
-that is a substitute for loading a save.
+Verified statically: the C# compiles against the real 1.6 assembly, every def/texture
+reference is checked to resolve in Core or Biotech, and every custom `Class=` in XML is
+checked against the built DLL.
 
-Worth watching for on the first run:
-- frame time while a stasis field is up (the `DoTick` prefix is on the hottest loop in the game)
-- a stasis field saved and reloaded mid-duration
-- provoke against pawns that are already fleeing or in a mental state
+Confirmed in-game (1.6.4871, alongside ~40 other mods including Vanilla Psycasts Expanded):
+
+- the four genes appear under *special abilities*, archite gene behind Ignore restrictions
+- the stasis field renders, and projectiles visibly halt in mid-air inside it
+- no noticeable frame cost with a field up, despite the prefix sitting on `Thing.DoTick`
+
+Still unverified:
+
+- **saving and reloading with a field still up** - bubbles persist through
+  `MapComponent_TimeBubbles.ExposeData`, and that path has never run
+- provoke against pawns already fleeing or in a mental state
+- disarm spit against mechs
+- whether the metabolic overdrive exchange rate feels right; a full stomach buys about
+  20 seconds, which is the number most likely to need tuning
