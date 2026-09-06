@@ -21,7 +21,7 @@ namespace AbilityGenes
         public int ticksRemaining;
         public int totalTicks;
         public bool invulnerable = true;
-        public Color color = TimeBubbleGraphics.DefaultDomeColor;
+        public Color color = TimeBubbleDefaults.DomeColor;
 
         // Cached so the hot path compares squared distances without a sqrt.
         private float radiusSquared;
@@ -92,7 +92,7 @@ namespace AbilityGenes
             Scribe_Values.Look(ref ticksRemaining, "ticksRemaining", 0);
             Scribe_Values.Look(ref totalTicks, "totalTicks", 0);
             Scribe_Values.Look(ref invulnerable, "invulnerable", true);
-            Scribe_Values.Look(ref color, "color", TimeBubbleGraphics.DefaultDomeColor);
+            Scribe_Values.Look(ref color, "color", TimeBubbleDefaults.DomeColor);
             if (Scribe.mode == LoadSaveMode.PostLoadInit) RecacheRadius();
         }
     }

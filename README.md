@@ -102,6 +102,28 @@ Both fade in over 15 ticks and out over the last 45 so the field does not pop.
 
 Colours are `DomeColor` and `EdgeColor` at the top of `MapComponent_TimeBubbles`.
 
+### A trap worth knowing about
+
+`[StaticConstructorOnStartup]` guarantees RimWorld *will* run a class's static constructor
+on the main thread at startup. It does **not** prevent anything else triggering that
+constructor earlier.
+
+Def parsing runs on a background thread and builds CompProperties via
+`Activator.CreateInstance`, which runs their field initializers on that thread. So a
+CompProperties field written as:
+
+```csharp
+public Color domeColor = TimeBubbleGraphics.DefaultDomeColor;   // don't
+```
+
+fires `TimeBubbleGraphics`'s constructor during XML parsing. If that constructor loads a
+texture you get `Tried to get a resource from a different thread`, and the material stays
+broken for the whole session.
+
+Hence the split: constants referenced by CompProperties live in `TimeBubbleDefaults`,
+which loads nothing. `TimeBubbleGraphics` holds the Material and is touched only from the
+draw path, and resolves it lazily as a second line of defence.
+
 ### Tuning it
 
 `frozenAreInvulnerable` on the ability comp (`1.6/Defs/AbilityDefs/AG_Abilities.xml`)

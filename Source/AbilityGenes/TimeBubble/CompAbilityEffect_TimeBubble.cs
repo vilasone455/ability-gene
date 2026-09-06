@@ -22,7 +22,7 @@ namespace AbilityGenes
         /// Dome tint. Vanilla force fields are grey; keeping this off-white and blue is
         /// what stops a stasis field being mistaken for a bullet shield at a glance.
         /// </summary>
-        public Color domeColor = TimeBubbleGraphics.DefaultDomeColor;
+        public Color domeColor = TimeBubbleDefaults.DomeColor;
 
         public CompProperties_AbilityTimeBubble()
         {
