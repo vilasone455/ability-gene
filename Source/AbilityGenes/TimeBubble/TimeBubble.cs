@@ -19,6 +19,7 @@ namespace AbilityGenes
         public IntVec3 center;
         public float radius;
         public int ticksRemaining;
+        public int totalTicks;
         public bool invulnerable = true;
 
         // Cached so the hot path compares squared distances without a sqrt.
@@ -35,6 +36,7 @@ namespace AbilityGenes
             this.center = center;
             this.radius = radius;
             this.ticksRemaining = ticks;
+            this.totalTicks = ticks;
             this.invulnerable = invulnerable;
             RecacheRadius();
         }
@@ -66,11 +68,27 @@ namespace AbilityGenes
             }
         }
 
+        /// <summary>
+        /// Eases the dome in and out so it does not pop into existence. Steps once per
+        /// tick rather than per frame, which is not noticeable at these durations.
+        /// </summary>
+        public float DrawAlpha()
+        {
+            const int FadeInTicks = 15;
+            const int FadeOutTicks = 45;
+
+            int elapsed = totalTicks - ticksRemaining;
+            if (elapsed < FadeInTicks) return elapsed / (float)FadeInTicks;
+            if (ticksRemaining < FadeOutTicks) return ticksRemaining / (float)FadeOutTicks;
+            return 1f;
+        }
+
         public void ExposeData()
         {
             Scribe_Values.Look(ref center, "center");
             Scribe_Values.Look(ref radius, "radius", 6.9f);
             Scribe_Values.Look(ref ticksRemaining, "ticksRemaining", 0);
+            Scribe_Values.Look(ref totalTicks, "totalTicks", 0);
             Scribe_Values.Look(ref invulnerable, "invulnerable", true);
             if (Scribe.mode == LoadSaveMode.PostLoadInit) RecacheRadius();
         }

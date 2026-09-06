@@ -64,6 +64,30 @@ would freeze along with everything else and could never expire itself.
 `TimeBubbleRegistry` exists purely so the `DoTick` prefix stays cheap: `DoTick` runs for
 every ticking thing every tick, so the no-bubble case costs one static field read.
 
+### What it looks like
+
+The dome is the same visual vanilla uses for projectile-interceptor shields — mech
+cluster shields and firefoam poppers: the `Other/ForceField` texture on a `plane10` quad
+under the `MoteGlow` shader, drawn at `AltitudeLayer.MoteOverhead` and scaled to
+`radius * 2 * 1.1601562`. That last constant is vanilla's `TextureActualRingSizeFactor`;
+the visible ring occupies less than the full quad, so the quad has to be scaled past the
+true radius for the ring to land on the right cells.
+
+That texture lives in the base game's `resources.assets`, not in a DLC asset bundle, so
+it resolves with only Biotech installed.
+
+Two differences from the vanilla shield:
+
+- The tint is a cold near-white blue rather than the shield's saturated colour, and it
+  does not pulse. The field is meant to read as an absence, not an energy weapon.
+- A faint ground outline is drawn underneath it via `GenDraw.DrawFieldEdges`. The dome
+  alone looks better, but this field freezes *your own pawns*, so the exact cell boundary
+  needs to be readable rather than merely suggested.
+
+Both fade in over 15 ticks and out over the last 45 so the field does not pop.
+
+Colours are `DomeColor` and `EdgeColor` at the top of `MapComponent_TimeBubbles`.
+
 ### Tuning it
 
 `frozenAreInvulnerable` on the ability comp (`1.6/Defs/AbilityDefs/AG_Abilities.xml`)

@@ -13,7 +13,14 @@ namespace AbilityGenes
     {
         private List<TimeBubble> bubbles = new List<TimeBubble>();
 
-        private static readonly Color EdgeColor = new Color(0.45f, 0.85f, 1f, 0.7f);
+        /// <summary>Cold and near-colourless: the field is an absence, not an energy weapon.</summary>
+        private static readonly Color DomeColor = new Color(0.62f, 0.88f, 1f, 0.55f);
+
+        /// <summary>
+        /// Faint ground outline drawn under the dome. The field freezes your own pawns
+        /// too, so the exact cell boundary has to be readable, not just suggested.
+        /// </summary>
+        private static readonly Color EdgeColor = new Color(0.45f, 0.85f, 1f, 0.35f);
 
         public MapComponent_TimeBubbles(Map map) : base(map) { }
 
@@ -42,7 +49,26 @@ namespace AbilityGenes
         {
             for (int i = 0; i < bubbles.Count; i++)
             {
-                GenDraw.DrawFieldEdges(bubbles[i].EdgeCells, EdgeColor, null, null);
+                TimeBubble bubble = bubbles[i];
+
+                float alpha = bubble.DrawAlpha();
+                if (alpha <= 0f) continue;
+
+                GenDraw.DrawFieldEdges(bubble.EdgeCells, EdgeColor * new Color(1f, 1f, 1f, alpha), null, null);
+
+                Vector3 drawPos = bubble.center.ToVector3Shifted();
+                drawPos.y = AltitudeLayer.MoteOverhead.AltitudeFor();
+
+                Color tint = DomeColor;
+                tint.a *= alpha;
+                TimeBubbleGraphics.PropertyBlock.SetColor(ShaderPropertyIDs.Color, tint);
+
+                float diameter = bubble.radius * 2f * TimeBubbleGraphics.TextureRingSizeFactor;
+                Matrix4x4 matrix = default(Matrix4x4);
+                matrix.SetTRS(drawPos, Quaternion.identity, new Vector3(diameter, 1f, diameter));
+
+                Graphics.DrawMesh(MeshPool.plane10, matrix, TimeBubbleGraphics.FieldMat, 0, null, 0,
+                    TimeBubbleGraphics.PropertyBlock);
             }
         }
 
