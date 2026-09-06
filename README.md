@@ -1,107 +1,123 @@
 # Ability Genes
 
-A RimWorld **1.6** mod that expands Biotech's very short list of genes granting an **active ability**.
-
-Vanilla Biotech ships 9 ability genes. This adds **15 more**, all in the vanilla `Ability`
-gene category so they slot straight into the gene assembler alongside fire spew and longjump legs.
+A RimWorld **1.6** mod adding four genes, each granting an active ability that does
+something no vanilla gene — and as far as I can tell, no popular gene mod — does.
 
 ## Dependencies
 
 | Dependency | Required | Why |
 |---|---|---|
-| **Biotech DLC** | **Yes** (hard) | Genes do not exist without it |
-| Royalty / Ideology / Anomaly | No | Deliberately not referenced |
-| Harmony | No | No C# assembly, so nothing to patch |
-| Any framework (VEF, EBSG, …) | No | Everything uses base-game ability comps |
+| **Biotech DLC** | **Yes** | Genes do not exist without it |
+| **Harmony** (`brrainz.harmony`) | **Yes** | The stasis field patches `Thing.DoTick` and `Thing.TakeDamage` |
+| Royalty / Ideology / Anomaly | No | Deliberately not referenced — no def or texture in this mod resolves to a DLC other than Core or Biotech |
+| Any framework (VEF, EBSG, …) | No | — |
 
-Everything is XML. There is no compiled assembly, which means: no Harmony, no framework
-mod, no version-specific DLL to rebuild, and nothing to break on a game patch that does not
-change def schemas.
+## The four genes
 
-## Contents
+### Corrosive glands → *disarm spit*
+Spit contact acid at a target's weapon; they drop it and it lands a few cells away,
+forbidden. **Deals no damage at all.** Two charges, ~5.5 in-game hours each.
+Works on mechs. Met −2, Cpx 1.
 
-### Self-buff
-| Gene | Ability | Effect | Met / Cpx |
-|---|---|---|---|
-| adrenal reserve | adrenal surge | 60s: +move, +melee damage/hit/dodge, pain ×0.35 | -2 / 1 |
-| reflex node | reflex overdrive | 45s: aim delay ×0.6, ranged cooldown ×0.7, +2 accuracy | -2 / 1 |
+The point is removing a threat without removing the body — a raider you would rather
+recruit, or a doomsday launcher you would rather not eat.
 
-### Mobility
-| Gene | Ability | Effect | Met / Cpx |
-|---|---|---|---|
-| spring tendons | kinetic leap | 13.9-tile jump, 20s cooldown, no hemogen cost | -2 / 0 |
+### Hypermetabolic glands → *metabolic overdrive*
+Burns nutrition directly into wound repair, ~1.5 injury severity per second for
+0.05 nutrition. Ends itself the moment the pawn runs out of injuries *or* runs out of
+food. Bleeding wounds are prioritised. Met −3, Cpx 2.
 
-### Offence
-| Gene | Ability | Effect | Met / Cpx |
-|---|---|---|---|
-| barb sac | barb volley | 3 charges, 12 dmg stab projectile, 12.9 range | -2 / 0 |
-| hemo lance | hemo lance | 26 dmg / 0.75 AP projectile, costs 0.25 hemogen (needs Hemogenic) | -1 / 1 |
-| venom glands | paralytic spit | 30s near-total immobilisation, no damage — take prisoners alive | -2 / 1 |
-| shriek sacs | terror shriek | forces PanicFlee on one target | -2 / 1 |
+The cost is real: healing a badly mangled colonist can take them from fed to starving.
 
-### Defence & utility
-| Gene | Ability | Effect | Met / Cpx |
-|---|---|---|---|
-| smoke glands | smoke burst | 4.9-radius smoke, 2 charges | -1 / 0 |
-| retardant bladders | firefoam burst | 4.9-radius firefoam on self | -1 / 0 |
-| coolant bladder | coolant burst | extinguish a 2.9-radius area at 12.9 range, 2 charges | -2 / 1 |
-| osseous bulwark | osseous bulwark | raise a 5-cell cross of wall as instant cover | -3 / 2 |
-| calming pheromones | calming pheromones | end another pawn's mental break | -1 / 1 |
-| rallying voice | rallying call | grant an inspiration, 5-day cooldown | -2 / 2 |
+### Alarm pheromones → *provoke*
+Every hostile within 12.9 cells drops what it is doing and comes for the carrier, for
+20 seconds. The carrier gets +0.20 sharp/blunt armor and ×0.85 incoming damage while it
+holds — enough to make the decision survivable, not enough to make it safe. Met −2, Cpx 1.
 
-### Archite tier (each costs 1 archite capsule)
-| Gene | Ability | Effect | Cpx / Arc |
-|---|---|---|---|
-| storm gland | storm call | call a flashstorm at 29.9 range, 10-day cooldown | 3 / 1 |
-| fold organ | fold | teleport the caster and nearby pawns home, 15-day cooldown | 4 / 1 |
+RimWorld has no aggro system. This works by rewriting each hostile's `enemyTarget` and
+interrupting their current job once so their AI re-acquires; `enemyTarget` is then
+re-pointed every second to keep it sticky without thrashing their job queue. Ranged
+pawns stay ranged rather than being forced into melee.
+
+### Stasis organ → *stasis field* (archite)
+Collapses a 6.9-cell sphere of stopped time around the caster for 20 seconds. Inside it:
+pawns, projectiles in flight, fire and gas all halt, and **nothing can be harmed**.
+
+It does not spare your own colonists and it does not spare the caster, who is at the
+centre and always inside. What you buy is twenty seconds for everyone standing outside
+the bubble. Cpx 4, Arc 1, five-day cooldown.
+
+## How the stasis field works
+
+RimWorld 1.6 reworked ticking. `TickList.Tick()` now calls `Thing.DoTick()`, which is
+public, non-virtual, and fans out to `Tick` / `TickInterval` / `TickRare` / `TickLong`
+plus held-contents ticking. That makes it the single place to intercept: a Harmony prefix
+returning false stops a thing completely. Because `tickDelta` is only incremented inside
+`DoTick`, there is no catch-up burst when the field lifts.
+
+`Thing.Suspended` looks like the natural hook but is not usable — it returns false for
+anything spawned on a map.
+
+Lifetime is owned by `MapComponent_TimeBubbles`, not by a Thing. A Thing at the centre
+would freeze along with everything else and could never expire itself.
+
+`TimeBubbleRegistry` exists purely so the `DoTick` prefix stays cheap: `DoTick` runs for
+every ticking thing every tick, so the no-bubble case costs one static field read.
+
+### Tuning it
+
+`frozenAreInvulnerable` on the ability comp (`1.6/Defs/AbilityDefs/AG_Abilities.xml`)
+controls whether frozen things can be damaged. It ships **true**, which makes the field a
+stall. Setting it **false** turns it into a free-hit window — freeze a raid, then shoot it
+apart while it cannot respond. That is a very large balance swing, which is why it is a
+field you can flip rather than a decision baked into the code.
+
+`radius` and `durationTicks` sit beside it. 60 ticks = 1 second.
 
 ## Layout
 
 ```
-About/About.xml              mod metadata + Biotech dependency
-loadFolders.xml              1.6 only
-1.6/Defs/AbilityDefs/        15 AbilityDefs + AG_Genetic category + self-cast abstract base
-1.6/Defs/GeneDefs/           15 GeneDefs
-1.6/Defs/HediffDefs/         3 temporary hediffs (surge, overdrive, paralysis)
-1.6/Defs/ThingDefs_Misc/     2 projectiles
-Textures/AbilityGenes/       empty — see "Art" below
+About/About.xml                  metadata, Biotech + Harmony dependencies
+loadFolders.xml                  1.6 only
+1.6/Defs/AbilityDefs/            4 AbilityDefs + AG_Genetic category
+1.6/Defs/GeneDefs/               4 GeneDefs
+1.6/Defs/HediffDefs/             2 hediffs (overdrive, provoking)
+1.6/Assemblies/AbilityGenes.dll  built output, committed
+Languages/English/Keyed/         message strings
+Source/AbilityGenes/             C# source
 ```
 
-Def prefix is `AG_` throughout.
+Def prefix is `AG_`. All icons point at existing Core/Biotech textures, so the mod ships
+no art and still renders correctly; see `iconPath` on each def to swap in your own.
 
-## Art
+## Building
 
-The mod currently ships **no textures**. Every `iconPath` points at an existing Core or
-Biotech texture, so icons render correctly with only Biotech installed. To replace one,
-drop a 128×128 PNG at `Textures/AbilityGenes/<Name>.png` and change that def's `iconPath`
-to `AbilityGenes/<Name>`.
+Needs a .NET SDK; the game assemblies are referenced straight out of the install.
+
+```bash
+dotnet build Source/AbilityGenes/AbilityGenes.csproj
+```
+
+Output goes directly to `1.6/Assemblies/`. Override the game path if yours differs:
+
+```bash
+dotnet build Source/AbilityGenes/AbilityGenes.csproj \
+  -p:RimWorldManaged="/path/to/RimWorld/RimWorldWin64_Data/Managed"
+```
+
+Harmony is referenced with `ExcludeAssets="runtime"` so `0Harmony.dll` is never copied
+into `Assemblies/` — shipping a second copy alongside the Harmony mod causes load errors.
 
 ## Testing
 
-`./deploy.sh` copies the mod into the local RimWorld `Mods/` folder. Then enable
-"Ability Genes" in the mod list, start a dev-mode game, and use the gene assembler
-or the character editor to attach a gene and try the gizmo.
+`./deploy.sh` copies the mod into the local RimWorld `Mods/` folder.
 
-## Extending: what is available without C#
+**Not yet tested in-game.** Everything here is verified statically: the C# compiles
+against the real 1.6 assembly, every def/texture reference is checked to resolve in Core
+or Biotech, and every custom `Class=` in XML is checked against the built DLL. None of
+that is a substitute for loading a save.
 
-The base game assembly exposes 57 `CompProperties_Ability*` classes. This mod only uses
-ones whose XML field names are confirmed by an existing vanilla def:
-
-`AbilityGiveHediff` `AbilityGiveMentalState` `AbilityStopMentalState` `AbilityGiveInspiration`
-`AbilityLaunchProjectile` `AbilitySmokepop` `AbilityFirefoampop` `AbilityWaterskip`
-`AbilityWallraise` `AbilityFlashstorm` `AbilityFarskip` `AbilityHemogenCost`
-`AbilityRequiresCapacity` `AbilityFleckOnTarget`
-
-Also verified-and-unused, if you want more: `AbilityTeleport`, `AbilitySprayLiquid`,
-`AbilitySpawn`, `AbilityChunkskip`, `AbilityFireSpew`, `AbilityFireBurst`, `AbilityCoagulate`,
-`AbilitySocialInteraction`, `AbilityOffsetPrisonerResistance`, `AbilityEffecterOnTarget`.
-
-Comps that exist in the assembly but that **no** vanilla or workshop def uses — so their XML
-field names are unverified — include `AbilityExplosion`, `AbilityReleaseGas`,
-`AbilityPutToSleep`, `AbilityFixWorstHealthCondition`, `AbilityAnimalRoar`,
-`AbilityTrainRandomSkill`. Confirm field names by decompiling before relying on them.
-
-Anything genuinely new (a resource gene that fuels abilities, a channelled ability, an
-ability that scales with a skill) needs a C# assembly. That would add Harmony as a
-dependency and require a .NET SDK targeting `net48` with a reference to
-`RimWorldWin64_Data/Managed/Assembly-CSharp.dll`. See `Source/` — currently empty.
+Worth watching for on the first run:
+- frame time while a stasis field is up (the `DoTick` prefix is on the hottest loop in the game)
+- a stasis field saved and reloaded mid-duration
+- provoke against pawns that are already fleeing or in a mental state

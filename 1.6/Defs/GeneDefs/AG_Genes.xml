@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <GeneDef>
+    <defName>AG_CorrosiveGlands</defName>
+    <label>corrosive glands</label>
+    <description>Glands behind the carrier's jaw hold a contact acid strong enough to ruin a grip in under a second. Spat accurately, it makes a person drop whatever they are carrying without doing them any real harm.\n\nThe obvious use is taking a dangerous weapon off a raider you would rather recruit than bury.</description>
+    <iconPath>UI/Icons/Genes/Gene_AcidSpray</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>100</displayOrderInCategory>
+    <marketValueFactor>1.5</marketValueFactor>
+    <abilities>
+      <li>AG_DisarmSpit</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_DisarmSpit</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-2</biostatMet>
+    <biostatCpx>1</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>acid</symbol></li>
+        <li><symbol>etch</symbol></li>
+        <li><symbol>corro</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>spit</symbol></li>
+        <li><symbol>etcher</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_HypermetabolicGlands</defName>
+    <label>hypermetabolic glands</label>
+    <description>The carrier's metabolism has no upper governor. On command they can burn food reserves straight into tissue repair, closing wounds at a rate that would take an ordinary body days.\n\nThe body does not care whether it can afford this. Used on serious injuries it will happily run its owner into starvation.</description>
+    <iconPath>UI/Icons/Genes/Gene_RobustDigestion</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>110</displayOrderInCategory>
+    <marketValueFactor>1.5</marketValueFactor>
+    <abilities>
+      <li>AG_MetabolicOverdrive</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_MetabolicOverdrive</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-3</biostatMet>
+    <biostatCpx>2</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>burn</symbol></li>
+        <li><symbol>ember</symbol></li>
+        <li><symbol>furn</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>burner</symbol></li>
+        <li><symbol>forge</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_AlarmPheromones</defName>
+    <label>alarm pheromones</label>
+    <description>The carrier can dump a pheromone blend that every predator instinct in range reads as the nearest and most urgent thing to kill. Hostiles break off whatever they were doing and come straight for them.\n\nA reflexive tightening of the skin comes with it, blunting some of what arrives. Not all of it.</description>
+    <iconPath>UI/Icons/Genes/Gene_HyperAggressive</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>120</displayOrderInCategory>
+    <marketValueFactor>1.4</marketValueFactor>
+    <abilities>
+      <li>AG_Provoke</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_Provoke</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-2</biostatMet>
+    <biostatCpx>1</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>bait</symbol></li>
+        <li><symbol>lure</symbol></li>
+        <li><symbol>goad</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>bait</symbol></li>
+        <li><symbol>wall</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+  <GeneDef>
+    <defName>AG_StasisOrgan</defName>
+    <label>stasis organ</label>
+    <description>An archite lattice grown through the carrier's chest can seize a sphere of local time and hold it still. Inside, nothing moves and nothing can be touched — not the raiders, not your own people, not the carrier, who is at the centre of it and goes under with everyone else.\n\nThe lattice takes many days to wind back up. Nobody has explained what it actually does to the people caught inside, and the ones who have been in one do not remember any of it.</description>
+    <iconPath>UI/Icons/Genes/Gene_ArchiteMetabolism</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>200</displayOrderInCategory>
+    <marketValueFactor>2</marketValueFactor>
+    <abilities>
+      <li>AG_TimeBubble</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_TimeBubble</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatCpx>4</biostatCpx>
+    <biostatArc>1</biostatArc>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>stasis</symbol></li>
+        <li><symbol>still</symbol></li>
+        <li><symbol>halt</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>stasis</symbol></li>
+        <li><symbol>still</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+</Defs>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+
+  <AG_TimeBubbleFormed>{0} collapsed a stasis field. Everything inside is out of the fight until it lifts.</AG_TimeBubbleFormed>
+  <AG_TimeBubbleTooltip>Freezes everything within {0} cells for {1} seconds, including your own pawns and the caster. Nothing inside can be harmed.</AG_TimeBubbleTooltip>
+
+  <AG_Disarmed>{0} was disarmed and dropped {1}.</AG_Disarmed>
+  <AG_DisarmNeedsPawn>Must target a person or mech.</AG_DisarmNeedsPawn>
+  <AG_DisarmNoWeapon>{0} is not holding a weapon.</AG_DisarmNoWeapon>
+
+  <AG_OverdriveOutOfFood>{0}'s metabolic overdrive ran out of food reserves and shut down.</AG_OverdriveOutOfFood>
+  <AG_OverdriveNothingToHeal>{0}'s metabolic overdrive shut down with nothing left to heal.</AG_OverdriveNothingToHeal>
+
+</LanguageData>
