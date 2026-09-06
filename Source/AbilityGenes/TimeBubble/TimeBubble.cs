@@ -21,6 +21,7 @@ namespace AbilityGenes
         public int ticksRemaining;
         public int totalTicks;
         public bool invulnerable = true;
+        public Color color = TimeBubbleGraphics.DefaultDomeColor;
 
         // Cached so the hot path compares squared distances without a sqrt.
         private float radiusSquared;
@@ -30,8 +31,9 @@ namespace AbilityGenes
 
         public TimeBubble() { }
 
-        public TimeBubble(Map map, IntVec3 center, float radius, int ticks, bool invulnerable)
+        public TimeBubble(Map map, IntVec3 center, float radius, int ticks, bool invulnerable, Color color)
         {
+            this.color = color;
             Map = map;
             this.center = center;
             this.radius = radius;
@@ -90,6 +92,7 @@ namespace AbilityGenes
             Scribe_Values.Look(ref ticksRemaining, "ticksRemaining", 0);
             Scribe_Values.Look(ref totalTicks, "totalTicks", 0);
             Scribe_Values.Look(ref invulnerable, "invulnerable", true);
+            Scribe_Values.Look(ref color, "color", TimeBubbleGraphics.DefaultDomeColor);
             if (Scribe.mode == LoadSaveMode.PostLoadInit) RecacheRadius();
         }
     }

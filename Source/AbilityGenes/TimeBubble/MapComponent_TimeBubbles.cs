@@ -13,20 +13,18 @@ namespace AbilityGenes
     {
         private List<TimeBubble> bubbles = new List<TimeBubble>();
 
-        /// <summary>Cold and near-colourless: the field is an absence, not an energy weapon.</summary>
-        private static readonly Color DomeColor = new Color(0.62f, 0.88f, 1f, 0.55f);
-
         /// <summary>
-        /// Faint ground outline drawn under the dome. The field freezes your own pawns
-        /// too, so the exact cell boundary has to be readable, not just suggested.
+        /// The ground outline under the dome is drawn at this fraction of the dome's own
+        /// alpha. The field freezes your own pawns too, so the exact cell boundary has to
+        /// be readable, not merely suggested.
         /// </summary>
-        private static readonly Color EdgeColor = new Color(0.45f, 0.85f, 1f, 0.35f);
+        private const float EdgeAlphaFactor = 0.8f;
 
         public MapComponent_TimeBubbles(Map map) : base(map) { }
 
-        public void AddBubble(IntVec3 center, float radius, int ticks, bool invulnerable)
+        public void AddBubble(IntVec3 center, float radius, int ticks, bool invulnerable, Color color)
         {
-            TimeBubble bubble = new TimeBubble(map, center, radius, ticks, invulnerable);
+            TimeBubble bubble = new TimeBubble(map, center, radius, ticks, invulnerable, color);
             bubbles.Add(bubble);
             TimeBubbleRegistry.Register(bubble);
         }
@@ -54,13 +52,15 @@ namespace AbilityGenes
                 float alpha = bubble.DrawAlpha();
                 if (alpha <= 0f) continue;
 
-                GenDraw.DrawFieldEdges(bubble.EdgeCells, EdgeColor * new Color(1f, 1f, 1f, alpha), null, null);
+                Color tint = bubble.color;
+                tint.a *= alpha;
+
+                Color edge = tint;
+                edge.a *= EdgeAlphaFactor;
+                GenDraw.DrawFieldEdges(bubble.EdgeCells, edge, null, null);
 
                 Vector3 drawPos = bubble.center.ToVector3Shifted();
                 drawPos.y = AltitudeLayer.MoteOverhead.AltitudeFor();
-
-                Color tint = DomeColor;
-                tint.a *= alpha;
                 TimeBubbleGraphics.PropertyBlock.SetColor(ShaderPropertyIDs.Color, tint);
 
                 float diameter = bubble.radius * 2f * TimeBubbleGraphics.TextureRingSizeFactor;

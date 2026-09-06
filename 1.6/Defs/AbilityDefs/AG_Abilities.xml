@@ -146,6 +146,10 @@
         <radius>6.9</radius>
         <durationTicks>1200</durationTicks>
         <frozenAreInvulnerable>true</frozenAreInvulnerable>
+        <!-- Vanilla force fields (bullet shield, mech shields) are grey (0.4, 0.4, 0.4)
+             and idle near alpha 0.2. Off-white with a blue bias reads as ice instead,
+             and stays distinguishable from a bullet shield at a glance. -->
+        <domeColor>(0.75, 0.90, 1.0, 0.40)</domeColor>
       </li>
     </comps>
   </AbilityDef>

@@ -18,6 +18,12 @@ namespace AbilityGenes
         /// </summary>
         public bool frozenAreInvulnerable = true;
 
+        /// <summary>
+        /// Dome tint. Vanilla force fields are grey; keeping this off-white and blue is
+        /// what stops a stasis field being mistaken for a bullet shield at a glance.
+        /// </summary>
+        public Color domeColor = TimeBubbleGraphics.DefaultDomeColor;
+
         public CompProperties_AbilityTimeBubble()
         {
             compClass = typeof(CompAbilityEffect_TimeBubble);
@@ -39,7 +45,8 @@ namespace AbilityGenes
             MapComponent_TimeBubbles comp = map.GetComponent<MapComponent_TimeBubbles>();
             if (comp == null) return;
 
-            comp.AddBubble(caster.Position, Props.radius, Props.durationTicks, Props.frozenAreInvulnerable);
+            comp.AddBubble(caster.Position, Props.radius, Props.durationTicks,
+                Props.frozenAreInvulnerable, Props.domeColor);
 
             Messages.Message(
                 "AG_TimeBubbleFormed".Translate(caster.LabelShort),

@@ -76,10 +76,24 @@ true radius for the ring to land on the right cells.
 That texture lives in the base game's `resources.assets`, not in a DLC asset bundle, so
 it resolves with only Biotech installed.
 
-Two differences from the vanilla shield:
+The same dome backs the Royalty **Bullet Shield** psycast, which spawns
+`BulletShieldPsychic` carrying that same comp — so if you have Royalty, the two are the
+same texture and need to be told apart by colour. Every vanilla force field is
+desaturated and idles faint:
 
-- The tint is a cold near-white blue rather than the shield's saturated colour, and it
-  does not pulse. The field is meant to read as an absence, not an energy weapon.
+| Dome | Colour | Idle alpha |
+|---|---|---|
+| Bullet shield (psycast) | `(0.4, 0.4, 0.4)` | 0.2 |
+| Mech shield / Legionary / Centurion | `(0.4, 0.4, 0.4)` | 0.2-0.5 |
+| Broadshield projector | `(0.6, 0.6, 0.8)` | 0.05 |
+| Mortar shield generator | `(0.6, 0.6, 0.6)` | - |
+
+Two differences from those:
+
+- The tint is off-white with a blue bias, `(0.75, 0.90, 1.0, 0.40)`, so it reads as ice
+  rather than as another grey bullet shield, and it does not pulse. It sits only slightly
+  more solid than vanilla idle because the player has to see exactly who got caught.
+  Set `domeColor` on the ability comp to change it.
 - A faint ground outline is drawn underneath it via `GenDraw.DrawFieldEdges`. The dome
   alone looks better, but this field freezes *your own pawns*, so the exact cell boundary
   needs to be readable rather than merely suggested.
