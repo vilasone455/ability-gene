@@ -1,6 +1,6 @@
 # Ability Genes
 
-A RimWorld **1.6** mod adding eight genes, each granting active abilities that do
+A RimWorld **1.6** mod adding nine genes, each granting active abilities that do
 something no vanilla gene — and as far as I can tell, no popular gene mod — does.
 
 ## Dependencies
@@ -143,6 +143,35 @@ Double clap is the one that will define it: pull a bleeding colonist out and lea
 dropped them standing in your firing line, without the carrier going anywhere. It spends the two
 marks it was given, which is why the carrier holds three — one survives, so a double clap does
 not leave them completely empty.
+
+### Resonant marrow → *resonance*
+
+A skeleton that holds a note. Met −2, Cpx 3.
+
+| | |
+|---|---|
+| Duration | 30s, self-cast |
+| Note lifetime | ~5s per struck part |
+| Cooldown | 1 in-game hour |
+
+Every melee blow the carrier lands leaves the **exact part it hit** ringing for about five
+seconds. A second blow on that same part while the note is live takes the part off the body.
+Both blows land for exactly what they were worth — it is not a damage bonus, it is the timing.
+
+**Which part rings is not up to anyone.** RimWorld picks a hit part by coverage weighting, so
+this is pressure held on one body until the dice repeat, not a place the player can aim. That
+is the whole balance of it: it is a probability engine, not an execute button.
+
+**The note needs something that can ring.** Torso, neck, head — anything with a life inside it —
+is too well damped to carry one, and blows there do nothing unusual. So this takes people
+apart; it does not kill them. Losing both arms is what it does instead, which is a raider who
+will never hold a weapon again.
+
+The cost is that **the resonance does not know which side of the blow it is on**. For the whole
+thirty seconds the carrier's own frame is ringing on identical terms, and anything that lands
+twice on the same part of them takes that part off just as readily. Against one opponent it is
+a duel the carrier is winning; walking it into a melee crowd is how a carrier comes home with
+one arm.
 
 ### Stasis organ → *stasis field* (archite)
 Collapses a 6.9-cell sphere of stopped time around the caster for 20 seconds. Inside it:
@@ -296,6 +325,71 @@ The teleport plays Core's `Skip_EntryNoDelay` and `Skip_ExitNoDelay` effecters, 
 and cached rather than through a `DefOf`, so a missing def leaves the clap silent instead of
 throwing at startup.
 
+## How the resonance works
+
+**The part is read out of the damage, not out of the swing.** A melee swing carries no hit part
+into `Thing.TakeDamage` — it comes back out of it, because the damage worker is what decides
+where the blow landed. So this is a *postfix* on `TakeDamage` reading `DamageWorker.DamageResult`,
+where every other patch in this mod is a prefix. Sitting at the damage layer rather than on the
+melee verb is the same choice the vector reflex made, and buys the same thing: one choke point
+covers every source of a melee hit, including tools this mod has never heard of.
+
+`dinfo.Tool` is the melee test — the same one the halving membrane uses to tell a swing from a
+blast. Bullets, explosions and fire carry no tool, so none of them ring. Neither does the
+shatter itself, which is what keeps the postfix from recursing into its own damage.
+
+**Which parts can ring is derived, never listed.** `ResonanceUtility.CanRing` asks four
+questions that are the same question four ways: is the part on the surface (anything deeper is
+never struck directly, only through what covers it), does it have a parent (the core part is
+what everything else rings *against*), is it actually flesh, and does its subtree contain a
+part tagged `vital`.
+
+The vital test has to walk the whole subtree rather than the part itself. A neck carries no
+vital tag — but a head hangs off it and a brain hangs off that, so removing one kills. **The tag
+that matters is never on the part you would name.**
+
+The flesh test is `BodyPartDef.conceptual`, and the waist is the case that demands it. Its label
+is *utility slot*: it is not a body part at all, it is where a belt hangs. But it sits Outside,
+under the torso, with no vital descendant, so all three of the other tests wave it through — and
+breaking it would take the pelvis and spine with it on the way to destroying an apparel slot.
+Waist is the only conceptual part in Core, which is exactly why it wants a rule rather than an
+exception.
+
+Reading all of this off the game's own body data instead of a list of `BodyPartDef`s is what
+makes it hold for animals, mechs and modded races with no patch. It resolves to the right set on
+each:
+
+| Body | Rings | Damped |
+|---|---|---|
+| **Human** | 36 — shoulders, arms, hands, fingers, legs, feet, toes, eyes, ears, nose, jaw | 28 — torso, waist, neck, head, skull, brain, heart, lungs, liver, kidneys, stomach, every internal bone |
+| **Quadruped** | 14 — legs, hooves, eyes, ears, nose, jaw | 13 — body, neck, head, brain, and the organs |
+| **Centipede** | 7 — sensors and the rear body rings | 9 — head, artificial brain, reactor, reprocessor, forward rings |
+
+**The break goes through the ordinary damage path.** `ResonanceUtility.Shatter` applies one
+damage instance sized to the part's remaining health rather than adding a missing-part hediff
+directly, so everything downstream of losing a limb happens by itself — the bleeding, the pain,
+the drop, the combat log line, the notification, and the death check for a body that could not
+afford it after all. Propagation is off because the note is in one part and nowhere else, and
+the armour penetration is absurd on purpose: armour has already had its say on both blows that
+caused this, and this is what those two blows did, not a third one.
+
+**The outermost part that can ring wins, not the last one hit.** A cut to a leg that carries on
+into the femur reports both parts, and the femur is the deeper entry — taking the tail of
+`DamageResult.parts` would mean a blow that broke a bone inside a limb silently failed to ring
+the limb it went through.
+
+**Live notes are deliberately not saved.** They last five seconds, and a `BodyPartRecord` is
+resolved by walking a body rather than by an id, so persisting them would cost a resolver and a
+class of load-order bugs to buy back a window shorter than the pause between hitting save and
+the game coming back.
+
+### The knob worth knowing about
+
+`selfResonance` on the hediff comp turns off the carrier's own ringing. It is the entire cost of
+the gene, so it belongs in XML the way `banWeapons` does on the anchor organ rather than being
+hardcoded — but turning it off does not make this a slightly easier ability, it makes it a
+different and much stronger one.
+
 ## How the stasis field works
 
 RimWorld 1.6 reworked ticking. `TickList.Tick()` now calls `Thing.DoTick()`, which is
@@ -388,9 +482,9 @@ field you can flip rather than a decision baked into the code.
 ```
 About/About.xml                  metadata, Biotech + Harmony dependencies
 loadFolders.xml                  1.6 only
-1.6/Defs/AbilityDefs/            13 AbilityDefs + AG_Genetic category
-1.6/Defs/GeneDefs/               8 GeneDefs
-1.6/Defs/HediffDefs/             8 hediffs
+1.6/Defs/AbilityDefs/            14 AbilityDefs + AG_Genetic category
+1.6/Defs/GeneDefs/               9 GeneDefs
+1.6/Defs/HediffDefs/             9 hediffs
 1.6/Assemblies/AbilityGenes.dll  built output, committed
 Languages/English/Keyed/         message strings
 Source/AbilityGenes/             C# source
@@ -453,6 +547,8 @@ Confirmed in-game (1.6.4871, alongside ~40 other mods including Vanilla Psycasts
 - the four genes appear under *special abilities*, archite gene behind Ignore restrictions
 - the stasis field renders, and projectiles visibly halt in mid-air inside it
 - no noticeable frame cost with a field up, despite the prefix sitting on `Thing.DoTick`
+- the resonant marrow: notes are set on the struck part, a second blow in phase takes the part
+  off, and the damage-layer postfix reads hit parts correctly off `DamageResult`
 
 Still unverified:
 
@@ -467,6 +563,10 @@ Still unverified:
   givers that expect a weapon, whether a map-wide `range` of 9999 upsets the targeter, whether
   clapping a pawn out of a bed or out of a caravan-forming job leaves anything stuck, and whether
   two marks is too few to be interesting or exactly right
+- **resonant marrow tuning.** Confirmed working in-game; what is still an open question is the
+  numbers. `resonanceTicks` at 300 (5s) is a guess, not a measured value - too short and the
+  second blow never lands, too long and every part on the field is live at once. `durationTicks`
+  and the one-hour cooldown are untested against how often a player actually wants this
 - **everything in the vector reflex organ.** It compiles and validates, and none of it has
   been in front of the game yet. The parts most likely to bite: whether refusing
   `CanReserve` produces job-giver spam in the log, whether a re-launched projectile behaves

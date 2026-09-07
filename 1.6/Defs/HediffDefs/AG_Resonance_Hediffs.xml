@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Duration lives on HediffCompProperties_Resonance rather than on a Disappears comp: an
+       accelerated pawn ticks its own hediffs several times per game tick, so a Disappears comp
+       would expire early for anyone also carrying the time lattice.
+
+       No stages and no capMods. The carrier is not changed by this in any way a doctor could
+       find - what changed is what their blows leave behind, and what anyone else's blows leave
+       on them. -->
+  <HediffDef>
+    <defName>AG_Resonance</defName>
+    <label>resonance</label>
+    <description>This person's strikes are leaving a note in whatever they land on, and a second strike in the same place while it holds will take that part off.\n\nTheir own frame is ringing on the same terms. Anything that hits them twice in one place will do to them exactly what they are doing to everyone else.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(1, 0.85, 0.45)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <makesSickThought>false</makesSickThought>
+    <isBad>false</isBad>
+    <maxSeverity>1</maxSeverity>
+    <comps>
+      <li Class="HediffCompProperties_DisappearsOnDeath" />
+      <li Class="AbilityGenes.HediffCompProperties_Resonance">
+        <durationTicks>1800</durationTicks>
+        <resonanceTicks>300</resonanceTicks>
+        <selfResonance>true</selfResonance>
+        <damageDef>Crush</damageDef>
+      </li>
+    </comps>
+  </HediffDef>
+
+</Defs>

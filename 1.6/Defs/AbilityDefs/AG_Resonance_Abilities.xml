@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Self-cast: the note is set in the carrier's own frame, so there is nothing to aim at.
+       Unlike the other self-buffs in this mod, casting this requires a pawn capable of
+       violence - it does nothing at all except through a melee weapon or a fist, so offering
+       it to a pacifist would be offering them an empty button. -->
+  <AbilityDef>
+    <defName>AG_Resonance</defName>
+    <label>resonance</label>
+    <description>Set the carrier's strikes ringing for thirty seconds. Any melee blow they land leaves that exact part resonating for about five seconds, and a second blow on the same part while the note is live takes it off the body - an arm, a hand, a leg, an ear, torn away by its own ringing.\n\nWhich part rings is not up to anyone. It is wherever the blow happened to land, so this is pressure held on one body until the dice repeat, not a place the carrier can choose.\n\nThe note needs something that can ring. A torso, a neck, a head - anything with a life inside it - is too well damped to carry one, and blows there do nothing unusual. This takes people apart. It does not kill them.\n\nThe resonance does not know which side of the blow it is on. For the whole thirty seconds the carrier's own frame is ringing too, and anything that lands twice on the same part of them takes that part off as readily. Do not open this in a crowd.</description>
+    <iconPath>UI/Abilities/PiercingSpine</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>2500</cooldownTicksRange>
+    <jobDef>CastAbilityOnThingWithoutWeapon</jobDef>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityGiveHediff">
+        <compClass>CompAbilityEffect_GiveHediff</compClass>
+        <hediffDef>AG_Resonance</hediffDef>
+        <onlyApplyToSelf>true</onlyApplyToSelf>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Consciousness</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

@@ -21,6 +21,10 @@
   <AG_ReflectionUp>{0} reversed their vectors. Nothing aimed at them will land - and nothing can reach them, including help.</AG_ReflectionUp>
   <AG_ShoveNeedsPawn>Must target a person, animal or mech.</AG_ShoveNeedsPawn>
 
+  <AG_ResonanceUp>{0}'s strikes are ringing. Anything struck twice in the same place comes apart - including them.</AG_ResonanceUp>
+  <AG_ResonanceRinging>{0} ringing</AG_ResonanceRinging>
+  <AG_ResonanceBroke>{0}'s {1} was struck in phase and came apart.</AG_ResonanceBroke>
+
   <AG_AnchorTileLabel>that spot</AG_AnchorTileLabel>
   <AG_AnchorPlaced>{0} marked {1}.</AG_AnchorPlaced>
   <AG_AnchorLifted>{0} took back their mark on {1}.</AG_AnchorLifted>
