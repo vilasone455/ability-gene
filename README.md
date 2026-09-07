@@ -1,6 +1,6 @@
 # Ability Genes
 
-A RimWorld **1.6** mod adding nine genes, each granting active abilities that do
+A RimWorld **1.6** mod adding ten genes, each granting active abilities that do
 something no vanilla gene — and as far as I can tell, no popular gene mod — does.
 
 ## Dependencies
@@ -172,6 +172,35 @@ thirty seconds the carrier's own frame is ringing on identical terms, and anythi
 twice on the same part of them takes that part off just as readily. Against one opponent it is
 a duel the carrier is winning; walking it into a melee crowd is how a carrier comes home with
 one arm.
+
+### Deferred plexus → *arrears*
+
+A second nervous system that sits between the body and the news. Met −3, Cpx 4.
+
+| | |
+|---|---|
+| Window | 20s, self-cast |
+| Cooldown | half an in-game day |
+| Settle early | gizmo on the hediff |
+
+For twenty seconds every wound the carrier takes is **written down instead of applied** — no
+damage, no bleeding, no pain, no going down. They keep walking, and nothing that happens to
+them slows them at all.
+
+**Nothing is prevented and nothing is reduced.** When the window ends, every wound lands at
+once, in the order it was received, in a single instant. What the ability sells is not less
+damage, it is a different *arrival shape* — and the shape is worse. Sixty damage spread over
+twenty seconds is something a person survives while a doctor runs to them; the same sixty in
+one moment very often is not, because RimWorld's death and shock checks look at what arrives
+together.
+
+That is the whole cost, and it needed no invented penalty bolted on. Dying with a debt
+outstanding cancels it, which is the one mercy in the design and costs nothing to give: there
+is no longer a body to tell.
+
+The gizmo settles early, and that is the decision the ability actually offers. The bill is
+coming either way. The only thing anyone gets to choose is whether it arrives here, in cover,
+beside a doctor — or wherever they happen to be standing when the time runs out.
 
 ### Stasis organ → *stasis field* (archite)
 Collapses a 6.9-cell sphere of stopped time around the caster for 20 seconds. Inside it:
@@ -390,6 +419,41 @@ the gene, so it belongs in XML the way `banWeapons` does on the anchor organ rat
 hardcoded — but turning it off does not make this a slightly easier ability, it makes it a
 different and much stronger one.
 
+## How arrears works
+
+**One prefix, and the ordering is the whole design.** `Thing.TakeDamage` now carries four
+prefixes from this mod, and arrears sits at `Priority.Low`, deliberately last:
+
+| Patch | Priority | What it does first |
+|---|---|---|
+| Stasis field | `First` | Frozen pawns are immune and run up no debt at all |
+| Vector reflex | default | A reflected round was never received, so nothing is owed for it |
+| Halving membrane | default | *Scales* verbless damage rather than cancelling it |
+| **Arrears** | **`Low`** | Records whatever is left |
+
+The membrane row is the one that had to be right. It scales rather than cancels, so if arrears
+ran first a carrier holding both would owe the full blast they never actually took.
+
+**Armour is applied at settlement and only at settlement**, which looks wrong and is correct.
+Armour reduction happens inside the damage worker, downstream of the prefix that takes the wound
+onto the books — so nothing in the ledger has met armour yet, and re-applying the raw figure at
+settlement runs it through exactly once, with the original instance's penetration value.
+
+**The ledger is saved, and that is not optional.** A debt that evaporated on load would make
+reloading a way of not paying. Each entry keeps the damage def, amount, penetration, angle and
+hit part through a small `IExposable`; the instigator and weapon are deliberately dropped, since
+they are `Thing` references that may be dead or on another map by the time the bill lands and
+none of them change what the body is about to find out. The cost is that kills at settlement are
+not credited to whoever fired the shot.
+
+**Settling removes the hediff before it applies anything.** Otherwise every wound paid would
+walk straight back into the prefix and be recorded again. The pawn may die partway down the
+list, which needs no special case — the loop stops the moment there is nobody left to tell.
+
+Removal by any other route — a dev tool, another mod, anything that clears hediffs — settles
+rather than forgives, so there is no back door. `Settle` is re-entrancy guarded, so the removal
+it performs itself lands there harmlessly.
+
 ## How the stasis field works
 
 RimWorld 1.6 reworked ticking. `TickList.Tick()` now calls `Thing.DoTick()`, which is
@@ -482,9 +546,9 @@ field you can flip rather than a decision baked into the code.
 ```
 About/About.xml                  metadata, Biotech + Harmony dependencies
 loadFolders.xml                  1.6 only
-1.6/Defs/AbilityDefs/            14 AbilityDefs + AG_Genetic category
-1.6/Defs/GeneDefs/               9 GeneDefs
-1.6/Defs/HediffDefs/             9 hediffs
+1.6/Defs/AbilityDefs/            15 AbilityDefs + AG_Genetic category
+1.6/Defs/GeneDefs/               10 GeneDefs
+1.6/Defs/HediffDefs/             10 hediffs
 1.6/Assemblies/AbilityGenes.dll  built output, committed
 Languages/English/Keyed/         message strings
 Source/AbilityGenes/             C# source
@@ -549,6 +613,9 @@ Confirmed in-game (1.6.4871, alongside ~40 other mods including Vanilla Psycasts
 - no noticeable frame cost with a field up, despite the prefix sitting on `Thing.DoTick`
 - the resonant marrow: notes are set on the struck part, a second blow in phase takes the part
   off, and the damage-layer postfix reads hit parts correctly off `DamageResult`
+- the deferred plexus: wounds are held rather than applied, the carrier keeps moving while in
+  debt, and settling delivers the whole bill at once - including the four-way prefix ordering on
+  `Thing.TakeDamage` holding up with the other genes present
 
 Still unverified:
 
@@ -563,6 +630,12 @@ Still unverified:
   givers that expect a weapon, whether a map-wide `range` of 9999 upsets the targeter, whether
   clapping a pawn out of a bed or out of a caravan-forming job leaves anything stuck, and whether
   two marks is too few to be interesting or exactly right
+- **arrears across a save/load.** The ledger is scribed so that reloading cannot be used to
+  duck a debt, and that path has never run. Cast arrears, take hits, save mid-window, reload -
+  the debt should still be there and should still land
+- **arrears tuning.** Confirmed working in-game; the numbers are still guesses. Twenty seconds
+  and a half-day cooldown were picked to feel right rather than measured, and `severityPerDamage`
+  at 120 only decides how fast the stage labels escalate
 - **resonant marrow tuning.** Confirmed working in-game; what is still an open question is the
   numbers. `resonanceTicks` at 300 (5s) is a guess, not a measured value - too short and the
   second blow never lands, too long and every part on the field is live at once. `durationTicks`

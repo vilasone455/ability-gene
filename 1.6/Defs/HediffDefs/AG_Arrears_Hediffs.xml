@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Duration lives on HediffCompProperties_Arrears rather than on a Disappears comp: an
+       accelerated pawn ticks its own hediffs several times per game tick, which would run the
+       window out early - and here that does not merely end the ability, it presents the bill.
+
+       Severity is display only. It tracks the outstanding total against severityPerDamage so
+       the health tab reads how bad the debt has got at a glance; the comp's ledger is what
+       actually gets paid, and it keeps counting after severity has capped at 1. -->
+  <HediffDef>
+    <defName>AG_Arrears</defName>
+    <label>arrears</label>
+    <description>This person is being wounded and has not been told. Every injury is on the books instead of in the body - no bleeding, no pain, no shock, nothing slowing them down.\n\nAll of it is still owed. It arrives in one instant when the plexus reports, and there is no version of this where it does not.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.95, 0.6, 0.35)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <makesSickThought>false</makesSickThought>
+    <isBad>false</isBad>
+    <maxSeverity>1</maxSeverity>
+    <comps>
+      <li Class="HediffCompProperties_DisappearsOnDeath" />
+      <li Class="AbilityGenes.HediffCompProperties_Arrears">
+        <durationTicks>1200</durationTicks>
+        <severityPerDamage>120</severityPerDamage>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <label>not reporting</label>
+      </li>
+      <li>
+        <label>not reporting, in debt</label>
+        <minSeverity>0.15</minSeverity>
+      </li>
+      <li>
+        <label>not reporting, badly in debt</label>
+        <minSeverity>0.40</minSeverity>
+      </li>
+      <li>
+        <!-- Past here the bill is very likely to be fatal when it arrives. -->
+        <label>not reporting, owing more than they hold</label>
+        <minSeverity>0.70</minSeverity>
+      </li>
+      <li>
+        <label>not reporting, owing a death</label>
+        <minSeverity>0.90</minSeverity>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

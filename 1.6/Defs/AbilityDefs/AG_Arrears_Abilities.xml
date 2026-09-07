@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Self-cast. The plexus sits between the carrier and their own body, so there is nothing to
+       aim at. Castable by a pawn incapable of violence on purpose - taking a beating without
+       telling anyone is not a violent act, and a doctor crossing open ground is exactly who
+       wants this. -->
+  <AbilityDef>
+    <defName>AG_Arrears</defName>
+    <label>arrears</label>
+    <description>Stop reporting. For twenty seconds every wound the carrier takes is written down instead of applied - no damage, no bleeding, no pain, no going down. They keep walking, and nothing that happens to them slows them at all.\n\nNone of it is prevented. When the twenty seconds are up, every wound lands at once, in the order it was received, in a single instant. Sixty damage spread over twenty seconds is something a person survives while a doctor runs to them. The same sixty in one moment very often is not.\n\nThe gizmo on the carrier settles the debt early, and that is the decision worth making: the bill is coming either way, and the only thing anyone gets to choose is whether it arrives here, in cover, next to a doctor - or wherever they happen to be standing when the time runs out.</description>
+    <iconPath>UI/Abilities/MechResurrection</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>30000</cooldownTicksRange>
+    <jobDef>CastAbilityOnThingWithoutWeapon</jobDef>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityGiveHediff">
+        <compClass>CompAbilityEffect_GiveHediff</compClass>
+        <hediffDef>AG_Arrears</hediffDef>
+        <onlyApplyToSelf>true</onlyApplyToSelf>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Consciousness</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

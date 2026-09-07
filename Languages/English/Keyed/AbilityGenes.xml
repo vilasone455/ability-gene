@@ -25,6 +25,12 @@
   <AG_ResonanceRinging>{0} ringing</AG_ResonanceRinging>
   <AG_ResonanceBroke>{0}'s {1} was struck in phase and came apart.</AG_ResonanceBroke>
 
+  <AG_ArrearsUp>{0} stopped reporting. Nothing that happens to them will land until the plexus tells them.</AG_ArrearsUp>
+  <AG_ArrearsDue>{0}'s plexus reported. {1} damage arrived at once.</AG_ArrearsDue>
+  <AG_ArrearsSettledEarly>{0} took the news early. {1} damage arrived at once.</AG_ArrearsSettledEarly>
+  <AG_ArrearsSettleLabel>Settle debt ({0})</AG_ArrearsSettleLabel>
+  <AG_ArrearsSettleDesc>Tell the body now. Every wound on the books lands in this instant, wherever the carrier is standing - which is the point of doing it early, while that is somewhere with cover and a doctor in it.</AG_ArrearsSettleDesc>
+
   <AG_AnchorTileLabel>that spot</AG_AnchorTileLabel>
   <AG_AnchorPlaced>{0} marked {1}.</AG_AnchorPlaced>
   <AG_AnchorLifted>{0} took back their mark on {1}.</AG_AnchorLifted>

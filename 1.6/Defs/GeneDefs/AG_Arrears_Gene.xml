@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <GeneDef>
+    <defName>AG_DeferredPlexus</defName>
+    <label>deferred plexus</label>
+    <description>A second nervous system that sits between the body and the news. It receives every wound exactly as the first one does - the depth, the bleeding, the shock - and then simply does not pass any of it upward. The body carries on because nobody has told it otherwise.\n\nNothing is prevented and nothing is lessened. The plexus is not armour; it is a delay, and everything it is holding is still owed in full.\n\nWhat it cannot do is deliver the news gently. When it finally reports, it reports all of it at once, and a body that would have gone down slowly enough to be dragged somewhere safe instead finds out everything in the same instant.</description>
+    <iconPath>UI/Icons/Genes/Gene_PainReduced</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>190</displayOrderInCategory>
+    <marketValueFactor>1.9</marketValueFactor>
+    <abilities>
+      <li>AG_Arrears</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_Arrears</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-3</biostatMet>
+    <biostatCpx>4</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>late</symbol></li>
+        <li><symbol>owed</symbol></li>
+        <li><symbol>lag</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>debt</symbol></li>
+        <li><symbol>late</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+</Defs>
