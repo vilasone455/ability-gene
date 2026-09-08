@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The entire cost of the gene is this one hediff's severity.
+
+       It sheds at 0.12/day, which is deliberately slower than a raid and slower than a doctor
+       can help with - the same rule temporal strain follows. A cost that clears before the next
+       fight is not a cost, it is a cooldown, and this gene already has cooldowns.
+
+       Talking is what carries the penalty because RimWorld already keys social work, recruiting
+       and trading off it. Nothing in this mod has to know that a hoarse carrier is a worse
+       negotiator; the base game works it out. -->
+  <HediffDef>
+    <defName>AG_LarynxWear</defName>
+    <label>strained larynx</label>
+    <description>This person has been forcing sound through a throat that was not built to survive it.\n\nIt heals, but slowly, and it does not care whether the next thing they need their voice for is an order or a trade.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.85, 0.55, 0.5)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>true</isBad>
+    <maxSeverity>1</maxSeverity>
+    <comps>
+      <li Class="HediffCompProperties_SeverityPerDay">
+        <severityPerDay>-0.12</severityPerDay>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <label>hoarse</label>
+        <capMods>
+          <li>
+            <capacity>Talking</capacity>
+            <offset>-0.10</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <minSeverity>0.30</minSeverity>
+        <label>raw</label>
+        <capMods>
+          <li>
+            <capacity>Talking</capacity>
+            <offset>-0.30</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <minSeverity>0.60</minSeverity>
+        <label>torn</label>
+        <painOffset>0.10</painOffset>
+        <capMods>
+          <li>
+            <capacity>Talking</capacity>
+            <offset>-0.60</offset>
+          </li>
+        </capMods>
+      </li>
+      <!-- No voice at all. CanSpeak fails here, so every gizmo greys out and the gene is simply
+           gone until this sheds. Set severityPerDay to 0 on a fifth stage above this one if the
+           mute should be permanent instead - that is the whole change. -->
+      <li>
+        <minSeverity>0.85</minSeverity>
+        <label>silent</label>
+        <painOffset>0.15</painOffset>
+        <capMods>
+          <li>
+            <capacity>Talking</capacity>
+            <setMax>0</setMax>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

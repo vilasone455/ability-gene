@@ -47,6 +47,10 @@
   <AG_LanceNeedsDirection>The lance needs a direction. Aim away from the carrier.</AG_LanceNeedsDirection>
   <AG_LanceTooltip>Charges for {0} seconds in full view, then deals {1} damage to everything left on the line. Reaches {2} cells, or the first wall.</AG_LanceTooltip>
 
+  <AG_LarynxNotHeard>{0} cannot hear it.</AG_LarynxNotHeard>
+  <AG_LarynxNoVoice>{0} has no voice left to spend.</AG_LarynxNoVoice>
+  <AG_LarynxTooltip>Costs at least {0} larynx strain, multiplied by how hard the target was going to be to talk to. Deaf targets do not hear it at all.</AG_LarynxTooltip>
+
   <AG_InvoluteVented>{0} connected the hole in their {1}. Anything that finds it now goes through.</AG_InvoluteVented>
   <AG_InvoluteVentedTip>Connected for another {0} seconds.</AG_InvoluteVentedTip>
   <AG_InvoluteClosed>{0}'s hole is not connected to anything.</AG_InvoluteClosed>
