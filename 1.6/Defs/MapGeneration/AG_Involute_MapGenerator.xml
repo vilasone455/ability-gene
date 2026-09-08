@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <MapGeneratorDef>
+    <defName>AG_InvoluteVolume</defName>
+    <label>involute volume</label>
+    <isUnderground>true</isUnderground>
+    <ignoreAreaRevealedLetter>true</ignoreAreaRevealedLetter>
+    <disableCallAid>true</disableCallAid>
+    <pocketMapProperties>
+      <biome>AG_InvoluteVoid</biome>
+      <temperature>16</temperature>
+    </pocketMapProperties>
+    <genSteps>
+      <li>AG_InvoluteVolume</li>
+    </genSteps>
+  </MapGeneratorDef>
+
+  <!-- One step, doing the whole room. Alpha Genes needs KCSG from Vanilla Expanded Framework
+       for this; writing it keeps the mod's dependency list at Biotech and Harmony, and gives a
+       different room every time rather than four fixed prefabs.
+
+       Every def named below is Core except AncientExostriderRemains, which is Biotech. -->
+  <GenStepDef>
+    <defName>AG_InvoluteVolume</defName>
+    <order>500</order>
+    <genStep Class="AbilityGenes.GenStep_InvoluteVolume">
+      <floor>Gravel</floor>
+      <patchTerrain>SoftSand</patchTerrain>
+      <poolTerrain>WaterOceanDeep</poolTerrain>
+      <patchChance>0.18</patchChance>
+      <poolCount>2~5</poolCount>
+      <poolRadius>1~3</poolRadius>
+      <lightCount>16~24</lightCount>
+      <lights>
+        <li>Agarilux</li>
+        <li>Bryolux</li>
+        <li>Glowstool</li>
+      </lights>
+      <wreckageCount>3~7</wreckageCount>
+      <wreckage>
+        <li>AncientWarwalkerTorso</li>
+        <li>AncientWarwalkerLeg</li>
+        <li>AncientWarwalkerClaw</li>
+        <li>AncientWarwalkerFoot</li>
+        <li>AncientMegaCannonBarrel</li>
+        <li>ChunkMechanoidSlag</li>
+        <li>ShipChunk</li>
+        <li MayRequire="Ludeon.RimWorld.Biotech">AncientExostriderRemains</li>
+      </wreckage>
+    </genStep>
+  </GenStepDef>
+
+</Defs>

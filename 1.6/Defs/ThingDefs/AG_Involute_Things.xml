@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The hole, standing where the carrier left it.
+
+       It has no hit points and it is not buildable, minifiable or repairable. Damage aimed at
+       it is handled in Building_Aperture.PreApplyDamage, which passes it to the far side rather
+       than resisting it - so the aperture cannot be brought down, and shooting it is not a
+       waste of ammunition, it is a way of shooting into the room on the other side.
+
+       fillPercent 0 and Standable passability matter: an indestructible thing that gave cover
+       or blocked movement would be a permanent invulnerable wall segment, which is an exploit.
+       Shots aimed at the aperture go through it; shots flying past are not affected.
+
+       The texture is Core's - the swirl vanilla draws inside a skip. This mod ships no art. -->
+  <ThingDef>
+    <defName>AG_InvoluteAperture</defName>
+    <label>aperture</label>
+    <description>A hole where somebody used to be standing. It is not a door in anything - there is nothing for it to be set into - and it does not lead anywhere you can point at.\n\nIt cannot be broken. Anything that arrives at it goes through, and comes out on the other side, wherever that is.</description>
+    <thingClass>AbilityGenes.Building_Aperture</thingClass>
+    <category>Building</category>
+    <altitudeLayer>Item</altitudeLayer>
+    <drawerType>RealtimeOnly</drawerType>
+    <useHitPoints>false</useHitPoints>
+    <selectable>true</selectable>
+    <neverMultiSelect>true</neverMultiSelect>
+    <rotatable>false</rotatable>
+    <tickerType>Rare</tickerType>
+    <passability>Standable</passability>
+    <fillPercent>0</fillPercent>
+    <coversFloor>false</coversFloor>
+    <blockWind>false</blockWind>
+    <blockLight>false</blockLight>
+    <castEdgeShadows>false</castEdgeShadows>
+    <canOverlapZones>true</canOverlapZones>
+    <isSaveable>true</isSaveable>
+    <saveCompressible>false</saveCompressible>
+    <!-- Only the selection icon and the def's own validity come off this. What is actually
+         drawn on the map is Building_Aperture.DrawAt, because a hole needs a dark layer under
+         a bright one and a ThingDef graphic is a single layer - see InvoluteGraphics. -->
+    <graphicData>
+      <texPath>Things/Mote/SkipInnerDimension</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(2, 2)</drawSize>
+      <color>(158, 89, 242, 255)</color>
+    </graphicData>
+    <comps>
+      <li Class="CompProperties_Glower">
+        <glowRadius>7</glowRadius>
+        <glowColor>(60, 20, 105, 0)</glowColor>
+      </li>
+    </comps>
+  </ThingDef>
+
+</Defs>

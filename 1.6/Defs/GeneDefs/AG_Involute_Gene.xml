@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <GeneDef>
+    <defName>AG_InvoluteOrgan</defName>
+    <label>involute organ</label>
+    <description>Your pawn has a hole in them. One part of their body - rolled when the gene lands, and named on their health tab - is not entirely there, and they are permanently worse at whatever that part did.\n\nMost of the time the hole leads nowhere. When they connect it, anything that strikes that part stops landing on them and arrives instead inside a room that is not anywhere, still travelling at whatever speed it was.\n\nThey can step through it themselves, and an aperture stays standing where they were - visible, glowing, and impossible to break. It stays after they come back out, which is how they reach the volume from outside it, and it never stops being a shooting lane into everything they have stored in there.\n\nThey can put people through it. An enemy goes in and does not come out; a wounded ally goes in and can be carried back. And they can end the whole volume, with everything and everyone in it, from outside.</description>
+    <geneClass>AbilityGenes.Gene_Involute</geneClass>
+    <iconPath>UI/Icons/Genes/Gene_ExtremePsychicAbility</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>200</displayOrderInCategory>
+    <marketValueFactor>3.0</marketValueFactor>
+    <abilities>
+      <li>AG_InvoluteVent</li>
+      <li>AG_InvoluteFold</li>
+      <li>AG_InvoluteSwallow</li>
+      <li>AG_InvolutePost</li>
+      <li>AG_InvoluteCollapse</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_InvoluteVent</AbilityDef>
+      <AbilityDef>AG_InvoluteFold</AbilityDef>
+      <AbilityDef>AG_InvoluteSwallow</AbilityDef>
+      <AbilityDef>AG_InvolutePost</AbilityDef>
+      <AbilityDef>AG_InvoluteCollapse</AbilityDef>
+    </descriptionHyperlinks>
+    <biostatMet>-4</biostatMet>
+    <biostatCpx>7</biostatCpx>
+    <biostatArc>1</biostatArc>
+    <modExtensions>
+      <li Class="AbilityGenes.InvoluteGeneExtension">
+        <volumeSizeX>32</volumeSizeX>
+        <volumeSizeZ>32</volumeSizeZ>
+        <volumeGenerator>AG_InvoluteVolume</volumeGenerator>
+
+        <!-- The roll can reach the torso and the head, not just limbs. Rare - one candidate in
+             about fifteen - and a trade rather than a prize: a torso hole stops roughly 40% of
+             incoming fire, and puts the hole's efficiency penalty on the part everything else
+             hangs off. That carrier is hard to kill and barely able to work. -->
+        <allowAnyPart>true</allowAnyPart>
+        <minHoleCoverage>0.02</minHoleCoverage>
+        <maxHoleCoverage>1.0</maxHoleCoverage>
+        <holeEfficiencyOffset>-0.5</holeEfficiencyOffset>
+        <maxSwallowBodySize>1.2</maxSwallowBodySize>
+      </li>
+    </modExtensions>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>fold</symbol></li>
+        <li><symbol>hollow</symbol></li>
+        <li><symbol>void</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>hole</symbol></li>
+        <li><symbol>gate</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+</Defs>

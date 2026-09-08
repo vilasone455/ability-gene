@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Connecting the hole is the one the player presses most, and the only one with a short
+       cooldown. The hole itself is permanent and free; somewhere for it to lead is not. -->
+  <AbilityDef>
+    <defName>AG_InvoluteVent</defName>
+    <label>vent</label>
+    <description>Connect the hole. For half a minute, anything that strikes the part it is in does not land on your pawn - it arrives inside the volume instead, still travelling.\n\nWhich part the hole is in was decided when the gene did, and it is on the health tab. RimWorld picks where a blow lands by how much of the body each part covers, so this is a share of incoming fire, not a shield: most hits will still find somewhere else.\n\nWhile it is connected your pawn can fold through it, put people through it, and post things into it.</description>
+    <iconPath>UI/Icons/Genes/Gene_Darkvision</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>2500</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="AbilityGenes.CompProperties_AbilityVent" />
+    </comps>
+  </AbilityDef>
+
+  <!-- Going in leaves the hole standing where the carrier was. Coming back out lands them
+       exactly there, which is the pressure the ability never stops applying. -->
+  <AbilityDef>
+    <defName>AG_InvoluteFold</defName>
+    <label>fold</label>
+    <description>Step through your own hole and out of the world.\n\nThe hole stays where your pawn was standing. It is a real thing on the map, it glows, and anyone can see it - and anything fired into it arrives in the room your pawn is now standing in, still travelling. Hiding in there is not the same as being safe.\n\nCast again from inside to come back. Your pawn arrives at the aperture, exactly where they left, along with whatever they are carrying - which is one item, or one downed person, and no more.\n\nThe aperture stays standing after they step out, and that is how they reach the volume from outside it. It also never stops being a shooting lane into their own storeroom. Folding in from somewhere else moves it; collapse is what closes it.</description>
+    <iconPath>UI/Icons/Genes/Gene_Unstoppable</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>2500</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>1</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="AbilityGenes.CompProperties_AbilityFold" />
+    </comps>
+  </AbilityDef>
+
+  <!-- Deliberately not enemies-only. One rule - a pawn goes in - and it means something
+       completely different depending on who it is pointed at. -->
+  <AbilityDef>
+    <defName>AG_InvoluteSwallow</defName>
+    <label>swallow</label>
+    <description>Put someone into the volume. Anyone: a raider in your face, or a colonist bleeding out across the field.\n\nThey are not hurt by it and they are not healed by it. They are simply somewhere else, in a room with no doctor and no food except what your pawn posted there earlier.\n\nOnly what fits goes through. The hole is about the size of a hand, so a person barely makes it and anything bigger than a megaspider does not - a centipede stays exactly where it is.\n\nGetting out is the difference between the two uses. Someone who went in downed can be picked up and carried out. Someone who walked in on their own feet cannot be picked up at all, and stays until something puts them off them.</description>
+    <iconPath>UI/Icons/Genes/Gene_PiercingSpine</iconPath>
+    <category>AG_Genetic</category>
+    <!-- Three in-game hours rather than a day. What pays for that is maxSwallowBodySize on the
+         gene, not the clock: a size cap stops this being a delete key aimed at a diabolus and
+         leaves the rescue alone, which a long cooldown did neither of. -->
+    <cooldownTicksRange>7500</cooldownTicksRange>
+    <!-- Not hostile. It deals no damage and it is meant to be pointed at your own people as
+         often as at theirs - marking it hostile makes the game treat casting it on a colonist
+         as an attack, which is the opposite of the rescue this ability exists for. -->
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>9.9</range>
+      <warmupTime>3</warmupTime>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetLocations>false</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="AbilityGenes.CompProperties_AbilitySwallow" />
+    </comps>
+  </AbilityDef>
+
+  <!-- What makes the volume somewhere worth arriving at. Minified furniture is an item. -->
+  <AbilityDef>
+    <defName>AG_InvolutePost</defName>
+    <label>post</label>
+    <description>Push something through the hole.\n\nThis is how the volume stops being an empty room. Medicine, food, a minified bed, a lamp - anything your pawn can point at goes in and stays there until somebody carries it back out by hand.\n\nGoes through the hole on their body while it is connected, or through a standing aperture from anywhere on the map.\n\nA carrier who did this before the raid has somewhere to take a wounded colonist. One who did not has a hole to die in.</description>
+    <iconPath>UI/Icons/Genes/Gene_RobustDigestion</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>1200</cooldownTicksRange>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>15.9</range>
+      <warmupTime>0.5</warmupTime>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetPawns>false</canTargetPawns>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetItems>true</canTargetItems>
+        <thingCategory>Item</thingCategory>
+        <mapObjectTargetsMustBeAutoAttackable>false</mapObjectTargetsMustBeAutoAttackable>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="AbilityGenes.CompProperties_AbilityPost" />
+    </comps>
+  </AbilityDef>
+
+  <!-- Outside only, which is the one line that keeps it from being an accident. -->
+  <AbilityDef>
+    <defName>AG_InvoluteCollapse</defName>
+    <label>collapse</label>
+    <description>End the volume.\n\nEverything in it goes: what your pawn stored, what they built, whoever they put in there, and every round the hole has ever taken. A new fold opens a new empty room, and the old one is not anywhere to go back to.\n\nSwallow something and then collapse and you have killed it, with no corpse and no roll. It costs your pawn their entire dimension to do it.</description>
+    <iconPath>UI/Icons/Genes/Gene_MajorCellInstability</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>60000</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <confirmationDialogText>Everything inside the volume will be destroyed, including anything and anyone stored there. This cannot be undone.</confirmationDialogText>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="AbilityGenes.CompProperties_AbilityCollapse" />
+    </comps>
+  </AbilityDef>
+
+</Defs>

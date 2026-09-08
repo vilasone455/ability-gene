@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Nothing lives here and nothing grows here. The terrain entry is a fallback the player
+       never sees, because the GenStep paints every cell before anyone arrives. -->
+  <BiomeDef>
+    <defName>AG_InvoluteVoid</defName>
+    <label>involute volume</label>
+    <description>A space that is not anywhere. It has an inside and no outside.</description>
+    <generatesNaturally>false</generatesNaturally>
+    <animalDensity>0</animalDensity>
+    <plantDensity>0</plantDensity>
+    <wildAnimalsCanWanderInto>false</wildAnimalsCanWanderInto>
+    <hasVirtualPlants>false</hasVirtualPlants>
+    <baseWeatherCommonalities>
+      <AG_InvoluteVoid>1</AG_InvoluteVoid>
+    </baseWeatherCommonalities>
+    <terrainsByFertility>
+      <li>
+        <terrain>Gravel</terrain>
+        <min>-999</min>
+        <max>999</max>
+      </li>
+    </terrainsByFertility>
+  </BiomeDef>
+
+</Defs>

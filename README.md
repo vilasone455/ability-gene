@@ -1,6 +1,6 @@
 # Ability Genes
 
-A RimWorld **1.6** mod adding ten genes, each granting active abilities that do
+A RimWorld **1.6** mod adding twelve genes, each granting active abilities that do
 something no vanilla gene — and as far as I can tell, no popular gene mod — does.
 
 ## Dependencies
@@ -209,6 +209,64 @@ pawns, projectiles in flight, fire and gas all halt, and **nothing can be harmed
 It does not spare your own colonists and it does not spare the caster, who is at the
 centre and always inside. What you buy is twenty seconds for everyone standing outside
 the bubble. Cpx 4, Arc 1, five-day cooldown.
+
+### Involute organ → *vent*, *fold*, *swallow*, *post*, *collapse* (archite)
+
+One hole, normally on the carrier's body, leading to a volume that is not anywhere.
+Met −4, Cpx 7, Arc 1.
+
+| Ability | Effect | Cooldown |
+|---|---|---|
+| Vent | 30s. Anything that finds the part the hole is in passes through instead of landing | 1 in-game hour |
+| Fold | Step through your own hole. It stays behind as a ground aperture; cast again to return | 1 in-game hour |
+| Swallow | Any pawn, ally or enemy, goes into the volume. Range 9.9, 3s warmup, LOS | 1 in-game day |
+| Post | Push one item through an aperture from outside. Range 15.9 | 20s |
+| Collapse | Destroy the volume and everything in it. Outside only | 1 in-game day |
+
+**The hole is permanent and the connection is not.** Which body part it is in is rolled once
+when the gene lands, never player-chosen, and it costs a `partEfficiencyOffset` on that part
+forever. Closed, it is a hole that goes nowhere and simply does not work as a hand. That split
+is deliberate: a permanent pass-through would be the only always-on effect in this mod, and
+generating the volume at all would mean a pocket map ticking forever for a carrier who never
+used it.
+
+The part is the entire balance. RimWorld picks hit parts by coverage weight, so the share of
+incoming fire the hole eats *is* that part's coverage — a hole in the torso is near-immunity
+and a hole in a finger is nothing. The roll is banded to hand-sized, 2–10%, and the candidate
+set is `ResonanceUtility.CanRing`: the parts that can hold a note are the parts that can hold
+a hole, and both questions are answered off the game's own body data rather than a list.
+
+**Nothing is cancelled and nothing is reduced.** A round that finds the hole is not stopped —
+it is put back in flight inside the volume, entering from a random edge cell and crossing the
+room. That distinction is the whole mechanic: setting it down on a random cell would make this
+cosmetic, because a pawn occupies one cell in a thousand and a full burst would touch them
+about three times in a hundred. A round that *travels* can hit whatever is standing in the way
+of it.
+
+It comes in from a random direction because the volume is not anywhere and has no orientation
+relative to whoever fired. There is no honest vector to preserve, and neither side gets to aim.
+
+**The aperture cannot be brought down.** It has no hit points, and `PreApplyDamage` reports
+everything aimed at it as absorbed after handing it to the far side — the same rule the hole
+follows on a body, in the other place it can be. So shooting it is not wasted ammunition; it is
+a way of shooting into the room the carrier is hiding in. It gives no cover and blocks no
+movement, because an indestructible thing that did either would be a permanent invulnerable
+wall segment.
+
+**Two rules need no code at all.** Despawning takes a pawn's `carryTracker` with them, so a
+carrier brings in exactly one item or one downed person, each way — that is the whole capacity
+rule. And RimWorld only lets you carry a *downed* pawn, so an ally swallowed while bleeding can
+be carried back out and a raider swallowed on his feet cannot be picked up at all. The volume
+releases what cannot walk and keeps what can, which is the entire difference between a rescue
+and a prison, and neither sentence of it is enforced by this mod.
+
+Time inside runs at normal rate, deliberately. Two genes already own time and both pay for it;
+a third doing it for free would be the drift this mod keeps refusing. Leaving it alone also
+means the two compose — a carrier with the time lattice can fold out and Square Accel through
+their own healing, in a room with no doctor, at four times the hunger.
+
+Swallow then collapse is an unconditional kill with no corpse. It costs the carrier the volume,
+everything stored in it, and every round the hole has ever taken.
 
 ## How reflection works
 
@@ -541,6 +599,88 @@ field you can flip rather than a decision baked into the code.
 
 `radius` and `durationTicks` sit beside it. 60 ticks = 1 second.
 
+## How the involute organ works
+
+**The hole is read one layer deeper than the resonance.** `Patch_Thing_TakeDamage_Resonance` can
+be a postfix because it only wants to know which part was struck. This has to stop the strike
+landing, and by the time the damage worker returns the injury is already on the body — so it
+prefixes `DamageWorker_AddInjury.ApplyDamageToPart` instead.
+
+The trap there is that the part has not been chosen yet, and choosing it is a weighted random
+roll. Rolling in the prefix and then letting vanilla roll again inside
+`GetExactPartFromDamageInfo` would give two different answers: the hole would eat hits that
+never landed on it and miss ones that did. The roll is therefore made exactly once and written
+back with `dinfo.SetHitPart`, which sends vanilla down its already-decided branch.
+
+**The aperture uses no Harmony patch.** `Thing.PreApplyDamage` is virtual and runs before the
+damage worker is even chosen, so a round, a swing, a blast and a fire all arrive at one override
+and all leave the same way.
+
+**The origin map has to be held open.** A carrier standing in their own volume is not standing
+on the map they left, and a map with nobody on it is one the game removes — taking the way back
+with it. `Patch_MapParent_CheckRemoveMapNow_Involute` blocks removal outright for any map
+holding an aperture, rather than pretending the aperture is a colonist.
+
+**State lives on the gene**, the same choice the anchor organ's marks made and for the same
+reason: the hole belongs to a person. `Gene_Involute` scribes the part, the volume and the
+aperture, so save/load is free. The aperture stores its owner as a `Pawn` reference rather than
+a `Gene`, because the gene is one lookup off the pawn and the save system will hand back the
+pawn.
+
+### The volume
+
+`GenStep_InvoluteVolume` is written rather than borrowed. Alpha Genes lays its pocket plane out
+with `KCSG.StructureLayoutDef` from Vanilla Expanded Framework; adding a framework dependency
+for set dressing is not a trade worth making, and scattering procedurally gives a different room
+every time instead of four fixed prefabs.
+
+Every def it names is Core except `AncientExostriderRemains`, which is Biotech. The floor is
+`Gravel` with `SoftSand` blotches and `WaterOceanDeep` pools; the light is `Agarilux`,
+`Bryolux` and `Glowstool`, which glow on their own with no power and no wiring; the scale comes
+from warwalker wreckage and ship chunks.
+
+Every cell is given thick roof. That is not decoration — a roofed cell takes no sky glow, so the
+light level is entirely what the GenStep scattered, which is what lets the weather's sky colours
+be a tint rather than a clock. `AG_InvoluteVoid` sets all four sky slots identically for the same
+reason, so the volume looks the same at every hour. `saturation` above 1 with a low `sky` is what
+keeps it from being grey sludge: dark **and** vividly coloured, not dimmed.
+
+### It ships no art
+
+The aperture is Core's `Things/Mote/SkipInnerDimension` — the swirl vanilla draws inside a skip,
+which is already a picture of a hole with somewhere else behind it. `InvoluteGraphics` resolves
+it lazily from the draw path, the third use of the pattern `TimeBubbleGraphics` and
+`AnchorGraphics` set.
+
+The hole on a body is drawn beside the pawn rather than on the part it is in. `PawnRenderNode`
+does not hand out a screen position for a left hand, and chasing one across every body type,
+rotation and posture is a great deal of work for a dot under half a cell across. The health tab
+names the part; the mote only has to say the hole is open.
+
+Violet, and deliberately not the skip-blue of the anchor marks and the stasis dome. Those move
+things through normal space. This opens somewhere else, and the player should be able to tell
+which family of effect they are looking at without reading a word.
+
+A `PsycastSkipFlashEntry` fires every time anything passes through, on both sides. Without it
+the mechanic is invisible — the player watches a raider shoot, sees no damage, and learns
+nothing about the gene they are carrying.
+
+### Tuning it
+
+`InvoluteGeneExtension` on the GeneDef holds the levers: `volumeSizeX`/`volumeSizeZ`,
+`minHoleCoverage`/`maxHoleCoverage` — which is the balance dial, see above — and
+`holeEfficiencyOffset`. `durationTicks` on `HediffCompProperties_Vent` is the window.
+
+### Known gaps
+
+Hostiles are not made to attack a ground aperture. Insects and mechs go for structures and will
+find it; a manhunter pack will not, which makes the escape free against wildlife. That is left
+alone on purpose — forcing hostiles onto a target is the alarm pheromones' job, and reaching for
+it here is the drift the rest of this file keeps refusing. A gene that is strong against gunfire
+and cheap against animals is a matchup, not a bug.
+
+None of this has been run in-game yet.
+
 ## Layout
 
 ```
@@ -617,6 +757,49 @@ Confirmed in-game (1.6.4871, alongside ~40 other mods including Vanilla Psycasts
   debt, and settling delivers the whole bill at once - including the four-way prefix ordering on
   `Thing.TakeDamage` holding up with the other genes present
 
+### Testing the involute organ
+
+The pass-through cannot be tested in a fight, and that is a property of the design rather than a
+gap in it: it fires only on the one part the hole is in, which is a few percent of incoming hits,
+and the carrier is under fire the whole time you wait for it. So the test loop takes the combat
+out.
+
+Dev mode → the debug actions menu → **Ability Genes**, all pawn-targeted:
+
+| Action | What it is for |
+|---|---|
+| Name the hole part | Says which part, what share of hits it covers, whether the hole is connected, and whether the volume exists |
+| Re-roll the hole part | Tries a different part without generating a new pawn. The gene rolls once in play, which is right, and useless for a test session |
+| **Move the hole to…** | Picks the part off a list, filter and all. The only way to reach the torso — no amount of re-rolling gets there, see below |
+| Connect hole (10 min) | Vent, long enough to run a whole test without re-casting |
+| **Put a round through the hole** | Fires a rifle round with the part named rather than rolled. The pass-through is guaranteed to be the branch under test |
+| Fire a round, part unrolled | The same round with the part left to the engine, which is what a real shot does |
+| Go to the volume | Jumps the camera into the room, generating it if the hole has never been opened |
+
+The order that answers the most in the fewest clicks: *name the hole part* → *connect hole* →
+*put a round through the hole*. A pass looks like a violet flash on the carrier, **no injury on
+their health tab**, and a rifle round crossing the volume when you switch to it.
+
+**The torso is a rare roll, not an impossible one.** `allowAnyPart` on the gene drops the
+core-part and vital-organ exclusions from `ResonanceUtility.CanRing` while keeping the rest, so
+the roll can land on a torso or a head — about one candidate in fifteen — and still never on an
+internal organ. It is a trade rather than a prize: a torso hole stops roughly 40% of incoming
+fire and puts the efficiency penalty on the part everything else hangs off, so that carrier is
+hard to kill and barely able to work.
+
+To get one on demand rather than waiting for the roll, *move the hole to…* picks it off a list,
+and `forceHolePart` does the same from the def side if it needs to survive a reload.
+
+*Fire a round, part unrolled* is the one that checks the part of this most likely to be subtly
+wrong. The prefix rolls the hit part itself and writes it back with `SetHitPart` so vanilla does
+not roll a second, different answer - if that skewed the odds, this is where it shows. Run it
+twenty times and roughly the part's coverage share should pass through and the rest should
+wound normally.
+
+For the abilities rather than the mechanic, the ordinary way round is: *connect hole*, fold, and
+have something shoot the aperture - insects and mechs go for structures and will find it on
+their own.
+
 Still unverified:
 
 - **saving and reloading with a field still up** - bubbles persist through
@@ -645,3 +828,9 @@ Still unverified:
   `CanReserve` produces job-giver spam in the log, whether a re-launched projectile behaves
   when it is spawned less than a cell from its new target, and whether 30 seconds of rooted
   invulnerability reads as a wall or as a win button
+- **everything in the involute organ.** It compiles and validates and has never been in front of
+  the game. The parts most likely to bite: whether `Projectile.Launch` with a null launcher
+  survives contact with real projectile code, whether the `MoteGlow` shader on the aperture's
+  `SkipInnerDimension` texture reads as a hole or as a violet smear, whether a lone pawn on a
+  pocket map will take jobs at all - tending, eating, sleeping on a posted bed, which is what
+  makes the rescue play work - and whether hostiles ever choose to shoot a ground aperture

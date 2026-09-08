@@ -43,4 +43,28 @@
   <AG_AnchorNoWeapon>The clap needs both hands. {0} is holding {1}.</AG_AnchorNoWeapon>
   <AG_AnchorCannotEquip>Needs both hands free to clap.</AG_AnchorCannotEquip>
 
+  <AG_LanceCharging>{0}'s lance is lit. Anything still on the line in a second and a half will be on it when it fires.</AG_LanceCharging>
+  <AG_LanceNeedsDirection>The lance needs a direction. Aim away from the carrier.</AG_LanceNeedsDirection>
+  <AG_LanceTooltip>Charges for {0} seconds in full view, then deals {1} damage to everything left on the line. Reaches {2} cells, or the first wall.</AG_LanceTooltip>
+
+  <AG_InvoluteVented>{0} connected the hole in their {1}. Anything that finds it now goes through.</AG_InvoluteVented>
+  <AG_InvoluteVentedTip>Connected for another {0} seconds.</AG_InvoluteVentedTip>
+  <AG_InvoluteClosed>{0}'s hole is not connected to anything.</AG_InvoluteClosed>
+  <AG_InvoluteFoldedIn>{0} folded out of the world. The hole is off them and standing where they were - anything fired into it arrives beside them.</AG_InvoluteFoldedIn>
+  <AG_InvoluteFoldedOut>{0} came back through. The aperture is still standing - anything fired into it lands among their stores.</AG_InvoluteFoldedOut>
+  <AG_InvoluteNoWayBack>There is no aperture left. {0} has no way back.</AG_InvoluteNoWayBack>
+  <AG_InvoluteAlreadyInside>{0} is already inside the volume.</AG_InvoluteAlreadyInside>
+  <AG_InvoluteSwallowed>{0} put {1} through the hole.</AG_InvoluteSwallowed>
+  <AG_InvoluteTooBig>{0} does not fit through the hole.</AG_InvoluteTooBig>
+  <AG_InvoluteNeedsPawn>Must target a person, animal or mech.</AG_InvoluteNeedsPawn>
+  <AG_InvoluteNotSelf>The hole does not lead to itself. Fold instead.</AG_InvoluteNotSelf>
+  <AG_InvolutePosted>{0} posted {1} into the volume.</AG_InvolutePosted>
+  <AG_InvoluteNeedsItem>Must target an item. People go through with swallow.</AG_InvoluteNeedsItem>
+  <AG_InvoluteCollapsed>{0}'s volume collapsed. Everything that was in it is gone.</AG_InvoluteCollapsed>
+  <AG_InvoluteCantCollapseInside>{0} cannot collapse the volume while standing in it.</AG_InvoluteCantCollapseInside>
+  <AG_InvoluteNoVolume>There is no volume to collapse.</AG_InvoluteNoVolume>
+  <AG_InvoluteApertureOwner>Belongs to {0}</AG_InvoluteApertureOwner>
+  <AG_InvoluteApertureOccupied>The carrier is on the other side.</AG_InvoluteApertureOccupied>
+  <AG_InvoluteApertureIdle>Open. Nothing on the other side but what was put there.</AG_InvoluteApertureIdle>
+
 </LanguageData>
