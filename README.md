@@ -268,6 +268,54 @@ their own healing, in a room with no doctor, at four times the hunger.
 Swallow then collapse is an unconditional kill with no corpse. It costs the carrier the volume,
 everything stored in it, and every round the hole has ever taken.
 
+### Imperative larynx → *stop*, *drop*, *kneel*, *come*, *run*
+
+A second set of folds above the first, wired to push a word out at a pressure no throat is
+meant to hold. Met −2, Cpx 4.
+
+| Word | Effect | Cooldown |
+|---|---|---|
+| Stop | Stands still, 3s | 10s |
+| Drop | Stops, half a second, lets go of their weapon where they stand | 20s |
+| Kneel | Lies down, 3s | 30s |
+| Come | Walks to the speaker, once | 30s |
+| Run | Runs ~24 cells away | 30s |
+
+Range 16.9, no line of sight — a wall stops a lance and does not stop a voice.
+
+**Nothing here is mind control and nothing is a mental state.** Vanilla has both, and both take
+the person away. A target keeps their faction, their hostility, their memory and their think
+tree, and does one thing they did not choose on the way through — then picks up exactly where
+they were, still armed, still coming, and perfectly clear on who made them do it. What the gene
+sells is not control. It is seconds, and where people are standing when those seconds end.
+
+**The cost is the speaker's own throat, and it is priced by the target.** Every word accrues
+`AG_LarynxWear` on the neck, which sheds at 0.12/day — slower than the raid it came from, so it
+follows the carrier into the next week. What a word costs depends on how hard that particular
+head was going to be to talk to: telling someone to do what they were already doing is nearly
+free, a hostile costs double, and anyone in a mental state costs two and a half times on top of
+that, because nobody in a tantrum is listening. Shouting *run* at an ordinary raider is about
+0.18, so roughly five words across a fight. Shouting it at a berserk one is 0.45, and two of
+those take a colonist's voice for four days.
+
+**The penalty is Talking, so this mod does not have to describe it.** RimWorld already runs
+recruiting, warden work and trading off that capacity. A hoarse carrier is quietly a worse
+negotiator and nothing announces it; at the top stage they cannot speak at all and the gene is
+simply gone until it heals. Your best talker being your best shouter is the tension the gene
+actually creates, and it costs no code to create it.
+
+**Kneel is the one that will define this gene, and vanilla designed it.** A prone pawn is hit at
+×0.5 from 4.5 cells or more and at ×7.5 from 3.9 or less. So the same word is an execution setup
+at melee range and an actively harmful mistake at rifle range — shouted across a killbox it
+protects the raider from your own firing line. It is one number that changes sign at about four
+cells, the player can read it in the shot tooltip as a *Target prone* line, and it punishes
+reflexive use. Nothing in this mod computes any of it.
+
+**Deafness is the counter and it needed no code.** A word is a sound, so anything below 0.15
+Hearing does not hear it and nothing happens — no effect, no cooldown spent, a message saying
+so. Mechs are excluded at the targeting params. No vanilla mechanic attacks or defends Hearing,
+which makes this a real answer a player can find rather than an immunity flag this mod invented.
+
 ## How reflection works
 
 Three mechanisms, one for each thing the reflex has to do.
@@ -681,14 +729,90 @@ and cheap against animals is a matchup, not a bug.
 
 None of this has been run in-game yet.
 
+## How the imperative larynx works
+
+**One job, inserted, then handed back — and no Harmony patch anywhere.**
+`Pawn_JobTracker.StartJob` already takes `resumeCurJobAfterwards`, so the interruption and the
+return are the game's own rather than an imitation of them. That is the whole mechanism. It also
+means this gene adds no contact surface with the other eleven: nothing here prefixes
+`Thing.TakeDamage`, so it sits outside the ordering that arrears, the membrane, the stasis field
+and the vector reflex all have to agree about.
+
+The alarm pheromones reach into the same AI one layer shallower — they rewrite `enemyTarget` and
+interrupt once, leaving the target to decide what to do about it. This decides for them, once,
+and then stops deciding.
+
+**The cost model reads five things, and the honest limit is that it wanted to read a sixth.**
+What `WearFor` would like to know is how far the command sits from what the think tree actually
+wanted, and that number does not survive: a think tree does not keep the scores it rejected. So
+it reads what is still there — whether the target is already doing the thing, whether they are
+in a mental state, whether they are hostile, how conscious they are, and how big they are. Every
+term is a number the game holds for its own reasons, which is the point, but it is inference
+from observable state and not the ranking itself. `LarynxDefaults.BaseWearFor` is the only place
+with invented numbers in it and the only place worth tuning.
+
+The bill is worked out *before* the order lands. Obeying changes `CurJobDef`, so measuring
+afterwards would make every word look like one the target was already following and price the
+whole gene at 15%.
+
+### The two capacities
+
+`Talking` carries the cost and `Hearing` is the counter, and neither needed a custom stat. The
+wear lands on the neck because there is no `Throat` body part — `Neck` is as deep as vanilla
+goes — which puts it on the one part the resonant marrow calls too damped to hold a note. The
+top hediff stage sets Talking to zero rather than offsetting it, so `CanSpeak` fails and every
+gizmo greys out. Making that permanent is a fifth stage with `severityPerDay` 0; it is left
+recoverable on purpose, because a gene that can permanently delete itself in one bad fight is a
+trap rather than a cost.
+
+### Two traps this design walks into
+
+**`JobDefOf.LayDown` is the rest job.** It has `CanSleep => true`, so a raider told to kneel
+would have gone to sleep on the doorstep. `LayDownAwake` subclasses the same driver and
+overrides `CanSleep` and `CanRest` to false. Posture is what the shot factors actually read, and
+posture comes from the job driver: `PawnUtility.GetPosture` returns `p.jobs.posture` for anyone
+not downed, which is why a job can produce a prone pawn without touching their health at all. A
+commanded pawn is at full health the entire time.
+
+**Drop looked like the one word that was not a job.** It is. `JobDefOf.DropEquipment` stops the
+pather dead, waits 30 ticks and drops at the pawn's own position — the word exactly, and for
+free. Writing it by hand would have grown a second copy of what the corrosive glands already do.
+
+### Why drop does not scatter and does not forbid
+
+The corrosive glands throw a weapon clear and forbid where it lands. This makes someone let go,
+and it lands at their feet, and they will pick it back up. That difference is deliberate: acid
+puts the weapon somewhere, a shout only ends someone's grip on it. Keeping the scatter and the
+forbid exclusive to the older gene is what stops a Met −2 gene quietly obsoleting a Met −1 one
+that exists to do this properly.
+
+### Known gaps
+
+All five gizmos share `UI/Abilities/AnimalWarcall` — the only voice-themed icon in Core or
+Biotech, with `Gene_VoiceRoar` already spent on the alarm pheromones. Five identical buttons in
+a row is the one part of this gene that wants art.
+
+The tooltip quotes base cost only. The decision the gene offers is whether *this* target is
+worth the voice, so the real multiplied figure should be visible at targeting time —
+`ExtraTooltipPart()` has no target, so doing it properly means taking over the targeter draw the
+way the anchor organ took over `DrawHighlight`.
+
+`JobDriver_LayDownAwake` has `LookForOtherJobs => true`, so a hostile is permitted to abandon
+kneel early. The job is marked `playerForced`, which usually holds, but three seconds may turn
+out to be one.
+
+Confirmed in-game: the gene loads and all five words cast and resolve. The tuning has not been
+played against a real raid — the five-words-per-fight figure for *run* is an estimate, not a
+measurement.
+
 ## Layout
 
 ```
 About/About.xml                  metadata, Biotech + Harmony dependencies
 loadFolders.xml                  1.6 only
-1.6/Defs/AbilityDefs/            15 AbilityDefs + AG_Genetic category
-1.6/Defs/GeneDefs/               10 GeneDefs
-1.6/Defs/HediffDefs/             10 hediffs
+1.6/Defs/AbilityDefs/            25 AbilityDefs + 2 abstract + AG_Genetic category
+1.6/Defs/GeneDefs/               12 GeneDefs
+1.6/Defs/HediffDefs/             13 hediffs + 2 abstract
 1.6/Assemblies/AbilityGenes.dll  built output, committed
 Languages/English/Keyed/         message strings
 Source/AbilityGenes/             C# source
