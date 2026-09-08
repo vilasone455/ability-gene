@@ -43,9 +43,6 @@
   <AG_AnchorNoWeapon>The clap needs both hands. {0} is holding {1}.</AG_AnchorNoWeapon>
   <AG_AnchorCannotEquip>Needs both hands free to clap.</AG_AnchorCannotEquip>
 
-  <AG_LanceCharging>{0}'s lance is lit. Anything still on the line in a second and a half will be on it when it fires.</AG_LanceCharging>
-  <AG_LanceNeedsDirection>The lance needs a direction. Aim away from the carrier.</AG_LanceNeedsDirection>
-  <AG_LanceTooltip>Charges for {0} seconds in full view, then deals {1} damage to everything left on the line. Reaches {2} cells, or the first wall.</AG_LanceTooltip>
 
   <AG_LarynxNotHeard>{0} cannot hear it.</AG_LarynxNotHeard>
   <AG_LarynxNoVoice>{0} has no voice left to spend.</AG_LarynxNoVoice>

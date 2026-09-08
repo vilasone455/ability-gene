@@ -2,7 +2,7 @@ namespace AbilityGenes
 {
     /// <summary>
     /// Plain constants, no Unity resources - same rule and same reason as
-    /// <see cref="LanceDefaults"/>.
+    /// <see cref="TimeBubbleDefaults"/>.
     ///
     /// Every number here is a shape rather than a balance figure. The actual cost of a word is
     /// mostly decided by what the target is doing when it is said, which is not in this file.

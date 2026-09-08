@@ -4,7 +4,7 @@ namespace AbilityGenes
 {
     /// <summary>
     /// Plain constants, in a class that loads no Unity resources - the same rule and the same
-    /// reason as <see cref="LanceDefaults"/> and <see cref="TimeBubbleDefaults"/>. CompProperties
+    /// reason as <see cref="TimeBubbleDefaults"/>. CompProperties
     /// field initializers run on the def-parsing thread, so a default that reached
     /// <see cref="InvoluteGraphics"/> would fire a Material load off the main thread.
     /// </summary>
