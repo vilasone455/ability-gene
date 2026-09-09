@@ -57,15 +57,9 @@
 
   <!-- A blade on the way down.
 
-       A real Skyfaller, parented to vanilla's own base for one, so the fall curve, the shadow
-       that grows on the landing cell, the roof check, the impact sound and the dust thrown up
-       on arrival are all the game's. An earlier version of this was a plain thing with its own
-       position maths and it read exactly as badly as that sounds: what a fall looks like in
-       this game is an accelerating approach along one fixed angle, and that is a solved problem
-       nobody should be solving twice.
-
-       ticksToImpactRange is short and the rain ability adds to each blade's own count, which
-       is what puts a dozen blades in the air at different heights at the same moment.
+       Skyfaller handles landing shadows, roof checks, impact sound and dust. FallingBlade
+       draws the sword at a nearby summon gate before its short accelerating descent.
+       Rain adds a stagger to ticksToImpactRange so each sword leaves its gate in sequence.
 
        hitRoof is off deliberately. These are blades, not meteors; a rain called down indoors
        should not take the roof off the room. -->

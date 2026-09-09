@@ -31,8 +31,7 @@ namespace AbilityGenes
         /// <summary>
         /// Ticks between one blade landing and the next, so rain arrives as rain.
         ///
-        /// Added to each blade's own ticksToImpact, which is why a stagger also spreads them
-        /// out in the air: a skyfaller with longer to fall is drawn further from the ground.
+        /// Added to each blade's own ticksToImpact, holding it at its summon gate longer.
         /// </summary>
         public const int RainStaggerTicks = 4;
 

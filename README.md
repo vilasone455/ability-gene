@@ -878,20 +878,21 @@ is the rotation with no texture correction in the way, and the planted sprite st
 ground line falls (`PlantedGroundFraction`) so a leaning blade pivots about the hole it is
 standing in rather than sliding out of it.
 
-**The fall is a `Skyfaller`, and the first version's was not.** A blade coming down is the same
-event as a drop pod coming down, and RimWorld has a whole class for that: an accelerating
-approach along one fixed angle, a drop-spot shadow growing on the landing cell, a roof check,
-an impact sound and dust thrown up on arrival — every one of them a field in the def rather
-than a line of code. The hand-rolled version that shipped first reimplemented all of it out of
-its own position maths and looked precisely as wrong as that suggests. What is left for
-`FallingBlade` is the two things vanilla cannot know: that the blade hurts what it lands on,
-and that it stays standing afterwards.
+**Rain stages its summon near the landing field.** `FallingBlade` keeps the `Skyfaller`
+impact timer, shadow, roof handling, impact sound and dust. Its visual position holds the
+sword at a gold gate 4.2 cells above and 1.4 cells beside its landing point, then accelerates
+it point-first toward that cell over the final 22 ticks. This replaces a skyfaller trajectory
+that placed the sword far off-screen for most of its lifetime.
 
-The stagger is added to each blade's own `ticksToImpact` rather than spawning blades later,
-which is what makes a rain read as one: a skyfaller's height is derived from how long it still
-has to fall, so a dozen blades are in the air at once at a dozen different heights and arrive
-in sequence, with nothing holding a timer for the group. `hitRoof` is off on purpose — these
-are blades, not meteors, and a rain called down indoors should not take the roof off.
+The gates open over 16 ticks, with concentric elliptical rings and orbiting sparks. Each
+landing cell has a contracting gold marker; descending blades leave tapered gold and pale
+core trails. Gates close as their swords leave, and impacts add a small Core psycast flash.
+`PanoplyRainGraphics` builds shared meshes once, with no borrowed Melee Animation assets
+or dependency. Animation uses saved skyfaller age and impact timers, so it pauses with the
+game and resumes after loading without a separate effect manager or per-frame random calls.
+
+The stagger remains on each blade's `ticksToImpact`; damage, arrival times and planted
+blade behavior are unchanged. `hitRoof` remains off so indoor rain does not remove roofs.
 
 **No Harmony patch anywhere.** Like the imperative larynx, this gene adds no contact surface with
 the other twelve — nothing here prefixes `Thing.TakeDamage`, so it sits outside the ordering that

@@ -5,19 +5,8 @@ using Verse;
 namespace AbilityGenes
 {
     /// <summary>
-    /// A blade on its way down.
-    ///
-    /// This is a `Skyfaller`, which is the thing RimWorld already has for an object arriving out
-    /// of the sky - it is what a drop pod, a meteorite and a shuttle all are. The first version
-    /// of this class was not, and hand-rolled the fall out of its own position maths; it looked
-    /// wrong for the reason home-made versions of engine features usually do. Vanilla's fall is
-    /// not a straight line and a shrinking offset. It is an accelerating approach along a fixed
-    /// angle, with a drop-spot shadow on the landing cell, a roof check, an impact sound and
-    /// dust thrown up on arrival, and every one of those is a field in the def rather than a
-    /// line of code here.
-    ///
-    /// What is left for this class is the two things vanilla cannot know: that the blade hurts
-    /// whatever it lands on, and that it stays standing afterwards.
+    /// A summoned blade. Skyfaller owns impact timing, roof handling, sound and dust;
+    /// the draw path stages a visible summon followed by an accelerating, point-first fall.
     /// </summary>
     public class FallingBlade : Skyfaller
     {
@@ -25,14 +14,26 @@ namespace AbilityGenes
         private float lean;
         private int damage;
 
+        private const int DescentTicks = 22;
+        private static readonly Vector3 SummonOffset = new Vector3(-1.4f, 0f, 4.2f);
+
+        private float Descent => Mathf.Clamp01(1f - ticksToImpact / (float)DescentTicks);
+
+        public override Vector3 DrawPos
+        {
+            get
+            {
+                Vector3 ground = Position.ToVector3Shifted();
+                ground.y = def.altitudeLayer.AltitudeFor();
+                return ground + SummonOffset * (1f - Descent * Descent);
+            }
+        }
+
         /// <summary>
         /// Sets the blade up and pushes its arrival back by <paramref name="delayTicks"/>.
         ///
-        /// Adding to `ticksToImpact` rather than spawning the blade later is what makes a rain
-        /// look like rain: every blade is in the air at once and they are at different heights,
-        /// because a skyfaller's distance from the ground is derived from how long it still has
-        /// to fall. A dozen of them therefore arrive in sequence without anything holding a
-        /// timer for the group.
+        /// The delay holds each blade at its gate longer before its final descent. The base
+        /// age and impact timer also keep all visual phases stable across saving and loading.
         /// </summary>
         public void Configure(Pawn newOwner, int delayTicks, int impactDamage)
         {
@@ -43,14 +44,23 @@ namespace AbilityGenes
         }
 
         /// <summary>
-        /// The sprite is drawn point-up, and a blade that is falling is pointing where it is
-        /// going. `rotateGraphicTowardsDirection` on the def has already tilted it to match the
-        /// line it is travelling; this turns it over so the point leads.
+        /// Gates and trails are drawn without spawning per-frame motes or consuming game RNG.
         /// </summary>
-        protected override void GetDrawPositionAndRotation(ref Vector3 drawLoc, out float extraRotation)
+        protected override void DrawAt(Vector3 drawLoc, bool flip = false)
         {
-            base.GetDrawPositionAndRotation(ref drawLoc, out extraRotation);
-            extraRotation += 180f;
+            Vector3 ground = Position.ToVector3Shifted();
+            ground.y = def.altitudeLayer.AltitudeFor();
+            float reveal = Mathf.Clamp01(ageTicks / 16f);
+            float heading = Mathf.Atan2(-SummonOffset.x, -SummonOffset.z) * Mathf.Rad2Deg;
+            float gateAlpha = reveal * Mathf.Clamp01((ticksToImpact - DescentTicks + 10f) / 10f);
+            PanoplyRainGraphics.DrawGate(ground + SummonOffset, gateAlpha, ageTicks, thingIDNumber);
+            PanoplyRainGraphics.DrawLandingMark(ground, reveal, Descent);
+            DrawDropSpotShadow();
+
+            if (Descent > 0f)
+                PanoplyRainGraphics.DrawTrail(drawLoc, SummonOffset.normalized, Descent);
+            PanoplyGraphics.DrawBlade(drawLoc, heading, PanoplyDefaults.BladeDrawSize,
+                Mathf.SmoothStep(0f, 1f, reveal));
         }
 
         /// <summary>
@@ -68,6 +78,9 @@ namespace AbilityGenes
         {
             Map map = Map;
             IntVec3 cell = Position;
+
+            if (map != null && cell.InBounds(map))
+                FleckMaker.Static(cell.ToVector3Shifted(), map, FleckDefOf.PsycastAreaEffect, 0.45f);
 
             if (map != null && cell.InBounds(map) && damage > 0)
             {

@@ -8,7 +8,7 @@ namespace AbilityGenes
     ///
     /// A blade falling, a blade standing, a blade in flight and a blade on its way to a hand are
     /// the same object seen at four moments, so they are one draw helper with different arguments
-    /// rather than four graphics. The texture is Core's longsword - this mod ships no art.
+    /// rather than four graphics. Airborne and planted blades use this mod's own sprites.
     ///
     /// Transparent rather than Cutout, because three of the four moments fade.
     /// </summary>
