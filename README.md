@@ -1,6 +1,6 @@
 # Ability Genes
 
-A RimWorld **1.6** mod adding twelve genes, each granting active abilities that do
+A RimWorld **1.6** mod adding thirteen genes, each granting active abilities that do
 something no vanilla gene — and as far as I can tell, no popular gene mod — does.
 
 ## Dependencies
@@ -201,6 +201,47 @@ is no longer a body to tell.
 The gizmo settles early, and that is the decision the ability actually offers. The bill is
 coming either way. The only thing anyone gets to choose is whether it arrives here, in cover,
 beside a doctor — or wherever they happen to be standing when the time runs out.
+
+### Panoply organ → *rain*, *loose*, *grasp*
+
+A frame that carries more of itself than it needs, and can throw the surplus. Met −4, Cpx 6.
+
+| Ability | Effect | Cooldown |
+|---|---|---|
+| Rain | 14 blades come down over a 6.9-cell blob, ~12 stab where they land, and stay standing | half an in-game day |
+| Loose | Every planted blade within 12.9 of a point lifts, turns and flies at it **from its own cell** | 15s |
+| Grasp | The nearest blade tears out of the ground and arrives in an empty hand as real steel | 10s |
+
+**Rain is placement, not damage.** Half the blades land on nobody and the ones that connect are
+worth about one good melee hit. What the ability actually produces is a dozen objects in a shape
+the player chose, and both of the other abilities are readers of that shape. Rain across a
+doorway and loose is a crossfire; rain on the wrong side of a wall and loose is a wall being
+stabbed twelve times.
+
+**A planted blade is not an item, and that is the load-bearing decision.** Two vanilla rules
+apply to items and both would have quietly wrecked this: only one item stack may occupy a cell,
+so rain could not put two blades near each other, and a weapon on the floor generates haul jobs,
+so colonists would tidy the battlefield into a stockpile mid-fight. A thing of its own has
+neither problem, draws itself at the lean it landed at, and leaves room for a blade that acts
+later. The cost of that choice is that nobody can loot the field, which is why grasp exists.
+
+**The cost is a readout, not an accrual.** `AG_PanoplyDebt` has no `severityPerDay` anywhere; its
+severity is *assigned* from the live blade count at 0.02 a blade every time that count changes.
+So a full rain puts the carrier at 0.28 and holds them there, and the moment a blade is loosed,
+grasped or called back the number falls in the same tick. The debt cannot outlive the field
+because it **is** the field, and Manipulation and Moving carry it because what is missing is
+structural — part of the carrier's own frame is standing in the ground twenty cells away.
+
+**Loose does not consume anything.** Each blade flies from where it was standing and plants
+itself again wherever it stops, which is usually much closer to the people it was thrown at.
+Nothing about the volley is computed here: cover, line of sight and the bodies in between are
+resolved per blade by the same projectile code a rifle round goes through, so a blade behind a
+raider genuinely ignores the sandbag in front of him.
+
+**Grasp is the only place this gene puts real matter into the world.** What arrives is an
+ordinary steel longsword and it stays one — ownable, tradeable, lootable off the corpse. It
+needs an empty hand and will not make one; silently dropping a colonist's rifle to give them a
+sword is help nobody asked for.
 
 ### Stasis organ → *stasis field* (archite)
 Collapses a 6.9-cell sphere of stopped time around the caster for 20 seconds. Inside it:
@@ -805,21 +846,101 @@ Confirmed in-game: the gene loads and all five words cast and resolve. The tunin
 played against a real raid — the five-words-per-fight figure for *run* is an estimate, not a
 measurement.
 
+## How the panoply organ works
+
+**The stagger lives on the blade, not on the ability.** Loose finds the blades near the point,
+hands each one the target and a number of ticks to wait, and stops existing. Each blade counts
+its own delay down, lifts, turns toward what it was pointed at and launches itself. That is one
+integer per blade and it buys the whole read — a volley that leaves in sequence rather than a
+dozen projectiles appearing in the same instant — and it means a blade destroyed or expiring
+mid-windup simply never fires, with nothing to clean up.
+
+**It is a `Bullet`, not a bare `Projectile`.** `Bullet.Impact` is where vanilla resolves damage
+against armour, body parts and the hit roll, so subclassing it means the numbers come off the
+def and none of the maths is this mod's. The subclass only decides what the thing looks like on
+the way and that it plants itself again where it stops.
+
+**This is the one gene that had to be drawn.** Every other gene in the mod dresses itself in a
+Core texture that already means the right thing, and this one spent two attempts proving it
+cannot. A planted blade has to read as standing *in* the ground, and every weapon texture in
+RimWorld is a sword photographed from directly above while lying flat — there is no rotation of
+a picture like that which produces a side view. The first attempt also had the sprite's own
+heading wrong: Core's longsword points at 155°, not the 45° that was assumed, which put every
+blade 110° out and produced a field of swords lying at diagonals. Deriving the angle from
+`equippedAngleOffset` fixed the maths and changed nothing about the read, because the problem
+was never the angle.
+
+So `make_textures.py` draws two sprites: a sword point-up for every moment a blade is in the
+air, and a side view with the point already buried and earth thrown up around the hole for a
+blade that has arrived. The overlap of that near lip over the steel is the entire illusion — a
+blade that stops at the surface reads as one lying on it. Both point north, so a compass heading
+is the rotation with no texture correction in the way, and the planted sprite states where its
+ground line falls (`PlantedGroundFraction`) so a leaning blade pivots about the hole it is
+standing in rather than sliding out of it.
+
+**The fall is a `Skyfaller`, and the first version's was not.** A blade coming down is the same
+event as a drop pod coming down, and RimWorld has a whole class for that: an accelerating
+approach along one fixed angle, a drop-spot shadow growing on the landing cell, a roof check,
+an impact sound and dust thrown up on arrival — every one of them a field in the def rather
+than a line of code. The hand-rolled version that shipped first reimplemented all of it out of
+its own position maths and looked precisely as wrong as that suggests. What is left for
+`FallingBlade` is the two things vanilla cannot know: that the blade hurts what it lands on,
+and that it stays standing afterwards.
+
+The stagger is added to each blade's own `ticksToImpact` rather than spawning blades later,
+which is what makes a rain read as one: a skyfaller's height is derived from how long it still
+has to fall, so a dozen blades are in the air at once at a dozen different heights and arrive
+in sequence, with nothing holding a timer for the group. `hitRoof` is off on purpose — these
+are blades, not meteors, and a rain called down indoors should not take the roof off.
+
+**No Harmony patch anywhere.** Like the imperative larynx, this gene adds no contact surface with
+the other twelve — nothing here prefixes `Thing.TakeDamage`, so it sits outside the ordering that
+arrears, the membrane, the stasis field and the vector reflex all have to agree about.
+
+### The registry, and why it is not a lister query
+
+`PanoplyRegistry` is self-healing in the same way `TimeAlterRegistry` is: blades add themselves
+on spawn, remove themselves on despawn, and anything lost in between — a map discarded, a save
+reloaded, a blade destroyed by a path that never ran `DeSpawn` — is pruned on the next read. That
+survives save/load without a removal callback that has to fire, and it means the debt can be
+recomputed without walking a map.
+
+### Known gaps
+
+**Nothing here has been in front of the game yet.** It compiles and validates. The parts most
+likely to bite: whether a non-edifice building with `Standable` passability really does let two
+blades share a cell in every spawn path, whether a blade planted by a loosed round inside a wall
+cell looks like anything sensible, whether fourteen `RealtimeOnly` things each doing their own
+`Graphics.DrawMesh` costs anything visible at low zoom, and whether the debt curve is a weight or
+a punishment.
+
+The blade lifetime (5000 ticks, about two in-game hours) is a guess. It wants to be long enough
+that rain is a plan made early and short enough that a field cannot be left seeded across a whole
+day of work, and only play decides which of those it currently is.
+
+Rain has no `aiCanUse`, like every ability in this mod. A raider carrying this gene does nothing
+with it.
+
 ## Layout
 
 ```
 About/About.xml                  metadata, Biotech + Harmony dependencies
 loadFolders.xml                  1.6 only
-1.6/Defs/AbilityDefs/            25 AbilityDefs + 2 abstract + AG_Genetic category
-1.6/Defs/GeneDefs/               12 GeneDefs
-1.6/Defs/HediffDefs/             13 hediffs + 2 abstract
+1.6/Defs/AbilityDefs/            28 AbilityDefs + 2 abstract + AG_Genetic category
+1.6/Defs/GeneDefs/               13 GeneDefs
+1.6/Defs/HediffDefs/             14 hediffs + 2 abstract
+1.6/Defs/ThingDefs/              5 things: the involute aperture and the four blade states
 1.6/Assemblies/AbilityGenes.dll  built output, committed
+Textures/AbilityGenes/Panoply/   the only art in the mod: two blade sprites
+make_textures.py                 draws them; run it after editing, commit the PNGs
 Languages/English/Keyed/         message strings
 Source/AbilityGenes/             C# source
 ```
 
-Def prefix is `AG_`. All icons point at existing Core/Biotech textures, so the mod ships
-no art and still renders correctly; see `iconPath` on each def to swap in your own.
+Def prefix is `AG_`. Every icon but the panoply organ's points at an existing Core/Biotech
+texture; see `iconPath` on each def to swap in your own. The two exceptions are the blade
+sprites in `Textures/AbilityGenes/Panoply/`, drawn by `make_textures.py` — see
+*How the panoply organ works* for why that gene could not borrow one.
 
 ## Building
 
@@ -854,6 +975,11 @@ parent's rather than replacing it. Declaring a comp on both an abstract base and
 silently gives the hediff two copies, and RimWorld only says so at load time, as
 `two comps with same compClass`. Note that the parent lookup is keyed on `Name=`, not
 `defName` — an AbilityDef and a HediffDef may legitimately share a defName.
+
+One tag is deliberately exempt: `<category>` inside a `ThingDef` is the `ThingCategory` enum,
+not a def name, and checking it asks the game for a def that was never meant to exist. On an
+`AbilityDef` the same tag *is* a reference, so the exemption is keyed on the parent def type
+rather than on the value.
 
 It also checks for **duplicate `Name=` declarations**, which is worth calling out because
 it is not obvious: RimWorld's `Name` attribute is a single namespace shared by *every def
@@ -952,6 +1078,9 @@ Still unverified:
   `CanReserve` produces job-giver spam in the log, whether a re-launched projectile behaves
   when it is spawned less than a cell from its new target, and whether 30 seconds of rooted
   invulnerability reads as a wall or as a win button
+- **the panoply organ beyond its first look.** Rain has been cast in game and the blades land,
+  plant and hold; what has not been tested is loose, grasp, the debt curve, or any of it in a
+  fight. See its own *Known gaps* above
 - **everything in the involute organ.** It compiles and validates and has never been in front of
   the game. The parts most likely to bite: whether `Projectile.Launch` with a null launcher
   survives contact with real projectile code, whether the `MoteGlow` shader on the aperture's

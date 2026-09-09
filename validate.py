@@ -8,9 +8,11 @@ runtime, in the order they have actually bitten this project:
      shared by every def type in a mod, so an abstract HediffDef and an abstract
      AbilityDef cannot share a name. The second is silently dropped and its
      children inherit the wrong base.
-  3. Unresolved ParentName
-  4. Def and texture references that do not resolve in Core or Biotech (anything
-     Royalty-only would break for players without that DLC)
+  3. Unresolved ParentName, and ranges written in vector syntax ("(60, 75)" instead
+     of "60~75"), which drops the whole def at load with no useful error
+  4. Def and texture references that resolve neither in this mod's own Textures/
+     folder nor in Core or Biotech (anything Royalty-only would break for players
+     without that DLC)
   5. Custom Class= values that do not exist in the built assembly
   6. Comp classes a def ends up with twice once inheritance is applied
   7. Translate keys used in C# but not defined in Languages/
@@ -84,13 +86,34 @@ for f in my_files:
         if v not in mine and (DATA is None or v not in vanilla):
             fail("unresolved ParentName", f, v)
 
+# 3b. range syntax
+# RimWorld parses IntRange and FloatRange from "a~b" (or a bare number) and Vector2/Vector3
+# from "(x, y)". Writing a range in vector syntax throws a FormatException at load, the def
+# is dropped whole, and the only symptom is a later "Failed to find ThingDef named ..." -
+# which is how AG_PanoplyBladeFalling went missing with the rest of the file loading fine.
+for f in my_files:
+    for el in ET.parse(f).getroot().iter():
+        if not el.tag.endswith("Range") or not el.text: continue
+        text = el.text.strip()
+        if text.startswith("("):
+            fail("range in vector syntax", f,
+                 "<" + el.tag + ">" + text + " -- ranges are written a~b, not (a, b)")
+
 # 4. references
 if DATA is not None:
     stats = set()
     for f in my_files:
-        for el in ET.parse(f).getroot().iter():
+        root = ET.parse(f).getroot()
+        # <category> is an AbilityCategoryDef reference on an AbilityDef and a plain
+        # ThingCategory enum on a ThingDef. Only the first is a def name, so the enum ones
+        # are collected here and skipped below - checking them asks the game for a def that
+        # was never supposed to exist.
+        enum_categories = {el for d in root.findall("ThingDef") for el in d.findall("category")}
+        for el in root.iter():
             vals = []
-            if el.tag in REF_TAGS and el.text and el.text.strip():
+            if el in enum_categories:
+                pass
+            elif el.tag in REF_TAGS and el.text and el.text.strip():
                 vals = [el.text.strip()]
             elif el.tag in LIST_TAGS:
                 vals = [c.text.strip() for c in el if c.text]
@@ -102,9 +125,15 @@ if DATA is not None:
                 if not w: fail("unresolved ref <" + el.tag + ">", f, v)
                 elif w == {"Royalty"}: fail("Royalty-only ref <" + el.tag + ">", f, v)
         for m in re.finditer(r"<(?:iconPath|texPath)>([^<]+)<", open(f).read()):
-            w = vanilla.get("TEX:" + m.group(1).strip())
-            if not w: fail("unresolved texture", f, m.group(1))
-            elif w == {"Royalty"}: fail("Royalty-only texture", f, m.group(1))
+            tex = m.group(1).strip()
+            # This mod's own art comes first: the panoply organ ships two sprites because a
+            # top-down weapon texture cannot be turned into a blade standing in the ground.
+            if any(os.path.exists(os.path.join("Textures", tex + ext))
+                   for ext in (".png", ".jpg")):
+                continue
+            w = vanilla.get("TEX:" + tex)
+            if not w: fail("unresolved texture", f, tex)
+            elif w == {"Royalty"}: fail("Royalty-only texture", f, tex)
     for s in sorted(stats):
         w = vanilla.get(s)
         if not w: fail("unknown stat", "statBases/Offsets/Factors", s)

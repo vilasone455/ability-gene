@@ -68,4 +68,12 @@
   <AG_InvoluteApertureOccupied>The carrier is on the other side.</AG_InvoluteApertureOccupied>
   <AG_InvoluteApertureIdle>Open. Nothing on the other side but what was put there.</AG_InvoluteApertureIdle>
 
+  <AG_PanoplyRained>{0} threw {1} blades over the field. They are standing where they landed.</AG_PanoplyRained>
+  <AG_PanoplyLoosed>{0} loosed {1} blades.</AG_PanoplyLoosed>
+  <AG_PanoplyNoBladesNear>There are no blades of {0}'s standing near there.</AG_PanoplyNoBladesNear>
+  <AG_PanoplyNoBlades>{0} has no blades in the ground.</AG_PanoplyNoBlades>
+  <AG_PanoplyHandFull>{0} already has a weapon in hand.</AG_PanoplyHandFull>
+  <AG_PanoplyNotToEnemy>{0} is not going to be handed a sword.</AG_PanoplyNotToEnemy>
+  <AG_PanoplyBladeOwner>Extruded from {0}. Called back in {1}.</AG_PanoplyBladeOwner>
+
 </LanguageData>

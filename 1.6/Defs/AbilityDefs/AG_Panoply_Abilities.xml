@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Three abilities, and only the first of them makes anything. Loose and grasp are both
+       readers of what rain left on the ground, which is why neither has a resource, a charge
+       or a magazine: the ammunition is the field, and the field is visible. -->
+
+  <AbilityDef>
+    <defName>AG_Panoply_Rain</defName>
+    <label>rain</label>
+    <description>Open the carrier's frame and throw a dozen blades into the sky over a chosen place.\n\nWhat lands is not the point. Half of them will hit nothing, and the ones that do hit are not what kills anybody. What matters is that they are still standing there afterwards - in a doorway, across a corridor, behind the line somebody is holding - because everything else this gene does is done with blades that are already in the ground.\n\nThe carrier is lighter afterwards, and worse at everything, for exactly as long as the blades are out.</description>
+    <iconPath>AbilityGenes/Panoply/IconRain</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>30000</cooldownTicksRange>
+    <aiCanUse>false</aiCanUse>
+    <hostile>true</hostile>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>26.9</range>
+      <warmupTime>1.5</warmupTime>
+      <drawAimPie>true</drawAimPie>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>true</canTargetBuildings>
+        <canTargetLocations>true</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="AbilityGenes.CompProperties_AbilityBladeRain">
+        <radius>6.9</radius>
+        <bladeCount>14</bladeCount>
+        <impactDamage>12</impactDamage>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef>
+    <defName>AG_Panoply_Loose</defName>
+    <label>loose</label>
+    <description>Every blade standing near the chosen point lifts, turns to face it, and goes.\n\nEach one flies from the cell it happens to be in, so the volley has the shape the rain had. Blades behind the target do not care what is in front of them, blades in the open have a clean line, and blades on the wrong side of a wall spend themselves on the wall.\n\nThey do not come back. Wherever each one stops is where it is standing now, which is often much closer to the people it was thrown at.</description>
+    <iconPath>AbilityGenes/Panoply/IconLoose</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>900</cooldownTicksRange>
+    <aiCanUse>false</aiCanUse>
+    <hostile>true</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>26.9</range>
+      <warmupTime>0.5</warmupTime>
+      <requireLineOfSight>false</requireLineOfSight>
+      <drawAimPie>true</drawAimPie>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>true</canTargetBuildings>
+        <canTargetLocations>true</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="AbilityGenes.CompProperties_AbilityBladeLoose">
+        <radius>12.9</radius>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef>
+    <defName>AG_Panoply_Grasp</defName>
+    <label>grasp</label>
+    <description>The nearest planted blade tears out of the ground and flies to an open hand - the carrier's own, or anyone else's within sight.\n\nWhat arrives is an ordinary steel longsword, and it stays one. A blade in the ground belongs to the body that made it and can never be picked up by anybody; a blade in a hand has been paid for and is simply a weapon somebody owns now.\n\nThe hand has to be empty. Nothing here will put a colonist's rifle on the floor to make room.</description>
+    <iconPath>AbilityGenes/Panoply/IconGrasp</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>600</cooldownTicksRange>
+    <aiCanUse>false</aiCanUse>
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>24.9</range>
+      <warmupTime>0.4</warmupTime>
+      <drawAimPie>true</drawAimPie>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>false</canTargetAnimals>
+        <canTargetMechs>false</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetLocations>false</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="AbilityGenes.CompProperties_AbilityBladeGrasp" />
+    </comps>
+  </AbilityDef>
+
+</Defs>

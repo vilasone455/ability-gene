@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The whole cost of the gene, and it is not accrued - it is a readout.
+
+       Severity is assigned from the blade count every time that count changes, at 0.03 a blade.
+       So a carrier who rains fourteen blades is at 0.28 for as long as they stand there, and
+       the moment a blade is loosed, grasped or reclaimed by the body the number falls in the
+       same tick. There is no severityPerDay on this and there deliberately is not: the debt
+       cannot outlive the field, because it *is* the field.
+
+       Manipulation and Moving are what carry it, because what is missing is structural. The
+       carrier has put part of their own frame in the ground twenty cells away, and the game
+       already knows what a body with less frame in it can do - aim, work, walk, and carry. -->
+  <HediffDef>
+    <defName>AG_PanoplyDebt</defName>
+    <label>extruded frame</label>
+    <description>This person's blades are somewhere else.\n\nWhat is standing in the ground came out of them, and until it comes back they are carrying less of themselves around than a body is supposed to. It is not an injury and no doctor can help with it. The only treatment is to stop leaving blades lying about.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.72, 0.76, 0.85)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>true</isBad>
+    <maxSeverity>1</maxSeverity>
+    <stages>
+      <li>
+        <label>drawn</label>
+        <capMods>
+          <li>
+            <capacity>Manipulation</capacity>
+            <offset>-0.10</offset>
+          </li>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.05</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <minSeverity>0.16</minSeverity>
+        <label>hollowed</label>
+        <painOffset>0.05</painOffset>
+        <capMods>
+          <li>
+            <capacity>Manipulation</capacity>
+            <offset>-0.25</offset>
+          </li>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.12</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <minSeverity>0.30</minSeverity>
+        <label>stripped</label>
+        <painOffset>0.15</painOffset>
+        <capMods>
+          <li>
+            <capacity>Manipulation</capacity>
+            <offset>-0.45</offset>
+          </li>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.25</offset>
+          </li>
+        </capMods>
+      </li>
+      <!-- Twenty-five blades out: two full rains with almost nothing recovered. The carrier
+           can still act; they are simply worse at every part of it than the colonist standing
+           next to them. -->
+      <li>
+        <minSeverity>0.50</minSeverity>
+        <label>unmade</label>
+        <painOffset>0.30</painOffset>
+        <capMods>
+          <li>
+            <capacity>Manipulation</capacity>
+            <offset>-0.70</offset>
+          </li>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.45</offset>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

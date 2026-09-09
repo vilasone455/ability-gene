@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- A blade standing in the ground.
+
+       It is deliberately not an item. Two vanilla rules apply to items and both would quietly
+       break this: only one item stack may occupy a cell, so rain could not put two blades near
+       each other, and a weapon on the floor generates haul jobs, so colonists would tidy the
+       field into a stockpile in the middle of a fight. A thing of its own has neither problem
+       and draws itself at whatever angle it landed at.
+
+       isEdifice false is what lets two of them share a cell - the default for a building is
+       true, and edifices wipe each other on spawn.
+
+       fillPercent 0 and Standable passability for the same reason the involute aperture has
+       them: a field of these must not become a wall the player can grow anywhere at will.
+
+       The texture is this gene's own, and it is the only art in the mod. Every weapon sprite
+       in the game is a sword seen from directly above while lying flat, and no rotation of one
+       of those reads as a blade standing in the ground - the first attempt tried every angle
+       Core's longsword had and produced a field of dropped swords each time. See
+       make_textures.py, which draws both blade sprites. -->
+  <ThingDef>
+    <defName>AG_PanoplyBlade</defName>
+    <label>planted blade</label>
+    <description>A blade standing where it came down, still humming.\n\nIt was part of somebody a moment ago and it is on loan from them - it cannot be picked up, carried or kept, and when their body calls it back it will simply not be here any more.</description>
+    <thingClass>AbilityGenes.PlantedBlade</thingClass>
+    <category>Building</category>
+    <altitudeLayer>Item</altitudeLayer>
+    <drawerType>RealtimeOnly</drawerType>
+    <tickerType>Normal</tickerType>
+    <useHitPoints>false</useHitPoints>
+    <selectable>true</selectable>
+    <neverMultiSelect>true</neverMultiSelect>
+    <rotatable>false</rotatable>
+    <passability>Standable</passability>
+    <fillPercent>0</fillPercent>
+    <coversFloor>false</coversFloor>
+    <blockWind>false</blockWind>
+    <blockLight>false</blockLight>
+    <castEdgeShadows>false</castEdgeShadows>
+    <canOverlapZones>true</canOverlapZones>
+    <isSaveable>true</isSaveable>
+    <saveCompressible>false</saveCompressible>
+    <building>
+      <isEdifice>false</isEdifice>
+      <claimable>false</claimable>
+      <deconstructible>false</deconstructible>
+    </building>
+    <graphicData>
+      <texPath>AbilityGenes/Panoply/BladePlanted</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <shaderType>Transparent</shaderType>
+      <drawSize>1.3</drawSize>
+    </graphicData>
+  </ThingDef>
+
+  <!-- A blade on the way down.
+
+       A real Skyfaller, parented to vanilla's own base for one, so the fall curve, the shadow
+       that grows on the landing cell, the roof check, the impact sound and the dust thrown up
+       on arrival are all the game's. An earlier version of this was a plain thing with its own
+       position maths and it read exactly as badly as that sounds: what a fall looks like in
+       this game is an accelerating approach along one fixed angle, and that is a solved problem
+       nobody should be solving twice.
+
+       ticksToImpactRange is short and the rain ability adds to each blade's own count, which
+       is what puts a dozen blades in the air at different heights at the same moment.
+
+       hitRoof is off deliberately. These are blades, not meteors; a rain called down indoors
+       should not take the roof off the room. -->
+  <ThingDef ParentName="SkyfallerBase">
+    <defName>AG_PanoplyBladeFalling</defName>
+    <label>falling blade</label>
+    <description>A blade coming down.</description>
+    <thingClass>AbilityGenes.FallingBlade</thingClass>
+    <graphicData>
+      <texPath>AbilityGenes/Panoply/Blade</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <shaderType>Transparent</shaderType>
+      <drawSize>1.1</drawSize>
+    </graphicData>
+    <skyfaller>
+      <movementType>Accelerate</movementType>
+      <speed>1.6</speed>
+      <ticksToImpactRange>60~75</ticksToImpactRange>
+      <shadow>Things/Skyfaller/SkyfallerShadowCircle</shadow>
+      <shadowSize>(0.65, 0.65)</shadowSize>
+      <impactSound>MeleeHit_Metal_Sharp</impactSound>
+      <rotateGraphicTowardsDirection>true</rotateGraphicTowardsDirection>
+      <motesPerCell>2</motesPerCell>
+      <hitRoof>false</hitRoof>
+    </skyfaller>
+  </ThingDef>
+
+  <!-- A blade on the way to a hand. Same shape as the falling one; the only difference is which
+       curve it is flying along and what happens when it gets there. -->
+  <ThingDef>
+    <defName>AG_PanoplyBladeFlying</defName>
+    <label>flying blade</label>
+    <description>A blade on its way to somebody's hand.</description>
+    <thingClass>AbilityGenes.BladeFlight</thingClass>
+    <category>Ethereal</category>
+    <altitudeLayer>Skyfaller</altitudeLayer>
+    <drawerType>RealtimeOnly</drawerType>
+    <tickerType>Normal</tickerType>
+    <useHitPoints>false</useHitPoints>
+    <drawOffscreen>true</drawOffscreen>
+    <selectable>false</selectable>
+    <neverMultiSelect>true</neverMultiSelect>
+    <rotatable>false</rotatable>
+    <isSaveable>true</isSaveable>
+    <saveCompressible>false</saveCompressible>
+    <graphicData>
+      <texPath>AbilityGenes/Panoply/Blade</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <shaderType>Transparent</shaderType>
+      <drawSize>1.05</drawSize>
+    </graphicData>
+  </ThingDef>
+
+  <!-- A loosed blade. A real projectile, so cover, line of sight, the hit roll and the armour
+       maths are all the ones a rifle round goes through - the class only decides what it looks
+       like on the way and that it plants itself again where it stops.
+
+       Stab rather than Cut: the blade arrives point first, which is also what Projectile_Blade
+       draws. -->
+  <ThingDef>
+    <defName>AG_PanoplyBladeShot</defName>
+    <label>loosed blade</label>
+    <thingClass>AbilityGenes.Projectile_Blade</thingClass>
+    <category>Projectile</category>
+    <altitudeLayer>Projectile</altitudeLayer>
+    <tickerType>Normal</tickerType>
+    <useHitPoints>false</useHitPoints>
+    <neverMultiSelect>true</neverMultiSelect>
+    <graphicData>
+      <texPath>AbilityGenes/Panoply/Blade</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <shaderType>Transparent</shaderType>
+      <drawSize>1.05</drawSize>
+    </graphicData>
+    <projectile>
+      <damageDef>Stab</damageDef>
+      <damageAmountBase>16</damageAmountBase>
+      <armorPenetrationBase>0.35</armorPenetrationBase>
+      <speed>42</speed>
+    </projectile>
+  </ThingDef>
+
+</Defs>
