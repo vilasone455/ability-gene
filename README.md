@@ -1,6 +1,6 @@
 # Ability Genes
 
-A RimWorld **1.6** mod adding thirteen genes, each granting active abilities that do
+A RimWorld **1.6** mod adding fourteen genes, each granting active abilities that do
 something no vanilla gene — and as far as I can tell, no popular gene mod — does.
 
 ## Dependencies
@@ -1087,3 +1087,39 @@ Still unverified:
   `SkipInnerDimension` texture reads as a hole or as a violet smear, whether a lone pawn on a
   pocket map will take jobs at all - tending, eating, sleeping on a posted bed, which is what
   makes the rescue play work - and whether hostiles ever choose to shoot a ground aperture
+
+
+## Dispersal plexus
+
+Three crow abilities share three charges; one charge regrows each in-game hour.
+
+- **Murder:** targeted flight up to 35 cells, crossing obstacles without line of sight.
+  Costs one charge, with a 0.2-second cast and ten-second cooldown. The pawn stays hidden
+  during flight and lands without blood loss or a recovery penalty.
+- **Auto Scatter:** a saved on/off toggle. While enabled, an awake, standing carrier evades
+  qualifying hits of at least six damage and relocates five to ten cells toward safety.
+  Costs one charge and 4% blood loss, with 15% slower movement for two seconds.
+  Relocation is instant; animated crows follow the route. Disabling Scatter preserves charges.
+- **Carrion:** sends feeding crows to consume a fresh corpse and bring recovery back to the
+  carrier, who stays visible and does not travel with them.
+
+Flying crows use eight distinct wingbeat poses and leave feather trails. Existing carriers
+gain newly added abilities after the game resumes.
+
+### Carrion: a feeding flock
+
+Carrion spends one shared dispersal charge to send crows to a fresh flesh corpse within ten
+cells. The carrier stays visible and does not travel with the flock. Birds fly out, land and
+peck for two seconds, consume the body, and return to deliver recovery. A human-sized corpse
+provides up to 20 points of healing to actively bleeding, non-permanent injuries, removes
+0.20 blood-loss severity, and restores 0.20 Hemogen if the carrier has an active reserve.
+Smaller bodies provide proportionally less; larger bodies are capped at the same recovery.
+Scars, missing parts, diseases and nonbleeding injuries are not healed.
+
+Each carrier can have one flock away, and each corpse can be claimed by one flock. Progress
+and pending recovery are saved. A corpse removed before consumption, or a carrier who dies
+or leaves the map, ends the flight without recovery or a charge refund. A concurrent Murder
+pauses feeding until the carrier lands. The pawn never performs an ingestion job.
+
+Lifecycle checks: `dotnet run --project Tests/Carrion/Carrion.csproj`. These use production
+lifecycle code with game-boundary stubs; see `Tests/Carrion/README.md` for in-game checks.

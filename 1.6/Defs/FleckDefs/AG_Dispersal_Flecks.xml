@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- What is left on the ground where a person was standing. Thrown outward with a spin, so
+       the ring never reads as a decal stamped on the cell. -->
+  <FleckDef ParentName="FleckBase">
+    <defName>AG_DispersalFeather</defName>
+    <graphicData>
+      <texPath>AbilityGenes/Dispersal/Feather</texPath>
+    </graphicData>
+    <altitudeLayer>MoteOverhead</altitudeLayer>
+    <fadeInTime>0.05</fadeInTime>
+    <solidTime>0.9</solidTime>
+    <fadeOutTime>1.6</fadeOutTime>
+  </FleckDef>
+
+</Defs>

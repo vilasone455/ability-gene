@@ -76,4 +76,20 @@
   <AG_PanoplyNotToEnemy>{0} is not going to be handed a sword.</AG_PanoplyNotToEnemy>
   <AG_PanoplyBladeOwner>Extruded from {0}. Called back in {1}.</AG_PanoplyBladeOwner>
 
+
+
+  <AG_DispersalLabel>Auto Scatter: {0}/{1}</AG_DispersalLabel>
+  <AG_DispersalFullDesc>The plexus is holding {0} shared charges for Scatter, Murder and Carrion.</AG_DispersalFullDesc>
+  <AG_DispersalRechargingDesc>The plexus is holding {0}. The next one is {1}% grown.</AG_DispersalRechargingDesc>
+  <AG_DispersalToggleDesc>Toggle automatic Scatter. When enabled, qualifying incoming hits consume a charge to evade and relocate. When disabled, the carrier holds position and takes damage normally. Murder and charge regeneration remain available.</AG_DispersalToggleDesc>
+  <AG_DispersalScattered>{0} came apart. {1} left in the plexus.</AG_DispersalScattered>
+  <AG_DispersalRecharged>{0}'s plexus has grown another dispersal. {1} in hand.</AG_DispersalRecharged>
+
+  <AG_DispersalEmpty>{0}'s plexus is empty. Nothing left to come apart into.</AG_DispersalEmpty>
+  <AG_DispersalEmptyShort>The plexus is empty.</AG_DispersalEmptyShort>
+  <AG_DispersalNoLanding>The flock has nowhere to put a person down there.</AG_DispersalNoLanding>
+
+  <AG_CarrionBusy>A feeding flock is already away.</AG_CarrionBusy>
+  <AG_CarrionInvalid>Choose a fresh flesh corpse within 10 cells on revealed ground.</AG_CarrionInvalid>
+  <AG_CarrionClaimed>Another feeding flock has already claimed this corpse.</AG_CarrionClaimed>
 </LanguageData>

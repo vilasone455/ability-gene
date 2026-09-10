@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Automatic Scatter can be toggled; Murder is targeted. Both use the same pool. -->
+  <GeneDef>
+    <defName>AG_DispersalPlexus</defName>
+    <label>dispersal plexus</label>
+    <description>A body that can come apart into crows.\n\nWhile automatic Scatter is enabled, an incoming hit of at least 6 damage from a present attacker is cancelled. The awake, standing carrier reforms in a safer reachable location five to ten cells away. Each Scatter costs one charge and 4% blood loss, with 15% slower movement for two seconds. Toggle it off to hold position and reserve charges.\n\nMurder is deliberate flight: pick a revealed landing spot up to 35 cells away, cross obstacles, and arrive ready to act with no blood loss or landing penalty.\n\nCarrion sends crows to consume a nearby fresh corpse while the carrier stays in place. Recovery is delivered when the birds return.\n\nAll three abilities share three charges. One charge regrows each game hour, even with automatic Scatter disabled.</description>
+    <geneClass>AbilityGenes.Gene_Dispersal</geneClass>
+    <iconPath>AbilityGenes/Dispersal/IconGene</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>250</displayOrderInCategory>
+    <marketValueFactor>1.9</marketValueFactor>
+    <abilities>
+      <li>AG_DispersalMurder</li>
+      <li>AG_DispersalCarrion</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_DispersalMurder</AbilityDef>
+      <AbilityDef>AG_DispersalCarrion</AbilityDef>
+      <HediffDef>AG_Reassembling</HediffDef>
+      <HediffDef>BloodLoss</HediffDef>
+    </descriptionHyperlinks>
+    <biostatMet>-3</biostatMet>
+    <biostatCpx>5</biostatCpx>
+    <modExtensions>
+      <li Class="AbilityGenes.DispersalGeneExtension">
+        <maxCharges>3</maxCharges>
+        <rechargeTicks>2500</rechargeTicks>
+        <minimumDamage>6</minimumDamage>
+        <bloodLossPerScatter>0.04</bloodLossPerScatter>
+        <minRange>5</minRange>
+        <maxRange>10</maxRange>
+      </li>
+    </modExtensions>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>crow</symbol></li>
+        <li><symbol>scatter</symbol></li>
+        <li><symbol>flock</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>wing</symbol></li>
+        <li><symbol>feather</symbol></li>
+        <li><symbol>flight</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+</Defs>

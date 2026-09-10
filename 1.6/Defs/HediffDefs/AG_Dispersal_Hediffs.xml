@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Emergency Scatter briefly slows movement without reducing pawn capacities.
+       Murder does not apply this hediff. -->
+  <HediffDef>
+    <defName>AG_Reassembling</defName>
+    <label>reassembling</label>
+    <description>The carrier is finding their footing after an emergency Scatter. Movement speed is reduced by 15% for two seconds. Consciousness, manipulation and sight are unaffected.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.45, 0.45, 0.58)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>true</isBad>
+    <maxSeverity>1</maxSeverity>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>120</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <statFactors>
+          <MoveSpeed>0.85</MoveSpeed>
+        </statFactors>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

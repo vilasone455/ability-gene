@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Core's PawnFlyer with one field changed. Everything that makes a flight work - taking the
+       pawn off the map, arcing them over a computed number of ticks, putting them back down with
+       their job queue intact, re-aiming at a nearby cell if the destination stops being valid
+       mid-flight - is already in the base class and none of it is reimplemented here.
+
+       flightSpeed is below Core's 12 because these are birds. The longer duration is the point:
+       a murder is meant to be watched, and at jump speed the flock is a smear. -->
+  <ThingDef ParentName="PawnFlyerBase">
+    <defName>AG_DispersalFlock</defName>
+    <label>flock</label>
+    <thingClass>AbilityGenes.PawnFlyer_Murder</thingClass>
+    <pawnFlyer>
+      <flightDurationMin>0.9</flightDurationMin>
+      <flightSpeed>9</flightSpeed>
+    </pawnFlyer>
+  </ThingDef>
+
+</Defs>
