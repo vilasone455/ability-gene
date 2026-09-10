@@ -27,17 +27,25 @@
     <li>Ludeon.RimWorld.Ideology</li>
     <li>Ludeon.RimWorld.Biotech</li>
     <li>Ludeon.RimWorld.Anomaly</li>
+    <li>Ludeon.RimWorld.Odyssey</li>
+    <li>co.uk.epicguru.meleeanimation</li>
   </loadAfter>
 
-  <description>Four genes, each granting an active ability that does something no other gene does.
+  <description>Combat abilities from every angle. Genes, traits, equipment, training, weapon traits, and battlefield conditions — each one a different way your pawn learns to fight.
 
-CORROSIVE GLANDS - spit contact acid at a target's weapon and make them drop it. No damage: takes the threat off the field without taking the body off it.
+GENES - acid spit, metabolic overdrive, pheromone taunt, crow dispersal, pocket dimensions, time control, blade extrusion, and more. Biological powers wired into the body.
 
-HYPERMETABOLIC GLANDS - burn food reserves straight into wound repair. Runs until the wounds are gone or the food is.
+TRAITS - natural authority, trained reflexes, combat instincts. Abilities your pawn is born with or earns through who they are.
 
-ALARM PHEROMONES - force every hostile in range to break off and come for you, with a little extra toughness to survive the decision.
+EQUIPMENT - gear that grants active abilities. Shields that bash, armor that deflects, devices that freeze time.
 
-STASIS ORGAN (archite) - collapse a sphere of stopped time around yourself. Nothing inside moves or can be harmed, including your own pawns and the caster. What you buy is time for everyone outside it.
+WEAPON TRAITS (Odyssey) - blade rain, dash-strikes, resonant hits. Abilities tied to the weapon, not the wielder.
 
-Requires Biotech and Harmony. No other DLC or framework mods needed.</description>
+TRAINING - techniques learned through practice. Martial disarms, defensive stances, tactical repositioning.
+
+CONDITIONS - adrenaline when allies fall, last stands at death's door. The fight itself unlocks what your pawn can do.
+
+No psycasts. No magic system. Just combat arts from every source that makes sense.
+
+Requires Biotech and Harmony. Optional support for Odyssey and Melee Animation.</description>
 </ModMetaData>

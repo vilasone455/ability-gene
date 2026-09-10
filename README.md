@@ -1,21 +1,22 @@
-# Ability Genes
+# RimArt
 
-A RimWorld **1.6** mod adding fourteen genes, each granting active abilities that do
-something no vanilla gene — and as far as I can tell, no popular gene mod — does. Thirteen of
-them need nothing but Biotech; the fourteenth is built on another mod's animations and is not
-built at all without it.
+A RimWorld **1.6** combat ability mod. Pawns gain abilities from genes, traits, equipment,
+training, weapon traits (Odyssey) and battlefield conditions — not just one source.
+
+Currently shipping fourteen gene-based abilities. Multi-source support is in progress.
 
 ## Dependencies
 
 | Dependency | Required | Why |
 |---|---|---|
-| **Biotech DLC** | **Yes** | Genes do not exist without it |
+| **Biotech DLC** | **Yes** | Gene-based abilities need it. Will become optional once non-gene sources ship |
 | **Harmony** (`brrainz.harmony`) | **Yes** | Patches `Thing.DoTick`, `Thing.TakeDamage` and `ReservationManager.CanReserve` |
-| Royalty / Ideology / Anomaly | No | Deliberately not referenced — no def or texture in this mod resolves to a DLC other than Core or Biotech |
+| **Odyssey DLC** | No | Weapon trait abilities are `MayRequire`d against it |
+| **Melee Animation** (`co.uk.epicguru.meleeanimation`) | No | The arc tendon is `MayRequire`d against it |
+| Royalty / Ideology / Anomaly | No | Not referenced |
 | Any framework (VEF, EBSG, …) | No | — |
-| **Melee Animation** (`co.uk.epicguru.meleeanimation`) | For one gene | The arc tendon is `MayRequire`d against it: with the mod absent the gene, its ability and its hediff are never built, and the other thirteen are untouched |
 
-## The genes
+## Abilities
 
 ### Corrosive glands → *disarm spit*
 Spit contact acid at a target's weapon; they drop it and it lands a few cells away,
@@ -1083,34 +1084,35 @@ with it.
 ```
 About/About.xml                  metadata, Biotech + Harmony dependencies
 loadFolders.xml                  1.6 only
-1.6/Defs/AbilityDefs/            29 AbilityDefs + 2 abstract + AG_Genetic category
-1.6/Defs/GeneDefs/               14 GeneDefs, one of them MayRequire'd against Melee Animation
-1.6/Defs/HediffDefs/             15 hediffs + 2 abstract
-1.6/Defs/ThingDefs/              5 things: the involute aperture and the four blade states
-1.6/Assemblies/AbilityGenes.dll  built output, committed
-Textures/AbilityGenes/Panoply/   the only art in the mod: two blade sprites
+1.6/Defs/AbilityDefs/            AbilityDefs + AG_Genetic category
+1.6/Defs/GeneDefs/               GeneDefs, some MayRequire'd
+1.6/Defs/HediffDefs/             hediffs + abstracts
+1.6/Defs/ThingDefs/              the involute aperture and blade states
+1.6/Assemblies/RimArt.dll        built output, committed
+Textures/RimArt/Panoply/         blade sprites
 make_textures.py                 draws them; run it after editing, commit the PNGs
 Languages/English/Keyed/         message strings
-Source/AbilityGenes/             C# source
+Source/RimArt/                   C# source
 ```
 
-Def prefix is `AG_`. Every icon but the panoply organ's points at an existing Core/Biotech
-texture; see `iconPath` on each def to swap in your own. The two exceptions are the blade
-sprites in `Textures/AbilityGenes/Panoply/`, drawn by `make_textures.py` — see
-*How the panoply organ works* for why that gene could not borrow one.
+Def prefix is `AG_` (kept for save compatibility). Every icon but the panoply organ's
+points at an existing Core/Biotech texture; see `iconPath` on each def to swap in your
+own. The two exceptions are the blade sprites in `Textures/RimArt/Panoply/`, drawn by
+`make_textures.py` — see *How the panoply organ works* for why that gene could not
+borrow one.
 
 ## Building
 
 Needs a .NET SDK; the game assemblies are referenced straight out of the install.
 
 ```bash
-dotnet build Source/AbilityGenes/AbilityGenes.csproj
+dotnet build Source/RimArt/RimArt.csproj
 ```
 
 Output goes directly to `1.6/Assemblies/`. Override the game path if yours differs:
 
 ```bash
-dotnet build Source/AbilityGenes/AbilityGenes.csproj \
+dotnet build Source/RimArt/RimArt.csproj \
   -p:RimWorldManaged="/path/to/RimWorld/RimWorldWin64_Data/Managed"
 ```
 
