@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Pain Inhibitor — brain implant, industrial tier -->
+  <RecipeDef ParentName="SurgeryInstallImplantBase">
+    <defName>AG_InstallPainInhibitor</defName>
+    <label>install pain inhibitor</label>
+    <description>Install a pain inhibitor implant in the brain.</description>
+    <jobString>Installing pain inhibitor.</jobString>
+    <addsHediff>AG_PainInhibitor</addsHediff>
+    <appliedOnFixedBodyParts>
+      <li>Brain</li>
+    </appliedOnFixedBodyParts>
+  </RecipeDef>
+
+  <!-- Reflex Booster — spine implant, industrial tier -->
+  <RecipeDef ParentName="SurgeryInstallImplantBase">
+    <defName>AG_InstallReflexBooster</defName>
+    <label>install reflex booster</label>
+    <description>Install a reflex booster implant in the spine.</description>
+    <jobString>Installing reflex booster.</jobString>
+    <addsHediff>AG_ReflexBooster</addsHediff>
+    <appliedOnFixedBodyParts>
+      <li>Spine</li>
+    </appliedOnFixedBodyParts>
+  </RecipeDef>
+
+  <!-- Phase Barrier — brain implant, archotech tier -->
+  <RecipeDef ParentName="SurgeryInstallImplantBase">
+    <defName>AG_InstallPhaseBarrier</defName>
+    <label>install phase barrier</label>
+    <description>Install an archotech phase barrier implant in the brain.</description>
+    <jobString>Installing phase barrier.</jobString>
+    <workAmount>4000</workAmount>
+    <skillRequirements>
+      <Medicine>8</Medicine>
+    </skillRequirements>
+    <addsHediff>AG_PhaseBarrier</addsHediff>
+    <appliedOnFixedBodyParts>
+      <li>Brain</li>
+    </appliedOnFixedBodyParts>
+  </RecipeDef>
+
+  <!-- Neural Accelerator — brain implant, spacer tier -->
+  <RecipeDef ParentName="SurgeryInstallImplantBase">
+    <defName>AG_InstallNeuralAccelerator</defName>
+    <label>install neural accelerator</label>
+    <description>Install a neural accelerator implant in the brain.</description>
+    <jobString>Installing neural accelerator.</jobString>
+    <workAmount>3500</workAmount>
+    <skillRequirements>
+      <Medicine>6</Medicine>
+    </skillRequirements>
+    <addsHediff>AG_NeuralAccelerator</addsHediff>
+    <appliedOnFixedBodyParts>
+      <li>Brain</li>
+    </appliedOnFixedBodyParts>
+  </RecipeDef>
+
+</Defs>

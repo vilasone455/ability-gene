@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- Example: a trait that grants the provoke ability without the biological flavor.
-       This validates the trait ability system. Replace or expand as the roster grows. -->
+  <!-- Grants AG_Provoke — same ability as the Alarm Pheromones gene,
+       but flavored as natural authority rather than biology. -->
   <TraitDef>
     <defName>AG_CombatPresence</defName>
     <commonality>0.5</commonality>
@@ -20,6 +20,61 @@
       <li Class="RimArt.TraitAbilityExtension">
         <abilities>
           <li>AG_Provoke</li>
+        </abilities>
+      </li>
+    </modExtensions>
+  </TraitDef>
+
+  <!-- Grants all 5 imperative voice commands. A born leader who
+       can bark orders that enemies obey — no gene organ needed. -->
+  <TraitDef>
+    <defName>AG_CommandingVoice</defName>
+    <commonality>0.3</commonality>
+    <degreeDatas>
+      <li>
+        <label>commanding voice</label>
+        <description>This person has a voice that demands obedience. They can issue short, sharp commands that compel targets to act — stop, drop their weapon, kneel, come closer, or run.</description>
+        <degree>0</degree>
+      </li>
+    </degreeDatas>
+    <conflictingTraits>
+      <li>Wimp</li>
+    </conflictingTraits>
+    <requiredWorkTags>
+      <li>Violent</li>
+    </requiredWorkTags>
+    <modExtensions>
+      <li Class="RimArt.TraitAbilityExtension">
+        <abilities>
+          <li>AG_Imperative_Stop</li>
+          <li>AG_Imperative_Drop</li>
+          <li>AG_Imperative_Kneel</li>
+          <li>AG_Imperative_Come</li>
+          <li>AG_Imperative_Run</li>
+        </abilities>
+      </li>
+    </modExtensions>
+  </TraitDef>
+
+  <!-- Grants AG_Arrears — delay incoming damage. Flavored as
+       mental toughness rather than a nerve plexus. -->
+  <TraitDef>
+    <defName>AG_PainDebt</defName>
+    <commonality>0.3</commonality>
+    <degreeDatas>
+      <li>
+        <label>pain debt</label>
+        <description>This person can push through injuries by sheer willpower, deferring the full impact of wounds until the fight is over.</description>
+        <degree>0</degree>
+      </li>
+    </degreeDatas>
+    <conflictingTraits>
+      <li>Wimp</li>
+    </conflictingTraits>
+    <modExtensions>
+      <li Class="RimArt.TraitAbilityExtension">
+        <abilities>
+          <li>AG_Arrears</li>
         </abilities>
       </li>
     </modExtensions>

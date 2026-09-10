@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Pain inhibitor implant — grants Arrears (delay damage).
+       Installed in the brain. Same ability as the Deferred Plexus gene. -->
+  <HediffDef>
+    <defName>AG_PainInhibitor</defName>
+    <hediffClass>Hediff_Implant</hediffClass>
+    <label>pain inhibitor</label>
+    <labelNoun>a pain inhibitor</labelNoun>
+    <description>An implant in the brain that intercepts pain signals, allowing the user to defer the full impact of wounds.</description>
+    <defaultLabelColor>(0.6, 0.8, 1.0)</defaultLabelColor>
+    <isBad>false</isBad>
+    <abilities>
+      <li>AG_Arrears</li>
+    </abilities>
+  </HediffDef>
+
+  <!-- Reflex booster implant — grants Vector Reflection and Shove.
+       Installed in the spine. Same abilities as the Vector Reflex gene. -->
+  <HediffDef>
+    <defName>AG_ReflexBooster</defName>
+    <hediffClass>Hediff_Implant</hediffClass>
+    <label>reflex booster</label>
+    <labelNoun>a reflex booster</labelNoun>
+    <description>A spinal implant that enhances reflexive responses, allowing the user to deflect incoming projectiles or shove attackers away.</description>
+    <defaultLabelColor>(0.6, 0.8, 1.0)</defaultLabelColor>
+    <isBad>false</isBad>
+    <abilities>
+      <li>AG_VectorReflection</li>
+      <li>AG_VectorShove</li>
+    </abilities>
+  </HediffDef>
+
+  <!-- Phase barrier implant — grants Recursion.
+       Archotech-tier. Same ability as the Halving Membrane gene. -->
+  <HediffDef>
+    <defName>AG_PhaseBarrier</defName>
+    <hediffClass>Hediff_Implant</hediffClass>
+    <label>phase barrier</label>
+    <labelNoun>a phase barrier</labelNoun>
+    <description>An archotech implant that projects a recursive energy field around the user, halving each incoming hit.</description>
+    <defaultLabelColor>(0.5, 1.0, 0.6)</defaultLabelColor>
+    <isBad>false</isBad>
+    <abilities>
+      <li>AG_Recursion</li>
+    </abilities>
+  </HediffDef>
+
+  <!-- Neural accelerator implant — grants Time Lattice abilities.
+       Same abilities as the Time Lattice gene. -->
+  <HediffDef>
+    <defName>AG_NeuralAccelerator</defName>
+    <hediffClass>Hediff_Implant</hediffClass>
+    <label>neural accelerator</label>
+    <labelNoun>a neural accelerator</labelNoun>
+    <description>An implant that manipulates the user's perception of time, allowing them to speed up allies or slow down enemies in an area.</description>
+    <defaultLabelColor>(0.6, 0.8, 1.0)</defaultLabelColor>
+    <isBad>false</isBad>
+    <abilities>
+      <li>AG_TimeAlterDouble</li>
+      <li>AG_TimeAlterSquare</li>
+      <li>AG_TimeAlterStagnate</li>
+    </abilities>
+  </HediffDef>
+
+</Defs>
