@@ -45,12 +45,12 @@ Currently all abilities are granted via `GeneDef.<abilities>`. Need to support:
 
 ### Architecture Tasks
 
-- [ ] Create `AbilitySourceDef` or equivalent abstraction (optional — may not need one if each source uses vanilla mechanics)
-- [ ] Test `CompProperties_AbilityItem` for equipment-granted abilities
-- [ ] Build trait-based ability granting system
+- [x] Build trait-based ability granting system (`TraitAbilityExtension` + Harmony patches)
+- [x] Equipment abilities — use vanilla `CompProperties_AbilityItem` (XML only, no custom C#)
+- [x] Condition abilities — use vanilla `HediffDef.<abilities>` (XML only, no custom C#)
 - [ ] Build training/skill-based ability system (pawn trains to unlock)
 - [ ] Research Odyssey weapon trait API for `MayRequire` integration
-- [ ] Build condition-based ability triggers (e.g. "adrenaline surge when ally downed nearby")
+- [ ] ~~Create `AbilitySourceDef`~~ Not needed — each source uses its own vanilla or light-custom mechanism
 
 ### Key Principle
 

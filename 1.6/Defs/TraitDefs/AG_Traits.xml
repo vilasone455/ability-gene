@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Example: a trait that grants the provoke ability without the biological flavor.
+       This validates the trait ability system. Replace or expand as the roster grows. -->
+  <TraitDef>
+    <defName>AG_CombatPresence</defName>
+    <commonality>0.5</commonality>
+    <degreeDatas>
+      <li>
+        <label>combat presence</label>
+        <description>This person commands attention on the battlefield. Hostiles find it hard to ignore them.</description>
+        <degree>0</degree>
+      </li>
+    </degreeDatas>
+    <conflictingTraits>
+      <li>Wimp</li>
+    </conflictingTraits>
+    <modExtensions>
+      <li Class="RimArt.TraitAbilityExtension">
+        <abilities>
+          <li>AG_Provoke</li>
+        </abilities>
+      </li>
+    </modExtensions>
+  </TraitDef>
+
+</Defs>
