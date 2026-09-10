@@ -72,6 +72,38 @@ namespace RimArt
                 }
             }
 
+            if (pawn.health?.hediffSet != null)
+            {
+                List<Hediff> hediffs = pawn.health.hediffSet.hediffs;
+                for (int i = 0; i < hediffs.Count; i++)
+                {
+                    if (hediffs[i].def.abilities != null && hediffs[i].def.abilities.Contains(ability))
+                        return true;
+                }
+            }
+
+            if (pawn.equipment != null)
+            {
+                List<ThingWithComps> equips = pawn.equipment.AllEquipmentListForReading;
+                for (int i = 0; i < equips.Count; i++)
+                {
+                    CompEquippableAbilityReloadable comp = equips[i].TryGetComp<CompEquippableAbilityReloadable>();
+                    if (comp?.Props?.abilityDef == ability)
+                        return true;
+                }
+            }
+
+            if (pawn.apparel != null)
+            {
+                List<Apparel> worn = pawn.apparel.WornApparel;
+                for (int i = 0; i < worn.Count; i++)
+                {
+                    CompEquippableAbilityReloadable comp = worn[i].TryGetComp<CompEquippableAbilityReloadable>();
+                    if (comp?.Props?.abilityDef == ability)
+                        return true;
+                }
+            }
+
             return false;
         }
     }

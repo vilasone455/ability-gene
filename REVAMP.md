@@ -49,7 +49,7 @@ Currently all abilities are granted via `GeneDef.<abilities>`. Need to support:
 - [x] Equipment abilities — use vanilla `CompProperties_AbilityItem` (XML only, no custom C#)
 - [x] Condition abilities — use vanilla `HediffDef.<abilities>` (XML only, no custom C#)
 - [ ] Build training/skill-based ability system (pawn trains to unlock)
-- [ ] Research Odyssey weapon trait API for `MayRequire` integration
+- [x] Odyssey weapon traits — use vanilla `WeaponTraitDef.abilityProps` (XML only, no custom C#, MayRequire on defs)
 - [ ] ~~Create `AbilitySourceDef`~~ Not needed — each source uses its own vanilla or light-custom mechanism
 
 ### Key Principle
