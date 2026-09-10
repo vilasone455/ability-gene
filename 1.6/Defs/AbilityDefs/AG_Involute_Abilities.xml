@@ -27,7 +27,7 @@
       </targetParams>
     </verbProperties>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityVent" />
+      <li Class="RimArt.CompProperties_AbilityVent" />
     </comps>
   </AbilityDef>
 
@@ -57,7 +57,7 @@
       </targetParams>
     </verbProperties>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityFold" />
+      <li Class="RimArt.CompProperties_AbilityFold" />
     </comps>
   </AbilityDef>
 
@@ -96,7 +96,7 @@
       </targetParams>
     </verbProperties>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilitySwallow" />
+      <li Class="RimArt.CompProperties_AbilitySwallow" />
     </comps>
   </AbilityDef>
 
@@ -127,7 +127,7 @@
       </targetParams>
     </verbProperties>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityPost" />
+      <li Class="RimArt.CompProperties_AbilityPost" />
     </comps>
   </AbilityDef>
 
@@ -157,7 +157,7 @@
       </targetParams>
     </verbProperties>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityCollapse" />
+      <li Class="RimArt.CompProperties_AbilityCollapse" />
     </comps>
   </AbilityDef>
 

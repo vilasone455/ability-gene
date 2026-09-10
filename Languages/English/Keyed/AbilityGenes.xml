@@ -77,6 +77,10 @@
   <AG_PanoplyBladeOwner>Extruded from {0}. Called back in {1}.</AG_PanoplyBladeOwner>
 
 
+  <AG_ArcNeedsPawn>Must target a person, animal or mech.</AG_ArcNeedsPawn>
+  <AG_ArcBadTarget>{0} cannot be arced to - they are down, gone, or already caught in something else.</AG_ArcBadTarget>
+  <AG_ArcRunning>{0} is already mid-arc.</AG_ArcRunning>
+  <AG_ArcNoWeapon>{0} has nothing in hand the arc knows how to strike with.</AG_ArcNoWeapon>
 
   <AG_DispersalLabel>Auto Scatter: {0}/{1}</AG_DispersalLabel>
   <AG_DispersalFullDesc>The plexus is holding {0} shared charges for Scatter, Murder and Carrion.</AG_DispersalFullDesc>

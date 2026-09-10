@@ -33,7 +33,7 @@
       </targetParams>
     </verbProperties>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityDisarm">
+      <li Class="RimArt.CompProperties_AbilityDisarm">
         <scatterRadius>3</scatterRadius>
         <forbidDropped>true</forbidDropped>
         <goodwillImpact>-15</goodwillImpact>
@@ -142,7 +142,7 @@
       </targetParams>
     </verbProperties>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityTimeBubble">
+      <li Class="RimArt.CompProperties_AbilityTimeBubble">
         <radius>6.9</radius>
         <durationTicks>1200</durationTicks>
         <frozenAreInvulnerable>true</frozenAreInvulnerable>

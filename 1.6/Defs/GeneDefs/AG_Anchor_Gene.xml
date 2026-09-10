@@ -5,7 +5,7 @@
     <defName>AG_AnchorOrgan</defName>
     <label>anchor organ</label>
     <description>Your pawn can walk up to something and leave a mark on it. A person, an animal, a raider, or just a patch of ground. The mark stays where it is put and travels with whoever is wearing it.\n\nThen they clap, and two marked places change over. Your pawn and a mark, or any two marks with each other - you pick which. Whatever was standing at one end is now standing at the other, and it works at any distance across the map.\n\nThe clap takes both hands. This pawn does not carry a weapon, ever, and marking something means walking close enough to touch it first.</description>
-    <geneClass>AbilityGenes.Gene_Anchors</geneClass>
+    <geneClass>RimArt.Gene_Anchors</geneClass>
     <iconPath>UI/Icons/Genes/Gene_ElongatedFingers</iconPath>
     <displayCategory>Ability</displayCategory>
     <displayOrderInCategory>170</displayOrderInCategory>
@@ -23,7 +23,7 @@
     <biostatMet>-2</biostatMet>
     <biostatCpx>4</biostatCpx>
     <modExtensions>
-      <li Class="AbilityGenes.AnchorGeneExtension">
+      <li Class="RimArt.AnchorGeneExtension">
         <maxAnchors>3</maxAnchors>
         <markDurationTicks>60000</markDurationTicks>
         <banWeapons>true</banWeapons>

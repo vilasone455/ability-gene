@@ -5,7 +5,7 @@
     <defName>AG_PanoplyOrgan</defName>
     <label>panoply organ</label>
     <description>A frame that carries more of itself than it needs, and can throw the surplus.\n\nWhat comes out are blades - real ones, edged and balanced, extruded whole and flung high enough that they come down point first over somewhere the carrier chose. They stand where they land. They can be called at a target, all at once, from wherever they happen to be standing, and one can be pulled back into a waiting hand as a plain steel longsword.\n\nEverything that is out is missing. A carrier standing over a field of their own blades is holding less of themselves than a person is supposed to, and moves and works like it, until the blades are spent or the body takes them back.</description>
-    <iconPath>AbilityGenes/Panoply/IconGene</iconPath>
+    <iconPath>RimArt/Panoply/IconGene</iconPath>
     <displayCategory>Ability</displayCategory>
     <displayOrderInCategory>230</displayOrderInCategory>
     <marketValueFactor>2.1</marketValueFactor>

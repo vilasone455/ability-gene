@@ -1,7 +1,9 @@
 # Ability Genes
 
 A RimWorld **1.6** mod adding fourteen genes, each granting active abilities that do
-something no vanilla gene — and as far as I can tell, no popular gene mod — does.
+something no vanilla gene — and as far as I can tell, no popular gene mod — does. Thirteen of
+them need nothing but Biotech; the fourteenth is built on another mod's animations and is not
+built at all without it.
 
 ## Dependencies
 
@@ -11,6 +13,7 @@ something no vanilla gene — and as far as I can tell, no popular gene mod — 
 | **Harmony** (`brrainz.harmony`) | **Yes** | Patches `Thing.DoTick`, `Thing.TakeDamage` and `ReservationManager.CanReserve` |
 | Royalty / Ideology / Anomaly | No | Deliberately not referenced — no def or texture in this mod resolves to a DLC other than Core or Biotech |
 | Any framework (VEF, EBSG, …) | No | — |
+| **Melee Animation** (`co.uk.epicguru.meleeanimation`) | For one gene | The arc tendon is `MayRequire`d against it: with the mod absent the gene, its ability and its hediff are never built, and the other thirteen are untouched |
 
 ## The genes
 
@@ -357,6 +360,39 @@ Hearing does not hear it and nothing happens — no effect, no cooldown spent, a
 so. Mechs are excluded at the targeting params. No vanilla mechanic attacks or defends Hearing,
 which makes this a real answer a player can find rather than an immunity flag this mod invented.
 
+### Arc tendon → *arc* (needs Melee Animation)
+
+One cast, up to three people, and none of the damage is this mod's. Met −3, Cpx 5.
+
+| Ability | Effect | Cooldown |
+|---|---|---|
+| Arc | The carrier crosses to one enemy and strikes, then to the nearest enemy still standing to *that* one, up to three in a cast | half an in-game day |
+
+**This is the only gene here that does not exist on its own.** `MayRequire` sits on the GeneDef,
+the AbilityDef and the HediffDef, so without Melee Animation loaded none of the three is built
+and nothing in the game refers to them. That is the honest shape for it: the whole point of the
+arc is the blow at the far end, the blow is one of their executions, and a version of this gene
+that drew nothing would be a teleport with a damage number attached — which is not worth a gene.
+
+**The damage is theirs, deliberately.** The strike is resolved by `OutcomeUtility` against the
+carrier's own weapon, melee skill and Lethality stat, exactly as an execution the player started
+by hand would be. It can kill, and often does. A number invented here would only have disagreed
+with every other execution in the game. An arc also puts the carrier's ordinary execute button on
+its own cooldown, because it just spent three of them.
+
+**The chain is decided in the tick the button is pressed**, and each link is the nearest enemy to
+the *previous target* rather than to the carrier — which is what makes the shape of the chain the
+shape of the crowd. A raider standing on their own is one hop; five in a doorway is three. Every
+link needs line of sight from the last one, for the same reason the first target does: an arc is a
+step, not a teleport past masonry. The arc does not re-pick as it goes — anyone who has gone down,
+died or been caught in someone else's animation by the time it arrives is skipped, and the arc
+spends what is left.
+
+**The cost is charged per person hit, not per cast.** `AG_ArcRecoil` takes 0.33 a hop and clears
+itself in twenty seconds, so a full three-target chain lands on the top stage and leaves the
+carrier standing over three bodies barely able to hold anything — and an arc that found one target
+and ran out costs a third of that. The player is never punished for the arc running out of people.
+
 ## How reflection works
 
 Three mechanisms, one for each thing the reflex has to do.
@@ -435,10 +471,13 @@ silently scale them by the multiplier. Each guards on `Find.TickManager.TicksGam
 
 ### Afterimages
 
-`PawnRenderer.RenderPawnAt` exposes no alpha, so these are **solid** copies of the pawn drawn
-at recorded positions, not fading ghosts. Ghost count tracks the tier, so you can read how
-hard someone is pushing without opening the gizmo bar. If it looks wrong in play, set
-`drawAfterimages` false on the hediff comp rather than rebuilding.
+`PawnRenderer` exposes no alpha, so these are **solid** copies of the pawn drawn at recorded
+positions, not fading ghosts. Ghost count tracks the tier, so you can read how hard someone is
+pushing without opening the gizmo bar. If it looks wrong in play, set `drawAfterimages` false on
+the hediff comp rather than rebuilding.
+
+This shipped drawing nothing at all. A lone `RenderPawnAt` at a position of your own is a no-op in
+1.6 — see *How the arc tendon works* for why, and for what replaced it.
 
 ## How the anchor organ works
 
@@ -921,14 +960,132 @@ day of work, and only play decides which of those it currently is.
 Rain has no `aiCanUse`, like every ability in this mod. A raider carrying this gene does nothing
 with it.
 
+## How the arc tendon works
+
+**One reflection bridge, three calls, no assembly reference.** `MeleeAnimation` is the only class
+in this mod that knows the other mod exists, and it reaches it through `AccessTools` rather than a
+compile-time reference. The reason is that this dll has to load and run with Melee Animation
+absent: a real reference is resolved the moment any method touching one of their types is jitted,
+and the method jitted first is never the one you expected. Reflection turns that into a runtime
+question with an answer the class can hold. What it needs from them is small and has been stable
+across 1.4–1.6:
+
+| Their member | What it answers |
+|---|---|
+| `AnimDef.GetExecutionAnimationsForPawnAndWeapon` | which executions this carrier's weapon can throw |
+| `OutcomeUtility.GenerateRandomOutcome` | what the blow does to the person it lands on |
+| `AnimationStartParameters.TryTrigger` | play it, and hand back how many ticks it lasts |
+
+Anything thrown across that bridge switches it off for the session rather than repeating once a
+tick. A silent gene is a bug report; a log full of the same exception is a bug report nobody can
+read.
+
+**The run is two phases and both are one line of state.** Dash puts the carrier beside somebody
+and remembers who; strike, ten ticks later, throws the blow and waits out however long the
+animation says it takes. Everything else — the beat between people, the afterimages, the recoil —
+hangs off those two moments. It lives in a `MapComponent` rather than on a hediff because a run is
+not a state the carrier is in; it is a three-second sequence being played at them that has to
+survive them being knocked about mid-way.
+
+**The twelve ticks between arriving and striking exist entirely for the trail.** Melee Animation
+takes over drawing a pawn the moment its animation starts, so anything drawn in the same tick as
+the strike is drawn for nobody. A fifth of a second of the carrier plainly standing somewhere they
+were not is what makes the blink read as a blink.
+
+**Drawing a pawn where it is not takes all three phases, and that is not obvious.** As of 1.6 the
+draw phase uses results the render tree computed earlier in the frame for wherever the pawn
+actually is, so `RenderPawnAt` called on its own with a position of your own draws *nothing* — no
+error, no ghost, no clue. Both this gene and the time lattice shipped doing exactly that and drew
+no afterimages at all in game. What works is `DynamicDrawPhaseAt` for `EnsureInitialized`,
+`ParallelPreDraw` and `Draw` in sequence at the ghost position, which is the same thing Melee
+Animation's own render patch does to put a pawn somewhere the game did not expect, and then a
+fourth call pushing the results back to the real position so nothing else inherits the last
+ghost's. The ghosts are still solid — `PawnRenderer` exposes no alpha — so the trail thins by
+losing ghosts rather than by fading them, and their lifetimes are staggered by place in the line
+so it retracts toward the carrier instead of blinking out evenly. A trail that vanishes all at once
+reads as five people; one that retracts reads as one person moving.
+
+**The streak is a plain quad, not one of Core's line motes.** Every line-shaped mote in the game is
+drawn by a system that decides its own heading, and borrowing one means inheriting a texture whose
+"up" has to be guessed at — which is the mistake the panoply organ made twice with the longsword
+sprite. A solid additive quad scaled along the path has no heading of its own to be wrong about:
+the rotation is the compass angle of the dash and nothing else. Two layers, because one bright
+rectangle reads as a bar rather than as speed — a wide dim glow for edges that fall off, a narrow
+bright core inside it for the line. The fade is baked into the material at eight quantised steps
+rather than pushed through a property block, so it cannot depend on whether a given shader honours
+one.
+
+**Their promotion roll is asked for, and that is most of what the gene looks like.** Melee Animation
+does not simply play the execution it picked: on a killing outcome it rolls again to promote that
+animation into a better one — the beheadings, the head removals, the lift on a spear. Skipping that
+roll left the best half of their animation set on the shelf and made an arc look like three melee
+hits in a row. Asking for it means handing over a `PromotionInput` built the way their float menu
+builds one, including a real occupied mask off the carrier's landing cell, so a promoted animation
+cannot finish with somebody standing in a wall. The pick before it is weighted by their
+`Probability` too, which is a def value multiplied by the player's own settings — somebody who
+turned an animation off in Melee Animation has said they do not want to see it, and an arc is not
+the place to argue.
+
+None of that is required for the gene to work. Every one of those members is null-checked
+separately from the four the bridge cannot do without, so a version of Melee Animation that moved
+or renamed them costs the arc its flourishes rather than its function.
+
+**The carrier is held still between arriving and striking.** `Notify_Teleported` drops whatever job
+they had, which left them free to start walking somewhere in the pause and get yanked back mid-step.
+A short wait job holds them, expires on its own if the arc is cut short, and is replaced outright by
+the animation when the strike begins. They also arrive already facing the person they came for.
+
+**The arc does not borrow the anchor organ's skip flashes,** and that is a deliberate refusal. A
+clap is a psychic exchange of two places and is dressed as one; an arc is a person crossing nine
+cells faster than the eye follows, so what it leaves is disturbed ground, sparks off the stop and a
+line of light. Two genes that both move somebody instantly should not look the same, or watching
+either one teaches the player nothing.
+
+**The landing cell is not a choice, it is their layout.** An execution is laid out with the
+attacker at (0,0) and the victim at (1,0), so the only two cells that can carry one are directly
+west of the victim, or directly east with the animation mirrored — which is what `flipX` is for.
+The root transform is read off `Pawn.Position`, so the teleport can happen in the same tick as the
+trigger. If neither cell is free the arc still happens: the carrier takes any adjacent cell and
+throws an ordinary melee swing instead. A corridor fight is exactly where somebody presses this,
+and refusing it there because the geometry is tight would read as broken rather than constrained.
+
+**Downed targets are excluded, and that is their rule rather than a choice made here** — their
+renderer refuses a downed pawn outright. It happens to be the right rule anyway: an arc is three
+people taken out of a fight, not a tour of the wounded.
+
+**No Harmony patch anywhere**, like the larynx and the panoply organ. Nothing here prefixes
+`Thing.TakeDamage`, so it sits outside the ordering that arrears, the membrane, the stasis field
+and the vector reflex all have to agree about.
+
+### Known gaps
+
+**Nothing here has been in front of the game yet.** It compiles, validates, and the API it reaches
+for was read out of Melee Animation's own 1.6 source. The parts most likely to bite: whether
+`Pawn.Position` written directly is enough for their root transform in every case or whether a
+carrier who was mid-path needs a tick to settle, whether three executions back to back read as one
+movement or as three separate animations with pauses in them, whether the promotion roll ever picks
+an animation whose end cells do not suit a chain that is about to move again, and whether the recoil
+curve is a weight or a punishment.
+
+The carrier is held still only for the pause before each strike, not for the twenty ticks after one
+finishes. If they visibly start walking somewhere in that gap, the hold wants extending to cover it
+as well.
+
+The cooldown — half an in-game day — is a guess made against what three executions are worth, not a
+measured figure. So is the 9.9 chain radius, which is the number that decides whether this is a
+crowd ability or a duel ability.
+
+Arc has no `aiCanUse`, like every ability in this mod. A raider carrying this gene does nothing
+with it.
+
 ## Layout
 
 ```
 About/About.xml                  metadata, Biotech + Harmony dependencies
 loadFolders.xml                  1.6 only
-1.6/Defs/AbilityDefs/            28 AbilityDefs + 2 abstract + AG_Genetic category
-1.6/Defs/GeneDefs/               13 GeneDefs
-1.6/Defs/HediffDefs/             14 hediffs + 2 abstract
+1.6/Defs/AbilityDefs/            29 AbilityDefs + 2 abstract + AG_Genetic category
+1.6/Defs/GeneDefs/               14 GeneDefs, one of them MayRequire'd against Melee Animation
+1.6/Defs/HediffDefs/             15 hediffs + 2 abstract
 1.6/Defs/ThingDefs/              5 things: the involute aperture and the four blade states
 1.6/Assemblies/AbilityGenes.dll  built output, committed
 Textures/AbilityGenes/Panoply/   the only art in the mod: two blade sprites
@@ -1081,30 +1238,16 @@ Still unverified:
 - **the panoply organ beyond its first look.** Rain has been cast in game and the blades land,
   plant and hold; what has not been tested is loose, grasp, the debt curve, or any of it in a
   fight. See its own *Known gaps* above
+- **everything in the arc tendon.** It compiles and validates and has never been in front of the
+  game, and unlike the rest of the mod it is talking to another mod's internals. The parts most
+  likely to bite are in its own *Known gaps* above; the first thing to check is simply whether a
+  three-target chain reads as one movement
 - **everything in the involute organ.** It compiles and validates and has never been in front of
   the game. The parts most likely to bite: whether `Projectile.Launch` with a null launcher
   survives contact with real projectile code, whether the `MoteGlow` shader on the aperture's
   `SkipInnerDimension` texture reads as a hole or as a violet smear, whether a lone pawn on a
   pocket map will take jobs at all - tending, eating, sleeping on a posted bed, which is what
   makes the rescue play work - and whether hostiles ever choose to shoot a ground aperture
-
-
-## Dispersal plexus
-
-Three crow abilities share three charges; one charge regrows each in-game hour.
-
-- **Murder:** targeted flight up to 35 cells, crossing obstacles without line of sight.
-  Costs one charge, with a 0.2-second cast and ten-second cooldown. The pawn stays hidden
-  during flight and lands without blood loss or a recovery penalty.
-- **Auto Scatter:** a saved on/off toggle. While enabled, an awake, standing carrier evades
-  qualifying hits of at least six damage and relocates five to ten cells toward safety.
-  Costs one charge and 4% blood loss, with 15% slower movement for two seconds.
-  Relocation is instant; animated crows follow the route. Disabling Scatter preserves charges.
-- **Carrion:** sends feeding crows to consume a fresh corpse and bring recovery back to the
-  carrier, who stays visible and does not travel with them.
-
-Flying crows use eight distinct wingbeat poses and leave feather trails. Existing carriers
-gain newly added abilities after the game resumes.
 
 ### Carrion: a feeding flock
 

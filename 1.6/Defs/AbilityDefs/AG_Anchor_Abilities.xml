@@ -30,7 +30,7 @@
       </targetParams>
     </verbProperties>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityMark" />
+      <li Class="RimArt.CompProperties_AbilityMark" />
     </comps>
   </AbilityDef>
 
@@ -65,7 +65,7 @@
       </targetParams>
     </verbProperties>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityClap" />
+      <li Class="RimArt.CompProperties_AbilityClap" />
       <li Class="CompProperties_AbilityRequiresCapacity">
         <capacity>Manipulation</capacity>
       </li>
@@ -103,7 +103,7 @@
       </targetParams>
     </verbProperties>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityDoubleClap">
+      <li Class="RimArt.CompProperties_AbilityDoubleClap">
         <destination>Selected</destination>
         <range>9999</range>
         <requiresLineOfSight>false</requiresLineOfSight>

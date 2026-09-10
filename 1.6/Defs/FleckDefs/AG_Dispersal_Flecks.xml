@@ -6,7 +6,7 @@
   <FleckDef ParentName="FleckBase">
     <defName>AG_DispersalFeather</defName>
     <graphicData>
-      <texPath>AbilityGenes/Dispersal/Feather</texPath>
+      <texPath>RimArt/Dispersal/Feather</texPath>
     </graphicData>
     <altitudeLayer>MoteOverhead</altitudeLayer>
     <fadeInTime>0.05</fadeInTime>

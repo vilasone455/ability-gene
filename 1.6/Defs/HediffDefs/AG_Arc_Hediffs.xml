@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The cost, and it is charged per person hit rather than per cast. An arc that finds one
+       target and stops costs a third of what a full three-target chain costs, which means the
+       player is never punished for the arc running out of people.
+
+       Twenty seconds is long enough to matter in the fight it was spent in and short enough
+       that it is gone before the next one. It is not an injury: no doctor is involved, nothing
+       scars, and it clears on its own. -->
+  <HediffDef MayRequire="co.uk.epicguru.meleeanimation">
+    <defName>AG_ArcRecoil</defName>
+    <label>arc recoil</label>
+    <description>This person stopped several times faster than a body is built to stop.\n\nNothing is torn. Everything is simply still ringing - the joints that took the arrival, the eyes that have not caught up with where they are standing, the hand that is still holding a strike that already landed. It passes.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.85, 0.80, 0.62)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>true</isBad>
+    <maxSeverity>1</maxSeverity>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>1200</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <label>ringing</label>
+        <capMods>
+          <li>
+            <capacity>Manipulation</capacity>
+            <offset>-0.10</offset>
+          </li>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.08</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <minSeverity>0.60</minSeverity>
+        <label>jarred</label>
+        <painOffset>0.08</painOffset>
+        <capMods>
+          <li>
+            <capacity>Manipulation</capacity>
+            <offset>-0.22</offset>
+          </li>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.18</offset>
+          </li>
+          <li>
+            <capacity>Sight</capacity>
+            <offset>-0.10</offset>
+          </li>
+        </capMods>
+      </li>
+      <!-- A full three-target chain. The carrier is standing over three people and is, for the
+           next twenty seconds, worse at everything than the colonist who walked. -->
+      <li>
+        <minSeverity>0.95</minSeverity>
+        <label>wrung out</label>
+        <painOffset>0.18</painOffset>
+        <capMods>
+          <li>
+            <capacity>Manipulation</capacity>
+            <offset>-0.38</offset>
+          </li>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.32</offset>
+          </li>
+          <li>
+            <capacity>Sight</capacity>
+            <offset>-0.20</offset>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

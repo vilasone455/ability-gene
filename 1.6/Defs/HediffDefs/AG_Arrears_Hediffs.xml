@@ -20,7 +20,7 @@
     <maxSeverity>1</maxSeverity>
     <comps>
       <li Class="HediffCompProperties_DisappearsOnDeath" />
-      <li Class="AbilityGenes.HediffCompProperties_Arrears">
+      <li Class="RimArt.HediffCompProperties_Arrears">
         <durationTicks>1200</durationTicks>
         <severityPerDamage>120</severityPerDamage>
       </li>

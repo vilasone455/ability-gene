@@ -43,7 +43,7 @@
     <maxSeverity>1</maxSeverity>
     <comps>
       <li Class="HediffCompProperties_DisappearsOnDeath" />
-      <li Class="AbilityGenes.HediffCompProperties_Vent">
+      <li Class="RimArt.HediffCompProperties_Vent">
         <durationTicks>1800</durationTicks>
       </li>
     </comps>

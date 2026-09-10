@@ -24,7 +24,7 @@
   <GenStepDef>
     <defName>AG_InvoluteVolume</defName>
     <order>500</order>
-    <genStep Class="AbilityGenes.GenStep_InvoluteVolume">
+    <genStep Class="RimArt.GenStep_InvoluteVolume">
       <floor>Gravel</floor>
       <patchTerrain>SoftSand</patchTerrain>
       <poolTerrain>WaterOceanDeep</poolTerrain>

@@ -26,7 +26,7 @@
     <defaultLabelColor>(1, 0.7, 0.35)</defaultLabelColor>
     <isBad>false</isBad>
     <comps>
-      <li Class="AbilityGenes.HediffCompProperties_MetabolicOverdrive">
+      <li Class="RimArt.HediffCompProperties_MetabolicOverdrive">
         <intervalTicks>60</intervalTicks>
         <nutritionPerInterval>0.05</nutritionPerInterval>
         <healPerInterval>1.5</healPerInterval>
@@ -52,7 +52,7 @@
     <defaultLabelColor>(1, 0.4, 0.35)</defaultLabelColor>
     <isBad>false</isBad>
     <comps>
-      <li Class="AbilityGenes.HediffCompProperties_Provoke">
+      <li Class="RimArt.HediffCompProperties_Provoke">
         <radius>12.9</radius>
         <intervalTicks>60</intervalTicks>
       </li>

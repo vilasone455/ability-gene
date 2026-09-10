@@ -16,7 +16,7 @@
     <defName>AG_DispersalMurder</defName>
     <label>murder</label>
     <description>Disperse into a flock of crows and fly to a chosen location up to 35 cells away, crossing walls, water, fire and enemies without line of sight. The destination must be revealed and able to support a standing pawn.\n\nLand ready to act, with no blood loss or reassembly penalty. Costs one of the plexus's three shared charges. Cast time: 0.2 seconds. Cooldown: 10 seconds. One charge regrows each game hour.\n\nToggle automatic Scatter off to reserve charges for deliberate flight.</description>
-    <iconPath>AbilityGenes/Dispersal/IconGene</iconPath>
+    <iconPath>RimArt/Dispersal/IconGene</iconPath>
     <cooldownTicksRange>600</cooldownTicksRange>
     <hostile>false</hostile>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
@@ -37,7 +37,7 @@
       </targetParams>
     </verbProperties>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityMurder" />
+      <li Class="RimArt.CompProperties_AbilityMurder" />
     </comps>
   </AbilityDef>
 
@@ -45,7 +45,7 @@
     <defName>AG_DispersalCarrion</defName>
     <label>carrion</label>
     <description>Send a flock of crows to feast on a nearby fresh corpse. The carrier remains in place while the birds strip the body away, then return with what they have taken.\n\nWhen the flock returns, it heals bleeding injuries and restores lost blood. Carriers with a Hemogen reserve also recover Hemogen.\n\nConsumes the corpse and one dispersal charge. Only one feeding flock can be active at a time. Cannot restore missing body parts, remove scars, or cure disease.\n\nRange: 10 cells. Feeding takes two seconds, plus travel time. A human-sized corpse restores up to 20 injury points, 20% blood loss, and 20% Hemogen. Smaller corpses provide proportionally less. If the corpse is removed before feeding finishes, or the carrier dies or leaves the map, the flock is lost without recovery. The spent charge is not refunded.</description>
-    <iconPath>AbilityGenes/Dispersal/IconCarrion</iconPath>
+    <iconPath>RimArt/Dispersal/IconCarrion</iconPath>
     <cooldownTicksRange>60</cooldownTicksRange>
     <hostile>false</hostile>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
@@ -67,7 +67,7 @@
       </targetParams>
     </verbProperties>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityCarrion" />
+      <li Class="RimArt.CompProperties_AbilityCarrion" />
     </comps>
   </AbilityDef>
 

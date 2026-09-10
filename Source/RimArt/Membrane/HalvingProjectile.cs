@@ -1,0 +1,141 @@
+using HarmonyLib;
+using UnityEngine;
+using Verse;
+using Verse.Sound;
+
+namespace RimArt
+{
+    /// <summary>
+    /// One projectile caught by a membrane, and the Zeno curve it is now following.
+    ///
+    /// The engine cannot express this on its own. A projectile's speed comes from its def and
+    /// its position is a straight lerp along origin->destination driven by ticksToImpact, and
+    /// StartingTicksToImpact is a computed property with no setter - so there is no per-instance
+    /// way to make one round travel slower than its def says. Instead the projectile is taken
+    /// off the engine's clock entirely (Projectile.TickInterval is skipped) and its reported
+    /// position is overridden:
+    ///
+    ///     d = entryDistance * 0.5 ^ (ticksHeld / halfLifeTicks)
+    ///
+    /// distance from the point it was caught heading for. That anchor is fixed in world space at
+    /// capture, not re-read from the holder: a round is a thing in the world travelling its own
+    /// straight line, and re-anchoring it every tick would drag held rounds along behind a
+    /// walking carrier, which is nonsense. The carrier stepping aside is instead a release - the
+    /// round was never stopped, and it goes back to finishing its original trip.
+    ///
+    /// The distance halves forever, never reaches zero, and - because each step is a fraction of
+    /// the last - the per-tick movement shrinks smoothly rather than stuttering. Nothing is ever
+    /// cancelled; the round is still arriving.
+    /// </summary>
+    public class HalvingProjectile
+    {
+        private static readonly AccessTools.FieldRef<Projectile, Vector3> OriginRef =
+            AccessTools.FieldRefAccess<Projectile, Vector3>("origin");
+        private static readonly AccessTools.FieldRef<Projectile, Vector3> DestinationRef =
+            AccessTools.FieldRefAccess<Projectile, Vector3>("destination");
+        private static readonly AccessTools.FieldRef<Projectile, int> TicksToImpactRef =
+            AccessTools.FieldRefAccess<Projectile, int>("ticksToImpact");
+        private static readonly AccessTools.FieldRef<Projectile, Sustainer> AmbientSustainerRef =
+            AccessTools.FieldRefAccess<Projectile, Sustainer>("ambientSustainer");
+
+        public readonly HediffComp_Recursion Holder;
+
+        /// <summary>Where the round was heading when it was caught. Fixed in world space.</summary>
+        private readonly Vector3 anchor;
+
+        /// <summary>Unit vector from the anchor back out along the round's line of approach.</summary>
+        private readonly Vector3 approach;
+        private readonly float entryDistance;
+        private readonly float halfLifeTicks;
+        private readonly float minDistance;
+
+        private int ticksHeld;
+
+        public HalvingProjectile(Projectile projectile, HediffComp_Recursion holder,
+            float halfLifeTicks, float minDistance)
+        {
+            Holder = holder;
+            this.halfLifeTicks = Mathf.Max(1f, halfLifeTicks);
+            this.minDistance = minDistance;
+
+            anchor = holder.Pawn.DrawPos;
+            anchor.y = 0f;
+
+            Vector3 offset = projectile.ExactPosition - anchor;
+            offset.y = 0f;
+
+            entryDistance = Mathf.Max(offset.magnitude, minDistance);
+            approach = offset.sqrMagnitude > 0.0001f ? offset.normalized : Vector3.forward;
+        }
+
+        public void Advance(int delta)
+        {
+            ticksHeld += delta;
+        }
+
+        /// <summary>
+        /// Where the round has got to. Clamped at minDistance only so it does not disappear
+        /// inside the anchor once the halvings take it below a pixel - the curve itself has no
+        /// floor.
+        /// </summary>
+        public Vector3 CurrentPosition()
+        {
+            float distance = entryDistance * Mathf.Pow(0.5f, ticksHeld / halfLifeTicks);
+            if (distance < minDistance) distance = minDistance;
+            return anchor + approach * distance;
+        }
+
+        /// <summary>
+        /// True once the carrier has walked out from behind their own membrane. The round is
+        /// handed straight back rather than following them: it is still on the line it was
+        /// fired along, and that line no longer has anyone standing on it.
+        /// </summary>
+        public bool CarrierHasLeft(float fieldRadius)
+        {
+            Pawn pawn = Holder.Pawn;
+            if (pawn == null || !pawn.Spawned) return true;
+
+            Vector3 offset = pawn.DrawPos - anchor;
+            offset.y = 0f;
+            return offset.sqrMagnitude > fieldRadius * fieldRadius;
+        }
+
+        /// <summary>
+        /// Ambient sound is normally maintained from Projectile.TickInterval, which is skipped
+        /// while the round is held. Rockets and the like would otherwise log a stale sustainer.
+        /// </summary>
+        public void MaintainSound(Projectile projectile)
+        {
+            Sustainer sustainer = AmbientSustainerRef(projectile);
+            if (sustainer != null && !sustainer.Ended) sustainer.Maintain();
+        }
+
+        /// <summary>
+        /// Hands the round back to the engine from wherever the halvings left it.
+        ///
+        /// Position is a lerp of origin->destination by (1 - ticksToImpact/StartingTicksToImpact),
+        /// so moving origin to the held position and setting ticksToImpact back to a full
+        /// timeline puts the lerp at zero - the round resumes exactly where it was drawn, at its
+        /// def's normal speed, and finishes the trip it never stopped making.
+        /// </summary>
+        public void Release(Projectile projectile)
+        {
+            if (projectile == null || projectile.Destroyed) return;
+
+            Vector3 held = CurrentPosition();
+            held.y = 0f;
+            Vector3 destination = DestinationRef(projectile);
+
+            float speed = projectile.def.projectile != null
+                ? projectile.def.projectile.SpeedTilesPerTick
+                : 1f;
+            if (speed <= 0f) speed = 1f;
+
+            Vector3 remaining = destination - held;
+            remaining.y = 0f;
+
+            OriginRef(projectile) = held;
+            TicksToImpactRef(projectile) = Mathf.Max(1, Mathf.CeilToInt(remaining.magnitude / speed));
+        }
+    }
+}

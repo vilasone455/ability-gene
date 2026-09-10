@@ -59,7 +59,7 @@
       </targetParams>
     </verbProperties>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityVectorShove">
+      <li Class="RimArt.CompProperties_AbilityVectorShove">
         <pushCells>6</pushCells>
         <stunTicks>60</stunTicks>
         <damagePerCell>1.5</damagePerCell>

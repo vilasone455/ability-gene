@@ -24,7 +24,7 @@
     <defName>AG_PanoplyBlade</defName>
     <label>planted blade</label>
     <description>A blade standing where it came down, still humming.\n\nIt was part of somebody a moment ago and it is on loan from them - it cannot be picked up, carried or kept, and when their body calls it back it will simply not be here any more.</description>
-    <thingClass>AbilityGenes.PlantedBlade</thingClass>
+    <thingClass>RimArt.PlantedBlade</thingClass>
     <category>Building</category>
     <altitudeLayer>Item</altitudeLayer>
     <drawerType>RealtimeOnly</drawerType>
@@ -48,7 +48,7 @@
       <deconstructible>false</deconstructible>
     </building>
     <graphicData>
-      <texPath>AbilityGenes/Panoply/BladePlanted</texPath>
+      <texPath>RimArt/Panoply/BladePlanted</texPath>
       <graphicClass>Graphic_Single</graphicClass>
       <shaderType>Transparent</shaderType>
       <drawSize>1.3</drawSize>
@@ -73,9 +73,9 @@
     <defName>AG_PanoplyBladeFalling</defName>
     <label>falling blade</label>
     <description>A blade coming down.</description>
-    <thingClass>AbilityGenes.FallingBlade</thingClass>
+    <thingClass>RimArt.FallingBlade</thingClass>
     <graphicData>
-      <texPath>AbilityGenes/Panoply/Blade</texPath>
+      <texPath>RimArt/Panoply/Blade</texPath>
       <graphicClass>Graphic_Single</graphicClass>
       <shaderType>Transparent</shaderType>
       <drawSize>1.1</drawSize>
@@ -99,7 +99,7 @@
     <defName>AG_PanoplyBladeFlying</defName>
     <label>flying blade</label>
     <description>A blade on its way to somebody's hand.</description>
-    <thingClass>AbilityGenes.BladeFlight</thingClass>
+    <thingClass>RimArt.BladeFlight</thingClass>
     <category>Ethereal</category>
     <altitudeLayer>Skyfaller</altitudeLayer>
     <drawerType>RealtimeOnly</drawerType>
@@ -112,7 +112,7 @@
     <isSaveable>true</isSaveable>
     <saveCompressible>false</saveCompressible>
     <graphicData>
-      <texPath>AbilityGenes/Panoply/Blade</texPath>
+      <texPath>RimArt/Panoply/Blade</texPath>
       <graphicClass>Graphic_Single</graphicClass>
       <shaderType>Transparent</shaderType>
       <drawSize>1.05</drawSize>
@@ -128,14 +128,14 @@
   <ThingDef>
     <defName>AG_PanoplyBladeShot</defName>
     <label>loosed blade</label>
-    <thingClass>AbilityGenes.Projectile_Blade</thingClass>
+    <thingClass>RimArt.Projectile_Blade</thingClass>
     <category>Projectile</category>
     <altitudeLayer>Projectile</altitudeLayer>
     <tickerType>Normal</tickerType>
     <useHitPoints>false</useHitPoints>
     <neverMultiSelect>true</neverMultiSelect>
     <graphicData>
-      <texPath>AbilityGenes/Panoply/Blade</texPath>
+      <texPath>RimArt/Panoply/Blade</texPath>
       <graphicClass>Graphic_Single</graphicClass>
       <shaderType>Transparent</shaderType>
       <drawSize>1.05</drawSize>

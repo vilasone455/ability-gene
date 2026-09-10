@@ -20,7 +20,7 @@
     <maxSeverity>1</maxSeverity>
     <comps>
       <li Class="HediffCompProperties_DisappearsOnDeath" />
-      <li Class="AbilityGenes.HediffCompProperties_Resonance">
+      <li Class="RimArt.HediffCompProperties_Resonance">
         <durationTicks>1800</durationTicks>
         <resonanceTicks>300</resonanceTicks>
         <selfResonance>true</selfResonance>

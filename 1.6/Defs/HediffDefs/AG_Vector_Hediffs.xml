@@ -16,7 +16,7 @@
     <maxSeverity>1</maxSeverity>
     <comps>
       <li Class="HediffCompProperties_DisappearsOnDeath" />
-      <li Class="AbilityGenes.HediffCompProperties_Reflection">
+      <li Class="RimArt.HediffCompProperties_Reflection">
         <durationTicks>1800</durationTicks>
         <reflectProjectiles>true</reflectProjectiles>
         <catchRadius>1.5</catchRadius>

@@ -36,7 +36,7 @@
     <iconPath>UI/Abilities/AnimalWarcall</iconPath>
     <cooldownTicksRange>600</cooldownTicksRange>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityImperative">
+      <li Class="RimArt.CompProperties_AbilityImperative">
         <word>Stop</word>
         <holdTicks>180</holdTicks>
       </li>
@@ -50,7 +50,7 @@
     <iconPath>UI/Abilities/AnimalWarcall</iconPath>
     <cooldownTicksRange>1200</cooldownTicksRange>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityImperative">
+      <li Class="RimArt.CompProperties_AbilityImperative">
         <word>Drop</word>
       </li>
     </comps>
@@ -63,7 +63,7 @@
     <iconPath>UI/Abilities/AnimalWarcall</iconPath>
     <cooldownTicksRange>1800</cooldownTicksRange>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityImperative">
+      <li Class="RimArt.CompProperties_AbilityImperative">
         <word>Kneel</word>
         <holdTicks>180</holdTicks>
       </li>
@@ -77,7 +77,7 @@
     <iconPath>UI/Abilities/AnimalWarcall</iconPath>
     <cooldownTicksRange>1800</cooldownTicksRange>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityImperative">
+      <li Class="RimArt.CompProperties_AbilityImperative">
         <word>Come</word>
       </li>
     </comps>
@@ -90,7 +90,7 @@
     <iconPath>UI/Abilities/AnimalWarcall</iconPath>
     <cooldownTicksRange>1800</cooldownTicksRange>
     <comps>
-      <li Class="AbilityGenes.CompProperties_AbilityImperative">
+      <li Class="RimArt.CompProperties_AbilityImperative">
         <word>Run</word>
       </li>
     </comps>

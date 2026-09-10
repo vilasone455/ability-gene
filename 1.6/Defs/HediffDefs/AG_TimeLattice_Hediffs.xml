@@ -26,7 +26,7 @@
     <description>This person's internal time is running at twice its normal rate. Everything about them - stride, aim, heartbeat, the speed at which they bleed - is happening twice as fast as it is for anyone watching.</description>
     <defaultLabelColor>(0.45, 0.85, 1)</defaultLabelColor>
     <comps>
-      <li Class="AbilityGenes.HediffCompProperties_TimeAlter">
+      <li Class="RimArt.HediffCompProperties_TimeAlter">
         <rateMultiplier>2</rateMultiplier>
         <durationTicks>1200</durationTicks>
         <strainPerSecond>0.020</strainPerSecond>
@@ -42,7 +42,7 @@
     <description>This person's internal time is running at four times its normal rate. The body was not built to be driven this hard and is coming apart while it runs.</description>
     <defaultLabelColor>(0.55, 0.95, 1)</defaultLabelColor>
     <comps>
-      <li Class="AbilityGenes.HediffCompProperties_TimeAlter">
+      <li Class="RimArt.HediffCompProperties_TimeAlter">
         <rateMultiplier>4</rateMultiplier>
         <durationTicks>360</durationTicks>
         <strainPerSecond>0.150</strainPerSecond>
@@ -58,7 +58,7 @@
     <description>This person's internal time is running at a third of its normal rate. They can barely act - but their bleeding, their infections and any poison in them have slowed by exactly the same factor.</description>
     <defaultLabelColor>(0.6, 0.65, 0.85)</defaultLabelColor>
     <comps>
-      <li Class="AbilityGenes.HediffCompProperties_TimeAlter">
+      <li Class="RimArt.HediffCompProperties_TimeAlter">
         <rateMultiplier>0.333</rateMultiplier>
         <durationTicks>3600</durationTicks>
         <strainPerSecond>0</strainPerSecond>
@@ -80,7 +80,7 @@
     <initialSeverity>0.001</initialSeverity>
     <comps>
       <li Class="HediffCompProperties_DisappearsOnDeath" />
-      <li Class="AbilityGenes.HediffCompProperties_TemporalStrain">
+      <li Class="RimArt.HediffCompProperties_TemporalStrain">
         <decayPerDay>0.15</decayPerDay>
         <permanentInjuryThreshold>0.85</permanentInjuryThreshold>
         <injuryCheckIntervalTicks>300</injuryCheckIntervalTicks>

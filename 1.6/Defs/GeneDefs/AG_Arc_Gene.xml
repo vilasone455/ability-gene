@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The one gene in this mod that does not exist on its own.
+
+       MayRequire is on the def rather than on a patch, so without Melee Animation loaded the
+       gene, its ability and its hediff are simply never built and nothing in the game refers
+       to them. That is the honest shape for this: the whole point of the arc is the strike at
+       the far end of it, and the strike is theirs. A version of this gene that drew nothing
+       would be a teleport with a damage number attached, which is not worth a gene. -->
+  <GeneDef MayRequire="co.uk.epicguru.meleeanimation">
+    <defName>AG_ArcTendon</defName>
+    <label>arc tendon</label>
+    <description>A tendon wound tight enough that a step taken with it is not a step. The carrier is beside somebody, and the distance in between was never crossed.\n\nWhat it is for is the blow at the far end. The body arrives already committed, with the strike half-thrown, and then it does the same thing to whoever is standing near the first one, and again after that. Three places, one movement, no ground covered between them.\n\nThe tendon does not choose who dies. It only puts the carrier at somebody's shoulder at speed, holding whatever they were already holding. Stopping that fast is the part that is paid for.</description>
+    <iconPath>UI/Icons/Genes/Gene_Killthirst</iconPath>
+    <displayCategory>Ability</displayCategory>
+    <displayOrderInCategory>240</displayOrderInCategory>
+    <marketValueFactor>1.9</marketValueFactor>
+    <abilities>
+      <li>AG_Arc_Arc</li>
+    </abilities>
+    <descriptionHyperlinks>
+      <AbilityDef>AG_Arc_Arc</AbilityDef>
+      <HediffDef>AG_ArcRecoil</HediffDef>
+    </descriptionHyperlinks>
+    <biostatMet>-3</biostatMet>
+    <biostatCpx>5</biostatCpx>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>arc</symbol></li>
+        <li><symbol>flash</symbol></li>
+        <li><symbol>quick</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>arc</symbol></li>
+        <li><symbol>step</symbol></li>
+        <li><symbol>edge</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+</Defs>

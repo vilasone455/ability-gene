@@ -21,7 +21,7 @@
     <maxSeverity>1</maxSeverity>
     <comps>
       <li Class="HediffCompProperties_DisappearsOnDeath" />
-      <li Class="AbilityGenes.HediffCompProperties_Recursion">
+      <li Class="RimArt.HediffCompProperties_Recursion">
         <fieldRadius>3.9</fieldRadius>
         <projectileHalfLifeTicks>360</projectileHalfLifeTicks>
         <projectileMinDistance>0.35</projectileMinDistance>

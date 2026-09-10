@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- One ability, one target, and everything after the first target is picked by the arc
+       rather than by the player. That is deliberate: the gene is a spectacle, not a puzzle,
+       and asking for three separate clicks would turn a single movement into a plan.
+
+       Line of sight is required. The arc is a step, not a teleport past a wall, and a carrier
+       who can blink through masonry is a different and much stronger gene than this one. -->
+  <AbilityDef MayRequire="co.uk.epicguru.meleeanimation">
+    <defName>AG_Arc_Arc</defName>
+    <label>arc</label>
+    <description>Point at one enemy. The carrier is gone, and is standing at that person's shoulder mid-strike, and then does the same to whoever is nearest to them, and once more after that.\n\nThe blow is a real one, thrown with whatever the carrier is holding, and it can finish the person it lands on. Nothing about the chain is chosen after the cast - the arc takes the nearest enemy still standing to whoever it just hit, and stops when there is nobody left inside its reach or when it has hit three.\n\nStopping that fast leaves the carrier jarred, and worse at everything, for a while afterwards. That is the whole cost, and it is paid per person hit rather than per cast.</description>
+    <iconPath>UI/Abilities/MechLongJump</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>30000</cooldownTicksRange>
+    <aiCanUse>false</aiCanUse>
+    <hostile>true</hostile>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>24.9</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>true</drawAimPie>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetLocations>false</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityArc">
+        <maxTargets>3</maxTargets>
+        <chainRadius>9.9</chainRadius>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>
