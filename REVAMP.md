@@ -23,7 +23,7 @@ Transform "Ability Genes" (gene-only combat abilities) into **RimArt** — a com
 
 - [x] Rewrite `About.xml` description for new scope
 - [x] Add Odyssey and Melee Animation to `loadAfter`
-- [ ] Make Biotech optional -- defs are ready (genes `MayRequire` Biotech, shared abilities use the mod's own `AG_CastAbilityOnThingWithoutWeapon`), blocked only on 26 ability icons that point at Biotech art. Flipping it back on is deleting the Biotech entry from `modDependencies`
+- [x] ~~Make Biotech optional~~ Cut. Biotech stays a declared dependency. Dropping it means redrawing 23 gene-art icons, and those icons want drawing on their own merits rather than as the price of shedding a DLC that players of a gene-sourced mod overwhelmingly own. The def-level gating stays in place and costs nothing -- genes are `MayRequire`d, shared abilities use the mod's own `AG_CastAbilityOnThingWithoutWeapon` -- so if this is ever revisited it is deleting the Biotech entry from `modDependencies`, not redoing the work
 - [x] Update README.md header, dependencies, layout, and build sections
 
 ---
@@ -40,22 +40,35 @@ Currently all abilities are granted via `GeneDef.<abilities>`. Need to support:
 | **Trait** | `TraitDef` + custom C# to grant/revoke abilities | Yes |
 | **Equipment/Apparel** | `CompProperties_AbilityItem` on apparel/equipment | No (vanilla comp) |
 | **Weapon Trait (Odyssey)** | Odyssey weapon trait system | Yes (MayRequire) |
-| **Training** | Custom system — pawn gains ability after meeting conditions | Yes |
-| **Condition** | Hediff-granted abilities or situational triggers | Partial (hediffs can grant abilities via vanilla) |
+| **Special condition** | Any grant vanilla has no mechanism for — the mod checks a condition or a checklist itself | Yes |
+
+### Special Condition — Definition
+
+A pawn gains an ability in a way vanilla has no mechanism for, gated behind a condition or
+a checklist the mod checks itself. Gene, equipment and weapon-trait sources are pure vanilla
+XML. What this category adds is **the check** — the grant itself may still ride on a vanilla
+mechanism once the check passes. Two sub-types, because they are different code:
+
+| Sub-type | Granted | Storage | Example |
+|---|---|---|---|
+| **Permanent** | Once, when the checklist completes | `GameComponent` with saved per-pawn records | Origin: Blade — five blade types studied, Melee 14, Crafting 12 |
+| **Transient** | While a state holds, revoked when it lifts | None — a hediff comes and goes | Adrenaline Surge, Last Stand |
+
+Shipped so far: **Origin: Blade** (permanent). See `docs/origin-blade.md`.
 
 ### Architecture Tasks
 
 - [x] Build trait-based ability granting system (`TraitAbilityExtension` + Harmony patches)
 - [x] Equipment abilities — use vanilla `CompProperties_AbilityItem` (XML only, no custom C#)
-- [x] Condition abilities — use vanilla `HediffDef.<abilities>` (XML only, no custom C#)
-- [ ] Build training/skill-based ability system (pawn trains to unlock)
+- [x] Special condition, transient — use vanilla `HediffDef.<abilities>` (XML only, no custom C#)
+- [x] Special condition, permanent — `GameComponent_BladeStudy` + `OriginBladeUtility`, shipped as Origin: Blade
 - [x] Odyssey weapon traits — use vanilla `WeaponTraitDef.abilityProps` (XML only, no custom C#, MayRequire on defs)
 - [x] Unique Melee Weapons traits — same `abilityProps` mechanism, `MayRequire="shunter.uniquemeleeweapons"` (resonance, arc)
 - [ ] ~~Create `AbilitySourceDef`~~ Not needed — each source uses its own vanilla or light-custom mechanism
 
 ### Key Principle
 
-The **AbilityDef** and **ability implementation** (CompAbilityEffect, HediffComp, etc.) stay the same regardless of source. Only the *granting mechanism* changes. A disarm is a disarm whether it comes from acid glands or martial training.
+The **AbilityDef** and **ability implementation** (CompAbilityEffect, HediffComp, etc.) stay the same regardless of source. Only the *granting mechanism* changes. A disarm is a disarm whether it comes from acid glands or an earned discipline.
 
 ---
 
@@ -90,14 +103,14 @@ The **AbilityDef** and **ability implementation** (CompAbilityEffect, HediffComp
 
 | Ability | Source | Description |
 |---|---|---|
-| Martial Disarm | Training | Trained technique to disarm (non-acid version) |
-| Defensive Stance | Training / Trait | Temporary defense boost, can't move |
+| Martial Disarm | Special condition (permanent) | Trained technique to disarm (non-acid version) |
+| Defensive Stance | Special condition (permanent) / Trait | Temporary defense boost, can't move |
 | Shield Bash | Equipment | Knock back + stun from shield |
-| Adrenaline Surge | Condition | Speed/damage boost when ally downed nearby |
+| Adrenaline Surge | Special condition (transient) | Speed/damage boost when ally downed nearby |
 | Berserker Rage | Trait | Damage boost + can't stop attacking |
-| Tactical Reposition | Training | Quick dash to cover |
-| Last Stand | Condition | Massive buffs when health is critical |
-| Counter Strike | Training / Weapon Trait | Auto-retaliate after dodge |
+| Tactical Reposition | Special condition (permanent) | Quick dash to cover |
+| Last Stand | Special condition (transient) | Massive buffs when health is critical |
+| Counter Strike | Special condition (permanent) / Weapon Trait | Auto-retaliate after dodge |
 
 ---
 
@@ -112,7 +125,7 @@ Do this AFTER Phase 3 & 4, since ability descriptions change when they move to n
 3. **No Zeno's paradox essays.** If the description is longer than 3 sentences, it's too long.
 4. **Names should be self-explanatory.** A player hovering over the name should know roughly what it does.
 5. **Cut the dramatic one-liners.** No more "Not all of it." and "It is not enough to make this safe."
-6. **Different sources get different flavor.** Gene version: biological flavor. Equipment version: tech flavor. Training version: martial flavor. Same mechanic, different text.
+6. **Different sources get different flavor.** Gene version: biological flavor. Equipment version: tech flavor. Earned version: martial flavor. Same mechanic, different text.
 
 ### Name Changes to Consider
 
@@ -138,7 +151,7 @@ Do this AFTER Phase 3 & 4, since ability descriptions change when they move to n
 - [ ] Update Steam Workshop description
 - [ ] Test all abilities with each source type
 - [ ] Test save compatibility (AG_ prefix preserved)
-- [ ] Test without Biotech loaded (gene abilities hidden, others work)
+- [x] ~~Test without Biotech loaded (gene abilities hidden, others work)~~ Moot -- Biotech is required
 - [ ] Test without Odyssey loaded (weapon trait abilities hidden via MayRequire)
 
 ---

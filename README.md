@@ -9,7 +9,7 @@ Currently shipping fourteen gene-based abilities. Multi-source support is in pro
 
 | Dependency | Required | Why |
 |---|---|---|
-| **Biotech DLC** | **Yes** | Declared in `modDependencies`. The defs no longer need it — genes are `MayRequire`d and shared abilities use this mod's own job def — but 26 ability icons still point at Biotech art, so the dependency stays until they are redrawn |
+| **Biotech DLC** | **Yes** | Declared in `modDependencies`, and staying that way. The defs themselves are gated — genes are `MayRequire`d and shared abilities use this mod's own job def — but 23 ability icons point at Biotech gene art, and the genes are the mod's core source anyway |
 | **Harmony** (`brrainz.harmony`) | **Yes** | Patches `Thing.DoTick`, `Thing.TakeDamage` and `ReservationManager.CanReserve` |
 | **Odyssey DLC** | No | Weapon trait abilities are `MayRequire`d against it |
 | **Melee Animation** (`co.uk.epicguru.meleeanimation`) | No | The arc tendon is `MayRequire`d against it |
