@@ -13,10 +13,10 @@
 
   <AG_StrainInjury>{0}'s temporal strain tore something in their {1}. The damage is permanent.</AG_StrainInjury>
 
-  <AG_RecursionUp>{0} opened the halving membrane. Nothing will reach them - and they have stopped breathing.</AG_RecursionUp>
-  <AG_RecursionCollapsed>{0}'s halving membrane closed. Everything that was on its way arrived at once.</AG_RecursionCollapsed>
-  <AG_RecursionCloseLabel>Close membrane</AG_RecursionCloseLabel>
-  <AG_RecursionCloseDesc>Let the membrane collapse and start breathing again. Everything currently held short - every round drifting in, every blow still arriving - lands in the same instant.</AG_RecursionCloseDesc>
+  <AG_RecursionUp>{0} raised the phase barrier. Nothing will reach them - and they have stopped breathing.</AG_RecursionUp>
+  <AG_RecursionCollapsed>{0}'s phase barrier dropped. Everything that was on its way resumed at once.</AG_RecursionCollapsed>
+  <AG_RecursionCloseLabel>Drop barrier</AG_RecursionCloseLabel>
+  <AG_RecursionCloseDesc>Drop the phase barrier and start breathing again. Every suspended round and unfinished blow resumes immediately.</AG_RecursionCloseDesc>
 
   <AG_ReflectionUp>{0} reversed their vectors. Nothing aimed at them will land - and nothing can reach them, including help.</AG_ReflectionUp>
   <AG_ShoveNeedsPawn>Must target a person, animal or mech.</AG_ShoveNeedsPawn>
@@ -25,11 +25,11 @@
   <AG_ResonanceRinging>{0} ringing</AG_ResonanceRinging>
   <AG_ResonanceBroke>{0}'s {1} was struck in phase and came apart.</AG_ResonanceBroke>
 
-  <AG_ArrearsUp>{0} stopped reporting. Nothing that happens to them will land until the nerves report.</AG_ArrearsUp>
-  <AG_ArrearsDue>{0}'s nerves reported. {1} damage arrived at once.</AG_ArrearsDue>
-  <AG_ArrearsSettledEarly>{0} took the news early. {1} damage arrived at once.</AG_ArrearsSettledEarly>
+  <AG_ArrearsUp>{0} refused to yield. Nothing that happens to them will land until their resolve breaks.</AG_ArrearsUp>
+  <AG_ArrearsDue>{0}'s resolve broke. {1} damage arrived at once.</AG_ArrearsDue>
+  <AG_ArrearsSettledEarly>{0} settled the debt early. {1} damage arrived at once.</AG_ArrearsSettledEarly>
   <AG_ArrearsSettleLabel>Settle debt ({0})</AG_ArrearsSettleLabel>
-  <AG_ArrearsSettleDesc>Tell the body now. Every wound on the books lands in this instant, wherever the carrier is standing - which is the point of doing it early, while that is somewhere with cover and a doctor in it.</AG_ArrearsSettleDesc>
+  <AG_ArrearsSettleDesc>Stop holding the wounds back. Every wound on the books lands immediately, so settle while in cover and near a doctor.</AG_ArrearsSettleDesc>
 
   <AG_AnchorTileLabel>that spot</AG_AnchorTileLabel>
   <AG_AnchorPlaced>{0} marked {1}.</AG_AnchorPlaced>
@@ -74,7 +74,7 @@
   <AG_PanoplyNoBlades>{0} has no blades in the ground.</AG_PanoplyNoBlades>
   <AG_PanoplyHandFull>{0} already has a weapon in hand.</AG_PanoplyHandFull>
   <AG_PanoplyNotToEnemy>{0} is not going to be handed a sword.</AG_PanoplyNotToEnemy>
-  <AG_PanoplyBladeOwner>Extruded from {0}. Called back in {1}.</AG_PanoplyBladeOwner>
+  <AG_PanoplyBladeOwner>Called by {0}. Recalled in {1}.</AG_PanoplyBladeOwner>
 
 
   <AG_ArcNeedsPawn>Must target a person, animal or mech.</AG_ArcNeedsPawn>

@@ -43,10 +43,9 @@ actually made. Psytrainers and psylink neuroformers reject use before consuming 
 
 ## Existing kit behavior
 
-This adds a pawn-trait source alongside the existing Panoply gene. It reuses the existing
-trait ability extension and does not add a weapon trait or require Unique Melee Weapons.
-Deployed blades still belong to the pawn, incur bodily debt, and can become permanent
-steel longswords through Grasp. Those balance choices have not been redesigned.
+Origin: Blade is the sole source of Rain, Loose and Grasp. It uses the trait ability
+extension and does not require Unique Melee Weapons. Deployed blades belong to the pawn,
+create a burden while maintained, and can become permanent steel longswords through Grasp.
 
 Royalty is optional; the restriction hooks reference base-game types without adding
 Royalty-only XML definitions. Vanilla Psycasts Expanded and other replacement psycast

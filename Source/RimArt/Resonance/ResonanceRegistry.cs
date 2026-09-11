@@ -13,7 +13,7 @@ namespace RimArt
     /// CarrierCount exists for the same reason the other registries have their counts. The
     /// resonance is read from a postfix on Thing.TakeDamage, which runs for everything that is
     /// ever hurt on every map; it has to cost one static integer read in the overwhelmingly
-    /// common case where nobody is carrying this gene at all.
+    /// common case where no active weapon has granted Resonance.
     /// </summary>
     public static class ResonanceRegistry
     {

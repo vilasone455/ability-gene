@@ -42,7 +42,7 @@ namespace RimArt
         ///
         /// The candidate set is <see cref="ResonanceUtility.CanRing"/> - outside depth, has a
         /// parent, not conceptual, not the core part, nothing vital hanging off it. That is the
-        /// same question the resonant marrow asks and it is already answered off the game's own
+        /// same question Resonance asks and it is already answered off the game's own
         /// body data, so this holds for animals, mechs and modded races without a patch.
         ///
         /// The coverage band on top is the balance. RimWorld picks hit parts by coverage weight,
@@ -89,7 +89,7 @@ namespace RimArt
         /// <summary>
         /// Whether a hole can be in this part.
         ///
-        /// The strict answer is ResonanceUtility.CanRing, which is the resonant marrow's rule:
+        /// The strict answer is ResonanceUtility.CanRing, which is Resonance's rule:
         /// the parts a note can live in are the parts a hole can. It throws out the body's core
         /// part and anything with a vital organ hanging off it, so it can never pick a torso.
         ///

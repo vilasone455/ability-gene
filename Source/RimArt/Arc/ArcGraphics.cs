@@ -4,12 +4,12 @@ using Verse;
 namespace RimArt
 {
     /// <summary>
-    /// The streak the carrier leaves crossing a gap, and the only thing this gene draws.
+    /// The streak the carrier leaves crossing a gap, and the only thing Arc draws.
     ///
     /// It is a solid colour rather than one of Core's line textures on purpose. Every line-shaped
     /// mote in the game is drawn by a system that decides its own heading, and borrowing one means
     /// inheriting a texture whose "up" has to be guessed at - which is the exact mistake the
-    /// panoply organ made twice with the longsword sprite. A plain quad scaled along the path has
+    /// Origin: Blade made twice with the longsword sprite. A plain quad scaled along the path has
     /// no heading of its own to be wrong about: the rotation is the compass angle of the dash and
     /// nothing else.
     ///

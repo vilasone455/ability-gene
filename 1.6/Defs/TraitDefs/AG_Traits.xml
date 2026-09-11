@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- Grants AG_Provoke — same ability as the Alarm Pheromones gene,
-       but flavored as natural authority rather than biology. -->
+  <!-- Combat Presence is the sole source of Provoke. -->
   <TraitDef>
     <defName>AG_CombatPresence</defName>
     <commonality>0.5</commonality>
@@ -25,8 +24,7 @@
     </modExtensions>
   </TraitDef>
 
-  <!-- Grants all 5 imperative voice commands. A born leader who
-       can bark orders that enemies obey — no gene organ needed. -->
+  <!-- Commanding Voice is the sole source of all five imperative commands. -->
   <TraitDef>
     <defName>AG_CommandingVoice</defName>
     <commonality>0.3</commonality>
@@ -56,8 +54,7 @@
     </modExtensions>
   </TraitDef>
 
-  <!-- Grants AG_Arrears — delay incoming damage. Flavored as
-       mental toughness rather than a nerve plexus. -->
+  <!-- Pain Debt is the sole source of Wound Debt. -->
   <TraitDef>
     <defName>AG_PainDebt</defName>
     <commonality>0.3</commonality>

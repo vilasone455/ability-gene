@@ -9,7 +9,7 @@
     <degreeDatas>
       <li>
         <label>Origin: Blade</label>
-        <description>This person's origin is the blade, earned through Melee 14, Crafting 12 and the study of five distinct blade types. It grants Rain, Loose and Grasp permanently, and cannot be rolled at random or lost to a later decline in skill.\n\nAwakening removed every psycast and psylink level and forbids ranged weapons for life, though psychic sensitivity is unchanged.</description>
+        <description>This person's origin is the blade, earned through Melee 14, Crafting 12 and the study of five distinct blade types. It grants Rain, Loose and Grasp permanently, and cannot be rolled at random or lost to a later decline in skill.\n\nAwakening removes every psycast and psylink level and forbids ranged weapons for life, though psychic sensitivity is unchanged.</description>
         <degree>0</degree>
       </li>
     </degreeDatas>

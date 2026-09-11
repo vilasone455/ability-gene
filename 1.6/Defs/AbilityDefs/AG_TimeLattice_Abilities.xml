@@ -26,7 +26,7 @@
   <AbilityDef ParentName="AG_TimeAlterAbilityBase">
     <defName>AG_TimeAlterDouble</defName>
     <label>time alter: double accel</label>
-    <description>Open the lattice to twice normal rate for 20 seconds - fast enough to cross open ground before a volley lands, or to finish a melee before it starts properly.\n\nThe strain heals off over about three days, so this is the one you can afford to use regularly, but it stacks: twice in an afternoon is not the same as twice in a week.</description>
+    <description>Run the neural accelerator at twice normal rate for 20 seconds - fast enough to cross open ground before a volley lands, or to finish a melee before it starts properly.\n\nThe strain heals off over about three days, so this setting can be used regularly, but repeated use still stacks.</description>
     <iconPath>UI/Icons/Genes/Gene_QuickMovespeed</iconPath>
     <cooldownTicksRange>2500</cooldownTicksRange>
     <comps>
@@ -44,7 +44,7 @@
   <AbilityDef ParentName="AG_TimeAlterAbilityBase">
     <defName>AG_TimeAlterSquare</defName>
     <label>time alter: square accel</label>
-    <description>Open the lattice all the way - four times normal rate, for six seconds. Enough to cross a killzone, reach a downed colonist, or end a fight outright.\n\nIt is also very nearly enough to ruin the carrier: one full use takes strain most of the way to critical, where the lattice begins leaving damage that never heals.</description>
+    <description>Run the neural accelerator at four times normal rate for six seconds - enough to cross a killzone, reach a downed colonist, or end a fight outright.\n\nOne full use pushes strain close to critical, where the acceleration begins leaving damage that never heals.</description>
     <iconPath>UI/Abilities/MechLongJump</iconPath>
     <cooldownTicksRange>60000</cooldownTicksRange>
     <comps>
@@ -62,7 +62,7 @@
   <AbilityDef ParentName="AG_TimeAlterAbilityBase">
     <defName>AG_TimeAlterStagnate</defName>
     <label>time alter: stagnate</label>
-    <description>Run the lattice backwards - a third of normal rate, for a full minute. The carrier can barely move or act, and in exchange everything happening to them slows by the same factor: blood loss, infection, poison, all of it.\n\nSlowing down is the direction the body tolerates, so it costs no strain at all.</description>
+    <description>Run the neural accelerator in reverse at a third of normal rate for a full minute. The carrier can barely act, but blood loss, infection and poison slow by the same factor.\n\nSlowing down causes no temporal strain.</description>
     <iconPath>UI/Icons/Genes/Gene_SlowMovespeed</iconPath>
     <cooldownTicksRange>15000</cooldownTicksRange>
     <comps>

@@ -16,7 +16,7 @@ namespace RimArt
     /// reflex made and for the same reason: one choke point covers every source of a melee hit,
     /// including tools this mod has never heard of.
     ///
-    /// dinfo.Tool is the melee test - the same one the halving membrane uses to tell a swing
+    /// dinfo.Tool is the melee test - the same one the phase barrier uses to tell a swing
     /// from a blast. Bullets, explosions and fire carry no tool, so none of them ring, and
     /// neither does the shatter itself, which is what keeps this from recursing.
     /// </summary>

@@ -8,7 +8,7 @@
   <AbilityDef>
     <defName>AG_Resonance</defName>
     <label>resonance</label>
-    <description>Set the carrier's strikes ringing for thirty seconds: any melee blow leaves that exact part resonating for about five seconds, and a second blow on the same part while the note is live takes it off the body. Only limbs and extremities ring - a torso, neck or head is too well damped to carry a note.\n\nThe carrier's own frame is ringing too, on exactly the same terms.</description>
+    <description>Set the weapon ringing for thirty seconds: every melee blow leaves the struck part resonating for about five seconds, and a second blow on the same part takes it off the body. Only limbs and extremities can hold the note.\n\nThe resonance passes through the weapon into its wielder, leaving their own frame vulnerable on the same terms.</description>
     <iconPath>UI/Abilities/PiercingSpine</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>2500</cooldownTicksRange>

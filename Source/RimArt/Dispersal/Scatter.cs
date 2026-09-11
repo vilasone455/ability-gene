@@ -24,7 +24,7 @@ namespace RimArt
         /// <summary>
         /// Whether this particular damage instance is one the plexus comes apart for.
         ///
-        /// Read this as the cost of the exemption. Everything the halving membrane's notes warn
+        /// Read this as the cost of the exemption. Everything the phase barrier's notes warn
         /// about - that a hard "this does not apply" stops being a mechanic and becomes
         /// invulnerability - is true, and the answer is that this returns false far more often
         /// than it returns true.

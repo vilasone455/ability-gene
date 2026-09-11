@@ -48,7 +48,7 @@
   <HediffDef ParentName="AG_AbilityHediffBase">
     <defName>AG_Provoking</defName>
     <label>provoking</label>
-    <description>This person is flooding the air with a blend of alarm pheromones tuned to read as an immediate threat. Every hostile close enough to smell it wants them dead before anything else.\n\nTheir skin has tightened in anticipation, turning aside some of what is about to arrive.</description>
+    <description>This person has claimed every hostile's attention. Until the challenge ends, those enemies want them before anyone else.\n\nThey are braced for the response and better protected against it.</description>
     <defaultLabelColor>(1, 0.4, 0.35)</defaultLabelColor>
     <isBad>false</isBad>
     <comps>

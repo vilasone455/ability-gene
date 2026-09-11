@@ -5,7 +5,7 @@
   <AbilityDef>
     <defName>AG_VectorReflection</defName>
     <label>reflection</label>
-    <description>Open the reflex all the way for thirty seconds. Every vector arriving at the carrier is reversed - bullets sent back down their own line, blows returned to whoever swung them, a fire on them turned on itself.\n\nThe carrier is rooted in place while it holds, and nobody can reach them for any reason: no tending, no feeding, no rescue.</description>
+    <description>Open the reflex booster all the way for thirty seconds. Every vector arriving at the carrier is reversed - bullets return down their own line, blows return to whoever swung them, and fire turns on itself.\n\nThe carrier is rooted while it holds, and nobody can reach them to tend, feed or rescue them.</description>
     <iconPath>UI/Gizmos/ShieldMech</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>60000</cooldownTicksRange>

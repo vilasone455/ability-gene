@@ -17,7 +17,7 @@ namespace RimArt
     /// </summary>
     public static class DebugActions_Involute
     {
-        private const string Category = "Ability Genes";
+        private const string Category = "RimArts";
 
         [DebugAction(Category, "Involute: name the hole part", actionType = DebugActionType.ToolMapForPawns,
             allowedGameStates = AllowedGameStates.PlayingOnMap)]

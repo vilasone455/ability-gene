@@ -7,7 +7,7 @@ namespace RimArt
     /// same reasoning as <see cref="AnchorGeneExtension"/>.
     ///
     /// This gene needs them more than the others do. Scatter is the only thing in the mod that
-    /// makes a damage instance not happen at all, and the halving membrane's own notes explain
+    /// makes a damage instance not happen at all, and the phase barrier's own notes explain
     /// at length why that is a line worth not crossing. It is crossed here on purpose, and
     /// everything that keeps it honest is a number in this file.
     /// </summary>

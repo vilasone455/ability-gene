@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- Resonance as a melee weapon trait. The blade itself holds a note — same mechanic as the
-       gene, different origin. UMW_Melee so any unique melee weapon can roll it. Tags "Ability"
+  <!-- Resonance belongs to the melee weapon trait. The blade itself holds a note.
+       UMW_Melee lets any unique melee weapon roll it. Tags "Ability"
        to stay mutually exclusive with UMW_Storied and UMW_Piledriver (one active ability per
        weapon, Odyssey convention). Priced at EMPPulser/Piledriver parity (+80): a powerful
        combat proc gated behind timing.
@@ -31,8 +31,7 @@
     </abilityProps>
   </WeaponTraitDef>
 
-  <!-- Arc as a bladed weapon trait. A blade forged for chaining strikes — same mechanic as the
-       gene, different origin. UMW_Bladed because the dash-execute chain is a swordsman's move.
+  <!-- Arc belongs to the bladed weapon trait. UMW_Bladed fits the dash-execute chain.
        Requires Melee Animation on top of UMW — the arc literally plays their execution animations,
        so without MA loaded the ability def does not exist.
        Two MayRequire conditions: UMW for the weapon category, MA for the ability def. The def-level

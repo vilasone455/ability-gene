@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- The stasis belt: the same field the stasis organ grows, in a box that comes off.
-
-       The gene is archite-gated and has to be found in a genepack, so in most colonies it
-       never turns up at all. This is the route a player can actually aim at - build the
-       research, build the belt, put it on whoever is about to be swarmed.
+  <!-- The stasis belt is the sole source of the stasis field. Build the research, build
+       the belt, and put it on whoever is about to be swarmed.
 
        Belt slot on purpose. The field forms on the wearer and catches them in it, which is
        the shield belt's shape exactly, and players already read a belt as the thing that

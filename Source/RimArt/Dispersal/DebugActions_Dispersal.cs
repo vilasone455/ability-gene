@@ -17,7 +17,7 @@ namespace RimArt
     /// </summary>
     public static class DebugActions_Dispersal
     {
-        private const string Category = "Ability Genes";
+        private const string Category = "RimArts";
 
         [DebugAction(Category, "Dispersal: shoot the carrier", actionType = DebugActionType.ToolMapForPawns,
             allowedGameStates = AllowedGameStates.PlayingOnMap)]

@@ -57,7 +57,7 @@ namespace RimArt
         /// What lands in the hand is a real steel longsword.
         ///
         /// The blade in the ground was never an item - it could not be picked up, hauled or
-        /// traded - so this is the one moment the gene puts real matter into the world, and it
+        /// traded - so this is the one moment the kit puts real matter into the world, and it
         /// puts it there permanently. That is the trade grasp is making: a blade taken out of
         /// the field stops costing the carrier anything and starts being a weapon somebody owns.
         ///

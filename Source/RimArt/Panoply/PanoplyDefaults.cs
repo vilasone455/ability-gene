@@ -5,8 +5,8 @@ namespace RimArt
     /// <see cref="LarynxDefaults"/>.
     ///
     /// Almost everything here is a shape rather than a balance figure. The one number that
-    /// decides what the gene costs is <see cref="DebtPerBlade"/>, because the cost of this gene
-    /// is not a cooldown and not a resource: it is how much of the carrier is currently standing
+    /// decides what the kit costs is <see cref="DebtPerBlade"/>, because the cost of this kit
+    /// is not a cooldown and not a resource: it is how much of the arsenal the carrier is maintaining
     /// in the ground somewhere else.
     /// </summary>
     public static class PanoplyDefaults
@@ -43,7 +43,7 @@ namespace RimArt
         /// How far a planted blade leans off upright, either way.
         ///
         /// Small on purpose. A blade at a steep angle reads as one lying on the floor, which is
-        /// exactly what this gene must not look like - the whole point of a planted blade is
+        /// exactly what this kit must not look like - the whole point of a planted blade is
         /// that it is standing in the ground and cannot be picked up.
         /// </summary>
         public const float PlantedLeanRange = 13f;

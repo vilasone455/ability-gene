@@ -74,7 +74,7 @@ namespace RimArt
     /// the miss mote, the miss sound, the combat log line - and it never reaches zero, so a
     /// swing that beats the odds still lands in full. That last part is deliberate: the moment
     /// melee is cancelled outright the membrane stops being a receding distance and becomes an
-    /// invulnerability shield, which is the reflection gene's job, not this one's.
+    /// invulnerability shield, which is Reflection's job, not Phase Guard's.
     /// </summary>
     [HarmonyPatch(typeof(Verb_MeleeAttack), "GetNonMissChance")]
     public static class Patch_Verb_MeleeAttack_GetNonMissChance

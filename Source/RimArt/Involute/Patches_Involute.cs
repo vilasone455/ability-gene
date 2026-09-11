@@ -7,7 +7,7 @@ using Verse;
 namespace RimArt
 {
     /// <summary>
-    /// Where a blow finds out what it hit, one layer deeper than the resonant marrow reads it.
+    /// Where a blow finds out what it hit, one layer deeper than Resonance reads it.
     ///
     /// The marrow can use a postfix because it only wants to know which part was struck. This
     /// has to stop the strike landing, and by the time the damage worker has returned, the

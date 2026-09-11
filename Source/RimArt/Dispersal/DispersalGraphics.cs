@@ -8,7 +8,7 @@ namespace RimArt
     ///
     /// The crows are this mod's own sprites rather than Odyssey's. That is not a licensing
     /// dodge - a texture referenced by path is loaded out of the player's own game files and
-    /// never redistributed, and the arc tendon already leans on another mod that way. It is
+    /// never redistributed, and Arc already leans on another mod that way. It is
     /// that Odyssey's Crow_Flying frames are a naturalistic bird, lit, with visible primaries,
     /// and what belongs here is a cutout. The thing being drawn is not a crow. It is a person
     /// who is currently not present, wearing the shape of some.

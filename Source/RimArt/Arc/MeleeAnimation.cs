@@ -17,7 +17,7 @@ namespace RimArt
     /// method that is jitted first is never the one you expected. Reflection makes the
     /// dependency a runtime question with an answer this class can hold: <see cref="Present"/>.
     ///
-    /// The gene itself is gated in XML with MayRequire, so in practice Present is true wherever
+    /// The ability is gated in XML with MayRequire, so in practice Present is true wherever
     /// any of this is reached. It is checked anyway, because a mod list can change under a save
     /// and a null here would otherwise be an exception every tick of a run that cannot finish.
     ///
@@ -229,7 +229,7 @@ namespace RimArt
         /// head comes off.
         ///
         /// This is the difference between an arc that looks like three melee hits and an arc worth
-        /// having the gene for, and skipping it was leaving the best half of their animation set on
+        /// using the weapon trait for, and skipping it was leaving the best half of their animation set on
         /// the shelf. It is their roll, their chances and their space checks - all this does is ask
         /// the question the way their float menu asks it, including handing over a real occupied
         /// mask so a promoted animation cannot finish with somebody standing in a wall.
@@ -265,7 +265,7 @@ namespace RimArt
 
         /// <summary>
         /// Puts the carrier's ordinary execute button on its cooldown, because an arc spent three
-        /// of them. Without this the gene would quietly hand out a fourth execution for free.
+        /// of them. Without this the ability would quietly hand out a fourth execution for free.
         /// </summary>
         private static void NoteExecuted(Pawn attacker)
         {
@@ -328,7 +328,7 @@ namespace RimArt
                       && flipXField != null && outcomeField != null && randomOutcome != null && tryTrigger != null;
 
             if (!present)
-                Log.Warning("[Ability Genes] Melee Animation is loaded but its API did not look the way the arc tendon expects. The gene will do nothing.");
+                Log.Warning("[RimArt] Melee Animation is loaded but its API did not look the way Arc expects. The ability will do nothing.");
         }
 
         private static MethodInfo FindMethod(Type type, string name, Func<ParameterInfo[], bool> matches)
@@ -348,7 +348,7 @@ namespace RimArt
         private static void Disable(Exception e)
         {
             present = false;
-            Log.Error("[Ability Genes] The arc tendon's Melee Animation bridge threw and has been switched off for this session: " + e);
+            Log.Error("[RimArt] Arc's Melee Animation bridge threw and has been switched off for this session: " + e);
         }
     }
 }

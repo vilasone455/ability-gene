@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Draws the art this mod could not borrow: the panoply organ's blades, and the dispersal
+Draws the art this mod could not borrow: Origin: Blade's arsenal, and the dispersal
 plexus's crows.
 
 Most of these genes ship no art at all, and for most of them that is the right call - they
@@ -258,7 +258,7 @@ def make_icons():
 #
 # Every crow here points north, because that is what RimWorld assumes an unrotated sprite
 # does, and the flock is drawn by rotating the quad to the heading of the flight. Drawing
-# them pointing east and rotating by AngleFlat - which is the mistake the panoply organ made
+# them pointing east and rotating by AngleFlat - which is the mistake Origin: Blade made
 # twice - would put every bird ninety degrees off its own path.
 # ---------------------------------------------------------------------------------------
 
@@ -457,7 +457,7 @@ def make_dispersal_icon():
 
 
 # ---------------------------------------------------------------------------------------
-# The stasis organ: a belt that carries the same field, and one icon for both sources.
+# The stasis belt and its field icon.
 #
 # The gene grows an archite lattice through the chest. The belt is the same field in a
 # box you can take off and hand to somebody else, which is the whole reason it exists -

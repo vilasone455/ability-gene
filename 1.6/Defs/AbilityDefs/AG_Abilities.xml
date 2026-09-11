@@ -90,7 +90,7 @@
   <AbilityDef>
     <defName>AG_Provoke</defName>
     <label>provoke</label>
-    <description>Flood the surrounding air with alarm pheromones keyed to read as the single most urgent threat present. Every hostile close enough to smell it drops what it was doing and comes for the carrier.\n\nThe same reflex tightens the carrier's skin, turning aside part of what follows.</description>
+    <description>Command the attention of every hostile within range, making them drop what they were doing and come for the speaker.\n\nThe speaker braces for the response, gaining protection while the challenge holds.</description>
     <iconPath>UI/Icons/Genes/Gene_VoiceRoar</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>30000</cooldownTicksRange>

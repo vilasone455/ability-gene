@@ -54,7 +54,7 @@ namespace RimArt
         /// rotation of a picture like that produces one standing up - the first attempt turned
         /// Core's longsword through every angle it had and produced a field of dropped swords
         /// every time. A side-on sprite with the point already buried is the only thing that
-        /// reads, so this gene ships two textures. See make_textures.py.
+        /// reads, so this kit ships two textures. See make_textures.py.
         /// </summary>
         public static Material PlantedMat
         {

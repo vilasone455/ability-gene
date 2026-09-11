@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
-  <name>RimArt</name>
+  <name>RimArts: Combat Abilities</name>
   <author>vilasone455</author>
   <packageId>vilasone455.rimart</packageId>
   <supportedVersions>
@@ -32,21 +32,13 @@
     <li>shunter.uniquemeleeweapons</li>
   </loadAfter>
 
-  <description>Combat abilities from every angle. Genes, traits, equipment, training, weapon traits, and battlefield conditions — each one a different way your pawn learns to fight.
+  <description>Fifteen combat ability kits, each with one clear source: gene, trait, implant, equipment, weapon trait, or earned origin.
 
-GENES - acid spit, metabolic overdrive, pheromone taunt, crow dispersal, pocket dimensions, time control, blade extrusion, and more. Biological powers wired into the body.
+Spit acid to disarm enemies, burn nutrition to heal, scatter into crows, bend time, reflect attacks, open pocket dimensions, command foes, and rain blades across the battlefield. Every power carries a cost, vulnerability, or tactical commitment.
 
-TRAITS - natural authority, trained reflexes, combat instincts. Abilities your pawn is born with or earns through who they are.
+Five biological kits come from genes. The others belong to distinct traits, implants, equipment, weapons, or Origin: Blade, a permanent path earned through combat and crafting skill.
 
-EQUIPMENT - gear that grants active abilities. Shields that bash, armor that deflects, devices that freeze time.
-
-WEAPON TRAITS (Odyssey) - blade rain, dash-strikes, resonant hits. Abilities tied to the weapon, not the wielder.
-
-TRAINING - techniques learned through practice. Martial disarms, defensive stances, tactical repositioning.
-
-CONDITIONS - adrenaline when allies fall, last stands at death's door. The fight itself unlocks what your pawn can do.
-
-No psycasts. No magic system. Just combat arts from every source that makes sense.
+No psycasts and no separate magic system.
 
 Requires Biotech and Harmony. Optional support for Odyssey, Melee Animation and Unique Melee Weapons.</description>
 </ModMetaData>

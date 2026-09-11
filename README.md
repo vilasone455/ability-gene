@@ -1,18 +1,34 @@
-# RimArt
+# RimArts: Combat Abilities
 
-A RimWorld **1.6** combat ability mod. Pawns gain abilities from genes, traits, equipment,
-training, weapon traits (Odyssey) and battlefield conditions — not just one source.
+A RimWorld **1.6** combat ability mod. Each kit has one source: a gene, trait, implant,
+piece of equipment, weapon trait, or earned origin.
 
-Currently shipping fourteen gene-based abilities. Multi-source support is in progress.
+| Source | Kit | How to obtain it |
+|---|---|---|
+| Gene | **Corrosive glands** | Acquire and implant the gene |
+| Gene | **Hypermetabolic glands** | Acquire and implant the gene |
+| Gene | **Anchor organ** | Acquire and implant the gene |
+| Gene | **Fold organ** | Acquire and implant the archite gene |
+| Gene | **Dispersal plexus** | Acquire and implant the gene |
+| Trait | **Combat presence** | Appears naturally as a pawn trait |
+| Trait | **Pain debt** | Appears naturally as a pawn trait |
+| Trait | **Commanding voice** | Appears naturally as a pawn trait |
+| Implant | **Neural accelerator** | Craft after Bionics research and install surgically |
+| Implant | **Reflex booster** | Craft after Prosthetics research and install surgically |
+| Implant | **Phase barrier** | Find through quests or deep-space trade and install surgically |
+| Equipment | **Stasis belt** | Research Stasis Fields, craft it, and wear it |
+| Weapon trait | **Resonant** | Find on a Unique Melee Weapon |
+| Weapon trait | **Arcing** | Find on a Unique Melee Weapon; also requires Melee Animation |
+| Earned origin | **Origin: Blade** | Reach Melee 14 and Crafting 12, study five blade types, then awaken |
 
 ## Dependencies
 
 | Dependency | Required | Why |
 |---|---|---|
-| **Biotech DLC** | **Yes** | Declared in `modDependencies`, and staying that way. The defs themselves are gated — genes are `MayRequire`d and shared abilities use this mod's own job def — but 23 ability icons point at Biotech gene art, and the genes are the mod's core source anyway |
+| **Biotech DLC** | **Yes** | Required by the five gene kits; several ability icons also reuse Biotech art |
 | **Harmony** (`brrainz.harmony`) | **Yes** | Patches `Thing.DoTick`, `Thing.TakeDamage` and `ReservationManager.CanReserve` |
 | **Odyssey DLC** | No | Weapon trait abilities are `MayRequire`d against it |
-| **Melee Animation** (`co.uk.epicguru.meleeanimation`) | No | The arc tendon is `MayRequire`d against it |
+| **Melee Animation** (`co.uk.epicguru.meleeanimation`) | No | Required for the Arcing weapon trait and its ability |
 | **Unique Melee Weapons** (`shunter.uniquemeleeweapons`) | No | Melee weapon traits (resonance, arc) are `MayRequire`d against it |
 | Royalty / Ideology / Anomaly | No | Not referenced |
 | Any framework (VEF, EBSG, …) | No | — |
@@ -34,19 +50,19 @@ food. Bleeding wounds are prioritised. Met −3, Cpx 2.
 
 The cost is real: healing a badly mangled colonist can take them from fed to starving.
 
-### Alarm pheromones → *provoke*
-Every hostile within 12.9 cells drops what it is doing and comes for the carrier, for
-20 seconds. The carrier gets +0.20 sharp/blunt armor and ×0.85 incoming damage while it
-holds — enough to make the decision survivable, not enough to make it safe. Met −2, Cpx 1.
+### Combat presence → *provoke* (trait)
+Every hostile within 12.9 cells drops what it is doing and comes for the speaker, for
+20 seconds. The speaker gets +0.20 sharp/blunt armor and ×0.85 incoming damage while it
+holds — enough to make the decision survivable, not enough to make it safe.
 
 RimWorld has no aggro system. This works by rewriting each hostile's `enemyTarget` and
 interrupting their current job once so their AI re-acquires; `enemyTarget` is then
 re-pointed every second to keep it sticky without thrashing their job queue. Ranged
 pawns stay ranged rather than being forced into melee.
 
-### Innate time lattice → *time alter* (three abilities)
-Alters the flow of time **inside one body**. No field, no radius — nothing around the
-carrier changes rate. Met −2, Cpx 4.
+### Neural accelerator → *time alter* (implant)
+Alters the flow of time **inside its user**. No field, no radius — nothing around the
+user changes rate.
 
 | Ability | Rate | Duration | Cooldown | Strain |
 |---|---|---|---|---|
@@ -68,8 +84,8 @@ Because acceleration is implemented as extra ticks, hunger, rest, bleeding and i
 *also* run at the multiplier. That emergent penalty may be a better balance lever than the
 strain numbers, and wants watching before either is tuned.
 
-### Vector reflex organ → *reflection*, *vector shove*
-A redundant nervous system that answers incoming momentum by reversing it. Met −3, Cpx 5.
+### Reflex booster → *reflection*, *vector shove* (implant)
+A spinal implant that reads incoming momentum and reverses it.
 
 | Ability | Effect | Cooldown |
 |---|---|---|
@@ -87,11 +103,11 @@ carrier is **rooted** and **untouchable**: no tending, no feeding, no rescue, no
 nobody hauling them to a bed. It is a decision to stop being a person and be a wall, and
 the way to beat it is to stop shooting and wait.
 
-### Halving membrane → *phase guard*
+### Phase barrier → *phase guard* (implant)
 
-Holds a boundary that divides distance instead of blocking it. Met −4, Cpx 6.
+An archotech implant that divides approaching distance instead of blocking it.
 
-| Path | What the membrane does | Half-life |
+| Path | What the barrier does | Half-life |
 |---|---|---|
 | Projectiles | Round is taken off the engine's clock; its reported position halves its remaining distance to the point it was caught heading for, forever | 6s |
 | Melee | Attacker's chance to connect halves for every second spent inside the field | 1s |
@@ -99,21 +115,21 @@ Holds a boundary that divides distance instead of blocking it. Met −4, Cpx 6.
 
 **Nothing is ever cancelled.** Every path is a continuous scaling toward zero that never
 arrives, which is the whole point — the moment any of it becomes a hard "this does not
-apply", the membrane stops being a receding distance and becomes an invulnerability
-shield, which is the vector reflex organ's job. A round held by the membrane is still in
-flight, and when the membrane closes it resumes from exactly where it was drawn and
+apply", the barrier stops being a receding distance and becomes an invulnerability
+shield, which is Reflection's job. A round held by the barrier is still in
+flight, and when the barrier drops it resumes from exactly where it was drawn and
 finishes the trip. Everything queued against the carrier's face lands in the same tick.
 
 A held round's anchor is fixed in world space at the moment of capture, not re-read from
 the carrier. A round is a thing travelling its own straight line; re-anchoring it every
 tick would drag held rounds along behind a walking carrier. Stepping out from behind your
-own membrane therefore releases everything it was holding on that spot — the rounds were
+own barrier therefore releases everything it was holding on that spot — the rounds were
 never stopped, and the line they are on no longer has anyone standing on it.
 
-The membrane cannot tell that air is also approaching. `Breathing` drops on a ramp from
+The barrier cannot tell that air is also approaching. `Breathing` drops on a ramp from
 the moment it opens: ~14s to the first stage, ~24s to oxygen-starved, ~32s to
 asphyxiating, and at ~39s Breathing reaches zero and the carrier dies standing up.
-There is no duration field anywhere — the membrane stays open until the player closes it
+There is no duration field anywhere — the barrier stays open until the player drops it
 with the gizmo on the hediff, or until it closes them. That, not the one-hour cooldown,
 is the limit.
 
@@ -149,9 +165,9 @@ dropped them standing in your firing line, without the carrier going anywhere. I
 marks it was given, which is why the carrier holds three — one survives, so a double clap does
 not leave them completely empty.
 
-### Resonant marrow → *resonance*
+### Resonant → *resonance* (weapon trait)
 
-A skeleton that holds a note. Met −2, Cpx 3.
+A unique melee weapon that holds a note.
 
 | | |
 |---|---|
@@ -178,9 +194,9 @@ twice on the same part of them takes that part off just as readily. Against one 
 a duel the carrier is winning; walking it into a melee crowd is how a carrier comes home with
 one arm.
 
-### Deferred nerves → *wound debt*
+### Pain debt → *wound debt* (trait)
 
-A second nervous system that sits between the body and the news. Met −3, Cpx 4.
+The will to keep fighting before the body receives the news.
 
 | | |
 |---|---|
@@ -207,9 +223,13 @@ The gizmo settles early, and that is the decision the ability actually offers. T
 coming either way. The only thing anyone gets to choose is whether it arrives here, in cover,
 beside a doctor — or wherever they happen to be standing when the time runs out.
 
-### Panoply organ → *rain*, *loose*, *grasp*
+### Origin: Blade → *rain*, *loose*, *grasp* (earned)
 
-A frame that carries more of itself than it needs, and can throw the surplus. Met −4, Cpx 6.
+A permanent martial origin earned through blade study, Melee 14 and Crafting 12.
+
+A colonist studies five distinct bladed melee weapon types for one in-game hour each. When
+the skill and study requirements are met, the game asks whether to awaken the origin. Awakening
+removes psycasts and psylinks and forbids ranged weapons permanently; declining costs nothing.
 
 | Ability | Effect | Cooldown |
 |---|---|---|
@@ -234,8 +254,7 @@ later. The cost of that choice is that nobody can loot the field, which is why g
 severity is *assigned* from the live blade count at 0.02 a blade every time that count changes.
 So a full rain puts the carrier at 0.28 and holds them there, and the moment a blade is loosed,
 grasped or called back the number falls in the same tick. The debt cannot outlive the field
-because it **is** the field, and Manipulation and Moving carry it because what is missing is
-structural — part of the carrier's own frame is standing in the ground twenty cells away.
+because it **is** the field. Manipulation and Moving carry the cost of maintaining that arsenal.
 
 **Loose does not consume anything.** Each blade flies from where it was standing and plants
 itself again wherever it stops, which is usually much closer to the people it was thrown at.
@@ -243,45 +262,23 @@ Nothing about the volley is computed here: cover, line of sight and the bodies i
 resolved per blade by the same projectile code a rifle round goes through, so a blade behind a
 raider genuinely ignores the sandbag in front of him.
 
-**Grasp is the only place this gene puts real matter into the world.** What arrives is an
+**Grasp is the only place this kit puts real matter into the world.** What arrives is an
 ordinary steel longsword and it stays one — ownable, tradeable, lootable off the corpse. It
 needs an empty hand and will not make one; silently dropping a colonist's rifle to give them a
 sword is help nobody asked for.
 
-### Origin: Blade → *rain*, *loose*, *grasp* (earned)
-
-The same panoply kit, reached without a gene. A colonist studies five distinct bladed melee
-weapon types — one in-game hour each, the weapon left intact — and with **Melee 14** and
-**Crafting 12** the game offers them the origin.
-
-It is the only kit in the mod a player can deliberately work toward. The trait has commonality
-0, so it never rolls on a generated pawn; it has to be earned.
-
-**Awakening asks first, and it is permanent.** Taking it removes every psycast and psylink
-level, blocks both forever, and forbids ranged weapons for the rest of that pawn's life. The
-offer arrives as a choice letter with the full warning, the way a vanilla growth moment does,
-and nothing is taken until the player accepts. Declining costs nothing — the Origin: Blade
-command becomes **Awaken: Blade**, so a pawn passed over can be taken through later.
-
-Studies are stored per pawn and survive a save. A type is a `ThingDef`, so material and quality
-variants count once, and any melee weapon with a Cut or Stab tool qualifies — including modded
-ones. Core ships exactly five: knife, ikwa, spear, gladius, longsword.
-
 Full design notes in [docs/origin-blade.md](docs/origin-blade.md).
 
-### Stasis organ → *stasis field* (archite)
+### Stasis belt → *stasis field* (equipment)
 Collapses a 6.9-cell sphere of stopped time around the caster for 20 seconds. Inside it:
 pawns, projectiles in flight, fire and gas all halt, and **nothing can be harmed**.
 
 It does not spare your own colonists and it does not spare the caster, who is at the
 centre and always inside. What you buy is twenty seconds for everyone standing outside
-the bubble. Cpx 4, Arc 1, five-day cooldown.
+the bubble. The belt has a five-day cooldown.
 
-Also available as the **stasis belt** — the same field in a device you can take off and
-hand to somebody else. Belt slot, spacer tech, behind the *stasis fields* research (one
+The belt is spacer tech, behind the *stasis fields* research (one
 step past vanilla shields), machining table, 2 spacer components / 60 plasteel / 20 gold.
-The gene needs a genepack roll *and* an archite capsule, so in most colonies it never
-appears at all; the belt is the route a player can aim at deliberately.
 
 The five-day charge lives on the belt rather than on the wearer, so taking it off and
 putting it back on does not refresh it, and neither does passing it between two pawns —
@@ -340,18 +337,18 @@ be carried back out and a raider swallowed on his feet cannot be picked up at al
 releases what cannot walk and keeps what can, which is the entire difference between a rescue
 and a prison, and neither sentence of it is enforced by this mod.
 
-Time inside runs at normal rate, deliberately. Two genes already own time and both pay for it;
-a third doing it for free would be the drift this mod keeps refusing. Leaving it alone also
-means the two compose — a carrier with the time lattice can fold out and Square Accel through
+Time inside runs at normal rate, deliberately. Two other kits already own time and both pay for it;
+a third doing it for free would blur their roles. Leaving it alone also
+means the two compose — a carrier with a neural accelerator can fold out and Square Accel through
 their own healing, in a room with no doctor, at four times the hunger.
 
 Swallow then collapse is an unconditional kill with no corpse. It costs the carrier the volume,
 everything stored in it, and every round the hole has ever taken.
 
-### Imperative larynx → *stop*, *drop*, *kneel*, *come*, *run*
+### Commanding voice → *stop*, *drop*, *kneel*, *come*, *run* (trait)
 
-A second set of folds above the first, wired to push a word out at a pressure no throat is
-meant to hold. Met −2, Cpx 4.
+A force of personality that makes one-word commands difficult to disobey. Using it still
+strains an ordinary throat.
 
 | Word | Effect | Cooldown |
 |---|---|---|
@@ -366,7 +363,7 @@ Range 16.9, no line of sight — a wall stops a lance and does not stop a voice.
 **Nothing here is mind control and nothing is a mental state.** Vanilla has both, and both take
 the person away. A target keeps their faction, their hostility, their memory and their think
 tree, and does one thing they did not choose on the way through — then picks up exactly where
-they were, still armed, still coming, and perfectly clear on who made them do it. What the gene
+they were, still armed, still coming, and perfectly clear on who made them do it. What the trait
 sells is not control. It is seconds, and where people are standing when those seconds end.
 
 **The cost is the speaker's own throat, and it is priced by the target.** Every word accrues
@@ -380,11 +377,11 @@ those take a colonist's voice for four days.
 
 **The penalty is Talking, so this mod does not have to describe it.** RimWorld already runs
 recruiting, warden work and trading off that capacity. A hoarse carrier is quietly a worse
-negotiator and nothing announces it; at the top stage they cannot speak at all and the gene is
-simply gone until it heals. Your best talker being your best shouter is the tension the gene
+negotiator and nothing announces it; at the top stage they cannot speak at all and the ability is
+simply gone until it heals. Your best talker being your best shouter is the tension the trait
 actually creates, and it costs no code to create it.
 
-**Kneel is the one that will define this gene, and vanilla designed it.** A prone pawn is hit at
+**Kneel is the one that will define this kit, and vanilla designed it.** A prone pawn is hit at
 ×0.5 from 4.5 cells or more and at ×7.5 from 3.9 or less. So the same word is an execution setup
 at melee range and an actively harmful mistake at rifle range — shouted across a killbox it
 protects the raider from your own firing line. It is one number that changes sign at about four
@@ -396,19 +393,17 @@ Hearing does not hear it and nothing happens — no effect, no cooldown spent, a
 so. Mechs are excluded at the targeting params. No vanilla mechanic attacks or defends Hearing,
 which makes this a real answer a player can find rather than an immunity flag this mod invented.
 
-### Arc tendon → *arc* (needs Melee Animation)
+### Arcing → *arc* (weapon trait; needs Melee Animation)
 
-One cast, up to three people, and none of the damage is this mod's. Met −3, Cpx 5.
+One cast, up to three people, and none of the damage is this mod's.
 
 | Ability | Effect | Cooldown |
 |---|---|---|
 | Arc | The carrier crosses to one enemy and strikes, then to the nearest enemy still standing to *that* one, up to three in a cast | half an in-game day |
 
-**This is the only gene here that does not exist on its own.** `MayRequire` sits on the GeneDef,
-the AbilityDef and the HediffDef, so without Melee Animation loaded none of the three is built
-and nothing in the game refers to them. That is the honest shape for it: the whole point of the
-arc is the blow at the far end, the blow is one of their executions, and a version of this gene
-that drew nothing would be a teleport with a damage number attached — which is not worth a gene.
+The Arcing trait can appear on compatible weapons from Unique Melee Weapons. The ability and
+its effect are absent when Melee Animation is not loaded, because each hop uses that mod's
+execution animation and combat resolution.
 
 **The damage is theirs, deliberately.** The strike is resolved by `OutcomeUtility` against the
 carrier's own weapon, melee skill and Lethality stat, exactly as an execution the player started
@@ -431,13 +426,11 @@ and ran out costs a third of that. The player is never punished for the arc runn
 
 ## Implants
 
-Four of the ability kits are also available as surgical implants, so a colony without the
-gene for one can still get there. Each is a real item that has to be built or found before
-a surgeon can fit it — the recipes consume the device plus two medicine.
+Three kits come from surgical implants. Each is a real item that has to be built or found
+before a surgeon can fit it; the installation recipes consume the device plus two medicine.
 
 | Implant | Grants | Tier | How you get it |
 |---|---|---|---|
-| **Pain inhibitor** | *wound debt* | Industrial | Machining table, behind **Prosthetics**. 25 steel, 4 industrial components |
 | **Reflex booster** | *reflection*, *vector shove* | Industrial | Machining table, behind **Prosthetics**. 35 steel, 6 industrial components |
 | **Neural accelerator** | *time alter* ×3 | Spacer | Fabrication bench, behind **Bionics**. 20 plasteel, 4 spacer components |
 | **Phase barrier** | *phase guard* | Archotech | **Not craftable.** Quest rewards and deep-space trade only |
@@ -534,7 +527,7 @@ pushing without opening the gizmo bar. If it looks wrong in play, set `drawAfter
 the hediff comp rather than rebuilding.
 
 This shipped drawing nothing at all. A lone `RenderPawnAt` at a position of your own is a no-op in
-1.6 — see *How the arc tendon works* for why, and for what replaced it.
+1.6 — see *How the Arcing weapon works* for why, and for what replaced it.
 
 ## How the anchor organ works
 
@@ -606,7 +599,7 @@ where every other patch in this mod is a prefix. Sitting at the damage layer rat
 melee verb is the same choice the vector reflex made, and buys the same thing: one choke point
 covers every source of a melee hit, including tools this mod has never heard of.
 
-`dinfo.Tool` is the melee test — the same one the halving membrane uses to tell a swing from a
+`dinfo.Tool` is the melee test — the same one the phase barrier uses to tell a swing from a
 blast. Bullets, explosions and fire carry no tool, so none of them ring. Neither does the
 shatter itself, which is what keeps the postfix from recursing into its own damage.
 
@@ -658,7 +651,7 @@ the game coming back.
 ### The knob worth knowing about
 
 `selfResonance` on the hediff comp turns off the carrier's own ringing. It is the entire cost of
-the gene, so it belongs in XML the way `banWeapons` does on the anchor organ rather than being
+the weapon trait, so it belongs in XML the way `banWeapons` does on the anchor organ rather than being
 hardcoded — but turning it off does not make this a slightly easier ability, it makes it a
 different and much stronger one.
 
@@ -674,10 +667,10 @@ prefixes from this mod, and arrears sits at `Priority.Low`, deliberately last:
 |---|---|---|
 | Stasis field | `First` | Frozen pawns are immune and run up no debt at all |
 | Vector reflex | default | A reflected round was never received, so nothing is owed for it |
-| Halving membrane | default | *Scales* verbless damage rather than cancelling it |
+| Phase barrier | default | *Scales* verbless damage rather than cancelling it |
 | **Arrears** | **`Low`** | Records whatever is left |
 
-The membrane row is the one that had to be right. It scales rather than cancels, so if arrears
+The phase-barrier row is the one that had to be right. It scales rather than cancels, so if arrears
 ran first a carrier holding both would owe the full blast they never actually took.
 
 **Armour is applied at settlement and only at settlement**, which looks wrong and is correct.
@@ -863,22 +856,22 @@ nothing about the gene they are carrying.
 
 Hostiles are not made to attack a ground aperture. Insects and mechs go for structures and will
 find it; a manhunter pack will not, which makes the escape free against wildlife. That is left
-alone on purpose — forcing hostiles onto a target is the alarm pheromones' job, and reaching for
+alone on purpose — forcing hostiles onto a target is Provoke's job, and reaching for
 it here is the drift the rest of this file keeps refusing. A gene that is strong against gunfire
 and cheap against animals is a matchup, not a bug.
 
 None of this has been run in-game yet.
 
-## How the imperative larynx works
+## How Commanding Voice works
 
 **One job, inserted, then handed back — and no Harmony patch anywhere.**
 `Pawn_JobTracker.StartJob` already takes `resumeCurJobAfterwards`, so the interruption and the
 return are the game's own rather than an imitation of them. That is the whole mechanism. It also
-means this gene adds no contact surface with the other eleven: nothing here prefixes
-`Thing.TakeDamage`, so it sits outside the ordering that arrears, the membrane, the stasis field
-and the vector reflex all have to agree about.
+means this trait adds no contact surface with the other kits: nothing here prefixes
+`Thing.TakeDamage`, so it sits outside the ordering that Wound Debt, Phase Guard, Stasis Field
+and Reflection all have to agree about.
 
-The alarm pheromones reach into the same AI one layer shallower — they rewrite `enemyTarget` and
+Provoke reaches into the same AI one layer shallower — it rewrites `enemyTarget` and
 interrupt once, leaving the target to decide what to do about it. This decides for them, once,
 and then stops deciding.
 
@@ -893,16 +886,16 @@ with invented numbers in it and the only place worth tuning.
 
 The bill is worked out *before* the order lands. Obeying changes `CurJobDef`, so measuring
 afterwards would make every word look like one the target was already following and price the
-whole gene at 15%.
+whole kit at 15%.
 
 ### The two capacities
 
 `Talking` carries the cost and `Hearing` is the counter, and neither needed a custom stat. The
 wear lands on the neck because there is no `Throat` body part — `Neck` is as deep as vanilla
-goes — which puts it on the one part the resonant marrow calls too damped to hold a note. The
+goes — which puts it on the one part Resonance calls too damped to hold a note. The
 top hediff stage sets Talking to zero rather than offsetting it, so `CanSpeak` fails and every
 gizmo greys out. Making that permanent is a fifth stage with `severityPerDay` 0; it is left
-recoverable on purpose, because a gene that can permanently delete itself in one bad fight is a
+recoverable on purpose, because an ability that can permanently delete itself in one bad fight is a
 trap rather than a cost.
 
 ### Two traps this design walks into
@@ -929,10 +922,10 @@ that exists to do this properly.
 ### Known gaps
 
 All five gizmos share `UI/Abilities/AnimalWarcall` — the only voice-themed icon in Core or
-Biotech, with `Gene_VoiceRoar` already spent on the alarm pheromones. Five identical buttons in
-a row is the one part of this gene that wants art.
+Biotech, with `Gene_VoiceRoar` already used by Provoke. Five identical buttons in
+a row is the one part of this kit that wants art.
 
-The tooltip quotes base cost only. The decision the gene offers is whether *this* target is
+The tooltip quotes base cost only. The decision the trait offers is whether *this* target is
 worth the voice, so the real multiplied figure should be visible at targeting time —
 `ExtraTooltipPart()` has no target, so doing it properly means taking over the targeter draw the
 way the anchor organ took over `DrawHighlight`.
@@ -941,11 +934,11 @@ way the anchor organ took over `DrawHighlight`.
 kneel early. The job is marked `playerForced`, which usually holds, but three seconds may turn
 out to be one.
 
-Confirmed in-game: the gene loads and all five words cast and resolve. The tuning has not been
+Confirmed in-game: all five words cast and resolve. The tuning has not been
 played against a real raid — the five-words-per-fight figure for *run* is an estimate, not a
 measurement.
 
-## How the panoply organ works
+## How Origin: Blade works
 
 **The stagger lives on the blade, not on the ability.** Loose finds the blades near the point,
 hands each one the target and a number of ticks to wait, and stops existing. Each blade counts
@@ -959,8 +952,8 @@ against armour, body parts and the hit roll, so subclassing it means the numbers
 def and none of the maths is this mod's. The subclass only decides what the thing looks like on
 the way and that it plants itself again where it stops.
 
-**This is the one gene that had to be drawn.** Every other gene in the mod dresses itself in a
-Core texture that already means the right thing, and this one spent two attempts proving it
+**This is the one kit that had to be drawn.** The other kits use Core textures that already mean
+the right thing, and this one spent two attempts proving it
 cannot. A planted blade has to read as standing *in* the ground, and every weapon texture in
 RimWorld is a sword photographed from directly above while lying flat — there is no rotation of
 a picture like that which produces a side view. The first attempt also had the sprite's own
@@ -992,9 +985,9 @@ has to fall, so a dozen blades are in the air at once at a dozen different heigh
 in sequence, with nothing holding a timer for the group. `hitRoof` is off on purpose — these
 are blades, not meteors, and a rain called down indoors should not take the roof off.
 
-**No Harmony patch anywhere.** Like the imperative larynx, this gene adds no contact surface with
-the other twelve — nothing here prefixes `Thing.TakeDamage`, so it sits outside the ordering that
-arrears, the membrane, the stasis field and the vector reflex all have to agree about.
+**No Harmony patch anywhere.** Like Commanding Voice, this origin adds no contact surface with
+the other kits — nothing here prefixes `Thing.TakeDamage`, so it sits outside the ordering that
+Wound Debt, Phase Guard, Stasis Field and Reflection all have to agree about.
 
 ### The registry, and why it is not a lister query
 
@@ -1017,10 +1010,10 @@ The blade lifetime (5000 ticks, about two in-game hours) is a guess. It wants to
 that rain is a plan made early and short enough that a field cannot be left seeded across a whole
 day of work, and only play decides which of those it currently is.
 
-Rain has no `aiCanUse`, like every ability in this mod. A raider carrying this gene does nothing
+Rain has no `aiCanUse`, like every ability in this mod. A hostile pawn with this origin does nothing
 with it.
 
-## How the arc tendon works
+## How the Arcing weapon works
 
 **One reflection bridge, three calls, no assembly reference.** `MeleeAnimation` is the only class
 in this mod that knows the other mod exists, and it reaches it through `AccessTools` rather than a
@@ -1037,7 +1030,7 @@ across 1.4–1.6:
 | `AnimationStartParameters.TryTrigger` | play it, and hand back how many ticks it lasts |
 
 Anything thrown across that bridge switches it off for the session rather than repeating once a
-tick. A silent gene is a bug report; a log full of the same exception is a bug report nobody can
+tick. A silent ability is a bug report; a log full of the same exception is a bug report nobody can
 read.
 
 **The run is two phases and both are one line of state.** Dash puts the carrier beside somebody
@@ -1055,7 +1048,7 @@ were not is what makes the blink read as a blink.
 **Drawing a pawn where it is not takes all three phases, and that is not obvious.** As of 1.6 the
 draw phase uses results the render tree computed earlier in the frame for wherever the pawn
 actually is, so `RenderPawnAt` called on its own with a position of your own draws *nothing* — no
-error, no ghost, no clue. Both this gene and the time lattice shipped doing exactly that and drew
+error, no ghost, no clue. Both Arc and the neural accelerator initially did exactly that and drew
 no afterimages at all in game. What works is `DynamicDrawPhaseAt` for `EnsureInitialized`,
 `ParallelPreDraw` and `Draw` in sequence at the ghost position, which is the same thing Melee
 Animation's own render patch does to put a pawn somewhere the game did not expect, and then a
@@ -1067,7 +1060,7 @@ reads as five people; one that retracts reads as one person moving.
 
 **The streak is a plain quad, not one of Core's line motes.** Every line-shaped mote in the game is
 drawn by a system that decides its own heading, and borrowing one means inheriting a texture whose
-"up" has to be guessed at — which is the mistake the panoply organ made twice with the longsword
+"up" has to be guessed at — which is the mistake Origin: Blade made twice with the longsword
 sprite. A solid additive quad scaled along the path has no heading of its own to be wrong about:
 the rotation is the compass angle of the dash and nothing else. Two layers, because one bright
 rectangle reads as a bar rather than as speed — a wide dim glow for edges that fall off, a narrow
@@ -1075,7 +1068,7 @@ bright core inside it for the line. The fade is baked into the material at eight
 rather than pushed through a property block, so it cannot depend on whether a given shader honours
 one.
 
-**Their promotion roll is asked for, and that is most of what the gene looks like.** Melee Animation
+**Their promotion roll is asked for, and that is most of what the ability looks like.** Melee Animation
 does not simply play the execution it picked: on a killing outcome it rolls again to promote that
 animation into a better one — the beheadings, the head removals, the lift on a spear. Skipping that
 roll left the best half of their animation set on the shelf and made an arc look like three melee
@@ -1086,7 +1079,7 @@ cannot finish with somebody standing in a wall. The pick before it is weighted b
 turned an animation off in Melee Animation has said they do not want to see it, and an arc is not
 the place to argue.
 
-None of that is required for the gene to work. Every one of those members is null-checked
+None of that is required for the ability to work. Every one of those members is null-checked
 separately from the four the bridge cannot do without, so a version of Melee Animation that moved
 or renamed them costs the arc its flourishes rather than its function.
 
@@ -1098,7 +1091,7 @@ the animation when the strike begins. They also arrive already facing the person
 **The arc does not borrow the anchor organ's skip flashes,** and that is a deliberate refusal. A
 clap is a psychic exchange of two places and is dressed as one; an arc is a person crossing nine
 cells faster than the eye follows, so what it leaves is disturbed ground, sparks off the stop and a
-line of light. Two genes that both move somebody instantly should not look the same, or watching
+line of light. Two kits that both move somebody instantly should not look the same, or watching
 either one teaches the player nothing.
 
 **The landing cell is not a choice, it is their layout.** An execution is laid out with the
@@ -1113,9 +1106,9 @@ and refusing it there because the geometry is tight would read as broken rather 
 renderer refuses a downed pawn outright. It happens to be the right rule anyway: an arc is three
 people taken out of a fight, not a tour of the wounded.
 
-**No Harmony patch anywhere**, like the larynx and the panoply organ. Nothing here prefixes
-`Thing.TakeDamage`, so it sits outside the ordering that arrears, the membrane, the stasis field
-and the vector reflex all have to agree about.
+**No Harmony patch anywhere**, like Commanding Voice and Origin: Blade. Nothing here prefixes
+`Thing.TakeDamage`, so it sits outside the ordering that Wound Debt, Phase Guard, Stasis Field
+and Reflection all have to agree about.
 
 ### Known gaps
 
@@ -1135,7 +1128,7 @@ The cooldown — half an in-game day — is a guess made against what three exec
 measured figure. So is the 9.9 chain radius, which is the number that decides whether this is a
 crowd ability or a duel ability.
 
-Arc has no `aiCanUse`, like every ability in this mod. A raider carrying this gene does nothing
+Arc has no `aiCanUse`, like every ability in this mod. A hostile pawn wielding an Arcing weapon does nothing
 with it.
 
 ## Layout
@@ -1154,11 +1147,9 @@ Languages/English/Keyed/         message strings
 Source/RimArt/                   C# source
 ```
 
-Def prefix is `AG_` (kept for save compatibility). Every icon but the panoply organ's
-points at an existing Core/Biotech texture; see `iconPath` on each def to swap in your
-own. The two exceptions are the blade sprites in `Textures/RimArt/Panoply/`, drawn by
-`make_textures.py` — see *How the panoply organ works* for why that gene could not
-borrow one.
+Def prefix is `AG_`. Custom blade, crow and stasis art lives under `Textures/RimArt/`;
+the remaining icons reuse Core or Biotech textures. Run `make_textures.py` after editing
+the generated art and commit the resulting PNGs.
 
 ## Building
 
@@ -1214,16 +1205,16 @@ Verified statically: the C# compiles against the real 1.6 assembly, every def/te
 reference is checked to resolve in Core or Biotech, and every custom `Class=` in XML is
 checked against the built DLL.
 
-Confirmed in-game (1.6.4871, alongside ~40 other mods including Vanilla Psycasts Expanded):
+Confirmed in-game before the single-source roster change (1.6.4871, alongside ~40 other mods
+including Vanilla Psycasts Expanded):
 
-- the four genes appear under *special abilities*, archite gene behind Ignore restrictions
 - the stasis field renders, and projectiles visibly halt in mid-air inside it
 - no noticeable frame cost with a field up, despite the prefix sitting on `Thing.DoTick`
-- the resonant marrow: notes are set on the struck part, a second blow in phase takes the part
+- Resonance: notes are set on the struck part, a second blow in phase takes the part
   off, and the damage-layer postfix reads hit parts correctly off `DamageResult`
-- the deferred nerves: wounds are held rather than applied, the carrier keeps moving while in
+- Wound Debt: wounds are held rather than applied, the carrier keeps moving while in
   debt, and settling delivers the whole bill at once - including the four-way prefix ordering on
-  `Thing.TakeDamage` holding up with the other genes present
+  `Thing.TakeDamage` holding up with the other damage effects present
 
 ### Testing the fold organ
 
@@ -1232,7 +1223,7 @@ gap in it: it fires only on the one part the hole is in, which is a few percent 
 and the carrier is under fire the whole time you wait for it. So the test loop takes the combat
 out.
 
-Dev mode → the debug actions menu → **Ability Genes**, all pawn-targeted:
+Dev mode → the debug actions menu → **RimArts**, all pawn-targeted:
 
 | Action | What it is for |
 |---|---|
@@ -1287,19 +1278,19 @@ Still unverified:
 - **arrears tuning.** Confirmed working in-game; the numbers are still guesses. Twenty seconds
   and a half-day cooldown were picked to feel right rather than measured, and `severityPerDamage`
   at 120 only decides how fast the stage labels escalate
-- **resonant marrow tuning.** Confirmed working in-game; what is still an open question is the
+- **Resonance tuning.** Confirmed working in-game; what is still an open question is the
   numbers. `resonanceTicks` at 300 (5s) is a guess, not a measured value - too short and the
   second blow never lands, too long and every part on the field is live at once. `durationTicks`
   and the one-hour cooldown are untested against how often a player actually wants this
-- **everything in the vector reflex organ.** It compiles and validates, and none of it has
+- **everything in the Reflex Booster.** It compiles and validates, and none of it has
   been in front of the game yet. The parts most likely to bite: whether refusing
   `CanReserve` produces job-giver spam in the log, whether a re-launched projectile behaves
   when it is spawned less than a cell from its new target, and whether 30 seconds of rooted
   invulnerability reads as a wall or as a win button
-- **the panoply organ beyond its first look.** Rain has been cast in game and the blades land,
+- **Origin: Blade beyond its first look.** Rain has been cast in game and the blades land,
   plant and hold; what has not been tested is loose, grasp, the debt curve, or any of it in a
   fight. See its own *Known gaps* above
-- **everything in the arc tendon.** It compiles and validates and has never been in front of the
+- **everything in the Arcing weapon.** It compiles and validates and has never been in front of the
   game, and unlike the rest of the mod it is talking to another mod's internals. The parts most
   likely to bite are in its own *Known gaps* above; the first thing to check is simply whether a
   three-target chain reads as one movement

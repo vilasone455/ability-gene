@@ -25,7 +25,7 @@ namespace RimArt
 
     /// <summary>
     /// Seizes one target's momentum and spends it away from the caster. Cheap and short, so the
-    /// gene is not purely a wall: it breaks a melee grip, throws a sapper off a wall, or puts a
+    /// kit is not purely a wall: it breaks a melee grip, throws a sapper off a wall, or puts a
     /// raider back out in the open.
     /// </summary>
     public class CompAbilityEffect_VectorShove : CompAbilityEffect

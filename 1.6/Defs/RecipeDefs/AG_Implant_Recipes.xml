@@ -7,40 +7,6 @@
        doctor bought an archotech phase barrier, repeatably, from day one. The items are
        defined in ThingDefs/AG_Implant_Things.xml. -->
 
-  <!-- Pain Inhibitor — brain implant, industrial tier -->
-  <RecipeDef ParentName="SurgeryInstallImplantBase">
-    <defName>AG_InstallPainInhibitor</defName>
-    <label>install pain inhibitor</label>
-    <description>Install a pain inhibitor implant in the brain.</description>
-    <jobString>Installing pain inhibitor.</jobString>
-    <ingredients>
-      <li>
-        <filter>
-          <thingDefs>
-            <li>AG_PainInhibitor</li>
-          </thingDefs>
-        </filter>
-        <count>1</count>
-      </li>
-      <li>
-        <filter><categories><li>Medicine</li></categories></filter>
-        <count>2</count>
-      </li>
-    </ingredients>
-    <fixedIngredientFilter>
-      <thingDefs>
-        <li>AG_PainInhibitor</li>
-      </thingDefs>
-      <categories>
-        <li>Medicine</li>
-      </categories>
-    </fixedIngredientFilter>
-    <addsHediff>AG_PainInhibitor</addsHediff>
-    <appliedOnFixedBodyParts>
-      <li>Brain</li>
-    </appliedOnFixedBodyParts>
-  </RecipeDef>
-
   <!-- Reflex Booster — spine implant, industrial tier -->
   <RecipeDef ParentName="SurgeryInstallImplantBase">
     <defName>AG_InstallReflexBooster</defName>

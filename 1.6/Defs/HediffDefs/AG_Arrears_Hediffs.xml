@@ -10,8 +10,8 @@
        actually gets paid, and it keeps counting after severity has capped at 1. -->
   <HediffDef>
     <defName>AG_Arrears</defName>
-    <label>arrears</label>
-    <description>This person is being wounded and has not been told. Every injury is on the books instead of in the body - no bleeding, no pain, no shock, nothing slowing them down.\n\nAll of it is still owed, and it arrives in one instant when the nerves report.</description>
+    <label>wound debt</label>
+    <description>This person is refusing to yield to their wounds. Every injury is on the books instead of in the body - no bleeding, pain or shock slows them down.\n\nAll of it is still owed, and it arrives in one instant when their resolve breaks.</description>
     <hediffClass>HediffWithComps</hediffClass>
     <defaultLabelColor>(0.95, 0.6, 0.35)</defaultLabelColor>
     <scenarioCanAdd>false</scenarioCanAdd>

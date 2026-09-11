@@ -15,7 +15,7 @@ namespace RimArt
     /// <summary>
     /// One blade out of the ground and into a hand.
     ///
-    /// It is the smallest ability in the gene and the one that decides what the gene is for. A
+    /// It is the smallest ability in the kit and the one that decides what the kit is for. A
     /// planted blade cannot be picked up by anybody - it is not an item - so the field is not a
     /// pile of free weapons lying in front of a raid. Grasp is the only door out of that, it
     /// costs a cast, and what comes through it is one ordinary steel longsword in one named

@@ -7,7 +7,7 @@
   <AbilityDef>
     <defName>AG_Recursion</defName>
     <label>phase guard</label>
-    <description>Hold the membrane open, and everything moving toward the carrier begins halving the distance it has left without ever finishing - rounds hang short, blows miss by margins that keep doubling.\n\nAir is approaching too, so the carrier stops breathing until it closes. Nothing has been destroyed: everything still on its way lands the instant it does.</description>
+    <description>Raise the phase barrier, and everything moving toward the carrier begins halving the distance it has left without ever arriving - rounds hang short and blows miss by widening margins.\n\nThe barrier also holds back air, so the carrier stops breathing until it drops. Everything suspended by the field resumes immediately.</description>
     <iconPath>UI/Abilities/MechSmokepop</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>2500</cooldownTicksRange>

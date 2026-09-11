@@ -17,7 +17,7 @@ namespace RimArt
     ///   pawn in a bubble is immune and runs up no debt at all.
     /// - The vector reflex runs at default priority and cancels what it returns to sender. A
     ///   reflected round was never received, so there is nothing to owe for it.
-    /// - The halving membrane runs at default priority and *scales* verbless damage rather than
+    /// - The phase barrier runs at default priority and *scales* verbless damage rather than
     ///   cancelling it, so what lands on the books here is the reduced figure. That ordering is
     ///   the one that had to be right: recorded before scaling, a carrier holding both would owe
     ///   the full blast they never actually took.

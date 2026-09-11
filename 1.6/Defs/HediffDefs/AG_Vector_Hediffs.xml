@@ -7,7 +7,7 @@
   <HediffDef>
     <defName>AG_VectorReflection</defName>
     <label>reflection</label>
-    <description>Every vector reaching this person is being reversed. Nothing aimed at them lands; it is returned, at strength, to whatever sent it.\n\nThe reflex does not distinguish, so while it holds they cannot be tended, fed, rescued or touched at all, and can barely move.</description>
+    <description>The reflex booster is reversing every vector reaching this person. Nothing aimed at them lands; it returns at full strength to whatever sent it.\n\nThe booster does not distinguish help from harm, so they cannot be tended, fed, rescued or touched while it holds.</description>
     <hediffClass>HediffWithComps</hediffClass>
     <defaultLabelColor>(0.6, 0.85, 1)</defaultLabelColor>
     <scenarioCanAdd>false</scenarioCanAdd>

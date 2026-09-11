@@ -70,7 +70,7 @@
   <HediffDef>
     <defName>AG_TemporalStrain</defName>
     <label>temporal strain</label>
-    <description>Tissue damage from being driven faster than it was built to run. Vessels, muscle and connective tissue tear a little every time the lattice is opened up, and the body repairs it slowly.\n\nIt does not reset between fights, so leaning on acceleration repeatedly will stack this into something serious.</description>
+    <description>Tissue damage from being driven faster than it was built to run. Vessels, muscle and connective tissue tear a little every time the neural accelerator engages, and the body repairs it slowly.\n\nIt does not reset between fights, so repeated acceleration stacks into something serious.</description>
     <hediffClass>HediffWithComps</hediffClass>
     <defaultLabelColor>(0.85, 0.35, 0.3)</defaultLabelColor>
     <scenarioCanAdd>false</scenarioCanAdd>

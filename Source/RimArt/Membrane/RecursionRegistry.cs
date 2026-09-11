@@ -4,7 +4,7 @@ using Verse;
 namespace RimArt
 {
     /// <summary>
-    /// Tracks who is holding a halving membrane open, and every projectile currently captured
+    /// Tracks who is holding a phase barrier open, and every projectile currently captured
     /// by one.
     ///
     /// Same self-healing shape as <see cref="ReflectionRegistry"/> and

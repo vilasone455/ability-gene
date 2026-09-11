@@ -3,7 +3,7 @@
 
   <!-- The devices the install surgeries consume.
 
-       These did not exist. The four recipes inherited SurgeryInstallImplantBase and never
+       These did not exist. The recipes inherited SurgeryInstallImplantBase and never
        overrode its ingredients, which is two medicine and nothing else, so an archotech
        phase barrier cost a doctor and a pair of herbal poultices and could be fitted to
        every colonist on day one. Every vanilla implant recipe names the item it consumes;
@@ -16,29 +16,11 @@
        No new art: the Core health-item sprite is tinted per tier by the parent, which is
        how every vanilla prosthetic, bionic and archotech part is drawn. -->
 
-  <!-- Industrial. Sits with the other machining-table prosthetics. -->
-  <ThingDef ParentName="BodyPartProstheticMakeableBase">
-    <defName>AG_PainInhibitor</defName>
-    <label>pain inhibitor</label>
-    <description>A brain implant that intercepts pain signalling and holds the debt rather than cancelling it. Damage still arrives; it simply arrives later, all at once, when the implant lets go.</description>
-    <descriptionHyperlinks><RecipeDef>AG_InstallPainInhibitor</RecipeDef></descriptionHyperlinks>
-    <costList>
-      <Steel>25</Steel>
-      <ComponentIndustrial>4</ComponentIndustrial>
-    </costList>
-    <thingSetMakerTags>
-      <li>RewardStandardLowFreq</li>
-    </thingSetMakerTags>
-    <techHediffsTags>
-      <li>Advanced</li>
-    </techHediffsTags>
-  </ThingDef>
-
-  <!-- Industrial, and the more involved of the two: a spinal implant rather than a brain one. -->
+  <!-- Industrial spinal implant. -->
   <ThingDef ParentName="BodyPartProstheticMakeableBase">
     <defName>AG_ReflexBooster</defName>
     <label>reflex booster</label>
-    <description>A spinal implant that shortens the path between seeing a thing and moving away from it. Fast enough to turn a shot aside, and to put a body on the ground that was standing a moment ago.</description>
+    <description>A spinal implant that reads and redirects momentum before its user can consciously react. It can reverse incoming harm or throw an attacker away.</description>
     <descriptionHyperlinks><RecipeDef>AG_InstallReflexBooster</RecipeDef></descriptionHyperlinks>
     <costList>
       <Steel>35</Steel>
@@ -56,7 +38,7 @@
   <ThingDef ParentName="BodyPartBionicBase">
     <defName>AG_NeuralAccelerator</defName>
     <label>neural accelerator</label>
-    <description>A brain implant that runs its host faster than the world around them, and bills them for it afterwards. The strain it accrues sheds slowly and does not care whether the fight is over.</description>
+    <description>A brain implant that changes its user's internal rate of time. Acceleration leaves strain that sheds slowly and does not care whether the fight is over.</description>
     <descriptionHyperlinks><RecipeDef>AG_InstallNeuralAccelerator</RecipeDef></descriptionHyperlinks>
     <costList>
       <Plasteel>20</Plasteel>

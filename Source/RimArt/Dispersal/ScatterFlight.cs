@@ -10,7 +10,7 @@ namespace RimArt
     /// This is decoration and nothing else. The carrier is already standing at the far end
     /// before the first bird is drawn, and no part of the game reads this class - it holds no
     /// damage, blocks nothing and is not scribed, so a save taken mid-flight simply loads with
-    /// the birds already gone. The arc tendon makes the same call about its afterimages and for
+    /// the birds already gone. Arc makes the same call about its afterimages and for
     /// the same reason: half a second of picture is wrong on the other side of a reload anyway.
     ///
     /// Murder is the opposite case and does not use this class: there the flight *is* the

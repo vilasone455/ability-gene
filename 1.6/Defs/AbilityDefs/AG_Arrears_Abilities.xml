@@ -8,7 +8,7 @@
   <AbilityDef>
     <defName>AG_Arrears</defName>
     <label>wound debt</label>
-    <description>Stop reporting. For twenty seconds every wound the carrier takes is written down instead of applied - no damage, no bleeding, no pain, no going down.\n\nNone of it is prevented: when the time runs out every wound lands at once, in a single instant, which is why the carrier's gizmo can settle the debt early and in cover.</description>
+    <description>Push through every wound for twenty seconds, taking no immediate damage, bleeding or pain.\n\nNothing is prevented: when the resolve breaks, every wound lands in the same instant. The debt can be settled early while the pawn is in cover and near a doctor.</description>
     <iconPath>UI/Abilities/MechResurrection</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>30000</cooldownTicksRange>

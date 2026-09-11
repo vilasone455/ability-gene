@@ -16,6 +16,7 @@ runtime, in the order they have actually bitten this project:
   5. Custom Class= values that do not exist in the built assembly
   6. Comp classes a def ends up with twice once inheritance is applied
   7. Translate keys used in C# but not defined in Languages/
+  8. Concrete abilities with zero or multiple acquisition sources
 
 Usage: python3 validate.py [path/to/RimWorld/Data]
 """
@@ -136,7 +137,7 @@ if DATA is not None:
                 elif w == {"Royalty"}: fail("Royalty-only ref <" + el.tag + ">", f, v)
         for m in re.finditer(r"<(?:iconPath|texPath)>([^<]+)<", open(f).read()):
             tex = m.group(1).strip()
-            # This mod's own art comes first: the panoply organ ships two sprites because a
+            # This mod's own art comes first: Origin: Blade ships two sprites because a
             # top-down weapon texture cannot be turned into a blade standing in the ground.
             if any(os.path.exists(os.path.join("Textures", tex + ext))
                    for ext in (".png", ".jpg")):
@@ -206,6 +207,34 @@ for f in glob.glob("Languages/**/Keyed/*.xml", recursive=True):
     defined.update(re.findall(r"<(AG_[A-Za-z0-9_]+)>", open(f).read()))
 for k in sorted(used - defined):
     fail("missing translate key", "Languages/English/Keyed/", k)
+
+# 8. every concrete ability has exactly one acquisition source
+ability_defs, grants = {}, {}
+for f in my_files:
+    for el in ET.parse(f).getroot():
+        def_name = (el.findtext("defName") or "").strip()
+        if el.tag == "AbilityDef" and def_name and (el.get("Abstract") or "").lower() != "true":
+            ability_defs[def_name] = f
+
+        source = el.tag + ":" + def_name
+        refs = []
+        if el.tag in ("GeneDef", "HediffDef"):
+            refs = [n.text.strip() for n in el.findall("./abilities/li") if n.text]
+        elif el.tag == "TraitDef":
+            refs = [n.text.strip() for n in el.findall("./modExtensions/li/abilities/li") if n.text]
+        elif el.tag == "ThingDef":
+            refs = [n.text.strip() for n in el.findall("./comps/li/abilities/li") if n.text]
+        elif el.tag == "WeaponTraitDef":
+            refs = [n.text.strip() for n in el.findall("./abilityProps/abilityDef") if n.text]
+        for ability in refs:
+            grants.setdefault(ability, set()).add(source)
+
+for ability, f in sorted(ability_defs.items()):
+    sources = grants.get(ability, set())
+    if len(sources) != 1:
+        fail("ability source count", f,
+             ability + " has " + str(len(sources)) + " acquisition sources: "
+             + (", ".join(sorted(sources)) or "none"))
 
 if problems:
     print("FAILED -- " + str(len(problems)) + " problem(s)\n")

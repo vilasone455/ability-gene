@@ -22,7 +22,7 @@ namespace RimArt
     ///
     /// What it does is not damage - the damage on landing is small and half the blades will hit
     /// nothing at all. What it does is *put objects on the ground in a shape*, and every other
-    /// thing this gene can do reads that shape afterwards. Rain onto a corridor and loose is a
+    /// thing this kit can do reads that shape afterwards. Rain onto a corridor and loose is a
     /// crossfire; rain onto the wrong side of a wall and loose is a wall being stabbed.
     ///
     /// The blades are staggered on the way down rather than landing together, which costs one

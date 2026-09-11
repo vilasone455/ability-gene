@@ -11,7 +11,7 @@ namespace RimArt
     /// The arc deliberately does not borrow the anchor organ's skip flashes. A clap is a psychic
     /// exchange of two places and is dressed as one; an arc is a person covering nine cells faster
     /// than the eye follows, and what that should leave behind is disturbed ground and a bright
-    /// line, not a purple bloom. Two genes that both move somebody instantly should not look the
+    /// line, not a purple bloom. Two kits that both move somebody instantly should not look the
     /// same, or the player learns nothing from watching either.
     ///
     /// Everything here is resolved by name and cached, the same as <see cref="AnchorFX"/>, so a

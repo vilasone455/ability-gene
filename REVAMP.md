@@ -1,208 +1,61 @@
-# RimArt Revamp Plan
+# RimArts: Combat Abilities — Single-Source Roster
 
 ## Goal
 
-Transform "Ability Genes" (gene-only combat abilities) into **RimArt** — a combat ability mod where pawns gain abilities from many sources: genes, traits, equipment, training, weapon traits (Odyssey DLC), and specific conditions. Make combat feel more anime/MOBA. Exclude psycasts (VPE) and ROM class scope — those are too OP and already covered.
+Each ability kit has one clear origin. A kit comes from one gene, trait, implant, piece of
+equipment, weapon trait, or earned origin; no kit is duplicated across several sources.
 
----
+The source supplies the kit's player-facing name. Biological names are reserved for actual
+genes instead of being forced onto abilities that come from training, technology, or weapons.
 
-## Phase 1: Mod Identity (DONE)
+## Roster
 
-- [x] Rename mod to RimArt
-- [x] Update packageId to `vilasone455.rimart`
-- [x] Rename C# namespace `AbilityGenes` → `RimArt`
-- [x] Rename assembly `AbilityGenes.dll` → `RimArt.dll`
-- [x] Rename source directory, texture directory
-- [x] Update all XML class references and texture paths
-- [x] Update Harmony ID
-- [x] Keep `AG_` def prefix for save compatibility
-
----
-
-## Phase 2: About.xml and Mod Description
-
-- [x] Rewrite `About.xml` description for new scope
-- [x] Add Odyssey and Melee Animation to `loadAfter`
-- [x] ~~Make Biotech optional~~ Cut. Biotech stays a declared dependency. Dropping it means redrawing 23 gene-art icons, and those icons want drawing on their own merits rather than as the price of shedding a DLC that players of a gene-sourced mod overwhelmingly own. The def-level gating stays in place and costs nothing -- genes are `MayRequire`d, shared abilities use the mod's own `AG_CastAbilityOnThingWithoutWeapon` -- so if this is ever revisited it is deleting the Biotech entry from `modDependencies`, not redoing the work
-- [x] Update README.md header, dependencies, layout, and build sections
-
----
-
-## Phase 3: Code Architecture — Multi-Source Abilities
-
-Currently all abilities are granted via `GeneDef.<abilities>`. Need to support:
-
-### Source Types
-
-| Source | How RimWorld grants abilities | Needs custom C#? |
-|---|---|---|
-| **Gene** | `GeneDef.<abilities>` | No (existing) |
-| **Trait** | `TraitDef` + custom C# to grant/revoke abilities | Yes |
-| **Equipment/Apparel** | `RimArt.CompProperties_ApparelAbility` on apparel; `CompEquippableAbility` on weapons | Yes, for apparel |
-| **Weapon Trait (Odyssey)** | Odyssey weapon trait system | Yes (MayRequire) |
-| **Special condition** | Any grant vanilla has no mechanism for — the mod checks a condition or a checklist itself | Yes |
-
-### Special Condition — Definition
-
-A pawn gains an ability in a way vanilla has no mechanism for, gated behind a condition or
-a checklist the mod checks itself. Gene, equipment and weapon-trait sources are pure vanilla
-XML. What this category adds is **the check** — the grant itself may still ride on a vanilla
-mechanism once the check passes. Two sub-types, because they are different code:
-
-| Sub-type | Granted | Storage | Example |
+| Source | Kit | Abilities | Acquisition |
 |---|---|---|---|
-| **Permanent** | Once, when the checklist completes | `GameComponent` with saved per-pawn records | Origin: Blade — five blade types studied, Melee 14, Crafting 12 |
-| **Transient** | While a state holds, revoked when it lifts | None — a hediff comes and goes | Adrenaline Surge, Last Stand |
+| Gene | **Corrosive glands** | Disarm Spit | Acquire and implant the gene |
+| Gene | **Hypermetabolic glands** | Metabolic Overdrive | Acquire and implant the gene |
+| Gene | **Anchor organ** | Mark, Clap, Double Clap | Acquire and implant the gene |
+| Gene | **Fold organ** | Vent, Fold, Swallow, Post, Collapse | Acquire and implant the archite gene |
+| Gene | **Dispersal plexus** | Scatter, Murder, Carrion | Acquire and implant the gene |
+| Trait | **Combat presence** | Provoke | Appears naturally as a pawn trait |
+| Trait | **Pain debt** | Wound Debt | Appears naturally as a pawn trait |
+| Trait | **Commanding voice** | Stop, Drop, Kneel, Come, Run | Appears naturally as a pawn trait |
+| Implant | **Neural accelerator** | Double Accel, Square Accel, Stagnate | Craft after Bionics research and install |
+| Implant | **Reflex booster** | Reflection, Vector Shove | Craft after Prosthetics research and install |
+| Implant | **Phase barrier** | Phase Guard | Find through quests or deep-space trade and install |
+| Equipment | **Stasis belt** | Stasis Field | Research Stasis Fields, craft and wear |
+| Weapon trait | **Resonant** | Resonance | Find on a Unique Melee Weapon |
+| Weapon trait | **Arcing** | Arc | Find on a Unique Melee Weapon; requires Melee Animation |
+| Earned origin | **Origin: Blade** | Rain, Loose, Grasp | Meet the skill and blade-study requirements, then awaken |
 
-Shipped so far: **Origin: Blade** (permanent). See `docs/origin-blade.md`.
+## Removed Duplicate Sources
 
-### Architecture Tasks
+- Alarm pheromones gene; Provoke belongs to Combat Presence.
+- Innate time lattice gene; time alteration belongs to the Neural Accelerator.
+- Vector reflex organ gene; Reflection and Vector Shove belong to the Reflex Booster.
+- Halving membrane gene; Phase Guard belongs to the Phase Barrier.
+- Resonant marrow gene; Resonance belongs to Resonant weapons.
+- Deferred nerves gene and Pain Inhibitor implant; Wound Debt belongs to Pain Debt.
+- Panoply organ gene; Rain, Loose and Grasp belong to Origin: Blade.
+- Stasis organ gene; Stasis Field belongs to the Stasis Belt.
+- Imperative larynx gene; the five commands belong to Commanding Voice.
+- Arc tendon gene; Arc belongs to Arcing weapons.
 
-- [x] Build trait-based ability granting system (`TraitAbilityExtension` + Harmony patches)
-- [x] Equipment abilities — `RimArt.CompProperties_ApparelAbility` plus two `Pawn_ApparelTracker` patches. The plan said vanilla `CompProperties_AbilityItem` and no C#; that class does not exist. Vanilla's real options are `CompEquippableAbility`, which replaces `CompEquippable` and so only works on a weapon, and `CompApparelVerbOwner`, which grants a `Verb` rather than an `AbilityDef`. Neither fits a belt, so the comp is ours. It also holds the cooldown on the item, which is what stops a long charge being refreshed by unequipping. Shipped as the stasis belt
-- [x] Special condition, transient — use vanilla `HediffDef.<abilities>` (XML only, no custom C#)
-- [x] Special condition, permanent — `GameComponent_BladeStudy` + `OriginBladeUtility`, shipped as Origin: Blade
-- [x] Odyssey weapon traits — use vanilla `WeaponTraitDef.abilityProps` (XML only, no custom C#, MayRequire on defs)
-- [x] Unique Melee Weapons traits — same `abilityProps` mechanism, `MayRequire="shunter.uniquemeleeweapons"` (resonance, arc)
-- [x] ~~Create `AbilitySourceDef`~~ Not needed — each source uses its own vanilla or light-custom mechanism
+The ability defNames and implementation class names remain unchanged where renaming would add
+churn without changing what players see. The removed defs were never published, so no public
+save compatibility migration is required.
 
-### Key Principle
+## Origin: Blade
 
-The **AbilityDef** and **ability implementation** (CompAbilityEffect, HediffComp, etc.) stay the same regardless of source. Only the *granting mechanism* changes. A disarm is a disarm whether it comes from acid glands or an earned discipline.
+Origin: Blade never appears randomly. A pawn must reach Melee 14 and Crafting 12, study five
+distinct bladed melee weapon types, and accept the awakening. Awakening permanently removes
+psylinks and psycasts and forbids ranged weapons.
 
----
+See [docs/origin-blade.md](docs/origin-blade.md).
 
-## Phase 4: Ability Roster — What Goes Where
+## Remaining Verification
 
-### Stays Gene-Only (inherently biological)
-
-| Ability | Gene | Reason |
-|---|---|---|
-| Corrosive Glands (disarm spit) | AG_CorrosiveGlands | Acid glands are organs |
-| Hypermetabolic Glands (overdrive) | AG_HypermetabolicGlands | Metabolic function |
-| Alarm Pheromones (provoke) | AG_AlarmPheromones | Pheromones are biological |
-| Dispersal Plexus (scatter/murder/carrion) | AG_DispersalPlexus | Body comes apart into crows |
-| Involute Organ (fold/swallow/collapse) | AG_InvoluteOrgan | Hole in the body, archite |
-| Anchor Organ (mark/clap/double clap) | AG_AnchorOrgan | Moved here. The marks are stored on the gene and the class comment says why: they belong to a person, travel with them between maps, and end when the gene does. A device that did the same needs that explained, and the gene does not. See below |
-
-### Multiple Sources (gene + at least one other)
-
-| Ability | Gene version | Other sources | Notes |
-|---|---|---|---|
-| Imperative Larynx (stop/drop/kneel/come/run) | Voice organ | Trait (natural authority), equipment (voice amplifier) | Voice commands fit multiple origins |
-| Arc Tendon (dash-strike chain) | Tendon | Weapon trait (Odyssey), training | The strike is the point, not the organ |
-| Resonant Marrow (double-hit destroys) | Skeleton | Weapon trait (Odyssey), training | Could be weapon resonance or technique |
-| Panoply Organ (blade rain/loose/grasp) | Extrude blades | Weapon trait (Odyssey) | Weapon that scatters/recalls blades |
-| Deferred Plexus (arrears) | Nerve plexus | Drug, implant, trait | Delay damage mechanic doesn't need biology |
-| Vector Reflex (reflect/shove) | Reflex organ | Equipment (power armor), implant | Deflection tech or trained reflex |
-| Halving Membrane (recursion) | Membrane | Psychic, archotech implant | Zeno barrier could be tech-based |
-| Stasis Organ (time bubble) | Archite organ | **Equipment (stasis belt) — shipped** | Time-freeze could be a deployable |
-| Time Lattice (speed up/slow down) | Nerve lattice | Drug, implant | Go-juice style speed boost |
-
-### Anchor Organ stays gene-only
-
-Cut, not deferred. The second source was one line in this plan and nothing in the game.
-
-Building it meant moving the mark list off `Gene_Anchors`, which is where it is saved,
-through the fourteen call sites that reach it via `AnchorUtility.GeneOf`, plus a migration
-for any colony with marks already placed. That is real risk for a route nobody asked for,
-on a kit that already works and that four other kits already match by being gene-only.
-
-Nothing is removed: the gene, the three abilities, the mark storage and the weapon ban all
-stay exactly as they are. What ends is the expectation of a stasis-belt equivalent for this
-kit. It can still be built later, and nothing shipped today would be wasted if it were.
-
-### New Abilities to Add (future)
-
-| Ability | Source | Description |
-|---|---|---|
-| Martial Disarm | Special condition (permanent) | Trained technique to disarm (non-acid version) |
-| Defensive Stance | Special condition (permanent) / Trait | Temporary defense boost, can't move |
-| Shield Bash | Equipment | Knock back + stun from shield |
-| Adrenaline Surge | Special condition (transient) | Speed/damage boost when ally downed nearby |
-| Berserker Rage | Trait | Damage boost + can't stop attacking |
-| Tactical Reposition | Special condition (permanent) | Quick dash to cover |
-| Last Stand | Special condition (transient) | Massive buffs when health is critical |
-| Counter Strike | Special condition (permanent) / Weapon Trait | Auto-retaliate after dodge |
-
----
-
-## Phase 5: Writing Pass
-
-Do this AFTER Phase 3 & 4, since ability descriptions change when they move to new sources.
-
-### Rules
-
-1. **Lead with the mechanic.** First sentence says what the ability does in gameplay terms.
-2. **One line of flavor max.** After the mechanic, one sentence of flavor if there's room.
-3. **No Zeno's paradox essays.** If the description is longer than 3 sentences, it's too long.
-4. **Names should be self-explanatory.** A player hovering over the name should know roughly what it does.
-5. **Cut the dramatic one-liners.** No more "Not all of it." and "It is not enough to make this safe."
-6. **Different sources get different flavor.** Gene version: biological flavor. Equipment version: tech flavor. Earned version: martial flavor. Same mechanic, different text.
-
-### Name Changes — done
-
-Two of this table's suggestions had already been taken by the multi-source work, which is the
-clue that settled the rest of it: the implant granting recursion is called **phase barrier**,
-and the trait granting arrears is called **pain debt**. Those names were used because they were
-the right names. Rule 6 above then decides who keeps which — the gene gets biological flavour,
-the device gets tech flavour — so the table's instinct to rename the *genes* after the devices
-was backwards, and only the shared **ability** names actually needed fixing, since those appear
-on a gizmo with no context at all.
-
-| Was | Now | Why |
-|---|---|---|
-| Recursion (ability) | **phase guard** | Sounded like programming; now agrees with the phase barrier implant |
-| Arrears (ability) | **wound debt** | Financial jargon; "pain debt" was taken by the trait |
-| Deferred plexus (gene) | **deferred nerves** | Still biological, no longer jargon |
-| Involute organ (gene) | **fold organ** | "Involute" needed a dictionary; names the thing it does |
-| Halving membrane (gene) | *kept* | Biological and already describes the mechanic |
-
-`AG_Arrears`, `AG_Recursion`, `AG_DeferredPlexus` and `AG_InvoluteOrgan` keep their defNames and
-class names, so only labels moved.
-
-### Keyed Strings
-
-- [x] Renamed `AbilityGenes.xml` to `RimArt.xml`
-- [x] Stale references swept: the deferred-nerves messages no longer say "plexus"
-
-### Descriptions — done
-
-All **88** descriptions in the mod now sit at three sentences or fewer, checked by counting
-rather than by eye: every AbilityDef, GeneDef, HediffDef, ThingDef and TraitDef. The two that
-already complied — corrosive glands and hypermetabolic glands — set the shape the rest were cut
-to: mechanic first, then the cost, and no closing one-liner.
-
----
-
-## Phase 6: Polish
-
-- [x] ~~Update Workshop thumbnail/preview images~~ Skipped -- not revamp work, and the word
-      "update" was wrong anyway. No preview image has ever existed: `About/` holds only
-      `About.xml`, and nothing named `Preview.png` or `ModIcon.png` appears anywhere in the
-      repo's history. Creating one is store design, and it belongs to publishing rather than
-      to this plan
-- [x] ~~Update Steam Workshop description~~ Skipped for the same reason, and on the same wrong
-      premise -- the mod has never been published. There is no `About/PublishedFileId.txt`,
-      which is the file Steam writes on first upload; the only `steamWorkshopUrl` in
-      `About.xml` is Harmony's, sitting in `modDependencies` to tell players where to get the
-      dependency. Both of these become real work the day you decide to ship, not before
-- [ ] Test all abilities with each source type
-- [x] ~~Test save compatibility (AG_ prefix preserved)~~ Skipped -- nothing to be compatible
-      with. The mod has never been published, so no save outside this machine has ever loaded
-      it. The `AG_` prefix itself stays as it is: the reason for keeping it is gone, but
-      renaming 86 defs now would be pure churn against working files, and it costs nothing
-      where it sits
-- [x] ~~Test without Biotech loaded (gene abilities hidden, others work)~~ Moot -- Biotech is required
-- [ ] Test without Odyssey loaded (weapon trait abilities hidden via MayRequire)
-
----
-
-## Order of Work
-
-1. ~~Phase 1: Mod Identity~~ (done)
-2. Phase 2: About.xml — quick win, do first
-3. Phase 3: Code architecture — build the multi-source framework
-4. Phase 4: Move abilities to new sources — ability by ability
-5. Phase 5: Writing pass — rewrite all descriptions
-6. Phase 6: Polish and test
+- Test all fifteen kits in game through their sole acquisition routes.
+- Test with Odyssey absent.
+- Test with Unique Melee Weapons absent.
+- Test with Melee Animation absent.
