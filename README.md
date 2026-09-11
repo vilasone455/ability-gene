@@ -13,6 +13,7 @@ Currently shipping fourteen gene-based abilities. Multi-source support is in pro
 | **Harmony** (`brrainz.harmony`) | **Yes** | Patches `Thing.DoTick`, `Thing.TakeDamage` and `ReservationManager.CanReserve` |
 | **Odyssey DLC** | No | Weapon trait abilities are `MayRequire`d against it |
 | **Melee Animation** (`co.uk.epicguru.meleeanimation`) | No | The arc tendon is `MayRequire`d against it |
+| **Unique Melee Weapons** (`shunter.uniquemeleeweapons`) | No | Melee weapon traits (resonance, arc) are `MayRequire`d against it |
 | Royalty / Ideology / Anomaly | No | Not referenced |
 | Any framework (VEF, EBSG, …) | No | — |
 

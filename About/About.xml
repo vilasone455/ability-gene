@@ -29,6 +29,7 @@
     <li>Ludeon.RimWorld.Anomaly</li>
     <li>Ludeon.RimWorld.Odyssey</li>
     <li>co.uk.epicguru.meleeanimation</li>
+    <li>shunter.uniquemeleeweapons</li>
   </loadAfter>
 
   <description>Combat abilities from every angle. Genes, traits, equipment, training, weapon traits, and battlefield conditions — each one a different way your pawn learns to fight.
@@ -47,5 +48,5 @@ CONDITIONS - adrenaline when allies fall, last stands at death's door. The fight
 
 No psycasts. No magic system. Just combat arts from every source that makes sense.
 
-Requires Biotech and Harmony. Optional support for Odyssey and Melee Animation.</description>
+Requires Biotech and Harmony. Optional support for Odyssey, Melee Animation and Unique Melee Weapons.</description>
 </ModMetaData>

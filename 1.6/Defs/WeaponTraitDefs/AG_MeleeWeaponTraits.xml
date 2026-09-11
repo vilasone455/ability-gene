@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Resonance as a melee weapon trait. The blade itself holds a note — same mechanic as the
+       gene, different origin. UMW_Melee so any unique melee weapon can roll it. Tags "Ability"
+       to stay mutually exclusive with UMW_Storied and UMW_Piledriver (one active ability per
+       weapon, Odyssey convention). Priced at EMPPulser/Piledriver parity (+80): a powerful
+       combat proc gated behind timing.
+       MayRequire on the def: without Unique Melee Weapons loaded, the WeaponCategoryDef
+       UMW_Melee does not exist and this def would fail cross-reference resolution. -->
+  <WeaponTraitDef MayRequire="shunter.uniquemeleeweapons">
+    <defName>AG_WeaponResonance</defName>
+    <label>resonant</label>
+    <description>The blade holds a note. On command, strikes set the part they hit ringing for a few seconds — a second blow on the same part while the note is live tears it off the body. The wielder's own frame rings on the same terms.</description>
+    <commonality>0.5</commonality>
+    <weaponCategory>UMW_Melee</weaponCategory>
+    <exclusionTags>
+      <li>Ability</li>
+    </exclusionTags>
+    <statOffsets>
+      <MarketValue>80</MarketValue>
+    </statOffsets>
+    <traitAdjectives>
+      <li>resonant</li>
+      <li>ringing</li>
+      <li>harmonic</li>
+      <li>singing</li>
+    </traitAdjectives>
+    <abilityProps>
+      <abilityDef>AG_Resonance</abilityDef>
+    </abilityProps>
+  </WeaponTraitDef>
+
+  <!-- Arc as a bladed weapon trait. A blade forged for chaining strikes — same mechanic as the
+       gene, different origin. UMW_Bladed because the dash-execute chain is a swordsman's move.
+       Requires Melee Animation on top of UMW — the arc literally plays their execution animations,
+       so without MA loaded the ability def does not exist.
+       Two MayRequire conditions: UMW for the weapon category, MA for the ability def. The def-level
+       MayRequire needs both — if either is absent, skip the whole def. RimWorld's MayRequire on a
+       def takes a comma-separated list as AND. -->
+  <WeaponTraitDef MayRequire="shunter.uniquemeleeweapons,co.uk.epicguru.meleeanimation">
+    <defName>AG_WeaponArc</defName>
+    <label>arcing</label>
+    <description>The blade was forged for the chain. On command the wielder crosses to one enemy mid-strike, then to whoever stands nearest, up to three in a single arc. The blow is real and lands with whatever the weapon is worth.</description>
+    <commonality>0.3</commonality>
+    <weaponCategory>UMW_Bladed</weaponCategory>
+    <exclusionTags>
+      <li>Ability</li>
+    </exclusionTags>
+    <statOffsets>
+      <MarketValue>120</MarketValue>
+    </statOffsets>
+    <traitAdjectives>
+      <li>arcing</li>
+      <li>flashing</li>
+      <li>chaining</li>
+      <li>swift</li>
+    </traitAdjectives>
+    <abilityProps>
+      <abilityDef>AG_Arc_Arc</abilityDef>
+    </abilityProps>
+  </WeaponTraitDef>
+
+</Defs>

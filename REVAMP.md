@@ -50,6 +50,7 @@ Currently all abilities are granted via `GeneDef.<abilities>`. Need to support:
 - [x] Condition abilities — use vanilla `HediffDef.<abilities>` (XML only, no custom C#)
 - [ ] Build training/skill-based ability system (pawn trains to unlock)
 - [x] Odyssey weapon traits — use vanilla `WeaponTraitDef.abilityProps` (XML only, no custom C#, MayRequire on defs)
+- [x] Unique Melee Weapons traits — same `abilityProps` mechanism, `MayRequire="shunter.uniquemeleeweapons"` (resonance, arc)
 - [ ] ~~Create `AbilitySourceDef`~~ Not needed — each source uses its own vanilla or light-custom mechanism
 
 ### Key Principle
