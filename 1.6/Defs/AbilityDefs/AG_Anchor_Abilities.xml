@@ -43,7 +43,7 @@
     <iconPath>UI/Icons/Genes/Gene_HandsHuman</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>1800</cooldownTicksRange>
-    <jobDef>CastAbilityOnThingWithoutWeapon</jobDef>
+    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
     <hostile>false</hostile>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
     <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
@@ -81,7 +81,7 @@
     <iconPath>UI/Icons/Genes/Gene_LongJumpLegs</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>1800</cooldownTicksRange>
-    <jobDef>CastAbilityOnThingWithoutWeapon</jobDef>
+    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
     <hostile>false</hostile>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
     <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>

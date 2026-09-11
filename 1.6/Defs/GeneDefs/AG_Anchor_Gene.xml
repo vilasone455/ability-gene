@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <GeneDef>
+  <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_AnchorOrgan</defName>
     <label>anchor organ</label>
     <description>Your pawn can walk up to something and leave a mark on it. A person, an animal, a raider, or just a patch of ground. The mark stays where it is put and travels with whoever is wearing it.\n\nThen they clap, and two marked places change over. Your pawn and a mark, or any two marks with each other - you pick which. Whatever was standing at one end is now standing at the other, and it works at any distance across the map.\n\nThe clap takes both hands. This pawn does not carry a weapon, ever, and marking something means walking close enough to touch it first.</description>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <GeneDef>
+  <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_ResonantMarrow</defName>
     <label>resonant marrow</label>
     <description>A skeleton that holds a note. Every blow this person lands sets the struck part ringing, and the ring does not fade for several seconds. A second blow arriving in the same place while the note is still live comes in phase with the first, and the two together are more than that piece of body can carry.\n\nIt is not a harder hit. Both blows land for exactly what they were worth; it is the timing that takes the arm off.\n\nThe marrow does not know whose bone it is standing in.</description>

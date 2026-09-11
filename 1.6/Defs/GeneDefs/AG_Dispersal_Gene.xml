@@ -2,7 +2,7 @@
 <Defs>
 
   <!-- Automatic Scatter can be toggled; Murder is targeted. Both use the same pool. -->
-  <GeneDef>
+  <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_DispersalPlexus</defName>
     <label>dispersal plexus</label>
     <description>A body that can come apart into crows.\n\nWhile automatic Scatter is enabled, an incoming hit of at least 6 damage from a present attacker is cancelled. The awake, standing carrier reforms in a safer reachable location five to ten cells away. Each Scatter costs one charge and 4% blood loss, with 15% slower movement for two seconds. Toggle it off to hold position and reserve charges.\n\nMurder is deliberate flight: pick a revealed landing spot up to 35 cells away, cross obstacles, and arrive ready to act with no blood loss or landing penalty.\n\nCarrion sends crows to consume a nearby fresh corpse while the carrier stays in place. Recovery is delivered when the birds return.\n\nAll three abilities share three charges. One charge regrows each game hour, even with automatic Scatter disabled.</description>

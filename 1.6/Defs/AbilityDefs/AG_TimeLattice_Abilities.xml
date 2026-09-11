@@ -5,7 +5,7 @@
        nothing around the carrier changes rate. -->
   <AbilityDef Name="AG_TimeAlterAbilityBase" Abstract="True">
     <category>AG_Genetic</category>
-    <jobDef>CastAbilityOnThingWithoutWeapon</jobDef>
+    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
     <targetRequired>false</targetRequired>
     <hostile>false</hostile>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>

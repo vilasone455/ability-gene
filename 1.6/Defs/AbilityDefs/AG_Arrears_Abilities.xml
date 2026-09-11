@@ -12,7 +12,7 @@
     <iconPath>UI/Abilities/MechResurrection</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>30000</cooldownTicksRange>
-    <jobDef>CastAbilityOnThingWithoutWeapon</jobDef>
+    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
     <targetRequired>false</targetRequired>
     <hostile>false</hostile>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>

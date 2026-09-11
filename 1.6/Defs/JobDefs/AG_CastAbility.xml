@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- A Biotech-free copy of Biotech's CastAbilityOnThingWithoutWeapon.
+
+       The abilities in this mod are shared across sources: the same cast that a gene grants
+       is also granted by a trait, an implant hediff or a weapon trait. Pointing their
+       <jobDef> at a Biotech def meant that every one of them failed cross-reference
+       resolution without Biotech installed, including the ones no gene is involved in.
+       The gene defs can be MayRequire'd away; these abilities cannot, because they have to
+       survive for the sources that are not genes.
+
+       The parent CastAbilityOnThing is Core, and supplies driverClass JobDriver_CastAbility.
+       Only the two fields Biotech overrides are restated here. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastAbilityOnThingWithoutWeapon</defName>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>

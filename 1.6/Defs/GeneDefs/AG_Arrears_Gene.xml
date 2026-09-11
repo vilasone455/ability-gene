@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <GeneDef>
+  <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_DeferredPlexus</defName>
     <label>deferred plexus</label>
     <description>A second nervous system that sits between the body and the news. It receives every wound exactly as the first one does - the depth, the bleeding, the shock - and then simply does not pass any of it upward. The body carries on because nobody has told it otherwise.\n\nNothing is prevented and nothing is lessened. The plexus is not armour; it is a delay, and everything it is holding is still owed in full.\n\nWhat it cannot do is deliver the news gently. When it finally reports, it reports all of it at once, and a body that would have gone down slowly enough to be dragged somewhere safe instead finds out everything in the same instant.</description>

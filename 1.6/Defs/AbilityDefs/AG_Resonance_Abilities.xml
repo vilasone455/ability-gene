@@ -12,7 +12,7 @@
     <iconPath>UI/Abilities/PiercingSpine</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>2500</cooldownTicksRange>
-    <jobDef>CastAbilityOnThingWithoutWeapon</jobDef>
+    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
     <targetRequired>false</targetRequired>
     <hostile>false</hostile>
     <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>

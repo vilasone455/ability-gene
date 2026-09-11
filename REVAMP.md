@@ -23,7 +23,7 @@ Transform "Ability Genes" (gene-only combat abilities) into **RimArt** — a com
 
 - [x] Rewrite `About.xml` description for new scope
 - [x] Add Odyssey and Melee Animation to `loadAfter`
-- [ ] Make Biotech optional (after non-gene sources ship)
+- [x] Make Biotech optional (gene defs `MayRequire` Biotech; shared abilities use the mod's own job def)
 - [x] Update README.md header, dependencies, layout, and build sections
 
 ---

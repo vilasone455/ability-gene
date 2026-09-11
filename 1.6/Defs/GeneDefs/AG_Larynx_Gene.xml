@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <GeneDef>
+  <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_ImperativeLarynx</defName>
     <label>imperative larynx</label>
     <description>A second set of folds above the first, wired to push a word out at a pressure no throat is meant to hold.\n\nWhat comes out is not persuasion and it is not fear. It arrives underneath both, and the body it lands in does the thing before the person in it has an opinion about it - then goes straight back to whatever they were doing, still armed, still hostile, and still perfectly clear on who made them do it.\n\nThe folds tear a little every time. They heal slowly, they heal worse each time, and a carrier who spends the whole raid talking will spend the following week unable to.</description>

@@ -9,7 +9,7 @@ Currently shipping fourteen gene-based abilities. Multi-source support is in pro
 
 | Dependency | Required | Why |
 |---|---|---|
-| **Biotech DLC** | **Yes** | Gene-based abilities need it. Will become optional once non-gene sources ship |
+| **Biotech DLC** | No | Gene defs are `MayRequire`d against it. Without Biotech the genes vanish and every other source still works |
 | **Harmony** (`brrainz.harmony`) | **Yes** | Patches `Thing.DoTick`, `Thing.TakeDamage` and `ReservationManager.CanReserve` |
 | **Odyssey DLC** | No | Weapon trait abilities are `MayRequire`d against it |
 | **Melee Animation** (`co.uk.epicguru.meleeanimation`) | No | The arc tendon is `MayRequire`d against it |
@@ -1083,7 +1083,7 @@ with it.
 ## Layout
 
 ```
-About/About.xml                  metadata, Biotech + Harmony dependencies
+About/About.xml                  metadata, Harmony dependency
 loadFolders.xml                  1.6 only
 1.6/Defs/AbilityDefs/            AbilityDefs + AG_Genetic category
 1.6/Defs/GeneDefs/               GeneDefs, some MayRequire'd

@@ -9,10 +9,6 @@
 
   <modDependencies>
     <li>
-      <packageId>Ludeon.RimWorld.Biotech</packageId>
-      <displayName>Biotech</displayName>
-    </li>
-    <li>
       <packageId>brrainz.harmony</packageId>
       <displayName>Harmony</displayName>
       <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
@@ -48,5 +44,5 @@ CONDITIONS - adrenaline when allies fall, last stands at death's door. The fight
 
 No psycasts. No magic system. Just combat arts from every source that makes sense.
 
-Requires Biotech and Harmony. Optional support for Odyssey, Melee Animation and Unique Melee Weapons.</description>
+Requires Harmony. Gene abilities need Biotech; every other source works without it. Optional support for Odyssey, Melee Animation and Unique Melee Weapons.</description>
 </ModMetaData>

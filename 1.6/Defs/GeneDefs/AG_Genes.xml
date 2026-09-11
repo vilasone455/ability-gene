@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <GeneDef>
+  <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_CorrosiveGlands</defName>
     <label>corrosive glands</label>
     <description>Glands behind the carrier's jaw hold a contact acid strong enough to ruin a grip in under a second. Spat accurately, it makes a person drop whatever they are carrying without doing them any real harm.\n\nThe obvious use is taking a dangerous weapon off a raider you would rather recruit than bury.</description>
@@ -30,7 +30,7 @@
     </symbolPack>
   </GeneDef>
 
-  <GeneDef>
+  <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_HypermetabolicGlands</defName>
     <label>hypermetabolic glands</label>
     <description>The carrier's metabolism has no upper governor. On command they can burn food reserves straight into tissue repair, closing wounds at a rate that would take an ordinary body days.\n\nThe body does not care whether it can afford this. Used on serious injuries it will happily run its owner into starvation.</description>
@@ -59,7 +59,7 @@
     </symbolPack>
   </GeneDef>
 
-  <GeneDef>
+  <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_AlarmPheromones</defName>
     <label>alarm pheromones</label>
     <description>The carrier can dump a pheromone blend that every predator instinct in range reads as the nearest and most urgent thing to kill. Hostiles break off whatever they were doing and come straight for them.\n\nA reflexive tightening of the skin comes with it, blunting some of what arrives. Not all of it.</description>
@@ -88,7 +88,7 @@
     </symbolPack>
   </GeneDef>
 
-  <GeneDef>
+  <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_StasisOrgan</defName>
     <label>stasis organ</label>
     <description>An archite lattice grown through the carrier's chest can seize a sphere of local time and hold it still. Inside, nothing moves and nothing can be touched — not the raiders, not your own people, not the carrier, who is at the centre of it and goes under with everyone else.\n\nThe lattice takes many days to wind back up. Nobody has explained what it actually does to the people caught inside, and the ones who have been in one do not remember any of it.</description>

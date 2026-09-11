@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <GeneDef>
+  <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_VectorReflex</defName>
     <label>vector reflex organ</label>
     <description>A second, redundant nervous system reads the direction and speed of anything approaching the carrier and answers it before the conscious mind knows it is there. Momentum is not absorbed, blocked or dodged - it is turned around and handed back.\n\nHeld fully open, nothing lands. The carrier also cannot move, cannot be reached, cannot be tended and cannot be helped, because a reflex that cannot tell a bullet from a doctor's hands reverses both. It is a decision to stop being a person for half a minute and be a wall instead.\n\nHeld shut, the same organ can still be pointed outward in short bursts, taking hold of one body's momentum and spending all of it at once.</description>
