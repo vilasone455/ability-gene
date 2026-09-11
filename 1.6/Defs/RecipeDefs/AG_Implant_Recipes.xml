@@ -1,12 +1,40 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
+  <!-- Each of these consumes the device it installs, plus medicine.
+       SurgeryInstallImplantBase supplies medicine alone, so inheriting it without an
+       ingredients override made every implant here free: two herbal poultices and a
+       doctor bought an archotech phase barrier, repeatably, from day one. The items are
+       defined in ThingDefs/AG_Implant_Things.xml. -->
+
   <!-- Pain Inhibitor — brain implant, industrial tier -->
   <RecipeDef ParentName="SurgeryInstallImplantBase">
     <defName>AG_InstallPainInhibitor</defName>
     <label>install pain inhibitor</label>
     <description>Install a pain inhibitor implant in the brain.</description>
     <jobString>Installing pain inhibitor.</jobString>
+    <ingredients>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>AG_PainInhibitor</li>
+          </thingDefs>
+        </filter>
+        <count>1</count>
+      </li>
+      <li>
+        <filter><categories><li>Medicine</li></categories></filter>
+        <count>2</count>
+      </li>
+    </ingredients>
+    <fixedIngredientFilter>
+      <thingDefs>
+        <li>AG_PainInhibitor</li>
+      </thingDefs>
+      <categories>
+        <li>Medicine</li>
+      </categories>
+    </fixedIngredientFilter>
     <addsHediff>AG_PainInhibitor</addsHediff>
     <appliedOnFixedBodyParts>
       <li>Brain</li>
@@ -19,6 +47,28 @@
     <label>install reflex booster</label>
     <description>Install a reflex booster implant in the spine.</description>
     <jobString>Installing reflex booster.</jobString>
+    <ingredients>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>AG_ReflexBooster</li>
+          </thingDefs>
+        </filter>
+        <count>1</count>
+      </li>
+      <li>
+        <filter><categories><li>Medicine</li></categories></filter>
+        <count>2</count>
+      </li>
+    </ingredients>
+    <fixedIngredientFilter>
+      <thingDefs>
+        <li>AG_ReflexBooster</li>
+      </thingDefs>
+      <categories>
+        <li>Medicine</li>
+      </categories>
+    </fixedIngredientFilter>
     <addsHediff>AG_ReflexBooster</addsHediff>
     <appliedOnFixedBodyParts>
       <li>Spine</li>
@@ -35,6 +85,28 @@
     <skillRequirements>
       <Medicine>8</Medicine>
     </skillRequirements>
+    <ingredients>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>AG_PhaseBarrier</li>
+          </thingDefs>
+        </filter>
+        <count>1</count>
+      </li>
+      <li>
+        <filter><categories><li>Medicine</li></categories></filter>
+        <count>2</count>
+      </li>
+    </ingredients>
+    <fixedIngredientFilter>
+      <thingDefs>
+        <li>AG_PhaseBarrier</li>
+      </thingDefs>
+      <categories>
+        <li>Medicine</li>
+      </categories>
+    </fixedIngredientFilter>
     <addsHediff>AG_PhaseBarrier</addsHediff>
     <appliedOnFixedBodyParts>
       <li>Brain</li>
@@ -51,6 +123,28 @@
     <skillRequirements>
       <Medicine>6</Medicine>
     </skillRequirements>
+    <ingredients>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>AG_NeuralAccelerator</li>
+          </thingDefs>
+        </filter>
+        <count>1</count>
+      </li>
+      <li>
+        <filter><categories><li>Medicine</li></categories></filter>
+        <count>2</count>
+      </li>
+    </ingredients>
+    <fixedIngredientFilter>
+      <thingDefs>
+        <li>AG_NeuralAccelerator</li>
+      </thingDefs>
+      <categories>
+        <li>Medicine</li>
+      </categories>
+    </fixedIngredientFilter>
     <addsHediff>AG_NeuralAccelerator</addsHediff>
     <appliedOnFixedBodyParts>
       <li>Brain</li>

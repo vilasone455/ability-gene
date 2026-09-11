@@ -408,6 +408,27 @@ itself in twenty seconds, so a full three-target chain lands on the top stage an
 carrier standing over three bodies barely able to hold anything — and an arc that found one target
 and ran out costs a third of that. The player is never punished for the arc running out of people.
 
+## Implants
+
+Four of the ability kits are also available as surgical implants, so a colony without the
+gene for one can still get there. Each is a real item that has to be built or found before
+a surgeon can fit it — the recipes consume the device plus two medicine.
+
+| Implant | Grants | Tier | How you get it |
+|---|---|---|---|
+| **Pain inhibitor** | *arrears* | Industrial | Machining table, behind **Prosthetics**. 25 steel, 4 industrial components |
+| **Reflex booster** | *reflection*, *vector shove* | Industrial | Machining table, behind **Prosthetics**. 35 steel, 6 industrial components |
+| **Neural accelerator** | *time alter* ×3 | Spacer | Fabrication bench, behind **Bionics**. 20 plasteel, 4 spacer components |
+| **Phase barrier** | *recursion* | Archotech | **Not craftable.** Quest rewards and deep-space trade only |
+
+The phase barrier stays uncraftable on purpose: no archotech part in the base game has a
+recipe, and it is the strongest thing on this list.
+
+Each device ThingDef shares its `defName` with the HediffDef it installs, which is the
+vanilla convention — `Joywire` is both an item and a hediff, and the two live in separate
+databases. No new art: the Core health-item sprite is tinted per tier by the parent def,
+exactly as every vanilla prosthetic, bionic and archotech part is drawn.
+
 ## How reflection works
 
 Three mechanisms, one for each thing the reflex has to do.

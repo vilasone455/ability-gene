@@ -29,8 +29,15 @@ REF_TAGS = {
     "hediffDef", "stateDef", "fleckDef", "jobDef", "capacity", "soundCast",
     "warmupStartSound", "clamorType", "category", "prerequisite", "damageDef",
     "thingDef", "effecterDef", "projectileDef", "strainHediff", "injuryDef",
+    # Item, recipe and research plumbing. Added when the implant devices landed: an
+    # install recipe that names a researchPrerequisite or an unfinishedThingDef that
+    # does not exist drops the recipe at load, which looks exactly like the surgery
+    # simply not being offered.
+    "researchPrerequisite", "requiredResearchBuilding", "unfinishedThingDef", "addsHediff",
 }
-LIST_TAGS = {"abilities", "descriptionHyperlinks", "exceptions"}
+LIST_TAGS = {"abilities", "descriptionHyperlinks", "exceptions",
+             "recipeUsers", "thingDefs", "prerequisites", "thingCategories",
+             "categories", "appliedOnFixedBodyParts"}
 
 problems = []
 def fail(kind, where, detail):
@@ -119,6 +126,9 @@ if DATA is not None:
                 vals = [c.text.strip() for c in el if c.text]
             elif el.tag in ("statBases", "statOffsets", "statFactors"):
                 stats.update(c.tag for c in el)
+            # <costList> names its ingredients as child TAGS, not as text or <li>.
+            elif el.tag == "costList":
+                vals = [c.tag for c in el]
             for v in vals:
                 if v in mine: continue
                 w = vanilla.get(v)
