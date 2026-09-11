@@ -7,7 +7,7 @@
   <AbilityDef>
     <defName>AG_AnchorMark</defName>
     <label>mark</label>
-    <description>Leave a mark on a person, an animal or a patch of ground. It stays with them wherever they go.\n\nYour pawn can hold three at once. Marking something that is already marked takes the mark back instead, so you can free a slot without waiting.\n\nMarks fade after about a day. You have to get close to place one - close enough that anything hostile has already noticed you.</description>
+    <description>Leave a mark on a person, an animal or a patch of ground, and it stays with them wherever they go. The carrier holds three at once, and marking something already marked takes that mark back instead.\n\nMarks fade after about a day, and placing one means walking close enough to touch.</description>
     <iconPath>UI/Gizmos/RemoteRepair</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>600</cooldownTicksRange>
@@ -39,7 +39,7 @@
   <AbilityDef>
     <defName>AG_AnchorClap</defName>
     <label>clap</label>
-    <description>Clap once and change places with one of your marks.\n\nIf the mark is on someone, it is a straight swap - they end up standing exactly where your pawn was, in whatever your pawn was standing in. If the mark is on a patch of ground, your pawn simply arrives there and nothing comes back.\n\nDistance does not matter and neither does line of sight. The mark is used up. Both hands have to be empty.</description>
+    <description>Clap once and change places with one of your marks, at any distance and without line of sight. A mark on someone is a straight swap; a mark on the ground simply moves the carrier there.\n\nThe mark is spent, and both hands have to be empty.</description>
     <iconPath>UI/Icons/Genes/Gene_HandsHuman</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>1800</cooldownTicksRange>
@@ -77,7 +77,7 @@
   <AbilityDef>
     <defName>AG_AnchorDoubleClap</defName>
     <label>double clap</label>
-    <description>Clap twice and any two of your marks change places with each other. Your pawn does not move and is not one of the ends.\n\nPick the first mark, then pick the second. This is how you put a raider in your killbox without standing in it yourself, or pull a bleeding colonist out and leave whoever dropped them in their place.\n\nIt costs both marks you picked. At least one of them has to be on something that can move - two marked patches of ground have nothing to exchange. Both hands have to be empty.</description>
+    <description>Clap twice and any two of your marks change places with each other. The carrier does not move and is not one of the ends - this is how a raider ends up in your killbox without anyone standing in it.\n\nBoth marks are spent, at least one must be on something that can move, and both hands have to be empty.</description>
     <iconPath>UI/Icons/Genes/Gene_LongJumpLegs</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>1800</cooldownTicksRange>

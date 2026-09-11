@@ -15,7 +15,7 @@
   <HediffDef>
     <defName>AG_PanoplyDebt</defName>
     <label>extruded frame</label>
-    <description>This person's blades are somewhere else.\n\nWhat is standing in the ground came out of them, and until it comes back they are carrying less of themselves around than a body is supposed to. It is not an injury and no doctor can help with it. The only treatment is to stop leaving blades lying about.</description>
+    <description>This person's blades are somewhere else. What is standing in the ground came out of them, and until it comes back they carry less of themselves around than a body is supposed to.\n\nIt is not an injury and no doctor can help; the only treatment is to stop leaving blades lying about.</description>
     <hediffClass>HediffWithComps</hediffClass>
     <defaultLabelColor>(0.72, 0.76, 0.85)</defaultLabelColor>
     <scenarioCanAdd>false</scenarioCanAdd>

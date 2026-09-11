@@ -11,7 +11,7 @@
   <HediffDef MayRequire="co.uk.epicguru.meleeanimation">
     <defName>AG_ArcRecoil</defName>
     <label>arc recoil</label>
-    <description>This person stopped several times faster than a body is built to stop.\n\nNothing is torn. Everything is simply still ringing - the joints that took the arrival, the eyes that have not caught up with where they are standing, the hand that is still holding a strike that already landed. It passes.</description>
+    <description>This person stopped several times faster than a body is built to stop.\n\nNothing is torn - the joints that took the arrival, the eyes that have not caught up, the hand still holding a strike that already landed are all simply ringing. It passes.</description>
     <hediffClass>HediffWithComps</hediffClass>
     <defaultLabelColor>(0.85, 0.80, 0.62)</defaultLabelColor>
     <scenarioCanAdd>false</scenarioCanAdd>

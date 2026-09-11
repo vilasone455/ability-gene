@@ -15,7 +15,7 @@
   <ThingDef ParentName="ApparelBase">
     <defName>AG_StasisBelt</defName>
     <label>stasis belt</label>
-    <description>A field generator worn at the waist. Triggered, it collapses a sphere of stopped time around the wearer: nothing inside moves, burns or bleeds, and nothing inside can be harmed.\n\nIt does not know friend from enemy, and it does not spare the person wearing it. What it buys is time for everyone standing outside.\n\nThe lattice takes many days to wind back up, and the charge stays with the belt when it changes hands.</description>
+    <description>A field generator worn at the waist. Triggered, it collapses a sphere of stopped time around the wearer: nothing inside moves, burns, bleeds or can be harmed, and it does not spare the person wearing it.\n\nThe lattice takes many days to wind back up, and the charge stays with the belt when it changes hands.</description>
     <thingClass>Apparel</thingClass>
     <graphicData>
       <texPath>RimArt/Stasis/Belt</texPath>

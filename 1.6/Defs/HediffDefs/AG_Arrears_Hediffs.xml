@@ -11,7 +11,7 @@
   <HediffDef>
     <defName>AG_Arrears</defName>
     <label>arrears</label>
-    <description>This person is being wounded and has not been told. Every injury is on the books instead of in the body - no bleeding, no pain, no shock, nothing slowing them down.\n\nAll of it is still owed. It arrives in one instant when the plexus reports, and there is no version of this where it does not.</description>
+    <description>This person is being wounded and has not been told. Every injury is on the books instead of in the body - no bleeding, no pain, no shock, nothing slowing them down.\n\nAll of it is still owed, and it arrives in one instant when the nerves report.</description>
     <hediffClass>HediffWithComps</hediffClass>
     <defaultLabelColor>(0.95, 0.6, 0.35)</defaultLabelColor>
     <scenarioCanAdd>false</scenarioCanAdd>

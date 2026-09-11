@@ -16,7 +16,7 @@
   <ThingDef>
     <defName>AG_InvoluteAperture</defName>
     <label>aperture</label>
-    <description>A hole where somebody used to be standing. It is not a door in anything - there is nothing for it to be set into - and it does not lead anywhere you can point at.\n\nIt cannot be broken. Anything that arrives at it goes through, and comes out on the other side, wherever that is.</description>
+    <description>A hole where somebody used to be standing. It is not a door in anything and it does not lead anywhere you can point at.\n\nIt cannot be broken, and anything arriving at it goes through and comes out on the other side, wherever that is.</description>
     <thingClass>RimArt.Building_Aperture</thingClass>
     <category>Building</category>
     <altitudeLayer>Item</altitudeLayer>

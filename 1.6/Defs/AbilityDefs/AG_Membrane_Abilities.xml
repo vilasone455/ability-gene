@@ -6,8 +6,8 @@
        breath, which lives on the hediff's Breathing ramp, not here. -->
   <AbilityDef>
     <defName>AG_Recursion</defName>
-    <label>recursion</label>
-    <description>Hold the membrane open. Everything moving toward the carrier begins halving the distance it has left and loses the ability to finish - rounds drift in and hang short, blades and fists miss by margins that keep doubling, and nothing that started toward them ever quite arrives.\n\nAir is approaching too. The carrier stops breathing the moment this goes up and does not start again until it comes down. There is no cooldown worth speaking of, because the limit is a lung.\n\nNothing has been destroyed or turned aside. Everything still on its way lands the instant the membrane closes - including whatever has been queuing up against their face. Let go early.</description>
+    <label>phase guard</label>
+    <description>Hold the membrane open, and everything moving toward the carrier begins halving the distance it has left without ever finishing - rounds hang short, blows miss by margins that keep doubling.\n\nAir is approaching too, so the carrier stops breathing until it closes. Nothing has been destroyed: everything still on its way lands the instant it does.</description>
     <iconPath>UI/Abilities/MechSmokepop</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>2500</cooldownTicksRange>

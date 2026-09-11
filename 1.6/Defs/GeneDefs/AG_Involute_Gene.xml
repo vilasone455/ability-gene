@@ -3,8 +3,8 @@
 
   <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_InvoluteOrgan</defName>
-    <label>involute organ</label>
-    <description>Your pawn has a hole in them. One part of their body - rolled when the gene lands, and named on their health tab - is not entirely there, and they are permanently worse at whatever that part did.\n\nMost of the time the hole leads nowhere. When they connect it, anything that strikes that part stops landing on them and arrives instead inside a room that is not anywhere, still travelling at whatever speed it was.\n\nThey can step through it themselves, and an aperture stays standing where they were - visible, glowing, and impossible to break. It stays after they come back out, which is how they reach the volume from outside it, and it never stops being a shooting lane into everything they have stored in there.\n\nThey can put people through it. An enemy goes in and does not come out; a wounded ally goes in and can be carried back. And they can end the whole volume, with everything and everyone in it, from outside.</description>
+    <label>fold organ</label>
+    <description>One part of the carrier's body - rolled when the gene lands, named on their health tab - is not entirely there, and they are permanently worse at whatever that part did. Connected, anything striking that part arrives inside a room that is not anywhere instead of landing on them.\n\nThey can step through it, put people through it, store things in it, and end the whole volume with everything still inside.</description>
     <geneClass>RimArt.Gene_Involute</geneClass>
     <iconPath>UI/Icons/Genes/Gene_ExtremePsychicAbility</iconPath>
     <displayCategory>Ability</displayCategory>

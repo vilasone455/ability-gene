@@ -11,7 +11,7 @@
     <defName>AG_InvoluteHole</defName>
     <label>involute hole</label>
     <labelNoun>an involute hole</labelNoun>
-    <description>There is a hole in this part. Not a wound - a hole, with nothing on the other side of it that belongs to this body.\n\nMost of the time it leads nowhere and is simply missing tissue. When the carrier connects it, whatever strikes this part goes through instead of landing.</description>
+    <description>There is a hole in this part. Not a wound - a hole, with nothing on the other side of it that belongs to this body.\n\nMost of the time it leads nowhere and is simply missing tissue; connected, whatever strikes this part goes through instead of landing.</description>
     <hediffClass>Hediff</hediffClass>
     <defaultLabelColor>(0.62, 0.35, 0.95)</defaultLabelColor>
     <isBad>true</isBad>
@@ -34,7 +34,7 @@
   <HediffDef>
     <defName>AG_InvoluteVented</defName>
     <label>vented</label>
-    <description>The hole is connected. Anything that finds the part it is in does not land - it arrives somewhere else, in a room this person can walk to and nobody else can.\n\nWhat goes through is not stopped, slowed or reduced. It is still travelling, and it is still dangerous to whatever is in there.</description>
+    <description>The hole is connected. Anything that finds the part it is in does not land - it arrives somewhere else, in a room this person can walk to and nobody else can.\n\nWhat goes through is not stopped, slowed or reduced, and it is still dangerous to whatever is in there.</description>
     <hediffClass>HediffWithComps</hediffClass>
     <defaultLabelColor>(0.62, 0.35, 0.95)</defaultLabelColor>
     <scenarioCanAdd>false</scenarioCanAdd>

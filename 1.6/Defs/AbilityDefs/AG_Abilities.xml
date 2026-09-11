@@ -90,7 +90,7 @@
   <AbilityDef>
     <defName>AG_Provoke</defName>
     <label>provoke</label>
-    <description>Flood the surrounding air with alarm pheromones keyed to read as the single most urgent threat present. Every hostile close enough to smell it drops what it was doing and comes for the carrier.\n\nThe carrier's skin tightens in the same reflex, turning aside some of what follows. It is not enough to make this safe.</description>
+    <description>Flood the surrounding air with alarm pheromones keyed to read as the single most urgent threat present. Every hostile close enough to smell it drops what it was doing and comes for the carrier.\n\nThe same reflex tightens the carrier's skin, turning aside part of what follows.</description>
     <iconPath>UI/Icons/Genes/Gene_VoiceRoar</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>30000</cooldownTicksRange>
@@ -123,7 +123,7 @@
   <AbilityDef>
     <defName>AG_TimeBubble</defName>
     <label>stasis field</label>
-    <description>Collapse a sphere of stopped time around the carrier. Inside it nothing moves, nothing burns, nothing bleeds and bullets hang in the air where they were.\n\nThe field does not know friend from enemy and it does not spare the person who cast it. Everyone inside — raiders, your own people, the carrier — is simply gone from the fight until it lifts. Nothing inside can be harmed while it holds.\n\nWhat you buy is time for everyone standing outside it.</description>
+    <description>Collapse a sphere of stopped time around the carrier. Nothing inside moves, burns, bleeds or can be harmed - raiders, your own people and the carrier alike.\n\nWhat you buy is time for everyone standing outside it.</description>
     <iconPath>RimArt/Stasis/IconStasis</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>300000</cooldownTicksRange>

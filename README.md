@@ -87,7 +87,7 @@ carrier is **rooted** and **untouchable**: no tending, no feeding, no rescue, no
 nobody hauling them to a bed. It is a decision to stop being a person and be a wall, and
 the way to beat it is to stop shooting and wait.
 
-### Halving membrane → *recursion*
+### Halving membrane → *phase guard*
 
 Holds a boundary that divides distance instead of blocking it. Met −4, Cpx 6.
 
@@ -178,7 +178,7 @@ twice on the same part of them takes that part off just as readily. Against one 
 a duel the carrier is winning; walking it into a melee crowd is how a carrier comes home with
 one arm.
 
-### Deferred plexus → *arrears*
+### Deferred nerves → *wound debt*
 
 A second nervous system that sits between the body and the news. Met −3, Cpx 4.
 
@@ -248,6 +248,27 @@ ordinary steel longsword and it stays one — ownable, tradeable, lootable off t
 needs an empty hand and will not make one; silently dropping a colonist's rifle to give them a
 sword is help nobody asked for.
 
+### Origin: Blade → *rain*, *loose*, *grasp* (earned)
+
+The same panoply kit, reached without a gene. A colonist studies five distinct bladed melee
+weapon types — one in-game hour each, the weapon left intact — and with **Melee 14** and
+**Crafting 12** the game offers them the origin.
+
+It is the only kit in the mod a player can deliberately work toward. The trait has commonality
+0, so it never rolls on a generated pawn; it has to be earned.
+
+**Awakening asks first, and it is permanent.** Taking it removes every psycast and psylink
+level, blocks both forever, and forbids ranged weapons for the rest of that pawn's life. The
+offer arrives as a choice letter with the full warning, the way a vanilla growth moment does,
+and nothing is taken until the player accepts. Declining costs nothing — the Origin: Blade
+command becomes **Awaken: Blade**, so a pawn passed over can be taken through later.
+
+Studies are stored per pawn and survive a save. A type is a `ThingDef`, so material and quality
+variants count once, and any melee weapon with a Cut or Stab tool qualifies — including modded
+ones. Core ships exactly five: knife, ikwa, spear, gladius, longsword.
+
+Full design notes in [docs/origin-blade.md](docs/origin-blade.md).
+
 ### Stasis organ → *stasis field* (archite)
 Collapses a 6.9-cell sphere of stopped time around the caster for 20 seconds. Inside it:
 pawns, projectiles in flight, fire and gas all halt, and **nothing can be harmed**.
@@ -269,7 +290,7 @@ the longest remaining charge is the one that carries. Granted through
 from apparel: `CompEquippableAbility` replaces `CompEquippable` and works only on a
 weapon, and `CompApparelVerbOwner` grants a `Verb` rather than an ability.
 
-### Involute organ → *vent*, *fold*, *swallow*, *post*, *collapse* (archite)
+### Fold organ → *vent*, *fold*, *swallow*, *post*, *collapse* (archite)
 
 One hole, normally on the carrier's body, leading to a volume that is not anywhere.
 Met −4, Cpx 7, Arc 1.
@@ -416,10 +437,10 @@ a surgeon can fit it — the recipes consume the device plus two medicine.
 
 | Implant | Grants | Tier | How you get it |
 |---|---|---|---|
-| **Pain inhibitor** | *arrears* | Industrial | Machining table, behind **Prosthetics**. 25 steel, 4 industrial components |
+| **Pain inhibitor** | *wound debt* | Industrial | Machining table, behind **Prosthetics**. 25 steel, 4 industrial components |
 | **Reflex booster** | *reflection*, *vector shove* | Industrial | Machining table, behind **Prosthetics**. 35 steel, 6 industrial components |
 | **Neural accelerator** | *time alter* ×3 | Spacer | Fabrication bench, behind **Bionics**. 20 plasteel, 4 spacer components |
-| **Phase barrier** | *recursion* | Archotech | **Not craftable.** Quest rewards and deep-space trade only |
+| **Phase barrier** | *phase guard* | Archotech | **Not craftable.** Quest rewards and deep-space trade only |
 
 The phase barrier stays uncraftable on purpose: no archotech part in the base game has a
 recipe, and it is the strongest thing on this list.
@@ -643,6 +664,9 @@ different and much stronger one.
 
 ## How arrears works
 
+*Player-facing this ability is **wound debt**; `AG_Arrears` and `HediffComp_Arrears`
+keep the old name in code, so the implementation notes below use it.*
+
 **One prefix, and the ordering is the whole design.** `Thing.TakeDamage` now carries four
 prefixes from this mod, and arrears sits at `Priority.Low`, deliberately last:
 
@@ -763,7 +787,7 @@ field you can flip rather than a decision baked into the code.
 
 `radius` and `durationTicks` sit beside it. 60 ticks = 1 second.
 
-## How the involute organ works
+## How the fold organ works
 
 **The hole is read one layer deeper than the resonance.** `Patch_Thing_TakeDamage_Resonance` can
 be a postfix because it only wants to know which part was struck. This has to stop the strike
@@ -1197,11 +1221,11 @@ Confirmed in-game (1.6.4871, alongside ~40 other mods including Vanilla Psycasts
 - no noticeable frame cost with a field up, despite the prefix sitting on `Thing.DoTick`
 - the resonant marrow: notes are set on the struck part, a second blow in phase takes the part
   off, and the damage-layer postfix reads hit parts correctly off `DamageResult`
-- the deferred plexus: wounds are held rather than applied, the carrier keeps moving while in
+- the deferred nerves: wounds are held rather than applied, the carrier keeps moving while in
   debt, and settling delivers the whole bill at once - including the four-way prefix ordering on
   `Thing.TakeDamage` holding up with the other genes present
 
-### Testing the involute organ
+### Testing the fold organ
 
 The pass-through cannot be tested in a fight, and that is a property of the design rather than a
 gap in it: it fires only on the one part the hole is in, which is a few percent of incoming hits,
@@ -1279,7 +1303,7 @@ Still unverified:
   game, and unlike the rest of the mod it is talking to another mod's internals. The parts most
   likely to bite are in its own *Known gaps* above; the first thing to check is simply whether a
   three-target chain reads as one movement
-- **everything in the involute organ.** It compiles and validates and has never been in front of
+- **everything in the fold organ.** It compiles and validates and has never been in front of
   the game. The parts most likely to bite: whether `Projectile.Launch` with a null launcher
   survives contact with real projectile code, whether the `MoteGlow` shader on the aperture's
   `SkipInnerDimension` texture reads as a hole or as a violet smear, whether a lone pawn on a

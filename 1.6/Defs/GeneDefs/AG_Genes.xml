@@ -33,7 +33,7 @@
   <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_HypermetabolicGlands</defName>
     <label>hypermetabolic glands</label>
-    <description>The carrier's metabolism has no upper governor. On command they can burn food reserves straight into tissue repair, closing wounds at a rate that would take an ordinary body days.\n\nThe body does not care whether it can afford this. Used on serious injuries it will happily run its owner into starvation.</description>
+    <description>The carrier's metabolism has no upper governor. On command they burn food reserves straight into tissue repair, closing wounds at a rate that would take an ordinary body days.\n\nThe body does not care whether it can afford this, and on serious injuries it will run its owner into starvation.</description>
     <iconPath>UI/Icons/Genes/Gene_RobustDigestion</iconPath>
     <displayCategory>Ability</displayCategory>
     <displayOrderInCategory>110</displayOrderInCategory>
@@ -62,7 +62,7 @@
   <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_AlarmPheromones</defName>
     <label>alarm pheromones</label>
-    <description>The carrier can dump a pheromone blend that every predator instinct in range reads as the nearest and most urgent thing to kill. Hostiles break off whatever they were doing and come straight for them.\n\nA reflexive tightening of the skin comes with it, blunting some of what arrives. Not all of it.</description>
+    <description>The carrier can dump a pheromone blend that every predator instinct in range reads as the nearest and most urgent thing to kill. Hostiles break off whatever they were doing and come straight for them.\n\nA reflexive tightening of the skin comes with it, blunting part of what arrives.</description>
     <iconPath>UI/Icons/Genes/Gene_HyperAggressive</iconPath>
     <displayCategory>Ability</displayCategory>
     <displayOrderInCategory>120</displayOrderInCategory>
@@ -91,7 +91,7 @@
   <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_StasisOrgan</defName>
     <label>stasis organ</label>
-    <description>An archite lattice grown through the carrier's chest can seize a sphere of local time and hold it still. Inside, nothing moves and nothing can be touched — not the raiders, not your own people, not the carrier, who is at the centre of it and goes under with everyone else.\n\nThe lattice takes many days to wind back up. Nobody has explained what it actually does to the people caught inside, and the ones who have been in one do not remember any of it.</description>
+    <description>An archite lattice grown through the carrier's chest can seize a sphere of local time and hold it still. Nothing inside moves or can be touched - not the raiders, not your own people, not the carrier at the centre of it.\n\nThe lattice takes many days to wind back up, and nobody who has been inside one remembers any of it.</description>
     <iconPath>UI/Icons/Genes/Gene_ArchiteMetabolism</iconPath>
     <displayCategory>Ability</displayCategory>
     <displayOrderInCategory>200</displayOrderInCategory>

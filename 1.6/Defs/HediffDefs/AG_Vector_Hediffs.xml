@@ -7,7 +7,7 @@
   <HediffDef>
     <defName>AG_VectorReflection</defName>
     <label>reflection</label>
-    <description>Every vector reaching this person is being reversed. Nothing aimed at them lands; it is returned, at strength, to whatever sent it.\n\nThe reflex does not distinguish. While it holds, this person cannot be tended, fed, rescued, arrested or touched at all, and can barely move - handling their own momentum is the one thing the organ is not doing.</description>
+    <description>Every vector reaching this person is being reversed. Nothing aimed at them lands; it is returned, at strength, to whatever sent it.\n\nThe reflex does not distinguish, so while it holds they cannot be tended, fed, rescued or touched at all, and can barely move.</description>
     <hediffClass>HediffWithComps</hediffClass>
     <defaultLabelColor>(0.6, 0.85, 1)</defaultLabelColor>
     <scenarioCanAdd>false</scenarioCanAdd>

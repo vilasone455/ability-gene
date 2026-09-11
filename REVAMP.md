@@ -140,21 +140,38 @@ Do this AFTER Phase 3 & 4, since ability descriptions change when they move to n
 5. **Cut the dramatic one-liners.** No more "Not all of it." and "It is not enough to make this safe."
 6. **Different sources get different flavor.** Gene version: biological flavor. Equipment version: tech flavor. Earned version: martial flavor. Same mechanic, different text.
 
-### Name Changes to Consider
+### Name Changes — done
 
-| Current | Problem | Possible rename |
+Two of this table's suggestions had already been taken by the multi-source work, which is the
+clue that settled the rest of it: the implant granting recursion is called **phase barrier**,
+and the trait granting arrears is called **pain debt**. Those names were used because they were
+the right names. Rule 6 above then decides who keeps which — the gene gets biological flavour,
+the device gets tech flavour — so the table's instinct to rename the *genes* after the devices
+was backwards, and only the shared **ability** names actually needed fixing, since those appear
+on a gizmo with no context at all.
+
+| Was | Now | Why |
 |---|---|---|
-| Halving membrane | Nobody knows what this means | Phase barrier, Zeno barrier |
-| Deferred plexus | "Plexus" is jargon | Delayed nerves, Pain debt |
-| Involute organ | "Involute" needs a dictionary | Pocket void, Fold organ |
-| Recursion (ability name) | Sounds like programming | Phase guard, Zeno guard |
-| Arrears (ability name) | Financial jargon | Debt settle, Pain release |
+| Recursion (ability) | **phase guard** | Sounded like programming; now agrees with the phase barrier implant |
+| Arrears (ability) | **wound debt** | Financial jargon; "pain debt" was taken by the trait |
+| Deferred plexus (gene) | **deferred nerves** | Still biological, no longer jargon |
+| Involute organ (gene) | **fold organ** | "Involute" needed a dictionary; names the thing it does |
+| Halving membrane (gene) | *kept* | Biological and already describes the mechanic |
+
+`AG_Arrears`, `AG_Recursion`, `AG_DeferredPlexus` and `AG_InvoluteOrgan` keep their defNames and
+class names, so only labels moved.
 
 ### Keyed Strings
 
-- In-game messages (AbilityGenes.xml) are mostly fine — short and clear
-- Review and simplify where needed
-- Rename file from `AbilityGenes.xml` to `RimArt.xml`
+- [x] Renamed `AbilityGenes.xml` to `RimArt.xml`
+- [x] Stale references swept: the deferred-nerves messages no longer say "plexus"
+
+### Descriptions — done
+
+All **88** descriptions in the mod now sit at three sentences or fewer, checked by counting
+rather than by eye: every AbilityDef, GeneDef, HediffDef, ThingDef and TraitDef. The two that
+already complied — corrosive glands and hypermetabolic glands — set the shape the rest were cut
+to: mechanic first, then the cost, and no closing one-liner.
 
 ---
 

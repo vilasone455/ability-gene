@@ -5,7 +5,7 @@
   <AbilityDef>
     <defName>AG_VectorReflection</defName>
     <label>reflection</label>
-    <description>Open the reflex all the way for thirty seconds. Every vector arriving at the carrier is reversed - bullets are sent back down their own line, blades and blasts are returned to whoever swung them, and a fire burning on them is turned on itself.\n\nThe reflex cannot tell what it is reversing. While it holds, the carrier is rooted in place and no one can reach them for any reason: no tending, no feeding, no rescue, no hand on the shoulder. Anyone who wants them dead has to stop shooting and wait.\n\nPress this to hold a doorway, not to win a fight.</description>
+    <description>Open the reflex all the way for thirty seconds. Every vector arriving at the carrier is reversed - bullets sent back down their own line, blows returned to whoever swung them, a fire on them turned on itself.\n\nThe carrier is rooted in place while it holds, and nobody can reach them for any reason: no tending, no feeding, no rescue.</description>
     <iconPath>UI/Gizmos/ShieldMech</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>60000</cooldownTicksRange>
@@ -40,7 +40,7 @@
   <AbilityDef>
     <defName>AG_VectorShove</defName>
     <label>vector shove</label>
-    <description>Take hold of one body's momentum and spend all of it moving them away from the carrier. They are thrown several cells, knocked off balance, and hurt in proportion to how far they went - or a great deal more if something solid stopped them early.\n\nHeavier bodies carry more momentum and move less. It deals no damage worth speaking of on open ground; it is for breaking a melee grip, for putting a sapper back out in the open, and for introducing people to walls.</description>
+    <description>Take hold of one body's momentum and spend all of it throwing them away from the carrier. Damage scales with the distance travelled, and a great deal more if something solid stops them early.\n\nHeavier bodies move less; this is for breaking a melee grip and introducing people to walls, not for damage.</description>
     <iconPath>UI/Abilities/Longjump</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>1200</cooldownTicksRange>

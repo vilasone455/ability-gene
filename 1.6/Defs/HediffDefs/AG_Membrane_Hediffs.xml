@@ -12,7 +12,7 @@
   <HediffDef>
     <defName>AG_Recursion</defName>
     <label>recursion</label>
-    <description>Every approach to this person is being halved. Nothing has been stopped and nothing has been deflected; it is all still coming, in steps too small to finish.\n\nThey are not breathing. The membrane does not distinguish between a bullet and the next breath, and it is holding both at the same distance - which is to say, always nearly here.</description>
+    <description>Every approach to this person is being halved. Nothing has been stopped or deflected; it is all still coming, in steps too small to finish.\n\nThey are not breathing - the membrane does not distinguish between a bullet and the next breath, and holds both at the same distance.</description>
     <hediffClass>HediffWithComps</hediffClass>
     <defaultLabelColor>(0.75, 0.8, 0.95)</defaultLabelColor>
     <scenarioCanAdd>false</scenarioCanAdd>

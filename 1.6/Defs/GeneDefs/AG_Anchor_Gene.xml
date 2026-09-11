@@ -4,7 +4,7 @@
   <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_AnchorOrgan</defName>
     <label>anchor organ</label>
-    <description>Your pawn can walk up to something and leave a mark on it. A person, an animal, a raider, or just a patch of ground. The mark stays where it is put and travels with whoever is wearing it.\n\nThen they clap, and two marked places change over. Your pawn and a mark, or any two marks with each other - you pick which. Whatever was standing at one end is now standing at the other, and it works at any distance across the map.\n\nThe clap takes both hands. This pawn does not carry a weapon, ever, and marking something means walking close enough to touch it first.</description>
+    <description>Leave marks on people, animals or bare ground, then clap to change places with one - or clap twice and swap any two marks with each other. Neither distance nor line of sight matters.\n\nThe clap takes both hands, so this carrier never carries a weapon, and every mark has to be placed within arm's reach.</description>
     <geneClass>RimArt.Gene_Anchors</geneClass>
     <iconPath>UI/Icons/Genes/Gene_ElongatedFingers</iconPath>
     <displayCategory>Ability</displayCategory>

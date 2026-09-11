@@ -4,7 +4,7 @@
   <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_HalvingMembrane</defName>
     <label>halving membrane</label>
-    <description>A membrane the carrier can hold open across their own surface. It does not stop what is coming - it divides the distance. Anything approaching crosses half the remaining gap, then half of what is left, then half of that. The steps get smaller forever and the last one is never taken.\n\nNothing lands while it is held. Rounds slow and drift and hang short of the skin; a fist that has been swinging for ten seconds is a thousand times less likely to arrive than the first one was. None of it is blocked, deflected or absorbed - all of it is simply still on its way.\n\nThe membrane cannot tell that air is also approaching. It halves that too.</description>
+    <description>A membrane the carrier holds open across their own surface. It does not stop what is coming, it divides the distance - each thing crosses half the remaining gap, then half of what is left, and never takes the last step.\n\nNothing is blocked or absorbed, only still on its way, and the membrane cannot tell that air is approaching too.</description>
     <iconPath>UI/Icons/Genes/Gene_Deathless</iconPath>
     <displayCategory>Ability</displayCategory>
     <displayOrderInCategory>170</displayOrderInCategory>

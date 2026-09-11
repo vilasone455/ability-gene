@@ -32,7 +32,7 @@
   <AbilityDef ParentName="AG_ImperativeBase">
     <defName>AG_Imperative_Stop</defName>
     <label>stop</label>
-    <description>One word, and whoever hears it stands still for three seconds.\n\nThey are not stunned and they are not yours. They keep their weapon, their target and their intentions, and they pick all three back up the moment the word wears off.\n\nCheap to say, because it asks for nothing but a pause.</description>
+    <description>One word, and whoever hears it stands still for three seconds. They are not stunned and they are not yours - they keep their weapon, their target and their intentions, and pick all three back up the moment it wears off.\n\nCheap to say, because it asks for nothing but a pause.</description>
     <iconPath>UI/Abilities/AnimalWarcall</iconPath>
     <cooldownTicksRange>600</cooldownTicksRange>
     <comps>
@@ -46,7 +46,7 @@
   <AbilityDef ParentName="AG_ImperativeBase">
     <defName>AG_Imperative_Drop</defName>
     <label>drop</label>
-    <description>Whoever hears it stops where they are, takes half a second, and opens their hand.\n\nThe weapon lands at their feet, not thrown clear - a shout only makes someone let go, it does not put the thing anywhere. They are free to pick it straight back up, and they will.\n\nWhat this buys is the half second, the stoop, and whatever your guns do in between. Said to the one carrying the launcher, that is enough.</description>
+    <description>Whoever hears it stops, takes half a second, and opens their hand. The weapon lands at their feet rather than thrown clear, and they are free to pick it straight back up.\n\nWhat this buys is the half second, the stoop, and whatever your guns do in between - which, said to the one carrying the launcher, is enough.</description>
     <iconPath>UI/Abilities/AnimalWarcall</iconPath>
     <cooldownTicksRange>1200</cooldownTicksRange>
     <comps>
@@ -59,7 +59,7 @@
   <AbilityDef ParentName="AG_ImperativeBase">
     <defName>AG_Imperative_Kneel</defName>
     <label>kneel</label>
-    <description>Whoever hears it goes to the ground and stays there for three seconds.\n\nProne is not downed. They can still shoot, and anyone shooting at them is shooting at a smaller thing. This is worth saying to somebody running, and close to worthless said to somebody already in cover.\n\nExpensive, because it puts a body somewhere it did not agree to go.</description>
+    <description>Whoever hears it goes to the ground and stays there for three seconds. Prone is not downed: they can still shoot, but anyone shooting at them is shooting at a smaller thing.\n\nWorth saying to somebody running, close to worthless said to somebody already in cover, and expensive either way.</description>
     <iconPath>UI/Abilities/AnimalWarcall</iconPath>
     <cooldownTicksRange>1800</cooldownTicksRange>
     <comps>
@@ -73,7 +73,7 @@
   <AbilityDef ParentName="AG_ImperativeBase">
     <defName>AG_Imperative_Come</defName>
     <label>come</label>
-    <description>Whoever hears it walks to the speaker, once, and then remembers what they were doing.\n\nCalling an armed hostile to your own position is exactly as bad an idea as it sounds. It is in the list because there is a version of it that is not: pulling one raider off a wall, out of cover, or away from the colonist they had chosen.</description>
+    <description>Whoever hears it walks to the speaker, once, and then remembers what they were doing.\n\nCalling an armed hostile to your own position is as bad an idea as it sounds; the version that is not is pulling one raider off a wall, out of cover, or away from the colonist they had chosen.</description>
     <iconPath>UI/Abilities/AnimalWarcall</iconPath>
     <cooldownTicksRange>1800</cooldownTicksRange>
     <comps>
@@ -86,7 +86,7 @@
   <AbilityDef ParentName="AG_ImperativeBase">
     <defName>AG_Imperative_Run</defName>
     <label>run</label>
-    <description>Whoever hears it turns and runs from the speaker.\n\nThey stop when they get far enough, work out that nothing is chasing them, and come back. What was bought is the walk back.\n\nExpensive for the same reason kneel is, and the most useful thing in the list to say to something that was about to reach a colonist.</description>
+    <description>Whoever hears it turns and runs from the speaker. They stop when they are far enough, work out that nothing is chasing them, and come back - what you bought is the walk back.\n\nExpensive for the same reason kneel is, and the best thing in the list to say to something about to reach a colonist.</description>
     <iconPath>UI/Abilities/AnimalWarcall</iconPath>
     <cooldownTicksRange>1800</cooldownTicksRange>
     <comps>

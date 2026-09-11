@@ -10,7 +10,7 @@
   <AbilityDef MayRequire="co.uk.epicguru.meleeanimation">
     <defName>AG_Arc_Arc</defName>
     <label>arc</label>
-    <description>Point at one enemy. The carrier is gone, and is standing at that person's shoulder mid-strike, and then does the same to whoever is nearest to them, and once more after that.\n\nThe blow is a real one, thrown with whatever the carrier is holding, and it can finish the person it lands on. Nothing about the chain is chosen after the cast - the arc takes the nearest enemy still standing to whoever it just hit, and stops when there is nobody left inside its reach or when it has hit three.\n\nStopping that fast leaves the carrier jarred, and worse at everything, for a while afterwards. That is the whole cost, and it is paid per person hit rather than per cast.</description>
+    <description>Point at one enemy: the carrier is gone and standing at that person's shoulder mid-strike, then does the same to whoever is nearest to them, and once more after that. The blow is real, thrown with whatever they are holding, and it can finish the person it lands on.\n\nNothing about the chain is chosen after the cast, and stopping that fast leaves the carrier jarred and worse at everything - paid per person hit, not per cast.</description>
     <iconPath>UI/Abilities/MechLongJump</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>30000</cooldownTicksRange>
