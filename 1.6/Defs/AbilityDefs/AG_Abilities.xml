@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
+  <!-- One category for every ability this mod grants, whatever the source. The defName stays
+       AG_Genetic: it is referenced by 23 defs and nothing player-facing reads it, so renaming it
+       would be churn for no gain. The label is what shows in the ability tab, and "genetic" stopped
+       being true once traits, implants and weapon traits started granting the same abilities. -->
   <AbilityCategoryDef>
     <defName>AG_Genetic</defName>
-    <label>genetic</label>
+    <label>combat arts</label>
     <displayOrder>900</displayOrder>
   </AbilityCategoryDef>
 
