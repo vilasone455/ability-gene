@@ -7,10 +7,11 @@
     <hediffClass>Hediff_Implant</hediffClass>
     <label>reflex booster</label>
     <labelNoun>a reflex booster</labelNoun>
-    <description>A spinal implant that reads and redirects momentum, allowing its user to reflect incoming harm or throw an attacker away.</description>
+    <description>A spinal implant that reads and redirects momentum. It can drive its carrier's perception far ahead of the world's, seize the rounds flying near them and turn them, or throw an attacker away.</description>
     <defaultLabelColor>(0.6, 0.8, 1.0)</defaultLabelColor>
     <isBad>false</isBad>
     <abilities>
+      <li>AG_VectorSurge</li>
       <li>AG_VectorReflection</li>
       <li>AG_VectorShove</li>
     </abilities>

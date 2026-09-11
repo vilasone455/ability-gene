@@ -7,9 +7,9 @@ namespace RimArt
     /// Where the body stops being there.
     ///
     /// This is the only place in the mod that makes a damage instance not have happened. Every
-    /// other answer this mod gives to incoming damage is a transformation of it - the vector
-    /// Reflection sends it back, the phase barrier scales it toward zero without ever arriving,
-    /// the arrears ledger defers it in full. Scatter is the exemption those three are all
+    /// other answer this mod gives to incoming damage is a transformation of it - vector
+    /// manipulation turns the round around, the phase barrier scales it toward zero, and the
+    /// arrears ledger defers it in full. Scatter is the exemption those three are all
     /// carefully not, and the argument for it is in <see cref="Scatter.Applies"/>: the hit is
     /// only cancelled when there was a direction it came from and a place the carrier could
     /// have been instead.

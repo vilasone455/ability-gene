@@ -26,7 +26,7 @@ piece of equipment, weapon trait, or earned origin.
 | Dependency | Required | Why |
 |---|---|---|
 | **Biotech DLC** | **Yes** | Required by the five gene kits; several ability icons also reuse Biotech art |
-| **Harmony** (`brrainz.harmony`) | **Yes** | Patches `Thing.DoTick`, `Thing.TakeDamage` and `ReservationManager.CanReserve` |
+| **Harmony** (`brrainz.harmony`) | **Yes** | Patches `Thing.DoTick`, `Thing.TakeDamage`, `Projectile` flight and damage, and `Selector.SelectorOnGUI` |
 | **Odyssey DLC** | No | Weapon trait abilities are `MayRequire`d against it |
 | **Melee Animation** (`co.uk.epicguru.meleeanimation`) | No | Required for the Arcing weapon trait and its ability |
 | **Unique Melee Weapons** (`shunter.uniquemeleeweapons`) | No | Melee weapon traits (resonance, arc) are `MayRequire`d against it |
@@ -84,24 +84,69 @@ Because acceleration is implemented as extra ticks, hunger, rest, bleeding and i
 *also* run at the multiplier. That emergent penalty may be a better balance lever than the
 strain numbers, and wants watching before either is tuned.
 
-### Reflex booster → *reflection*, *vector shove* (implant)
-A spinal implant that reads incoming momentum and reverses it.
+### Reflex booster → *reflex surge*, *vector manipulation*, *vector shove* (implant)
+A spinal implant that reads momentum and spends it again.
 
 | Ability | Effect | Cooldown |
 |---|---|---|
-| Reflection | 30s. Every damage instance aimed at the carrier is returned to whatever caused it | 1 in-game day |
+| Reflex surge | 5s of game time at a **quarter** the world's real-time rate — about 20s of yours. Buys time and nothing else | 30s |
+| Vector manipulation | Catches every round flying within 12 cells, pauses, and lets you turn and re-throw them in up to four groups | 5s |
 | Vector shove | Throws one pawn ~6 cells away from the carrier, stunned, hurt by how far they went | 20s |
 
-**Reflection is not a shield.** Bullets, blades, blasts and a fire burning on the carrier
-are all cancelled and re-applied to their instigator — the fire case works because a
-`Fire`'s damage carries the fire itself as instigator, so reflected flame destroys the
-fire that was doing the burning. Damage with no live instigator is cancelled rather than
-returned; there is nothing to hand it back to.
+**Vector manipulation is an editor, not a cast.** Clicking the gizmo scans once, stops the
+clock, and opens a panel on what it caught. Drag on the map to sort the rounds into as many
+as four non-overlapping groups; give each group a rotation from −180° to +180° and a force
+from ×0.25 to ×2; press **Apply and resume**. Everything commits in one go and the game runs
+on at the speed it was going before. Cancel discards the draft and restores the pause state
+you found. An empty scan costs nothing and does not even pause.
 
-The cost is that the reflex cannot tell what it is reversing. For the whole 30 seconds the
-carrier is **rooted** and **untouchable**: no tending, no feeding, no rescue, no arrest,
-nobody hauling them to a bed. It is a decision to stop being a person and be a wall, and
-the way to beat it is to stop shooting and wait.
+**Reflex surge is what makes that click possible, and it is a separate decision.** Measured
+against vanilla projectiles, a rifle round crosses the 12-cell catch radius in about 10
+ticks — a sixth of a second, less than a person's reaction time before they have moved the
+mouse. No radius fixes that; even a map-wide catch would not, because the round's entire
+flight from a shooter 25 cells away lasts roughly a third of a second. So the surge drops
+the world to a quarter rate, which turns that sixth of a second into **1.4 seconds**. A half
+rate would give 0.7s — still a coin flip, which is why there is one surge setting and not
+two.
+
+**The surge buys time and nothing else.** It changes no in-game relationship at all: the
+bullet still crosses a cell in the same number of ticks, the carrier still walks the same
+cells per tick, and every cooldown, decay and duration in this mod is counted in game ticks
+and so is untouched. What changes is how much *real* time one game tick takes. The fiction
+carries that honestly — the carrier's perception is what sped up, and they are slowed along
+with everyone else — but the effect is on the person holding the mouse, not on the pawn.
+It is priced accordingly: a small strain charge to open, a 30-second cooldown, and a gizmo
+on the hediff to end it early, because 20 seconds of real time is a long while to sit
+through once the shooting has stopped.
+
+| Force | Speed and primary damage | New travel |
+|---|---|---|
+| ×0.25 | Quarter | 5 cells |
+| ×0.5 | Half | 10 cells |
+| ×1 | Baseline | 20 cells |
+| ×2 | Double | 40 cells |
+
+Range is **recalculated, not extended**. Every edited round starts again from where it was
+caught with twenty cells times its force in front of it, clipped where that line leaves the
+map — so a spent volley two cells from the dirt is a loaded one again, and that counts as an
+edit even at no rotation and ×1. Force is absolute against the round's own def, so editing
+the same round twice at ×2 leaves it at ×2 rather than ×4.
+
+Rotation is stored as a delta and applied to each round's own captured heading, so a volley
+arriving as a fan comes out of a ninety-degree turn still fanned. Nothing moves the rounds
+themselves; only where they are pointing changes.
+
+The cost is **brain strain**, and it is steeply superlinear in how many groups one
+application changes: 8 for one group, 24 for two, 48 for three, 80 for four, out of 100.
+Strain sheds at 100 a day and does not reset between fights, so it stacks across a
+campaign. Fill the bar and the booster overloads: the top hediff stage takes 0.6 off
+Consciousness, which is enough to put the carrier on the floor until enough strain has bled
+off to drop out of the stage — about fifty seconds from full. The five-second cooldown is
+there to stop double-clicks; strain is the real limit.
+
+Edited rounds are credited to the manipulating pawn, keep vanilla collisions, cover,
+shields and impact behaviour, and can hit allies. The preview line is where the round is
+going, not a promise that it gets there.
 
 ### Phase barrier → *phase guard* (implant)
 
@@ -116,7 +161,7 @@ An archotech implant that divides approaching distance instead of blocking it.
 **Nothing is ever cancelled.** Every path is a continuous scaling toward zero that never
 arrives, which is the whole point — the moment any of it becomes a hard "this does not
 apply", the barrier stops being a receding distance and becomes an invulnerability
-shield, which is Reflection's job. A round held by the barrier is still in
+shield, which nothing in this mod does any more. A round held by the barrier is still in
 flight, and when the barrier drops it resumes from exactly where it was drawn and
 finishes the trip. Everything queued against the carrier's face lands in the same tick.
 
@@ -431,7 +476,7 @@ before a surgeon can fit it; the installation recipes consume the device plus tw
 
 | Implant | Grants | Tier | How you get it |
 |---|---|---|---|
-| **Reflex booster** | *reflection*, *vector shove* | Industrial | Machining table, behind **Prosthetics**. 35 steel, 6 industrial components |
+| **Reflex booster** | *reflex surge*, *vector manipulation*, *vector shove* | Industrial | Machining table, behind **Prosthetics**. 35 steel, 6 industrial components |
 | **Neural accelerator** | *time alter* ×3 | Spacer | Fabrication bench, behind **Bionics**. 20 plasteel, 4 spacer components |
 | **Phase barrier** | *phase guard* | Archotech | **Not craftable.** Quest rewards and deep-space trade only |
 
@@ -443,44 +488,107 @@ vanilla convention — `Joywire` is both an item and a hediff, and the two live 
 databases. No new art: the Core health-item sprite is tinted per tier by the parent def,
 exactly as every vanilla prosthetic, bionic and archotech part is drawn.
 
-## How reflection works
+## How vector manipulation works
 
-Three mechanisms, one for each thing the reflex has to do.
+Four mechanisms: catching the rounds, owning the input, rewriting a flight, and charging for it.
 
-**Returning damage is a single choke point.** A prefix on `Thing.TakeDamage` cancels the
-instance and re-applies it to `dinfo.Instigator`, with the reflecting pawn as the new
-instigator so kills are credited correctly. Doing it at the damage layer rather than per
-projectile means melee, explosions, EMP and fire are covered by the same six lines, with
-no per-`Projectile`-subclass patching.
+**Catching is a single frozen scan.** `VectorEditSession.Begin` walks
+`ThingRequestGroup.Projectile` once, keeps the `Bullet`s within the radius that the carrier has
+line of sight to and that are not fogged, and freezes that list for the life of the session.
+`Bullet` is the right filter rather than a coincidence: arrows are Bullets, and so are this
+mod's loosed blades, for the same reason — it is the class that makes vanilla resolve what they
+hit. Mortar shells and rockets are refused (`flyOverhead`, `explosionRadius`), and so is
+anything already held by a phase barrier or standing still inside a stasis field, because those
+rounds belong to those effects. Freezing the set is what stops the list changing under a drag
+box.
 
-A static guard wraps the re-application. Without it two reflecting pawns hitting each other
-would bounce one damage instance between them forever; with it, the second one takes the hit.
+**Slowing the world is one postfix, because there is nowhere else to put it.** `TimeSpeed`
+bottoms out at `Paused` and jumps straight to `Normal`, so there is no sub-normal speed to
+select. What there is instead is `TickManager.TickRateMultiplier`, the figure every other
+part of the tick loop is derived from: a postfix returning 0.25 makes `CurTimePerTick` a
+fifteenth of a second, the loop affords one tick every four frames at 60fps, and
+`PawnTweener` — which scales its interpolation by the same figure — glides pawns at quarter
+speed instead of stuttering them through it. Quarter-rate movement therefore looks right
+rather than looking like a frame drop.
 
-Precedence against the stasis field is free: the bubble's prefix sits at `Priority.First`
-and returns false for anything frozen, and a prefix returning false skips the rest. A frozen
-pawn is simply immune and never reflects.
+It is **forced, not scaled**. Multiplying the existing result would leave superfast at six
+times a quarter, which is faster than normal — the ability would be bypassable by pressing a
+speed button. A result of zero is the one case left alone: that means the player paused, or
+the editor did, and neither should be restarted by a surge.
 
-**Being untouchable is a reservation problem.** Every friendly job that wants to reach a pawn
-— tend, feed, rescue, arrest, haul to bed — goes through `ReservationManager.CanReserve`
-first. Refusing there stops all of them without patching one WorkGiver per interaction.
-Melee reserves nothing and still connects, which is exactly right: attacks arrive and are
-returned, doctors never set out.
+The radius is the other loud knob. It stopped being a reaction-time number once the surge
+took that job — what it decides instead is how much of a volley is in the air when you
+click. At six cells the answer was usually one round, which makes a four-group panel a panel
+with nothing to put in it; twelve is the first radius at which rounds from separate shooters
+overlap reliably.
 
-**Rooting is one stat.** A `MoveSpeed` factor of 0 clamps `Pawn.TicksPerMove` to its 450-tick
-ceiling — 7.5 seconds a cell, about four cells over the whole reflection. No patch, no
-capacity mod, and no risk of the pawn being counted as downed the way a zeroed `Moving`
-capacity would.
+**Owning the input is one prefix, in the right place.** `Selector.SelectorOnGUI` is the last
+stop in the frame for anything the mouse does over the map, and it is where a drag becomes a
+selection box and a right-click becomes an order — which are exactly the gestures the editor
+needs. While a session is open the whole method is replaced by the session's own handling, so
+no pawn is selected and no order is issued by drawing a group over a field of bullets. The
+panel has already had its turn by then: windows are processed earlier in
+`UIRoot_Play.UIRootOnGUI`, so nothing here can steal a click that belonged to a slider. The
+panel itself does not absorb input around it, because the map underneath has to stay clickable.
 
-### Bouncing the actual bullets is cosmetic
+The map half is drawn from two places for two reasons. Lines and the reach ring are world-space
+and go down in `MapComponentUpdate`, so they lie on the ground and scale with the camera.
+Markers, group numbers and the drag box are screen-space and go down in `MapComponentOnGUI`,
+which runs *before* the window stack — so the panel draws on top of them rather than under.
 
-Damage return already sends a bullet's damage back to whoever fired it, so the round turning
-around is a visual only. `HediffComp_Reflection` scans for hostile projectiles within
-`catchRadius` (1.5 cells) each game tick and re-launches them at their launcher; anything
-that steps over the check between ticks still lands and is returned as damage. Friendly
-rounds are deliberately left alone — a colonist shooting past the reflector would otherwise
-get their own bullet back.
+**Rewriting a flight is done by hand, and has to be.** A projectile's position is a lerp along
+`origin → destination` driven by `ticksToImpact` against `StartingTicksToImpact`, which is
+computed from the def's speed with no setter — the same wall the phase barrier hits. `Launch`
+is not the answer either: it scatters the destination by up to a third of a cell and re-reads
+the origin from the projectile's current cell, and the whole promise of the editor is that the
+line drawn on the paused map is the line the round takes. So `CapturedProjectile.Commit` writes
+`origin`, `destination`, `ticksToImpact`, `lifetime`, `launcher` and both targets directly, and
+a postfix on `StartingTicksToImpact` divides the total by the round's force. Setting
+`ticksToImpact` to that same figure at commit keeps both halves of the lerp in step: the round
+covers its recalculated range at its chosen speed, and interception, cover, shields and impact
+all run unchanged. The instance is preserved, so a blade still plants itself where it stops.
 
-`reflectProjectiles` on the hediff comp turns the visual off without touching the mechanic.
+A second postfix on `Projectile.DamageAmount` scales the primary damage by the same force.
+Only the primary figure — armour penetration, extra damage rolls and everything an impact does
+afterwards are deliberately left alone, because force is a decision about momentum rather than
+a general damage multiplier that quietly rewrites how a round meets armour.
+
+Nothing on any def is touched, so a rifle round edited to half speed does not make every other
+round of its kind slow.
+
+### The edited-round table
+
+`VectorEditRegistry` is a `Dictionary<Projectile, float>` behind an `EditedCount` check, for
+the same reason `RecursionRegistry` is: both hot paths are extremely hot.
+`StartingTicksToImpact` is read from the position lerp several times per projectile per tick
+and `DamageAmount` at every impact, so both must cost one static integer read when nothing has
+been edited, which is almost always.
+
+A round at ×1 is **not** an entry. Force is absolute rather than cumulative, so the baseline is
+exactly "no entry", and editing a round back to ×1 removes it from the table instead of storing
+a redundant multiplier.
+
+The table is committed state and is scribed by reference with the save, so a round mid-flight
+when the game is saved resumes at the same speed and damage rather than snapping back to its
+def. The editor's draft groups are not saved and cannot be: a session does not survive the
+frame the game was saved in. Nothing tells a registry when a projectile lands, so
+`MapComponent_VectorEdit` prunes the table every 600 ticks rather than putting a scan in front
+of every impact.
+
+### What replaced reflection
+
+Reflection returned every damage instance to its instigator and refused every reservation aimed
+at the carrier. Both are gone: the `Thing.TakeDamage` and `ReservationManager.CanReserve`
+prefixes are deleted, so the booster no longer sits in the ordering that Wound Debt, Phase
+Guard and the stasis field have to agree about.
+
+The `AG_VectorReflection` **defName is kept** for both the ability and the old hediff. It is the
+key a saved reflex booster's ability list is written under, so renaming it would silently take
+the ability off every carrier in every existing save. The hediff def survives with no comps and
+no stat factors purely so that a save made while reflection was up still resolves the
+reference; `GameComponent_VectorEdit.FinalizeInit` takes it off every pawn at load, and clamps
+any inherited cooldown to the new five-second maximum so a carrier who cast the old ability
+shortly before saving is not locked out for most of a day.
 
 ### Shoving
 
@@ -660,15 +768,17 @@ different and much stronger one.
 *Player-facing this ability is **wound debt**; `AG_Arrears` and `HediffComp_Arrears`
 keep the old name in code, so the implementation notes below use it.*
 
-**One prefix, and the ordering is the whole design.** `Thing.TakeDamage` now carries four
+**One prefix, and the ordering is the whole design.** `Thing.TakeDamage` carries several
 prefixes from this mod, and arrears sits at `Priority.Low`, deliberately last:
 
 | Patch | Priority | What it does first |
 |---|---|---|
 | Stasis field | `First` | Frozen pawns are immune and run up no debt at all |
-| Vector reflex | default | A reflected round was never received, so nothing is owed for it |
 | Phase barrier | default | *Scales* verbless damage rather than cancelling it |
 | **Arrears** | **`Low`** | Records whatever is left |
+
+The reflex booster is no longer in this list. Vector manipulation acts on rounds in flight
+rather than on damage instances, so it never reaches `TakeDamage` at all.
 
 The phase-barrier row is the one that had to be right. It scales rather than cancels, so if arrears
 ran first a carrier holding both would owe the full blast they never actually took.
@@ -868,8 +978,8 @@ None of this has been run in-game yet.
 `Pawn_JobTracker.StartJob` already takes `resumeCurJobAfterwards`, so the interruption and the
 return are the game's own rather than an imitation of them. That is the whole mechanism. It also
 means this trait adds no contact surface with the other kits: nothing here prefixes
-`Thing.TakeDamage`, so it sits outside the ordering that Wound Debt, Phase Guard, Stasis Field
-and Reflection all have to agree about.
+`Thing.TakeDamage`, so it sits outside the ordering that Wound Debt, Phase Guard and the
+stasis field all have to agree about.
 
 Provoke reaches into the same AI one layer shallower — it rewrites `enemyTarget` and
 interrupt once, leaving the target to decide what to do about it. This decides for them, once,
@@ -987,7 +1097,7 @@ are blades, not meteors, and a rain called down indoors should not take the roof
 
 **No Harmony patch anywhere.** Like Commanding Voice, this origin adds no contact surface with
 the other kits — nothing here prefixes `Thing.TakeDamage`, so it sits outside the ordering that
-Wound Debt, Phase Guard, Stasis Field and Reflection all have to agree about.
+Wound Debt, Phase Guard and the stasis field all have to agree about.
 
 ### The registry, and why it is not a lister query
 
@@ -1107,8 +1217,8 @@ renderer refuses a downed pawn outright. It happens to be the right rule anyway:
 people taken out of a fight, not a tour of the wounded.
 
 **No Harmony patch anywhere**, like Commanding Voice and Origin: Blade. Nothing here prefixes
-`Thing.TakeDamage`, so it sits outside the ordering that Wound Debt, Phase Guard, Stasis Field
-and Reflection all have to agree about.
+`Thing.TakeDamage`, so it sits outside the ordering that Wound Debt, Phase Guard and the
+stasis field all have to agree about.
 
 ### Known gaps
 
@@ -1205,6 +1315,17 @@ Verified statically: the C# compiles against the real 1.6 assembly, every def/te
 reference is checked to resolve in Core or Biotech, and every custom `Class=` in XML is
 checked against the built DLL.
 
+Three harnesses run production code against small game-boundary doubles, plus one that loads
+the built mod against the installed game and resolves every Harmony target and injected
+parameter. Each has its own README with the in-game checks the harness cannot make:
+
+```bash
+dotnet run --project Tests/VectorEdit/VectorEdit.csproj          # vector manipulation arithmetic
+dotnet run --project Tests/OriginBlade/OriginBlade.csproj        # Origin: Blade lifecycle
+dotnet run --project Tests/Carrion/Carrion.csproj                # Carrion lifecycle
+dotnet run --project Tests/OriginBlade/ApiChecks/ApiChecks.csproj # Harmony targets and signatures
+```
+
 Confirmed in-game before the single-source roster change (1.6.4871, alongside ~40 other mods
 including Vanilla Psycasts Expanded):
 
@@ -1213,7 +1334,7 @@ including Vanilla Psycasts Expanded):
 - Resonance: notes are set on the struck part, a second blow in phase takes the part
   off, and the damage-layer postfix reads hit parts correctly off `DamageResult`
 - Wound Debt: wounds are held rather than applied, the carrier keeps moving while in
-  debt, and settling delivers the whole bill at once - including the four-way prefix ordering on
+  debt, and settling delivers the whole bill at once - including the prefix ordering on
   `Thing.TakeDamage` holding up with the other damage effects present
 
 ### Testing the fold organ
@@ -1282,11 +1403,14 @@ Still unverified:
   numbers. `resonanceTicks` at 300 (5s) is a guess, not a measured value - too short and the
   second blow never lands, too long and every part on the field is live at once. `durationTicks`
   and the one-hour cooldown are untested against how often a player actually wants this
-- **everything in the Reflex Booster.** It compiles and validates, and none of it has
-  been in front of the game yet. The parts most likely to bite: whether refusing
-  `CanReserve` produces job-giver spam in the log, whether a re-launched projectile behaves
-  when it is spawned less than a cell from its new target, and whether 30 seconds of rooted
-  invulnerability reads as a wall or as a win button
+- **everything in the Reflex Booster.** The flight arithmetic has a test harness behind it
+  (`Tests/VectorEdit`) and the Harmony targets resolve against the installed game, but none of
+  it has been in front of the game yet. The parts most likely to bite: whether the editor's
+  drag reads cleanly at the zoom levels a fight is actually watched at, whether six cells is
+  enough reach to ever catch anything, and whether the strain table is a real limit or a
+  formality. The numbers are initial defaults — the 20-cell range baseline, the 8/24/48/80
+  strain costs, the consciousness caps on the strain stages, and the five-second cooldown —
+  and all of them were picked to feel right rather than measured
 - **Origin: Blade beyond its first look.** Rain has been cast in game and the blades land,
   plant and hold; what has not been tested is loose, grasp, the debt curve, or any of it in a
   fight. See its own *Known gaps* above

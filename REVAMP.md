@@ -21,7 +21,7 @@ genes instead of being forced onto abilities that come from training, technology
 | Trait | **Pain debt** | Wound Debt | Appears naturally as a pawn trait |
 | Trait | **Commanding voice** | Stop, Drop, Kneel, Come, Run | Appears naturally as a pawn trait |
 | Implant | **Neural accelerator** | Double Accel, Square Accel, Stagnate | Craft after Bionics research and install |
-| Implant | **Reflex booster** | Reflection, Vector Shove | Craft after Prosthetics research and install |
+| Implant | **Reflex booster** | Reflex Surge, Vector Manipulation, Vector Shove | Craft after Prosthetics research and install |
 | Implant | **Phase barrier** | Phase Guard | Find through quests or deep-space trade and install |
 | Equipment | **Stasis belt** | Stasis Field | Research Stasis Fields, craft and wear |
 | Weapon trait | **Resonant** | Resonance | Find on a Unique Melee Weapon |
@@ -32,7 +32,7 @@ genes instead of being forced onto abilities that come from training, technology
 
 - Alarm pheromones gene; Provoke belongs to Combat Presence.
 - Innate time lattice gene; time alteration belongs to the Neural Accelerator.
-- Vector reflex organ gene; Reflection and Vector Shove belong to the Reflex Booster.
+- Vector reflex organ gene; Vector Manipulation and Vector Shove belong to the Reflex Booster.
 - Halving membrane gene; Phase Guard belongs to the Phase Barrier.
 - Resonant marrow gene; Resonance belongs to Resonant weapons.
 - Deferred nerves gene and Pain Inhibitor implant; Wound Debt belongs to Pain Debt.

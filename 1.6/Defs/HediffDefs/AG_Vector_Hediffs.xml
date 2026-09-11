@@ -1,13 +1,120 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- Duration lives on HediffCompProperties_Reflection rather than on a Disappears comp:
-       an accelerated pawn ticks its own hediffs several times per game tick, so a Disappears
-       comp would expire early for anyone also carrying the time lattice. -->
+  <!-- Brain strain: the whole cost of vector manipulation.
+
+       Decay lives on the comp rather than on severityPerDay for the same reason the time
+       lattice counts its own ticks: an accelerated pawn runs its hediff comps several times
+       per game tick, which would shed strain at the multiplier and make the neural accelerator
+       a way of paying less for this. The comp counts game ticks instead.
+
+       The overload stage is not a timer. Its consciousness penalty is what puts the carrier
+       down, and shedding back out of the stage is what stands them up - so the length of a
+       collapse is set by decayPerDay and there is no second duration to keep in step. -->
+  <HediffDef>
+    <defName>AG_VectorStrain</defName>
+    <label>brain strain</label>
+    <description>Swelling where the reflex booster meets the spine, left behind every time it seizes a field of moving objects and spends their momentum again. It sheds over about a day and does not reset between fights, so manipulations stack.\n\nFilled to the top the booster overloads and the carrier goes down until enough of it has bled off.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.85, 0.45, 0.35)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <makesSickThought>false</makesSickThought>
+    <isBad>true</isBad>
+    <maxSeverity>1</maxSeverity>
+    <initialSeverity>0.001</initialSeverity>
+    <comps>
+      <li Class="HediffCompProperties_DisappearsOnDeath" />
+      <li Class="RimArt.HediffCompProperties_VectorStrain">
+        <decayPerDay>1.0</decayPerDay>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <label>slight</label>
+      </li>
+      <li>
+        <label>building</label>
+        <minSeverity>0.25</minSeverity>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.05</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <label>heavy</label>
+        <minSeverity>0.50</minSeverity>
+        <painOffset>0.06</painOffset>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.10</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <label>critical</label>
+        <minSeverity>0.75</minSeverity>
+        <painOffset>0.14</painOffset>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.20</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <!-- Consciousness this low is below the threshold a pawn stays upright at, which is
+             how the overload downs them without a stun that would have to be timed separately. -->
+        <label>overloaded</label>
+        <minSeverity>0.95</minSeverity>
+        <painOffset>0.25</painOffset>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.60</offset>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <!-- Reflex surge, while it is up. Duration lives on the comp rather than on a Disappears
+       comp for the same reason the time lattice counts its own ticks: an accelerated pawn runs
+       its hediff comps several times per game tick and would expire this early.
+
+       No stat factors and no cap mods. The surge does not make the carrier better at anything -
+       it slows the world's real-time clock, which is a change to how long the player has to
+       look at a tick rather than a change to the tick. -->
+  <HediffDef>
+    <defName>AG_VectorSurge</defName>
+    <label>reflex surge</label>
+    <description>The reflex booster is running its carrier's clock far ahead of everyone else's. Rounds hang in the air, people walk as though through water, and the carrier has time to look at all of it.\n\nIt lasts five seconds of the world's time and buys no advantage beyond the looking.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.55, 0.9, 1)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <makesSickThought>false</makesSickThought>
+    <isBad>false</isBad>
+    <maxSeverity>1</maxSeverity>
+    <comps>
+      <li Class="HediffCompProperties_DisappearsOnDeath" />
+      <li Class="RimArt.HediffCompProperties_VectorSurge">
+        <durationTicks>300</durationTicks>
+        <strainCost>0.10</strainCost>
+      </li>
+    </comps>
+  </HediffDef>
+
+  <!-- Legacy only. Reflection was replaced by vector manipulation; this def survives so that a
+       save made while reflection was up still resolves the reference and loads without errors.
+       GameComponent_VectorEdit takes it off every pawn at load, so nothing ever carries it for
+       longer than the first frame. It has no comps and no stat factors: the rooting and the
+       reservation refusal are gone with the ability. -->
   <HediffDef>
     <defName>AG_VectorReflection</defName>
     <label>reflection</label>
-    <description>The reflex booster is reversing every vector reaching this person. Nothing aimed at them lands; it returns at full strength to whatever sent it.\n\nThe booster does not distinguish help from harm, so they cannot be tended, fed, rescued or touched while it holds.</description>
+    <description>A reflex booster held wide open. This is left over from an earlier version of the booster and is removed as soon as the game finishes loading.</description>
     <hediffClass>HediffWithComps</hediffClass>
     <defaultLabelColor>(0.6, 0.85, 1)</defaultLabelColor>
     <scenarioCanAdd>false</scenarioCanAdd>
@@ -16,21 +123,7 @@
     <maxSeverity>1</maxSeverity>
     <comps>
       <li Class="HediffCompProperties_DisappearsOnDeath" />
-      <li Class="RimArt.HediffCompProperties_Reflection">
-        <durationTicks>1800</durationTicks>
-        <reflectProjectiles>true</reflectProjectiles>
-        <catchRadius>1.5</catchRadius>
-      </li>
     </comps>
-    <stages>
-      <li>
-        <!-- Rooted. A move speed of zero clamps Pawn.TicksPerMove to its 450-tick ceiling,
-             which is 7.5 seconds a cell - about four cells over the whole reflection. -->
-        <statFactors>
-          <MoveSpeed>0</MoveSpeed>
-        </statFactors>
-      </li>
-    </stages>
   </HediffDef>
 
 </Defs>

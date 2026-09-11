@@ -7,9 +7,9 @@ namespace RimArt
     /// Tracks who is holding a phase barrier open, and every projectile currently captured
     /// by one.
     ///
-    /// Same self-healing shape as <see cref="ReflectionRegistry"/> and
-    /// <see cref="TimeAlterRegistry"/>: the hediff comp reports itself every tick and drops
-    /// itself on removal, so nothing here depends on a callback firing.
+    /// Same self-healing shape as <see cref="TimeAlterRegistry"/>: the hediff comp reports
+    /// itself every tick and drops itself on removal, so nothing here depends on a callback
+    /// firing.
     ///
     /// The two counts exist because both hot paths are extremely hot.
     /// Projectile.ExactPosition is read for every projectile every frame *and* from the

@@ -1,21 +1,66 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- Self-cast: the reflex acts on the carrier's own surface, so there is nothing to aim at. -->
+  <!-- The defName is still AG_VectorReflection. The ability it names has been replaced
+       outright, but it is the key a saved reflex booster's ability list is written under, so
+       renaming it would silently take the ability off every carrier in every existing save.
+
+       No jobDef and no targetRequired: the gizmo class arms the booster, or opens the editor
+       in the frame it is clicked when there is already something to catch. A walk and a warmup
+       would spend the fraction of a second the rounds are in the air. -->
   <AbilityDef>
     <defName>AG_VectorReflection</defName>
-    <label>reflection</label>
-    <description>Open the reflex booster all the way for thirty seconds. Every vector arriving at the carrier is reversed - bullets return down their own line, blows return to whoever swung them, and fire turns on itself.\n\nThe carrier is rooted while it holds, and nobody can reach them to tend, feed or rescue them.</description>
-    <iconPath>UI/Gizmos/ShieldMech</iconPath>
+    <label>vector manipulation</label>
+    <description>Stop the world and take hold of every round flying within twelve cells, then sort them into as many as four groups and turn each group where you want it. An edited round starts again from where it was caught with twenty cells of travel multiplied by the force spent on it, and moves and lands at that same multiple. A bullet crosses that reach in a fifth of a second, so reflex surge is usually what buys the time to press this.\n\nThe bill comes in brain strain when you apply an edit, steeply: one group is routine, four at once is most of what the carrier has. Filling the bar overloads the booster and puts them on the floor.</description>
+    <iconPath>UI/Abilities/PiercingSpine</iconPath>
     <category>AG_Genetic</category>
-    <cooldownTicksRange>60000</cooldownTicksRange>
-    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
+    <gizmoClass>RimArt.Command_VectorEdit</gizmoClass>
+    <cooldownTicksRange>300</cooldownTicksRange>
     <targetRequired>false</targetRequired>
     <hostile>false</hostile>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
     <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
     <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
-    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Consciousness</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Reflex surge. The enabler for vector manipulation, and a separate decision from it:
+       a rifle round crosses the catch radius in about ten ticks, so pressing the manipulation
+       gizmo in response to one is not something a person can do at normal speed. This is what
+       buys the time, and it has to be spent before the shooting rather than during it.
+
+       Nothing in the simulation changes while it is up - it is the world's real-time rate that
+       drops, not any in-game relationship - so the cost is small and the duration is short. -->
+  <AbilityDef>
+    <defName>AG_VectorSurge</defName>
+    <label>reflex surge</label>
+    <description>Drive the booster's own clock up until the world appears to crawl. For five seconds of game time everything outside the carrier's head runs at a quarter rate, which is about twenty seconds of yours - long enough to watch a burst cross the room and decide what to do about it.\n\nIt buys time and nothing else: nobody moves further, nothing hits harder, and the carrier is slowed with everyone else. Ends early from the gizmo on the hediff, and costs a little brain strain to open.</description>
+    <iconPath>UI/Icons/Genes/Gene_QuickMovespeed</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>1800</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
     <verbProperties>
       <verbClass>Verb_CastAbility</verbClass>
       <range>-1</range>
@@ -28,7 +73,7 @@
     <comps>
       <li Class="CompProperties_AbilityGiveHediff">
         <compClass>CompAbilityEffect_GiveHediff</compClass>
-        <hediffDef>AG_VectorReflection</hediffDef>
+        <hediffDef>AG_VectorSurge</hediffDef>
         <onlyApplyToSelf>true</onlyApplyToSelf>
       </li>
       <li Class="CompProperties_AbilityRequiresCapacity">

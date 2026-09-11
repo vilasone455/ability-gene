@@ -18,8 +18,35 @@
   <AG_RecursionCloseLabel>Drop barrier</AG_RecursionCloseLabel>
   <AG_RecursionCloseDesc>Drop the phase barrier and start breathing again. Every suspended round and unfinished blow resumes immediately.</AG_RecursionCloseDesc>
 
-  <AG_ReflectionUp>{0} reversed their vectors. Nothing aimed at them will land - and nothing can reach them, including help.</AG_ReflectionUp>
   <AG_ShoveNeedsPawn>Must target a person, animal or mech.</AG_ShoveNeedsPawn>
+
+  <AG_VectorEditNothing>Nothing is flying within reach of {0}.</AG_VectorEditNothing>
+  <AG_VectorEditCaught>{0}'s reflex booster caught {1} rounds in flight.</AG_VectorEditCaught>
+  <AG_VectorSurgeUp>{0}'s reflex booster surged. The world has slowed to a quarter.</AG_VectorSurgeUp>
+  <AG_VectorSurgeTip>Slowed for another {0}.</AG_VectorSurgeTip>
+  <AG_VectorSurgeDropLabel>End surge</AG_VectorSurgeDropLabel>
+  <AG_VectorSurgeDropDesc>Let the booster's clock fall back in step with the world and return the game to normal speed.</AG_VectorSurgeDropDesc>
+  <AG_VectorEditLost>The manipulation was lost before it could be applied.</AG_VectorEditLost>
+  <AG_VectorEditApplied>{0} redirected {1} rounds.</AG_VectorEditApplied>
+  <AG_VectorEditGroupsFull>All {0} groups are in use. Release one first.</AG_VectorEditGroupsFull>
+  <AG_VectorOverload>{0}'s reflex booster overloaded. They are down until the strain bleeds off.</AG_VectorOverload>
+
+  <AG_VectorEditTitle>Vector manipulation</AG_VectorEditTitle>
+  <AG_VectorEditHint>Drag on the map to group rounds. Shift-drag adds, alt-drag removes, right-click deselects, Delete releases the group. Drag the handle or the slider to turn.</AG_VectorEditHint>
+  <AG_VectorEditStrainNow>Brain strain: {0} / 100</AG_VectorEditStrainNow>
+  <AG_VectorEditStrainAdded>This manipulation adds {0}, for {1} / 100.</AG_VectorEditStrainAdded>
+  <AG_VectorEditCollapseWarning>This will overload the booster and put them on the floor.</AG_VectorEditCollapseWarning>
+  <AG_VectorEditGroupRow>Group {0} - {1} rounds, {2} deg, x{3}</AG_VectorEditGroupRow>
+  <AG_VectorEditGroupEmpty>Group {0} - empty</AG_VectorEditGroupEmpty>
+  <AG_VectorEditGroupTag>{0}: x{1}, {2}c</AG_VectorEditGroupTag>
+  <AG_VectorEditNoGroup>Select a group to turn it and set its force.</AG_VectorEditNoGroup>
+  <AG_VectorEditRotation>Rotation: {0} deg</AG_VectorEditRotation>
+  <AG_VectorEditForce>Force: x{0} - {1} cells of travel</AG_VectorEditForce>
+  <AG_VectorEditReset>Reset</AG_VectorEditReset>
+  <AG_VectorEditRelease>Release</AG_VectorEditRelease>
+  <AG_VectorEditApply>Apply and resume</AG_VectorEditApply>
+  <AG_VectorEditCancel>Cancel</AG_VectorEditCancel>
+  <AG_VectorEditNoChange>Nothing would change. Group some rounds, or turn a group you have already made.</AG_VectorEditNoChange>
 
   <AG_ResonanceUp>{0}'s strikes are ringing. Anything struck twice in the same place comes apart - including them.</AG_ResonanceUp>
   <AG_ResonanceRinging>{0} ringing</AG_ResonanceRinging>

@@ -28,7 +28,7 @@ namespace RimArt
         /// <summary>
         /// Guards the recharge against a carrier running accelerated ticks.
         ///
-        /// Same problem and same answer as <see cref="HediffComp_Reflection"/>: a pawn under
+        /// Same problem and same answer as <see cref="HediffComp_TemporalStrain"/>: a pawn under
         /// the time lattice ticks their genes several times inside one game tick, and without
         /// this the plexus would refill at the multiplier. Squaring your own reflexes should
         /// not also be a way to buy charges.

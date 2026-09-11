@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Lib.Harmony" Version="2.3.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" /><Compile Include="GameStubs.cs" />
+    <Compile Include="../../Source/RimArt/Vector/VectorEditDefaults.cs" Link="VectorEditDefaults.cs" />
+    <Compile Include="../../Source/RimArt/Vector/CapturedProjectile.cs" Link="CapturedProjectile.cs" />
+    <Compile Include="../../Source/RimArt/Vector/VectorEditGroup.cs" Link="VectorEditGroup.cs" />
+    <Compile Include="../../Source/RimArt/Vector/VectorEditRegistry.cs" Link="VectorEditRegistry.cs" />
+  </ItemGroup>
+</Project>

@@ -6,7 +6,7 @@ namespace RimArt
     /// <summary>
     /// Tracks which carriers currently have the hole connected.
     ///
-    /// Same self-healing shape and the same reason as <see cref="ReflectionRegistry"/>: the
+    /// Same self-healing shape and the same reason as <see cref="RecursionRegistry"/>: the
     /// lookup is read from inside the damage worker, which runs for pawns on every map and off
     /// it, so no one MapComponent owns the pruning.
     ///

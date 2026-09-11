@@ -20,7 +20,7 @@
   <ThingDef ParentName="BodyPartProstheticMakeableBase">
     <defName>AG_ReflexBooster</defName>
     <label>reflex booster</label>
-    <description>A spinal implant that reads and redirects momentum before its user can consciously react. It can reverse incoming harm or throw an attacker away.</description>
+    <description>A spinal implant that reads and redirects momentum before its user can consciously react. It can run its carrier's clock ahead of the world's, take hold of the rounds flying near them, or throw an attacker away.</description>
     <descriptionHyperlinks><RecipeDef>AG_InstallReflexBooster</RecipeDef></descriptionHyperlinks>
     <costList>
       <Steel>35</Steel>
