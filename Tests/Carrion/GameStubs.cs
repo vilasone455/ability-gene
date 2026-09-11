@@ -76,7 +76,7 @@ namespace RimWorld {
   public static void OffsetHemogen(Pawn p,float value,bool applyStatFactor=true){var g=p.genes.GetFirstGeneOfType<Gene_Hemogen>();g.Value=Math.Min(1,g.Value+value);}
  }
 }
-namespace AbilityGenes {
+namespace RimArt {
  using Verse; using UnityEngine;
  public class Gene_Dispersal{public bool Active=true; public int Charges=3;public bool HasCharge=>Charges>0;public void Spend(){Charges--;}}
  public class Flock{public Flock(int n,float spread,float lift){}public void Draw(Vector3 a,Vector3 b,float p,int t){}}

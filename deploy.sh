@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Copy this mod into the local RimWorld Mods folder for testing.
 set -euo pipefail
-DEST="/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Mods/AbilityGenes"
+DEST="/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Mods/RimArt"
 SRC="$(cd "$(dirname "$0")" && pwd)"
 rm -rf "$DEST"
 mkdir -p "$DEST"

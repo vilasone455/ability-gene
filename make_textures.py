@@ -112,7 +112,7 @@ def make_flying():
 
     draw_sword(d, cx=S // 2, tip_y=px(6), blade_len=px(82), half_w=px(9),
                grip_len=px(20), guard_half=px(23))
-    finish(img, "Textures/AbilityGenes/Panoply/Blade.png")
+    finish(img, "Textures/RimArt/Panoply/Blade.png")
 
 
 # Where the ground crosses the planted sprite, as a fraction from the top. The drawing code
@@ -177,7 +177,7 @@ def make_planted():
     near = near.filter(ImageFilter.GaussianBlur(px(0.9)))
     img = Image.alpha_composite(img, near)
 
-    finish(img, "Textures/AbilityGenes/Panoply/BladePlanted.png")
+    finish(img, "Textures/RimArt/Panoply/BladePlanted.png")
 
 
 # ---------------------------------------------------------------- icons
@@ -223,14 +223,14 @@ def make_icons():
     img = place(img, sword, angle=170, scale=0.62, dx=-px(30), dy=-px(14))
     img = place(img, sword, angle=186, scale=0.62, dx=px(28), dy=-px(22))
     img = place(img, sword, angle=178, scale=0.74, dx=-px(1), dy=px(16))
-    finish(img, "Textures/AbilityGenes/Panoply/IconRain.png")
+    finish(img, "Textures/RimArt/Panoply/IconRain.png")
 
     # LOOSE - a volley, all of it going the same way, tips leading.
     img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     img = place(img, sword, angle=64, scale=0.60, dx=-px(14), dy=-px(30))
     img = place(img, sword, angle=78, scale=0.60, dx=-px(24), dy=px(4))
     img = place(img, sword, angle=71, scale=0.72, dx=-px(4), dy=-px(6))
-    finish(img, "Textures/AbilityGenes/Panoply/IconLoose.png")
+    finish(img, "Textures/RimArt/Panoply/IconLoose.png")
 
     # GRASP - one blade coming up out of the ground, and the earth it leaves.
     img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
@@ -242,14 +242,14 @@ def make_icons():
     for x, y0, y1 in ((-px(14), px(74), px(100)), (px(12), px(68), px(96)), (px(1), px(60), px(92))):
         d.line([(S // 2 + x, y0), (S // 2 + x + px(4), y1)], fill=(150, 140, 120, 150), width=px(2))
     img = place(img, sword, angle=20, scale=0.88, dx=px(4), dy=-px(6))
-    finish(img, "Textures/AbilityGenes/Panoply/IconGrasp.png")
+    finish(img, "Textures/RimArt/Panoply/IconGrasp.png")
 
     # GENE - a panoply: what the carrier is, rather than any one thing they do.
     img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     img = place(img, sword, angle=-34, scale=0.80, dx=-px(20), dy=px(4))
     img = place(img, sword, angle=34, scale=0.80, dx=px(20), dy=px(4))
     img = place(img, sword, angle=0, scale=0.92, dx=0, dy=0)
-    finish(img, "Textures/AbilityGenes/Panoply/IconGene.png")
+    finish(img, "Textures/RimArt/Panoply/IconGene.png")
 
 
 
@@ -368,7 +368,7 @@ def make_crows():
         extension, sweepback = crow_beat(i / float(CROW_FRAME_COUNT))
         img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
         draw_crow(ImageDraw.Draw(img), extension, sweepback)
-        finish_at(img, "Textures/AbilityGenes/Dispersal/Crow" + str(i) + ".png", CROW_SIZE)
+        finish_at(img, "Textures/RimArt/Dispersal/Crow" + str(i) + ".png", CROW_SIZE)
 
 
 def make_feeding_crows():
@@ -390,7 +390,7 @@ def make_feeding_crows():
         d.ellipse((S*.455,S*(head-.055),S*.545,S*(head+.07)), fill=CROW)
         d.polygon([(S*.48,S*(head-.03)),(S*.52,S*(head-.03)),
                    (S*.5,S*(head-.115))], fill=CROW)
-        finish_at(img, "Textures/AbilityGenes/Dispersal/CrowFeed"+str(frame)+".png", CROW_SIZE)
+        finish_at(img, "Textures/RimArt/Dispersal/CrowFeed"+str(frame)+".png", CROW_SIZE)
 
     # Feeding birds surrounding a bone distinguish Carrion from the flying Murder icon.
     icon = Image.new("RGBA", (S, S), (0, 0, 0, 0))
@@ -403,7 +403,7 @@ def make_feeding_crows():
     for angle, x, y in ((-90,.24,.49),(90,.76,.49),(0,.50,.79)):
         layer = bird.rotate(angle, resample=Image.BICUBIC)
         icon.alpha_composite(layer,(int(S*x-layer.width/2),int(S*y-layer.height/2)))
-    finish(icon, "Textures/AbilityGenes/Dispersal/IconCarrion.png")
+    finish(icon, "Textures/RimArt/Dispersal/IconCarrion.png")
 
 
 def make_feather():
@@ -427,7 +427,7 @@ def make_feather():
     ], fill=CROW)
     d.line([(cx, S * 0.18), (cx, S * 0.84)], fill=CROW_LIT, width=px(1.4))
 
-    finish_at(img, "Textures/AbilityGenes/Dispersal/Feather.png", 32)
+    finish_at(img, "Textures/RimArt/Dispersal/Feather.png", 32)
 
 
 def make_dispersal_icon():
@@ -451,7 +451,7 @@ def make_dispersal_icon():
         img.alpha_composite(layer, (int(S / 2 - layer.width / 2 + dx),
                                     int(S / 2 - layer.height / 2 + dy)))
 
-    finish(img, "Textures/AbilityGenes/Dispersal/IconGene.png")
+    finish(img, "Textures/RimArt/Dispersal/IconGene.png")
 
 
 if __name__ == "__main__":

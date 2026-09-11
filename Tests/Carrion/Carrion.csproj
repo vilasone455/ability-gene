@@ -2,7 +2,7 @@
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><EnableDefaultCompileItems>false</EnableDefaultCompileItems></PropertyGroup>
   <ItemGroup>
     <Compile Include="Program.cs" /><Compile Include="GameStubs.cs" />
-    <Compile Include="../../Source/AbilityGenes/Dispersal/CarrionRun.cs" Link="CarrionRun.cs" />
-    <Compile Include="../../Source/AbilityGenes/Dispersal/MapComponent_Carrion.cs" Link="MapComponent_Carrion.cs" />
+    <Compile Include="../../Source/RimArt/Dispersal/CarrionRun.cs" Link="CarrionRun.cs" />
+    <Compile Include="../../Source/RimArt/Dispersal/MapComponent_Carrion.cs" Link="MapComponent_Carrion.cs" />
   </ItemGroup>
 </Project>
