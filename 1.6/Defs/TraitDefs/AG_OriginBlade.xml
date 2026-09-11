@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <TraitDef>
+    <defName>AG_OriginBlade</defName>
+    <commonality>0</commonality>
+    <commonalityFemale>0</commonalityFemale>
+    <allowOnHostileSpawn>false</allowOnHostileSpawn>
+    <canBeSuppressed>false</canBeSuppressed>
+    <degreeDatas>
+      <li>
+        <label>Origin: Blade</label>
+        <description>This person's origin is the blade. Through mastery of combat, craftsmanship, and the study of five distinct blade types, they have awakened an inner arsenal.\n\nGrants Rain, Loose, and Grasp permanently. Awakening removes all psycasts and psylink levels, prevents future psycasting, and forbids equipping ranged weapons. Psychic sensitivity is unchanged.\n\nEarned with Melee 14, Crafting 12, and five completed blade studies. Cannot occur randomly. Skill loss does not remove this trait. Deployed blades retain the kit's bodily debt; Grasp produces a permanent steel longsword.</description>
+        <degree>0</degree>
+      </li>
+    </degreeDatas>
+    <modExtensions>
+      <li Class="RimArt.TraitAbilityExtension">
+        <abilities>
+          <li>AG_Panoply_Rain</li>
+          <li>AG_Panoply_Loose</li>
+          <li>AG_Panoply_Grasp</li>
+        </abilities>
+      </li>
+    </modExtensions>
+  </TraitDef>
+</Defs>

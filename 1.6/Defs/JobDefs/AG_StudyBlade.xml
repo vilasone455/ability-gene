@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <JobDef>
+    <defName>AG_StudyBlade</defName>
+    <driverClass>RimArt.JobDriver_StudyBlade</driverClass>
+    <reportString>Studying TargetA.</reportString>
+    <casualInterruptible>true</casualInterruptible>
+  </JobDef>
+</Defs>
