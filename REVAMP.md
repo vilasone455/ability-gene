@@ -64,7 +64,7 @@ Shipped so far: **Origin: Blade** (permanent). See `docs/origin-blade.md`.
 - [x] Special condition, permanent — `GameComponent_BladeStudy` + `OriginBladeUtility`, shipped as Origin: Blade
 - [x] Odyssey weapon traits — use vanilla `WeaponTraitDef.abilityProps` (XML only, no custom C#, MayRequire on defs)
 - [x] Unique Melee Weapons traits — same `abilityProps` mechanism, `MayRequire="shunter.uniquemeleeweapons"` (resonance, arc)
-- [ ] ~~Create `AbilitySourceDef`~~ Not needed — each source uses its own vanilla or light-custom mechanism
+- [x] ~~Create `AbilitySourceDef`~~ Not needed — each source uses its own vanilla or light-custom mechanism
 
 ### Key Principle
 
@@ -147,10 +147,22 @@ Do this AFTER Phase 3 & 4, since ability descriptions change when they move to n
 
 ## Phase 6: Polish
 
-- [ ] Update Workshop thumbnail/preview images
-- [ ] Update Steam Workshop description
+- [x] ~~Update Workshop thumbnail/preview images~~ Skipped -- not revamp work, and the word
+      "update" was wrong anyway. No preview image has ever existed: `About/` holds only
+      `About.xml`, and nothing named `Preview.png` or `ModIcon.png` appears anywhere in the
+      repo's history. Creating one is store design, and it belongs to publishing rather than
+      to this plan
+- [x] ~~Update Steam Workshop description~~ Skipped for the same reason, and on the same wrong
+      premise -- the mod has never been published. There is no `About/PublishedFileId.txt`,
+      which is the file Steam writes on first upload; the only `steamWorkshopUrl` in
+      `About.xml` is Harmony's, sitting in `modDependencies` to tell players where to get the
+      dependency. Both of these become real work the day you decide to ship, not before
 - [ ] Test all abilities with each source type
-- [ ] Test save compatibility (AG_ prefix preserved)
+- [x] ~~Test save compatibility (AG_ prefix preserved)~~ Skipped -- nothing to be compatible
+      with. The mod has never been published, so no save outside this machine has ever loaded
+      it. The `AG_` prefix itself stays as it is: the reason for keeping it is gone, but
+      renaming 86 defs now would be pure churn against working files, and it costs nothing
+      where it sits
 - [x] ~~Test without Biotech loaded (gene abilities hidden, others work)~~ Moot -- Biotech is required
 - [ ] Test without Odyssey loaded (weapon trait abilities hidden via MayRequire)
 
