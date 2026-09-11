@@ -83,6 +83,7 @@ The **AbilityDef** and **ability implementation** (CompAbilityEffect, HediffComp
 | Alarm Pheromones (provoke) | AG_AlarmPheromones | Pheromones are biological |
 | Dispersal Plexus (scatter/murder/carrion) | AG_DispersalPlexus | Body comes apart into crows |
 | Involute Organ (fold/swallow/collapse) | AG_InvoluteOrgan | Hole in the body, archite |
+| Anchor Organ (mark/clap/double clap) | AG_AnchorOrgan | Moved here. The marks are stored on the gene and the class comment says why: they belong to a person, travel with them between maps, and end when the gene does. A device that did the same needs that explained, and the gene does not. See below |
 
 ### Multiple Sources (gene + at least one other)
 
@@ -95,9 +96,21 @@ The **AbilityDef** and **ability implementation** (CompAbilityEffect, HediffComp
 | Deferred Plexus (arrears) | Nerve plexus | Drug, implant, trait | Delay damage mechanic doesn't need biology |
 | Vector Reflex (reflect/shove) | Reflex organ | Equipment (power armor), implant | Deflection tech or trained reflex |
 | Halving Membrane (recursion) | Membrane | Psychic, archotech implant | Zeno barrier could be tech-based |
-| Anchor Organ (mark/clap/swap) | Organ | Archotech equipment, psychic | Teleport swap doesn't need biology |
 | Stasis Organ (time bubble) | Archite organ | **Equipment (stasis belt) — shipped** | Time-freeze could be a deployable |
 | Time Lattice (speed up/slow down) | Nerve lattice | Drug, implant | Go-juice style speed boost |
+
+### Anchor Organ stays gene-only
+
+Cut, not deferred. The second source was one line in this plan and nothing in the game.
+
+Building it meant moving the mark list off `Gene_Anchors`, which is where it is saved,
+through the fourteen call sites that reach it via `AnchorUtility.GeneOf`, plus a migration
+for any colony with marks already placed. That is real risk for a route nobody asked for,
+on a kit that already works and that four other kits already match by being gene-only.
+
+Nothing is removed: the gene, the three abilities, the mark storage and the weapon ban all
+stay exactly as they are. What ends is the expectation of a stasis-belt equivalent for this
+kit. It can still be built later, and nothing shipped today would be wasted if it were.
 
 ### New Abilities to Add (future)
 
