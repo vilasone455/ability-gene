@@ -27,7 +27,7 @@ namespace RimArt
         public static VectorEditSession Current;
 
         /// <summary>Reused by the scan, so opening the editor does not allocate a second list.</summary>
-        private static readonly List<Projectile> scratch = new List<Projectile>();
+        private static readonly List<Thing> scratch = new List<Thing>();
 
         public readonly Pawn Caster;
         public readonly Map Map;
@@ -54,7 +54,7 @@ namespace RimArt
         public int Selected => selected;
         public VectorEditGroup SelectedGroup => selected >= 0 ? groups[selected] : null;
 
-        private VectorEditSession(Pawn caster, Ability ability, List<Projectile> found)
+        private VectorEditSession(Pawn caster, Ability ability, List<Thing> found)
         {
             Caster = caster;
             Map = caster.Map;
@@ -105,7 +105,7 @@ namespace RimArt
         /// What the booster would take hold of if the gizmo were clicked this instant, for the
         /// hover preview. The caller owns the list, so drawing it costs no allocation per frame.
         /// </summary>
-        public static void CatchableNow(Pawn caster, List<Projectile> into)
+        public static void CatchableNow(Pawn caster, List<Thing> into)
         {
             into.Clear();
             if (caster == null || !caster.Spawned || caster.Map == null) return;
@@ -121,8 +121,20 @@ namespace RimArt
         /// Mortar shells and rockets are refused because an arc and a blast are not a vector the
         /// reflex can take hold of, and rounds already held by a phase barrier or standing still
         /// in a stasis field belong to those effects rather than to this one.
+        ///
+        /// Combat Extended has no class that means what Bullet means - every one of its rounds
+        /// from a pistol shot to an artillery shell is a ProjectileCE - so its half of the same
+        /// refusal is made on the def instead. The two tests agree on every case that matters:
+        /// arcs are flyOverhead and blasts carry an explosion radius, in both engines.
+        ///
+        /// What "can reach" means is <see cref="VectorEditDefaults.ComesIntoReach"/>: a round is
+        /// caught a fixed number of ticks before it arrives rather than at a fixed distance, so a
+        /// round moving four times as fast is simply taken hold of four times as far out. The
+        /// line of sight test is still against the cell the round is standing in now, which is
+        /// what stops a round the carrier cannot possibly have seen being caught at the far end
+        /// of its lead.
         /// </summary>
-        private static void Scan(Pawn caster, List<Projectile> found)
+        private static void Scan(Pawn caster, List<Thing> found)
         {
             found.Clear();
 
@@ -130,36 +142,43 @@ namespace RimArt
             List<Thing> things = map.listerThings.ThingsInGroup(ThingRequestGroup.Projectile);
             if (things.Count == 0) return;
 
-            float radiusSquared = VectorEditDefaults.ScanRadiusCells * VectorEditDefaults.ScanRadiusCells;
             Vector3 eye = caster.DrawPos;
             eye.y = 0f;
 
             for (int i = 0; i < things.Count; i++)
             {
-                Bullet bullet = things[i] as Bullet;
-                if (bullet == null || bullet.Destroyed || !bullet.Spawned) continue;
+                Thing round = things[i];
+                if (round == null || round.Destroyed || !round.Spawned) continue;
 
-                ProjectileProperties props = bullet.def.projectile;
+                RoundBackend backend = Rounds.For(round);
+                if (backend == null) continue;
+                if (backend == Rounds.Vanilla && !(round is Bullet)) continue;
+
+                ProjectileProperties props = round.def.projectile;
                 if (props == null || props.flyOverhead || props.explosionRadius > 0f) continue;
 
                 if (RecursionRegistry.CapturedCount > 0)
                 {
                     HalvingProjectile held;
-                    if (RecursionRegistry.TryGetCapture(bullet, out held)) continue;
+                    if (RecursionRegistry.TryGetCapture(round, out held)) continue;
                 }
 
-                if (TimeBubbleRegistry.ActiveCount > 0 && TimeBubbleRegistry.IsFrozen(bullet)) continue;
+                if (TimeBubbleRegistry.ActiveCount > 0 && TimeBubbleRegistry.IsFrozen(round)) continue;
 
-                IntVec3 cell = bullet.Position;
+                IntVec3 cell = round.Position;
                 if (!cell.InBounds(map) || cell.Fogged(map)) continue;
 
-                Vector3 offset = bullet.ExactPosition - eye;
-                offset.y = 0f;
-                if (offset.sqrMagnitude > radiusSquared) continue;
+                Vector3 at = backend.Position(round);
+                at.y = 0f;
+                if (!VectorEditDefaults.ComesIntoReach(at, backend.Heading(round),
+                        backend.CurrentSpeedPerTick(round), eye))
+                {
+                    continue;
+                }
 
                 if (!GenSight.LineOfSight(caster.Position, cell, map, true)) continue;
 
-                found.Add(bullet);
+                found.Add(round);
             }
         }
 

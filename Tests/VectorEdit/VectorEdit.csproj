@@ -10,6 +10,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" /><Compile Include="GameStubs.cs" />
+    <Compile Include="../../Source/RimArt/Rounds/Rounds.cs" Link="Rounds.cs" />
     <Compile Include="../../Source/RimArt/Vector/VectorEditDefaults.cs" Link="VectorEditDefaults.cs" />
     <Compile Include="../../Source/RimArt/Vector/CapturedProjectile.cs" Link="CapturedProjectile.cs" />
     <Compile Include="../../Source/RimArt/Vector/VectorEditGroup.cs" Link="VectorEditGroup.cs" />

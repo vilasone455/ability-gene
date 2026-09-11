@@ -106,6 +106,13 @@ namespace RimArt
         /// Hostile rounds that come inside the field are taken off the engine's clock and put
         /// on the halving curve. Friendly fire is left alone: a colonist shooting past the
         /// holder should not have their round parked on their own ally's face.
+        ///
+        /// What is tested is the step the round took this tick, not where it is standing now.
+        /// The field is under four cells across and there are rounds in this game that cross it
+        /// between two samples - every Combat Extended rifle round is faster than a vanilla one,
+        /// and the fastest are four times faster - so a round that is never inside the field on
+        /// any tick it is looked at is not a round that missed. It is a round that was never
+        /// caught.
         /// </summary>
         private void CaptureNearbyProjectiles(Pawn pawn)
         {
@@ -115,25 +122,35 @@ namespace RimArt
             List<Thing> projectiles = map.listerThings.ThingsInGroup(ThingRequestGroup.Projectile);
             if (projectiles.Count == 0) return;
 
-            float radiusSquared = Props.fieldRadius * Props.fieldRadius;
+            Vector3 centre = pawn.DrawPos;
+            centre.y = 0f;
+
             for (int i = projectiles.Count - 1; i >= 0; i--)
             {
-                Projectile projectile = projectiles[i] as Projectile;
-                if (projectile == null || projectile.Destroyed) continue;
+                Thing round = projectiles[i];
+                if (round == null || round.Destroyed) continue;
+
+                // Null for anything neither engine is flying, which is the one honest way to
+                // refuse a thing this mod does not know how to hold.
+                RoundBackend backend = Rounds.For(round);
+                if (backend == null) continue;
 
                 HalvingProjectile existing;
-                if (RecursionRegistry.TryGetCapture(projectile, out existing)) continue;
+                if (RecursionRegistry.TryGetCapture(round, out existing)) continue;
 
-                Thing launcher = projectile.Launcher;
+                Thing launcher = backend.Launcher(round);
                 if (launcher == null || launcher == pawn) continue;
                 if (!launcher.HostileTo(pawn)) continue;
 
-                Vector3 offset = projectile.ExactPosition - pawn.DrawPos;
-                offset.y = 0f;
-                if (offset.sqrMagnitude > radiusSquared) continue;
+                Vector3 entry;
+                if (!Rounds.SegmentEntersCircle(backend.LastPosition(round), backend.Position(round),
+                        centre, Props.fieldRadius, out entry))
+                {
+                    continue;
+                }
 
-                RecursionRegistry.Capture(projectile, new HalvingProjectile(
-                    projectile, this, Props.projectileHalfLifeTicks, Props.projectileMinDistance));
+                RecursionRegistry.Capture(round, new HalvingProjectile(
+                    round, this, entry, Props.projectileHalfLifeTicks, Props.projectileMinDistance));
             }
         }
 

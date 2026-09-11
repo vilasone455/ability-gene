@@ -19,9 +19,9 @@ namespace RimArt
     public static class RecursionRegistry
     {
         private static readonly List<HediffComp_Recursion> holders = new List<HediffComp_Recursion>();
-        private static readonly Dictionary<Projectile, HalvingProjectile> captured =
-            new Dictionary<Projectile, HalvingProjectile>();
-        private static readonly List<Projectile> scratch = new List<Projectile>();
+        private static readonly Dictionary<Thing, HalvingProjectile> captured =
+            new Dictionary<Thing, HalvingProjectile>();
+        private static readonly List<Thing> scratch = new List<Thing>();
 
         public static int HolderCount => holders.Count;
         public static int CapturedCount => captured.Count;
@@ -53,17 +53,17 @@ namespace RimArt
             return null;
         }
 
-        public static void Capture(Projectile projectile, HalvingProjectile state)
+        public static void Capture(Thing projectile, HalvingProjectile state)
         {
             captured[projectile] = state;
         }
 
-        public static bool TryGetCapture(Projectile projectile, out HalvingProjectile state)
+        public static bool TryGetCapture(Thing projectile, out HalvingProjectile state)
         {
             return captured.TryGetValue(projectile, out state);
         }
 
-        public static void ReleaseCapture(Projectile projectile)
+        public static void ReleaseCapture(Thing projectile)
         {
             captured.Remove(projectile);
         }
@@ -78,7 +78,7 @@ namespace RimArt
             if (captured.Count == 0) return;
 
             scratch.Clear();
-            foreach (KeyValuePair<Projectile, HalvingProjectile> pair in captured)
+            foreach (KeyValuePair<Thing, HalvingProjectile> pair in captured)
             {
                 if (pair.Value.Holder == comp) scratch.Add(pair.Key);
             }
@@ -86,7 +86,7 @@ namespace RimArt
             float fieldRadius = comp.Props.fieldRadius;
             for (int i = 0; i < scratch.Count; i++)
             {
-                Projectile projectile = scratch[i];
+                Thing projectile = scratch[i];
                 if (projectile.Destroyed)
                 {
                     captured.Remove(projectile);
@@ -104,6 +104,7 @@ namespace RimArt
                 }
 
                 state.Advance(1);
+                state.PlaceHeld(projectile);
                 state.MaintainSound(projectile);
             }
         }
@@ -117,14 +118,14 @@ namespace RimArt
             if (captured.Count == 0) return;
 
             scratch.Clear();
-            foreach (KeyValuePair<Projectile, HalvingProjectile> pair in captured)
+            foreach (KeyValuePair<Thing, HalvingProjectile> pair in captured)
             {
                 if (pair.Value.Holder == comp) scratch.Add(pair.Key);
             }
 
             for (int i = 0; i < scratch.Count; i++)
             {
-                Projectile projectile = scratch[i];
+                Thing projectile = scratch[i];
                 captured[projectile].Release(projectile);
                 captured.Remove(projectile);
             }

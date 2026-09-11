@@ -13,7 +13,7 @@ namespace RimArt
     /// </summary>
     public class MapComponent_VectorEdit : MapComponent
     {
-        private readonly List<Projectile> hoverScan = new List<Projectile>();
+        private readonly List<Thing> hoverScan = new List<Thing>();
 
         public MapComponent_VectorEdit(Map map) : base(map) { }
 

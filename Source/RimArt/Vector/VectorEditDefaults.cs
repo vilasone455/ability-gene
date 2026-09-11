@@ -14,18 +14,41 @@ namespace RimArt
     public static class VectorEditDefaults
     {
         /// <summary>
-        /// How far from the carrier a round can be and still be caught by the scan.
+        /// How close a round has to come to the carrier to be worth catching.
         ///
-        /// This stopped being a reaction-time number the moment reflex surge took that job.
-        /// What the radius decides instead is how much of a volley is in the air when the
-        /// player clicks - at six cells the answer was usually one round, which makes four
-        /// groups a panel with nothing to put in it.
+        /// Not how far away it can be when it is caught - that is <see cref="LeadTicks"/>. This
+        /// is the threat test: a round on a line that never brings it within twelve cells is
+        /// somebody else's problem, however near it passes the camera.
         ///
-        /// Twelve is the first radius at which rounds from separate shooters overlap reliably.
-        /// It is also the loudest tuning knob in the kit: raise it and the editor opens earlier
-        /// with more on the table, lower it and the catch is late, tight and mostly single.
+        /// What the figure decides is how much of a volley is in the air at once - at six cells
+        /// the answer was usually one round, which makes four groups a panel with nothing to put
+        /// in it. Twelve is the first radius at which rounds from separate shooters overlap
+        /// reliably. It is still the loudest tuning knob in the kit: raise it and more of the
+        /// field is the carrier's business, lower it and the catch is tight and mostly single.
         /// </summary>
         public const float ScanRadiusCells = 12f;
+
+        /// <summary>
+        /// How far ahead of itself a round is caught, in game ticks of its own flight.
+        ///
+        /// This is the number that decides whether the ability can be used at all, and it is
+        /// counted in ticks rather than in cells for one reason: a catch measured in cells is a
+        /// different amount of time for every round in the game. Twelve cells is ten ticks of a
+        /// vanilla rifle round, six of a typical Combat Extended one, three and a half of a fast
+        /// one and under one tick of the fastest CE ships - and three and a half ticks is under a
+        /// quarter of a second even with reflex surge holding the world at quarter rate, which is
+        /// below anyone's reaction time. Twenty-one ticks is twenty-one ticks whatever fired it:
+        /// 0.35 seconds at normal rate, 1.4 at quarter.
+        ///
+        /// Twenty-one is not a new number. It is how long a vanilla rifle round already spent
+        /// crossing the old twelve-cell circle, which is the window the kit was tuned against and
+        /// the one that plays. Stating it directly is what makes a CE round behave like a vanilla
+        /// one - it is simply caught further out, because it is coming faster.
+        ///
+        /// A round already inside the reach counts as arriving now, so one that has just gone
+        /// past can still be taken hold of and thrown back.
+        /// </summary>
+        public const int LeadTicks = 21;
 
         /// <summary>
         /// Travel given to an edited round at ×1 force, measured from where it was caught.
@@ -73,12 +96,12 @@ namespace RimArt
         /// <summary>
         /// What the world's tick rate becomes while a reflex surge is open.
         ///
-        /// A quarter, and the quarter is load-bearing. A rifle round crosses the catch radius in
-        /// about twenty-one ticks; at normal rate that is a sixth of a second, which is less
-        /// than a person's reaction time before they have even moved the mouse. At a quarter it
-        /// is 1.4 seconds, which is enough to see it and press the gizmo. A half would give 0.7
-        /// seconds - still about reaction time, so still a coin flip, which is why there is one
-        /// surge setting rather than two.
+        /// A quarter, and the quarter is load-bearing. A round is catchable for
+        /// <see cref="LeadTicks"/> ticks before it arrives, whatever fired it; at normal rate
+        /// that is 0.35 seconds, which is gone before a person has moved the mouse. At a quarter
+        /// it is 1.4 seconds, which is enough to see it and press the gizmo. A half would give
+        /// 0.7 seconds - still about reaction time, so still a coin flip, which is why there is
+        /// one surge setting rather than two.
         ///
         /// Forced rather than scaled by the TickRateMultiplier postfix: scaling would let
         /// superfast multiply straight back through it and run the game faster than normal.
@@ -113,6 +136,25 @@ namespace RimArt
             SimpleColor.Magenta,
             SimpleColor.Green,
         };
+
+        /// <summary>
+        /// Whether a round on this line will come inside the carrier's reach soon enough to be
+        /// caught - which is the whole catch rule, and the only place it is stated.
+        ///
+        /// Flies the round forward at its own speed for <see cref="LeadTicks"/> and asks whether
+        /// that stretch of its path passes within <see cref="ScanRadiusCells"/> of the carrier.
+        /// A round already in reach passes at once, because the segment starts inside.
+        /// </summary>
+        public static bool ComesIntoReach(Vector3 position, Vector3 heading, float speedPerTick,
+            Vector3 carrier)
+        {
+            float lead = speedPerTick * LeadTicks;
+            if (lead < 0f) lead = 0f;
+
+            Vector3 unused;
+            return Rounds.SegmentEntersCircle(position, position + heading * lead, carrier,
+                ScanRadiusCells, out unused);
+        }
 
         /// <summary>Strain cost of an application that changes this many groups.</summary>
         public static float StrainCostFor(int groupsChanged)

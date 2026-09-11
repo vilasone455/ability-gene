@@ -1,4 +1,3 @@
-using HarmonyLib;
 using UnityEngine;
 using Verse;
 
@@ -13,29 +12,18 @@ namespace RimArt
     /// picture cannot drift while the game is paused, and a round destroyed mid-session is a
     /// member that fails revalidation rather than a null dereference in the middle of drawing.
     ///
-    /// Writing the new flight is done by hand rather than by calling Launch. Launch scatters the
-    /// destination by up to a third of a cell and re-reads the origin from the projectile's
-    /// current cell; both are wrong here, because the whole promise of the editor is that the
-    /// line drawn on the paused map is the line the round takes.
+    /// The round is held as a Thing rather than a Projectile, and every reading and writing of
+    /// it goes through <see cref="Rounds"/>. Combat Extended's rounds are not Verse.Projectile
+    /// and never pass an `as Projectile`; holding the base type is what lets one editor act on
+    /// both engines' rounds without the panel, the drag box or any of the arithmetic below
+    /// knowing which is which.
     /// </summary>
     public class CapturedProjectile
     {
-        private static readonly AccessTools.FieldRef<Projectile, Vector3> OriginRef =
-            AccessTools.FieldRefAccess<Projectile, Vector3>("origin");
-        private static readonly AccessTools.FieldRef<Projectile, Vector3> DestinationRef =
-            AccessTools.FieldRefAccess<Projectile, Vector3>("destination");
-        private static readonly AccessTools.FieldRef<Projectile, int> TicksToImpactRef =
-            AccessTools.FieldRefAccess<Projectile, int>("ticksToImpact");
-        private static readonly AccessTools.FieldRef<Projectile, int> LifetimeRef =
-            AccessTools.FieldRefAccess<Projectile, int>("lifetime");
-        private static readonly AccessTools.FieldRef<Projectile, Thing> LauncherRef =
-            AccessTools.FieldRefAccess<Projectile, Thing>("launcher");
-        private static readonly AccessTools.FieldRef<Projectile, bool> LandedRef =
-            AccessTools.FieldRefAccess<Projectile, bool>("landed");
-        private static readonly AccessTools.FieldRef<Projectile, bool> PreventFriendlyFireRef =
-            AccessTools.FieldRefAccess<Projectile, bool>("preventFriendlyFire");
+        public readonly Thing Round;
 
-        public readonly Projectile Projectile;
+        /// <summary>The engine that is flying this round, resolved once at capture.</summary>
+        private readonly RoundBackend backend;
 
         /// <summary>Where the round was when it was caught. The new flight starts here.</summary>
         public readonly Vector3 Position;
@@ -49,28 +37,22 @@ namespace RimArt
         /// <summary>Which group owns it, or -1 while it is still unassigned.</summary>
         public int Group = -1;
 
-        public CapturedProjectile(Projectile projectile)
+        public CapturedProjectile(Thing round)
         {
-            Projectile = projectile;
+            Round = round;
+            backend = Rounds.For(round);
 
-            Vector3 position = projectile.ExactPosition;
+            Vector3 position = backend.Position(round);
             position.y = 0f;
             Position = position;
 
-            Vector3 heading = DestinationRef(projectile) - OriginRef(projectile);
-            heading.y = 0f;
-            Heading = heading.sqrMagnitude > 0.0001f ? heading.normalized : Vector3.forward;
-
-            float speed = projectile.def.projectile != null
-                ? projectile.def.projectile.SpeedTilesPerTick
-                : 1f;
-            BaseSpeed = speed > 0f ? speed : 1f;
+            Heading = backend.Heading(round);
+            BaseSpeed = Rounds.BaseSpeedPerTick(round);
         }
 
         public bool StillValid(Map map)
         {
-            return Projectile != null && !Projectile.Destroyed && Projectile.Spawned
-                   && Projectile.Map == map;
+            return Round != null && !Round.Destroyed && Round.Spawned && Round.Map == map;
         }
 
         /// <summary>Heading after a group's rotation, which turns the whole group as one piece.</summary>
@@ -110,10 +92,10 @@ namespace RimArt
         public bool WouldChange(float rotationDegrees, float force, Map map)
         {
             Vector3 endpoint = EndpointFor(rotationDegrees, force, map);
-            if ((endpoint - DestinationRef(Projectile)).sqrMagnitude > 0.01f) return true;
-            if ((Position - OriginRef(Projectile)).sqrMagnitude > 0.01f) return true;
-            if (TicksFor(endpoint, force) != TicksToImpactRef(Projectile)) return true;
-            return !Mathf.Approximately(force, VectorEditRegistry.ForceFor(Projectile));
+            if ((endpoint - backend.Destination(Round)).sqrMagnitude > 0.01f) return true;
+            if ((Position - backend.Origin(Round)).sqrMagnitude > 0.01f) return true;
+            if (TicksFor(endpoint, force) != backend.TicksToImpact(Round)) return true;
+            return !Mathf.Approximately(force, VectorEditRegistry.ForceFor(Round));
         }
 
         /// <summary>
@@ -121,25 +103,20 @@ namespace RimArt
         /// anything its own Impact does - a blade planting itself, an arrow's extra damage -
         /// are all untouched; only where it starts, where it is going, how long it takes and
         /// who is answerable for it change.
+        ///
+        /// The force is registered whichever engine flew the round. For the engine's own rounds
+        /// the registry is where speed and damage are read back out of by the two postfixes that
+        /// apply them; for CE's the figures are written into the round at redirect and the entry
+        /// is what keeps a second edit absolute rather than cumulative.
         /// </summary>
         public void Commit(float rotationDegrees, float force, Pawn caster, Map map)
         {
             Vector3 endpoint = EndpointFor(rotationDegrees, force, map);
             int ticks = TicksFor(endpoint, force);
 
-            OriginRef(Projectile) = Position;
-            DestinationRef(Projectile) = endpoint;
-            TicksToImpactRef(Projectile) = ticks;
-            LifetimeRef(Projectile) = ticks;
-            LandedRef(Projectile) = false;
-            LauncherRef(Projectile) = caster;
-            PreventFriendlyFireRef(Projectile) = false;
+            backend.Redirect(Round, Position, endpoint, ticks, force, caster);
 
-            LocalTargetInfo target = new LocalTargetInfo(endpoint.ToIntVec3());
-            Projectile.usedTarget = target;
-            Projectile.intendedTarget = target;
-
-            VectorEditRegistry.Register(Projectile, force);
+            VectorEditRegistry.Register(Round, force);
         }
 
         /// <summary>

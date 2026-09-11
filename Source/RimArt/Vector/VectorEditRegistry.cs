@@ -21,12 +21,12 @@ namespace RimArt
     /// </summary>
     public static class VectorEditRegistry
     {
-        private static Dictionary<Projectile, float> forces = new Dictionary<Projectile, float>();
-        private static readonly List<Projectile> scratch = new List<Projectile>();
+        private static Dictionary<Thing, float> forces = new Dictionary<Thing, float>();
+        private static readonly List<Thing> scratch = new List<Thing>();
 
         public static int EditedCount => forces.Count;
 
-        public static void Register(Projectile projectile, float force)
+        public static void Register(Thing projectile, float force)
         {
             if (projectile == null) return;
 
@@ -34,9 +34,15 @@ namespace RimArt
             else forces[projectile] = force;
         }
 
-        /// <summary>Hot path. Only reached once at least one round has been edited.</summary>
-        public static float ForceFor(Projectile projectile)
+        /// <summary>
+        /// Hot path. The two postfixes that read it are already behind an EditedCount check, but
+        /// the membrane's capture scan asks it of every round in the air every tick a field is
+        /// open, and that one has no such gate in front of it - so the gate is in here as well.
+        /// </summary>
+        public static float ForceFor(Thing projectile)
         {
+            if (forces.Count == 0) return 1f;
+
             float force;
             return forces.TryGetValue(projectile, out force) ? force : 1f;
         }
@@ -57,11 +63,11 @@ namespace RimArt
             if (forces.Count == 0) return;
 
             scratch.Clear();
-            foreach (KeyValuePair<Projectile, float> pair in forces)
+            foreach (KeyValuePair<Thing, float> pair in forces)
             {
                 // A dictionary key is never null, so destroyed and despawned are the only
                 // two ways a round leaves the table.
-                Projectile projectile = pair.Key;
+                Thing projectile = pair.Key;
                 if (projectile.Destroyed || !projectile.Spawned) scratch.Add(projectile);
             }
 
@@ -83,7 +89,7 @@ namespace RimArt
             // periodic prune on the map component picks up anything stale a few seconds later.
             if (Scribe.mode == LoadSaveMode.PostLoadInit && forces == null)
             {
-                forces = new Dictionary<Projectile, float>();
+                forces = new Dictionary<Thing, float>();
             }
         }
     }

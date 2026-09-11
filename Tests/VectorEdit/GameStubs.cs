@@ -20,6 +20,7 @@ namespace UnityEngine {
   public float sqrMagnitude=>x*x+y*y+z*z;
   public float magnitude=>(float)Math.Sqrt(sqrMagnitude);
   public Vector3 normalized{get{float m=magnitude;return m<=0f?zero:this/m;}}
+  public static float Dot(Vector3 a,Vector3 b)=>a.x*b.x+a.y*b.y+a.z*b.z;
   public override string ToString()=>$"({x:0.###}, {y:0.###}, {z:0.###})";
  }
  // Only rotation about +Y is ever asked for, and only of ground-plane headings, so the
@@ -43,11 +44,20 @@ namespace UnityEngine {
   public static int CeilToInt(float v)=>(int)Math.Ceiling(v);
   public static int RoundToInt(float v)=>(int)Math.Round(v,MidpointRounding.AwayFromZero);
   public static bool Approximately(float a,float b)=>Math.Abs(a-b)<1e-4f;
+  public static float Sqrt(float v)=>(float)Math.Sqrt(v);
+  public static float Pow(float a,float b)=>(float)Math.Pow(a,b);
  }
+}
+
+namespace Verse.Sound {
+ // Only ever maintained, and only for a round held by a membrane - which the vector
+ // arithmetic under test never is.
+ public class Sustainer{public bool Ended; public void Maintain(){}}
 }
 
 namespace Verse {
  using UnityEngine;
+ using Verse.Sound;
  public enum SimpleColor{White,Red,Green,Blue,Cyan,Magenta,Yellow,Orange}
  public enum LookMode{Value,Reference}
  public enum LoadSaveMode{Inactive,Saving,LoadingVars,ResolvingCrossRefs,PostLoadInit}
@@ -68,11 +78,11 @@ namespace Verse {
  }
  public class ProjectileProperties{public float speed=30f; public float SpeedTilesPerTick=>speed/60f;}
  public class ThingDef{public ProjectileProperties projectile=new();}
- public class Thing{public bool Destroyed,Spawned=true; public Map Map;}
+ // def lives on Thing in the engine, and Rounds reads it there.
+ public class Thing{public bool Destroyed,Spawned=true; public Map Map; public ThingDef def=new();}
  public class Pawn:Thing{}
  // Field names and types mirror Verse.Projectile, which is what the Harmony field refs bind to.
  public class Projectile:Thing {
-  public ThingDef def=new();
   protected Vector3 origin;
   protected Vector3 destination;
   protected int ticksToImpact;
@@ -80,6 +90,8 @@ namespace Verse {
   protected Thing launcher;
   protected bool landed;
   protected bool preventFriendlyFire;
+  protected Sustainer ambientSustainer;
+  public Thing Launcher=>launcher;
   public LocalTargetInfo usedTarget;
   public LocalTargetInfo intendedTarget;
   public virtual Vector3 ExactPosition{get;set;}

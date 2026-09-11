@@ -317,16 +317,34 @@ namespace RimArt
             if (!to.IsValid || to == from) return false;
 
             Thing spawned = GenSpawn.Spawn(projectile, from, volume);
-            Projectile round = spawned as Projectile;
-            if (round == null)
+            RoundBackend backend = Rounds.For(spawned);
+            if (backend == null)
             {
                 if (spawned != null && !spawned.Destroyed) spawned.Destroy();
                 return false;
             }
 
-            // No launcher. Nothing in the volume knows who fired, and there is nobody on this
-            // side for a kill to be credited to.
-            round.Launch(null, from.ToVector3Shifted(), to, to, ProjectileHitFlags.All, false, null, null);
+            // No launcher, either way. Nothing in the volume knows who fired, and there is nobody
+            // on this side for a kill to be credited to.
+            Projectile round = spawned as Projectile;
+            if (round != null)
+            {
+                round.Launch(null, from.ToVector3Shifted(), to, to, ProjectileHitFlags.All, false, null, null);
+                return true;
+            }
+
+            // A Combat Extended round, which has no Launch this can call without also handing it
+            // a shooter, a muzzle height and a firing angle it does not have. Redirected instead,
+            // which is the same straight line from the same place and is what the vector kit does
+            // to CE's rounds already.
+            Vector3 origin = from.ToVector3Shifted();
+            Vector3 endpoint = to.ToVector3Shifted();
+
+            Vector3 travel = endpoint - origin;
+            travel.y = 0f;
+            int ticks = Mathf.Max(1, Mathf.CeilToInt(travel.magnitude / Rounds.BaseSpeedPerTick(spawned)));
+
+            backend.Redirect(spawned, origin, endpoint, ticks, 1f, null);
             return true;
         }
 

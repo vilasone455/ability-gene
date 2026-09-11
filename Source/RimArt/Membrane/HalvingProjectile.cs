@@ -1,7 +1,5 @@
-using HarmonyLib;
 using UnityEngine;
 using Verse;
-using Verse.Sound;
 
 namespace RimArt
 {
@@ -12,8 +10,8 @@ namespace RimArt
     /// its position is a straight lerp along origin->destination driven by ticksToImpact, and
     /// StartingTicksToImpact is a computed property with no setter - so there is no per-instance
     /// way to make one round travel slower than its def says. Instead the projectile is taken
-    /// off the engine's clock entirely (Projectile.TickInterval is skipped) and its reported
-    /// position is overridden:
+    /// off the engine's clock entirely (Projectile.TickInterval is skipped, and ProjectileCE.Tick
+    /// for a round Combat Extended is flying) and its reported position is overridden:
     ///
     ///     d = entryDistance * 0.5 ^ (ticksHeld / halfLifeTicks)
     ///
@@ -29,15 +27,6 @@ namespace RimArt
     /// </summary>
     public class HalvingProjectile
     {
-        private static readonly AccessTools.FieldRef<Projectile, Vector3> OriginRef =
-            AccessTools.FieldRefAccess<Projectile, Vector3>("origin");
-        private static readonly AccessTools.FieldRef<Projectile, Vector3> DestinationRef =
-            AccessTools.FieldRefAccess<Projectile, Vector3>("destination");
-        private static readonly AccessTools.FieldRef<Projectile, int> TicksToImpactRef =
-            AccessTools.FieldRefAccess<Projectile, int>("ticksToImpact");
-        private static readonly AccessTools.FieldRef<Projectile, Sustainer> AmbientSustainerRef =
-            AccessTools.FieldRefAccess<Projectile, Sustainer>("ambientSustainer");
-
         public readonly HediffComp_Recursion Holder;
 
         /// <summary>Where the round was heading when it was caught. Fixed in world space.</summary>
@@ -51,7 +40,14 @@ namespace RimArt
 
         private int ticksHeld;
 
-        public HalvingProjectile(Projectile projectile, HediffComp_Recursion holder,
+        /// <summary>
+        /// <paramref name="entry"/> is where the round crossed into the field, which is not the
+        /// same as where it was standing when the scan noticed it. A round moving faster than the
+        /// field is wide is already past the carrier by the time it is sampled, and measuring
+        /// from there would put the offset on the far side - the curve would hold the round
+        /// behind the carrier and recede away from them rather than toward them.
+        /// </summary>
+        public HalvingProjectile(Thing round, HediffComp_Recursion holder, Vector3 entry,
             float halfLifeTicks, float minDistance)
         {
             Holder = holder;
@@ -61,7 +57,7 @@ namespace RimArt
             anchor = holder.Pawn.DrawPos;
             anchor.y = 0f;
 
-            Vector3 offset = projectile.ExactPosition - anchor;
+            Vector3 offset = entry - anchor;
             offset.y = 0f;
 
             entryDistance = Mathf.Max(offset.magnitude, minDistance);
@@ -101,41 +97,48 @@ namespace RimArt
         }
 
         /// <summary>
-        /// Ambient sound is normally maintained from Projectile.TickInterval, which is skipped
-        /// while the round is held. Rockets and the like would otherwise log a stale sustainer.
+        /// Puts the round where the curve says it is.
+        ///
+        /// Nothing at all for one of the engine's own rounds, whose position is reported by the
+        /// postfix on Projectile.ExactPosition. CE reads its rounds out of a field that its
+        /// drawing, collision and impact checks all share rather than through one getter, so its
+        /// held rounds have to be moved instead of described - and with their tick skipped,
+        /// nothing else would move them.
         /// </summary>
-        public void MaintainSound(Projectile projectile)
+        public void PlaceHeld(Thing round)
         {
-            Sustainer sustainer = AmbientSustainerRef(projectile);
-            if (sustainer != null && !sustainer.Ended) sustainer.Maintain();
+            RoundBackend backend = Rounds.For(round);
+            if (backend == null) return;
+
+            backend.PlaceHeld(round, CurrentPosition());
         }
 
         /// <summary>
-        /// Hands the round back to the engine from wherever the halvings left it.
-        ///
-        /// Position is a lerp of origin->destination by (1 - ticksToImpact/StartingTicksToImpact),
-        /// so moving origin to the held position and setting ticksToImpact back to a full
-        /// timeline puts the lerp at zero - the round resumes exactly where it was drawn, at its
-        /// def's normal speed, and finishes the trip it never stopped making.
+        /// Ambient sound is normally maintained from the round's own tick, which is skipped while
+        /// it is held. Rockets and the like would otherwise log a stale sustainer.
         /// </summary>
-        public void Release(Projectile projectile)
+        public void MaintainSound(Thing round)
         {
-            if (projectile == null || projectile.Destroyed) return;
+            RoundBackend backend = Rounds.For(round);
+            if (backend != null) backend.MaintainSound(round);
+        }
+
+        /// <summary>
+        /// Hands the round back to the engine from wherever the halvings left it, on a straight
+        /// line to wherever it was going at its def's own speed - the trip it never stopped
+        /// making.
+        /// </summary>
+        public void Release(Thing round)
+        {
+            if (round == null || round.Destroyed) return;
+
+            RoundBackend backend = Rounds.For(round);
+            if (backend == null) return;
 
             Vector3 held = CurrentPosition();
             held.y = 0f;
-            Vector3 destination = DestinationRef(projectile);
 
-            float speed = projectile.def.projectile != null
-                ? projectile.def.projectile.SpeedTilesPerTick
-                : 1f;
-            if (speed <= 0f) speed = 1f;
-
-            Vector3 remaining = destination - held;
-            remaining.y = 0f;
-
-            OriginRef(projectile) = held;
-            TicksToImpactRef(projectile) = Mathf.Max(1, Mathf.CeilToInt(remaining.magnitude / speed));
+            backend.Resume(round, held);
         }
     }
 }

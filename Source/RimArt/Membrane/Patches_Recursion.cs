@@ -11,6 +11,11 @@ namespace RimArt
     ///
     /// This getter is read for every projectile every frame and again from the engine's own
     /// interception checks, so the count test in front of it is not optional.
+    ///
+    /// There is no Combat Extended counterpart to this patch and there should not be. CE reads its
+    /// rounds out of a field its drawing, collision and impact checks all share rather than
+    /// through one getter, so a held CE round is moved onto the curve each tick instead of being
+    /// described - see <see cref="HalvingProjectile.PlaceHeld"/>.
     /// </summary>
     [HarmonyPatch(typeof(Projectile), nameof(Projectile.ExactPosition), MethodType.Getter)]
     public static class Patch_Projectile_ExactPosition
@@ -36,7 +41,10 @@ namespace RimArt
     /// still in flight rather than frozen or cancelled. Its position comes from the curve in
     /// <see cref="HalvingProjectile"/>, stepped once per game tick by the holder.
     ///
-    /// Both entry points are patched because a subclass may override either.
+    /// Both entry points are patched because a subclass may override either. Combat Extended's
+    /// rounds are stopped the same way and for the same reason, by a prefix on ProjectileCE.Tick
+    /// that <see cref="CombatExtendedRounds.Install"/> applies by hand - there is no type to name
+    /// in an attribute unless CE is loaded.
     /// </summary>
     [HarmonyPatch]
     public static class Patch_Projectile_Ticking

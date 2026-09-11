@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
@@ -76,6 +78,94 @@ static class ApiChecks
             if (className != null && assembly.GetType(className) == null)
                 throw new Exception($"Missing class {className}");
         }
-        Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, plus trait and job definition checks.");
+        string combatExtended = CheckCombatExtended();
+        Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, "
+            + $"plus trait and job definition checks. {combatExtended}");
+    }
+
+    /// <summary>
+    /// The Combat Extended contract, stated independently of the bridge that uses it.
+    ///
+    /// CombatExtendedRounds reaches twenty-five members of one class of theirs by name, and a
+    /// name that has moved fails at runtime as a single Log.Warning in a game nobody is watching
+    /// the log of. Stating the expected members and types here means a CE update that breaks the
+    /// bridge breaks this instead.
+    ///
+    /// Skipped, not failed, when CE is not installed: it is an optional dependency, and a check
+    /// that cannot run is not a check that failed.
+    /// </summary>
+    static string CheckCombatExtended()
+    {
+        string dll = Environment.GetEnvironmentVariable("CombatExtendedDll") ?? FindCombatExtended();
+        if (dll == null) return "Combat Extended not installed, bridge contract not checked.";
+
+        Type projectile = Assembly.LoadFrom(dll).GetType("CombatExtended.ProjectileCE");
+        if (projectile == null) throw new Exception("CE is installed but has no CombatExtended.ProjectileCE");
+
+        var expected = new Dictionary<string, string>
+        {
+            { "exactPosition", "UnityEngine.Vector3" },
+            { "LastPos", "UnityEngine.Vector3" },
+            { "velocity", "UnityEngine.Vector3" },
+            { "origin", "UnityEngine.Vector2" },
+            { "Destination", "UnityEngine.Vector2" },
+            { "OriginIV3", "Verse.IntVec3" },
+            { "shotSpeed", "System.Single" },
+            { "initialSpeed", "System.Single" },
+            { "shotAngle", "System.Single" },
+            { "shotRotation", "System.Single" },
+            { "shotHeight", "System.Single" },
+            { "startingTicksToImpact", "System.Single" },
+            { "intTicksToImpact", "System.Int32" },
+            { "FlightTicks", "System.Int32" },
+            { "ticksToTruePosition", "System.Int32" },
+            { "GravityPerWidth", "System.Single" },
+            { "gravity", "System.Double" },
+            { "landed", "System.Boolean" },
+            { "lerpPosition", "System.Boolean" },
+            { "launcher", "Verse.Thing" },
+            { "intendedTarget", "Verse.LocalTargetInfo" },
+            { "ambientSustainer", "Verse.Sound.Sustainer" },
+            { "forcedTrajectoryWorker", "CombatExtended.BaseTrajectoryWorker" },
+            { "cachedPredictedPositions", "System.Collections.Generic.List`1[UnityEngine.Vector3]" },
+            { "damageAmount", "System.Nullable`1[System.Single]" },
+        };
+
+        const BindingFlags Any = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        foreach (var member in expected)
+        {
+            FieldInfo field = projectile.GetField(member.Key, Any);
+            if (field == null)
+                throw new Exception($"CE bridge: ProjectileCE.{member.Key} is gone");
+            if (field.FieldType.ToString() != member.Value)
+                throw new Exception($"CE bridge: ProjectileCE.{member.Key} is now {field.FieldType}, "
+                    + $"expected {member.Value}");
+        }
+
+        // The redirect writes position through the property rather than the field, because CE's
+        // setter also moves the thing's cell; it clears and re-reads DamageAmount to keep force
+        // absolute; and a held round is stopped by a prefix on Tick.
+        if (projectile.GetProperty("ExactPosition")?.GetSetMethod() == null)
+            throw new Exception("CE bridge: ProjectileCE.ExactPosition has no public setter");
+        PropertyInfo damage = projectile.GetProperty("DamageAmount");
+        if (damage == null || damage.PropertyType != typeof(float) || damage.GetSetMethod() == null)
+            throw new Exception("CE bridge: ProjectileCE.DamageAmount is not a settable float");
+        if (projectile.GetMethod("Tick", BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly) == null)
+            throw new Exception("CE bridge: ProjectileCE no longer declares Tick");
+        if (projectile.Assembly.GetType("CombatExtended.LerpedTrajectoryWorker") == null)
+            throw new Exception("CE bridge: CombatExtended.LerpedTrajectoryWorker is gone");
+
+        return $"Checked {expected.Count + 4} members of the Combat Extended bridge contract.";
+    }
+
+    /// <summary>The workshop copy, whichever folder Steam gave it. Null when CE is not there.</summary>
+    static string FindCombatExtended()
+    {
+        const string Workshop = "/mnt/c/Program Files (x86)/Steam/steamapps/workshop/content/294100";
+        if (!Directory.Exists(Workshop)) return null;
+
+        return Directory.EnumerateDirectories(Workshop)
+            .Select(folder => Path.Combine(folder, "Assemblies", "CombatExtended.dll"))
+            .FirstOrDefault(File.Exists);
     }
 }

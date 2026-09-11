@@ -18,15 +18,15 @@ namespace RimArt
     /// Grouped casting is refused because two carriers cannot share one paused editor, and
     /// aiCanUse is off in the def for the same reason a raider cannot be handed the panel.
     ///
-    /// Reacting to a round is not something a player can be asked to do at normal speed - a
-    /// rifle bullet crosses the catch radius in about ten ticks. Reflex surge is what buys the
-    /// time to press this; it is a separate decision, made before the shooting, with its own
-    /// cost.
+    /// Reacting to a round is not something a player can be asked to do at normal speed - the
+    /// catch runs twenty-one ticks ahead of a round's arrival, which is a third of a second.
+    /// Reflex surge is what buys the time to press this; it is a separate decision, made before
+    /// the shooting, with its own cost.
     /// </summary>
     public class Command_VectorEdit : Command_Ability
     {
         /// <summary>Reused by the in-reach count, which is recomputed every frame the gizmo draws.</summary>
-        private static readonly List<Projectile> inReach = new List<Projectile>();
+        private static readonly List<Thing> inReach = new List<Thing>();
 
         public Command_VectorEdit(Ability ability, Pawn pawn) : base(ability, pawn)
         {

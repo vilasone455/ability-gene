@@ -25,15 +25,19 @@ namespace RimArt
         private static readonly Color ReachRingColor = new Color(0.35f, 0.85f, 1f, 0.55f);
 
         /// <summary>
-        /// The hover preview: how far the booster reaches, and which rounds are currently inside
-        /// it.
+        /// The hover preview: how close a round has to come, and which rounds are on their way
+        /// into that.
         ///
-        /// Both halves are needed. The ring alone answers "how far", which the player can also
-        /// learn once by reading the description; the markers answer "is this worth pressing",
-        /// which changes every tick and is the only question being asked at the moment the
-        /// cursor is on the gizmo.
+        /// Three parts, and the third is what stops the first two contradicting each other. The
+        /// ring answers "how close", which the player can also learn once by reading the
+        /// description; the markers answer "is this worth pressing", which changes every tick and
+        /// is the only question being asked at the moment the cursor is on the gizmo. But a round
+        /// is caught a fixed time ahead of its arrival rather than at a fixed distance, so a fast
+        /// one is marked well outside the ring - and a marker outside the ring that draws it
+        /// reads as a bug. The lead line is the round's own next twenty-one ticks, which is
+        /// exactly what the catch tested, and it lands inside the ring by construction.
         /// </summary>
-        public static void DrawReach(Pawn carrier, List<Projectile> scratch)
+        public static void DrawReach(Pawn carrier, List<Thing> scratch)
         {
             GenDraw.DrawRadiusRing(carrier.Position, VectorEditDefaults.ScanRadiusCells,
                 ReachRingColor, null);
@@ -42,12 +46,19 @@ namespace RimArt
 
             for (int i = 0; i < scratch.Count; i++)
             {
-                Projectile round = scratch[i];
+                Thing round = scratch[i];
                 if (round == null || round.Destroyed) continue;
 
-                Vector3 at = round.ExactPosition;
+                RoundBackend backend = Rounds.For(round);
+                if (backend == null) continue;
+
+                Vector3 at = backend.Position(round);
                 at.y = 0f;
                 GenDraw.DrawCircleOutline(at, 0.5f, SimpleColor.Cyan);
+
+                float lead = backend.CurrentSpeedPerTick(round) * VectorEditDefaults.LeadTicks;
+                GenDraw.DrawLineBetween(at, at + backend.Heading(round) * lead,
+                    SimpleColor.Cyan, 0.08f);
             }
 
             scratch.Clear();

@@ -17,7 +17,10 @@ namespace RimArt
     ///
     /// Nothing on the def is touched, so a rifle round edited to half speed does not make every
     /// other round of its kind slow.
-
+    ///
+    /// The engine's own rounds only. Combat Extended's carry a per-instance speed of their own -
+    /// shotSpeed - so there is nothing to express and force is written straight into the round at
+    /// commit; see <see cref="CombatExtendedRounds"/>.
     /// </summary>
     [HarmonyPatch(typeof(Projectile), "StartingTicksToImpact", MethodType.Getter)]
     public static class Patch_Projectile_StartingTicksToImpact
@@ -42,7 +45,10 @@ namespace RimArt
     /// does afterwards are left alone deliberately - force is meant to be a decision about
     /// momentum, not a general damage multiplier that quietly rewrites how a round interacts
     /// with armour.
-
+    ///
+    /// The engine's own rounds only, for the same reason as the speed postfix above: a CE round's
+    /// damage is a settable figure on the instance, so force is written into it at commit rather
+    /// than applied on the way out.
     /// </summary>
     [HarmonyPatch(typeof(Projectile), nameof(Projectile.DamageAmount), MethodType.Getter)]
     public static class Patch_Projectile_DamageAmount

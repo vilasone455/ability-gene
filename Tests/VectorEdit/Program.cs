@@ -29,6 +29,8 @@ static class Program
         ForceOfOneLeavesNoRegistryEntry();
         StrainCosts();
         GroupMembershipIsExclusive();
+        FastRoundsAreCaughtByTheirStep();
+        TheCatchIsMeasuredInTicksNotCells();
 
         Console.WriteLine($"Passed {checks} vector manipulation checks.");
     }
@@ -253,6 +255,109 @@ static class Program
         Near(VectorEditDefaults.StrainCostFor(3), 0.48f, "three groups cost 48");
         Near(VectorEditDefaults.StrainCostFor(4), 0.80f, "four groups cost 80");
         Near(VectorEditDefaults.StrainCostFor(9), 0.80f, "more than four is still the top of the table");
+    }
+
+    /// <summary>
+    /// A field has to be tested against the step a round took, not against where it is standing
+    /// when it is looked at. These are the speeds that make the difference: a vanilla rifle round
+    /// moves 1.2 cells a tick and is sampled several times crossing a four-cell field, a Combat
+    /// Extended round moves four, and the fastest CE rounds move sixteen - clean over it.
+    /// </summary>
+    static void FastRoundsAreCaughtByTheirStep()
+    {
+        Vector3 carrier = new Vector3(50f, 0f, 50f);
+        const float Radius = 3.9f;
+        Vector3 entry;
+
+        // Sixteen cells in one tick, straight through the carrier. Neither end of the step is
+        // inside the field and a sampled position would have missed it outright.
+        Vector3 from = new Vector3(42f, 0f, 50f);
+        Vector3 to = new Vector3(58f, 0f, 50f);
+        Check(Rounds.SegmentEntersCircle(from, to, carrier, Radius, out entry),
+            "a round that crosses the whole field in one tick is still caught");
+        Near(entry.x, 50f - Radius, "and is caught where it crossed the boundary, not where it ended up");
+        Near(entry.z, 50f, "on the line it was travelling");
+
+        // The reason the entry point matters: measured from the sampled position, this round is
+        // past the carrier, and the curve would hold it behind them and recede away.
+        Check(entry.x < carrier.x, "the entry point is on the approaching side");
+
+        // A round already inside when the step began is caught where it began.
+        Check(Rounds.SegmentEntersCircle(carrier, new Vector3(53f, 0f, 50f), carrier, Radius, out entry),
+            "a round already inside the field is caught");
+        Near(entry.x, carrier.x, "at the start of its step");
+
+        // A round that passes by outside is not caught, however fast it is going.
+        Check(!Rounds.SegmentEntersCircle(new Vector3(42f, 0f, 60f), new Vector3(58f, 0f, 60f),
+                carrier, Radius, out entry),
+            "a round that passes wide is not caught");
+
+        // Nor is one whose step stops short of the boundary.
+        Check(!Rounds.SegmentEntersCircle(new Vector3(40f, 0f, 50f), new Vector3(44f, 0f, 50f),
+                carrier, Radius, out entry),
+            "a round still short of the field is not caught early");
+    }
+
+    /// <summary>
+    /// The catch rule, which is the one thing that decides whether the ability can be pressed in
+    /// time. A round is caught a fixed number of ticks before it arrives, so every round in the
+    /// game gives the player the same window however fast it is going - the fast one is simply
+    /// taken hold of further out.
+    /// </summary>
+    static void TheCatchIsMeasuredInTicksNotCells()
+    {
+        // A vanilla rifle round at 1.17 cells a tick, a middling Combat Extended one at 2.05, and
+        // the fastest rounds CE ships at 16.7. Under the old fixed twelve-cell rule those were
+        // ten ticks, six, and under one tick of warning respectively.
+        CaughtTheSameNumberOfTicksOut(70f / 60f, "a vanilla rifle round");
+        CaughtTheSameNumberOfTicksOut(123f / 60f, "a Combat Extended rifle round");
+        CaughtTheSameNumberOfTicksOut(1000f / 60f, "the fastest round CE ships");
+
+        Vector3 carrier = new Vector3(50f, 0f, 50f);
+        Vector3 north = new Vector3(0f, 0f, 1f);
+        const float Vanilla = 70f / 60f;
+
+        // Direction still decides. A round that never comes inside the reach is somebody else's.
+        Check(!VectorEditDefaults.ComesIntoReach(new Vector3(70f, 0f, 26f), north, Vanilla, carrier),
+            "a round passing twenty cells wide is not caught however close it starts");
+
+        // A round already in reach is caught whichever way it is pointed, so one that has just
+        // gone past can still be taken hold of and thrown back.
+        Check(VectorEditDefaults.ComesIntoReach(new Vector3(50f, 0f, 53f), north, Vanilla, carrier),
+            "a round already inside the reach and leaving is still caught");
+
+        // A round that has stopped is where it is, and nowhere else.
+        Check(VectorEditDefaults.ComesIntoReach(new Vector3(50f, 0f, 55f), north, 0f, carrier),
+            "a motionless round inside the reach is caught");
+        Check(!VectorEditDefaults.ComesIntoReach(new Vector3(50f, 0f, 20f), north, 0f, carrier),
+            "a motionless round outside it is not");
+    }
+
+    /// <summary>
+    /// Walks one round in head-on from far away and finds the distance at which it is first
+    /// caught, then checks that the time that distance buys is the lead the kit promises - the
+    /// same figure for every speed, which is the whole point of counting the catch in ticks.
+    /// </summary>
+    static void CaughtTheSameNumberOfTicksOut(float speedPerTick, string what)
+    {
+        Vector3 carrier = new Vector3(50f, 0f, 50f);
+        Vector3 north = new Vector3(0f, 0f, 1f);
+
+        // The lead reaches the edge of the reach, so the first catch is one reach further out
+        // than the lead itself.
+        float caughtAt = speedPerTick * VectorEditDefaults.LeadTicks + VectorEditDefaults.ScanRadiusCells;
+
+        Check(VectorEditDefaults.ComesIntoReach(new Vector3(50f, 0f, 50f - caughtAt + 0.1f),
+                north, speedPerTick, carrier),
+            what + " is caught as its lead reaches the edge of the carrier's reach");
+        Check(!VectorEditDefaults.ComesIntoReach(new Vector3(50f, 0f, 50f - caughtAt - 0.1f),
+                north, speedPerTick, carrier),
+            what + " is not caught one step before that");
+
+        // What the player actually gets: the time from the catch to the round arriving at the
+        // edge of the reach, which is the lead and nothing else.
+        Near((caughtAt - VectorEditDefaults.ScanRadiusCells) / speedPerTick,
+            VectorEditDefaults.LeadTicks, what + " buys the same window as every other round", 0.5f);
     }
 
     /// <summary>Groups never overlap: a round belongs to one or to none.</summary>

@@ -29,6 +29,7 @@ piece of equipment, weapon trait, or earned origin.
 | **Harmony** (`brrainz.harmony`) | **Yes** | Patches `Thing.DoTick`, `Thing.TakeDamage`, `Projectile` flight and damage, and `Selector.SelectorOnGUI` |
 | **Odyssey DLC** | No | Weapon trait abilities are `MayRequire`d against it |
 | **Melee Animation** (`co.uk.epicguru.meleeanimation`) | No | Required for the Arcing weapon trait and its ability |
+| **Combat Extended** (`ceteam.combatextended`) | No | Supported, not required. Its rounds are not `Verse.Projectile`, so the three kits that act on rounds in flight reach them through a reflection bridge — see *Rounds in flight, and Combat Extended* |
 | **Unique Melee Weapons** (`shunter.uniquemeleeweapons`) | No | Melee weapon traits (resonance, arc) are `MayRequire`d against it |
 | Royalty / Ideology / Anomaly | No | Not referenced |
 | Any framework (VEF, EBSG, …) | No | — |
@@ -90,7 +91,7 @@ A spinal implant that reads momentum and spends it again.
 | Ability | Effect | Cooldown |
 |---|---|---|
 | Reflex surge | 5s of game time at a **quarter** the world's real-time rate — about 20s of yours. Buys time and nothing else | 30s |
-| Vector manipulation | Catches every round flying within 12 cells, pauses, and lets you turn and re-throw them in up to four groups | 5s |
+| Vector manipulation | Catches every round due to pass within 12 cells of the carrier in the next 21 ticks, pauses, and lets you turn and re-throw them in up to four groups | 5s |
 | Vector shove | Throws one pawn ~6 cells away from the carrier, stunned, hurt by how far they went | 20s |
 
 **Vector manipulation is an editor, not a cast.** Clicking the gizmo scans once, stops the
@@ -164,6 +165,14 @@ apply", the barrier stops being a receding distance and becomes an invulnerabili
 shield, which nothing in this mod does any more. A round held by the barrier is still in
 flight, and when the barrier drops it resumes from exactly where it was drawn and
 finishes the trip. Everything queued against the carrier's face lands in the same tick.
+
+Capture tests the step a round took this tick, not the point it was standing on when the
+scan looked at it. The field is under four cells across, and a round moving faster than that
+is never sampled inside it — a vanilla rifle round is looked at six or seven times crossing
+the field, a Combat Extended round two or three, and the fastest CE rounds cross it between
+two ticks. The round enters at the point where its step crossed the boundary, which matters
+as much as catching it at all: measured from a sample already past the carrier, the curve
+would hold the round *behind* them and recede away.
 
 A held round's anchor is fixed in world space at the moment of capture, not re-read from
 the carrier. A round is a thing travelling its own straight line; re-anchoring it every
@@ -492,12 +501,38 @@ exactly as every vanilla prosthetic, bionic and archotech part is drawn.
 
 Four mechanisms: catching the rounds, owning the input, rewriting a flight, and charging for it.
 
+**The catch is measured in ticks, not in cells.** A round is caught when its next
+`LeadTicks` (21) of flight bring it within `ScanRadiusCells` (12) of the carrier — so the
+window the player gets is the same 21 ticks whatever fired it, and a round moving four times as
+fast is simply taken hold of four times as far out. The two constants do different jobs and it
+is worth keeping them apart: twelve cells is the *threat* test, a round on a line that never
+brings it that close is somebody else's problem; twenty-one ticks is the *reaction* test, and
+it is the only number that decides whether the ability can be pressed in time.
+
+Twenty-one is not a new figure. It is how long a vanilla rifle round already spent crossing the
+old twelve-cell circle, which is the window the kit was tuned against and the one that plays.
+
+| Round | cells/tick | 12 cells was | at quarter rate |
+|---|---|---|---|
+| Vanilla rifle (70) | 1.17 | 10.3 ticks | 0.69s |
+| CE median (123) | 2.05 | 5.9 ticks | 0.39s |
+| CE fast (208) | 3.47 | 3.5 ticks | 0.23s |
+| CE fastest (1000) | 16.7 | 0.7 ticks | 0.05s |
+
+Stating the window directly is what makes every round behave like the one the kit was tuned on.
+A round already inside the reach passes at once, so one that has just gone by can still be taken
+hold of and thrown back.
+
 **Catching is a single frozen scan.** `VectorEditSession.Begin` walks
-`ThingRequestGroup.Projectile` once, keeps the `Bullet`s within the radius that the carrier has
+`ThingRequestGroup.Projectile` once, keeps the rounds coming into reach that the carrier has
 line of sight to and that are not fogged, and freezes that list for the life of the session.
-`Bullet` is the right filter rather than a coincidence: arrows are Bullets, and so are this
-mod's loosed blades, for the same reason — it is the class that makes vanilla resolve what they
-hit. Mortar shells and rockets are refused (`flyOverhead`, `explosionRadius`), and so is
+The sight test is against the cell the round is standing in *now*, which is what stops a round
+the carrier could not possibly have seen being caught at the far end of its lead.
+For the engine's own rounds the filter is `Bullet`, which is the right filter rather than a
+coincidence: arrows are Bullets, and so are this mod's loosed blades, for the same reason — it
+is the class that makes vanilla resolve what they hit. Combat Extended has no class that means
+the same thing, so its rounds are narrowed on the def instead; the two tests agree on every
+case that matters. Mortar shells and rockets are refused (`flyOverhead`, `explosionRadius`), and so is
 anything already held by a phase barrier or standing still inside a stasis field, because those
 rounds belong to those effects. Freezing the set is what stops the list changing under a drag
 box.
@@ -558,7 +593,7 @@ round of its kind slow.
 
 ### The edited-round table
 
-`VectorEditRegistry` is a `Dictionary<Projectile, float>` behind an `EditedCount` check, for
+`VectorEditRegistry` is a `Dictionary<Thing, float>` behind an `EditedCount` check, for
 the same reason `RecursionRegistry` is: both hot paths are extremely hot.
 `StartingTicksToImpact` is read from the position lerp several times per projectile per tick
 and `DamageAmount` at every impact, so both must cost one static integer read when nothing has
@@ -597,6 +632,88 @@ stand in or cannot see from where it started, so a shove into a wall moves them 
 wall rather than through it. Being stopped early is what makes it hurt: distance travelled
 pays `damagePerCell`, and a blocked throw adds `slamDamage` on top. Pushes are divided by
 body size, so a thrumbo barely moves.
+
+## Rounds in flight, and Combat Extended
+
+Three kits take hold of rounds that are already in the air: vector manipulation redirects them,
+the phase barrier parks them on a halving curve, and the involute looses one inside its own
+volume. All three were written against `Verse.Projectile`.
+
+**Combat Extended's rounds are not `Verse.Projectile`.** `CombatExtended.ProjectileCE` derives
+straight from `ThingWithComps`, so every `as Projectile` in this mod was null for anything a CE
+weapon fired, and every Harmony patch typed to `Projectile` never ran. The kits did not
+misbehave under CE so much as silently stop seeing the fight — and the phase barrier's failure
+was the worse of the two, because it did not go inert. Its `Thing.TakeDamage` fallback still
+fired, and a CE bullet carries no `Tool`, so every gunshot fell into the verbless branch and was
+scaled to 15%. The barrier quietly became a flat 85% damage shield, which is the exact failure
+mode the rest of its design argues against.
+
+### One round, either engine
+
+`Rounds` is the dispatch and `RoundBackend` is what a kit is allowed to ask of a round: where it
+is, where it was last tick, its heading, its speed, who fired it, and four writes — redirect it,
+place it while held, resume it, maintain its sound. `VanillaRounds` answers for the engine's own
+rounds through the same Harmony field refs this mod always used. `CombatExtendedRounds` answers
+for CE's, by reflection, and is the only file in the mod that knows CE exists — same rule and
+same reason as `MeleeAnimation` for the Arcing weapon: the dll has to load and run with CE
+absent, and a compile-time reference is resolved the moment any method touching one of their
+types is jitted. `CombatExtendedRounds.Install` asks the question once at startup and leaves the
+answer in `Rounds.Foreign`, which is null in a game without CE.
+
+The speed a force multiplies is read from the **def** in both engines, never from the instance.
+That is the whole reason force can be absolute rather than cumulative: a round already at ×2
+still reports its def's figure, so editing it again to ×2 is ×2 and not ×4.
+
+### A redirected CE round is made to fly like a vanilla one
+
+An edited CE round is forced onto CE's own `LerpedTrajectoryWorker` with its gravity zeroed —
+which is to say it is made to fly the way a vanilla round flies: a straight line from where it
+was caught to where the player pointed it, arriving in a known number of ticks.
+
+CE's ballistic model cannot express that. Under ballistics a flat shot travels until it falls to
+the ground, so its range is decided by height and gravity rather than by the editor, and the
+editor's one promise is that the line drawn on the paused map is the line the round takes.
+
+It also settles damage. CE scales damage by remaining kinetic energy — `shotSpeed²/initialSpeed²`
+— so under ballistics a round thrown twice as hard would arrive **four** times as hard. The
+lerped worker reports full energy, which leaves force scaling damage linearly and puts CE on
+exactly the vanilla rule. Force is applied by clearing CE's cached damage figure and reading it
+back, so a second trip through the editor is absolute rather than cumulative there too.
+
+Two smaller things fall out of the same place. The redirect does not go through CE's `Launch`,
+because `Launch` clamps speed up to the def's figure — which would make the ×0.25 setting
+impossible — and derives its destination from the ballistics rather than taking the one it was
+given. And a redirected round is floored at chest height, because CE impacts a lerped round when
+its height reaches zero: a round caught in the last moment before it hit the dirt would
+otherwise land on the first tick of its new flight.
+
+### Holding a CE round
+
+There is no CE counterpart to the postfix on `Projectile.ExactPosition`, and there should not be.
+CE reads its rounds out of a field that its drawing, collision and impact checks all share rather
+than through one getter, and the two ends of that read — `LastPos` and `ExactPosition` — are the
+segment its collision runs along. A held round whose reported position moved but whose `LastPos`
+did not would trail a segment across the map and collide with whatever it crossed.
+
+So a held CE round is **moved** rather than described: `ProjectileCE.Tick` is prefixed away by
+hand (there is no type to name in an attribute unless CE is loaded), and the curve writes both
+ends each tick. With the tick skipped nothing else would move it, and with both ends equal the
+collision segment has zero length and finds nothing.
+
+### Why the catch had to stop being a distance
+
+Making the kits see CE rounds was not enough to make vector manipulation *usable* under CE, and
+the reason is worth stating because it is not a CE bug. Twelve cells is ten ticks of a vanilla
+rifle round and three and a half of a fast CE one, so the same catch radius was handing the
+player a third of the time to react. No tick rate fixes that: the window scales with the rate, so
+CE's speed advantage survives any slowdown — a quarter rate leaves 0.23 seconds against vanilla's
+0.69, and buying that back would need a rate of about 0.04, which is under three game ticks a
+second.
+
+So the catch is now measured in ticks of the round's own flight rather than in cells, and it is
+the same twenty-one ticks for every round in the game. See *The catch is measured in ticks, not
+in cells* above; the change is not CE-specific and applies in a vanilla game too, where it also
+means a round is caught while it is still coming rather than once it is already close.
 
 ## How time alter works
 
@@ -1255,6 +1372,7 @@ Textures/RimArt/Panoply/         blade sprites
 make_textures.py                 draws them; run it after editing, commit the PNGs
 Languages/English/Keyed/         message strings
 Source/RimArt/                   C# source
+Source/RimArt/Rounds/            one round in flight, either engine's; the CE bridge
 ```
 
 Def prefix is `AG_`. Custom blade, crow and stasis art lives under `Textures/RimArt/`;
@@ -1317,13 +1435,17 @@ checked against the built DLL.
 
 Three harnesses run production code against small game-boundary doubles, plus one that loads
 the built mod against the installed game and resolves every Harmony target and injected
-parameter. Each has its own README with the in-game checks the harness cannot make:
+parameter. That last one also states the Combat Extended contract independently of the bridge
+that uses it — twenty-nine members of `ProjectileCE` by name and type — so a CE update that
+moves one of them fails a test rather than a single `Log.Warning` in a game nobody is watching
+the log of. It is skipped, not failed, when CE is not installed. Each harness has its own README
+with the in-game checks it cannot make:
 
 ```bash
 dotnet run --project Tests/VectorEdit/VectorEdit.csproj          # vector manipulation arithmetic
 dotnet run --project Tests/OriginBlade/OriginBlade.csproj        # Origin: Blade lifecycle
 dotnet run --project Tests/Carrion/Carrion.csproj                # Carrion lifecycle
-dotnet run --project Tests/OriginBlade/ApiChecks/ApiChecks.csproj # Harmony targets and signatures
+dotnet run --project Tests/OriginBlade/ApiChecks/ApiChecks.csproj # Harmony targets, signatures, CE bridge contract
 ```
 
 Confirmed in-game before the single-source roster change (1.6.4871, alongside ~40 other mods
@@ -1381,6 +1503,14 @@ have something shoot the aperture - insects and mechs go for structures and will
 their own.
 
 Still unverified:
+
+- **everything under Combat Extended.** The bridge resolves against the installed CE build and
+  every member it reaches is checked by `ApiChecks`, but none of it has been in front of the
+  game. The parts most likely to bite: whether a redirected CE round forced onto the lerped
+  trajectory worker reads as a bullet rather than as a glitch, whether chest height is the right
+  floor for one caught near the ground, whether the phase barrier's segment capture now catches
+  *too* much of a CE burst, and whether a held CE round drawn from a written position looks right
+  at speed. The involute's CE relaunch is the least exercised path of the three
 
 - **saving and reloading with a field still up** - bubbles persist through
   `MapComponent_TimeBubbles.ExposeData`, and that path has never run

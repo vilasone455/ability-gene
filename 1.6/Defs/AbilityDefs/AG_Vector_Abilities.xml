@@ -11,7 +11,7 @@
   <AbilityDef>
     <defName>AG_VectorReflection</defName>
     <label>vector manipulation</label>
-    <description>Stop the world and take hold of every round flying within twelve cells, then sort them into as many as four groups and turn each group where you want it. An edited round starts again from where it was caught with twenty cells of travel multiplied by the force spent on it, and moves and lands at that same multiple. A bullet crosses that reach in a fifth of a second, so reflex surge is usually what buys the time to press this.\n\nThe bill comes in brain strain when you apply an edit, steeply: one group is routine, four at once is most of what the carrier has. Filling the bar overloads the booster and puts them on the floor.</description>
+    <description>Stop the world and take hold of every round about to pass within twelve cells of the carrier, then sort them into as many as four groups and turn each group where you want it. An edited round starts again from where it was caught with twenty cells of travel multiplied by the force spent on it, and moves and lands at that same multiple. A round is caught a third of a second before it arrives however fast it is flying, so reflex surge is usually what buys the time to press this.\n\nThe bill comes in brain strain when you apply an edit, steeply: one group is routine, four at once is most of what the carrier has. Filling the bar overloads the booster and puts them on the floor.</description>
     <iconPath>UI/Abilities/PiercingSpine</iconPath>
     <category>AG_Genetic</category>
     <gizmoClass>RimArt.Command_VectorEdit</gizmoClass>
