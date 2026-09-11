@@ -9,5 +9,6 @@
     <Compile Include="GameStubs.cs" />
     <Compile Include="../../Source/RimArt/OriginBlade/OriginBladeUtility.cs" Link="OriginBladeUtility.cs" />
     <Compile Include="../../Source/RimArt/OriginBlade/GameComponent_BladeStudy.cs" Link="GameComponent_BladeStudy.cs" />
+    <Compile Include="../../Source/RimArt/OriginBlade/ChoiceLetter_OriginBladeAwakening.cs" Link="ChoiceLetter_OriginBladeAwakening.cs" />
   </ItemGroup>
 </Project>

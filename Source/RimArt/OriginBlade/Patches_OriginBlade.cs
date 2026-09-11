@@ -15,12 +15,30 @@ namespace RimArt
         {
             foreach (Gizmo gizmo in __result) yield return gizmo;
             if (!OriginBladeUtility.CanStudy(__instance) || OriginBladeUtility.HasOrigin(__instance)) yield break;
+            // Once every requirement is met the command stops being a progress readout and
+            // becomes the way in, so a player who dismissed the letter -- or who was not
+            // looking when it arrived -- is never locked out of the origin.
+            bool ready = OriginBladeUtility.ReadyToAwaken(__instance);
+            Pawn pawn = __instance;
             yield return new Command_Action
             {
-                defaultLabel = "AG_OriginBladeStudyGizmo".Translate(),
-                defaultDesc = OriginBladeUtility.ProgressText(__instance),
+                defaultLabel = ready
+                    ? "AG_OriginBladeAwakenGizmo".Translate()
+                    : "AG_OriginBladeStudyGizmo".Translate(),
+                defaultDesc = OriginBladeUtility.ProgressText(pawn),
                 icon = ContentFinder<Texture2D>.Get("RimArt/Panoply/IconGene"),
-                action = () => Find.WindowStack.Add(new Dialog_MessageBox(OriginBladeUtility.ProgressText(__instance)))
+                action = () =>
+                {
+                    if (!ready)
+                    {
+                        Find.WindowStack.Add(new Dialog_MessageBox(OriginBladeUtility.ProgressText(pawn)));
+                        return;
+                    }
+                    Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation(
+                        "AG_OriginBladeAwakenText".Translate(pawn.LabelShortCap)
+                            + "\n\n" + "AG_OriginBladeWarning".Translate(),
+                        () => OriginBladeUtility.Awaken(pawn), true));
+                }
             };
         }
     }

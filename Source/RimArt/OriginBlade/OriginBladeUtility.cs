@@ -9,6 +9,7 @@ namespace RimArt
     {
         public static TraitDef AG_OriginBlade;
         public static JobDef AG_StudyBlade;
+        public static LetterDef AG_OriginBladeAwakening;
         public static ToolCapacityDef Cut;
         public static ToolCapacityDef Stab;
 
@@ -41,6 +42,30 @@ namespace RimArt
             && !pawn.skills.GetSkill(SkillDefOf.Crafting).TotallyDisabled
             && pawn.skills.GetSkill(SkillDefOf.Melee).Level >= MeleeRequired
             && pawn.skills.GetSkill(SkillDefOf.Crafting).Level >= CraftingRequired;
+
+        /// <summary>Every requirement met and the trait not yet taken.</summary>
+        public static bool ReadyToAwaken(Pawn pawn)
+        {
+            if (pawn == null || HasOrigin(pawn) || !CanStudy(pawn) || !SkillsReady(pawn)) return false;
+            BladeStudyRecord record = Current.Game?.GetComponent<GameComponent_BladeStudy>()?.RecordFor(pawn);
+            return record != null && record.bladeTypes.Count >= BladesRequired;
+        }
+
+        /// <summary>
+        /// Takes the origin. The single place the trait is granted, so the letter and the
+        /// gizmo cannot drift apart on what awakening means.
+        /// </summary>
+        public static void Awaken(Pawn pawn)
+        {
+            if (!ReadyToAwaken(pawn)) return;
+
+            pawn.story.traits.GainTrait(new Trait(OriginBladeDefOf.AG_OriginBlade));
+            if (!HasOrigin(pawn)) return;
+
+            EnforceRestrictions(pawn);
+            Find.LetterStack.ReceiveLetter("AG_OriginBladeAwakenedLabel".Translate(),
+                "AG_OriginBladeAwakened".Translate(pawn.LabelShortCap), LetterDefOf.NeutralEvent, pawn);
+        }
 
         public static void EnforceRestrictions(Pawn pawn)
         {

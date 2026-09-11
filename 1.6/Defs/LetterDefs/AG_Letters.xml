@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The awakening asks instead of announcing. Parented to vanilla's own choice-letter base
+       so it looks and behaves like a growth moment, which is the mechanic it is copying. -->
+  <LetterDef ParentName="CustomChoiceLetterBase">
+    <defName>AG_OriginBladeAwakening</defName>
+    <letterClass>RimArt.ChoiceLetter_OriginBladeAwakening</letterClass>
+  </LetterDef>
+
+</Defs>

@@ -10,11 +10,15 @@ namespace RimArt
         public Pawn pawn;
         // Def names retain completed studies even when a weapon mod is later removed.
         public List<string> bladeTypes = new List<string>();
+        // The awakening letter is offered once. Declining is not final -- the gizmo becomes
+        // an awaken button -- but the letter must not return every 250 ticks forever.
+        public bool offered;
 
         public void ExposeData()
         {
             Scribe_References.Look(ref pawn, "pawn");
             Scribe_Collections.Look(ref bladeTypes, "bladeTypes", LookMode.Value);
+            Scribe_Values.Look(ref offered, "offered", false);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
                 bladeTypes = bladeTypes?.Where(name => !string.IsNullOrEmpty(name)).Distinct().ToList()
                     ?? new List<string>();
@@ -50,6 +54,14 @@ namespace RimArt
             CheckUnlock(record);
         }
 
+        /// <summary>
+        /// Offers the awakening rather than performing it.
+        ///
+        /// This used to grant the trait the moment the last requirement was met, which meant a
+        /// pawn could lose a psylink and every psycast years after the player last read the
+        /// warning. The cost is permanent, so the decision belongs to the player at the moment
+        /// it is taken, the way vanilla handles a growth moment.
+        /// </summary>
         private static void CheckUnlock(BladeStudyRecord record)
         {
             Pawn pawn = record.pawn;
@@ -59,14 +71,17 @@ namespace RimArt
                 OriginBladeUtility.EnforceRestrictions(pawn);
                 return;
             }
-            if (record.bladeTypes.Count < OriginBladeUtility.BladesRequired
-                || !OriginBladeUtility.CanStudy(pawn) || !OriginBladeUtility.SkillsReady(pawn)) return;
+            if (record.offered || !OriginBladeUtility.ReadyToAwaken(pawn)) return;
 
-            pawn.story.traits.GainTrait(new Trait(OriginBladeDefOf.AG_OriginBlade));
-            if (!OriginBladeUtility.HasOrigin(pawn)) return;
-            OriginBladeUtility.EnforceRestrictions(pawn);
-            Find.LetterStack.ReceiveLetter("AG_OriginBladeAwakenedLabel".Translate(),
-                "AG_OriginBladeAwakened".Translate(pawn.LabelShortCap), LetterDefOf.NeutralEvent, pawn);
+            record.offered = true;
+            ChoiceLetter_OriginBladeAwakening letter =
+                (ChoiceLetter_OriginBladeAwakening)LetterMaker.MakeLetter(
+                    "AG_OriginBladeAwakenLabel".Translate(),
+                    "AG_OriginBladeAwakenText".Translate(pawn.LabelShortCap)
+                        + "\n\n" + "AG_OriginBladeWarning".Translate(),
+                    OriginBladeDefOf.AG_OriginBladeAwakening, pawn);
+            letter.pawn = pawn;
+            Find.LetterStack.ReceiveLetter(letter);
         }
 
         public override void GameComponentTick()

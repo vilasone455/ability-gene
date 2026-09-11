@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using RimArt;
 using RimWorld;
 using Verse;
@@ -12,6 +13,23 @@ static class Program
         checks++;
         if (!condition) throw new Exception(message);
     }
+    // The letter offered for this pawn, if one is waiting.
+    private static ChoiceLetter_OriginBladeAwakening OfferFor(Pawn pawn) =>
+        Find.LetterStack.Stack.OfType<ChoiceLetter_OriginBladeAwakening>()
+            .SingleOrDefault(letter => letter.pawn == pawn);
+
+    private static bool Offered(Pawn pawn) => OfferFor(pawn) != null;
+
+    /// <summary>Clicks a choice on the offered letter, the way a player would.</summary>
+    private static void Choose(Pawn pawn, bool awaken)
+    {
+        ChoiceLetter_OriginBladeAwakening letter = OfferFor(pawn);
+        List<DiaOption> options = letter.Choices.ToList();
+        (awaken ? options.First() : options.Last()).action();
+    }
+
+    private static void Accept(Pawn pawn) => Choose(pawn, true);
+
     private static ThingDef Blade(string name) => new ThingDef
     {
         defName = name, IsMeleeWeapon = true,
@@ -57,15 +75,23 @@ static class Program
         var melee = new ThingWithComps { def = knife };
         pawn.equipment.AllEquipmentListForReading.AddRange(new[] { ranged, melee });
         studies.CompleteStudy(pawn, Blade("Longsword"));
-        Check(OriginBladeUtility.HasOrigin(pawn), "Fifth type unlocks at exact skill thresholds");
+        Check(!OriginBladeUtility.HasOrigin(pawn), "Completing the checklist must not awaken on its own");
+        Check(OriginBladeUtility.ReadyToAwaken(pawn) && Offered(pawn), "Fifth type offers the awakening at exact skill thresholds");
+        Check(pawn.abilities.abilities.Contains(psychic) && pawn.equipment.AllEquipmentListForReading.Contains(ranged),
+            "Nothing is taken before the player accepts");
+        studies.GameComponentTick(); studies.GameComponentTick();
+        Check(Find.LetterStack.Stack.Count == 1, "The offer is made once, not every tick");
+        Accept(pawn);
+        Check(OriginBladeUtility.HasOrigin(pawn), "Accepting awakens");
+        Check(!Offered(pawn), "Accepting clears the letter");
         Check(pawn.abilities.abilities.Count == 1 && pawn.abilities.abilities.Contains(ordinary), "Only psycasts are removed");
         Check(pawn.health.hediffSet.hediffs.Count == 1 && pawn.health.hediffSet.hediffs.Contains(injury), "Only psylinks are removed");
         Check(pawn.equipment.Dropped.Contains(ranged) && pawn.equipment.AllEquipmentListForReading.Contains(melee), "Ranged weapon is dropped intact and melee retained");
         pawn.skills.GetSkill(SkillDefOf.Melee).Level = 0;
         pawn.skills.GetSkill(SkillDefOf.Crafting).Level = 0;
         studies.GameComponentTick();
-        Check(OriginBladeUtility.HasOrigin(pawn) && pawn.story.traits.allTraits.Count == 1 && Find.LetterStack.Count == 1,
-            "Skill decline preserves trait without duplicate unlock or notification");
+        Check(OriginBladeUtility.HasOrigin(pawn) && pawn.story.traits.allTraits.Count == 1,
+            "Skill decline preserves trait without duplicate unlock");
         pawn.Spawned = false;
         pawn.equipment.AllEquipmentListForReading.Add(ranged);
         OriginBladeUtility.EnforceRestrictions(pawn);
@@ -73,18 +99,27 @@ static class Program
             "Off-map restriction transfers the weapon safely to inventory");
         var later = ReadyPawn(); later.skills.GetSkill(SkillDefOf.Crafting).Level = 11;
         foreach (string name in new[] { "Knife", "Ikwa", "Spear", "Gladius", "Longsword" }) studies.CompleteStudy(later, Blade(name));
-        Check(!OriginBladeUtility.HasOrigin(later), "Five studies cannot bypass Crafting threshold");
+        Check(!OriginBladeUtility.HasOrigin(later) && !Offered(later), "Five studies cannot bypass Crafting threshold");
         later.skills.GetSkill(SkillDefOf.Crafting).Level = 12;
         later.skills.GetSkill(SkillDefOf.Melee).Level = 13;
         studies.GameComponentTick();
-        Check(!OriginBladeUtility.HasOrigin(later), "Melee threshold also required");
+        Check(!OriginBladeUtility.HasOrigin(later) && !Offered(later), "Melee threshold also required");
         later.skills.GetSkill(SkillDefOf.Melee).Level = 14;
         later.skills.GetSkill(SkillDefOf.Crafting).TotallyDisabled = true;
         studies.GameComponentTick();
-        Check(!OriginBladeUtility.HasOrigin(later), "Disabled skill cannot qualify");
+        Check(!OriginBladeUtility.HasOrigin(later) && !Offered(later), "Disabled skill cannot qualify");
         later.skills.GetSkill(SkillDefOf.Crafting).TotallyDisabled = false;
         studies.GameComponentTick();
-        Check(OriginBladeUtility.HasOrigin(later), "Skill training after study unlocks without another study");
+        Check(Offered(later) && !OriginBladeUtility.HasOrigin(later),
+            "Skill training after study offers without another study");
+        // Declining must not close the door: the gizmo path asks the same question again.
+        Choose(later, false);
+        Check(!Offered(later) && !OriginBladeUtility.HasOrigin(later), "Declining dismisses without awakening");
+        studies.GameComponentTick();
+        Check(!Offered(later), "A declined offer is not re-sent every tick");
+        Check(OriginBladeUtility.ReadyToAwaken(later), "A declined pawn can still be awakened later");
+        OriginBladeUtility.Awaken(later);
+        Check(OriginBladeUtility.HasOrigin(later), "The gizmo path awakens a pawn who declined");
         Check(studies.RecordFor(new Pawn()).bladeTypes.Count == 0, "Study progress is personal");
         var record = studies.RecordFor(later);
         Scribe.mode = LoadSaveMode.Saving; record.ExposeData();

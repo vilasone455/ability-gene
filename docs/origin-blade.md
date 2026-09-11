@@ -17,8 +17,16 @@ are permanent and saved per pawn. The Origin: Blade command shows progress and t
 A type is a weapon's ThingDef, so material and quality variants count once. Melee weapons
 with Cut or Stab tools qualify, including compatible modded weapons. Guns with bayonets
 do not qualify. Core provides five examples: knife, ikwa, spear, gladius, and longsword.
-Pawns can study before reaching the skill requirements. When all requirements are met,
-awakening occurs automatically (checked every 250 ticks and immediately on study completion).
+Pawns can study before reaching the skill requirements. When all requirements are met the
+game **asks**: a choice letter offers Awaken or Not yet, the way a vanilla growth moment does.
+Nothing is taken until the player accepts. The offer is made once (checked every 250 ticks and
+immediately on study completion), and declining costs nothing - the Origin: Blade command
+becomes an awaken button, so a pawn passed over can be taken through at any later point.
+
+Awakening is never automatic. It removes psylinks, psycasts and the use of ranged weapons for
+the rest of that pawn's life, and a pawn who studied early can cross the skill thresholds years
+later; granting it unasked meant a player could lose a psycaster to a decision they made, and
+were last warned about, several sessions earlier.
 
 ## Permanent tradeoffs
 
@@ -30,8 +38,8 @@ awakening occurs automatically (checked every 250 ticks and immediately on study
 - Skill loss does not remove the trait or its abilities.
 
 The study dialog warns before starting that awakening removes psycasting and ranged
-weapon use. It also explains that awakening can occur later when the skill requirements
-are met. Psytrainers and psylink neuroformers reject use before consuming the item.
+weapon use, and the same warning is repeated on the offer itself, at the moment the choice is
+actually made. Psytrainers and psylink neuroformers reject use before consuming the item.
 
 ## Existing kit behavior
 

@@ -73,7 +73,33 @@ namespace Verse
     public static class Current { public static Game Game; }
     public static class Find { public static Ticks TickManager = new(); public static Letters LetterStack = new(); }
     public class Ticks { public int TicksGame = 250; }
-    public class Letters { public int Count; public void ReceiveLetter(string title, string text, object def, Pawn pawn) => Count++; }
+    public class Letters
+    {
+        public int Count;
+        public List<object> Stack = new();
+        public void ReceiveLetter(string title, string text, object def, Pawn pawn) => Count++;
+        public void ReceiveLetter(object letter) { Count++; Stack.Add(letter); }
+        public void RemoveLetter(object letter) => Stack.Remove(letter);
+    }
+    public class LetterDef : Def { }
+    public class DiaOption
+    {
+        public string Text; public Action action; public bool resolveTree;
+        public DiaOption() { } public DiaOption(string text) => Text = text;
+    }
+    public abstract class ChoiceLetter
+    {
+        public string title; public string text;
+        public virtual bool CanShowInLetterStack => true;
+        public virtual IEnumerable<DiaOption> Choices { get { yield break; } }
+        public DiaOption Option_Close => new DiaOption("close");
+        public virtual void ExposeData() { }
+    }
+    public static class LetterMaker
+    {
+        public static object MakeLetter(string title, string text, LetterDef def, Pawn pawn)
+            => Activator.CreateInstance(typeof(RimArt.ChoiceLetter_OriginBladeAwakening));
+    }
     public static class Messages { public static void Message(string text, Pawn pawn, object def, bool historical) { } }
     public static class TranslateExtension { public static string Translate(this string key, params object[] args) => key; }
     public interface IExposable { void ExposeData(); }
@@ -86,6 +112,15 @@ namespace Verse
         {
             if (Scribe.mode == LoadSaveMode.Saving) Scribe.Data[key] = value;
             if (Scribe.mode == LoadSaveMode.LoadingVars) value = Scribe.Data.GetValueOrDefault(key) as T;
+        }
+    }
+    public static class Scribe_Values
+    {
+        public static void Look<T>(ref T value, string key, T fallback = default)
+        {
+            if (Scribe.mode == LoadSaveMode.Saving) Scribe.Data[key] = value;
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+                value = Scribe.Data.TryGetValue(key, out object v) ? (T)v : fallback;
         }
     }
     public static class Scribe_Collections
