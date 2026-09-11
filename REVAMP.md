@@ -23,7 +23,7 @@ Transform "Ability Genes" (gene-only combat abilities) into **RimArt** — a com
 
 - [x] Rewrite `About.xml` description for new scope
 - [x] Add Odyssey and Melee Animation to `loadAfter`
-- [x] Make Biotech optional (gene defs `MayRequire` Biotech; shared abilities use the mod's own job def)
+- [ ] Make Biotech optional -- defs are ready (genes `MayRequire` Biotech, shared abilities use the mod's own `AG_CastAbilityOnThingWithoutWeapon`), blocked only on 26 ability icons that point at Biotech art. Flipping it back on is deleting the Biotech entry from `modDependencies`
 - [x] Update README.md header, dependencies, layout, and build sections
 
 ---
