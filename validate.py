@@ -140,13 +140,14 @@ if DATA is not None:
         elif w == {"Royalty"}: fail("Royalty-only stat", "statBases/Offsets/Factors", s)
 
 # 5. custom Class= exists in the assembly
-dll = "1.6/Assemblies/AbilityGenes.dll"
+NAMESPACE = "RimArt"
+dll = "1.6/Assemblies/" + NAMESPACE + ".dll"
 if os.path.exists(dll):
     blob = open(dll, "rb").read().decode("latin-1")
     for f in my_files:
-        for m in re.finditer(r'Class="AbilityGenes\.([A-Za-z_0-9]+)"', open(f).read()):
+        for m in re.finditer(r'Class="' + NAMESPACE + r'\.([A-Za-z_0-9]+)"', open(f).read()):
             if m.group(1) not in blob:
-                fail("class not in assembly", f, "AbilityGenes." + m.group(1))
+                fail("class not in assembly", f, NAMESPACE + "." + m.group(1))
 else:
     print("warning: " + dll + " not built -- skipping class check")
 
