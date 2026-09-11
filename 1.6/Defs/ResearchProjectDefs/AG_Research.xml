@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Sits one step past shields, because that is the thing it is a variation on: the belt
+       that stops a bullet, taken far enough that it stops the moment instead. Gold in the
+       cost list and a hi-tech bench keep it where the fabrication-tier gear lives. -->
+  <ResearchProjectDef>
+    <defName>AG_StasisFields</defName>
+    <label>stasis fields</label>
+    <description>Build a wearable stasis generator. Where a shield belt repels what crosses its boundary, a stasis field holds everything inside it still - including the wearer. Nothing within can act, and nothing within can be harmed.</description>
+    <baseCost>2400</baseCost>
+    <techLevel>Spacer</techLevel>
+    <prerequisites>
+      <li>ShieldBelt</li>
+    </prerequisites>
+    <requiredResearchBuilding>HiTechResearchBench</requiredResearchBuilding>
+    <researchViewX>13.00</researchViewX>
+    <researchViewY>2.60</researchViewY>
+  </ResearchProjectDef>
+
+</Defs>

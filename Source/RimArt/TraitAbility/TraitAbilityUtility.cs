@@ -26,7 +26,7 @@ namespace RimArt
 
             for (int i = 0; i < abilities.Count; i++)
             {
-                if (!GrantedByOtherSource(pawn, abilities[i], trait))
+                if (!GrantedByOtherSource(pawn, abilities[i], trait, null))
                     pawn.abilities.RemoveAbility(abilities[i]);
             }
         }
@@ -48,7 +48,12 @@ namespace RimArt
             return ext.abilities;
         }
 
-        private static bool GrantedByOtherSource(Pawn pawn, AbilityDef ability, Trait exclude)
+        /// <summary>
+        /// Whether anything other than the named source still grants this ability, so revoking
+        /// one source does not take an ability the pawn has earned twice over.
+        /// </summary>
+        public static bool GrantedByOtherSource(Pawn pawn, AbilityDef ability, Trait exclude,
+            ThingComp excludeComp)
         {
             if (pawn.genes != null)
             {
@@ -100,6 +105,11 @@ namespace RimArt
                 {
                     CompEquippableAbilityReloadable comp = worn[i].TryGetComp<CompEquippableAbilityReloadable>();
                     if (comp?.Props?.abilityDef == ability)
+                        return true;
+
+                    CompApparelAbility granter = worn[i].TryGetComp<CompApparelAbility>();
+                    if (granter != null && granter != excludeComp
+                        && granter.Props?.abilities != null && granter.Props.abilities.Contains(ability))
                         return true;
                 }
             }

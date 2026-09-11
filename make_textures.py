@@ -454,6 +454,128 @@ def make_dispersal_icon():
     finish(img, "Textures/RimArt/Dispersal/IconGene.png")
 
 
+
+
+# ---------------------------------------------------------------------------------------
+# The stasis organ: a belt that carries the same field, and one icon for both sources.
+#
+# The gene grows an archite lattice through the chest. The belt is the same field in a
+# box you can take off and hand to somebody else, which is the whole reason it exists -
+# a panic button welded to one colonist is worth less than one you can move to whoever
+# is about to be swarmed.
+#
+# Both are drawn from the dome's own colour, TimeBubbleDefaults.DomeColor (0.75, 0.90,
+# 1.00) - off-white with a blue bias, ice rather than another bullet shield. Matching it
+# here means the icon on the gizmo and the dome that appears on the map are recognisably
+# the same object, which is the only thing stopping a stasis field being mistaken for a
+# shield at a glance.
+# ---------------------------------------------------------------------------------------
+
+ICE_LIGHT = (233, 247, 255)
+ICE       = (191, 230, 255)
+ICE_MID   = (138, 191, 232)
+ICE_DEEP  = (74, 126, 176)
+
+STRAP      = (56, 49, 44)
+STRAP_LIT  = (88, 77, 68)
+
+
+def ring(d, cx, cy, r, colour, width):
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], outline=colour, width=width)
+
+
+def stasis_core(img, cx, cy, r):
+    """
+    The emitter: a lens with the field already standing in it.
+
+    Drawn as a filled sphere rather than an outline because a gizmo is read at 24 pixels -
+    at that size concentric rings alone collapse into a grey smudge, and what has to
+    survive the downsample is one bright disc.
+    """
+    d = ImageDraw.Draw(img)
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=ICE_DEEP)
+    d.ellipse([cx - int(r * .86), cy - int(r * .86),
+               cx + int(r * .86), cy + int(r * .86)], fill=ICE_MID)
+    d.ellipse([cx - int(r * .62), cy - int(r * .62),
+               cx + int(r * .62), cy + int(r * .62)], fill=ICE)
+    # Off-centre highlight: a sphere, not a disc.
+    d.ellipse([cx - int(r * .40) - int(r * .22), cy - int(r * .40) - int(r * .22),
+               cx + int(r * .14) - int(r * .22), cy + int(r * .14) - int(r * .22)],
+              fill=ICE_LIGHT)
+
+
+def make_stasis_belt():
+    """
+    The worn item. A strap that runs the full width, and a squared housing sitting on it.
+
+    The housing is deliberately not a circle. A round bezel with rings inside it reads as
+    a camera lens at any size, which is what the first pass of this looked like; a boxed
+    emitter with one round lens in it reads as equipment.
+    """
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    cy = S // 2
+    half = px(17)
+
+    # Strap, edge to edge, lit along the top so the band reads as round.
+    d.rounded_rectangle([0, cy - half, S, cy + half], radius=px(6), fill=STRAP)
+    d.rounded_rectangle([px(4), cy - half + px(3), S - px(4), cy - px(4)],
+                        radius=px(4), fill=STRAP_LIT)
+
+    # Stitching, which is most of what says "leather" at item size.
+    for y in (cy - half + px(5), cy + half - px(5)):
+        for x in range(px(10), S - px(10), px(12)):
+            d.line([(x, y), (x + px(5), y)], fill=(38, 33, 30, 180), width=px(2))
+
+    # Housing: a boxed emitter, wider than it is tall, bolted across the strap.
+    hw, hh = px(34), px(27)
+    d.rounded_rectangle([S // 2 - hw, cy - hh, S // 2 + hw, cy + hh], radius=px(7), fill=EDGE)
+    d.rounded_rectangle([S // 2 - hw + px(3), cy - hh + px(3),
+                         S // 2 + hw - px(3), cy + hh - px(3)], radius=px(6), fill=STEEL_DARK)
+    d.rounded_rectangle([S // 2 - hw + px(5), cy - hh + px(5),
+                         S // 2 + hw - px(5), cy - px(2)], radius=px(5), fill=STEEL)
+
+    # Vent slots either side of the lens.
+    for x in (S // 2 - px(26), S // 2 + px(22)):
+        for i in range(3):
+            d.rounded_rectangle([x, cy - px(8) + i * px(7), x + px(4), cy - px(5) + i * px(7)],
+                                radius=px(1), fill=STEEL_DARK)
+
+    stasis_core(img, S // 2, cy, px(15))
+
+    finish(img, "Textures/RimArt/Stasis/Belt.png")
+
+
+def make_stasis_icon():
+    """
+    The gizmo, shared by the gene and the belt.
+
+    Three rings and a core, plus four streaks stopped short of it. The streaks are the
+    point: a sphere alone says "shield", and a shield is the one thing this must not be
+    mistaken for. Something frozen on its way in says the field stopped it.
+    """
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    c = S // 2
+
+    glow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    g = ImageDraw.Draw(glow)
+    for r, a, w in ((px(58), 150, px(4)), (px(46), 200, px(5)), (px(34), 245, px(6))):
+        ring(g, c, c, r, ICE_MID + (a,), w)
+    glow = glow.filter(ImageFilter.GaussianBlur(px(0.8)))
+    img.alpha_composite(glow)
+
+    # Held mid-flight, tips pointing in, none of them touching the core.
+    d = ImageDraw.Draw(img)
+    for dx, dy in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
+        x0, y0 = c + dx * px(52), c + dy * px(52)
+        x1, y1 = c + dx * px(34), c + dy * px(34)
+        d.line([(x0, y0), (x1, y1)], fill=ICE_DEEP + (255,), width=px(6))
+
+    stasis_core(img, c, c, px(24))
+    finish(img, "Textures/RimArt/Stasis/IconStasis.png")
+
+
 if __name__ == "__main__":
     make_flying()
     make_planted()
@@ -462,3 +584,5 @@ if __name__ == "__main__":
     make_feeding_crows()
     make_feather()
     make_dispersal_icon()
+    make_stasis_belt()
+    make_stasis_icon()

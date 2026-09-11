@@ -11,27 +11,53 @@ static class ApiChecks
     {
         Assembly assembly = typeof(OriginBladeUtility).Assembly;
         int count = 0;
-        foreach (Type type in assembly.GetTypes().Where(type => type.Name.StartsWith("Patch_")
-            && (type.Name.Contains("OriginBlade") || type.Name.Contains("BladeStudy"))))
+        foreach (Type type in assembly.GetTypes().Where(type => type.Name.StartsWith("Patch_")))
         {
-            HarmonyMethod info = type.GetCustomAttribute<HarmonyPatch>().info;
-            MethodInfo original = info.methodType == MethodType.Getter
-                ? AccessTools.PropertyGetter(info.declaringType, info.methodName)
-                : AccessTools.Method(info.declaringType, info.methodName, info.argumentTypes);
-            if (original == null) throw new Exception($"Missing Harmony target: {type.Name}");
-            foreach (MethodInfo patch in type.GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
-                .Where(method => method.Name == "Prefix" || method.Name == "Postfix"))
-            foreach (ParameterInfo param in patch.GetParameters())
+            // Harmony allows three ways to name a target, and this mod uses all of them:
+            // a class-level [HarmonyPatch], a static TargetMethod(), or one attribute per
+            // patch method. Resolve whichever applies and check the injected parameters
+            // against the method actually being patched.
+            MethodInfo resolver = type.GetMethod("TargetMethod",
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            HarmonyMethod classInfo = type.GetCustomAttribute<HarmonyPatch>()?.info;
+
+            MethodBase classTarget = null;
+            if (resolver != null) classTarget = (MethodBase)resolver.Invoke(null, null);
+            else if (classInfo?.declaringType != null && classInfo.methodName != null)
+                classTarget = classInfo.methodType == MethodType.Getter
+                    ? AccessTools.PropertyGetter(classInfo.declaringType, classInfo.methodName)
+                    : AccessTools.Method(classInfo.declaringType, classInfo.methodName, classInfo.argumentTypes);
+
+            foreach (MethodInfo patch in type.GetMethods(
+                BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public))
             {
-                string name = param.Name;
-                if (name == "__instance" || name == "__result") continue;
-                if (name.StartsWith("___"))
+                HarmonyMethod own = patch.GetCustomAttribute<HarmonyPatch>()?.info;
+                bool named = patch.Name == "Prefix" || patch.Name == "Postfix"
+                    || patch.GetCustomAttribute<HarmonyPrefix>() != null
+                    || patch.GetCustomAttribute<HarmonyPostfix>() != null;
+                if (!named) continue;
+
+                MethodBase original = classTarget;
+                if (own?.declaringType != null && own.methodName != null)
+                    original = own.methodType == MethodType.Getter
+                        ? AccessTools.PropertyGetter(own.declaringType, own.methodName)
+                        : AccessTools.Method(own.declaringType, own.methodName, own.argumentTypes);
+
+                if (original == null)
+                    throw new Exception($"Missing Harmony target: {type.Name}.{patch.Name}");
+
+                foreach (ParameterInfo param in patch.GetParameters())
                 {
-                    if (AccessTools.Field(original.DeclaringType, name.Substring(3)) == null)
-                        throw new Exception($"Missing injected field: {type.Name}.{name}");
+                    string name = param.Name;
+                    if (name == "__instance" || name == "__result") continue;
+                    if (name.StartsWith("___"))
+                    {
+                        if (AccessTools.Field(original.DeclaringType, name.Substring(3)) == null)
+                            throw new Exception($"Missing injected field: {type.Name}.{name}");
+                    }
+                    else if (!original.GetParameters().Any(target => target.Name == name))
+                        throw new Exception($"Missing original parameter: {type.Name}.{patch.Name}.{name}");
                 }
-                else if (!original.GetParameters().Any(target => target.Name == name))
-                    throw new Exception($"Missing original parameter: {type.Name}.{name}");
             }
             count++;
         }

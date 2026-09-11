@@ -256,6 +256,19 @@ It does not spare your own colonists and it does not spare the caster, who is at
 centre and always inside. What you buy is twenty seconds for everyone standing outside
 the bubble. Cpx 4, Arc 1, five-day cooldown.
 
+Also available as the **stasis belt** — the same field in a device you can take off and
+hand to somebody else. Belt slot, spacer tech, behind the *stasis fields* research (one
+step past vanilla shields), machining table, 2 spacer components / 60 plasteel / 20 gold.
+The gene needs a genepack roll *and* an archite capsule, so in most colonies it never
+appears at all; the belt is the route a player can aim at deliberately.
+
+The five-day charge lives on the belt rather than on the wearer, so taking it off and
+putting it back on does not refresh it, and neither does passing it between two pawns —
+the longest remaining charge is the one that carries. Granted through
+`RimArt.CompProperties_ApparelAbility`, because no vanilla comp grants an `AbilityDef`
+from apparel: `CompEquippableAbility` replaces `CompEquippable` and works only on a
+weapon, and `CompApparelVerbOwner` grants a `Verb` rather than an ability.
+
 ### Involute organ → *vent*, *fold*, *swallow*, *post*, *collapse* (archite)
 
 One hole, normally on the carrier's body, leading to a volume that is not anywhere.

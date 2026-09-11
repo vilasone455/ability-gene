@@ -38,7 +38,7 @@ Currently all abilities are granted via `GeneDef.<abilities>`. Need to support:
 |---|---|---|
 | **Gene** | `GeneDef.<abilities>` | No (existing) |
 | **Trait** | `TraitDef` + custom C# to grant/revoke abilities | Yes |
-| **Equipment/Apparel** | `CompProperties_AbilityItem` on apparel/equipment | No (vanilla comp) |
+| **Equipment/Apparel** | `RimArt.CompProperties_ApparelAbility` on apparel; `CompEquippableAbility` on weapons | Yes, for apparel |
 | **Weapon Trait (Odyssey)** | Odyssey weapon trait system | Yes (MayRequire) |
 | **Special condition** | Any grant vanilla has no mechanism for — the mod checks a condition or a checklist itself | Yes |
 
@@ -59,7 +59,7 @@ Shipped so far: **Origin: Blade** (permanent). See `docs/origin-blade.md`.
 ### Architecture Tasks
 
 - [x] Build trait-based ability granting system (`TraitAbilityExtension` + Harmony patches)
-- [x] Equipment abilities — use vanilla `CompProperties_AbilityItem` (XML only, no custom C#)
+- [x] Equipment abilities — `RimArt.CompProperties_ApparelAbility` plus two `Pawn_ApparelTracker` patches. The plan said vanilla `CompProperties_AbilityItem` and no C#; that class does not exist. Vanilla's real options are `CompEquippableAbility`, which replaces `CompEquippable` and so only works on a weapon, and `CompApparelVerbOwner`, which grants a `Verb` rather than an `AbilityDef`. Neither fits a belt, so the comp is ours. It also holds the cooldown on the item, which is what stops a long charge being refreshed by unequipping. Shipped as the stasis belt
 - [x] Special condition, transient — use vanilla `HediffDef.<abilities>` (XML only, no custom C#)
 - [x] Special condition, permanent — `GameComponent_BladeStudy` + `OriginBladeUtility`, shipped as Origin: Blade
 - [x] Odyssey weapon traits — use vanilla `WeaponTraitDef.abilityProps` (XML only, no custom C#, MayRequire on defs)
@@ -96,7 +96,7 @@ The **AbilityDef** and **ability implementation** (CompAbilityEffect, HediffComp
 | Vector Reflex (reflect/shove) | Reflex organ | Equipment (power armor), implant | Deflection tech or trained reflex |
 | Halving Membrane (recursion) | Membrane | Psychic, archotech implant | Zeno barrier could be tech-based |
 | Anchor Organ (mark/clap/swap) | Organ | Archotech equipment, psychic | Teleport swap doesn't need biology |
-| Stasis Organ (time bubble) | Archite organ | Equipment (stasis device) | Time-freeze could be a deployable |
+| Stasis Organ (time bubble) | Archite organ | **Equipment (stasis belt) — shipped** | Time-freeze could be a deployable |
 | Time Lattice (speed up/slow down) | Nerve lattice | Drug, implant | Go-juice style speed boost |
 
 ### New Abilities to Add (future)

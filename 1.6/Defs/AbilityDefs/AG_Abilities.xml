@@ -124,7 +124,7 @@
     <defName>AG_TimeBubble</defName>
     <label>stasis field</label>
     <description>Collapse a sphere of stopped time around the carrier. Inside it nothing moves, nothing burns, nothing bleeds and bullets hang in the air where they were.\n\nThe field does not know friend from enemy and it does not spare the person who cast it. Everyone inside — raiders, your own people, the carrier — is simply gone from the fight until it lifts. Nothing inside can be harmed while it holds.\n\nWhat you buy is time for everyone standing outside it.</description>
-    <iconPath>UI/Abilities/Resurrect</iconPath>
+    <iconPath>RimArt/Stasis/IconStasis</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>300000</cooldownTicksRange>
     <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>

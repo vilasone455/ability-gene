@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The stasis belt: the same field the stasis organ grows, in a box that comes off.
+
+       The gene is archite-gated and has to be found in a genepack, so in most colonies it
+       never turns up at all. This is the route a player can actually aim at - build the
+       research, build the belt, put it on whoever is about to be swarmed.
+
+       Belt slot on purpose. The field forms on the wearer and catches them in it, which is
+       the shield belt's shape exactly, and players already read a belt as the thing that
+       saves you rather than the thing that kills. Spacer tech and plasteel keep it out of
+       the early game; the five-day charge does the rest of the balancing, and that charge
+       lives on the belt, so passing it around does not refresh it. -->
+  <ThingDef ParentName="ApparelBase">
+    <defName>AG_StasisBelt</defName>
+    <label>stasis belt</label>
+    <description>A field generator worn at the waist. Triggered, it collapses a sphere of stopped time around the wearer: nothing inside moves, burns or bleeds, and nothing inside can be harmed.\n\nIt does not know friend from enemy, and it does not spare the person wearing it. What it buys is time for everyone standing outside.\n\nThe lattice takes many days to wind back up, and the charge stays with the belt when it changes hands.</description>
+    <thingClass>Apparel</thingClass>
+    <graphicData>
+      <texPath>RimArt/Stasis/Belt</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <techLevel>Spacer</techLevel>
+    <statBases>
+      <Mass>3</Mass>
+      <WorkToMake>24000</WorkToMake>
+      <Flammability>0.4</Flammability>
+      <EquipDelay>2</EquipDelay>
+    </statBases>
+    <thingSetMakerTags>
+      <li>RewardStandardQualitySuper</li>
+    </thingSetMakerTags>
+    <costList>
+      <ComponentSpacer>2</ComponentSpacer>
+      <Plasteel>60</Plasteel>
+      <Gold>20</Gold>
+    </costList>
+    <recipeMaker>
+      <unfinishedThingDef>UnfinishedBelt</unfinishedThingDef>
+      <researchPrerequisite>AG_StasisFields</researchPrerequisite>
+      <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+      <workSkill>Crafting</workSkill>
+      <effectWorking>Smith</effectWorking>
+      <soundWorking>Recipe_Machining</soundWorking>
+      <recipeUsers>
+        <li>TableMachining</li>
+      </recipeUsers>
+      <useIngredientsForColor>false</useIngredientsForColor>
+      <skillRequirements>
+        <Crafting>8</Crafting>
+      </skillRequirements>
+      <displayPriority>310</displayPriority>
+    </recipeMaker>
+    <thingCategories>
+      <li>ApparelUtility</li>
+    </thingCategories>
+    <apparel>
+      <countsAsClothingForNudity>false</countsAsClothingForNudity>
+      <careIfWornByCorpse>false</careIfWornByCorpse>
+      <careIfDamaged>false</careIfDamaged>
+      <wearPerDay>0</wearPerDay>
+      <bodyPartGroups>
+        <li>Waist</li>
+      </bodyPartGroups>
+      <layers>
+        <li>Belt</li>
+      </layers>
+      <tags>
+        <li>BeltDefense</li>
+      </tags>
+      <developmentalStageFilter>Child, Adult</developmentalStageFilter>
+    </apparel>
+    <comps>
+      <li Class="RimArt.CompProperties_ApparelAbility">
+        <abilities>
+          <li>AG_TimeBubble</li>
+        </abilities>
+      </li>
+    </comps>
+  </ThingDef>
+
+</Defs>
