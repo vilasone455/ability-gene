@@ -77,9 +77,10 @@ namespace RimArt
 
         /// <summary>
         /// Every kit at once, reported as one line. Three of them want the weapon slot - the
-        /// frost bomb and the two weapon traits - and the stasis belt wants the belt slot, so
-        /// the last one to run holds each and the earlier weapons end up in the pawn's
-        /// inventory. Worth knowing before reading the result as a bug.
+        /// frost bomb and the two weapon traits - and two want the belt slot: the stasis belt
+        /// and the drone control rig. The last one to run holds each, the earlier weapons end up
+        /// in the pawn's inventory, and the earlier belt is simply not worn. Worth knowing
+        /// before reading the result as a bug.
         /// </summary>
         private static void ApplyAll(Pawn pawn, List<Kit> kits)
         {
@@ -141,6 +142,7 @@ namespace RimArt
 
                 new Kit { Label = "Stasis belt", Grant = GrantStasisBelt },
                 new Kit { Label = "Frost bomb", Grant = GrantFrostBomb },
+                new Kit { Label = "Drone control rig", Grant = GrantControlRig },
 
                 WeaponTrait("Resonant weapon", "AG_WeaponResonance"),
                 WeaponTrait("Arcing weapon", "AG_WeaponArc"),
@@ -278,6 +280,34 @@ namespace RimArt
             }
 
             pawn.equipment.AddEquipment((ThingWithComps)ThingMaker.MakeThing(def, GenStuff.DefaultStuffFor(def)));
+            return null;
+        }
+
+        // ----------------------------------------------------------------- drone control rig
+
+        /// <summary>
+        /// Wears the rig, with the deploy ability ready rather than on cooldown.
+        ///
+        /// The ready charge is the only thing here the real route does not do, for the same
+        /// reason the frost bomb's grant resets its cooldown: CompApparelAbility hands a fresh
+        /// wearer whatever charge the device has left, and a rig that has just been made has a
+        /// full one. Waiting a quarter of a day to test the first deploy is not a test loop.
+        /// </summary>
+        private static string GrantControlRig(Pawn pawn)
+        {
+            ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail("AG_ControlRig");
+            if (def == null) return "no ThingDef AG_ControlRig";
+            if (pawn.apparel == null) return "cannot wear apparel";
+            if (pawn.apparel.WornApparel.Any(worn => worn.def == def)) return "already wearing one";
+
+            FinishResearch("AG_RemoteOrdnance");
+
+            Apparel rig = (Apparel)ThingMaker.MakeThing(def, GenStuff.DefaultStuffFor(def));
+            pawn.apparel.Wear(rig, true, false);
+
+            AbilityDef deploy = DefDatabase<AbilityDef>.GetNamedSilentFail("AG_DeployToyCar");
+            Ability granted = deploy == null ? null : pawn.abilities?.GetAbility(deploy, true);
+            granted?.ResetCooldown();
             return null;
         }
 

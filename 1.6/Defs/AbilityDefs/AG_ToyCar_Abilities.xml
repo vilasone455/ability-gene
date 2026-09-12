@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Put a car on the ground.
+
+       targetRequired false and a self-cast: the car is assembled just in front of the caster, so there is nothing to aim. Where it goes afterwards is the drive's problem.
+
+       Deploying takes no control and pins nobody. That separation is the point of the item -
+       a car parked in a corridor before the raid arrives costs nothing until somebody picks up
+       the handset.
+
+       displayGizmoWhileUndrafted is true, like the stasis belt: placing a car is preparation,
+       and preparation that can only be done while drafted is preparation done too late.
+
+       casterMustBeCapableOfViolence is true. The car is a bomb, and a pacifist does not get to
+       drive one on the technicality that the button is somewhere else. -->
+  <AbilityDef>
+    <defName>AG_DeployToyCar</defName>
+    <label>deploy toy car</label>
+    <description>Assemble and place a remote demolition drone just in front of you.\n\nThe drone does nothing until somebody takes control of it. Controlling it costs the operator everything else: while driving they cannot move, shoot or work. It can be detonated on command, and detonates by itself if the operator is downed or killed while driving.</description>
+    <iconPath>RimArt/ToyCar/IconDeploy</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>15000</cooldownTicksRange>
+    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.8</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityDeployToyCar" />
+    </comps>
+  </AbilityDef>
+
+</Defs>

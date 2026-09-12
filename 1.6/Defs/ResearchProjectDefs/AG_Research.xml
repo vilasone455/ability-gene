@@ -35,4 +35,21 @@
     <researchViewY>4.20</researchViewY>
   </ResearchProjectDef>
 
+  <!-- Sits past machining and microelectronics, because the rig is both: a machined chassis and
+       a radio link. Slot 7.00/5.40 is free - cryogenic munitions is at 7.00/4.20 and stasis
+       fields at 13.00/2.60. -->
+  <ResearchProjectDef>
+    <defName>AG_RemoteOrdnance</defName>
+    <label>remote ordnance</label>
+    <description>Build a drone control rig and the demolition drones it deploys. The drone delivers a charge somewhere a grenade cannot be thrown, at the cost of an operator who cannot move or act while driving it.</description>
+    <baseCost>1400</baseCost>
+    <techLevel>Industrial</techLevel>
+    <prerequisites>
+      <li>Machining</li>
+      <li>MicroelectronicsBasics</li>
+    </prerequisites>
+    <researchViewX>7.00</researchViewX>
+    <researchViewY>5.40</researchViewY>
+  </ResearchProjectDef>
+
 </Defs>

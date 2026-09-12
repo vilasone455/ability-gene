@@ -680,6 +680,118 @@ def make_frost_icon():
     finish(img, "Textures/RimArt/Frost/IconFrost.png")
 
 
+# ---------------------------------------------------------------------------------------
+# Toy car. Drawn from directly above, unlike the frost bomb: this one is on the ground and
+# seen the way everything else on the map is seen, so the top-down convention holds.
+# ---------------------------------------------------------------------------------------
+
+CAR_BODY   = (176, 58, 48)
+CAR_LIT    = (214, 96, 84)
+CAR_DARK   = (116, 34, 28)
+CAR_TYRE   = (38, 38, 42)
+CAR_CHARGE = (186, 170, 120)
+
+
+def make_toy_car():
+    """
+    The chassis: a small blunt car with a charge strapped across the roof.
+
+    The charge is drawn on top rather than hidden inside, because a player glancing at a
+    parked one needs to read "this is a bomb" and not "somebody dropped a toy".
+    """
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    cx = S // 2
+    top, bottom = px(30), px(98)
+    half = px(26)
+
+    # Tyres first, so the body overlaps them and they read as underneath.
+    for y in (px(42), px(82)):
+        for x in (cx - half - px(3), cx + half - px(6)):
+            d.rounded_rectangle([x, y, x + px(9), y + px(16)], radius=px(3), fill=CAR_TYRE)
+
+    d.rounded_rectangle([cx - half, top, cx + half, bottom], radius=px(10), fill=CAR_DARK)
+    d.rounded_rectangle([cx - half + px(3), top + px(3), cx + half - px(3), bottom - px(3)],
+                        radius=px(8), fill=CAR_BODY)
+    # Lit down the left, matching the light direction the other sprites in this mod use.
+    d.rounded_rectangle([cx - half + px(6), top + px(6), cx - px(4), bottom - px(8)],
+                        radius=px(6), fill=CAR_LIT)
+
+    # Windscreen, just enough to say which end is the front.
+    d.rounded_rectangle([cx - px(16), top + px(9), cx + px(16), top + px(24)],
+                        radius=px(4), fill=(58, 74, 88))
+
+    # The charge: a block strapped across the roof with two bands.
+    d.rounded_rectangle([cx - px(20), px(52), cx + px(20), px(78)], radius=px(4), fill=CAR_CHARGE)
+    for x in (cx - px(12), cx + px(6)):
+        d.rectangle([x, px(50), x + px(5), px(80)], fill=CAR_TYRE)
+
+    finish(img, "Textures/RimArt/ToyCar/Car.png")
+
+
+
+def make_toy_car_rig():
+    """
+    The worn device: a belt pouch with a handset clipped to it and a stub aerial.
+
+    Read as a transmitter rather than as a weapon. The aerial is the only part that has to
+    survive the downsample, so it is the highest-contrast thing in the sprite.
+    """
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    cx, cy = S // 2, S // 2
+
+    # Belt strap across the sprite, the way the stasis belt is drawn.
+    d.rounded_rectangle([px(14), cy - px(9), S - px(14), cy + px(9)], radius=px(6), fill=WEBBING)
+    d.rounded_rectangle([px(14), cy - px(6), S - px(14), cy + px(1)], radius=px(4), fill=WEBBING_LIT)
+
+    # Handset body.
+    d.rounded_rectangle([cx - px(22), cy - px(24), cx + px(22), cy + px(22)],
+                        radius=px(7), fill=CANISTER_DARK)
+    d.rounded_rectangle([cx - px(18), cy - px(20), cx + px(18), cy + px(18)],
+                        radius=px(5), fill=CANISTER)
+    d.rounded_rectangle([cx - px(15), cy - px(17), cx - px(2), cy + px(14)],
+                        radius=px(4), fill=CANISTER_LIT)
+
+    # Screen, lit the same pale blue the rest of this mod uses for "powered".
+    d.rounded_rectangle([cx - px(12), cy - px(14), cx + px(12), cy - px(2)],
+                        radius=px(3), fill=ICE_DEEP)
+    d.rounded_rectangle([cx - px(10), cy - px(12), cx + px(10), cy - px(5)],
+                        radius=px(2), fill=ICE)
+
+    # Aerial.
+    d.rounded_rectangle([cx + px(14), px(12), cx + px(20), cy - px(20)], radius=px(3), fill=EDGE)
+    d.ellipse([cx + px(12), px(8), cx + px(22), px(18)], fill=ICE_LIGHT)
+
+    finish(img, "Textures/RimArt/ToyCar/Rig.png")
+
+
+def make_toy_car_icon():
+    """The deploy gizmo: the car seen small, on a dark disc so it reads at gizmo size."""
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    c = S // 2
+    d.ellipse([c - px(46), c - px(46), c + px(46), c + px(46)], fill=(30, 32, 36, 210))
+
+    # The car, blunt and small, pointing up.
+    d.rounded_rectangle([c - px(20), c - px(26), c + px(20), c + px(24)], radius=px(8),
+                        fill=CAR_DARK)
+    d.rounded_rectangle([c - px(17), c - px(23), c + px(17), c + px(21)], radius=px(6),
+                        fill=CAR_BODY)
+    d.rounded_rectangle([c - px(14), c - px(20), c - px(3), c + px(17)], radius=px(4),
+                        fill=CAR_LIT)
+    d.rounded_rectangle([c - px(12), c - px(18), c + px(12), c - px(8)], radius=px(3),
+                        fill=(58, 74, 88))
+    d.rounded_rectangle([c - px(15), c + px(2), c + px(15), c + px(14)], radius=px(3),
+                        fill=CAR_CHARGE)
+
+    finish(img, "Textures/RimArt/ToyCar/IconDeploy.png")
+
+
+
 if __name__ == "__main__":
     make_flying()
     make_planted()
@@ -692,3 +804,6 @@ if __name__ == "__main__":
     make_stasis_icon()
     make_frost_bomb()
     make_frost_icon()
+    make_toy_car()
+    make_toy_car_rig()
+    make_toy_car_icon()

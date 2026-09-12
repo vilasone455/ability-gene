@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The remote vehicle.
+
+       Shaped after AG_PanoplyBlade, which is the same kind of object: a selectable, ticking
+       thing that sits on the map and belongs to somebody. Item category was the first attempt
+       and was wrong - it brings stacking, deterioration, forbidding and haul jobs, and a car
+       parked in a corridor waiting for raiders is not something a colonist should decide on
+       their own to carry off to a stockpile.
+
+       passability Standable and isEdifice false are load-bearing, not decoration.
+       ThingDef.AffectsRegions is true only for Impassable things, doors and fences, and
+       Thing.Position logs a warning and misbehaves when a region-affecting thing is moved -
+       which is the one thing this def exists to do. Keep both as they are. -->
+  <ThingDef>
+    <defName>AG_ToyCar</defName>
+    <label>toy car</label>
+    <description>A toy chassis carrying a demolition charge and a radio. It is driven by an operator, who cannot move or act while controlling it. Range 24 cells from the operator. The charge can be detonated on command, and detonates on its own if the operator is downed or killed while driving.</description>
+    <thingClass>RimArt.ToyCar</thingClass>
+    <category>Building</category>
+    <altitudeLayer>Item</altitudeLayer>
+    <drawerType>RealtimeOnly</drawerType>
+    <tickerType>Normal</tickerType>
+    <selectable>true</selectable>
+    <neverMultiSelect>true</neverMultiSelect>
+    <useHitPoints>true</useHitPoints>
+    <rotatable>false</rotatable>
+    <passability>Standable</passability>
+    <fillPercent>0</fillPercent>
+    <coversFloor>false</coversFloor>
+    <blockWind>false</blockWind>
+    <blockLight>false</blockLight>
+    <castEdgeShadows>false</castEdgeShadows>
+    <canOverlapZones>true</canOverlapZones>
+    <building>
+      <isEdifice>false</isEdifice>
+      <claimable>false</claimable>
+      <deconstructible>false</deconstructible>
+    </building>
+    <graphicData>
+      <texPath>RimArt/ToyCar/Car</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.9</drawSize>
+    </graphicData>
+    <statBases>
+      <MaxHitPoints>40</MaxHitPoints>
+      <Mass>3</Mass>
+      <Flammability>0.7</Flammability>
+    </statBases>
+  </ThingDef>
+
+  <!-- The worn device, and the only way to get a car.
+
+       Belt slot, so it competes with the stasis belt and the shield belt rather than stacking
+       beside them. One utility device at a time is what these items are balanced around.
+
+       The ability is granted from here and nowhere else. validate.py rule 8 requires exactly one
+       acquisition source per concrete AbilityDef, so adding a second route - a gene, an implant,
+       a weapon trait - fails the build rather than quietly doubling the ways in. -->
+  <ThingDef ParentName="ApparelBase">
+    <defName>AG_ControlRig</defName>
+    <label>drone control rig</label>
+    <description>A belt-mounted transmitter and handset for a demolition drone. It builds and deploys one toy car at a time.
+
+Driving the car takes the operator's whole attention: while controlling it they cannot move, shoot or work. The car carries a charge that can be set off on command, and that goes off on its own if the operator is downed or killed while driving.</description>
+    <thingClass>Apparel</thingClass>
+    <graphicData>
+      <texPath>RimArt/ToyCar/Rig</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <techLevel>Industrial</techLevel>
+    <statBases>
+      <Mass>2</Mass>
+      <WorkToMake>12000</WorkToMake>
+      <Flammability>0.4</Flammability>
+      <EquipDelay>2</EquipDelay>
+    </statBases>
+    <costList>
+      <Steel>40</Steel>
+      <ComponentIndustrial>3</ComponentIndustrial>
+    </costList>
+    <recipeMaker>
+      <unfinishedThingDef>UnfinishedBelt</unfinishedThingDef>
+      <researchPrerequisite>AG_RemoteOrdnance</researchPrerequisite>
+      <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+      <workSkill>Crafting</workSkill>
+      <effectWorking>Smith</effectWorking>
+      <soundWorking>Recipe_Machining</soundWorking>
+      <recipeUsers>
+        <li>TableMachining</li>
+      </recipeUsers>
+      <useIngredientsForColor>false</useIngredientsForColor>
+      <skillRequirements>
+        <Crafting>6</Crafting>
+      </skillRequirements>
+      <displayPriority>330</displayPriority>
+    </recipeMaker>
+    <tradeTags>
+      <li>ExoticMisc</li>
+    </tradeTags>
+    <thingCategories>
+      <li>ApparelUtility</li>
+    </thingCategories>
+    <apparel>
+      <countsAsClothingForNudity>false</countsAsClothingForNudity>
+      <careIfWornByCorpse>false</careIfWornByCorpse>
+      <careIfDamaged>false</careIfDamaged>
+      <wearPerDay>0</wearPerDay>
+      <bodyPartGroups>
+        <li>Waist</li>
+      </bodyPartGroups>
+      <layers>
+        <li>Belt</li>
+      </layers>
+      <tags>
+        <li>BeltDefense</li>
+      </tags>
+      <developmentalStageFilter>Child, Adult</developmentalStageFilter>
+    </apparel>
+    <comps>
+      <li Class="RimArt.CompProperties_ApparelAbility">
+        <abilities>
+          <li>AG_DeployToyCar</li>
+        </abilities>
+      </li>
+    </comps>
+  </ThingDef>
+
+</Defs>
