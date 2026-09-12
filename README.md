@@ -28,7 +28,7 @@ piece of equipment, weapon trait, or earned origin.
 | **Biotech DLC** | **Yes** | Required by the five gene kits; several ability icons also reuse Biotech art |
 | **Harmony** (`brrainz.harmony`) | **Yes** | Patches `Thing.DoTick`, `Thing.TakeDamage`, `Projectile` flight and damage, and `Selector.SelectorOnGUI` |
 | **Odyssey DLC** | No | Weapon trait abilities are `MayRequire`d against it |
-| **Melee Animation** (`co.uk.epicguru.meleeanimation`) | No | Required for the Arcing weapon trait and its ability |
+| **Melee Animation** (`co.uk.epicguru.meleeanimation`) | No | Required for the Arcing weapon trait and its ability. Also supplies the grenade-throw animation: without it the frost bomb is thrown instantly and with no animation, which is how every thrown weapon in the base game works |
 | **Combat Extended** (`ceteam.combatextended`) | No | Supported, not required. Its rounds are not `Verse.Projectile`, so the three kits that act on rounds in flight reach them through a reflection bridge — see *Rounds in flight, and Combat Extended* |
 | **Unique Melee Weapons** (`shunter.uniquemeleeweapons`) | No | Melee weapon traits (resonance, arc) are `MayRequire`d against it |
 | Royalty / Ideology / Anomaly | No | Not referenced |
@@ -340,6 +340,30 @@ the longest remaining charge is the one that carries. Granted through
 `RimArt.CompProperties_ApparelAbility`, because no vanilla comp grants an `AbilityDef`
 from apparel: `CompEquippableAbility` replaces `CompEquippable` and works only on a
 weapon, and `CompApparelVerbOwner` grants a `Verb` rather than an ability.
+
+### Cryo bandolier → *frost bomb* (equipment)
+Throws a cryogenic bomb up to 12.9 cells. It bursts into a 2.9-cell freezing cloud:
+everything caught in it is stunned for up to three seconds and then thaws over about ten
+more, movement and manipulation climbing back as it goes.
+
+It does not choose sides. Your own pawns freeze in it exactly as well, frozen targets can
+still be shot, and bullets pass through the cloud normally — this is not the stasis belt.
+Effect falls off from the centre to 45% at the rim, large targets take proportionally less
+(a body-size-4 thrumbo takes about a third of what a human does), and mechanoids take 60%
+of that again — they seize rather than freeze.
+
+The damage is almost nothing. `AG_Cryo` does 5 damage, is resisted by heat armour, and has
+a *negative* explosion heat energy, so what the bomb leaves behind is a cold room rather
+than a crater. The seconds are the weapon.
+
+Industrial tech, behind the *cryogenic munitions* research (one step past machining),
+machining table, 40 steel / 4 industrial components / 30 chemfuel. Half-day cooldown, and
+the charge lives on the bandolier rather than on the wearer, exactly like the stasis belt.
+
+**Supply model is not settled.** `docs/tactical-ability-ideas.md` records a preference for
+XCOM-style replenishment after a sustained *safe period* — explicitly not a plain timer,
+and explicitly not something a lull in the same fight can reset. What is implemented is the
+plain timer, because the safe-period rule was left open in the doc and still is.
 
 ### Fold organ → *vent*, *fold*, *swallow*, *post*, *collapse* (archite)
 
@@ -1358,6 +1382,136 @@ crowd ability or a duel ability.
 Arc has no `aiCanUse`, like every ability in this mod. A hostile pawn wielding an Arcing weapon does nothing
 with it.
 
+## How the grenade throw is animated
+
+Melee Animation draws the arm. This mod supplies the clip, decides when the hand opens, and
+launches the grenade at that moment — and works without any of it.
+
+### It is a sidearm throw, because the camera looks straight down
+
+There is no vertical axis on screen: x is east, z is north, y is nothing but draw order. So a
+grenade cannot be raised overhead — moving it "up" sends it north, and the throw comes out as
+a dogleg. And a true overarm throw seen from directly above is foreshortened onto a line, since
+up is the one direction the camera cannot see.
+
+So the hand orbits the body in the horizontal plane: hip, back around the pawn's right, whip
+through the facing axis, release at full reach pointing at the target. The path is authored in
+polar — an angle and a reach — and sampled into position curves, because interpolating the
+cartesian points directly pulls the hand inward on fast segments (a chord between two points on
+a circle passes inside it) and the arm goes limp exactly where the throw is fastest.
+
+Their own clips read the same way once you stop seeing height in them: `Execution_Behead` swings
+z from −0.58 to +0.85 around a victim standing due east, which is a sword sweeping horizontally,
+not a sword being raised. They never animate scale either, so they have no way to show height
+and do not try.
+
+### The clip is generated, not exported
+
+Melee Animation's own guide animates in Unity and exports a json. The json is the real
+interface: `AnimDataSourceManager.ScanForDataFiles()` walks **every active mod** for an
+`Animations/` folder and indexes the `.json` files it finds by filename, so a mod ships a
+clip simply by having one. And the format is a flat bag of keyframe curves, which means it
+can be written directly.
+
+`make_throw_anim.py` does that. No Unity install, the keyframe table diffs as a keyframe
+table rather than as 40KB of regenerated json, and the release moment is a number in the
+script rather than a marker somebody has to go and look at.
+
+What is given up is the visual preview. Melee Animation ships one anyway: dev mode →
+*Melee Animation* → *Open Debugger* → *Animation Starter* plays any loaded clip on any pawn.
+
+### The rig
+
+Six parts: `BodyA` and its `HeadA`, an invisible `PawnAHolding` container carrying `HandA`,
+`HandB`, and the grenade. Two of those names are load-bearing and one is load-bearing by
+its **absence**:
+
+- `HandA` / `HandB` are looked up by name in `ConfigureHandsForPawn`, which supplies the
+  hand sprite, the pawn's own skin colour, and a glove if they are wearing one. Both must
+  exist even though only one throws: their off-hand lookup is guarded by the *main* hand's
+  null check, so a rig with `HandA` and no `HandB` throws inside their code. `HandB` hangs off
+  `BodyA` rather than off the throwing cluster, so it stays braced at the body instead of
+  orbiting on the end of the arm — parentage is free, since the lookup is by name only.
+- There is deliberately **no `ItemA`**. Their `AddPawn` claims that name and overwrites its
+  texture with whatever melee weapon the pawn is carrying — which on a grenade throw would
+  put a sword in the hand. The grenade part is called `Grenade`, so it is left alone.
+
+Hands also have to be asked for explicitly. Their visibility resolves as
+`animation ?? weapon ?? false`, and a thrower is holding no melee weapon, so the weapon term
+is null and the whole thing falls through to invisible. `<handsVisibility>` in the AnimDef
+is the only way a weaponless clip ever draws hands.
+
+### Four facings, three clips
+
+A pawn body is not drawn at a free angle. `DrawPawns` hands the pawn renderer a `Rot4` taken
+from the clip's own `PawnBody.Direction` curve, so the body snaps to one of RimWorld's four
+facing sprites. The arm and the grenade are ordinary sprites drawn at a real angle and can
+sweep anywhere — the body cannot. So the facing is **baked into the clip**, and one clip
+cannot serve every direction.
+
+East also covers west through horizontal mirroring. North and south have dedicated clips,
+with the body step and supporting hand rotated into the facing direction. The throwing hand
+passes behind the torso on the far side and in front on the near side:
+
+| Throw | Clip | Flags | Facing |
+|---|---|---|---|
+| East | `RimArt_ThrowGrenade` | — | Rot4.East |
+| West | `RimArt_ThrowGrenade` | `FlipX` | Rot4.West |
+| North | `RimArt_ThrowGrenadeNorth` | — | Rot4.North |
+| South | `RimArt_ThrowGrenadeSouth` | — | Rot4.South |
+
+`ThrowAnimation.TryThrow` selects the clip by dominant axis, with ties going to east/west.
+All three clips use the overhand poses in `make_throw_anim.py`. The throwing hand rises
+beside the head, sweeps over the crown, releases while raised, and follows through downward.
+Forward reach and shoulder placement follow the facing; screen-space lift stays upward in
+all three clips. The body leans back while loading and shifts forward through release.
+Release remains at tick 35 of 72; projectile flight is unchanged.
+
+Adding the south definition and runtime selection requires a full mod deployment and game
+restart. Subsequent curve-only edits can use `./deploy.sh anims` and the animation reload action.
+
+### The grenade leaves on a tick, not on an event
+
+Melee Animation has an event system, and this does not use it. The clip's length in ticks
+times `ThrowAnimation.ReleaseFraction` is the tick the hand opens; `MapComponent_Throws`
+parks the launch until then and `PendingThrow` fires it. A thrower who died, was downed or
+left the map during the wind-up drops the throw rather than launching from an empty cell.
+
+That fraction is single-sourced: `make_throw_anim.py` prints it every time it writes the
+clip, and it is the same number as the constant. Change the timing in the script and the
+script tells you what to change the constant to.
+
+Without Melee Animation, `TryThrow` returns false, the delay is zero, and the grenade is
+launched on the spot — which is what every thrown weapon in the base game does.
+
+### Two separate bridges to one mod
+
+`Source/RimArt/Arc/MeleeAnimation.cs` and `Source/RimArt/Throw/ThrowAnimation.cs` both talk
+to Melee Animation by reflection and neither uses the other. That is deliberate. The Arc
+bridge wants an execution — two pawns, a weapon filter, an outcome roll, a promotion pass —
+and switches itself off wholesale unless every one of those resolves. A throw needs none of
+it, and hanging it off the execution bridge's stricter gate would mean a change to their
+execution API silently costing this mod its grenade animation too.
+
+### Where it fails loudly instead of quietly
+
+Three things depend on their API and every one of them fails silently: the bridge resolves
+members by name, the AnimDef sets XML fields that DirectXml drops with a warning if renamed,
+and the generated json is deserialised straight onto their model classes — where Newtonsoft
+ignores a key it does not recognise, so a renamed curve loads happily and plays with the arm
+missing.
+
+So `Tests/OriginBlade/ApiChecks` states the whole contract independently, the same way the
+Combat Extended bridge contract is stated: the reflection targets, the AnimDef fields the XML
+sets, every key and curve name in the generated json, and the `BodyA`/`HandA`/`HandB`/
+`Grenade`-present, `ItemA`-absent rule. It is skipped, not failed, when their mod is not
+installed.
+
+This is not theoretical. The check caught, on its first run, that `AnimPartData` and
+`AnimPartOverrideData` carry **no namespace** — their `AnimData.cs` declares none, unlike
+every file around it — so the bridge's texture override had been binding `AM.Data.AnimPartData`
+and silently skipping itself.
+
 ## Layout
 
 ```
@@ -1370,9 +1524,13 @@ loadFolders.xml                  1.6 only
 1.6/Assemblies/RimArt.dll        built output, committed
 Textures/RimArt/Panoply/         blade sprites
 make_textures.py                 draws them; run it after editing, commit the PNGs
+Animations/                      Melee Animation clips, as json (one per facing pair)
+make_throw_anim.py               writes both throw clips; run it after editing, commit the json
+Patch_MeleeAnimation/1.6/Defs/   defs that name their types; loaded only when their mod is
 Languages/English/Keyed/         message strings
 Source/RimArt/                   C# source
 Source/RimArt/Rounds/            one round in flight, either engine's; the CE bridge
+Source/RimArt/Throw/             the throw animation bridge and the launch it delays
 ```
 
 Def prefix is `AG_`. Custom blade, crow and stasis art lives under `Textures/RimArt/`;
@@ -1396,6 +1554,14 @@ dotnet build Source/RimArt/RimArt.csproj \
 
 Harmony is referenced with `ExcludeAssets="runtime"` so `0Harmony.dll` is never copied
 into `Assemblies/` — shipping a second copy alongside the Harmony mod causes load errors.
+
+The generated art and the generated animation are both committed, so a plain `dotnet build`
+is enough. Re-run their scripts only after editing them:
+
+```bash
+python3 make_textures.py     # -> Textures/RimArt/**.png
+python3 make_throw_anim.py   # -> Animations/RimArt_ThrowGrenade{,North}.json
+```
 
 ## Validating
 

@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The thaw, and the only lasting thing a frost bomb does.
+
+       The hard freeze is a stun, applied in code, and it is over in three seconds. This is what
+       happens afterwards: a target that comes out of the cloud slow, clumsy, and worth shooting
+       at, getting better every second whether anyone helps them or not.
+
+       Severity is the thaw clock. It lands at the fraction of the blast the target caught and
+       sheds at 100/day, which is ten seconds from a centre hit to nothing at all. Those units
+       look absurd - severity per *day* on an effect measured in seconds - but severityPerDay is
+       the only shedding comp the game has, and 100 is simply what ten seconds costs in it.
+
+       Deliberately not isBad. It is not an injury, nothing treats it, and a doctor being told
+       to go and tend somebody who will be fine before they arrive is a bug. -->
+  <HediffDef>
+    <defName>AG_Frostbound</defName>
+    <label>frostbound</label>
+    <description>This person has been caught in a cryogenic burst. Muscle and joint fluid are still near freezing: they move slowly and cannot grip properly.\n\nIt passes on its own within seconds. Nothing needs to be done about it.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.62, 0.82, 0.95)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <maxSeverity>1</maxSeverity>
+    <isBad>false</isBad>
+    <comps>
+      <li Class="HediffCompProperties_SeverityPerDay">
+        <severityPerDay>-100</severityPerDay>
+      </li>
+    </comps>
+    <stages>
+      <!-- Clipped by the edge of the cloud. Cold hands, nothing more. -->
+      <li>
+        <label>chilled</label>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.15</offset>
+          </li>
+          <li>
+            <capacity>Manipulation</capacity>
+            <offset>-0.15</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <minSeverity>0.35</minSeverity>
+        <label>rimed</label>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.45</offset>
+          </li>
+          <li>
+            <capacity>Manipulation</capacity>
+            <offset>-0.40</offset>
+          </li>
+        </capMods>
+      </li>
+      <!-- Straight out of the cloud. Movement is most of the way gone and the hands are useless,
+           but this is the stage that lasts the least time - it sheds into 'rimed' in about three
+           seconds. Never a full stop: the stun already did that, and stacking a zero capacity on
+           top of it would leave a pawn frozen well after the ice has visibly gone. -->
+      <li>
+        <minSeverity>0.70</minSeverity>
+        <label>frozen through</label>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.75</offset>
+          </li>
+          <li>
+            <capacity>Manipulation</capacity>
+            <offset>-0.70</offset>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

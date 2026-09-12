@@ -246,6 +246,19 @@ expressed interest in XCOM-style replenishment without repeatedly buying or craf
 A reusable charge-based item with free replenishment after a sustained safe period at the
 colony is an alternative. Do not assume either supply model has been approved.
 
+**Implemented.** Shipped as the cryo bandolier (`AG_CryoBandolier`) granting the *frost bomb*
+ability, behind *cryogenic munitions* research. The burst is a stun that falls off from the
+centre plus an `AG_Frostbound` hediff that thaws movement and manipulation back over about ten
+seconds; large targets and mechanoids take proportionally less. Allies are caught. Bullets are
+unaffected, as specified. The throw plays a hand-thrown animation through Melee Animation when
+that mod is present, and launches instantly when it is not.
+
+Two things in this section are **not** implemented and remain open. The supply rule above is
+still a plain cooldown on the device, not a safe-period refill. And no Combat Extended-specific
+grenade flight or collision integration was written — the bomb is an ordinary `Projectile_Explosive`
+subclass, which CE already handles as a grenade, and the frost effect is applied at the real
+detonation point by the projectile itself.
+
 ### Mimic Beacon
 
 **Role:** draw hostile fire away from allies during retreat, reloading, flanking, or rescue.

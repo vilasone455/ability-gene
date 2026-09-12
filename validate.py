@@ -44,7 +44,11 @@ problems = []
 def fail(kind, where, detail):
     problems.append((kind, where, detail))
 
-my_files = sorted(glob.glob("1.6/Defs/**/*.xml", recursive=True))
+# Patch_* folders are defs that only load alongside some other mod (see loadFolders.xml).
+# They are checked the same as any other def: the game will not read them without that mod
+# installed, which means a typo in one is invisible until the one player who has both finds it.
+my_files = sorted(glob.glob("1.6/Defs/**/*.xml", recursive=True)
+                  + glob.glob("Patch_*/**/Defs/**/*.xml", recursive=True))
 
 # 1. well-formedness
 for f in my_files + sorted(glob.glob("Languages/**/*.xml", recursive=True)) + ["About/About.xml"]:

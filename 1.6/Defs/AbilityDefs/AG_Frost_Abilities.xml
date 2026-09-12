@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Throw the bomb.
+
+       Targets a cell, not a person, which is the whole difference between this and every attack
+       in the mod. What it is aimed at is a piece of ground somebody has to cross, and aiming it
+       at a pawn who is about to move is how it gets wasted.
+
+       The range matches the game's own grenades at 12.9, because the animation shows a person
+       throwing something by hand and a hand-thrown object that outranges a frag grenade would be
+       a lie told twice.
+
+       hostile is false and casterMustBeCapableOfViolence is true: it catches allies, so it is not
+       a hostile-only targeting job, but it is unambiguously a weapon and a pacifist does not get
+       to pretend otherwise. -->
+  <AbilityDef>
+    <defName>AG_FrostBomb</defName>
+    <label>frost bomb</label>
+    <description>Throw a cryogenic bomb. It bursts into a small freezing cloud: everything caught in it stops moving and cannot fight for a few seconds, then thaws back to normal on its own.\n\nIt does not choose sides. Your own people freeze in it exactly as well as the people you threw it at, and frozen targets can still be shot.</description>
+    <iconPath>RimArt/Frost/IconFrost</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>30000</cooldownTicksRange>
+    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
+    <hostile>false</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>false</displayGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>12.9</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>true</drawAimPie>
+      <soundCast>ThrowGrenade</soundCast>
+      <targetParams>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetSelf>false</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityFrostBomb">
+        <handTexture>RimArt/Frost/Bomb</handTexture>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

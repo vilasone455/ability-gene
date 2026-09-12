@@ -1,0 +1,154 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The cold itself.
+
+       Its own damage def rather than vanilla Frostbite, for two reasons. Frostbite's worker is
+       DamageWorker_Frostbite, which is written for a pawn slowly losing extremities to weather
+       and is not externalViolence - a raider frozen by a colonist would register as nobody's
+       fault. And its heat energy is the wrong sign: an explosion of cold that warms the room is
+       a bad joke, so this one cools the cells it touches instead.
+
+       The damage is small on purpose. A frost bomb that kills is a frag grenade with a blue
+       texture, and the whole point of the item is the seconds it buys rather than the bodies. -->
+  <DamageDef>
+    <defName>AG_Cryo</defName>
+    <label>cryogenic burst</label>
+    <workerClass>DamageWorker_AddInjury</workerClass>
+    <externalViolence>true</externalViolence>
+    <isExplosive>true</isExplosive>
+    <deathMessage>{0} has been frozen to death.</deathMessage>
+    <hediff>Frostbite</hediff>
+    <harmAllLayersUntilOutside>true</harmAllLayersUntilOutside>
+    <makesBlood>false</makesBlood>
+    <canUseDeflectMetalEffect>false</canUseDeflectMetalEffect>
+    <!-- Heat armour is what insulates, so heat armour is what resists this. -->
+    <armorCategory>Heat</armorCategory>
+    <defaultDamage>5</defaultDamage>
+    <defaultArmorPenetration>0.10</defaultArmorPenetration>
+    <buildingDamageFactorImpassable>0.1</buildingDamageFactorImpassable>
+    <buildingDamageFactorPassable>0.1</buildingDamageFactorPassable>
+    <plantDamageFactor>1</plantDamageFactor>
+    <explosionHeatEnergyPerCell>-16</explosionHeatEnergyPerCell>
+    <explosionSnowMeltAmount>0</explosionSnowMeltAmount>
+    <explosionCellFleck>BlastDry</explosionCellFleck>
+    <explosionColorCenter>(0.80, 0.94, 1.00)</explosionColorCenter>
+    <explosionColorEdge>(0.45, 0.70, 0.88)</explosionColorEdge>
+    <soundExplosion>Explosion_Stun</soundExplosion>
+  </DamageDef>
+
+  <!-- The grenade in flight.
+
+       Parented to the game's own BaseGrenadeProjectile so it arcs, casts a shadow and is
+       recognised as a grenade by everything that cares what a grenade is. A zero explosion delay
+       makes the bomb detonate and apply its frost burst on impact.
+
+       The freeze is not here. Projectile_FrostBomb runs it after the explosion resolves, because
+       the falloff, the body-size resistance and the thaw are all decisions no XML field can make. -->
+  <ThingDef ParentName="BaseGrenadeProjectile">
+    <defName>AG_FrostBombProjectile</defName>
+    <label>frost bomb</label>
+    <thingClass>RimArt.Projectile_FrostBomb</thingClass>
+    <graphicData>
+      <texPath>RimArt/Frost/Bomb</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.75</drawSize>
+    </graphicData>
+    <projectile>
+      <explosionRadius>2.9</explosionRadius>
+      <damageDef>AG_Cryo</damageDef>
+      <explosionDelay>0</explosionDelay>
+      <speed>13</speed>
+    </projectile>
+  </ThingDef>
+
+  <!-- The bandolier, and the only way to get a frost bomb.
+
+       A worn device rather than a stack of consumable grenades. The design note for this item
+       (docs/tactical-ability-ideas.md) records the user preferring XCOM-style replenishment over
+       buying and crafting bombs one at a time, so the bombs are not an item at all: the bandolier
+       makes one, and then has to wind up again.
+
+       The cooldown lives on the bandolier rather than on the wearer - see CompApparelAbility -
+       so passing it to a fresh pawn does not hand over a fresh charge.
+
+       Note for whoever picks this up next: the doc's preferred refill rule is a charge that comes
+       back after a sustained *safe period*, explicitly not a plain timer and explicitly not
+       something a lull in the same fight can reset. That is a custom mechanic and it is not what
+       this is; this is the plain timer. The rule was left open in the doc and is still open. -->
+  <ThingDef ParentName="ApparelBase">
+    <defName>AG_CryoBandolier</defName>
+    <label>cryo bandolier</label>
+    <description>A belt of cryogenic charge tubes and a compressor. Triggered, it assembles and primes a single frost bomb, which the wearer throws by hand.\n\nThe compressor takes most of a day to build pressure for the next one, and that pressure stays with the bandolier when it changes hands.</description>
+    <thingClass>Apparel</thingClass>
+    <graphicData>
+      <texPath>RimArt/Frost/Bandolier</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <techLevel>Industrial</techLevel>
+    <statBases>
+      <Mass>2</Mass>
+      <WorkToMake>14000</WorkToMake>
+      <Flammability>0.4</Flammability>
+      <EquipDelay>2</EquipDelay>
+      <Insulation_Cold>2</Insulation_Cold>
+    </statBases>
+    <thingSetMakerTags>
+      <li>RewardStandardQualitySuper</li>
+    </thingSetMakerTags>
+    <costList>
+      <Steel>40</Steel>
+      <ComponentIndustrial>4</ComponentIndustrial>
+      <Chemfuel>30</Chemfuel>
+    </costList>
+    <recipeMaker>
+      <unfinishedThingDef>UnfinishedBelt</unfinishedThingDef>
+      <researchPrerequisite>AG_CryogenicMunitions</researchPrerequisite>
+      <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+      <workSkill>Crafting</workSkill>
+      <effectWorking>Smith</effectWorking>
+      <soundWorking>Recipe_Machining</soundWorking>
+      <recipeUsers>
+        <li>TableMachining</li>
+      </recipeUsers>
+      <useIngredientsForColor>false</useIngredientsForColor>
+      <skillRequirements>
+        <Crafting>5</Crafting>
+      </skillRequirements>
+      <displayPriority>320</displayPriority>
+    </recipeMaker>
+    <tradeTags>
+      <li>ExoticMisc</li>
+    </tradeTags>
+    <thingCategories>
+      <li>ApparelUtility</li>
+    </thingCategories>
+    <apparel>
+      <countsAsClothingForNudity>false</countsAsClothingForNudity>
+      <careIfWornByCorpse>false</careIfWornByCorpse>
+      <careIfDamaged>false</careIfDamaged>
+      <wearPerDay>0</wearPerDay>
+      <!-- Waist/Belt, like every belt in the game, so it competes for the slot the stasis
+           belt and the shield belt are in rather than stacking beside them. Wearing one
+           utility device at a time is the choice these items are balanced around. -->
+      <bodyPartGroups>
+        <li>Waist</li>
+      </bodyPartGroups>
+      <layers>
+        <li>Belt</li>
+      </layers>
+      <tags>
+        <li>BeltDefense</li>
+      </tags>
+      <developmentalStageFilter>Child, Adult</developmentalStageFilter>
+    </apparel>
+    <comps>
+      <li Class="RimArt.CompProperties_ApparelAbility">
+        <abilities>
+          <li>AG_FrostBomb</li>
+        </abilities>
+      </li>
+    </comps>
+  </ThingDef>
+
+</Defs>

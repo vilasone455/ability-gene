@@ -576,6 +576,156 @@ def make_stasis_icon():
     finish(img, "Textures/RimArt/Stasis/IconStasis.png")
 
 
+# ---------------------------------------------------------------------------------------
+# Frost bomb. Shares the stasis palette above on purpose - both are cold, and a player who
+# has learned that pale blue in this mod means "stopped" should not have to learn it twice.
+# ---------------------------------------------------------------------------------------
+
+CANISTER      = (168, 178, 188)
+CANISTER_LIT  = (214, 224, 233)
+CANISTER_DARK = (104, 114, 126)
+WEBBING       = (72, 78, 72)
+WEBBING_LIT   = (98, 106, 96)
+
+
+def make_frost_bomb():
+    """
+    The bomb, drawn twice over: as the projectile in flight and as the thing in the pawn's
+    hand during the throw.
+
+    One texture for both because they are the same object, and because the hand is holding
+    it at roughly the size the projectile flies at. It is drawn upright rather than from
+    directly above, which breaks the game's top-down convention deliberately: the animation
+    puts this sprite in a fist for half a second and a foreshortened disc in a fist reads as
+    a coin.
+    """
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    cx = S // 2
+    body_top, body_bottom = px(34), px(100)
+    half = px(26)
+
+    # Canister: a rounded cylinder, lit down the left so it reads as round rather than flat.
+    d.rounded_rectangle([cx - half, body_top, cx + half, body_bottom],
+                        radius=px(20), fill=CANISTER_DARK)
+    d.rounded_rectangle([cx - half + px(3), body_top + px(3), cx + half - px(3), body_bottom - px(3)],
+                        radius=px(18), fill=CANISTER)
+    d.rounded_rectangle([cx - half + px(6), body_top + px(7), cx - px(4), body_bottom - px(9)],
+                        radius=px(12), fill=CANISTER_LIT)
+
+    # Frost band: the charge showing through the middle of the tube. This is the one part
+    # that has to survive the downsample, so it is the brightest thing in the sprite.
+    band_top, band_bottom = px(54), px(80)
+    d.rounded_rectangle([cx - half + px(4), band_top, cx + half - px(4), band_bottom],
+                        radius=px(8), fill=ICE_DEEP)
+    d.rounded_rectangle([cx - half + px(7), band_top + px(3), cx + half - px(7), band_bottom - px(3)],
+                        radius=px(6), fill=ICE)
+    d.rounded_rectangle([cx - half + px(10), band_top + px(5), cx - px(2), band_bottom - px(7)],
+                        radius=px(4), fill=ICE_LIGHT)
+
+    # Cap and lever, which is most of what says "grenade" at a glance.
+    d.rounded_rectangle([cx - px(15), px(22), cx + px(15), body_top + px(6)],
+                        radius=px(5), fill=EDGE)
+    d.rounded_rectangle([cx - px(12), px(25), cx + px(12), px(34)], radius=px(4), fill=STEEL)
+    d.rounded_rectangle([cx + px(10), px(26), cx + px(17), px(62)], radius=px(3), fill=STEEL_DARK)
+    d.ellipse([cx - px(9), px(14), cx + px(9), px(30)], outline=STEEL_LIGHT, width=px(4))
+
+    finish(img, "Textures/RimArt/Frost/Bomb.png")
+
+
+def make_frost_bandolier():
+    """
+    The worn item: a chest rig of charge tubes rather than a belt with a box on it.
+
+    Drawn across the sprite the way the stasis belt is, because that is what the apparel
+    slot expects, but three tubes instead of one housing - the difference between a device
+    that does something once and a device that holds ammunition.
+    """
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    cy = S // 2
+    half = px(19)
+
+    # Webbing, edge to edge, lit along the top.
+    d.rounded_rectangle([0, cy - half, S, cy + half], radius=px(6), fill=WEBBING)
+    d.rounded_rectangle([px(4), cy - half + px(3), S - px(4), cy - px(5)],
+                        radius=px(4), fill=WEBBING_LIT)
+
+    # Three charge tubes, upright, seated in the webbing. The outer two sit a little lower so
+    # the row reads as curving around a torso.
+    for i, (dx, drop) in enumerate(((-px(36), px(3)), (0, 0), (px(36), px(3)))):
+        x = S // 2 + dx
+        top = cy - px(26) + drop
+        bottom = cy + px(26) + drop
+        tw = px(13)
+
+        d.rounded_rectangle([x - tw, top, x + tw, bottom], radius=px(11), fill=CANISTER_DARK)
+        d.rounded_rectangle([x - tw + px(2), top + px(2), x + tw - px(2), bottom - px(2)],
+                            radius=px(10), fill=CANISTER)
+        d.rounded_rectangle([x - tw + px(4), top + px(5), x - px(2), bottom - px(6)],
+                            radius=px(6), fill=CANISTER_LIT)
+
+        # The cold showing through each tube.
+        d.rounded_rectangle([x - tw + px(3), cy - px(6) + drop, x + tw - px(3), cy + px(8) + drop],
+                            radius=px(4), fill=ICE_DEEP)
+        d.rounded_rectangle([x - tw + px(5), cy - px(4) + drop, x + tw - px(5), cy + px(6) + drop],
+                            radius=px(3), fill=ICE)
+
+        # Cap.
+        d.rounded_rectangle([x - px(8), top - px(5), x + px(8), top + px(4)],
+                            radius=px(3), fill=EDGE)
+
+    finish(img, "Textures/RimArt/Frost/Bandolier.png")
+
+
+def make_frost_icon():
+    """
+    The gizmo: a burst rather than a bomb.
+
+    The item is already drawn elsewhere; what the button has to say is what happens, which is
+    cold going outward and everything in it stopping. Six spokes and a bright core, with the
+    spokes stopped short of the rim so the shape stays open at 24 pixels.
+    """
+    import math
+
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    c = S // 2
+
+    glow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    g = ImageDraw.Draw(glow)
+    ring(g, c, c, px(54), ICE_MID + (120,), px(4))
+    ring(g, c, c, px(40), ICE_MID + (180,), px(5))
+    glow = glow.filter(ImageFilter.GaussianBlur(px(1.0)))
+    img.alpha_composite(glow)
+
+    d = ImageDraw.Draw(img)
+
+    # Six spokes with barbs, which is the shorthand every snowflake in every icon set uses.
+    for i in range(6):
+        a = math.radians(i * 60)
+        ux, uy = math.cos(a), math.sin(a)
+        x0, y0 = c + ux * px(12), c + uy * px(12)
+        x1, y1 = c + ux * px(52), c + uy * px(52)
+        d.line([(x0, y0), (x1, y1)], fill=ICE + (255,), width=px(7))
+
+        # Barbs, angled back toward the centre.
+        for t, length in ((0.58, px(14)), (0.82, px(10))):
+            bx, by = c + ux * px(52) * t, c + uy * px(52) * t
+            for side in (-40, 40):
+                b = a + math.radians(side)
+                d.line([(bx, by), (bx + math.cos(b) * length, by + math.sin(b) * length)],
+                       fill=ICE + (255,), width=px(5))
+
+    # Core last, over the spokes, so the icon has one bright point at any size.
+    d.ellipse([c - px(17), c - px(17), c + px(17), c + px(17)], fill=ICE_DEEP)
+    d.ellipse([c - px(12), c - px(12), c + px(12), c + px(12)], fill=ICE)
+    d.ellipse([c - px(9), c - px(9), c + px(3), c + px(3)], fill=ICE_LIGHT)
+
+    finish(img, "Textures/RimArt/Frost/IconFrost.png")
+
+
 if __name__ == "__main__":
     make_flying()
     make_planted()
@@ -586,3 +736,6 @@ if __name__ == "__main__":
     make_dispersal_icon()
     make_stasis_belt()
     make_stasis_icon()
+    make_frost_bomb()
+    make_frost_bandolier()
+    make_frost_icon()

@@ -139,6 +139,7 @@ namespace RimArt
                 Implant("Phase barrier", "AG_PhaseBarrier", "Brain", null),
 
                 new Kit { Label = "Stasis belt", Grant = GrantStasisBelt },
+                new Kit { Label = "Cryo bandolier (frost bomb)", Grant = GrantCryoBandolier },
 
                 WeaponTrait("Resonant weapon", "AG_WeaponResonance"),
                 WeaponTrait("Arcing weapon", "AG_WeaponArc"),
@@ -235,6 +236,34 @@ namespace RimArt
 
             Apparel belt = (Apparel)ThingMaker.MakeThing(def, GenStuff.DefaultStuffFor(def));
             pawn.apparel.Wear(belt, true, false);
+            return null;
+        }
+
+        // ----------------------------------------------------------------- cryo bandolier
+
+        /// <summary>
+        /// Wears the bandolier, with the frost bomb ready rather than on cooldown.
+        ///
+        /// The ready charge is the only thing here the real route does not do. CompApparelAbility
+        /// hands a fresh wearer whatever charge the device has left, and a bandolier that has just
+        /// been made has a full one - so this is what crafting one and putting it on produces,
+        /// without the half-day of waiting that the first cast would otherwise cost a test.
+        /// </summary>
+        private static string GrantCryoBandolier(Pawn pawn)
+        {
+            ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail("AG_CryoBandolier");
+            if (def == null) return "no ThingDef AG_CryoBandolier";
+            if (pawn.apparel == null) return "cannot wear apparel";
+            if (pawn.apparel.WornApparel.Any(worn => worn.def == def)) return "already wearing one";
+
+            FinishResearch("AG_CryogenicMunitions");
+
+            Apparel bandolier = (Apparel)ThingMaker.MakeThing(def, GenStuff.DefaultStuffFor(def));
+            pawn.apparel.Wear(bandolier, true, false);
+
+            AbilityDef bomb = DefDatabase<AbilityDef>.GetNamedSilentFail("AG_FrostBomb");
+            Ability granted = bomb == null ? null : pawn.abilities?.GetAbility(bomb, true);
+            granted?.ResetCooldown();
             return null;
         }
 

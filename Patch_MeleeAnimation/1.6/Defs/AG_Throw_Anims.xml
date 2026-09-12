@@ -1,0 +1,120 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The grenade throw, in three clips covering four facings.
+
+       This whole folder only exists when Melee Animation does - see loadFolders.xml - because
+       AM.AnimDef lives in their assembly and a def naming a class that is not loaded is a red
+       error on startup rather than a skipped def.
+
+       A pawn body is not drawn at a free angle. Their DrawPawns hands the pawn renderer a Rot4
+       taken from the clip's PawnBody.Direction, so the body snaps to one of RimWorld's four
+       facing sprites. The arm and the grenade are ordinary sprites drawn at a real angle and can
+       sweep anywhere, but the body cannot - which is why one clip cannot serve every direction.
+
+       East is mirrored horizontally for west. North and south each have their own clip,
+       with the step, supporting hand and draw depth authored for that facing.
+
+       The json is written by make_throw_anim.py in the mod root, not by the Unity editor their
+       tutorial describes. Their loader does not care which wrote it: AnimDataSourceManager
+       scans every active mod for an Animations folder and indexes what it finds by filename. -->
+  <AM.AnimDef>
+    <defName>AG_ThrowGrenade</defName>
+    <label>Throw: grenade</label>
+    <description>Throwing a grenade.</description>
+    <jobString>Throwing a grenade.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ThrowGrenade.json</data>
+
+    <cellData>
+      <li>
+        <type>PawnStart</type>
+        <position>(0, 0)</position>
+        <pawnIndex>0</pawnIndex>
+      </li>
+    </cellData>
+
+    <!-- Without this the pawn throws with invisible hands.
+
+         Melee Animation decides hand visibility in ConfigureHandsForPawn as
+         `animation ?? weapon ?? false`, and a thrower is not holding a melee weapon, so the
+         weapon term is null and the whole expression falls through to false. Saying it here is
+         the only way a weaponless animation ever draws hands. Their renderer still supplies the
+         hand sprite, the pawn's own skin colour, and a glove if the pawn is wearing one. -->
+    <handsVisibility>
+      <li>
+        <pawnIndex>0</pawnIndex>
+        <showMainHand>true</showMainHand>
+        <showAltHand>true</showAltHand>
+      </li>
+    </handsVisibility>
+
+    <!-- Not an execution, so there is no probability for a player to weight it against other
+         animations - it plays whenever the ability is cast or it does not play at all. -->
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+
+  <!-- North-facing throw, including its own hand layering. -->
+  <AM.AnimDef>
+    <defName>AG_ThrowGrenadeNorth</defName>
+    <label>Throw: grenade (north)</label>
+    <description>Throwing a grenade.</description>
+    <jobString>Throwing a grenade.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ThrowGrenadeNorth.json</data>
+
+    <cellData>
+      <li>
+        <type>PawnStart</type>
+        <position>(0, 0)</position>
+        <pawnIndex>0</pawnIndex>
+      </li>
+    </cellData>
+
+    <!-- Same reasoning as the east clip above. -->
+    <handsVisibility>
+      <li>
+        <pawnIndex>0</pawnIndex>
+        <showMainHand>true</showMainHand>
+        <showAltHand>true</showAltHand>
+      </li>
+    </handsVisibility>
+
+    <!-- Same as above. -->
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+
+  <!-- South-facing throw with the release in front of the pawn. -->
+  <AM.AnimDef>
+    <defName>AG_ThrowGrenadeSouth</defName>
+    <label>Throw: grenade (south)</label>
+    <description>Throwing a grenade.</description>
+    <jobString>Throwing a grenade.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ThrowGrenadeSouth.json</data>
+
+    <cellData>
+      <li>
+        <type>PawnStart</type>
+        <position>(0, 0)</position>
+        <pawnIndex>0</pawnIndex>
+      </li>
+    </cellData>
+
+    <!-- Same reasoning as the east clip above. -->
+    <handsVisibility>
+      <li>
+        <pawnIndex>0</pawnIndex>
+        <showMainHand>true</showMainHand>
+        <showAltHand>true</showAltHand>
+      </li>
+    </handsVisibility>
+
+    <!-- Same as above. -->
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+
+</Defs>

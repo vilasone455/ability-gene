@@ -3,5 +3,11 @@
   <v1.6>
     <li>/</li>
     <li>1.6</li>
+
+    <!-- Defs that name a type from another mod's assembly cannot sit in the ordinary Defs
+         folder. MayRequire on the node is not enough: the game resolves the def's class before
+         it reads the attribute, so an <AM.AnimDef> with Melee Animation absent is a load error
+         rather than a skipped node. A conditional folder is never read at all. -->
+    <li IfModActive="co.uk.epicguru.meleeanimation">Patch_MeleeAnimation/1.6</li>
   </v1.6>
 </loadFolders>
