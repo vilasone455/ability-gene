@@ -32,7 +32,7 @@ piece of equipment, weapon trait, or earned origin.
 | **Combat Extended** (`ceteam.combatextended`) | No | Supported, not required. Its rounds are not `Verse.Projectile`, so the three kits that act on rounds in flight reach them through a reflection bridge — see *Rounds in flight, and Combat Extended*. The frost bomb also gets CE stats and a CE melee tool from `Patch_CombatExtended/`, and stays reusable rather than becoming one-use ammo — see *The frost bomb under Combat Extended* |
 | **Unique Melee Weapons** (`shunter.uniquemeleeweapons`) | No | Melee weapon traits (resonance, arc) are `MayRequire`d against it |
 | Royalty / Ideology / Anomaly | No | Not referenced |
-| Any framework (VEF, EBSG, …) | No | — |
+| **Vanilla Expanded Framework** (`OskarPotocki.VanillaFactionsExpanded.Core`) | **Yes** | Shared framework available for future abilities; existing kits retain their current implementation |
 
 ## Abilities
 
@@ -1589,7 +1589,7 @@ and silently skipping itself.
 ## Layout
 
 ```
-About/About.xml                  metadata, Biotech + Harmony dependencies
+About/About.xml                  metadata, Biotech + Harmony + VEF dependencies
 loadFolders.xml                  1.6 only
 1.6/Defs/AbilityDefs/            AbilityDefs + AG_Genetic category
 1.6/Defs/GeneDefs/               GeneDefs, some MayRequire'd
@@ -1615,18 +1615,22 @@ the generated art and commit the resulting PNGs.
 
 ## Building
 
-Needs a .NET SDK; the game assemblies are referenced straight out of the install.
+Needs a .NET SDK and Vanilla Expanded Framework for RimWorld 1.6; assemblies are referenced from the local game and Workshop installs.
 
 ```bash
 dotnet build Source/RimArt/RimArt.csproj
 ```
 
-Output goes directly to `1.6/Assemblies/`. Override the game path if yours differs:
+Output goes directly to `1.6/Assemblies/`. Override the game and VEF paths if yours differ:
 
 ```bash
 dotnet build Source/RimArt/RimArt.csproj \
-  -p:RimWorldManaged="/path/to/RimWorld/RimWorldWin64_Data/Managed"
+  -p:RimWorldManaged="/path/to/RimWorld/RimWorldWin64_Data/Managed" \
+  -p:VEFAssemblies="/path/to/VanillaExpandedFramework/1.6/Assemblies"
 ```
+
+VEF is required and must load before RimArts. Its assembly uses `Private=false`, so the build
+does not bundle `VEF.dll`; it is supplied by the installed framework mod.
 
 Harmony is referenced with `ExcludeAssets="runtime"` so `0Harmony.dll` is never copied
 into `Assemblies/` — shipping a second copy alongside the Harmony mod causes load errors.

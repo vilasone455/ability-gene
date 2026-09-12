@@ -9,6 +9,12 @@
 
   <modDependencies>
     <li>
+      <packageId>OskarPotocki.VanillaFactionsExpanded.Core</packageId>
+      <displayName>Vanilla Expanded Framework</displayName>
+      <steamWorkshopUrl>https://steamcommunity.com/workshop/filedetails/?id=2023507013</steamWorkshopUrl>
+      <downloadUrl>https://github.com/Vanilla-Expanded/VanillaExpandedFramework</downloadUrl>
+    </li>
+    <li>
       <packageId>Ludeon.RimWorld.Biotech</packageId>
       <displayName>Biotech</displayName>
     </li>
@@ -23,6 +29,7 @@
   <loadAfter>
     <li>Ludeon.RimWorld</li>
     <li>brrainz.harmony</li>
+    <li>OskarPotocki.VanillaFactionsExpanded.Core</li>
     <li>Ludeon.RimWorld.Royalty</li>
     <li>Ludeon.RimWorld.Ideology</li>
     <li>Ludeon.RimWorld.Biotech</li>
@@ -42,5 +49,5 @@ The frost bomb is a thrown grenade that freezes everything it catches, friend an
 
 No psycasts and no separate magic system.
 
-Requires Biotech and Harmony. Optional support for Odyssey, Combat Extended, Melee Animation and Unique Melee Weapons.</description>
+Requires Biotech, Harmony and Vanilla Expanded Framework. Optional support for Odyssey, Combat Extended, Melee Animation and Unique Melee Weapons.</description>
 </ModMetaData>

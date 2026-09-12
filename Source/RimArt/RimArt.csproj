@@ -13,6 +13,7 @@
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <Deterministic>true</Deterministic>
     <RimWorldManaged Condition="'$(RimWorldManaged)' == ''">/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/RimWorldWin64_Data/Managed</RimWorldManaged>
+    <VEFAssemblies Condition="'$(VEFAssemblies)' == ''">/mnt/c/Program Files (x86)/Steam/steamapps/workshop/content/294100/2023507013/1.6/Assemblies</VEFAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +26,10 @@
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
       <HintPath>$(RimWorldManaged)/Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="VEF">
+      <HintPath>$(VEFAssemblies)/VEF.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
@@ -40,5 +45,10 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
+
+  <Target Name="CheckVEFAssembly" BeforeTargets="ResolveAssemblyReferences">
+    <Error Condition="!Exists('$(VEFAssemblies)/VEF.dll')"
+           Text="VEF.dll not found. Install Vanilla Expanded Framework or set -p:VEFAssemblies to its 1.6/Assemblies directory." />
+  </Target>
 
 </Project>
