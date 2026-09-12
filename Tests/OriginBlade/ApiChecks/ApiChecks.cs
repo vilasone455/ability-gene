@@ -347,7 +347,32 @@ static class ApiChecks
         if (projectile.Assembly.GetType("CombatExtended.LerpedTrajectoryWorker") == null)
             throw new Exception("CE bridge: CombatExtended.LerpedTrajectoryWorker is gone");
 
-        return $"Checked {expected.Count + 4} members of the Combat Extended bridge contract.";
+        int patchTypes = CheckCombatExtendedPatchTypes(projectile.Assembly);
+
+        return $"Checked {expected.Count + 4} members of the Combat Extended bridge contract "
+             + $"and {patchTypes} types named by the CE patch folder.";
+    }
+
+    /// <summary>
+    /// The CE types that Patch_CombatExtended names in XML rather than in code.
+    ///
+    /// A Class attribute that does not resolve is a red error at load for the player who has both
+    /// mods and silence for everybody else, which is exactly the failure this file exists to move
+    /// forward in time. The frost bomb patch is small on purpose - it gives the weapon CE's stats
+    /// and CE's melee tool and keeps this mod's own verb, because CE's verb casts what it spawns
+    /// to ProjectileCE and taking it would cost the throw animation - so there is exactly one
+    /// type to check here today. Add to the list when the patch names another.
+    /// </summary>
+    static int CheckCombatExtendedPatchTypes(Assembly ce)
+    {
+        string[] named = { "CombatExtended.ToolCE" };
+        foreach (string name in named)
+        {
+            if (ce.GetType(name) == null)
+                throw new Exception($"CE patch: {name} is gone, named by "
+                    + "Patch_CombatExtended/1.6/Patches/AG_Frost_CE.xml");
+        }
+        return named.Length;
     }
 
     /// <summary>The workshop copy, whichever folder Steam gave it. Null when CE is not there.</summary>

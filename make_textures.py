@@ -634,52 +634,6 @@ def make_frost_bomb():
     finish(img, "Textures/RimArt/Frost/Bomb.png")
 
 
-def make_frost_bandolier():
-    """
-    The worn item: a chest rig of charge tubes rather than a belt with a box on it.
-
-    Drawn across the sprite the way the stasis belt is, because that is what the apparel
-    slot expects, but three tubes instead of one housing - the difference between a device
-    that does something once and a device that holds ammunition.
-    """
-    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-
-    cy = S // 2
-    half = px(19)
-
-    # Webbing, edge to edge, lit along the top.
-    d.rounded_rectangle([0, cy - half, S, cy + half], radius=px(6), fill=WEBBING)
-    d.rounded_rectangle([px(4), cy - half + px(3), S - px(4), cy - px(5)],
-                        radius=px(4), fill=WEBBING_LIT)
-
-    # Three charge tubes, upright, seated in the webbing. The outer two sit a little lower so
-    # the row reads as curving around a torso.
-    for i, (dx, drop) in enumerate(((-px(36), px(3)), (0, 0), (px(36), px(3)))):
-        x = S // 2 + dx
-        top = cy - px(26) + drop
-        bottom = cy + px(26) + drop
-        tw = px(13)
-
-        d.rounded_rectangle([x - tw, top, x + tw, bottom], radius=px(11), fill=CANISTER_DARK)
-        d.rounded_rectangle([x - tw + px(2), top + px(2), x + tw - px(2), bottom - px(2)],
-                            radius=px(10), fill=CANISTER)
-        d.rounded_rectangle([x - tw + px(4), top + px(5), x - px(2), bottom - px(6)],
-                            radius=px(6), fill=CANISTER_LIT)
-
-        # The cold showing through each tube.
-        d.rounded_rectangle([x - tw + px(3), cy - px(6) + drop, x + tw - px(3), cy + px(8) + drop],
-                            radius=px(4), fill=ICE_DEEP)
-        d.rounded_rectangle([x - tw + px(5), cy - px(4) + drop, x + tw - px(5), cy + px(6) + drop],
-                            radius=px(3), fill=ICE)
-
-        # Cap.
-        d.rounded_rectangle([x - px(8), top - px(5), x + px(8), top + px(4)],
-                            radius=px(3), fill=EDGE)
-
-    finish(img, "Textures/RimArt/Frost/Bandolier.png")
-
-
 def make_frost_icon():
     """
     The gizmo: a burst rather than a bomb.
@@ -737,5 +691,4 @@ if __name__ == "__main__":
     make_stasis_belt()
     make_stasis_icon()
     make_frost_bomb()
-    make_frost_bandolier()
     make_frost_icon()

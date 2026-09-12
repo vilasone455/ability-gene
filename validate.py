@@ -15,6 +15,9 @@ runtime, in the order they have actually bitten this project:
      without that DLC)
   5. Custom Class= values that do not exist in the built assembly
   6. Comp classes a def ends up with twice once inheritance is applied
+  6b. Two ThingDef.ConfigErrors rules the game enforces at load: an explosive projectile
+     verb must declare a forcedMissRadius (and a non-explosive one must not), and a def
+     carrying CompProperties_Explosive must tick Normal
   7. Translate keys used in C# but not defined in Languages/
   8. Concrete abilities with zero or multiple acquisition sources
 
@@ -50,8 +53,15 @@ def fail(kind, where, detail):
 my_files = sorted(glob.glob("1.6/Defs/**/*.xml", recursive=True)
                   + glob.glob("Patch_*/**/Defs/**/*.xml", recursive=True))
 
+# PatchOperation files, which are not defs and so are checked for well-formedness only. Worth
+# listing separately rather than skipping: a Patch_* folder is read by the game only when some
+# other mod is present, so a broken one is invisible here and loud for the player who has both.
+patch_files = sorted(f for f in glob.glob("Patch_*/**/Patches/**/*.xml", recursive=True)
+                     if f not in my_files)
+
 # 1. well-formedness
-for f in my_files + sorted(glob.glob("Languages/**/*.xml", recursive=True)) + ["About/About.xml"]:
+for f in (my_files + patch_files + sorted(glob.glob("Languages/**/*.xml", recursive=True))
+          + ["About/About.xml"]):
     try:
         ET.parse(f)
     except Exception as e:
@@ -202,6 +212,86 @@ for entry in all_defs:
                  + " -- a child's <comps> merges with its parent's, it does not replace it")
         seen.add(c)
 
+# 6b. Two rules the game enforces in ThingDef.ConfigErrors that nothing above would catch.
+#    Both were found the hard way - by a red error at load, after a build, a validator run and
+#    an API check pass had all come back clean - and both are the same shape: a def that is
+#    well-formed, resolves every name it uses, and is still refused by the game.
+#
+#    Only defs whose pieces are all visible from here are judged. A projectile inherited from a
+#    vanilla abstract, or a thingClass this file cannot see, is skipped rather than guessed at.
+EXPLOSIVE_PROJECTILE_CLASSES = ("Projectile_Explosive", "Projectile_DoomsdayRocket")
+
+things_by_name, things_by_defname = {}, {}
+for f in my_files:
+    for el in ET.parse(f).getroot():
+        if el.tag != "ThingDef": continue
+        rec = {"el": el, "file": f, "parent": el.get("ParentName"),
+               "label": el.get("Name") or (el.findtext("defName") or "").strip()}
+        if el.get("Name"): things_by_name[el.get("Name")] = rec
+        defname = (el.findtext("defName") or "").strip()
+        if defname: things_by_defname[defname] = rec
+
+def _chain(rec):
+    """The def and every ancestor of it declared in this mod, nearest first."""
+    seen = set()
+    while rec is not None:
+        yield rec
+        parent = rec["parent"]
+        if parent is None or parent in seen: return
+        seen.add(parent)
+        rec = things_by_name.get(parent)
+
+def _inherited(rec, tag):
+    for node in _chain(rec):
+        value = node["el"].findtext(tag)
+        if value is not None and value.strip(): return value.strip()
+    return None
+
+def _comp_classes(rec):
+    found = []
+    for node in _chain(rec):
+        comps = node["el"].find("comps")
+        if comps is not None:
+            found += [c.get("Class") for c in comps if c.get("Class")]
+    return found
+
+def _explosive(rec):
+    if any(c and "CompProperties_Explosive" in c for c in _comp_classes(rec)): return True
+    thing_class = _inherited(rec, "thingClass")
+    if thing_class is None: return None
+    return any(k in thing_class for k in EXPLOSIVE_PROJECTILE_CLASSES)
+
+for defname, rec in sorted(things_by_defname.items()):
+    # "CompExplosive requires Normal ticker type" - a comp that counts down a wick cannot be
+    # ticked rarely, and tickerType defaults to Never.
+    if any(c and "CompProperties_Explosive" in c for c in _comp_classes(rec)):
+        if _inherited(rec, "tickerType") != "Normal":
+            fail("config error", rec["file"], defname
+                 + " has CompProperties_Explosive but does not declare <tickerType>Normal</tickerType>"
+                 + " -- the game refuses any other ticker for it")
+
+    # "explosive projectiles and only explosive projectiles should have forced miss enabled",
+    # which is an equality rather than a minimum: a forcedMissRadius on a non-explosive verb is
+    # refused just as loudly as its absence on an explosive one.
+    verbs = rec["el"].find("verbs")
+    if verbs is None: continue
+    for index, li in enumerate(verbs):
+        projectile = (li.findtext("defaultProjectile") or "").strip()
+        if not projectile: continue
+        target = things_by_defname.get(projectile)
+        if target is None: continue
+        explodes = _explosive(target)
+        if explodes is None: continue
+        try:
+            radius = float((li.findtext("forcedMissRadius") or "0").strip())
+        except ValueError:
+            continue
+        if (radius > 0) != explodes:
+            fail("config error", rec["file"], defname + " verb " + str(index)
+                 + (" launches explosive " + projectile + " but has no forcedMissRadius"
+                    if explodes else
+                    " has a forcedMissRadius but " + projectile + " is not explosive"))
+
 # 7. translate keys
 used = set()
 for f in glob.glob("Source/**/*.cs", recursive=True):
@@ -247,4 +337,5 @@ if problems:
     sys.exit(1)
 
 print("OK -- " + str(len(my_files)) + " def files, " + str(len(declared)) +
-      " abstract names, " + str(len(mine)) + " defNames, no problems")
+      " abstract names, " + str(len(mine)) + " defNames, " + str(len(patch_files)) +
+      " patch files, no problems")

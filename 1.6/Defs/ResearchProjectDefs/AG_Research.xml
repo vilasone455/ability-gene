@@ -18,14 +18,14 @@
     <researchViewY>2.60</researchViewY>
   </ResearchProjectDef>
 
-  <!-- Sits past machining, because the bandolier is a machined thing rather than an exotic one:
+  <!-- Sits past machining, because the bomb is a machined thing rather than an exotic one:
        compressed gas, tubing and a timer. Industrial tier and a plain research bench keep the
        frost bomb reachable in the part of a game where being outnumbered is still the problem it
        solves, which is the whole reason to have it. -->
   <ResearchProjectDef>
     <defName>AG_CryogenicMunitions</defName>
     <label>cryogenic munitions</label>
-    <description>Build a wearable charge compressor that assembles cryogenic bombs. The burst does almost no damage; what it does is stop everything standing in it, friend and enemy alike, for long enough to flank, reload or drag somebody out.</description>
+    <description>Build throwable cryogenic charges. The burst does almost no damage; what it does is stop everything standing in it, friend and enemy alike, for long enough to flank, reload or drag somebody out.</description>
     <baseCost>1400</baseCost>
     <techLevel>Industrial</techLevel>
     <prerequisites>

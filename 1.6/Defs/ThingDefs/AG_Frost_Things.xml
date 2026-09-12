@@ -10,11 +10,16 @@
        a bad joke, so this one cools the cells it touches instead.
 
        The damage is small on purpose. A frost bomb that kills is a frag grenade with a blue
-       texture, and the whole point of the item is the seconds it buys rather than the bodies. -->
+       texture, and the whole point of the item is the seconds it buys rather than the bodies.
+
+       The freeze hangs off this def rather than off the projectile that delivers it. Anything
+       that explodes as AG_Cryo freezes what it touches - a thrown bomb, or a rack of them
+       cooking off in a fire - and, more to the point, the grenade can then be whatever class the
+       loaded mods want it to be. See DamageWorker_Cryo. -->
   <DamageDef>
     <defName>AG_Cryo</defName>
     <label>cryogenic burst</label>
-    <workerClass>DamageWorker_AddInjury</workerClass>
+    <workerClass>RimArt.DamageWorker_Cryo</workerClass>
     <externalViolence>true</externalViolence>
     <isExplosive>true</isExplosive>
     <deathMessage>{0} has been frozen to death.</deathMessage>
@@ -41,14 +46,16 @@
 
        Parented to the game's own BaseGrenadeProjectile so it arcs, casts a shadow and is
        recognised as a grenade by everything that cares what a grenade is. A zero explosion delay
-       makes the bomb detonate and apply its frost burst on impact.
+       makes the bomb detonate on impact.
 
-       The freeze is not here. Projectile_FrostBomb runs it after the explosion resolves, because
-       the falloff, the body-size resistance and the thaw are all decisions no XML field can make. -->
+       thingClass is stated rather than inherited, and that line is load-bearing under Combat
+       Extended: their patch rewrites BaseGrenadeProjectile's thingClass to ProjectileCE_Explosive,
+       and a child that names its own class keeps it. Verb_ThrowFrostBomb spawns a Verse.Projectile,
+       and CE's projectile is not one - so the two have to agree, and this is where they do. -->
   <ThingDef ParentName="BaseGrenadeProjectile">
     <defName>AG_FrostBombProjectile</defName>
     <label>frost bomb</label>
-    <thingClass>RimArt.Projectile_FrostBomb</thingClass>
+    <thingClass>Projectile_Explosive</thingClass>
     <graphicData>
       <texPath>RimArt/Frost/Bomb</texPath>
       <graphicClass>Graphic_Single</graphicClass>
@@ -62,91 +69,116 @@
     </projectile>
   </ThingDef>
 
-  <!-- The bandolier, and the only way to get a frost bomb.
+  <!-- The bomb, as a thing a pawn carries and throws.
 
-       A worn device rather than a stack of consumable grenades. The design note for this item
-       (docs/tactical-ability-ideas.md) records the user preferring XCOM-style replenishment over
-       buying and crafting bombs one at a time, so the bombs are not an item at all: the bandolier
-       makes one, and then has to wind up again.
+       A weapon, not an ability. It was an ability granted by a worn bandolier, which meant a
+       grenade that appeared in the ability bar with a cooldown ring on it and behaved like a
+       psycast - so it is equipped, aimed and thrown like the game's own grenades instead. The
+       bandolier is gone; this is the item, and the only thing that grants it is crafting one.
 
-       The cooldown lives on the bandolier rather than on the wearer - see CompApparelAbility -
-       so passing it to a fresh pawn does not hand over a fresh charge.
+       Reusable rather than consumed, exactly like every grenade in the base game: the tubes hold
+       charge and the compressor builds the next bomb between throws, which is what the cooldown
+       below is. That stays true with Combat Extended loaded, where hand grenades are normally
+       one-use ammo - see Patch_CombatExtended for why this one is not.
 
-       Note for whoever picks this up next: the doc's preferred refill rule is a charge that comes
-       back after a sustained *safe period*, explicitly not a plain timer and explicitly not
-       something a lull in the same fight can reset. That is a custom mechanic and it is not what
-       this is; this is the plain timer. The rule was left open in the doc and is still open. -->
-  <ThingDef ParentName="ApparelBase">
-    <defName>AG_CryoBandolier</defName>
-    <label>cryo bandolier</label>
-    <description>A belt of cryogenic charge tubes and a compressor. Triggered, it assembles and primes a single frost bomb, which the wearer throws by hand.\n\nThe compressor takes most of a day to build pressure for the next one, and that pressure stays with the bandolier when it changes hands.</description>
-    <thingClass>Apparel</thingClass>
+       No AI weapon tags. Nothing in this mod is handed to raiders, and a stun this cheap in the
+       hands of a siege is not a fight, so AG_FrostBomb appears in no pawn kind's gear. -->
+  <ThingDef ParentName="BaseMakeableGrenade">
+    <defName>AG_FrostBomb</defName>
+    <label>frost bomb</label>
+    <description>A cryogenic charge in a throwable tube. It bursts into a small freezing cloud: everything caught in it stops moving and cannot fight for a few seconds, then thaws back to normal on its own.\n\nIt does not choose sides. Your own people freeze in it exactly as well as the people you threw it at, and frozen targets can still be shot. The compressor rebuilds the charge between throws, so the tube is never used up.</description>
     <graphicData>
-      <texPath>RimArt/Frost/Bandolier</texPath>
+      <texPath>RimArt/Frost/Bomb</texPath>
       <graphicClass>Graphic_Single</graphicClass>
     </graphicData>
+    <uiIconPath>RimArt/Frost/IconFrost</uiIconPath>
+    <uiIconScale>1.1</uiIconScale>
+    <soundInteract>Interact_Grenade</soundInteract>
     <techLevel>Industrial</techLevel>
+    <!-- Required by the CompProperties_Explosive below, which refuses any other ticker: a comp
+         that counts down a wick cannot be ticked rarely. The game says so at load - "CompExplosive
+         requires Normal ticker type" - and the vanilla grenades carry the same line. -->
+    <tickerType>Normal</tickerType>
     <statBases>
-      <Mass>2</Mass>
-      <WorkToMake>14000</WorkToMake>
-      <Flammability>0.4</Flammability>
-      <EquipDelay>2</EquipDelay>
-      <Insulation_Cold>2</Insulation_Cold>
+      <Mass>1</Mass>
+      <!-- Six seconds between throws, against 2.66 for a frag grenade.
+
+           Two things set this floor and they agree. The freeze is a hard stun, and an
+           infinitely reusable stun on a short timer is a chain-lock rather than a tool - the
+           item is meant to buy seconds, not to remove somebody from the fight. And the throw
+           animation is 72 ticks long with the hand opening at tick 35, so a cooldown shorter
+           than 1.2s would let a pawn walk out of the stance while the arm is still coming
+           round. Six is comfortably past both. -->
+      <RangedWeapon_Cooldown>6</RangedWeapon_Cooldown>
+      <WorkToMake>9000</WorkToMake>
+      <Flammability>0.6</Flammability>
     </statBases>
-    <thingSetMakerTags>
-      <li>RewardStandardQualitySuper</li>
-    </thingSetMakerTags>
     <costList>
-      <Steel>40</Steel>
-      <ComponentIndustrial>4</ComponentIndustrial>
-      <Chemfuel>30</Chemfuel>
+      <Steel>20</Steel>
+      <ComponentIndustrial>2</ComponentIndustrial>
+      <Chemfuel>40</Chemfuel>
     </costList>
     <recipeMaker>
-      <unfinishedThingDef>UnfinishedBelt</unfinishedThingDef>
       <researchPrerequisite>AG_CryogenicMunitions</researchPrerequisite>
-      <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
-      <workSkill>Crafting</workSkill>
-      <effectWorking>Smith</effectWorking>
-      <soundWorking>Recipe_Machining</soundWorking>
-      <recipeUsers>
-        <li>TableMachining</li>
-      </recipeUsers>
-      <useIngredientsForColor>false</useIngredientsForColor>
       <skillRequirements>
         <Crafting>5</Crafting>
       </skillRequirements>
       <displayPriority>320</displayPriority>
     </recipeMaker>
+    <thingCategories>
+      <li>Grenades</li>
+    </thingCategories>
     <tradeTags>
       <li>ExoticMisc</li>
     </tradeTags>
-    <thingCategories>
-      <li>ApparelUtility</li>
-    </thingCategories>
-    <apparel>
-      <countsAsClothingForNudity>false</countsAsClothingForNudity>
-      <careIfWornByCorpse>false</careIfWornByCorpse>
-      <careIfDamaged>false</careIfDamaged>
-      <wearPerDay>0</wearPerDay>
-      <!-- Waist/Belt, like every belt in the game, so it competes for the slot the stasis
-           belt and the shield belt are in rather than stacking beside them. Wearing one
-           utility device at a time is the choice these items are balanced around. -->
-      <bodyPartGroups>
-        <li>Waist</li>
-      </bodyPartGroups>
-      <layers>
-        <li>Belt</li>
-      </layers>
-      <tags>
-        <li>BeltDefense</li>
-      </tags>
-      <developmentalStageFilter>Child, Adult</developmentalStageFilter>
-    </apparel>
+    <smeltable>true</smeltable>
+    <verbs>
+      <li>
+        <label>throw frost bomb</label>
+        <verbClass>RimArt.Verb_ThrowFrostBomb</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <!-- Matches the game's own grenades. The animation shows a person throwing something by
+             hand, and a hand-thrown object that outranges a frag grenade would be a lie told
+             twice. -->
+        <range>12.9</range>
+        <!-- Matches the frag grenade, and is not optional: ThingDef error checking requires a
+             forced miss radius on a verb that launches an explosive projectile and refuses one
+             on a verb that does not. Verb_ThrowFrostBomb therefore reproduces the scatter rather
+             than declaring a number it ignores. It is gentler than it looks - the engine's own
+             falloff drops it to nothing inside three cells and to half inside five, so only a
+             throw near the edge of range really wanders. -->
+        <forcedMissRadius>1.9</forcedMissRadius>
+        <warmupTime>0.8</warmupTime>
+        <noiseRadius>4</noiseRadius>
+        <!-- Never thrown on the pawn's own initiative. Pawn.TryGetAttackVerb skips a
+             manual-cast verb while its owner is sitting in Wait_Combat, which is what a drafted
+             pawn auto-acquiring targets is doing, so the bomb goes only where the player throws
+             it. On a weapon that freezes allies as readily as enemies, a colonist who decides
+             for themselves to lob one into their own firing line is not a feature. Explicit
+             orders are unaffected. -->
+        <onlyManualCast>true</onlyManualCast>
+        <soundCast>ThrowGrenade</soundCast>
+        <targetParams>
+          <canTargetLocations>true</canTargetLocations>
+          <canTargetPawns>true</canTargetPawns>
+          <canTargetAnimals>true</canTargetAnimals>
+          <canTargetMechs>true</canTargetMechs>
+          <canTargetBuildings>false</canTargetBuildings>
+          <canTargetSelf>false</canTargetSelf>
+        </targetParams>
+        <defaultProjectile>AG_FrostBombProjectile</defaultProjectile>
+        <rangedFireRulepack>Combat_RangedFire_Thrown</rangedFireRulepack>
+      </li>
+    </verbs>
     <comps>
-      <li Class="RimArt.CompProperties_ApparelAbility">
-        <abilities>
-          <li>AG_FrostBomb</li>
-        </abilities>
+      <!-- A bomb in a fire cooks off, and freezes the room when it does. The same damage def
+           carries the burst, so a rack of these going up in a warehouse blast reads exactly like
+           a thrown one - which is the behaviour a player expects and the reason the freeze was
+           moved onto the damage in the first place. -->
+      <li Class="CompProperties_Explosive">
+        <explosiveRadius>2.9</explosiveRadius>
+        <explosiveDamageType>AG_Cryo</explosiveDamageType>
+        <requiredDamageTypeToExplode>Flame</requiredDamageTypeToExplode>
       </li>
     </comps>
   </ThingDef>

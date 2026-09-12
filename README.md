@@ -29,7 +29,7 @@ piece of equipment, weapon trait, or earned origin.
 | **Harmony** (`brrainz.harmony`) | **Yes** | Patches `Thing.DoTick`, `Thing.TakeDamage`, `Projectile` flight and damage, and `Selector.SelectorOnGUI` |
 | **Odyssey DLC** | No | Weapon trait abilities are `MayRequire`d against it |
 | **Melee Animation** (`co.uk.epicguru.meleeanimation`) | No | Required for the Arcing weapon trait and its ability. Also supplies the grenade-throw animation: without it the frost bomb is thrown instantly and with no animation, which is how every thrown weapon in the base game works |
-| **Combat Extended** (`ceteam.combatextended`) | No | Supported, not required. Its rounds are not `Verse.Projectile`, so the three kits that act on rounds in flight reach them through a reflection bridge — see *Rounds in flight, and Combat Extended* |
+| **Combat Extended** (`ceteam.combatextended`) | No | Supported, not required. Its rounds are not `Verse.Projectile`, so the three kits that act on rounds in flight reach them through a reflection bridge — see *Rounds in flight, and Combat Extended*. The frost bomb also gets CE stats and a CE melee tool from `Patch_CombatExtended/`, and stays reusable rather than becoming one-use ammo — see *The frost bomb under Combat Extended* |
 | **Unique Melee Weapons** (`shunter.uniquemeleeweapons`) | No | Melee weapon traits (resonance, arc) are `MayRequire`d against it |
 | Royalty / Ideology / Anomaly | No | Not referenced |
 | Any framework (VEF, EBSG, …) | No | — |
@@ -341,10 +341,11 @@ the longest remaining charge is the one that carries. Granted through
 from apparel: `CompEquippableAbility` replaces `CompEquippable` and works only on a
 weapon, and `CompApparelVerbOwner` grants a `Verb` rather than an ability.
 
-### Cryo bandolier → *frost bomb* (equipment)
-Throws a cryogenic bomb up to 12.9 cells. It bursts into a 2.9-cell freezing cloud:
-everything caught in it is stunned for up to three seconds and then thaws over about ten
-more, movement and manipulation climbing back as it goes.
+### Frost bomb (weapon)
+A thrown grenade, equipped in the weapon slot and aimed like the game's own. Range 12.9
+cells; it bursts into a freezing cloud that stuns everything caught in it for up to three
+seconds and then thaws over about ten more, movement and manipulation climbing back as it
+goes.
 
 It does not choose sides. Your own pawns freeze in it exactly as well, frozen targets can
 still be shot, and bullets pass through the cloud normally — this is not the stasis belt.
@@ -352,18 +353,59 @@ Effect falls off from the centre to 45% at the rim, large targets take proportio
 (a body-size-4 thrumbo takes about a third of what a human does), and mechanoids take 60%
 of that again — they seize rather than freeze.
 
+The freeze reaches 3.4 cells, half a cell further than the 2.9-cell blast, which is why
+`Verb_ThrowFrostBomb` overrides `HighlightFieldRadiusAroundTarget`: the ring drawn under the
+cursor is the cold, not the bang, because the cold is the part that catches your own line.
+
 The damage is almost nothing. `AG_Cryo` does 5 damage, is resisted by heat armour, and has
 a *negative* explosion heat energy, so what the bomb leaves behind is a cold room rather
 than a crater. The seconds are the weapon.
 
-Industrial tech, behind the *cryogenic munitions* research (one step past machining),
-machining table, 40 steel / 4 industrial components / 30 chemfuel. Half-day cooldown, and
-the charge lives on the bandolier rather than on the wearer, exactly like the stasis belt.
+It misses like a grenade, at `forcedMissRadius` 1.9 — the same as a frag. That is not a
+balance choice: `ThingDef.ConfigErrors` requires a forced miss radius on a verb that launches
+an explosive projectile and refuses one on a verb that does not, so the options were to
+declare a number and not honour it or to scatter for real. `Verb_ThrowFrostBomb.ThrownAt`
+scatters for real, reusing the engine's own falloff — nothing inside three cells, half inside
+five, four fifths inside seven — so a bomb lobbed into the next room lands where you put it
+and only a throw near the edge of range wanders.
 
-**Supply model is not settled.** `docs/tactical-ability-ideas.md` records a preference for
-XCOM-style replenishment after a sustained *safe period* — explicitly not a plain timer,
-and explicitly not something a lull in the same fight can reset. What is implemented is the
-plain timer, because the safe-period rule was left open in the doc and still is.
+Reusable, like every grenade in the base game — the tubes hold charge and the compressor
+builds the next bomb between throws. The balance lever is a six-second `RangedWeapon_Cooldown`
+against 2.66 for a frag grenade, and it is long for two independent reasons that agree: an
+infinitely reusable *stun* on a short timer is a chain-lock rather than a tool, and the throw
+animation runs 72 ticks with the hand opening at tick 35, so anything under 1.2 s would let
+the pawn walk out of the cooldown stance mid-swing. **1.2 s is a floor, not a tuning knob.**
+
+Industrial tech, behind the *cryogenic munitions* research (one step past machining),
+machining table, 20 steel / 2 industrial components / 40 chemfuel. It carries no AI weapon
+tags, so no raider is ever generated holding one.
+
+It was an ability granted by a worn cryo bandolier until it became a weapon; the bandolier
+and `AG_FrostBomb`'s `AbilityDef` are both gone. `CompProperties_ApparelAbility` above stays,
+because the stasis belt still uses it.
+
+**Supply model, resolved differently.** `docs/tactical-ability-ideas.md` records a preference
+for XCOM-style replenishment after a sustained *safe period*. That is moot now: a reusable
+grenade has nothing to replenish. The doc's underlying objection — not wanting to buy or craft
+bombs one at a time — is satisfied by the item never being consumed.
+
+### Where the freeze lives
+On the `DamageDef`, not on the projectile. `RimArt.DamageWorker_Cryo` overrides
+`ExplosionStart` and calls `FrostBurst.At`, so *anything* that explodes as `AG_Cryo` freezes
+what it touches — a thrown bomb, or a rack of them cooking off in a warehouse fire through
+`CompProperties_Explosive`.
+
+That started as a Combat Extended requirement and turned out to be the better design
+regardless. CE's verb casts what it spawns straight to `ProjectileCE`:
+
+```csharp
+protected virtual ProjectileCE SpawnProjectile()
+    => (ProjectileCE)ThingMaker.MakeThing(Projectile, null);
+```
+
+so a `Projectile_Explosive` subclass of ours can never be a projectile CE throws. Hanging the
+freeze on the damage unties the effect from the delivery, and `ExplosionStart` fires once per
+explosion — a per-cell hook would have frozen a pawn once for every cell it stands in.
 
 ### Fold organ → *vent*, *fold*, *swallow*, *post*, *collapse* (archite)
 
@@ -738,6 +780,38 @@ So the catch is now measured in ticks of the round's own flight rather than in c
 the same twenty-one ticks for every round in the game. See *The catch is measured in ticks, not
 in cells* above; the change is not CE-specific and applies in a vanilla game too, where it also
 means a round is caught while it is still coming rather than once it is already close.
+
+### The frost bomb under Combat Extended
+
+The frost bomb is a weapon rather than a round in flight, so it does not use the reflection
+bridge above. Its CE support is a patch folder, and the interesting part is what the folder
+does *not* do.
+
+CE turns every hand grenade into ammo: `Class="CombatExtended.AmmoDef"`, `thingClass`
+`AmmoThing`, `stackLimit` 75, and `Verb_ShootCEOneUse`, whose `SelfConsume()` destroys the
+grenade you just threw and equips the next one out of the pack. The frost bomb stays reusable
+instead — one item, one set of numbers, whatever the modlist says. It is a charge compressor
+in a throwable tube, and the six-second cooldown is the compressor working.
+
+`Patch_CombatExtended/1.6/Patches/AG_Frost_CE.xml` therefore adds CE's `Bulk` and
+`SightsEfficiency` stats, a `CombatExtended.ToolCE` so bashing somebody with it goes down a
+path that finds the armour-penetration fields it expects, and `CE_OneHandedWeapon` so it can
+be carried with a shield. It deliberately leaves two things alone:
+
+- **The verb.** `RimArt.Verb_ThrowFrostBomb` hands the launch to `MapComponent_Throws` so the
+  grenade leaves the hand on the tick the animation opens it. CE's verb spawns its projectile
+  inside `TryCastShot` and casts what it spawns to `ProjectileCE`, so taking their verb costs
+  both the animation and the projectile class. What is given up by keeping ours is CE's
+  ballistic flight model for this one lobbed grenade — no height, no cover interception on the
+  way in. On a cell-targeted 3.4-cell stun that is a far smaller loss than it would be on a
+  bullet.
+- **The projectile**, which names `Projectile_Explosive` itself precisely so CE's rewrite of
+  `BaseGrenadeProjectile`'s `thingClass` does not reach it.
+
+Nothing in that file is conditional on anything but the folder: `loadFolders.xml` reads the
+directory only when CE is active, so `ToolCE` is guaranteed to resolve. `ApiChecks` still
+asserts it exists, because a `Class` attribute that does not resolve is a red error at load for
+the player who has both mods and silence for everybody else.
 
 ## How time alter works
 
@@ -1527,10 +1601,12 @@ make_textures.py                 draws them; run it after editing, commit the PN
 Animations/                      Melee Animation clips, as json (one per facing pair)
 make_throw_anim.py               writes both throw clips; run it after editing, commit the json
 Patch_MeleeAnimation/1.6/Defs/   defs that name their types; loaded only when their mod is
+Patch_CombatExtended/1.6/        CE stats and tool for the frost bomb; same conditional rule
 Languages/English/Keyed/         message strings
 Source/RimArt/                   C# source
 Source/RimArt/Rounds/            one round in flight, either engine's; the CE bridge
 Source/RimArt/Throw/             the throw animation bridge and the launch it delays
+Source/RimArt/Frost/             the frost bomb: its verb, its burst, its damage worker
 ```
 
 Def prefix is `AG_`. Custom blade, crow and stasis art lives under `Textures/RimArt/`;

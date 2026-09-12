@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- The frost bomb under Combat Extended.
+
+     Read this before changing it, because the interesting part is what the file does not do.
+
+     CE turns every hand grenade into ammo. Their patch on the vanilla three sets Class to
+     CombatExtended.AmmoDef, thingClass to AmmoThing, a stackLimit of 75, and a verb of
+     Verb_ShootCEOneUse - whose SelfConsume() destroys the grenade you just threw and equips the
+     next one out of your pack. That is a coherent design and it is not this one. The frost bomb
+     is a charge compressor in a throwable tube: it builds the next bomb between throws, which is
+     what its six-second cooldown is, and it is reusable with or without CE for the same reason a
+     frag grenade is reusable without it. One item, one set of numbers, one paragraph in the
+     README, whatever the modlist says.
+
+     So this patch gives the weapon CE's stats and CE's melee tool and stops. It deliberately
+     leaves alone:
+
+       - the verb. RimArt.Verb_ThrowFrostBomb hands the launch to MapComponent_Throws so the
+         grenade leaves the hand on the tick the throw animation opens it. CE's verb spawns its
+         projectile inside TryCastShot, and it casts what it spawns straight to ProjectileCE:
+
+             protected virtual ProjectileCE SpawnProjectile()
+                 => (ProjectileCE)ThingMaker.MakeThing(Projectile, null);
+
+         Taking their verb therefore costs both the animation and the projectile class, and the
+         animation is the feature. What is given up by keeping ours is CE's ballistic flight
+         model for this one lobbed grenade - no height, no cover interception on the way in. On a
+         cell-targeted 3.4-cell stun that is a much smaller loss than it would be on a bullet.
+
+       - the projectile, which names Projectile_Explosive itself precisely so that CE's rewrite
+         of BaseGrenadeProjectile's thingClass does not reach it. See AG_Frost_Things.xml.
+
+     Nothing here is conditional on anything but the folder: loadFolders.xml only reads this
+     directory when CE is active, so every type named below is guaranteed to exist. -->
+
+<Patch>
+
+  <!-- Bulk, which is the stat CE actually plans a pawn's kit around - a colonist can be under
+       the weight limit and still unable to move for volume. Priced against their frag grenade at
+       0.87: the tube is a little bigger than a frag and a little lighter, being mostly gas. -->
+  <Operation Class="PatchOperationAdd">
+    <xpath>Defs/ThingDef[defName="AG_FrostBomb"]/statBases</xpath>
+    <value>
+      <Bulk>1.1</Bulk>
+      <SightsEfficiency>1.0</SightsEfficiency>
+    </value>
+  </Operation>
+
+  <!-- Every weapon in CE needs a ToolCE rather than a vanilla Tool, or a pawn who bashes
+       somebody with it goes through a code path that expects CE's armour penetration fields and
+       does not find them. Their own grenade patch adds exactly this tool; so does this. -->
+  <Operation Class="PatchOperationAdd">
+    <xpath>Defs/ThingDef[defName="AG_FrostBomb"]</xpath>
+    <value>
+      <tools>
+        <li Class="CombatExtended.ToolCE">
+          <label>tube</label>
+          <capacities>
+            <li>Blunt</li>
+          </capacities>
+          <power>2</power>
+          <cooldownTime>1.75</cooldownTime>
+          <armorPenetrationBlunt>1.0</armorPenetrationBlunt>
+          <linkedBodyPartsGroup>Base</linkedBodyPartsGroup>
+        </li>
+      </tools>
+    </value>
+  </Operation>
+
+  <!-- CE_OneHandedWeapon so it can be carried alongside a shield, which is the combination the
+       item is for: walk somebody up behind a shield, freeze the line, pull the wounded out. The
+       CE_AI_* tags are pointedly absent - they are what tells CE's raider generator to hand a
+       weapon out, and nothing in this mod is given to raiders. -->
+  <Operation Class="PatchOperationAdd">
+    <xpath>Defs/ThingDef[defName="AG_FrostBomb"]</xpath>
+    <value>
+      <weaponTags>
+        <li>CE_OneHandedWeapon</li>
+      </weaponTags>
+    </value>
+  </Operation>
+
+</Patch>

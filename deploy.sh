@@ -24,7 +24,15 @@ fi
 
 rm -rf "$DEST"
 mkdir -p "$DEST"
-for item in About 1.6 Textures Languages Animations Patch_MeleeAnimation loadFolders.xml; do
-  [ -e "$SRC/$item" ] && cp -r "$SRC/$item" "$DEST/"
+
+# Patch_* is a glob rather than a list of names on purpose. These folders hold the defs and
+# patches that load only alongside some other mod, and one of them going missing from a deploy
+# is close to undetectable: the game reads the folder only when that mod is active, so the
+# build is fine, the validator is fine, and the feature is simply absent for the one person
+# testing the combination. Adding a folder should not also mean remembering to edit this line.
+cd "$SRC"
+for item in About 1.6 Textures Languages Animations loadFolders.xml Patch_*; do
+  [ -e "$item" ] && cp -r "$item" "$DEST/"
 done
 echo "Deployed to: $DEST"
+echo "Conditional folders: $(ls -d Patch_* 2>/dev/null | tr '\n' ' ')"

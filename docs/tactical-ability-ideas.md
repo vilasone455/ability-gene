@@ -246,18 +246,29 @@ expressed interest in XCOM-style replenishment without repeatedly buying or craf
 A reusable charge-based item with free replenishment after a sustained safe period at the
 colony is an alternative. Do not assume either supply model has been approved.
 
-**Implemented.** Shipped as the cryo bandolier (`AG_CryoBandolier`) granting the *frost bomb*
-ability, behind *cryogenic munitions* research. The burst is a stun that falls off from the
-centre plus an `AG_Frostbound` hediff that thaws movement and manipulation back over about ten
-seconds; large targets and mechanoids take proportionally less. Allies are caught. Bullets are
-unaffected, as specified. The throw plays a hand-thrown animation through Melee Animation when
-that mod is present, and launches instantly when it is not.
+**Implemented.** Shipped as `AG_FrostBomb`, a thrown grenade weapon behind *cryogenic
+munitions* research. The burst is a stun that falls off from the centre plus an `AG_Frostbound`
+hediff that thaws movement and manipulation back over about ten seconds; large targets and
+mechanoids take proportionally less. Allies are caught. Bullets are unaffected, as specified.
+The throw plays a hand-thrown animation through Melee Animation when that mod is present, and
+launches instantly when it is not.
 
-Two things in this section are **not** implemented and remain open. The supply rule above is
-still a plain cooldown on the device, not a safe-period refill. And no Combat Extended-specific
-grenade flight or collision integration was written — the bomb is an ordinary `Projectile_Explosive`
-subclass, which CE already handles as a grenade, and the frost effect is applied at the real
-detonation point by the projectile itself.
+**The supply question above is resolved, by being dissolved.** It first shipped as a worn cryo
+bandolier granting an ability on a half-day cooldown — the plain timer this section warned
+against. The user's later direction was that the thing should be an actual grenade rather than
+an active ability, and reusable like the game's own. A reusable grenade has nothing to
+replenish, so neither supply model applies: the objection recorded here was to buying and
+crafting bombs one at a time, and an item that is never consumed satisfies it directly. The
+balance lever moved to a six-second weapon cooldown, which is also bounded below by the throw
+animation's 1.2-second clip.
+
+**Combat Extended.** Now integrated rather than merely tolerated, but deliberately not on CE's
+own terms: CE makes every hand grenade one-use ammo, and this one stays reusable so the item is
+the same with or without that mod. `Patch_CombatExtended/` supplies CE's stats and melee tool.
+Still **not** implemented is CE ballistic flight for the bomb — it keeps a vanilla projectile
+class, because CE's verb casts what it spawns to `ProjectileCE` and adopting it would cost the
+throw animation. That trade is recorded in the README, and it is the one piece of CE
+integration left on the table.
 
 ### Mimic Beacon
 

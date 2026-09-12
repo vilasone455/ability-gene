@@ -76,9 +76,10 @@ namespace RimArt
         }
 
         /// <summary>
-        /// Every kit at once, reported as one line. Two of them take a weapon and a belt slot
-        /// the others also want, so the last one to run wins those - which is worth knowing
-        /// before reading the result as a bug.
+        /// Every kit at once, reported as one line. Three of them want the weapon slot - the
+        /// frost bomb and the two weapon traits - and the stasis belt wants the belt slot, so
+        /// the last one to run holds each and the earlier weapons end up in the pawn's
+        /// inventory. Worth knowing before reading the result as a bug.
         /// </summary>
         private static void ApplyAll(Pawn pawn, List<Kit> kits)
         {
@@ -139,7 +140,7 @@ namespace RimArt
                 Implant("Phase barrier", "AG_PhaseBarrier", "Brain", null),
 
                 new Kit { Label = "Stasis belt", Grant = GrantStasisBelt },
-                new Kit { Label = "Cryo bandolier (frost bomb)", Grant = GrantCryoBandolier },
+                new Kit { Label = "Frost bomb", Grant = GrantFrostBomb },
 
                 WeaponTrait("Resonant weapon", "AG_WeaponResonance"),
                 WeaponTrait("Arcing weapon", "AG_WeaponArc"),
@@ -239,31 +240,44 @@ namespace RimArt
             return null;
         }
 
-        // ----------------------------------------------------------------- cryo bandolier
+        // ----------------------------------------------------------------- frost bomb
 
         /// <summary>
-        /// Wears the bandolier, with the frost bomb ready rather than on cooldown.
+        /// Puts a frost bomb in the pawn's hands, ready to throw.
         ///
-        /// The ready charge is the only thing here the real route does not do. CompApparelAbility
-        /// hands a fresh wearer whatever charge the device has left, and a bandolier that has just
-        /// been made has a full one - so this is what crafting one and putting it on produces,
-        /// without the half-day of waiting that the first cast would otherwise cost a test.
+        /// Equipped rather than dropped at their feet, because the thing being tested is the
+        /// throw and an item on the floor is two more clicks before any of it happens. The
+        /// pawn's existing weapon goes to their inventory, so a test pawn does not silently lose
+        /// the rifle they were carrying.
+        ///
+        /// The weapon slot has to be genuinely empty before the bomb goes in, and the clearing
+        /// is checked rather than assumed. AddEquipment does not refuse a second primary - it
+        /// logs a red error and returns, leaving the pawn holding the old weapon - so an
+        /// unchecked transfer produces a dev action that reports success and grants nothing. The
+        /// transfer really can fail: an inventory can refuse the weapon, and under Combat
+        /// Extended a pawn near their bulk limit will. Dropping it is the fallback, and being
+        /// unable to do either is reported instead of being papered over.
         /// </summary>
-        private static string GrantCryoBandolier(Pawn pawn)
+        private static string GrantFrostBomb(Pawn pawn)
         {
-            ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail("AG_CryoBandolier");
-            if (def == null) return "no ThingDef AG_CryoBandolier";
-            if (pawn.apparel == null) return "cannot wear apparel";
-            if (pawn.apparel.WornApparel.Any(worn => worn.def == def)) return "already wearing one";
+            ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail("AG_FrostBomb");
+            if (def == null) return "no ThingDef AG_FrostBomb";
+            if (pawn.equipment == null) return "cannot carry equipment";
+            if (pawn.equipment.Primary?.def == def) return "already holding one";
 
             FinishResearch("AG_CryogenicMunitions");
 
-            Apparel bandolier = (Apparel)ThingMaker.MakeThing(def, GenStuff.DefaultStuffFor(def));
-            pawn.apparel.Wear(bandolier, true, false);
+            ThingWithComps held = pawn.equipment.Primary;
+            if (held != null)
+            {
+                bool stowed = pawn.inventory != null
+                    && pawn.equipment.TryTransferEquipmentToContainer(held, pawn.inventory.innerContainer);
 
-            AbilityDef bomb = DefDatabase<AbilityDef>.GetNamedSilentFail("AG_FrostBomb");
-            Ability granted = bomb == null ? null : pawn.abilities?.GetAbility(bomb, true);
-            granted?.ResetCooldown();
+                if (!stowed && !pawn.equipment.TryDropEquipment(held, out _, pawn.Position, false))
+                    return "could not put down " + held.LabelShortCap;
+            }
+
+            pawn.equipment.AddEquipment((ThingWithComps)ThingMaker.MakeThing(def, GenStuff.DefaultStuffFor(def)));
             return null;
         }
 

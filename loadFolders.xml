@@ -9,5 +9,12 @@
          it reads the attribute, so an <AM.AnimDef> with Melee Animation absent is a load error
          rather than a skipped node. A conditional folder is never read at all. -->
     <li IfModActive="co.uk.epicguru.meleeanimation">Patch_MeleeAnimation/1.6</li>
+
+    <!-- The CE folder holds PatchOperations rather than defs, so it could have lived in the
+         ordinary Patches folder behind a MayRequire - a patch whose xpath matches nothing is a
+         no-op, not an error. It is here anyway, for the same reason the folder above exists:
+         the operations name CombatExtended.ToolCE, and a Class attribute naming an absent
+         assembly is resolved when the node is read. -->
+    <li IfModActive="ceteam.combatextended">Patch_CombatExtended/1.6</li>
   </v1.6>
 </loadFolders>
