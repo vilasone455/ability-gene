@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Source/RimArt/Shinra/ShinraVfxTiming.cs" Link="ShinraVfxTiming.cs" />
+    <Compile Include="../../Source/RimArt/Shinra/MapComponent_ShinraVfx.cs" Link="MapComponent_ShinraVfx.cs" />
+  </ItemGroup>
+</Project>

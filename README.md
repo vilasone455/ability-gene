@@ -36,6 +36,14 @@ piece of equipment, weapon trait, or earned origin.
 
 ## Abilities
 
+### Shinra Tensei visual preview (development mode)
+
+A VFX-only prototype: a raised transparent pressure shell expands around the chosen cell,
+with moving curved highlights, a dust ring, and tumbling decorative stones with shadows.
+It has no combat mechanics yet. In development mode, search **Shinra Tensei** in the debug
+actions menu for normal, quarter-speed, frozen-peak and clear controls. The animation runs
+even while the map is paused. See [preview instructions and rendering notes](docs/shinra-tensei-vfx.md).
+
 ### Corrosive glands → *disarm spit*
 Spit contact acid at a target's weapon; they drop it and it lands a few cells away,
 forbidden. **Deals no damage at all.** Two charges, 8 in-game hours each.
