@@ -80,3 +80,46 @@ map.Fogged = false;
 component.MapComponentUpdate();
 Check(ShinraVfxGraphics.Calls == calls, "Fogging the centre cancels the preview");
 Console.WriteLine("Shinra VFX envelopes and preview lifecycle passed.");
+
+var casts = new MapComponent_ShinraCasts(map);
+var pawn = new Pawn { Map = map };
+var animation = new ShinraCastAnimation.Handle { Time = ShinraVfxTiming.ChargeEnd };
+casts.Begin(pawn, animation);
+casts.MapComponentUpdate();
+Check(casts.Running(pawn) && Near(ShinraVfxGraphics.Time, animation.Time),
+    "Cast must sample the real animation clock at hand release");
+Time.unscaledDeltaTime = 10f;
+casts.MapComponentUpdate();
+Check(Near(ShinraVfxGraphics.Time, animation.Time), "Paused animation must not drift with wall time");
+animation.Time = 0.8f;
+casts.MapComponentUpdate();
+Check(Near(ShinraVfxGraphics.Time, 0.8f), "Animation speed changes must immediately carry the wave with them");
+animation.Time = 1.35f;
+animation.Finished = true;
+Find.TickManager.TicksGame = 500;
+casts.MapComponentUpdate();
+Find.TickManager.TicksGame = 530;
+casts.MapComponentUpdate();
+Check(Near(ShinraVfxGraphics.Time, 1.85f), "After hand recovery, remaining VFX use game time");
+Find.TickManager.TicksGame = 750;
+casts.MapComponentUpdate();
+Check(!casts.Running(pawn), "Finished VFX must release the cast button");
+
+animation = new ShinraCastAnimation.Handle { Time = 0.2f, Valid = false };
+casts.Begin(pawn, animation);
+calls = ShinraVfxGraphics.Calls;
+casts.MapComponentUpdate();
+Check(!casts.Running(pawn) && ShinraVfxGraphics.Calls == calls,
+    "An interrupted animation must not release a wave later");
+
+var otherPawn = new Pawn { Map = map };
+animation = new ShinraCastAnimation.Handle { Time = 0.5f };
+casts.Begin(pawn, animation);
+casts.Begin(otherPawn, new ShinraCastAnimation.Handle { Time = 0.6f });
+pawn.Downed = true;
+casts.MapComponentUpdate();
+Check(!casts.Running(pawn) && casts.Running(otherPawn), "One cancelled caster must not cancel another");
+otherPawn.Spawned = false;
+casts.MapComponentUpdate();
+Check(!casts.Running(otherPawn), "Leaving the map cancels the cast");
+Console.WriteLine("Shinra pawn casts: animation synchronization, interruption, completion and independent casters passed.");

@@ -36,13 +36,14 @@ piece of equipment, weapon trait, or earned origin.
 
 ## Abilities
 
-### Shinra Tensei visual preview (development mode)
+### Shinra Tensei kit (animation only)
 
-A VFX-only prototype: a raised transparent pressure shell expands around the chosen cell,
-with moving curved highlights, a dust ring, and tumbling decorative stones with shadows.
-It has no combat mechanics yet. In development mode, search **Shinra Tensei** in the debug
-actions menu for normal, quarter-speed, frozen-peak and clear controls. The animation runs
-even while the map is paused. See [preview instructions and rendering notes](docs/shinra-tensei-vfx.md).
+A pawn draws both hands back and thrusts them outward, releasing a raised transparent
+pressure shell with curved highlights and ground dust. There are no rocks or combat effects.
+Use development mode → **RimArts → Grant kit... → Shinra Tensei (animation only)** to give
+a humanlike pawn the ability button. The hand animation requires Melee Animation and follows
+the pawn's current facing. Acquisition and balance are not decided yet. Separate free-running
+VFX debug tools remain available. See [instructions and rendering notes](docs/shinra-tensei-vfx.md).
 
 ### Corrosive glands → *disarm spit*
 Spit contact acid at a target's weapon; they drop it and it lands a few cells away,

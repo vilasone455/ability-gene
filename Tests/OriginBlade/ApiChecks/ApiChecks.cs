@@ -144,6 +144,10 @@ static class ApiChecks
             throw new Exception("Melee Animation bridge: AnimRenderer.GetPart(string) is gone");
         if (renderer.GetMethod("GetOverride", new[] { partData }) == null)
             throw new Exception("Melee Animation bridge: AnimRenderer.GetOverride(AnimPartData) is gone");
+        foreach (var member in new[] { ("CurrentTime", typeof(float)), ("Duration", typeof(float)),
+                                       ("IsDestroyed", typeof(bool)) })
+            if (renderer.GetProperty(member.Item1)?.PropertyType != member.Item2)
+                throw new Exception($"Shinra animation clock contract changed: {member.Item1}");
         if (overrideData.GetField("Texture", Any) == null)
             throw new Exception("Melee Animation bridge: AnimPartOverrideData.Texture is gone");
 
@@ -162,7 +166,8 @@ static class ApiChecks
         }
 
         int curves = 0, clips = 0;
-        foreach (string clip in new[] { "RimArt_ThrowGrenade", "RimArt_ThrowGrenadeNorth" })
+        foreach (string clip in new[] { "RimArt_ThrowGrenade", "RimArt_ThrowGrenadeNorth", "RimArt_ThrowGrenadeSouth",
+                                        "RimArt_ShinraPush", "RimArt_ShinraPushNorth", "RimArt_ShinraPushSouth" })
         {
             curves += CheckThrowAnimationJson(dataModel, partModel, clip);
             clips++;
@@ -238,7 +243,9 @@ static class ApiChecks
 
         // Their AddPawn looks these up by name. Both hands must exist because their off-hand
         // lookup is guarded by the main hand's null check and would throw inside their code.
-        foreach (string required in new[] { "BodyA", "HandA", "HandB", "Grenade" })
+        bool shinra = clip.StartsWith("RimArt_ShinraPush");
+        foreach (string required in shinra ? new[] { "BodyA", "HeadA", "HandA", "HandB" }
+                                           : new[] { "BodyA", "HandA", "HandB", "Grenade" })
         {
             if (!names.Contains(required))
                 throw new Exception($"Melee Animation bridge: animation has no '{required}' part");
@@ -248,6 +255,8 @@ static class ApiChecks
         // is carrying, putting a sword in the hand instead of the bomb.
         if (names.Contains("ItemA"))
             throw new Exception($"Melee Animation bridge: {clip} must not have an ItemA part");
+        if (shinra && (names.Contains("Grenade") || root.GetProperty("Events").GetArrayLength() != 0))
+            throw new Exception($"{clip} must have empty hands and no gameplay events");
 
         // The facing is baked into the clip, so it has to be there and it has to be the one this
         // clip is named for. A north clip that says east is a pawn throwing over its own shoulder.
@@ -257,7 +266,7 @@ static class ApiChecks
         if (!body.GetProperty("DefaultValues").TryGetProperty("PawnBody.Direction", out var facing))
             throw new Exception($"Melee Animation bridge: {clip} does not set PawnBody.Direction, "
                 + "so the pawn would face whatever the previous animation left it facing");
-        int expected = clip.EndsWith("North") ? 0 : 1;   // Rot4.North : Rot4.East
+        int expected = clip.EndsWith("North") ? 0 : clip.EndsWith("South") ? 2 : 1;
         if ((int)facing.GetDouble() != expected)
             throw new Exception($"Melee Animation bridge: {clip} has PawnBody.Direction "
                 + $"{facing.GetDouble()}, expected Rot4 {expected}");

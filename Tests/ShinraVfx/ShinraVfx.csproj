@@ -3,5 +3,6 @@
   <ItemGroup>
     <Compile Include="../../Source/RimArt/Shinra/ShinraVfxTiming.cs" Link="ShinraVfxTiming.cs" />
     <Compile Include="../../Source/RimArt/Shinra/MapComponent_ShinraVfx.cs" Link="MapComponent_ShinraVfx.cs" />
+    <Compile Include="../../Source/RimArt/Shinra/MapComponent_ShinraCasts.cs" Link="MapComponent_ShinraCasts.cs" />
   </ItemGroup>
 </Project>

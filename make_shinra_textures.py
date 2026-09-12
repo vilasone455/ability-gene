@@ -69,31 +69,12 @@ def make_dust():
     return raster(192, (255, 255, 255), alpha)
 
 
-def make_rock(index):
-    image = Image.new("RGBA", (256, 256))
-    draw = ImageDraw.Draw(image)
-    shapes = [
-        [(44, 71), (126, 33), (207, 79), (214, 161), (132, 222), (58, 185)],
-        [(33, 110), (82, 40), (169, 51), (220, 131), (173, 211), (65, 194)],
-        [(56, 60), (156, 31), (212, 100), (181, 210), (96, 220), (38, 140)],
-    ]
-    points = shapes[index]
-    draw.polygon(points, fill=(71, 69, 64), outline=(44, 43, 40), width=7)
-    centre = (127, 121)
-    draw.polygon([points[0], points[1], points[2], centre], fill=(132, 129, 120))
-    draw.polygon([points[2], points[3], centre], fill=(99, 97, 90))
-    draw.polygon([points[0], centre, points[5]], fill=(110, 106, 98))
-    draw.line([points[0], points[1], points[2]], fill=(158, 154, 142), width=5)
-    return image.resize((64, 64), Image.Resampling.LANCZOS)
-
-
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     assets = {
         "Shell": raster(1024, (247, 250, 255), shell_alpha),
         "Dust": make_dust(),
         "Glow": raster(128, (255, 255, 255), lambda x, y: math.exp(-(x*x+y*y)*9) * max(0, 1-x*x-y*y)),
-        "Shadow": raster(128, (0, 0, 0), lambda x, y: math.exp(-(x*x+y*y)*4) * max(0, 1-x*x-y*y)),
     }
     ribbon = Image.new("RGBA", (256, 64))
     pixels = ribbon.load()
@@ -105,8 +86,15 @@ def main():
             alpha = taper * (0.8*gaussian(across, 0.13) + 0.17*gaussian(across, 0.55))
             pixels[x, y] = (255, 255, 255, round(alpha*255))
     assets["Ribbon"] = ribbon
-    for i in range(3):
-        assets[f"Rock{i}"] = make_rock(i)
+    # A simple pressure-wave icon, with two palms at its base.
+    icon = Image.new("RGBA", (512, 512))
+    draw = ImageDraw.Draw(icon)
+    for inset, opacity in [(38, 100), (76, 165), (116, 240)]:
+        draw.arc((inset, inset, 512-inset, 512-inset), 190, 350, fill=(235, 244, 255, opacity), width=12)
+    for x in (175, 337):
+        draw.rounded_rectangle((x-23, 239, x+23, 329), radius=18, fill=(236, 241, 247, 255))
+        draw.line((x, 323, x, 393), fill=(236, 241, 247, 255), width=21)
+    assets["IconPush"] = icon.resize((128, 128), Image.Resampling.LANCZOS)
     for name, asset in assets.items():
         path = OUT / f"{name}.png"
         asset.save(path)

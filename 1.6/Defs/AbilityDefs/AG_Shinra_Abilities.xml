@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <AbilityDef>
+    <defName>AG_ShinraTensei</defName>
+    <label>Shinra Tensei</label>
+    <description>Thrust both hands outward and release an expanding pressure wave. This version is visual only.</description>
+    <iconPath>RimArt/Shinra/IconPush</iconPath>
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <aiCanUse>false</aiCanUse>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams><canTargetSelf>true</canTargetSelf></targetParams>
+    </verbProperties>
+    <comps><li Class="RimArt.CompProperties_AbilityShinraTensei" /></comps>
+  </AbilityDef>
+</Defs>

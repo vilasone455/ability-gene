@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- Development grant only; acquisition and balance are intentionally undecided. -->
+  <HediffDef>
+    <defName>AG_ShinraTenseiKit</defName>
+    <hediffClass>HediffWithComps</hediffClass>
+    <label>Shinra Tensei</label>
+    <description>Perform a two-handed pressure-wave gesture. The wave is visual only.</description>
+    <isBad>false</isBad>
+    <abilities><li>AG_ShinraTensei</li></abilities>
+  </HediffDef>
+</Defs>

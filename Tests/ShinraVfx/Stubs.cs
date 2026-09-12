@@ -26,11 +26,32 @@ namespace Verse
         public MapComponent(Map map) { this.map = map; }
         public virtual void MapComponentUpdate() { }
     }
-    public static class Find { public static Map CurrentMap; }
+    public class Pawn
+    {
+        public bool Spawned = true, Dead, Downed;
+        public Map Map;
+        public IntVec3 Position = new IntVec3(10, 20);
+    }
+    public class TickManager { public int TicksGame; }
+    public static class Find
+    {
+        public static Map CurrentMap;
+        public static TickManager TickManager = new TickManager();
+    }
 }
 
 namespace RimArt
 {
+    public static class ShinraCastAnimation
+    {
+        public class Handle
+        {
+            public float Time;
+            public bool Finished, Valid = true;
+            public bool Read(out float time, out bool finished)
+            { time = Time; finished = Finished; return Valid; }
+        }
+    }
     internal static class ShinraVfxGraphics
     {
         public static int Calls;

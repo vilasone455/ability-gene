@@ -38,6 +38,5 @@ namespace RimArt
             Smooth(Progress(time - delay, ChargeEnd, 0.72f)) *
             (1f - Smooth(Progress(time, 1.55f, Duration)));
 
-        public static float DebrisProgress(float time, float delay) => Progress(time, ChargeEnd + delay, 2.85f + delay);
     }
 }

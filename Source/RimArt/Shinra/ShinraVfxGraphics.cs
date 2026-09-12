@@ -7,17 +7,15 @@ namespace RimArt
     /// <summary>
     /// A projected hemisphere: its highlights rise north of its elliptical ground contact.
     /// Projection is drawn at stable map altitudes to avoid clipping a tall 3D sphere into
-    /// RimWorld's close camera. Independent ribbons and debris supply the motion/depth cues.
+    /// RimWorld's close camera. Independent ribbons and ground dust supply the depth cues.
     /// </summary>
     [StaticConstructorOnStartup]
     internal static class ShinraVfxGraphics
     {
-        private static Material shell, dust, glow, ribbon, shadow;
-        private static Material[] rocks;
+        private static Material shell, dust, glow, ribbon;
         private static Mesh arc;
         private static readonly MaterialPropertyBlock Properties = new MaterialPropertyBlock();
         private static readonly Particle[] Dust = MakeParticles(76, 1701);
-        private static readonly Particle[] Debris = MakeParticles(30, 1702);
 
         private struct Particle
         {
@@ -49,10 +47,6 @@ namespace RimArt
             dust = MaterialPool.MatFrom("RimArt/Shinra/Dust", ShaderDatabase.Transparent);
             glow = MaterialPool.MatFrom("RimArt/Shinra/Glow", ShaderDatabase.Transparent);
             ribbon = MaterialPool.MatFrom("RimArt/Shinra/Ribbon", ShaderDatabase.Transparent);
-            shadow = MaterialPool.MatFrom("RimArt/Shinra/Shadow", ShaderDatabase.Transparent);
-            rocks = new Material[3];
-            for (int i = 0; i < rocks.Length; i++)
-                rocks[i] = MaterialPool.MatFrom("RimArt/Shinra/Rock" + i, ShaderDatabase.Transparent);
             arc = MakeArc();
         }
 
@@ -65,7 +59,6 @@ namespace RimArt
 
             DrawCharge(centre, time, altitude);
             DrawDust(centre, time, radius, altitude, map);
-            DrawDebris(centre, time, altitude, map, true);
 
             if (alpha > 0f)
             {
@@ -85,7 +78,6 @@ namespace RimArt
                 }
             }
 
-            DrawDebris(centre, time, altitude, map, false);
         }
 
         private static void DrawCharge(Vector3 centre, float time, float altitude)
@@ -124,33 +116,6 @@ namespace RimArt
                     Mathf.Lerp(0.3f, 1f, ShinraVfxTiming.Expansion(age));
                 Plane(dust, position, size, size * 0.85f, p.spin + trail * 24f,
                     new Color(0.76f, 0.70f, 0.59f, alpha * (0.38f + p.size * 0.2f)));
-            }
-        }
-
-        private static void DrawDebris(Vector3 centre, float time, float altitude, Map map, bool behind)
-        {
-            for (int i = 0; i < Debris.Length; i++)
-            {
-                Particle p = Debris[i];
-                if ((Mathf.Sin(p.angle) > 0f) != behind) continue;
-                float t = ShinraVfxTiming.DebrisProgress(time, p.delay);
-                if (t <= 0f || t >= 1f) continue;
-                float alpha = ShinraVfxTiming.Smooth(t / 0.08f) *
-                    (1f - ShinraVfxTiming.Smooth((t - 0.78f) / 0.22f));
-                float distance = ShinraVfxTiming.Radius * (0.22f + p.spread * 0.65f) *
-                    (0.25f + 0.85f * (1f - (1f - t) * (1f - t)));
-                Vector3 ground = centre + GroundOffset(p.angle, distance);
-                if (!Visible(ground, map)) continue;
-                float height = Mathf.Sin(t * Mathf.PI) * (0.7f + p.lift * 1.8f);
-                float size = 0.13f + p.size * p.size * 0.44f;
-                Plane(shadow, At(ground, AltitudeLayer.Shadows.AltitudeFor()),
-                    size * (1.2f + height * 0.45f), size * 0.6f, 0f,
-                    new Color(1f, 1f, 1f, alpha * 0.42f / (1f + height * 0.3f)));
-
-                Vector3 airborne = At(ground, altitude + (behind ? 0.01f : 0.05f));
-                airborne.z += height * ShinraVfxTiming.HeightLift;
-                Plane(rocks[i % rocks.Length], airborne, size, size,
-                    p.spin + time * (p.spread - 0.5f) * 150f, new Color(1f, 1f, 1f, alpha));
             }
         }
 
