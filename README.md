@@ -38,12 +38,13 @@ piece of equipment, weapon trait, or earned origin.
 
 ### Shinra Tensei kit (animation only)
 
-A pawn draws both hands back and thrusts them outward, releasing a raised transparent
-pressure shell with curved highlights and ground dust. There are no rocks or combat effects.
+A pawn throws both arms straight out to the sides into a T-pose, releasing a raised
+pressure dome that holds one size, warps the view behind it, and carries impact waves across
+its inside while a ring travels out across the ground. There are no rocks or combat effects.
 Use development mode → **RimArts → Grant kit... → Shinra Tensei (animation only)** to give
-a humanlike pawn the ability button. The hand animation requires Melee Animation and follows
-the pawn's current facing. Acquisition and balance are not decided yet. Separate free-running
-VFX debug tools remain available. See [instructions and rendering notes](docs/shinra-tensei-vfx.md).
+a humanlike pawn the ability button. The arm animation requires Melee Animation. The wave is
+centred on the caster, so there is one clip and no facing. Acquisition and balance are not
+decided yet. Separate free-running VFX debug tools remain available. See [instructions and rendering notes](docs/shinra-tensei-vfx.md).
 
 ### Corrosive glands → *disarm spit*
 Spit contact acid at a target's weapon; they drop it and it lands a few cells away,

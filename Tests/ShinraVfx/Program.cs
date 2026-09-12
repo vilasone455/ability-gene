@@ -9,16 +9,49 @@ static void Check(bool condition, string message)
 }
 static bool Near(float a, float b) => Math.Abs(a - b) < 0.0001f;
 
-float lastRadius = 0f;
+// The dome holds one size: it arrives with a punch and settles, and never swells from nothing.
+float peakRadius = ShinraVfxTiming.ShellRadius(ShinraVfxTiming.ChargeEnd + ShinraVfxTiming.PopIn);
+float ringReach = ShinraVfxTiming.Radius * ShinraVfxTiming.RingSpan;
+float lastRing = 0f;
 for (float time = 0f; time <= ShinraVfxTiming.Duration + 0.1f; time += 0.005f)
 {
     float radius = ShinraVfxTiming.ShellRadius(time);
-    Check(float.IsFinite(radius) && radius >= lastRadius && radius <= ShinraVfxTiming.Radius,
-        "Expansion must be finite, outward only, and bounded");
-    lastRadius = radius;
-    foreach (float alpha in new[] { ShinraVfxTiming.ShellAlpha(time), ShinraVfxTiming.DustAlpha(time) })
+    Check(float.IsFinite(radius) && radius >= 0f && radius <= peakRadius + 0.0001f,
+        "The dome must be finite and never exceed its punch");
+    Check(time < ShinraVfxTiming.ChargeEnd
+        ? radius == 0f
+        : radius >= ShinraVfxTiming.Radius * ShinraVfxTiming.PopScale - 0.0001f,
+        "The dome must appear at its mid scale rather than growing into it");
+
+    // The outward travel moved off the dome and onto the ground ring, which still only expands.
+    float ring = ShinraVfxTiming.RingRadius(time);
+    Check(float.IsFinite(ring) && ring >= lastRing - 0.0001f && ring <= ringReach + 0.0001f,
+        "Ring travel must be finite, outward only, and bounded");
+    lastRing = ring;
+
+    foreach (float alpha in new[] { ShinraVfxTiming.ShellAlpha(time), ShinraVfxTiming.DustAlpha(time),
+        ShinraVfxTiming.ReleaseFlash(time), ShinraVfxTiming.GroundRingAlpha(time),
+        ShinraVfxTiming.DistortionIntensity(time) })
         Check(float.IsFinite(alpha) && alpha >= 0f && alpha <= 1f, "Opacity must stay valid");
+
+    for (int pulse = 0; pulse < ShinraVfxTiming.ImpactPulses; pulse++)
+    {
+        float alpha = ShinraVfxTiming.ImpactAlpha(pulse, time);
+        Check(float.IsFinite(alpha) && alpha >= 0f && alpha <= 1f, "Impact opacity must stay valid");
+        Check(ShinraVfxTiming.ImpactRadius(pulse, time) <= ShinraVfxTiming.Radius + 0.0001f,
+            "An impact wave must die against the shell, not pass through it");
+    }
 }
+Check(ShinraVfxTiming.ShellRadius(ShinraVfxTiming.ChargeEnd - 0.01f) == 0f, "No dome before the thrust");
+Check(Near(ShinraVfxTiming.ShellRadius(ShinraVfxTiming.ChargeEnd),
+    ShinraVfxTiming.Radius * ShinraVfxTiming.PopScale), "The dome arrives at its pop-in scale");
+Check(peakRadius > ShinraVfxTiming.Radius, "The release must punch past the dome's held size");
+Check(Near(ShinraVfxTiming.ShellRadius(ShinraVfxTiming.ChargeEnd + ShinraVfxTiming.PopIn
+    + ShinraVfxTiming.Rebound), ShinraVfxTiming.Radius), "The dome must settle to exactly its held size");
+Check(Near(ShinraVfxTiming.ShellRadius(ShinraVfxTiming.Duration), ShinraVfxTiming.Radius),
+    "and hold that size for the rest of the effect");
+Check(Near(ShinraVfxTiming.RingRadius(ShinraVfxTiming.ExpansionEnd), ringReach),
+    "The ground ring must travel its full reach, past the dome");
 Check(ShinraVfxTiming.ShellAlpha(0f) == 0f, "No shell before the charge");
 Check(ShinraVfxTiming.ShellAlpha(ShinraVfxTiming.PeakTime) > 0.95f, "Frozen peak must show the shell");
 Check(ShinraVfxTiming.ShellAlpha(ShinraVfxTiming.ShellEnd) == 0f, "Shell must finish before the dust");
@@ -26,6 +59,22 @@ Check(ShinraVfxTiming.DustAlpha(ShinraVfxTiming.ShellEnd) > 0f, "Dust must linge
 Check(ShinraVfxTiming.DustAlpha(ShinraVfxTiming.Duration) == 0f, "Dust must disappear before removal");
 Check(ShinraVfxTiming.DustAlpha(ShinraVfxTiming.Duration, 0.23f) == 0f,
     "Delayed dust must also fade completely before the preview is removed");
+Check(ShinraVfxTiming.ReleaseFlash(0f) == 0f, "No release flash while the hands draw back");
+Check(Near(ShinraVfxTiming.ReleaseFlash(ShinraVfxTiming.ChargeEnd), 1f), "The flash is full at the thrust");
+Check(ShinraVfxTiming.ReleaseFlash(ShinraVfxTiming.FlashEnd) == 0f, "The flash must be brief");
+Check(ShinraVfxTiming.GroundRingAlpha(0f) == 0f, "No ground ring before the thrust");
+Check(ShinraVfxTiming.GroundRingAlpha(ShinraVfxTiming.ChargeEnd + 0.1f) > 0.5f, "The ring leads the dome");
+Check(ShinraVfxTiming.GroundRingAlpha(ShinraVfxTiming.ShellEnd) == 0f, "The ring clears before the shell");
+Check(ShinraVfxTiming.DistortionIntensity(0f) == 0f, "No warp before the thrust");
+Check(ShinraVfxTiming.DistortionIntensity(ShinraVfxTiming.ShellEnd) == 0f,
+    "The warp must clear with the shell it belongs to");
+// Each pulse is a separate beat: they must not all fire at the release.
+Check(ShinraVfxTiming.ImpactAlpha(0, ShinraVfxTiming.ChargeEnd + 0.02f) > 0f, "The first impact fires at the release");
+for (int pulse = 1; pulse < ShinraVfxTiming.ImpactPulses; pulse++)
+    Check(ShinraVfxTiming.ImpactAlpha(pulse, ShinraVfxTiming.ChargeEnd + 0.02f) == 0f,
+        "Later impacts must be staggered, not simultaneous");
+Check(ShinraVfxTiming.ImpactAlpha(ShinraVfxTiming.ImpactPulses - 1, ShinraVfxTiming.ShellEnd) == 0f,
+    "Every impact must finish inside the shell's life");
 
 var map = new Map();
 var component = new MapComponent_ShinraVfx(map);

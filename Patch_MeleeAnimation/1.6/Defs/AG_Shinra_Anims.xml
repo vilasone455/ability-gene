@@ -1,28 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
-  <!-- No weapon, second pawn, animation events, or end-cell teleport. -->
-  <AM.AnimDef Name="AG_ShinraPushBase" Abstract="True">
-    <description>A two-handed pressure-wave gesture.</description>
+  <!-- One clip, not one per facing: the wave is centred on the caster, so the T-pose gesture
+       has no direction to carry. No weapon, second pawn, animation events, or end-cell teleport. -->
+  <AM.AnimDef>
+    <defName>AG_ShinraPush</defName>
+    <label>Shinra Tensei: two-arm T-pose</label>
+    <description>A two-armed pressure-wave gesture.</description>
     <jobString>Casting Shinra Tensei.</jobString>
     <type>Other</type>
     <pawnCount>1</pawnCount>
+    <data>RimArt_ShinraPush.json</data>
     <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
     <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
     <canEditProbability>false</canEditProbability>
-  </AM.AnimDef>
-  <AM.AnimDef ParentName="AG_ShinraPushBase">
-    <defName>AG_ShinraPush</defName>
-    <label>Shinra Tensei: two-hand push</label>
-    <data>RimArt_ShinraPush.json</data>
-  </AM.AnimDef>
-  <AM.AnimDef ParentName="AG_ShinraPushBase">
-    <defName>AG_ShinraPushNorth</defName>
-    <label>Shinra Tensei: two-hand push (north)</label>
-    <data>RimArt_ShinraPushNorth.json</data>
-  </AM.AnimDef>
-  <AM.AnimDef ParentName="AG_ShinraPushBase">
-    <defName>AG_ShinraPushSouth</defName>
-    <label>Shinra Tensei: two-hand push (south)</label>
-    <data>RimArt_ShinraPushSouth.json</data>
   </AM.AnimDef>
 </Defs>

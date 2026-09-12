@@ -54,6 +54,21 @@ def shell_alpha(x, y):
     return alpha
 
 
+def distort_alpha(x, y):
+    """Mask for the screen-warp quad: the dome silhouette, feathered so the warp has no edge.
+
+    Painted black, because the shader may composite this texture as well as read it as a mask.
+    Black at low alpha reads as a faint pressure shadow either way, never as a bright square.
+    """
+    x, y = x * 1.15, y * 1.15
+    depth, lift = 0.68, 0.75
+    top = math.hypot(depth, lift)
+    silhouette = math.hypot(x, y / (top if y >= 0 else depth))
+    if silhouette >= 1.0:
+        return 0.0
+    return 0.55 * min(1.0, (1.0 - silhouette) / 0.22)
+
+
 def make_dust():
     randomizer = random.Random(1701)
     lobes = [(randomizer.uniform(-0.48, 0.48), randomizer.uniform(-0.42, 0.42),
@@ -75,6 +90,7 @@ def main():
         "Shell": raster(1024, (247, 250, 255), shell_alpha),
         "Dust": make_dust(),
         "Glow": raster(128, (255, 255, 255), lambda x, y: math.exp(-(x*x+y*y)*9) * max(0, 1-x*x-y*y)),
+        "Distort": raster(256, (0, 0, 0), distort_alpha),
     }
     ribbon = Image.new("RGBA", (256, 64))
     pixels = ribbon.load()

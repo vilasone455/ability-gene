@@ -5,15 +5,15 @@ using Verse;
 
 namespace RimArt
 {
-    /// <summary>One pawn, empty hands, no animation events. Optional Melee Animation bridge.</summary>
+    /// <summary>One pawn, empty hands, no animation events, one facing-free clip.
+    /// Optional Melee Animation bridge.</summary>
     public static class ShinraCastAnimation
     {
         private static bool resolved, present;
         private static ConstructorInfo constructor;
-        private static FieldInfo flipX;
         private static MethodInfo trigger, animatorFor;
         private static PropertyInfo currentTime, duration, destroyed;
-        private static Def east, north, south;
+        private static Def clip;
 
         public static bool Present { get { Resolve(); return present; } }
 
@@ -51,10 +51,9 @@ namespace RimArt
             if (!CanAnimate(pawn)) return false;
             try
             {
-                int facing = pawn.Rotation.AsInt;
-                Def clip = facing == 0 ? north : facing == 2 ? south : east;
+                // The clip carries its own facing. A centred wave has no direction to mirror,
+                // so the caster's rotation is not read here at all.
                 object start = constructor.Invoke(new object[] { clip, pawn, null });
-                flipX.SetValue(start, facing == 3);
                 object[] args = { null };
                 if (!(bool)trigger.Invoke(start, args) || args[0] == null) return false;
                 handle = new Handle(args[0]);
@@ -72,18 +71,14 @@ namespace RimArt
             Type start = AccessTools.TypeByName("AM.AnimationStartParameters");
             if (def == null || renderer == null || start == null) return;
             constructor = start.GetConstructor(new[] { def, typeof(Pawn), typeof(Pawn) });
-            flipX = AccessTools.Field(start, "FlipX");
             trigger = AccessTools.Method(start, "TryTrigger", new[] { renderer.MakeByRefType() });
             animatorFor = AccessTools.Method(renderer, "TryGetAnimator", new[] { typeof(Pawn) });
             currentTime = AccessTools.Property(renderer, "CurrentTime");
             duration = AccessTools.Property(renderer, "Duration");
             destroyed = AccessTools.Property(renderer, "IsDestroyed");
-            east = GenDefDatabase.GetDefSilentFail(def, "AG_ShinraPush", false) as Def;
-            north = GenDefDatabase.GetDefSilentFail(def, "AG_ShinraPushNorth", false) as Def;
-            south = GenDefDatabase.GetDefSilentFail(def, "AG_ShinraPushSouth", false) as Def;
-            present = constructor != null && flipX != null && trigger != null && animatorFor != null
-                && currentTime != null && duration != null && destroyed != null
-                && east != null && north != null && south != null;
+            clip = GenDefDatabase.GetDefSilentFail(def, "AG_ShinraPush", false) as Def;
+            present = constructor != null && trigger != null && animatorFor != null
+                && currentTime != null && duration != null && destroyed != null && clip != null;
         }
 
         private static void Disable(Exception e)

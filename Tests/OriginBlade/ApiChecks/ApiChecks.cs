@@ -81,8 +81,43 @@ static class ApiChecks
         string combatExtended = CheckCombatExtended();
         string meleeAnimation = CheckMeleeAnimation();
         string mimic = CheckMimicContract();
+        string distortion = CheckShinraDistortion();
         Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, "
-            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic}");
+            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion}");
+    }
+
+    /// <summary>
+    /// Shinra Tensei's screen warp borrows RimWorld's own distortion shader and the two maps it
+    /// reads. All three are addressed by string at runtime and all three fail silently, so this
+    /// pins them to Core: a shader or texture that only ships with a DLC would leave the warp
+    /// missing for anyone without that DLC, and nothing in the log would say so.
+    ///
+    /// The renderer already degrades to no warp when they are absent, so a missing install is
+    /// skipped rather than failed. What must not happen quietly is the names moving.
+    /// </summary>
+    static string CheckShinraDistortion()
+    {
+        const string Core = "/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Data/Core";
+        string mask = Path.Combine(Directory.GetCurrentDirectory(), "Textures/RimArt/Shinra/Distort.png");
+        if (!File.Exists(mask))
+            throw new Exception("Missing Textures/RimArt/Shinra/Distort.png; run make_shinra_textures.py");
+        if (!Directory.Exists(Core)) return "Skipped the distortion contract: RimWorld's Core data is not installed.";
+
+        bool declared = Directory.EnumerateFiles(Core, "*.xml", SearchOption.AllDirectories)
+            .Where(file => file.Contains("ShaderTypeDef"))
+            .SelectMany(file => XDocument.Load(file).Descendants("ShaderTypeDef"))
+            .Any(def => (string)def.Element("defName") == "MoteLargeDistortionWave");
+        if (!declared)
+            throw new Exception("Core no longer declares the MoteLargeDistortionWave shader type");
+
+        foreach (string texture in new[] { "PsychicDistortionCurrents", "PsycastNoise" })
+        {
+            bool referenced = Directory.EnumerateFiles(Core, "*.xml", SearchOption.AllDirectories)
+                .Any(file => File.ReadAllText(file).Contains(texture));
+            if (!referenced)
+                throw new Exception($"Core no longer ships {texture}; the distortion maps moved to a DLC");
+        }
+        return "Checked the distortion shader type and both core distortion maps.";
     }
 
     /// <summary>
@@ -166,14 +201,21 @@ static class ApiChecks
         }
 
         int curves = 0, clips = 0;
+        // The throw is directional and needs one clip per facing; Shinra Tensei is centred and
+        // has exactly one, so a second Shinra clip reappearing here is a mistake worth catching.
         foreach (string clip in new[] { "RimArt_ThrowGrenade", "RimArt_ThrowGrenadeNorth", "RimArt_ThrowGrenadeSouth",
-                                        "RimArt_ShinraPush", "RimArt_ShinraPushNorth", "RimArt_ShinraPushSouth" })
+                                        "RimArt_ShinraPush" })
         {
             curves += CheckThrowAnimationJson(dataModel, partModel, clip);
             clips++;
         }
+        foreach (string stale in new[] { "RimArt_ShinraPushNorth", "RimArt_ShinraPushSouth" })
+        {
+            if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "Animations", stale + ".json")))
+                throw new Exception($"{stale}.json is back; the centred wave uses one facing-free clip");
+        }
         return $"Checked the Melee Animation bridge contract and {curves} animation curves "
-             + $"across {clips} facing clips.";
+             + $"across {clips} clips.";
     }
 
     /// <summary>
@@ -266,7 +308,9 @@ static class ApiChecks
         if (!body.GetProperty("DefaultValues").TryGetProperty("PawnBody.Direction", out var facing))
             throw new Exception($"Melee Animation bridge: {clip} does not set PawnBody.Direction, "
                 + "so the pawn would face whatever the previous animation left it facing");
-        int expected = clip.EndsWith("North") ? 0 : clip.EndsWith("South") ? 2 : 1;
+        // Shinra Tensei's single clip faces south: that is the one facing which shows both arms
+        // at full extension rather than hiding one behind the torso.
+        int expected = shinra ? 2 : clip.EndsWith("North") ? 0 : clip.EndsWith("South") ? 2 : 1;
         if ((int)facing.GetDouble() != expected)
             throw new Exception($"Melee Animation bridge: {clip} has PawnBody.Direction "
                 + $"{facing.GetDouble()}, expected Rot4 {expected}");
