@@ -692,7 +692,7 @@ CAR_TYRE   = (38, 38, 42)
 CAR_CHARGE = (186, 170, 120)
 
 
-def make_toy_car():
+def make_toy_car(body_only=False):
     """
     The chassis: a small blunt car with a charge strapped across the roof.
 
@@ -707,9 +707,10 @@ def make_toy_car():
     half = px(26)
 
     # Tyres first, so the body overlaps them and they read as underneath.
-    for y in (px(42), px(82)):
-        for x in (cx - half - px(3), cx + half - px(6)):
-            d.rounded_rectangle([x, y, x + px(9), y + px(16)], radius=px(3), fill=CAR_TYRE)
+    if not body_only:
+        for y in (px(42), px(82)):
+            for x in (cx - half - px(3), cx + half - px(6)):
+                d.rounded_rectangle([x, y, x + px(9), y + px(16)], radius=px(3), fill=CAR_TYRE)
 
     d.rounded_rectangle([cx - half, top, cx + half, bottom], radius=px(10), fill=CAR_DARK)
     d.rounded_rectangle([cx - half + px(3), top + px(3), cx + half - px(3), bottom - px(3)],
@@ -727,7 +728,7 @@ def make_toy_car():
     for x in (cx - px(12), cx + px(6)):
         d.rectangle([x, px(50), x + px(5), px(80)], fill=CAR_TYRE)
 
-    finish(img, "Textures/RimArt/ToyCar/Car.png")
+    finish(img, "Textures/RimArt/ToyCar/Body.png" if body_only else "Textures/RimArt/ToyCar/Car.png")
 
 
 
@@ -805,5 +806,6 @@ if __name__ == "__main__":
     make_frost_bomb()
     make_frost_icon()
     make_toy_car()
+    make_toy_car(body_only=True)
     make_toy_car_rig()
     make_toy_car_icon()

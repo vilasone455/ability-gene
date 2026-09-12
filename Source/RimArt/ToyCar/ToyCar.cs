@@ -50,6 +50,10 @@ namespace RimArt
         private float wheelTravel;
         private float visualSpeed;
         private float dustTravel;
+        private int deploymentTicks = 24;
+        private float steering;
+        private float brakeDip;
+        private float lastVisualSpeed;
 
         /// <summary>
         /// Re-entry guard for the blast.
@@ -87,11 +91,8 @@ namespace RimArt
 
         protected override void DrawAt(Vector3 drawLoc, bool flip = false)
         {
-            // Tiny suspension movement and rolling tread follow distance, so pausing freezes
-            // the animation and faster game speeds remain in sync with the car.
-            drawLoc.z += Mathf.Sin(wheelTravel * 24f) * 0.012f * visualSpeed;
-            Graphic.Draw(drawLoc, Rot4.North, this, heading);
-            ToyCarGraphics.DrawTreads(drawLoc, heading, wheelTravel);
+            ToyCarGraphics.Draw(drawLoc, heading, wheelTravel, visualSpeed,
+                deploymentTicks / 24f, steering, brakeDip);
         }
 
         /// <summary>
@@ -162,6 +163,12 @@ namespace RimArt
         protected override void Tick()
         {
             base.Tick();
+            if (deploymentTicks < 24) deploymentTicks++;
+            steering = Mathf.MoveTowards(steering, Moving
+                ? Mathf.Clamp(Mathf.DeltaAngle(heading, stepHeading), -28f, 28f) : 0f, 3f);
+            float braking = Mathf.Clamp01((lastVisualSpeed - speed) / ToyCarMotion.Braking);
+            brakeDip = Mathf.Lerp(brakeDip, braking, 0.25f);
+            lastVisualSpeed = speed;
             visualSpeed = Mathf.MoveTowards(visualSpeed, speed / ToyCarMotion.MaxSpeed, 0.08f);
             if (!Spawned || path == null) return;
 
@@ -303,6 +310,8 @@ namespace RimArt
         {
             if (map == null || !cell.IsValid) return;
 
+            ToyCarGraphics.DetonationFlash(cell.ToVector3Shifted(), map);
+
             // Vanilla Bomb rather than a damage def of this mod's own. The frost bomb needed
             // AG_Cryo because the freeze rides on that def's damage worker; nothing rides on
             // this one, and a def added only to rename the death message is ceremony.
@@ -316,7 +325,11 @@ namespace RimArt
         public override void SpawnSetup(Map map, bool respawningAfterLoad)
         {
             base.SpawnSetup(map, respawningAfterLoad);
-            if (!respawningAfterLoad) heading = Rotation.AsAngle;
+            if (!respawningAfterLoad)
+            {
+                heading = Rotation.AsAngle;
+                deploymentTicks = 0;
+            }
 
             // The saved destination is re-pathed rather than restored, because the path itself
             // was never saved. A route that no longer exists simply stops the car where it is.
