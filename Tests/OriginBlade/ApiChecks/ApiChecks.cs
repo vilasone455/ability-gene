@@ -80,8 +80,9 @@ static class ApiChecks
         }
         string combatExtended = CheckCombatExtended();
         string meleeAnimation = CheckMeleeAnimation();
+        string mimic = CheckMimicContract();
         Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, "
-            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation}");
+            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic}");
     }
 
     /// <summary>
@@ -384,5 +385,76 @@ static class ApiChecks
         return Directory.EnumerateDirectories(Workshop)
             .Select(folder => Path.Combine(folder, "Assemblies", "CombatExtended.dll"))
             .FirstOrDefault(File.Exists);
+    }
+
+    /// <summary>
+    /// The mimic beacon's two contracts with the engine, neither of which is a Harmony patch and
+    /// both of which fail silently.
+    ///
+    /// The decoy is a Thing that raiders shoot because it implements IAttackTarget, and it is
+    /// drawn by running the source pawn's renderer at a second position. Neither is patched, so
+    /// neither is covered by the loop above; and neither throws when it breaks. A renamed member
+    /// on IAttackTarget is a compile error, but a *removed* one is not - the decoy would simply
+    /// stop being registered in the attack target cache and quietly become scenery. A changed
+    /// PawnRenderer signature is the same story: the decoy stands there invisible.
+    ///
+    /// The taunt strength is derived from AttackTargetFinder.GetShootingTargetScore, which is
+    /// private and cannot be re-derived here. Its existence is checked, and Tests/Mimic holds a
+    /// transcription of the arithmetic.
+    /// </summary>
+    static string CheckMimicContract()
+    {
+        const BindingFlags Any = BindingFlags.Public | BindingFlags.NonPublic
+                                 | BindingFlags.Instance | BindingFlags.Static;
+
+        Type attackTarget = typeof(Verse.Thing).Assembly.GetType("Verse.AI.IAttackTarget")
+            ?? throw new Exception("Mimic: Verse.AI.IAttackTarget is gone");
+
+        foreach (string member in new[] { "Thing", "TargetCurrentlyAimingAt", "TargetPriorityFactor" })
+        {
+            if (attackTarget.GetProperty(member, Any) == null)
+                throw new Exception($"Mimic: IAttackTarget.{member} is gone");
+        }
+        if (attackTarget.GetMethod("ThreatDisabled", Any) == null)
+            throw new Exception("Mimic: IAttackTarget.ThreatDisabled is gone");
+
+        if (!attackTarget.IsAssignableFrom(typeof(MimicDecoy)))
+            throw new Exception("Mimic: MimicDecoy no longer implements IAttackTarget");
+
+        // Registration is automatic and entirely implicit - this is the call that puts a spawned
+        // decoy in front of enemy AI, and nothing in this mod invokes it.
+        Type cache = typeof(Verse.Thing).Assembly.GetType("Verse.AI.AttackTargetsCache")
+            ?? throw new Exception("Mimic: Verse.AI.AttackTargetsCache is gone");
+        if (cache.GetMethod("Notify_ThingSpawned", Any) == null)
+            throw new Exception("Mimic: AttackTargetsCache.Notify_ThingSpawned is gone - "
+                + "a spawned decoy would never be registered as a target");
+
+        Type finder = typeof(Verse.Thing).Assembly.GetType("Verse.AI.AttackTargetFinder")
+            ?? throw new Exception("Mimic: Verse.AI.AttackTargetFinder is gone");
+        if (finder.GetMethod("GetShootingTargetScore", Any) == null)
+            throw new Exception("Mimic: AttackTargetFinder.GetShootingTargetScore is gone - "
+                + "MimicDefaults.PriorityFactor is derived from its arithmetic, see Tests/Mimic");
+        // Raiders scan with NeedAutoTargetable, and this is the predicate that flag runs. It
+        // rejects dormant and uninitiated things; the decoy carries neither comp, which is the
+        // reason it passes.
+        if (finder.GetMethod("IsAutoTargetable", Any) == null)
+            throw new Exception("Mimic: AttackTargetFinder.IsAutoTargetable is gone");
+
+        // The decoy has no appearance of its own; it is the source pawn's renderer run again at
+        // another position, with the rotation pinned. The Rot4? parameter is what pins it.
+        MethodInfo drawPhase = typeof(Verse.PawnRenderer).GetMethod("DynamicDrawPhaseAt", Any, null,
+            new[] { typeof(Verse.DrawPhase), typeof(UnityEngine.Vector3), typeof(Verse.Rot4?), typeof(bool) },
+            null);
+        if (drawPhase == null)
+            throw new Exception("Mimic: PawnRenderer.DynamicDrawPhaseAt(DrawPhase, Vector3, Rot4?, bool) "
+                + "is gone - the decoy would draw nothing at all");
+
+        foreach (string phase in new[] { "EnsureInitialized", "ParallelPreDraw", "Draw" })
+        {
+            if (!Enum.IsDefined(typeof(Verse.DrawPhase), phase))
+                throw new Exception($"Mimic: DrawPhase.{phase} is gone");
+        }
+
+        return "Checked the mimic beacon's IAttackTarget and PawnRenderer contracts.";
     }
 }

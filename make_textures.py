@@ -793,6 +793,109 @@ def make_toy_car_icon():
 
 
 
+# ---------------------------------------------------------------------------------------
+# Mimic beacon. Drawn upright like the frost bomb rather than from above, for the same
+# reason: the throw animation puts this sprite in a fist for half a second, and a disc seen
+# from directly above reads as a coin when a hand is holding it.
+# ---------------------------------------------------------------------------------------
+
+HOLO_DEEP  = (26, 92, 118)
+HOLO       = (74, 178, 214)
+HOLO_LIGHT = (168, 232, 248)
+CASE       = (126, 132, 142)
+CASE_LIT   = (186, 192, 202)
+CASE_DARK  = (68, 72, 82)
+
+
+def make_mimic_beacon():
+    """
+    The emitter: a squat drum with a lens on top and a projected figure standing out of it.
+
+    The figure is the whole point of the sprite. A drum on its own is indistinguishable from
+    every other piece of industrial kit in the game, and the item has to say "this makes a
+    person" at inventory size. So the drum is drawn small and dark at the bottom and the
+    light coming out of it is the tall bright half.
+    """
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    cx = S // 2
+
+    # The projection first, behind the case, so the case sits over its base.
+    glow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    g = ImageDraw.Draw(glow)
+
+    # A cone of light widening upward from the lens, then a figure standing inside it.
+    g.polygon([(cx - px(8), px(84)), (cx + px(8), px(84)),
+               (cx + px(30), px(18)), (cx - px(30), px(18))], fill=HOLO_DEEP + (110,))
+
+    # The figure: head, shoulders, torso. Deliberately featureless - it is a silhouette in
+    # light, and anything more detailed turns to mud at 24 pixels.
+    g.ellipse([cx - px(11), px(20), cx + px(11), px(42)], fill=HOLO + (235,))
+    g.polygon([(cx - px(19), px(84)), (cx + px(19), px(84)),
+               (cx + px(15), px(46)), (cx - px(15), px(46))], fill=HOLO + (235,))
+    g.rounded_rectangle([cx - px(6), px(26), cx + px(2), px(74)], radius=px(4),
+                        fill=HOLO_LIGHT + (255,))
+    glow = glow.filter(ImageFilter.GaussianBlur(px(1.2)))
+    img.alpha_composite(glow)
+
+    d = ImageDraw.Draw(img)
+
+    # The case: a drum seen slightly from the side, with three feet.
+    d.rounded_rectangle([cx - px(30), px(80), cx + px(30), px(114)], radius=px(10),
+                        fill=CASE_DARK)
+    d.rounded_rectangle([cx - px(27), px(83), cx + px(27), px(110)], radius=px(8), fill=CASE)
+    d.rounded_rectangle([cx - px(23), px(86), cx - px(4), px(106)], radius=px(6), fill=CASE_LIT)
+    for foot in (-px(22), 0, px(22)):
+        d.rounded_rectangle([cx + foot - px(5), px(110), cx + foot + px(5), px(120)],
+                            radius=px(3), fill=CASE_DARK)
+
+    # The lens, last and brightest, sitting in the top face of the drum.
+    d.ellipse([cx - px(16), px(74), cx + px(16), px(90)], fill=CASE_DARK)
+    d.ellipse([cx - px(12), px(77), cx + px(12), px(87)], fill=HOLO_DEEP)
+    d.ellipse([cx - px(8), px(79), cx + px(4), px(85)], fill=HOLO_LIGHT)
+
+    finish(img, "Textures/RimArt/Mimic/Beacon.png")
+
+
+def make_mimic_icon():
+    """
+    The gizmo: two figures, one solid and one made of light.
+
+    The item is drawn elsewhere; what the button has to say is what it does, and what it
+    does is put a second you somewhere else. Two silhouettes side by side is the shortest
+    way to say that, and it survives the downsample because it is two blocks of flat colour.
+    """
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    c = S // 2
+
+    d = ImageDraw.Draw(img)
+    d.ellipse([c - px(58), c - px(58), c + px(58), c + px(58)], fill=(30, 32, 36, 210))
+
+    def figure(x, head, body, outline=None):
+        d.ellipse([x - px(13), c - px(38), x + px(13), c - px(12)], fill=head)
+        d.polygon([(x - px(22), c + px(40)), (x + px(22), c + px(40)),
+                   (x + px(17), c - px(8)), (x - px(17), c - px(8))], fill=body)
+        if outline is not None:
+            d.ellipse([x - px(13), c - px(38), x + px(13), c - px(12)],
+                      outline=outline, width=px(3))
+
+    # The real one on the left, in the steel the rest of the mod's icons use.
+    figure(c - px(24), STEEL_LIGHT, STEEL)
+
+    # The copy on the right, in light, drawn over a glow so it reads as the projected one.
+    glow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glow)
+    gd.polygon([(c + px(2), c + px(44)), (c + px(46), c + px(44)),
+                (c + px(40), c - px(42)), (c + px(8), c - px(42))], fill=HOLO_DEEP + (140,))
+    glow = glow.filter(ImageFilter.GaussianBlur(px(2.0)))
+    img.alpha_composite(glow)
+
+    d = ImageDraw.Draw(img)
+    figure(c + px(24), HOLO_LIGHT, HOLO, outline=HOLO_LIGHT)
+
+    finish(img, "Textures/RimArt/Mimic/IconMimic.png")
+
+
+
 if __name__ == "__main__":
     make_flying()
     make_planted()
@@ -809,3 +912,5 @@ if __name__ == "__main__":
     make_toy_car(body_only=True)
     make_toy_car_rig()
     make_toy_car_icon()
+    make_mimic_beacon()
+    make_mimic_icon()

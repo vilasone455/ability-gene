@@ -361,13 +361,17 @@ The damage is almost nothing. `AG_Cryo` does 5 damage, is resisted by heat armou
 a *negative* explosion heat energy, so what the bomb leaves behind is a cold room rather
 than a crater. The seconds are the weapon.
 
-It misses like a grenade, at `forcedMissRadius` 1.9 — the same as a frag. That is not a
-balance choice: `ThingDef.ConfigErrors` requires a forced miss radius on a verb that launches
-an explosive projectile and refuses one on a verb that does not, so the options were to
-declare a number and not honour it or to scatter for real. `Verb_ThrowFrostBomb.ThrownAt`
-scatters for real, reusing the engine's own falloff — nothing inside three cells, half inside
-five, four fifths inside seven — so a bomb lobbed into the next room lands where you put it
-and only a throw near the edge of range wanders.
+It is pinpoint: it lands on the cell you picked, at any range. That takes a
+`forcedMissRadius` of 0.4 rather than 0, because two different parts of the game read the
+field. `ThingDef.ConfigErrors` requires one on a verb that launches an explosive projectile
+and refuses one on a verb that does not — it tests `forcedMissRadius > 0f != CausesExplosion`,
+an equality, so zero is a load error. The code that actually displaces a shot tests
+`ForcedMissRadius > 0.5f`. Anything between the two satisfies the check and never moves a
+grenade.
+
+`Verb_ThrowFrostBomb.ThrownAt` still implements the real scatter — the engine's own falloff,
+nothing inside three cells, half inside five, four fifths inside seven — so raising that one
+number turns the bomb back into a grenade that misses without touching any C#.
 
 Reusable, like every grenade in the base game — the tubes hold charge and the compressor
 builds the next bomb between throws. The balance lever is a six-second `RangedWeapon_Cooldown`
@@ -406,6 +410,60 @@ protected virtual ProjectileCE SpawnProjectile()
 so a `Projectile_Explosive` subclass of ours can never be a projectile CE throws. Hanging the
 freeze on the damage unties the effect from the delivery, and `ExplosionStart` fires once per
 explosion — a per-cell hook would have frozen a pawn once for every cell it stands in.
+
+### Mimic beacon (weapon)
+A thrown projector, equipped in the weapon slot and aimed like the game's own grenades.
+Range 12.9 cells; where it lands it stands a **copy of the person who threw it** — same body,
+same face, same clothes, same gun — which cannot move, cannot act, and cannot fight.
+
+What it can do is look like the better target. The projection is a real object with 120 hit
+points, and most hostiles shoot it instead of your colonists for the twenty seconds it holds.
+When it ends — the charge running out, or the enemy taking it apart — it leaves **nothing**.
+No corpse, no blood, no dropped gun, no haul job. A flash, and the cell is empty.
+
+It is a **strong preference, not a compulsion**, and that distinction is the entire mechanic.
+A raider who has already been firing on one of your colonists keeps firing on them; a raider
+picking a target picks the decoy. Melee raiders walk to it and swing at it, which is the half
+of the item that stops a rush rather than a volley.
+
+There is **no taunt radius**, deliberately. The bias lives inside the game's own target
+scoring, so the decoy's reach is each enemy's own acquisition radius — the distance at which
+they would have noticed a colonist standing there. See *How the mimic beacon works* below for
+the arithmetic and where the 1.6 comes from.
+
+**Throw it forward.** Distance is worth a point a cell in the game's own target scoring, so a
+decoy standing further from the enemy than your people are is spending its whole advantage on
+making up that gap. It has about twelve cells of slack covering somebody in a ten-cell
+firefight and about six at twenty-five, and past roughly forty it has none at all — at that
+range the decoy has to be nearer the shooter than the person it is covering. A beacon lobbed
+sideways or backwards does very little.
+
+The cost is position. Nothing is consumed, so there is no material price per throw; what
+there is instead is the decision of where to put it, and a beacon thrown badly pulls a firing
+line toward your own people. Standing one beside a colonist is how you call fire onto them.
+
+Eight-second cooldown, against six for the frost bomb. That is a short number on purpose:
+`RangedWeapon_Cooldown` is not a gate on the item, it is **how long the thrower cannot move or
+shoot** — see *Why a thrower stands still* below. Uptime is limited where it belongs instead,
+by one decoy per thrower.
+
+Spacer tech, behind the *holographic projection* research (past machining and microelectronics),
+machining table, 40 steel / 4 industrial components / 10 gold. Like the frost bomb it carries no
+AI weapon tags, so no raider is ever generated holding one.
+
+**One decoy per thrower.** Throwing a second pops the first. Two colonists with two beacons get
+two decoys, which is a squad investment and deliberately allowed. This, rather than a long
+cooldown, is what stops one pawn blanketing the map — and a projection under fire rarely lives
+out its twenty seconds anyway.
+
+**It is drawn as light, not as a person.** The copy is tinted blue and rendered through the
+game's own cloaking shader, which is translucent and carries a distortion texture, and it casts
+no shadow. `MimicDefaults.Shimmer` turns that off for a solid blue clone with a shadow instead.
+
+**The projection ends when its source does.** If the thrower dies, is downed, is picked up or
+leaves the map, the decoy goes with them — it is copying a live signature, and there is nothing
+left to copy. That is a fiction covering a real constraint, and the constraint is in the next
+section.
 
 ### Fold organ → *vent*, *fold*, *swallow*, *post*, *collapse* (archite)
 
@@ -1456,10 +1514,215 @@ crowd ability or a duel ability.
 Arc has no `aiCanUse`, like every ability in this mod. A hostile pawn wielding an Arcing weapon does nothing
 with it.
 
+## How the mimic beacon works
+
+Three decisions carry this feature, and all three were made by reading the game's code rather
+than by guessing at it.
+
+### The decoy is a Thing, and it still draws fire
+
+The obvious build is a humanlike `Pawn` of the player's faction. It is the wrong one.
+`Pawn.IsColonist` tests nothing more than "humanlike, and in the player's faction", so such a
+pawn *is* a colonist: colonist bar, needs, mood, a health tab, a social log, recruitment, a
+caravan slot, a "colonist died" letter, and a body on the floor afterwards. Every one of those
+is something this item is specified not to do, and each would need its own patch to suppress.
+
+The toy car's file records the cost of the other route as "enemy AI ignores the car, so it
+draws no fire and is not a decoy". That is true of a plain `Thing` and **not** true of one that
+implements `Verse.AI.IAttackTarget`, which is four members:
+
+```csharp
+public interface IAttackTarget : ILoadReferenceable
+{
+    Thing Thing { get; }
+    LocalTargetInfo TargetCurrentlyAimingAt { get; }
+    float TargetPriorityFactor { get; }
+    bool ThreatDisabled(IAttackTargetSearcher disabledFor);
+}
+```
+
+`ILoadReferenceable` comes free with `Thing`. Registration is automatic:
+`AttackTargetsCache.Notify_ThingSpawned` files anything spawned that implements the interface.
+`RimWorld.Hive` is the precedent — a building, not a turret, that raiders shoot and swing at.
+Raiders reach it through `JobGiver_AIFightEnemy.FindAttackTarget`, whose scan flags are
+`NeedLOSToPawns | NeedReachableIfCantHitFromMyPos | NeedThreat | NeedAutoTargetable`; the two
+that could exclude it both pass, because `ThreatDisabled` is ours to write and
+`AttackTargetFinder.IsAutoTargetable` only rejects dormant or uninitiated things. Melee finds it
+by a different road — `ThingRequestGroup.AttackTarget` membership is literally
+`typeof(IAttackTarget).IsAssignableFrom(def.thingClass)` — and arrives at the same place.
+
+So "it leaves nothing" is true by construction rather than by cleanup. There is no corpse
+because there is no pawn.
+
+**The faction must be set before the spawn, not after.** `AttackTargetsCache.RegisterTarget`
+files a new target under every faction it is hostile to *at that moment*, once, and nothing
+re-files it afterwards except an actual change in faction relations. A decoy spawned
+factionless is hostile to nobody, filed under nobody, and returned to nobody — it would stand
+there as scenery, with no error in any log. This is the single easiest way to break the
+feature and it is one line.
+
+### The taunt is one number, and the number is derived
+
+`AttackTargetFinder.GetShootingTargetScore` is the whole of enemy target selection:
+
+```csharp
+float num = 60f;
+num -= Mathf.Min(distance, 40f);                                   // closer is better
+if (target.TargetCurrentlyAimingAt == searcher.Thing) num += 10f;  // it is aiming back
+if (searcher.LastAttackedTarget == target.Thing
+    && TicksGame - searcher.LastAttackTargetTick <= 300) num += 40f;   // engaged, last 5s
+num -= blockChance * 10f;                                          // cover
+// ... terms that apply only to Pawns ...
+return num * target.TargetPriorityFactor;
+```
+
+The design wants a heavy bias that a hostile **already engaged** is allowed to resist. That
+exemption is already in the engine and is worth exactly +40, for five seconds after the last
+shot. So the whole of the taunt reduces to one inequality — at a shared distance `d`, the decoy
+must beat a target nobody is shooting at and lose to one somebody is:
+
+```
+(60 - d) * F  >  (60 - d) + 10          and          (60 - d) * F  <  (60 - d) + 40
+```
+
+Each side is written for the case that is *worst for the decoy* rather than the average one,
+and that turns out to matter. The left-hand bound assumes the unengaged colonist is shooting
+back, so it holds the +10; it is hardest at the 40-cell clamp and demands `F > 1.5`. The
+right-hand bound assumes the engaged colonist is **not** shooting back, so it holds only the
++40; it is hardest at point-blank and demands `F < 1.667`.
+
+That upper bound is the easy one to get wrong. A factor of 1.75 satisfies the same inequality
+at ten cells and beyond and quietly breaks it inside seven — which is precisely where "a raider
+who has already reached somebody does not turn around" is the promise being made. The window is
+therefore **(1.5, 1.667)** and the constant is **1.6**, near the middle of it, beating an idle
+target by three fifths.
+
+`Tests/Mimic` holds a transcription of the formula and asserts both bounds at *every* distance
+from zero to the clamp, along with the window itself and the forward-throw slack, so changing
+the constant fails a test rather than quietly changing how raids behave.
+
+There is no `enemyTarget` rewrite here, and that is the difference from *provoke*, which
+does exactly that and is a hard taunt (see *Combat presence*). Doing it natively means the
+decoy competes inside the same function as everything else: cover, distance, friendly-fire
+avoidance and the engaged bonus all keep working, and no enemy's job queue is thrashed.
+
+### The picture is the thrower's own renderer, run twice
+
+The decoy has no appearance of its own. It is drawn by running the source pawn's
+`PawnRenderer` a second time at the decoy's position, which is the same trick the arc and the
+time lattice already use for afterimages, and which gets body, head, hair, colours, xenotype,
+every worn garment and the weapon in the hand exactly right — with no `PawnGenerator` call, no
+apparel to clone, and nothing to destroy on the way out.
+
+The three phases are not optional. As of 1.6 a pawn is drawn from results the render tree
+computed earlier in the frame for wherever that pawn actually is, so asking for a draw at a
+position of your own draws nothing at all; `EnsureInitialized` and `ParallelPreDraw` at the
+decoy's position re-point those results first, and they are then pushed back to the source's
+real position so nothing else drawing that pawn this frame inherits the decoy's.
+
+Two things are pinned that the afterimages do not pin. The rotation is overridden with a facing
+captured at throw time, so the decoy does not turn as its source turns, and `neverAimWeapon`
+keeps it from raising a gun it cannot fire.
+
+**What is not pinned is posture, and that is the known limit.** A decoy whose source is running
+bobs; a decoy whose source is lying down lies down. Rather than paper over it, the decoy simply
+**ends when its source stops standing** — dead, downed, carried, or off the map. That disposes
+of every posture case at once, and it is why "one decoy per thrower" is a rendering rule as much
+as a design one: two decoys sharing a source would run that renderer twice in a frame and push
+the results back once, drawing the second from the first one's position.
+
+### It is coloured by the game's own tint field, not by new materials
+
+The copy is drawn blue, translucent, faintly rippling, and without a shadow. None of that is
+painted; all four fall out of two fields the render tree already carries.
+
+`PawnDrawParms.tint` is multiplied into every material the pawn draws with —
+`PawnRenderNodeWorker.PreDraw` does `parms.tint * mat.color` into a `MaterialPropertyBlock` —
+so a postfix on `PawnRenderer.GetDrawParms` that multiplies in a colour tints the whole figure,
+clothes and weapon included, with nothing to enumerate. Multiplied rather than assigned, so the
+damage flash still reads through: a decoy being shot flickers the way anything else does.
+
+`PawnRenderFlags.Invisible` is the second field, and it does two jobs. `PawnRenderNodeWorker`
+swaps every material for one on the `Misc/Invisible` shader, which is translucent and carries a
+distortion texture — light with a ripple in it. And `RenderPawnAt` skips the shadow for anything
+carrying that flag, which the game does for its own cloaked pawns and which matters here more
+than it does for them: a shadow under a hologram is the most obvious tell there is.
+
+Both patches are inert unless `MimicRender.DrawingAsDecoy` names the pawn being rendered, which
+is true for exactly one call a frame per live decoy. Plain static state is enough — the game
+finishes every parallel pre-draw job inside `DrawDynamicThings`, and `MapComponentUpdate`, where
+the decoy draw happens, runs after that on the main thread.
+
+**There is a third patch and it is the one that is easy to miss.** Zoomed out past a threshold
+the game stops rendering humanlike pawns through the render tree and blits a cached frame from a
+texture atlas, taking its material from the atlas and passing `PawnRenderFlags.None`. That path
+honours neither the tint nor the shader, so the decoy would look right while the camera was
+close and turn back into an ordinary-looking colonist the moment the player zoomed out.
+`ParallelGetPreRenderResults` already takes a `disableCache` parameter and simply never gets it
+passed from there, so a prefix sets it.
+
+`MimicDefaults.Shimmer` turns the cloaking flag off and leaves the tint, which gives a solid
+blue clone with a shadow instead. That switch exists because it is the one decision in this
+feature that cannot be made by reading code.
+
+### What the Combat Extended patch does and does not do
+
+The same shape as the frost bomb's, for the same reasons — CE's stats and a `ToolCE`, and
+neither CE's verb nor CE's projectile, because their verb casts what it spawns straight to
+`ProjectileCE` and taking it would cost the throw animation. One difference is worth stating:
+the frost bomb gives up CE ballistics for a cell-targeted stun, which is a small loss, while the
+beacon gives up nothing at all. It is a device that arrives at a cell and switches on; there is
+no damage to model and therefore no ballistics to miss.
+
+What CE does change, correctly, is how long a decoy lasts. CE rounds hit harder, so 120 hit
+points come apart faster — and the beacon is a way to spend somebody else's ammunition in a mod
+about ammunition being finite.
+
 ## How the grenade throw is animated
 
 Melee Animation draws the arm. This mod supplies the clip, decides when the hand opens, and
 launches the grenade at that moment — and works without any of it.
+
+### Why a thrower stands still
+
+A pawn that has just thrown something cannot walk, and cannot fire again, until the weapon's
+cooldown is up. This is not something either thrown item does — it is how every ranged weapon in
+RimWorld works, and it is worth writing down because it is the single biggest constraint on what
+`RangedWeapon_Cooldown` may be set to.
+
+Three separate things hold the thrower still, in order:
+
+| Phase | Length | What holds them |
+|---|---|---|
+| Warmup | `warmupTime`, 0.8s here | `Stance_Warmup`. A move order cancels it and the throw never happens |
+| The clip | 1.2s, hand opens at 0.58s | Melee Animation pins the pawn for the length of the animation. Without that mod this phase does not exist and the object launches instantly |
+| Cooldown | `RangedWeapon_Cooldown` | `Stance_Cooldown` |
+
+The third is the one that matters. `Stance_Cooldown` extends `Stance_Busy`, whose `StanceBusy`
+is `true`, and `Pawn_PathFollower.PatherTick` returns immediately while `stances.FullBodyBusy`:
+
+```csharp
+else
+{
+    if (this.pawn.stances.FullBodyBusy)
+    {
+        return;
+    }
+    ...
+```
+
+So for the whole cooldown the pawn does not move and cannot start another shot. **A new order
+clears it** — `Pawn_JobTracker.StartJob` takes `cancelBusyStances = true` by default and calls
+`CancelBusyStanceHard`, so clicking somewhere frees them on the spot. What is stuck is a pawn
+with nothing else to do: a drafted colonist holding position stands through the entire cooldown
+with the little countdown circle under them.
+
+That is why the frost bomb's six seconds is described as a long cooldown rather than a normal
+one, and why the mimic beacon is eight rather than the thirty its first draft had. Thirty
+seconds is a fine gate on an item and an unusable one on a person — it would have taken the
+thrower out of the fight the beacon exists to save. Anything that needs to be gated for longer
+than a few seconds has to be gated on the item instead, the way the stasis belt holds its charge
+on the belt rather than on the wearer.
 
 ### It is a sidearm throw, because the camera looks straight down
 
@@ -1601,12 +1864,14 @@ make_textures.py                 draws them; run it after editing, commit the PN
 Animations/                      Melee Animation clips, as json (one per facing pair)
 make_throw_anim.py               writes both throw clips; run it after editing, commit the json
 Patch_MeleeAnimation/1.6/Defs/   defs that name their types; loaded only when their mod is
-Patch_CombatExtended/1.6/        CE stats and tool for the frost bomb; same conditional rule
+Patch_CombatExtended/1.6/        CE stats and tools for the frost bomb and mimic beacon
 Languages/English/Keyed/         message strings
 Source/RimArt/                   C# source
 Source/RimArt/Rounds/            one round in flight, either engine's; the CE bridge
 Source/RimArt/Throw/             the throw animation bridge and the launch it delays
 Source/RimArt/Frost/             the frost bomb: its verb, its burst, its damage worker
+Source/RimArt/Mimic/             the mimic beacon: the decoy, its targeting, its renderer copy
+Source/RimArt/ToyCar/            the remote vehicle, its link, its operator lock
 ```
 
 Def prefix is `AG_`. Custom blade, crow and stasis art lives under `Textures/RimArt/`;

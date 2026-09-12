@@ -169,10 +169,24 @@ NAMESPACE = "RimArt"
 dll = "1.6/Assemblies/" + NAMESPACE + ".dll"
 if os.path.exists(dll):
     blob = open(dll, "rb").read().decode("latin-1")
+    # Two spellings, because RimWorld names a class two different ways and only one of them
+    # is an attribute. Class="RimArt.X" picks the implementation of a <li> or a def; the
+    # element forms below name a class in a field. A typo in either produces a def that loads
+    # and then throws when the game first needs the type - at spawn, at cast, at damage - so
+    # both are checked against the built assembly here.
+    ELEMENT_CLASS_TAGS = ("thingClass", "workerClass", "driverClass", "gizmoClass",
+                          "verbClass", "compClass", "hediffClass", "abilityClass")
+    element_pattern = re.compile(
+        r'<(?:' + "|".join(ELEMENT_CLASS_TAGS) + r')>\s*' + NAMESPACE + r'\.([A-Za-z_0-9]+)\s*<')
+
     for f in my_files:
-        for m in re.finditer(r'Class="' + NAMESPACE + r'\.([A-Za-z_0-9]+)"', open(f).read()):
-            if m.group(1) not in blob:
-                fail("class not in assembly", f, NAMESPACE + "." + m.group(1))
+        text = open(f).read()
+        found = [m.group(1) for m in
+                 re.finditer(r'Class="' + NAMESPACE + r'\.([A-Za-z_0-9]+)"', text)]
+        found += [m.group(1) for m in element_pattern.finditer(text)]
+        for name in found:
+            if name not in blob:
+                fail("class not in assembly", f, NAMESPACE + "." + name)
 else:
     print("warning: " + dll + " not built -- skipping class check")
 

@@ -123,4 +123,7 @@
   <AG_CarrionBusy>A feeding flock is already away.</AG_CarrionBusy>
   <AG_CarrionInvalid>Choose a fresh flesh corpse within 10 cells on revealed ground.</AG_CarrionInvalid>
   <AG_CarrionClaimed>Another feeding flock has already claimed this corpse.</AG_CarrionClaimed>
+
+  <AG_MimicProjecting>Projecting {0}. {1} left.</AG_MimicProjecting>
+  <AG_MimicNoRoom>No room to project a decoy there.</AG_MimicNoRoom>
 </LanguageData>

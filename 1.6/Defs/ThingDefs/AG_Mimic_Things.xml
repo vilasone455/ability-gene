@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The projection.
+
+       Shaped after AG_ToyCar, which is the same kind of object: a selectable, ticking thing
+       that sits on the map and belongs to somebody. Building rather than Item for the same
+       reasons given there - stacking, deterioration, forbidding and haul jobs all mean nothing
+       here, and a colonist deciding on their own to carry a decoy off to a stockpile is not
+       behaviour anybody wants.
+
+       passability Standable and isEdifice false keep it out of the region system, so a raider
+       can walk onto the cell and swing at it rather than treating it as a wall to path around.
+       That matters: half of what this item does is stop a melee rush, and a melee rush that has
+       to path around the decoy is a melee rush that walked past it.
+
+       repairable and deconstructible are both off. A colonist running out under fire to patch up
+       a hologram, or to dismantle one for its steel, is the kind of thing the game will invent
+       on its own if the def lets it.
+
+       No costList and leaveResourcesWhenKilled false, which is what makes "it leaves nothing"
+       true rather than merely intended. There is no corpse because there is no pawn. -->
+  <ThingDef>
+    <defName>AG_MimicDecoy</defName>
+    <label>projection</label>
+    <description>A projected copy of the person who threw the beacon. It cannot move, act or fight, and it does not know it is not real. What it does is look worth shooting.</description>
+    <thingClass>RimArt.MimicDecoy</thingClass>
+    <category>Building</category>
+    <altitudeLayer>Item</altitudeLayer>
+    <drawerType>RealtimeOnly</drawerType>
+    <tickerType>Normal</tickerType>
+    <selectable>true</selectable>
+    <neverMultiSelect>true</neverMultiSelect>
+    <useHitPoints>true</useHitPoints>
+    <rotatable>false</rotatable>
+    <passability>Standable</passability>
+    <fillPercent>0</fillPercent>
+    <coversFloor>false</coversFloor>
+    <blockWind>false</blockWind>
+    <blockLight>false</blockLight>
+    <castEdgeShadows>false</castEdgeShadows>
+    <canOverlapZones>true</canOverlapZones>
+    <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
+    <building>
+      <isEdifice>false</isEdifice>
+      <claimable>false</claimable>
+      <deconstructible>false</deconstructible>
+      <repairable>false</repairable>
+    </building>
+    <graphicData>
+      <texPath>RimArt/Mimic/Beacon</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.8</drawSize>
+    </graphicData>
+    <statBases>
+      <!-- About eleven rifle hits. Three shooters at ordinary hit rates take it apart in eight
+           to ten seconds, which is deliberately inside the twenty-second life: under real
+           pressure the decoy is meant to be destroyed rather than to time out, and the timer is
+           the ceiling for the case where nobody shoots it at all. -->
+      <MaxHitPoints>120</MaxHitPoints>
+      <Mass>1</Mass>
+      <!-- It is light. Setting fire to a projection should do nothing at all, and the simplest
+           way to say so is for it not to burn. -->
+      <Flammability>0</Flammability>
+    </statBases>
+  </ThingDef>
+
+  <!-- The beacon in flight.
+
+       ParentName BaseGrenadeProjectile for the arc, the speed and the shadow, and thingClass
+       restated on purpose: Combat Extended rewrites that parent's thingClass to its own
+       explosive projectile, and a restated one is not reached. AG_FrostBombProjectile carries
+       the same line for the same reason.
+
+       No explosionRadius anywhere, and therefore no forcedMissRadius either. ThingDef error
+       checking tests "forcedMissRadius > 0f != CausesExplosion" as an equality, so a
+       non-explosive projectile must declare none at all - which is also what makes the beacon
+       land exactly where the player put it, since Verb_ThrowByHand returns the target unchanged
+       for any radius at or under half a cell.
+
+       A damage def is declared and does nothing. Nothing in this projectile's path applies it -
+       Projectile.Impact deals no damage on its own and Projectile_MimicBeacon adds none - but a
+       projectile with no damage def at all is a shape the game does not expect, and Blunt at
+       zero is cheaper than finding out where. -->
+  <ThingDef ParentName="BaseGrenadeProjectile">
+    <defName>AG_MimicBeaconProjectile</defName>
+    <label>mimic beacon</label>
+    <thingClass>RimArt.Projectile_MimicBeacon</thingClass>
+    <graphicData>
+      <texPath>RimArt/Mimic/Beacon</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.7</drawSize>
+    </graphicData>
+    <projectile>
+      <damageDef>Blunt</damageDef>
+      <damageAmountBase>0</damageAmountBase>
+      <speed>12</speed>
+      <arcHeightFactor>2</arcHeightFactor>
+      <shadowSize>0.4</shadowSize>
+    </projectile>
+  </ThingDef>
+
+  <!-- The item, which is a grenade in every way the game cares about: weapon slot, aimed at a
+       cell, thrown by hand, and never used up.
+
+       Reusable for the same reason the frost bomb is. The recorded objection was to buying and
+       crafting bombs one at a time, and an item that is never consumed answers it directly -
+       which also dissolves the charge-and-replenish supply model the design notes left open,
+       because there is nothing left to replenish.
+
+       Eight seconds, against six for the frost bomb, and the number is bounded from above much
+       harder than it looks.
+
+       RangedWeapon_Cooldown is not a gate on the item. It is how long the thrower is frozen.
+       Verb.TryCastNextBurstShot puts the caster into a Stance_Cooldown for exactly this long,
+       Stance_Cooldown is a Stance_Busy so StanceBusy is true, and Pawn_PathFollower.PatherTick
+       returns immediately while stances.FullBodyBusy - the pawn cannot walk and cannot shoot
+       until it expires. A new order clears it (Pawn_JobTracker.StartJob cancels busy stances by
+       default), so the pawn is not stuck; but a drafted pawn told to hold position stands there
+       doing nothing for the whole duration.
+
+       This was thirty seconds in the first draft, reasoning that the cooldown had to outlast the
+       decoy so one pawn could not keep one up permanently. That reasoning was about the wrong
+       thing. Thirty seconds of RangedWeapon_Cooldown is thirty seconds of a colonist unable to
+       move or fire, on an item whose entire purpose is covering a retreat - it would have taken
+       the thrower out of the fight it was meant to save.
+
+       Permanent uptime is prevented where it actually belongs: one decoy per thrower, enforced
+       in MapComponent_Mimics, so a second throw replaces the first rather than adding to it. And
+       a projection under fire rarely survives its twenty seconds anyway. What a pawn on decoy
+       duty spends is about ten seconds per refresh - warmup, throw animation, cooldown - during
+       which they are not shooting, which is a legible cost and the right one.
+
+       The floor is 1.2s: the throw animation runs 72 ticks and the hand opens at tick 35, so
+       anything shorter lets the pawn walk out of the stance mid-swing.
+
+       No AI weapon tags, so no raider is ever generated holding one. -->
+  <ThingDef ParentName="BaseMakeableGrenade">
+    <defName>AG_MimicBeacon</defName>
+    <label>mimic beacon</label>
+    <description>A throwable projector that reads whoever threw it and stands a copy of them where it lands. The copy cannot move, act or fight. What it can do is look like the better target, and most people shoot at it.\n\nIt is a projection, not a shield: the light stops nothing, and the projector fails when it is shot to pieces or when its charge runs out about twenty seconds later. Either way nothing is left on the ground. The emitter rebuilds its charge between throws, so the device is never used up.</description>
+    <graphicData>
+      <texPath>RimArt/Mimic/Beacon</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <uiIconPath>RimArt/Mimic/IconMimic</uiIconPath>
+    <uiIconScale>1.1</uiIconScale>
+    <soundInteract>Interact_Grenade</soundInteract>
+    <techLevel>Spacer</techLevel>
+    <statBases>
+      <Mass>1.5</Mass>
+      <RangedWeapon_Cooldown>8</RangedWeapon_Cooldown>
+      <WorkToMake>12000</WorkToMake>
+      <Flammability>0.4</Flammability>
+    </statBases>
+    <costList>
+      <Steel>40</Steel>
+      <ComponentIndustrial>4</ComponentIndustrial>
+      <!-- The optics. Also what keeps this off the bench the moment microelectronics finishes,
+           which matters for an item that answers being outnumbered. -->
+      <Gold>10</Gold>
+    </costList>
+    <recipeMaker>
+      <researchPrerequisite>AG_HolographicProjection</researchPrerequisite>
+      <skillRequirements>
+        <Crafting>6</Crafting>
+      </skillRequirements>
+      <displayPriority>330</displayPriority>
+    </recipeMaker>
+    <thingCategories>
+      <li>Grenades</li>
+    </thingCategories>
+    <tradeTags>
+      <li>ExoticMisc</li>
+    </tradeTags>
+    <smeltable>true</smeltable>
+    <verbs>
+      <li>
+        <label>throw mimic beacon</label>
+        <verbClass>RimArt.Verb_ThrowMimicBeacon</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <!-- Matches the game's own grenades, and the frost bomb. The animation shows a person
+             throwing something by hand, and a hand-thrown object that outranges a frag grenade
+             would be a lie told twice. It also prices the item: the beacon has to be put
+             somewhere useful, and twelve cells means walking. -->
+        <range>12.9</range>
+        <warmupTime>0.8</warmupTime>
+        <noiseRadius>4</noiseRadius>
+        <!-- Never thrown on the pawn's own initiative. A decoy dropped where a colonist felt
+             like it, pulling a firing line somewhere nobody chose, is the whole failure mode
+             this item has. Explicit orders are unaffected. -->
+        <onlyManualCast>true</onlyManualCast>
+        <soundCast>ThrowGrenade</soundCast>
+        <targetParams>
+          <canTargetLocations>true</canTargetLocations>
+          <canTargetPawns>false</canTargetPawns>
+          <canTargetBuildings>false</canTargetBuildings>
+          <canTargetSelf>false</canTargetSelf>
+        </targetParams>
+        <defaultProjectile>AG_MimicBeaconProjectile</defaultProjectile>
+        <rangedFireRulepack>Combat_RangedFire_Thrown</rangedFireRulepack>
+      </li>
+    </verbs>
+  </ThingDef>
+
+</Defs>

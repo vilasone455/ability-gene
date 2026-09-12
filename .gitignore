@@ -8,3 +8,4 @@ Source/**/obj/
 Thumbs.db
 .vs/
 .idea/
+__pycache__/

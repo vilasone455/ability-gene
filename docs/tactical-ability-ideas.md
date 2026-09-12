@@ -219,10 +219,17 @@ this buys evacuation time rather than restoring health. Exact resource costs and
 
 ## Selected tactical items
 
-The user selected these four additional concepts for this document: **Frost Bomb, Mimic
-Beacon, Grapnel Launcher, and Paper Bomb**. This selects ideas for design notes, not
+The user selected these concepts for this document: **Frost Bomb, Mimic Beacon, Grapnel
+Launcher, Kunai Paper Bomb, and Remote Toy Car**. This selects ideas for design notes, not
 implementation. Effects, costs, durations, and research requirements below remain proposals.
-Paper Bomb is the chosen name for the earlier explosive-tag concept.
+
+Two later decisions are folded in. Paper Bomb was the chosen name for the earlier
+explosive-tag concept, and it is now **thrown on a kunai** rather than placed by hand - which
+exists to keep it distinct from the Remote Toy Car, whose first sketch was a strict superset
+of a charge you place and detonate remotely. The two are now split on line of sight: the
+kunai is thrown at what the pawn can see, the car is driven to what it cannot. Frost Bomb,
+Remote Toy Car and Mimic Beacon are implemented; the Grapnel Launcher and the Kunai Paper Bomb
+are not.
 
 ### Frost Bomb
 
@@ -290,6 +297,52 @@ replenish without material costs after a sustained safe period. The refill rule 
 a brief lull in the same fight must not reset charges. This is a custom mechanic, not CE's
 ordinary inventory restocking.
 
+**Implemented.** Shipped as `AG_MimicBeacon`, a thrown grenade weapon behind *holographic
+projection* research. It stands `AG_MimicDecoy` where it lands: a copy of the thrower with 120
+hit points that cannot move or act, holds for twenty seconds, and leaves nothing at all when the
+timer runs out or the enemy destroys it.
+
+**The two open questions in this entry are both closed.**
+
+*Which enemies can be deceived, and when they recognise it* — all of them, and never. A
+recognition mechanic is a second feature, and the decoy already has a defined failure case
+without one: it is destructible, and a raid that shoots it simply gets it out of the way. If a
+"mechs see through it" rule is ever wanted it is a filter on one list.
+
+*Supply* — resolved by being dissolved, exactly as the frost bomb's was. The beacon is reusable
+and never consumed, so the charge-and-replenish model this entry proposed has nothing to
+replenish. The balance lever is a thirty-second weapon cooldown, and that number is derived
+rather than picked: the decoy stands for twenty seconds, so anything shorter lets one pawn keep
+a decoy up permanently.
+
+**Two proposals here were dropped on purpose.** The projection is *not* a hologram that shots
+pass through with a separate destructible emitter behind it. It is one solid object that absorbs
+the rounds, because rounds spent on nothing is the entire product and rounds that pass through
+and carry on are rounds still arriving somewhere. Dropping the emitter also removes a second
+object to model and gives the "destroyed" ending an obvious meaning.
+
+And the taunt is not custom targeting. It is `IAttackTarget.TargetPriorityFactor`, a multiplier
+the game already applies inside its own target scorer, which means cover, distance,
+friendly-fire avoidance and the engine's own five-second stickiness on an already-engaged target
+all keep working. That stickiness is what implements "strong preference rather than compulsion"
+without a line of code. Full derivation in the README.
+
+**What it cost instead** was the picture: a Thing has no appearance, so the decoy is drawn by
+running the thrower's own `PawnRenderer` at a second position. That is the same technique the
+arc and the time lattice use for afterimages, and it is why the decoy ends the moment its
+thrower stops standing. The projection reads as light rather than as a person by way of two
+fields the render tree already carries - a blue `PawnDrawParms.tint` and
+`PawnRenderFlags.Invisible`, which between them give a translucent rippling figure with no
+shadow.
+
+**One number was wrong in the first draft and is worth recording.** The cooldown was set to
+thirty seconds so that it would outlast the decoy. `RangedWeapon_Cooldown` is not a gate on the
+item, though - it is a `Stance_Cooldown` on the thrower, and `Pawn_PathFollower` refuses to move
+a pawn whose stance is busy, so thirty seconds meant a colonist who could neither walk nor shoot
+for half a minute after covering their own retreat. It is eight now, and permanent uptime is
+prevented by the one-decoy-per-thrower rule instead. Anything in this mod that needs a gate
+longer than a few seconds has to hold it on the item, the way the stasis belt does.
+
 ### Grapnel Launcher
 
 **Role:** reach cover quickly using a hook, cable, and powered pull.
@@ -303,21 +356,84 @@ ordinary inventory restocking.
 **Acquisition proposal:** wearable equipment crafted after machining-related research.
 **Supply proposal:** reusable cable with a cooldown, avoiding ammunition restocking.
 
-### Paper Bomb
+### Kunai Paper Bomb
 
-**Role:** Naruto-inspired explosive tags for prepared ambushes and breaching.
+**Role:** Naruto-inspired explosive tags for prepared ambushes and breaching, thrown rather
+than placed by hand. Earlier form: a tag attached to an adjacent surface.
 
-- Attach a paper explosive tag to a nearby surface, such as a wall or door.
-- Withdraw, then detonate it remotely.
-- Placement exposes the pawn. The blast can injure allies and damage colony structures.
+- Throw a tagged kunai at a target cell or surface within throwing range; it sticks where it
+  lands.
+- Withdraw, then detonate remotely, individually or as a group.
+- The blast can injure allies and damage colony structures.
 - Strong structures may survive; breaching must depend on the charge's damage rather than
   guaranteeing destruction of every wall or door.
-- Group detonation, placement limits, blast size, and remote-trigger range remain open.
+- A placed tag is visible and can be shot or destroyed before it is triggered.
+- Group detonation, placement limits, blast size, and remote-trigger range remain open. Also
+  open: whether a kunai may stick to a *pawn*, and whether an unexploded one can be recovered.
+
+**Why it is thrown.** The earlier hand-placed form justified itself with "placement exposes the
+pawn" - the pawn had to walk to the wall. Throwing removes that exposure, so the cost has to
+move: consumable tags, a throwing range well under gun range, and the tag being destructible
+once it is stuck. Decide those before implementing, because without them the ranged form is
+strictly better than the placed one it replaces.
+
+**Implementation note.** This reuses the throw pipeline built for the frost bomb rather than
+adding machinery. `MapComponent_Throws.Begin` already takes a projectile def and a hand
+texture, and the Melee Animation clip was written so that a second thrown thing is a caller
+rather than a change to the bridge. A tagged kunai is that second caller.
 
 **Acquisition proposal:** craft consumable tags after a dedicated explosives research project;
 specific ingredients and trade availability remain undecided.
 **Supply proposal:** one tag consumed per explosion, with replacements crafted or acquired.
 Reusable remote triggering does not itself replenish spent tags.
+
+### Remote Toy Car
+
+**Role:** deliver a charge to somewhere that cannot be thrown to - around a corner, through a
+door, inside a room - and draw fire while it drives. In-fiction a child's toy repurposed as a
+chassis and packed with chemfuel; the final label is open, and the joke belongs in the item
+description rather than in the mechanic.
+
+- Deploy the vehicle at the operator's feet.
+- While the operator is controlling it, the operator cannot move or act.
+- The vehicle works only within a limited range of its operator.
+- Detonate it on command.
+- The operator is defenceless for the whole drive, and is a legitimate target while driving.
+  This is the point of the design, not a drawback to be softened.
+
+**Boundary with the kunai above.** Line of sight is the split. A kunai is thrown at something
+the pawn can see; the car is driven to something it cannot. If that distinction ever collapses -
+a car with a long leash and a fast chassis reaching everything a throw would - then one of the
+two is redundant and the other should be cut.
+
+**Implementation direction.** The vehicle should be a `Pawn` of the player faction, shaped like
+a Biotech mech. Pathing, damage, rendering and targeting then come from the game, and "remote
+control" needs no control mode at all, because selecting a thing and right-clicking is already
+how RimWorld is played. What remains to build is the operator lock, the tether, the detonate
+gizmo, and the scribed link between the two. A `Thing` with custom movement instead would mean
+reimplementing pathing and is not worth it.
+
+The operator lock should be a hediff rather than a job: it survives save/load and is visible in
+the health tab.
+
+**Open questions, each of which needs a defined answer or it becomes a bug report:** operator
+downed or killed mid-drive; the player ordering the operator to move; the vehicle out of range;
+the vehicle destroyed while controlled; save/load mid-drive; a caravan leaving with an active
+link.
+
+**Deliberately out of the first version:** vision. A drone that *sees* interacts with fog of
+war, CE sightlines and Squadsight, and that is a much deeper problem than a drone that drives
+and explodes. Ship the demolition form first.
+
+**Pacing.** This is an XCOM idea in a real-time game, so time passes while the operator sits
+helpless. A drive that takes thirty seconds is one the player pauses through, which is tedious
+rather than tense. The chassis should be fast and the leash modest, so a run is five to ten
+seconds. Fix that before tuning anything else, because it decides every other number.
+
+**Acquisition proposal:** a crafted device, after machining or an electronics project.
+**Supply proposal:** the chassis is reusable and is consumed only when detonated - drive it
+back and you keep it. Retrieval costs time the fight may not give you, which prices the
+decision without a timer.
 
 ## Suggested first slice
 

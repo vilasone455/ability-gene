@@ -52,4 +52,27 @@
     <researchViewY>5.40</researchViewY>
   </ResearchProjectDef>
 
+  <!-- Sits past machining and microelectronics, in the slot below remote ordnance at
+       7.00/5.40. Spacer tier and a hi-tech bench, because the thing being built is not a decoy
+       in the sandbag sense - it is a projector that reads a person and reproduces them well
+       enough to fool somebody aiming at them, and that is a different order of device from a
+       chassis with a radio in it.
+
+       Cost 2000 against cryogenic munitions' 1400, which puts it a clear step later without
+       pushing it past the part of a game where being outnumbered is still the problem it
+       solves. -->
+  <ResearchProjectDef>
+    <defName>AG_HolographicProjection</defName>
+    <label>holographic projection</label>
+    <description>Build throwable mimic beacons. A beacon projects a copy of whoever threw it: it cannot fight, but most people shoot at it instead of at your colonists, which is twenty seconds to retreat, reload or drag somebody out.</description>
+    <baseCost>2000</baseCost>
+    <techLevel>Spacer</techLevel>
+    <prerequisites>
+      <li>Machining</li>
+      <li>MicroelectronicsBasics</li>
+    </prerequisites>
+    <researchViewX>7.00</researchViewX>
+    <researchViewY>6.60</researchViewY>
+  </ResearchProjectDef>
+
 </Defs>

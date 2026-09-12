@@ -141,13 +141,20 @@
              hand, and a hand-thrown object that outranges a frag grenade would be a lie told
              twice. -->
         <range>12.9</range>
-        <!-- Matches the frag grenade, and is not optional: ThingDef error checking requires a
-             forced miss radius on a verb that launches an explosive projectile and refuses one
-             on a verb that does not. Verb_ThrowFrostBomb therefore reproduces the scatter rather
-             than declaring a number it ignores. It is gentler than it looks - the engine's own
-             falloff drops it to nothing inside three cells and to half inside five, so only a
-             throw near the edge of range really wanders. -->
-        <forcedMissRadius>1.9</forcedMissRadius>
+        <!-- Pinpoint, deliberately, and 0.4 rather than 0 because the two numbers are read by
+             two different pieces of the game.
+
+             ThingDef error checking requires a forced miss radius on a verb that launches an
+             explosive projectile and refuses one on a verb that does not - it tests
+             "forcedMissRadius > 0f != CausesExplosion", an equality rather than a minimum, so a
+             flat zero is a load error. The code that actually scatters a shot tests
+             "ForcedMissRadius > 0.5f" instead. Anything in between therefore satisfies the
+             check and never moves a grenade, which is what is wanted here: the bomb lands where
+             the player put the ring, every time.
+
+             Verb_ThrowFrostBomb.ThrownAt still carries the full scatter and will honour a real
+             radius if this is raised, so this is one number to change and not a rewrite. -->
+        <forcedMissRadius>0.4</forcedMissRadius>
         <warmupTime>0.8</warmupTime>
         <noiseRadius>4</noiseRadius>
         <!-- Never thrown on the pawn's own initiative. Pawn.TryGetAttackVerb skips a

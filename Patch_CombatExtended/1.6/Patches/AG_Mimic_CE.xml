@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- The mimic beacon under Combat Extended.
+
+     The same shape as AG_Frost_CE.xml and for the same reasons, which are written out there: CE
+     turns every hand grenade into one-use ammo, this one stays reusable so the item is the same
+     with or without that mod, and the verb and projectile are deliberately left alone because
+     RimArt.Verb_ThrowMimicBeacon defers the launch to MapComponent_Throws for the throw
+     animation while CE's verb casts what it spawns straight to ProjectileCE.
+
+     One thing is different here and worth saying. The frost bomb gives up CE's ballistic flight
+     for a cell-targeted stun, which is a small loss. The beacon gives up nothing at all: it is a
+     device that arrives at a cell and switches on. There is no damage to model, so there is no
+     ballistics to miss.
+
+     What CE does change, and should, is the decoy's life expectancy. CE rounds do more damage
+     per hit than vanilla's, so a 120-hit-point projection comes apart faster - which is the
+     correct direction. The beacon is a way to spend somebody else's ammunition, and CE is a mod
+     about ammunition being finite. -->
+
+<Patch>
+
+  <!-- Priced against the frost bomb's 1.1 and CE's own frag grenade at 0.87. The beacon is a
+       drum with optics in it rather than a tube of gas: heavier to carry and much more awkward,
+       which is the whole of what Bulk says. -->
+  <Operation Class="PatchOperationAdd">
+    <xpath>Defs/ThingDef[defName="AG_MimicBeacon"]/statBases</xpath>
+    <value>
+      <Bulk>1.4</Bulk>
+      <SightsEfficiency>1.0</SightsEfficiency>
+    </value>
+  </Operation>
+
+  <!-- Every weapon in CE needs a ToolCE rather than a vanilla Tool, or a pawn who bashes
+       somebody with it goes through a code path that expects CE's armour penetration fields and
+       does not find them. -->
+  <Operation Class="PatchOperationAdd">
+    <xpath>Defs/ThingDef[defName="AG_MimicBeacon"]</xpath>
+    <value>
+      <tools>
+        <li Class="CombatExtended.ToolCE">
+          <label>casing</label>
+          <capacities>
+            <li>Blunt</li>
+          </capacities>
+          <power>3</power>
+          <cooldownTime>1.9</cooldownTime>
+          <armorPenetrationBlunt>1.2</armorPenetrationBlunt>
+          <linkedBodyPartsGroup>Base</linkedBodyPartsGroup>
+        </li>
+      </tools>
+    </value>
+  </Operation>
+
+  <!-- One-handed so it can be carried alongside a shield, which is the combination this item is
+       for: the pawn throwing the decoy is usually the one covering the retreat. The CE_AI_* tags
+       are pointedly absent - they are what tells CE's raider generator to hand a weapon out, and
+       nothing in this mod is given to raiders. -->
+  <Operation Class="PatchOperationAdd">
+    <xpath>Defs/ThingDef[defName="AG_MimicBeacon"]</xpath>
+    <value>
+      <weaponTags>
+        <li>CE_OneHandedWeapon</li>
+      </weaponTags>
+    </value>
+  </Operation>
+
+</Patch>
