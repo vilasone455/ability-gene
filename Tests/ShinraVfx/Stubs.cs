@@ -52,6 +52,12 @@ namespace RimArt
             { time = Time; finished = Finished; return Valid; }
         }
     }
+    internal static class ShinraSound
+    {
+        public static int Releases;
+        public static Verse.IntVec3 Cell;
+        public static void Release(Verse.Map map, Verse.IntVec3 cell) { Releases++; Cell = cell; }
+    }
     internal static class ShinraVfxGraphics
     {
         public static int Calls;

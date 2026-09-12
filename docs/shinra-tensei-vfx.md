@@ -28,9 +28,13 @@ grenade is drawn. The animation contains no gameplay events or end-cell move.
 
 ## Timing
 
-The arms snap to the T at 0.38 seconds, the same `ChargeEnd` used by the shell, reaching 1.52
-cells across at 0.48. The hands hold their height through the extension; letting them descend
-as the arms open reads as a strike toward the floor. The gesture recovers by 1.35 seconds.
+The hands snap out at 0.38 seconds, the same `ChargeEnd` used by the shell, reaching 0.76
+cells across at 0.48. They hold their height through the extension; letting them descend as
+they open reads as a strike toward the floor. The span is deliberately short: Melee Animation
+draws a hand sprite and no arm, so a hand carried well away from the torso is a mitt floating
+in open ground. The peak puts each hand just outside the body silhouette and no further, and
+the gesture is carried by the hand splay and the held height rather than by distance. The
+gesture recovers by 1.35 seconds.
 During the gesture, VFX read Melee Animation's actual `CurrentTime`, so pausing or changing its
 animation speed does not separate the hands from the wave.
 The dome does not swell from nothing. It appears at 88% of its size at 0.38 seconds, punches
@@ -92,6 +96,22 @@ projection constants requires updating that script and `ShinraVfxTiming` togethe
 release time from `ShinraVfxTiming` and shares the grenade generator's JSON/curve helpers.
 `ApiChecks` fails if a second Shinra clip reappears.
 
+## Sound
+
+Two SoundDefs in `1.6/Defs/SoundDefs/AG_Shinra_Sounds.xml`, both pointed at audio Core already
+ships, so there are no new audio files. `AG_ShinraCharge` is the verb's `soundCast` and plays
+when the button is pressed; `AG_ShinraRelease` layers a deep mortar body at pitch 0.38-0.45
+with the same psychic texture an octave up, and is played from code when the effect clock
+crosses `ChargeEnd`. That is what keeps the boom on the frame the dome appears: a paused or
+slowed gesture carries the sound with it, exactly as it carries the VFX. It fires once per
+cast, never for a gesture cut short before the thrust, and never for the frozen-peak preview,
+which opens after the release.
+
+Volumes are this mod's own. Core's `Explosion_Thump` carries the right body at volume 80,
+which is a mortar landing next to the player every time the ability is pressed; the release
+sits at 38 and 26 across its two layers. `ApiChecks` pins both defNames against the DefOf that
+names them and both clip folders against Core.
+
 ## Verification
 
 Run `dotnet run --project Tests/ShinraVfx/ShinraVfx.csproj` for timing, preview lifecycle,
@@ -100,7 +120,9 @@ map, draw and animation API stubs. Run `Tests/OriginBlade/ApiChecks/ApiChecks.cs
 the installed Melee Animation clock API and exported clip schema, and `python3 validate.py`
 for XML, classes, textures and single-source ability grants.
 
-In-game checks still needed: grant/remove kit, both arms visible with weapons/gloves, the
+In-game checks still needed: grant/remove kit, both hands visible with weapons/gloves and
+staying visually attached to the body at peak span, sound level and whether the two release
+layers muddy each other, the
 pawn being turned to face south for the cast, pause and animation-speed changes, normal/max
 zoom, repeated casts, two casters, cancellation, save/load, and overlaps with pawns, trees and
 walls. The ground ring

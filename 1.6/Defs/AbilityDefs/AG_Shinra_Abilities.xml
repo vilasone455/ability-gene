@@ -17,6 +17,7 @@
       <range>-1</range>
       <warmupTime>0</warmupTime>
       <drawAimPie>false</drawAimPie>
+      <soundCast>AG_ShinraCharge</soundCast>
       <requireLineOfSight>false</requireLineOfSight>
       <targetParams><canTargetSelf>true</canTargetSelf></targetParams>
     </verbProperties>

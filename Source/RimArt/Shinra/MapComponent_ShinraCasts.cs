@@ -14,6 +14,7 @@ namespace RimArt
             public ShinraCastAnimation.Handle animation;
             public float time;
             public int tailStartTick = -1;
+            public bool released;
         }
 
         private readonly List<Cast> casts = new List<Cast>();
@@ -44,6 +45,11 @@ namespace RimArt
                 float time = cast.time + (cast.tailStartTick < 0 ? 0f :
                     (Find.TickManager.TicksGame - cast.tailStartTick) / 60f);
                 if (time >= ShinraVfxTiming.Duration) { casts.RemoveAt(i); continue; }
+                if (!cast.released && time >= ShinraVfxTiming.ChargeEnd)
+                {
+                    cast.released = true;
+                    ShinraSound.Release(map, cast.centre.ToIntVec3());
+                }
                 if (!cast.centre.ToIntVec3().Fogged(map)) ShinraVfxGraphics.Draw(cast.centre, time, map);
             }
         }

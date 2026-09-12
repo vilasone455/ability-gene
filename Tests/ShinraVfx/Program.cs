@@ -100,9 +100,11 @@ Find.CurrentMap = map;
 component.MapComponentUpdate();
 Check(Near(ShinraVfxGraphics.Time, 0.05f), "Switching back resumes without a time jump");
 
+int releases = ShinraSound.Releases;
 component.Preview(new IntVec3(10, 20), 0f, true);
 for (int i = 0; i < 100; i++) component.MapComponentUpdate();
 Check(Near(ShinraVfxGraphics.Time, ShinraVfxTiming.PeakTime), "Frozen peak must not expire");
+Check(ShinraSound.Releases == releases, "A preview frozen past the release must stay silent");
 component.Clear();
 calls = ShinraVfxGraphics.Calls;
 component.MapComponentUpdate();
@@ -134,12 +136,16 @@ var casts = new MapComponent_ShinraCasts(map);
 var pawn = new Pawn { Map = map };
 var animation = new ShinraCastAnimation.Handle { Time = ShinraVfxTiming.ChargeEnd };
 casts.Begin(pawn, animation);
+int booms = ShinraSound.Releases;
 casts.MapComponentUpdate();
 Check(casts.Running(pawn) && Near(ShinraVfxGraphics.Time, animation.Time),
     "Cast must sample the real animation clock at hand release");
+Check(ShinraSound.Releases == booms + 1 && ShinraSound.Cell.x == pawn.Position.x,
+    "The release must sound once the gesture reaches the thrust, at the caster");
 Time.unscaledDeltaTime = 10f;
 casts.MapComponentUpdate();
 Check(Near(ShinraVfxGraphics.Time, animation.Time), "Paused animation must not drift with wall time");
+Check(ShinraSound.Releases == booms + 1, "The release must not repeat every frame of one cast");
 animation.Time = 0.8f;
 casts.MapComponentUpdate();
 Check(Near(ShinraVfxGraphics.Time, 0.8f), "Animation speed changes must immediately carry the wave with them");
@@ -157,9 +163,11 @@ Check(!casts.Running(pawn), "Finished VFX must release the cast button");
 animation = new ShinraCastAnimation.Handle { Time = 0.2f, Valid = false };
 casts.Begin(pawn, animation);
 calls = ShinraVfxGraphics.Calls;
+booms = ShinraSound.Releases;
 casts.MapComponentUpdate();
 Check(!casts.Running(pawn) && ShinraVfxGraphics.Calls == calls,
     "An interrupted animation must not release a wave later");
+Check(ShinraSound.Releases == booms, "A gesture cut short before the thrust must not sound");
 
 var otherPawn = new Pawn { Map = map };
 animation = new ShinraCastAnimation.Handle { Time = 0.5f };

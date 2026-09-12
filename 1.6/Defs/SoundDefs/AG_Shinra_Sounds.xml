@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- Core's own clips, re-pointed at this mod's own volumes and pitches. Explosion_Thump
+       carries the right body but plays at volume 80, which is a mortar landing next to you
+       every time the ability is pressed. These sit far below that and drop the pitch further,
+       so the release reads as pressure rather than detonation. No new audio files. -->
+  <SoundDef>
+    <defName>AG_ShinraCharge</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>3</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains>
+          <li Class="AudioGrain_Folder">
+            <clipFolderPath>Misc/Artifacts/Psychic_Animal_Pulser</clipFolderPath>
+          </li>
+        </grains>
+        <volumeRange>18~18</volumeRange>
+        <pitchRange>0.55~0.62</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <SoundDef>
+    <defName>AG_ShinraRelease</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>3</maxSimultaneous>
+    <subSounds>
+      <li>
+        <!-- The body of the wave. -->
+        <grains>
+          <li Class="AudioGrain_Folder">
+            <clipFolderPath>Weapon/Artillery/Mortar_Explode_Dry</clipFolderPath>
+          </li>
+        </grains>
+        <volumeRange>38~38</volumeRange>
+        <pitchRange>0.38~0.45</pitchRange>
+      </li>
+      <li>
+        <!-- The same psychic texture as the charge, an octave up, so the two read as one event. -->
+        <grains>
+          <li Class="AudioGrain_Folder">
+            <clipFolderPath>Misc/Artifacts/Psychic_Animal_Pulser</clipFolderPath>
+          </li>
+        </grains>
+        <volumeRange>26~26</volumeRange>
+        <pitchRange>1.05~1.18</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+</Defs>

@@ -82,8 +82,9 @@ static class ApiChecks
         string meleeAnimation = CheckMeleeAnimation();
         string mimic = CheckMimicContract();
         string distortion = CheckShinraDistortion();
+        string sounds = CheckShinraSounds(assembly);
         Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, "
-            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion}");
+            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds}");
     }
 
     /// <summary>
@@ -118,6 +119,45 @@ static class ApiChecks
                 throw new Exception($"Core no longer ships {texture}; the distortion maps moved to a DLC");
         }
         return "Checked the distortion shader type and both core distortion maps.";
+    }
+
+    /// <summary>
+    /// Shinra Tensei's two sounds are this mod's own SoundDefs pointed at Core's audio, so that
+    /// the release plays at a sane volume instead of Explosion_Thump's 80. Two things can rot
+    /// silently: a DefOf field whose def is not declared, which fails at startup rather than at
+    /// the cast; and a Core clip folder that moves, which leaves a SoundDef that resolves and
+    /// plays nothing at all.
+    /// </summary>
+    static string CheckShinraSounds(Assembly assembly)
+    {
+        var declared = XDocument.Load("1.6/Defs/SoundDefs/AG_Shinra_Sounds.xml").Root
+            .Elements("SoundDef").ToArray();
+        var names = declared.Select(def => (string)def.Element("defName")).ToArray();
+
+        Type defOf = assembly.GetType("RimArt.ShinraSoundDefOf")
+            ?? throw new Exception("RimArt.ShinraSoundDefOf is gone; the sounds have no DefOf");
+        foreach (FieldInfo field in defOf.GetFields(BindingFlags.Public | BindingFlags.Static))
+        {
+            if (!names.Contains(field.Name))
+                throw new Exception($"ShinraSoundDefOf.{field.Name} names no SoundDef in "
+                    + "AG_Shinra_Sounds.xml, which fails at startup rather than at the cast");
+        }
+
+        var folders = declared.Descendants("clipFolderPath").Select(e => e.Value).Distinct().ToArray();
+        if (folders.Length == 0) throw new Exception("The Shinra sounds reference no audio at all");
+
+        const string Core = "/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Data/Core";
+        if (!Directory.Exists(Core))
+            return $"Skipped the {folders.Length} Shinra audio paths: RimWorld's Core data is not installed.";
+        foreach (string folder in folders)
+        {
+            bool referenced = Directory.EnumerateFiles(Path.Combine(Core, "Defs", "SoundDefs"), "*.xml")
+                .Any(file => File.ReadAllText(file).Contains(folder));
+            if (!referenced)
+                throw new Exception($"No Core sound still uses '{folder}'; the Shinra sound would "
+                    + "resolve and play nothing");
+        }
+        return $"Checked {names.Length} Shinra sound defs against their DefOf and {folders.Length} core audio paths.";
     }
 
     /// <summary>

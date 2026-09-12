@@ -38,7 +38,7 @@ piece of equipment, weapon trait, or earned origin.
 
 ### Shinra Tensei kit (animation only)
 
-A pawn throws both arms straight out to the sides into a T-pose, releasing a raised
+A pawn snaps both hands out to the sides into a T-pose, releasing a raised
 pressure dome that holds one size, warps the view behind it, and carries impact waves across
 its inside while a ring travels out across the ground. There are no rocks or combat effects.
 Use development mode → **RimArts → Grant kit... → Shinra Tensei (animation only)** to give
