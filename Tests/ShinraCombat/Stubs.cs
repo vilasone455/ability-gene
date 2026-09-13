@@ -60,7 +60,7 @@ namespace Verse.Sound {
 namespace Verse {
  using UnityEngine;
  using Verse.Sound;
- public static class Log { public static void Warning(string s) { throw new System.Exception(s); } }
+ public static class Log { public static void Error(string s) { throw new System.Exception(s); } public static void Warning(string s) { throw new System.Exception(s); } }
  public enum SimpleColor{White,Red,Green,Blue,Cyan,Magenta,Yellow,Orange}
  public enum LookMode{Value,Reference}
  public enum LoadSaveMode{Inactive,Saving,LoadingVars,ResolvingCrossRefs,PostLoadInit}
@@ -191,5 +191,21 @@ namespace CombatExtended {
   public void Tick() {}
   public void ExposeData() {}
   protected UnityEngine.Vector3 MoveForward()=>exactPosition;
+ }
+}
+
+namespace AM.Patches {
+ // The installed AM signature is checked separately by ApiChecks. This boundary reproduces
+ // its prefix behavior so the regression exercises Harmony's actual nested patch calls.
+ public static class Patch_InvisibilityUtility_IsPsychologicallyInvisible {
+  [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+  public static bool Prefix(Verse.Pawn pawn, ref bool __result) { __result=true; return false; }
+ }
+}
+namespace RimWorld {
+ public static class InvisibilityUtility {
+  public static bool GenuineInvisibility;
+  [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
+  public static bool IsPsychologicallyInvisible(Verse.Pawn pawn) => GenuineInvisibility;
  }
 }

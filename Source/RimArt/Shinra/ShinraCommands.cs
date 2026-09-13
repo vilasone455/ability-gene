@@ -24,7 +24,6 @@ namespace RimArt
             var action = new Command_Action
             {
                 groupable = false,
-                onHover = () => { if (pawn.Spawned) GenDraw.DrawRadiusRing(pawn.Position, ShinraCharge.Radius); },
                 defaultLabel = s.active ? "Release" : "Charge Shinra Tensei",
                 defaultDesc = "Hold a repulsion charge for up to 3 seconds of power. Release commits a 20-second cooldown. Allies can be hit.",
                 icon = ContentFinder<Texture2D>.Get("RimArt/Shinra/IconPush"),

@@ -15,6 +15,7 @@ namespace RimArt
             // touches them. This looks for CE and, if it is there, teaches the three kits that act
             // on rounds in flight how to read and write its ones. A no-op when it is not.
             CombatExtendedRounds.Install(harmony);
+            ShinraTargeting.Install(harmony);
         }
     }
 }

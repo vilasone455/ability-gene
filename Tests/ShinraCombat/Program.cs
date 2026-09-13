@@ -118,3 +118,22 @@ Check(loadedCe.forcedTrajectoryWorker is CombatExtended.LerpedTrajectoryWorker
     && Near(loadedCe.DamageAmount,20f) && loadedCe.gravity==0 && loadedCe.GravityPerWidth==0,
     "CE saves reflected damage and restores forced trajectory without rescaling");
 Console.WriteLine("CE adapter: power, independent speed/damage, range, height, grenade exclusion and persistence passed.");
+
+var targetingHarmony = new HarmonyLib.Harmony("RimArt.ShinraTargetingTests");
+// AM may have already patched the game method when our compatibility patch is installed.
+targetingHarmony.Patch(HarmonyLib.AccessTools.Method(typeof(RimWorld.InvisibilityUtility), "IsPsychologicallyInvisible"),
+    prefix: new HarmonyLib.HarmonyMethod(typeof(AM.Patches.Patch_InvisibilityUtility_IsPsychologicallyInvisible), "Prefix"));
+Check(RimWorld.InvisibilityUtility.IsPsychologicallyInvisible(caster), "Regression setup: AM hides animated pawns");
+ShinraTargeting.Install(targetingHarmony);
+state.active=true;
+foreach (bool releasing in new[]{false,true}) {
+    state.charge.releasing=releasing;
+    Check(!RimWorld.InvisibilityUtility.IsPsychologicallyInvisible(caster), "Shinra remains targetable while charging and releasing");
+}
+RimWorld.InvisibilityUtility.GenuineInvisibility=true;
+Check(RimWorld.InvisibilityUtility.IsPsychologicallyInvisible(caster), "Genuine invisibility still works during Shinra");
+RimWorld.InvisibilityUtility.GenuineInvisibility=false;
+Check(RimWorld.InvisibilityUtility.IsPsychologicallyInvisible(new Pawn()), "Other animations keep AM targeting behavior");
+state.active=false;
+Check(RimWorld.InvisibilityUtility.IsPsychologicallyInvisible(caster), "Shinra exception ends with the cast");
+Console.WriteLine("Shinra targeting: AM invisibility bypass, recovery, genuine invisibility and other animations passed.");

@@ -13,8 +13,8 @@ Shinra Tensei (repulsion eye)** and the independent VFX previews below.
 ## Controls and timing
 
 Click **Charge Shinra Tensei**, then **Release**. The charge meter reaches full power after
-180 game ticks (3 seconds), including the opening motion. The preview radius is always four
-cells. **Cancel** discards charge without cooldown. **Auto-release** is saved per pawn and
+180 game ticks (3 seconds), including the opening motion. The effect radius is always four
+cells; no area highlight is drawn. **Cancel** discards charge without cooldown. **Auto-release** is saved per pawn and
 starts off. Full charge holds indefinitely until released or cancelled.
 
 The single existing clip draws the hands toward the chest from 0 to **0.27 seconds**, holds
@@ -24,7 +24,9 @@ Early release freezes power and continues through the hold marker without stoppi
 Requesting release commits **1,200 ticks (20 seconds) of cooldown**, even if interrupted
 before the burst. Stun, downing, death, leaving the map, a movement order or loss of the last
 eye cancels. Attacks and other orders are blocked while casting; ordinary damage does not
-cancel or receive any reduction from Shinra.
+cancel or receive any reduction from Shinra. Melee Animation's automatic targeting invisibility
+is bypassed for Shinra casters throughout charging and recovery. Genuine invisibility effects
+and the targeting behavior of other animations remain unchanged.
 
 A game component advances gameplay and calls the renderer's `Seek` explicitly with
 `TimeScale = 0`. The Melee Animation speed setting changes clip progression, never charge
@@ -84,7 +86,7 @@ The hemisphere is an illustrated projection: the ground footprint has depth `0.6
 and height shifts artwork north by `0.75 * height`. The dome settles at a four-cell width
 radius after its brief punch; the ground ring and dust reach five cells. The wave is centred
 on the caster's cell. Its illustrated footprint differs from the circular gameplay area,
-which has a separate four-cell ground indicator. Fixed render altitudes avoid clipping a tall sphere
+which remains four cells without a ground highlight. Fixed render altitudes avoid clipping a tall sphere
 into RimWorld's close camera. There is no physical volume and no custom shader of this mod's
 own; the warp is the game's.
 

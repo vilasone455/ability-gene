@@ -214,6 +214,12 @@ static class ApiChecks
         Type Need(string name)
             => am.GetType(name) ?? throw new Exception($"Melee Animation bridge: type {name} is gone");
 
+        Type invisibilityPatch = Need("AM.Patches.Patch_InvisibilityUtility_IsPsychologicallyInvisible");
+        MethodInfo invisibilityPrefix = invisibilityPatch.GetMethod("Prefix", Any, null,
+            new[] { typeof(Verse.Pawn), typeof(bool).MakeByRefType() }, null);
+        if (invisibilityPrefix?.ReturnType != typeof(bool))
+            throw new Exception("Shinra targeting exception requires Melee Animation's invisibility prefix");
+
         Type animDef = Need("AM.AnimDef");
         Type renderer = Need("AM.AnimRenderer");
         Type startParams = Need("AM.AnimationStartParameters");

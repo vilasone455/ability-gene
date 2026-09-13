@@ -6,6 +6,7 @@
     <Compile Include="../../Source/RimArt/Rounds/Rounds.cs" Link="Rounds.cs" />
     <Compile Include="../../Source/RimArt/Vector/VectorEditRegistry.cs" Link="VectorEditRegistry.cs" />
     <Compile Include="../../Source/RimArt/Shinra/ShinraCharge.cs" Link="ShinraCharge.cs" />
+    <Compile Include="../../Source/RimArt/Shinra/ShinraTargeting.cs" Link="ShinraTargeting.cs" />
     <Compile Include="../../Source/RimArt/Shinra/ShinraCombat.cs" Link="ShinraCombat.cs" />
   </ItemGroup>
 </Project>
