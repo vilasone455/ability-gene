@@ -155,8 +155,13 @@ if DATA is not None:
             tex = m.group(1).strip()
             # This mod's own art comes first: Origin: Blade ships two sprites because a
             # top-down weapon texture cannot be turned into a blade standing in the ground.
+            # Graphic_Multi textures (render nodes) are split by facing, so the bare path has no
+            # file of its own: accept the path when all three facings exist.
             if any(os.path.exists(os.path.join("Textures", tex + ext))
                    for ext in (".png", ".jpg")):
+                continue
+            if all(os.path.exists(os.path.join("Textures", tex + "_" + facing + ".png"))
+                   for facing in ("north", "east", "south")):
                 continue
             w = vanilla.get("TEX:" + tex)
             if not w: fail("unresolved texture", f, tex)

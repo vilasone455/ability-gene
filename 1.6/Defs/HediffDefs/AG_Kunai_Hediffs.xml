@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- A kunai stuck in a body part. Added by Projectile_Kunai through KunaiEmbedding.TryEmbed,
+       one per kunai, at most 3 per pawn. The hediff stands for the kunai item: pulling it out
+       hands the item to the puller, and death or any other removal drops it on the ground.
+
+       While it is here the wound it made bleeds at half rate (Patch_HediffInjury_EmbeddedKunaiBleed).
+       Not tendable and not cured by items; it ends by being pulled (float menu, adds a cut), by
+       the removal surgery below (no cut), or by the part being lost.
+
+       Two render nodes because wound anchors for head parts are offsets from the head and the
+       rest are offsets from the body. The worker draws only the one matching the part. -->
+  <HediffDef>
+    <defName>AG_EmbeddedKunai</defName>
+    <label>embedded kunai</label>
+    <labelNoun>an embedded kunai</labelNoun>
+    <description>A kunai stuck in this body part. While it stays in, the wound it made bleeds at half rate.\n\nPulling takes out every stuck kunai: 2 seconds for all of them, or 0.5 seconds and a melee roll per kunai against a standing enemy. Each one comes back, restores its wound's full bleeding, and cuts its part for 6 more damage (+36% bleeding per day). Surgery removes it without the extra cut.</description>
+    <hediffClass>RimArt.Hediff_EmbeddedKunai</hediffClass>
+    <defaultLabelColor>(0.75, 0.78, 0.85)</defaultLabelColor>
+    <isBad>true</isBad>
+    <tendable>false</tendable>
+    <makesSickThought>false</makesSickThought>
+    <everCurableByItem>false</everCurableByItem>
+    <forceRenderTreeRecache>true</forceRenderTreeRecache>
+    <stages>
+      <li>
+        <painOffset>0.05</painOffset>
+      </li>
+    </stages>
+    <renderNodeProperties>
+      <li>
+        <debugLabel>Embedded kunai (body)</debugLabel>
+        <workerClass>RimArt.PawnRenderNodeWorker_EmbeddedKunai</workerClass>
+        <texPath>RimArt/Kunai/Embedded</texPath>
+        <parentTagDef>Body</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <baseLayer>35</baseLayer>
+        <drawSize>0.5</drawSize>
+        <drawData>
+          <useBodyPartAnchor>true</useBodyPartAnchor>
+        </drawData>
+      </li>
+      <li>
+        <debugLabel>Embedded kunai (head)</debugLabel>
+        <workerClass>RimArt.PawnRenderNodeWorker_EmbeddedKunai</workerClass>
+        <texPath>RimArt/Kunai/Embedded</texPath>
+        <parentTagDef>Head</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <baseLayer>67</baseLayer>
+        <drawSize>0.5</drawSize>
+        <drawData>
+          <useBodyPartAnchor>true</useBodyPartAnchor>
+        </drawData>
+      </li>
+    </renderNodeProperties>
+  </HediffDef>
+
+</Defs>

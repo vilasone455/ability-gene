@@ -1129,6 +1129,32 @@ def make_kunai_icon():
 
 
 
+def make_kunai_embedded():
+    """
+    A kunai stuck in a body, drawn on the pawn over the wound: the ring, the handle and the first
+    part of the blade, which ends in a dark cut where it goes in. Point up like the item. The cut
+    is at the texture centre, which is the point the render node places on the wound anchor and
+    rotates around.
+    """
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    length = px(90)
+    tip = px(8)
+    cut = tip + int(length * 0.55 * 0.62)
+    layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    draw_kunai(ImageDraw.Draw(layer), S // 2, tip, length)
+    # Everything above the cut is inside the body.
+    layer.paste((0, 0, 0, 0), (0, 0, S, cut))
+    shifted = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    shifted.alpha_composite(layer, (0, S // 2 - cut))
+    img.alpha_composite(shifted)
+    d = ImageDraw.Draw(img)
+    c = S // 2
+    d.ellipse([c - px(10), c - px(3), c + px(10), c + px(4)], fill=(90, 18, 18, 230))
+    # The render node loads Graphic_Multi, which wants one texture per facing (west mirrors
+    # east). The kunai looks the same from every side.
+    for facing in ("north", "east", "south"):
+        finish(img, f"Textures/RimArt/Kunai/Embedded_{facing}.png")
+
 if __name__ == "__main__":
     make_flying()
     make_planted()
@@ -1154,3 +1180,4 @@ if __name__ == "__main__":
     make_kunai()
     make_kunai_belt()
     make_kunai_icon()
+    make_kunai_embedded()

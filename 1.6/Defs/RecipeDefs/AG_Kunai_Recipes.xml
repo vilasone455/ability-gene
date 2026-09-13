@@ -42,4 +42,41 @@
     <displayPriority>331</displayPriority>
   </RecipeDef>
 
+  <!-- Surgery to take a stuck kunai out without the pull's extra cut. One per operation, per
+       body part. Recipe_RemoveHediff removes the hediff, whose PostRemoved drops the kunai item
+       next to the patient. -->
+  <RecipeDef ParentName="SurgeryFlesh">
+    <defName>AG_RemoveEmbeddedKunai</defName>
+    <label>remove embedded kunai</label>
+    <description>Remove a kunai stuck in a body part. Unlike pulling it out by hand, this does not cut the part further. The kunai is dropped next to the patient.</description>
+    <workerClass>Recipe_RemoveHediff</workerClass>
+    <jobString>Removing embedded kunai.</jobString>
+    <workAmount>1000</workAmount>
+    <isViolation>false</isViolation>
+    <targetsBodyPart>true</targetsBodyPart>
+    <removesHediff>AG_EmbeddedKunai</removesHediff>
+    <successfullyRemovedHediffMessage>{0} has removed the kunai stuck in {1}.</successfullyRemovedHediffMessage>
+    <skillRequirements>
+      <Medicine>3</Medicine>
+    </skillRequirements>
+    <recipeUsers>
+      <li>Human</li>
+    </recipeUsers>
+    <ingredients>
+      <li>
+        <filter>
+          <categories>
+            <li>Medicine</li>
+          </categories>
+        </filter>
+        <count>1</count>
+      </li>
+    </ingredients>
+    <fixedIngredientFilter>
+      <categories>
+        <li>Medicine</li>
+      </categories>
+    </fixedIngredientFilter>
+  </RecipeDef>
+
 </Defs>

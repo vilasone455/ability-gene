@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Walk to a pawn and pull a stuck kunai out. Ordered from the float menu
+       (FloatMenuOptionProvider_PullKunai). Not suspendable: an interrupted pull is ordered again. -->
+  <JobDef>
+    <defName>AG_PullKunai</defName>
+    <driverClass>RimArt.JobDriver_PullKunai</driverClass>
+    <reportString>pulling a kunai out of TargetA.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <playerInterruptible>true</playerInterruptible>
+    <suspendable>false</suspendable>
+  </JobDef>
+
+</Defs>

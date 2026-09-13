@@ -16,6 +16,11 @@ namespace RimArt
 
         public static AbilityDef AG_ThrowKunai;
 
+        /// <summary>A kunai stuck in a body part. Holds the kunai until it is pulled or dropped.</summary>
+        public static HediffDef AG_EmbeddedKunai;
+
+        public static JobDef AG_PullKunai;
+
         static KunaiDefOf()
         {
             DefOfHelper.EnsureInitializedInCtor(typeof(KunaiDefOf));

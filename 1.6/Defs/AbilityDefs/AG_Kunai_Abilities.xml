@@ -8,12 +8,13 @@
        second throw cannot start while the first animation is playing.
 
        accuracy* feed ShotReport through VerbProperties.GetHitChanceFactor, which reads these
-       fields directly when the verb has no equipment. Values sit between the short bow
+       fields directly when the verb has no equipment. The thrower's skill term is Melee, not
+       Shooting: see KunaiAccuracy. Values sit between the short bow
        (0.75 / 0.65) and a pistol. -->
   <AbilityDef>
     <defName>AG_ThrowKunai</defName>
     <label>throw kunai</label>
-    <description>Throw one kunai from the kunai belt. Range 14.9 tiles. 12 stab damage, 18% armor penetration.\n\nHit chance uses the thrower's Shooting skill, distance, cover and weather, like a gun. Misses can hit other people near the line of fire.\n\nThe kunai drops where it lands and can be picked up to reload the belt. Hits have a 20% chance to break it.</description>
+    <description>Throw one kunai from the kunai belt. Range 14.9 tiles. 12 stab damage, 18% armor penetration.\n\nHit chance uses the thrower's Melee skill, with distance, cover and weather counted like a gun. Melee 10 throws as accurately as Shooting 10 shoots. Each throw at a person gives Melee experience. Misses can hit other people near the line of fire.\n\nA hit has a 20% chance to break the kunai. Otherwise it sticks in the body part it hit (up to 3 per target), and that wound bleeds at half rate while it stays in. Right-click the target to pull them all out: 2 seconds for all of them, or against a standing enemy 0.5 seconds and a melee roll per kunai, repeated until all are out. Each pulled kunai comes back, its wound bleeds fully again, and its part is cut for 6 more (+36% bleeding per day). Kunai in a killed target drop by the body. Misses, and hits that armor stops, drop on the ground to pick up.</description>
     <iconPath>RimArt/Kunai/IconKunai</iconPath>
     <category>AG_Genetic</category>
     <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
@@ -25,7 +26,7 @@
     <verbProperties>
       <verbClass>Verb_CastAbility</verbClass>
       <range>14.9</range>
-      <warmupTime>0.5</warmupTime>
+      <warmupTime>0.3</warmupTime>
       <drawAimPie>false</drawAimPie>
       <requireLineOfSight>true</requireLineOfSight>
       <accuracyTouch>0.80</accuracyTouch>

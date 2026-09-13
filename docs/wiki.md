@@ -469,9 +469,9 @@ The drone does nothing until somebody takes control of it. Controlling it costs 
 
 A belt with loops for 6 kunai. The wearer can throw them with the throw kunai ability.
 
-Range 14.9 tiles. 12 stab damage, 18% armor penetration. Hit chance uses the wearer's Shooting skill. Each throw uses one kunai.
+Range 14.9 tiles. 12 stab damage, 18% armor penetration. Hit chance uses the wearer's Melee skill. Each throw uses one kunai.
 
-A thrown kunai drops where it lands. Hits have a 20% chance to break it. Reload the belt with kunai items: the wearer reloads on their own when the belt is empty, or right-click kunai to reload early. A new belt comes with 6 kunai.
+A kunai that misses drops where it lands. A hit has a 20% chance to break it; otherwise it sticks in the target until someone pulls it out, and pulling makes the wound bleed more. Reload the belt with kunai items: the wearer reloads on their own when the belt is empty, or right-click kunai to reload early. A new belt comes with 6 kunai.
 
 **How to get it**
 
@@ -483,11 +483,11 @@ A thrown kunai drops where it lands. Hits have a 20% chance to break it. Reload 
 
 Throw one kunai from the kunai belt. Range 14.9 tiles. 12 stab damage, 18% armor penetration.
 
-Hit chance uses the thrower's Shooting skill, distance, cover and weather, like a gun. Misses can hit other people near the line of fire.
+Hit chance uses the thrower's Melee skill, with distance, cover and weather counted like a gun. Melee 10 throws as accurately as Shooting 10 shoots. Each throw at a person gives Melee experience. Misses can hit other people near the line of fire.
 
-The kunai drops where it lands and can be picked up to reload the belt. Hits have a 20% chance to break it.
+A hit has a 20% chance to break the kunai. Otherwise it sticks in the body part it hit (up to 3 per target), and that wound bleeds at half rate while it stays in. Right-click the target to pull them all out: 2 seconds for all of them, or against a standing enemy 0.5 seconds and a melee roll per kunai, repeated until all are out. Each pulled kunai comes back, its wound bleeds fully again, and its part is cut for 6 more (+36% bleeding per day). Kunai in a killed target drop by the body. Misses, and hits that armor stops, drop on the ground to pick up.
 
-**Cooldown:** 1.5 seconds | **Range:** 14.9 cells | **Cast time:** 0.5 seconds
+**Cooldown:** 1.5 seconds | **Range:** 14.9 cells | **Cast time:** 0.3 seconds
 
 
 ### Retrieval hook belt

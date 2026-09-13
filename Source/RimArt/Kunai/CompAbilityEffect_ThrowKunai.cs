@@ -15,9 +15,10 @@ namespace RimArt
     /// Throws one kunai from the worn belt.
     ///
     /// The hit roll is vanilla Verb_LaunchProjectile.TryCastShot's, done here because an ability
-    /// verb does not launch anything: <see cref="ShotReport"/> built from the ability's own verb,
-    /// so the wearer's Shooting accuracy, distance, weather, smoke, target size and cover all
-    /// count, and the accuracy numbers come from the ability's verbProperties. A wild miss flies
+    /// verb does not launch anything: a <see cref="ShotReport"/> built from the ability's own verb
+    /// by <see cref="KunaiAccuracy"/>, so distance, weather, smoke, target size and cover all
+    /// count like a gun, the thrower's skill term is Melee instead of Shooting, and the accuracy
+    /// numbers come from the ability's verbProperties. Each throw gives Melee XP. A wild miss flies
     /// to a scattered cell, a cover miss flies into the cover, and a hit flies at the target.
     ///
     /// The roll happens at cast. The launch waits for the kunai throw clip's release tick (18) in
@@ -49,7 +50,7 @@ namespace RimArt
         public override string ExtraLabelMouseAttachment(LocalTargetInfo target)
         {
             if (!target.IsValid || parent.pawn.Map == null) return null;
-            ShotReport report = ShotReport.HitReportFor(parent.pawn, parent.verb, target);
+            ShotReport report = KunaiAccuracy.For(parent.pawn, parent.verb, target);
             return "Hit chance: " + report.TotalEstimatedHitChance.ToStringPercent("F0");
         }
 
@@ -68,6 +69,7 @@ namespace RimArt
             if (caster?.Map == null || belt == null || belt.RemainingCharges <= 0 || !target.IsValid) return;
 
             belt.UsedOnce();
+            KunaiAccuracy.Learn(caster, parent, target);
 
             LocalTargetInfo flyTo = Aim(caster, target, out ProjectileHitFlags flags);
             MapComponent_Throws.Begin(caster, flyTo, KunaiDefOf.AG_KunaiProjectile, KunaiDefaults.HandTexture,
@@ -82,7 +84,7 @@ namespace RimArt
         private LocalTargetInfo Aim(Pawn caster, LocalTargetInfo target, out ProjectileHitFlags flags)
         {
             Verb verb = parent.verb;
-            ShotReport report = ShotReport.HitReportFor(caster, verb, target);
+            ShotReport report = KunaiAccuracy.For(caster, verb, target);
 
             if (!Rand.Chance(report.AimOnTargetChance_IgnoringPosture))
             {

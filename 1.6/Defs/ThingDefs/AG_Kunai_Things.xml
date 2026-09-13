@@ -6,7 +6,7 @@
   <ThingDef ParentName="ResourceBase">
     <defName>AG_Kunai</defName>
     <label>kunai</label>
-    <description>A steel throwing knife. Loaded into a kunai belt, one kunai per throw.\n\nA thrown kunai drops on the ground where it lands and can be picked up and reloaded. One that hits a target has a 20% chance to break.</description>
+    <description>A steel throwing knife. Loaded into a kunai belt, one kunai per throw.\n\nA thrown kunai that misses drops on the ground. One that hits has a 20% chance to break; otherwise it sticks in the target until pulled out, which makes the wound bleed more. Picked-up and pulled kunai reload the belt.</description>
     <graphicData>
       <texPath>RimArt/Kunai/Kunai</texPath>
       <graphicClass>Graphic_Single</graphicClass>
@@ -61,7 +61,7 @@
   <ThingDef ParentName="ApparelBase">
     <defName>AG_KunaiBelt</defName>
     <label>kunai belt</label>
-    <description>A belt with loops for 6 kunai. The wearer can throw them with the throw kunai ability.\n\nRange 14.9 tiles. 12 stab damage, 18% armor penetration. Hit chance uses the wearer's Shooting skill. Each throw uses one kunai.\n\nA thrown kunai drops where it lands. Hits have a 20% chance to break it. Reload the belt with kunai items: the wearer reloads on their own when the belt is empty, or right-click kunai to reload early. A new belt comes with 6 kunai.</description>
+    <description>A belt with loops for 6 kunai. The wearer can throw them with the throw kunai ability.\n\nRange 14.9 tiles. 12 stab damage, 18% armor penetration. Hit chance uses the wearer's Melee skill. Each throw uses one kunai.\n\nA kunai that misses drops where it lands. A hit has a 20% chance to break it; otherwise it sticks in the target until someone pulls it out, and pulling makes the wound bleed more. Reload the belt with kunai items: the wearer reloads on their own when the belt is empty, or right-click kunai to reload early. A new belt comes with 6 kunai.</description>
     <thingClass>Apparel</thingClass>
     <graphicData>
       <texPath>RimArt/Kunai/Belt</texPath>

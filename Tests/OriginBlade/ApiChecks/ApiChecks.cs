@@ -779,6 +779,20 @@ static class ApiChecks
             throw new Exception("Kunai: ShotReport.GetRandomCoverToMissInto() is gone");
         if (typeof(Verse.ShootLine).GetMethod("ChangeDestToMissWild", new[] { typeof(float), typeof(bool), typeof(Verse.Map) }) == null)
             throw new Exception("Kunai: ShootLine.ChangeDestToMissWild(float, bool, Map) changed");
+        // KunaiAccuracy swaps Shooting for Melee by overwriting this private field and rebuilding
+        // ShootingAccuracyPawn's value from its def. A rename would throw on the first throw.
+        if (report.GetField("factorFromShooterAndDist", BindingFlags.NonPublic | BindingFlags.Instance)?.FieldType != typeof(float))
+            throw new Exception("Kunai: ShotReport.factorFromShooterAndDist (float) is gone - Melee accuracy cannot replace Shooting");
+        Type statDef = typeof(RimWorld.StatDef);
+        if (statDef.GetField("noSkillOffset", Public)?.FieldType != typeof(float)
+            || statDef.GetField("capacityOffsets", Public) == null
+            || statDef.GetField("postProcessCurve", Public)?.FieldType != typeof(Verse.SimpleCurve)
+            || statDef.GetField("postProcessStatFactors", Public) == null
+            || typeof(RimWorld.PawnCapacityOffset).GetMethod("GetOffset", new[] { typeof(float) })?.ReturnType != typeof(float))
+            throw new Exception("Kunai: StatDef noSkillOffset / capacityOffsets / postProcessCurve / postProcessStatFactors or PawnCapacityOffset.GetOffset changed");
+        if (typeof(RimWorld.Pawn_SkillTracker).GetMethod("Learn", new[] { typeof(RimWorld.SkillDef), typeof(float), typeof(bool), typeof(bool) }) == null)
+            throw new Exception("Kunai: Pawn_SkillTracker.Learn(SkillDef, float, bool, bool) changed - no Melee XP");
+
         foreach (string name in new[] { "accuracyTouch", "accuracyShort", "accuracyMedium", "accuracyLong" })
             if (typeof(Verse.VerbProperties).GetField(name, Public)?.FieldType != typeof(float))
                 throw new Exception("Kunai: VerbProperties." + name + " is gone - hit chance would ignore the def");
@@ -805,11 +819,46 @@ static class ApiChecks
 
         var ability = XDocument.Load("1.6/Defs/AbilityDefs/AG_Kunai_Abilities.xml").Root.Element("AbilityDef");
         if ((float)ability.Element("verbProperties").Element("range") != 14.9f || (bool)ability.Element("aiCanUse")
-            || (int)ability.Element("cooldownTicksRange") != 90)
-            throw new Exception("Throw kunai: expected range 14.9, no AI use, 90-tick cooldown");
+            || (int)ability.Element("cooldownTicksRange") != 90
+            || (float)ability.Element("verbProperties").Element("warmupTime") != 0.3f)
+            throw new Exception("Throw kunai: expected range 14.9, no AI use, 0.3 s warmup, 90-tick cooldown");
         if (KunaiDefaults.BreakChanceOnHit != 0.2f)
             throw new Exception("Kunai: break chance on hit must be 0.2");
 
-        return "Checked the kunai hit roll, reloadable belt and def numbers.";
+        // Stuck kunai. The hediff's hooks and the float menu provider are overrides, which the build
+        // already checks; these are the pieces reached by name or by data.
+        if (KunaiDefaults.MaxEmbeddedPerPawn != 3 || KunaiDefaults.EmbeddedBleedFactor != 0.5f
+            || KunaiDefaults.PullCutSeverity != 6f || KunaiDefaults.PullTicksFighting != 30 || KunaiDefaults.PullTicksCalm != 120)
+            throw new Exception("Stuck kunai: expected 3 per pawn, 0.5 bleed while stuck, severity 6 pull cut, 30/120 pull ticks");
+        if (typeof(Verse.PawnRenderNode).GetField("hediff", Public)?.FieldType != typeof(Verse.Hediff)
+            || typeof(Verse.PawnRenderNode).GetField("bodyPart", Public)?.FieldType != typeof(Verse.BodyPartRecord)
+            || typeof(Verse.DrawData).GetField("useBodyPartAnchor", Public)?.FieldType != typeof(bool))
+            throw new Exception("Stuck kunai: PawnRenderNode.hediff / bodyPart or DrawData.useBodyPartAnchor changed - kunai not drawn at the wound");
+        if (typeof(Verse.DynamicPawnRenderNodeSetup_Hediffs) == null || typeof(RimWorld.Recipe_RemoveHediff) == null
+            || typeof(RimWorld.FloatMenuMakerMap) == null)
+            throw new Exception("Stuck kunai: hediff render nodes, Recipe_RemoveHediff or FloatMenuMakerMap is gone");
+        // Without this override two kunai in the same part merge into one hediff and the second kunai
+        // item is deleted.
+        if (typeof(Hediff_EmbeddedKunai).GetMethod("TryMergeWith", new[] { typeof(Verse.Hediff) })?.DeclaringType != typeof(Hediff_EmbeddedKunai))
+            throw new Exception("Stuck kunai: Hediff_EmbeddedKunai must override TryMergeWith to never merge");
+        var hediff = XDocument.Load("1.6/Defs/HediffDefs/AG_Kunai_Hediffs.xml").Root.Element("HediffDef");
+        var nodes = hediff.Element("renderNodeProperties").Elements("li").ToArray();
+        if ((string)hediff.Element("hediffClass") != "RimArt.Hediff_EmbeddedKunai"
+            || (float)hediff.Element("stages").Element("li").Element("painOffset") != 0.05f
+            || (bool)hediff.Element("tendable") || !(bool)hediff.Element("forceRenderTreeRecache")
+            || nodes.Length != 2
+            || !nodes.Select(n => (string)n.Element("parentTagDef")).OrderBy(s => s).SequenceEqual(new[] { "Body", "Head" })
+            || nodes.Any(n => !(bool)n.Element("drawData").Element("useBodyPartAnchor")))
+            throw new Exception("Stuck kunai hediff: expected Hediff_EmbeddedKunai, 5% pain, not tendable, render recache, body and head anchor nodes");
+        foreach (string facing in new[] { "north", "east", "south" })
+            if (!File.Exists($"Textures/RimArt/Kunai/Embedded_{facing}.png"))
+                throw new Exception($"Stuck kunai: Textures/RimArt/Kunai/Embedded_{facing}.png missing - Graphic_Multi needs every facing");
+        var surgery = XDocument.Load("1.6/Defs/RecipeDefs/AG_Kunai_Recipes.xml").Root.Elements("RecipeDef")
+            .Single(e => (string)e.Element("defName") == "AG_RemoveEmbeddedKunai");
+        if ((string)surgery.Element("workerClass") != "Recipe_RemoveHediff" || (string)surgery.Element("removesHediff") != "AG_EmbeddedKunai"
+            || !(bool)surgery.Element("targetsBodyPart") || (int)surgery.Element("skillRequirements").Element("Medicine") != 3)
+            throw new Exception("Stuck kunai surgery: expected Recipe_RemoveHediff on AG_EmbeddedKunai per body part, Medicine 3");
+
+        return "Checked the kunai hit roll, reloadable belt, stuck kunai and def numbers.";
     }
 }

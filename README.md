@@ -382,19 +382,49 @@ for targets, the pull sequence, save behaviour and the in-game test list.
 
 ### Kunai belt → *throw kunai* (equipment)
 Throws one kunai at a pawn, animal, mech or building. Range 14.9 tiles, line of sight required,
-0.5 s warmup, 1.5 s cooldown. **12 stab damage, 18% armor penetration.** Drafted only, not usable
+0.3 s warmup, 1.5 s cooldown. **12 stab damage, 18% armor penetration.** Drafted only, not usable
 by pawns incapable of violence or by AI.
 
-Hit chance is the vanilla gun roll: the thrower's Shooting accuracy, distance, target size,
-cover, weather and smoke, with accuracy 80% touch / 70% short / 50% medium / 30% long. The cursor
+Hit chance is the vanilla gun roll with **Melee** in place of Shooting: distance, target size,
+cover, weather and smoke count as for a gun, and the per-tile accuracy is ShootingAccuracyPawn's
+formula fed the Melee level (plus sight and manipulation), so Melee 10 throws as accurately as
+Shooting 10 shoots. Shooting traits and gear do not apply. Weapon accuracy is 80% touch / 70%
+short / 50% medium / 30% long. Each throw gives Melee XP on the vanilla shooting rule: 170 XP per
+second of warmup plus cooldown (1.8 s, so 306) against a standing hostile pawn, 20 per second
+against other standing pawns. The cursor
 shows the chance. A wild miss flies to a scattered cell and can hit other pawns; a cover miss
 hits the cover.
 
 **Ammunition:** the belt holds **6 kunai**, shown on the gizmo as "4 / 6". Each throw uses one.
-The thrown kunai drops as an item where it lands; one that hits a pawn or building breaks 20% of
-the time, and one that leaves the map is lost. Reloading is vanilla reloadable apparel (the jump
+Where a thrown kunai ends up: a hit on a pawn or building breaks it 20% of the time; a hit on a
+living pawn that makes an injury otherwise **sticks** (below); misses, building hits, hits stopped
+by armor, killing hits and hits on a pawn already holding 3 kunai drop the item where it stopped;
+one that leaves the map is lost. Reloading is vanilla reloadable apparel (the jump
 pack's comp): one kunai item per charge, the wearer reloads on their own when the belt is empty
 and kunai are reachable, and right-clicking kunai gives *Reload*. A crafted belt starts full.
+
+**Stuck kunai.** A stuck kunai is the `AG_EmbeddedKunai` hediff on the body part the injury
+landed on, holding the item. It adds 5% pain, halves that wound's bleeding while it stays in, and
+is drawn on the pawn at the part's wound anchor (humanlike pawns only; head parts on the head).
+Up to 3 per pawn.
+- **Pull out** (right-click the pawn): one order pulls every stuck kunai. Walk adjacent, then
+  from a downed, asleep, friendly or prisoner pawn all of them come out after 2 s. Against a
+  standing awake enemy (puller drafted and capable of violence) each kunai is a 0.5 s grip and the
+  vanilla melee roll (puller's melee hit chance, then the target's dodge unless stunned), repeated
+  and following the target until none are left or the order is interrupted; a miss shows
+  "Missed" and costs that attempt. The target is re-checked before every grip, so an enemy that
+  goes down mid-pull is finished the calm way. Each success removes the newest stuck kunai,
+  puts it in the puller's kunai belt if it has room (else on the ground next to them), restores the
+  wound's full bleeding and adds a **severity 6 cut** to that part (+36% blood loss per day),
+  armor ignored, never enough to destroy the part. Against a hostile the puller is the instigator;
+  against anyone else the cut has no instigator. Mechs lose the kunai but take no cut.
+- **Surgery** *remove embedded kunai*: Medicine 3, 1 medicine, no cut, humans only. The kunai is
+  dropped next to the patient.
+- **Death:** stuck kunai drop at the corpse when it spawns. Any other removal (the part being
+  destroyed, healing) drops the kunai at the pawn.
+
+For a typical 12-damage hit (stab severity 12, 72% blood loss per day), a stuck kunai makes it 36%
+per day and pulling it makes it 108% per day.
 
 With Melee Animation the pawn plays its own kunai throw clip (`AG_ThrowKunai`, three facings,
 written by `make_throw_anim.py`): 36 ticks, the hand cocks beside the ear with the blade up and
