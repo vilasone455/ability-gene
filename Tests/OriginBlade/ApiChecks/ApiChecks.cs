@@ -87,6 +87,7 @@ static class ApiChecks
         string retrieval = CheckRetrievalHookContract();
         string kunai = CheckKunaiContract();
         string makibishi = CheckMakibishiContract();
+        Console.WriteLine(CheckFumaContract());
         Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, "
             + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval} {kunai} {makibishi}");
     }
@@ -252,6 +253,9 @@ static class ApiChecks
             throw new Exception("Melee Animation bridge: AnimationStartParameters.TryTrigger(out) is gone");
         if (renderer.GetMethod("TryGetAnimator", new[] { typeof(Verse.Pawn) }) == null)
             throw new Exception("Melee Animation bridge: AnimRenderer.TryGetAnimator(Pawn) is gone");
+        if (startParams.GetField("CustomJobDef", Any)?.FieldType != typeof(Verse.JobDef)
+            || renderer.GetField("CustomJobDef", Any)?.FieldType != typeof(Verse.JobDef))
+            throw new Exception("Fuma needs the custom-job animation bridge to preserve its throw job");
         if (renderer.GetProperty("DurationTicks") == null)
             throw new Exception("Melee Animation bridge: AnimRenderer.DurationTicks is gone");
         if (renderer.GetMethod("GetPart", new[] { typeof(string) }) == null)
@@ -292,7 +296,7 @@ static class ApiChecks
         int curves = 0, clips = 0;
         // The throw is directional and needs one clip per facing; Shinra Tensei is centred and
         // has exactly one, so a second Shinra clip reappearing here is a mistake worth catching.
-        foreach (string clip in ThrowAnimation.Grenade.All.Concat(ThrowAnimation.Kunai.All).Concat(ThrowAnimation.Scatter.All)
+        foreach (string clip in ThrowAnimation.Grenade.All.Concat(ThrowAnimation.Kunai.All).Concat(ThrowAnimation.Scatter.All).Concat(ThrowAnimation.Fuma.All)
                      .Select(name => name.Replace("AG_", "RimArt_")).Append("RimArt_ShinraPush"))
         {
             curves += CheckThrowAnimationJson(dataModel, partModel, clip);
@@ -300,7 +304,7 @@ static class ApiChecks
         }
         // The C# launches the thrown object at ReleaseFraction of the clip. The json hides the held
         // part at its release time, so the two must agree for every facing of every throw style.
-        foreach (var style in new[] { ThrowAnimation.Grenade, ThrowAnimation.Kunai, ThrowAnimation.Scatter })
+        foreach (var style in new[] { ThrowAnimation.Grenade, ThrowAnimation.Kunai, ThrowAnimation.Scatter, ThrowAnimation.Fuma })
         foreach (string clip in style.All)
         {
             string file = "Animations/" + clip.Replace("AG_", "RimArt_") + ".json";
@@ -314,7 +318,9 @@ static class ApiChecks
             if (Math.Abs(release / length - style.ReleaseFraction) > 0.001f)
                 throw new Exception($"{file}: release at {release}s of {length}s is {release / length:0.0000}, "
                     + $"but ThrowAnimation says {style.ReleaseFraction}");
-            var patchDefs = XDocument.Load("Patch_MeleeAnimation/1.6/Defs/AG_Throw_Anims.xml").Root.Elements()
+            var patchDefs = XDocument.Load(style == ThrowAnimation.Fuma
+                ? "Patch_MeleeAnimation/1.6/Defs/AG_Fuma_Anims.xml"
+                : "Patch_MeleeAnimation/1.6/Defs/AG_Throw_Anims.xml").Root.Elements()
                 .Where(e => e.Name.LocalName == "AM.AnimDef").ToArray();
             if (!patchDefs.Any(e => (string)e.Element("defName") == clip
                                     && (string)e.Element("data") == Path.GetFileName(file)))
@@ -334,7 +340,7 @@ static class ApiChecks
                     + $"expected {facing} flip {flip} {degrees:0.00}");
         }
         foreach (string stale in new[] { "NorthEast", "SouthEast" })
-        foreach (var style in new[] { ThrowAnimation.Grenade, ThrowAnimation.Kunai, ThrowAnimation.Scatter })
+        foreach (var style in new[] { ThrowAnimation.Grenade, ThrowAnimation.Kunai, ThrowAnimation.Scatter, ThrowAnimation.Fuma })
             if (File.Exists($"Animations/{style.East.Replace("AG_", "RimArt_")}{stale}.json"))
                 throw new Exception($"{style.East}{stale} clip is back; diagonals are rotated at draw time, not authored");
 
@@ -931,4 +937,51 @@ static class ApiChecks
 
         return "Checked the makibishi path cost provider, pouch, spikes and def numbers.";
     }
+    static string CheckFumaContract()
+    {
+        const BindingFlags Any = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        if (!typeof(Verse.IThingHolder).IsAssignableFrom(typeof(Projectile_Fuma))
+            || !typeof(Verse.Projectile).IsAssignableFrom(typeof(Projectile_Fuma))
+            || !typeof(Verse.CompEquippable).IsAssignableFrom(typeof(CompFuma)))
+            throw new Exception("Fuma must retain the physical weapon while in flight and standard melee equipment");
+        if (typeof(Verse.Pawn_EquipmentTracker).GetMethod("TryTransferEquipmentToContainer",
+                new[] { typeof(Verse.ThingWithComps), typeof(Verse.ThingOwner) })?.ReturnType != typeof(bool))
+            throw new Exception("Fuma equipment transfer API changed");
+        if (typeof(RimWorld.CompProjectileInterceptor).GetMethod("CheckIntercept", Any, null,
+                new[] { typeof(Verse.Projectile), typeof(UnityEngine.Vector3), typeof(UnityEngine.Vector3) }, null) == null)
+            throw new Exception("Fuma shield interception API changed");
+        foreach (string field in new[] { "origin", "destination", "ticksToImpact", "lifetime", "equipment", "launcher" })
+            if (typeof(Verse.Projectile).GetField(field, Any) == null)
+                throw new Exception("Fuma projectile field missing: " + field);
+        var root = XDocument.Load("1.6/Defs/ThingDefs/AG_Fuma_Things.xml").Root;
+        var weapon = root.Elements("ThingDef").Single(e => (string)e.Element("defName") == "AG_FumaShuriken");
+        var projectile = root.Elements("ThingDef").Single(e => (string)e.Element("defName") == "AG_FumaProjectile");
+        if ((string)weapon.Element("comps").Attribute("Inherit") != "False"
+            || weapon.Element("comps").Elements("li").Count(e => (string)e.Attribute("Class") == "RimArt.CompProperties_Fuma") != 1
+            || weapon.Element("weaponTags") != null || weapon.Element("verbs") != null)
+            throw new Exception("Fuma must have exactly one equippable comp, normal melee, and no AI generation tags");
+        if (!(bool)root.Element("DamageDef").Element("isRanged")
+            || (string)projectile.Element("thingClass") != "RimArt.Projectile_Fuma")
+            throw new Exception("Fuma needs ranged shield-aware damage and its explicit projectile class");
+        foreach (string name in new[] { "Folded", "Unfolded", "Ring", "Blade", "IconFuma" })
+            if (!File.Exists($"Textures/RimArt/Fuma/{name}.png")) throw new Exception("Missing Fuma texture: " + name);
+        foreach (string clip in ThrowAnimation.Fuma.All)
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText("Animations/" + clip.Replace("AG_", "RimArt_") + ".json"));
+            var parts = doc.RootElement.GetProperty("Parts").EnumerateArray().Where(p =>
+                p.GetProperty("CustomName").ValueKind == System.Text.Json.JsonValueKind.String
+                && (p.GetProperty("CustomName").GetString().StartsWith("FumaBlade")
+                    || p.GetProperty("CustomName").GetString() == "Grenade")).ToArray();
+            if (parts.Length != 5) throw new Exception("Fuma needs four animated blades and a ring");
+            foreach (var part in parts)
+            {
+                float release = part.GetProperty("Curves").GetProperty("GameObject.m_IsActive").GetProperty("Keyframes")
+                    .EnumerateArray().First(k => k.GetProperty("value").GetSingle() == 0).GetProperty("time").GetSingle();
+                if (Math.Abs(release * 60 - FumaRules.WarmupTicks) > .001)
+                    throw new Exception("Fuma visual release must match the job, including all four blades");
+            }
+        }
+        return "Checked Fuma equipment ownership interfaces, projectile interception, melee command, and folding/release assets.";
+    }
+
 }

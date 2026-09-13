@@ -637,3 +637,24 @@ It is a projection, not a shield: the light stops nothing, and the projector fai
 #### Throw mimic beacon
 
 **Cooldown:** 8 seconds | **Range:** 12.9 cells | **Cast time:** 0.8 seconds
+
+## Fūma Shuriken
+
+A large folding **primary weapon**. Its four curved blades provide ordinary melee slashes,
+plus a **Throw Fūma Shuriken** command while drafted.
+
+- **Craft:** either smithy, Smithing research, Crafting 6; 80 steel and 12,000 work.
+- **Melee:** 14 cut damage, 20% armor penetration, two-second base cooldown; quality applies.
+- **Throw:** choose a landing cell within 12 tiles. Warmup 0.8 seconds; cooldown four seconds.
+  Travels at 24 tiles/second along the highlighted line, without an accuracy roll.
+- **Piercing:** 30 damage to the first pawn, then 24/19/15/12/10/8; 20% armor penetration.
+  Each pawn is hit once. Allies, downed pawns, animals, and mechanoids can all be hit.
+- **Obstacles:** walls and closed doors stop it; low cover and open doors allow passage.
+  Personal shields can absorb damage; area projectile shields stop the flight.
+- **Recovery:** throwing leaves the pawn unarmed. The same weapon lands with its quality and
+  condition intact. Use Equip to recover it, or pull it closer with the retrieval hook first.
+  Recovery is manual, and changing owners does not reset its cooldown.
+
+The folded carry form opens into four blades for combat. Melee Animation adds an unfolding
+throw animation; it is optional. Combat Extended gets bulk and melee tools, while the throw
+keeps its custom trajectory rather than using CE ammunition or ballistics.

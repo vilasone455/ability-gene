@@ -1275,6 +1275,45 @@ def make_makibishi_icon():
     finish(img, "Textures/RimArt/Makibishi/IconMakibishi.png")
 
 
+def make_fuma():
+    """Four hinged, curved blades sharing one centred ring pivot in every asset."""
+    import math
+    from pathlib import Path
+    Path("Textures/RimArt/Fuma").mkdir(parents=True, exist_ok=True)
+    def bezier(a, b, c, e):
+        return [((1-t)**3*a[0]+3*(1-t)**2*t*b[0]+3*(1-t)*t*t*c[0]+t**3*e[0],
+                 (1-t)**3*a[1]+3*(1-t)**2*t*b[1]+3*(1-t)*t*t*c[1]+t**3*e[1])
+                for t in [i/24 for i in range(25)]]
+    upper = bezier((70,60), (82,49), (108,39), (113,16))
+    tip = bezier((113,16), (126,37), (115,52), (91,59))
+    lower = bezier((91,59), (80,63), (75,66), (70,68))
+    shape = upper + tip + lower
+    def blank(): return Image.new("RGBA", (S,S), (0,0,0,0))
+    blade = blank()
+    d=ImageDraw.Draw(blade)
+    points=[(px(x),px(y)) for x,y in shape]
+    d.polygon(points, fill=(26,29,35))
+    d.line(points+[points[0]], fill=(8,10,14), width=px(2))
+    d.line([(px(x),px(y)) for x,y in upper], fill=(219,225,230), width=px(2.6))
+    spine=bezier((75,61),(89,53),(113,47),(114,30))
+    d.line([(px(x),px(y)) for x,y in spine], fill=(64,71,82), width=px(1.3))
+    finish(blade, "Textures/RimArt/Fuma/Blade.png")
+    ring=blank(); d=ImageDraw.Draw(ring)
+    d.ellipse([px(52),px(52),px(76),px(76)], fill=(14,17,22), outline=(105,112,122), width=px(1.2))
+    d.ellipse([px(57),px(57),px(71),px(71)], fill=(0,0,0,0), outline=(173,180,188), width=px(1))
+    for a in (45,135,225,315):
+        x=64+9*math.cos(math.radians(a)); y=64+9*math.sin(math.radians(a))
+        d.ellipse([px(x-1),px(y-1),px(x+1),px(y+1)], fill=(137,144,153))
+    finish(ring, "Textures/RimArt/Fuma/Ring.png")
+    for name, angles in (("Unfolded", (0,90,180,270)), ("Folded", (142,150,158,166))):
+        img=blank()
+        for a in reversed(angles):
+            img.alpha_composite(blade.rotate(a, resample=Image.Resampling.BICUBIC))
+        img.alpha_composite(ring)
+        finish(img, f"Textures/RimArt/Fuma/{name}.png")
+        if name == "Unfolded": finish(img, "Textures/RimArt/Fuma/IconFuma.png")
+
+
 if __name__ == "__main__":
     make_flying()
     make_planted()
@@ -1306,3 +1345,5 @@ if __name__ == "__main__":
     make_makibishi_spikes()
     make_makibishi_pouch()
     make_makibishi_icon()
+
+    make_fuma()

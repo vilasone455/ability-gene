@@ -486,6 +486,44 @@ the waist (cannot be worn with the kunai belt or any other belt), no armor. Maki
 research, smithy, Crafting 3, 10 steel for 5, 0.2 kg each, stack 25. Combat Extended adds Bulk
 0.2 per makibishi and Bulk 1 / Worn Bulk 0.5 for the pouch.
 
+### Fūma Shuriken (weapon)
+
+A folding, four-bladed **primary melee weapon** with a separate **Throw Fūma Shuriken**
+command. Craft at either smithy after **Smithing**, with Crafting **6**, **80 steel**, and
+12,000 work. Mass 2 kg, 200 HP, normal weapon quality. Not assigned to raiders automatically.
+
+Normal attacks slash for 14 cut damage with 20% armor penetration and a two-second base
+cooldown. A drafted pawn can explicitly throw at a ground cell up to **12 tiles** away:
+0.8-second warmup, 24 tiles/second flight, four-second throw cooldown. The selected cell is
+the landing point. The yellow preview is the actual narrow damage corridor; friendly pawns'
+cells are marked red. No accuracy roll or random landing offset.
+
+The blade hits every living pawn in its path once, including allies, animals, mechanoids,
+and downed pawns. Damage is **30, 24, 19, 15, 12, 10, then 8** per subsequent pawn. Armor and
+personal shields still apply; even an absorbed contact reduces the next hit's damage.
+Walls, closed doors, and full-fill obstacles stop it without taking damage. Low cover and
+open doors allow passage. Diagonal throws cannot cut through solid corners. Area projectile
+shields stop the blade; personal shields absorb the wearer's damage without stopping flight.
+
+**The actual weapon leaves the pawn's equipment.** It lands with its identity, quality,
+condition, and components intact, without throw breakage. Order **Equip** to recover it;
+the retrieval hook can first pull it closer. There is no automatic recovery or re-equipping.
+The cooldown stays on the weapon across transfers. Interrupted warmup spends nothing;
+after release the projectile continues independently. Flight saves include the held weapon
+and already-hit pawns. Failed landing placement retains the holder and retries.
+
+Art comes from `make_textures.py`: four curved black blades, silver edges, a central ring,
+and matching folded/open states. `make_throw_anim.py` authors three directional clips with
+four independently unfolding blades. The throw job controls animation time and releases at
+tick 48 of 72, independent of Melee Animation's speed setting. Without that mod, gameplay
+timing is identical and the projectile still spins. CE supplies bulk and melee-tool stats;
+the custom flight remains a vanilla projectile, without CE ammunition or ballistic simulation.
+
+Dev mode: **RimArts → Spawn Fūma Shuriken**. Automated geometry checks:
+`dotnet run --project Tests/Fuma/Fuma.csproj`. API checks cover ownership interfaces,
+interception, definitions, and all five animated pieces' release times. See
+[the runtime verification checklist](docs/fuma-verification.md) for checks requiring a running game.
+
 ### Frost bomb (weapon)
 A thrown grenade, equipped in the weapon slot and aimed like the game's own. Range 12.9
 cells; it bursts into a freezing cloud that stuns everything caught in it for up to three

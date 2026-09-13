@@ -345,7 +345,22 @@ SCATTER = {
     "item_scale": 0.36,
 }
 
-STYLES = [GRENADE, KUNAI, SCATTER]
+# One full-sized folding weapon, with the release clock owned by its throw job.
+FUMA = {
+    **GRENADE,
+    "name": "RimArt_ThrowFuma", "length": 1.2, "release": 0.8,
+    "poses": [(0,0.12,-0.23,0), (0.20,0.04,-0.30,0.15),
+              (0.42,-0.24,-0.40,0.20), (0.65,-0.30,-0.38,0.20),
+              (0.80,0.40,-0.10,0.20), (0.96,0.42,0.20,0.12), (1.2,0.12,-0.23,0)],
+    "body_rot": [(0,0),(.5,-12),(.8,10),(1.2,0)],
+    "body_x": [(0,0),(.5,-.06),(.8,.10),(1.2,0)],
+    "body_lift": [(0,0),(1.2,0)],
+    "wrist": [(0,0),(.5,-25),(.8,65),(1.2,0)],
+    "behind": (0.96,1.1), "spin": [(0,0),(.8,0)],
+    "texture": "RimArt/Fuma/Ring", "item_scale": 1.4,
+    "item_pos": {"x": 0, "z": 0}, "item_y": HAND_Y - 0.005,
+}
+STYLES = [GRENADE, KUNAI, SCATTER, FUMA]
 
 ARC_SAMPLE = 0.02
 
@@ -514,6 +529,19 @@ def build(style, name, direction, turn):
     )
 
     parts = [body, head, lift, holding, hand_a, hand_b, grenade]
+    if style["name"] == "RimArt_ThrowFuma":
+        # The ring and each blade have the same centred pivot. The fan opens smoothly
+        # before release; all five visible pieces disappear on the release frame.
+        for i in range(4):
+            blade = part(1010+i, f"PawnALift/PawnAHolding/FumaBlade{i}",
+                         f"FumaBlade{i}", parent_id=1003, texture="RimArt/Fuma/Blade",
+                         curves={"GameObject.m_IsActive": curve(item_active(style), smooth=False),
+                                 **transform_curves(rot={"y": [(0,142+8*i),(.15,142+8*i),(.48,90*i),(.8,90*i)]})},
+                         default_overrides={"Transform.m_LocalPosition.y": HAND_Y-.01-i*.001,
+                                            "Transform.m_LocalScale.x": 1.4,
+                                            "Transform.m_LocalScale.y": 1.4,
+                                            "Transform.m_LocalScale.z": 1.4})
+            parts.append(blade)
 
     return {
         "ExportTimeUTC": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.0000000Z"),

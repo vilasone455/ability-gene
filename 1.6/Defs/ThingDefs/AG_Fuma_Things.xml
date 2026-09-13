@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <DamageDef ParentName="CutBase">
+    <defName>AG_FumaCut</defName>
+    <label>shuriken cut</label>
+    <isRanged>true</isRanged>
+    <defaultDamage>30</defaultDamage>
+    <defaultArmorPenetration>0.2</defaultArmorPenetration>
+  </DamageDef>
+  <ThingDef ParentName="BaseBullet">
+    <defName>AG_FumaProjectile</defName>
+    <label>Fūma Shuriken</label>
+    <thingClass>RimArt.Projectile_Fuma</thingClass>
+    <graphicData>
+      <texPath>RimArt/Fuma/Unfolded</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.4</drawSize>
+    </graphicData>
+    <projectile>
+      <damageDef>AG_FumaCut</damageDef>
+      <damageAmountBase>30</damageAmountBase>
+      <armorPenetrationBase>0.2</armorPenetrationBase>
+      <speed>24</speed>
+      <spinRate>6</spinRate>
+      <shadowSize>0.5</shadowSize>
+    </projectile>
+  </ThingDef>
+  <ThingDef ParentName="BaseMeleeWeapon_Sharp_Quality">
+    <defName>AG_FumaShuriken</defName>
+    <label>Fūma Shuriken</label>
+    <description>A massive folding shuriken. Four curved steel blades pivot around a central grip ring, stacking together for carrying and fanning open for combat.\n\nUse it for melee slashes, or order a throw at a ground cell up to 12 tiles away. The spinning blade cuts through every pawn in its path, including allies: 30 cut damage and 20% armor penetration, losing 20% damage per pawn down to a minimum of 8. Walls and closed doors stop it.\n\nThrowing leaves you unarmed. The same weapon lands on the ground with its quality and condition intact. Retrieve and equip it to use it again; a retrieval hook can pull it closer. Warmup 0.8 seconds; throw cooldown 4 seconds.</description>
+    <thingClass>RimArt.FumaWeapon</thingClass>
+    <graphicData>
+      <texPath>RimArt/Fuma/Unfolded</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.4</drawSize>
+    </graphicData>
+    <uiIconPath>RimArt/Fuma/IconFuma</uiIconPath>
+    <techLevel>Medieval</techLevel>
+    <stackLimit>1</stackLimit>
+    <statBases>
+      <Mass>2</Mass>
+      <MaxHitPoints>200</MaxHitPoints>
+      <WorkToMake>12000</WorkToMake>
+      <Flammability>0</Flammability>
+      <MeleeWeapon_CooldownMultiplier>1</MeleeWeapon_CooldownMultiplier>
+    </statBases>
+    <costList><Steel>80</Steel></costList>
+    <recipeMaker>
+      <researchPrerequisite>Smithing</researchPrerequisite>
+      <skillRequirements><Crafting>6</Crafting></skillRequirements>
+      <displayPriority>345</displayPriority>
+    </recipeMaker>
+    <comps Inherit="False">
+      <li Class="RimArt.CompProperties_Fuma" />
+      <li><compClass>CompQuality</compClass></li>
+      <li Class="CompProperties_Art">
+        <nameMaker>NamerArtWeaponMelee</nameMaker>
+        <descriptionMaker>ArtDescription_WeaponMelee</descriptionMaker>
+        <minQualityForArtistic>Excellent</minQualityForArtistic>
+      </li>
+    </comps>
+    <tools>
+      <li>
+        <label>blades</label>
+        <capacities><li>Cut</li></capacities>
+        <power>14</power>
+        <armorPenetration>0.2</armorPenetration>
+        <cooldownTime>2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+</Defs>

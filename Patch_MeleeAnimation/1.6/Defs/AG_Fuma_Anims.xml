@@ -1,0 +1,78 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Defs>
+  <AM.AnimDef>
+    <defName>AG_ThrowFuma</defName>
+    <label>Throw: Fūma Shuriken</label>
+    <description>Unfolding and throwing a Fūma Shuriken.</description>
+    <jobString>Throwing Fūma Shuriken.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ThrowFuma.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <canEditProbability>false</canEditProbability>
+    <cellData>
+      <li>
+        <type>PawnStart</type>
+        <position>(0, 0)</position>
+        <pawnIndex>0</pawnIndex>
+      </li>
+    </cellData>
+    <handsVisibility>
+      <li>
+        <pawnIndex>0</pawnIndex>
+        <showMainHand>true</showMainHand>
+        <showAltHand>true</showAltHand>
+      </li>
+    </handsVisibility>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_ThrowFumaNorth</defName>
+    <label>Throw: Fūma Shuriken (north)</label>
+    <description>Unfolding and throwing a Fūma Shuriken.</description>
+    <jobString>Throwing Fūma Shuriken.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ThrowFumaNorth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <canEditProbability>false</canEditProbability>
+    <cellData>
+      <li>
+        <type>PawnStart</type>
+        <position>(0, 0)</position>
+        <pawnIndex>0</pawnIndex>
+      </li>
+    </cellData>
+    <handsVisibility>
+      <li>
+        <pawnIndex>0</pawnIndex>
+        <showMainHand>true</showMainHand>
+        <showAltHand>true</showAltHand>
+      </li>
+    </handsVisibility>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_ThrowFumaSouth</defName>
+    <label>Throw: Fūma Shuriken (south)</label>
+    <description>Unfolding and throwing a Fūma Shuriken.</description>
+    <jobString>Throwing Fūma Shuriken.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ThrowFumaSouth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <canEditProbability>false</canEditProbability>
+    <cellData>
+      <li>
+        <type>PawnStart</type>
+        <position>(0, 0)</position>
+        <pawnIndex>0</pawnIndex>
+      </li>
+    </cellData>
+    <handsVisibility>
+      <li>
+        <pawnIndex>0</pawnIndex>
+        <showMainHand>true</showMainHand>
+        <showAltHand>true</showAltHand>
+      </li>
+    </handsVisibility>
+  </AM.AnimDef>
+</Defs>
