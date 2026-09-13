@@ -519,7 +519,9 @@ tick 48 of 72, independent of Melee Animation's speed setting. Without that mod,
 timing is identical and the projectile still spins. CE supplies bulk and melee-tool stats;
 the custom flight remains a vanilla projectile, without CE ammunition or ballistic simulation.
 
-Dev mode: **RimArts → Spawn Fūma Shuriken**. Automated geometry checks:
+Dev mode: **RimArts → Grant kit… → Fūma Shuriken** equips it directly, storing the old
+weapon in inventory or dropping it if necessary. **Spawn Fūma Shuriken** also places one
+on the ground. Automated geometry checks:
 `dotnet run --project Tests/Fuma/Fuma.csproj`. API checks cover ownership interfaces,
 interception, definitions, and all five animated pieces' release times. See
 [the runtime verification checklist](docs/fuma-verification.md) for checks requiring a running game.

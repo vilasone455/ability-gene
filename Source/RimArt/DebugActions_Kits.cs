@@ -146,6 +146,7 @@ namespace RimArt
                 new Kit { Label = "Retrieval hook belt", Grant = GrantRetrievalHookBelt },
                 new Kit { Label = "Kunai belt", Grant = GrantKunaiBelt },
                 new Kit { Label = "Makibishi pouch", Grant = GrantMakibishiPouch },
+                new Kit { Label = "Fūma Shuriken", Grant = GrantFumaShuriken },
                 new Kit { Label = "Shinra Tensei (repulsion eye)", Grant = GrantShinraTensei },
 
                 WeaponTrait("Resonant weapon", "AG_WeaponResonance"),
@@ -252,17 +253,23 @@ namespace RimArt
             return null;
         }
 
-        // ----------------------------------------------------------------- frost bomb
+        // ----------------------------------------------------------------- equipped weapons
+
+        private static string GrantFrostBomb(Pawn pawn)
+            => GrantWeapon(pawn, "AG_FrostBomb", "AG_CryogenicMunitions");
+
+        private static string GrantFumaShuriken(Pawn pawn)
+            => GrantWeapon(pawn, "AG_FumaShuriken", "Smithing");
 
         /// <summary>
-        /// Puts a frost bomb in the pawn's hands, ready to throw.
+        /// Puts a weapon in the pawn's hands, ready to use.
         ///
         /// Equipped rather than dropped at their feet, because the thing being tested is the
         /// throw and an item on the floor is two more clicks before any of it happens. The
         /// pawn's existing weapon goes to their inventory, so a test pawn does not silently lose
         /// the rifle they were carrying.
         ///
-        /// The weapon slot has to be genuinely empty before the bomb goes in, and the clearing
+        /// The weapon slot has to be empty before the new weapon goes in, and the clearing
         /// is checked rather than assumed. AddEquipment does not refuse a second primary - it
         /// logs a red error and returns, leaving the pawn holding the old weapon - so an
         /// unchecked transfer produces a dev action that reports success and grants nothing. The
@@ -270,14 +277,14 @@ namespace RimArt
         /// Extended a pawn near their bulk limit will. Dropping it is the fallback, and being
         /// unable to do either is reported instead of being papered over.
         /// </summary>
-        private static string GrantFrostBomb(Pawn pawn)
+        private static string GrantWeapon(Pawn pawn, string defName, string research)
         {
-            ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail("AG_FrostBomb");
-            if (def == null) return "no ThingDef AG_FrostBomb";
+            ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail(defName);
+            if (def == null) return "no ThingDef " + defName;
             if (pawn.equipment == null) return "cannot carry equipment";
             if (pawn.equipment.Primary?.def == def) return "already holding one";
 
-            FinishResearch("AG_CryogenicMunitions");
+            FinishResearch(research);
 
             ThingWithComps held = pawn.equipment.Primary;
             if (held != null)

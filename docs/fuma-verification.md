@@ -4,7 +4,9 @@ Automated checks cover geometry, preview/sweep agreement, cooldown arithmetic, d
 falloff, installed API signatures, and animation/definition contracts. These do not run a
 RimWorld combat simulation. The following runtime checks remain unperformed in this change.
 
-1. Craft at either smithy after Smithing with Crafting 6 and 80 steel. Confirm quality,
+1. Use **RimArts → Grant kit… → Fūma Shuriken** on an armed pawn. Verify direct equipping,
+   preservation of the old weapon in inventory (or on the ground), and refusal when already
+   holding one. Also craft at either smithy after Smithing with Crafting 6 and 80 steel. Confirm quality,
    2 kg mass, 200 base HP, and normal melee attacks; only the throw command throws it.
 2. Throw through a row of unarmored pawns. Verify 30/24/19/15/12/10/8 base damage, one
    contact each, attribution in the combat log, and inclusion of allies and downed pawns.
