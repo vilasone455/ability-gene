@@ -24,6 +24,12 @@ namespace RimArt
         private static Dictionary<Thing, float> forces = new Dictionary<Thing, float>();
         private static readonly List<Thing> scratch = new List<Thing>();
 
+        // Required by Scribe_Collections for a dictionary with reference keys: the keys are read
+        // in LoadingVars and only resolved to Things in ResolvingCrossRefs, so the lists have to
+        // survive between the two passes. The 4-argument overload uses locals and loses them.
+        private static List<Thing> keysWorking;
+        private static List<float> valuesWorking;
+
         public static int EditedCount => forces.Count;
 
         public static void Register(Thing projectile, float force)
@@ -81,7 +87,10 @@ namespace RimArt
         /// </summary>
         public static void Expose()
         {
-            Scribe_Collections.Look(ref forces, "AG_vectorEditForces", LookMode.Reference, LookMode.Value);
+            // logNullErrors off: a round destroyed between the last prune and the save is written
+            // as a null reference, and skipping it on load is the correct result.
+            Scribe_Collections.Look(ref forces, "AG_vectorEditForces", LookMode.Reference, LookMode.Value,
+                ref keysWorking, ref valuesWorking, false);
 
             // Deliberately not pruned here. Whether a just-loaded round counts as spawned yet
             // depends on where in the load the components are exposed, and dropping an entry
