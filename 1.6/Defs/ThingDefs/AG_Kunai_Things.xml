@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The kunai item. Belt ammunition, one per charge, and what a thrown kunai drops as after it
+       lands (Projectile_Kunai). Made in batches of 5 by AG_MakeKunai. -->
+  <ThingDef ParentName="ResourceBase">
+    <defName>AG_Kunai</defName>
+    <label>kunai</label>
+    <description>A steel throwing knife. Loaded into a kunai belt, one kunai per throw.\n\nA thrown kunai drops on the ground where it lands and can be picked up and reloaded. One that hits a target has a 20% chance to break.</description>
+    <graphicData>
+      <texPath>RimArt/Kunai/Kunai</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.8</drawSize>
+    </graphicData>
+    <soundInteract>Metal_Drop</soundInteract>
+    <soundDrop>Metal_Drop</soundDrop>
+    <techLevel>Medieval</techLevel>
+    <stackLimit>30</stackLimit>
+    <healthAffectsPrice>false</healthAffectsPrice>
+    <statBases>
+      <MarketValue>11</MarketValue>
+      <Mass>0.25</Mass>
+      <MaxHitPoints>60</MaxHitPoints>
+      <Flammability>0</Flammability>
+      <DeteriorationRate>0.5</DeteriorationRate>
+    </statBases>
+    <thingCategories>
+      <li>Manufactured</li>
+    </thingCategories>
+  </ThingDef>
+
+  <!-- A kunai in flight. Bullet damage, so armour, body part and battle log are vanilla. The
+       texture points up, which the game draws along the direction of travel. -->
+  <ThingDef ParentName="BaseBullet">
+    <defName>AG_KunaiProjectile</defName>
+    <label>kunai</label>
+    <thingClass>RimArt.Projectile_Kunai</thingClass>
+    <graphicData>
+      <texPath>RimArt/Kunai/Kunai</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.75</drawSize>
+    </graphicData>
+    <projectile>
+      <damageDef>Stab</damageDef>
+      <damageAmountBase>12</damageAmountBase>
+      <armorPenetrationBase>0.18</armorPenetrationBase>
+      <stoppingPower>0.5</stoppingPower>
+      <speed>40</speed>
+    </projectile>
+  </ThingDef>
+
+  <!-- The kunai belt, and the only source of the throw kunai ability.
+
+       Belt slot, so it cannot be worn with the stasis belt, the retrieval hook belt, the drone
+       rig or a shield belt.
+
+       Charges are vanilla CompApparelReloadable, the jump pack's comp: 6 kunai, saved on the
+       belt, full when crafted, reloaded one kunai item per charge. Pawns reload it on their own
+       when it is empty and kunai are reachable, and "Reload" appears when right-clicking kunai.
+       No apparel tags: nothing generates wearing one. -->
+  <ThingDef ParentName="ApparelBase">
+    <defName>AG_KunaiBelt</defName>
+    <label>kunai belt</label>
+    <description>A belt with loops for 6 kunai. The wearer can throw them with the throw kunai ability.\n\nRange 14.9 tiles. 12 stab damage, 18% armor penetration. Hit chance uses the wearer's Shooting skill. Each throw uses one kunai.\n\nA thrown kunai drops where it lands. Hits have a 20% chance to break it. Reload the belt with kunai items: the wearer reloads on their own when the belt is empty, or right-click kunai to reload early. A new belt comes with 6 kunai.</description>
+    <thingClass>Apparel</thingClass>
+    <graphicData>
+      <texPath>RimArt/Kunai/Belt</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <techLevel>Medieval</techLevel>
+    <statBases>
+      <Mass>1.5</Mass>
+      <WorkToMake>3000</WorkToMake>
+      <Flammability>0.4</Flammability>
+      <EquipDelay>1.5</EquipDelay>
+    </statBases>
+    <costList>
+      <Steel>30</Steel>
+      <Cloth>20</Cloth>
+    </costList>
+    <recipeMaker>
+      <unfinishedThingDef>UnfinishedBelt</unfinishedThingDef>
+      <researchPrerequisite>Smithing</researchPrerequisite>
+      <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+      <workSkill>Crafting</workSkill>
+      <effectWorking>Smith</effectWorking>
+      <soundWorking>Recipe_Smith</soundWorking>
+      <recipeUsers>
+        <li>FueledSmithy</li>
+        <li>ElectricSmithy</li>
+      </recipeUsers>
+      <useIngredientsForColor>false</useIngredientsForColor>
+      <skillRequirements>
+        <Crafting>4</Crafting>
+      </skillRequirements>
+      <displayPriority>330</displayPriority>
+    </recipeMaker>
+    <thingCategories>
+      <li>ApparelUtility</li>
+    </thingCategories>
+    <apparel>
+      <countsAsClothingForNudity>false</countsAsClothingForNudity>
+      <careIfWornByCorpse>false</careIfWornByCorpse>
+      <careIfDamaged>false</careIfDamaged>
+      <wearPerDay>0</wearPerDay>
+      <bodyPartGroups>
+        <li>Waist</li>
+      </bodyPartGroups>
+      <layers>
+        <li>Belt</li>
+      </layers>
+      <developmentalStageFilter>Child, Adult</developmentalStageFilter>
+    </apparel>
+    <comps>
+      <li Class="CompProperties_ApparelReloadable">
+        <maxCharges>6</maxCharges>
+        <ammoDef>AG_Kunai</ammoDef>
+        <ammoCountPerCharge>1</ammoCountPerCharge>
+        <baseReloadTicks>60</baseReloadTicks>
+        <soundReload>Standard_Reload</soundReload>
+        <chargeNoun>kunai</chargeNoun>
+      </li>
+      <li Class="RimArt.CompProperties_ApparelAbility">
+        <abilities>
+          <li>AG_ThrowKunai</li>
+        </abilities>
+      </li>
+    </comps>
+  </ThingDef>
+
+</Defs>

@@ -144,6 +144,7 @@ namespace RimArt
                 new Kit { Label = "Frost bomb", Grant = GrantFrostBomb },
                 new Kit { Label = "Drone control rig", Grant = GrantControlRig },
                 new Kit { Label = "Retrieval hook belt", Grant = GrantRetrievalHookBelt },
+                new Kit { Label = "Kunai belt", Grant = GrantKunaiBelt },
                 new Kit { Label = "Shinra Tensei (repulsion eye)", Grant = GrantShinraTensei },
 
                 WeaponTrait("Resonant weapon", "AG_WeaponResonance"),
@@ -333,6 +334,29 @@ namespace RimArt
 
             Apparel belt = (Apparel)ThingMaker.MakeThing(def, GenStuff.DefaultStuffFor(def));
             pawn.apparel.Wear(belt, true, false);
+            return null;
+        }
+
+        /// <summary>Wears a full kunai belt and drops 12 spare kunai next to the pawn for testing reload.</summary>
+        private static string GrantKunaiBelt(Pawn pawn)
+        {
+            ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail("AG_KunaiBelt");
+            ThingDef ammo = DefDatabase<ThingDef>.GetNamedSilentFail("AG_Kunai");
+            if (def == null || ammo == null) return "no ThingDef AG_KunaiBelt or AG_Kunai";
+            if (pawn.apparel == null) return "cannot wear apparel";
+            if (pawn.apparel.WornApparel.Any(worn => worn.def == def)) return "already wearing one";
+
+            FinishResearch("Smithing");
+
+            Apparel belt = (Apparel)ThingMaker.MakeThing(def, GenStuff.DefaultStuffFor(def));
+            pawn.apparel.Wear(belt, true, false);
+
+            if (pawn.Spawned)
+            {
+                Thing spare = ThingMaker.MakeThing(ammo);
+                spare.stackCount = 12;
+                GenPlace.TryPlaceThing(spare, pawn.Position, pawn.Map, ThingPlaceMode.Near);
+            }
             return null;
         }
 

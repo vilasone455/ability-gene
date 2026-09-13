@@ -30,6 +30,21 @@ namespace RimArt
         /// </summary>
         public static void Begin(Pawn thrower, LocalTargetInfo target, ThingDef projectile, string handTexture)
         {
+            Begin(thrower, target, projectile, handTexture, LocalTargetInfo.Invalid, ProjectileHitFlags.IntendedTarget,
+                  ThrowAnimation.Grenade);
+        }
+
+        /// <summary>
+        /// As above, for a thrown object that has already rolled to hit. <paramref name="target"/>
+        /// is where it flies (a miss cell, a piece of cover, or the target itself),
+        /// <paramref name="intendedTarget"/> is what the thrower aimed at, and
+        /// <paramref name="hitFlags"/> is what it may collide with on the way, and
+        /// <paramref name="clips"/> is which throw animation plays.
+        /// </summary>
+        public static void Begin(Pawn thrower, LocalTargetInfo target, ThingDef projectile, string handTexture,
+                                 LocalTargetInfo intendedTarget, ProjectileHitFlags hitFlags,
+                                 ThrowAnimation.Clips clips)
+        {
             Map map = thrower?.Map;
             if (map == null || projectile == null || !target.IsValid) return;
 
@@ -37,11 +52,12 @@ namespace RimArt
             if (component == null) return;
 
             int delay = 0;
-            if (ThrowAnimation.TryThrow(thrower, target.Cell, handTexture, out ThrowAnimation.Throw thrown))
+            if (ThrowAnimation.TryThrow(thrower, target.Cell, handTexture, clips, out ThrowAnimation.Throw thrown))
                 delay = thrown.ReleaseTick;
 
             component.pending.Add(new PendingThrow(thrower, target, projectile,
-                                                   Find.TickManager.TicksGame + delay));
+                                                   Find.TickManager.TicksGame + delay,
+                                                   intendedTarget, hitFlags));
         }
 
         public override void MapComponentTick()

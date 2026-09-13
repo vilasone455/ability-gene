@@ -9,7 +9,7 @@ namespace RimArt
     /// The animation and the projectile are two separate things that have to agree on one moment.
     /// Melee Animation draws the arm; it knows nothing about grenades and will not tell anybody
     /// when the hand opens. So the cast works out which tick that is - the clip's length times
-    /// <see cref="ThrowAnimation.ReleaseFraction"/> - and parks the launch here until then.
+    /// <see cref="ThrowAnimation.Clips.ReleaseFraction"/> - and parks the launch here until then.
     ///
     /// Without an animation there is nothing to wait for and the fuse is zero, which is the path
     /// every pawn takes when Melee Animation is not installed.
@@ -21,6 +21,12 @@ namespace RimArt
         private ThingDef projectile;
         private int releaseTick;
 
+        // What the thrower aimed at, when a miss sends the object somewhere else, and what the
+        // projectile may collide with. Grenades leave both at their defaults: aimed at the cell
+        // they land on, hitting only that.
+        private LocalTargetInfo intendedTarget = LocalTargetInfo.Invalid;
+        private ProjectileHitFlags hitFlags = ProjectileHitFlags.IntendedTarget;
+
         /// <summary>Required by Scribe. Every field is written back by ExposeData.</summary>
         public PendingThrow() { }
 
@@ -30,6 +36,14 @@ namespace RimArt
             this.target = target;
             this.projectile = projectile;
             this.releaseTick = releaseTick;
+        }
+
+        public PendingThrow(Pawn thrower, LocalTargetInfo target, ThingDef projectile, int releaseTick,
+                            LocalTargetInfo intendedTarget, ProjectileHitFlags hitFlags)
+            : this(thrower, target, projectile, releaseTick)
+        {
+            this.intendedTarget = intendedTarget;
+            this.hitFlags = hitFlags;
         }
 
         /// <summary>Ticks the throw. Returns false once it has been launched or given up on.</summary>
@@ -60,7 +74,8 @@ namespace RimArt
             if (shot == null) return;
 
             GenSpawn.Spawn(shot, thrower.Position, map);
-            shot.Launch(thrower, thrower.DrawPos, target, target, ProjectileHitFlags.IntendedTarget);
+            LocalTargetInfo intended = intendedTarget.IsValid ? intendedTarget : target;
+            shot.Launch(thrower, thrower.DrawPos, target, intended, hitFlags);
         }
 
         public void ExposeData()
@@ -69,6 +84,8 @@ namespace RimArt
             Scribe_TargetInfo.Look(ref target, "target");
             Scribe_Defs.Look(ref projectile, "projectile");
             Scribe_Values.Look(ref releaseTick, "releaseTick", 0);
+            Scribe_TargetInfo.Look(ref intendedTarget, "intendedTarget");
+            Scribe_Values.Look(ref hitFlags, "hitFlags", ProjectileHitFlags.IntendedTarget);
         }
     }
 }

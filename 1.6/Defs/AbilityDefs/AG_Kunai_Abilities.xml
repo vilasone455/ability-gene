@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Throw one kunai from the worn belt. Granted only by AG_KunaiBelt.
+
+       The kunai count is on the belt, checked and spent by CompAbilityEffect_ThrowKunai. The
+       1.5 s cooldown is longer than the whole kunai throw clip (36 ticks, release at 18), so a
+       second throw cannot start while the first animation is playing.
+
+       accuracy* feed ShotReport through VerbProperties.GetHitChanceFactor, which reads these
+       fields directly when the verb has no equipment. Values sit between the short bow
+       (0.75 / 0.65) and a pistol. -->
+  <AbilityDef>
+    <defName>AG_ThrowKunai</defName>
+    <label>throw kunai</label>
+    <description>Throw one kunai from the kunai belt. Range 14.9 tiles. 12 stab damage, 18% armor penetration.\n\nHit chance uses the thrower's Shooting skill, distance, cover and weather, like a gun. Misses can hit other people near the line of fire.\n\nThe kunai drops where it lands and can be picked up to reload the belt. Hits have a 20% chance to break it.</description>
+    <iconPath>RimArt/Kunai/IconKunai</iconPath>
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
+    <cooldownTicksRange>90</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>14.9</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <accuracyTouch>0.80</accuracyTouch>
+      <accuracyShort>0.70</accuracyShort>
+      <accuracyMedium>0.50</accuracyMedium>
+      <accuracyLong>0.30</accuracyLong>
+      <soundCast>Interact_BeatFire</soundCast>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>true</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityThrowKunai" />
+    </comps>
+  </AbilityDef>
+
+</Defs>

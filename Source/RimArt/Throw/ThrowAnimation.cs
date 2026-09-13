@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
@@ -7,7 +8,8 @@ using Verse;
 namespace RimArt
 {
     /// <summary>
-    /// Plays the grenade throw on one pawn, through Melee Animation, facing the target.
+    /// Plays a throw on one pawn, through Melee Animation, facing the target. Which throw is a
+    /// <see cref="Clips"/> set: <see cref="Grenade"/> or <see cref="Kunai"/>.
     ///
     /// This is a second, separate bridge to the same mod that <see cref="MeleeAnimation"/> talks
     /// to, and the split is deliberate. That one asks for an execution: two pawns, a weapon
@@ -33,34 +35,100 @@ namespace RimArt
     public static class ThrowAnimation
     {
         /// <summary>
-        /// The three clips, defined in Patch_MeleeAnimation and loaded only alongside their mod.
+        /// One throw style: three clips, defined in Patch_MeleeAnimation and loaded only alongside
+        /// their mod, and the moment in them the hand opens.
         ///
         /// A pawn body is drawn at one of four facings, not at a free angle: their DrawPawns
         /// passes a Rot4 to the pawn renderer, and that Rot4 comes from the clip's own
-        /// PawnBody.Direction. So the direction of a throw cannot be a runtime parameter the way
-        /// a position can - it is baked into whichever clip is played.
+        /// PawnBody.Direction. So the body's facing is baked into whichever clip is played: east
+        /// (mirrored for west), north or south, picked by <see cref="Aim"/>.
         ///
-        /// East is mirrored horizontally for west. North and south have dedicated clips,
-        /// including the hand placement and draw depth for each facing.
+        /// The exact direction is not baked in. <see cref="ThrowAim"/> records how far the target
+        /// is from the clip's direction, and the renderer worker in Patch_MeleeAnimation turns the
+        /// throwing hand and the held item by that much when they are drawn. This is how a 3/4
+        /// top-down game aims with three body facings, and how RimWorld draws a gun: body in a
+        /// fixed facing, weapon at the real angle.
         /// </summary>
-        public const string ThrowDefNameEast = "AG_ThrowGrenade";
-        public const string ThrowDefNameNorth = "AG_ThrowGrenadeNorth";
-        public const string ThrowDefNameSouth = "AG_ThrowGrenadeSouth";
+        public sealed class Clips
+        {
+            public readonly string East;
+            public readonly string North;
+            public readonly string South;
+
+            /// <summary>
+            /// How far into the clip the hand opens, as a fraction of its length.
+            ///
+            /// Single-sourced with the animation: make_throw_anim.py prints this number for each
+            /// style, and ApiChecks compares it with the json. If they differ the object leaves
+            /// the hand at a moment when the hand is not open.
+            /// </summary>
+            public readonly float ReleaseFraction;
+
+            internal Def eastDef;
+            internal Def northDef;
+            internal Def southDef;
+            internal bool looked;
+
+            /// <summary>Names the three clips as prefix, prefix + "North", prefix + "South".</summary>
+            public Clips(string prefix, float releaseFraction)
+            {
+                East = prefix;
+                North = prefix + "North";
+                South = prefix + "South";
+                ReleaseFraction = releaseFraction;
+            }
+
+            public IEnumerable<string> All => new[] { East, North, South };
+
+            internal bool Loaded => eastDef != null && northDef != null && southDef != null;
+        }
+
+        /// <summary>Overhand lob, 72 ticks, release at tick 35. Frost bomb and mimic beacon.</summary>
+        public static readonly Clips Grenade = new Clips("AG_ThrowGrenade", 0.4833f);
+
+        /// <summary>Flat knife throw from beside the ear, 36 ticks, release at tick 18.</summary>
+        public static readonly Clips Kunai = new Clips("AG_ThrowKunai", 0.5f);
+
+        /// <summary>Which of the three clips a throw uses.</summary>
+        public enum Facing
+        {
+            East,
+            North,
+            South,
+        }
+
+        /// <summary>
+        /// The clip and aim correction for a throw at offset (dx, dz) in cells.
+        ///
+        /// The clip is the dominant axis, ties going to east/west, the way RimWorld picks a
+        /// pawn's facing. <paramref name="flipX"/> is true for a westward throw. The returned angle
+        /// is the target direction minus the played clip's direction, in degrees counter-clockwise
+        /// seen from above, between -45 and 45. A zero offset throws east with no correction.
+        /// </summary>
+        public static Facing Aim(int dx, int dz, out bool flipX, out float offsetDegrees)
+        {
+            flipX = false;
+            offsetDegrees = 0f;
+            if (dx == 0 && dz == 0) return Facing.East;
+
+            bool sideways = Math.Abs(dx) >= Math.Abs(dz);
+            Facing facing = sideways ? Facing.East : dz < 0 ? Facing.South : Facing.North;
+            flipX = sideways && dx < 0;
+
+            double clipDegrees = facing == Facing.North ? 90.0 : facing == Facing.South ? -90.0 : flipX ? 180.0 : 0.0;
+            double offset = Math.Atan2(dz, dx) * 180.0 / Math.PI - clipDegrees;
+            while (offset > 180.0) offset -= 360.0;
+            while (offset <= -180.0) offset += 360.0;
+            offsetDegrees = (float)offset;
+            return facing;
+        }
 
         /// <summary>
         /// The custom part in the clip that holds the thrown object. Deliberately not "ItemA",
-        /// which their AddPawn claims and fills with the pawn's melee weapon.
+        /// which their AddPawn claims and fills with the pawn's melee weapon. Every clip set uses
+        /// this name, including the kunai.
         /// </summary>
         private const string GrenadePartName = "Grenade";
-
-        /// <summary>
-        /// How far into the clip the hand opens, as a fraction of its length.
-        ///
-        /// Single-sourced with the animation: make_throw_anim.py prints this number every time it
-        /// writes the json, and the two are the same value or the grenade leaves the hand at a
-        /// moment when the hand is not open. Read the script's output if the timing is changed.
-        /// </summary>
-        public const float ReleaseFraction = 0.4833f;
 
         private static bool resolved;
         private static bool present;
@@ -80,11 +148,7 @@ namespace RimArt
         private static MethodInfo getOverrideByPart;
         private static FieldInfo overrideTextureField;
 
-        private static Def throwDefEast;
-        private static Def throwDefNorth;
-        private static Def throwDefSouth;
-
-        /// <summary>True when Melee Animation is loaded, its API looks right, and the clip exists.</summary>
+        /// <summary>True when Melee Animation is loaded, its API looks right, and the grenade clips exist.</summary>
         public static bool Present
         {
             get
@@ -103,10 +167,10 @@ namespace RimArt
             /// <summary>Ticks from the start of the clip until the grenade leaves the hand.</summary>
             public readonly int ReleaseTick;
 
-            public Throw(int durationTicks)
+            public Throw(int durationTicks, float releaseFraction)
             {
                 DurationTicks = durationTicks;
-                ReleaseTick = Mathf.RoundToInt(durationTicks * ReleaseFraction);
+                ReleaseTick = Mathf.RoundToInt(durationTicks * releaseFraction);
             }
 
             public bool Started => DurationTicks > 0;
@@ -137,32 +201,29 @@ namespace RimArt
         }
 
         /// <summary>
-        /// Starts the throw on <paramref name="thrower"/>, aimed at <paramref name="target"/>.
+        /// Starts the <paramref name="clips"/> throw on <paramref name="thrower"/>, aimed at
+        /// <paramref name="target"/>.
         ///
         /// <paramref name="texturePath"/> replaces whatever the clip draws in the hand, so one
         /// animation serves any number of thrown things; pass null to keep the clip's own.
         /// </summary>
         /// <returns>False if nothing is playing, in which case the caller should throw the
         /// ordinary way and on its own timing. Nothing has happened to the pawn.</returns>
-        public static bool TryThrow(Pawn thrower, IntVec3 target, string texturePath, out Throw thrown)
+        public static bool TryThrow(Pawn thrower, IntVec3 target, string texturePath, Clips clips, out Throw thrown)
         {
             thrown = default;
-            if (!Present || !CanAnimate(thrower)) return false;
+            if (clips == null || !Present || !CanAnimate(thrower)) return false;
+            if (!LookUp(clips)) return false;
 
             try
             {
-                // Which of the four facings this throw is, decided the way RimWorld decides every
-                // facing: the dominant axis wins, and a tie goes to east/west because that is the
-                // pair with the pawn's widest sprite.
-                int dx = target.x - thrower.Position.x;
-                int dz = target.z - thrower.Position.z;
-                bool sideways = Mathf.Abs(dx) >= Mathf.Abs(dz);
-
-                object anim = sideways ? throwDefEast : dz < 0 ? throwDefSouth : throwDefNorth;
+                Facing facing = Aim(target.x - thrower.Position.x, target.z - thrower.Position.z,
+                                    out bool flipX, out float offsetDegrees);
+                object anim = facing == Facing.East ? clips.eastDef : facing == Facing.North ? clips.northDef : clips.southDef;
                 if (anim == null) return false;
 
                 object start = startParamsConstructor.Invoke(new object[] { anim, thrower, null });
-                flipXField.SetValue(start, sideways && dx < 0);
+                flipXField.SetValue(start, flipX);
                 flipYField.SetValue(start, false);
 
                 object[] args = { null };
@@ -171,11 +232,12 @@ namespace RimArt
 
                 object renderer = args[0];
                 ApplyTexture(renderer, texturePath);
+                ThrowAim.Set(renderer, offsetDegrees);
 
                 int duration = (int)durationTicksProperty.GetValue(renderer);
                 if (duration <= 0) return false;
 
-                thrown = new Throw(duration);
+                thrown = new Throw(duration, clips.ReleaseFraction);
                 return true;
             }
             catch (Exception e)
@@ -242,19 +304,34 @@ namespace RimArt
             if (overrideType != null)
                 overrideTextureField = AccessTools.Field(overrideType, "Texture");
 
-            // The clips live in a folder that only loads alongside their mod, so their absence
-            // here is the ordinary way this mod runs, not a fault worth logging.
-            throwDefEast = GenDefDatabase.GetDefSilentFail(animDefType, ThrowDefNameEast, false) as Def;
-            throwDefNorth = GenDefDatabase.GetDefSilentFail(animDefType, ThrowDefNameNorth, false) as Def;
-
-            throwDefSouth = GenDefDatabase.GetDefSilentFail(animDefType, ThrowDefNameSouth, false) as Def;
+            bool grenadeClips = LookUp(Grenade);
 
             present = startParamsConstructor != null && flipXField != null && flipYField != null
                       && tryTrigger != null && tryGetAnimator != null && durationTicksProperty != null
-                      && throwDefEast != null && throwDefNorth != null && throwDefSouth != null;
+                      && grenadeClips;
 
-            if (!present && throwDefEast != null)
+            if (!present && Grenade.eastDef != null)
                 Log.Warning("[RimArt] Melee Animation is loaded but its API did not look the way the throw animation expects. Grenades will be thrown without one.");
+        }
+
+        /// <summary>
+        /// Finds a clip set's three AnimDefs once. False if any is missing, which is the ordinary
+        /// state without Melee Animation: the clips live in a folder that only loads alongside
+        /// their mod, so this is not logged.
+        /// </summary>
+        private static bool LookUp(Clips clips)
+        {
+            if (!clips.looked)
+            {
+                clips.looked = true;
+                if (animDefType != null)
+                {
+                    clips.eastDef = GenDefDatabase.GetDefSilentFail(animDefType, clips.East, false) as Def;
+                    clips.northDef = GenDefDatabase.GetDefSilentFail(animDefType, clips.North, false) as Def;
+                    clips.southDef = GenDefDatabase.GetDefSilentFail(animDefType, clips.South, false) as Def;
+                }
+            }
+            return clips.Loaded;
         }
 
         private static MethodInfo FindMethod(Type type, string name, Func<ParameterInfo[], bool> matches)

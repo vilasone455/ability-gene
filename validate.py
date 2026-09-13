@@ -38,6 +38,8 @@ REF_TAGS = {
     # does not exist drops the recipe at load, which looks exactly like the surgery
     # simply not being offered.
     "researchPrerequisite", "requiredResearchBuilding", "unfinishedThingDef", "addsHediff",
+    # Reloadable apparel ammunition (the kunai belt). A wrong name leaves the belt unreloadable.
+    "ammoDef", "soundReload", "soundInteract", "soundDrop",
 }
 LIST_TAGS = {"abilities", "descriptionHyperlinks", "exceptions",
              "recipeUsers", "thingDefs", "prerequisites", "thingCategories",

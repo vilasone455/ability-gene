@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Writes the grenade-throw animation that Melee Animation plays for this mod.
+Writes the throw animations that Melee Animation plays for this mod: the grenade throw (frost
+bomb, mimic beacon) and the kunai throw. Each is a set of three clips, one per facing.
 
 Melee Animation's own guide (Source/AnimationTutorial/AnimationTutorial.md in their repo)
 animates in Unity and exports a json. That json is the real interface - their loader reads
@@ -14,8 +15,8 @@ It makes the animation reviewable. A keyframe table in a diff says "the wind-up 
 longer"; a re-exported 40KB json says nothing at all.
 
 And it makes the timing single-sourced. The release moment is a number here, and the same
-number is the one the C# throws the grenade on - see ThrowAnimation.ReleaseFraction, which
-this script prints so the two cannot drift apart silently.
+number is the one the C# throws on - see ThrowAnimation.Grenade and ThrowAnimation.Kunai, whose
+release fractions this script prints and ApiChecks compares against the written json.
 
 What is given up is the visual preview. Melee Animation ships one anyway: dev mode ->
 Melee Animation -> Open Debugger -> Animation Starter plays any loaded anim on any pawn.
@@ -30,19 +31,22 @@ from datetime import datetime, timezone
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.join(HERE, "Animations")
 
-# East also covers west through horizontal mirroring. North and south use their own
-# facing and rotated choreography so the step, off hand and depth agree with the body.
+# Three clips per throw style, the usual 3/4 top-down set. East also covers west through
+# horizontal mirroring. North and south use their own facing so the step, off hand and depth
+# agree with the body.
+#
+# The clip is authored for its own direction only. The exact aim is applied at draw time by
+# RimArt.MeleeAnimation.ThrowAimWorker, which turns everything under PawnALift (the throwing
+# hand and the held item) around that part's position by the difference between the clip
+# direction and the target, at most 45 degrees. The body keeps its sprite facing, the same way
+# RimWorld draws a pawn aiming a gun diagonally: body in one of four facings, weapon at the real
+# angle.
+# (suffix, Rot4, arc turn in degrees)
 FACINGS = [
-    ("RimArt_ThrowGrenade", 1, 0.0),
-    ("RimArt_ThrowGrenadeNorth", 0, 90.0),
-    ("RimArt_ThrowGrenadeSouth", 2, -90.0),
+    ("", 1, 0.0),
+    ("North", 0, 90.0),
+    ("South", 2, -90.0),
 ]
-
-LENGTH = 1.2
-
-# The instant the grenade leaves the hand, in seconds from the start. Everything before this is
-# wind-up, everything after is follow-through with the grenade part hidden.
-RELEASE = 0.58
 
 # Unity's exporter stamps every keyframe with these. They are the default unweighted tangent
 # settings; reproduced so a file written here is byte-shaped like a file written there.
@@ -53,12 +57,9 @@ TANGENT_MODE = 136
 # Draw depth. Their renderer sorts on world y, so these are layer numbers wearing a position's
 # clothes: the grenade sits just in front of the hands that are holding it.
 HAND_Y = 0.05
-GRENADE_Y = 0.06
 
 # Their hand sprite is authored at this scale in every shipped animation.
 HAND_SCALE = 0.175
-
-GRENADE_TEXTURE = "RimArt/Frost/Bomb"
 
 
 def catmull_tangents(points):
@@ -176,43 +177,125 @@ def transform_curves(pos=None, rot=None, smooth=True):
     return curves
 
 
+# ---------------------------------------------------------------- grenade
+
+# The instant the grenade leaves the hand, in seconds from the start. Everything before this is
+# wind-up, everything after is follow-through with the grenade part hidden.
+GRENADE_LENGTH = 1.2
+GRENADE_RELEASE = 0.58
+
 # Overhand poses: (seconds, forward reach, shoulder-side offset, screen-space lift).
 # x/z carry the image on screen; y only controls draw order. Rotate forward/side
 # with the facing, then add lift to screen z so "above the head" stays up in every clip.
-THROW_POSES = [
-    (0.00,  0.12, -0.23,  0.00),  # ready at the hip
-    (0.16, -0.08, -0.25,  0.28),  # bend the elbow and raise the hand
-    (0.32, -0.24, -0.22,  0.64),  # cock the hand beside/behind the head
-    (0.42, -0.26, -0.20,  0.72),  # hold the loaded pose briefly
-    (0.50, -0.05, -0.18,  0.85),  # swing over the crown
-    (RELEASE, 0.27, -0.14, 0.64), # release with the hand still raised
-    (0.70,  0.48, -0.10,  0.05),  # drive the empty hand down in front
-    (0.82,  0.32, -0.12, -0.15),  # finish low, across the torso
-    (1.02,  0.16, -0.20, -0.04),
-    (LENGTH, 0.12, -0.23, 0.00),
-]
-ARC_SAMPLE = 0.02
+GRENADE = {
+    "name": "RimArt_ThrowGrenade",
+    "length": GRENADE_LENGTH,
+    "release": GRENADE_RELEASE,
+    "poses": [
+        (0.00,  0.12, -0.23,  0.00),  # ready at the hip
+        (0.16, -0.08, -0.25,  0.28),  # bend the elbow and raise the hand
+        (0.32, -0.24, -0.22,  0.64),  # cock the hand beside/behind the head
+        (0.42, -0.26, -0.20,  0.72),  # hold the loaded pose briefly
+        (0.50, -0.05, -0.18,  0.85),  # swing over the crown
+        (GRENADE_RELEASE, 0.27, -0.14, 0.64),  # release with the hand still raised
+        (0.70,  0.48, -0.10,  0.05),  # drive the empty hand down in front
+        (0.82,  0.32, -0.12, -0.15),  # finish low, across the torso
+        (1.02,  0.16, -0.20, -0.04),
+        (GRENADE_LENGTH, 0.12, -0.23, 0.00),
+    ],
+    # Side-view lean: back while loading, forward after release. North/south instead
+    # show the weight shift along their facing axis, without tilting sideways.
+    "body_rot": [
+        (0.00, 0.0),
+        (0.32, -12.0),
+        (0.42, -15.0),
+        (GRENADE_RELEASE, 8.0),
+        (0.72, 16.0),
+        (0.94, 4.0),
+        (GRENADE_LENGTH, 0.0),
+    ],
+    "body_x": [
+        (0.00, 0.0),
+        (0.40, -0.10),
+        (GRENADE_RELEASE, 0.09),
+        (0.72, 0.14),
+        (0.94, 0.04),
+        (GRENADE_LENGTH, 0.0),
+    ],
+    "body_lift": [(0.00, 0.0), (0.40, 0.04), (0.72, -0.06), (GRENADE_LENGTH, 0.0)],
+    # Wrist rolls over with the throw instead of rotating around the pawn's waist.
+    "wrist": [(0.0, -20.0), (0.42, -100.0), (GRENADE_RELEASE, -30.0),
+              (0.82, 65.0), (GRENADE_LENGTH, -20.0)],
+    # When a north-facing hand drops behind the torso. Only the low follow-through does;
+    # screen height alone is not depth.
+    "behind": (0.70, 0.94),
+    "texture": "RimArt/Frost/Bomb",
+    # A slow tumble of its own, on top of the arm's rotation which already carries it around the
+    # arc. Small, because the arm is doing most of the turning now.
+    "spin": [(0.00, 0.0), (GRENADE_RELEASE, -40.0)],
+    "item_pos": {"x": 0.04, "z": 0.0},
+    "item_y": 0.06,
+    "item_scale": 0.42,
+}
 
-# Side-view lean: back while loading, forward after release. North/south instead
-# show the weight shift along their facing axis, without tilting sideways.
-BODY_ROT = [
-    (0.00, 0.0),
-    (0.32, -12.0),
-    (0.42, -15.0),
-    (RELEASE, 8.0),
-    (0.72, 16.0),
-    (0.94, 4.0),
-    (LENGTH, 0.0),
-]
-BODY_X = [
-    (0.00, 0.0),
-    (0.40, -0.10),
-    (RELEASE, 0.09),
-    (0.72, 0.14),
-    (0.94, 0.04),
-    (LENGTH, 0.0),
-]
-BODY_LIFT = [(0.00, 0.0), (0.40, 0.04), (0.72, -0.06), (LENGTH, 0.0)]
+
+# ---------------------------------------------------------------- kunai
+
+# A knife throw, not a lob. Half the length of the grenade clip. The hand comes up and cocks
+# beside the ear with the blade pointing up and back, holds for 4 frames, then whips forward
+# at shoulder height. The kunai leaves the hand with the arm extended and the blade pointing at
+# the target, and the hand barely drops through the release: the grenade swings over the crown
+# and finishes low, this one moves in a flat line. Short follow-through, small body lean.
+KUNAI_LENGTH = 0.6
+KUNAI_RELEASE = 0.3
+
+KUNAI = {
+    "name": "RimArt_ThrowKunai",
+    "length": KUNAI_LENGTH,
+    "release": KUNAI_RELEASE,
+    "poses": [
+        (0.00,  0.12, -0.23,  0.00),  # ready at the hip, same as the grenade clip
+        (0.10,  0.00, -0.24,  0.30),  # hand comes up
+        (0.18, -0.20, -0.22,  0.46),  # cocked beside the ear
+        (0.24, -0.23, -0.21,  0.47),  # hold
+        (KUNAI_RELEASE, 0.34, -0.16, 0.42),  # arm extended at shoulder height
+        (0.38,  0.46, -0.13,  0.26),  # short follow-through, forward and down
+        (0.48,  0.26, -0.18,  0.08),
+        (KUNAI_LENGTH, 0.12, -0.23, 0.00),
+    ],
+    "body_rot": [
+        (0.00, 0.0),
+        (0.20, -6.0),
+        (KUNAI_RELEASE, 7.0),
+        (0.38, 10.0),
+        (KUNAI_LENGTH, 0.0),
+    ],
+    "body_x": [
+        (0.00, 0.0),
+        (0.20, -0.05),
+        (KUNAI_RELEASE, 0.07),
+        (0.40, 0.09),
+        (KUNAI_LENGTH, 0.0),
+    ],
+    "body_lift": [(0.00, 0.0), (0.20, 0.02), (0.40, -0.02), (KUNAI_LENGTH, 0.0)],
+    # Blade direction in the clip's frame: 0 is up the screen, -90 is back, +90 is at the
+    # target. Up and back while cocked, snapped round to point at the target on release.
+    "wrist": [(0.0, 20.0), (0.18, -30.0), (0.24, -35.0), (KUNAI_RELEASE, 90.0),
+              (0.40, 110.0), (KUNAI_LENGTH, 20.0)],
+    "behind": (0.36, 0.50),
+    "texture": "RimArt/Kunai/Kunai",
+    # No tumble: a thrown knife that spins in the hand is one nobody is holding.
+    "spin": [(0.00, 0.0), (KUNAI_RELEASE, 0.0)],
+    # The texture's centre is the base of the blade. Shifted along the blade so the handle, not
+    # the blade, sits in the hand, and drawn just behind the hand so the fingers cover the grip.
+    "item_pos": {"x": 0.0, "z": 0.08},
+    "item_y": 0.04,
+    "item_scale": 0.40,
+}
+
+STYLES = [GRENADE, KUNAI]
+
+ARC_SAMPLE = 0.02
 
 
 def hermite(points, t):
@@ -234,66 +317,70 @@ def hermite(points, t):
     return points[-1][1]
 
 
-def sample_arc(turn):
-    """Project the overhead hand poses into the pawn's facing and screen space."""
-    forward = [(p[0], p[1]) for p in THROW_POSES]
-    side = [(p[0], p[2]) for p in THROW_POSES]
-    lift = [(p[0], p[3]) for p in THROW_POSES]
+def sample_arc(style, turn):
+    """
+    Project the hand poses into the pawn's facing and screen space, split into two parts.
+
+    PawnALift carries what must not turn with the aim: the body's forward shift and the screen
+    height of the hand. PawnAHolding, its child, carries the ground-plane reach and shoulder
+    offset and the wrist angle, which is what the aim worker rotates. Their sum is the hand.
+    """
+    poses, length = style["poses"], style["length"]
+    forward = [(p[0], p[1]) for p in poses]
+    side = [(p[0], p[2]) for p in poses]
+    lift = [(p[0], p[3]) for p in poses]
     facing_x, facing_z = math.cos(math.radians(turn)), math.sin(math.radians(turn))
-    xs, zs, rots = [], [], []
-    steps = int(round(LENGTH / ARC_SAMPLE))
-    times = sorted({round(min(LENGTH, i * ARC_SAMPLE), 7) for i in range(steps + 1)}
-                   | {p[0] for p in THROW_POSES})
-    # Wrist rolls over with the throw instead of rotating around the pawn's waist.
-    wrist = [(0.0, -20.0), (0.42, -100.0), (RELEASE, -30.0),
-             (0.82, 65.0), (LENGTH, -20.0)]
+    lift_xs, lift_zs, xs, zs, rots = [], [], [], [], []
+    steps = int(round(length / ARC_SAMPLE))
+    times = sorted({round(min(length, i * ARC_SAMPLE), 7) for i in range(steps + 1)}
+                   | {p[0] for p in poses})
     for t in times:
-        reach = hermite(forward, t) + hermite(BODY_X, t)
+        step = hermite(style["body_x"], t)
+        reach = hermite(forward, t)
         shoulder = hermite(side, t)
-        height = hermite(lift, t) + hermite(BODY_LIFT, t)
+        height = hermite(lift, t) + hermite(style["body_lift"], t)
+        lift_xs.append((t, step * facing_x))
+        lift_zs.append((t, step * facing_z + height))
         xs.append((t, reach * facing_x - shoulder * facing_z))
-        zs.append((t, reach * facing_z + shoulder * facing_x + height))
-        rots.append((t, hermite(wrist, t) - turn))
-    return xs, zs, rots
+        zs.append((t, reach * facing_z + shoulder * facing_x))
+        rots.append((t, hermite(style["wrist"], t) - turn))
+    return (lift_xs, lift_zs), (xs, zs, rots)
 
 
-# The grenade is drawn until the hand opens, then it is the projectile's problem. Held flat so
-# the value does not ramp down across the release frame and leave a half-faded grenade.
-GRENADE_ACTIVE = [
-    (0.00, 1.0),
-    (round(RELEASE - 1.0 / 60.0, 7), 1.0),
-    (RELEASE, 0.0),
-    (LENGTH, 0.0),
-]
-
-# Slow tumble in the hand. It is barely visible and it is the difference between a grenade and
-# a sticker of a grenade.
-# A slow tumble of its own, on top of the arm's rotation which already carries it around the
-# arc. Small, because the arm is doing most of the turning now.
-GRENADE_SPIN = [
-    (0.00, 0.0),
-    (RELEASE, -40.0),
-]
+def item_active(style):
+    """
+    The thrown thing is drawn until the hand opens, then it is the projectile's problem. Held
+    flat so the value does not ramp down across the release frame and leave a half-faded item.
+    """
+    release, length = style["release"], style["length"]
+    return [
+        (0.00, 1.0),
+        (round(release - 1.0 / 60.0, 7), 1.0),
+        (release, 0.0),
+        (length, 0.0),
+    ]
 
 
-def build(name, direction, turn):
-    holding_x, holding_z, holding_rot = sample_arc(turn)
+def build(style, name, direction, turn):
+    (lift_x, lift_z), (holding_x, holding_z, holding_rot) = sample_arc(style, turn)
     facing_x, facing_z = math.cos(math.radians(turn)), math.sin(math.radians(turn))
-    body_times = sorted({t for t, _ in BODY_X} | {t for t, _ in BODY_LIFT})
+    body_x, body_lift = style["body_x"], style["body_lift"]
+    body_times = sorted({t for t, _ in body_x} | {t for t, _ in body_lift})
     body_pos = {
-        "x": [(t, hermite(BODY_X, t) * facing_x) for t in body_times],
-        "z": [(t, hermite(BODY_X, t) * facing_z + hermite(BODY_LIFT, t))
+        "x": [(t, hermite(body_x, t) * facing_x) for t in body_times],
+        "z": [(t, hermite(body_x, t) * facing_z + hermite(body_lift, t))
               for t in body_times],
     }
-    # Keep the raised hand visible beside the head. Only the north-facing low
-    # follow-through moves behind the torso; screen height alone is not depth.
-    holding_y = [(0.0, 0.02), (RELEASE, 0.02),
-                 (0.70, -0.12 if direction == 0 else 0.02),
-                 (0.94, -0.12 if direction == 0 else 0.02), (LENGTH, 0.02)]
+    # Keep the raised hand visible beside the head. Only the north-facing follow-through
+    # moves behind the torso.
+    behind_from, behind_to = style["behind"]
+    holding_y = [(0.0, 0.02), (style["release"], 0.02),
+                 (behind_from, -0.12 if direction == 0 else 0.02),
+                 (behind_to, -0.12 if direction == 0 else 0.02), (style["length"], 0.02)]
 
     body = part(
         1001, "BodyA", "BodyA",
-        curves=transform_curves(pos=body_pos, rot={"y": [(t, v * facing_x) for t, v in BODY_ROT]}),
+        curves=transform_curves(pos=body_pos, rot={"y": [(t, v * facing_x) for t, v in style["body_rot"]]}),
         # Direction is a state, not a motion: a curve would interpolate the pawn through
         # north on its way from east to west.
         default_overrides={"PawnBody.Direction": float(direction)},
@@ -301,10 +388,18 @@ def build(name, direction, turn):
 
     head = part(1002, "BodyA/HeadA", "HeadA", parent_id=1001)
 
-    # An invisible parent. Their exporter gives these a fully transparent tint rather than
+    # Invisible parents. Their exporter gives these a fully transparent tint rather than
     # deactivating them, because a deactivated part takes its children with it.
+    #
+    # PawnALift is the aim pivot: the worker rotates its children around its position. Named,
+    # because the worker finds it with GetPart, which matches CustomName.
+    lift = part(
+        1007, "PawnALift", "PawnALift",
+        curves=transform_curves(pos={"x": lift_x, "z": lift_z}),
+        default_overrides={"AnimatedPart.Tint.a": 0.0},
+    )
     holding = part(
-        1003, "PawnAHolding",
+        1003, "PawnALift/PawnAHolding", parent_id=1007,
         curves=transform_curves(pos={"x": holding_x, "y": holding_y, "z": holding_z}, rot={"y": holding_rot}),
         default_overrides={"AnimatedPart.Tint.a": 0.0},
     )
@@ -314,7 +409,7 @@ def build(name, direction, turn):
     # lookup of the off hand is guarded by the main hand's null check, so a rig with HandA and
     # no HandB throws inside their code rather than ours.
     hand_a = part(
-        1004, "PawnAHolding/HandA", "HandA", parent_id=1003,
+        1004, "PawnALift/PawnAHolding/HandA", "HandA", parent_id=1003,
         default_overrides={
             "Transform.m_LocalPosition.y": HAND_Y,
             "Transform.m_LocalScale.x": HAND_SCALE,
@@ -350,41 +445,49 @@ def build(name, direction, turn):
     # grenade throw would put a sword in the pawn's hand. A part under any other name is left
     # alone, so the texture set here is the texture that draws.
     grenade = part(
-        1006, "PawnAHolding/Grenade", "Grenade", parent_id=1003,
-        texture=GRENADE_TEXTURE,
+        1006, "PawnALift/PawnAHolding/Grenade", "Grenade", parent_id=1003,
+        texture=style["texture"],
         curves={
-            "GameObject.m_IsActive": curve(GRENADE_ACTIVE, smooth=False),
-            **transform_curves(rot={"y": GRENADE_SPIN}),
+            "GameObject.m_IsActive": curve(item_active(style), smooth=False),
+            **transform_curves(rot={"y": style["spin"]}),
         },
         default_overrides={
-            "Transform.m_LocalPosition.x": 0.04,
-            "Transform.m_LocalPosition.y": GRENADE_Y,
-            "Transform.m_LocalScale.x": 0.42,
-            "Transform.m_LocalScale.y": 0.42,
-            "Transform.m_LocalScale.z": 0.42,
+            "Transform.m_LocalPosition.x": style["item_pos"]["x"],
+            "Transform.m_LocalPosition.y": style["item_y"],
+            "Transform.m_LocalPosition.z": style["item_pos"]["z"],
+            "Transform.m_LocalScale.x": style["item_scale"],
+            "Transform.m_LocalScale.y": style["item_scale"],
+            "Transform.m_LocalScale.z": style["item_scale"],
         },
     )
 
-    parts = [body, head, holding, hand_a, hand_b, grenade]
+    parts = [body, head, lift, holding, hand_a, hand_b, grenade]
 
     return {
         "ExportTimeUTC": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.0000000Z"),
         "Name": name,
-        "Length": LENGTH,
-        "Bounds": bounds(holding_x, holding_z, body_pos),
+        "Length": style["length"],
+        "Bounds": bounds(lift_x, lift_z, holding_x, holding_z, body_pos),
         "Events": [],
         "Parts": parts,
     }
 
 
-def bounds(holding_x, holding_z, body_pos):
+def bounds(lift_x, lift_z, holding_x, holding_z, body_pos):
     """
     The rectangle the animation plays inside, which their renderer uses for culling. Computed
     from the arm's travel with a cell of padding, so a throw at the edge of the screen does not
     vanish halfway through.
+
+    The hand is PawnALift plus PawnAHolding, and the aim worker can turn PawnAHolding to any
+    angle around PawnALift, so each sample counts as a circle of the holding offset's length.
     """
-    xs = [v for _, v in holding_x] + [v for _, v in body_pos["x"]]
-    zs = [v for _, v in holding_z] + [v for _, v in body_pos["z"]]
+    xs = [v for _, v in body_pos["x"]]
+    zs = [v for _, v in body_pos["z"]]
+    for (_, lx), (_, lz), (_, hx), (_, hz) in zip(lift_x, lift_z, holding_x, holding_z):
+        r = math.hypot(hx, hz)
+        xs += [lx - r, lx + r]
+        zs += [lz - r, lz + r]
     pad = 1.0
     x0, x1 = min(xs) - pad, max(xs) + pad
     z0, z1 = min(zs) - pad, max(zs) + pad
@@ -395,17 +498,20 @@ def bounds(holding_x, holding_z, body_pos):
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
 
-    for name, direction, turn in FACINGS:
-        path = os.path.join(OUT_DIR, f"{name}.json")
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(build(name, direction, turn), f, indent=2)
-            f.write("\n")
-        print(f"Wrote {path}  (Rot4 {direction}, arc turned {turn:+.0f} deg)")
+    for style in STYLES:
+        for suffix, direction, turn in FACINGS:
+            name = style["name"] + suffix
+            path = os.path.join(OUT_DIR, f"{name}.json")
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(build(style, name, direction, turn), f, indent=2)
+                f.write("\n")
+            print(f"Wrote {path}  (Rot4 {direction}, arc turned {turn:+.0f} deg)")
 
-    release_fraction = RELEASE / LENGTH
-    print(f"  length          {LENGTH}s ({round(LENGTH * 60)} ticks)")
-    print(f"  release         {RELEASE}s ({round(RELEASE * 60)} ticks)")
-    print(f"  ReleaseFraction {release_fraction:.4f}  <- must match ThrowAnimation.ReleaseFraction")
+        length, release = style["length"], style["release"]
+        print(f"  {style['name']}")
+        print(f"    length          {length}s ({round(length * 60)} ticks)")
+        print(f"    release         {release}s ({round(release * 60)} ticks)")
+        print(f"    ReleaseFraction {release / length:.4f}  <- must match ThrowAnimation")
 
 
 if __name__ == "__main__":

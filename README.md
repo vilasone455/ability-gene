@@ -18,6 +18,7 @@ piece of equipment, weapon trait, or earned origin.
 | Implant | **Phase barrier** | Find through quests or deep-space trade and install surgically |
 | Equipment | **Stasis belt** | Research Stasis Fields, craft it, and wear it |
 | Equipment | **Retrieval hook belt** | Research Machining, craft it, and wear it |
+| Equipment | **Kunai belt** | Research Smithing, craft it and kunai, and wear it |
 | Weapon trait | **Resonant** | Find on a Unique Melee Weapon |
 | Weapon trait | **Arcing** | Find on a Unique Melee Weapon; also requires Melee Animation |
 | Earned origin | **Origin: Blade** | Reach Melee 14 and Crafting 12, study five blade types, then awaken |
@@ -378,6 +379,38 @@ No eligible wound, no penalty.
 Industrial tech, *Machining* research, machining table, Crafting 5, 60 steel / 2 components /
 20 cloth, 2 kg, belt layer, no armor. See [the retrieval hook belt guide](docs/retrieval-hook-belt.md)
 for targets, the pull sequence, save behaviour and the in-game test list.
+
+### Kunai belt → *throw kunai* (equipment)
+Throws one kunai at a pawn, animal, mech or building. Range 14.9 tiles, line of sight required,
+0.5 s warmup, 1.5 s cooldown. **12 stab damage, 18% armor penetration.** Drafted only, not usable
+by pawns incapable of violence or by AI.
+
+Hit chance is the vanilla gun roll: the thrower's Shooting accuracy, distance, target size,
+cover, weather and smoke, with accuracy 80% touch / 70% short / 50% medium / 30% long. The cursor
+shows the chance. A wild miss flies to a scattered cell and can hit other pawns; a cover miss
+hits the cover.
+
+**Ammunition:** the belt holds **6 kunai**, shown on the gizmo as "4 / 6". Each throw uses one.
+The thrown kunai drops as an item where it lands; one that hits a pawn or building breaks 20% of
+the time, and one that leaves the map is lost. Reloading is vanilla reloadable apparel (the jump
+pack's comp): one kunai item per charge, the wearer reloads on their own when the belt is empty
+and kunai are reachable, and right-clicking kunai gives *Reload*. A crafted belt starts full.
+
+With Melee Animation the pawn plays its own kunai throw clip (`AG_ThrowKunai`, three facings,
+written by `make_throw_anim.py`): 36 ticks, the hand cocks beside the ear with the blade up and
+back, whips forward flat at shoulder height, and the kunai launches at tick 18 with the blade
+pointing at the target. The grenade clip is 72 ticks with an overhand lob. Both throws aim at the
+exact target angle with 3 clips each, the usual 3/4 top-down set: east (mirrored for west),
+north and south. The clip is picked by the larger axis, and
+`RimArt.MeleeAnimation.ThrowAimWorker` rotates the throwing hand and the held item by the rest
+of the angle (up to 45 degrees) when they are drawn, the way RimWorld draws a gun at any angle
+on a four-facing body. That worker subclasses Melee Animation's `AnimationRendererWorker`, so it
+is a second assembly, `Patch_MeleeAnimation/1.6/Assemblies/RimArt.MeleeAnimation.dll`, built
+from `Source/RimArt.MeleeAnimation` after `RimArt.dll` and loaded only with Melee Animation. Without Melee
+Animation the kunai launches at once.
+
+Medieval tech, *Smithing* research, smithy. Belt: Crafting 4, 30 steel / 20 cloth, 1.5 kg, belt
+layer, no armor. Kunai: 25 steel for 5, 0.25 kg each, stack 30.
 
 ### Frost bomb (weapon)
 A thrown grenade, equipped in the weapon slot and aimed like the game's own. Range 12.9

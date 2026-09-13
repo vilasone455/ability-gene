@@ -85,8 +85,9 @@ static class ApiChecks
         string distortion = CheckShinraDistortion();
         string sounds = CheckShinraSounds(assembly);
         string retrieval = CheckRetrievalHookContract();
+        string kunai = CheckKunaiContract();
         Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, "
-            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval}");
+            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval} {kunai}");
     }
 
     static void CheckShinraAcquisition()
@@ -290,12 +291,79 @@ static class ApiChecks
         int curves = 0, clips = 0;
         // The throw is directional and needs one clip per facing; Shinra Tensei is centred and
         // has exactly one, so a second Shinra clip reappearing here is a mistake worth catching.
-        foreach (string clip in new[] { "RimArt_ThrowGrenade", "RimArt_ThrowGrenadeNorth", "RimArt_ThrowGrenadeSouth",
-                                        "RimArt_ShinraPush" })
+        foreach (string clip in ThrowAnimation.Grenade.All.Concat(ThrowAnimation.Kunai.All)
+                     .Select(name => name.Replace("AG_", "RimArt_")).Append("RimArt_ShinraPush"))
         {
             curves += CheckThrowAnimationJson(dataModel, partModel, clip);
             clips++;
         }
+        // The C# launches the thrown object at ReleaseFraction of the clip. The json hides the held
+        // part at its release time, so the two must agree for every facing of every throw style.
+        foreach (var style in new[] { ThrowAnimation.Grenade, ThrowAnimation.Kunai })
+        foreach (string clip in style.All)
+        {
+            string file = "Animations/" + clip.Replace("AG_", "RimArt_") + ".json";
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(file));
+            float length = doc.RootElement.GetProperty("Length").GetSingle();
+            var held = doc.RootElement.GetProperty("Parts").EnumerateArray()
+                .Single(p => p.GetProperty("CustomName").ValueKind == System.Text.Json.JsonValueKind.String
+                             && p.GetProperty("CustomName").GetString() == "Grenade");
+            float release = held.GetProperty("Curves").GetProperty("GameObject.m_IsActive").GetProperty("Keyframes")
+                .EnumerateArray().First(k => k.GetProperty("value").GetSingle() == 0f).GetProperty("time").GetSingle();
+            if (Math.Abs(release / length - style.ReleaseFraction) > 0.001f)
+                throw new Exception($"{file}: release at {release}s of {length}s is {release / length:0.0000}, "
+                    + $"but ThrowAnimation says {style.ReleaseFraction}");
+            var patchDefs = XDocument.Load("Patch_MeleeAnimation/1.6/Defs/AG_Throw_Anims.xml").Root.Elements()
+                .Where(e => e.Name.LocalName == "AM.AnimDef").ToArray();
+            if (!patchDefs.Any(e => (string)e.Element("defName") == clip
+                                    && (string)e.Element("data") == Path.GetFileName(file)))
+                throw new Exception($"No AM.AnimDef {clip} pointing at {Path.GetFileName(file)}");
+        }
+        // Three clips plus an aim correction. (dx, dz) -> clip, mirrored, degrees counter-clockwise
+        // from the clip's direction. The correction never exceeds 45 degrees either way.
+        var E = ThrowAnimation.Facing.East; var N = ThrowAnimation.Facing.North; var S = ThrowAnimation.Facing.South;
+        foreach (var (dx, dz, facing, flip, degrees) in new[] {
+                     (5, 0, E, false, 0f), (0, 5, N, false, 0f), (0, -5, S, false, 0f), (-5, 0, E, true, 0f),
+                     (4, 4, E, false, 45f), (-4, 4, E, true, -45f), (-4, -4, E, true, 45f), (4, -4, E, false, -45f),
+                     (4, -5, S, false, 38.66f), (3, 10, N, false, -16.70f), (-10, 3, E, true, -16.70f), (0, 0, E, false, 0f) })
+        {
+            var got = ThrowAnimation.Aim(dx, dz, out bool gotFlip, out float gotDegrees);
+            if (got != facing || gotFlip != flip || Math.Abs(gotDegrees - degrees) > 0.05f)
+                throw new Exception($"ThrowAnimation.Aim({dx}, {dz}) = {got} flip {gotFlip} {gotDegrees:0.00}, "
+                    + $"expected {facing} flip {flip} {degrees:0.00}");
+        }
+        foreach (string stale in new[] { "NorthEast", "SouthEast" })
+        foreach (var style in new[] { ThrowAnimation.Grenade, ThrowAnimation.Kunai })
+            if (File.Exists($"Animations/{style.East.Replace("AG_", "RimArt_")}{stale}.json"))
+                throw new Exception($"{style.East}{stale} clip is back; diagonals are rotated at draw time, not authored");
+
+        // The aim worker. It subclasses their worker, so a changed PreRenderPart signature would
+        // stop the type loading and every throw AnimDef naming it would fail at startup.
+        Type worker = Need("AM.RendererWorkers.AnimationRendererWorker");
+        Type byRef(Type type) => type.MakeByRefType();
+        Type unity(string name) => typeof(UnityEngine.Matrix4x4).Assembly.GetType("UnityEngine." + name);
+        if (worker.GetMethod("PreRenderPart", Any, null, new[] { byRef(am.GetType("AnimPartSnapshot") ?? Need("AM.AnimPartSnapshot")), byRef(overrideData),
+                byRef(typeof(UnityEngine.Mesh)), byRef(typeof(UnityEngine.Matrix4x4)), byRef(typeof(UnityEngine.Material)),
+                byRef(unity("MaterialPropertyBlock")) }, null) == null
+            || worker.GetMethod("SetupRenderer", Any, null, new[] { renderer }, null) == null)
+            throw new Exception("Throw aim: AnimationRendererWorker.PreRenderPart / SetupRenderer changed");
+        if (animDef.GetField("rendererWorker", Any)?.FieldType != typeof(Type))
+            throw new Exception("Throw aim: AnimDef.rendererWorker (Type) is gone");
+        if (renderer.GetField("RootTransform", Any)?.FieldType != typeof(UnityEngine.Matrix4x4)
+            || renderer.GetMethod("GetSnapshot", new[] { partData }) == null
+            || partData.GetField("Parent", Any)?.FieldType != partData)
+            throw new Exception("Throw aim: AnimRenderer.RootTransform / GetSnapshot or AnimPartData.Parent changed");
+        const string BridgeDll = "Patch_MeleeAnimation/1.6/Assemblies/RimArt.MeleeAnimation.dll";
+        if (!File.Exists(BridgeDll))
+            throw new Exception($"{BridgeDll} is missing - build Source/RimArt.MeleeAnimation");
+        Type aimWorker = Assembly.LoadFrom(Path.GetFullPath(BridgeDll)).GetType("RimArt.MeleeAnimation.ThrowAimWorker");
+        if (aimWorker?.BaseType?.FullName != worker.FullName)
+            throw new Exception("Throw aim: RimArt.MeleeAnimation.ThrowAimWorker is missing or no longer an AnimationRendererWorker");
+        foreach (var def in XDocument.Load("Patch_MeleeAnimation/1.6/Defs/AG_Throw_Anims.xml").Root.Elements()
+                     .Where(e => e.Name.LocalName == "AM.AnimDef"))
+            if ((string)def.Element("rendererWorker") != aimWorker.FullName)
+                throw new Exception($"{def.Element("defName")?.Value} does not use {aimWorker.FullName}");
+
         foreach (string stale in new[] { "RimArt_ShinraPushNorth", "RimArt_ShinraPushSouth" })
         {
             if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "Animations", stale + ".json")))
@@ -384,6 +452,25 @@ static class ApiChecks
         // is carrying, putting a sword in the hand instead of the bomb.
         if (names.Contains("ItemA"))
             throw new Exception($"Melee Animation bridge: {clip} must not have an ItemA part");
+        // The aim worker rotates everything under PawnALift: the throwing hand and the item must be
+        // there, the body and the off hand must not.
+        if (!shinra)
+        {
+            var parts = root.GetProperty("Parts").EnumerateArray().ToDictionary(
+                p => p.GetProperty("ID").GetInt32(),
+                p => (Name: p.GetProperty("CustomName").ValueKind == System.Text.Json.JsonValueKind.Null
+                         ? p.GetProperty("Path").GetString() : p.GetProperty("CustomName").GetString(),
+                      Parent: p.GetProperty("ParentID").GetInt32()));
+            bool Under(string name)
+            {
+                int id = parts.First(p => p.Value.Name == name).Value.Parent;
+                for (; id != 0; id = parts[id].Parent)
+                    if (parts[id].Name == "PawnALift") return true;
+                return false;
+            }
+            if (!names.Contains("PawnALift") || !Under("HandA") || !Under("Grenade") || Under("HandB") || Under("BodyA"))
+                throw new Exception($"{clip}: HandA and Grenade must be under PawnALift, HandB and BodyA must not");
+        }
         if (shinra && (names.Contains("Grenade") || root.GetProperty("Events").GetArrayLength() != 0))
             throw new Exception($"{clip} must have empty hands and no gameplay events");
 
@@ -671,5 +758,58 @@ static class ApiChecks
             throw new Exception("Retrieval hook: reload must be 600 ticks and item capacity 20 kg");
 
         return "Checked the retrieval hook's health and tend contracts and def numbers.";
+    }
+    /// <summary>
+    /// The kunai belt's contracts. The throw re-implements Verb_LaunchProjectile's hit roll from
+    /// public ShotReport and ShootLine members, and spends charges on vanilla
+    /// CompApparelReloadable; neither is a Harmony patch, so the loop above does not cover them.
+    /// </summary>
+    static string CheckKunaiContract()
+    {
+        const BindingFlags Public = BindingFlags.Public | BindingFlags.Instance;
+
+        Type report = typeof(Verse.ShotReport);
+        if (report.GetMethod("HitReportFor", BindingFlags.Public | BindingFlags.Static, null,
+                new[] { typeof(Verse.Thing), typeof(Verse.Verb), typeof(Verse.LocalTargetInfo) }, null) == null)
+            throw new Exception("Kunai: ShotReport.HitReportFor(Thing, Verb, LocalTargetInfo) changed");
+        foreach (string name in new[] { "AimOnTargetChance_IgnoringPosture", "AimOnTargetChance_StandardTarget", "PassCoverChance", "TotalEstimatedHitChance" })
+            if (report.GetProperty(name, Public)?.PropertyType != typeof(float))
+                throw new Exception("Kunai: ShotReport." + name + " (float) is gone");
+        if (report.GetMethod("GetRandomCoverToMissInto", Public)?.ReturnType != typeof(Verse.Thing))
+            throw new Exception("Kunai: ShotReport.GetRandomCoverToMissInto() is gone");
+        if (typeof(Verse.ShootLine).GetMethod("ChangeDestToMissWild", new[] { typeof(float), typeof(bool), typeof(Verse.Map) }) == null)
+            throw new Exception("Kunai: ShootLine.ChangeDestToMissWild(float, bool, Map) changed");
+        foreach (string name in new[] { "accuracyTouch", "accuracyShort", "accuracyMedium", "accuracyLong" })
+            if (typeof(Verse.VerbProperties).GetField(name, Public)?.FieldType != typeof(float))
+                throw new Exception("Kunai: VerbProperties." + name + " is gone - hit chance would ignore the def");
+
+        Type reloadable = typeof(RimWorld.CompApparelReloadable);
+        if (reloadable.GetProperty("RemainingCharges", Public)?.PropertyType != typeof(int)
+            || reloadable.GetProperty("LabelRemaining", Public)?.PropertyType != typeof(string)
+            || reloadable.GetMethod("UsedOnce", Type.EmptyTypes) == null)
+            throw new Exception("Kunai: CompApparelReloadable.RemainingCharges / LabelRemaining / UsedOnce changed");
+        if (typeof(RimWorld.Command_Ability).GetProperty("Ability", Public) == null)
+            throw new Exception("Kunai: Command_Ability.Ability is gone - no kunai count on the gizmo");
+
+        var things = XDocument.Load("1.6/Defs/ThingDefs/AG_Kunai_Things.xml").Root.Elements("ThingDef").ToArray();
+        var belt = things.Single(e => (string)e.Element("defName") == "AG_KunaiBelt");
+        var reload = belt.Element("comps").Elements("li").Single(e => (string)e.Attribute("Class") == "CompProperties_ApparelReloadable");
+        if ((int)reload.Element("maxCharges") != 6 || (string)reload.Element("ammoDef") != "AG_Kunai"
+            || (int)reload.Element("ammoCountPerCharge") != 1 || reload.Element("ammoCountToRefill") != null
+            || (string)belt.Element("apparel").Element("layers").Element("li") != "Belt"
+            || belt.Element("apparel").Element("tags") != null)
+            throw new Exception("Kunai belt: expected 6 charges of AG_Kunai, 1 per charge, belt layer, no generation tags");
+        var projectile = things.Single(e => (string)e.Element("defName") == "AG_KunaiProjectile").Element("projectile");
+        if ((int)projectile.Element("damageAmountBase") != 12 || (float)projectile.Element("armorPenetrationBase") != 0.18f)
+            throw new Exception("Kunai projectile: expected 12 damage and 0.18 armor penetration");
+
+        var ability = XDocument.Load("1.6/Defs/AbilityDefs/AG_Kunai_Abilities.xml").Root.Element("AbilityDef");
+        if ((float)ability.Element("verbProperties").Element("range") != 14.9f || (bool)ability.Element("aiCanUse")
+            || (int)ability.Element("cooldownTicksRange") != 90)
+            throw new Exception("Throw kunai: expected range 14.9, no AI use, 90-tick cooldown");
+        if (KunaiDefaults.BreakChanceOnHit != 0.2f)
+            throw new Exception("Kunai: break chance on hit must be 0.2");
+
+        return "Checked the kunai hit roll, reloadable belt and def numbers.";
     }
 }

@@ -1032,6 +1032,103 @@ def make_retrieval_reel_icon():
 
 
 
+# Kunai. One steel throwing knife, drawn point up: that one texture is the item on the ground,
+# the projectile in flight (the game rotates projectile textures so up is the direction of
+# travel) and the thing in the pawn's hand during the throw animation.
+
+KUNAI_WRAP     = (34, 36, 44)
+KUNAI_WRAP_LIT = (70, 74, 88)
+
+
+def draw_kunai(d, cx, tip_y, length):
+    """
+    A kunai of the given total length, point at tip_y. Proportions: blade 55%, handle 33%,
+    ring 12%. The blade is a leaf shape widest a third of the way down; the handle is cord
+    wrap drawn as bands; the ring is an open circle.
+    """
+    blade = length * 0.55
+    handle = length * 0.33
+    ring_d = length * 0.12
+    half = length * 0.085
+    widest = tip_y + blade * 0.62
+    base = tip_y + blade
+
+    d.polygon([(cx, tip_y), (cx + half, widest), (cx + half * 0.35, base),
+               (cx - half * 0.35, base), (cx - half, widest)], fill=EDGE)
+    inset = px(2)
+    d.polygon([(cx, tip_y + inset * 2), (cx + half - inset, widest), (cx + half * 0.35 - inset * 0.5, base - inset),
+               (cx - half * 0.35 + inset * 0.5, base - inset), (cx - half + inset, widest)], fill=STEEL)
+    # Lit left half and a ridge down the middle.
+    d.polygon([(cx, tip_y + inset * 2), (cx, base - inset), (cx - half * 0.35 + inset * 0.5, base - inset),
+               (cx - half + inset, widest)], fill=STEEL_LIGHT)
+    d.line([(cx, tip_y + inset * 3), (cx, base - inset)], fill=STEEL_DARK, width=max(1, px(1)))
+
+    hw = half * 0.38
+    top = base
+    bottom = base + handle
+    d.rectangle([cx - hw, top, cx + hw, bottom], fill=KUNAI_WRAP)
+    bands = 6
+    for i in range(bands):
+        y0 = top + (bottom - top) * (i + 0.2) / bands
+        y1 = top + (bottom - top) * (i + 0.7) / bands
+        d.rectangle([cx - hw + inset * 0.5, y0, cx + hw - inset * 0.5, y1], fill=KUNAI_WRAP_LIT)
+
+    r = ring_d / 2
+    ry = bottom + r
+    d.ellipse([cx - r, ry - r, cx + r, ry + r], outline=EDGE, width=px(4))
+    d.ellipse([cx - r + inset * 0.5, ry - r + inset * 0.5, cx + r - inset * 0.5, ry + r - inset * 0.5],
+              outline=STEEL_DARK, width=px(2))
+
+
+def make_kunai():
+    """Item, projectile and hand texture."""
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    draw_kunai(d, S // 2, px(8), px(112))
+    finish(img, "Textures/RimArt/Kunai/Kunai.png")
+
+
+def make_kunai_belt():
+    """The worn item: a belt with three kunai in loops across it."""
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    cy = S // 2
+
+    d.rounded_rectangle([0, cy - px(14), S, cy + px(14)], radius=px(6), fill=STRAP)
+    d.rounded_rectangle([px(4), cy - px(11), S - px(4), cy - px(3)], radius=px(4), fill=STRAP_LIT)
+
+    for i, cx in enumerate((px(36), px(64), px(92))):
+        layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+        draw_kunai(ImageDraw.Draw(layer), cx, px(14), px(90))
+        layer = layer.rotate(-12 + i * 12, resample=Image.BICUBIC, center=(cx, cy))
+        img.alpha_composite(layer)
+        d = ImageDraw.Draw(img)
+        d.rectangle([cx - px(9), cy - px(4), cx + px(9), cy + px(8)], fill=STRAP)
+        d.rectangle([cx - px(9), cy - px(4), cx + px(9), cy - px(1)], fill=STRAP_LIT)
+
+    finish(img, "Textures/RimArt/Kunai/Belt.png")
+
+
+def make_kunai_icon():
+    """The throw gizmo: one kunai flying up and to the right, with three motion lines behind it."""
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    c = S // 2
+    d.ellipse([c - px(58), c - px(58), c + px(58), c + px(58)], fill=(30, 32, 36, 210))
+
+    # Motion lines parallel to the kunai, either side of its handle.
+    for sx, sy in ((px(58), px(96)), (px(30), px(68))):
+        d.line([(sx - px(22), sy + px(22)), (sx, sy)], fill=STEEL_DARK, width=px(4))
+
+    layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    draw_kunai(ImageDraw.Draw(layer), c, px(10), px(108))
+    layer = layer.rotate(-45, resample=Image.BICUBIC, center=(c, c))
+    img.alpha_composite(layer)
+
+    finish(img, "Textures/RimArt/Kunai/IconKunai.png")
+
+
+
 if __name__ == "__main__":
     make_flying()
     make_planted()
@@ -1054,3 +1151,6 @@ if __name__ == "__main__":
     make_retrieval_belt()
     make_retrieval_hook_icon()
     make_retrieval_reel_icon()
+    make_kunai()
+    make_kunai_belt()
+    make_kunai_icon()

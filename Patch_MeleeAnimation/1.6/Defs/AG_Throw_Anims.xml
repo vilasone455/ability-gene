@@ -15,6 +15,12 @@
        East is mirrored horizontally for west. North and south each have their own clip,
        with the step, supporting hand and draw depth authored for that facing.
 
+       Every throw clip names RimArt.MeleeAnimation.ThrowAimWorker as its rendererWorker. The clip
+       only covers its own direction; the worker turns the throwing hand and the held item to the
+       exact target angle when they are drawn (up to 45 degrees). It lives in
+       Patch_MeleeAnimation/1.6/Assemblies, which loads only with Melee Animation, because it
+       subclasses their AnimationRendererWorker.
+
        The json is written by make_throw_anim.py in the mod root, not by the Unity editor their
        tutorial describes. Their loader does not care which wrote it: AnimDataSourceManager
        scans every active mod for an Animations folder and indexes what it finds by filename. -->
@@ -26,6 +32,7 @@
     <type>Other</type>
     <pawnCount>1</pawnCount>
     <data>RimArt_ThrowGrenade.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
 
     <cellData>
       <li>
@@ -64,6 +71,7 @@
     <type>Other</type>
     <pawnCount>1</pawnCount>
     <data>RimArt_ThrowGrenadeNorth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
 
     <cellData>
       <li>
@@ -95,6 +103,7 @@
     <type>Other</type>
     <pawnCount>1</pawnCount>
     <data>RimArt_ThrowGrenadeSouth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
 
     <cellData>
       <li>
@@ -114,6 +123,100 @@
     </handsVisibility>
 
     <!-- Same as above. -->
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+
+  <!-- The kunai throw, in the same three facings. A separate clip, not the grenade lob:
+       36 ticks against 72, the hand cocks beside the ear and whips forward flat at shoulder
+       height, and the kunai leaves the hand at tick 18 with the blade pointing at the target.
+       Written by make_throw_anim.py (KUNAI). -->
+  <AM.AnimDef>
+    <defName>AG_ThrowKunai</defName>
+    <label>Throw: kunai</label>
+    <description>Throwing a kunai.</description>
+    <jobString>Throwing a kunai.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ThrowKunai.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+
+    <cellData>
+      <li>
+        <type>PawnStart</type>
+        <position>(0, 0)</position>
+        <pawnIndex>0</pawnIndex>
+      </li>
+    </cellData>
+
+    <!-- Same reasoning as the grenade clips. -->
+    <handsVisibility>
+      <li>
+        <pawnIndex>0</pawnIndex>
+        <showMainHand>true</showMainHand>
+        <showAltHand>true</showAltHand>
+      </li>
+    </handsVisibility>
+
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+
+  <AM.AnimDef>
+    <defName>AG_ThrowKunaiNorth</defName>
+    <label>Throw: kunai (north)</label>
+    <description>Throwing a kunai.</description>
+    <jobString>Throwing a kunai.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ThrowKunaiNorth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+
+    <cellData>
+      <li>
+        <type>PawnStart</type>
+        <position>(0, 0)</position>
+        <pawnIndex>0</pawnIndex>
+      </li>
+    </cellData>
+
+    <!-- Same reasoning as the grenade clips. -->
+    <handsVisibility>
+      <li>
+        <pawnIndex>0</pawnIndex>
+        <showMainHand>true</showMainHand>
+        <showAltHand>true</showAltHand>
+      </li>
+    </handsVisibility>
+
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+
+  <AM.AnimDef>
+    <defName>AG_ThrowKunaiSouth</defName>
+    <label>Throw: kunai (south)</label>
+    <description>Throwing a kunai.</description>
+    <jobString>Throwing a kunai.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ThrowKunaiSouth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+
+    <cellData>
+      <li>
+        <type>PawnStart</type>
+        <position>(0, 0)</position>
+        <pawnIndex>0</pawnIndex>
+      </li>
+    </cellData>
+
+    <!-- Same reasoning as the grenade clips. -->
+    <handsVisibility>
+      <li>
+        <pawnIndex>0</pawnIndex>
+        <showMainHand>true</showMainHand>
+        <showAltHand>true</showAltHand>
+      </li>
+    </handsVisibility>
+
     <canEditProbability>false</canEditProbability>
   </AM.AnimDef>
 
