@@ -11,16 +11,54 @@ namespace RimArt
     {
         private static bool resolved, present;
         private static ConstructorInfo constructor;
-        private static MethodInfo trigger, animatorFor;
+        private static MethodInfo trigger, animatorFor, seek, destroy;
+        private static FieldInfo timeScale, settings, globalSpeed;
         private static PropertyInfo currentTime, duration, destroyed;
         private static Def clip;
 
         public static bool Present { get { Resolve(); return present; } }
 
+        public static float Speed
+        {
+            get { Resolve(); return present ? (float)globalSpeed.GetValue(settings.GetValue(null)) : 1f; }
+        }
+
+        public static bool TryRestore(Pawn pawn, out Handle handle)
+        {
+            Resolve();
+            handle = null;
+            if (!present) return false;
+            object existing = animatorFor.Invoke(null, new object[] { pawn });
+            if (existing != null)
+            {
+                // Only reclaim our saved clip; never seize an unrelated animation.
+                object def = AccessTools.Field(existing.GetType(), "Def")?.GetValue(existing)
+                    ?? AccessTools.Property(existing.GetType(), "Def")?.GetValue(existing);
+                if (def != clip) return false;
+                handle = new Handle(existing);
+                timeScale.SetValue(existing, 0f);
+                return true;
+            }
+            return TryStart(pawn, out handle);
+        }
+
         public sealed class Handle
         {
             private readonly object renderer;
             internal Handle(object renderer) { this.renderer = renderer; }
+
+            public void Stop() { destroy.Invoke(renderer, null); }
+            public bool Seek(float time)
+            {
+                try
+                {
+                    if ((bool)destroyed.GetValue(renderer)) return false;
+                    timeScale.SetValue(renderer, 0f);
+                    seek.Invoke(renderer, new object[] { (float?)time, 0f, null, false });
+                    return true;
+                }
+                catch (Exception e) { Disable(e); return false; }
+            }
 
             public bool Read(out float time, out bool finished)
             {
@@ -56,6 +94,7 @@ namespace RimArt
                 object start = constructor.Invoke(new object[] { clip, pawn, null });
                 object[] args = { null };
                 if (!(bool)trigger.Invoke(start, args) || args[0] == null) return false;
+                timeScale.SetValue(args[0], 0f);
                 handle = new Handle(args[0]);
                 return true;
             }
@@ -73,12 +112,17 @@ namespace RimArt
             constructor = start.GetConstructor(new[] { def, typeof(Pawn), typeof(Pawn) });
             trigger = AccessTools.Method(start, "TryTrigger", new[] { renderer.MakeByRefType() });
             animatorFor = AccessTools.Method(renderer, "TryGetAnimator", new[] { typeof(Pawn) });
+            seek = AccessTools.Method(renderer, "Seek");
+            destroy = AccessTools.Method(renderer, "Destroy", Type.EmptyTypes);
+            timeScale = AccessTools.Field(renderer, "TimeScale");
+            settings = AccessTools.Field(AccessTools.TypeByName("AM.Core"), "Settings");
+            globalSpeed = settings == null ? null : AccessTools.Field(settings.FieldType, "GlobalAnimationSpeed");
             currentTime = AccessTools.Property(renderer, "CurrentTime");
             duration = AccessTools.Property(renderer, "Duration");
             destroyed = AccessTools.Property(renderer, "IsDestroyed");
             clip = GenDefDatabase.GetDefSilentFail(def, "AG_ShinraPush", false) as Def;
             present = constructor != null && trigger != null && animatorFor != null
-                && currentTime != null && duration != null && destroyed != null && clip != null;
+                && seek != null && destroy != null && timeScale != null && globalSpeed != null && currentTime != null && duration != null && destroyed != null && clip != null;
         }
 
         private static void Disable(Exception e)

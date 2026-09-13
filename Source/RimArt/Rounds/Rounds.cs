@@ -147,6 +147,21 @@ namespace RimArt
 
         public abstract Thing Launcher(Thing thing);
 
+        public abstract float DirectDamage(Thing thing);
+        public virtual bool DirectFlight(Thing thing) => thing.def.projectile != null
+            && !thing.def.projectile.flyOverhead && thing.def.projectile.arcHeightFactor <= 0f;
+
+        // Unlike Vector Edit, repulsion does not renew range or scale power.
+        public virtual void Repel(Thing thing, Vector3 entry, Vector3 outward, Thing caster)
+        {
+            Vector3 remaining = Destination(thing) - entry;
+            remaining.y = 0f;
+            float speed = CurrentSpeedPerTick(thing);
+            int ticks = Mathf.Max(1, Mathf.CeilToInt(remaining.magnitude / speed));
+            Redirect(thing, entry, entry + outward * remaining.magnitude, ticks,
+                VectorEditRegistry.ForceFor(thing), caster);
+        }
+
         /// <summary>
         /// Writes a new flight over the old one: from <paramref name="origin"/>, to
         /// <paramref name="endpoint"/>, arriving in <paramref name="ticks"/>, at
@@ -200,6 +215,14 @@ namespace RimArt
             AccessTools.FieldRefAccess<Projectile, bool>("preventFriendlyFire");
         private static readonly AccessTools.FieldRef<Projectile, Sustainer> AmbientSustainerRef =
             AccessTools.FieldRefAccess<Projectile, Sustainer>("ambientSustainer");
+
+        public override float DirectDamage(Thing thing) => ((Projectile)thing).DamageAmount;
+
+        public override void Repel(Thing thing, Vector3 entry, Vector3 outward, Thing caster)
+        {
+            base.Repel(thing, entry, outward, caster);
+            ((Projectile)thing).HitFlags = ProjectileHitFlags.All;
+        }
 
         public override bool Owns(Thing thing)
         {

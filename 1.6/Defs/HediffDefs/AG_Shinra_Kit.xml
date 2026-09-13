@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
-  <!-- Development grant only; acquisition and balance are intentionally undecided. -->
+  <!-- Retained so old saves can resolve their developer grant before migration. -->
   <HediffDef>
     <defName>AG_ShinraTenseiKit</defName>
     <hediffClass>HediffWithComps</hediffClass>
-    <label>Shinra Tensei</label>
-    <description>Perform a two-handed pressure-wave gesture. The wave is visual only.</description>
+    <label>Shinra Tensei (legacy grant)</label>
+    <description>A legacy developer grant, converted to a repulsion eye when the game loads.</description>
     <isBad>false</isBad>
+  </HediffDef>
+  <HediffDef ParentName="AddedBodyPartBase">
+    <defName>AG_RepulsionEye</defName>
+    <label>repulsion eye</label>
+    <labelNoun>a repulsion eye</labelNoun>
+    <description>An artificial eye supplying normal sight and the charged Shinra Tensei repulsion ability. Additional eyes do not increase its power.</description>
+    <spawnThingOnRemoved>AG_RepulsionEye</spawnThingOnRemoved>
+    <addedPartProps><solid>true</solid><partEfficiency>1</partEfficiency></addedPartProps>
     <abilities><li>AG_ShinraTensei</li></abilities>
   </HediffDef>
 </Defs>

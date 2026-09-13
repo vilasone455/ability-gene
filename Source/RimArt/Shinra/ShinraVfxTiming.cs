@@ -11,7 +11,7 @@ namespace RimArt
         public const float PeakTime = 1.20f;
         public const float ShellEnd = 2.05f;
         public const float Duration = 3.4f;
-        public const float Radius = 3.5f;
+        public const float Radius = ShinraCharge.Radius;
         // The ground ring and dust carry the outward force instead of the dome, so they travel
         // past it. The dome itself holds one size.
         public const float RingSpan = 1.25f;

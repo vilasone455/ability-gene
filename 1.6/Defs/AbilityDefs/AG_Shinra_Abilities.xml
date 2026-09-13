@@ -3,7 +3,7 @@
   <AbilityDef>
     <defName>AG_ShinraTensei</defName>
     <label>Shinra Tensei</label>
-    <description>Thrust both hands outward and release an expanding pressure wave. This version is visual only.</description>
+    <description>Charge for up to three seconds of power, then release a four-cell repulsion wave. Pushes allies and enemies, deals blunt damage only on collision, and briefly redirects incoming direct fire. Release commits a twenty-second cooldown.</description>
     <iconPath>RimArt/Shinra/IconPush</iconPath>
     <category>AG_Genetic</category>
     <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
@@ -17,7 +17,6 @@
       <range>-1</range>
       <warmupTime>0</warmupTime>
       <drawAimPie>false</drawAimPie>
-      <soundCast>AG_ShinraCharge</soundCast>
       <requireLineOfSight>false</requireLineOfSight>
       <targetParams><canTargetSelf>true</canTargetSelf></targetParams>
     </verbProperties>

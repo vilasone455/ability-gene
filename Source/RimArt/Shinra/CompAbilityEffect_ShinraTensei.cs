@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using RimWorld;
 using Verse;
 
@@ -10,6 +12,13 @@ namespace RimArt
 
     public class CompAbilityEffect_ShinraTensei : CompAbilityEffect
     {
+        public override IEnumerable<Gizmo> CompGetGizmosExtra()
+        {
+            if (parent.pawn.abilities.AllAbilitiesForReading.FirstOrDefault(a => a.def == parent.def) != parent) yield break;
+            var s = GameComponent_Shinra.Instance.For(parent.pawn);
+            if (s.active) yield return new Gizmo_ShinraCharge(s);
+        }
+
         public override bool GizmoDisabled(out string reason)
         {
             if (!ShinraCastAnimation.Present)
@@ -27,7 +36,8 @@ namespace RimArt
             Pawn pawn = parent.pawn;
             if (pawn?.Map == null) return;
             MapComponent_ShinraCasts component = pawn.Map.GetComponent<MapComponent_ShinraCasts>();
-            if (component.Running(pawn)) return;
+            if (component.Running(pawn) || !GameComponent_Shinra.HasEye(pawn)
+                || GameComponent_Shinra.Instance.For(pawn).cooldownUntil > Find.TickManager.TicksGame) return;
             if (ShinraCastAnimation.TryStart(pawn, out ShinraCastAnimation.Handle animation))
                 component.Begin(pawn, animation);
         }

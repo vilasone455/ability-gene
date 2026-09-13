@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using HarmonyLib;
 using UnityEngine;
 using Verse;
@@ -47,6 +48,8 @@ namespace RimArt
         /// </summary>
         private const float MinimumFlightHeight = 0.85f;
 
+        private sealed class Repelled { public Repelled() { } public bool value; }
+        private static readonly ConditionalWeakTable<Thing, Repelled> repelled = new ConditionalWeakTable<Thing, Repelled>();
         private static Type projectileType;
         private static Type lerpedWorkerType;
 
@@ -73,6 +76,7 @@ namespace RimArt
         private static AccessTools.FieldRef<object, LocalTargetInfo> intendedTargetRef;
         private static AccessTools.FieldRef<object, Sustainer> ambientSustainerRef;
 
+        private static FieldInfo equipmentField;
         private static FieldInfo forcedWorkerField;
         private static FieldInfo predictedPositionsField;
         private static FieldInfo damageAmountField;
@@ -118,6 +122,7 @@ namespace RimArt
             intendedTargetRef = FieldRef<LocalTargetInfo>("intendedTarget");
             ambientSustainerRef = FieldRef<Sustainer>("ambientSustainer");
 
+            equipmentField = AccessTools.Field(projectileType, "equipmentDef");
             forcedWorkerField = AccessTools.Field(projectileType, "forcedTrajectoryWorker");
             predictedPositionsField = AccessTools.Field(projectileType, "cachedPredictedPositions");
             damageAmountField = AccessTools.Field(projectileType, "damageAmount");
@@ -127,7 +132,7 @@ namespace RimArt
 
             MethodInfo tick = AccessTools.Method(projectileType, "Tick");
 
-            bool complete = lerpedWorkerType != null && forcedWorkerField != null
+            bool complete = equipmentField != null && lerpedWorkerType != null && forcedWorkerField != null
                 && predictedPositionsField != null && damageAmountField != null
                 && exactPositionSetter != null && damageAmountGetter != null
                 && damageAmountSetter != null && tick != null
@@ -149,6 +154,10 @@ namespace RimArt
             }
 
             harmony.Patch(tick, new HarmonyMethod(typeof(CombatExtendedRounds), nameof(TickPrefix)));
+            harmony.Patch(AccessTools.Method(projectileType, "ExposeData"), postfix:
+                new HarmonyMethod(typeof(CombatExtendedRounds), nameof(RepelledExposeData)));
+            harmony.Patch(AccessTools.Method(projectileType, "MoveForward"), postfix:
+                new HarmonyMethod(typeof(CombatExtendedRounds), nameof(RepelledMoveForward)));
             Rounds.Foreign = new CombatExtendedRounds();
         }
 
@@ -159,10 +168,38 @@ namespace RimArt
         /// </summary>
         public static bool TickPrefix(Thing __instance)
         {
+            if (!ShinraCombat.BeforeProjectileTick(__instance, 1)) return false;
             if (RecursionRegistry.CapturedCount == 0) return true;
 
             HalvingProjectile held;
             return !RecursionRegistry.TryGetCapture(__instance, out held);
+        }
+
+        public static void RepelledMoveForward(Thing __instance, ref Vector3 __result)
+        {
+            if (!repelled.TryGetValue(__instance, out var state) || !state.value || ticksToImpactRef(__instance) > 0) return;
+            Vector2 end = destinationRef(__instance);
+            __result.x = end.x;
+            __result.z = end.y;
+        }
+
+        public static void RepelledExposeData(Thing __instance)
+        {
+            var state = repelled.GetOrCreateValue(__instance);
+            Scribe_Values.Look(ref state.value, "rimArtRepelled");
+            if (!state.value) return;
+            float damage = Scribe.mode == LoadSaveMode.Saving
+                ? (float)damageAmountGetter.Invoke(__instance, null) : 0f;
+            Scribe_Values.Look(ref damage, "rimArtRepelledDamage");
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+                damageAmountSetter.Invoke(__instance, new object[] { damage });
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                forcedWorkerField.SetValue(__instance, Activator.CreateInstance(lerpedWorkerType));
+                lerpPositionRef(__instance) = true;
+                gravityPerWidthRef(__instance) = 0f;
+                gravityRef(__instance) = 0.0;
+            }
         }
 
         private static AccessTools.FieldRef<object, T> FieldRef<T>(string name)
@@ -174,6 +211,33 @@ namespace RimArt
         }
 
         // ------------------------------------------------------------------ reading
+
+        public override bool DirectFlight(Thing thing)
+        {
+            if (!base.DirectFlight(thing) || landedRef(thing)) return false;
+            var equipment = equipmentField.GetValue(thing) as ThingDef;
+            if (equipment?.thingCategories?.Exists(c => c.defName == "Grenades") == true) return false;
+            return true;
+        }
+
+        public override float DirectDamage(Thing thing) => (float)damageAmountGetter.Invoke(thing, null);
+
+        public override void Repel(Thing thing, Vector3 entry, Vector3 outward, Thing caster)
+        {
+            repelled.GetOrCreateValue(thing).value = true;
+            float damage = DirectDamage(thing);
+            float speed = CurrentSpeedPerTick(thing);
+            float height = exactPositionRef(thing).y;
+            Vector3 remaining = Destination(thing) - entry;
+            remaining.y = 0f;
+            int ticks = Mathf.Max(1, Mathf.CeilToInt(remaining.magnitude / speed));
+            Redirect(thing, entry, entry + outward * remaining.magnitude, ticks,
+                speed / Rounds.BaseSpeedPerTick(thing), caster);
+            damageAmountSetter.Invoke(thing, new object[] { damage });
+            shotHeightRef(thing) = height;
+            startingTicksRef(thing) = remaining.magnitude / speed;
+            Place(thing, new Vector3(entry.x, height, entry.z));
+        }
 
         public override bool Owns(Thing thing)
         {

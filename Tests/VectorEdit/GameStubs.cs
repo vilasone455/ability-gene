@@ -76,13 +76,16 @@ namespace Verse {
  public struct LocalTargetInfo {
   public IntVec3 Cell; public LocalTargetInfo(IntVec3 cell){Cell=cell;}
  }
- public class ProjectileProperties{public float speed=30f; public float SpeedTilesPerTick=>speed/60f;}
+ public enum ProjectileHitFlags { All }
+ public class ProjectileProperties{public bool flyOverhead; public float arcHeightFactor; public float speed=30f; public float SpeedTilesPerTick=>speed/60f;}
  public class ThingDef{public ProjectileProperties projectile=new();}
  // def lives on Thing in the engine, and Rounds reads it there.
  public class Thing{public bool Destroyed,Spawned=true; public Map Map; public ThingDef def=new();}
  public class Pawn:Thing{}
  // Field names and types mirror Verse.Projectile, which is what the Harmony field refs bind to.
  public class Projectile:Thing {
+  public int DamageAmount = 12;
+  public ProjectileHitFlags HitFlags;
   protected Vector3 origin;
   protected Vector3 destination;
   protected int ticksToImpact;

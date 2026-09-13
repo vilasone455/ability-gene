@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <RecipeDef ParentName="SurgeryInstallBodyPartArtificialBase">
+    <defName>AG_InstallRepulsionEye</defName>
+    <label>install repulsion eye</label>
+    <description>Replace one eye with a repulsion eye.</description>
+    <jobString>Installing repulsion eye.</jobString>
+    <skillRequirements><Medicine>8</Medicine></skillRequirements>
+    <ingredients Inherit="False">
+      <li><filter><thingDefs><li>AG_RepulsionEye</li></thingDefs></filter><count>1</count></li>
+      <li><filter><categories><li>Medicine</li></categories></filter><count>2</count></li>
+    </ingredients>
+    <fixedIngredientFilter Inherit="False">
+      <thingDefs><li>AG_RepulsionEye</li></thingDefs>
+      <categories><li>Medicine</li></categories>
+    </fixedIngredientFilter>
+    <appliedOnFixedBodyParts><li>Eye</li></appliedOnFixedBodyParts>
+    <addsHediff>AG_RepulsionEye</addsHediff>
+  </RecipeDef>
+</Defs>

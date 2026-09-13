@@ -36,15 +36,20 @@ piece of equipment, weapon trait, or earned origin.
 
 ## Abilities
 
-### Shinra Tensei kit (animation only)
+### Repulsion eye → *Shinra Tensei*
 
-A pawn snaps both hands out to the sides into a T-pose, releasing a raised
-pressure dome that holds one size, warps the view behind it, and carries impact waves across
-its inside while a ring travels out across the ground. There are no rocks or combat effects.
-Use development mode → **RimArts → Grant kit... → Shinra Tensei (animation only)** to give
-a humanlike pawn the ability button. The arm animation requires Melee Animation. The wave is
-centred on the caster, so there is one clip and no facing. Acquisition and balance are not
-decided yet. Separate free-running VFX debug tools remain available. See [instructions and rendering notes](docs/shinra-tensei-vfx.md).
+Install an uncraftable repulsion eye from rare trade or standard quest rewards, then click
+**Charge**, hold for up to three seconds of power, and **Release**. The hands freeze at the
+chest until release. A four-cell wave pushes living pawns, including allies, damages them
+only on obstacle collision, and briefly redirects qualifying incoming projectiles. Release
+commits a 20-second cooldown. A charge meter, Cancel button and per-pawn Auto-release toggle
+provide control; full charge can be held indefinitely.
+
+The eye costs 3,200 silver, provides normal sight, and can be recovered surgically.
+Installation requires Medicine 8, the device and two medicine. Multiple eyes share one
+ability. Melee Animation is required; vanilla and Combat Extended projectiles are supported.
+Development grants and independent VFX previews remain available. See
+[controls, balance and verification notes](docs/shinra-tensei-vfx.md).
 
 ### Corrosive glands → *disarm spit*
 Spit contact acid at a target's weapon; they drop it and it lands a few cells away,

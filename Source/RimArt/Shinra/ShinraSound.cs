@@ -13,13 +13,11 @@ namespace RimArt
         static ShinraSoundDefOf() { DefOfHelper.EnsureInitializedInCtor(typeof(ShinraSoundDefOf)); }
     }
 
-    /// <summary>
-    /// The release rides the effect clock rather than the cast, so a paused or slowed gesture
-    /// keeps the boom on the frame the dome appears. The charge is on the verb's soundCast and
-    /// needs no code.
-    /// </summary>
     internal static class ShinraSound
     {
+        public static void Charge(Map map, IntVec3 cell) =>
+            ShinraSoundDefOf.AG_ShinraCharge.PlayOneShot(new TargetInfo(cell, map, false));
+
         public static void Release(Map map, IntVec3 cell)
         {
             if (map == null || !cell.InBounds(map)) return;

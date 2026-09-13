@@ -132,51 +132,125 @@ component.MapComponentUpdate();
 Check(ShinraVfxGraphics.Calls == calls, "Fogging the centre cancels the preview");
 Console.WriteLine("Shinra VFX envelopes and preview lifecycle passed.");
 
+
+var controller = new GameComponent_Shinra(Current.Game);
+Current.Game.Shinra = controller;
 var casts = new MapComponent_ShinraCasts(map);
 var pawn = new Pawn { Map = map };
-var animation = new ShinraCastAnimation.Handle { Time = ShinraVfxTiming.ChargeEnd };
-casts.Begin(pawn, animation);
+void Tick(int count = 1)
+{ for (int i = 0; i < count; i++) { Find.TickManager.TicksGame++; controller.GameComponentTick(); } }
+ShinraPawnState Begin(Pawn p)
+{ casts.Begin(p, new ShinraCastAnimation.Handle()); return controller.For(p); }
+var state = Begin(pawn);
+Tick(16);
+Check(state.charge.time < ShinraCharge.Hold, "Opening must play before holding");
+Tick(1);
+Check(Near(state.charge.time, 0.27f), "Hold marker must be exact");
+Tick(18000);
+Check(state.active && state.charge.Power == 1 && Near(state.charge.time, 0.27f), "Hold indefinitely without drift");
+Check(ShinraCombat.Pushes == 0, "Holding must never push");
 int booms = ShinraSound.Releases;
-casts.MapComponentUpdate();
-Check(casts.Running(pawn) && Near(ShinraVfxGraphics.Time, animation.Time),
-    "Cast must sample the real animation clock at hand release");
-Check(ShinraSound.Releases == booms + 1 && ShinraSound.Cell.x == pawn.Position.x,
-    "The release must sound once the gesture reaches the thrust, at the caster");
-Time.unscaledDeltaTime = 10f;
-casts.MapComponentUpdate();
-Check(Near(ShinraVfxGraphics.Time, animation.Time), "Paused animation must not drift with wall time");
-Check(ShinraSound.Releases == booms + 1, "The release must not repeat every frame of one cast");
-animation.Time = 0.8f;
-casts.MapComponentUpdate();
-Check(Near(ShinraVfxGraphics.Time, 0.8f), "Animation speed changes must immediately carry the wave with them");
-animation.Time = 1.35f;
-animation.Finished = true;
-Find.TickManager.TicksGame = 500;
-casts.MapComponentUpdate();
-Find.TickManager.TicksGame = 530;
-casts.MapComponentUpdate();
-Check(Near(ShinraVfxGraphics.Time, 1.85f), "After hand recovery, remaining VFX use game time");
-Find.TickManager.TicksGame = 750;
-casts.MapComponentUpdate();
-Check(!casts.Running(pawn), "Finished VFX must release the cast button");
-
-animation = new ShinraCastAnimation.Handle { Time = 0.2f, Valid = false };
-casts.Begin(pawn, animation);
 calls = ShinraVfxGraphics.Calls;
-booms = ShinraSound.Releases;
-casts.MapComponentUpdate();
-Check(!casts.Running(pawn) && ShinraVfxGraphics.Calls == calls,
-    "An interrupted animation must not release a wave later");
-Check(ShinraSound.Releases == booms, "A gesture cut short before the thrust must not sound");
+for (int i = 0; i < 50; i++) casts.MapComponentUpdate();
+Check(ShinraVfxGraphics.Calls == calls && ShinraSound.Releases == booms, "No VFX or release sound while held");
+Check(Near(state.charge.time, 0.27f), "Drawing while paused cannot advance either clock");
+state.Release();
+int cooldown = state.cooldownUntil;
+Check(cooldown == Find.TickManager.TicksGame + 1200, "Release commits cooldown immediately");
+Tick(6);
+Check(!state.charge.burst, "Protection starts at burst, not release request");
+Find.CurrentMap = new Map();
+Tick();
+Check(state.charge.burst && state.Protected && ShinraCombat.Pushes == 1, "Burst runs off selected map");
+Tick(70);
+Check(ShinraCombat.Pushes == 1 && ShinraSound.Releases == booms + 1, "Burst effects exactly once");
+Check(!state.active && state.tail >= 0f, "Recovery releases pawn before VFX finish");
+Check(!state.Protected && state.cooldownUntil == cooldown, "Defense expires without changing cooldown");
+Tick(200);
+Check(state.tail < 0f, "VFX tail expires");
 
-var otherPawn = new Pawn { Map = map };
-animation = new ShinraCastAnimation.Handle { Time = 0.5f };
-casts.Begin(pawn, animation);
-casts.Begin(otherPawn, new ShinraCastAnimation.Handle { Time = 0.6f });
-pawn.Downed = true;
-casts.MapComponentUpdate();
-Check(!casts.Running(pawn) && casts.Running(otherPawn), "One cancelled caster must not cancel another");
-otherPawn.Spawned = false;
-casts.MapComponentUpdate();
-Check(!casts.Running(otherPawn), "Leaving the map cancels the cast");
-Console.WriteLine("Shinra pawn casts: animation synchronization, interruption, completion and independent casters passed.");
+var early = Begin(new Pawn { Map = map });
+Tick(3);
+early.Release();
+float power = early.charge.Power;
+Tick(30);
+Check(early.charge.burst && early.charge.Power == power, "Early release freezes power and passes hold");
+var cancelled = Begin(new Pawn { Map = map });
+Tick(20);
+cancelled.Cancel();
+Tick();
+Check(!cancelled.active && cancelled.cooldownUntil == 0, "Cancel costs no cooldown");
+var interrupted = Begin(new Pawn { Map = map });
+Tick(20);
+interrupted.Release();
+interrupted.animation.Valid = false;
+Tick();
+Check(!interrupted.active && !interrupted.charge.burst && interrupted.cooldownUntil > Find.TickManager.TicksGame,
+    "Interrupted release costs cooldown without a burst");
+foreach (string reason in new[] { "stun", "down", "dead", "map", "eye", "move", "job" })
+{
+    var p = new Pawn { Map = map };
+    var c = Begin(p);
+    Tick(18);
+    switch (reason) {
+      case "stun": p.stances.stunner.Stunned = true; break;
+      case "down": p.Downed = true; break;
+      case "dead": p.Dead = true; break;
+      case "map": p.Map = new Map(); break;
+      case "eye": p.health.hediffSet.hediffs.Clear(); break;
+      case "move": p.Position = new IntVec3(1, 1); break;
+      case "job": p.CurJobDef.defName = "Goto"; break;
+    }
+    Tick();
+    Check(!c.active && c.cooldownUntil == 0, "Charging cancellation: " + reason);
+}
+var automatic = Begin(new Pawn { Map = map });
+automatic.autoRelease = true;
+ShinraCombat.Threat = true;
+Tick(179);
+Check(!automatic.charge.releasing, "Auto-release requires full charge");
+Tick(2);
+Check(automatic.charge.releasing, "Full charge releases on threat");
+ShinraCombat.Threat = false;
+var fast = Begin(new Pawn { Map = map });
+ShinraCastAnimation.Speed = 2f;
+Tick(9);
+Check(fast.charge.Held && Near(fast.charge.Power, 9f / 180f), "Animation speed must not change charge rate");
+fast.Release();
+Tick(4);
+Check(fast.charge.burst, "Animation setting advances release twice as quickly");
+ShinraCastAnimation.Speed = 1f;
+
+var saved = Begin(new Pawn { Map = map });
+Tick(180);
+saved.autoRelease = true;
+Scribe.mode = LoadSaveMode.Saving; saved.ExposeData();
+var loaded = new ShinraPawnState();
+Scribe.mode = LoadSaveMode.LoadingVars; loaded.ExposeData();
+Scribe.mode = LoadSaveMode.PostLoadInit; loaded.ExposeData();
+Scribe.mode = LoadSaveMode.Inactive;
+Check(loaded.active && loaded.charge.Held && loaded.charge.Power == 1 && loaded.autoRelease && loaded.restore,
+    "Save/load restores charge, hold, toggle and schedules animation restoration");
+saved.restore = true; saved.animation = null;
+Tick();
+Check(saved.active && saved.animation != null && Near(saved.animation.Time, 0.27f), "Held animation is reclaimed after load");
+saved.Release();
+Tick(7);
+Scribe.mode = LoadSaveMode.Saving; saved.ExposeData();
+var loadedRelease = new ShinraPawnState();
+Scribe.mode = LoadSaveMode.LoadingVars; loadedRelease.ExposeData();
+Scribe.mode = LoadSaveMode.PostLoadInit; loadedRelease.ExposeData();
+Scribe.mode = LoadSaveMode.Inactive;
+Check(loadedRelease.Protected && loadedRelease.charge.burst && loadedRelease.cooldownUntil == saved.cooldownUntil,
+    "Defense and committed cooldown survive save/load");
+saved.restore = true;
+Tick();
+Check(!saved.active && saved.Protected, "Loading interrupts release but preserves the active defense");
+
+for (int ticks = 0; ticks <= 180; ticks++)
+{
+    var c = new ShinraCharge { ticks = ticks };
+    Check(Near(c.Push, 3f + ticks / 45f) && Near(c.CollisionDamage, 8f + ticks / 15f)
+        && Near(c.ProjectileLimit, 12f + ticks * 48f / 180f), "Continuous balance interpolation");
+}
+Console.WriteLine("Shinra charge lifecycle, cancellation, off-map burst, clocks, recovery and persistence passed.");

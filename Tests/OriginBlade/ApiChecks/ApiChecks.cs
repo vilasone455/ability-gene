@@ -81,10 +81,40 @@ static class ApiChecks
         string combatExtended = CheckCombatExtended();
         string meleeAnimation = CheckMeleeAnimation();
         string mimic = CheckMimicContract();
+        CheckShinraAcquisition();
         string distortion = CheckShinraDistortion();
         string sounds = CheckShinraSounds(assembly);
         Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, "
             + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds}");
+    }
+
+    static void CheckShinraAcquisition()
+    {
+        var item = XDocument.Load("1.6/Defs/ThingDefs/AG_Shinra_Things.xml").Root.Element("ThingDef");
+        var recipe = XDocument.Load("1.6/Defs/RecipeDefs/AG_Shinra_Recipes.xml").Root.Element("RecipeDef");
+        var eye = XDocument.Load("1.6/Defs/HediffDefs/AG_Shinra_Kit.xml").Root.Elements("HediffDef")
+            .Single(e => (string)e.Element("defName") == "AG_RepulsionEye");
+        if ((string)item.Attribute("ParentName") != "BodyPartArchotechBase"
+            || (float)item.Element("statBases").Element("MarketValue") != 3200f
+            || (string)item.Element("thingSetMakerTags").Element("li") != "RewardStandardCore"
+            || item.Element("recipeMaker") != null || item.Element("costList") != null)
+            throw new Exception("Repulsion eye must be an uncraftable 3200-silver archotech trade/reward item");
+        if ((string)eye.Attribute("ParentName") != "AddedBodyPartBase"
+            || (float)eye.Element("addedPartProps").Element("partEfficiency") != 1f
+            || (string)eye.Element("spawnThingOnRemoved") != "AG_RepulsionEye"
+            || (string)eye.Element("abilities").Element("li") != "AG_ShinraTensei")
+            throw new Exception("Repulsion eye must supply normal sight, recovery and the existing ability ID");
+        var ingredients = recipe.Element("ingredients");
+        if ((string)recipe.Attribute("ParentName") != "SurgeryInstallBodyPartArtificialBase"
+            || (int)recipe.Element("skillRequirements").Element("Medicine") != 8
+            || (string)recipe.Element("appliedOnFixedBodyParts").Element("li") != "Eye"
+            || (string)ingredients.Attribute("Inherit") != "False"
+            || ingredients.Elements("li").Count() != 2
+            || !ingredients.Elements("li").Any(e => (int)e.Element("count") == 1
+                && (string)e.Element("filter").Element("thingDefs")?.Element("li") == "AG_RepulsionEye")
+            || !ingredients.Elements("li").Any(e => (int)e.Element("count") == 2
+                && (string)e.Element("filter").Element("categories")?.Element("li") == "Medicine"))
+            throw new Exception("Repulsion surgery must replace one eye with Medicine 8, one device and two medicine");
     }
 
     /// <summary>
@@ -225,6 +255,16 @@ static class ApiChecks
                 throw new Exception($"Shinra animation clock contract changed: {member.Item1}");
         if (overrideData.GetField("Texture", Any) == null)
             throw new Exception("Melee Animation bridge: AnimPartOverrideData.Texture is gone");
+
+        if (renderer.GetField("TimeScale", Any)?.FieldType != typeof(float)
+            || renderer.GetMethod("Destroy", Any, null, Type.EmptyTypes, null) == null
+            || renderer.GetMethod("Seek", Any, null, new[] { typeof(float?), typeof(float),
+                typeof(Action<>).MakeGenericType(am.GetType("AM.Events.EventBase")
+                    ?? am.GetTypes().Single(t => t.Name == "EventBase")), typeof(bool) }, null) == null)
+            throw new Exception("Shinra requires AnimRenderer.TimeScale, Seek and Destroy");
+        Type settingsType = am.GetType("AM.Core").GetField("Settings", Any)?.FieldType;
+        if (settingsType?.GetField("GlobalAnimationSpeed", Any)?.FieldType != typeof(float))
+            throw new Exception("Shinra animation speed setting contract changed");
 
         // What Patch_MeleeAnimation/1.6/Defs/AG_Throw_Anims.xml sets. DirectXml drops an unknown
         // node with a warning, so a rename here costs the animation its hands or its pawn count.
@@ -397,6 +437,7 @@ static class ApiChecks
             { "Destination", "UnityEngine.Vector2" },
             { "OriginIV3", "Verse.IntVec3" },
             { "shotSpeed", "System.Single" },
+            { "equipmentDef", "Verse.ThingDef" },
             { "initialSpeed", "System.Single" },
             { "shotAngle", "System.Single" },
             { "shotRotation", "System.Single" },
@@ -440,6 +481,9 @@ static class ApiChecks
             throw new Exception("CE bridge: ProjectileCE no longer declares Tick");
         if (projectile.Assembly.GetType("CombatExtended.LerpedTrajectoryWorker") == null)
             throw new Exception("CE bridge: CombatExtended.LerpedTrajectoryWorker is gone");
+
+        if (projectile.GetMethod("ExposeData", Any) == null || projectile.GetMethod("MoveForward", Any) == null)
+            throw new Exception("CE repulsion persistence requires ProjectileCE.ExposeData and MoveForward");
 
         int patchTypes = CheckCombatExtendedPatchTypes(projectile.Assembly);
 

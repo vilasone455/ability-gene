@@ -143,7 +143,7 @@ namespace RimArt
                 new Kit { Label = "Stasis belt", Grant = GrantStasisBelt },
                 new Kit { Label = "Frost bomb", Grant = GrantFrostBomb },
                 new Kit { Label = "Drone control rig", Grant = GrantControlRig },
-                new Kit { Label = "Shinra Tensei (animation only)", Grant = GrantShinraTensei },
+                new Kit { Label = "Shinra Tensei (repulsion eye)", Grant = GrantShinraTensei },
 
                 WeaponTrait("Resonant weapon", "AG_WeaponResonance"),
                 WeaponTrait("Arcing weapon", "AG_WeaponArc"),
@@ -157,10 +157,7 @@ namespace RimArt
         private static string GrantShinraTensei(Pawn pawn)
         {
             if (!pawn.RaceProps.Humanlike || pawn.health == null) return "requires a humanlike pawn";
-            HediffDef def = DefDatabase<HediffDef>.GetNamed("AG_ShinraTenseiKit");
-            if (pawn.health.hediffSet.GetFirstHediffOfDef(def) != null) return "already has it";
-            pawn.health.AddHediff(def);
-            return null;
+            return ShinraAcquisition.Grant(pawn);
         }
 
         private static Kit Gene(string label, string geneDefName)

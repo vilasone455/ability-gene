@@ -1,56 +1,24 @@
-using System.Collections.Generic;
-using UnityEngine;
 using Verse;
 
 namespace RimArt
 {
-    /// <summary>Tracks real pawn casts separately from the free-running debug preview.</summary>
+    // Drawing never advances or commits gameplay. All maps share the game-tick controller.
     public class MapComponent_ShinraCasts : MapComponent
     {
-        private sealed class Cast
-        {
-            public Pawn pawn;
-            public Vector3 centre;
-            public ShinraCastAnimation.Handle animation;
-            public float time;
-            public int tailStartTick = -1;
-            public bool released;
-        }
-
-        private readonly List<Cast> casts = new List<Cast>();
         public MapComponent_ShinraCasts(Map map) : base(map) { }
-
-        public bool Running(Pawn pawn) => casts.Exists(cast => cast.pawn == pawn);
-
-        public void Begin(Pawn pawn, ShinraCastAnimation.Handle animation)
-        {
-            casts.Add(new Cast { pawn = pawn, centre = pawn.Position.ToVector3Shifted(), animation = animation });
-        }
-
+        public bool Running(Pawn pawn) => GameComponent_Shinra.Instance.For(pawn).active;
+        public void Begin(Pawn pawn, ShinraCastAnimation.Handle animation) =>
+            GameComponent_Shinra.Instance.Begin(pawn, animation);
         public override void MapComponentUpdate()
         {
             if (Find.CurrentMap != map) return;
-            for (int i = casts.Count - 1; i >= 0; i--)
+            foreach (var s in GameComponent_Shinra.Instance.States)
             {
-                Cast cast = casts[i];
-                if (!cast.pawn.Spawned || cast.pawn.Map != map || cast.pawn.Dead || cast.pawn.Downed)
-                { casts.RemoveAt(i); continue; }
-
-                if (cast.tailStartTick < 0)
-                {
-                    if (!cast.animation.Read(out cast.time, out bool finished))
-                    { casts.RemoveAt(i); continue; }
-                    if (finished) cast.tailStartTick = Find.TickManager.TicksGame;
-                }
-                float time = cast.time + (cast.tailStartTick < 0 ? 0f :
-                    (Find.TickManager.TicksGame - cast.tailStartTick) / 60f);
-                if (time >= ShinraVfxTiming.Duration) { casts.RemoveAt(i); continue; }
-                if (!cast.released && time >= ShinraVfxTiming.ChargeEnd)
-                {
-                    cast.released = true;
-                    ShinraSound.Release(map, cast.centre.ToIntVec3());
-                }
-                if (!cast.centre.ToIntVec3().Fogged(map)) ShinraVfxGraphics.Draw(cast.centre, time, map);
+                if (s.map != map || s.centre.ToIntVec3().Fogged(map)) continue;
+                if (s.active && Find.Selector.IsSelected(s.pawn))
+                    GenDraw.DrawRadiusRing(s.centre.ToIntVec3(), ShinraCharge.Radius);
+                float time = s.tail >= 0f ? s.tail : s.active ? s.charge.time : -1f;
+                if (time >= ShinraCharge.Burst) ShinraVfxGraphics.Draw(s.centre, time, map);
             }
         }
     }

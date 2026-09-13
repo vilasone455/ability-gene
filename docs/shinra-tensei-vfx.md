@@ -1,51 +1,70 @@
-# Shinra Tensei: animation kit
+# Shinra Tensei: charged repulsion
 
-The pawn draws both hands in to the chest, then throws both arms straight out to the sides
-into a T-pose, holds, and returns to idle. A transparent pressure dome appears at the thrust
-and holds one size, warping the view behind it, while impact waves cross its inside and a flat
-ring travels outward across the ground. There are no rocks, damage, knockback, projectile
-interception, terrain changes, resource costs, or combat AI.
+Install a **repulsion eye** (3,200 silver) to gain Shinra Tensei. It uses the vanilla archotech
+implant trade pool and standard quest rewards, has no crafting recipe, and replaces one eye
+at normal sight efficiency. Installation requires Medicine 8, the device, and two medicine.
+Vanilla remove-body-part surgery recovers the device for transfer. Additional eyes share one
+set of controls, charge, toggle and cooldown. Legacy developer grants migrate on the first
+game tick to one installed eye; existing ability and legacy hediff identifiers remain valid.
 
-## Try the kit
+**Melee Animation is required.** Development mode still provides **RimArts → Grant kit... →
+Shinra Tensei (repulsion eye)** and the independent VFX previews below.
 
-Build with `dotnet build Source/RimArt/RimArt.csproj -c Release`, deploy, and restart RimWorld.
-Enable development mode, open debug actions, choose **RimArts → Grant kit...**, click a
-humanlike pawn, and choose **Shinra Tensei (animation only)**. Select that pawn and press its
-**Shinra Tensei** ability button. It is available drafted or undrafted and casts in place.
-Another cast becomes available when its VFX finish.
+## Controls and timing
 
-The kit currently uses a developer-granted hediff as its single ability source; there is no
-recipe, research or permanent acquisition decision yet. Removing that hediff removes the
-ability. The grant survives saving. The transient wave itself is not saved.
+Click **Charge Shinra Tensei**, then **Release**. The charge meter reaches full power after
+180 game ticks (3 seconds), including the opening motion. The preview radius is always four
+cells. **Cancel** discards charge without cooldown. **Auto-release** is saved per pawn and
+starts off. Full charge holds indefinitely until released or cancelled.
 
-**Melee Animation is required for the pawn cast.** The button explains this when unavailable.
-The existing optional integration supplies the pawn body, both hands, skin/glove rendering,
-and its temporary animation job. There is one clip and no mirroring: the wave is centred on
-the caster and radial, so the gesture has no direction to carry and the bridge never reads the
-caster's rotation. The clip draws the pawn facing south for its length, which is the one facing
-that shows both arms at full extension instead of hiding one behind the torso. No weapon or
-grenade is drawn. The animation contains no gameplay events or end-cell move.
+The single existing clip draws the hands toward the chest from 0 to **0.27 seconds**, holds
+exactly there while charging, then resumes on release. Crossing **0.38 seconds** commits the
+push, projectile defense, dome and release sound once. The pawn recovers at **1.35 seconds**.
+Early release freezes power and continues through the hold marker without stopping.
+Requesting release commits **1,200 ticks (20 seconds) of cooldown**, even if interrupted
+before the burst. Stun, downing, death, leaving the map, a movement order or loss of the last
+eye cancels. Attacks and other orders are blocked while casting; ordinary damage does not
+cancel or receive any reduction from Shinra.
 
-## Timing
+A game component advances gameplay and calls the renderer's `Seek` explicitly with
+`TimeScale = 0`. The Melee Animation speed setting changes clip progression, never charge
+accumulation. Drawing cannot advance gameplay, including on another selected map. Pausing
+stops both clocks. Held casts reload at their saved pose; loading interrupts releases without
+refunding cooldown or clearing an already committed defense window. VFX tails finish even
+when the pawn's recovery or a post-burst interruption has ended the animation.
 
-The hands snap out at 0.38 seconds, the same `ChargeEnd` used by the shell, reaching 0.76
-cells across at 0.48. They hold their height through the extension; letting them descend as
-they open reads as a strike toward the floor. The span is deliberately short: Melee Animation
-draws a hand sprite and no arm, so a hand carried well away from the torso is a mitt floating
-in open ground. The peak puts each hand just outside the body silhouette and no further, and
-the gesture is carried by the hand splay and the held height rather than by distance. The
-gesture recovers by 1.35 seconds.
-During the gesture, VFX read Melee Animation's actual `CurrentTime`, so pausing or changing its
-animation speed does not separate the hands from the wave.
-The dome does not swell from nothing. It appears at 88% of its size at 0.38 seconds, punches
-to 106% by 0.48, and settles to exactly its held size by 0.70. Three impact waves are born at
-the core at 0.38, 0.58 and 0.78 seconds and die against the shell 0.44 seconds later each. A
-bright flash at the caster covers 0.38 to 0.56 seconds; the ground ring and the dust travel
-outward to 1.25 times the dome radius by 1.08 seconds, and the ring clears by 1.43. The screen
-warp holds while the shell does and fades with it. After recovery, the remaining VFX use game
-ticks: the shell disappears at effect time 2.05 seconds, and dust finishes at 3.4 seconds. A
-downed/dead/despawned caster or an interrupted gesture cancels its VFX. Different pawns have
-independent casts.
+## Combat defaults
+
+These are tuning defaults, not measured balance results. Charge continuously interpolates
+human-sized push from 3 to 7 cells, collision damage from 8 to 20 blunt, and projectile power
+limit from 12 to 60 direct damage before armor. At half charge these are 5, 14 and 36.
+Defense lasts 45 ticks (0.75 seconds) at every power. All living pawns, including allies,
+animals, mechs and downed pawns, can be pushed if the caster has an unobstructed path.
+Travel divides by `max(1, BodySize)` and ends on a map cell. Every pushed pawn staggers for
+30 ticks. Only solid-obstacle collision deals damage; map edges and pawns do not. Buildings
+and terrain are never damaged.
+
+Incoming direct projectiles are redirected outward; outgoing shots pass. Direct-fire
+explosives also require full charge. Overpowered rounds, overhead shells and arcing grenades
+pass unchanged. Travel segments are checked before impact, including fast shots crossing the
+whole field. Each burst remembers its redirected rounds. Overlapping fields choose the first
+entry on the current segment. Speed, direct damage, remaining range and explosive behavior
+are preserved, with hits attributed to the caster and friendly fire enabled. CE additionally
+saves the forced straight trajectory and preserved damage, and clips its last step to the
+remaining endpoint.
+
+Auto-release requires full charge and a reflectable shot on a path to the caster, regardless
+of allegiance. Its horizon is remaining clip time to burst divided by animation speed, plus
+0.15 seconds. From the held pose at normal animation speed this is 0.11 + 0.15 seconds.
+Close-range shots can hit before the burst begins protection. Enemy autonomous charging is
+outside this version.
+
+## Artwork timing
+
+The dome appears at 88% of its four-cell size at 0.38 seconds, punches to 106% by 0.48 and
+settles by 0.70. The existing textures, south-facing gesture, hand span, flash, impact pulses,
+ring and dust remain. Pulses start at 0.38, 0.58 and 0.78 seconds. After hand recovery, the VFX
+tail advances in game time: the shell ends at 2.05 seconds and dust at 3.4 seconds.
 
 ## Separate VFX inspection tools
 
@@ -62,11 +81,10 @@ replaces the previous one on that map. They do not start, replace or clear pawn 
 ## Rendering and authoring
 
 The hemisphere is an illustrated projection: the ground footprint has depth `0.68 * radius`,
-and height shifts artwork north by `0.75 * height`. The dome's width radius is 3.5 cells and
-it never scales past that; the ground ring and dust reach 4.4 cells. The wave is centred on
-the caster's cell and is the same in every direction.
-These are art dimensions, not a gameplay area. A later circular hit radius needs its own
-truthful ground indicator if relevant. Fixed render altitudes avoid clipping a tall sphere
+and height shifts artwork north by `0.75 * height`. The dome settles at a four-cell width
+radius after its brief punch; the ground ring and dust reach five cells. The wave is centred
+on the caster's cell. Its illustrated footprint differs from the circular gameplay area,
+which has a separate four-cell ground indicator. Fixed render altitudes avoid clipping a tall sphere
 into RimWorld's close camera. There is no physical volume and no custom shader of this mod's
 own; the warp is the game's.
 
@@ -99,8 +117,8 @@ release time from `ShinraVfxTiming` and shares the grenade generator's JSON/curv
 ## Sound
 
 Two SoundDefs in `1.6/Defs/SoundDefs/AG_Shinra_Sounds.xml`, both pointed at audio Core already
-ships, so there are no new audio files. `AG_ShinraCharge` is the verb's `soundCast` and plays
-when the button is pressed; `AG_ShinraRelease` layers a deep mortar body at pitch 0.38-0.45
+ships, so there are no new audio files. `AG_ShinraCharge` plays when the charge controller
+starts the gesture; `AG_ShinraRelease` layers a deep mortar body at pitch 0.38-0.45
 with the same psychic texture an octave up, and is played from code when the effect clock
 crosses `ChargeEnd`. That is what keeps the boom on the frame the dome appears: a paused or
 slowed gesture carries the sound with it, exactly as it carries the VFX. It fires once per
@@ -112,22 +130,43 @@ which is a mortar landing next to the player every time the ability is pressed; 
 sits at 38 and 26 across its two layers. `ApiChecks` pins both defNames against the DefOf that
 names them and both clip folders against Core.
 
-## Verification
+## Visual acceptance
 
-Run `dotnet run --project Tests/ShinraVfx/ShinraVfx.csproj` for timing, preview lifecycle,
-and pawn-cast synchronization/cancellation checks. These use production lifecycle code with
-map, draw and animation API stubs. Run `Tests/OriginBlade/ApiChecks/ApiChecks.csproj` to check
-the installed Melee Animation clock API and exported clip schema, and `python3 validate.py`
-for XML, classes, textures and single-source ability grants.
+Live rendering is still needed to judge hand layering with weapons/gloves, attachment to the
+body at peak span, sound levels, the south-facing gesture, normal/max zoom, overlapping VFX,
+and the ground ring over floors and filth. Confirm the warp distorts rather than drawing a
+dark square, and judge its intensity of 0.12 at normal zoom.
 
-In-game checks still needed: grant/remove kit, both hands visible with weapons/gloves and
-staying visually attached to the body at peak span, sound level and whether the two release
-layers muddy each other, the
-pawn being turned to face south for the cast, pause and animation-speed changes, normal/max
-zoom, repeated casts, two casters, cancellation, save/load, and overlaps with pawns, trees and
-walls. The ground ring
-needs checking over floors and filth and under pawns, and the reduced radius needs checking
-for dust washing out the caster. The warp is the one part whose shader contract cannot be
-checked without the renderer: confirm it distorts rather than drawing a dark square, and that
-its intensity of 0.12 is not too strong at normal zoom. The actual
-renderer is required to judge hand layering, brightness and resemblance to the concept.
+## Charged-combat verification
+
+Automated checks:
+
+```sh
+dotnet build Source/RimArt/RimArt.csproj -c Release
+dotnet run --project Tests/ShinraVfx
+dotnet run --project Tests/ShinraCombat
+dotnet run --project Tests/VectorEdit
+dotnet run --project Tests/OriginBlade/ApiChecks
+python3 validate.py
+```
+
+The lifecycle tests run the production game controller with stubbed animation, drawing and
+combat boundaries. Combat tests run the production push/interception logic and both projectile
+adapters against controlled game boundaries. API checks inspect the installed RimWorld,
+Melee Animation and CE assemblies. These checks do not constitute live combat testing.
+
+In-game acceptance checks still require RimWorld, once with vanilla projectiles and once
+with Combat Extended:
+
+- Install, remove and transfer an eye; install two eyes; reload an old developer grant save.
+- Hold for a minute, pause, change animation speed and switch maps. Verify the hands stay at
+  the chest with no dome or release sound, while the meter stops at full.
+- Release early and at full charge, cancel, issue a movement order, attempt an attack, stun,
+  down or kill the caster. Save/load during opening, hold, before burst and during defense.
+- Push allies, animals, mechs, heavy bodies and downed pawns into open ground, walls and map
+  edges. Confirm no damage to terrain/buildings and no collision damage from other pawns.
+- Fire rounds at each threshold and just above it; test rockets, shells, grenades, friendly
+  fire, edited projectiles, close shots, fast shots and overlapping bursts. Verify one burst
+  per cast and one redirection per projectile per burst. Save/load redirected CE rounds.
+- With auto-release off, verify incoming shots never release the charge. With it on, verify
+  only full charge responds, misses pass without triggering, and close shots can hit first.
