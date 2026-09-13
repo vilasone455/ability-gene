@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Writes the throw animations that Melee Animation plays for this mod: the grenade throw (frost
-bomb, mimic beacon) and the kunai throw. Each is a set of three clips, one per facing.
+bomb, mimic beacon), the kunai throw and the makibishi scatter. Each is a set of three clips, one per facing.
 
 Melee Animation's own guide (Source/AnimationTutorial/AnimationTutorial.md in their repo)
 animates in Unity and exports a json. That json is the real interface - their loader reads
@@ -15,7 +15,7 @@ It makes the animation reviewable. A keyframe table in a diff says "the wind-up 
 longer"; a re-exported 40KB json says nothing at all.
 
 And it makes the timing single-sourced. The release moment is a number here, and the same
-number is the one the C# throws on - see ThrowAnimation.Grenade and ThrowAnimation.Kunai, whose
+number is the one the C# throws on - see ThrowAnimation.Grenade, .Kunai and .Scatter, whose
 release fractions this script prints and ApiChecks compares against the written json.
 
 What is given up is the visual preview. Melee Animation ships one anyway: dev mode ->
@@ -293,7 +293,59 @@ KUNAI = {
     "item_scale": 0.40,
 }
 
-STYLES = [GRENADE, KUNAI]
+# ---------------------------------------------------------------- makibishi scatter
+
+# An underhand toss of a handful of spikes at the ground a few cells away, not a throw at a
+# target. The hand swings back past the hip, low, holds for 4 frames, then sweeps forward and up
+# at waist height. The handful leaves the palm early in the forward swing, while the hand is still
+# below the chest, and the arm follows through forward and up. No hand ever goes above the
+# shoulder: the grenade clip lobs over the crown, the kunai clip whips from beside the ear.
+SCATTER_LENGTH = 0.7
+SCATTER_RELEASE = 0.3
+
+SCATTER = {
+    "name": "RimArt_ThrowScatter",
+    "length": SCATTER_LENGTH,
+    "release": SCATTER_RELEASE,
+    "poses": [
+        (0.00,  0.12, -0.23,  0.00),  # ready at the hip, same as the other clips
+        (0.12, -0.10, -0.26, -0.02),  # swing back past the hip
+        (0.20, -0.22, -0.24, -0.04),  # wound back, low
+        (0.24, -0.23, -0.23, -0.04),  # hold
+        (SCATTER_RELEASE, 0.20, -0.20, 0.10),  # sweeping forward at waist height: open the hand
+        (0.40,  0.40, -0.15,  0.22),  # follow through forward and up, palm up
+        (0.54,  0.26, -0.20,  0.10),
+        (SCATTER_LENGTH, 0.12, -0.23, 0.00),
+    ],
+    "body_rot": [
+        (0.00, 0.0),
+        (0.20, -4.0),
+        (SCATTER_RELEASE, 8.0),
+        (0.42, 10.0),
+        (SCATTER_LENGTH, 0.0),
+    ],
+    "body_x": [
+        (0.00, 0.0),
+        (0.20, -0.05),
+        (SCATTER_RELEASE, 0.06),
+        (0.42, 0.08),
+        (SCATTER_LENGTH, 0.0),
+    ],
+    # A small crouch into the wind-back, standing up through the release.
+    "body_lift": [(0.00, 0.0), (0.20, -0.03), (0.42, 0.0), (SCATTER_LENGTH, 0.0)],
+    # Palm faces back on the wind-back and turns up and forward through the release.
+    "wrist": [(0.0, 0.0), (0.20, -20.0), (SCATTER_RELEASE, 60.0), (0.42, 90.0), (SCATTER_LENGTH, 0.0)],
+    # North-facing follow-through reaches past the body, away from the camera.
+    "behind": (0.34, 0.54),
+    "texture": "RimArt/Makibishi/Handful",
+    "spin": [(0.00, 0.0), (SCATTER_RELEASE, 0.0)],
+    # Sits in the palm, drawn in front of the hand.
+    "item_pos": {"x": 0.0, "z": 0.04},
+    "item_y": 0.06,
+    "item_scale": 0.36,
+}
+
+STYLES = [GRENADE, KUNAI, SCATTER]
 
 ARC_SAMPLE = 0.02
 

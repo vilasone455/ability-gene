@@ -435,6 +435,29 @@ seconds. Fix that before tuning anything else, because it decides every other nu
 back and you keep it. Retrieval costs time the fight may not give you, which prices the
 decision without a timer.
 
+## Makibishi
+
+Chosen by the user on September 13, 2026, after the kunai belt, as a ninja tool that denies an
+area. Nothing else in the mod does: the frost bomb acts only at the moment it bursts.
+
+**Implemented** as the makibishi pouch. Decisions taken with the user:
+
+| Topic | Decision |
+|---|---|
+| Carry | Waist pouch on the Belt layer, like the other belts. A thigh position would have allowed wearing it with the kunai belt; the user chose the waist because nobody carries a spike bag on the leg |
+| Supply | Consumable makibishi items, one handful per throw, reloaded like the kunai belt. Spikes on the ground are not picked up again: there are too many of them |
+| Shape | 3x3. The center "+" (5 cells) always, each corner 50%. The user's own design: a square's blocking with a scatter's look |
+| Duration | 30 s |
+| Pathing | Everyone avoids the patch if a detour exists and walks through if not |
+| Effect | 35% per cell entered: 4 stab damage to a foot and Moving -30%, fading over 15 s |
+| Friendly fire | Colonists and allies are hurt the same as enemies |
+
+Rejected: a reusable grenade-slot item (endless physical spikes), a consumable stack in the grenade
+slot (vanilla weapons do not stack, so every throw would need a manual re-equip), and hostiles not
+seeing the patch like vanilla traps (the spikes are visible on screen).
+
+Numbers, the pathing mechanism and the animation are in the README section *Makibishi pouch*.
+
 ## Suggested first slice
 
 1. **Wimp → Play Dead**, the pairing the user favored.

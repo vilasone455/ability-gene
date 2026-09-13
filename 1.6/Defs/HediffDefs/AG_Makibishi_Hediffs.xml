@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Stepped on a makibishi. Added by Makibishi.Wound, replaced (timer restarted) on every new
+       step. Whole body, not a part: the stab wound itself is a normal injury on the foot.
+
+       15 s total (HediffComp_Disappears, 900 ticks). HediffComp_FadeWithTimer sets severity to the
+       fraction of that time left, so the stages below are -30% for 5 s, -20% for 5 s, -10% for 5 s. -->
+  <HediffDef>
+    <defName>AG_PuncturedFoot</defName>
+    <label>punctured foot</label>
+    <description>Stepped on a makibishi spike. Moving is slower while the foot hurts: -30% at first, -20% after 5 seconds, -10% after 10 seconds, gone after 15 seconds.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.85, 0.55, 0.45)</defaultLabelColor>
+    <isBad>true</isBad>
+    <tendable>false</tendable>
+    <makesSickThought>false</makesSickThought>
+    <everCurableByItem>false</everCurableByItem>
+    <initialSeverity>1</initialSeverity>
+    <maxSeverity>1</maxSeverity>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>900</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+      <li Class="RimArt.HediffCompProperties_FadeWithTimer" />
+    </comps>
+    <stages>
+      <li>
+        <minSeverity>0</minSeverity>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.10</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <minSeverity>0.3334</minSeverity>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.20</offset>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <minSeverity>0.6667</minSeverity>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <offset>-0.30</offset>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

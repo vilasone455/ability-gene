@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Makibishi under Combat Extended. Only the inventory stats CE plans a pawn's kit around.
+
+     The throw is untouched: it is an ability, not a CE verb, and the projectile keeps
+     RimArt.Projectile_Makibishi (see AG_Makibishi_Things.xml), so there is no ballistic flight to
+     give up. The spikes are a cell effect with no CE damage model involved. -->
+
+<Patch>
+
+  <!-- A handful of small spikes: about a pistol magazine's bulk. -->
+  <Operation Class="PatchOperationAdd">
+    <xpath>Defs/ThingDef[defName="AG_Makibishi"]/statBases</xpath>
+    <value>
+      <Bulk>0.2</Bulk>
+    </value>
+  </Operation>
+
+  <!-- A small cloth pouch on the belt. -->
+  <Operation Class="PatchOperationAdd">
+    <xpath>Defs/ThingDef[defName="AG_MakibishiPouch"]/statBases</xpath>
+    <value>
+      <Bulk>1</Bulk>
+      <WornBulk>0.5</WornBulk>
+    </value>
+  </Operation>
+
+</Patch>

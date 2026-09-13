@@ -220,4 +220,98 @@
     <canEditProbability>false</canEditProbability>
   </AM.AnimDef>
 
+  <!-- The makibishi scatter, in the same three facings. An underhand toss at the ground, not a
+       throw at a target: 42 ticks, the hand swings back low past the hip, sweeps forward at waist
+       height and opens at tick 18, following through forward and up. Written by
+       make_throw_anim.py (SCATTER). -->
+  <AM.AnimDef>
+    <defName>AG_ThrowScatter</defName>
+    <label>Throw: makibishi</label>
+    <description>Scattering makibishi.</description>
+    <jobString>Scattering makibishi.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ThrowScatter.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+
+    <cellData>
+      <li>
+        <type>PawnStart</type>
+        <position>(0, 0)</position>
+        <pawnIndex>0</pawnIndex>
+      </li>
+    </cellData>
+
+    <!-- Same reasoning as the grenade clips. -->
+    <handsVisibility>
+      <li>
+        <pawnIndex>0</pawnIndex>
+        <showMainHand>true</showMainHand>
+        <showAltHand>true</showAltHand>
+      </li>
+    </handsVisibility>
+
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+
+  <AM.AnimDef>
+    <defName>AG_ThrowScatterNorth</defName>
+    <label>Throw: makibishi (north)</label>
+    <description>Scattering makibishi.</description>
+    <jobString>Scattering makibishi.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ThrowScatterNorth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+
+    <cellData>
+      <li>
+        <type>PawnStart</type>
+        <position>(0, 0)</position>
+        <pawnIndex>0</pawnIndex>
+      </li>
+    </cellData>
+
+    <!-- Same reasoning as the grenade clips. -->
+    <handsVisibility>
+      <li>
+        <pawnIndex>0</pawnIndex>
+        <showMainHand>true</showMainHand>
+        <showAltHand>true</showAltHand>
+      </li>
+    </handsVisibility>
+
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+
+  <AM.AnimDef>
+    <defName>AG_ThrowScatterSouth</defName>
+    <label>Throw: makibishi (south)</label>
+    <description>Scattering makibishi.</description>
+    <jobString>Scattering makibishi.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ThrowScatterSouth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+
+    <cellData>
+      <li>
+        <type>PawnStart</type>
+        <position>(0, 0)</position>
+        <pawnIndex>0</pawnIndex>
+      </li>
+    </cellData>
+
+    <!-- Same reasoning as the grenade clips. -->
+    <handsVisibility>
+      <li>
+        <pawnIndex>0</pawnIndex>
+        <showMainHand>true</showMainHand>
+        <showAltHand>true</showAltHand>
+      </li>
+    </handsVisibility>
+
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+
 </Defs>

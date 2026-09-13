@@ -163,6 +163,10 @@ if DATA is not None:
             if all(os.path.exists(os.path.join("Textures", tex + "_" + facing + ".png"))
                    for facing in ("north", "east", "south")):
                 continue
+            # Graphic_Random textures (makibishi spikes) are a folder of variants.
+            folder = os.path.join("Textures", tex)
+            if os.path.isdir(folder) and any(n.endswith(".png") for n in os.listdir(folder)):
+                continue
             w = vanilla.get("TEX:" + tex)
             if not w: fail("unresolved texture", f, tex)
             elif w == {"Royalty"}: fail("Royalty-only texture", f, tex)

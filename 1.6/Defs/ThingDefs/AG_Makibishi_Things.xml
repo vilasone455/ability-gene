@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- One handful of makibishi. Pouch ammunition, one per throw, used up when thrown: spikes on the
+       ground are not picked up again. Made 5 at a time by AG_MakeMakibishi. -->
+  <ThingDef ParentName="ResourceBase">
+    <defName>AG_Makibishi</defName>
+    <label>makibishi</label>
+    <description>A handful of small iron spikes, shaped so one point always faces up. Loaded into a makibishi pouch, one handful per throw.\n\nThrown makibishi cover up to 9 cells for 30 seconds and are then too scattered to matter. They cannot be picked up again.</description>
+    <graphicData>
+      <texPath>RimArt/Makibishi/Makibishi</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.8</drawSize>
+    </graphicData>
+    <soundInteract>Metal_Drop</soundInteract>
+    <soundDrop>Metal_Drop</soundDrop>
+    <techLevel>Medieval</techLevel>
+    <stackLimit>25</stackLimit>
+    <healthAffectsPrice>false</healthAffectsPrice>
+    <statBases>
+      <MarketValue>5</MarketValue>
+      <Mass>0.2</Mass>
+      <MaxHitPoints>40</MaxHitPoints>
+      <Flammability>0</Flammability>
+      <DeteriorationRate>0.5</DeteriorationRate>
+    </statBases>
+    <thingCategories>
+      <li>Manufactured</li>
+    </thingCategories>
+  </ThingDef>
+
+  <!-- A handful in flight. Arcs like a grenade and deals no damage; Projectile_Makibishi spikes the
+       patch where it lands.
+
+       thingClass is stated rather than inherited: Combat Extended rewrites BaseGrenadeProjectile's
+       thingClass, and MapComponent_Throws launches a Verse.Projectile. Same line as
+       AG_MimicBeaconProjectile. No explosionRadius, so the ability needs no forced miss radius. -->
+  <ThingDef ParentName="BaseGrenadeProjectile">
+    <defName>AG_MakibishiProjectile</defName>
+    <label>makibishi</label>
+    <thingClass>RimArt.Projectile_Makibishi</thingClass>
+    <graphicData>
+      <texPath>RimArt/Makibishi/Handful</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.6</drawSize>
+    </graphicData>
+    <projectile>
+      <damageDef>Blunt</damageDef>
+      <damageAmountBase>0</damageAmountBase>
+      <speed>14</speed>
+      <arcHeightFactor>0.6</arcHeightFactor>
+      <shadowSize>0.3</shadowSize>
+    </projectile>
+  </ThingDef>
+
+  <!-- Spikes on one cell (RimArt.Makibishi). Lasts 30 s, then vanishes.
+
+       Building, not an edifice, standable and fillPercent 0, like AG_MimicDecoy: it shares a cell
+       with a door, an item, filth or a plant without wiping it (GenSpawn.SpawningWipes), and does
+       not block movement. Pathing cost comes from the class (IPathFindCostProvider), not from
+       pathCost, so it can be per pawn: flying pawns and mechanoids ignore it.
+
+       No hit points, not claimable, deconstructible or repairable: nothing to shoot, haul or
+       rebuild. Drawn in the map mesh at filth altitude, under pawns and items. -->
+  <ThingDef>
+    <defName>AG_MakibishiSpikes</defName>
+    <label>makibishi</label>
+    <description>Iron spikes scattered on the ground. Anyone who walks here has a 35% chance to step on one: a 4-damage stab to the foot and slower movement for 15 seconds. People walk around spikes when they can. Flying creatures and mechanoids are not affected.</description>
+    <thingClass>RimArt.Makibishi</thingClass>
+    <category>Building</category>
+    <altitudeLayer>Filth</altitudeLayer>
+    <drawerType>MapMeshOnly</drawerType>
+    <tickerType>Normal</tickerType>
+    <selectable>true</selectable>
+    <useHitPoints>false</useHitPoints>
+    <rotatable>false</rotatable>
+    <passability>Standable</passability>
+    <fillPercent>0</fillPercent>
+    <coversFloor>false</coversFloor>
+    <blockWind>false</blockWind>
+    <blockLight>false</blockLight>
+    <castEdgeShadows>false</castEdgeShadows>
+    <staticSunShadowHeight>0</staticSunShadowHeight>
+    <canOverlapZones>true</canOverlapZones>
+    <leaveResourcesWhenKilled>false</leaveResourcesWhenKilled>
+    <building>
+      <isEdifice>false</isEdifice>
+      <claimable>false</claimable>
+      <deconstructible>false</deconstructible>
+      <repairable>false</repairable>
+      <expandHomeArea>false</expandHomeArea>
+    </building>
+    <graphicData>
+      <texPath>RimArt/Makibishi/Spikes</texPath>
+      <graphicClass>Graphic_Random</graphicClass>
+      <drawSize>1</drawSize>
+    </graphicData>
+    <statBases>
+      <Flammability>0</Flammability>
+    </statBases>
+  </ThingDef>
+
+  <!-- The makibishi pouch, and the only source of the scatter makibishi ability.
+
+       Belt layer on the waist, like every other belt in this mod, so it cannot be worn with the
+       kunai belt, stasis belt, retrieval hook belt, drone rig or a shield belt.
+
+       Charges are vanilla CompApparelReloadable, the same as the kunai belt: 3 handfuls, saved on
+       the pouch, full when crafted, one makibishi item per charge. Pawns reload it on their own
+       when it is empty and makibishi are reachable, and "Reload" appears when right-clicking
+       makibishi. No apparel tags: nothing generates wearing one. -->
+  <ThingDef ParentName="ApparelBase">
+    <defName>AG_MakibishiPouch</defName>
+    <label>makibishi pouch</label>
+    <description>A cloth pouch worn on the belt that holds 3 handfuls of makibishi. The wearer can scatter them with the scatter makibishi ability.\n\nRange 9.9 tiles. Each throw uses one handful and spikes a 3x3 patch for 30 seconds: the center and the 4 cells beside it always, each corner 50% of the time. Reload with makibishi: the wearer reloads on their own when the pouch is empty, or right-click makibishi to reload early. A new pouch comes with 3 handfuls.</description>
+    <thingClass>Apparel</thingClass>
+    <graphicData>
+      <texPath>RimArt/Makibishi/Pouch</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <techLevel>Medieval</techLevel>
+    <statBases>
+      <Mass>0.8</Mass>
+      <WorkToMake>1500</WorkToMake>
+      <Flammability>1</Flammability>
+      <EquipDelay>1</EquipDelay>
+    </statBases>
+    <costList>
+      <Cloth>30</Cloth>
+    </costList>
+    <recipeMaker>
+      <unfinishedThingDef>UnfinishedApparel</unfinishedThingDef>
+      <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+      <workSkill>Crafting</workSkill>
+      <effectWorking>Tailor</effectWorking>
+      <soundWorking>Recipe_Tailor</soundWorking>
+      <recipeUsers>
+        <li>HandTailoringBench</li>
+        <li>ElectricTailoringBench</li>
+      </recipeUsers>
+      <useIngredientsForColor>false</useIngredientsForColor>
+      <skillRequirements>
+        <Crafting>3</Crafting>
+      </skillRequirements>
+      <displayPriority>332</displayPriority>
+    </recipeMaker>
+    <thingCategories>
+      <li>ApparelUtility</li>
+    </thingCategories>
+    <apparel>
+      <countsAsClothingForNudity>false</countsAsClothingForNudity>
+      <careIfWornByCorpse>false</careIfWornByCorpse>
+      <careIfDamaged>false</careIfDamaged>
+      <wearPerDay>0</wearPerDay>
+      <bodyPartGroups>
+        <li>Waist</li>
+      </bodyPartGroups>
+      <layers>
+        <li>Belt</li>
+      </layers>
+      <developmentalStageFilter>Child, Adult</developmentalStageFilter>
+    </apparel>
+    <comps>
+      <li Class="CompProperties_ApparelReloadable">
+        <maxCharges>3</maxCharges>
+        <ammoDef>AG_Makibishi</ammoDef>
+        <ammoCountPerCharge>1</ammoCountPerCharge>
+        <baseReloadTicks>60</baseReloadTicks>
+        <soundReload>Standard_Reload</soundReload>
+        <chargeNoun>handful</chargeNoun>
+      </li>
+      <li Class="RimArt.CompProperties_ApparelAbility">
+        <abilities>
+          <li>AG_ScatterMakibishi</li>
+        </abilities>
+      </li>
+    </comps>
+  </ThingDef>
+
+</Defs>

@@ -19,6 +19,7 @@ piece of equipment, weapon trait, or earned origin.
 | Equipment | **Stasis belt** | Research Stasis Fields, craft it, and wear it |
 | Equipment | **Retrieval hook belt** | Research Machining, craft it, and wear it |
 | Equipment | **Kunai belt** | Research Smithing, craft it and kunai, and wear it |
+| Equipment | **Makibishi pouch** | Craft it, research Smithing to make makibishi, and wear it |
 | Weapon trait | **Resonant** | Find on a Unique Melee Weapon |
 | Weapon trait | **Arcing** | Find on a Unique Melee Weapon; also requires Melee Animation |
 | Earned origin | **Origin: Blade** | Reach Melee 14 and Crafting 12, study five blade types, then awaken |
@@ -441,6 +442,49 @@ Animation the kunai launches at once.
 
 Medieval tech, *Smithing* research, smithy. Belt: Crafting 4, 30 steel / 20 cloth, 1.5 kg, belt
 layer, no armor. Kunai: 25 steel for 5, 0.25 kg each, stack 30.
+
+### Makibishi pouch → *scatter makibishi* (equipment)
+Tosses one handful of makibishi (iron caltrops) at a cell. Range 9.9 tiles, line of sight required,
+0.5 s warmup, 2 s cooldown, no hit roll: the handful lands on the aimed cell. Drafted only, not
+usable by pawns incapable of violence or by AI.
+
+**Patch:** 3x3 around the landing cell. The center and the 4 cells beside it are always spiked;
+each corner is spiked 50% of the time. So the middle row and middle column are always full, and
+any straight crossing of a gap up to 3 wide enters a spiked cell. A cell is skipped if it is not
+walkable, is water, or has no line of sight to the center (no spikes behind a wall corner). Door
+cells are walkable, so a door gets spikes and keeps its door. Spikes last **30 s** and then vanish;
+throwing on a cell that already has spikes restarts its 30 s. Spikes cannot be picked up.
+
+**Stepping on it:** each time a pawn enters a spiked cell it has a **35% chance** to step on a
+spike. Standing on the cell does not roll again. A step is a **4 stab damage** wound (10% armor
+penetration, no damage spread) to a foot, or for animals a paw or hoof, or failing both any leg,
+blamed on the last pawn to throw on that cell. It also adds *punctured foot*: Moving -30% for 5 s,
+-20% for 5 s, -10% for 5 s. A new step restarts it at -30%. Colonists and allies are hurt the same
+as enemies. Flying pawns and mechanoids are not affected.
+
+**Pathing:** each spiked cell adds a path cost of 400 (a plain cell is 13) for every pawn it can
+hurt, so pawns detour around the patch when the way around is up to about 30 cells longer, and
+walk through it otherwise. The cost comes from `RimArt.Makibishi` implementing vanilla
+`IPathFindCostProvider` (the path finder lists every such thing through
+`ThingRequestGroup.CostProvider`), not from `pathCost`, so it can be per pawn and does not need
+the spikes to be an edifice. The spikes are a non-edifice, standable, zero-fill building, so they
+wipe nothing when spawned.
+
+**Ammunition:** the pouch holds **3 handfuls**, shown on the gizmo as "2 / 3". Reloading is
+vanilla reloadable apparel, as for the kunai belt: one makibishi item per charge, the wearer
+reloads on their own when the pouch is empty and makibishi are reachable on the map, and
+right-clicking makibishi gives *Reload*. A crafted pouch starts full. Makibishi in a pawn's
+inventory are not used for reloading.
+
+With Melee Animation the pawn plays its own scatter clip (`AG_ThrowScatter`, three facings,
+written by `make_throw_anim.py`): 42 ticks, the hand swings back low past the hip, sweeps forward
+at waist height and opens at tick 18, following through forward and up. Without Melee Animation
+the handful launches at once.
+
+Pouch: Medieval tech, no research, tailoring bench, Crafting 3, 30 cloth, 0.8 kg, belt layer on
+the waist (cannot be worn with the kunai belt or any other belt), no armor. Makibishi: *Smithing*
+research, smithy, Crafting 3, 10 steel for 5, 0.2 kg each, stack 25. Combat Extended adds Bulk
+0.2 per makibishi and Bulk 1 / Worn Bulk 0.5 for the pouch.
 
 ### Frost bomb (weapon)
 A thrown grenade, equipped in the weapon slot and aimed like the game's own. Range 12.9

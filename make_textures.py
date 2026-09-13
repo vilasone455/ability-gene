@@ -1155,6 +1155,126 @@ def make_kunai_embedded():
     for facing in ("north", "east", "south"):
         finish(img, f"Textures/RimArt/Kunai/Embedded_{facing}.png")
 
+
+# Makibishi. Iron caltrops seen from above: three points lying on the ground 120 degrees apart
+# and a fourth pointing up at the viewer, drawn as a lit knob in the middle. The same drawing is
+# the item, the handful in the hand and in flight, the spikes on the ground, the pouch and the
+# icon. Positions are fixed numbers, not random, so a rerun writes the same files.
+
+IRON       = (78, 80, 88)
+IRON_LIGHT = (136, 140, 150)
+IRON_DARK  = (44, 45, 52)
+POUCH      = (92, 70, 52)
+POUCH_LIT  = (124, 97, 72)
+POUCH_DARK = (60, 45, 34)
+
+
+def draw_caltrop(d, cx, cy, size, angle):
+    """One caltrop of the given point length, first point at angle degrees (0 = right)."""
+    import math
+    base = size * 0.30
+    for k in range(3):
+        a = math.radians(angle + k * 120)
+        tip = (cx + math.cos(a) * size, cy - math.sin(a) * size)
+        left = (cx + math.cos(a + 1.5708) * base, cy - math.sin(a + 1.5708) * base)
+        right = (cx + math.cos(a - 1.5708) * base, cy - math.sin(a - 1.5708) * base)
+        d.polygon([tip, left, right], fill=IRON_DARK)
+        # Lit upper-left edge of each point.
+        mid = ((left[0] + right[0]) / 2, (left[1] + right[1]) / 2)
+        lit_side = left if left[0] + left[1] < right[0] + right[1] else right
+        d.polygon([tip, lit_side, mid], fill=IRON)
+    r = base * 1.25
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=IRON_DARK)
+    d.ellipse([cx - r * 0.75, cy - r * 0.75, cx + r * 0.55, cy + r * 0.55], fill=IRON)
+    d.ellipse([cx - r * 0.5, cy - r * 0.5, cx, cy], fill=IRON_LIGHT)
+
+
+def draw_caltrops(d, spots):
+    """spots: (x, y, point length, angle) in final-texture pixels."""
+    for x, y, size, angle in spots:
+        draw_caltrop(d, px(x), px(y), px(size), angle)
+
+
+def make_makibishi():
+    """The item: a small pile of five caltrops."""
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    draw_caltrops(ImageDraw.Draw(img), [
+        (46, 70, 20, 10), (82, 62, 20, 75), (64, 88, 20, 40), (60, 48, 18, 100), (88, 90, 18, 150),
+    ])
+    finish(img, "Textures/RimArt/Makibishi/Makibishi.png")
+
+
+def make_makibishi_handful():
+    """In the hand and in flight: four caltrops close together."""
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    draw_caltrops(ImageDraw.Draw(img), [
+        (50, 56, 22, 20), (80, 54, 22, 85), (54, 84, 22, 130), (82, 82, 22, 50),
+    ])
+    finish(img, "Textures/RimArt/Makibishi/Handful.png")
+
+
+# Three ground variants for Graphic_Random, one per spiked cell. Each spreads 6-7 caltrops across
+# the cell so neighbouring cells read as one scattered patch.
+SPIKE_LAYOUTS = {
+    "a": [(22, 26, 16, 10), (70, 18, 16, 80), (108, 40, 16, 140), (40, 66, 16, 50),
+          (86, 74, 16, 110), (24, 106, 16, 170), (96, 110, 16, 30)],
+    "b": [(34, 16, 16, 60), (98, 24, 16, 0), (60, 52, 16, 120), (18, 80, 16, 90),
+          (110, 76, 16, 20), (54, 104, 16, 150)],
+    "c": [(16, 40, 16, 100), (58, 22, 16, 30), (104, 16, 16, 70), (82, 58, 16, 160),
+          (36, 90, 16, 10), (76, 104, 16, 130), (114, 100, 16, 50)],
+}
+
+
+def make_makibishi_spikes():
+    import os
+    os.makedirs("Textures/RimArt/Makibishi/Spikes", exist_ok=True)
+    for name, spots in SPIKE_LAYOUTS.items():
+        img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+        draw_caltrops(ImageDraw.Draw(img), spots)
+        finish(img, f"Textures/RimArt/Makibishi/Spikes/Spikes_{name}.png")
+
+
+def make_makibishi_pouch():
+    """The worn item: a drawstring cloth pouch hanging from a belt loop, caltrop points showing at the mouth."""
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+
+    # Belt loop at the top.
+    d.rounded_rectangle([px(44), px(14), px(84), px(34)], radius=px(4), fill=STRAP)
+    d.rounded_rectangle([px(47), px(17), px(81), px(23)], radius=px(3), fill=STRAP_LIT)
+
+    # Caltrops at the mouth, behind the body of the pouch.
+    draw_caltrops(d, [(52, 40, 14, 60), (74, 38, 14, 100), (63, 34, 12, 20)])
+
+    # Body.
+    d.ellipse([px(22), px(42), px(106), px(120)], fill=EDGE)
+    d.ellipse([px(25), px(45), px(103), px(117)], fill=POUCH)
+    d.ellipse([px(32), px(50), px(70), px(92)], fill=POUCH_LIT)
+    d.chord([px(25), px(45), px(103), px(117)], 20, 160, fill=POUCH_DARK)
+    d.ellipse([px(25), px(45), px(103), px(113)], outline=EDGE, width=px(1.5))
+
+    # Gathered neck and drawstring.
+    d.rounded_rectangle([px(40), px(40), px(88), px(54)], radius=px(6), fill=POUCH_DARK, outline=EDGE, width=px(1.5))
+    for x in range(44, 86, 7):
+        d.line([(px(x), px(42)), (px(x + 2), px(52))], fill=POUCH, width=px(1.5))
+    d.line([(px(86), px(48)), (px(98), px(66)), (px(94), px(74))], fill=CORD_LIT, width=px(3))
+
+    finish(img, "Textures/RimArt/Makibishi/Pouch.png")
+
+
+def make_makibishi_icon():
+    """The scatter gizmo: three caltrops fanned out from the bottom left."""
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    c = S // 2
+    d.ellipse([c - px(58), c - px(58), c + px(58), c + px(58)], fill=(30, 32, 36, 210))
+    # Arc of motion lines from the hand's direction.
+    for r in (px(70), px(84)):
+        d.arc([px(10) - r, S - px(10) - r, px(10) + r, S - px(10) + r], 290, 340, fill=STEEL_DARK, width=px(4))
+    draw_caltrops(d, [(58, 40, 20, 10), (92, 58, 20, 80), (80, 94, 20, 140)])
+    finish(img, "Textures/RimArt/Makibishi/IconMakibishi.png")
+
+
 if __name__ == "__main__":
     make_flying()
     make_planted()
@@ -1181,3 +1301,8 @@ if __name__ == "__main__":
     make_kunai_belt()
     make_kunai_icon()
     make_kunai_embedded()
+    make_makibishi()
+    make_makibishi_handful()
+    make_makibishi_spikes()
+    make_makibishi_pouch()
+    make_makibishi_icon()

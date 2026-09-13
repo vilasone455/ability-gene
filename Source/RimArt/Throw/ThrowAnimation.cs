@@ -9,7 +9,7 @@ namespace RimArt
 {
     /// <summary>
     /// Plays a throw on one pawn, through Melee Animation, facing the target. Which throw is a
-    /// <see cref="Clips"/> set: <see cref="Grenade"/> or <see cref="Kunai"/>.
+    /// <see cref="Clips"/> set: <see cref="Grenade"/>, <see cref="Kunai"/> or <see cref="Scatter"/>.
     ///
     /// This is a second, separate bridge to the same mod that <see cref="MeleeAnimation"/> talks
     /// to, and the split is deliberate. That one asks for an execution: two pawns, a weapon
@@ -88,6 +88,9 @@ namespace RimArt
 
         /// <summary>Flat knife throw from beside the ear, 36 ticks, release at tick 18.</summary>
         public static readonly Clips Kunai = new Clips("AG_ThrowKunai", 0.5f);
+
+        /// <summary>Underhand toss of a handful at the ground, 42 ticks, release at tick 18. Makibishi.</summary>
+        public static readonly Clips Scatter = new Clips("AG_ThrowScatter", 0.4286f);
 
         /// <summary>Which of the three clips a throw uses.</summary>
         public enum Facing

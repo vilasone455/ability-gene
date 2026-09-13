@@ -23,6 +23,7 @@ Every kit in the mod, how to get it, and what each ability does.
 | [Repulsion eye](#repulsion-eye) | Implant | Shinra Tensei | - |
 | [Drone control rig](#drone-control-rig) | Wearable | Deploy toy car | - |
 | [Kunai belt](#kunai-belt) | Wearable | Throw kunai | - |
+| [Makibishi pouch](#makibishi-pouch) | Wearable | Scatter makibishi | - |
 | [Retrieval hook belt](#retrieval-hook-belt) | Wearable | Retrieval hook | - |
 | [Stasis belt](#stasis-belt) | Wearable | Stasis field | - |
 | [Arcing](#arcing) | Weapon trait | Arc | Unique Melee Weapons, Melee Animation |
@@ -488,6 +489,29 @@ Hit chance uses the thrower's Melee skill, with distance, cover and weather coun
 A hit has a 20% chance to break the kunai. Otherwise it sticks in the body part it hit (up to 3 per target), and that wound bleeds at half rate while it stays in. Right-click the target to pull them all out: 2 seconds for all of them, or against a standing enemy 0.5 seconds and a melee roll per kunai, repeated until all are out. Each pulled kunai comes back, its wound bleeds fully again, and its part is cut for 6 more (+36% bleeding per day). Kunai in a killed target drop by the body. Misses, and hits that armor stops, drop on the ground to pick up.
 
 **Cooldown:** 1.5 seconds | **Range:** 14.9 cells | **Cast time:** 0.3 seconds
+
+
+### Makibishi pouch
+
+A cloth pouch worn on the belt that holds 3 handfuls of makibishi. The wearer can scatter them with the scatter makibishi ability.
+
+Range 9.9 tiles. Each throw uses one handful and spikes a 3x3 patch for 30 seconds: the center and the 4 cells beside it always, each corner 50% of the time. Reload with makibishi: the wearer reloads on their own when the pouch is empty, or right-click makibishi to reload early. A new pouch comes with 3 handfuls.
+
+**How to get it**
+
+- Craft it at a hand tailor bench or electric tailor bench. Needs Crafting skill 3. Costs cloth ×30.
+- Holds 3 charges and starts full. Reload with makibishi (1 per charge). Make 5 from 10 steel at a fueled smithy or electric smithy after researching **smithing**.
+- Wear it to use the ability. Taking it off removes the ability.
+
+#### Scatter makibishi
+
+Toss one handful of makibishi from the pouch onto the ground. Range 9.9 tiles.
+
+Spikes a 3x3 patch for 30 seconds: the center and the 4 cells beside it always, each corner 50% of the time. No spikes on water, or on cells hidden from the center by a wall.
+
+Each time anyone walks onto a spiked cell they have a 35% chance to step on a spike: 4 stab damage to a foot (10% armor penetration) and -30% movement, falling to -20% after 5 seconds and -10% after 10, gone after 15. Colonists and allies are hurt the same as enemies. People walk around spikes when the way around is not much longer. Flying creatures and mechanoids are not affected.
+
+**Cooldown:** 2 seconds | **Range:** 9.9 cells | **Cast time:** 0.5 seconds
 
 
 ### Retrieval hook belt

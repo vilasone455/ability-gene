@@ -86,8 +86,9 @@ static class ApiChecks
         string sounds = CheckShinraSounds(assembly);
         string retrieval = CheckRetrievalHookContract();
         string kunai = CheckKunaiContract();
+        string makibishi = CheckMakibishiContract();
         Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, "
-            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval} {kunai}");
+            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval} {kunai} {makibishi}");
     }
 
     static void CheckShinraAcquisition()
@@ -291,7 +292,7 @@ static class ApiChecks
         int curves = 0, clips = 0;
         // The throw is directional and needs one clip per facing; Shinra Tensei is centred and
         // has exactly one, so a second Shinra clip reappearing here is a mistake worth catching.
-        foreach (string clip in ThrowAnimation.Grenade.All.Concat(ThrowAnimation.Kunai.All)
+        foreach (string clip in ThrowAnimation.Grenade.All.Concat(ThrowAnimation.Kunai.All).Concat(ThrowAnimation.Scatter.All)
                      .Select(name => name.Replace("AG_", "RimArt_")).Append("RimArt_ShinraPush"))
         {
             curves += CheckThrowAnimationJson(dataModel, partModel, clip);
@@ -299,7 +300,7 @@ static class ApiChecks
         }
         // The C# launches the thrown object at ReleaseFraction of the clip. The json hides the held
         // part at its release time, so the two must agree for every facing of every throw style.
-        foreach (var style in new[] { ThrowAnimation.Grenade, ThrowAnimation.Kunai })
+        foreach (var style in new[] { ThrowAnimation.Grenade, ThrowAnimation.Kunai, ThrowAnimation.Scatter })
         foreach (string clip in style.All)
         {
             string file = "Animations/" + clip.Replace("AG_", "RimArt_") + ".json";
@@ -333,7 +334,7 @@ static class ApiChecks
                     + $"expected {facing} flip {flip} {degrees:0.00}");
         }
         foreach (string stale in new[] { "NorthEast", "SouthEast" })
-        foreach (var style in new[] { ThrowAnimation.Grenade, ThrowAnimation.Kunai })
+        foreach (var style in new[] { ThrowAnimation.Grenade, ThrowAnimation.Kunai, ThrowAnimation.Scatter })
             if (File.Exists($"Animations/{style.East.Replace("AG_", "RimArt_")}{stale}.json"))
                 throw new Exception($"{style.East}{stale} clip is back; diagonals are rotated at draw time, not authored");
 
@@ -860,5 +861,74 @@ static class ApiChecks
             throw new Exception("Stuck kunai surgery: expected Recipe_RemoveHediff on AG_EmbeddedKunai per body part, Medicine 3");
 
         return "Checked the kunai hit roll, reloadable belt, stuck kunai and def numbers.";
+    }
+
+    /// <summary>
+    /// The makibishi contracts. The spikes reach the path finder through a vanilla interface and
+    /// ThingRequestGroup rather than a Harmony patch, and the slow reads HediffComp_Disappears
+    /// fields, so the patch loop above covers none of it.
+    /// </summary>
+    static string CheckMakibishiContract()
+    {
+        const BindingFlags Public = BindingFlags.Public | BindingFlags.Instance;
+
+        // Path cost: PathFinder lists ThingRequestGroup.CostProvider, which is every thingClass
+        // implementing IPathFindCostProvider, and PathGridDoorsBlockedJob asks each for its cells
+        // and its cost for the pawn.
+        Type provider = typeof(Verse.IPathFindCostProvider);
+        if (provider.GetMethod("PathFindCostFor", new[] { typeof(Verse.Pawn) })?.ReturnType != typeof(ushort)
+            || provider.GetMethod("GetOccupiedRect", Type.EmptyTypes)?.ReturnType != typeof(Verse.CellRect))
+            throw new Exception("Makibishi: IPathFindCostProvider.PathFindCostFor(Pawn) / GetOccupiedRect() changed - spikes would not cost path");
+        if (!Enum.IsDefined(typeof(Verse.ThingRequestGroup), "CostProvider"))
+            throw new Exception("Makibishi: ThingRequestGroup.CostProvider is gone - the path finder no longer lists cost providers");
+        if (!provider.IsAssignableFrom(typeof(Makibishi)) || !typeof(Verse.Building).IsAssignableFrom(typeof(Makibishi)))
+            throw new Exception("Makibishi: the spikes must be a Building implementing IPathFindCostProvider");
+        if (typeof(Verse.Pawn).GetProperty("Flying", Public)?.PropertyType != typeof(bool))
+            throw new Exception("Makibishi: Pawn.Flying is gone - flying pawns would be hurt");
+        if (typeof(Verse.HediffComp_Disappears).GetField("ticksToDisappear", Public)?.FieldType != typeof(int)
+            || typeof(Verse.HediffComp_Disappears).GetField("disappearsAfterTicks", Public)?.FieldType != typeof(int))
+            throw new Exception("Makibishi: HediffComp_Disappears.ticksToDisappear / disappearsAfterTicks changed - the slow cannot fade");
+        if (typeof(RimWorld.BodyPartTagDefOf).GetField("MovingLimbSegment") == null
+            || typeof(RimWorld.BodyPartTagDefOf).GetField("MovingLimbCore") == null)
+            throw new Exception("Makibishi: BodyPartTagDefOf.MovingLimbSegment / MovingLimbCore is gone - no paw or leg to wound");
+
+        if (MakibishiDefaults.LifetimeTicks != 1800 || MakibishiDefaults.PathFindCost != 400
+            || MakibishiDefaults.TriggerChance != 0.35f || MakibishiDefaults.WoundDamage != 4f
+            || MakibishiDefaults.WoundArmorPenetration != 0.10f || MakibishiDefaults.CornerChance != 0.5f)
+            throw new Exception("Makibishi: expected 30 s, path cost 400, 35% per step, 4 damage, 10% AP, 50% corners");
+
+        var things = XDocument.Load("1.6/Defs/ThingDefs/AG_Makibishi_Things.xml").Root.Elements("ThingDef").ToArray();
+        var pouch = things.Single(e => (string)e.Element("defName") == "AG_MakibishiPouch");
+        var reload = pouch.Element("comps").Elements("li").Single(e => (string)e.Attribute("Class") == "CompProperties_ApparelReloadable");
+        if ((int)reload.Element("maxCharges") != 3 || (string)reload.Element("ammoDef") != "AG_Makibishi"
+            || (int)reload.Element("ammoCountPerCharge") != 1
+            || (string)pouch.Element("apparel").Element("layers").Element("li") != "Belt"
+            || (string)pouch.Element("apparel").Element("bodyPartGroups").Element("li") != "Waist"
+            || pouch.Element("apparel").Element("tags") != null)
+            throw new Exception("Makibishi pouch: expected 3 charges of AG_Makibishi, 1 per charge, belt layer on the waist, no generation tags");
+        var spikes = things.Single(e => (string)e.Element("defName") == "AG_MakibishiSpikes");
+        if ((string)spikes.Element("thingClass") != "RimArt.Makibishi" || (bool)spikes.Element("building").Element("isEdifice")
+            || (string)spikes.Element("passability") != "Standable" || (float)spikes.Element("fillPercent") != 0f
+            || (string)spikes.Element("tickerType") != "Normal")
+            throw new Exception("Makibishi spikes: expected RimArt.Makibishi, not an edifice, standable, fillPercent 0, Normal ticker - or it wipes doors or never ticks");
+        if (!Directory.Exists("Textures/RimArt/Makibishi/Spikes") || Directory.GetFiles("Textures/RimArt/Makibishi/Spikes", "*.png").Length < 2)
+            throw new Exception("Makibishi spikes: Graphic_Random needs a folder of variants at Textures/RimArt/Makibishi/Spikes");
+
+        var ability = XDocument.Load("1.6/Defs/AbilityDefs/AG_Makibishi_Abilities.xml").Root.Element("AbilityDef");
+        var verb = ability.Element("verbProperties");
+        if ((float)verb.Element("range") != 9.9f || (bool)ability.Element("aiCanUse")
+            || (float)verb.Element("warmupTime") != 0.5f || (int)ability.Element("cooldownTicksRange") != 120
+            || !(bool)verb.Element("targetParams").Element("canTargetLocations"))
+            throw new Exception("Scatter makibishi: expected range 9.9, no AI use, 0.5 s warmup, 120-tick cooldown, cell targets");
+
+        var hediff = XDocument.Load("1.6/Defs/HediffDefs/AG_Makibishi_Hediffs.xml").Root.Element("HediffDef");
+        var disappears = hediff.Element("comps").Elements("li").Single(e => (string)e.Attribute("Class") == "HediffCompProperties_Disappears");
+        var offsets = hediff.Element("stages").Elements("li")
+            .Select(li => (float)li.Element("capMods").Element("li").Element("offset")).ToArray();
+        if ((string)disappears.Element("disappearsAfterTicks") != "900"
+            || !offsets.SequenceEqual(new[] { -0.10f, -0.20f, -0.30f }))
+            throw new Exception("Punctured foot: expected 900 ticks and Moving -10% / -20% / -30% stages");
+
+        return "Checked the makibishi path cost provider, pouch, spikes and def numbers.";
     }
 }

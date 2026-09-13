@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- 10 steel into 5 handfuls. A RecipeDef rather than a recipeMaker on AG_Makibishi so the batch
+       size is stated in products, the same as AG_MakeKunai. -->
+  <RecipeDef>
+    <defName>AG_MakeMakibishi</defName>
+    <label>make makibishi x5</label>
+    <description>Make 5 handfuls of makibishi from 10 steel.</description>
+    <jobString>Making makibishi.</jobString>
+    <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+    <workSkill>Crafting</workSkill>
+    <effectWorking>Smith</effectWorking>
+    <soundWorking>Recipe_Smith</soundWorking>
+    <workAmount>800</workAmount>
+    <researchPrerequisite>Smithing</researchPrerequisite>
+    <recipeUsers>
+      <li>FueledSmithy</li>
+      <li>ElectricSmithy</li>
+    </recipeUsers>
+    <ingredients>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>Steel</li>
+          </thingDefs>
+        </filter>
+        <count>10</count>
+      </li>
+    </ingredients>
+    <fixedIngredientFilter>
+      <thingDefs>
+        <li>Steel</li>
+      </thingDefs>
+    </fixedIngredientFilter>
+    <products>
+      <AG_Makibishi>5</AG_Makibishi>
+    </products>
+    <skillRequirements>
+      <Crafting>3</Crafting>
+    </skillRequirements>
+    <displayPriority>333</displayPriority>
+  </RecipeDef>
+
+</Defs>

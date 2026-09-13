@@ -145,6 +145,7 @@ namespace RimArt
                 new Kit { Label = "Drone control rig", Grant = GrantControlRig },
                 new Kit { Label = "Retrieval hook belt", Grant = GrantRetrievalHookBelt },
                 new Kit { Label = "Kunai belt", Grant = GrantKunaiBelt },
+                new Kit { Label = "Makibishi pouch", Grant = GrantMakibishiPouch },
                 new Kit { Label = "Shinra Tensei (repulsion eye)", Grant = GrantShinraTensei },
 
                 WeaponTrait("Resonant weapon", "AG_WeaponResonance"),
@@ -355,6 +356,29 @@ namespace RimArt
             {
                 Thing spare = ThingMaker.MakeThing(ammo);
                 spare.stackCount = 12;
+                GenPlace.TryPlaceThing(spare, pawn.Position, pawn.Map, ThingPlaceMode.Near);
+            }
+            return null;
+        }
+
+        /// <summary>Wears a full makibishi pouch and drops 6 spare makibishi next to the pawn for testing reload.</summary>
+        private static string GrantMakibishiPouch(Pawn pawn)
+        {
+            ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail("AG_MakibishiPouch");
+            ThingDef ammo = DefDatabase<ThingDef>.GetNamedSilentFail("AG_Makibishi");
+            if (def == null || ammo == null) return "no ThingDef AG_MakibishiPouch or AG_Makibishi";
+            if (pawn.apparel == null) return "cannot wear apparel";
+            if (pawn.apparel.WornApparel.Any(worn => worn.def == def)) return "already wearing one";
+
+            FinishResearch("Smithing");
+
+            Apparel pouch = (Apparel)ThingMaker.MakeThing(def, GenStuff.DefaultStuffFor(def));
+            pawn.apparel.Wear(pouch, true, false);
+
+            if (pawn.Spawned)
+            {
+                Thing spare = ThingMaker.MakeThing(ammo);
+                spare.stackCount = 6;
                 GenPlace.TryPlaceThing(spare, pawn.Position, pawn.Map, ThingPlaceMode.Near);
             }
             return null;

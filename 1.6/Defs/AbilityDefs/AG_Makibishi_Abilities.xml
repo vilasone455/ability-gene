@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Scatter one handful from the worn pouch at a cell. Granted only by AG_MakibishiPouch.
+
+       The handful count is on the pouch, checked and spent by CompAbilityEffect_ScatterMakibishi.
+       No hit roll: the handful lands on the aimed cell. The 2 s cooldown is longer than the scatter
+       clip (42 ticks, release at 18). -->
+  <AbilityDef>
+    <defName>AG_ScatterMakibishi</defName>
+    <label>scatter makibishi</label>
+    <description>Toss one handful of makibishi from the pouch onto the ground. Range 9.9 tiles.\n\nSpikes a 3x3 patch for 30 seconds: the center and the 4 cells beside it always, each corner 50% of the time. No spikes on water, or on cells hidden from the center by a wall.\n\nEach time anyone walks onto a spiked cell they have a 35% chance to step on a spike: 4 stab damage to a foot (10% armor penetration) and -30% movement, falling to -20% after 5 seconds and -10% after 10, gone after 15. Colonists and allies are hurt the same as enemies. People walk around spikes when the way around is not much longer. Flying creatures and mechanoids are not affected.</description>
+    <iconPath>RimArt/Makibishi/IconMakibishi</iconPath>
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
+    <cooldownTicksRange>120</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>9.9</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <soundCast>Interact_BeatFire</soundCast>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityScatterMakibishi" />
+    </comps>
+  </AbilityDef>
+
+</Defs>
