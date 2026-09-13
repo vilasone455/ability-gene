@@ -143,6 +143,7 @@ namespace RimArt
                 new Kit { Label = "Stasis belt", Grant = GrantStasisBelt },
                 new Kit { Label = "Frost bomb", Grant = GrantFrostBomb },
                 new Kit { Label = "Drone control rig", Grant = GrantControlRig },
+                new Kit { Label = "Retrieval hook belt", Grant = GrantRetrievalHookBelt },
                 new Kit { Label = "Shinra Tensei (repulsion eye)", Grant = GrantShinraTensei },
 
                 WeaponTrait("Resonant weapon", "AG_WeaponResonance"),
@@ -315,6 +316,23 @@ namespace RimArt
             AbilityDef deploy = DefDatabase<AbilityDef>.GetNamedSilentFail("AG_DeployToyCar");
             Ability granted = deploy == null ? null : pawn.abilities?.GetAbility(deploy, true);
             granted?.ResetCooldown();
+            return null;
+        }
+
+        // ----------------------------------------------------------------- retrieval hook belt
+
+        /// <summary>Wears a new retrieval hook belt. New belts start loaded, as crafted ones do.</summary>
+        private static string GrantRetrievalHookBelt(Pawn pawn)
+        {
+            ThingDef def = DefDatabase<ThingDef>.GetNamedSilentFail("AG_RetrievalHookBelt");
+            if (def == null) return "no ThingDef AG_RetrievalHookBelt";
+            if (pawn.apparel == null) return "cannot wear apparel";
+            if (pawn.apparel.WornApparel.Any(worn => worn.def == def)) return "already wearing one";
+
+            FinishResearch("Machining");
+
+            Apparel belt = (Apparel)ThingMaker.MakeThing(def, GenStuff.DefaultStuffFor(def));
+            pawn.apparel.Wear(belt, true, false);
             return null;
         }
 

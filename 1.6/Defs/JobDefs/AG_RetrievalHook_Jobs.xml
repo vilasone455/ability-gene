@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Held while the net flies and the target is dragged. Ending it for any reason, including
+       a player order, interrupts the pull. Not suspendable: an interrupted pull does not
+       resume. -->
+  <JobDef>
+    <defName>AG_RetrievalHookPull</defName>
+    <driverClass>RimArt.JobDriver_RetrievalHookPull</driverClass>
+    <reportString>retrieving TargetA.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <playerInterruptible>true</playerInterruptible>
+    <suspendable>false</suspendable>
+    <neverShowWeapon>true</neverShowWeapon>
+  </JobDef>
+
+  <!-- Stationary reload. Progress is saved on the belt; the job is not suspendable, so after an
+       interruption the player gives the order again and it continues from where it stopped. -->
+  <JobDef>
+    <defName>AG_ReelInTether</defName>
+    <driverClass>RimArt.JobDriver_ReelInTether</driverClass>
+    <reportString>reeling in the retrieval hook tether.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <playerInterruptible>true</playerInterruptible>
+    <suspendable>false</suspendable>
+  </JobDef>
+
+</Defs>

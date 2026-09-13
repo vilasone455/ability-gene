@@ -896,6 +896,142 @@ def make_mimic_icon():
 
 
 
+# ---------------------------------------------------------------------------------------
+# Retrieval hook belt. A launcher on a belt, a padded net, and a tether between them.
+# ---------------------------------------------------------------------------------------
+
+CORD       = (122, 98, 66)
+CORD_LIT   = (176, 146, 102)
+CORD_DARK  = (70, 55, 38)
+PAD        = (196, 116, 44)
+PAD_LIT    = (232, 164, 86)
+PAD_DARK   = (128, 72, 26)
+
+
+def draw_net(d, cx, cy, r, mesh_width):
+    """
+    A round net seen from above: a padded rim, a mesh of cords, and a steel ring in the middle
+    where the tether ties on. The rim is orange so it reads against grass, stone and blood.
+    """
+    # Mesh first, clipped to the rim by drawing the rim over its ends.
+    step = r // 3
+    for i in range(-3, 4):
+        off = i * step
+        half = int((max(r * r - off * off, 0)) ** 0.5)
+        d.line([(cx + off, cy - half), (cx + off, cy + half)], fill=CORD, width=mesh_width)
+        d.line([(cx - half, cy + off), (cx + half, cy + off)], fill=CORD, width=mesh_width)
+    # Padded rim: six pads with a cord between them.
+    ring(d, cx, cy, r, CORD_DARK, px(5))
+    import math
+    for k in range(6):
+        a = k * math.pi / 3
+        px_ = cx + int(r * math.cos(a))
+        py_ = cy + int(r * math.sin(a))
+        pr = px(9)
+        d.ellipse([px_ - pr, py_ - pr, px_ + pr, py_ + pr], fill=PAD_DARK)
+        d.ellipse([px_ - pr + px(2), py_ - pr + px(2), px_ + pr - px(2), py_ + pr - px(2)], fill=PAD)
+        d.ellipse([px_ - pr + px(3), py_ - pr + px(3), px_ + px(1), py_ + px(1)], fill=PAD_LIT)
+    # Tie-on ring.
+    ring(d, cx, cy, px(9), EDGE, px(6))
+    ring(d, cx, cy, px(9), STEEL_LIGHT, px(3))
+
+
+def make_retrieval_net():
+    """The net drawn over a target while it is pulled, and while it flies."""
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    draw_net(d, S // 2, S // 2, px(50), px(3))
+    finish(img, "Textures/RimArt/RetrievalHook/Net.png")
+
+
+def make_retrieval_belt():
+    """
+    The worn item: a canvas belt with a launcher tube on it and a coil of tether beside it.
+
+    The tube is steel and the coil is tan cord, so the item reads as "fires something on a
+    line" rather than as another shield emitter.
+    """
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    cy = S // 2
+
+    d.rounded_rectangle([0, cy - px(14), S, cy + px(14)], radius=px(6), fill=WEBBING)
+    d.rounded_rectangle([px(4), cy - px(11), S - px(4), cy - px(3)], radius=px(4), fill=WEBBING_LIT)
+
+    # Coil of tether on the left.
+    cx = px(40)
+    for r, col in ((px(24), CORD_DARK), (px(21), CORD), (px(16), CORD_DARK), (px(13), CORD_LIT),
+                   (px(8), CORD_DARK)):
+        ring(d, cx, cy, r, col, px(4))
+
+    # Launcher tube on the right, pointing up and to the right.
+    tube = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    t = ImageDraw.Draw(tube)
+    t.rounded_rectangle([px(62), cy - px(13), px(122), cy + px(13)], radius=px(8), fill=EDGE)
+    t.rounded_rectangle([px(65), cy - px(10), px(119), cy + px(10)], radius=px(6), fill=STEEL_DARK)
+    t.rounded_rectangle([px(68), cy - px(8), px(116), cy - px(1)], radius=px(4), fill=STEEL)
+    t.ellipse([px(108), cy - px(11), px(124), cy + px(11)], fill=PAD_DARK)
+    t.ellipse([px(111), cy - px(8), px(121), cy + px(8)], fill=PAD)
+    tube = tube.rotate(18, resample=Image.BICUBIC, center=(px(92), cy))
+    img.alpha_composite(tube)
+
+    # Tether running from the coil into the tube.
+    d = ImageDraw.Draw(img)
+    d.line([(cx + px(22), cy + px(4)), (px(70), cy + px(8))], fill=CORD_LIT, width=px(3))
+
+    finish(img, "Textures/RimArt/RetrievalHook/Belt.png")
+
+
+def make_retrieval_hook_icon():
+    """
+    The fire gizmo: a net at the top right, a tether running to the bottom left.
+
+    The tether is drawn as a curve so the icon reads as a line under tension rather than as a
+    straight arrow.
+    """
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    c = S // 2
+    d.ellipse([c - px(58), c - px(58), c + px(58), c + px(58)], fill=(30, 32, 36, 210))
+
+    pts = []
+    for i in range(21):
+        u = i / 20
+        x = px(24) + (px(84) - px(24)) * u
+        y = px(104) + (px(44) - px(104)) * u + px(10) * (4 * u * (1 - u))
+        pts.append((x, y))
+    d.line(pts, fill=CORD_DARK, width=px(7))
+    d.line(pts, fill=CORD_LIT, width=px(3))
+    draw_net(d, px(84), px(44), px(30), px(3))
+
+    finish(img, "Textures/RimArt/RetrievalHook/IconHook.png")
+
+
+def make_retrieval_reel_icon():
+    """The reload gizmo: a spool of tether with a curved arrow around it."""
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    c = S // 2
+    d.ellipse([c - px(58), c - px(58), c + px(58), c + px(58)], fill=(30, 32, 36, 210))
+
+    for r, col in ((px(30), CORD_DARK), (px(26), CORD), (px(20), CORD_DARK), (px(16), CORD_LIT),
+                   (px(10), CORD_DARK)):
+        ring(d, c, c, r, col, px(5))
+    ring(d, c, c, px(5), STEEL_LIGHT, px(4))
+
+    # Arrow: an arc three quarters round, with a head at its end.
+    box = [c - px(44), c - px(44), c + px(44), c + px(44)]
+    d.arc(box, start=200, end=470, fill=STEEL_LIGHT, width=px(7))
+    import math
+    a = math.radians(470)
+    hx, hy = c + px(44) * math.cos(a), c + px(44) * math.sin(a)
+    d.polygon([(hx + px(12), hy - px(4)), (hx - px(8), hy - px(12)), (hx - px(4), hy + px(10))],
+              fill=STEEL_LIGHT)
+
+    finish(img, "Textures/RimArt/RetrievalHook/IconReel.png")
+
+
+
 if __name__ == "__main__":
     make_flying()
     make_planted()
@@ -914,3 +1050,7 @@ if __name__ == "__main__":
     make_toy_car_icon()
     make_mimic_beacon()
     make_mimic_icon()
+    make_retrieval_net()
+    make_retrieval_belt()
+    make_retrieval_hook_icon()
+    make_retrieval_reel_icon()

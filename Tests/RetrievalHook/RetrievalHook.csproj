@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Source/RimArt/RetrievalHook/RetrievalRules.cs" Link="RetrievalRules.cs" />
+    <Compile Include="../../Source/RimArt/RetrievalHook/RetrievalHookDefaults.cs" Link="RetrievalHookDefaults.cs" />
+  </ItemGroup>
+</Project>

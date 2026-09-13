@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Fire the retrieval hook at a downed person or an item.
+
+       No cooldown: the gate is the tether, which CompAbilityEffect_RetrievalHook checks on the
+       belt. casterMustBeCapableOfViolence is false because pulling someone out of a fight is
+       not an attack; the manipulation requirement is checked in code. Targeting parameters
+       admit animals, mechanoids and corpses so that aiming at one shows why it is refused. -->
+  <AbilityDef>
+    <defName>AG_RetrievalHook</defName>
+    <label>retrieval hook</label>
+    <description>Fire a padded net on a tether and reel the target in. Range 15 tiles.\n\nTargets: downed colonists, slaves and allies, or items (weapons, apparel, medicine, food, resources, minified buildings). Up to 20 kg of a stack is pulled; the rest stays.\n\nThe wearer must stand still until the target arrives. Moving, being downed or removing the belt stops the pull. Every shot needs the tether reeled in afterwards, even if it missed.\n\nDragging an injured person worsens one wound by up to 1 severity and removes its bandage. It will not kill them or destroy the part.</description>
+    <iconPath>RimArt/RetrievalHook/IconHook</iconPath>
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
+    <targetRequired>true</targetRequired>
+    <hostile>false</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>15</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetItems>true</canTargetItems>
+        <canTargetCorpses>true</canTargetCorpses>
+        <mapObjectTargetsMustBeAutoAttackable>false</mapObjectTargetsMustBeAutoAttackable>
+        <thingCategory>Item</thingCategory>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityRetrievalHook" />
+    </comps>
+  </AbilityDef>
+
+</Defs>

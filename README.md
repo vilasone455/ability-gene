@@ -17,6 +17,7 @@ piece of equipment, weapon trait, or earned origin.
 | Implant | **Reflex booster** | Craft after Prosthetics research and install surgically |
 | Implant | **Phase barrier** | Find through quests or deep-space trade and install surgically |
 | Equipment | **Stasis belt** | Research Stasis Fields, craft it, and wear it |
+| Equipment | **Retrieval hook belt** | Research Machining, craft it, and wear it |
 | Weapon trait | **Resonant** | Find on a Unique Melee Weapon |
 | Weapon trait | **Arcing** | Find on a Unique Melee Weapon; also requires Melee Animation |
 | Earned origin | **Origin: Blade** | Reach Melee 14 and Crafting 12, study five blade types, then awaken |
@@ -355,6 +356,28 @@ the longest remaining charge is the one that carries. Granted through
 `RimArt.CompProperties_ApparelAbility`, because no vanilla comp grants an `AbilityDef`
 from apparel: `CompEquippableAbility` replaces `CompEquippable` and works only on a
 weapon, and `CompApparelVerbOwner` grants a `Verb` rather than an ability.
+
+### Retrieval hook belt → *retrieval hook* (equipment)
+Fires a padded net on a tether and pulls a **downed colonist, colony slave or ally**, or up to
+**20 kg of an item stack**, to the wearer. Range 15 tiles, line of sight required. Items:
+weapons, apparel, medicine, food, resources and minified buildings; a heavier stack is split
+and the rest stays. The wearer stands still until the target arrives; moving, another order,
+being downed or removing the belt interrupts it.
+
+After every shot, including misses and interrupted shots, the tether must be reeled in:
+**Reel in tether** is 10 seconds of stationary work. Interrupted progress is kept on the belt
+and resumes when ordered again. The loaded state is saved on the belt, so swapping wearers or
+reloading a save does not refresh it. Usable drafted or undrafted, by pawns incapable of
+violence, not by AI.
+
+**Injury cost:** when a dragged pawn first moves, one external wound gets up to +1 severity and
+loses its bandage. Tended wounds that can bleed are chosen first. The increase is reduced in
+0.01 steps so it cannot kill the pawn or destroy the part; the wound can still bleed again.
+No eligible wound, no penalty.
+
+Industrial tech, *Machining* research, machining table, Crafting 5, 60 steel / 2 components /
+20 cloth, 2 kg, belt layer, no armor. See [the retrieval hook belt guide](docs/retrieval-hook-belt.md)
+for targets, the pull sequence, save behaviour and the in-game test list.
 
 ### Frost bomb (weapon)
 A thrown grenade, equipped in the weapon slot and aimed like the game's own. Range 12.9
@@ -1887,6 +1910,7 @@ Source/RimArt/Throw/             the throw animation bridge and the launch it de
 Source/RimArt/Frost/             the frost bomb: its verb, its burst, its damage worker
 Source/RimArt/Mimic/             the mimic beacon: the decoy, its targeting, its renderer copy
 Source/RimArt/ToyCar/            the remote vehicle, its link, its operator lock
+Source/RimArt/RetrievalHook/     the retrieval hook belt: tether state, pulls, wound penalty
 ```
 
 Def prefix is `AG_`. Custom blade, crow and stasis art lives under `Textures/RimArt/`;
@@ -1971,6 +1995,7 @@ with the in-game checks it cannot make:
 dotnet run --project Tests/VectorEdit/VectorEdit.csproj          # vector manipulation arithmetic
 dotnet run --project Tests/OriginBlade/OriginBlade.csproj        # Origin: Blade lifecycle
 dotnet run --project Tests/Carrion/Carrion.csproj                # Carrion lifecycle
+dotnet run --project Tests/RetrievalHook/RetrievalHook.csproj    # retrieval hook targets, mass, wounds, drag
 dotnet run --project Tests/OriginBlade/ApiChecks/ApiChecks.csproj # Harmony targets, signatures, CE bridge contract
 ```
 

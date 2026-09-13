@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The retrieval hook belt, and the only source of the retrieval hook ability.
+
+       Belt slot, so it competes with the stasis belt, the drone rig and the shield belt.
+
+       The tether state (loaded, and reel-in progress) is saved on the belt by
+       CompRetrievalHookBelt, so changing wearers, dropping it or reloading a save cannot
+       refresh it. No apparel tags: nothing generates wearing one, and the ability is not
+       usable by AI pawns. -->
+  <ThingDef ParentName="ApparelBase">
+    <defName>AG_RetrievalHookBelt</defName>
+    <label>retrieval hook belt</label>
+    <description>A belt-mounted launcher that fires a padded net on a tether and reels the target in.\n\nRange 15 tiles. Pulls a downed colonist, slave or ally, or up to 20 kg of an item stack (weapons, apparel, medicine, food, resources, minified buildings). Heavier stacks are split. After each shot the tether must be reeled in: 10 seconds of standing still.\n\nDragging an injured person worsens one of their wounds by up to 1 severity and removes its bandage. The increase is capped so it cannot kill them or destroy the body part, but the wound can bleed again.</description>
+    <thingClass>Apparel</thingClass>
+    <graphicData>
+      <texPath>RimArt/RetrievalHook/Belt</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <techLevel>Industrial</techLevel>
+    <statBases>
+      <Mass>2</Mass>
+      <WorkToMake>12000</WorkToMake>
+      <Flammability>0.6</Flammability>
+      <EquipDelay>2</EquipDelay>
+    </statBases>
+    <costList>
+      <Steel>60</Steel>
+      <ComponentIndustrial>2</ComponentIndustrial>
+      <Cloth>20</Cloth>
+    </costList>
+    <recipeMaker>
+      <unfinishedThingDef>UnfinishedBelt</unfinishedThingDef>
+      <researchPrerequisite>Machining</researchPrerequisite>
+      <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+      <workSkill>Crafting</workSkill>
+      <effectWorking>Smith</effectWorking>
+      <soundWorking>Recipe_Machining</soundWorking>
+      <recipeUsers>
+        <li>TableMachining</li>
+      </recipeUsers>
+      <useIngredientsForColor>false</useIngredientsForColor>
+      <skillRequirements>
+        <Crafting>5</Crafting>
+      </skillRequirements>
+      <displayPriority>335</displayPriority>
+    </recipeMaker>
+    <thingCategories>
+      <li>ApparelUtility</li>
+    </thingCategories>
+    <apparel>
+      <countsAsClothingForNudity>false</countsAsClothingForNudity>
+      <careIfWornByCorpse>false</careIfWornByCorpse>
+      <careIfDamaged>false</careIfDamaged>
+      <wearPerDay>0</wearPerDay>
+      <bodyPartGroups>
+        <li>Waist</li>
+      </bodyPartGroups>
+      <layers>
+        <li>Belt</li>
+      </layers>
+      <developmentalStageFilter>Child, Adult</developmentalStageFilter>
+    </apparel>
+    <comps>
+      <li Class="RimArt.CompProperties_ApparelAbility">
+        <abilities>
+          <li>AG_RetrievalHook</li>
+        </abilities>
+      </li>
+      <li Class="RimArt.CompProperties_RetrievalHookBelt" />
+    </comps>
+  </ThingDef>
+
+</Defs>

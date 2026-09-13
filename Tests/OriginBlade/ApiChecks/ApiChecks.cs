@@ -84,8 +84,9 @@ static class ApiChecks
         CheckShinraAcquisition();
         string distortion = CheckShinraDistortion();
         string sounds = CheckShinraSounds(assembly);
+        string retrieval = CheckRetrievalHookContract();
         Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, "
-            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds}");
+            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval}");
     }
 
     static void CheckShinraAcquisition()
@@ -599,5 +600,76 @@ static class ApiChecks
         }
 
         return "Checked the mimic beacon's IAttackTarget and PawnRenderer contracts.";
+    }
+
+    /// <summary>
+    /// The retrieval hook belt's contracts with the health system, and its def numbers.
+    ///
+    /// The wound penalty reaches three things that are not Harmony patches and so are not covered
+    /// by the loop above: the private severityInt field (written directly so probing a lethal
+    /// amount does not notify the health tracker), the two public tend fields it clears, and the
+    /// health checks it asks before committing. A rename of any of them compiles against an older
+    /// assembly and then throws or silently does nothing in game.
+    /// </summary>
+    static string CheckRetrievalHookContract()
+    {
+        const BindingFlags Instance = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+
+        FieldInfo severity = typeof(Verse.Hediff).GetField("severityInt", Instance);
+        if (severity == null || severity.FieldType != typeof(float))
+            throw new Exception("Retrieval hook: Hediff.severityInt (float) is gone");
+
+        Type tend = typeof(Verse.HediffComp_TendDuration);
+        FieldInfo ticks = tend.GetField("tendTicksLeft", BindingFlags.Public | BindingFlags.Instance);
+        FieldInfo quality = tend.GetField("tendQuality", BindingFlags.Public | BindingFlags.Instance);
+        if (ticks == null || ticks.FieldType != typeof(int) || quality == null || quality.FieldType != typeof(float))
+            throw new Exception("Retrieval hook: HediffComp_TendDuration.tendTicksLeft (int) / tendQuality (float) changed");
+        if (tend.GetProperty("IsTended")?.PropertyType != typeof(bool))
+            throw new Exception("Retrieval hook: HediffComp_TendDuration.IsTended is gone");
+
+        Type health = typeof(Verse.Pawn_HealthTracker);
+        if (health.GetMethod("ShouldBeDead", Type.EmptyTypes)?.ReturnType != typeof(bool))
+            throw new Exception("Retrieval hook: Pawn_HealthTracker.ShouldBeDead() is gone");
+        if (health.GetMethod("Notify_HediffChanged", new[] { typeof(Verse.Hediff) }) == null)
+            throw new Exception("Retrieval hook: Pawn_HealthTracker.Notify_HediffChanged(Hediff) is gone");
+        if (health.GetProperty("CanBleed")?.PropertyType != typeof(bool))
+            throw new Exception("Retrieval hook: Pawn_HealthTracker.CanBleed is gone");
+
+        Type set = typeof(Verse.HediffSet);
+        if (set.GetMethod("GetPartHealth", new[] { typeof(Verse.BodyPartRecord) })?.ReturnType != typeof(float))
+            throw new Exception("Retrieval hook: HediffSet.GetPartHealth(BodyPartRecord) changed");
+        if (set.GetMethod("DirtyCache", Type.EmptyTypes) == null)
+            throw new Exception("Retrieval hook: HediffSet.DirtyCache() is gone");
+
+        if (typeof(Verse.AI.Toil).GetField("tickIntervalAction")?.FieldType != typeof(Action<int>))
+            throw new Exception("Retrieval hook: Toil.tickIntervalAction (Action<int>) changed - reel-in would do no work");
+        if (typeof(Verse.ThingComp).GetMethod("CompGetWornGizmosExtra") == null)
+            throw new Exception("Retrieval hook: ThingComp.CompGetWornGizmosExtra is gone - no Reel in tether button");
+
+        var belt = XDocument.Load("1.6/Defs/ThingDefs/AG_RetrievalHook_Things.xml").Root.Element("ThingDef");
+        var stats = belt.Element("statBases");
+        var cost = belt.Element("costList");
+        var recipe = belt.Element("recipeMaker");
+        if ((float)stats.Element("Mass") != 2f || (float)stats.Element("WorkToMake") != 12000f
+            || (float)stats.Element("EquipDelay") != 2f || stats.Elements().Any(e => e.Name.LocalName.StartsWith("Armor"))
+            || (int)cost.Element("Steel") != 60 || (int)cost.Element("ComponentIndustrial") != 2 || (int)cost.Element("Cloth") != 20
+            || cost.Elements().Count() != 3
+            || (string)recipe.Element("researchPrerequisite") != "Machining"
+            || (string)recipe.Element("recipeUsers").Element("li") != "TableMachining"
+            || (int)recipe.Element("skillRequirements").Element("Crafting") != 5
+            || (string)belt.Element("apparel").Element("layers").Element("li") != "Belt"
+            || belt.Element("apparel").Element("tags") != null)
+            throw new Exception("Retrieval hook belt: def no longer matches 2 kg, 12000 work, 2 s equip, 60 steel / 2 components / 20 cloth, Machining, Crafting 5, belt layer, no armor, no generation tags");
+
+        var ability = XDocument.Load("1.6/Defs/AbilityDefs/AG_RetrievalHook_Abilities.xml").Root.Element("AbilityDef");
+        var verb = ability.Element("verbProperties");
+        if ((float)verb.Element("range") != RetrievalHookDefaults.Range || (bool)ability.Element("aiCanUse")
+            || (bool)ability.Element("casterMustBeCapableOfViolence") || !(bool)ability.Element("displayGizmoWhileUndrafted")
+            || ability.Element("cooldownTicksRange") != null)
+            throw new Exception("Retrieval hook ability: expected range 15, no AI use, usable by non-violent and undrafted pawns, no cooldown");
+        if (RetrievalHookDefaults.ReloadTicks != 600 || RetrievalHookDefaults.ItemCapacityKg != 20f)
+            throw new Exception("Retrieval hook: reload must be 600 ticks and item capacity 20 kg");
+
+        return "Checked the retrieval hook's health and tend contracts and def numbers.";
     }
 }
