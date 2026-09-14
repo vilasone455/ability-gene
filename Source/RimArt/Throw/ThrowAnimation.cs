@@ -91,6 +91,7 @@ namespace RimArt
 
         /// <summary>Underhand toss of a handful at the ground, 42 ticks, release at tick 18. Makibishi.</summary>
         public static readonly Clips Scatter = new Clips("AG_ThrowScatter", 0.4286f);
+        public static readonly Clips Fuma = new Clips("AG_ThrowFuma", 2f / 3f);
 
         /// <summary>Which of the three clips a throw uses.</summary>
         public enum Facing
@@ -140,6 +141,9 @@ namespace RimArt
         private static ConstructorInfo startParamsConstructor;
         private static FieldInfo flipXField;
         private static FieldInfo flipYField;
+        private static FieldInfo customJobDefField;
+        private static FieldInfo rendererJobField, rendererTimeScale;
+        private static MethodInfo rendererSeek, rendererDestroy;
         private static MethodInfo tryTrigger;
         private static MethodInfo tryGetAnimator;
         private static PropertyInfo durationTicksProperty;
@@ -213,10 +217,16 @@ namespace RimArt
         /// <returns>False if nothing is playing, in which case the caller should throw the
         /// ordinary way and on its own timing. Nothing has happened to the pawn.</returns>
         public static bool TryThrow(Pawn thrower, IntVec3 target, string texturePath, Clips clips, out Throw thrown)
+            => TryThrow(thrower, target, texturePath, clips, out thrown, null);
+
+        public static bool TryThrow(Pawn thrower, IntVec3 target, string texturePath, Clips clips, out Throw thrown,
+                                    JobDef customJob)
         {
             thrown = default;
             if (clips == null || !Present || !CanAnimate(thrower)) return false;
             if (!LookUp(clips)) return false;
+            if (customJob != null && (customJobDefField == null || rendererJobField == null
+                || rendererTimeScale == null || rendererSeek == null || rendererDestroy == null)) return false;
 
             try
             {
@@ -228,12 +238,14 @@ namespace RimArt
                 object start = startParamsConstructor.Invoke(new object[] { anim, thrower, null });
                 flipXField.SetValue(start, flipX);
                 flipYField.SetValue(start, false);
+                if (customJob != null) customJobDefField.SetValue(start, customJob);
 
                 object[] args = { null };
                 bool started = (bool)tryTrigger.Invoke(start, args);
                 if (!started || args[0] == null) return false;
 
                 object renderer = args[0];
+                if (customJob != null) rendererTimeScale.SetValue(renderer, 0f);
                 ApplyTexture(renderer, texturePath);
                 ThrowAim.Set(renderer, offsetDegrees);
 
@@ -251,11 +263,29 @@ namespace RimArt
         }
 
         /// <summary>
-        /// Puts the thrown thing's own texture in the pawn's hand.
-        ///
-        /// Their renderer checks the per-part override before the clip's texture path, so this
-        /// costs nothing when it is skipped - the grenade in the json draws instead.
+        /// A custom throw job owns the clock, including after loading a saved animation.
+        /// Never seek or stop an animation owned by another job.
         /// </summary>
+        public static bool UpdateCustomThrow(Pawn pawn, JobDef job, float seconds, bool stop = false)
+        {
+            Resolve();
+            if (!present || rendererJobField == null || rendererSeek == null || rendererDestroy == null) return false;
+            try
+            {
+                object renderer = tryGetAnimator.Invoke(null, new object[] { pawn });
+                if (renderer == null || rendererJobField.GetValue(renderer) != job) return false;
+                if (stop) rendererDestroy.Invoke(renderer, null);
+                else
+                {
+                    rendererTimeScale.SetValue(renderer, 0f);
+                    rendererSeek.Invoke(renderer, new object[] { (float?)seconds, 0f, null, false });
+                }
+                return !stop;
+            }
+            catch (Exception e) { Disable(e); return false; }
+        }
+
+        /// <summary>Overrides the held object's texture; null keeps the authored texture.</summary>
         private static void ApplyTexture(object renderer, string texturePath)
         {
             if (texturePath == null) return;
@@ -289,6 +319,11 @@ namespace RimArt
 
             flipXField = AccessTools.Field(startParamsType, "FlipX");
             flipYField = AccessTools.Field(startParamsType, "FlipY");
+            customJobDefField = AccessTools.Field(startParamsType, "CustomJobDef");
+            rendererJobField = AccessTools.Field(rendererType, "CustomJobDef");
+            rendererTimeScale = AccessTools.Field(rendererType, "TimeScale");
+            rendererSeek = AccessTools.Method(rendererType, "Seek");
+            rendererDestroy = AccessTools.Method(rendererType, "Destroy", Type.EmptyTypes);
             tryTrigger = FindMethod(startParamsType, "TryTrigger", p => p.Length == 1 && p[0].IsOut);
             tryGetAnimator = AccessTools.Method(rendererType, "TryGetAnimator", new[] { typeof(Pawn) });
             durationTicksProperty = AccessTools.Property(rendererType, "DurationTicks");

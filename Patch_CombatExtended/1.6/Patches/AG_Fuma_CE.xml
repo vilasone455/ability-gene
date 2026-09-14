@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+  <Operation Class="PatchOperationAdd">
+    <xpath>Defs/ThingDef[defName="AG_FumaShuriken"]/statBases</xpath>
+    <value><Bulk>3</Bulk></value>
+  </Operation>
+  <Operation Class="PatchOperationReplace">
+    <xpath>Defs/ThingDef[defName="AG_FumaShuriken"]/tools</xpath>
+    <value>
+      <tools>
+        <li Class="CombatExtended.ToolCE">
+          <label>blades</label>
+          <capacities><li>Cut</li></capacities>
+          <power>14</power>
+          <cooldownTime>2</cooldownTime>
+          <armorPenetrationSharp>2</armorPenetrationSharp>
+          <armorPenetrationBlunt>1</armorPenetrationBlunt>
+        </li>
+      </tools>
+    </value>
+  </Operation>
+</Patch>

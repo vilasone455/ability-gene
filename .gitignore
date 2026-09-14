@@ -1,6 +1,8 @@
 # Build output
 Source/**/bin/
 Source/**/obj/
+Tests/Fuma/bin/
+Tests/Fuma/obj/
 *.user
 
 # OS / editor

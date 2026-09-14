@@ -476,3 +476,17 @@ This order is a recommendation, not authorization to implement all proposals.
 - [XCOM 2 manual](https://www.feralinteractive.com/en/manuals/xcom2/latest/steam/): Hunker Down and tactical context.
 - [XCOM 2 Sharpshooter](https://xcom.fandom.com/wiki/Sharpshooter_Class_%28XCOM_2%29): Squadsight, Steady Hands, Aim, and Kill Zone inspiration.
 - [XCOM 2 Ranger](https://xcom.fandom.com/wiki/Ranger_Class_%28XCOM_2%29): Run and Gun inspiration.
+
+### Fūma Shuriken — implemented
+
+Chosen September 13, 2026: a large folding primary weapon using the supplied four-curved-blade
+reference. Melee by default, with an explicit ground-targeted piercing throw. The selected
+cell controls landing distance (maximum 12). Exact aim; damage falls 20% per pawn from 30 to
+8 minimum. Melee remains useful at 14 cut damage and two-second base cooldown.
+
+The throw physically transfers the existing weapon, retaining quality, HP, and components.
+Manual Equip recovers it; the retrieval hook can bring it closer. No return flight or automatic
+retrieval. Craft at Smithing tier: either smithy, Crafting 6, 80 steel, 12,000 work.
+
+The folding animation is optional; the 48-tick release and 240-tick item cooldown are not.
+See the README and `docs/fuma-verification.md` for exact behavior and remaining runtime checks.
