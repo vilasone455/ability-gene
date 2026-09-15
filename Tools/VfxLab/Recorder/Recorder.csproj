@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Runs the mod's own drawing code outside the game and records every draw call.
+    The files below are linked, not copied: the lab plays exactly what RimWorld would draw.
+    Engine/ stands in for UnityEngine and Verse; add to it when a newly linked file names a
+    member it lacks. Never edit a mod file to suit the lab.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>RimArt.VfxLab</RootNamespace>
+    <NoWarn>CS0169;CS0414;CS0649</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Six Paths -->
+    <Compile Include="../../../Source/RimArt/SixPaths/*.cs" LinkBase="Linked/SixPaths" />
+    <!-- Gravity Well -->
+    <Compile Include="../../../Source/RimArt/Gravity/GravityGraphics.cs" Link="Linked/Gravity/GravityGraphics.cs" />
+    <Compile Include="../../../Source/RimArt/Gravity/GravityRules.cs" Link="Linked/Gravity/GravityRules.cs" />
+    <Compile Include="../../../Source/RimArt/Gravity/DebugActions_Gravity.cs" Link="Linked/Gravity/DebugActions_Gravity.cs" />
+    <!-- Shinra Tensei -->
+    <Compile Include="../../../Source/RimArt/Shinra/ShinraVfxGraphics.cs" Link="Linked/Shinra/ShinraVfxGraphics.cs" />
+    <Compile Include="../../../Source/RimArt/Shinra/ShinraVfxTiming.cs" Link="Linked/Shinra/ShinraVfxTiming.cs" />
+    <Compile Include="../../../Source/RimArt/Shinra/ShinraCharge.cs" Link="Linked/Shinra/ShinraCharge.cs" />
+    <Compile Include="../../../Source/RimArt/Shinra/ShinraSound.cs" Link="Linked/Shinra/ShinraSound.cs" />
+    <Compile Include="../../../Source/RimArt/Shinra/MapComponent_ShinraVfx.cs" Link="Linked/Shinra/MapComponent_ShinraVfx.cs" />
+    <Compile Include="../../../Source/RimArt/Shinra/DebugActions_ShinraVfx.cs" Link="Linked/Shinra/DebugActions_ShinraVfx.cs" />
+  </ItemGroup>
+</Project>
