@@ -2124,6 +2124,7 @@ Source/RimArt/Mimic/             the mimic beacon: the decoy, its targeting, its
 Source/RimArt/ToyCar/            the remote vehicle, its link, its operator lock
 Source/RimArt/RetrievalHook/     the retrieval hook belt: tether state, pulls, wound penalty
 Source/RimArt/Gravity/           the gravity well: cast clock, pull, gathered mass, bent rounds
+Tools/VfxLab/                    browser VFX lab: records Source/ drawing code, plays it back
 ```
 
 Def prefix is `AG_`. Custom blade, crow and stasis art lives under `Textures/RimArt/`;
@@ -2188,6 +2189,16 @@ type in a mod*. An abstract `HediffDef` and an abstract `AbilityDef` cannot shar
 The second one is dropped with one error, and its children then silently inherit the wrong
 base — which surfaces as a cascade of confusing "doesn't correspond to any field in type
 HediffDef" errors against your AbilityDefs.
+
+## VFX lab
+
+`python3 Tools/VfxLab/lab.py` serves a browser page at
+`http://localhost:8765/Tools/VfxLab/web/` that plays power effects without starting the game.
+Recorded effects are the mod's own drawing code, run outside RimWorld with every draw call stored.
+Save a change under `Source/RimArt` and it is re-recorded in about 15 s. Sketches are JavaScript
+proposals with sliders, and can be compared side by side with a recorded effect. Six Paths, Gravity
+Well and Shinra Tensei are recorded. See [Tools/VfxLab/README.md](Tools/VfxLab/README.md) for
+what it cannot show and how to add a kit.
 
 ## Testing
 
