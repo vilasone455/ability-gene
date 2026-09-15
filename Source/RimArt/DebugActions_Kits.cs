@@ -148,6 +148,7 @@ namespace RimArt
                 new Kit { Label = "Makibishi pouch", Grant = GrantMakibishiPouch },
                 new Kit { Label = "Fūma Shuriken", Grant = GrantFumaShuriken },
                 new Kit { Label = "Shinra Tensei (repulsion eye)", Grant = GrantShinraTensei },
+                new Kit { Label = "Gravity Well (attraction eye)", Grant = GravityAcquisition.Grant },
 
                 WeaponTrait("Resonant weapon", "AG_WeaponResonance"),
                 WeaponTrait("Arcing weapon", "AG_WeaponArc"),

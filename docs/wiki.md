@@ -17,6 +17,7 @@ Every kit in the mod, how to get it, and what each ability does.
 | [Commanding voice](#commanding-voice) | Trait | Stop, Drop, Kneel, Come, Run | - |
 | [Origin: Blade](#origin-blade) | Trait | Rain, Loose, Grasp | - |
 | [Pain debt](#pain-debt) | Trait | Wound debt | - |
+| [Attraction eye](#attraction-eye) | Implant | Gravity Well | - |
 | [Neural accelerator](#neural-accelerator) | Implant | Time alter: double accel, Time alter: square accel, Time alter: stagnate | - |
 | [Phase barrier](#phase-barrier) | Implant | Phase guard | - |
 | [Reflex booster](#reflex-booster) | Implant | Reflex surge, Vector manipulation, Vector shove | - |
@@ -29,6 +30,7 @@ Every kit in the mod, how to get it, and what each ability does.
 | [Arcing](#arcing) | Weapon trait | Arc | Unique Melee Weapons, Melee Animation |
 | [Resonant](#resonant) | Weapon trait | Resonance | Unique Melee Weapons |
 | [Frost bomb](#frost-bomb) | Weapon | Throw frost bomb | - |
+| [Fūma Shuriken](#fūma-shuriken) | Weapon | Throw Fūma Shuriken | - |
 | [Mimic beacon](#mimic-beacon) | Weapon | Throw mimic beacon | - |
 
 ## Genes
@@ -332,6 +334,25 @@ Nothing is prevented: when the resolve breaks, every wound lands in the same ins
 
 ## Implants
 
+### Attraction eye
+
+An uncraftable artificial eye that supplies normal sight and lets its bearer channel a gravity well and implode gathered mass. It can be recovered surgically and transferred.
+
+**How to get it**
+
+- Cannot be crafted.
+- Can be given as a quest reward.
+- Can be bought from traders.
+- Install it by surgery in the eye. Needs Medicine skill 8. Uses the item and 2 medicine.
+- Can be removed by surgery and given to another colonist.
+
+#### Gravity Well
+
+Channel a fixed gravity well that pulls pawns and loose objects and bends ordinary bullets. Implode for 15–45 blunt damage based on mass currently in its core. Allies are affected. Requires Melee Animation.
+
+**Range:** self
+
+
 ### Neural accelerator
 
 A brain implant that changes its user's internal rate of time. Acceleration leaves strain that sheds slowly and does not care whether the fight is over.
@@ -622,6 +643,36 @@ It does not choose sides. Your own people freeze in it exactly as well as the pe
 **Cooldown:** 6 seconds | **Range:** 12.9 cells | **Cast time:** 0.8 seconds
 
 
+### Fūma Shuriken
+
+A massive folding shuriken. Four curved steel blades pivot around a central grip ring, stacking together for carrying and fanning open for combat.
+
+Use it for melee slashes, or order a throw at a ground cell up to 12 tiles away. The spinning blade cuts through every pawn in its path, including allies: 30 cut damage and 20% armor penetration, losing 20% damage per pawn down to a minimum of 8. Walls and closed doors stop it.
+
+Throwing leaves you unarmed. The same weapon lands on the ground with its quality and condition intact. Retrieve and equip it to use it again; a retrieval hook can pull it closer. Warmup 0.8 seconds; throw cooldown 4 seconds.
+
+**How to get it**
+
+- Craft it at a electric smithy or fueled smithy after researching **smithing**. Needs Crafting skill 6. Costs steel ×80.
+- Can be bought from traders.
+- Equip it as a melee weapon; the throw is a button on the pawn.
+
+**Details**
+
+- Melee: 14 cut damage, 20% armor penetration, 2 seconds cooldown; quality applies.
+- Throw damage: 30/24/19/15/12/10/8 to the 1st, 2nd, 3rd... pawn in the path, then 8 to every pawn after that. 20% armor penetration.
+- Flies at 14.4 cells per second.
+- Choose a landing cell with the throw button while drafted. There is no accuracy roll; it flies along the highlighted line.
+- Each pawn is hit once. Allies, downed pawns, animals and mechanoids can all be hit.
+- Walls and closed doors stop it; low cover and open doors let it through. Personal shields can absorb the damage; area projectile shields stop the flight.
+- Throwing leaves the pawn unarmed. The same weapon lands with its quality and condition intact. Use Equip to pick it up, or pull it closer with the retrieval hook first. Giving it to another pawn does not reset the throw cooldown.
+- With Melee Animation the throw plays an unfolding animation. With Combat Extended it gets bulk and melee stats, but the throw keeps its own flight instead of CE ammunition or ballistics.
+
+#### Throw Fūma Shuriken
+
+**Cooldown:** 4 seconds | **Range:** 12 cells | **Cast time:** 0.8 seconds
+
+
 ### Mimic beacon
 
 A throwable projector that reads whoever threw it and stands a copy of them where it lands. The copy cannot move, act or fight. What it can do is look like the better target, and most people shoot at it.
@@ -637,24 +688,3 @@ It is a projection, not a shield: the light stops nothing, and the projector fai
 #### Throw mimic beacon
 
 **Cooldown:** 8 seconds | **Range:** 12.9 cells | **Cast time:** 0.8 seconds
-
-## Fūma Shuriken
-
-A large folding **primary weapon**. Its four curved blades provide ordinary melee slashes,
-plus a **Throw Fūma Shuriken** command while drafted.
-
-- **Craft:** either smithy, Smithing research, Crafting 6; 80 steel and 12,000 work.
-- **Melee:** 14 cut damage, 20% armor penetration, two-second base cooldown; quality applies.
-- **Throw:** choose a landing cell within 12 tiles. Warmup 0.8 seconds; cooldown four seconds.
-  Travels at 24 tiles/second along the highlighted line, without an accuracy roll.
-- **Piercing:** 30 damage to the first pawn, then 24/19/15/12/10/8; 20% armor penetration.
-  Each pawn is hit once. Allies, downed pawns, animals, and mechanoids can all be hit.
-- **Obstacles:** walls and closed doors stop it; low cover and open doors allow passage.
-  Personal shields can absorb damage; area projectile shields stop the flight.
-- **Recovery:** throwing leaves the pawn unarmed. The same weapon lands with its quality and
-  condition intact. Use Equip to recover it, or pull it closer with the retrieval hook first.
-  Recovery is manual, and changing owners does not reset its cooldown.
-
-The folded carry form opens into four blades for combat. Melee Animation adds an unfolding
-throw animation; it is optional. Combat Extended gets bulk and melee tools, while the throw
-keeps its custom trajectory rather than using CE ammunition or ballistics.

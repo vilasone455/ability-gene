@@ -173,6 +173,14 @@ namespace RimArt
         public abstract void Redirect(Thing thing, Vector3 origin, Vector3 endpoint, int ticks,
             float force, Thing launcher);
 
+        // Gravity carries an explicit remaining arc-length budget instead of deriving range
+        // from the previous straight endpoint after each turn.
+        public virtual void Bend(Thing thing, Vector3 position, Vector3 heading, float remaining, float speed)
+        {
+            Redirect(thing, position, position + heading * remaining,
+                Mathf.Max(1, Mathf.CeilToInt(remaining / speed)), speed / Rounds.BaseSpeedPerTick(thing), Launcher(thing));
+        }
+
         /// <summary>
         /// Puts a round that has been taken off the engine's clock at a given point.
         ///

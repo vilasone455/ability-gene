@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ThingDef ParentName="BodyPartArchotechBase">
+    <defName>AG_AttractionEye</defName>
+    <label>attraction eye</label>
+    <description>An uncraftable artificial eye that supplies normal sight and lets its bearer channel a gravity well and implode gathered mass. It can be recovered surgically and transferred.</description>
+    <descriptionHyperlinks><RecipeDef>AG_InstallAttractionEye</RecipeDef></descriptionHyperlinks>
+    <statBases><MarketValue>3200</MarketValue><Mass>0.3</Mass></statBases>
+    <thingSetMakerTags><li>RewardStandardCore</li></thingSetMakerTags>
+  </ThingDef>
+</Defs>

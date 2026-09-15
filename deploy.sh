@@ -8,13 +8,15 @@
 # deploy deletes and rewrites the mod folder - which RimWorld will not reread without a
 # restart anyway. The clips are the one thing it *will* reread on demand: regenerate, copy the
 # three json files, then in game run dev mode -> Melee Animation -> Reload all animations. No
-# restart, no reload of the save.
+# restart, no reload of the save. Every clip generator runs here, so adding one means adding it
+# to this branch too.
 set -euo pipefail
 DEST="/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Mods/RimArt"
 SRC="$(cd "$(dirname "$0")" && pwd)"
 
 if [ "${1:-}" = "anims" ]; then
   python3 "$SRC/make_throw_anim.py"
+  python3 "$SRC/make_gravity_anim.py"
   mkdir -p "$DEST/Animations"
   cp "$SRC/Animations/"*.json "$DEST/Animations/"
   echo "Clips updated in: $DEST/Animations"

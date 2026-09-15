@@ -87,9 +87,10 @@ static class ApiChecks
         string retrieval = CheckRetrievalHookContract();
         string kunai = CheckKunaiContract();
         string makibishi = CheckMakibishiContract();
+        string gravity = CheckGravityContract(assembly);
         Console.WriteLine(CheckFumaContract());
         Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, "
-            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval} {kunai} {makibishi}");
+            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval} {kunai} {makibishi} {gravity}");
     }
 
     static void CheckShinraAcquisition()
@@ -294,10 +295,11 @@ static class ApiChecks
         }
 
         int curves = 0, clips = 0;
-        // The throw is directional and needs one clip per facing; Shinra Tensei is centred and
-        // has exactly one, so a second Shinra clip reappearing here is a mistake worth catching.
+        // The throw is directional and needs one clip per facing; Shinra Tensei and Gravity Well
+        // are centred and have exactly one each, so a second clip for either reappearing here is
+        // a mistake worth catching.
         foreach (string clip in ThrowAnimation.Grenade.All.Concat(ThrowAnimation.Kunai.All).Concat(ThrowAnimation.Scatter.All).Concat(ThrowAnimation.Fuma.All)
-                     .Select(name => name.Replace("AG_", "RimArt_")).Append("RimArt_ShinraPush"))
+                     .Select(name => name.Replace("AG_", "RimArt_")).Append("RimArt_ShinraPush").Append("RimArt_GravityChannel"))
         {
             curves += CheckThrowAnimationJson(dataModel, partModel, clip);
             clips++;
@@ -376,6 +378,21 @@ static class ApiChecks
             if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "Animations", stale + ".json")))
                 throw new Exception($"{stale}.json is back; the centred wave uses one facing-free clip");
         }
+        // Gravity Well's clip is named in XML on one side and by string on the other, and neither
+        // end says anything when it misses: the def loads pointing at a file that is not there, or
+        // GravityCastAnimation resolves no clip and the whole ability silently refuses to start.
+        var channel = XDocument.Load("Patch_MeleeAnimation/1.6/Defs/AG_Gravity_Anims.xml").Root.Elements()
+            .Single(e => e.Name.LocalName == "AM.AnimDef" && (string)e.Element("defName") == "AG_GravityChannel");
+        if ((string)channel.Element("data") != "RimArt_GravityChannel.json"
+            || (int)channel.Element("pawnCount") != 1 || (string)channel.Element("type") != "Other")
+            throw new Exception("AG_GravityChannel must be a one-pawn Other animation reading RimArt_GravityChannel.json");
+        // GravityCast holds the cast open only while the pawn is in this job, Melee Animation's own.
+        string mod = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(dll)));
+        if (Directory.Exists(Path.Combine(mod, "1.6", "Defs"))
+            && !Directory.EnumerateFiles(Path.Combine(mod, "1.6", "Defs"), "*.xml", SearchOption.AllDirectories)
+                    .Any(file => File.ReadAllText(file).Contains("AM_InAnimation")))
+            throw new Exception("Melee Animation no longer declares the AM_InAnimation job; "
+                + "Gravity Well and Shinra Tensei would cancel the instant they start");
         return $"Checked the Melee Animation bridge contract and {curves} animation curves "
              + $"across {clips} clips.";
     }
@@ -447,9 +464,11 @@ static class ApiChecks
 
         // Their AddPawn looks these up by name. Both hands must exist because their off-hand
         // lookup is guarded by the main hand's null check and would throw inside their code.
-        bool shinra = clip.StartsWith("RimArt_ShinraPush");
-        foreach (string required in shinra ? new[] { "BodyA", "HeadA", "HandA", "HandB" }
-                                           : new[] { "BodyA", "HandA", "HandB", "Grenade" })
+        // Shinra Tensei and Gravity Well are centred gestures with nothing in hand; every other
+        // clip here throws something and must carry the held part the C# releases.
+        bool centred = clip.StartsWith("RimArt_ShinraPush") || clip == "RimArt_GravityChannel";
+        foreach (string required in centred ? new[] { "BodyA", "HeadA", "HandA", "HandB" }
+                                            : new[] { "BodyA", "HandA", "HandB", "Grenade" })
         {
             if (!names.Contains(required))
                 throw new Exception($"Melee Animation bridge: animation has no '{required}' part");
@@ -461,7 +480,7 @@ static class ApiChecks
             throw new Exception($"Melee Animation bridge: {clip} must not have an ItemA part");
         // The aim worker rotates everything under PawnALift: the throwing hand and the item must be
         // there, the body and the off hand must not.
-        if (!shinra)
+        if (!centred)
         {
             var parts = root.GetProperty("Parts").EnumerateArray().ToDictionary(
                 p => p.GetProperty("ID").GetInt32(),
@@ -478,7 +497,7 @@ static class ApiChecks
             if (!names.Contains("PawnALift") || !Under("HandA") || !Under("Grenade") || Under("HandB") || Under("BodyA"))
                 throw new Exception($"{clip}: HandA and Grenade must be under PawnALift, HandB and BodyA must not");
         }
-        if (shinra && (names.Contains("Grenade") || root.GetProperty("Events").GetArrayLength() != 0))
+        if (centred && (names.Contains("Grenade") || root.GetProperty("Events").GetArrayLength() != 0))
             throw new Exception($"{clip} must have empty hands and no gameplay events");
 
         // The facing is baked into the clip, so it has to be there and it has to be the one this
@@ -489,9 +508,9 @@ static class ApiChecks
         if (!body.GetProperty("DefaultValues").TryGetProperty("PawnBody.Direction", out var facing))
             throw new Exception($"Melee Animation bridge: {clip} does not set PawnBody.Direction, "
                 + "so the pawn would face whatever the previous animation left it facing");
-        // Shinra Tensei's single clip faces south: that is the one facing which shows both arms
-        // at full extension rather than hiding one behind the torso.
-        int expected = shinra ? 2 : clip.EndsWith("North") ? 0 : clip.EndsWith("South") ? 2 : 1;
+        // The centred clips face south: that is the one facing which shows the arms at full
+        // extension rather than hiding one behind the torso.
+        int expected = centred ? 2 : clip.EndsWith("North") ? 0 : clip.EndsWith("South") ? 2 : 1;
         if ((int)facing.GetDouble() != expected)
             throw new Exception($"Melee Animation bridge: {clip} has PawnBody.Direction "
                 + $"{facing.GetDouble()}, expected Rot4 {expected}");
@@ -585,10 +604,15 @@ static class ApiChecks
 
         if (projectile.GetMethod("ExposeData", Any) == null || projectile.GetMethod("MoveForward", Any) == null)
             throw new Exception("CE repulsion persistence requires ProjectileCE.ExposeData and MoveForward");
+        // Gravity Well absorbs a CE round by running CE's own sweep and then its own impact, so a
+        // fast bullet cannot cross the core untested. Losing either only disables CE bending.
+        if (projectile.GetMethod("CheckForCollisionBetween", Any, null, Type.EmptyTypes, null) == null
+            || projectile.GetMethod("ImpactSomething", Any, null, Type.EmptyTypes, null) == null)
+            throw new Exception("CE bridge: Gravity Well needs ProjectileCE.CheckForCollisionBetween and ImpactSomething");
 
         int patchTypes = CheckCombatExtendedPatchTypes(projectile.Assembly);
 
-        return $"Checked {expected.Count + 4} members of the Combat Extended bridge contract "
+        return $"Checked {expected.Count + 6} members of the Combat Extended bridge contract "
              + $"and {patchTypes} types named by the CE patch folder.";
     }
 
@@ -937,6 +961,125 @@ static class ApiChecks
 
         return "Checked the makibishi path cost provider, pouch, spikes and def numbers.";
     }
+    /// <summary>
+    /// Gravity Well's contract. The attraction eye is the repulsion eye's sibling and has to stay
+    /// on the same trade, reward and surgery terms, so this compares the two defs rather than
+    /// restating the numbers a second time and letting them drift apart.
+    ///
+    /// The rest of the well is C#, which leaves two ways for it to rot quietly. The bending bridge
+    /// resolves private members of Projectile at type-init and the dragger resolves one on
+    /// Pawn_PathFollower, and a rename there is a startup exception rather than a def error. And
+    /// the damage range the ability description quotes to the player is computed in GravityRules,
+    /// so a tuning change that skips the description leaves the tooltip and the wiki lying.
+    /// </summary>
+    static string CheckGravityContract(Assembly assembly)
+    {
+        const BindingFlags Any = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+        // Absorption runs the game's own swept interception before its own impact, and the
+        // redirect rewrites the origin so remaining range keeps counting from the real muzzle.
+        // All three are private and all three are read when GravityProjectiles is first touched.
+        if (typeof(Verse.Projectile).GetMethod("CheckForFreeInterceptBetween", Any) == null
+            || typeof(Verse.Projectile).GetMethod("ImpactSomething", Any) == null
+            || typeof(Verse.Projectile).GetField("origin", Any)?.FieldType != typeof(UnityEngine.Vector3))
+            throw new Exception("Gravity Well: vanilla bending needs Projectile.CheckForFreeInterceptBetween, ImpactSomething and origin");
+        if (typeof(Verse.AI.Pawn_PathFollower).GetField("peMode", Any)?.FieldType != typeof(Verse.AI.PathEndMode))
+            throw new Exception("Gravity Well: dragging repaths through Pawn_PathFollower.peMode, which is gone");
+
+        // Same archotech trade item on the same terms as the eye it ships beside, same price.
+        var item = XDocument.Load("1.6/Defs/ThingDefs/AG_Gravity_Things.xml").Root.Element("ThingDef");
+        var sibling = XDocument.Load("1.6/Defs/ThingDefs/AG_Shinra_Things.xml").Root.Element("ThingDef");
+        if ((string)item.Attribute("ParentName") != (string)sibling.Attribute("ParentName")
+            || (float)item.Element("statBases").Element("MarketValue")
+               != (float)sibling.Element("statBases").Element("MarketValue")
+            || (string)item.Element("thingSetMakerTags").Element("li")
+               != (string)sibling.Element("thingSetMakerTags").Element("li")
+            || item.Element("recipeMaker") != null || item.Element("costList") != null)
+            throw new Exception("Attraction eye must be uncraftable and trade and reward on the repulsion eye's terms and price");
+
+        var eye = XDocument.Load("1.6/Defs/HediffDefs/AG_Gravity_Kit.xml").Root.Elements("HediffDef")
+            .Single(e => (string)e.Element("defName") == "AG_AttractionEye");
+        if ((string)eye.Attribute("ParentName") != "AddedBodyPartBase"
+            || (float)eye.Element("addedPartProps").Element("partEfficiency") != 1f
+            || (string)eye.Element("spawnThingOnRemoved") != "AG_AttractionEye"
+            || (string)eye.Element("abilities").Element("li") != "AG_GravityWell")
+            throw new Exception("Attraction eye must supply normal sight, surgical recovery and the Gravity Well ability");
+
+        var recipe = XDocument.Load("1.6/Defs/RecipeDefs/AG_Gravity_Recipes.xml").Root.Element("RecipeDef");
+        var siblingRecipe = XDocument.Load("1.6/Defs/RecipeDefs/AG_Shinra_Recipes.xml").Root.Element("RecipeDef");
+        var ingredients = recipe.Element("ingredients");
+        if ((string)recipe.Attribute("ParentName") != (string)siblingRecipe.Attribute("ParentName")
+            || (int)recipe.Element("skillRequirements").Element("Medicine")
+               != (int)siblingRecipe.Element("skillRequirements").Element("Medicine")
+            || (string)recipe.Element("appliedOnFixedBodyParts").Element("li") != "Eye"
+            || (string)recipe.Element("addsHediff") != "AG_AttractionEye"
+            || (string)ingredients.Attribute("Inherit") != "False"
+            || ingredients.Elements("li").Count() != 2
+            || !ingredients.Elements("li").Any(e => (int)e.Element("count") == 1
+                && (string)e.Element("filter").Element("thingDefs")?.Element("li") == "AG_AttractionEye")
+            || !ingredients.Elements("li").Any(e => (int)e.Element("count") == 2
+                && (string)e.Element("filter").Element("categories")?.Element("li") == "Medicine"))
+            throw new Exception("Attraction surgery must replace one eye on the repulsion eye's terms, one device and two medicine");
+
+        var ability = XDocument.Load("1.6/Defs/AbilityDefs/AG_Gravity_Abilities.xml").Root.Element("AbilityDef");
+        var verb = ability.Element("verbProperties");
+        if (ability.Element("comps").Elements("li").Count(e =>
+                assembly.GetType((string)e.Attribute("Class")) != null) != 1)
+            throw new Exception("Gravity Well needs exactly one comp and RimArt must declare its class");
+        // The cast targets a cell through the mod's own targeter, so the verb must not range-check
+        // or aim: a positive range would refuse the far half of the twenty cells the design asks for.
+        if ((float)verb.Element("range") != -1f || (bool)ability.Element("targetRequired")
+            || (bool)ability.Element("aiCanUse") || (bool)verb.Element("requireLineOfSight")
+            || (bool)verb.Element("drawAimPie") || (float)verb.Element("warmupTime") != 0f)
+            throw new Exception("Gravity Well must carry its own targeting: no verb range, warmup, aim pie, line of sight or AI use");
+        var quoted = System.Text.RegularExpressions.Regex.Match((string)ability.Element("description"),
+            @"(\d+)\D+(\d+) blunt damage");
+        if (!quoted.Success || float.Parse(quoted.Groups[1].Value) != GravityRules.Damage(0f)
+            || float.Parse(quoted.Groups[2].Value) != GravityRules.Damage(GravityRules.FullMass))
+            throw new Exception($"Gravity Well quotes a damage range the rules no longer produce: "
+                + $"{GravityRules.Damage(0f)}-{GravityRules.Damage(GravityRules.FullMass)}");
+
+        // The playtest defaults, stated once so a tuning pass is a deliberate edit here too.
+        if (GravityRules.Range != 20f || GravityRules.Radius != 8f || GravityRules.BulletRadius != 5f
+            || GravityRules.Core != 1.5f || GravityRules.BurstRadius != 2f || GravityRules.OpeningTicks != 30
+            || GravityRules.DurationTicks != 360 || GravityRules.CooldownTicks != 2400
+            || GravityRules.FullMass != 200f || GravityRules.BodyMass != 60f || GravityRules.CoreDamage != 4f
+            || GravityRules.Pull(GravityRules.Radius, 1f) != 0f || GravityRules.Pull(GravityRules.Core, 1f) != 6f
+            || GravityRules.BendDegrees(GravityRules.Core, 1f) != 20f)
+            throw new Exception("Gravity Well: expected 20 cells, 0.5 s opening, 6 s hold, 8/5/1.5/2 radii, "
+                + "4 damage per second, 40 s cooldown, 200 kg full, 60 kg bodies, 6 cells per second and 20 degrees at the core");
+
+        // A DefOf field naming no def is a red error at startup for everyone, not at the cast.
+        var declared = new[] { "1.6/Defs/SoundDefs/AG_Gravity_Sounds.xml", "1.6/Defs/HediffDefs/AG_Gravity_Kit.xml" }
+            .SelectMany(file => XDocument.Load(file).Root.Elements())
+            .Select(def => (string)def.Element("defName")).ToArray();
+        Type defOf = assembly.GetType("RimArt.GravityDefOf")
+            ?? throw new Exception("RimArt.GravityDefOf is gone; the well's defs have no DefOf");
+        foreach (FieldInfo field in defOf.GetFields(BindingFlags.Public | BindingFlags.Static))
+            if (!declared.Contains(field.Name))
+                throw new Exception($"GravityDefOf.{field.Name} names no def in the Gravity def files, "
+                    + "which fails at startup rather than at the cast");
+
+        var folders = XDocument.Load("1.6/Defs/SoundDefs/AG_Gravity_Sounds.xml").Root
+            .Descendants("clipFolderPath").Select(e => e.Value).Distinct().ToArray();
+        if (folders.Length == 0) throw new Exception("The Gravity Well sounds reference no audio at all");
+        const string Core = "/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Data/Core";
+        if (!Directory.Exists(Core))
+            return $"Skipped the {folders.Length} Gravity Well audio paths: RimWorld's Core data is not installed.";
+        // The well's warp takes the same shader as Shinra Tensei's but masks it with a third core
+        // texture, which the renderer looks up by string and skips in silence when it misses.
+        if (!Directory.EnumerateFiles(Core, "*.xml", SearchOption.AllDirectories)
+                .Any(file => File.ReadAllText(file).Contains("PsycastSkipFlash")))
+            throw new Exception("Core no longer ships PsycastSkipFlash; the well would draw no warp");
+        foreach (string folder in folders)
+            if (!Directory.EnumerateFiles(Path.Combine(Core, "Defs", "SoundDefs"), "*.xml")
+                    .Any(file => File.ReadAllText(file).Contains(folder)))
+                throw new Exception($"No Core sound still uses '{folder}'; the Gravity Well sound would "
+                    + "resolve and play nothing");
+        return $"Checked the attraction eye against its repulsion sibling, the well's bending members, "
+             + $"tuning, quoted damage, the warp mask and {folders.Length} core audio paths.";
+    }
+
     static string CheckFumaContract()
     {
         const BindingFlags Any = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;

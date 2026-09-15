@@ -54,6 +54,70 @@ ability. Melee Animation is required; vanilla and Combat Extended projectiles ar
 Development grants and independent VFX previews remain available. See
 [controls, balance and verification notes](docs/shinra-tensei-vfx.md).
 
+### Attraction eye → *Gravity Well*
+
+Install an uncraftable attraction eye from rare trade or standard quest rewards, then click
+**Gravity Well** and pick a visible, walkable cell up to **20 tiles** away. The caster gathers
+for 0.5 s, the field holds for up to **6 s**, and the button becomes **Implode**. A panel shows
+gathered mass and the damage it would currently deal, with the time remaining; **Cancel**
+dissipates the well without an implosion. The caster stands still for the whole channel: other
+orders are refused, attacks are blocked, and a move order cancels it. An activated well commits
+a **40-second** cooldown whether it imploded, was cancelled or was interrupted. Cancelling
+during the 0.5-second opening costs nothing.
+
+**The pull:** everything inside **8 cells** is drawn inward - enemies, allies, animals, mechs
+and downed pawns; only the caster is exempt. Attraction rises linearly from 0 at 8 cells to
+**6 cells per second** at the core boundary (1.5 cells), divided by max(1, BodySize). Victims
+stay spawned and targetable, keep their current job, and can attack, reload and walk: their own
+movement is added to the displacement rather than replaced by it, so an ordinary human can still
+walk out near the edge while a thrumbo is held deeper in. Nothing is stunned and no job is
+locked. Walls, closed doors and blocked diagonal corners stop displacement and shield whatever
+is behind them, and nothing takes collision damage.
+
+**The mass:** loose haulables, chunks, corpses, dropped equipment and minified buildings are
+pulled as whole stacks, resisted by max(1, mass / 60 kg). Equipped, carried, inventoried and
+container-held things stay with their owner, and structures and terrain are never moved. Only
+eligible, unobstructed things inside the **1.5-cell core** count toward mass: item mass × stack
+count, or 60 kg × BodySize for a pawn or corpse, with nothing counted for their gear and nothing
+for the caster or an absorbed bullet. A chunk pile placed in advance counts from the first tick,
+and anything that leaves stops counting immediately. The core deals **4 blunt damage per second**
+while the well is up, and the implosion covers **2 cells** for **15 + 30 × min(mass / 200 kg, 1)**
+blunt damage - 15 empty, 30 at 100 kg, 45 at 200 kg or more - through ordinary blunt armor. Only
+pawns are damaged; loot, corpses, structures and terrain come through intact.
+
+**Bullets:** non-explosive direct shots from either side bend by up to **20 degrees per cell
+travelled**, rising from zero at 5 cells to full strength at the core. Rockets, grenades and
+overhead shells fly straight, and fire and gas are untouched. Speed, damage, remaining range and
+the original shooter are preserved, so a bent shot can hit either side and still stops at cover.
+A shot whose swept path reaches the core is absorbed and adds no implosion power; the sweep runs
+the engine's own collision checks first, so a fast round cannot skip the field or pass through
+cover on its way in. Both vanilla and Combat Extended rounds are supported.
+
+Where two wells overlap, each thing is moved by whichever pulls hardest, ties broken by cast ID,
+and its mass belongs only to that well. Anything a retrieval hook already holds stays with the
+hook. Multiple attraction eyes share one ability and one cooldown; attraction and repulsion
+cool down independently.
+
+The eye costs 3,200 silver - the repulsion eye's price - provides normal sight, and can be
+recovered surgically. Installation requires Medicine 8, the device and two medicine.
+
+Melee Animation is required: the cast plays `AG_GravityChannel`, a 1.2-second one-pawn clip
+written by `make_gravity_anim.py` in which the hand opens, holds through the channel and closes
+on the implosion. The job holds the animation at a time the cast drives, so the hold lasts as
+long as the channel does rather than as long as the clip. The well itself draws a black core
+under a bright ring, four counter-rotating bands, 48 deterministic debris motes spiralling
+inward, and a screen warp on the same distortion shader Shinra Tensei uses, with the warp
+skipped when the shader or its textures are missing. Brightness and the sustained hum both
+follow gathered mass.
+
+Dev mode: **RimArts → Grant kit… → Gravity Well (attraction eye)** installs the eye, and
+**RimArts → Gravity Well: VFX preview** / **frozen full mass** draw the effect on a cell without
+a caster. Automated checks: `dotnet run --project Tests/Gravity/Gravity.csproj`. API checks
+cover the eye against its repulsion sibling, the bending members of both engines, the tuning
+constants, the quoted damage range and the animation clip. See
+[the runtime verification checklist](docs/gravity-well-verification.md) for the checks that need
+a running game.
+
 ### Corrosive glands → *disarm spit*
 Spit contact acid at a target's weapon; they drop it and it lands a few cells away,
 forbidden. **Deals no damage at all.** Two charges, 8 in-game hours each.
@@ -2048,6 +2112,7 @@ Textures/RimArt/Panoply/         blade sprites
 make_textures.py                 draws them; run it after editing, commit the PNGs
 Animations/                      Melee Animation clips, as json (one per facing pair)
 make_throw_anim.py               writes both throw clips; run it after editing, commit the json
+make_gravity_anim.py             writes the gravity channel clip; same rule
 Patch_MeleeAnimation/1.6/Defs/   defs that name their types; loaded only when their mod is
 Patch_CombatExtended/1.6/        CE stats and tools for the frost bomb and mimic beacon
 Languages/English/Keyed/         message strings
@@ -2058,6 +2123,7 @@ Source/RimArt/Frost/             the frost bomb: its verb, its burst, its damage
 Source/RimArt/Mimic/             the mimic beacon: the decoy, its targeting, its renderer copy
 Source/RimArt/ToyCar/            the remote vehicle, its link, its operator lock
 Source/RimArt/RetrievalHook/     the retrieval hook belt: tether state, pulls, wound penalty
+Source/RimArt/Gravity/           the gravity well: cast clock, pull, gathered mass, bent rounds
 ```
 
 Def prefix is `AG_`. Custom blade, crow and stasis art lives under `Textures/RimArt/`;
@@ -2092,6 +2158,7 @@ is enough. Re-run their scripts only after editing them:
 ```bash
 python3 make_textures.py     # -> Textures/RimArt/**.png
 python3 make_throw_anim.py   # -> Animations/RimArt_ThrowGrenade{,North}.json
+python3 make_gravity_anim.py # -> Animations/RimArt_GravityChannel.json
 ```
 
 ## Validating
@@ -2143,6 +2210,7 @@ dotnet run --project Tests/VectorEdit/VectorEdit.csproj          # vector manipu
 dotnet run --project Tests/OriginBlade/OriginBlade.csproj        # Origin: Blade lifecycle
 dotnet run --project Tests/Carrion/Carrion.csproj                # Carrion lifecycle
 dotnet run --project Tests/RetrievalHook/RetrievalHook.csproj    # retrieval hook targets, mass, wounds, drag
+dotnet run --project Tests/Gravity/Gravity.csproj                # gravity well lifecycle, mass, drag, bent rounds
 dotnet run --project Tests/OriginBlade/ApiChecks/ApiChecks.csproj # Harmony targets, signatures, CE bridge contract
 ```
 

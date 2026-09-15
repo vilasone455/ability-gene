@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <AbilityDef>
+    <defName>AG_GravityWell</defName>
+    <label>Gravity Well</label>
+    <description>Channel a fixed gravity well that pulls pawns and loose objects and bends ordinary bullets. Implode for 15–45 blunt damage based on mass currently in its core. Allies are affected. Requires Melee Animation.</description>
+    <iconPath>UI/Icons/Genes/Gene_Darkvision</iconPath>
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <aiCanUse>false</aiCanUse>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams><canTargetSelf>true</canTargetSelf></targetParams>
+    </verbProperties>
+    <comps><li Class="RimArt.CompProperties_AbilityGravityWell" /></comps>
+  </AbilityDef>
+</Defs>

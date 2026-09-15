@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <HediffDef ParentName="AddedBodyPartBase">
+    <defName>AG_AttractionEye</defName>
+    <label>attraction eye</label>
+    <labelNoun>a attraction eye</labelNoun>
+    <description>An artificial eye supplying normal sight and the channeled Gravity Well ability. Additional eyes do not increase its power.</description>
+    <spawnThingOnRemoved>AG_AttractionEye</spawnThingOnRemoved>
+    <addedPartProps><solid>true</solid><partEfficiency>1</partEfficiency></addedPartProps>
+    <abilities><li>AG_GravityWell</li></abilities>
+  </HediffDef>
+</Defs>

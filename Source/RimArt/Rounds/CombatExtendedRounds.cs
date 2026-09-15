@@ -244,6 +244,18 @@ namespace RimArt
             return projectileType.IsInstanceOfType(thing);
         }
 
+        public override void Bend(Thing thing, Vector3 position, Vector3 heading, float remaining, float speed)
+        {
+            float damage = DirectDamage(thing);
+            float height = exactPositionRef(thing).y;
+            repelled.GetOrCreateValue(thing).value = true;
+            base.Bend(thing, position, heading, remaining, speed);
+            damageAmountSetter.Invoke(thing, new object[] { damage });
+            shotHeightRef(thing) = height;
+            startingTicksRef(thing) = remaining / speed;
+            Place(thing, new Vector3(position.x, height, position.z));
+        }
+
         public override Vector3 Position(Thing thing)
         {
             return exactPositionRef(thing);
