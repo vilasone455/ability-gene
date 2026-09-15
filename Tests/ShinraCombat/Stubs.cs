@@ -73,6 +73,7 @@ namespace Verse {
  }
  public static class Scribe_Collections{
   public static void Look<K,V>(ref Dictionary<K,V> dict,string label,LookMode keys,LookMode values){}
+  public static void Look<K,V>(ref Dictionary<K,V> dict,string label,LookMode keys,LookMode values,ref List<K> keysWorking,ref List<V> valuesWorking,bool logNullErrors=true){}
  }
  public struct IntVec3 {
   public Vector3 ToVector3Shifted() => new(x+0.5f,0,z+0.5f);

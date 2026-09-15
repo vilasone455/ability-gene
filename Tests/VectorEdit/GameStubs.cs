@@ -64,6 +64,7 @@ namespace Verse {
  public static class Scribe{public static LoadSaveMode mode=LoadSaveMode.Inactive;}
  public static class Scribe_Collections{
   public static void Look<K,V>(ref Dictionary<K,V> dict,string label,LookMode keys,LookMode values){}
+  public static void Look<K,V>(ref Dictionary<K,V> dict,string label,LookMode keys,LookMode values,ref List<K> keysWorking,ref List<V> valuesWorking,bool logNullErrors=true){}
  }
  public struct IntVec3 {
   public int x,y,z; public IntVec3(int x,int y,int z){this.x=x;this.y=y;this.z=z;}
