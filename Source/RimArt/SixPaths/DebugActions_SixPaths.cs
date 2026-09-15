@@ -12,19 +12,31 @@ namespace RimArt
     {
         [DebugAction("RimArts", "Six Paths: orb showcase", actionType = DebugActionType.ToolMap,
             allowedGameStates = AllowedGameStates.PlayingOnMap)]
-        public static void Showcase() => Preview().Play(UI.MouseCell(), 1f, false, false);
+        public static void Showcase() => Preview().Play(UI.MouseCell(), PreviewMode.Ring, 1f, false);
 
         [DebugAction("RimArts", "Six Paths: slow motion", actionType = DebugActionType.ToolMap,
             allowedGameStates = AllowedGameStates.PlayingOnMap)]
-        public static void SlowMotion() => Preview().Play(UI.MouseCell(), 0.25f, false, false);
+        public static void SlowMotion() => Preview().Play(UI.MouseCell(), PreviewMode.Ring, 0.25f, false);
 
         [DebugAction("RimArts", "Six Paths: frozen mid-change", actionType = DebugActionType.ToolMap,
             allowedGameStates = AllowedGameStates.PlayingOnMap)]
-        public static void Frozen() => Preview().Play(UI.MouseCell(), 0f, true, false);
+        public static void Frozen() => Preview().Play(UI.MouseCell(), PreviewMode.Ring, 0f, true);
 
         [DebugAction("RimArts", "Six Paths: shape sheet", actionType = DebugActionType.ToolMap,
             allowedGameStates = AllowedGameStates.PlayingOnMap)]
-        public static void Sheet() => Preview().Play(UI.MouseCell(), 0f, false, true);
+        public static void Sheet() => Preview().Play(UI.MouseCell(), PreviewMode.Sheet, 0f, false);
+
+        [DebugAction("RimArts", "Six Paths: slam", actionType = DebugActionType.ToolMap,
+            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void Slam() => Preview().Play(UI.MouseCell(), PreviewMode.Slam, 1f, false);
+
+        [DebugAction("RimArts", "Six Paths: slam slow motion", actionType = DebugActionType.ToolMap,
+            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void SlamSlow() => Preview().Play(UI.MouseCell(), PreviewMode.Slam, 0.2f, false);
+
+        [DebugAction("RimArts", "Six Paths: slam frozen mid-fall", actionType = DebugActionType.ToolMap,
+            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void SlamFrozen() => Preview().Play(UI.MouseCell(), PreviewMode.Slam, 0f, true);
 
         [DebugAction("RimArts", "Six Paths: clear showcase", allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void Clear()
@@ -37,25 +49,32 @@ namespace RimArt
             Find.CurrentMap.GetComponent<MapComponent_SixPathsPreview>();
     }
 
+    public enum PreviewMode { Ring, Sheet, Slam }
+
     public sealed class MapComponent_SixPathsPreview : MapComponent
     {
         public bool active;
-        private bool frozen, sheet;
+        private PreviewMode mode;
+        private bool frozen, shaken;
         private float speed, seconds;
         private IntVec3 cell;
 
         public MapComponent_SixPathsPreview(Map map) : base(map) { }
 
-        public void Play(IntVec3 target, float rate, bool freeze, bool shapeSheet)
+        public void Play(IntVec3 target, PreviewMode play, float rate, bool freeze)
         {
             if (!target.InBounds(map) || target.Fogged(map)) return;
             cell = target;
+            mode = play;
             speed = rate;
             frozen = freeze;
-            sheet = shapeSheet;
-            // Frozen starts part way into a change, which is the frame worth inspecting: the
-            // outline is halfway between two forms and the rim is at its brightest.
-            seconds = freeze ? SixPathsTiming.HoldSeconds + SixPathsTiming.MorphSeconds * 0.5f : 0f;
+            shaken = false;
+            // Frozen starts at the frame worth inspecting. For the ring that is halfway between
+            // two forms, with the rim at its brightest; for the slam it is halfway down, where the
+            // block is clear of the ground and its shadow and its three faces can all be judged.
+            seconds = !freeze ? 0f
+                : play == PreviewMode.Slam ? SixPathsSlamTiming.FallAt + SixPathsSlamTiming.Fall * 0.5f
+                : SixPathsTiming.HoldSeconds + SixPathsTiming.MorphSeconds * 0.5f;
             active = true;
         }
 
@@ -66,8 +85,25 @@ namespace RimArt
             // which is the only way to judge a 0.26 s change.
             if (!frozen) seconds += Time.unscaledDeltaTime * speed;
 
-            if (sheet) SixPathsGraphics.DrawSheet(cell.ToVector3Shifted(), map);
-            else SixPathsGraphics.DrawRing(cell.ToVector3Shifted(), seconds, 1f, map);
+            switch (mode)
+            {
+                case PreviewMode.Sheet:
+                    SixPathsGraphics.DrawSheet(cell.ToVector3Shifted(), map);
+                    break;
+                case PreviewMode.Slam:
+                    if (!frozen && seconds >= SixPathsSlamTiming.LandAt && !shaken)
+                    {
+                        shaken = true;
+                        Find.CameraDriver.shaker.DoShake(0.14f);
+                    }
+                    SixPathsSlamGraphics.Draw(cell.ToVector3Shifted(), seconds, map);
+                    // The slam is one event rather than a loop, so it puts itself away.
+                    if (!frozen && seconds > SixPathsSlamTiming.Duration) active = false;
+                    break;
+                default:
+                    SixPathsGraphics.DrawRing(cell.ToVector3Shifted(), seconds, 1f, map);
+                    break;
+            }
         }
     }
 }

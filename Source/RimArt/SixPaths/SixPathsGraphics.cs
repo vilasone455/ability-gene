@@ -26,7 +26,13 @@ namespace RimArt
             new Material(ShaderDatabase.Transparent) { mainTexture = BaseContent.WhiteTex };
         private static readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
         private static readonly Mesh shadow = Disc();
-        private static readonly MorphMesh[] pool = NewPool(SixPathsTiming.Orbs + SixPathsShapes.Cycle.Length);
+        // The ring's six, the shape sheet's four, and six more for the slam's gather. Every orb
+        // drawn in one frame needs its own mesh: Graphics.DrawMesh reads a mesh when the frame
+        // renders, not when it is called.
+        private static readonly MorphMesh[] pool =
+            NewPool(SixPathsTiming.Orbs + SixPathsShapes.Cycle.Length + SixPathsTiming.Orbs);
+        private const int SheetSlot = SixPathsTiming.Orbs;
+        private static int AloftSlot => SheetSlot + SixPathsShapes.Cycle.Length;
 
         private static readonly Color Body = new Color(0.020f, 0.015f, 0.032f);
         private static readonly Color Rim = new Color(0.52f, 0.36f, 0.86f);
@@ -73,9 +79,27 @@ namespace RimArt
             {
                 Vector3 position = centre + new Vector3((i - 1.5f) * 2.4f, 0f, 0f);
                 if (!position.ToIntVec3().InBounds(map) || position.ToIntVec3().Fogged(map)) continue;
-                DrawOrb(pool[SixPathsTiming.Orbs + i], position.WithY(altitude),
+                DrawOrb(pool[SheetSlot + i], position.WithY(altitude),
                     SixPathsShapes.Cycle[i], 0.42f, 0f, 1f, 0f, false);
             }
+        }
+
+        /// <summary>
+        /// One orb of the slam's gather, drawn above the ground rather than on it. The body takes
+        /// the northward offset its height earns and the shadow stays behind on the cell it is
+        /// passing over; the shadow is the whole of the cue, because an orb offset north and drawn
+        /// larger is otherwise just a larger orb somewhere else.
+        /// </summary>
+        public static void DrawAloft(int orb, Vector3 ground, float height, in OrbShape shape,
+            float size, float facing, float fade)
+        {
+            float shrink = SixPathsHeight.ShadowSize(height);
+            DrawMesh(shadow, ground.WithY(AltitudeLayer.MoteLow.AltitudeFor()),
+                size * 2.6f * shrink, size * 1.5f * shrink, 0f,
+                new Color(0.02f, 0.01f, 0.05f, SixPathsHeight.ShadowAlpha(height) * fade));
+            DrawOrb(pool[AloftSlot + orb],
+                SixPathsHeight.Above(ground, height).WithY(AltitudeLayer.MoteOverhead.AltitudeFor()),
+                shape, size * SixPathsHeight.Scale(height), facing, fade, 0f, false);
         }
 
         private static void DrawOrb(MorphMesh mesh, Vector3 position, in OrbShape shape, float size,
