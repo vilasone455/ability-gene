@@ -16,6 +16,8 @@ namespace RimArt
             // on rounds in flight how to read and write its ones. A no-op when it is not.
             CombatExtendedRounds.Install(harmony);
             ShinraTargeting.Install(harmony);
+            GravityTargeting.Install(harmony);
+            GravityProjectiles.Install(harmony);
         }
     }
 }

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <AM.AnimDef>
+    <defName>AG_GravityChannel</defName>
+    <label>Gravity Well: gather and clench</label>
+    <description>One extended hand gathers mass, then closes to implode the well.</description>
+    <jobString>Channeling Gravity Well.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_GravityChannel.json</data>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+</Defs>
