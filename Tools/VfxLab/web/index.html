@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RimArt VFX Lab</title>
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <div class="brand"><span class="brand-cell" aria-hidden="true"></span>RimArt VFX Lab</div>
+    <div class="now" id="now-label"></div>
+    <button class="status" id="status" type="button" aria-live="polite">Loading recordings…</button>
+  </header>
+
+  <nav class="browser" id="browser" aria-label="Effects"></nav>
+
+  <main class="stage" id="stage">
+    <canvas id="gl"></canvas>
+    <canvas id="overlay" aria-hidden="true"></canvas>
+    <div class="view-labels" id="view-labels"></div>
+    <dl class="hud" id="hud"></dl>
+    <div class="notice" id="notice" hidden></div>
+  </main>
+
+  <aside class="inspector" aria-label="Inspector">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-params" aria-controls="panel-params" aria-selected="true">Params</button>
+      <button role="tab" id="tab-layers" aria-controls="panel-layers" aria-selected="false">Layers</button>
+      <button role="tab" id="tab-scene" aria-controls="panel-scene" aria-selected="false">Scene</button>
+      <button role="tab" id="tab-compare" aria-controls="panel-compare" aria-selected="false">Compare</button>
+    </div>
+    <section class="panel" id="panel-params" role="tabpanel" aria-labelledby="tab-params"></section>
+    <section class="panel" id="panel-layers" role="tabpanel" aria-labelledby="tab-layers" hidden></section>
+    <section class="panel" id="panel-scene" role="tabpanel" aria-labelledby="tab-scene" hidden>
+      <h3>Map</h3>
+      <label class="check"><input type="checkbox" id="show-terrain" checked> Terrain</label>
+      <label class="check"><input type="checkbox" id="show-props" checked> Trees, rocks and pawn</label>
+      <label class="check"><input type="checkbox" id="show-grid"> Cell grid <kbd>G</kbd></label>
+      <h3>Sun</h3>
+      <label class="slider"><span>Shadow direction</span><input type="range" id="sun-angle" min="0" max="359" step="1"><output id="sun-angle-out"></output></label>
+      <label class="slider"><span>Shadow length per cell up</span><input type="range" id="sun-length" min="0" max="1.5" step="0.01"><output id="sun-length-out"></output></label>
+      <label class="slider"><span>Tree shadow strength</span><input type="range" id="sun-strength" min="0" max="0.8" step="0.01"><output id="sun-strength-out"></output></label>
+      <h3>Camera</h3>
+      <p class="readout" id="camera-readout"></p>
+      <div class="row">
+        <button type="button" id="frame-effect">Centre on effect <kbd>F</kbd></button>
+        <button type="button" id="reset-cell">Effect back to centre cell</button>
+      </div>
+      <h3>In-game screenshot</h3>
+      <p class="hint">Draw effects over a real screenshot. Enter how many screen pixels one cell spans in it; the image is centred on the effect cell.</p>
+      <label class="file"><input type="file" id="backdrop-file" accept="image/*"></label>
+      <label class="slider"><span>Pixels per cell in the screenshot</span><input type="number" id="backdrop-ppc" min="4" max="400" step="0.5" value="46"></label>
+      <button type="button" id="backdrop-clear">Back to generated map</button>
+    </section>
+    <section class="panel" id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>
+      <label class="check"><input type="checkbox" id="compare-on"> Side by side <kbd>C</kbd></label>
+      <label class="select"><span>A (left)</span><select id="compare-a"></select></label>
+      <label class="select"><span>B (right)</span><select id="compare-b"></select></label>
+      <button type="button" id="compare-swap">Swap A and B</button>
+      <p class="hint">Both sides share one clock and one camera. A side shorter than the other holds its last frame.</p>
+    </section>
+  </aside>
+
+  <footer class="transport">
+    <div class="controls">
+      <button type="button" class="icon" id="play" aria-label="Pause"></button>
+      <button type="button" class="icon" id="step-back" aria-label="Previous frame">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 3v10M13 3 6 8l7 5z"/></svg>
+      </button>
+      <button type="button" class="icon" id="step-forward" aria-label="Next frame">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M12 3v10M3 3l7 5-7 5z"/></svg>
+      </button>
+      <div class="segmented" id="speeds" role="group" aria-label="Playback speed"></div>
+      <label class="check"><input type="checkbox" id="loop" checked> Loop</label>
+      <output class="time" id="time"></output>
+    </div>
+    <canvas id="timeline" aria-label="Timeline"></canvas>
+  </footer>
+</div>
+<script type="module" src="js/ui.js"></script>
+</body>
+</html>

@@ -6,6 +6,7 @@
     <sustain>true</sustain>
     <sustainFadeoutTime>0.2</sustainFadeoutTime>
     <maxSimultaneous>3</maxSimultaneous>
+    <priorityMode>PrioritizeNearest</priorityMode>
     <subSounds><li>
       <grains><li Class="AudioGrain_Folder"><clipFolderPath>Misc/Artifacts/Psychic_Animal_Pulser</clipFolderPath></li></grains>
       <volumeRange>12~12</volumeRange>

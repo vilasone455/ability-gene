@@ -71,7 +71,7 @@ namespace RimArt
             shaken = false;
             // Frozen starts at the frame worth inspecting. For the ring that is halfway between
             // two forms, with the rim at its brightest; for the slam it is halfway down, where the
-            // block is clear of the ground and its shadow and its three faces can all be judged.
+            // block is clear of the ground and its shadows and its faces can all be judged.
             seconds = !freeze ? 0f
                 : play == PreviewMode.Slam ? SixPathsSlamTiming.FallAt + SixPathsSlamTiming.Fall * 0.5f
                 : SixPathsTiming.HoldSeconds + SixPathsTiming.MorphSeconds * 0.5f;
@@ -94,7 +94,7 @@ namespace RimArt
                     if (!frozen && seconds >= SixPathsSlamTiming.LandAt && !shaken)
                     {
                         shaken = true;
-                        Find.CameraDriver.shaker.DoShake(0.14f);
+                        Find.CameraDriver.shaker.DoShake(SixPathsSlamTiming.Shake);
                     }
                     SixPathsSlamGraphics.Draw(cell.ToVector3Shifted(), seconds, map);
                     // The slam is one event rather than a loop, so it puts itself away.

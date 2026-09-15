@@ -18,6 +18,8 @@ runtime, in the order they have actually bitten this project:
   6b. Two ThingDef.ConfigErrors rules the game enforces at load: an explosive projectile
      verb must declare a forcedMissRadius (and a non-explosive one must not), and a def
      carrying CompProperties_Explosive must tick Normal
+  6c. SoundDef.ConfigErrors: a sustainer must not use priorityMode PrioritizeNewest,
+     which is the default when priorityMode is left out
   7. Translate keys used in C# but not defined in Languages/
   8. Concrete abilities with zero or multiple acquisition sources
 
@@ -316,6 +318,21 @@ for defname, rec in sorted(things_by_defname.items()):
                  + (" launches explosive " + projectile + " but has no forcedMissRadius"
                     if explodes else
                     " has a forcedMissRadius but " + projectile + " is not explosive"))
+
+# 6c. "PrioritizeNewest is not supported with sustainers." SoundDef.priorityMode defaults to
+#    PrioritizeNewest, so a sustainer that says nothing about priority is refused at load. Found
+#    in the game log for AG_GravityHum after build, validator and API checks were all clean.
+#    Mod SoundDefs do not use ParentName, so only a def's own tags are read; one that inherits
+#    is skipped rather than guessed at.
+for f in my_files:
+    for el in ET.parse(f).getroot():
+        if el.tag != "SoundDef" or el.get("ParentName"): continue
+        if (el.findtext("sustain") or "").strip().lower() != "true": continue
+        mode = (el.findtext("priorityMode") or "PrioritizeNewest").strip()
+        if mode == "PrioritizeNewest":
+            fail("config error", f, (el.findtext("defName") or "?").strip()
+                 + " is a sustainer with priorityMode PrioritizeNewest (the default when it is not set)"
+                 + " -- the game refuses that; use PrioritizeNearest")
 
 # 7. translate keys
 used = set()
