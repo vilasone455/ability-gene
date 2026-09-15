@@ -63,7 +63,7 @@ namespace RimArt.VfxLab
             new Phase("Hang", SixPathsSlamTiming.HangAt),
             new Phase("Fall", SixPathsSlamTiming.FallAt),
             new Phase("Land", SixPathsSlamTiming.LandAt),
-            new Phase("Fade", SixPathsSlamTiming.FadeAt),
+            new Phase("Exit: sink", SixPathsSlamTiming.ExitAt),
         };
 
         private static Phase[] RingPhases()

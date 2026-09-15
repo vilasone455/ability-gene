@@ -85,18 +85,13 @@ namespace RimArt
         }
 
         /// <summary>
-        /// One orb of the slam's gather, drawn above the ground rather than on it. The body takes
-        /// the northward offset its height earns and the shadow stays behind on the cell it is
-        /// passing over; the shadow is the whole of the cue, because an orb offset north and drawn
-        /// larger is otherwise just a larger orb somewhere else.
+        /// One orb of the slam's gather, drawn above the ground rather than on it: the body takes
+        /// the northward offset its height earns. It draws no shadow; SixPathsSlamGraphics casts
+        /// that along the sun, the same way it casts the block's.
         /// </summary>
         public static void DrawAloft(int orb, Vector3 ground, float height, in OrbShape shape,
             float size, float facing, float fade)
         {
-            float shrink = SixPathsHeight.ShadowSize(height);
-            DrawMesh(shadow, ground.WithY(AltitudeLayer.MoteLow.AltitudeFor()),
-                size * 2.6f * shrink, size * 1.5f * shrink, 0f,
-                new Color(0.02f, 0.01f, 0.05f, SixPathsHeight.ShadowAlpha(height) * fade));
             DrawOrb(pool[AloftSlot + orb],
                 SixPathsHeight.Above(ground, height).WithY(AltitudeLayer.MoteOverhead.AltitudeFor()),
                 shape, size * SixPathsHeight.Scale(height), facing, fade, 0f, false);

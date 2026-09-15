@@ -226,6 +226,27 @@ namespace RimWorld
     [AttributeUsage(AttributeTargets.Class)]
     public sealed class DefOf : Attribute { }
 
+    public static class GenCelestial
+    {
+        public struct LightInfo
+        {
+            public Vector2 vector;
+            public float intensity;
+        }
+
+        public enum LightType { Shadow, LightingSun, LightingMoon }
+
+        /// <summary>
+        /// A fixed sun: the lab scene's (web/js/scene.js, 235 degrees, 0.55 cells of shadow per
+        /// cell of height) written as the game's shadow vector for SixPathsSlamGraphics.SunScale,
+        /// so recorded shadows fall the same way as the scene's trees and rocks.
+        /// </summary>
+        public static LightInfo GetLightSourceInfo(Verse.Map map, LightType type) =>
+            new LightInfo { vector = new Vector2(-6.143f, -4.302f), intensity = 1f };
+
+        public static float CurShadowStrength(Verse.Map map) => 1f;
+    }
+
     public static class DefOfHelper
     {
         /// <summary>Fills each Def field with a def named after the field, which is what the game's
