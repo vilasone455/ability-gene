@@ -91,6 +91,7 @@ export default {
   params: {
     sink: P('Orbs sink into the floor', 0.35, 0.1, 1.5, 0.05, 'Timing (s)'),
     heave: P('Ground heaves', 0.15, 0, 0.8, 0.01, 'Timing (s)'),
+    overlap: P('Ground breaks this early into the sink', 0.80, 0, 0.95, 0.05, 'Timing (s)'),
     stagger: P('Rods start over', 0.30, 0, 1.5, 0.05, 'Timing (s)'),
     punch: P('One rod comes up in', 0.12, 0.04, 0.6, 0.01, 'Timing (s)'),
     stand: P('Rods stand', 1.00, 0, 4, 0.05, 'Timing (s)'),
@@ -152,8 +153,11 @@ export default {
 };
 
 function times(p) {
-  const heaveAt = p.sink;
-  const punchAt = heaveAt + p.heave;
+  // The floor gives way while the orb is still going into it, not after: with the two apart
+  // there is a moment with an orb too far gone to see and no hole yet, and the run reads as a
+  // cut. The rods still wait for the orbs to be fully in.
+  const heaveAt = p.sink * (1 - p.overlap);
+  const punchAt = p.sink + p.heave;
   const standAt = punchAt + p.stagger + p.punch;
   const retractAt = standAt + p.stand;
   return { heaveAt, punchAt, standAt, retractAt, endAt: retractAt + p.retract };
@@ -208,7 +212,7 @@ function drawGround(s, p, t, origin) {
 
   for (let i = 0; i < p.count; i++) {
     const b = base(i, p, origin);
-    const open = Mathf.Smooth(progress(s, t.heaveAt + rand(i, 4) * 0.08, 0.12));
+    const open = Mathf.Smooth(progress(s, t.heaveAt + rand(i, 4) * 0.06, Math.max(0.08, p.sink * p.overlap + p.heave * 0.5)));
     if (open <= 0.001) continue;
     const r = p.holeSize * open;
 
@@ -238,20 +242,24 @@ function drawGround(s, p, t, origin) {
 
 // ---------------------------------------------------------------- the orbs going in
 
-/** The six orbs, already on the floor, sinking into it. They are gone once the ground heaves. */
+/** The six orbs, already on the floor, sinking into it. Gone once they are all the way in. */
 function drawOrbs(s, p, t, origin, sun) {
-  if (s >= t.heaveAt) return;
+  // Until the sink ends, not until the ground heaves: the heave starts partway through the sink,
+  // so the two overlap and the hole grows under an orb that is still going down.
+  if (s >= p.sink) return;
   const u = Mathf.Smooth(progress(s, 0, p.sink));
   for (let i = 0; i < p.count; i++) {
     const b = base(i, p, origin);
-    // Sinking, not shrinking away: it keeps its width and loses its height, so what is left is
-    // a shape being swallowed by the floor.
+    // Sinking, not fading: it keeps its width and its colour and loses its height, so what is
+    // left is a shape being swallowed by the floor. Opacity only goes at the very end, when
+    // what is left is a sliver, or the orbs read as dissolving in mid-air instead.
     const size = 0.42 * (1 - u * 0.15);
-    const swallowed = 1 - u;
+    const left = 1 - u;
+    const alpha = 1 - Mathf.Smooth(Mathf.Clamp01((u - 0.8) / 0.2));
     draw(MeshPool.plane10, b.x + sun.x * 0.2, Y.shadows, b.z + sun.z * 0.2,
-      size * 2.4, size * 1.7, 0, new Color(0, 0, 0, p.sunShadow * swallowed), soft);
-    draw(rimBand, b.x, Y.rod, b.z, size, size * swallowed, 0, Rim.withAlpha(0.9 * swallowed));
-    draw(disc, b.x, Y.rod + 0.004, b.z, size, size * swallowed, 0, Body.withAlpha(swallowed));
+      size * 2.4, size * 1.7 * Mathf.Lerp(0.5, 1, left), 0, new Color(0, 0, 0, p.sunShadow * alpha), soft);
+    draw(rimBand, b.x, Y.rod, b.z, size, size * left, 0, Rim.withAlpha(0.9 * alpha));
+    draw(disc, b.x, Y.rod + 0.004, b.z, size, size * left, 0, Body.withAlpha(alpha));
   }
 }
 
