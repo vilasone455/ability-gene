@@ -1,9 +1,9 @@
 // Truth-Seeking Scorch — reference-inspired piercing line-attack showcase.
 // Based on the supplied mobile-game stills (black mass / purple edge), not a
-// frame-accurate recreation of unseen motion. One orb swells (0.75 s), extrudes
-// an attached lance (0.16 s), holds contact (0.40 s), retracts (0.40 s), settles
-// back to its original size (0.45 s). Impact is timed to the tip reaching target.
-// Gameplay proposal: committed aim during windup, piercing damage on extension.
+// frame-accurate recreation of unseen motion. The orb charges, emits a straight
+// beam, sustains fire, then cuts emission. The full beam thins/fades in place;
+// nothing retracts into the orb. Impact starts when the beam front reaches target.
+// Gameplay proposal: committed aim during windup, piercing damage on beam contact.
 // Mannequins are optional lab props; no damage/status logic is implemented here.
 // Ordinary strip meshes and shipped textures only. All animation is time-derived.
 import {
@@ -30,8 +30,8 @@ const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp;
 const P = (label, value, min, max, step, group) => ({ label, value, min, max, step, group });
 const source = -2;
 function times(p) {
-  const hit = p.charge + p.extend, retract = hit + p.hold, reform = retract + p.retract;
-  return { hit, retract, reform, end: reform + p.settle };
+  const hit = p.charge + p.flight, cutoff = hit + p.hold, reform = cutoff + p.dissipate;
+  return { hit, cutoff, reform, end: reform + p.settle };
 }
 function position(o, p, x, z) {
   const a = p.aim * Mathf.Deg2Rad;
@@ -44,7 +44,7 @@ function paint(m, o, p, x, z, layer, w, h, c, mat = solid) {
   Graphics.DrawMesh(m, Matrix4x4.TRS(position(o, p, x, z).WithY(layer),
     Quaternion.Euler(0, -p.aim, 0), new Vector3(w, 1, h)), mat, 0, null, 0, props);
 }
-// A strip, rather than a polygon fan, preserves the concave silhouette of the lance.
+// Parallel strip edges keep the beam straight and constant in width.
 function strip(key, points, width, o, p, layer, colour) {
   const v = [], tri = [];
   for (let i = 0; i < points.length; i++) {
@@ -81,15 +81,14 @@ export default {
   kit: 'Six Paths', label: 'Truth-Seeking Scorch (sketch)',
   params: {
     charge: P('Orb swells / aim windup', 0.75, 0.3, 1.5, 0.05, 'Timing (s)'),
-    extend: P('Lance extends', 0.16, 0.08, 0.5, 0.01, 'Timing (s)'),
+    flight: P('Beam reaches target', 0.09, 0.03, 0.25, 0.01, 'Timing (s)'),
     hold: P('Contact hold', 0.40, 0.1, 1.2, 0.05, 'Timing (s)'),
-    retract: P('Lance retracts', 0.40, 0.15, 1, 0.05, 'Timing (s)'),
+    dissipate: P('Beam dissipates after cutoff', 0.16, 0.06, 0.4, 0.01, 'Timing (s)'),
     settle: P('Orb settles', 0.45, 0.2, 1, 0.05, 'Timing (s)'),
     aim: P('Aim direction (degrees)', 180, 0, 360, 5, 'Shape'),
     range: P('Reach from orb (cells)', 5.4, 3.5, 7, 0.1, 'Shape'),
     orb: P('Charged orb radius (cells)', 0.95, 0.6, 1.3, 0.05, 'Shape'),
-    width: P('Lance root half-width (cells)', 0.60, 0.3, 0.85, 0.05, 'Shape'),
-    ripple: P('Edge undulation (cells)', 0.10, 0, 0.22, 0.01, 'Shape'),
+    beamWidth: P('Beam half-width (cells)', 0.22, 0.10, 0.45, 0.01, 'Shape'),
     glow: P('Purple aura strength', 0.70, 0, 1, 0.05, 'Feedback'),
     impact: P('Impact star radius (cells)', 0.75, 0.35, 1.2, 0.05, 'Feedback'),
     shake: P('Contact camera shake', 0.08, 0, 0.2, 0.01, 'Feedback'),
@@ -98,8 +97,8 @@ export default {
   duration(p) { return times(p).end; },
   phases(p) {
     const t = times(p);
-    return [{ name: 'Charge / aim', t: 0 }, { name: 'Pierce', t: p.charge },
-      { name: 'Contact', t: t.hit }, { name: 'Retract', t: t.retract }, { name: 'Reformed', t: t.reform }];
+    return [{ name: 'Charge / aim', t: 0 }, { name: 'Fire', t: p.charge },
+      { name: 'Contact', t: t.hit }, { name: 'Cut emission', t: t.cutoff }, { name: 'Reformed', t: t.reform }];
   },
   events(p) { return p.shake ? [{ t: times(p).hit, type: 'shake', value: p.shake }] : []; },
   draw(s, p, { origin: o }) {
@@ -107,11 +106,12 @@ export default {
     if (s < 0 || s >= t.end) return;
     const alpha = smooth(s / 0.12) * (1 - smooth((s - t.reform) / p.settle));
     const charged = smooth(s / p.charge);
-    const recovery = smooth((s - t.retract) / (p.retract + p.settle * 0.6));
+    const recovery = smooth((s - t.reform) / (p.settle * 0.6));
     const radius = lerp(0.28, p.orb, charged * (1 - recovery));
-    const out = 1 - (1 - clamp((s - p.charge) / p.extend)) ** 3;
-    const back = smooth((s - t.retract) / p.retract);
-    const length = p.range * out * (1 - back);
+    const out = clamp((s - p.charge) / p.flight);
+    const beamFade = 1 - smooth((s - t.cutoff) / p.dissipate);
+    const muzzle = source + p.orb * 0.88;
+    const length = (p.range - p.orb * 0.88) * out;
     const target = source + p.range;
     if (p.actors) {
       actor(source - 1.25, new Color(0.40, 0.58, 0.61), o, p, alpha);
@@ -133,37 +133,41 @@ export default {
       const r = radius + (1 - charged) * 0.7;
       paint(ring, o, p, source, 0, y - 0.01, r, r, rim.withAlpha(charged * alpha * 0.5));
     }
-    if (length > 0.01) {
-      const points = Array.from({ length: 65 }, (_, i) => {
-        const u = i / 64;
-        return { u, x: source + length * u,
-          z: Math.sin(u * 13 - s * 14) * Math.sin(u * Math.PI) * p.ripple * out };
-      });
-      const thickness = u => p.width * Math.pow(1 - u, 0.8) * Math.min(1, length / p.orb);
-      paint(MeshPool.plane10, o, p, source + length * 0.5, 0, floor + 0.01, length + 1, p.width * 4,
-        violet.withAlpha(alpha * p.glow * 0.32), glow);
-      strip('lance aura', points, u => thickness(u) + 0.09 * Math.sin(Math.PI * u), o, p, y,
-        violet.withAlpha(alpha * p.glow * 0.45));
-      strip('lance edge', points, u => thickness(u) + 0.025 * (1 - u), o, p, y + 0.002, rim.withAlpha(alpha));
-      strip('lance core', points, thickness, o, p, y + 0.004, ink.withAlpha(alpha));
-      // Narrow filaments echo the references without replacing the black silhouette.
-      for (let k = 0; k < 4; k++) {
-        const sign = k % 2 ? 1 : -1;
-        const trail = points.map(q => ({ u: q.u, x: q.x,
-          z: q.z + sign * (thickness(q.u) + Math.sin(Math.PI * q.u) * (0.14 + k * 0.05)
-            + p.ripple * Math.sin(q.u * 19 + s * 18 + k) * Math.sin(Math.PI * q.u)) }));
-        strip(`filament ${k}`, trail, u => 0.013 * Math.sin(Math.PI * u), o, p, y + 0.006,
-          (k < 2 ? rim : violet).withAlpha(alpha * p.glow * (k < 2 ? 0.7 : 0.4)));
+    if (length > 0.001 && beamFade > 0) {
+      const points = [{ u: 0, x: muzzle, z: 0 }, { u: 1, x: muzzle + length, z: 0 }];
+      const w = p.beamWidth * beamFade;
+      const beamAlpha = alpha * beamFade;
+      paint(MeshPool.plane10, o, p, muzzle + length / 2, 0, floor + 0.01, length + 0.5, w * 7,
+        violet.withAlpha(beamAlpha * p.glow * 0.45), glow);
+      strip('beam sheath', points, () => w + 0.09 * beamFade, o, p, y,
+        violet.withAlpha(beamAlpha * p.glow * 0.7));
+      strip('beam edge', points, () => w + 0.028 * beamFade, o, p, y + 0.002,
+        rim.withAlpha(beamAlpha));
+      strip('beam core', points, () => w, o, p, y + 0.004, ink.withAlpha(beamAlpha));
+      // Energy streaks travel only toward the target, along rigid parallel edges.
+      for (let i = 0; i < 6; i++) {
+        const u = Mathf.Repeat((s - p.charge) * 2.8 + i / 6, 1);
+        const start = muzzle + length * u;
+        const end = Math.min(muzzle + length, start + 0.38);
+        const z = (i % 2 ? 1 : -1) * (w + 0.025);
+        strip(`streak ${i}`, [{ u: 0, x: start, z }, { u: 1, x: end, z }],
+          () => 0.013 * beamFade, o, p, y + 0.006, white.withAlpha(beamAlpha * p.glow * 0.8));
       }
     }
-    // Draw the orb over the lance root to hide the join and retain one continuous mass.
+    // The sphere remains the emitter; its silhouette does not stretch into the beam.
     paint(disc, o, p, source, 0, y + 0.02, radius + 0.035, radius + 0.035, rim.withAlpha(alpha));
     paint(disc, o, p, source, 0, y + 0.022, radius, radius, ink.withAlpha(alpha));
     paint(MeshPool.plane10, o, p, source - radius * 0.3, radius * 0.3, y + 0.024,
       radius * 1.2, radius * 1.2, violet.withAlpha(alpha * p.glow * 0.22), glow);
+    if (s >= p.charge && s < t.reform) {
+      paint(ring, o, p, muzzle, 0, y + 0.04, 0.11, p.beamWidth * 1.9,
+        rim.withAlpha(alpha * beamFade), edgeGlow);
+      paint(MeshPool.plane10, o, p, muzzle, 0, y + 0.042, 0.42, p.beamWidth * 4,
+        white.withAlpha(alpha * beamFade * p.glow * 0.65), glow);
+    }
     const age = s - t.hit;
     if (age >= 0) {
-      const contact = 1 - smooth((s - t.retract) / Math.min(0.18, p.retract));
+      const contact = beamFade;
       const pulse = 1 - clamp(age / 0.2);
       paint(MeshPool.plane10, o, p, target, 0, y + 0.07, p.impact * 3, p.impact * 3,
         violet.withAlpha(alpha * contact * p.glow * (0.45 + pulse * 0.4)), glow);
