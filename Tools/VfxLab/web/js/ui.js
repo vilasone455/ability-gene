@@ -6,6 +6,9 @@ import { Scene } from './scene.js';
 import { Camera, bindCamera, shakeAt } from './camera.js';
 import { RecordedSource, SketchSource, Clock, RecordedCell } from './player.js';
 import { layerOf } from './engine.js';
+import { listPresets, savePreset, deletePreset, applyPreset, presetFile, importPresets } from './presets.js';
+import { csharpConstants, plainList, shareLink, countParams } from './share.js';
+import { renderFrames, composeSheet, composeOverlay, renderBackdrop, download, textUrl, manifest, baseName, frameName, frameTimes, sheetColumns } from './export.js';
 import sketchFiles from '../sketches/index.js';
 
 const $ = (id) => document.getElementById(id);
@@ -39,6 +42,11 @@ const state = {
   frames: [],
   standIns: new Set(),
   drawn: 0,
+  exporting: false,
+  // Frame export, remembered between visits. from/to are reset to the effect's own length
+  // whenever the selection changes.
+  export: { frames: 12, px: 256, cells: 8, north: 2, columns: 0, transparent: false, manifest: true,
+    from: 0, to: 0, layout: 'sheet', oldest: 0.28 },
 };
 
 const clock = new Clock();
@@ -58,6 +66,7 @@ async function boot() {
   Object.assign(scene.sun, store.get('sun', {}));
   Object.assign(scene.show, store.get('show', {}));
   camera.ppc = store.get('ppc', camera.ppc);
+  Object.assign(state.export, store.get('export', {}));
   centreCamera();
 
   for (const file of sketchFiles) {
@@ -95,17 +104,22 @@ async function boot() {
   if (query.has('cell')) { const [x, z] = query.get('cell').split(',').map(Number); state.cell = { x, z }; centreCamera(); }
   if (query.has('ppc')) camera.ppc = Number(query.get('ppc'));
   state.debug = window.__labDebug = query.has('debug');
-  if (state.debug) window.__lab = { state, clock, camera };
+  // ?debug also hands the internals to the console and to Tools/VfxLab's own checks.
+  if (state.debug) window.__lab = { state, clock, camera, renderer, scene, sourceA, runExport, renderFrames, composeSheet, composeOverlay, renderBackdrop, listPresets, savePreset, csharpConstants, plainList, shareLink };
 
   let last = performance.now(), layersAt = 0;
   const frame = (now) => {
-    clock.duration = activeDuration();
-    clock.tick(Math.min(0.1, (now - last) / 1000));
+    // While frames are being exported the drawing buffer belongs to the exporter: it is a
+    // different size and is read back with toDataURL, so nothing else may draw into it.
+    if (!state.exporting) {
+      clock.duration = activeDuration();
+      clock.tick(Math.min(0.1, (now - last) / 1000));
+      drawStage();
+      drawTimeline();
+      updateTime();
+      if (now - layersAt > 250) { layersAt = now; renderLayers(); }
+    }
     last = now;
-    drawStage();
-    drawTimeline();
-    updateTime();
-    if (now - layersAt > 250) { layersAt = now; renderLayers(); }
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
@@ -176,11 +190,14 @@ async function select(id, side = 'a') {
 
 function selectionChanged(restart) {
   store.set('a', state.a); store.set('b', state.b); store.set('compare', state.compare);
+  const chosen = sourceA();
+  if (chosen) { state.export.from = 0; state.export.to = chosen.duration || 0; }
   if (restart) { clock.t = 0; clock.playing = true; }
   clock.duration = activeDuration();
   $('compare-on').checked = state.compare;
   renderBrowser();
   renderParams();
+  renderExportPanel();
   renderCompareSelects();
   renderViewLabels();
   const a = sourceA();
@@ -427,25 +444,214 @@ function renderParams() {
       out);
   })));
 
-  const copy = el('button', { type: 'button', onclick: async () => {
-    const text = Object.entries(source.values).map(([k, v]) => {
-      const name = k[0].toUpperCase() + k.slice(1);
-      if (typeof v === 'boolean') return `public const bool ${name} = ${v};`;
-      if (typeof v === 'string') return `// ${name}: ${v}`;
-      return `public const float ${name} = ${Number(v)}f;`;
-    }).join('\n');
-    try { await navigator.clipboard.writeText(text); copy.textContent = 'Copied'; }
-    catch { copy.textContent = 'Clipboard blocked; see console'; console.log(text); }
-    setTimeout(() => { copy.textContent = 'Copy as C# constants'; }, 1600);
-  } }, 'Copy as C# constants');
+  // Three ways to hand these values to someone else, all covering every parameter the sketch
+  // declares, under the same group headings this panel shows.
+  const copier = (label, build) => {
+    const button = el('button', { type: 'button', onclick: async () => {
+      const text = build();
+      try { await navigator.clipboard.writeText(text); button.textContent = `Copied ${countParams(source.module)} values`; }
+      catch { button.textContent = 'Clipboard blocked; see console'; console.log(text); }
+      setTimeout(() => { button.textContent = label; }, 1800);
+    } }, label);
+    return button;
+  };
+  const copy = copier('Copy as C# constants', () => csharpConstants(source.module, source.values, source.label));
+  const copyList = copier('Copy as a list', () => plainList(source.module, source.values, source.label));
+  const copyLink = copier('Copy link', () =>
+    shareLink(location.origin + location.pathname, source.label, source.module, source.values, clock.t));
   const reset = el('button', { type: 'button', onclick: () => { source.values = SketchSource.defaults(source.module); save(); renderParams(); } }, 'Reset to defaults');
 
   panel.replaceChildren(
     el('div', { class: 'group' },
       el('h3', {}, 'Sketch'),
       el('p', { class: 'hint' }, `A proposal in JavaScript, not the game. ${source.module.compareWith ? `Compare it with the recorded "${source.module.compareWith}" on the Compare tab.` : ''}`),
-      el('div', { class: 'row' }, reset, copy)),
-    phases, ...controls);
+      el('div', { class: 'row' }, reset, copy, copyList, copyLink),
+      el('p', { class: 'hint' }, `${countParams(source.module)} settings. "Copy as a list" is the readable one to send someone; "Copy link" opens this exact configuration in their own lab.`)),
+    presetGroup(source), phases, ...controls);
+}
+
+/**
+ * Saved parameter sets for this sketch: name one, load it back, hand it to someone as a file.
+ * Sliders themselves are already remembered per sketch; a preset is for keeping a version of
+ * them while trying another.
+ */
+function presetGroup(source) {
+  const saved = listPresets(source.file);
+  const note = el('p', { class: 'hint' },
+    saved.length ? 'Click a name to load it.' : 'Nothing saved for this sketch yet.');
+  const name = el('input', { type: 'text', placeholder: 'Name these values', maxlength: 60,
+    onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); keep(); } } });
+
+  function keep() {
+    if (!name.value.trim()) { note.textContent = 'Give it a name first.'; return; }
+    if (!savePreset(source.file, name.value, source.values)) {
+      note.textContent = 'This browser refused to store it: a private window, or no room left.';
+      return;
+    }
+    renderParams();
+  }
+
+  function load(values) {
+    source.values = applyPreset(source.values, values);
+    store.set(`params:${source.file}`, source.values);
+    clock.duration = activeDuration();
+    renderParams();
+  }
+
+  const rows = saved.map(({ name: label, values }) => el('div', { class: 'row preset' },
+    el('button', { type: 'button', onclick: () => load(values) }, label),
+    el('button', { type: 'button', title: `Export ${label} as a file`,
+      onclick: () => download(textUrl(presetFile(source.file, source.label, { [label]: values })),
+        `${source.file.replace(/\.js$/, '')}-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.json`) }, 'Export'),
+    el('button', { type: 'button', title: `Delete ${label}`,
+      onclick: () => { deletePreset(source.file, label); renderParams(); } }, '×')));
+
+  const exportAll = saved.length > 1 ? el('button', { type: 'button',
+    onclick: () => download(textUrl(presetFile(source.file, source.label,
+      Object.fromEntries(saved.map((x) => [x.name, x.values])))), `${source.file.replace(/\.js$/, '')}-presets.json`),
+  }, `Export all ${saved.length}`) : null;
+
+  const pick = el('input', { type: 'file', accept: 'application/json,.json', onchange: async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const taken = importPresets(source.file, await file.text());
+      renderParams();
+      $('preset-note')?.replaceChildren(`Imported ${taken.length}: ${taken.join(', ')}`);
+    } catch (error) {
+      note.textContent = error.message;
+    }
+  } });
+
+  return el('div', { class: 'group' },
+    el('h3', {}, 'Presets'),
+    el('div', { class: 'row' }, name, el('button', { type: 'button', onclick: keep }, 'Save')),
+    ...rows,
+    el('div', { class: 'row' }, exportAll, el('label', { class: 'file' }, 'Import', pick)),
+    el('p', { class: 'hint', id: 'preset-note' }, note.textContent));
+}
+
+// ------------------------------------------------------------------ frame export
+
+function renderExportPanel() {
+  const panel = $('panel-export'), source = sourceA();
+  if (!source) { panel.replaceChildren(el('p', { class: 'hint' }, 'Pick an effect on the left.')); return; }
+  const settings = state.export;
+  const save = () => { store.set('export', settings); summarise(); };
+  const summary = el('p', { class: 'hint' });
+  const status = el('p', { class: 'readout', id: 'export-status' }, source.still
+    ? 'A frozen preview is one frame; ask for one.' : 'Ready.');
+
+  const Layouts = {
+    sheet: 'One image, frames in a grid',
+    strip: 'One image, frames in a row',
+    overlay: 'One image, frames stacked (strobe)',
+  };
+  const layout = el('label', { class: 'select' }, el('span', {}, 'Layout'),
+    el('select', { onchange: (e) => { settings.layout = e.target.value; store.set('export', settings); renderExportPanel(); } },
+      ...Object.entries(Layouts).map(([value, text]) => el('option', { value, selected: settings.layout === value }, text))));
+
+  const num = (key, label, attrs, digits = 0) => {
+    const input = el('input', {
+      type: 'number', value: settings[key], ...attrs,
+      oninput: (e) => { settings[key] = Number(e.target.value); save(); },
+    });
+    return el('label', { class: 'slider' }, el('span', {}, label), input, el('output', {}, digits ? '' : ''));
+  };
+
+  function summarise() {
+    const times = frameTimes(settings.frames, settings.from, settings.to);
+    const px = Math.round(settings.px);
+    const [cols, rows] = settings.layout === 'overlay' ? [1, 1]
+      : settings.layout === 'strip' ? [times.length, 1]
+        : [sheetColumns(times.length, settings.columns), Math.ceil(times.length / sheetColumns(times.length, settings.columns))];
+    const step = times.length > 1 ? times[1] - times[0] : 0;
+    summary.textContent = `${times.length} frames every ${fmt(step)} s (${step > 0 ? fmt(1 / step, 1) : '–'} fps), `
+      + `${px} px each, ${settings.cells} cells across. `
+      + (settings.layout === 'overlay'
+        ? `Stacked into one ${px} × ${px} px picture.`
+        : `One image ${cols} × ${rows}, ${cols * px} × ${rows * px} px.`);
+  }
+
+  const sheet = el('button', { type: 'button', onclick: () => runExport('image', sheet) }, 'Export image');
+  const sequence = el('button', { type: 'button', onclick: () => runExport('sequence', sequence) }, 'Export PNG sequence');
+
+  panel.replaceChildren(
+    el('div', { class: 'group' },
+      el('h3', {}, 'Frames'),
+      el('p', { class: 'hint' }, 'Writes the effect out as PNGs, sampled from its own clock rather than captured from playback, so the same numbers give the same frames every time.'),
+      num('frames', 'How many frames', { min: 1, max: 240, step: 1 }),
+      num('from', 'From (s)', { min: 0, max: 60, step: 0.01 }),
+      num('to', 'To (s)', { min: 0, max: 60, step: 0.01 }),
+      el('div', { class: 'row' },
+        el('button', { type: 'button', onclick: () => { settings.from = 0; settings.to = source.duration || 0; save(); renderExportPanel(); } }, 'Whole effect'),
+        ...(source.phases ?? []).slice(0, 6).map((ph, i, all) => el('button', {
+          type: 'button', title: `From ${ph.name} to ${all[i + 1]?.name ?? 'the end'}`,
+          onclick: () => { settings.from = ph.t; settings.to = all[i + 1]?.t ?? (source.duration || ph.t); save(); renderExportPanel(); },
+        }, ph.name)))),
+    el('div', { class: 'group' },
+      el('h3', {}, 'Picture'),
+      layout,
+      num('px', 'Pixels per frame', { min: 16, max: 1024, step: 16 }),
+      num('cells', 'Cells across', { min: 1, max: 40, step: 0.5 }),
+      num('north', 'Centre this far north (cells)', { min: -10, max: 20, step: 0.5 }),
+      ...(settings.layout === 'sheet' ? [num('columns', 'Sheet columns (0 = square)', { min: 0, max: 24, step: 1 })] : []),
+      ...(settings.layout === 'overlay' ? [num('oldest', 'Oldest frame\'s opacity', { min: 0.05, max: 1, step: 0.01 })] : []),
+      el('label', { class: 'check' }, el('input', { type: 'checkbox', checked: settings.transparent,
+        onchange: (e) => { settings.transparent = e.target.checked; save(); } }), 'Effect only, transparent background'),
+      el('label', { class: 'check' }, el('input', { type: 'checkbox', checked: settings.manifest,
+        onchange: (e) => { settings.manifest = e.target.checked; save(); } }), 'Also write a JSON of times and params'),
+      el('p', { class: 'hint' }, 'Transparent drops the generated terrain, trees and pawn. Frames are centred on the effect\'s cell, pushed north because height is drawn as a northward offset.')),
+    el('div', { class: 'group' },
+      el('h3', {}, 'Write'),
+      el('div', { class: 'row' }, sheet, sequence),
+      summary, status),
+  );
+  summarise();
+}
+
+async function runExport(kind, button) {
+  const source = sourceA();
+  if (!source) return;
+  const settings = { ...state.export };
+  const status = $('export-status');
+  const label = button.textContent;
+  state.exporting = true;
+  button.disabled = true;
+  status.textContent = 'Drawing frames…';
+  try {
+    // Synchronous: every frame is drawn and read back before anything else can touch the buffer.
+    const context = { renderer, scene, camera, source, cell: state.cell, hidden: state.hidden };
+    const overlay = kind === 'image' && settings.layout === 'overlay';
+    // Stacked frames have to be transparent, or each one hides the frames under it. The scene,
+    // if it is wanted, is drawn once as a bed for them instead.
+    const backdrop = overlay && !settings.transparent ? renderBackdrop(context, settings) : null;
+    const { times, shots, px, ppc } = renderFrames(context, overlay ? { ...settings, transparent: true } : settings);
+    if (kind === 'image') {
+      const made = overlay
+        ? await composeOverlay(shots, px, { backdrop, oldest: settings.oldest })
+        : await composeSheet(shots, px, settings.layout === 'strip' ? shots.length : settings.columns);
+      download(made.url, `${baseName(source, settings)}-${settings.layout}.png`);
+      status.textContent = overlay
+        ? `Wrote ${times.length} frames stacked into ${made.width} × ${made.height} px.`
+        : `Wrote ${times.length} frames as ${made.cols} × ${made.rows}, ${made.width} × ${made.height} px.`;
+    } else {
+      for (let i = 0; i < shots.length; i++) {
+        download(shots[i], frameName(source, settings, i, shots.length));
+        await new Promise((done) => setTimeout(done, 60));
+      }
+      status.textContent = `Wrote ${shots.length} PNGs at ${px} × ${px} px. The browser asks once to allow several downloads.`;
+    }
+    if (settings.manifest) download(textUrl(manifest({ source, settings, times, ppc })), `${baseName(source, settings)}.json`);
+    return { frames: times.length, px };
+  } catch (error) {
+    status.textContent = `Export failed: ${error.message}`;
+    throw error;
+  } finally {
+    state.exporting = false;
+    button.disabled = false;
+    button.textContent = label;
+  }
 }
 
 function renderLayers() {
@@ -553,6 +759,7 @@ function bindChrome() {
       }
       state.layersKey = null;
       renderLayers();
+      if (tab.id === 'tab-export') renderExportPanel();
     };
   }
 

@@ -84,6 +84,50 @@ Recorded now: Six Paths (7 actions), Gravity Well (2), Shinra Tensei (3).
 | Pan / zoom | drag / wheel |
 | Draw over a real game screenshot | Scene tab, then enter the screenshot's pixels per cell |
 | Hide a group of draw calls | Layers tab, untick it |
+| Save the sliders as a named preset | Params tab, Presets: name it, Save |
+| Send a sketch's settings to someone | Params tab, Copy as a list, or Copy link |
+| Write the effect out as PNGs | Export tab |
+
+## Presets
+
+The Params tab remembers each sketch's sliders by itself. A preset is for keeping a set of them
+while trying another: name it and press Save, then click its name to load it back. Presets are
+stored in this browser, per sketch file.
+
+Export writes one as JSON, which is small enough to paste into a commit message or hand to
+someone else; Import reads that file back. A file for another sketch is refused rather than
+half-applied, and a preset saved before a slider existed simply leaves that slider alone.
+
+## Exporting frames
+
+The Export tab writes the selected effect out as PNGs. Frames are sampled from the effect's own
+clock, not captured from playback, so the same settings give the same frames on any machine, and
+a sketch is identical between runs because it is a pure function of time and its params.
+
+| Setting | What it does |
+|---|---|
+| How many frames | Frames taken across the range, evenly spaced. The end is left open, so a loop does not repeat its first pose. |
+| Layout | One image with the frames in a grid, one image with them in a row, or one image with them stacked. |
+| From, To | The range in seconds. "Whole effect" resets it; the phase buttons beside it set one phase's span. |
+| Pixels per frame | Each frame is square, this many pixels a side. |
+| Cells across | How much map a frame covers, which together with the pixel size fixes the zoom. |
+| Centre this far north | Frames centre on the effect's cell, pushed north, because height is drawn as a northward offset -- a tall effect sits up the screen. |
+| Sheet columns | Grid layout only; 0 lays it out as square as it can. |
+| Oldest frame's opacity | Stacked layout only: how faint the first frame is, so the motion reads in order. |
+| Effect only, transparent background | Drops the generated terrain, trees and pawn and clears to nothing, leaving the effect alone on transparency. |
+| Also write a JSON | The times, the settings and the sketch's params, next to the pictures. |
+
+**Export image** writes one PNG in the chosen layout. **Export PNG sequence** writes the frames
+numbered separately instead; the browser asks once to allow several downloads.
+
+The stacked layout is a strobe photo: every frame in one frame-sized picture, the oldest faintest.
+It needs transparent frames, since an opaque one would hide the frames under it, so the terrain is
+drawn once as a bed and the effect stacked over it -- which happens whether or not "effect only"
+is ticked. Stacking a whole effect mostly shows wherever it holds still; stack one phase instead,
+with the phase buttons above, to see a movement.
+
+The page's own drawing stops while an export runs, because the exporter is using the drawing
+buffer at a different size and reads each frame straight back out of it.
 
 A link can open an exact frame:
 
@@ -151,7 +195,23 @@ Vector arithmetic is methods (`a.plus(b)`, `a.times(f)`), because JavaScript has
 Keep one `Mesh` per thing drawn in a frame. The renderer reads meshes after the frame is drawn,
 as Unity does, so two draws sharing a rebuilt mesh both show its last shape.
 
-"Copy as C# constants" on the Params tab copies the current values as `public const float ...` lines.
+## Sending a sketch's settings
+
+Three buttons at the top of the Params tab copy every parameter the sketch declares, in
+declaration order, under the same group headings the panel shows.
+
+| Button | Gives you | For |
+|---|---|---|
+| Copy as C# constants | `public const float Sink = 0.35f;   // Orbs sink into the floor`, grouped by `// Timing (s)` comments | pasting into a timing class |
+| Copy as a list | `Timing (s)` then `  Orbs sink into the floor: 0.35` | sending to a person to read |
+| Copy link | the page's URL with `p.<param>=` for every value and the current time | someone opening the exact configuration in their own lab |
+
+The C# lines are named as the C# will name them, with the panel's own label after each one when
+it differs. A choice between options comes out as a comment rather than a constant, because what
+the C# should do with a switch is a decision. The link writes every parameter out, not only the
+ones that differ from the defaults, so it keeps working when a sketch's defaults change.
+
+For a whole configuration as a file rather than as text, use Presets: Export.
 
 ## Files
 
@@ -167,6 +227,8 @@ web/js/player.js       recorded and sketch sources, the clock
 web/js/scene.js        generated terrain, trees, rocks, a pawn for scale, sun shadows
 web/js/camera.js       pan, zoom, camera shake
 web/js/standins.js     procedural textures for vanilla paths
+web/js/presets.js      named parameter sets, and their JSON files
+web/js/export.js       frame sampling, sprite sheets, downloads
 web/js/ui.js           the page controller
 web/sketches/          sketches, listed in index.js
 ```
