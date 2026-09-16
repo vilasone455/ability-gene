@@ -78,6 +78,9 @@ function compile(gl, vs, fs) {
   return { program, uniforms };
 }
 
+/** The stage's own background, the one colour the lab clears to when it is not exporting. */
+const Ground = [0.105, 0.121, 0.133, 1];
+
 export class Renderer {
   constructor(canvas, onTexture) {
     this.canvas = canvas;
@@ -179,9 +182,17 @@ export class Renderer {
   }
 
   resize() {
-    const gl = this.gl, dpr = window.devicePixelRatio || 1;
-    const w = Math.max(1, Math.round(this.canvas.clientWidth * dpr));
-    const h = Math.max(1, Math.round(this.canvas.clientHeight * dpr));
+    const dpr = window.devicePixelRatio || 1;
+    this.allocate(Math.max(1, Math.round(this.canvas.clientWidth * dpr)),
+      Math.max(1, Math.round(this.canvas.clientHeight * dpr)));
+  }
+
+  /**
+   * Point the drawing buffer and its multisampled target at this exact pixel size. resize() calls
+   * it with the canvas's own size; the frame exporter calls it with whatever size it is writing.
+   */
+  allocate(w, h) {
+    const gl = this.gl;
     if (w === this.size[0] && h === this.size[1]) return;
     this.size = [w, h];
     this.canvas.width = w; this.canvas.height = h;
@@ -210,12 +221,29 @@ export class Renderer {
    */
   render(views) {
     this.resize();
-    const gl = this.gl, dpr = window.devicePixelRatio || 1, [W, H] = this.size;
+    return this.draw(views, window.devicePixelRatio || 1, Ground);
+  }
+
+  /**
+   * One view drawn at an exact pixel size, for the frame exporter. The canvas keeps its drawing
+   * buffer, so the caller reads the frame straight back with toDataURL before anything else
+   * draws; the next render() puts the buffer back to the canvas's own size.
+   *
+   * A transparent clear gives back the effect on nothing, which is what a frame sequence for an
+   * animation wants. Alpha is straight, not premultiplied, as the context is created.
+   */
+  renderExport(view, width, height, { transparent = false } = {}) {
+    this.allocate(width, height);
+    return this.draw([{ ...view, rect: [0, 0, width, height] }], 1, transparent ? [0, 0, 0, 0] : Ground);
+  }
+
+  draw(views, dpr, clear) {
+    const gl = this.gl, [W, H] = this.size;
     const used = new Set();
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.msFbo);
     gl.viewport(0, 0, W, H);
     gl.disable(gl.SCISSOR_TEST);
-    gl.clearColor(0.105, 0.121, 0.133, 1);
+    gl.clearColor(...clear);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.enable(gl.BLEND);
 

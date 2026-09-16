@@ -29,6 +29,7 @@
       <button role="tab" id="tab-params" aria-controls="panel-params" aria-selected="true">Params</button>
       <button role="tab" id="tab-layers" aria-controls="panel-layers" aria-selected="false">Layers</button>
       <button role="tab" id="tab-scene" aria-controls="panel-scene" aria-selected="false">Scene</button>
+      <button role="tab" id="tab-export" aria-controls="panel-export" aria-selected="false">Export</button>
       <button role="tab" id="tab-compare" aria-controls="panel-compare" aria-selected="false">Compare</button>
     </div>
     <section class="panel" id="panel-params" role="tabpanel" aria-labelledby="tab-params"></section>
@@ -54,6 +55,7 @@
       <label class="slider"><span>Pixels per cell in the screenshot</span><input type="number" id="backdrop-ppc" min="4" max="400" step="0.5" value="46"></label>
       <button type="button" id="backdrop-clear">Back to generated map</button>
     </section>
+    <section class="panel" id="panel-export" role="tabpanel" aria-labelledby="tab-export" hidden></section>
     <section class="panel" id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>
       <label class="check"><input type="checkbox" id="compare-on"> Side by side <kbd>C</kbd></label>
       <label class="select"><span>A (left)</span><select id="compare-a"></select></label>

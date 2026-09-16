@@ -101,6 +101,11 @@ kbd { font: 11px var(--mono); color: var(--dim); border: 1px solid var(--line); 
 select { width: 100%; padding: 4px 6px; background: var(--ground); border: 1px solid var(--line); border-radius: 4px; }
 .file input { width: 100%; font-size: 12px; }
 .group { display: flex; flex-direction: column; gap: var(--s2); padding-bottom: var(--s2); border-bottom: 1px solid var(--line); }
+/* A saved preset: its name takes the row, with export and delete beside it. */
+.preset { gap: var(--s1, 4px); }
+.preset button:first-child { flex: 1; text-align: left; }
+.panel input[type="text"], .panel input[type="number"] { min-width: 0; padding: 3px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--raised); }
+.panel .row input[type="text"] { flex: 1; }
 .group:last-of-type { border-bottom: 0; }
 .facts { display: grid; grid-template-columns: auto 1fr; gap: 2px var(--s3); margin: 0; font-size: 12px; }
 .facts dt { color: var(--dim); }
