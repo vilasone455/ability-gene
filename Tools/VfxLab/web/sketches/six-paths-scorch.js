@@ -57,18 +57,6 @@ function strip(key, points, width, o, p, layer, colour, material = solid) {
   const m = mesh(key); m.setFlat(v, tri);
   paint(m, o, p, 0, 0, layer, 1, 1, colour, material);
 }
-function burst(o, p, x, size, alpha, age) {
-  const v = [0, 0], tri = [];
-  for (let i = 0; i < 16; i++) {
-    const a = i / 16 * Math.PI * 2 + 0.12 * Math.sin(age * 17);
-    const r = i % 2 ? 0.24 : 0.54 + 0.46 * Math.sin(i * 7.1 + age * 24) ** 2;
-    v.push(Math.cos(a) * r, Math.sin(a) * r);
-    tri.push(0, i + 1, (i + 1) % 16 + 1);
-  }
-  const m = mesh('contact star'); m.setFlat(v, tri);
-  paint(m, o, p, x, 0, y + 0.08, size * 1.09, size * 1.09, rim.withAlpha(alpha));
-  paint(m, o, p, x, 0, y + 0.082, size, size, ink.withAlpha(alpha));
-}
 function actor(x, colour, o, p, alpha) {
   const at = position(o, p, x, 0), neutral = { aim: 0 }, origin = { x: at.x, z: at.z };
   const layer = AltitudeLayer.Pawn.AltitudeFor();
@@ -90,7 +78,7 @@ export default {
     orb: P('Charged orb radius (cells)', 0.6, 0.6, 1.3, 0.05, 'Shape'),
     beamWidth: P('Beam half-width (cells)', 0.26, 0.10, 0.45, 0.01, 'Shape'),
     glow: P('Purple aura strength', 0.70, 0, 1, 0.05, 'Feedback'),
-    impact: P('Impact star radius (cells)', 0.75, 0.35, 1.2, 0.05, 'Feedback'),
+    impact: P('Contact bloom size (cells)', 0.75, 0.35, 1.2, 0.05, 'Feedback'),
     shake: P('Contact camera shake', 0.08, 0, 0.2, 0.01, 'Feedback'),
     actors: { label: 'Show caster and target', value: true, group: 'Showcase' },
   },
@@ -192,11 +180,29 @@ export default {
     if (age >= 0) {
       const contact = beamFade;
       const pulse = 1 - clamp(age / 0.2);
-      paint(MeshPool.plane10, o, p, target, 0, y + 0.07, p.impact * 3, p.impact * 3,
-        violet.withAlpha(alpha * contact * p.glow * (0.45 + pulse * 0.4)), glow);
-      burst(o, p, target, p.impact * (0.45 + pulse * 0.55), alpha * contact, age);
-      paint(MeshPool.plane10, o, p, target, 0, y + 0.084, p.impact * 0.85, p.impact * 0.85,
-        white.withAlpha(alpha * contact * p.glow * (0.35 + pulse * 0.5) * flicker), glow);
+      // A hot, flattened contact surface perpendicular to the beam, with a short
+      // forward plume. The white centre replaces the old black melee-style star.
+      const energy = alpha * contact * p.glow * flicker;
+      const cap = Math.max(p.beamWidth * 1.15, p.impact * 0.50);
+      paint(MeshPool.plane10, o, p, target + 0.10, 0, y + 0.07,
+        p.impact * 1.8, cap * 4, violet.withAlpha(energy * 0.85), glow);
+      paint(MeshPool.plane10, o, p, target + p.impact * 0.22, 0, y + 0.075,
+        p.impact * 1.6, cap * 1.5, rim.withAlpha(energy * (0.55 + pulse * 0.25)), glow);
+      paint(MeshPool.plane10, o, p, target, 0, y + 0.08,
+        p.impact * 0.75, cap * 2.5, white.withAlpha(energy * (0.75 + pulse * 0.25)), glow);
+      paint(disc, o, p, target, 0, y + 0.082, 0.045 + p.impact * 0.04, cap * 0.62,
+        white.withAlpha(energy * 0.9), edgeGlow);
+      // Flattened pressure rings leave the contact surface in the firing direction.
+      // Births stop at cutoff, while existing rings dissipate naturally.
+      for (let i = 0; i < 2; i++) {
+        const interval = 0.24, offset = i * interval / 2;
+        const birth = Math.floor((Math.min(age, p.hold - 0.00001) - offset) / interval) * interval + offset;
+        const dt = age - birth;
+        if (birth < 0 || dt < 0 || dt >= interval) continue;
+        const u = dt / interval, spread = cap * (0.85 + u * 1.25);
+        paint(ring, o, p, target + u * p.impact * 0.45, 0, y + 0.086,
+          spread * 0.27, spread, rim.withAlpha(alpha * p.glow * (1 - u) ** 2 * 0.65), edgeGlow);
+      }
       // Fixed emission times make these outward sparks identical when scrubbing.
       // New particles stop at cutoff; already-emitted ones finish their short flight.
       for (let i = 0; i < 10; i++) {
@@ -216,9 +222,8 @@ export default {
         paint(MeshPool.plane10, o, p, x, z, y + 0.102, 0.18, 0.18,
           rim.withAlpha(fade * 0.5), glow);
       }
-      paint(ring, o, p, target, 0, floor + 0.02, 0.3 + age * 2, 0.3 + age * 2,
-        rim.withAlpha(alpha * pulse * 0.55));
-      paint(MeshPool.plane10, o, p, target, 0, y + 0.09, 0.22, p.impact * 2,
+      // The first hit gets one short transverse flash, then sustained contact takes over.
+      paint(MeshPool.plane10, o, p, target, 0, y + 0.09, 0.18, cap * 3.5,
         white.withAlpha(alpha * pulse * p.glow), glow);
     }
   },
