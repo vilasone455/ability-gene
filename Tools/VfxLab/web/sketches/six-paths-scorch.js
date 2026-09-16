@@ -45,7 +45,7 @@ function paint(m, o, p, x, z, layer, w, h, c, mat = solid) {
     Quaternion.Euler(0, -p.aim, 0), new Vector3(w, 1, h)), mat, 0, null, 0, props);
 }
 // Parallel strip edges keep the beam straight and constant in width.
-function strip(key, points, width, o, p, layer, colour) {
+function strip(key, points, width, o, p, layer, colour, material = solid) {
   const v = [], tri = [];
   for (let i = 0; i < points.length; i++) {
     const q = points[i], prev = points[Math.max(0, i - 1)], next = points[Math.min(points.length - 1, i + 1)];
@@ -55,15 +55,15 @@ function strip(key, points, width, o, p, layer, colour) {
     if (i) { const k = i * 2; tri.push(k - 2, k, k - 1, k - 1, k, k + 1); }
   }
   const m = mesh(key); m.setFlat(v, tri);
-  paint(m, o, p, 0, 0, layer, 1, 1, colour);
+  paint(m, o, p, 0, 0, layer, 1, 1, colour, material);
 }
-function burst(o, p, x, size, alpha) {
+function burst(o, p, x, size, alpha, age) {
   const v = [0, 0], tri = [];
-  for (let i = 0; i < 24; i++) {
-    const a = i / 24 * Math.PI * 2;
-    const r = i % 2 ? 0.27 : 0.7 + 0.3 * Math.sin(i * 7.1) ** 2;
+  for (let i = 0; i < 16; i++) {
+    const a = i / 16 * Math.PI * 2 + 0.12 * Math.sin(age * 17);
+    const r = i % 2 ? 0.24 : 0.54 + 0.46 * Math.sin(i * 7.1 + age * 24) ** 2;
     v.push(Math.cos(a) * r, Math.sin(a) * r);
-    tri.push(0, i + 1, (i + 1) % 24 + 1);
+    tri.push(0, i + 1, (i + 1) % 16 + 1);
   }
   const m = mesh('contact star'); m.setFlat(v, tri);
   paint(m, o, p, x, 0, y + 0.08, size * 1.09, size * 1.09, rim.withAlpha(alpha));
@@ -113,6 +113,7 @@ export default {
     const muzzle = source + p.orb * 0.88;
     const length = (p.range - p.orb * 0.88) * out;
     const target = source + p.range;
+    const flicker = 0.92 + 0.05 * Math.sin(s * 83) + 0.03 * Math.sin(s * 137);
     if (p.actors) {
       actor(source - 1.25, new Color(0.40, 0.58, 0.61), o, p, alpha);
       actor(target, new Color(0.67, 0.43, 0.28), o, p, alpha);
@@ -139,10 +140,14 @@ export default {
       const beamAlpha = alpha * beamFade;
       paint(MeshPool.plane10, o, p, muzzle + length / 2, 0, floor + 0.01, length + 0.5, w * 7,
         violet.withAlpha(beamAlpha * p.glow * 0.45), glow);
-      strip('beam sheath', points, () => w + 0.09 * beamFade, o, p, y,
-        violet.withAlpha(beamAlpha * p.glow * 0.7));
-      strip('beam edge', points, () => w + 0.028 * beamFade, o, p, y + 0.002,
-        rim.withAlpha(beamAlpha));
+      // Layered additive falloff outside a crisp black core, not a solid neon border.
+      for (let i = 9; i >= 0; i--) {
+        const spread = (0.025 + i * 0.025) * beamFade;
+        strip(`beam halo ${i}`, points, () => w + spread, o, p, y,
+          violet.withAlpha(beamAlpha * p.glow * flicker * 0.085 * (1 - i / 12)), edgeGlow);
+      }
+      strip('beam edge', points, () => w + 0.012 * beamFade, o, p, y + 0.002,
+        rim.withAlpha(beamAlpha * 0.72));
       strip('beam core', points, () => w, o, p, y + 0.004, ink.withAlpha(beamAlpha));
       // Energy streaks travel only toward the target, along rigid parallel edges.
       for (let i = 0; i < 6; i++) {
@@ -151,7 +156,10 @@ export default {
         const end = Math.min(muzzle + length, start + 0.38);
         const z = (i % 2 ? 1 : -1) * (w + 0.025);
         strip(`streak ${i}`, [{ u: 0, x: start, z }, { u: 1, x: end, z }],
-          () => 0.013 * beamFade, o, p, y + 0.006, white.withAlpha(beamAlpha * p.glow * 0.8));
+          () => 0.013 * beamFade, o, p, y + 0.006, white.withAlpha(beamAlpha * p.glow * 0.65), edgeGlow);
+        paint(MeshPool.plane10, o, p, (start + end) / 2, z, y + 0.007,
+          Math.max(0.01, end - start) * 1.6, w * 1.3,
+          rim.withAlpha(beamAlpha * p.glow * 0.28), glow);
       }
     }
     // The sphere remains the emitter; its silhouette does not stretch into the beam.
@@ -159,11 +167,26 @@ export default {
     paint(disc, o, p, source, 0, y + 0.022, radius, radius, ink.withAlpha(alpha));
     paint(MeshPool.plane10, o, p, source - radius * 0.3, radius * 0.3, y + 0.024,
       radius * 1.2, radius * 1.2, violet.withAlpha(alpha * p.glow * 0.22), glow);
+    // A broad, restrained crescent follows the sphere's curvature; the centre stays black.
+    const crescent = Array.from({ length: 33 }, (_, i) => {
+      const u = i / 32, a = 1.1 + u * 1.7 + 0.12 * Math.sin(s * 2);
+      return { u, x: source + Math.cos(a) * radius * 0.86, z: Math.sin(a) * radius * 0.86 };
+    });
+    strip('orb crescent', crescent, u => radius * 0.065 * Math.sin(Math.PI * u), o, p, y + 0.026,
+      rim.withAlpha(alpha * p.glow * 0.35), edgeGlow);
     if (s >= p.charge && s < t.reform) {
       paint(ring, o, p, muzzle, 0, y + 0.04, 0.11, p.beamWidth * 1.9,
-        rim.withAlpha(alpha * beamFade), edgeGlow);
+        white.withAlpha(alpha * beamFade * p.glow * flicker), edgeGlow);
       paint(MeshPool.plane10, o, p, muzzle, 0, y + 0.042, 0.42, p.beamWidth * 4,
-        white.withAlpha(alpha * beamFade * p.glow * 0.65), glow);
+        white.withAlpha(alpha * beamFade * p.glow * flicker), glow);
+      const flareLength = Math.min(length, 0.65);
+      if (flareLength > 0.001) {
+        const flare = [{ u: 0, x: muzzle, z: 0 }, { u: 1, x: muzzle + flareLength, z: 0 }];
+        strip('muzzle flare', flare, u => p.beamWidth * 0.85 * (1 - u) * beamFade,
+          o, p, y + 0.044, white.withAlpha(alpha * beamFade * p.glow * flicker * 0.65), edgeGlow);
+        paint(MeshPool.plane10, o, p, muzzle + flareLength * 0.28, 0, y + 0.046,
+          0.7, p.beamWidth * 2.7, rim.withAlpha(alpha * beamFade * p.glow * 0.5), glow);
+      }
     }
     const age = s - t.hit;
     if (age >= 0) {
@@ -171,7 +194,28 @@ export default {
       const pulse = 1 - clamp(age / 0.2);
       paint(MeshPool.plane10, o, p, target, 0, y + 0.07, p.impact * 3, p.impact * 3,
         violet.withAlpha(alpha * contact * p.glow * (0.45 + pulse * 0.4)), glow);
-      burst(o, p, target, p.impact * (0.72 + pulse * 0.28), alpha * contact);
+      burst(o, p, target, p.impact * (0.45 + pulse * 0.55), alpha * contact, age);
+      paint(MeshPool.plane10, o, p, target, 0, y + 0.084, p.impact * 0.85, p.impact * 0.85,
+        white.withAlpha(alpha * contact * p.glow * (0.35 + pulse * 0.5) * flicker), glow);
+      // Fixed emission times make these outward sparks identical when scrubbing.
+      // New particles stop at cutoff; already-emitted ones finish their short flight.
+      for (let i = 0; i < 10; i++) {
+        const cycle = 0.23, offset = i * 0.019;
+        const birth = Math.floor((Math.min(age, p.hold - 0.00001) - offset) / cycle) * cycle + offset;
+        const dt = age - birth;
+        if (birth < 0 || dt < 0 || dt >= cycle) continue;
+        const angle = -1.4 + (i / 9) * 2.8;
+        const speed = 2.8 + (i % 3) * 0.7;
+        const travel = speed * dt;
+        const dx = Math.cos(angle), dz = Math.sin(angle);
+        const x = target + dx * travel, z = dz * travel;
+        const fade = (1 - dt / cycle) ** 2 * alpha * p.glow;
+        strip(`contact spark ${i}`, [{ u: 0, x: x - dx * 0.13, z: z - dz * 0.13 },
+          { u: 1, x, z }], u => 0.016 * (1 - u * 0.7), o, p, y + 0.10,
+          white.withAlpha(fade), edgeGlow);
+        paint(MeshPool.plane10, o, p, x, z, y + 0.102, 0.18, 0.18,
+          rim.withAlpha(fade * 0.5), glow);
+      }
       paint(ring, o, p, target, 0, floor + 0.02, 0.3 + age * 2, 0.3 + age * 2,
         rim.withAlpha(alpha * pulse * 0.55));
       paint(MeshPool.plane10, o, p, target, 0, y + 0.09, 0.22, p.impact * 2,
