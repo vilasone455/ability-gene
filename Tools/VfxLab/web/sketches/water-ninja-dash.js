@@ -1,39 +1,21 @@
 // Undertow Dash: gather 0–0.18 s, dash 0.18–0.46 s, arrival splash 0.46–0.64 s,
-// then puddles and ripples settle until 1.00 s. A watery pawn proxy shows motion;
+// then puddles and ripples settle until 1.00 s. A curved water bow shows motion;
 // this sketch cannot move the lab's scene pawn. No game ability is replaced.
-// Uses layered PNG wake sprites; the runner and arrival use Tidecutter's lab-only texture.
+// Uses layered PNG wake sprites; the arrival uses Tidecutter's lab-only texture.
 import { Mathf } from '../js/engine.js';
 import { hash } from '../js/standins.js';
-import { spriteWake } from './lib/water-wake-sprites.js';
+import { spriteWake, waterProw, waterSpray } from './lib/water-wake-sprites.js';
 import {
-  TAU, smooth, blue, aqua, foam, disc, altitude, floor, P,
-  draw, ribbon, stream, droplet,
+  TAU, smooth, foam, P,
+  ribbon, stream,
 } from './lib/water-ninja-water.js';
 
 const arrival = p => p.gather + p.dash;
 const end = p => arrival(p) + p.splashTime + p.settle;
 
-// A crouched water silhouette, scaled like a pawn, makes the displacement readable.
-function runner(key, point, distance, alpha, p, phase) {
-  if (alpha <= 0.001) return;
-  const [x, z] = point(distance);
-  draw(disc, x, z, 0.40, 0.17, -p.heading, blue, alpha * 0.20, floor + 0.02);
-  const head = point(distance + 0.18);
-  draw(disc, head[0], head[1] + 0.70, 0.19, 0.21, 0, aqua, alpha * 0.64, altitude + 0.02);
-  draw(disc, head[0] - 0.055, head[1] + 0.77, 0.08, 0.07, 0,
-    foam, alpha * p.foam * 0.65, altitude + 0.025);
-  const stroke = (suffix, from, to, width) => {
-    const pts = Array.from({ length: 33 }, (_, i) => {
-      const u = i / 32;
-      const q = point(distance + from[0] + (to[0] - from[0]) * u, (from[2] ?? 0) * (1 - u));
-      return [q[0], q[1] + from[1] + (to[1] - from[1]) * u];
-    });
-    stream(`${key}-${suffix}`, pts, width, alpha, p.foam, phase);
-  };
-  stroke('body', [-0.22, 0.24], [0.16, 0.65], 0.32);
-  stroke('back-leg', [-0.65, 0.04, -0.12], [-0.18, 0.30], 0.16);
-  stroke('front-leg', [0.23, 0.04, 0.15], [-0.18, 0.30], 0.17);
-  stroke('arm', [-0.42, 0.36, 0.18], [0.08, 0.53], 0.12);
+// The moving water proxy is a bow wave; delayed copies show the dash path.
+function runner(point, distance, alpha, p) {
+  if (alpha > 0.001) waterProw(point, distance, alpha, p);
 }
 
 export default {
@@ -50,7 +32,7 @@ export default {
     splash: P('Arrival radius (cells)', 1.25, 0.5, 2.5, 0.05, 'Shape'),
     foam: P('White foam', 0.9, 0, 1, 0.05, 'Style'),
     afterimages: { label: 'Two watery afterimages', value: true, group: 'Style' },
-    runner: { label: 'Show water pawn proxy', value: true, group: 'Style' },
+    runner: { label: 'Show forward bow wave', value: true, group: 'Style' },
   },
   duration: end,
   phases(p) {
@@ -81,27 +63,17 @@ export default {
 
     if (t > p.gather) {
       spriteWake(t, p, point);
-      // Small, irregular pools remain where the wake has already passed.
-      for (let i = 0; i < 11; i++) {
-        const along = (i + 0.5) / 11;
-        if (along > progress) continue;
-        const q = point(p.reach * along, (hash(i, 1, 817) - 0.5) * p.width);
-        const size = 0.10 + hash(i, 2, 817) * 0.15;
-        draw(disc, q[0], q[1], size, size * 0.43, -p.heading, blue, fade * 0.22, floor);
-        droplet(`dash-wake-drop-${i}`, q[0], q[1] + 0.12 + Math.sin(along * Math.PI) * 0.13,
-          0.055, -p.heading, fade * 0.65, p.foam);
-      }
     }
 
     if (p.afterimages && t > p.gather) {
       for (let i = 2; i >= 1; i--) {
         const old = t - p.dash * i * 0.22;
         if (old <= p.gather || old >= land) continue;
-        runner(`dash-echo-${i}`, point, p.reach * smooth((old - p.gather) / p.dash),
-          0.34 * (1 - i * 0.18) * fade, p, t * 12 + i);
+        runner(point, p.reach * smooth((old - p.gather) / p.dash),
+          0.34 * (1 - i * 0.18) * fade, p);
       }
     }
-    if (p.runner) runner('dash-runner', point, head, intro * fade, p, t * 12);
+    if (p.runner) runner(point, head, intro * fade, p);
 
     if (t >= land) {
       const age = t - land, spread = smooth(age / p.splashTime);
@@ -117,13 +89,10 @@ export default {
         if (j === 0) ribbon('dash-arrival-foam', pts, 0.026, foam, fade * p.foam * 0.75);
       }
       for (let i = 0; i < 18; i++) {
-        const life = duration * (0.45 + hash(i, 3, 817) * 0.5), u = age / life;
-        if (u >= 1) continue;
-        const a = aim + (hash(i, 4, 817) - 0.5) * 3.6;
-        const r = p.splash * (0.3 + u * (0.6 + hash(i, 5, 817)));
-        droplet(`dash-arrival-drop-${i}`, x + Math.cos(a) * r,
-          z + Math.sin(a) * r * 0.65 + Math.sin(u * Math.PI) * 0.35,
-          0.05 + hash(i, 6, 817) * 0.07, -a * Mathf.Rad2Deg + 90, (1 - smooth(u)) * fade, p.foam);
+        const angle = aim + (hash(i, 4, 817) - 0.5) * 3.6;
+        const speed = 1.2 + hash(i, 5, 817) * 2.5;
+        waterSpray(age, duration, x, z, Math.cos(angle) * speed, Math.sin(angle) * speed * 0.65,
+          0.7 + hash(i, 3, 817) * 0.9, 0.035 + hash(i, 6, 817) ** 2 * 0.17, fade, p);
       }
     }
   },
