@@ -1,10 +1,12 @@
 // Toll of Oblivion — three-orb Six Paths VFX proposal, not gameplay cost/damage logic.
-// Three orbs rise, become an anchor slab, hollow bell, and hammer, then strike once.
+// Three orbs rise, become an overhead anchor, hanging bell, and hammer, then strike once.
+// Bell and anchor share a jolting crown attachment; each object casts a softened
+// ground shadow along the scene sun using its height, not its draw altitude.
 // The hammer fractures on contact. Bell recoil emits three ground shock fronts;
 // the anchor cracks and the bell sheds pieces until the final pulse consumes it.
 // No recall or orb regeneration: a game port must spend three orbs independently.
 // Default: rise .65, form .65, windup .65, swing .22, pulse interval .55 seconds.
-import { Color, Mathf, Meshes, MaterialPool, ShaderDatabase } from '../js/engine.js';
+import { AltitudeLayer, Color, Mathf, Meshes, MaterialPool, ShaderDatabase } from '../js/engine.js';
 import { draw, mesh } from './lib/six-paths-solid.js';
 import { P, Body, Rim, Lift, Y, Floor, at, sprite, orb, band, trail, rand, glow } from './lib/six-paths-impact.js';
 const smooth = Mathf.Smooth, lerp = Mathf.Lerp, clamp = Mathf.Clamp01, TAU = Math.PI * 2;
@@ -12,6 +14,29 @@ const disc = Meshes.disc(64, 'bell mouth');
 const crownRing = Meshes.band(0.65, 1, 48, 'bell crown loop');
 const puff = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.Transparent);
 const shade = new Color(0.105, 0.078, 0.15);
+const shadowLayer = AltitudeLayer.Shadows.AltitudeFor();
+function suspension(s, p, t) {
+  const age = Math.max(0, s - t.hit);
+  const jolt = s >= t.hit ? -0.13 * Math.sin(age * 24) * Math.exp(-age * 2) : 0;
+  const settle = Math.sin(clamp((s - t.form) / p.form) * Math.PI) * 0.10;
+  const crown = p.height + 0.35 + 3.2 * p.scale + jolt + settle;
+  return { crown, anchor: crown + 1.6 * p.scale,
+    x: s >= t.hit ? Math.sin(age * 55) * 0.025 * Math.exp(-age * 2) : 0 };
+}
+// Project the same silhouettes onto the floor along the scene sun. Several faint
+// offset copies soften the edge; higher objects cast broader, lighter shadows.
+function castShadow(key, left, right, sun, strength) {
+  if (strength <= 0) return;
+  const height = left.reduce((n, q) => n + q.height, 0) / left.length;
+  const blur = 0.035 + height * 0.022;
+  for (let pass = 0; pass < 7; pass++) {
+    const a = pass / 6 * TAU, offset = pass === 6 ? 0 : blur;
+    const project = q => ({ x: q.x + sun.x * q.height + Math.cos(a) * offset,
+      z: q.z - Lift * q.height + sun.z * q.height + Math.sin(a) * offset });
+    band(`${key} shadow ${pass}`, left.map(project), right.map(project),
+      new Color(0.018, 0.014, 0.025, strength / (7 * (1 + height * 0.09))), shadowLayer);
+  }
+}
 function times(p) {
   const form = p.rise, wind = form + p.form, swing = wind + p.wind;
   const hit = swing + p.swing, final = hit + p.interval * 2;
@@ -30,7 +55,7 @@ function hammerPose(s, p, t, o) {
   const head = at(pivot, Math.cos(angle) * 3.2 * p.scale, 0, Math.sin(angle) * 3.2 * p.scale);
   return { pivot, head, angle };
 }
-function hammer(s, p, t, o, formed) {
+function hammer(s, p, t, o, formed, sun, shadowStrength) {
   if (s >= t.hit || formed <= 0) return;
   const q = hammerPose(s, p, t, o);
   const dx = q.head.x - q.pivot.x, dz = q.head.z - q.pivot.z, len = Math.hypot(dx, dz);
@@ -43,6 +68,11 @@ function hammer(s, p, t, o, formed) {
   }
   const corner = (u, v) => at(q.head, (ux * u + vx * v) * h, (uz * u + vz * v) * h);
   const outline = [corner(-0.48, -0.68), corner(0.40, -0.68), corner(0.52, -0.48), corner(0.52, 0.48), corner(0.40, 0.68), corner(-0.48, 0.68)];
+  const shadowPoint = q => ({ ...q, height: Math.max(0, (q.z - o.z) / Lift) });
+  castShadow('bell hammer head', [outline[0], outline[5]].map(shadowPoint),
+    [outline[1], outline[4]].map(shadowPoint), sun, shadowStrength);
+  castShadow('bell hammer handle', [at(q.pivot, -0.08 * h, 0), at(q.head, -0.08 * h, 0)].map(shadowPoint),
+    [at(q.pivot, 0.08 * h, 0), at(q.head, 0.08 * h, 0)].map(shadowPoint), sun, shadowStrength);
   polygon('bell hammer head', outline, Body, Y + 0.065);
   polygon('bell hammer bevel', [corner(-0.48, -0.68), corner(0.40, -0.68), corner(0.52, -0.48), corner(-0.35, -0.48)], shade, Y + 0.066);
   trail('bell hammer outline', [...outline, outline[0]], 0.035, Rim, Y + 0.067);
@@ -52,16 +82,17 @@ function hammer(s, p, t, o, formed) {
     trail('bell hammer streak', pts, 0.065 * h, new Color(0.85, 0.74, 1, p.trails), Y + 0.048);
   }
 }
-function bell(s, p, t, o, formed, echo = 0) {
+function bell(s, p, t, o, formed, sun, shadowStrength, echo = 0) {
   const age = Math.max(0, s - echo - t.hit), scale = p.scale * formed;
   const decay = smooth((s - t.final) / p.decay);
   if (scale <= 0 || decay >= 1) return;
   const vibration = s >= t.hit ? Math.sin(age * TAU / p.interval) * Math.exp(-age * 1.2) : 0;
   const swing = vibration * 0.15;
-  const base = p.height + 0.35, height = 3.2 * scale;
-  const position = (x, h, depth = 0) => at(o,
-    x + Math.sin(swing) * (h - height), depth,
-    base + height + Math.cos(swing) * (h - height));
+  const mount = suspension(s - echo, p, t), height = 3.2 * scale;
+  const position = (x, h, depth = 0) => {
+    const worldHeight = mount.crown + Math.cos(swing) * (h - height) - Math.sin(swing) * x;
+    return { ...at(o, mount.x + Math.cos(swing) * x + Math.sin(swing) * (h - height), depth, worldHeight), height: worldHeight };
+  };
   // Broad, flared silhouette with a curved shoulder and an open lower lip.
   const left = [], right = [], spine = [];
   for (let i = 0; i <= 40; i++) {
@@ -78,6 +109,7 @@ function bell(s, p, t, o, formed, echo = 0) {
     return;
   }
   const alpha = 1 - decay;
+  castShadow('bell shell', left, right, sun, shadowStrength * alpha);
   const crown = position(0, height + 0.1 * scale);
   draw(crownRing, crown.x, Y + 0.024, crown.z, 0.19 * scale, 0.22 * scale, 0, Rim.withAlpha(alpha * 0.7));
   band('bell shell left', left, spine, shade.withAlpha(alpha), Y + 0.025);
@@ -106,20 +138,24 @@ function bell(s, p, t, o, formed, echo = 0) {
     trail(`bell fissure ${i}`, pts, 0.018 + decay * 0.025, Rim.withAlpha(alpha * (0.3 + pulse * 0.6)), Y + 0.035);
   }
 }
-function anchor(s, p, t, o, formed) {
+function anchor(s, p, t, o, formed, sun, shadowStrength) {
   const gone = smooth((s - t.final) / (p.decay * 0.8));
   const alpha = 1 - gone, size = p.scale * formed;
   if (size <= 0 || alpha <= 0) return;
-  const shake = s > t.hit ? Math.sin((s - t.hit) * 55) * 0.045 * Math.exp(-(s - t.hit)) : 0;
-  const b = at(o, shake, 0, p.height);
-  const corners = [[-2.1, -0.65], [1.75, -0.65], [2.1, 0.55], [-1.75, 0.55]].map(([x,z]) => at(b, x * size, z * size));
+  const mount = suspension(s, p, t);
+  const b = at(o, mount.x, 0, mount.anchor);
+  const corners = [[-1.65, -0.4], [1.4, -0.4], [1.65, 0.4], [-1.4, 0.4]]
+    .map(([x,z]) => ({ ...at(b, x * size, z * size), height: mount.anchor }));
+  castShadow('bell overhead anchor', [corners[0], corners[3]], [corners[1], corners[2]], sun, shadowStrength * alpha);
   polygon('bell anchor top', corners, shade.withAlpha(alpha), Y);
   polygon('bell anchor thickness', [corners[0], corners[1], at(corners[1], 0, -0.23 * size), at(corners[0], 0, -0.23 * size)], Body.withAlpha(alpha), Y + 0.002);
   trail('bell anchor edge', [...corners, corners[0]], 0.035, Rim.withAlpha(alpha * 0.65), Y + 0.004);
-  for (const side of [-1, 1]) {
-    const pts = [at(b, side * 1.7 * size, 0), at(b, side * 1.45 * size, 0.24), at(b, side * 1.38 * size, 0.36)];
-    trail(`bell anchor clamp ${side}`, pts, 0.18 * size, Body.withAlpha(alpha), Y + 0.038);
-  }
+  // A short U-shaped hanger joins the underside to the bell's crown loop.
+  const upper = mount.anchor - 0.3 * size, lower = mount.crown + 0.12 * size;
+  const hanger = [at(o, mount.x - 0.20 * size, 0, upper), at(o, mount.x - 0.20 * size, 0, lower + 0.13 * size),
+    at(o, mount.x, 0, lower), at(o, mount.x + 0.20 * size, 0, lower + 0.13 * size), at(o, mount.x + 0.20 * size, 0, upper)];
+  trail('bell suspension bracket rim', hanger, 0.13 * size, Rim.withAlpha(alpha * 0.75), Y + 0.019);
+  trail('bell suspension bracket', hanger, 0.085 * size, Body.withAlpha(alpha), Y + 0.020);
   if (s >= t.hit) for (let j = 0; j < 5; j++) {
     const a = j * 2.4, reach = size * clamp((s - t.hit) / p.interval);
     const pts = [b, at(b, Math.cos(a) * reach * 0.6, Math.sin(a) * reach * 0.3),
@@ -164,7 +200,7 @@ function fragments(s, p, t, o, kind) {
     const shellH = rand(i + 90), shellR = 0.37 + 1.02 * (1 - shellH) ** 3;
     const source = kind === 0 ? at(origin, (rand(i + 70) - 0.5) * 0.6, (rand(i + 80) - 0.5) * 0.9)
       : kind === 1 ? at(origin, Math.cos(a) * shellR * p.scale, 0, 0.35 + shellH * 3.2 * p.scale)
-        : at(origin, (rand(i + 70) - 0.5) * 3.8 * p.scale, (rand(i + 80) - 0.5) * p.scale);
+        : at(o, (rand(i + 70) - 0.5) * 3 * p.scale, (rand(i + 80) - 0.5) * 0.8 * p.scale, suspension(t.final, p, t).anchor);
     const pos = at(source, Math.cos(a) * speed * age, Math.sin(a) * speed * age * 0.5, height);
     const size = (0.08 + rand(i + 44) * 0.18) * p.scale * (1 - u);
     const angle = a + age * (i % 2 ? 5 : -5);
@@ -185,7 +221,8 @@ export default {
     decay: P('Bell and anchor fracture', 0.75, 0.4, 1.2, 0.05, 'Timing (s)'),
     waveLife: P('Shock front lifetime', 1.15, 0.6, 1.8, 0.05, 'Timing (s)'),
     scale: P('Structure size', 1, 0.7, 1.3, 0.05, 'Shape'),
-    height: P('Anchor height (cells)', 2, 1, 3, 0.1, 'Shape'),
+    height: P('Bell ground clearance (cells)', 2, 1, 3, 0.1, 'Shape'),
+    shadows: P('Cast shadow strength', 0.55, 0, 0.8, 0.05, 'Shape'),
     radius: P('Shockwave reach (cells)', 7, 4, 10, 0.25, 'Impact'),
     trails: P('Hammer and bell trails', 0.8, 0, 1, 0.05, 'Impact'),
     dust: P('Shockwave dust', 0.7, 0, 1, 0.05, 'Impact'),
@@ -198,24 +235,25 @@ export default {
     { name: 'Consumed', t: t.final + p.decay + 0.35 }]; },
   events(p) { const t = times(p); return [0, 1, 2].map(i => ({ t: t.hit + i * p.interval,
     type: 'shake', value: p.shake * (i === 0 ? 1 : i === 1 ? 0.5 : 0.7) })); },
-  draw(s, p, { origin }) {
+  draw(s, p, { origin, scene }) {
     const t = times(p);
     if (s < 0 || s >= t.end) return;
     const rise = smooth(s / p.rise), formed = smooth((s - t.form) / p.form);
-    const remains = 1 - smooth((s - t.final) / p.decay);
-    sprite(origin, 5 * p.scale * formed, 3 * p.scale * formed, Body.withAlpha(0.3 * remains), undefined, Floor);
+    const sun = scene?.shadowVector ?? { x: -0.45, z: -0.32 };
+    const shadowStrength = p.shadows * (scene?.sun?.strength ?? 0.32) / 0.32;
     if (s < t.wind) for (let i = 0; i < 3; i++) {
-      const end = i === 0 ? at(origin, 0, 0, p.height) : i === 1 ? at(origin, 0, 0, p.height + 1.7 * p.scale) : hammerPose(0, p, t, origin).head;
+      const end = i === 0 ? at(origin, 0, 0, suspension(t.wind, p, t).anchor)
+        : i === 1 ? at(origin, 0, 0, p.height + 1.95 * p.scale) : hammerPose(0, p, t, origin).head;
       const start = at(origin, (i - 1) * 0.9, -1);
       const pose = u => ({ x: lerp(start.x, end.x, u) + Math.sin(u * Math.PI) * (i - 1) * 0.5, z: lerp(start.z, end.z, u) });
       const pts = Array.from({ length: 20 }, (_, j) => pose(smooth(Math.max(0, s - (1 - j / 19) * 0.18) / p.rise)));
       trail(`bell ascending orb ${i}`, pts, 0.10, Rim.withAlpha(0.45 * (1 - formed)), Y + 0.09);
       orb(pose(rise), 0.34, 1 - formed, 1 + formed * 0.5, Y + 0.095);
     }
-    anchor(s, p, t, origin, formed);
-    if (s >= t.hit && s < t.final + p.decay) for (const echo of [0.06, 0.03]) bell(s, p, t, origin, formed, echo);
-    bell(s, p, t, origin, formed);
-    hammer(s, p, t, origin, formed);
+    anchor(s, p, t, origin, formed, sun, shadowStrength);
+    if (s >= t.hit && s < t.final + p.decay) for (const echo of [0.06, 0.03]) bell(s, p, t, origin, formed, sun, shadowStrength, echo);
+    bell(s, p, t, origin, formed, sun, shadowStrength);
+    hammer(s, p, t, origin, formed, sun, shadowStrength);
     if (s >= t.wind && s < t.hit) for (let i = 0; i < 18; i++) {
       const u = clamp((s - t.wind) / (p.wind + p.swing)), a = i * 2.399;
       const r = lerp(3.5 + rand(i) * 1.5, 1.2, u);
