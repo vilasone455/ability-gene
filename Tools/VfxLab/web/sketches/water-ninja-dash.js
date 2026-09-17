@@ -1,9 +1,10 @@
 // Undertow Dash: gather 0–0.18 s, dash 0.18–0.46 s, arrival splash 0.46–0.64 s,
 // then puddles and ripples settle until 1.00 s. A watery pawn proxy shows motion;
 // this sketch cannot move the lab's scene pawn. No game ability is replaced.
-// Uses the same lab-only procedural water texture as Tidecutter.
+// Uses layered PNG wake sprites; the runner and arrival use Tidecutter's lab-only texture.
 import { Mathf } from '../js/engine.js';
 import { hash } from '../js/standins.js';
+import { spriteWake } from './lib/water-wake-sprites.js';
 import {
   TAU, smooth, blue, aqua, foam, disc, altitude, floor, P,
   draw, ribbon, stream, droplet,
@@ -79,14 +80,7 @@ export default {
     }
 
     if (t > p.gather) {
-      for (let j = 0; j < 3; j++) {
-        const pts = Array.from({ length: 33 }, (_, i) => {
-          const u = i / 32;
-          const q = point(head * u, ((j - 1) * 0.35 + Math.sin(u * 16 - t * 12 + j) * 0.11) * p.width);
-          return [q[0], q[1] + 0.06 + Math.sin(u * Math.PI) * 0.10];
-        });
-        stream(`dash-wake-${j}`, pts, p.width * 0.32, fade * intro, p.foam, t * 12 + j);
-      }
+      spriteWake(t, p, point);
       // Small, irregular pools remain where the wake has already passed.
       for (let i = 0; i < 11; i++) {
         const along = (i + 0.5) / 11;

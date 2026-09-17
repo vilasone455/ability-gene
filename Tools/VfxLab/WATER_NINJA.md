@@ -43,3 +43,12 @@ and the afterimages can be toggled independently in Params.
 Timing, distance, aim, wake width, arrival radius and foam are adjustable.
 The shared drawing helpers live in `web/sketches/lib/water-ninja-water.js`;
 both sketches use the same procedural water texture, which still needs baking for a game port.
+
+### Sprite wake
+
+Undertow's trail layers three variations of water-sheet PNGs with separate foam
+sprites and rounded spray. Packets spawn as the runner passes, then spread, drift
+and fade independently, so the trail breaks apart from its oldest end.
+Regenerate the seven white-alpha sprites with `python3 make_water_ninja_textures.py`.
+They live in `Textures/RimArt/WaterNinja/` and can be used directly in a C# port.
+The runner and arrival splash still use the shared lab-only procedural texture.
