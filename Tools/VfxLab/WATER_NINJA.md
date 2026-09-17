@@ -33,30 +33,25 @@ Porting still requires C# timing/drawing and an in-game check.
 
 ## Undertow Dash
 
-Choose **Water Ninja → Undertow Dash (sketch)** for the movement companion.
-Default timing: gather at the feet (0–0.18 s), dash (0.18–0.46 s),
-low arrival splash (0.46–0.64 s), wake settling into puddles (0.64–1.00 s).
-Two translucent afterimages follow a forward water crescent along a five-cell wake.
-The proxy illustrates movement; the lab scene pawn does not move. Both the proxy
-and the afterimages can be toggled independently in Params.
+Choose **Water Ninja → Undertow Dash (sketch)** for a compact traveling splash.
+Default timing: pawn collapses into water (0–0.18 s), a rolling surge moves forward
+(0.18–0.46 s), pawn emerges through a larger splash (0.46–0.64 s), wet ground
+and contact ripples settle (0.64–1.00 s).
 
-Timing, distance, aim, wake width, arrival radius and foam are adjustable.
-The shared drawing helpers live in `web/sketches/lib/water-ninja-water.js`;
-both sketches use the same procedural water texture, which still needs baking for a game port.
+Most water stays around the moving front. Only a short, broken wake follows it;
+there is no connecting beam or repeated crescent afterimage. Spray is thrown to
+the sides, falls under gravity, and becomes expanding ground rings. Subtle dark
+wet patches remain along the route after the water has passed.
 
-### Sprite wake
+The simple transformation pawn is a preview stand-in, toggled in Params. The lab's
+scene pawn does not move. Timing, aim, distance, moving splash size, arrival splash
+size and foam are adjustable. The preview pawn fades at the end for clean looping.
 
-Undertow's trail layers three rounded water-sheet PNGs with broad curved foam
-highlights. Highlights move faster than the sheets to suggest internal flow;
-the lab does not support UV scrolling. Sheets shrink as they age, releasing larger
-droplets instead of retaining a solid silhouette while fading.
+### Sprites
 
-The front is a curved bow wave. Side spray mixes tiny mist drops with heavier blobs;
-sprites stretch and rotate along their projected velocity. Gravity brings them down,
-and expanding ground rings replace them at contact. Soft shadows sit beneath the
-stream and droplets, while dark wet patches persist into the settling phase.
-
-Regenerate the nine white-alpha sprites with `python3 make_water_ninja_textures.py`.
+Rounded water-sheet sprites and separate foam layers overlap into the rolling surge.
+Sprite motion suggests internal flow; the lab does not support UV scrolling.
+Regenerate the seven white-alpha assets with `python3 make_water_ninja_textures.py`.
 They live in `Textures/RimArt/WaterNinja/` and can be used directly in a C# port.
-The shadow reuses `RimArt/SixPaths/SoftDisc`. The gather and arrival splash
-still use the shared lab-only procedural texture.
+Shadows reuse `RimArt/SixPaths/SoftDisc`. Undertow no longer draws the procedural
+Tidecutter ribbon texture; Tidecutter itself is unchanged.

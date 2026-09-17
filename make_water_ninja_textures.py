@@ -49,23 +49,7 @@ def main():
             alpha = smooth((1 - radius) / 0.15)
             pixels[x, y] = (255, 255, 255, round(alpha * 255))
     drop.save(OUT / 'Droplet.png')
-    for name, highlight in [('Bow', False), ('BowFoam', True)]:
-        image = Image.new('RGBA', (SIZE, SIZE))
-        px = image.load()
-        for y in range(SIZE):
-            for x in range(SIZE):
-                u, v = x / (SIZE - 1) * 2 - 1, y / (SIZE - 1) * 2 - 1
-                # Curved forward face on +x, with long tapered shoulders behind it.
-                front = 0.62 - 1.25 * v * v
-                thickness = 0.30 * max(0, 1 - v * v)
-                edge = front - u
-                a = smooth(edge / 0.10) * smooth((thickness - edge) / 0.16)
-                a *= smooth((0.92 - abs(v)) / 0.20)
-                if highlight:
-                    a *= math.exp(-((edge - 0.075) / 0.06) ** 2)
-                px[x, y] = (255, 255, 255, round(a * 255))
-        image.save(OUT / f'{name}.png')
-    print(f'Generated 9 water sprites in {OUT}')
+    print(f'Generated 7 water sprites in {OUT}')
 
 
 if __name__ == '__main__':
