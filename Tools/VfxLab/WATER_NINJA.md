@@ -30,3 +30,16 @@ Positions are calculated directly from time, so scrubbing and exports repeat exa
 
 Implementation: `web/sketches/water-ninja.js`. No existing ability is replaced.
 Porting still requires C# timing/drawing and an in-game check.
+
+## Undertow Dash
+
+Choose **Water Ninja → Undertow Dash (sketch)** for the movement companion.
+Default timing: gather at the feet (0–0.18 s), dash (0.18–0.46 s),
+low arrival splash (0.46–0.64 s), wake settling into puddles (0.64–1.00 s).
+Two translucent afterimages follow a crouched water pawn proxy along a five-cell wake.
+The proxy illustrates movement; the lab scene pawn does not move. Both the proxy
+and the afterimages can be toggled independently in Params.
+
+Timing, distance, aim, wake width, arrival radius and foam are adjustable.
+The shared drawing helpers live in `web/sketches/lib/water-ninja-water.js`;
+both sketches use the same procedural water texture, which still needs baking for a game port.
