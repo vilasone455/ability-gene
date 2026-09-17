@@ -165,6 +165,10 @@ as `MapComponent_ShinraVfx`, `MapComponent_GravityPreview` and `MapComponent_Six
 
 ## Adding a sketch
 
+A full guide for someone new to the mod, including textures and what a sketch cannot do, is
+`SKETCHING.md`.
+
+
 1. Create `web/sketches/<name>.js` whose default export is:
 
    ```js
