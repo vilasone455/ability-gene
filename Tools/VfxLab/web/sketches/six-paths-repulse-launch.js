@@ -80,15 +80,19 @@ export default {
         trail('repulse gather '+i, pts, .09, Rim.withAlpha((1-form)*.4));
       }
     }
-    // Independently sized upright oval, turned to reveal its membrane and frame.
+    // Rounded rectangular pad, turned to reveal its membrane and frame.
     // Center caves away from the pawn during pressure and snaps toward it on release.
     const alpha = 1 - recall, radius = p.size * form * (1 - recall*.8);
     const rebound = age >= 0 ? Math.sin(clamp(age/.26)*Math.PI)*.16 : 0;
     const yaw = p.yaw * Math.PI / 180;
     const point = (r, a, back = 0) => {
-      const u = Math.cos(a)*p.width*.5*form*(1-recall*.8)*r;
+      // A superellipse keeps broad straight sides with soft corners. Morph out of
+      // the circular source orbs so the rectangular frame grows continuously.
+      const c = Math.cos(a), sn = Math.sin(a), exponent = lerp(2, 5, form);
+      const outline = 1 / (Math.abs(c)**exponent + Math.abs(sn)**exponent)**(1/exponent);
+      const u = c*outline*p.width*.5*form*(1-recall*.8)*r;
       const across = u*Math.cos(yaw);
-      const height = centerH + Math.sin(a)*radius*r;
+      const height = centerH + sn*outline*radius*r;
       const along = panelX + u*Math.sin(yaw) + .16*r*r - pressure*(1-r*r) + rebound*(1-r*r) - back;
       return { ...pos(along, across, height), ground: pos(along, across), height };
     };
