@@ -2,7 +2,7 @@
 // five ropes load against the pawn's back, then snap into a level launch.
 // Defaults: gather 0–0.55s, posts/ropes form to 0.95s, brace to 1.35s,
 // launch to 1.80s, then the posts reform into two following orbs.
-// Side facings deliberately stagger posts and shear height for readability;
+// Side facings use a shallow three-quarter ground span with upright posts;
 // this is an illustrated projection, not a physically rotated ring wall.
 import { AltitudeLayer, Color, Mathf, Meshes } from '../js/engine.js';
 import { draw, Lift } from './lib/six-paths-solid.js';
@@ -69,16 +69,17 @@ export default {
     const release = smooth(age / .13), recall = smooth((s - t.recall) / p.recall);
     const x = travel(s, p, t), pressure = p.compression * load * (1 - release);
     const panelX = -.85, centerH = Math.max(1.05, p.size + .12);
-    // Direction-specific stage cheat: stagger side-facing anchors and lean their
-    // padded silhouettes across the launch axis. Mid-rope contact is unchanged.
+    // Direction-specific stage cheat: foreshorten the span, not the posts.
+    // Upright pads and a shallow diagonal keep the five ropes readable from the side.
+    // The centre still meets the pawn on the actual launch axis.
     const sideView=Math.abs(dx), contactH=.65;
     const sling=(along,across=0,height=0)=>{
       const ground=pos(along,across);
       if(sideView) {
-        ground.x+=dx*(across*.30+.82*contactH);
-        ground.z=o.z+dx*across*.82;
+        ground.x+=dx*across*.72;
+        ground.z=o.z+dx*across*.25;
       }
-      return {x:ground.x-dx*.82*height*sideView,
+      return {x:ground.x,
         z:ground.z+height*Lift,ground,height};
     };
     const shadow=q=>({x:q.ground.x+sun.x*q.height,z:q.ground.z+sun.z*q.height});
