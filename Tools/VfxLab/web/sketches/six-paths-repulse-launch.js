@@ -37,7 +37,6 @@ export default {
     recall: P('Two orbs follow', .65, .3, 1, .05, 'Timing (s)'),
     size: P('Surface half-height (cells)', .9, .65, 1.2, .05, 'Shape'),
     width: P('Surface width (cells)', 2.6, 1.2, 4.5, .1, 'Shape'),
-    yaw: P('Surface opening angle (degrees)', 35, 0, 65, 5, 'Shape'),
     rim: P('Frame thickness (cells)', .12, .06, .24, .01, 'Shape'),
     compression: P('Surface compression (cells)', .38, .15, .6, .05, 'Shape'),
     trails: P('Travel trails', .7, 0, 1, .05, 'Impact'),
@@ -81,20 +80,19 @@ export default {
         trail('repulse gather '+i, pts, .09, Rim.withAlpha((1-form)*.4));
       }
     }
-    // Rounded rectangular pad, turned to reveal its membrane and frame.
+    // Rounded rectangular pad aligned perpendicular to the cardinal launch axis.
     // Center caves away from the pawn during pressure and snaps toward it on release.
     const alpha = 1 - recall, radius = p.size * form * (1 - recall*.8);
     const rebound = age >= 0 ? Math.sin(clamp(age/.26)*Math.PI)*.16 : 0;
-    const yaw = p.yaw * Math.PI / 180;
     const point = (r, a, back = 0) => {
       // A superellipse keeps broad straight sides with soft corners. Morph out of
       // the circular source orbs so the rectangular frame grows continuously.
       const c = Math.cos(a), sn = Math.sin(a), exponent = lerp(2, 5, form);
       const outline = 1 / (Math.abs(c)**exponent + Math.abs(sn)**exponent)**(1/exponent);
       const u = c*outline*p.width*.5*form*(1-recall*.8)*r;
-      const across = u*Math.cos(yaw);
+      const across = u;
       const height = centerH + sn*outline*radius*r;
-      const along = panelX + u*Math.sin(yaw) + .16*r*r - pressure*(1-r*r) + rebound*(1-r*r) - back;
+      const along = panelX + .16*r*r - pressure*(1-r*r) + rebound*(1-r*r) - back;
       return { ...pos(along, across, height), ground: pos(along, across), height };
     };
     if (radius > .001 && alpha > .001) {
