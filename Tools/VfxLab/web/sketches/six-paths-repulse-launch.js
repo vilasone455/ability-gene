@@ -4,7 +4,7 @@
 // into two orbs and follows the pawn. No jump arc; no gameplay/cost changes.
 import { AltitudeLayer, Color, Mathf, Meshes } from '../js/engine.js';
 import { draw, mesh, Lift } from './lib/six-paths-solid.js';
-import { P, Body, Rim, Y, orb, sprite, trail, glow, soft, rand } from './lib/six-paths-impact.js';
+import { P, Body, Rim, Y, orb, sprite, trail, band, glow, soft, rand } from './lib/six-paths-impact.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp;
 const disc = Meshes.disc(32, 'repulse pawn');
@@ -35,7 +35,10 @@ export default {
     load: P('Brace and compress', .4, .2, .8, .05, 'Timing (s)'),
     dash: P('Straight launch', .45, .2, .8, .05, 'Timing (s)'),
     recall: P('Two orbs follow', .65, .3, 1, .05, 'Timing (s)'),
-    size: P('Surface radius (cells)', .9, .65, 1.2, .05, 'Shape'),
+    size: P('Surface half-height (cells)', .9, .65, 1.2, .05, 'Shape'),
+    width: P('Surface width (cells)', 2.6, 1.2, 4.5, .1, 'Shape'),
+    yaw: P('Surface opening angle (degrees)', 35, 0, 65, 5, 'Shape'),
+    rim: P('Frame thickness (cells)', .12, .06, .24, .01, 'Shape'),
     compression: P('Surface compression (cells)', .38, .15, .6, .05, 'Shape'),
     trails: P('Travel trails', .7, 0, 1, .05, 'Impact'),
     shake: P('Release shake', .09, 0, .2, .01, 'Impact'),
@@ -62,7 +65,7 @@ export default {
     const load = smooth((s - t.load) / p.load), age = s - t.launch;
     const release = smooth(age / .13), recall = smooth((s - t.recall) / p.recall);
     const x = travel(s, p, t), pressure = p.compression * load * (1 - release);
-    const panelX = -.85, centerH = 1.05;
+    const panelX = -.85, centerH = Math.max(1.05, p.size + .12);
     // One orb supplies each half; both approach the same center and flatten.
     for (let i = 0; i < 2; i++) {
       const side = i ? 1 : -1;
@@ -77,21 +80,23 @@ export default {
         trail('repulse gather '+i, pts, .09, Rim.withAlpha((1-form)*.4));
       }
     }
-    // A cupped, thick vertical disc: narrow in the travel axis, tall above ground.
+    // Independently sized upright oval, turned to reveal its membrane and frame.
     // Center caves away from the pawn during pressure and snaps toward it on release.
     const alpha = 1 - recall, radius = p.size * form * (1 - recall*.8);
     const rebound = age >= 0 ? Math.sin(clamp(age/.26)*Math.PI)*.16 : 0;
+    const yaw = p.yaw * Math.PI / 180;
     const point = (r, a, back = 0) => {
-      const across = Math.cos(a)*radius*r;
+      const u = Math.cos(a)*p.width*.5*form*(1-recall*.8)*r;
+      const across = u*Math.cos(yaw);
       const height = centerH + Math.sin(a)*radius*r;
-      const along = panelX + .16*r*r - pressure*(1-r*r) + rebound*(1-r*r) - back;
+      const along = panelX + u*Math.sin(yaw) + .16*r*r - pressure*(1-r*r) + rebound*(1-r*r) - back;
       return { ...pos(along, across, height), ground: pos(along, across), height };
     };
     if (radius > .001 && alpha > .001) {
       for (const pass of ['shadow', 'back', 'face']) {
         const verts = [], tri = [], rings = 8, segments = 48;
         for (let r = 0; r <= rings; r++) for (let k = 0; k <= segments; k++) {
-          const q = point(r/rings, k/segments*Math.PI*2, pass==='back'?.10:0);
+          const q = point(r/rings, k/segments*Math.PI*2, pass==='back'?p.rim:0);
           verts.push(pass==='shadow'?q.ground.x + sun.x*q.height:q.x,
             pass==='shadow'?q.ground.z + sun.z*q.height:q.z);
           if (r && k) { const n=r*(segments+1)+k; tri.push(n,n-1,n-segments-1,n-1,n-segments-2,n-segments-1); }
@@ -101,13 +106,21 @@ export default {
           pass==='back'?new Color(.18,.13,.25,alpha):Body.withAlpha(alpha);
         draw(m,0,pass==='shadow'?shadowLayer:Y+(pass==='back'?0:.002),0,1,1,0,color);
       }
-      const edge=Array.from({length:65},(_,j)=>point(1,j/64*Math.PI*2));
-      trail('repulse edge',edge,.035,Rim.withAlpha(alpha*.8),Y+.006);
-      for (let i=0;i<6;i++) {
-        const a=i*Math.PI/3;
-        const pts=Array.from({length:16},(_,j)=>point(.18+j/15*.78,a));
-        trail('repulse tension '+i,pts,.018,Rim.withAlpha(alpha*(.15+load*.35)),Y+.008);
+      const loop = (r, back=0) => Array.from({length:65},(_,j)=>point(r,j/64*Math.PI*2,back));
+      const edge=loop(1), inner=loop(1-p.rim/p.size);
+      // Extruded outer wall and broad dark frame surround a recessed elastic face.
+      band('repulse frame wall',loop(1,p.rim),edge,new Color(.16,.12,.23,alpha),Y+.004);
+      band('repulse frame face',edge,inner,new Color(.09,.065,.135,alpha),Y+.006);
+      trail('repulse edge',edge,.028,Rim.withAlpha(alpha*.8),Y+.008);
+      trail('repulse inner rim',inner,.022,pale.withAlpha(alpha*.42),Y+.009);
+      // Short tension attachments replace the umbrella-like spokes through the center.
+      for (let i=0;i<12;i++) {
+        const a=i*Math.PI/6;
+        const pts=Array.from({length:9},(_,j)=>point(.72+j/8*.2,a));
+        trail('repulse tension '+i,pts,.036,Rim.withAlpha(alpha*(.25+load*.35)),Y+.010);
       }
+      for (let i=0;i<2;i++) trail('repulse membrane '+i,loop(.38+i*.24),.012,
+        Rim.withAlpha(alpha*(.12+load*.16)),Y+.005);
     }
     const contact = pos(panelX-pressure+rebound, 0, centerH);
     if (age>=0 && age<.16) sprite(contact, .65, 1.6, pale.withAlpha((1-age/.16)*.75), glow,Y+.03);
