@@ -1,5 +1,5 @@
 // Repulse Step — VFX-only rope-sling proposal. Two orbs become padded posts,
-// three ropes load against the pawn's back, then snap into a level launch.
+// five ropes load against the pawn's back, then snap into a level launch.
 // Defaults: gather 0–0.55s, posts/ropes form to 0.95s, brace to 1.35s,
 // launch to 1.80s, then the posts reform into two following orbs.
 // Side facings deliberately stagger posts and shear height for readability;
@@ -75,16 +75,16 @@ export default {
     const sling=(along,across=0,height=0)=>{
       const ground=pos(along,across);
       if(sideView) {
-        ground.x+=dx*across*.30;
+        ground.x+=dx*(across*.30+.82*contactH);
         ground.z=o.z+dx*across*.82;
       }
-      return {x:ground.x-dx*.82*(height-contactH)*sideView,
+      return {x:ground.x-dx*.82*height*sideView,
         z:ground.z+height*Lift,ground,height};
     };
     const shadow=q=>({x:q.ground.x+sun.x*q.height,z:q.ground.z+sun.z*q.height});
     const alpha=1-recall, growth=form*(1-recall);
     const rebound=age>=0?Math.sin(clamp(age/.28)*Math.PI)*.24*Math.exp(-age*4):0;
-    const half=p.width*.5, anchorAlong=panelX-pressure*.15;
+    const half=p.width*.5, anchorAlong=panelX, postTop=centerH+p.size;
     const anchor=(side,h=centerH)=>sling(anchorAlong,side*half,h);
     // Each orb travels to its own anchor, then lengthens into a padded post.
     for(let i=0;i<2;i++) {
@@ -102,7 +102,7 @@ export default {
       if(growth>.001) {
         const left=[],right=[],inset=[],sidewall=[],shadowA=[],shadowB=[];
         for(let j=0;j<=24;j++) {
-          const u=j/24, h=centerH+(u*2-1)*p.size*growth;
+          const u=j/24, h=lerp(centerH,u*postTop,growth);
           const q=anchor(side,h), bulge=p.rim*(.72+.28*Math.sin(u*Math.PI));
           // Pad width is screen-space on purpose; a side view must retain mass.
           const a={x:q.x-bulge*.5,z:q.z},b={x:q.x+bulge*.5,z:q.z};
@@ -114,32 +114,47 @@ export default {
         band('repulse pad thickness '+i,right,sidewall,new Color(.16,.12,.22,alpha),Y+.018);
         band('repulse pad '+i,left,right,Body.withAlpha(alpha),Y+.020);
         band('repulse pad bevel '+i,left,inset,Rim.withAlpha(alpha*.75),Y+.022);
+        // The post reaches a fixed ground socket. A dense contact patch and
+        // flared foot join the pad to the terrain, including the cheated side view.
+        const planted=smooth((form-.35)/.65)*alpha, base=anchor(side,0);
+        sprite(base,.72,.38,Body.withAlpha(strength*.85*planted),soft,shadowLayer+.004);
+        draw(disc,base.x,shadowLayer+.005,base.z,p.rim*1.04,.12,0,
+          new Color(.018,.014,.024,planted));
+        const footLow=anchor(side,.025),footHigh=anchor(side,.22);
+        band('repulse planted foot '+i,
+          [{x:footLow.x-p.rim*.80,z:footLow.z},{x:footHigh.x-p.rim*.43,z:footHigh.z}],
+          [{x:footLow.x+p.rim*.80,z:footLow.z},{x:footHigh.x+p.rim*.43,z:footHigh.z}],
+          new Color(.12,.085,.17,planted),Y+.025);
+        trail('repulse foot lip '+i,
+          [{x:footLow.x-p.rim*.8,z:footLow.z},{x:footLow.x,z:footLow.z+.025},
+            {x:footLow.x+p.rim*.8,z:footLow.z}],.032,Rim.withAlpha(planted*.6),Y+.026);
         // Small violet bindings make the ends feel padded rather than metallic.
         for(let k=0;k<2;k++) {
-          const h=centerH+(k?1:-1)*p.size*growth*.74,q=anchor(side,h);
+          const h=lerp(centerH,postTop*(k?.90:.12),growth),q=anchor(side,h);
           trail('repulse pad binding '+i+' '+k,
             [{x:q.x-p.rim*.48,z:q.z},{x:q.x,z:q.z+.016},{x:q.x+p.rim*.48,z:q.z}],
             .048,Rim.withAlpha(alpha*.5),Y+.024);
         }
       }
     }
-    if(growth>.001)for(let i=0;i<3;i++) {
+    if(growth>.001)for(let i=0;i<5;i++) {
       const pts=[],shadowPts=[],highlight=[];
-      const spacing=Math.min(.36,contactH-centerH+p.size-.08);
-      const h=lerp(centerH,contactH+(i-1)*spacing,growth);
+      // Keep one rope at the pawn's back and fill the formerly empty upper pad.
+      const ropeH=i===0?.23:i===1?contactH:lerp(contactH,postTop-.16,(i-1)/3);
+      const h=lerp(centerH,ropeH,growth);
       for(let j=0;j<=48;j++) {
         const u=j/48, across=(u*2-1)*half;
         const bow=Math.sin(u*Math.PI)**1.6;
         // Endpoints stay attached; the loaded centre tracks the pawn's back.
         const vibration=age>0?Math.sin(u*Math.PI*3)*Math.sin(age*38-i*.7)*.07*Math.exp(-age*7):0;
-        const along=anchorAlong-(pressure*.85-rebound)*bow+vibration;
+        const along=anchorAlong-(pressure-rebound)*bow+vibration;
         const q=sling(along,across,h-.035*Math.sin(u*Math.PI)*(1-load));
         pts.push(q);shadowPts.push(shadow(q));highlight.push({x:q.x,z:q.z+.020});
       }
       trail('repulse rope shadow '+i,shadowPts,.072,Body.withAlpha(strength*alpha*.6),shadowLayer+.002);
-      trail('repulse rope edge '+i,pts,.085*growth,Rim.withAlpha(alpha*.85),Y+.008+i*.002);
-      trail('repulse rope body '+i,pts,.050*growth,Body.withAlpha(alpha),Y+.009+i*.002);
-      trail('repulse rope shine '+i,highlight,.015*growth,pale.withAlpha(alpha*(.24+load*.32)),Y+.010+i*.002);
+      trail('repulse rope edge '+i,pts,.085*growth,Rim.withAlpha(alpha*.85),Y+.006+i*.001);
+      trail('repulse rope body '+i,pts,.050*growth,Body.withAlpha(alpha),Y+.007+i*.001);
+      trail('repulse rope shine '+i,highlight,.015*growth,pale.withAlpha(alpha*(.24+load*.32)),Y+.008+i*.001);
     }
     const contact=sling(panelX-pressure+rebound,0,contactH);
     if(age>=0 && age<.16)sprite(contact,.7,.85,pale.withAlpha((1-age/.16)*.75),glow,Y+.03);
