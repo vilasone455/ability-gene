@@ -1,4 +1,4 @@
-// Devouring Maelstrom — VFX-only proposal, separate from Gravity Well.
+// Void Rotor — VFX-only proposal, separate from Gravity Well.
 // Spinning-top revision: three orbs launch, gather, and lock into hooked blades.
 // Defaults: lock and accelerate at 2.25s, grind from 2.9s until 5.3s,
 // retract blades and snap shut at 6.05s; dust clears by 6.7s. VFX only.
@@ -47,7 +47,7 @@ function pose(s,i,p,t) {
   return {x:ring.x*r,z:ring.z*r,h:lerp(1.6,.7,u)};
 }
 export default {
-  kit:'Six Paths',label:'Devouring Maelstrom (sketch)',
+  kit:'Six Paths',label:'Void Rotor (sketch)',
   params:{
     radius:P('Blade reach (cells)',2.7,1.7,4,.1,'Shape'),
     reach:P('Launch distance (cells)',6,4,8,.25,'Shape'),
