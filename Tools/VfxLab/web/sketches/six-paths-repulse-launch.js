@@ -27,7 +27,7 @@ export default {
   kit: 'Six Paths', label: 'Repulse Step (sketch)',
   params: {
     direction: { label: 'Launch direction', value: 'Forward', options: ['Forward', 'Backward'], group: 'Launch' },
-    angle: P('Facing angle (degrees)', 0, -60, 60, 5, 'Launch'),
+    facing: { label: 'Facing direction', value: 'Right', options: ['Right', 'Left', 'Up', 'Down'], group: 'Launch' },
     distance: P('Launch distance (cells)', 5, 2, 8, .25, 'Launch'),
     actors: { label: 'Show moving pawn', value: true, group: 'Showcase' },
     gather: P('Gather two orbs', .55, .25, 1, .05, 'Timing (s)'),
@@ -54,7 +54,8 @@ export default {
     const t = timing(p);
     if (s < 0 || s > t.end) return;
     const sign = p.direction === 'Backward' ? -1 : 1;
-    const angle = p.angle * Math.PI / 180, dx = Math.cos(angle) * sign, dz = Math.sin(angle) * sign;
+    const [fx, fz] = { Right: [1, 0], Left: [-1, 0], Up: [0, 1], Down: [0, -1] }[p.facing];
+    const dx = fx * sign, dz = fz * sign;
     const pos = (along, across = 0, height = 0) => ({
       x: o.x + dx * along - dz * across,
       z: o.z + dz * along + dx * across + height * Lift,
@@ -144,7 +145,7 @@ export default {
       limb('arm',[pos(x+lean,0,.9),pos(x+.27,0,.7),pos(x+.31,0,.82)],.14,new Color(.72,.57,.42));
       draw(disc,head.x,Y+.10,head.z,.16,.18,0,new Color(.83,.70,.54));
       // Facing marker stays fixed when Backward is selected.
-      const nose={x:head.x+Math.cos(angle)*.14,z:head.z+Math.sin(angle)*.14};
+      const nose={x:head.x+fx*.14,z:head.z+fz*.14};
       draw(disc,nose.x,Y+.11,nose.z,.065,.06,0,new Color(.88,.75,.59));
     }
     if (age>=0) {
