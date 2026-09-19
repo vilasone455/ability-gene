@@ -9,13 +9,18 @@
 //   AnimRenderer.Draw  one 1 x 1 quad per textured part, drawn with RootTransform * world, so a
 //                      part's scale is its sprite size in cells and its world y is its draw depth
 //   ConfigureHands     parts named HandA / HandB get Textures/AM/Hand.png tinted with skin colour
+//   ItemTweakData      a pawn's melee weapon goes on ItemA / ItemB: the weapon's texture on the
+//                      part's quad, placed by WeaponTweakData/<def>_<packageId>.json as one more
+//                      transform inside the part -- TRS((OffX, OffY), Rotation, (ScaleX, ScaleY)),
+//                      offset and angle negated by the flips; HandsMode hides the off hand or both
 //   DrawPawns          the pawn itself is drawn by RimWorld at BodyX's world position and angle,
 //                      facing PawnBody.Direction (East becomes West when mirrored)
 // and RimArt.MeleeAnimation.ThrowAimWorker, which turns every part under PawnALift about that
 // part by the angle between the clip's direction and the target (ThrowAnimation.Aim).
 //
-// What is a stand-in: the pawn (body, head, a mark for which way it faces) and the melee weapon on
-// ItemX, which the game fills in from the pawn's equipment. Only rotation about y is drawn, which
+// What is a stand-in: the pawn (body, head, a mark for which way it faces), and the melee weapon
+// when none is chosen. Weapons come from lab.py's list: ours, and installed mods' that have tweak
+// data and a loose PNG; vanilla weapon art is inside asset bundles. Only rotation about y is drawn, which
 // is all these clips animate; a rotated part under an unevenly scaled parent would shear and is
 // drawn without the shear. The lab engine has no matrices, so the 2D affine maths is in this file.
 
@@ -182,16 +187,28 @@ function aimFor(degrees) {
 
 const P = (label, v, min, max, step, group) => ({ label, value: v, min, max, step, group });
 
-export function clipModule(set, handTexture) {
+const Stub = 'Stand-in sword';
+const NoTweak = { OffX: 0, OffY: 0, Rotation: 0, ScaleX: 1, ScaleY: 1, FlipX: false, FlipY: false, HandsMode: 0 };
+
+export function clipModule(set, handTexture, weapons = []) {
   const facings = Object.keys(set.clips).length > 1, ours = set.source === 'rimart';
   const hand = MaterialPool.MatFrom(handTexture, ShaderDatabase.Cutout);
   const materials = new Map();
-  const materialFor = (path, transparent) => {
+  // A clip's own textures live with the clip's mod; a weapon's path already says where it lives.
+  const materialFor = (path, transparent, asIs = false) => {
     const key = `${path}|${transparent}`;
-    if (!materials.has(key)) materials.set(key, MaterialPool.MatFrom((ours ? '' : 'am:') + path, transparent ? ShaderDatabase.Transparent : ShaderDatabase.Cutout));
+    if (!materials.has(key)) materials.set(key, MaterialPool.MatFrom((ours || asIs ? '' : 'am:') + path, transparent ? ShaderDatabase.Transparent : ShaderDatabase.Cutout));
     return materials.get(key);
   };
   const pathMesh = new Mesh(`clip path ${set.id}`);
+
+  const weaponFor = (p) => weapons.find((w) => w.label === p.weapon) ?? null;
+  // The file's values, or the sliders when placement is being edited. Missing fields are Melee
+  // Animation's defaults: no offset, no turn, scale 1, both hands.
+  const tweakFor = (p) => {
+    const weapon = weaponFor(p), file = { ...NoTweak, ...(weapon?.tweak ?? {}) };
+    return p.edit ? { ...file, OffX: p.offX, OffY: p.offY, Rotation: p.rotation, ScaleX: p.scale, ScaleY: p.scale, FlipX: p.flipX, FlipY: p.flipY } : file;
+  };
 
   const choose = (p) => {
     const aim = facings ? aimFor(p.aim) : { facing: 'East', mirror: p.mirror, offset: 0 };
@@ -206,9 +223,27 @@ export function clipModule(set, handTexture) {
         ? { aim: P('Target direction (degrees, 0 east, 90 north)', 0, 0, 355, 5, 'Playback'),
           turn: { label: 'Turn the throwing hand to the target (ThrowAimWorker)', value: true, group: 'Playback' } }
         : { mirror: { label: 'Mirrored (facing west)', value: false, group: 'Playback' } }),
+      ...(set.items ? {
+        weapon: { label: 'Melee weapon on ItemA / ItemB', value: Stub, options: [Stub, ...weapons.map((w) => w.label)], group: 'Weapon' },
+        edit: { label: 'Place it with the sliders below, not its tweak file', value: false, group: 'Weapon' },
+        offX: P('OffX (cells, along the part)', 0, -1, 1, .005, 'Weapon'),
+        offY: P('OffY (cells, across the part)', 0, -1, 1, .005, 'Weapon'),
+        rotation: P('Rotation (degrees)', 0, -180, 180, 1, 'Weapon'),
+        scale: P('ScaleX and ScaleY', 1, .3, 3, .05, 'Weapon'),
+        flipX: { label: 'FlipX', value: false, group: 'Weapon' },
+        flipY: { label: 'FlipY', value: false, group: 'Weapon' },
+      } : {}),
       path: { label: 'Show the path of the main hand', value: true, group: 'Overlays' },
       pivots: { label: 'Show part pivots', value: false, group: 'Overlays' },
     },
+    // The json Melee Animation reads, for WeaponTweakData/<def>_<packageId>.json in the weapon's mod.
+    ...(set.items ? { extraCopy: { label: 'Copy tweak JSON', build(p) {
+      const weapon = weaponFor(p), t = tweakFor(p);
+      if (!weapon) return 'Choose a weapon first: the stand-in sword has no tweak file.';
+      const out = { TextureModID: weapon.package, ItemDefName: weapon.def, ItemType: 'ThingDef', ItemTypeNamespace: 'Verse', ...(weapon.tweak ?? {}),
+        OffX: t.OffX, OffY: t.OffY, Rotation: t.Rotation, ScaleX: t.ScaleX, ScaleY: t.ScaleY, FlipX: t.FlipX, FlipY: t.FlipY };
+      return `${weapon.tweakFile ? `// save as ${weapon.tweakFile}\n` : ''}${JSON.stringify(out, null, 2)}`;
+    } } } : {}),
     duration(p) { return choose(p).clip?.Length ?? set.length; },
     phases(p) {
       const clip = choose(p).clip;
@@ -224,10 +259,20 @@ export function clipModule(set, handTexture) {
       const parts = pose(clip, seconds, mirror, offset);
       const sun = scene?.shadowVector ?? { x: -.45, z: -.32 }, strength = scene?.sun?.strength ?? .32;
 
+      const weapon = set.items ? weaponFor(p) : null, tweak = weapon ? tweakFor(p) : null;
       let pawns = 0;
       for (const part of clip.ordered) {
         const s = parts.get(part);
         if (!s.active || s.tint.a <= 0) continue;
+        // HandsMode: 1 hides the off hand (HandB), 2 hides both.
+        if (tweak?.HandsMode && /^Hand[A-Z]\d*$/.test(part.name) && (tweak.HandsMode === 2 || part.name[4] !== 'A')) continue;
+        if (weapon && /^Item[A-Z]$/.test(part.name)) {
+          const fx = s.flipX !== tweak.FlipX, fy = s.flipY !== tweak.FlipY;
+          const inner = trs(fx ? -tweak.OffX : tweak.OffX, fy ? -tweak.OffY : tweak.OffY, fx !== fy ? -tweak.Rotation : tweak.Rotation, tweak.ScaleX, tweak.ScaleY);
+          const placed = mul(s.raw, inner), m = mirror ? mirrored(placed) : placed, d = decompose(m);
+          draw(quads[(fx !== mirror ? 1 : 0) + ((fy !== d.sz < 0) ? 2 : 0)], o.x + m.x, pawnLayer + s.y, o.z + m.z, d.sx, Math.abs(d.sz), d.rot, s.tint, materialFor(weapon.texture, false, true));
+          continue;
+        }
         const { rot, sx, sz } = decompose(s.m), x = o.x + s.m.x, z = o.z + s.m.z, y = pawnLayer + s.y;
 
         if (/^Body[A-Z]$/.test(part.name)) {
@@ -248,8 +293,8 @@ export function clipModule(set, handTexture) {
         if (/^Hand[A-Z]\d*$/.test(part.name)) draw(quad, x, y, z, sx, Math.abs(sz), rot, new Color(Skin.r * s.tint.r, Skin.g * s.tint.g, Skin.b * s.tint.b, s.tint.a), hand);
         else if (part.TexturePath) draw(quad, x, y, z, sx, Math.abs(sz), rot, s.tint, materialFor(part.TexturePath, part.TransparentByDefault || s.tint.a < 1));
         else if (/^Item[A-Z]$/.test(part.name)) {
-          // Stand-in melee weapon along the part's +x: grip, guard, blade.
-          const along = (lx, w, h, colour, lift) => { const q = mul(s.m, { a: 1, b: 0, c: 0, d: 1, x: lx, z: 0 }); draw(MeshPool.plane10, o.x + q.x, y + lift, o.z + q.z, w * sx, h * Math.abs(sz), rot, colour); };
+          // Stand-in melee weapon along the part's +x (its -x when the part is flipped): grip, guard, blade.
+          const along = (lx, w, h, colour, lift) => { const q = mul(s.m, { a: 1, b: 0, c: 0, d: 1, x: s.flipX ? -lx : lx, z: 0 }); draw(MeshPool.plane10, o.x + q.x, y + lift, o.z + q.z, w * sx, h * Math.abs(sz), rot, colour); };
           along(.2, .75, .06, Steel, 0); along(-.17, .04, .2, Hair, .001); along(-.27, .2, .045, Hair, .001);
         }
       }

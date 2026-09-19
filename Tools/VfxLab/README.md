@@ -46,6 +46,25 @@ mod's own in `Animations/` (written by `make_throw_anim.py`, `make_gravity_anim.
 - Overlays: the path the main hand (`HandA`) takes over the whole clip, with the point it is at now
   and the release point, because a still frame cannot show motion; and the pivot of every part.
 
+### Held weapons
+
+A clip with an `ItemA` or `ItemB` part (67 of Melee Animation's; none of ours yet) has a "Weapon"
+group. The dropdown lists our own melee weapons (every `ThingDef` in `1.6/Defs` with `<tools>` and
+a single PNG) and the weapons of installed workshop mods that Melee Animation ships tweak data for
+and whose texture is a loose PNG. Vanilla and DLC weapons are not listed: their art is inside asset
+bundles. The installed-mod scan reads a lot of XML over `/mnt/c`, so `lab.py` runs it once on a
+thread (about 90 s) and keeps it in `recordings/weapons-cache.json`; reload the page when it says it
+is done, and delete that file to scan again.
+
+The weapon is placed the way Melee Animation places it: by `WeaponTweakData/<def>_<packageId>.json`
+(`OffX`, `OffY`, `Rotation`, `ScaleX`, `ScaleY`, `FlipX`, `FlipY`, `HandsMode`), looked for in this
+repository first and then in Melee Animation's folder. A weapon with no tweak file sits centred on
+the hand, and Melee Animation does not animate such a weapon in game at all. To write one, tick
+"Place it with the sliders", move them until the grip is in the hand, and press "Copy tweak JSON";
+the first line of what is copied says where to save it. `lab.py` lists the new file within a second;
+reload the page to use it. Blade start and end, weapon type and sweep trails are not shown; set those in
+Melee Animation's own tweak editor in game.
+
 `web/js/animation.js` follows Melee Animation's renderer as read from its decompiled
 `zAnimationMod.dll`: a part is a 1 x 1 quad drawn with its composed position, y rotation and scale,
 world y is draw depth, hands are `Textures/AM/Hand.png` tinted with skin colour. What it cannot

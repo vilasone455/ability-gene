@@ -21,7 +21,7 @@ read where it is installed and served under /_am/; nothing of theirs is copied i
 repository. Set RIMART_MELEE_ANIMATION to the mod folder if it is not found. The list is rebuilt
 when a file in Animations/ changes, and the open page reloads the clips.
 """
-import argparse, http.server, json, os, pathlib, socketserver, subprocess, sys, threading, time, datetime
+import argparse, http.server, json, os, pathlib, re, socketserver, subprocess, sys, threading, time, datetime
 
 LAB = pathlib.Path(__file__).resolve().parent
 ROOT = LAB.parent.parent
@@ -47,12 +47,14 @@ def melee_animation_dir():
     return None
 
 
-def clip_length(path):
+def clip_facts(path):
+    """Length in seconds, and whether any part is a held melee weapon (ItemA, ItemB...)."""
     # Their exporter writes a BOM and bare Infinity, which Python's json accepts.
     try:
-        return float(json.loads(path.read_text(encoding="utf-8-sig")).get("Length", 0))
+        clip = json.loads(path.read_text(encoding="utf-8-sig"))
+        return float(clip.get("Length", 0)), any(re.fullmatch(r"(.*/)?Item[A-Z]", p.get("Path", "")) for p in clip.get("Parts", []))
     except (OSError, ValueError):
-        return 0.0
+        return 0.0, False
 
 
 def clip_sets(folder, url, kit, source):
@@ -66,13 +68,104 @@ def clip_sets(folder, url, kit, source):
         for facing in ("North", "South"):
             if name + facing in names:
                 clips[facing] = f"{url}/{name}{facing}.json"
+        length, items = clip_facts(path)
         sets.append({"id": f"{source}-{name}", "name": name, "kit": kit, "source": source,
-                     "length": clip_length(path), "clips": clips})
+                     "length": length, "items": items, "clips": clips})
     return sets
 
 
+THING_DEF = re.compile(r"<ThingDef\b[^>]*>(.*?)</ThingDef>", re.S)
+
+
+def xml_field(block, tag):
+    found = re.search(rf"<{tag}>\s*(.*?)\s*</{tag}>", block, re.S)
+    return found.group(1) if found else None
+
+
+def texture_folder(mod_root, tex_path):
+    """The folder under a mod that holds <tex_path>.png, relative to the mod, or None."""
+    for folder in ("Textures", "1.6/Textures", "Common/Textures", "1.5/Textures"):
+        if (mod_root / folder / f"{tex_path}.png").is_file():
+            return folder
+    return None
+
+
+def read_tweak(path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, ValueError):
+        return None
+
+
+def our_package_id():
+    about = (ROOT / "About" / "About.xml").read_text(encoding="utf-8-sig")
+    return xml_field(about, "packageId") or "unknown"
+
+
+def our_weapons(theirs):
+    """Every ThingDef of ours with <tools> and a single-image texture in Textures/."""
+    package, weapons = our_package_id(), []
+    for path in sorted((ROOT / "1.6" / "Defs").rglob("*.xml")):
+        for block in THING_DEF.findall(path.read_text(encoding="utf-8-sig", errors="ignore")):
+            name, tex = xml_field(block, "defName"), xml_field(block, "texPath")
+            if not name or not tex or "<tools>" not in block or not (ROOT / "Textures" / f"{tex}.png").is_file():
+                continue
+            file = f"{name}_{package}.json"
+            tweak = read_tweak(ROOT / "WeaponTweakData" / file) or (theirs and read_tweak(theirs / "WeaponTweakData" / file))
+            weapons.append({"label": f"{name} (RimArt)", "def": name, "package": package, "texture": tex, "tweak": tweak or None, "tweakFile": f"WeaponTweakData/{file}"})
+    return weapons
+
+
+def installed_weapons(theirs):
+    """Weapons of installed workshop mods that Melee Animation ships tweak data for and whose
+    texture is a loose PNG. Vanilla and DLC art is inside asset bundles, so those are left out.
+    Slow over /mnt/c (about two minutes), so index_animations runs it once on a thread and keeps the
+    result in recordings/weapons-cache.json; delete that file to scan again."""
+    workshop, mods, names = theirs.parent, {}, {}
+    for about in workshop.glob("*/About/About.xml"):
+        text = about.read_text(encoding="utf-8-sig", errors="ignore")
+        package = xml_field(text, "packageId")
+        if package:
+            mods[package.lower()] = about.parent.parent
+            names[about.parent.parent] = xml_field(text, "name") or about.parent.parent.name
+    wanted = {}
+    for path in sorted((theirs / "WeaponTweakData").glob("*.json")):
+        tweak = read_tweak(path)
+        mod = mods.get(str((tweak or {}).get("TextureModID", "")).lower())
+        if tweak and mod and mod != theirs:
+            wanted.setdefault(mod, {})[tweak["ItemDefName"]] = tweak
+    weapons = []
+    for mod, tweaks in wanted.items():
+        for xml in mod.rglob("*.xml"):
+            if "Defs" not in xml.parts or not tweaks:
+                continue
+            text = xml.read_text(encoding="utf-8-sig", errors="ignore")
+            if not any(name in text for name in tweaks):
+                continue
+            for block in THING_DEF.findall(text):
+                name, tex = xml_field(block, "defName"), xml_field(block, "texPath")
+                folder = texture_folder(mod, tex) if name in tweaks and tex else None
+                if folder:
+                    weapons.append({"label": f"{name} ({names[mod]})", "def": name, "package": tweaks[name]["TextureModID"], "texture": f"mod:{mod.name}/{folder}/{tex}",
+                                    "tweak": tweaks.pop(name), "tweakFile": None})
+    weapons.sort(key=lambda w: w["label"])
+    return weapons
+
+
+WEAPON_CACHE = RECORDINGS / "weapons-cache.json"
+weapon_scan_started = False
+
+
+def scan_installed_weapons(theirs):
+    started = time.time()
+    WEAPON_CACHE.write_text(json.dumps(installed_weapons(theirs)))
+    print(f"[lab] scanned installed mods for weapons in {time.time() - started:.0f}s; reload the page to list them", flush=True)
+    index_animations()
+
+
 def animation_stamps():
-    return {p: p.stat().st_mtime for p in ANIMATIONS.glob("*.json")} if ANIMATIONS.is_dir() else {}
+    watched = [*ANIMATIONS.glob("*.json"), *(ROOT / "WeaponTweakData").glob("*.json")]
+    return {p: p.stat().st_mtime for p in watched}
 
 
 def index_animations():
@@ -85,8 +178,13 @@ def index_animations():
         "stamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "meleeAnimation": bool(theirs),
         "sets": sets,
+        "weapons": our_weapons(theirs) + (json.loads(WEAPON_CACHE.read_text()) if WEAPON_CACHE.is_file() else []),
     }, indent=1))
     print(f"[lab] {len(sets)} animation clips listed" + ("" if theirs else " (Melee Animation not found)"), flush=True)
+    global weapon_scan_started
+    if theirs and not WEAPON_CACHE.is_file() and not weapon_scan_started:
+        weapon_scan_started = True
+        threading.Thread(target=scan_installed_weapons, args=(theirs,), daemon=True).start()
 
 
 def snapshot():
@@ -157,6 +255,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return str(ROOT / "__missing__")
             inner = super().translate_path("/" + path[len("/_am/"):])
             return str(theirs / pathlib.Path(inner).relative_to(ROOT))
+        # /_mod/<workshop id>/... is another installed mod, for the weapon textures listed above.
+        if path.startswith("/_mod/"):
+            theirs, (mod, _, rest) = melee_animation_dir(), path[len("/_mod/"):].partition("/")
+            if theirs is None or not mod.isdigit():
+                return str(ROOT / "__missing__")
+            inner = super().translate_path("/" + rest)
+            return str(theirs.parent / mod / pathlib.Path(inner).relative_to(ROOT))
         return super().translate_path(path)
 
     def end_headers(self):

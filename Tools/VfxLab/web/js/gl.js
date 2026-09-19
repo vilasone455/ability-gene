@@ -138,7 +138,9 @@ export class Renderer {
       img.onload = () => { upload(img, false); if (window.__labDebug) console.log('LAB loaded', path); };
       img.onerror = () => { if (window.__labDebug) console.log('LAB failed', path); fallback(); };
       // "am:" is Melee Animation's own Textures folder, served by lab.py from where that mod is installed.
-      img.src = path.startsWith('am:') ? `/_am/Textures/${path.slice(3)}.png` : `/Textures/${path}.png`;
+      // "mod:<workshop id>/<folder>/<path>" is a weapon PNG of another installed mod, listed by lab.py.
+      img.src = path.startsWith('am:') ? `/_am/Textures/${path.slice(3)}.png`
+        : path.startsWith('mod:') ? `/_mod/${path.slice(4)}.png` : `/Textures/${path}.png`;
     }
     return entry;
   }

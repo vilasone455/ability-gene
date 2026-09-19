@@ -142,7 +142,7 @@ async function loadClips() {
   // Without Melee Animation installed there is no hand texture to read; a soft disc stands in.
   const hand = index.meleeAnimation ? 'am:AM/Hand' : 'lab/soft-disc';
   for (const set of index.sets) {
-    const file = `clip/${set.id}`, source = new SketchSource(clipModule(set, hand), file);
+    const file = `clip/${set.id}`, source = new SketchSource(clipModule(set, hand, index.weapons ?? []), file);
     const saved = store.get(`params:${file}`, {});
     for (const k of Object.keys(source.values)) if (k in saved) source.values[k] = saved[k];
     state.sources.set(source.id, source);
@@ -476,10 +476,10 @@ function renderParams() {
 
   // Three ways to hand these values to someone else, all covering every parameter the sketch
   // declares, under the same group headings this panel shows.
-  const copier = (label, build) => {
+  const copier = (label, build, done = `Copied ${countParams(source.module)} values`) => {
     const button = el('button', { type: 'button', onclick: async () => {
       const text = build();
-      try { await navigator.clipboard.writeText(text); button.textContent = `Copied ${countParams(source.module)} values`; }
+      try { await navigator.clipboard.writeText(text); button.textContent = done; }
       catch { button.textContent = 'Clipboard blocked; see console'; console.log(text); }
       setTimeout(() => { button.textContent = label; }, 1800);
     } }, label);
@@ -490,12 +490,14 @@ function renderParams() {
   const copyLink = copier('Copy link', () =>
     shareLink(location.origin + location.pathname, source.label, source.module, source.values, clock.t));
   const reset = el('button', { type: 'button', onclick: () => { source.values = SketchSource.defaults(source.module); save(); renderParams(); } }, 'Reset to defaults');
+  // A module may add one copy button of its own (animation clips: the weapon's tweak json).
+  const extra = source.module.extraCopy ? [copier(source.module.extraCopy.label, () => source.module.extraCopy.build(source.values), 'Copied')] : [];
 
   panel.replaceChildren(
     el('div', { class: 'group' },
       el('h3', {}, source.module.tag === 'clip' ? 'Animation clip' : 'Sketch'),
       el('p', { class: 'hint' }, source.module.note ?? `A proposal in JavaScript, not the game. ${source.module.compareWith ? `Compare it with the recorded "${source.module.compareWith}" on the Compare tab.` : ''}`),
-      el('div', { class: 'row' }, reset, copy, copyList, copyLink),
+      el('div', { class: 'row' }, reset, copy, copyList, copyLink, ...extra),
       el('p', { class: 'hint' }, `${countParams(source.module)} settings. "Copy as a list" is the readable one to send someone; "Copy link" opens this exact configuration in their own lab.`)),
     presetGroup(source), phases, ...controls);
 }
