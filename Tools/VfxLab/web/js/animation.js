@@ -1,7 +1,8 @@
 // Animation clips: the json Melee Animation plays (Animations/*.json here, and that mod's own).
 //
 // A clip is wrapped as a sketch-shaped module -- kit, label, params, duration, phases, events,
-// draw -- so the player, timeline, export and shoot.mjs treat it like any sketch.
+// draw -- so the player, timeline, export and shoot.mjs treat it like any sketch. A sketch can also
+// draw a clip as its caster with playClip(), so the clip and the sketch's effect share one clock.
 //
 // The drawing follows Melee Animation's renderer, read from its decompiled zAnimationMod.dll:
 //   AnimPartSnapshot   local = TRS(position, Euler(rotation), scale); world = parent.world * local;
@@ -151,6 +152,50 @@ function pose(clip, t, mirror, aimDegrees) {
   return out;
 }
 
+/** Draws every part of a posed clip at `o`. `look` is { hand, material(path, transparent, asIs), weapon, tweak, shirts }. */
+function drawParts(clip, parts, o, scene, mirror, look) {
+  const sun = scene?.shadowVector ?? { x: -.45, z: -.32 }, strength = scene?.sun?.strength ?? .32;
+  const { weapon = null, tweak = null } = look;
+  let pawns = 0;
+  for (const part of clip.ordered) {
+    const s = parts.get(part);
+    if (!s.active || s.tint.a <= 0) continue;
+    // HandsMode: 1 hides the off hand (HandB), 2 hides both.
+    if (tweak?.HandsMode && /^Hand[A-Z]\d*$/.test(part.name) && (tweak.HandsMode === 2 || part.name[4] !== 'A')) continue;
+    if (weapon && /^Item[A-Z]$/.test(part.name)) {
+      const fx = s.flipX !== tweak.FlipX, fy = s.flipY !== tweak.FlipY;
+      const inner = trs(fx ? -tweak.OffX : tweak.OffX, fy ? -tweak.OffY : tweak.OffY, fx !== fy ? -tweak.Rotation : tweak.Rotation, tweak.ScaleX, tweak.ScaleY);
+      const placed = mul(s.raw, inner), m = mirror ? mirrored(placed) : placed, d = decompose(m);
+      draw(quads[(fx !== mirror ? 1 : 0) + ((fy !== d.sz < 0) ? 2 : 0)], o.x + m.x, pawnLayer + s.y, o.z + m.z, d.sx, Math.abs(d.sz), d.rot, s.tint, look.material(weapon.texture, false, true));
+      continue;
+    }
+    const { rot, sx, sz } = decompose(s.m), x = o.x + s.m.x, z = o.z + s.m.z, y = pawnLayer + s.y;
+
+    if (/^Body[A-Z]$/.test(part.name)) {
+      // Stand-in pawn, sized after a RimWorld human: the position is the middle of the sprite.
+      const west = s.direction === 3 || (s.direction === 1 && mirror), east = s.direction === 1 && !mirror;
+      const local = (lx, lz) => { const q = mul(trs(s.m.x, s.m.z, rot, 1, 1), { a: 1, b: 0, c: 0, d: 1, x: lx, z: lz }); return { x: o.x + q.x, z: o.z + q.z }; };
+      const shirt = (look.shirts ?? Shirts)[pawns++ % (look.shirts ?? Shirts).length], side = east ? 1 : west ? -1 : 0;
+      draw(MeshPool.plane10, x + sun.x * .4, shadowLayer, z - .3 + sun.z * .4, .9, .4, 0, new Color(.03, .03, .05, strength), soft);
+      const body = local(0, -.1), head = local(side * .03, .3);
+      draw(disc, body.x, y, body.z, .23, .27, rot, shirt);
+      draw(disc, head.x, y + .003, head.z, .17, .17, 0, s.direction === 0 ? Hair : Skin);
+      if (side) { const eye = local(side * .12, .31); draw(disc, eye.x, y + .004, eye.z, .025, .03, 0, Hair); }
+      else if (s.direction === 2) for (const e of [-1, 1]) { const eye = local(e * .065, .29); draw(disc, eye.x, y + .004, eye.z, .025, .03, 0, Hair); }
+      continue;
+    }
+
+    const flipX = s.flipX !== mirror, quad = quads[(flipX ? 1 : 0) + ((s.flipY !== sz < 0) ? 2 : 0)];
+    if (/^Hand[A-Z]\d*$/.test(part.name)) draw(quad, x, y, z, sx, Math.abs(sz), rot, new Color(Skin.r * s.tint.r, Skin.g * s.tint.g, Skin.b * s.tint.b, s.tint.a), look.hand);
+    else if (part.TexturePath) draw(quad, x, y, z, sx, Math.abs(sz), rot, s.tint, look.material(part.TexturePath, part.TransparentByDefault || s.tint.a < 1));
+    else if (/^Item[A-Z]$/.test(part.name)) {
+      // Stand-in melee weapon along the part's +x (its -x when the part is flipped): grip, guard, blade.
+      const along = (lx, w, h, colour, lift) => { const q = mul(s.m, { a: 1, b: 0, c: 0, d: 1, x: s.flipX ? -lx : lx, z: 0 }); draw(MeshPool.plane10, o.x + q.x, y + lift, o.z + q.z, w * sx, h * Math.abs(sz), rot, colour); };
+      along(.2, .75, .06, Steel, 0); along(-.17, .04, .2, Hair, .001); along(-.27, .2, .045, Hair, .001);
+    }
+  }
+}
+
 // ------------------------------------------------------------------ loading
 
 const cache = new Map();
@@ -170,6 +215,64 @@ function clipAt(url) {
     .then((text) => { entry.json = prepare(JSON.parse(text.replace(/^﻿/, '').replace(/(-?)Infinity/g, '$11e999'))); onLoaded(); })
     .catch((error) => console.warn('LAB clip failed', error));
   return null;
+}
+
+// ------------------------------------------------------------------ for sketches
+
+let listed = null;
+const looks = new Map();
+function setNamed(name) {
+  if (!listed) {
+    listed = { sets: null };
+    fetch('../recordings/animations.json', { cache: 'no-store' }).then((r) => r.json())
+      .then((index) => { listed.sets = index.sets; }).catch((error) => console.warn('LAB clip list failed', error));
+  }
+  return listed.sets?.find((set) => set.name === name) ?? null;
+}
+
+/**
+ * Draws clip `name` (the json file's name, "RimArt_ThrowKunai") at `position` for a sketch, in place
+ * of a two-disc stand-in caster, and says where the hand and the thrown item are so the sketch can
+ * start its own effect from them on the same clock.
+ *
+ *   options.aim     degrees to the target, 0 east, 90 north. Picks the facing clip and the mirror as
+ *                   ThrowAnimation.Aim does and turns the hand as ThrowAimWorker does. Without it
+ *                   the East clip plays, mirrored when options.mirror is set.
+ *   options.turn    false leaves the hand on the clip's own direction
+ *   options.shirt   a Color for the stand-in body
+ *   options.scene   the sketch's ctx.scene, for the shadow
+ *
+ * Returns null until the clip has loaded (nothing is drawn), then
+ *   { length, release, facing, mirror, hand: { x, z }, item: { x, z, rot, held } | null, itemAtRelease }
+ * `seconds` is clamped to the clip, so a sketch can hold the first or last pose as long as it likes.
+ */
+export function playClip(name, seconds, position, options = {}) {
+  const set = setNamed(name);
+  if (!set) return null;
+  const facings = Object.keys(set.clips).length > 1;
+  const aim = facings && options.aim != null ? aimFor(options.aim) : { facing: 'East', mirror: !!options.mirror, offset: 0 };
+  const clip = clipAt(set.clips[aim.facing]);
+  if (!clip) return null;
+  const offset = options.turn === false ? 0 : aim.offset, t = Math.max(0, Math.min(clip.Length, seconds));
+  if (!looks.has(set.id)) {
+    const materials = new Map(), prefix = set.source === 'rimart' ? '' : 'am:';
+    looks.set(set.id, { hand: MaterialPool.MatFrom('am:AM/Hand', ShaderDatabase.Cutout), material: (path, transparent, asIs) => {
+      const key = `${path}|${transparent}`;
+      if (!materials.has(key)) materials.set(key, MaterialPool.MatFrom((asIs ? '' : prefix) + path, transparent ? ShaderDatabase.Transparent : ShaderDatabase.Cutout));
+      return materials.get(key);
+    } });
+  }
+  const parts = pose(clip, t, aim.mirror, offset);
+  drawParts(clip, parts, position, options.scene, aim.mirror, { ...looks.get(set.id), shirts: options.shirt ? [options.shirt] : null });
+
+  const handPart = clip.ordered.find((q) => q.name === 'HandA'), itemPart = clip.ordered.find((q) => q.TexturePath && q.aimed) ?? null;
+  const where = (state) => ({ x: position.x + state.m.x, z: position.z + state.m.z, rot: decompose(state.m).rot, held: state.active });
+  return {
+    length: clip.Length, release: clip.release, facing: aim.facing, mirror: aim.mirror,
+    hand: handPart ? where(parts.get(handPart)) : null,
+    item: itemPart ? where(parts.get(itemPart)) : null,
+    itemAtRelease: itemPart && clip.release != null ? where(pose(clip, Math.max(0, clip.release - 1 / 60), aim.mirror, offset).get(itemPart)) : null,
+  };
 }
 
 // ------------------------------------------------------------------ the module
@@ -257,47 +360,7 @@ export function clipModule(set, handTexture, weapons = []) {
       const { clip, mirror, offset } = choose(p);
       if (!clip) return;
       const parts = pose(clip, seconds, mirror, offset);
-      const sun = scene?.shadowVector ?? { x: -.45, z: -.32 }, strength = scene?.sun?.strength ?? .32;
-
-      const weapon = set.items ? weaponFor(p) : null, tweak = weapon ? tweakFor(p) : null;
-      let pawns = 0;
-      for (const part of clip.ordered) {
-        const s = parts.get(part);
-        if (!s.active || s.tint.a <= 0) continue;
-        // HandsMode: 1 hides the off hand (HandB), 2 hides both.
-        if (tweak?.HandsMode && /^Hand[A-Z]\d*$/.test(part.name) && (tweak.HandsMode === 2 || part.name[4] !== 'A')) continue;
-        if (weapon && /^Item[A-Z]$/.test(part.name)) {
-          const fx = s.flipX !== tweak.FlipX, fy = s.flipY !== tweak.FlipY;
-          const inner = trs(fx ? -tweak.OffX : tweak.OffX, fy ? -tweak.OffY : tweak.OffY, fx !== fy ? -tweak.Rotation : tweak.Rotation, tweak.ScaleX, tweak.ScaleY);
-          const placed = mul(s.raw, inner), m = mirror ? mirrored(placed) : placed, d = decompose(m);
-          draw(quads[(fx !== mirror ? 1 : 0) + ((fy !== d.sz < 0) ? 2 : 0)], o.x + m.x, pawnLayer + s.y, o.z + m.z, d.sx, Math.abs(d.sz), d.rot, s.tint, materialFor(weapon.texture, false, true));
-          continue;
-        }
-        const { rot, sx, sz } = decompose(s.m), x = o.x + s.m.x, z = o.z + s.m.z, y = pawnLayer + s.y;
-
-        if (/^Body[A-Z]$/.test(part.name)) {
-          // Stand-in pawn, sized after a RimWorld human: the position is the middle of the sprite.
-          const west = s.direction === 3 || (s.direction === 1 && mirror), east = s.direction === 1 && !mirror;
-          const local = (lx, lz) => { const q = mul(trs(s.m.x, s.m.z, rot, 1, 1), { a: 1, b: 0, c: 0, d: 1, x: lx, z: lz }); return { x: o.x + q.x, z: o.z + q.z }; };
-          const shirt = Shirts[pawns++ % Shirts.length], side = east ? 1 : west ? -1 : 0;
-          draw(MeshPool.plane10, x + sun.x * .4, shadowLayer, z - .3 + sun.z * .4, .9, .4, 0, new Color(.03, .03, .05, strength), soft);
-          const body = local(0, -.1), head = local(side * .03, .3);
-          draw(disc, body.x, y, body.z, .23, .27, rot, shirt);
-          draw(disc, head.x, y + .003, head.z, .17, .17, 0, s.direction === 0 ? Hair : Skin);
-          if (side) { const eye = local(side * .12, .31); draw(disc, eye.x, y + .004, eye.z, .025, .03, 0, Hair); }
-          else if (s.direction === 2) for (const e of [-1, 1]) { const eye = local(e * .065, .29); draw(disc, eye.x, y + .004, eye.z, .025, .03, 0, Hair); }
-          continue;
-        }
-
-        const flipX = s.flipX !== mirror, quad = quads[(flipX ? 1 : 0) + ((s.flipY !== sz < 0) ? 2 : 0)];
-        if (/^Hand[A-Z]\d*$/.test(part.name)) draw(quad, x, y, z, sx, Math.abs(sz), rot, new Color(Skin.r * s.tint.r, Skin.g * s.tint.g, Skin.b * s.tint.b, s.tint.a), hand);
-        else if (part.TexturePath) draw(quad, x, y, z, sx, Math.abs(sz), rot, s.tint, materialFor(part.TexturePath, part.TransparentByDefault || s.tint.a < 1));
-        else if (/^Item[A-Z]$/.test(part.name)) {
-          // Stand-in melee weapon along the part's +x (its -x when the part is flipped): grip, guard, blade.
-          const along = (lx, w, h, colour, lift) => { const q = mul(s.m, { a: 1, b: 0, c: 0, d: 1, x: s.flipX ? -lx : lx, z: 0 }); draw(MeshPool.plane10, o.x + q.x, y + lift, o.z + q.z, w * sx, h * Math.abs(sz), rot, colour); };
-          along(.2, .75, .06, Steel, 0); along(-.17, .04, .2, Hair, .001); along(-.27, .2, .045, Hair, .001);
-        }
-      }
+      drawParts(clip, parts, o, scene, mirror, { hand, material: materialFor, weapon: set.items ? weaponFor(p) : null, tweak: set.items && weaponFor(p) ? tweakFor(p) : null });
 
       if (p.pivots) for (const part of clip.ordered) {
         const s = parts.get(part);

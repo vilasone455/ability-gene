@@ -65,6 +65,14 @@ the first line of what is copied says where to save it. `lab.py` lists the new f
 reload the page to use it. Blade start and end, weapon type and sweep trails are not shown; set those in
 Melee Animation's own tweak editor in game.
 
+### Clips inside sketches
+
+`playClip(name, seconds, position, options)` from `web/js/animation.js` draws a clip as a sketch's
+caster and returns where the hand and the thrown item are, so a throw and its projectile can be
+checked on one timeline. `SKETCHING.md` has the call; `sketches/throw-kunai.js` ("Kunai throw
+(sketch)") uses it, and shows the projectile starting at the pawn's centre as `PendingThrow` does,
+or at the hand, to see the gap between the two.
+
 `web/js/animation.js` follows Melee Animation's renderer as read from its decompiled
 `zAnimationMod.dll`: a part is a 1 x 1 quad drawn with its composed position, y rotation and scale,
 world y is draw depth, hands are `Textures/AM/Hand.png` tinted with skin colour. What it cannot
