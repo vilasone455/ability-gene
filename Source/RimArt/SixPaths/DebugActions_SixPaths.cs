@@ -48,6 +48,13 @@ namespace RimArt
         [RimArtDebug("Six Paths", "rods south")]
         public static void RodsSouth() => Preview().Play(UI.MouseCell(), PreviewMode.Rods, 1f, false, Vector2.down);
 
+        [RimArtDebug("Six Paths", "serpent east")]
+        public static void SerpentEast() => Preview().Play(UI.MouseCell(), PreviewMode.Serpent, 1f, false, Vector2.right);
+
+        [RimArtDebug("Six Paths", "serpent south-west")]
+        public static void SerpentSouthWest() => Preview().Play(UI.MouseCell(), PreviewMode.Serpent, 1f, false,
+            new Vector2(Mathf.Cos(215f * Mathf.Deg2Rad), Mathf.Sin(215f * Mathf.Deg2Rad)));
+
         [RimArtDebug("Six Paths", "umbrella canopy")]
         public static void UmbrellaCanopy() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaCanopy, 1f, false, Vector2.right);
 
@@ -74,7 +81,7 @@ namespace RimArt
             Find.CurrentMap.GetComponent<MapComponent_SixPathsPreview>();
     }
 
-    public enum PreviewMode { Ring, Sheet, Slam, Bloom, TwinMaw, Rods, UmbrellaCanopy, UmbrellaGuard }
+    public enum PreviewMode { Ring, Sheet, Slam, Bloom, TwinMaw, Rods, Serpent, UmbrellaCanopy, UmbrellaGuard }
 
     public sealed class MapComponent_SixPathsPreview : MapComponent
     {
@@ -84,13 +91,15 @@ namespace RimArt
         private const float MawSageDistance = 5f;
         /// <summary>Cells back along the cast direction from the middle of the wall that the rods' sage stands.</summary>
         private const float RodsSageDistance = 5f;
+        /// <summary>Cells back along the cast direction from the target that the serpent's sage stands: 4.5 to the orb's spot and 0.9 behind it.</summary>
+        private const float SerpentSageDistance = 4.5f + SixPathsSerpentTiming.Behind;
 
         public bool active;
         private PreviewMode mode;
         private bool frozen, shaken;
         private float speed, seconds;
         private IntVec3 cell;
-        /// <summary>The cardinal the umbrella's sage faces or the rods are cast along, east and north positive.</summary>
+        /// <summary>The cardinal the umbrella's sage faces or the rods or the serpent are cast along, east and north positive.</summary>
         private Vector2 toward;
 
         public MapComponent_SixPathsPreview(Map map) : base(map) { }
@@ -159,6 +168,11 @@ namespace RimArt
                     SixPathsRodsGraphics.Draw(cell.ToVector3Shifted(),
                         cell.ToVector3Shifted() - new Vector3(toward.x, 0f, toward.y) * RodsSageDistance, toward, seconds, map);
                     if (seconds >= SixPathsRodsTiming.Duration) active = false;
+                    break;
+                case PreviewMode.Serpent:
+                    SixPathsSerpentGraphics.Draw(cell.ToVector3Shifted(),
+                        cell.ToVector3Shifted() - new Vector3(toward.x, 0f, toward.y) * SerpentSageDistance, seconds, map);
+                    if (seconds >= SixPathsSerpentTiming.Duration) active = false;
                     break;
                 case PreviewMode.UmbrellaCanopy:
                 case PreviewMode.UmbrellaGuard:
