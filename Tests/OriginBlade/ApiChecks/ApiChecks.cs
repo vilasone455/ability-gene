@@ -299,10 +299,32 @@ static class ApiChecks
         // are centred and have exactly one each, so a second clip for either reappearing here is
         // a mistake worth catching.
         foreach (string clip in ThrowAnimation.Grenade.All.Concat(ThrowAnimation.Kunai.All).Concat(ThrowAnimation.Scatter.All).Concat(ThrowAnimation.Fuma.All)
-                     .Select(name => name.Replace("AG_", "RimArt_")).Append("RimArt_ShinraPush").Append("RimArt_GravityChannel"))
+                     .Select(name => name.Replace("AG_", "RimArt_")).Append("RimArt_ShinraPush").Append("RimArt_GravityChannel")
+                     .Append("RimArt_Clap").Append("RimArt_ClapTwice"))
         {
             curves += CheckThrowAnimationJson(dataModel, partModel, clip);
             clips++;
+        }
+        // The clap clips start with the warmup, so the last palm contact has to be the warmup's end:
+        // make_clap_anim.py, ClapTeleport and the two AbilityDefs each carry these numbers.
+        var clapDefs = XDocument.Load("1.6/Defs/AbilityDefs/AG_Anchor_Abilities.xml").Root.Elements("AbilityDef").ToList();
+        var clapAnims = XDocument.Load("Patch_MeleeAnimation/1.6/Defs/AG_Anchor_Anims.xml").Root.Elements().ToList();
+        foreach (var (ability, anim, file, contact, length) in new[] {
+            ("AG_AnchorClap", "AG_Clap", "RimArt_Clap", RimArt.ClapTeleport.FirstContact, RimArt.ClapTeleport.ClipLength),
+            ("AG_AnchorDoubleClap", "AG_ClapTwice", "RimArt_ClapTwice", RimArt.ClapTeleport.SecondContact, RimArt.ClapTeleport.ClipTwiceLength) })
+        {
+            var def = clapDefs.Single(e => (string)e.Element("defName") == ability);
+            float warmup = float.Parse((string)def.Element("verbProperties").Element("warmupTime"), System.Globalization.CultureInfo.InvariantCulture);
+            if (Math.Abs(warmup - contact) > 0.0001f)
+                throw new Exception($"{ability} warmupTime {warmup} is not the clip's last palm contact {contact}");
+            if ((string)def.Element("jobDef") != "AG_CastAnchorClap")
+                throw new Exception($"{ability} must cast through AG_CastAnchorClap, the job its clip is tied to");
+            if (!clapAnims.Any(e => (string)e.Element("defName") == anim && (string)e.Element("data") == file + ".json"))
+                throw new Exception($"No AM.AnimDef {anim} pointing at {file}.json");
+            using var clapJson = System.Text.Json.JsonDocument.Parse(File.ReadAllText($"Animations/{file}.json"));
+            float clipLength = clapJson.RootElement.GetProperty("Length").GetSingle();
+            if (Math.Abs(clipLength - length) > 0.0001f)
+                throw new Exception($"{file}.json is {clipLength} s but ClapTeleport says {length} s - run make_clap_anim.py or fix the constant");
         }
         // The C# launches the thrown object at ReleaseFraction of the clip. The json hides the held
         // part at its release time, so the two must agree for every facing of every throw style.
@@ -464,9 +486,9 @@ static class ApiChecks
 
         // Their AddPawn looks these up by name. Both hands must exist because their off-hand
         // lookup is guarded by the main hand's null check and would throw inside their code.
-        // Shinra Tensei and Gravity Well are centred gestures with nothing in hand; every other
+        // Shinra Tensei, Gravity Well and the two claps are empty-handed gestures; every other
         // clip here throws something and must carry the held part the C# releases.
-        bool centred = clip.StartsWith("RimArt_ShinraPush") || clip == "RimArt_GravityChannel";
+        bool centred = clip.StartsWith("RimArt_ShinraPush") || clip == "RimArt_GravityChannel" || clip.StartsWith("RimArt_Clap");
         foreach (string required in centred ? new[] { "BodyA", "HeadA", "HandA", "HandB" }
                                             : new[] { "BodyA", "HandA", "HandB", "Grenade" })
         {

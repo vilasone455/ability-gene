@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- One clip per ability, not one per facing: the clap is map-wide and sightless, so the gesture
+       has no direction to carry. The pawn is drawn facing south, the one facing that shows both
+       hands. No weapon, second pawn, animation events, or end-cell teleport: the carrier is moved
+       by the ability, and RimArt.ClapCastAnimation moves the clip's root with them. -->
+  <AM.AnimDef>
+    <defName>AG_Clap</defName>
+    <label>Anchor: clap</label>
+    <description>One clap, then the open hands of a finished trick.</description>
+    <jobString>Clapping.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_Clap.json</data>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_ClapTwice</defName>
+    <label>Anchor: double clap</label>
+    <description>Two claps, then the open hands of a finished trick.</description>
+    <jobString>Clapping twice.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ClapTwice.json</data>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+</Defs>

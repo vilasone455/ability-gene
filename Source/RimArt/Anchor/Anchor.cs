@@ -16,6 +16,13 @@ namespace RimArt
         public IntVec3 cell;
         public int placedTick;
 
+        /// <summary>
+        /// Which card the mark is drawn as: ClapTeleport.Spade, Heart or Club. Kept on the mark, not
+        /// read off its place in the list, so a mark does not change suit when an older one is spent.
+        /// -1 is a mark from a save older than the cards; the gene deals it a suit on load.
+        /// </summary>
+        public int suit = -1;
+
         public Anchor() { }
 
         public Anchor(Pawn pawn, int placedTick)
@@ -75,6 +82,7 @@ namespace RimArt
             Scribe_References.Look(ref pawn, "pawn");
             Scribe_Values.Look(ref cell, "cell");
             Scribe_Values.Look(ref placedTick, "placedTick", 0);
+            Scribe_Values.Look(ref suit, "suit", -1);
         }
     }
 }

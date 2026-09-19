@@ -33,8 +33,18 @@ namespace RimArt
             Anchor anchor = gene.AnchorFor(target);
             if (anchor == null) return;
 
+            // The ends are read before anyone moves: afterwards the carrier's cell is the mark's.
+            var teleports = caster.Map.GetComponent<MapComponent_ClapTeleports>();
+            ClapEnds.For(caster, anchor, null, false, out ClapEnd from, out ClapEnd to);
+
             gene.Remove(anchor);
-            AnchorSwap.Resolve(caster, anchor);
+            if (!AnchorSwap.Resolve(caster, anchor))
+            {
+                teleports.Ended(caster);
+                return;
+            }
+            teleports.Land(caster, from, to, parent.def.verbProperties.warmupTime, false);
+            ClapCastAnimation.MoveTo(caster, caster.CurJobDef);
         }
 
         public override bool CanApplyOn(LocalTargetInfo target, LocalTargetInfo dest)

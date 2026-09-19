@@ -41,9 +41,13 @@ namespace RimArt
             Anchor b = gene.AnchorFor(dest);
             if (a == null || b == null || a == b) return;
 
+            var teleports = caster.Map.GetComponent<MapComponent_ClapTeleports>();
+            ClapEnds.For(caster, a, b, false, out ClapEnd first, out ClapEnd second);
+
             gene.Remove(a);
             gene.Remove(b);
-            AnchorSwap.Resolve(a, b);
+            if (AnchorSwap.Resolve(a, b)) teleports.Land(caster, first, second, parent.def.verbProperties.warmupTime, true);
+            else teleports.Ended(caster);
         }
 
         /// <summary>
