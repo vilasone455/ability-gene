@@ -27,11 +27,10 @@
 // Drawing: a level ring stays a circle for every facing and only shifts north with height, so
 // there is no per-facing method. A standing card is one quad whose width is the cosine of its
 // turn; the north half of the ring draws under the pawn layer. The marked pawns are two-disc
-// stand-ins; the carrier is the real clip through playClip(). The three suit textures are lab/
-// generators and still have to be ported to a make_anchor_textures.py; the puff is the Six Paths
-// Puff texture.
+// stand-ins; the carrier is the real clip through playClip(). The three suit textures are
+// Textures/RimArt/Anchor/Suit*.png from make_anchor_textures.py; the puff and the soft disc are
+// the Six Paths ones, which the mod already ships.
 import { AltitudeLayer, Color, MaterialPool, Mathf, MeshPool, ShaderDatabase } from '../js/engine.js';
-import { registerLabTexture, pixels } from '../js/standins.js';
 import { playClip } from '../js/animation.js';
 import { draw } from './lib/six-paths-solid.js';
 import { P, Y, Floor, Lift, at, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
@@ -42,24 +41,12 @@ const shadowLayer = AltitudeLayer.Shadows.AltitudeFor(), pawnLayer = AltitudeLay
 const puffMat = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.Transparent);
 const whiteGlow = MaterialPool.MatFrom('white', ShaderDatabase.MoteGlow);
 
-// Suit pips: white shape in the alpha, coloured at draw time. x, y run -1.2..1.2 with y up.
-const heart = (x, y) => { const X = x * 1.15, Y2 = y * 1.15 + .2; return (X * X + Y2 * Y2 - 1) ** 3 - X * X * Y2 ** 3 < 0; };
-const stem = (x, y) => y < -.35 && y > -1.05 && Math.abs(x) < .08 + (-.35 - y) * .38;
-const suits = {
-  heart,
-  spade: (x, y) => heart(x, -y + .25) || stem(x, y),
-  club: (x, y) => [[0, .48], [-.47, -.12], [.47, -.12]].some(([cx, cy]) => Math.hypot(x - cx, y - cy) < .43) || stem(x, y) || (Math.abs(x) < .2 && Math.abs(y) < .3),
+// Suit pips: white shape in the alpha, coloured at draw time. Written by make_anchor_textures.py.
+const pip = {
+  spade: MaterialPool.MatFrom('RimArt/Anchor/SuitSpade', ShaderDatabase.Transparent),
+  heart: MaterialPool.MatFrom('RimArt/Anchor/SuitHeart', ShaderDatabase.Transparent),
+  club: MaterialPool.MatFrom('RimArt/Anchor/SuitClub', ShaderDatabase.Transparent),
 };
-const sub = [[-.25, -.25], [.25, -.25], [-.25, .25], [.25, .25]];
-const pip = {};
-for (const [name, inside] of Object.entries(suits)) {
-  registerLabTexture(`lab/suit-${name}`, () => pixels(64, (u, v) => {
-    let a = 0;
-    for (const [du, dv] of sub) if (inside(((u + du / 64) - .5) * 2.4, (.5 - (v + dv / 64)) * 2.4)) a += .25;
-    return [1, 1, 1, a];
-  }));
-  pip[name] = MaterialPool.MatFrom(`lab/suit-${name}`, ShaderDatabase.Transparent);
-}
 
 // Decided looks. The panel keeps what is still being tuned.
 const Paper = new Color(.96, .94, .88), Ink = new Color(.10, .08, .09), Red = new Color(.69, .125, .18);
