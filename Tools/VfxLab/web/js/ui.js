@@ -10,6 +10,7 @@ import { listPresets, savePreset, deletePreset, applyPreset, presetFile, importP
 import { csharpConstants, plainList, shareLink, countParams } from './share.js';
 import { renderFrames, composeSheet, composeOverlay, renderBackdrop, download, textUrl, manifest, baseName, frameName, frameTimes, sheetColumns } from './export.js';
 import sketchFiles from '../sketches/index.js';
+import { clipModule, forgetClips, whenClipLoads } from './animation.js';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, attrs = {}, ...children) => {
@@ -76,6 +77,7 @@ async function boot() {
     for (const k of Object.keys(source.values)) if (k in saved) source.values[k] = saved[k];
     state.sources.set(source.id, source);
   }
+  await loadClips();
   await refreshIndex(true);
   bindChrome();
 
@@ -123,10 +125,38 @@ async function boot() {
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
-  setInterval(() => refreshIndex(false), 1500);
+  setInterval(() => { refreshIndex(false); refreshClips(); }, 1500);
 }
 
 // ------------------------------------------------------------------ entries and sources
+
+// Animation clips are listed by lab.py in recordings/animations.json and wrapped as sketches.
+async function loadClips() {
+  let index = null;
+  try {
+    const response = await fetch('../recordings/animations.json', { cache: 'no-store' });
+    index = response.ok ? await response.json() : null;
+  } catch { index = null; }
+  if (!index) return;
+  state.clipStamp = index.stamp;
+  // Without Melee Animation installed there is no hand texture to read; a soft disc stands in.
+  const hand = index.meleeAnimation ? 'am:AM/Hand' : 'lab/soft-disc';
+  for (const set of index.sets) {
+    const file = `clip/${set.id}`, source = new SketchSource(clipModule(set, hand), file);
+    const saved = store.get(`params:${file}`, {});
+    for (const k of Object.keys(source.values)) if (k in saved) source.values[k] = saved[k];
+    state.sources.set(source.id, source);
+  }
+  whenClipLoads(() => { if (sourceA()?.module?.tag === 'clip' || sourceB()?.module?.tag === 'clip') renderParams(); });
+}
+
+async function refreshClips() {
+  try {
+    const response = await fetch('../recordings/animations.json', { cache: 'no-store' });
+    const stamp = response.ok ? (await response.json()).stamp : null;
+    if (stamp && state.clipStamp && stamp !== state.clipStamp) { state.clipStamp = stamp; forgetClips(); }
+  } catch { /* lab.py is not serving; the recordings notice already says so */ }
+}
 
 async function refreshIndex(first) {
   let index, status = null;
@@ -150,7 +180,7 @@ async function refreshIndex(first) {
       id: `recorded:${r.file}`, kind: 'recorded', file: r.file, label: r.label, kit: r.kit, seconds: r.seconds, still: r.still,
     }));
     const sketches = [...state.sources.values()].filter((s) => s.kind === 'sketch')
-      .map((s) => ({ id: s.id, kind: 'sketch', file: s.file, label: s.label, kit: s.kit, seconds: s.duration, still: false }));
+      .map((s) => ({ id: s.id, kind: 'sketch', tag: s.module.tag, file: s.file, label: s.label, kit: s.kit, seconds: s.duration, still: false }));
     state.entries = [...recorded, ...sketches].sort((x, y) => x.kit.localeCompare(y.kit) || (x.kind === y.kind ? 0 : x.kind === 'recorded' ? -1 : 1) || x.label.localeCompare(y.label));
     if (changed) {
       // New recordings from lab.py: swap the loaded ones in place, keeping time, zoom and selection.
@@ -389,7 +419,7 @@ function renderBrowser() {
       el('span', { class: 'name' }, name),
       el('span', { class: 'dur' }, e.still ? 'still' : `${fmt(e.seconds, 2)} s`),
       el('span', { class: 'tags' },
-        el('span', { class: `tag ${e.kind}` }, e.kind === 'recorded' ? 'recorded' : 'sketch'),
+        el('span', { class: `tag ${e.tag ?? e.kind}` }, e.tag ?? (e.kind === 'recorded' ? 'recorded' : 'sketch')),
         side && el('span', { class: 'tag side' }, side)));
     }),
   ]));
@@ -463,8 +493,8 @@ function renderParams() {
 
   panel.replaceChildren(
     el('div', { class: 'group' },
-      el('h3', {}, 'Sketch'),
-      el('p', { class: 'hint' }, `A proposal in JavaScript, not the game. ${source.module.compareWith ? `Compare it with the recorded "${source.module.compareWith}" on the Compare tab.` : ''}`),
+      el('h3', {}, source.module.tag === 'clip' ? 'Animation clip' : 'Sketch'),
+      el('p', { class: 'hint' }, source.module.note ?? `A proposal in JavaScript, not the game. ${source.module.compareWith ? `Compare it with the recorded "${source.module.compareWith}" on the Compare tab.` : ''}`),
       el('div', { class: 'row' }, reset, copy, copyList, copyLink),
       el('p', { class: 'hint' }, `${countParams(source.module)} settings. "Copy as a list" is the readable one to send someone; "Copy link" opens this exact configuration in their own lab.`)),
     presetGroup(source), phases, ...controls);
@@ -688,7 +718,7 @@ function renderLayers() {
 function renderCompareSelects() {
   for (const [id, side] of [['compare-a', 'a'], ['compare-b', 'b']]) {
     const select = $(id);
-    select.replaceChildren(el('option', { value: '' }, '—'), ...state.entries.map((e) => el('option', { value: e.id, selected: state[side] === e.id }, `${e.label}${e.kind === 'sketch' ? ' (sketch)' : ''}`)));
+    select.replaceChildren(el('option', { value: '' }, '—'), ...state.entries.map((e) => el('option', { value: e.id, selected: state[side] === e.id }, `${e.label}${e.kind === 'sketch' && !e.tag ? ' (sketch)' : ''}`)));
   }
 }
 

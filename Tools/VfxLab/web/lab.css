@@ -59,6 +59,7 @@ kbd { font: 11px var(--mono); color: var(--dim); border: 1px solid var(--line); 
 .effect .tags { grid-column: 1 / -1; display: flex; gap: var(--s1); }
 .tag { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; padding: 0 5px; border-radius: 3px; border: 1px solid var(--line); color: var(--dim); }
 .tag.sketch { color: var(--sketch); border-color: color-mix(in srgb, var(--sketch) 45%, transparent); }
+.tag.clip { color: #e0b64f; border-color: color-mix(in srgb, #e0b64f 45%, transparent); }
 .tag.side { color: var(--ground); background: var(--accent); border-color: var(--accent); }
 .browser .empty { padding: var(--s4); color: var(--dim); }
 

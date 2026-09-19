@@ -14,6 +14,12 @@ While serving, every .cs file under Source/RimArt and the recorder is polled onc
 A change re-records, and the open page picks the new recording up by itself, keeping its time,
 zoom and selection. A failed build or self-check leaves the previous recordings in place and
 shows the error on the page.
+
+Animation clips (the json Melee Animation plays) are listed in recordings/animations.json: the
+mod's own Animations/*.json, and Melee Animation's clips when that mod is installed. Its folder is
+read where it is installed and served under /_am/; nothing of theirs is copied into this
+repository. Set RIMART_MELEE_ANIMATION to the mod folder if it is not found. The list is rebuilt
+when a file in Animations/ changes, and the open page reloads the clips.
 """
 import argparse, http.server, json, os, pathlib, socketserver, subprocess, sys, threading, time, datetime
 
@@ -23,6 +29,64 @@ RECORDER = LAB / "Recorder"
 RECORDINGS = LAB / "recordings"
 WATCHED = [ROOT / "Source" / "RimArt", RECORDER]
 PORT = 8765
+ANIMATIONS = ROOT / "Animations"
+# Melee Animation, Steam workshop item 2944488802. First folder that exists wins.
+MELEE_ANIMATION_DIRS = [
+    os.environ.get("RIMART_MELEE_ANIMATION", ""),
+    "/mnt/c/Program Files (x86)/Steam/steamapps/workshop/content/294100/2944488802",
+    "/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Mods/MeleeAnimation",
+    os.path.expanduser("~/.steam/steam/steamapps/workshop/content/294100/2944488802"),
+    os.path.expanduser("~/.local/share/Steam/steamapps/workshop/content/294100/2944488802"),
+]
+
+
+def melee_animation_dir():
+    for candidate in MELEE_ANIMATION_DIRS:
+        if candidate and (pathlib.Path(candidate) / "Animations").is_dir():
+            return pathlib.Path(candidate)
+    return None
+
+
+def clip_length(path):
+    # Their exporter writes a BOM and bare Infinity, which Python's json accepts.
+    try:
+        return float(json.loads(path.read_text(encoding="utf-8-sig")).get("Length", 0))
+    except (OSError, ValueError):
+        return 0.0
+
+
+def clip_sets(folder, url, kit, source):
+    """One entry per clip. <Name>North.json and <Name>South.json join <Name>.json as its facings."""
+    names = {p.stem: p for p in sorted(folder.glob("*.json"))}
+    sets = []
+    for name, path in names.items():
+        if any(name.endswith(s) and name[:-len(s)] in names for s in ("North", "South")):
+            continue
+        clips = {"East": f"{url}/{name}.json"}
+        for facing in ("North", "South"):
+            if name + facing in names:
+                clips[facing] = f"{url}/{name}{facing}.json"
+        sets.append({"id": f"{source}-{name}", "name": name, "kit": kit, "source": source,
+                     "length": clip_length(path), "clips": clips})
+    return sets
+
+
+def animation_stamps():
+    return {p: p.stat().st_mtime for p in ANIMATIONS.glob("*.json")} if ANIMATIONS.is_dir() else {}
+
+
+def index_animations():
+    RECORDINGS.mkdir(parents=True, exist_ok=True)
+    sets = clip_sets(ANIMATIONS, "/Animations", "Animations: RimArt", "rimart") if ANIMATIONS.is_dir() else []
+    theirs = melee_animation_dir()
+    if theirs:
+        sets += clip_sets(theirs / "Animations", "/_am/Animations", "Animations: Melee Animation", "am")
+    (RECORDINGS / "animations.json").write_text(json.dumps({
+        "stamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "meleeAnimation": bool(theirs),
+        "sets": sets,
+    }, indent=1))
+    print(f"[lab] {len(sets)} animation clips listed" + ("" if theirs else " (Melee Animation not found)"), flush=True)
 
 
 def snapshot():
@@ -63,8 +127,13 @@ def record():
 
 def watch():
     before = snapshot()
+    clips = animation_stamps()
     while True:
         time.sleep(1.0)
+        if animation_stamps() != clips:
+            time.sleep(0.4)
+            clips = animation_stamps()
+            index_animations()
         now = snapshot()
         if now != before:
             changed = sorted({p for p in set(now) | set(before) if now.get(p) != before.get(p)})
@@ -79,6 +148,16 @@ def watch():
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(ROOT), **kwargs)
+
+    def translate_path(self, path):
+        # /_am/... is Melee Animation's install folder: its clips and its hand texture.
+        if path.startswith("/_am/"):
+            theirs = melee_animation_dir()
+            if theirs is None:
+                return str(ROOT / "__missing__")
+            inner = super().translate_path("/" + path[len("/_am/"):])
+            return str(theirs / pathlib.Path(inner).relative_to(ROOT))
+        return super().translate_path(path)
 
     def end_headers(self):
         # Recordings change under the page; never let the browser keep an old one.
@@ -97,6 +176,7 @@ def main():
     args = parser.parse_args()
 
     ok = record()
+    index_animations()
     if args.record_only:
         sys.exit(0 if ok else 1)
 

@@ -23,6 +23,36 @@ Firefox has it.
 Both kinds go through the same renderer, so the Compare tab puts a recorded effect and a sketch
 side by side on one clock.
 
+## Animation clips
+
+The third kind of entry, tagged `clip`. A clip is one of the json files Melee Animation plays: the
+mod's own in `Animations/` (written by `make_throw_anim.py`, `make_gravity_anim.py` and
+`make_shinra_anim.py`), and Melee Animation's 69 when that mod is installed. They are listed under
+"Animations: RimArt" and "Animations: Melee Animation".
+
+- `lab.py` writes the list to `recordings/animations.json` at start and again when a file in
+  `Animations/` changes; the open page then fetches the changed clips again. Run the Python script,
+  look at the page.
+- Melee Animation is read from where it is installed and served under `/_am/`. Nothing of theirs is
+  copied here. `lab.py` looks in the usual Steam workshop folders (item 2944488802); set
+  `RIMART_MELEE_ANIMATION` to the mod folder if it is elsewhere. Without it, only our clips are
+  listed and hands are drawn as soft discs.
+- `<Name>North.json` and `<Name>South.json` are joined to `<Name>.json` as one entry. That entry
+  has a "Target direction" slider, which picks the clip and the mirror the same way
+  `ThrowAnimation.Aim` does and turns the throwing hand by what is left over, as
+  `ThrowAimWorker` does. A clip with one file has a "Mirrored" checkbox.
+- The timeline marks "Release": the first time a textured part that started visible is switched
+  off, which is the thrown item leaving the hand. Clip events show as sound markers.
+- Overlays: the path the main hand (`HandA`) takes over the whole clip, with the point it is at now
+  and the release point, because a still frame cannot show motion; and the pivot of every part.
+
+`web/js/animation.js` follows Melee Animation's renderer as read from its decompiled
+`zAnimationMod.dll`: a part is a 1 x 1 quad drawn with its composed position, y rotation and scale,
+world y is draw depth, hands are `Textures/AM/Hand.png` tinted with skin colour. What it cannot
+show: the pawn is a stand-in (RimWorld draws the real one), and so is a melee weapon on `ItemA`
+(the game takes it from the pawn's equipment). A clip is wrapped as a sketch, so scrubbing, export,
+`shoot.mjs` and links work on it unchanged: `shoot.mjs "ThrowKunai (clip)" 0.28 out.png p.aim=200`.
+
 ## What a recording is
 
 `Recorder/` is a .NET 8 program that compiles the real drawing, timing and dev-action files, linked
@@ -220,7 +250,7 @@ For a whole configuration as a file rather than as text, use Presets: Export.
 ## Files
 
 ```
-lab.py                 record, serve, watch Source/ and re-record
+lab.py                 record, serve, watch Source/ and re-record; list animation clips
 shoot.mjs              screenshot a frame from the command line
 Recorder/              the C# recorder (Engine/ = UnityEngine and Verse stand-ins)
 recordings/            generated; git-ignored
@@ -228,6 +258,7 @@ web/index.html         the page
 web/js/gl.js           WebGL2 renderer: altitude order, blend per shader, distortion pass
 web/js/engine.js       the sketch drawing API
 web/js/player.js       recorded and sketch sources, the clock
+web/js/animation.js    Melee Animation clips: curves, part tree, stand-in pawn, hand path
 web/js/scene.js        generated terrain, trees, rocks, a pawn for scale, sun shadows
 web/js/camera.js       pan, zoom, camera shake
 web/js/standins.js     procedural textures for vanilla paths

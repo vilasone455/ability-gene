@@ -121,7 +121,9 @@ export class Renderer {
       this.onTexture?.();
     };
     const fallback = () => {
-      const s = standIn(path);
+      // Melee Animation's hand: not a wrong path, just a mod that is not installed (or a lab.py from
+      // before /_am/ existed). A soft disc takes the skin tint and still lists as a stand-in.
+      const s = standIn(path.startsWith('am:AM/Hand') ? 'lab/soft-disc' : path);
       entry.standIn = true;
       entry.known = s.known;
       upload(s.canvas, path.includes('Currents') || path.includes('Noise'));
@@ -135,7 +137,8 @@ export class Renderer {
       const img = new Image();
       img.onload = () => { upload(img, false); if (window.__labDebug) console.log('LAB loaded', path); };
       img.onerror = () => { if (window.__labDebug) console.log('LAB failed', path); fallback(); };
-      img.src = `/Textures/${path}.png`;
+      // "am:" is Melee Animation's own Textures folder, served by lab.py from where that mod is installed.
+      img.src = path.startsWith('am:') ? `/_am/Textures/${path.slice(3)}.png` : `/Textures/${path}.png`;
     }
     return entry;
   }
