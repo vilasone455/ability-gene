@@ -83,6 +83,7 @@ namespace UnityEngine
         public static float Clamp01(float v) => v < 0f ? 0f : v > 1f ? 1f : v;
         public static float Lerp(float a, float b, float t) => a + (b - a) * Clamp01(t);
         public static float Repeat(float t, float length) => Clamp(t - (float)Math.Floor(t / length) * length, 0f, length);
+        public static float Floor(float v) => (float)Math.Floor(v);
         public static int FloorToInt(float v) => (int)Math.Floor(v);
         public static int RoundToInt(float v) => (int)Math.Round(v);
         public static float Round(float v) => (float)Math.Round(v);

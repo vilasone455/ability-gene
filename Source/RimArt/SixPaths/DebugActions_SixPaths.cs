@@ -67,6 +67,18 @@ namespace RimArt
         [RimArtDebug("Six Paths", "repulse step south")]
         public static void RepulseSouth() => Preview().Play(UI.MouseCell(), PreviewMode.Repulse, 1f, false, Vector2.down);
 
+        [RimArtDebug("Six Paths", "devouring current east")]
+        public static void CurrentEast() => Preview().Play(UI.MouseCell(), PreviewMode.Current, 1f, false, Vector2.right);
+
+        [RimArtDebug("Six Paths", "devouring current west")]
+        public static void CurrentWest() => Preview().Play(UI.MouseCell(), PreviewMode.Current, 1f, false, Vector2.left);
+
+        [RimArtDebug("Six Paths", "devouring current north")]
+        public static void CurrentNorth() => Preview().Play(UI.MouseCell(), PreviewMode.Current, 1f, false, Vector2.up);
+
+        [RimArtDebug("Six Paths", "devouring current south")]
+        public static void CurrentSouth() => Preview().Play(UI.MouseCell(), PreviewMode.Current, 1f, false, Vector2.down);
+
         [RimArtDebug("Six Paths", "umbrella canopy")]
         public static void UmbrellaCanopy() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaCanopy, 1f, false, Vector2.right);
 
@@ -93,7 +105,7 @@ namespace RimArt
             Find.CurrentMap.GetComponent<MapComponent_SixPathsPreview>();
     }
 
-    public enum PreviewMode { Ring, Sheet, Slam, Bloom, TwinMaw, Rods, Serpent, Repulse, UmbrellaCanopy, UmbrellaGuard }
+    public enum PreviewMode { Ring, Sheet, Slam, Bloom, TwinMaw, Rods, Serpent, Repulse, Current, UmbrellaCanopy, UmbrellaGuard }
 
     public sealed class MapComponent_SixPathsPreview : MapComponent
     {
@@ -111,7 +123,7 @@ namespace RimArt
         private bool frozen, shaken;
         private float speed, seconds;
         private IntVec3 cell;
-        /// <summary>The cardinal the umbrella's sage faces or the rods or the serpent are cast along or the repulse step launches, east and north positive.</summary>
+        /// <summary>The cardinal the umbrella's sage faces or the rods or the serpent are cast along or the repulse step launches or the current runs, east and north positive.</summary>
         private Vector2 toward;
 
         public MapComponent_SixPathsPreview(Map map) : base(map) { }
@@ -197,6 +209,17 @@ namespace RimArt
                         cell.ToVector3Shifted() + new Vector3(toward.x, 0f, toward.y) * SixPathsRepulseTiming.Travel(seconds),
                         toward, seconds, map);
                     if (seconds >= SixPathsRepulseTiming.Duration) active = false;
+                    break;
+                case PreviewMode.Current:
+                    if (seconds >= SixPathsCurrentTiming.ReleaseAt && !shaken)
+                    {
+                        shaken = true;
+                        Find.CameraDriver.shaker.DoShake(SixPathsCurrentTiming.Shake);
+                    }
+                    // The chosen cell is the orb's spot, as in the sketch; the sage stands behind it.
+                    SixPathsCurrentGraphics.Draw(
+                        cell.ToVector3Shifted() - new Vector3(toward.x, 0f, toward.y) * SixPathsCurrentTiming.Behind, toward, seconds, map);
+                    if (seconds >= SixPathsCurrentTiming.Duration) active = false;
                     break;
                 case PreviewMode.UmbrellaCanopy:
                 case PreviewMode.UmbrellaGuard:
