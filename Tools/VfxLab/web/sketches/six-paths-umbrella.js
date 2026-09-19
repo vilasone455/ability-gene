@@ -15,6 +15,12 @@
 //             from the side; the panel above that stretch of veil pays for it. Each panel absorbs
 //             about 100 damage, then breaks and leaves a gap. All six orbs in use; 45 s cooldown.
 //
+// The orbs and the sage: the sage carries the six orbs on its ring (lib/six-paths-sage.js) at 0.09
+// radius. Slots 0 and 1 leave the ring, grow to the on-pawn cast radius 0.20 on the way to the
+// hand, and merge into the umbrella; their slots stay empty while the form is out. The other four
+// stay in the ring until the canopy calls them, then grow the same way as they fly to the apex and
+// shrink back into their slots when it folds.
+//
 // Drawing: one canopy routine serves both open states. It places an apex, a middle ring and a
 // rim in 3D around an axis (up, or along the facing), projects height north by Lift, and paints
 // the six panels back to front. Up mode looks the same for every facing. Straight mode does
@@ -24,6 +30,7 @@
 import { AltitudeLayer, Color, Mathf, Meshes } from '../js/engine.js';
 import { draw, mesh, Slate } from './lib/six-paths-solid.js';
 import { P, Body, Rim, Y, Floor, orb, sprite, trail, band, circle, glow, soft, rand, at } from './lib/six-paths-impact.js';
+import { sage, carried, slot, deployRadius, OnPawn, Facings } from './lib/six-paths-sage.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp;
 const disc = Meshes.disc(32, 'umbrella disc');
@@ -93,7 +100,7 @@ export default {
       draw(disc, pos.x, pawnLayer + .002, pos.z + .58 + bob, .16, .17, 0, new Color(.83, .70, .54));
     };
     const stepping = p.walk && s > t.up && s < t.close ? Math.abs(Math.sin(s * 8)) * .04 : 0;
-    figure(S, new Color(.39, .58, .65), stepping);
+    sage(S, Facings[p.facing], scene, stepping);
     if (p.actors) {
       figure(upMode ? rel(-.85, -.45) : rel(-.8, 0), new Color(.45, .55, .38), stepping);
       figure(shooter, new Color(.55, .38, .27));
@@ -102,19 +109,22 @@ export default {
 
     const apexOpen = upMode ? at(S, 0, 0, p.height + Dome) : rel(GuardReach, 0, GuardHeight);
     const baseOpen = upMode ? at(S, 0, 0, .7) : rel(.2, 0, .8);
-    // The four free orbs hover at the sage's sides, clear of whoever stands behind; only the
-    // canopy calls them in.
+    // Slots 0 and 1 are the umbrella. The four free orbs stay in the ring; only the canopy calls
+    // them, and they swell on the way to the apex before they merge into it.
     const called = upMode ? smooth((s - t.open) / (p.open * .7)) * (1 - smooth((s - t.close - p.close * .3) / (p.close * .7))) : 0;
-    for (let k = 0; k < 4; k++) {
-      const a = heading + (k < 2 ? 1 : -1) * (100 + (k % 2) * 32) * Mathf.Deg2Rad + Math.sin(s * 1.3 + k) * .06;
-      const home = at(S, Math.cos(a) * 1.0, Math.sin(a) * 1.0, .95 + .08 * Math.sin(s * 2 + k * 1.7));
+    carried(S, s, scene, (i) => i < 2 || called > 0);
+    if (called > 0) for (let k = 2; k < 6; k++) {
+      const home = slot(S, k, s);
       const q = { x: lerp(home.x, apexOpen.x, called), z: lerp(home.z, apexOpen.z, called) };
-      orb(q, .2 * (1 - called * .95));
-      if (called > 0 && called < 1) trail('umbrella orb in ' + k, [home, { x: (home.x + q.x) / 2, z: (home.z + q.z) / 2 + .15 }, q], .06, Rim.withAlpha(.4));
+      orb(q, deployRadius(called * 2, OnPawn) * (1 - smooth((called - .5) / .5) * .95), 1, 1, called < .15 ? home.layer : Y);
+      if (called < 1) trail('umbrella orb in ' + k, [home, { x: (home.x + q.x) / 2, z: (home.z + q.z) / 2 + .15 }, q], .06, Rim.withAlpha(.4));
     }
-    if (formed < 1) for (const side of [-1, 1]) {
-      const r = (1 - formed) * .7, a = s * 9 + side * 1.57, c = rel(.2, 0, .8);
-      orb({ x: c.x + Math.cos(a) * r, z: c.z + Math.sin(a) * r * .5 }, .2 * (1 - formed * .8));
+    if (formed < 1) for (const k of [0, 1]) {
+      // Out of the slot in the first half of the morph, then the spiral in to the hand.
+      const home = slot(S, k, s), go = smooth(s / (p.morph * .5));
+      const r = (1 - formed) * .7, a = s * 9 + (k ? 1 : -1) * 1.57, c = rel(.2, 0, .8);
+      orb({ x: lerp(home.x, c.x + Math.cos(a) * r, go), z: lerp(home.z, c.z + Math.sin(a) * r * .5, go) },
+        deployRadius(go, OnPawn) * (1 - formed * .8), 1, 1, go < .15 ? home.layer : Y);
     }
 
     // Closed umbrella in the hand: a tapered spindle. It lunges along the facing for the thrust
