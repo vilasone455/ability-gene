@@ -38,6 +38,10 @@ namespace RimArt
             allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void SlamFrozen() => Preview().Play(UI.MouseCell(), PreviewMode.Slam, 0f, true);
 
+        [DebugAction("RimArts", "Six Paths: bloom", actionType = DebugActionType.ToolMap,
+            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void Bloom() => Preview().Play(UI.MouseCell(), PreviewMode.Bloom, 1f, false);
+
         [DebugAction("RimArts", "Six Paths: clear showcase", allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void Clear()
         {
@@ -49,10 +53,13 @@ namespace RimArt
             Find.CurrentMap.GetComponent<MapComponent_SixPathsPreview>();
     }
 
-    public enum PreviewMode { Ring, Sheet, Slam }
+    public enum PreviewMode { Ring, Sheet, Slam, Bloom }
 
     public sealed class MapComponent_SixPathsPreview : MapComponent
     {
+        /// <summary>Cells west of the chosen cell that the bloom's sage stands. No pawn is drawn for either.</summary>
+        private const float BloomSageDistance = 4.5f;
+
         public bool active;
         private PreviewMode mode;
         private bool frozen, shaken;
@@ -99,6 +106,11 @@ namespace RimArt
                     SixPathsSlamGraphics.Draw(cell.ToVector3Shifted(), seconds, map);
                     // The slam is one event rather than a loop, so it puts itself away.
                     if (!frozen && seconds > SixPathsSlamTiming.Duration) active = false;
+                    break;
+                case PreviewMode.Bloom:
+                    SixPathsBloomGraphics.Draw(cell.ToVector3Shifted(),
+                        cell.ToVector3Shifted() - new Vector3(BloomSageDistance, 0f, 0f), seconds, map);
+                    if (seconds >= SixPathsBloomTiming.Duration) active = false;
                     break;
                 default:
                     SixPathsGraphics.DrawRing(cell.ToVector3Shifted(), seconds, 1f, map);

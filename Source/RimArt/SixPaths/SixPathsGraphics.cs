@@ -21,9 +21,13 @@ namespace RimArt
         // silhouette without it; this is the one part of the effect that is not optional. It is
         // held narrow because the staff is only 0.20 radii across and a wider rim closes it up.
         private const float RimWidth = 0.06f;
+        // A ball's rim in cells, not in radii: the same ball is drawn from 0.09 to 0.42 across,
+        // and 0.06 radii of a carried orb is a rim of half a hundredth of a cell.
+        private const float BallRim = 0.018f;
 
         private static readonly Material solid =
             new Material(ShaderDatabase.Transparent) { mainTexture = BaseContent.WhiteTex };
+        private static readonly Material soft = MaterialPool.MatFrom("RimArt/SixPaths/SoftDisc", ShaderDatabase.Transparent);
         private static readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
         private static readonly Mesh shadow = Disc();
         // The ring's six, the shape sheet's four, and six more for the slam's gather. Every orb
@@ -97,6 +101,41 @@ namespace RimArt
                 shape, size * SixPathsHeight.Scale(height), facing, fade, 0f, false);
         }
 
+        /// <summary>
+        /// The orbs the sage carries, each over its shadow. Bit i of <paramref name="away"/> leaves
+        /// slot i empty: that orb is out doing something and whoever sent it draws it.
+        /// </summary>
+        public static void DrawCarried(Vector3 ground, float seconds, int away, Vector2 sun, float daylight)
+        {
+            float pawn = AltitudeLayer.Pawn.AltitudeFor(), shadows = AltitudeLayer.Shadows.AltitudeFor();
+            for (int i = 0; i < SixPathsTiming.Orbs; i++)
+            {
+                if ((away & (1 << i)) != 0) continue;
+                CarriedSlot slot = SixPathsCarried.Slot(ground, i, seconds);
+                Vector3 cast = slot.ground + new Vector3(sun.x, 0f, sun.y) * slot.height;
+                DrawMesh(MeshPool.plane10, cast.WithY(shadows + 0.001f), SixPathsCarried.IdleRadius * 2.4f,
+                    SixPathsCarried.IdleRadius * 1.3f, 0f, new Color(0.03f, 0.03f, 0.05f, 0.26f * daylight), soft);
+                DrawBall(SixPathsHeight.Above(slot.ground, slot.height).WithY(CarriedAltitude(slot)),
+                    SixPathsCarried.IdleRadius, 1f, 1f);
+            }
+        }
+
+        /// <summary>Under the pawn for a slot north of it, over it for the rest: that is what takes the ring round the sage.</summary>
+        public static float CarriedAltitude(in CarriedSlot slot) =>
+            AltitudeLayer.Pawn.AltitudeFor() + (slot.behind ? -0.02f : 0.05f);
+
+        /// <summary>
+        /// A plain round orb at <paramref name="position"/>, which already holds its height and its
+        /// altitude. <paramref name="stretch"/> below 1 flattens it, for one sinking into the floor.
+        /// </summary>
+        public static void DrawBall(Vector3 position, float radius, float stretch, float fade)
+        {
+            DrawMesh(shadow, position, radius + BallRim, radius * stretch + BallRim, 0f,
+                new Color(Rim.r, Rim.g, Rim.b, fade), solid);
+            DrawMesh(shadow, position.WithY(position.y + 0.002f), radius, radius * stretch, 0f,
+                new Color(Body.r, Body.g, Body.b, fade), solid);
+        }
+
         private static void DrawOrb(MorphMesh mesh, Vector3 position, in OrbShape shape, float size,
             float facing, float fade, float surge, bool grounded)
         {
@@ -124,11 +163,14 @@ namespace RimArt
         }
 
         private static void DrawMesh(Mesh mesh, Vector3 position, float width, float depth,
-            float rotation, Color colour)
+            float rotation, Color colour) => DrawMesh(mesh, position, width, depth, rotation, colour, solid);
+
+        private static void DrawMesh(Mesh mesh, Vector3 position, float width, float depth,
+            float rotation, Color colour, Material material)
         {
             properties.SetColor(ShaderPropertyIDs.Color, colour);
             Graphics.DrawMesh(mesh, Matrix4x4.TRS(position, Quaternion.Euler(0f, rotation, 0f),
-                new Vector3(width, 1f, depth)), solid, 0, null, 0, properties);
+                new Vector3(width, 1f, depth)), material, 0, null, 0, properties);
         }
 
         private static MorphMesh[] NewPool(int count)

@@ -89,11 +89,11 @@ export default {
     const caster = { x: origin.x - p.distance, z: origin.z };
     const sunk = smooth(s / p.sink), reform = smooth((s - t.dissolve) / p.reform);
     const closed = smooth((s - t.snap) / p.snap) * (1 - smooth((s - t.open) / p.open));
+    carried(caster, s, scene, (i) => i === 0);
     if (p.actors) {
       // The patient lies on the open flower, then sits behind the front petals once they rise.
       const layer = closed > .35 ? Y + .02 : Y + .09, skin = new Color(.83, .70, .54);
       sage(caster, 0, scene);
-      carried(caster, s, scene, (i) => i === 0);
       // A downed patient lies bleeding until the bud has opened again, then stands.
       const down = p.patient === 'downed ally' && s < t.open + p.open * .6, shirt = new Color(.45, .55, .38);
       sprite({ x: origin.x + sun.x * .3, z: origin.z + sun.z * .3 }, .85, .4, Body.withAlpha(strength), soft, Floor);

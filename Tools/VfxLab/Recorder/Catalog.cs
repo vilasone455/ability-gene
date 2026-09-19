@@ -29,8 +29,9 @@ namespace RimArt.VfxLab
             {
                 Name = "Six Paths", Prefix = "Six Paths:", Component = typeof(MapComponent_SixPathsPreview), Clock = "seconds",
                 Phases = label => label.Contains("slam") ? SlamPhases()
+                    : label.Contains("bloom") ? BloomPhases()
                     : label.Contains("sheet") ? Array.Empty<Phase>() : RingPhases(),
-                LoopSeconds = label => label.Contains("slam") || label.Contains("sheet")
+                LoopSeconds = label => label.Contains("slam") || label.Contains("bloom") || label.Contains("sheet")
                     ? null : SixPathsTiming.CycleSeconds * SixPathsShapes.Cycle.Length,
             },
             new Kit
@@ -64,6 +65,17 @@ namespace RimArt.VfxLab
             new Phase("Fall", SixPathsSlamTiming.FallAt),
             new Phase("Land", SixPathsSlamTiming.LandAt),
             new Phase("Exit: sink", SixPathsSlamTiming.ExitAt),
+        };
+
+        private static Phase[] BloomPhases() => new[]
+        {
+            new Phase("Sink", 0f),
+            new Phase("Unfurl", SixPathsBloomTiming.UnfurlAt),
+            new Phase("Poise", SixPathsBloomTiming.PoiseAt),
+            new Phase("Fold shut", SixPathsBloomTiming.FoldAt),
+            new Phase("Cocoon / heal", SixPathsBloomTiming.ShutAt),
+            new Phase("Uncurl", SixPathsBloomTiming.UncurlAt),
+            new Phase("Orb returns", SixPathsBloomTiming.ReturnAt),
         };
 
         private static Phase[] RingPhases()
