@@ -1,0 +1,3835 @@
+{
+  "ExportTimeUTC": "2026-09-19T06:49:49.0000000Z",
+  "Name": "RimArt_ThrowFumaBackhand",
+  "Length": 1.2,
+  "Bounds": {
+    "x": -1.4624,
+    "y": -1.3621,
+    "width": 3.1191,
+    "height": 3.1191
+  },
+  "Events": [],
+  "Parts": [
+    {
+      "ID": 1001,
+      "Path": "BodyA",
+      "CustomName": "BodyA",
+      "ParentID": 0,
+      "TexturePath": null,
+      "TransparentByDefault": false,
+      "Curves": {
+        "Transform.m_LocalPosition.x": {
+          "Keyframes": [
+            {
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.5,
+              "value": -0.05,
+              "inTangent": 0.1,
+              "outTangent": 0.1,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0.08,
+              "inTangent": 0.333333,
+              "outTangent": 0.333333,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.95,
+              "value": 0.1,
+              "inTangent": -0.2,
+              "outTangent": -0.2,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        },
+        "Transform.m_LocalPosition.z": {
+          "Keyframes": [
+            {
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.5,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.95,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        },
+        "Transform.localEulerAnglesRaw.y": {
+          "Keyframes": [
+            {
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.45,
+              "value": -6.0,
+              "inTangent": -11.764706,
+              "outTangent": -11.764706,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.68,
+              "value": -8.0,
+              "inTangent": 34.285714,
+              "outTangent": 34.285714,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 6.0,
+              "inTangent": 66.666667,
+              "outTangent": 66.666667,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.95,
+              "value": 10.0,
+              "inTangent": -15.0,
+              "outTangent": -15.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        },
+        "PawnBody.Direction": {
+          "Keyframes": [
+            {
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.3833333,
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.4,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.7433333,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.76,
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        }
+      },
+      "DefaultValues": {
+        "GameObject.m_IsActive": 1.0,
+        "Transform.m_LocalPosition.y": 0.0,
+        "Transform.localEulerAnglesRaw.x": 0.0,
+        "Transform.localEulerAnglesRaw.z": 0.0,
+        "Transform.m_LocalScale.x": 1.0,
+        "Transform.m_LocalScale.y": 1.0,
+        "Transform.m_LocalScale.z": 1.0,
+        "AnimatedPart.DataA": 0.0,
+        "AnimatedPart.DataB": 0.0,
+        "AnimatedPart.DataC": 0.0,
+        "AnimatedPart.Tint.r": 1.0,
+        "AnimatedPart.Tint.g": 1.0,
+        "AnimatedPart.Tint.b": 1.0,
+        "AnimatedPart.Tint.a": 1.0,
+        "AnimatedPart.FlipX": 0.0,
+        "AnimatedPart.FlipY": 0.0,
+        "AnimatedPart.SplitDrawMode": 0.0,
+        "AnimatedPart.FrameIndex": 0.0
+      },
+      "SplitDrawPivotPartID": 0,
+      "SweepPaths": []
+    },
+    {
+      "ID": 1002,
+      "Path": "BodyA/HeadA",
+      "CustomName": "HeadA",
+      "ParentID": 1001,
+      "TexturePath": null,
+      "TransparentByDefault": false,
+      "Curves": {},
+      "DefaultValues": {
+        "GameObject.m_IsActive": 1.0,
+        "Transform.m_LocalPosition.x": 0.0,
+        "Transform.m_LocalPosition.y": 0.0,
+        "Transform.m_LocalPosition.z": 0.0,
+        "Transform.localEulerAnglesRaw.x": 0.0,
+        "Transform.localEulerAnglesRaw.y": 0.0,
+        "Transform.localEulerAnglesRaw.z": 0.0,
+        "Transform.m_LocalScale.x": 1.0,
+        "Transform.m_LocalScale.y": 1.0,
+        "Transform.m_LocalScale.z": 1.0,
+        "AnimatedPart.DataA": 0.0,
+        "AnimatedPart.DataB": 0.0,
+        "AnimatedPart.DataC": 0.0,
+        "AnimatedPart.Tint.r": 1.0,
+        "AnimatedPart.Tint.g": 1.0,
+        "AnimatedPart.Tint.b": 1.0,
+        "AnimatedPart.Tint.a": 1.0,
+        "AnimatedPart.FlipX": 0.0,
+        "AnimatedPart.FlipY": 0.0,
+        "AnimatedPart.SplitDrawMode": 0.0,
+        "AnimatedPart.FrameIndex": 0.0,
+        "PawnBody.Direction": 0.0
+      },
+      "SplitDrawPivotPartID": 0,
+      "SweepPaths": []
+    },
+    {
+      "ID": 1007,
+      "Path": "PawnALift",
+      "CustomName": "PawnALift",
+      "ParentID": 0,
+      "TexturePath": null,
+      "TransparentByDefault": false,
+      "Curves": {
+        "Transform.m_LocalPosition.x": {
+          "Keyframes": [
+            {
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.02,
+              "value": -0.00031,
+              "inTangent": -0.03008,
+              "outTangent": -0.03008,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.04,
+              "value": -0.0012,
+              "inTangent": -0.05776,
+              "outTangent": -0.05776,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.06,
+              "value": -0.00262,
+              "inTangent": -0.08256,
+              "outTangent": -0.08256,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.08,
+              "value": -0.00451,
+              "inTangent": -0.10448,
+              "outTangent": -0.10448,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.1,
+              "value": -0.0068,
+              "inTangent": -0.12352,
+              "outTangent": -0.12352,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.12,
+              "value": -0.00945,
+              "inTangent": -0.13968,
+              "outTangent": -0.13968,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.14,
+              "value": -0.01239,
+              "inTangent": -0.15296,
+              "outTangent": -0.15296,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.16,
+              "value": -0.01556,
+              "inTangent": -0.16336,
+              "outTangent": -0.16336,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.18,
+              "value": -0.01892,
+              "inTangent": -0.17088,
+              "outTangent": -0.17088,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.2,
+              "value": -0.0224,
+              "inTangent": -0.17552,
+              "outTangent": -0.17552,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.22,
+              "value": -0.02594,
+              "inTangent": -0.17728,
+              "outTangent": -0.17728,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.24,
+              "value": -0.02949,
+              "inTangent": -0.17616,
+              "outTangent": -0.17616,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.26,
+              "value": -0.03299,
+              "inTangent": -0.17216,
+              "outTangent": -0.17216,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.28,
+              "value": -0.03638,
+              "inTangent": -0.16528,
+              "outTangent": -0.16528,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.3,
+              "value": -0.0396,
+              "inTangent": -0.15552,
+              "outTangent": -0.15552,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.32,
+              "value": -0.0426,
+              "inTangent": -0.14288,
+              "outTangent": -0.14288,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.34,
+              "value": -0.04532,
+              "inTangent": -0.12736,
+              "outTangent": -0.12736,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.36,
+              "value": -0.04769,
+              "inTangent": -0.10896,
+              "outTangent": -0.10896,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.38,
+              "value": -0.04967,
+              "inTangent": -0.08768,
+              "outTangent": -0.08768,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.4,
+              "value": -0.0512,
+              "inTangent": -0.06352,
+              "outTangent": -0.06352,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.42,
+              "value": -0.05221,
+              "inTangent": -0.03648,
+              "outTangent": -0.03648,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.44,
+              "value": -0.05266,
+              "inTangent": -0.01452,
+              "outTangent": -0.01452,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.45,
+              "value": -0.05265,
+              "inTangent": 0.00912,
+              "outTangent": 0.00912,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.46,
+              "value": -0.05248,
+              "inTangent": 0.03468,
+              "outTangent": 0.03468,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.48,
+              "value": -0.05161,
+              "inTangent": 0.06192,
+              "outTangent": 0.06192,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.5,
+              "value": -0.05,
+              "inTangent": 0.114833,
+              "outTangent": 0.114833,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.52,
+              "value": -0.04702,
+              "inTangent": 0.194519,
+              "outTangent": 0.194519,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.54,
+              "value": -0.04222,
+              "inTangent": 0.279407,
+              "outTangent": 0.279407,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.56,
+              "value": -0.03584,
+              "inTangent": 0.352741,
+              "outTangent": 0.352741,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.58,
+              "value": -0.02811,
+              "inTangent": 0.414519,
+              "outTangent": 0.414519,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.6,
+              "value": -0.01926,
+              "inTangent": 0.464741,
+              "outTangent": 0.464741,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.62,
+              "value": -0.00952,
+              "inTangent": 0.503407,
+              "outTangent": 0.503407,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.64,
+              "value": 0.00088,
+              "inTangent": 0.530519,
+              "outTangent": 0.530519,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.66,
+              "value": 0.0117,
+              "inTangent": 0.546074,
+              "outTangent": 0.546074,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.68,
+              "value": 0.02272,
+              "inTangent": 0.550074,
+              "outTangent": 0.550074,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.7,
+              "value": 0.0337,
+              "inTangent": 0.542519,
+              "outTangent": 0.542519,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.72,
+              "value": 0.04442,
+              "inTangent": 0.523407,
+              "outTangent": 0.523407,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.74,
+              "value": 0.05464,
+              "inTangent": 0.492741,
+              "outTangent": 0.492741,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.76,
+              "value": 0.06413,
+              "inTangent": 0.450519,
+              "outTangent": 0.450519,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.78,
+              "value": 0.07266,
+              "inTangent": 0.396741,
+              "outTangent": 0.396741,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0.08,
+              "inTangent": 0.344519,
+              "outTangent": 0.344519,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.82,
+              "value": 0.08644,
+              "inTangent": 0.306074,
+              "outTangent": 0.306074,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.84,
+              "value": 0.09224,
+              "inTangent": 0.266963,
+              "outTangent": 0.266963,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.86,
+              "value": 0.09712,
+              "inTangent": 0.21363,
+              "outTangent": 0.21363,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.88,
+              "value": 0.10079,
+              "inTangent": 0.165333,
+              "outTangent": 0.165333,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.89,
+              "value": 0.10208,
+              "inTangent": 0.108741,
+              "outTangent": 0.108741,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.9,
+              "value": 0.10296,
+              "inTangent": 0.042667,
+              "outTangent": 0.042667,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.92,
+              "value": 0.10336,
+              "inTangent": -0.031704,
+              "outTangent": -0.031704,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.94,
+              "value": 0.10169,
+              "inTangent": -0.112,
+              "outTangent": -0.112,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.95,
+              "value": 0.1,
+              "inTangent": -0.200261,
+              "outTangent": -0.200261,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.96,
+              "value": 0.09769,
+              "inTangent": -0.28736,
+              "outTangent": -0.28736,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.98,
+              "value": 0.09138,
+              "inTangent": -0.36224,
+              "outTangent": -0.36224,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.0,
+              "value": 0.0832,
+              "inTangent": -0.44416,
+              "outTangent": -0.44416,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.02,
+              "value": 0.07361,
+              "inTangent": -0.50304,
+              "outTangent": -0.50304,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.04,
+              "value": 0.06308,
+              "inTangent": -0.53888,
+              "outTangent": -0.53888,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.06,
+              "value": 0.05206,
+              "inTangent": -0.55168,
+              "outTangent": -0.55168,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.08,
+              "value": 0.04101,
+              "inTangent": -0.54144,
+              "outTangent": -0.54144,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.1,
+              "value": 0.0304,
+              "inTangent": -0.50816,
+              "outTangent": -0.50816,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.12,
+              "value": 0.02068,
+              "inTangent": -0.45184,
+              "outTangent": -0.45184,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.14,
+              "value": 0.01233,
+              "inTangent": -0.37248,
+              "outTangent": -0.37248,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.16,
+              "value": 0.00579,
+              "inTangent": -0.27008,
+              "outTangent": -0.27008,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.18,
+              "value": 0.00152,
+              "inTangent": -0.14464,
+              "outTangent": -0.14464,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        },
+        "Transform.m_LocalPosition.z": {
+          "Keyframes": [
+            {
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.02,
+              "value": 0.00312,
+              "inTangent": 0.292889,
+              "outTangent": 0.292889,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.04,
+              "value": 0.01172,
+              "inTangent": 0.538,
+              "outTangent": 0.538,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.06,
+              "value": 0.02464,
+              "inTangent": 0.725778,
+              "outTangent": 0.725778,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.08,
+              "value": 0.04075,
+              "inTangent": 0.856222,
+              "outTangent": 0.856222,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.1,
+              "value": 0.05889,
+              "inTangent": 0.929333,
+              "outTangent": 0.929333,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.12,
+              "value": 0.07792,
+              "inTangent": 0.945111,
+              "outTangent": 0.945111,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.14,
+              "value": 0.09669,
+              "inTangent": 0.903556,
+              "outTangent": 0.903556,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.16,
+              "value": 0.11406,
+              "inTangent": 0.804667,
+              "outTangent": 0.804667,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.18,
+              "value": 0.12888,
+              "inTangent": 0.648444,
+              "outTangent": 0.648444,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.2,
+              "value": 0.14,
+              "inTangent": 0.488753,
+              "outTangent": 0.488753,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.22,
+              "value": 0.14843,
+              "inTangent": 0.399712,
+              "outTangent": 0.399712,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.24,
+              "value": 0.15599,
+              "inTangent": 0.357842,
+              "outTangent": 0.357842,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.26,
+              "value": 0.16274,
+              "inTangent": 0.319406,
+              "outTangent": 0.319406,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.28,
+              "value": 0.16876,
+              "inTangent": 0.284405,
+              "outTangent": 0.284405,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.3,
+              "value": 0.17412,
+              "inTangent": 0.252839,
+              "outTangent": 0.252839,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.32,
+              "value": 0.17888,
+              "inTangent": 0.224708,
+              "outTangent": 0.224708,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.34,
+              "value": 0.18311,
+              "inTangent": 0.200011,
+              "outTangent": 0.200011,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.36,
+              "value": 0.18688,
+              "inTangent": 0.178748,
+              "outTangent": 0.178748,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.38,
+              "value": 0.19026,
+              "inTangent": 0.160921,
+              "outTangent": 0.160921,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.4,
+              "value": 0.19332,
+              "inTangent": 0.146528,
+              "outTangent": 0.146528,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.42,
+              "value": 0.19612,
+              "inTangent": 0.13557,
+              "outTangent": 0.13557,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.44,
+              "value": 0.19874,
+              "inTangent": 0.129355,
+              "outTangent": 0.129355,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.45,
+              "value": 0.2,
+              "inTangent": 0.120266,
+              "outTangent": 0.120266,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.46,
+              "value": 0.20114,
+              "inTangent": 0.094518,
+              "outTangent": 0.094518,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.48,
+              "value": 0.20284,
+              "inTangent": 0.067108,
+              "outTangent": 0.067108,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.5,
+              "value": 0.20383,
+              "inTangent": 0.034972,
+              "outTangent": 0.034972,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.52,
+              "value": 0.20423,
+              "inTangent": 0.008507,
+              "outTangent": 0.008507,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.54,
+              "value": 0.20417,
+              "inTangent": -0.012287,
+              "outTangent": -0.012287,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.56,
+              "value": 0.20374,
+              "inTangent": -0.02741,
+              "outTangent": -0.02741,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.58,
+              "value": 0.20307,
+              "inTangent": -0.036862,
+              "outTangent": -0.036862,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.6,
+              "value": 0.20227,
+              "inTangent": -0.040643,
+              "outTangent": -0.040643,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.62,
+              "value": 0.20145,
+              "inTangent": -0.038752,
+              "outTangent": -0.038752,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.64,
+              "value": 0.20072,
+              "inTangent": -0.031191,
+              "outTangent": -0.031191,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.66,
+              "value": 0.2002,
+              "inTangent": -0.017958,
+              "outTangent": -0.017958,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.68,
+              "value": 0.2,
+              "inTangent": -0.004962,
+              "outTangent": -0.004962,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.7,
+              "value": 0.2,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.72,
+              "value": 0.2,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.74,
+              "value": 0.2,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.76,
+              "value": 0.2,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.78,
+              "value": 0.2,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0.2,
+              "inTangent": 0.013889,
+              "outTangent": 0.013889,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.82,
+              "value": 0.20056,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.84,
+              "value": 0.2,
+              "inTangent": -0.078253,
+              "outTangent": -0.078253,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.86,
+              "value": 0.19743,
+              "inTangent": -0.170263,
+              "outTangent": -0.170263,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.88,
+              "value": 0.19319,
+              "inTangent": -0.247515,
+              "outTangent": -0.247515,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.89,
+              "value": 0.19,
+              "inTangent": -0.359455,
+              "outTangent": -0.359455,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.9,
+              "value": 0.186,
+              "inTangent": -0.456294,
+              "outTangent": -0.456294,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.92,
+              "value": 0.17631,
+              "inTangent": -0.513598,
+              "outTangent": -0.513598,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.94,
+              "value": 0.16546,
+              "inTangent": -0.543706,
+              "outTangent": -0.543706,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.95,
+              "value": 0.16,
+              "inTangent": -0.538196,
+              "outTangent": -0.538196,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.96,
+              "value": 0.15469,
+              "inTangent": -0.527736,
+              "outTangent": -0.527736,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.98,
+              "value": 0.14417,
+              "inTangent": -0.543936,
+              "outTangent": -0.543936,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.0,
+              "value": 0.13294,
+              "inTangent": -0.604198,
+              "outTangent": -0.604198,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.02,
+              "value": 0.12,
+              "inTangent": -0.703927,
+              "outTangent": -0.703927,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.04,
+              "value": 0.10478,
+              "inTangent": -0.798118,
+              "outTangent": -0.798118,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.06,
+              "value": 0.08808,
+              "inTangent": -0.844863,
+              "outTangent": -0.844863,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.08,
+              "value": 0.07098,
+              "inTangent": -0.83702,
+              "outTangent": -0.83702,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.1,
+              "value": 0.05459,
+              "inTangent": -0.774588,
+              "outTangent": -0.774588,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.12,
+              "value": 0.04,
+              "inTangent": -0.708613,
+              "outTangent": -0.708613,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.14,
+              "value": 0.02625,
+              "inTangent": -0.666667,
+              "outTangent": -0.666667,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.16,
+              "value": 0.01333,
+              "inTangent": -0.5625,
+              "outTangent": -0.5625,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.18,
+              "value": 0.00375,
+              "inTangent": -0.333333,
+              "outTangent": -0.333333,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        }
+      },
+      "DefaultValues": {
+        "GameObject.m_IsActive": 1.0,
+        "Transform.m_LocalPosition.y": 0.0,
+        "Transform.localEulerAnglesRaw.x": 0.0,
+        "Transform.localEulerAnglesRaw.y": 0.0,
+        "Transform.localEulerAnglesRaw.z": 0.0,
+        "Transform.m_LocalScale.x": 1.0,
+        "Transform.m_LocalScale.y": 1.0,
+        "Transform.m_LocalScale.z": 1.0,
+        "AnimatedPart.DataA": 0.0,
+        "AnimatedPart.DataB": 0.0,
+        "AnimatedPart.DataC": 0.0,
+        "AnimatedPart.Tint.r": 1.0,
+        "AnimatedPart.Tint.g": 1.0,
+        "AnimatedPart.Tint.b": 1.0,
+        "AnimatedPart.Tint.a": 0.0,
+        "AnimatedPart.FlipX": 0.0,
+        "AnimatedPart.FlipY": 0.0,
+        "AnimatedPart.SplitDrawMode": 0.0,
+        "AnimatedPart.FrameIndex": 0.0,
+        "PawnBody.Direction": 0.0
+      },
+      "SplitDrawPivotPartID": 0,
+      "SweepPaths": []
+    },
+    {
+      "ID": 1003,
+      "Path": "PawnALift/PawnAHolding",
+      "CustomName": null,
+      "ParentID": 1007,
+      "TexturePath": null,
+      "TransparentByDefault": false,
+      "Curves": {
+        "Transform.m_LocalPosition.x": {
+          "Keyframes": [
+            {
+              "value": 0.12,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.02,
+              "value": 0.12256,
+              "inTangent": 0.236444,
+              "outTangent": 0.236444,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.04,
+              "value": 0.12946,
+              "inTangent": 0.424,
+              "outTangent": 0.424,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.06,
+              "value": 0.13952,
+              "inTangent": 0.552889,
+              "outTangent": 0.552889,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.08,
+              "value": 0.15157,
+              "inTangent": 0.623111,
+              "outTangent": 0.623111,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.1,
+              "value": 0.16444,
+              "inTangent": 0.634667,
+              "outTangent": 0.634667,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.12,
+              "value": 0.17696,
+              "inTangent": 0.587556,
+              "outTangent": 0.587556,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.14,
+              "value": 0.18795,
+              "inTangent": 0.481778,
+              "outTangent": 0.481778,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.16,
+              "value": 0.19623,
+              "inTangent": 0.317333,
+              "outTangent": 0.317333,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.18,
+              "value": 0.20064,
+              "inTangent": 0.094222,
+              "outTangent": 0.094222,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.2,
+              "value": 0.2,
+              "inTangent": -0.14554,
+              "outTangent": -0.14554,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.22,
+              "value": 0.19482,
+              "inTangent": -0.332672,
+              "outTangent": -0.332672,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.24,
+              "value": 0.18669,
+              "inTangent": -0.468295,
+              "outTangent": -0.468295,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.26,
+              "value": 0.17609,
+              "inTangent": -0.580793,
+              "outTangent": -0.580793,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.28,
+              "value": 0.16346,
+              "inTangent": -0.670165,
+              "outTangent": -0.670165,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.3,
+              "value": 0.14928,
+              "inTangent": -0.736412,
+              "outTangent": -0.736412,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.32,
+              "value": 0.134,
+              "inTangent": -0.779534,
+              "outTangent": -0.779534,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.34,
+              "value": 0.1181,
+              "inTangent": -0.799531,
+              "outTangent": -0.799531,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.36,
+              "value": 0.10202,
+              "inTangent": -0.796402,
+              "outTangent": -0.796402,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.38,
+              "value": 0.08624,
+              "inTangent": -0.770148,
+              "outTangent": -0.770148,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.4,
+              "value": 0.07122,
+              "inTangent": -0.720768,
+              "outTangent": -0.720768,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.42,
+              "value": 0.05741,
+              "inTangent": -0.648263,
+              "outTangent": -0.648263,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.44,
+              "value": 0.04529,
+              "inTangent": -0.580395,
+              "outTangent": -0.580395,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.45,
+              "value": 0.04,
+              "inTangent": -0.516464,
+              "outTangent": -0.516464,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.46,
+              "value": 0.03496,
+              "inTangent": -0.50966,
+              "outTangent": -0.50966,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.48,
+              "value": 0.02471,
+              "inTangent": -0.512926,
+              "outTangent": -0.512926,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.5,
+              "value": 0.01444,
+              "inTangent": -0.508101,
+              "outTangent": -0.508101,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.52,
+              "value": 0.00439,
+              "inTangent": -0.491472,
+              "outTangent": -0.491472,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.54,
+              "value": -0.00522,
+              "inTangent": -0.46304,
+              "outTangent": -0.46304,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.56,
+              "value": -0.01414,
+              "inTangent": -0.422804,
+              "outTangent": -0.422804,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.58,
+              "value": -0.02213,
+              "inTangent": -0.370765,
+              "outTangent": -0.370765,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.6,
+              "value": -0.02897,
+              "inTangent": -0.306922,
+              "outTangent": -0.306922,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.62,
+              "value": -0.03441,
+              "inTangent": -0.231276,
+              "outTangent": -0.231276,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.64,
+              "value": -0.03822,
+              "inTangent": -0.143826,
+              "outTangent": -0.143826,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.66,
+              "value": -0.04016,
+              "inTangent": -0.044573,
+              "outTangent": -0.044573,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.68,
+              "value": -0.04,
+              "inTangent": 0.131522,
+              "outTangent": 0.131522,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.7,
+              "value": -0.0349,
+              "inTangent": 0.516129,
+              "outTangent": 0.516129,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.72,
+              "value": -0.01935,
+              "inTangent": 1.144153,
+              "outTangent": 1.144153,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.74,
+              "value": 0.01087,
+              "inTangent": 1.983871,
+              "outTangent": 1.983871,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.76,
+              "value": 0.06,
+              "inTangent": 4.103327,
+              "outTangent": 4.103327,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.78,
+              "value": 0.175,
+              "inTangent": 6.5,
+              "outTangent": 6.5,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0.32,
+              "inTangent": 6.847222,
+              "outTangent": 6.847222,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.82,
+              "value": 0.44889,
+              "inTangent": 5.5,
+              "outTangent": 5.5,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.84,
+              "value": 0.54,
+              "inTangent": 2.763596,
+              "outTangent": 2.763596,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.86,
+              "value": 0.55943,
+              "inTangent": -0.01002,
+              "outTangent": -0.01002,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.88,
+              "value": 0.5396,
+              "inTangent": -1.314424,
+              "outTangent": -1.314424,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.89,
+              "value": 0.52,
+              "inTangent": -2.317307,
+              "outTangent": -2.317307,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.9,
+              "value": 0.49325,
+              "inTangent": -3.365967,
+              "outTangent": -3.365967,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.92,
+              "value": 0.41902,
+              "inTangent": -3.912069,
+              "outTangent": -3.912069,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.94,
+              "value": 0.33677,
+              "inTangent": -3.967366,
+              "outTangent": -3.967366,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.95,
+              "value": 0.3,
+              "inTangent": -3.619142,
+              "outTangent": -3.619142,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.96,
+              "value": 0.26439,
+              "inTangent": -3.703363,
+              "outTangent": -3.703363,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.98,
+              "value": 0.1889,
+              "inTangent": -3.564555,
+              "outTangent": -3.564555,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.0,
+              "value": 0.12181,
+              "inTangent": -2.722478,
+              "outTangent": -2.722478,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.02,
+              "value": 0.08,
+              "inTangent": -1.387379,
+              "outTangent": -1.387379,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.04,
+              "value": 0.06631,
+              "inTangent": -0.300863,
+              "outTangent": -0.300863,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.06,
+              "value": 0.06797,
+              "inTangent": 0.303895,
+              "outTangent": 0.303895,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.08,
+              "value": 0.07847,
+              "inTangent": 0.583634,
+              "outTangent": 0.583634,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.1,
+              "value": 0.09131,
+              "inTangent": 0.538353,
+              "outTangent": 0.538353,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.12,
+              "value": 0.1,
+              "inTangent": 0.357854,
+              "outTangent": 0.357854,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.14,
+              "value": 0.10562,
+              "inTangent": 0.305556,
+              "outTangent": 0.305556,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.16,
+              "value": 0.11222,
+              "inTangent": 0.302083,
+              "outTangent": 0.302083,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.18,
+              "value": 0.11771,
+              "inTangent": 0.194444,
+              "outTangent": 0.194444,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 0.12,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        },
+        "Transform.m_LocalPosition.y": {
+          "Keyframes": [
+            {
+              "value": 0.02,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.27,
+              "value": 0.02,
+              "inTangent": -0.466667,
+              "outTangent": -0.466667,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.3,
+              "value": -0.12,
+              "inTangent": -0.28,
+              "outTangent": -0.28,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.77,
+              "value": -0.12,
+              "inTangent": 0.28,
+              "outTangent": 0.28,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0.02,
+              "inTangent": 0.325581,
+              "outTangent": 0.325581,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 0.02,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        },
+        "Transform.m_LocalPosition.z": {
+          "Keyframes": [
+            {
+              "value": -0.23,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.02,
+              "value": -0.22624,
+              "inTangent": 0.357556,
+              "outTangent": 0.357556,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.04,
+              "value": -0.2157,
+              "inTangent": 0.669,
+              "outTangent": 0.669,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.06,
+              "value": -0.19948,
+              "inTangent": 0.925111,
+              "outTangent": 0.925111,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.08,
+              "value": -0.17869,
+              "inTangent": 1.125889,
+              "outTangent": 1.125889,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.1,
+              "value": -0.15444,
+              "inTangent": 1.271333,
+              "outTangent": 1.271333,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.12,
+              "value": -0.12784,
+              "inTangent": 1.361444,
+              "outTangent": 1.361444,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.14,
+              "value": -0.09999,
+              "inTangent": 1.396222,
+              "outTangent": 1.396222,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.16,
+              "value": -0.07199,
+              "inTangent": 1.375667,
+              "outTangent": 1.375667,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.18,
+              "value": -0.04496,
+              "inTangent": 1.299778,
+              "outTangent": 1.299778,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.2,
+              "value": -0.02,
+              "inTangent": 1.24101,
+              "outTangent": 1.24101,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.22,
+              "value": 0.00468,
+              "inTangent": 1.281904,
+              "outTangent": 1.281904,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.24,
+              "value": 0.03128,
+              "inTangent": 1.365132,
+              "outTangent": 1.365132,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.26,
+              "value": 0.05929,
+              "inTangent": 1.423284,
+              "outTangent": 1.423284,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.28,
+              "value": 0.08821,
+              "inTangent": 1.456357,
+              "outTangent": 1.456357,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.3,
+              "value": 0.11754,
+              "inTangent": 1.464354,
+              "outTangent": 1.464354,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.32,
+              "value": 0.14678,
+              "inTangent": 1.447273,
+              "outTangent": 1.447273,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.34,
+              "value": 0.17543,
+              "inTangent": 1.405115,
+              "outTangent": 1.405115,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.36,
+              "value": 0.20299,
+              "inTangent": 1.337879,
+              "outTangent": 1.337879,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.38,
+              "value": 0.22895,
+              "inTangent": 1.245566,
+              "outTangent": 1.245566,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.4,
+              "value": 0.25281,
+              "inTangent": 1.128176,
+              "outTangent": 1.128176,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.42,
+              "value": 0.27407,
+              "inTangent": 0.985708,
+              "outTangent": 0.985708,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.44,
+              "value": 0.29224,
+              "inTangent": 0.864229,
+              "outTangent": 0.864229,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.45,
+              "value": 0.3,
+              "inTangent": 0.729298,
+              "outTangent": 0.729298,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.46,
+              "value": 0.30682,
+              "inTangent": 0.594297,
+              "outTangent": 0.594297,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.48,
+              "value": 0.31783,
+              "inTangent": 0.471729,
+              "outTangent": 0.471729,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.5,
+              "value": 0.32569,
+              "inTangent": 0.325968,
+              "outTangent": 0.325968,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.52,
+              "value": 0.33087,
+              "inTangent": 0.202916,
+              "outTangent": 0.202916,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.54,
+              "value": 0.33381,
+              "inTangent": 0.102574,
+              "outTangent": 0.102574,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.56,
+              "value": 0.33497,
+              "inTangent": 0.024941,
+              "outTangent": 0.024941,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.58,
+              "value": 0.33481,
+              "inTangent": -0.029983,
+              "outTangent": -0.029983,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.6,
+              "value": 0.33377,
+              "inTangent": -0.062196,
+              "outTangent": -0.062196,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.62,
+              "value": 0.33232,
+              "inTangent": -0.071701,
+              "outTangent": -0.071701,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.64,
+              "value": 0.3309,
+              "inTangent": -0.058496,
+              "outTangent": -0.058496,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.66,
+              "value": 0.32998,
+              "inTangent": -0.022581,
+              "outTangent": -0.022581,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.68,
+              "value": 0.33,
+              "inTangent": -0.013838,
+              "outTangent": -0.013838,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.7,
+              "value": 0.32943,
+              "inTangent": -0.096102,
+              "outTangent": -0.096102,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.72,
+              "value": 0.32616,
+              "inTangent": -0.240423,
+              "outTangent": -0.240423,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.74,
+              "value": 0.31981,
+              "inTangent": -0.403898,
+              "outTangent": -0.403898,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.76,
+              "value": 0.31,
+              "inTangent": -0.615003,
+              "outTangent": -0.615003,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.78,
+              "value": 0.29521,
+              "inTangent": -1.25,
+              "outTangent": -1.25,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0.26,
+              "inTangent": -2.597222,
+              "outTangent": -2.597222,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.82,
+              "value": 0.19132,
+              "inTangent": -4.0,
+              "outTangent": -4.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.84,
+              "value": 0.1,
+              "inTangent": -5.059713,
+              "outTangent": -5.059713,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.86,
+              "value": -0.01107,
+              "inTangent": -5.711192,
+              "outTangent": -5.711192,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.88,
+              "value": -0.12845,
+              "inTangent": -5.63103,
+              "outTangent": -5.63103,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.89,
+              "value": -0.18,
+              "inTangent": -4.958347,
+              "outTangent": -4.958347,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.9,
+              "value": -0.22761,
+              "inTangent": -4.643357,
+              "outTangent": -4.643357,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.92,
+              "value": -0.3193,
+              "inTangent": -4.1554,
+              "outTangent": -4.1554,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.94,
+              "value": -0.39383,
+              "inTangent": -3.356643,
+              "outTangent": -3.356643,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.95,
+              "value": -0.42,
+              "inTangent": -2.253683,
+              "outTangent": -2.253683,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.96,
+              "value": -0.4389,
+              "inTangent": -1.400947,
+              "outTangent": -1.400947,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.98,
+              "value": -0.46203,
+              "inTangent": -0.728995,
+              "outTangent": -0.728995,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.0,
+              "value": -0.46806,
+              "inTangent": 0.05071,
+              "outTangent": 0.05071,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.02,
+              "value": -0.46,
+              "inTangent": 0.741262,
+              "outTangent": 0.741262,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.04,
+              "value": -0.43841,
+              "inTangent": 1.355451,
+              "outTangent": 1.355451,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.06,
+              "value": -0.40578,
+              "inTangent": 1.761752,
+              "outTangent": 1.761752,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.08,
+              "value": -0.36794,
+              "inTangent": 1.876131,
+              "outTangent": 1.876131,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.1,
+              "value": -0.33074,
+              "inTangent": 1.698588,
+              "outTangent": 1.698588,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.12,
+              "value": -0.3,
+              "inTangent": 1.401231,
+              "outTangent": 1.401231,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.14,
+              "value": -0.27469,
+              "inTangent": 1.194444,
+              "outTangent": 1.194444,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.16,
+              "value": -0.25222,
+              "inTangent": 0.963542,
+              "outTangent": 0.963542,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.18,
+              "value": -0.23615,
+              "inTangent": 0.555556,
+              "outTangent": 0.555556,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": -0.23,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        },
+        "Transform.localEulerAnglesRaw.y": {
+          "Keyframes": [
+            {
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.02,
+              "value": -0.21257,
+              "inTangent": -20.72783,
+              "outTangent": -20.72783,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.04,
+              "value": -0.82911,
+              "inTangent": -40.132333,
+              "outTangent": -40.132333,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.06,
+              "value": -1.81786,
+              "inTangent": -57.948842,
+              "outTangent": -57.948842,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.08,
+              "value": -3.14707,
+              "inTangent": -74.177358,
+              "outTangent": -74.177358,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.1,
+              "value": -4.78496,
+              "inTangent": -88.817881,
+              "outTangent": -88.817881,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.12,
+              "value": -6.69978,
+              "inTangent": -101.870411,
+              "outTangent": -101.870411,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.14,
+              "value": -8.85978,
+              "inTangent": -113.334947,
+              "outTangent": -113.334947,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.16,
+              "value": -11.23318,
+              "inTangent": -123.21149,
+              "outTangent": -123.21149,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.18,
+              "value": -13.78824,
+              "inTangent": -131.50004,
+              "outTangent": -131.50004,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.2,
+              "value": -16.49318,
+              "inTangent": -138.200597,
+              "outTangent": -138.200597,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.22,
+              "value": -19.31626,
+              "inTangent": -143.313161,
+              "outTangent": -143.313161,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.24,
+              "value": -22.22571,
+              "inTangent": -146.837731,
+              "outTangent": -146.837731,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.26,
+              "value": -25.18977,
+              "inTangent": -148.774308,
+              "outTangent": -148.774308,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.28,
+              "value": -28.17668,
+              "inTangent": -149.122892,
+              "outTangent": -149.122892,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.3,
+              "value": -31.15468,
+              "inTangent": -147.883483,
+              "outTangent": -147.883483,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.32,
+              "value": -34.09202,
+              "inTangent": -145.05608,
+              "outTangent": -145.05608,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.34,
+              "value": -36.95693,
+              "inTangent": -140.640684,
+              "outTangent": -140.640684,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.36,
+              "value": -39.71765,
+              "inTangent": -134.637295,
+              "outTangent": -134.637295,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.38,
+              "value": -42.34242,
+              "inTangent": -127.045913,
+              "outTangent": -127.045913,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.4,
+              "value": -44.79948,
+              "inTangent": -117.866538,
+              "outTangent": -117.866538,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.42,
+              "value": -47.05708,
+              "inTangent": -107.099169,
+              "outTangent": -107.099169,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.44,
+              "value": -49.08345,
+              "inTangent": -98.097313,
+              "outTangent": -98.097313,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.45,
+              "value": -50.0,
+              "inTangent": -93.698464,
+              "outTangent": -93.698464,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.46,
+              "value": -50.95742,
+              "inTangent": -108.177306,
+              "outTangent": -108.177306,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.48,
+              "value": -53.24532,
+              "inTangent": -122.533675,
+              "outTangent": -122.533675,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.5,
+              "value": -55.85877,
+              "inTangent": -133.655093,
+              "outTangent": -133.655093,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.52,
+              "value": -58.59152,
+              "inTangent": -134.464556,
+              "outTangent": -134.464556,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.54,
+              "value": -61.23735,
+              "inTangent": -124.962065,
+              "outTangent": -124.962065,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.56,
+              "value": -63.59001,
+              "inTangent": -105.14762,
+              "outTangent": -105.14762,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.58,
+              "value": -65.44325,
+              "inTangent": -75.021221,
+              "outTangent": -75.021221,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.6,
+              "value": -66.59085,
+              "inTangent": -34.582867,
+              "outTangent": -34.582867,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.62,
+              "value": -66.82657,
+              "inTangent": 16.16744,
+              "outTangent": 16.16744,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.64,
+              "value": -65.94416,
+              "inTangent": 77.229702,
+              "outTangent": 77.229702,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.66,
+              "value": -63.73738,
+              "inTangent": 148.603918,
+              "outTangent": 148.603918,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.68,
+              "value": -60.0,
+              "inTangent": 295.741973,
+              "outTangent": 295.741973,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.7,
+              "value": -51.9077,
+              "inTangent": 545.002939,
+              "outTangent": 545.002939,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.72,
+              "value": -38.19988,
+              "inTangent": 772.295708,
+              "outTangent": 772.295708,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.74,
+              "value": -21.01587,
+              "inTangent": 892.621987,
+              "outTangent": 892.621987,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.76,
+              "value": -2.495,
+              "inTangent": 905.981775,
+              "outTangent": 905.981775,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.78,
+              "value": 15.2234,
+              "inTangent": 812.375073,
+              "outTangent": 812.375073,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 30.0,
+              "inTangent": 707.394474,
+              "outTangent": 707.394474,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.82,
+              "value": 43.51918,
+              "inTangent": 704.082305,
+              "outTangent": 704.082305,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.84,
+              "value": 58.16329,
+              "inTangent": 733.020576,
+              "outTangent": 733.020576,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.86,
+              "value": 72.84,
+              "inTangent": 707.341564,
+              "outTangent": 707.341564,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.88,
+              "value": 86.45695,
+              "inTangent": 656.222222,
+              "outTangent": 656.222222,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.89,
+              "value": 92.52667,
+              "inTangent": 573.242798,
+              "outTangent": 573.242798,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.9,
+              "value": 97.92181,
+              "inTangent": 453.851852,
+              "outTangent": 453.851852,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.92,
+              "value": 106.14222,
+              "inTangent": 302.600823,
+              "outTangent": 302.600823,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.94,
+              "value": 110.02584,
+              "inTangent": 128.592593,
+              "outTangent": 128.592593,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.95,
+              "value": 110.0,
+              "inTangent": -61.548181,
+              "outTangent": -61.548181,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.96,
+              "value": 108.79488,
+              "inTangent": -203.808,
+              "outTangent": -203.808,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.98,
+              "value": 103.88576,
+              "inTangent": -315.872,
+              "outTangent": -315.872,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.0,
+              "value": 96.16,
+              "inTangent": -441.248,
+              "outTangent": -441.248,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.02,
+              "value": 86.23584,
+              "inTangent": -535.712,
+              "outTangent": -535.712,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.04,
+              "value": 74.73152,
+              "inTangent": -599.264,
+              "outTangent": -599.264,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.06,
+              "value": 62.26528,
+              "inTangent": -631.904,
+              "outTangent": -631.904,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.08,
+              "value": 49.45536,
+              "inTangent": -633.632,
+              "outTangent": -633.632,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.1,
+              "value": 36.92,
+              "inTangent": -604.448,
+              "outTangent": -604.448,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.12,
+              "value": 25.27744,
+              "inTangent": -544.352,
+              "outTangent": -544.352,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.14,
+              "value": 15.14592,
+              "inTangent": -453.344,
+              "outTangent": -453.344,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.16,
+              "value": 7.14368,
+              "inTangent": -331.424,
+              "outTangent": -331.424,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.18,
+              "value": 1.88896,
+              "inTangent": -178.592,
+              "outTangent": -178.592,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        }
+      },
+      "DefaultValues": {
+        "GameObject.m_IsActive": 1.0,
+        "Transform.localEulerAnglesRaw.x": 0.0,
+        "Transform.localEulerAnglesRaw.z": 0.0,
+        "Transform.m_LocalScale.x": 1.0,
+        "Transform.m_LocalScale.y": 1.0,
+        "Transform.m_LocalScale.z": 1.0,
+        "AnimatedPart.DataA": 0.0,
+        "AnimatedPart.DataB": 0.0,
+        "AnimatedPart.DataC": 0.0,
+        "AnimatedPart.Tint.r": 1.0,
+        "AnimatedPart.Tint.g": 1.0,
+        "AnimatedPart.Tint.b": 1.0,
+        "AnimatedPart.Tint.a": 0.0,
+        "AnimatedPart.FlipX": 0.0,
+        "AnimatedPart.FlipY": 0.0,
+        "AnimatedPart.SplitDrawMode": 0.0,
+        "AnimatedPart.FrameIndex": 0.0,
+        "PawnBody.Direction": 0.0
+      },
+      "SplitDrawPivotPartID": 0,
+      "SweepPaths": []
+    },
+    {
+      "ID": 1004,
+      "Path": "PawnALift/PawnAHolding/HandA",
+      "CustomName": "HandA",
+      "ParentID": 1003,
+      "TexturePath": null,
+      "TransparentByDefault": false,
+      "Curves": {},
+      "DefaultValues": {
+        "GameObject.m_IsActive": 1.0,
+        "Transform.m_LocalPosition.x": 0.0,
+        "Transform.m_LocalPosition.y": 0.05,
+        "Transform.m_LocalPosition.z": 0.0,
+        "Transform.localEulerAnglesRaw.x": 0.0,
+        "Transform.localEulerAnglesRaw.y": 0.0,
+        "Transform.localEulerAnglesRaw.z": 0.0,
+        "Transform.m_LocalScale.x": 0.175,
+        "Transform.m_LocalScale.y": 0.175,
+        "Transform.m_LocalScale.z": 0.175,
+        "AnimatedPart.DataA": 0.0,
+        "AnimatedPart.DataB": 0.0,
+        "AnimatedPart.DataC": 0.0,
+        "AnimatedPart.Tint.r": 1.0,
+        "AnimatedPart.Tint.g": 1.0,
+        "AnimatedPart.Tint.b": 1.0,
+        "AnimatedPart.Tint.a": 1.0,
+        "AnimatedPart.FlipX": 0.0,
+        "AnimatedPart.FlipY": 0.0,
+        "AnimatedPart.SplitDrawMode": 0.0,
+        "AnimatedPart.FrameIndex": 0.0,
+        "PawnBody.Direction": 0.0
+      },
+      "SplitDrawPivotPartID": 0,
+      "SweepPaths": []
+    },
+    {
+      "ID": 1005,
+      "Path": "BodyA/HandB",
+      "CustomName": "HandB",
+      "ParentID": 1001,
+      "TexturePath": null,
+      "TransparentByDefault": false,
+      "Curves": {},
+      "DefaultValues": {
+        "GameObject.m_IsActive": 1.0,
+        "Transform.m_LocalPosition.x": 0.13,
+        "Transform.m_LocalPosition.y": 0.04,
+        "Transform.m_LocalPosition.z": 0.17,
+        "Transform.localEulerAnglesRaw.x": 0.0,
+        "Transform.localEulerAnglesRaw.y": 0.0,
+        "Transform.localEulerAnglesRaw.z": 0.0,
+        "Transform.m_LocalScale.x": 0.175,
+        "Transform.m_LocalScale.y": 0.175,
+        "Transform.m_LocalScale.z": 0.175,
+        "AnimatedPart.DataA": 0.0,
+        "AnimatedPart.DataB": 0.0,
+        "AnimatedPart.DataC": 0.0,
+        "AnimatedPart.Tint.r": 1.0,
+        "AnimatedPart.Tint.g": 1.0,
+        "AnimatedPart.Tint.b": 1.0,
+        "AnimatedPart.Tint.a": 1.0,
+        "AnimatedPart.FlipX": 0.0,
+        "AnimatedPart.FlipY": 0.0,
+        "AnimatedPart.SplitDrawMode": 0.0,
+        "AnimatedPart.FrameIndex": 0.0,
+        "PawnBody.Direction": 0.0
+      },
+      "SplitDrawPivotPartID": 0,
+      "SweepPaths": []
+    },
+    {
+      "ID": 1006,
+      "Path": "PawnALift/PawnAHolding/Grenade",
+      "CustomName": "Grenade",
+      "ParentID": 1003,
+      "TexturePath": "RimArt/Fuma/Ring",
+      "TransparentByDefault": false,
+      "Curves": {
+        "GameObject.m_IsActive": {
+          "Keyframes": [
+            {
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.7833333,
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        },
+        "Transform.localEulerAnglesRaw.y": {
+          "Keyframes": [
+            {
+              "value": 0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        }
+      },
+      "DefaultValues": {
+        "Transform.m_LocalPosition.x": 0,
+        "Transform.m_LocalPosition.y": 0.045000000000000005,
+        "Transform.m_LocalPosition.z": 0,
+        "Transform.localEulerAnglesRaw.x": 0.0,
+        "Transform.localEulerAnglesRaw.z": 0.0,
+        "Transform.m_LocalScale.x": 1.4,
+        "Transform.m_LocalScale.y": 1.4,
+        "Transform.m_LocalScale.z": 1.4,
+        "AnimatedPart.DataA": 0.0,
+        "AnimatedPart.DataB": 0.0,
+        "AnimatedPart.DataC": 0.0,
+        "AnimatedPart.Tint.r": 1.0,
+        "AnimatedPart.Tint.g": 1.0,
+        "AnimatedPart.Tint.b": 1.0,
+        "AnimatedPart.Tint.a": 1.0,
+        "AnimatedPart.FlipX": 0.0,
+        "AnimatedPart.FlipY": 0.0,
+        "AnimatedPart.SplitDrawMode": 0.0,
+        "AnimatedPart.FrameIndex": 0.0,
+        "PawnBody.Direction": 0.0
+      },
+      "SplitDrawPivotPartID": 0,
+      "SweepPaths": []
+    },
+    {
+      "ID": 1010,
+      "Path": "PawnALift/PawnAHolding/FumaBlade0",
+      "CustomName": "FumaBlade0",
+      "ParentID": 1003,
+      "TexturePath": "RimArt/Fuma/Blade",
+      "TransparentByDefault": false,
+      "Curves": {
+        "GameObject.m_IsActive": {
+          "Keyframes": [
+            {
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.7833333,
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        },
+        "Transform.localEulerAnglesRaw.y": {
+          "Keyframes": [
+            {
+              "value": 142,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.15,
+              "value": 142,
+              "inTangent": -295.833333,
+              "outTangent": -295.833333,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.48,
+              "value": 0,
+              "inTangent": -218.461538,
+              "outTangent": -218.461538,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        }
+      },
+      "DefaultValues": {
+        "Transform.m_LocalPosition.x": 0.0,
+        "Transform.m_LocalPosition.y": 0.04,
+        "Transform.m_LocalPosition.z": 0.0,
+        "Transform.localEulerAnglesRaw.x": 0.0,
+        "Transform.localEulerAnglesRaw.z": 0.0,
+        "Transform.m_LocalScale.x": 1.4,
+        "Transform.m_LocalScale.y": 1.4,
+        "Transform.m_LocalScale.z": 1.4,
+        "AnimatedPart.DataA": 0.0,
+        "AnimatedPart.DataB": 0.0,
+        "AnimatedPart.DataC": 0.0,
+        "AnimatedPart.Tint.r": 1.0,
+        "AnimatedPart.Tint.g": 1.0,
+        "AnimatedPart.Tint.b": 1.0,
+        "AnimatedPart.Tint.a": 1.0,
+        "AnimatedPart.FlipX": 0.0,
+        "AnimatedPart.FlipY": 0.0,
+        "AnimatedPart.SplitDrawMode": 0.0,
+        "AnimatedPart.FrameIndex": 0.0,
+        "PawnBody.Direction": 0.0
+      },
+      "SplitDrawPivotPartID": 0,
+      "SweepPaths": []
+    },
+    {
+      "ID": 1011,
+      "Path": "PawnALift/PawnAHolding/FumaBlade1",
+      "CustomName": "FumaBlade1",
+      "ParentID": 1003,
+      "TexturePath": "RimArt/Fuma/Blade",
+      "TransparentByDefault": false,
+      "Curves": {
+        "GameObject.m_IsActive": {
+          "Keyframes": [
+            {
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.7833333,
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        },
+        "Transform.localEulerAnglesRaw.y": {
+          "Keyframes": [
+            {
+              "value": 150,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.15,
+              "value": 150,
+              "inTangent": -125.0,
+              "outTangent": -125.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.48,
+              "value": 90,
+              "inTangent": -92.307692,
+              "outTangent": -92.307692,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 90,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        }
+      },
+      "DefaultValues": {
+        "Transform.m_LocalPosition.x": 0.0,
+        "Transform.m_LocalPosition.y": 0.039,
+        "Transform.m_LocalPosition.z": 0.0,
+        "Transform.localEulerAnglesRaw.x": 0.0,
+        "Transform.localEulerAnglesRaw.z": 0.0,
+        "Transform.m_LocalScale.x": 1.4,
+        "Transform.m_LocalScale.y": 1.4,
+        "Transform.m_LocalScale.z": 1.4,
+        "AnimatedPart.DataA": 0.0,
+        "AnimatedPart.DataB": 0.0,
+        "AnimatedPart.DataC": 0.0,
+        "AnimatedPart.Tint.r": 1.0,
+        "AnimatedPart.Tint.g": 1.0,
+        "AnimatedPart.Tint.b": 1.0,
+        "AnimatedPart.Tint.a": 1.0,
+        "AnimatedPart.FlipX": 0.0,
+        "AnimatedPart.FlipY": 0.0,
+        "AnimatedPart.SplitDrawMode": 0.0,
+        "AnimatedPart.FrameIndex": 0.0,
+        "PawnBody.Direction": 0.0
+      },
+      "SplitDrawPivotPartID": 0,
+      "SweepPaths": []
+    },
+    {
+      "ID": 1012,
+      "Path": "PawnALift/PawnAHolding/FumaBlade2",
+      "CustomName": "FumaBlade2",
+      "ParentID": 1003,
+      "TexturePath": "RimArt/Fuma/Blade",
+      "TransparentByDefault": false,
+      "Curves": {
+        "GameObject.m_IsActive": {
+          "Keyframes": [
+            {
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.7833333,
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        },
+        "Transform.localEulerAnglesRaw.y": {
+          "Keyframes": [
+            {
+              "value": 158,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.15,
+              "value": 158,
+              "inTangent": 45.833333,
+              "outTangent": 45.833333,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.48,
+              "value": 180,
+              "inTangent": 33.846154,
+              "outTangent": 33.846154,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 180,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        }
+      },
+      "DefaultValues": {
+        "Transform.m_LocalPosition.x": 0.0,
+        "Transform.m_LocalPosition.y": 0.038,
+        "Transform.m_LocalPosition.z": 0.0,
+        "Transform.localEulerAnglesRaw.x": 0.0,
+        "Transform.localEulerAnglesRaw.z": 0.0,
+        "Transform.m_LocalScale.x": 1.4,
+        "Transform.m_LocalScale.y": 1.4,
+        "Transform.m_LocalScale.z": 1.4,
+        "AnimatedPart.DataA": 0.0,
+        "AnimatedPart.DataB": 0.0,
+        "AnimatedPart.DataC": 0.0,
+        "AnimatedPart.Tint.r": 1.0,
+        "AnimatedPart.Tint.g": 1.0,
+        "AnimatedPart.Tint.b": 1.0,
+        "AnimatedPart.Tint.a": 1.0,
+        "AnimatedPart.FlipX": 0.0,
+        "AnimatedPart.FlipY": 0.0,
+        "AnimatedPart.SplitDrawMode": 0.0,
+        "AnimatedPart.FrameIndex": 0.0,
+        "PawnBody.Direction": 0.0
+      },
+      "SplitDrawPivotPartID": 0,
+      "SweepPaths": []
+    },
+    {
+      "ID": 1013,
+      "Path": "PawnALift/PawnAHolding/FumaBlade3",
+      "CustomName": "FumaBlade3",
+      "ParentID": 1003,
+      "TexturePath": "RimArt/Fuma/Blade",
+      "TransparentByDefault": false,
+      "Curves": {
+        "GameObject.m_IsActive": {
+          "Keyframes": [
+            {
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.7833333,
+              "value": 1.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 1.2,
+              "value": 0.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        },
+        "Transform.localEulerAnglesRaw.y": {
+          "Keyframes": [
+            {
+              "value": 166,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.15,
+              "value": 166,
+              "inTangent": 216.666667,
+              "outTangent": 216.666667,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.48,
+              "value": 270,
+              "inTangent": 160.0,
+              "outTangent": 160.0,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            },
+            {
+              "time": 0.8,
+              "value": 270,
+              "inWeight": 0.333333343,
+              "outWeight": 0.333333343,
+              "tangentMode": 136
+            }
+          ],
+          "PreWrapMode": 8,
+          "PostWrapMode": 8
+        }
+      },
+      "DefaultValues": {
+        "Transform.m_LocalPosition.x": 0.0,
+        "Transform.m_LocalPosition.y": 0.037,
+        "Transform.m_LocalPosition.z": 0.0,
+        "Transform.localEulerAnglesRaw.x": 0.0,
+        "Transform.localEulerAnglesRaw.z": 0.0,
+        "Transform.m_LocalScale.x": 1.4,
+        "Transform.m_LocalScale.y": 1.4,
+        "Transform.m_LocalScale.z": 1.4,
+        "AnimatedPart.DataA": 0.0,
+        "AnimatedPart.DataB": 0.0,
+        "AnimatedPart.DataC": 0.0,
+        "AnimatedPart.Tint.r": 1.0,
+        "AnimatedPart.Tint.g": 1.0,
+        "AnimatedPart.Tint.b": 1.0,
+        "AnimatedPart.Tint.a": 1.0,
+        "AnimatedPart.FlipX": 0.0,
+        "AnimatedPart.FlipY": 0.0,
+        "AnimatedPart.SplitDrawMode": 0.0,
+        "AnimatedPart.FrameIndex": 0.0,
+        "PawnBody.Direction": 0.0
+      },
+      "SplitDrawPivotPartID": 0,
+      "SweepPaths": []
+    }
+  ]
+}

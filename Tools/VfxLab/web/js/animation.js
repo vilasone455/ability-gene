@@ -275,6 +275,25 @@ export function playClip(name, seconds, position, options = {}) {
   };
 }
 
+/**
+ * The main hand's position over the whole of clip `name` played at `position`, for a sketch that
+ * shows the path in one still. Takes playClip's aim, mirror and turn options. Draws nothing.
+ * Returns null until the clip has loaded, then { points: [{ x, z }], release: { x, z } | null }.
+ */
+export function clipHandPath(name, position, options = {}, steps = 60) {
+  const set = setNamed(name);
+  if (!set) return null;
+  const facings = Object.keys(set.clips).length > 1;
+  const aim = facings && options.aim != null ? aimFor(options.aim) : { facing: 'East', mirror: !!options.mirror, offset: 0 };
+  const clip = clipAt(set.clips[aim.facing]), handPart = clip?.ordered.find((q) => q.name === 'HandA');
+  if (!handPart) return null;
+  const offset = options.turn === false ? 0 : aim.offset;
+  const at = (t) => { const m = pose(clip, t, aim.mirror, offset).get(handPart).m; return { x: position.x + m.x, z: position.z + m.z }; };
+  const points = [];
+  for (let i = 0; i <= steps; i++) points.push(at(clip.Length * i / steps));
+  return { points, release: clip.release != null ? at(clip.release) : null };
+}
+
 // ------------------------------------------------------------------ the module
 
 /** ThrowAnimation.Aim with a continuous angle: which clip, mirrored or not, and the turn left over. */
