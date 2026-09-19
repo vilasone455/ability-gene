@@ -2,8 +2,8 @@
 // five ropes load against the pawn's back, then snap into a level launch.
 // Defaults: gather 0–0.55s, posts/ropes form to 0.95s, brace to 1.35s,
 // launch to 1.80s, then the posts reform into two following orbs.
-// Side facings use a shallow three-quarter ground span with upright posts;
-// this is an illustrated projection, not a physically rotated ring wall.
+// Side facings keep the true north-south span. Height and span share the screen
+// axis there, so the ropes fan along the launch axis by height to stay separate.
 import { AltitudeLayer, Color, Mathf, Meshes } from '../js/engine.js';
 import { draw, Lift } from './lib/six-paths-solid.js';
 import { P, Body, Rim, Y, orb, sprite, trail, band, glow, soft, rand } from './lib/six-paths-impact.js';
@@ -69,16 +69,11 @@ export default {
     const release = smooth(age / .13), recall = smooth((s - t.recall) / p.recall);
     const x = travel(s, p, t), pressure = p.compression * load * (1 - release);
     const panelX = -.85, centerH = Math.max(1.05, p.size + .12);
-    // Direction-specific stage cheat: foreshorten the span, not the posts.
-    // Upright pads and a shallow diagonal keep the five ropes readable from the side.
-    // The centre still meets the pawn on the actual launch axis.
+    // Side view: posts stand on their true cells. Ropes fan rearward by height
+    // (see fan below) and draw over the posts so all five ends stay visible.
     const sideView=Math.abs(dx), contactH=.65;
     const sling=(along,across=0,height=0)=>{
       const ground=pos(along,across);
-      if(sideView) {
-        ground.x+=dx*across*.72;
-        ground.z=o.z+dx*across*.25;
-      }
       return {x:ground.x,
         z:ground.z+height*Lift,ground,height};
     };
@@ -148,14 +143,16 @@ export default {
         const bow=Math.sin(u*Math.PI)**1.6;
         // Endpoints stay attached; the loaded centre tracks the pawn's back.
         const vibration=age>0?Math.sin(u*Math.PI*3)*Math.sin(age*38-i*.7)*.07*Math.exp(-age*7):0;
-        const along=anchorAlong-(pressure-rebound)*bow+vibration;
+        const fan=sideView?(h-contactH)*.30*Math.sin(u*Math.PI):0;
+        const along=anchorAlong-fan-(pressure-rebound)*bow+vibration;
         const q=sling(along,across,h-.035*Math.sin(u*Math.PI)*(1-load));
         pts.push(q);shadowPts.push(shadow(q));highlight.push({x:q.x,z:q.z+.020});
       }
       trail('repulse rope shadow '+i,shadowPts,.072,Body.withAlpha(strength*alpha*.6),shadowLayer+.002);
-      trail('repulse rope edge '+i,pts,.085*growth,Rim.withAlpha(alpha*.85),Y+.006+i*.001);
-      trail('repulse rope body '+i,pts,.050*growth,Body.withAlpha(alpha),Y+.007+i*.001);
-      trail('repulse rope shine '+i,highlight,.015*growth,pale.withAlpha(alpha*(.24+load*.32)),Y+.008+i*.001);
+      const ropeY=Y+(sideView?.030:.006)+i*.001;
+      trail('repulse rope edge '+i,pts,.085*growth,Rim.withAlpha(alpha*.85),ropeY);
+      trail('repulse rope body '+i,pts,.050*growth,Body.withAlpha(alpha),ropeY+.001);
+      trail('repulse rope shine '+i,highlight,.015*growth,pale.withAlpha(alpha*(.24+load*.32)),ropeY+.002);
     }
     const contact=sling(panelX-pressure+rebound,0,contactH);
     if(age>=0 && age<.16)sprite(contact,.7,.85,pale.withAlpha((1-age/.16)*.75),glow,Y+.03);
