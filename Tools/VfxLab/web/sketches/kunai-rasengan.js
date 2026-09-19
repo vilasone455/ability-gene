@@ -40,8 +40,12 @@
 // and scaled into circles and ellipses; threads, sparks, spirals and the helix are strip meshes
 // rebuilt while they show. The ball is blue-white, not the kit's gold: it is the source's colour
 // and is only ever a ball and one hit. Teleport shapes come from lib/flying-thunder-god.js. Pawns
-// and the wall are stand-ins. The ball is drawn at chest height (0.3 cells north of the feet).
+// and the wall are stand-ins. The caster plays RimArt_RasenganForm and RimArt_RasenganThrust
+// (make_rasengan_anim.py) and the ball sits on the clip's hand; the clip's contact (0.06 s) and burst
+// (0.36 s) are this file's Reach and Press. With the stand-in caster the ball is drawn at chest
+// height (0.3 cells north of the feet).
 import { AltitudeLayer, Color, Mathf, Meshes, MeshPool } from '../js/engine.js';
+import { playClip } from '../js/animation.js';
 import { draw } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, circle, glow, soft, rand } from './lib/six-paths-impact.js';
 import {
@@ -125,6 +129,7 @@ export default {
   params: {
     scenario: { label: 'The caster', value: 'teleports to a marked enemy', options: ['teleports to a marked enemy', 'is already next to the enemy'], group: 'Showcase' },
     wall: { label: 'A wall stands in the way of the throw', value: false, group: 'Showcase' },
+    look: { label: 'The caster is drawn as', value: 'animation clips', options: ['animation clips', 'stand-in'], group: 'Showcase' },
     aim: P('Direction to the enemy (degrees, 0 east, 90 north)', 0, 0, 355, 5, 'Showcase'),
     distance: P('Distance to the enemy when teleporting (cells)', 7, 4, 14, .5, 'Showcase'),
     form: P('Ball forms (the warmup)', .6, .2, 1.5, .05, 'Timing (s)'),
@@ -195,9 +200,19 @@ export default {
     const shake = grinding ? Math.sin(s * 95) * .028 : 0, victim = place(dir * (gone + .08 * pressed) + shake, shake * .6);
     const enemyColour = Color.Lerp(EnemyColour, Ice, Math.max(pressed, clamp(1 - (s - t.release) / .15) * (flight > 0 ? 1 : 0)) * .75);
     if (s >= t.land) sprite(victim, 1.3, .8, Ink.withAlpha(.34 * (1 - .4 * smooth((s - t.land) / Tail))), soft, Floor + .012, -p.aim);
+    let clipHand = null;
     const figures = [{ pos: caster, caster: true }, { pos: victim }];
     figures.sort((m, n) => n.pos.z - m.pos.z).forEach(f => {
-      if (f.caster) figure(f.pos, CasterColour, 1, landed ? thinIn : thinOut, sun, strength);
+      if (f.caster) {
+        // The caster plays the two Rasengan clips (make_rasengan_anim.py): Form where the ball is made,
+        // Thrust where it lands. A clip cannot be narrowed, so the sliver of the teleport is the stand-in.
+        const thin = landed ? thinIn : thinOut, thrusting = landed && s >= t.thrust - (tele ? .04 : 0);
+        const clip = p.look === 'animation clips' && thin < .02
+          ? (thrusting ? playClip('RimArt_RasenganThrust', s - t.thrust, stand, { aim: (p.aim + (tele ? 180 : 0)) % 360, scene })
+            : playClip('RimArt_RasenganForm', s - t.cast, stand, { aim: p.aim, scene }))
+          : null;
+        if (clip) clipHand = clip.hand; else figure(f.pos, CasterColour, 1, thin, sun, strength);
+      }
       else if (s >= t.land) downed(f.pos, EnemyColour, sun, strength);
       else if (flight > 0) tumbling(f.pos, enemyColour, dir * Tumble * u, Hop * Math.sin(u * Math.PI) * (p.wall ? .5 : 1), sun, strength);
       else { figure(f.pos, enemyColour, 1, 0, sun, strength); if (tele) stuckKunai(f.pos, p.aim, smooth((s - t.cast) / (p.form * .4))); }
@@ -213,7 +228,7 @@ export default {
 
     // --- the ball in the hand, and everything round it while it is held ---------------------------------------------
     const grown = smooth((s - t.cast) / p.form), out = Hand + (landed ? lunge * (1 - Lean - Hand - .03) : 0);
-    const hand = { x: caster.x + ca * face * out, z: caster.z + sa * face * out + Chest };
+    const hand = clipHand ?? { x: caster.x + ca * face * out, z: caster.z + sa * face * out + Chest };
     if (s >= t.cast && s < t.release) {
       const seen = 1 - (landed ? thinIn : thinOut), unsteady = Unsteady * (1 - grown);
       const size = p.ballSize * grown * (1 + Swell * smooth(pressed)) * (1 + unsteady * Math.sin(s * 53));
