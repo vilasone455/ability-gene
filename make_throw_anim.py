@@ -243,9 +243,11 @@ GRENADE = {
 
 # A knife throw, not a lob. Half the length of the grenade clip. The hand comes up and cocks
 # beside the ear with the blade pointing up and back, holds for 4 frames, then whips forward
-# at shoulder height. The kunai leaves the hand with the arm extended and the blade pointing at
-# the target, and the hand barely drops through the release: the grenade swings over the crown
-# and finishes low, this one moves in a flat line. Short follow-through, small body lean.
+# at shoulder height. The kunai leaves the hand in the middle of the whip, with the blade pointing
+# at the target and the hand at its top speed (about 11 cells/s, 0.15 cells in front of the body);
+# the empty hand then carries on to full extension and slows there. A hand that has already slowed
+# when it lets go reads as setting the knife down. The hand barely drops through the release: the
+# grenade swings over the crown and finishes low, this one moves in a flat line. Small body lean.
 KUNAI_LENGTH = 0.6
 KUNAI_RELEASE = 0.3
 
@@ -258,9 +260,11 @@ KUNAI = {
         (0.10,  0.00, -0.24,  0.30),  # hand comes up
         (0.18, -0.20, -0.22,  0.46),  # cocked beside the ear
         (0.24, -0.23, -0.21,  0.47),  # hold
-        (KUNAI_RELEASE, 0.34, -0.16, 0.42),  # arm extended at shoulder height
-        (0.38,  0.46, -0.13,  0.26),  # short follow-through, forward and down
-        (0.48,  0.26, -0.18,  0.08),
+        (0.27, -0.15, -0.20,  0.46),  # the whip starts
+        (KUNAI_RELEASE, 0.15, -0.17, 0.43),  # let go mid-whip, at the hand's top speed
+        (0.33,  0.44, -0.15,  0.38),  # the empty hand carries on to full extension
+        (0.38,  0.50, -0.13,  0.28),  # and slows there, forward and a little down
+        (0.48,  0.28, -0.18,  0.08),
         (KUNAI_LENGTH, 0.12, -0.23, 0.00),
     ],
     "body_rot": [
@@ -297,8 +301,9 @@ KUNAI = {
 
 # An underhand toss of a handful of spikes at the ground a few cells away, not a throw at a
 # target. The hand swings back past the hip, low, holds for 4 frames, then sweeps forward and up
-# at waist height. The handful leaves the palm early in the forward swing, while the hand is still
-# below the chest, and the arm follows through forward and up. No hand ever goes above the
+# at waist height. The handful leaves the palm in the middle of the forward swing, at the hand's
+# top speed (about 10 cells/s) and while the hand is still below the chest, and the arm follows
+# through forward and up. No hand ever goes above the
 # shoulder: the grenade clip lobs over the crown, the kunai clip whips from beside the ear.
 SCATTER_LENGTH = 0.7
 SCATTER_RELEASE = 0.3
@@ -312,8 +317,10 @@ SCATTER = {
         (0.12, -0.10, -0.26, -0.02),  # swing back past the hip
         (0.20, -0.22, -0.24, -0.04),  # wound back, low
         (0.24, -0.23, -0.23, -0.04),  # hold
-        (SCATTER_RELEASE, 0.20, -0.20, 0.10),  # sweeping forward at waist height: open the hand
-        (0.40,  0.40, -0.15,  0.22),  # follow through forward and up, palm up
+        (0.27, -0.16, -0.23, -0.03),  # the sweep starts
+        (SCATTER_RELEASE, 0.09, -0.21, 0.06),  # open the hand mid-sweep, at its top speed
+        (0.33,  0.32, -0.18,  0.16),  # the empty hand carries on forward and up
+        (0.40,  0.42, -0.15,  0.24),  # and slows there, palm up
         (0.54,  0.26, -0.20,  0.10),
         (SCATTER_LENGTH, 0.12, -0.23, 0.00),
     ],
@@ -351,7 +358,9 @@ FUMA = {
     "name": "RimArt_ThrowFuma", "length": 1.2, "release": 0.8,
     "poses": [(0,0.12,-0.23,0), (0.20,0.04,-0.30,0.15),
               (0.42,-0.24,-0.40,0.20), (0.65,-0.30,-0.38,0.20),
-              (0.80,0.40,-0.10,0.20), (0.96,0.42,0.20,0.12), (1.2,0.12,-0.23,0)],
+              # The sling: let go mid-swing at top speed, carry on across the body, come back slowly.
+              (0.74,-0.18,-0.32,0.20), (0.80,0.16,-0.18,0.20), (0.86,0.50,-0.03,0.18),
+              (0.96,0.50,0.06,0.12), (1.08,0.31,-0.085,0.06), (1.2,0.12,-0.23,0)],
     "body_rot": [(0,0),(.5,-12),(.8,10),(1.2,0)],
     "body_x": [(0,0),(.5,-.06),(.8,.10),(1.2,0)],
     "body_lift": [(0,0),(1.2,0)],
