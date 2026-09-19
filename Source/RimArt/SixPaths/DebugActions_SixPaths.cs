@@ -33,6 +33,9 @@ namespace RimArt
         [RimArtDebug("Six Paths", "bloom")]
         public static void Bloom() => Preview().Play(UI.MouseCell(), PreviewMode.Bloom, 1f, false);
 
+        [RimArtDebug("Six Paths", "twin maw")]
+        public static void TwinMaw() => Preview().Play(UI.MouseCell(), PreviewMode.TwinMaw, 1f, false);
+
         [RimArtDebug("Six Paths", "umbrella canopy")]
         public static void UmbrellaCanopy() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaCanopy, 1f, false, Vector2.right);
 
@@ -59,12 +62,14 @@ namespace RimArt
             Find.CurrentMap.GetComponent<MapComponent_SixPathsPreview>();
     }
 
-    public enum PreviewMode { Ring, Sheet, Slam, Bloom, UmbrellaCanopy, UmbrellaGuard }
+    public enum PreviewMode { Ring, Sheet, Slam, Bloom, TwinMaw, UmbrellaCanopy, UmbrellaGuard }
 
     public sealed class MapComponent_SixPathsPreview : MapComponent
     {
         /// <summary>Cells west of the chosen cell that the bloom's sage stands. No pawn is drawn for either.</summary>
         private const float BloomSageDistance = 4.5f;
+        /// <summary>Cells west of the trap tile that the maw's sage stands.</summary>
+        private const float MawSageDistance = 5f;
 
         public bool active;
         private PreviewMode mode;
@@ -120,6 +125,16 @@ namespace RimArt
                     SixPathsBloomGraphics.Draw(cell.ToVector3Shifted(),
                         cell.ToVector3Shifted() - new Vector3(BloomSageDistance, 0f, 0f), seconds, map);
                     if (seconds >= SixPathsBloomTiming.Duration) active = false;
+                    break;
+                case PreviewMode.TwinMaw:
+                    if (seconds >= SixPathsTwinMawTiming.ShutAt && !shaken)
+                    {
+                        shaken = true;
+                        Find.CameraDriver.shaker.DoShake(SixPathsTwinMawTiming.Shake);
+                    }
+                    SixPathsTwinMawGraphics.Draw(cell.ToVector3Shifted(),
+                        cell.ToVector3Shifted() - new Vector3(MawSageDistance, 0f, 0f), seconds, map);
+                    if (seconds >= SixPathsTwinMawTiming.Duration) active = false;
                     break;
                 case PreviewMode.UmbrellaCanopy:
                 case PreviewMode.UmbrellaGuard:

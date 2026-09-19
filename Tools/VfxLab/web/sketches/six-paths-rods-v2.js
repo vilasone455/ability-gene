@@ -11,6 +11,11 @@
 // with Shield wall: that stops bullets and lets pawns through, this stops pawns and lets bullets
 // through.
 //
+// The orbs and the sage: the caster carries the six orbs on its ring (lib/six-paths-sage.js). All
+// six leave their slots at 0.09 radius, grow to the field cast radius 0.30 over the flight and
+// sink into the line, so the ring is empty while the wall stands. On the way back each shrinks to
+// 0.09 and sits in its slot. The sage faces the nearest of the four directions to the cast.
+//
 // Drawing: a wall running north-south puts height and the line on the same screen axis, so its
 // rods cross alternately east and west like a spiked barricade; an east-west wall stands upright.
 // The amount of crossing follows the cast direction, so it changes gradually between the two.
@@ -18,6 +23,7 @@
 import { AltitudeLayer, Color, Mathf, Meshes } from '../js/engine.js';
 import { draw } from './lib/six-paths-solid.js';
 import { P, Body, Rim, Y, Floor, Lift, orb, sprite, trail, band, glow, soft, rand } from './lib/six-paths-impact.js';
+import { sage, carried, slot, deployRadius, Field } from './lib/six-paths-sage.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp;
 const disc = Meshes.disc(32, 'rods v2 disc');
@@ -85,16 +91,19 @@ export default {
       trail('rods v2 crack edge', pts, .05, Rim.withAlpha((standing ? .4 + .3 * pulse : .7) * closing), Floor + .009);
     }
 
-    // Six orbs fly from the caster, drop into the line, and come back out at the end.
+    // All six orbs leave the ring, drop into the line, and come back out to their slots at the end.
+    carried(caster, s, scene, () => true);
     for (let k = 0; k < Orbs; k++) {
-      const socket = floor(0, ((k + .5) / Orbs - .5) * p.length);
-      const path = (u) => ({ x: lerp(caster.x, socket.x, u),
-        z: lerp(caster.z, socket.z, u) + (.8 * (1 - u * u) + Math.sin(u * Math.PI) * (.7 + k * .08)) * Lift });
+      const socket = floor(0, ((k + .5) / Orbs - .5) * p.length), home = slot(caster, k, s);
+      const path = (u) => ({ x: lerp(home.x, socket.x, u),
+        z: lerp(home.z, socket.z, u) + Math.sin(u * Math.PI) * (.7 + k * .08) * Lift });
       const out = s < p.sink, back = s >= t.gone;
       if (!out && !back) continue;
       const fly = p.sink * .75, u = out ? smooth(s / fly) : 1 - smooth((s - t.gone) / .6);
       const drop = out ? smooth((s - fly) / (p.sink - fly)) : 0;
-      orb(path(u), .24 * (1 - drop), 1, 1 - drop * .5);
+      // Coming back, the orb rises out of the floor before it sets off.
+      const emerge = out ? 1 : Math.min(1, (1 - u) * 4);
+      orb(path(u), deployRadius(u, Field) * (1 - drop) * emerge, 1, 1 - drop * .5, u > 0 ? Y : home.layer);
       const from = out ? s : s - t.gone, span = out ? fly : .6;
       trail('rods v2 orb trail ' + k, Array.from({ length: 12 }, (_, j) => {
         const v = smooth(Math.max(0, from - (1 - j / 11) * .12) / span); return path(out ? v : 1 - v);
@@ -116,11 +125,7 @@ export default {
       }
       pawn = floor(along, across);
       sprite({ x: pawn.x + sun.x * .45, z: pawn.z + sun.z * .45 }, .85, .4, Body.withAlpha(strength), soft, shadowLayer);
-      for (const q of [caster]) {
-        sprite({ x: q.x + sun.x * .45, z: q.z + sun.z * .45 }, .85, .4, Body.withAlpha(strength), soft, shadowLayer);
-        draw(disc, q.x, Y - .06, q.z + .18, .22, .32, 0, new Color(.39, .58, .65));
-        draw(disc, q.x, Y - .058, q.z + .58, .16, .17, 0, new Color(.83, .70, .54));
-      }
+      sage(caster, Math.round(p.aim / 90) % 4 * 90, scene);
       pawn.hop = hop * Lift;
     }
     const drawPawn = () => {

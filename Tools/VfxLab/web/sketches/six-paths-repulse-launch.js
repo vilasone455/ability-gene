@@ -2,11 +2,17 @@
 // five ropes load against the pawn's back, then snap into a level launch.
 // Defaults: gather 0–0.55s, posts/ropes form to 0.95s, brace to 1.35s,
 // launch to 1.80s, then the posts reform into two following orbs.
+// The orbs and the sage: the launched pawn is the sage and carries the six orbs on its ring
+// (lib/six-paths-sage.js); the ring travels with it. Slots 0 and 1 leave the ring at 0.09 radius
+// and grow to the field cast radius 0.30 on the way to the post anchors (the posts are planted in
+// the ground, not held on the pawn). Both slots stay empty until the posts reform into orbs, which
+// fly after the sage, shrink to 0.09 and sit in their slots where it stopped.
 // Side facings keep the true north-south span. Height and span share the screen
 // axis there, so the ropes fan along the launch axis by height to stay separate.
 import { AltitudeLayer, Color, Mathf, Meshes } from '../js/engine.js';
 import { draw, Lift } from './lib/six-paths-solid.js';
 import { P, Body, Rim, Y, orb, sprite, trail, band, glow, soft, rand } from './lib/six-paths-impact.js';
+import { sage, carried, slot, deployRadius, Field, Facings } from './lib/six-paths-sage.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp;
 const disc = Meshes.disc(32, 'repulse pawn');
@@ -82,12 +88,15 @@ export default {
     const rebound=age>=0?Math.sin(clamp(age/.28)*Math.PI)*.24*Math.exp(-age*4):0;
     const half=p.width*.5, anchorAlong=panelX, postTop=centerH+p.size;
     const anchor=(side,h=centerH)=>sling(anchorAlong,side*half,h);
-    // Each orb travels to its own anchor, then lengthens into a padded post.
+    // The ring rides with the sage. Slots 0 and 1 are the posts.
+    const feet=pos(x);
+    carried(feet,s,scene,(i)=>i<2);
+    // Each orb travels from its slot to its own anchor, then lengthens into a padded post.
     for(let i=0;i<2;i++) {
       const side=i?1:-1, end=sling(panelX,side*half,centerH);
-      const start=pos(.12,side*.8,.8);
+      const start=slot(feet,i,s);
       const q={x:lerp(start.x,end.x,gather),z:lerp(start.z,end.z,gather)};
-      if(form<1)orb(q,.28*(1-form),1,1+form*2);
+      if(form<1)orb(q,deployRadius(gather,Field)*(1-form),1,1+form*2,gather>0?Y:start.layer);
       if(s<t.load) {
         const pts=Array.from({length:18},(_,j)=>{
           const u=smooth(Math.max(0,s-(1-j/17)*.16)/p.gather);
@@ -159,23 +168,9 @@ export default {
     const contact=sling(panelX-pressure+rebound,0,contactH);
     if(age>=0 && age<.16)sprite(contact,.7,.85,pale.withAlpha((1-age/.16)*.75),glow,Y+.03);
 
-    // The pawn leans its back into the central rope, with both feet on the ground.
-    if (p.actors) {
-      const lean = -load*(1-release)*.13 + Math.sin(clamp(age/p.dash)*Math.PI)*.2;
-      const limb = (key, points, width, color) => trail('repulse pawn '+key, points, width, color, Y+.08);
-      const q=pos(x,0,.65), head=pos(x+lean,0,1.18);
-      const ground=pos(x);
-      sprite({x:ground.x+sun.x*.45,z:ground.z+sun.z*.45},.85,.4,Body.withAlpha(strength),soft,shadowLayer);
-      const foot=pos(x-.24,0,.08);
-      limb('push leg',[q,pos(x-.24,0,.45),foot],.19,new Color(.23,.25,.29));
-      limb('other leg',[q,pos(x+.12,0,.3),pos(x+.15,0,.06)],.18,new Color(.29,.31,.34));
-      draw(disc,q.x,Y+.09,q.z,.23,.31,0,new Color(.55,.38,.27));
-      limb('arm',[pos(x+lean,0,.9),pos(x+.27,0,.7),pos(x+.31,0,.82)],.14,new Color(.72,.57,.42));
-      draw(disc,head.x,Y+.10,head.z,.16,.18,0,new Color(.83,.70,.54));
-      // Facing marker stays fixed when Backward is selected.
-      const nose={x:head.x+fx*.14,z:head.z+fz*.14};
-      draw(disc,nose.x,Y+.11,nose.z,.065,.06,0,new Color(.88,.75,.59));
-    }
+    // The sage stands with its back to the central rope. Its face keeps the facing when the
+    // launch is Backward.
+    if (p.actors) sage(feet, Facings[{ Right: 'East', Left: 'West', Up: 'North', Down: 'South' }[p.facing]], scene);
     if (age>=0) {
       for (let i=0;i<3;i++) {
         const pts=Array.from({length:24},(_,j)=>pos(travel(Math.max(t.launch,s-(1-j/23)*.19),p,t), (i-1)*.18,.45+i*.22));
@@ -191,9 +186,9 @@ export default {
     }
     if (recall>0) for (let i=0;i<2;i++) {
       const side=i?1:-1, start=sling(panelX,side*half,centerH);
-      const end=pos(p.distance-.35,side*.65,centerH);
+      const end=slot(feet,i,s);
       const q={x:lerp(start.x,end.x,recall),z:lerp(start.z,end.z,recall)};
-      orb(q,.28*recall);
+      orb(q,deployRadius(1-recall,Field)*Math.min(1,recall*4),1,1,recall<1?Y:end.layer);
       const tail=Array.from({length:16},(_,j)=>{
         const u=smooth((s-(1-j/15)*.12-t.recall)/p.recall);
         return {x:lerp(start.x,end.x,u),z:lerp(start.z,end.z,u)};
