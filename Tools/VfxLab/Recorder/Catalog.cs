@@ -30,8 +30,9 @@ namespace RimArt.VfxLab
                 Name = "Six Paths", Prefix = "Six Paths:", Component = typeof(MapComponent_SixPathsPreview), Clock = "seconds",
                 Phases = label => label.Contains("slam") ? SlamPhases()
                     : label.Contains("bloom") ? BloomPhases()
+                    : label.Contains("umbrella") ? UmbrellaPhases(label.Contains("canopy"))
                     : label.Contains("sheet") ? Array.Empty<Phase>() : RingPhases(),
-                LoopSeconds = label => label.Contains("slam") || label.Contains("bloom") || label.Contains("sheet")
+                LoopSeconds = label => label.Contains("slam") || label.Contains("bloom") || label.Contains("umbrella") || label.Contains("sheet")
                     ? null : SixPathsTiming.CycleSeconds * SixPathsShapes.Cycle.Length,
             },
             new Kit
@@ -76,6 +77,16 @@ namespace RimArt.VfxLab
             new Phase("Cocoon / heal", SixPathsBloomTiming.ShutAt),
             new Phase("Uncurl", SixPathsBloomTiming.UncurlAt),
             new Phase("Orb returns", SixPathsBloomTiming.ReturnAt),
+        };
+
+        private static Phase[] UmbrellaPhases(bool canopy) => new[]
+        {
+            new Phase("Form umbrella", 0f),
+            new Phase("Thrust", SixPathsUmbrellaTiming.ThrustAt),
+            new Phase(canopy ? "Canopy opens" : "Guard opens", SixPathsUmbrellaTiming.OpenAt),
+            new Phase(canopy ? "Moving cover" : "Front guard", SixPathsUmbrellaTiming.UpAt),
+            new Phase("Folds", SixPathsUmbrellaTiming.CloseAt),
+            new Phase("Held again", SixPathsUmbrellaTiming.ClosedAt),
         };
 
         private static Phase[] RingPhases()

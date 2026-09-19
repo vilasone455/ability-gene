@@ -42,6 +42,26 @@ namespace RimArt
             allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void Bloom() => Preview().Play(UI.MouseCell(), PreviewMode.Bloom, 1f, false);
 
+        [DebugAction("RimArts", "Six Paths: umbrella canopy", actionType = DebugActionType.ToolMap,
+            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void UmbrellaCanopy() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaCanopy, 1f, false, Vector2.right);
+
+        [DebugAction("RimArts", "Six Paths: umbrella guard east", actionType = DebugActionType.ToolMap,
+            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void UmbrellaGuardEast() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaGuard, 1f, false, Vector2.right);
+
+        [DebugAction("RimArts", "Six Paths: umbrella guard west", actionType = DebugActionType.ToolMap,
+            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void UmbrellaGuardWest() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaGuard, 1f, false, Vector2.left);
+
+        [DebugAction("RimArts", "Six Paths: umbrella guard north", actionType = DebugActionType.ToolMap,
+            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void UmbrellaGuardNorth() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaGuard, 1f, false, Vector2.up);
+
+        [DebugAction("RimArts", "Six Paths: umbrella guard south", actionType = DebugActionType.ToolMap,
+            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        public static void UmbrellaGuardSouth() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaGuard, 1f, false, Vector2.down);
+
         [DebugAction("RimArts", "Six Paths: clear showcase", allowedGameStates = AllowedGameStates.PlayingOnMap)]
         public static void Clear()
         {
@@ -53,7 +73,7 @@ namespace RimArt
             Find.CurrentMap.GetComponent<MapComponent_SixPathsPreview>();
     }
 
-    public enum PreviewMode { Ring, Sheet, Slam, Bloom }
+    public enum PreviewMode { Ring, Sheet, Slam, Bloom, UmbrellaCanopy, UmbrellaGuard }
 
     public sealed class MapComponent_SixPathsPreview : MapComponent
     {
@@ -65,13 +85,16 @@ namespace RimArt
         private bool frozen, shaken;
         private float speed, seconds;
         private IntVec3 cell;
+        /// <summary>The cardinal the umbrella's sage faces, east and north positive.</summary>
+        private Vector2 toward;
 
         public MapComponent_SixPathsPreview(Map map) : base(map) { }
 
-        public void Play(IntVec3 target, PreviewMode play, float rate, bool freeze)
+        public void Play(IntVec3 target, PreviewMode play, float rate, bool freeze, Vector2 facing = default)
         {
             if (!target.InBounds(map) || target.Fogged(map)) return;
             cell = target;
+            toward = facing;
             mode = play;
             speed = rate;
             frozen = freeze;
@@ -111,6 +134,14 @@ namespace RimArt
                     SixPathsBloomGraphics.Draw(cell.ToVector3Shifted(),
                         cell.ToVector3Shifted() - new Vector3(BloomSageDistance, 0f, 0f), seconds, map);
                     if (seconds >= SixPathsBloomTiming.Duration) active = false;
+                    break;
+                case PreviewMode.UmbrellaCanopy:
+                case PreviewMode.UmbrellaGuard:
+                    // The sage starts behind the chosen cell and walks through it while the umbrella is open.
+                    float ahead = SixPathsUmbrellaTiming.Walked(seconds) - SixPathsUmbrellaTiming.StartBack;
+                    SixPathsUmbrellaGraphics.Draw(cell.ToVector3Shifted() + new Vector3(toward.x, 0f, toward.y) * ahead, toward,
+                        mode == PreviewMode.UmbrellaCanopy ? UmbrellaMode.Canopy : UmbrellaMode.Guard, seconds, map);
+                    if (seconds >= SixPathsUmbrellaTiming.Duration) active = false;
                     break;
                 default:
                     SixPathsGraphics.DrawRing(cell.ToVector3Shifted(), seconds, 1f, map);
