@@ -369,7 +369,43 @@ FUMA = {
     "texture": "RimArt/Fuma/Ring", "item_scale": 1.4,
     "item_pos": {"x": 0, "z": 0}, "item_y": HAND_Y - 0.005,
 }
-STYLES = [GRENADE, KUNAI, SCATTER, FUMA]
+
+# Trial, not used by any def yet: the Fuma throw as a backhand. The hand comes across the chest to
+# the off side (side > 0), holds, then sweeps forward and around the front to the throwing side, a
+# half circle seen from above. The ring leaves one third of the way in, while the hand still moves
+# toward the target (about 6.5 cells/s, 23 degrees off forward); at the top of the half circle the
+# hand moves sideways, and a ring let go there would fly 90 degrees off. The rest of the arc is an
+# empty hand. Length and release match FUMA so it can replace that clip without touching the job.
+FUMA_BACKHAND = {
+    **FUMA,
+    "name": "RimArt_ThrowFumaBackhand",
+    "poses": [
+        (0.00,  0.12, -0.23, 0.00),  # ready at the hip
+        (0.20,  0.20, -0.02, 0.14),  # across the chest
+        (0.45,  0.04,  0.30, 0.20),  # crossed to the off side
+        (0.68, -0.04,  0.33, 0.20),  # loaded
+        (0.76,  0.06,  0.31, 0.20),  # the sweep starts
+        (0.80,  0.32,  0.26, 0.20),  # release, still moving at the target
+        (0.84,  0.54,  0.10, 0.20),  # empty hand passes the front
+        (0.89,  0.52, -0.18, 0.19),
+        (0.95,  0.30, -0.42, 0.16),  # and wraps round to the throwing side
+        (1.02,  0.08, -0.46, 0.12),
+        (1.12,  0.10, -0.30, 0.04),
+        (1.20,  0.12, -0.23, 0.00),
+    ],
+    "body_rot": [(0, 0), (.45, -6), (.68, -8), (.8, 6), (.95, 10), (1.2, 0)],
+    "body_x": [(0, 0), (.5, -.05), (.8, .08), (.95, .10), (1.2, 0)],
+    # Winds against the sweep, then turns with it (clockwise from above for a right hand).
+    "wrist": [(0, 0), (.45, -50), (.68, -60), (.8, 30), (.95, 110), (1.2, 0)],
+    # When the hand and ring are on the far side of the body from the camera, per Rot4. East:
+    # crossed to the off side. North: the front of the sweep. South: never.
+    "hidden": {1: (0.30, 0.77), 0: (0.81, 0.93)},
+    # Side view only: a flat sprite cannot twist, so the torso turn is shown by drawing the
+    # back (north) sprite while the hand is crossed over, and the east sprite again as the
+    # sweep starts. (from, to, Rot4 shown).
+    "twist": (0.40, 0.76, 0),
+}
+STYLES = [GRENADE, KUNAI, SCATTER, FUMA, FUMA_BACKHAND]
 
 ARC_SAMPLE = 0.02
 
@@ -453,13 +489,30 @@ def build(style, name, direction, turn):
     holding_y = [(0.0, 0.02), (style["release"], 0.02),
                  (behind_from, -0.12 if direction == 0 else 0.02),
                  (behind_to, -0.12 if direction == 0 else 0.02), (style["length"], 0.02)]
+    if "hidden" in style:
+        holding_y = [(0.0, 0.02), (style["length"], 0.02)]
+        if direction in style["hidden"]:
+            hidden_from, hidden_to = style["hidden"][direction]
+            holding_y[1:1] = [(hidden_from - 0.03, 0.02), (hidden_from, -0.12),
+                              (hidden_to, -0.12), (hidden_to + 0.03, 0.02)]
+
+    body_curves = transform_curves(pos=body_pos, rot={"y": [(t, v * facing_x) for t, v in style["body_rot"]]})
+    body_defaults = {"PawnBody.Direction": float(direction)}
+    if "twist" in style and direction == 1:
+        # Two keys one tick apart for each change. Their loader casts the value to a byte, so
+        # anything between 0 and 1 already reads as north.
+        twist_from, twist_to, shown = style["twist"]
+        tick = 1.0 / 60.0
+        body_curves["PawnBody.Direction"] = curve(
+            [(0.0, 1.0), (twist_from - tick, 1.0), (twist_from, float(shown)),
+             (twist_to - tick, float(shown)), (twist_to, 1.0), (style["length"], 1.0)], smooth=False)
 
     body = part(
         1001, "BodyA", "BodyA",
-        curves=transform_curves(pos=body_pos, rot={"y": [(t, v * facing_x) for t, v in style["body_rot"]]}),
+        curves=body_curves,
         # Direction is a state, not a motion: a curve would interpolate the pawn through
         # north on its way from east to west.
-        default_overrides={"PawnBody.Direction": float(direction)},
+        default_overrides=body_defaults,
     )
 
     head = part(1002, "BodyA/HeadA", "HeadA", parent_id=1001)
@@ -538,7 +591,7 @@ def build(style, name, direction, turn):
     )
 
     parts = [body, head, lift, holding, hand_a, hand_b, grenade]
-    if style["name"] == "RimArt_ThrowFuma":
+    if style["name"].startswith("RimArt_ThrowFuma"):
         # The ring and each blade have the same centred pivot. The fan opens smoothly
         # before release; all five visible pieces disappear on the release frame.
         for i in range(4):
