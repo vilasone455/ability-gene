@@ -1,4 +1,11 @@
 // Black Tide — a standalone Six Paths VFX proposal; no gameplay effect is replaced.
+//
+// What it is for (proposed, none of it agreed). The displacement half of the forward-line pair;
+// Blade wave is the damage half. The breaker runs 7 cells along the aim, 5.4 cells wide. Every
+// pawn it crosses is pushed about 3 cells along the aim, stopping at walls, and takes a debuff
+// (proposed: move speed -30% for 6 s). Little or no direct damage: about 10 Blunt only when a
+// pawn is driven into a wall. Six orbs, about 35 s cooldown. The picture is unchanged.
+//
 // Six orbs gather, compress, then launch a compact rolling breaker with streamed
 // wakes. Its crest slams into the floor, throwing a shock front and black fragments.
 // After a brief impact hold, six pieces whip back along curved, trailing paths.

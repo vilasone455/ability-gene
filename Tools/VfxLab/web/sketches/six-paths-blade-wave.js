@@ -8,6 +8,9 @@
 // Shinra Tensei only hurts what it slams into something. This one is pointed somewhere, hits
 // everything it passes through, and moves nobody. Proposed at ~18 Cut per pawn, allies included,
 // on a 30-second cooldown, between the eyes' 8-20 / 20 s and 15-45 / 40 s. None of it is agreed.
+// It is the damage half of the forward-line pair: Black Tide uses the same six orbs and a forward
+// line but pushes and debuffs instead of cutting. A lingering effect on the cut (bleed or burn)
+// is undecided.
 //
 // Why a crescent rather than the six separate lanes of the earlier sweep: six blades running
 // outward cut six thin lanes and missed most of the ring between them, which looked like an area
