@@ -7,7 +7,7 @@
 //
 // The orb and the sage: the sage carries the six orbs on its ring (lib/six-paths-sage.js) and
 // stands 0.9 cells behind the spot the orb works from, so "Target distance" is measured from the
-// orb. Slot 0 leaves the ring at 0.09 radius during the wake, grows to the field cast radius 0.30
+// orb. "Cast direction" turns the sage, the orb spot and the tether about the target. Slot 0 leaves the ring at 0.09 radius during the wake, grows to the field cast radius 0.30
 // and lands on the floor. It shrinks as it feeds the ribbon, as before. During the settle it flies
 // back, shrinks to 0.09 and sits in its slot, which was empty for the whole cast.
 //
@@ -54,18 +54,22 @@ function paint(m, o, x, z, y, w, h, c, mat = solid) {
     Quaternion.identity, new Vector3(w, 1, h)), mat, 0, null, 0, props);
 }
 
-// The tether meets the coil tangentially at its left edge. Wave amplitude falls
-// to zero at both endpoints, so tightening never separates the two pieces.
+// The tether lies flat on the floor, so it turns freely with the cast direction. It meets the
+// coil on the side facing the orb. The coil is level, so it is the same picture for every
+// direction and only its starting angle turns. Wave amplitude falls to zero at both endpoints,
+// so tightening never separates the two pieces.
 function point(u, s, p, t) {
   const tightened = smooth((s - t.reach) / p.wrap);
   const r = p.radius * (1 - 0.22 * tightened);
+  const aim = p.aim * Mathf.Deg2Rad, ax = Math.cos(aim), az = Math.sin(aim);
   if (u <= 1) {
-    const wave = p.wave * (1 - 0.92 * tightened);
-    return { x: -p.range + (p.range - r) * u,
-      z: Math.sin(u * TAU - (s - p.wake) * 5) * Math.sin(Math.PI * u) ** 2 * wave,
-      front: false };
+    const wave = Math.sin(u * TAU - (s - p.wake) * 5) * Math.sin(Math.PI * u) ** 2 * p.wave * (1 - 0.92 * tightened);
+    // From the orb's floor spot to the coil's first point; the wave runs across that line.
+    const sx = -ax * p.range, sz = -az * p.range, ex = -ax * r, ez = -az * r * 0.60;
+    const len = Math.hypot(ex - sx, ez - sz) || 1;
+    return { x: sx + (ex - sx) * u - (ez - sz) / len * wave, z: sz + (ez - sz) * u + (ex - sx) / len * wave, front: false };
   }
-  const v = u - 1, a = Math.PI + v * TAU * p.turns;
+  const v = u - 1, a = aim + Math.PI + v * TAU * p.turns;
   return { x: Math.cos(a) * r, z: Math.sin(a) * r * 0.60 + v * p.rise,
     front: Math.sin(a) < 0 };
 }
@@ -125,6 +129,7 @@ export default {
     rim: P('Pale edge width (cells)', 0.018, 0.008, 0.04, 0.002, 'Shape'),
     wave: P('Travel undulation (cells)', 0.45, 0, 0.8, 0.05, 'Shape'),
     pulse: P('Catch pulse brightness', 0.5, 0, 1, 0.05, 'Feedback'),
+    aim: P('Cast direction (degrees)', 0, 0, 360, 5, 'Showcase'),
     target: { label: 'Show sage and target mannequin', value: true, group: 'Showcase' },
   },
   duration(p) { return times(p).end; },
@@ -157,14 +162,16 @@ export default {
     }
     // Slot 0 flies to the floor in front of the sage during the wake and home during the settle.
     // On the floor it shrinks as it feeds the ribbon, and gains its mass back during recall.
-    const caster = { x: o.x - p.range - Behind, z: o.z }, spot = { x: o.x - p.range, z: o.z };
+    const aim = p.aim * Mathf.Deg2Rad, ax = Math.cos(aim), az = Math.sin(aim);
+    const caster = { x: o.x - ax * (p.range + Behind), z: o.z - az * (p.range + Behind) };
+    const spot = { x: o.x - ax * p.range, z: o.z - az * p.range };
     carried(caster, s, scene, (i) => i === 0);
-    if (p.target) sage(caster, 0, scene);
+    if (p.target) sage(caster, Math.round(p.aim / 90) % 4 * 90, scene);
     const home = slot(caster, 0, s);
     const go = smooth(s / p.wake) * (1 - smooth((s - t.reform) / p.settle));
     const fed = Math.sqrt(Math.max(0.08, 1 - extent / 2));
     const q = { x: Mathf.Lerp(home.x, spot.x, go), z: Mathf.Lerp(home.z, spot.z, go) + Math.sin(go * Math.PI) * 0.3 * Lift };
-    paint(MeshPool.plane10, o, -p.range, 0, floor, 0.95 * go, 0.5 * go, ink.withAlpha(go * 0.4), soft);
+    paint(MeshPool.plane10, spot, 0, 0, floor, 0.95 * go, 0.5 * go, ink.withAlpha(go * 0.4), soft);
     ball(q, deployRadius(go, Field) * fed, 1, 1, go > 0 ? front + 0.01 : home.layer);
     if (go > 0 && go < 1) trail('serpent orb flight', [home, { x: (home.x + q.x) / 2, z: (home.z + q.z) / 2 + 0.1 }, q],
       0.07, edge.withAlpha(0.45));
