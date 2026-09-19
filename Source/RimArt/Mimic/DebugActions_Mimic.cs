@@ -1,5 +1,4 @@
 using System.Linq;
-using LudeonTK;
 using RimWorld;
 using Verse;
 
@@ -15,10 +14,7 @@ namespace RimArt
     /// </summary>
     public static class DebugActions_Mimic
     {
-        private const string Category = "RimArts";
-
-        [DebugAction(Category, "Mimic: project decoy here", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Mimic", "project decoy here")]
         private static void ProjectDecoy()
         {
             Map map = Find.CurrentMap;

@@ -84,7 +84,7 @@ show: the pawn is a stand-in (RimWorld draws the real one), and so is a melee we
 
 `Recorder/` is a .NET 8 program that compiles the real drawing, timing and dev-action files, linked
 from `Source/RimArt` in `Recorder.csproj`. It compiles them against small stand-ins for
-UnityEngine and Verse in `Recorder/Engine/`. For every `[DebugAction("RimArts", ...)]` whose kit is
+UnityEngine and Verse in `Recorder/Engine/`. For every `[RimArtDebug(...)]` entry of kind `Cell` whose kit is
 listed in `Recorder/Catalog.cs`, it does what the dev tool does:
 
 1. Invoke the action on cell 60, 60 of a 120 × 120 map.

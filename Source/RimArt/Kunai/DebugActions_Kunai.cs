@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using LudeonTK;
 using RimWorld;
 using Verse;
 
@@ -9,11 +8,8 @@ namespace RimArt
     /// <summary>Test shortcuts for stuck kunai.</summary>
     public static class DebugActions_Kunai
     {
-        private const string Category = "RimArts";
-
         /// <summary>Stabs the clicked pawn for 8 on a random outside body part and sticks a kunai in it.</summary>
-        [DebugAction(Category, "Kunai: stick one in pawn", actionType = DebugActionType.ToolMapForPawns,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Kunai", "stick one in pawn", RimArtDebugKind.Pawn)]
         private static void Stick(Pawn pawn)
         {
             BodyPartRecord part = pawn.health.hediffSet.GetNotMissingParts(BodyPartHeight.Undefined, BodyPartDepth.Outside)

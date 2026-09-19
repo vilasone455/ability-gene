@@ -15,6 +15,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Six Paths -->
+    <Compile Include="../../../Source/RimArt/Debug/RimArtDebugAttribute.cs" Link="Linked/Debug/RimArtDebugAttribute.cs" />
     <Compile Include="../../../Source/RimArt/SixPaths/*.cs" LinkBase="Linked/SixPaths" />
     <!-- Gravity Well -->
     <Compile Include="../../../Source/RimArt/Gravity/GravityGraphics.cs" Link="Linked/Gravity/GravityGraphics.cs" />

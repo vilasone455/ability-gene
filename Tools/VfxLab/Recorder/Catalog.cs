@@ -12,8 +12,8 @@ namespace RimArt.VfxLab
     /// moves its markers with it.
     ///
     /// Adding a kit: link its drawing, timing and DebugActions files in Recorder.csproj, then add
-    /// an entry here. Every [DebugAction("RimArts", ...)] whose label starts with the prefix is
-    /// recorded, except "clear" actions.
+    /// an entry here. Every [RimArtDebug] entry of kind Cell whose full label starts with the
+    /// prefix is recorded; "clear" entries are kind Now and are not.
     /// </summary>
     public sealed class Kit
     {

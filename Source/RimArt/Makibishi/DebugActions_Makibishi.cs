@@ -1,5 +1,4 @@
 using System.Linq;
-using LudeonTK;
 using RimWorld;
 using Verse;
 
@@ -8,11 +7,8 @@ namespace RimArt
     /// <summary>Test shortcuts for makibishi: spikes without the pouch or the throw, and a forced step.</summary>
     public static class DebugActions_Makibishi
     {
-        private const string Category = "RimArts";
-
         /// <summary>Spikes the patch around the clicked cell, blamed on the selected pawn if there is one.</summary>
-        [DebugAction(Category, "Makibishi: scatter here", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Makibishi", "scatter here")]
         private static void ScatterHere()
         {
             Map map = Find.CurrentMap;
@@ -23,8 +19,7 @@ namespace RimArt
         }
 
         /// <summary>The clicked pawn steps on a spike, skipping the 35% roll.</summary>
-        [DebugAction(Category, "Makibishi: step on one", actionType = DebugActionType.ToolMapForPawns,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Makibishi", "step on one", RimArtDebugKind.Pawn)]
         private static void StepOnOne(Pawn pawn)
         {
             if (!Makibishi.Affects(pawn))

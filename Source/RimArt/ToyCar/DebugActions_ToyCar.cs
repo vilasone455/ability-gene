@@ -1,5 +1,4 @@
 using System.Linq;
-using LudeonTK;
 using RimWorld;
 using Verse;
 
@@ -14,10 +13,7 @@ namespace RimArt
     /// </summary>
     public static class DebugActions_ToyCar
     {
-        private const string Category = "RimArts";
-
-        [DebugAction(Category, "Toy car: spawn here", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Toy car", "spawn here")]
         private static void SpawnToyCar()
         {
             Map map = Find.CurrentMap;
@@ -42,8 +38,7 @@ namespace RimArt
         /// Selection first, because testing two cars at once is the only way to find out whether
         /// they path independently.
         /// </summary>
-        [DebugAction(Category, "Toy car: drive to here", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Toy car", "drive to here")]
         private static void DriveToyCar()
         {
             Map map = Find.CurrentMap;

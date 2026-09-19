@@ -1,4 +1,3 @@
-using LudeonTK;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -17,10 +16,7 @@ namespace RimArt
     /// </summary>
     public static class DebugActions_Dispersal
     {
-        private const string Category = "RimArts";
-
-        [DebugAction(Category, "Dispersal: shoot the carrier", actionType = DebugActionType.ToolMapForPawns,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Dispersal", "shoot the carrier", RimArtDebugKind.Pawn)]
         private static void ShootCarrier(Pawn pawn)
         {
             Gene_Dispersal gene = DispersalRegistry.CarrierFor(pawn);
@@ -48,8 +44,7 @@ namespace RimArt
                 (pawn.DrawPos - shooter.DrawPos).AngleFlat(), shooter));
         }
 
-        [DebugAction(Category, "Dispersal: fly to here", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Dispersal", "fly to here")]
         private static void FlyHere()
         {
             IntVec3 cell = UI.MouseCell();
@@ -83,8 +78,7 @@ namespace RimArt
                 MessageTypeDefOf.RejectInput, false);
         }
 
-        [DebugAction(Category, "Dispersal: refill the plexus", actionType = DebugActionType.ToolMapForPawns,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Dispersal", "refill the plexus", RimArtDebugKind.Pawn)]
         private static void Refill(Pawn pawn)
         {
             Gene_Dispersal gene = DispersalRegistry.CarrierFor(pawn);

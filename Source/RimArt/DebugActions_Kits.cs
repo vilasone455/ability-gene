@@ -29,8 +29,6 @@ namespace RimArt
     /// </summary>
     public static class DebugActions_Kits
     {
-        private const string Category = "RimArts";
-
         private class Kit
         {
             public string Label;
@@ -41,8 +39,7 @@ namespace RimArt
 
         // ----------------------------------------------------------------- the menu
 
-        [DebugAction(Category, "Grant kit...", actionType = DebugActionType.ToolMapForPawns,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Kits", "grant kit...", RimArtDebugKind.Pawn)]
         private static void GrantKit(Pawn pawn)
         {
             if (pawn == null) return;
