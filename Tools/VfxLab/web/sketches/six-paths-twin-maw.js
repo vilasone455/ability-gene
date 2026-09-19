@@ -8,12 +8,18 @@
 // apart, and the pawn cannot move for 4 s. Then the jaws open, sink, and the two orbs return.
 // Cooldown 30 s from snap or expiry. Two of the six orbs are unavailable while it is armed.
 //
+// The orbs and the sage: the caster carries the six orbs on its ring (lib/six-paths-sage.js).
+// Slots 0 and 1 leave the ring at 0.09 radius, grow to the field cast radius 0.30 over the flight
+// and sink into the sockets. Both slots stay empty while the trap is armed or shut, so the ring
+// shows four orbs left. On the way back each shrinks to 0.09 and sits in its slot.
+//
 // Drawing: the jaws always close east-west on screen whatever the cast direction, so height and
 // span never share the screen axis. Each jaw is a tall back rim behind the pawn and a short front
 // rim across its body. Caster and victim are stand-ins.
 import { AltitudeLayer, Color, Mathf, Meshes } from '../js/engine.js';
 import { draw, mesh, Slate, Lift } from './lib/six-paths-solid.js';
 import { P, Body, Rim, Y, Floor, orb, sprite, trail, band, impact, glow, soft } from './lib/six-paths-impact.js';
+import { sage, carried, slot, deployRadius, Field } from './lib/six-paths-sage.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp;
 const disc = Meshes.disc(32, 'maw disc');
@@ -140,17 +146,20 @@ export default {
       }
     };
 
-    // Orbs fly from the caster, drop into the sockets, and come back at the end.
+    // Slots 0 and 1 leave the ring, drop into the sockets, and come back to their slots at the end.
+    carried(caster, s, scene, (i) => i < 2);
     for (const side of [-1, 1]) {
-      const socket = { x: o.x + side * p.reach, z: o.z };
+      const socket = { x: o.x + side * p.reach, z: o.z }, home = slot(caster, side < 0 ? 0 : 1, s);
       const path = (u) => ({
-        x: lerp(caster.x, socket.x, u),
-        z: lerp(caster.z, socket.z, u) + (.8 * (1 - u * u) + Math.sin(u * Math.PI) * .9) * Lift,
+        x: lerp(home.x, socket.x, u),
+        z: lerp(home.z, socket.z, u) + Math.sin(u * Math.PI) * .9 * Lift,
       });
       const out = s < p.arm, u = out ? smooth(s / (p.arm * .75)) : 1 - smooth((s - t.gone) / p.recall);
       if (out || s >= t.gone) {
         const sinking = out ? smooth((s - p.arm * .75) / (p.arm * .25)) : 0;
-        orb(path(u), .28 * (1 - sinking), 1, 1 - sinking * .5);
+        // Coming back, the orb rises out of the socket before it sets off.
+        const emerge = out ? 1 : Math.min(1, (1 - u) * 4);
+        orb(path(u), deployRadius(u, Field) * (1 - sinking) * emerge, 1, 1 - sinking * .5, u > 0 ? Y : home.layer);
         const from = out ? s : s - t.gone, span = out ? p.arm * .75 : p.recall;
         const tail = Array.from({ length: 16 }, (_, j) => {
           const v = smooth(Math.max(0, from - (1 - j / 15) * .14) / span);
@@ -167,7 +176,7 @@ export default {
     for (const side of [-1, 1]) rimOf('maw back ' + side, side, .2, 1, Y + .02, .12);
 
     if (p.actors) {
-      figure(caster, new Color(.39, .58, .65), AltitudeLayer.Pawn.AltitudeFor());
+      sage(caster, 0, scene);
       const walking = p.scenario === 'walks in' && s < t.trigger;
       const w = walking ? clamp((s - p.arm) / p.wait) : 1;
       const held = s > t.rise && s < t.release;

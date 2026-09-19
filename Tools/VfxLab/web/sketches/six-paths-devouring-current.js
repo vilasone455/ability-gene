@@ -1,14 +1,20 @@
 // Devouring Current — VFX-only proposal: prepare 0–0.4s, pull 0.4–1.9s,
 // hold visible actors 1.9–2.35s, fire outward 2.35–2.75s, settle by 3.4s.
-// One orb survives. Pawn and bullets are scripted stand-ins, not mechanics.
+// Pawn and bullets are scripted stand-ins, not mechanics.
+//
+// The orb and the sage: the sage carries the six orbs on its ring (lib/six-paths-sage.js) and
+// stands 0.9 cells behind the spot the orb works from. Slot 0 leaves the ring at 0.09 radius
+// during the prepare, grows to the field cast radius 0.30 and hovers there. Its slot stays empty
+// for the whole cast. During the settle it flies back, shrinks to 0.09 and sits in its slot.
 import { AltitudeLayer, Color, Mathf, Meshes } from '../js/engine.js';
 import { draw, Lift } from './lib/six-paths-solid.js';
 import { P, Body, Rim, Y, orb, sprite, trail, soft, glow, rand } from './lib/six-paths-impact.js';
+import { sage, carried, slot, deployRadius, Field, Facings } from './lib/six-paths-sage.js';
 
 const clamp=Mathf.Clamp01, smooth=Mathf.Smooth, lerp=Mathf.Lerp;
 const pale=new Color(.88,.81,1), dust=new Color(.56,.49,.40);
 const disc=Meshes.disc(40,'devouring actor'), shadows=AltitudeLayer.Shadows.AltitudeFor();
-const prepare=.4, settle=.65, capture=1.05, hover=1.05;
+const prepare=.4, settle=.65, capture=1.05, hover=1.05, Behind=.9;
 function timing(p) {
   const hold=prepare+p.pull, release=hold+p.hold, stop=release+p.release;
   return {hold,release,stop,end:stop+settle};
@@ -76,14 +82,23 @@ export default {
     }
 
     // A single dark, shaded sphere and narrow forward crescent remain readable.
-    shadow(orbX,0,hover,.85,.57,.8);
-    const q=pos(orbX,0,hover);
-    orb(q,.34,1,1,Y+.04);
-    draw(disc,q.x-.075,Y+.045,q.z+.065,.20,.22,0,new Color(.12,.095,.17));
-    const crescent=Array.from({length:25},(_,j)=>{
-      const a=-1.1+j/24*2.2;return pos(orbX+.31*Math.cos(a),.31*Math.sin(a),hover);
-    });
-    trail('devouring inlet',crescent,.045,pale.withAlpha(.25+pressure*.55),Y+.05);
+    // Slot 0 flies out to the hover spot during the prepare and home during the settle.
+    const caster=pos(-Behind);
+    carried(caster,s,scene,(i)=>i===0);
+    if(p.actors)sage(caster,Facings[{Right:'East',Left:'West',Up:'North',Down:'South'}[p.facing]],scene);
+    const home=slot(caster,0,s), spot=pos(orbX,0,hover);
+    const go=smooth(s/prepare)*(1-smooth((s-t.stop)/settle)), R=deployRadius(go,Field);
+    const q={x:lerp(home.x,spot.x,go),z:lerp(home.z,spot.z,go)};
+    shadow(orbX,0,hover,.85*go,.57*go,.8*go);
+    orb(q,R,1,1,go>0?Y+.04:home.layer);
+    if(go>0 && go<1)trail('devouring orb flight',[home,{x:(home.x+q.x)/2,z:(home.z+q.z)/2+.1},q],.07,Rim.withAlpha(.45));
+    if(go>=1) {
+      draw(disc,q.x-R*.22,Y+.045,q.z+R*.19,R*.59,R*.65,0,new Color(.12,.095,.17));
+      const crescent=Array.from({length:25},(_,j)=>{
+        const a=-1.1+j/24*2.2;return pos(orbX+(R-.03)*Math.cos(a),(R-.03)*Math.sin(a),hover);
+      });
+      trail('devouring inlet',crescent,.045,pale.withAlpha(.25+pressure*.55),Y+.05);
+    }
     for(let i=0;i<7;i++) {
       if(s<prepare || s>=t.release)continue;
       const u=((s-prepare)*2.2+i/7)%1, side=i%2?1:-1;

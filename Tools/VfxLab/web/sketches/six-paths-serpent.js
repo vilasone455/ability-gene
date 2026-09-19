@@ -3,7 +3,14 @@
 // around the legs (0.55 s), holds taut (1.25 s), then unwinds/retracts (0.65 s)
 // into the same orb (0.35 s). The catch pulse marks when restraint would begin;
 // opening the coil marks when it ends. No damage burst or execution flash.
-// The optional mannequin is a lab-only target at origin; caster/orb is to its left.
+// The optional mannequin is a lab-only target at origin; the sage and the orb are to its left.
+//
+// The orb and the sage: the sage carries the six orbs on its ring (lib/six-paths-sage.js) and
+// stands 0.9 cells behind the spot the orb works from, so "Target distance" is measured from the
+// orb. Slot 0 leaves the ring at 0.09 radius during the wake, grows to the field cast radius 0.30
+// and lands on the floor. It shrinks as it feeds the ribbon, as before. During the settle it flies
+// back, shrinks to 0.09 and sits in its slot, which was empty for the whole cast.
+//
 // Port the sampled strip meshes and shipped SoftDisc texture to C#, replacing the
 // mannequin with the targeted pawn, and bind Hold/Release to the actual status.
 import {
@@ -11,7 +18,10 @@ import {
   Matrix4x4, Mesh, Meshes, MeshPool, Quaternion, ShaderDatabase, ShaderPropertyIDs, Vector3,
 } from '../js/engine.js';
 
-const TAU = 2 * Math.PI;
+import { Lift, orb as ball, trail } from './lib/six-paths-impact.js';
+import { sage, carried, slot, deployRadius, Field } from './lib/six-paths-sage.js';
+
+const TAU = 2 * Math.PI, Behind = 0.9;
 const ink = new Color(0.025, 0.022, 0.036);
 const edge = new Color(0.62, 0.53, 0.79);
 const pale = new Color(0.87, 0.83, 0.96);
@@ -115,7 +125,7 @@ export default {
     rim: P('Pale edge width (cells)', 0.018, 0.008, 0.04, 0.002, 'Shape'),
     wave: P('Travel undulation (cells)', 0.45, 0, 0.8, 0.05, 'Shape'),
     pulse: P('Catch pulse brightness', 0.5, 0, 1, 0.05, 'Feedback'),
-    target: { label: 'Show target mannequin', value: true, group: 'Showcase' },
+    target: { label: 'Show sage and target mannequin', value: true, group: 'Showcase' },
   },
   duration(p) { return times(p).end; },
   phases(p) {
@@ -125,7 +135,7 @@ export default {
       { name: 'Release', t: t.release }, { name: 'Reformed', t: t.reform }];
   },
   events() { return []; }, // A restraint catches; it does not explode or shake the map.
-  draw(s, p, { origin: o }) {
+  draw(s, p, { origin: o, scene }) {
     const t = times(p);
     if (s < 0 || s >= t.end) return;
     const stage = smooth(s / 0.15) * (1 - smooth((s - t.reform) / p.settle));
@@ -145,11 +155,19 @@ export default {
       paint(disc, o, reaction, 0.43, pawn + 0.002, 0.29, 0.36, new Color(0.60, 0.43, 0.28, stage));
       paint(disc, o, reaction, 0.88, pawn + 0.004, 0.19, 0.20, new Color(0.80, 0.69, 0.53, stage));
     }
-    // Orb shrinks as it feeds the ribbon, and gains its mass back during recall.
-    const orb = 0.32 * Math.sqrt(Math.max(0.08, 1 - extent / 2));
-    paint(MeshPool.plane10, o, -p.range, 0, floor, 0.95, 0.5, ink.withAlpha(stage * 0.4), soft);
-    paint(disc, o, -p.range, 0, front + 0.01, orb + p.rim, orb + p.rim, edge.withAlpha(stage));
-    paint(disc, o, -p.range, 0, front + 0.012, orb, orb, ink.withAlpha(stage));
+    // Slot 0 flies to the floor in front of the sage during the wake and home during the settle.
+    // On the floor it shrinks as it feeds the ribbon, and gains its mass back during recall.
+    const caster = { x: o.x - p.range - Behind, z: o.z }, spot = { x: o.x - p.range, z: o.z };
+    carried(caster, s, scene, (i) => i === 0);
+    if (p.target) sage(caster, 0, scene);
+    const home = slot(caster, 0, s);
+    const go = smooth(s / p.wake) * (1 - smooth((s - t.reform) / p.settle));
+    const fed = Math.sqrt(Math.max(0.08, 1 - extent / 2));
+    const q = { x: Mathf.Lerp(home.x, spot.x, go), z: Mathf.Lerp(home.z, spot.z, go) + Math.sin(go * Math.PI) * 0.3 * Lift };
+    paint(MeshPool.plane10, o, -p.range, 0, floor, 0.95 * go, 0.5 * go, ink.withAlpha(go * 0.4), soft);
+    ball(q, deployRadius(go, Field) * fed, 1, 1, go > 0 ? front + 0.01 : home.layer);
+    if (go > 0 && go < 1) trail('serpent orb flight', [home, { x: (home.x + q.x) / 2, z: (home.z + q.z) / 2 + 0.1 }, q],
+      0.07, edge.withAlpha(0.45));
 
     if (extent > 0.001) {
       const n = Math.ceil(160 * extent / 2), points = [];
