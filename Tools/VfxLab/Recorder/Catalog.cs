@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace RimArt.VfxLab
@@ -39,6 +40,14 @@ namespace RimArt.VfxLab
                     : label.Contains("sheet") ? Array.Empty<Phase>() : RingPhases(),
                 LoopSeconds = label => label.Contains("slam") || label.Contains("bloom") || label.Contains("maw") || label.Contains("rods") || label.Contains("serpent") || label.Contains("repulse") || label.Contains("current") || label.Contains("umbrella") || label.Contains("sheet")
                     ? null : SixPathsTiming.CycleSeconds * SixPathsShapes.Cycle.Length,
+            },
+            new Kit
+            {
+                Name = "Flying Thunder God", Prefix = "Flying Thunder God:", Component = typeof(MapComponent_ThunderGodPreview), Clock = "seconds",
+                Phases = label => label.Contains("chain") ? ChainPhases(label.Contains("5 targets") ? 5 : 3, label.Contains("jumps back"))
+                    : label.Contains("guiding") ? GuidingPhases()
+                    : label.Contains("rasengan") ? RasenganPhases(label.Contains("teleport"), label.Contains("wall"))
+                    : JumpPhases(label.Contains("in enemy")),
             },
             new Kit
             {
@@ -143,6 +152,49 @@ namespace RimArt.VfxLab
             new Phase("Folds", SixPathsUmbrellaTiming.CloseAt),
             new Phase("Held again", SixPathsUmbrellaTiming.ClosedAt),
         };
+
+        private static Phase[] JumpPhases(bool inEnemy)
+        {
+            var phases = new List<Phase>
+            {
+                new Phase("Stand", 0f),
+                new Phase("Script written", ThunderGodJumpTiming.CastAt),
+                new Phase("Gone / line", ThunderGodJumpTiming.GoAt),
+                new Phase("Arrive", ThunderGodJumpTiming.ArriveAt),
+            };
+            if (inEnemy) phases.Add(new Phase("Strike", ThunderGodJumpTiming.StrikeAt));
+            phases.Add(new Phase("Script burns away", ThunderGodJumpTiming.SettleAt));
+            return phases.ToArray();
+        }
+
+        private static Phase[] ChainPhases(int targets, bool returns)
+        {
+            var phases = new List<Phase> { new Phase("Stand", 0f), new Phase("Script written", ThunderGodChainTiming.CastAt) };
+            for (int k = 0; k < ThunderGodChainTiming.Hops(targets, returns); k++)
+                phases.Add(new Phase(k < targets ? "Jump " + (k + 1) : "Jump back", ThunderGodChainTiming.GoAt(k)));
+            phases.Add(new Phase("Script burns away", ThunderGodChainTiming.SettleAt(targets, returns)));
+            return phases.ToArray();
+        }
+
+        private static Phase[] GuidingPhases() => new[]
+        {
+            new Phase("Stand", 0f),
+            new Phase("Ring written", GuidingThunderTiming.CastAt),
+            new Phase("Barrier up", GuidingThunderTiming.UpAt),
+            new Phase("Ring burns away", GuidingThunderTiming.OverAt),
+            new Phase("Barrier gone", GuidingThunderTiming.GoneAt),
+        };
+
+        private static Phase[] RasenganPhases(bool teleports, bool wall)
+        {
+            var phases = new List<Phase> { new Phase("Stand", 0f), new Phase("Ball forms", RasenganTiming.CastAt) };
+            if (teleports) phases.Add(new Phase("Teleport", RasenganTiming.FormedAt));
+            phases.Add(new Phase("Thrust", RasenganTiming.ThrustAt(teleports)));
+            phases.Add(new Phase("Grind", RasenganTiming.HitAt(teleports)));
+            phases.Add(new Phase("Release / thrown", RasenganTiming.ReleaseAt(teleports)));
+            phases.Add(new Phase(wall ? "Hits the wall" : "Lands", RasenganTiming.LandAt(teleports, wall)));
+            return phases.ToArray();
+        }
 
         private static Phase[] RingPhases()
         {
