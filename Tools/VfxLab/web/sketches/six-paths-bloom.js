@@ -8,11 +8,16 @@
 // the bud uncurls (0.65 s) and the orb returns. One orb, about 60 s cooldown. It is the friendly
 // counterpart of Twin Maw: that closes on an enemy to hurt it, this closes on a friend to keep it.
 //
+// The orb and the sage: the caster carries the six orbs on its ring (lib/six-paths-sage.js). Slot 0
+// leaves the ring at 0.09 radius, grows to the field cast radius 0.30 over the flight, and sinks.
+// Its slot stays empty for the whole cast. On the way back it shrinks to 0.09 and sits in the slot.
+//
 // Curved petal strips project real height north by Lift; shadows stay at their roots.
 // Caster and patient are stand-ins. The patient gets up after the bud opens to show the result.
 import { Color, Mathf, Meshes } from '../js/engine.js';
 import { draw } from './lib/six-paths-solid.js';
 import { P, Body, Rim, Y, Floor, Lift, at, sprite, orb, circle, band, trail, glow, soft, rand } from './lib/six-paths-impact.js';
+import { sage, carried, slot, deployRadius, Field } from './lib/six-paths-sage.js';
 const smooth = Mathf.Smooth, lerp = Mathf.Lerp;
 const disc = Meshes.disc(32, 'bloom figure');
 const pale = new Color(.88, .79, 1);
@@ -84,12 +89,11 @@ export default {
     const caster = { x: origin.x - p.distance, z: origin.z };
     const sunk = smooth(s / p.sink), reform = smooth((s - t.dissolve) / p.reform);
     const closed = smooth((s - t.snap) / p.snap) * (1 - smooth((s - t.open) / p.open));
+    carried(caster, s, scene, (i) => i === 0);
     if (p.actors) {
       // The patient lies on the open flower, then sits behind the front petals once they rise.
       const layer = closed > .35 ? Y + .02 : Y + .09, skin = new Color(.83, .70, .54);
-      sprite({ x: caster.x + sun.x * .45, z: caster.z + sun.z * .45 }, .85, .4, Body.withAlpha(strength), soft, Floor);
-      draw(disc, caster.x, Y - .05, caster.z + .18, .22, .32, 0, new Color(.39, .58, .65));
-      draw(disc, caster.x, Y - .048, caster.z + .58, .16, .17, 0, skin);
+      sage(caster, 0, scene);
       // A downed patient lies bleeding until the bud has opened again, then stands.
       const down = p.patient === 'downed ally' && s < t.open + p.open * .6, shirt = new Color(.45, .55, .38);
       sprite({ x: origin.x + sun.x * .3, z: origin.z + sun.z * .3 }, .85, .4, Body.withAlpha(strength), soft, Floor);
@@ -105,12 +109,12 @@ export default {
     const fade = 1 - smooth((s - t.end + 0.15) / 0.15);
     sprite(origin, p.radius * 2 * sunk, p.radius * 2 * sunk, Body.withAlpha(0.3 * (1 - reform)), undefined, Floor);
     circle(origin, p.radius * 0.95, 0.2 * sunk * (1 - smooth((s - t.snap) / p.snap)));
-    // The orb flies from the caster, drops under the patient, and goes back at the end.
-    const path = (u) => ({ x: lerp(caster.x, origin.x, u),
-      z: lerp(caster.z, origin.z, u) + (.7 * (1 - u * u) + Math.sin(u * Math.PI) * .8) * Lift });
+    // The orb leaves ring slot 0, drops under the patient, and goes back to the slot at the end.
+    const home = slot(caster, 0, s);
+    const path = (u) => ({ x: lerp(home.x, origin.x, u), z: lerp(home.z, origin.z, u) + Math.sin(u * Math.PI) * .8 * Lift });
     if (s < p.sink) {
       const u = smooth(s / (p.sink * .7)), drop = smooth((s - p.sink * .7) / (p.sink * .3));
-      orb(path(u), 0.34 * (1 - drop * .9), 1, 1 - drop * .5);
+      orb(path(u), deployRadius(u, Field) * (1 - drop * .9), 1, 1 - drop * .5, u > 0 ? Y : home.layer);
       trail('bloom orb out', Array.from({ length: 14 }, (_, j) => path(smooth(Math.max(0, s - (1 - j / 13) * .14) / (p.sink * .7)))),
         .08, Rim.withAlpha(.5 * (1 - drop)));
     }
@@ -126,7 +130,7 @@ export default {
         pale.withAlpha(Math.sin(u * Math.PI) * p.motes * closed), glow, Y + 0.13);
     }
     if (reform > 0) {
-      orb(path(1 - reform), 0.34 * Math.min(1, reform * 4), fade);
+      orb(path(1 - reform), deployRadius(1 - reform, Field) * Math.min(1, reform * 4), 1, 1, reform < 1 ? Y : home.layer);
       trail('bloom orb back', Array.from({ length: 14 }, (_, j) =>
         path(1 - smooth(Math.max(0, s - t.dissolve - (1 - j / 13) * .14) / p.reform))), .08, Rim.withAlpha(.5 * fade));
     }

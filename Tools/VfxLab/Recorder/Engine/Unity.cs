@@ -19,6 +19,11 @@ namespace UnityEngine
         public float magnitude => Mathf.Sqrt(sqrMagnitude);
         public Vector2 normalized { get { float m = magnitude; return m > 1e-5f ? this / m : new Vector2(0f, 0f); } }
         public static Vector2 zero => new Vector2(0f, 0f);
+        public static Vector2 right => new Vector2(1f, 0f);
+        public static Vector2 left => new Vector2(-1f, 0f);
+        public static Vector2 up => new Vector2(0f, 1f);
+        public static Vector2 down => new Vector2(0f, -1f);
+        public static Vector2 Lerp(Vector2 a, Vector2 b, float t) { t = Mathf.Clamp01(t); return new Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t); }
     }
 
     public struct Vector3
@@ -36,6 +41,7 @@ namespace UnityEngine
         public float magnitude => Mathf.Sqrt(sqrMagnitude);
         public Vector3 normalized { get { float m = magnitude; return m > 1e-5f ? this / m : zero; } }
         public static Vector3 zero => new Vector3(0f, 0f, 0f);
+        public static Vector3 up => new Vector3(0f, 1f, 0f);
         public static Vector3 one => new Vector3(1f, 1f, 1f);
         public override string ToString() => $"({x:0.00}, {y:0.00}, {z:0.00})";
     }
@@ -64,6 +70,8 @@ namespace UnityEngine
         public static float Cos(float v) => (float)Math.Cos(v);
         public static float Sqrt(float v) => (float)Math.Sqrt(v);
         public static float Pow(float v, float e) => (float)Math.Pow(v, e);
+        public static float Exp(float v) => (float)Math.Exp(v);
+        public static float Atan2(float y, float x) => (float)Math.Atan2(y, x);
         public static float Abs(float v) => Math.Abs(v);
         public static float Min(float a, float b) => Math.Min(a, b);
         public static float Max(float a, float b) => Math.Max(a, b);
