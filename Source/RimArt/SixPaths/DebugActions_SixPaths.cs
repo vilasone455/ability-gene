@@ -55,6 +55,18 @@ namespace RimArt
         public static void SerpentSouthWest() => Preview().Play(UI.MouseCell(), PreviewMode.Serpent, 1f, false,
             new Vector2(Mathf.Cos(215f * Mathf.Deg2Rad), Mathf.Sin(215f * Mathf.Deg2Rad)));
 
+        [RimArtDebug("Six Paths", "repulse step east")]
+        public static void RepulseEast() => Preview().Play(UI.MouseCell(), PreviewMode.Repulse, 1f, false, Vector2.right);
+
+        [RimArtDebug("Six Paths", "repulse step west")]
+        public static void RepulseWest() => Preview().Play(UI.MouseCell(), PreviewMode.Repulse, 1f, false, Vector2.left);
+
+        [RimArtDebug("Six Paths", "repulse step north")]
+        public static void RepulseNorth() => Preview().Play(UI.MouseCell(), PreviewMode.Repulse, 1f, false, Vector2.up);
+
+        [RimArtDebug("Six Paths", "repulse step south")]
+        public static void RepulseSouth() => Preview().Play(UI.MouseCell(), PreviewMode.Repulse, 1f, false, Vector2.down);
+
         [RimArtDebug("Six Paths", "umbrella canopy")]
         public static void UmbrellaCanopy() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaCanopy, 1f, false, Vector2.right);
 
@@ -81,7 +93,7 @@ namespace RimArt
             Find.CurrentMap.GetComponent<MapComponent_SixPathsPreview>();
     }
 
-    public enum PreviewMode { Ring, Sheet, Slam, Bloom, TwinMaw, Rods, Serpent, UmbrellaCanopy, UmbrellaGuard }
+    public enum PreviewMode { Ring, Sheet, Slam, Bloom, TwinMaw, Rods, Serpent, Repulse, UmbrellaCanopy, UmbrellaGuard }
 
     public sealed class MapComponent_SixPathsPreview : MapComponent
     {
@@ -99,7 +111,7 @@ namespace RimArt
         private bool frozen, shaken;
         private float speed, seconds;
         private IntVec3 cell;
-        /// <summary>The cardinal the umbrella's sage faces or the rods or the serpent are cast along, east and north positive.</summary>
+        /// <summary>The cardinal the umbrella's sage faces or the rods or the serpent are cast along or the repulse step launches, east and north positive.</summary>
         private Vector2 toward;
 
         public MapComponent_SixPathsPreview(Map map) : base(map) { }
@@ -173,6 +185,18 @@ namespace RimArt
                     SixPathsSerpentGraphics.Draw(cell.ToVector3Shifted(),
                         cell.ToVector3Shifted() - new Vector3(toward.x, 0f, toward.y) * SerpentSageDistance, seconds, map);
                     if (seconds >= SixPathsSerpentTiming.Duration) active = false;
+                    break;
+                case PreviewMode.Repulse:
+                    if (seconds >= SixPathsRepulseTiming.LaunchAt && !shaken)
+                    {
+                        shaken = true;
+                        Find.CameraDriver.shaker.DoShake(SixPathsRepulseTiming.Shake);
+                    }
+                    // No pawn is launched here: the timing class's script says where the sage, and so its ring, is.
+                    SixPathsRepulseGraphics.Draw(cell.ToVector3Shifted(),
+                        cell.ToVector3Shifted() + new Vector3(toward.x, 0f, toward.y) * SixPathsRepulseTiming.Travel(seconds),
+                        toward, seconds, map);
+                    if (seconds >= SixPathsRepulseTiming.Duration) active = false;
                     break;
                 case PreviewMode.UmbrellaCanopy:
                 case PreviewMode.UmbrellaGuard:
