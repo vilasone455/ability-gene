@@ -36,6 +36,18 @@ namespace RimArt
         [RimArtDebug("Six Paths", "twin maw")]
         public static void TwinMaw() => Preview().Play(UI.MouseCell(), PreviewMode.TwinMaw, 1f, false);
 
+        [RimArtDebug("Six Paths", "rods east")]
+        public static void RodsEast() => Preview().Play(UI.MouseCell(), PreviewMode.Rods, 1f, false, Vector2.right);
+
+        [RimArtDebug("Six Paths", "rods west")]
+        public static void RodsWest() => Preview().Play(UI.MouseCell(), PreviewMode.Rods, 1f, false, Vector2.left);
+
+        [RimArtDebug("Six Paths", "rods north")]
+        public static void RodsNorth() => Preview().Play(UI.MouseCell(), PreviewMode.Rods, 1f, false, Vector2.up);
+
+        [RimArtDebug("Six Paths", "rods south")]
+        public static void RodsSouth() => Preview().Play(UI.MouseCell(), PreviewMode.Rods, 1f, false, Vector2.down);
+
         [RimArtDebug("Six Paths", "umbrella canopy")]
         public static void UmbrellaCanopy() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaCanopy, 1f, false, Vector2.right);
 
@@ -62,7 +74,7 @@ namespace RimArt
             Find.CurrentMap.GetComponent<MapComponent_SixPathsPreview>();
     }
 
-    public enum PreviewMode { Ring, Sheet, Slam, Bloom, TwinMaw, UmbrellaCanopy, UmbrellaGuard }
+    public enum PreviewMode { Ring, Sheet, Slam, Bloom, TwinMaw, Rods, UmbrellaCanopy, UmbrellaGuard }
 
     public sealed class MapComponent_SixPathsPreview : MapComponent
     {
@@ -70,13 +82,15 @@ namespace RimArt
         private const float BloomSageDistance = 4.5f;
         /// <summary>Cells west of the trap tile that the maw's sage stands.</summary>
         private const float MawSageDistance = 5f;
+        /// <summary>Cells back along the cast direction from the middle of the wall that the rods' sage stands.</summary>
+        private const float RodsSageDistance = 5f;
 
         public bool active;
         private PreviewMode mode;
         private bool frozen, shaken;
         private float speed, seconds;
         private IntVec3 cell;
-        /// <summary>The cardinal the umbrella's sage faces, east and north positive.</summary>
+        /// <summary>The cardinal the umbrella's sage faces or the rods are cast along, east and north positive.</summary>
         private Vector2 toward;
 
         public MapComponent_SixPathsPreview(Map map) : base(map) { }
@@ -135,6 +149,16 @@ namespace RimArt
                     SixPathsTwinMawGraphics.Draw(cell.ToVector3Shifted(),
                         cell.ToVector3Shifted() - new Vector3(MawSageDistance, 0f, 0f), seconds, map);
                     if (seconds >= SixPathsTwinMawTiming.Duration) active = false;
+                    break;
+                case PreviewMode.Rods:
+                    if (seconds >= SixPathsRodsTiming.RiseAt && !shaken)
+                    {
+                        shaken = true;
+                        Find.CameraDriver.shaker.DoShake(SixPathsRodsTiming.Shake);
+                    }
+                    SixPathsRodsGraphics.Draw(cell.ToVector3Shifted(),
+                        cell.ToVector3Shifted() - new Vector3(toward.x, 0f, toward.y) * RodsSageDistance, toward, seconds, map);
+                    if (seconds >= SixPathsRodsTiming.Duration) active = false;
                     break;
                 case PreviewMode.UmbrellaCanopy:
                 case PreviewMode.UmbrellaGuard:

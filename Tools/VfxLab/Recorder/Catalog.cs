@@ -31,9 +31,10 @@ namespace RimArt.VfxLab
                 Phases = label => label.Contains("slam") ? SlamPhases()
                     : label.Contains("bloom") ? BloomPhases()
                     : label.Contains("maw") ? TwinMawPhases()
+                    : label.Contains("rods") ? RodsPhases()
                     : label.Contains("umbrella") ? UmbrellaPhases(label.Contains("canopy"))
                     : label.Contains("sheet") ? Array.Empty<Phase>() : RingPhases(),
-                LoopSeconds = label => label.Contains("slam") || label.Contains("bloom") || label.Contains("maw") || label.Contains("umbrella") || label.Contains("sheet")
+                LoopSeconds = label => label.Contains("slam") || label.Contains("bloom") || label.Contains("maw") || label.Contains("rods") || label.Contains("umbrella") || label.Contains("sheet")
                     ? null : SixPathsTiming.CycleSeconds * SixPathsShapes.Cycle.Length,
             },
             new Kit
@@ -89,6 +90,16 @@ namespace RimArt.VfxLab
             new Phase("Hold", SixPathsTwinMawTiming.ShutAt),
             new Phase("Release", SixPathsTwinMawTiming.ReleaseAt),
             new Phase("Orbs return", SixPathsTwinMawTiming.GoneAt),
+        };
+
+        private static Phase[] RodsPhases() => new[]
+        {
+            new Phase("Orbs sink", 0f),
+            new Phase("Crack", SixPathsRodsTiming.CrackAt),
+            new Phase("Rods up", SixPathsRodsTiming.RiseAt),
+            new Phase("Wall stands", SixPathsRodsTiming.StandAt),
+            new Phase("Back down", SixPathsRodsTiming.RetractAt),
+            new Phase("Orbs return", SixPathsRodsTiming.GoneAt),
         };
 
         private static Phase[] UmbrellaPhases(bool canopy) => new[]
