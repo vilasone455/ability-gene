@@ -212,6 +212,34 @@ time giving the same picture. So:
   operator overloading, so the C# `a + b * 2` is `a.plus(b.times(2))`.
 - `Color.Lerp(a, b, t)`, `colour.withAlpha(a)`.
 
+### A caster that plays a real animation clip
+
+A sketch can draw one of the Melee Animation clips (`Animations/*.json`, or that mod's own) as its
+caster, so the pawn's motion and the effect run on one clock. `sketches/throw-kunai.js` is the
+worked example.
+
+```js
+import { playClip } from '../js/animation.js';
+
+const clip = playClip('RimArt_ThrowKunai', seconds - lead, casterPosition, { aim: p.aim, scene });
+if (!clip) return;                       // still loading: nothing was drawn
+if (seconds - lead >= clip.release) { /* the item has left the hand: start the projectile */ }
+```
+
+- The name is the json file's name without `.json`. `position` is `{ x, z }` in cells.
+- `aim` is degrees to the target (0 east, 90 north). It picks the East, North or South clip and
+  the west mirror as `ThrowAnimation.Aim` does, and turns the throwing hand by what is left, as
+  `ThrowAimWorker` does. Leave it out and the East clip plays; `mirror: true` faces it west.
+- `seconds` is clamped to the clip, so before 0 the pawn holds the first pose and after the end
+  the last. Shift it (`seconds - lead`) to start the clip late.
+- It returns `{ length, release, facing, mirror, hand, item, itemAtRelease }`. `hand` and `item`
+  are `{ x, z, rot, held }` in world cells for the main hand and the thrown item at this time;
+  `itemAtRelease` is the item one frame before it is switched off. `release` is null for a clip
+  that throws nothing.
+- The pawn is the clip player's stand-in, not the game's pawn. See "Animation clips" in `README.md`.
+- In game the thrown projectile starts at the pawn's `DrawPos`, not at the hand
+  (`PendingThrow.cs`), so `itemAtRelease` is for judging that gap, not the real launch point.
+
 ## 4. What a sketch cannot do
 
 The lab only offers what the game's drawing calls can do, so that a sketch can be ported. Anything
