@@ -26,10 +26,19 @@ namespace RimArt
             mesh.triangles = indices;
         }
 
-        public void Between(Vector2[] a, Vector2[] b)
+        /// <summary>
+        /// With <paramref name="skip"/>, the piece between points i and i + 1 is left with no area
+        /// where skip[i] is true, so one line of points can be shared out between two strips.
+        /// </summary>
+        public void Between(Vector2[] a, Vector2[] b, bool[] skip = null)
         {
             for (int i = 0; i + 1 < a.Length; i++)
             {
+                if (skip != null && skip[i])
+                {
+                    for (int v = i * 6; v < i * 6 + 6; v++) vertices[v] = Vector3.zero;
+                    continue;
+                }
                 Triangle(i * 6, a[i], a[i + 1], b[i]);
                 Triangle(i * 6 + 3, b[i], a[i + 1], b[i + 1]);
             }

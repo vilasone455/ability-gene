@@ -32,9 +32,10 @@ namespace RimArt.VfxLab
                     : label.Contains("bloom") ? BloomPhases()
                     : label.Contains("maw") ? TwinMawPhases()
                     : label.Contains("rods") ? RodsPhases()
+                    : label.Contains("serpent") ? SerpentPhases()
                     : label.Contains("umbrella") ? UmbrellaPhases(label.Contains("canopy"))
                     : label.Contains("sheet") ? Array.Empty<Phase>() : RingPhases(),
-                LoopSeconds = label => label.Contains("slam") || label.Contains("bloom") || label.Contains("maw") || label.Contains("rods") || label.Contains("umbrella") || label.Contains("sheet")
+                LoopSeconds = label => label.Contains("slam") || label.Contains("bloom") || label.Contains("maw") || label.Contains("rods") || label.Contains("serpent") || label.Contains("umbrella") || label.Contains("sheet")
                     ? null : SixPathsTiming.CycleSeconds * SixPathsShapes.Cycle.Length,
             },
             new Kit
@@ -100,6 +101,16 @@ namespace RimArt.VfxLab
             new Phase("Wall stands", SixPathsRodsTiming.StandAt),
             new Phase("Back down", SixPathsRodsTiming.RetractAt),
             new Phase("Orbs return", SixPathsRodsTiming.GoneAt),
+        };
+
+        private static Phase[] SerpentPhases() => new[]
+        {
+            new Phase("Prepare", 0f),
+            new Phase("Seek", SixPathsSerpentTiming.SeekAt),
+            new Phase("Wrap", SixPathsSerpentTiming.ReachAt),
+            new Phase("Restrained", SixPathsSerpentTiming.CatchAt),
+            new Phase("Release", SixPathsSerpentTiming.ReleaseAt),
+            new Phase("Reformed", SixPathsSerpentTiming.ReformAt),
         };
 
         private static Phase[] UmbrellaPhases(bool canopy) => new[]
