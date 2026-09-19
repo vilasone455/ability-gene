@@ -2243,7 +2243,7 @@ gap in it: it fires only on the one part the hole is in, which is a few percent 
 and the carrier is under fire the whole time you wait for it. So the test loop takes the combat
 out.
 
-Dev mode → the debug actions menu → **RimArts**, all pawn-targeted:
+Dev mode → the debug actions menu → **RimArts** → *Open debug window* → **Involute**, all pawn-targeted:
 
 | Action | What it is for |
 |---|---|

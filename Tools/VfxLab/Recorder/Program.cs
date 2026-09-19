@@ -4,13 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
-using LudeonTK;
 using RimArt;
 using RimArt.VfxLab;
 using UnityEngine;
 using Verse;
 
-// Plays every recordable RimArts dev action the way the game would -- invoke it on the centre
+// Plays every recordable [RimArtDebug] entry the way the mod's debug window would -- invoke it on the centre
 // cell, then call MapComponentUpdate once per 60 fps frame -- and writes what was drawn.
 //
 //   dotnet run --project Tools/VfxLab/Recorder -- [--out <dir>]
@@ -25,10 +24,9 @@ var written = new List<object>();
 
 var actions = typeof(SixPathsSlab).Assembly.GetTypes()
     .SelectMany(t => t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
-    .Select(m => (method: m, attr: m.GetCustomAttribute<DebugActionAttribute>()))
-    .Where(a => a.attr != null && a.attr.category == "RimArts" && a.attr.name != null)
-    .Where(a => !a.attr.name.Contains("clear", StringComparison.OrdinalIgnoreCase))
-    .Select(a => (a.method, label: a.attr.name, kit: Kit.For(a.attr.name)))
+    .Select(m => (method: m, attr: m.GetCustomAttribute<RimArtDebugAttribute>()))
+    .Where(a => a.attr != null && a.attr.kind == RimArtDebugKind.Cell)
+    .Select(a => (a.method, label: a.attr.FullLabel, kit: Kit.For(a.attr.FullLabel)))
     .Where(a => a.kit != null)
     .OrderBy(a => a.kit.Name).ThenBy(a => a.label)
     .ToList();
@@ -51,7 +49,7 @@ foreach (var (method, label, kit) in actions)
 
 foreach (Kit kit in Kit.All)
     if (!actions.Any(a => a.kit == kit))
-        failures.Add($"{kit.Name}: no dev action starting with \"{kit.Prefix}\" was found");
+        failures.Add($"{kit.Name}: no [RimArtDebug] entry starting with \"{kit.Prefix}\" was found");
 
 Directory.CreateDirectory(outDir);
 var index = new

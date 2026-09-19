@@ -1,4 +1,4 @@
-// Stand-in for the parts of Verse, RimWorld, Verse.Sound and LudeonTK the recorded kits call.
+// Stand-in for the parts of Verse, RimWorld and Verse.Sound the recorded kits call.
 // Values that change what gets drawn are the game's own, read out of Assembly-CSharp 1.6:
 // altitude is layer x 0.36585367 (Verse.Altitudes.LayerSpacing), and the layer numbers below
 // are the enum's. Everything else is the least that lets the real preview components run.
@@ -261,22 +261,5 @@ namespace RimWorld
                     field.SetValue(null, def);
                 }
         }
-    }
-}
-
-namespace LudeonTK
-{
-    public enum DebugActionType { Action, ToolMap, ToolMapForPawns, ToolWorld }
-
-    [Flags]
-    public enum AllowedGameStates { Invalid = 0, Entry = 1, Playing = 2, WorldRenderedNow = 4, IsCurrentlyOnMap = 8, HasGameCondition = 16, PlayingOnMap = 10, PlayingOnWorld = 6 }
-
-    [AttributeUsage(AttributeTargets.Method)]
-    public sealed class DebugActionAttribute : Attribute
-    {
-        public string category, name;
-        public DebugActionType actionType;
-        public AllowedGameStates allowedGameStates;
-        public DebugActionAttribute(string category = null, string name = null) { this.category = category; this.name = name; }
     }
 }

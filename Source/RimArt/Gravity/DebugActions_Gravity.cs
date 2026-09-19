@@ -1,19 +1,16 @@
 using UnityEngine;
 using RimWorld;
-using LudeonTK;
 using Verse;
 
 namespace RimArt
 {
     public static class DebugActions_Gravity
     {
-        [DebugAction("RimArts", "Gravity Well: VFX preview", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Gravity Well", "VFX preview")]
         public static void Preview() => Find.CurrentMap.GetComponent<MapComponent_GravityPreview>().Preview(UI.MouseCell(), false);
-        [DebugAction("RimArts", "Gravity Well: frozen full mass", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Gravity Well", "frozen full mass")]
         public static void Frozen() => Find.CurrentMap.GetComponent<MapComponent_GravityPreview>().Preview(UI.MouseCell(), true);
-        [DebugAction("RimArts", "Gravity Well: clear preview", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Gravity Well", "clear preview", RimArtDebugKind.Now)]
         public static void Clear() => Find.CurrentMap.GetComponent<MapComponent_GravityPreview>().active = false;
     }
     public sealed class MapComponent_GravityPreview : MapComponent

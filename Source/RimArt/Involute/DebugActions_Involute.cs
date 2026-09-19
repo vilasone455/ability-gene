@@ -17,10 +17,7 @@ namespace RimArt
     /// </summary>
     public static class DebugActions_Involute
     {
-        private const string Category = "RimArts";
-
-        [DebugAction(Category, "Involute: name the hole part", actionType = DebugActionType.ToolMapForPawns,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Involute", "name the hole part", RimArtDebugKind.Pawn)]
         private static void NameHolePart(Pawn pawn)
         {
             Gene_Involute gene = InvoluteUtility.GeneOf(pawn);
@@ -48,8 +45,7 @@ namespace RimArt
         /// rolls once and only once in play, which is the right rule and the wrong one for a
         /// test session.
         /// </summary>
-        [DebugAction(Category, "Involute: re-roll the hole part", actionType = DebugActionType.ToolMapForPawns,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Involute", "re-roll the hole part", RimArtDebugKind.Pawn)]
         private static void RerollHolePart(Pawn pawn)
         {
             Gene_Involute gene = InvoluteUtility.GeneOf(pawn);
@@ -76,8 +72,7 @@ namespace RimArt
         /// which stops being a share of the fire and starts being immunity. It is exactly what
         /// you want for one test session and exactly what you do not want to ship.
         /// </summary>
-        [DebugAction(Category, "Involute: move the hole to...", actionType = DebugActionType.ToolMapForPawns,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Involute", "move the hole to...", RimArtDebugKind.Pawn)]
         private static void MoveHole(Pawn pawn)
         {
             Gene_Involute gene = InvoluteUtility.GeneOf(pawn);
@@ -109,8 +104,7 @@ namespace RimArt
         }
 
         /// <summary>Connects the hole for long enough to run a whole test without re-casting.</summary>
-        [DebugAction(Category, "Involute: connect hole (10 min)", actionType = DebugActionType.ToolMapForPawns,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Involute", "connect hole (10 min)", RimArtDebugKind.Pawn)]
         private static void ConnectHole(Pawn pawn)
         {
             Gene_Involute gene = InvoluteUtility.GeneOf(pawn);
@@ -141,8 +135,7 @@ namespace RimArt
         /// If this works you should see the flash on the carrier, no injury on them, and a round
         /// crossing the volume when you switch to it.
         /// </summary>
-        [DebugAction(Category, "Involute: put a round through the hole", actionType = DebugActionType.ToolMapForPawns,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Involute", "put a round through the hole", RimArtDebugKind.Pawn)]
         private static void RoundThroughHole(Pawn pawn)
         {
             Shoot(pawn, true);
@@ -153,8 +146,7 @@ namespace RimArt
         /// this twenty times and roughly the part's coverage share should pass through - it is
         /// the check that the single-roll write-back in the prefix did not skew the odds.
         /// </summary>
-        [DebugAction(Category, "Involute: fire a round, part unrolled", actionType = DebugActionType.ToolMapForPawns,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Involute", "fire a round, part unrolled", RimArtDebugKind.Pawn)]
         private static void RoundUnrolled(Pawn pawn)
         {
             Shoot(pawn, false);
@@ -175,8 +167,7 @@ namespace RimArt
         }
 
         /// <summary>Look at the room. Generates it if this carrier has never opened the hole.</summary>
-        [DebugAction(Category, "Involute: go to the volume", actionType = DebugActionType.ToolMapForPawns,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Involute", "go to the volume", RimArtDebugKind.Pawn)]
         private static void GoToVolume(Pawn pawn)
         {
             Gene_Involute gene = InvoluteUtility.GeneOf(pawn);

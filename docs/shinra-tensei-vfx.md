@@ -70,7 +70,7 @@ tail advances in game time: the shell ends at 2.05 seconds and dust at 3.4 secon
 
 ## Separate VFX inspection tools
 
-Search **Shinra Tensei** in the debug actions menu, then click visible ground:
+Debug actions menu → **RimArts** → *Open debug window* → **Shinra Tensei**. Press an entry, then click visible ground:
 
 - **VFX preview** plays the wave without a pawn gesture.
 - **VFX slow motion** plays the wave at quarter speed.

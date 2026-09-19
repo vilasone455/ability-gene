@@ -1,4 +1,3 @@
-using LudeonTK;
 using UnityEngine;
 using Verse;
 
@@ -10,59 +9,46 @@ namespace RimArt
     /// </summary>
     public static class DebugActions_SixPaths
     {
-        [DebugAction("RimArts", "Six Paths: orb showcase", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "orb showcase")]
         public static void Showcase() => Preview().Play(UI.MouseCell(), PreviewMode.Ring, 1f, false);
 
-        [DebugAction("RimArts", "Six Paths: slow motion", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "slow motion")]
         public static void SlowMotion() => Preview().Play(UI.MouseCell(), PreviewMode.Ring, 0.25f, false);
 
-        [DebugAction("RimArts", "Six Paths: frozen mid-change", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "frozen mid-change")]
         public static void Frozen() => Preview().Play(UI.MouseCell(), PreviewMode.Ring, 0f, true);
 
-        [DebugAction("RimArts", "Six Paths: shape sheet", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "shape sheet")]
         public static void Sheet() => Preview().Play(UI.MouseCell(), PreviewMode.Sheet, 0f, false);
 
-        [DebugAction("RimArts", "Six Paths: slam", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "slam")]
         public static void Slam() => Preview().Play(UI.MouseCell(), PreviewMode.Slam, 1f, false);
 
-        [DebugAction("RimArts", "Six Paths: slam slow motion", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "slam slow motion")]
         public static void SlamSlow() => Preview().Play(UI.MouseCell(), PreviewMode.Slam, 0.2f, false);
 
-        [DebugAction("RimArts", "Six Paths: slam frozen mid-fall", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "slam frozen mid-fall")]
         public static void SlamFrozen() => Preview().Play(UI.MouseCell(), PreviewMode.Slam, 0f, true);
 
-        [DebugAction("RimArts", "Six Paths: bloom", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "bloom")]
         public static void Bloom() => Preview().Play(UI.MouseCell(), PreviewMode.Bloom, 1f, false);
 
-        [DebugAction("RimArts", "Six Paths: umbrella canopy", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "umbrella canopy")]
         public static void UmbrellaCanopy() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaCanopy, 1f, false, Vector2.right);
 
-        [DebugAction("RimArts", "Six Paths: umbrella guard east", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "umbrella guard east")]
         public static void UmbrellaGuardEast() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaGuard, 1f, false, Vector2.right);
 
-        [DebugAction("RimArts", "Six Paths: umbrella guard west", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "umbrella guard west")]
         public static void UmbrellaGuardWest() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaGuard, 1f, false, Vector2.left);
 
-        [DebugAction("RimArts", "Six Paths: umbrella guard north", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "umbrella guard north")]
         public static void UmbrellaGuardNorth() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaGuard, 1f, false, Vector2.up);
 
-        [DebugAction("RimArts", "Six Paths: umbrella guard south", actionType = DebugActionType.ToolMap,
-            allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "umbrella guard south")]
         public static void UmbrellaGuardSouth() => Preview().Play(UI.MouseCell(), PreviewMode.UmbrellaGuard, 1f, false, Vector2.down);
 
-        [DebugAction("RimArts", "Six Paths: clear showcase", allowedGameStates = AllowedGameStates.PlayingOnMap)]
+        [RimArtDebug("Six Paths", "clear showcase", RimArtDebugKind.Now)]
         public static void Clear()
         {
             var preview = Find.CurrentMap?.GetComponent<MapComponent_SixPathsPreview>();
