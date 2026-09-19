@@ -113,17 +113,19 @@ export default {
         // The post reaches a fixed ground socket. A dense contact patch and
         // flared foot join the pad to the terrain, including the cheated side view.
         const planted=smooth((form-.35)/.65)*alpha, base=anchor(side,0);
-        sprite(base,.72,.38,Body.withAlpha(strength*.85*planted),soft,shadowLayer+.004);
-        draw(disc,base.x,shadowLayer+.005,base.z,p.rim*1.04,.12,0,
+        // Side view: the far foot lands inside the rope fan, so both feet shrink.
+        const foot=sideView?.6:1, flare=p.rim*.80*foot;
+        sprite(base,.72*foot,.38*foot,Body.withAlpha(strength*.85*planted),soft,shadowLayer+.004);
+        draw(disc,base.x,shadowLayer+.005,base.z,p.rim*1.04*foot,.12*foot,0,
           new Color(.018,.014,.024,planted));
         const footLow=anchor(side,.025),footHigh=anchor(side,.22);
         band('repulse planted foot '+i,
-          [{x:footLow.x-p.rim*.80,z:footLow.z},{x:footHigh.x-p.rim*.43,z:footHigh.z}],
-          [{x:footLow.x+p.rim*.80,z:footLow.z},{x:footHigh.x+p.rim*.43,z:footHigh.z}],
+          [{x:footLow.x-flare,z:footLow.z},{x:footHigh.x-p.rim*.43,z:footHigh.z}],
+          [{x:footLow.x+flare,z:footLow.z},{x:footHigh.x+p.rim*.43,z:footHigh.z}],
           new Color(.12,.085,.17,planted),Y+.025);
         trail('repulse foot lip '+i,
-          [{x:footLow.x-p.rim*.8,z:footLow.z},{x:footLow.x,z:footLow.z+.025},
-            {x:footLow.x+p.rim*.8,z:footLow.z}],.032,Rim.withAlpha(planted*.6),Y+.026);
+          [{x:footLow.x-flare,z:footLow.z},{x:footLow.x,z:footLow.z+.025},
+            {x:footLow.x+flare,z:footLow.z}],.032,Rim.withAlpha(planted*.6),Y+.026);
         // Small violet bindings make the ends feel padded rather than metallic.
         for(let k=0;k<2;k++) {
           const h=lerp(centerH,postTop*(k?.90:.12),growth),q=anchor(side,h);
