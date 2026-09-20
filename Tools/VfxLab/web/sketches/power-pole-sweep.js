@@ -1,9 +1,11 @@
 // Power Pole: Sweep — weapon ability proposal, not the game. Nothing in Source/RimArt draws this yet.
 //
-// What it is for (proposed, none of it agreed). Targets a direction. The pole extends to 4 cells
-// during a 0.3 s wind-up, swings through the front 180 degrees from the caster's left to its right
-// in 0.4 s, and retracts in 0.25 s. Every pawn in that half-circle the caster has line of sight to
-// takes 12 blunt and is staggered. A wall shortens the pole while it passes, so a pawn behind the
+// What it is for (agreed 2026-09-21; the numbers are placeholders and will be XML fields; the full
+// kit is in docs/power-pole-kit.md). Targets a direction. The pole extends to 4 cells during a
+// 0.3 s wind-up, swings through the front 180 degrees from the caster's left to its right in 0.4 s,
+// and retracts in 0.25 s. Every pawn in that half-circle the caster has line of sight to, ally or
+// enemy, takes 12 blunt at 18% armor penetration and is staggered. There is no push; the small
+// shove in the picture only shows the stagger. A wall shortens the pole while it passes, so a pawn behind the
 // wall is not hit. Cooldown 20 s. It is the kit's answer to being surrounded; Extend Thrust is one
 // target far away, this is many targets close.
 //

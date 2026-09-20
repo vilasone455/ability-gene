@@ -1,11 +1,13 @@
 // Power Pole: Vault Strike — weapon ability proposal, not the game. Nothing in Source/RimArt draws this yet.
 // A second take on Pole Vault (power-pole-vault.js), which was a jump with nothing at the end.
 //
-// What it is for (proposed, none of it agreed). Targets an enemy pawn or a standable cell up to 10
-// cells away; no line of sight is needed, the pawn goes over walls. 0.3 s plant, then 0.9 s in the
-// air. The pole pushes the pawn up to the peak, the pawn whips the pole over its head, falls with it
-// held high, and 0.05 s before landing the pole extends down and slams the target cell: 20 blunt and
-// a 1.5 s stun to a pawn on that cell, stagger to every pawn within 1.5 cells of it. The pawn lands
+// What it is for (agreed 2026-09-21; the numbers are placeholders and will be XML fields; the full
+// kit is in docs/power-pole-kit.md). Targets a pawn or a standable cell up to 10 cells away; no line
+// of sight is needed, the pawn goes over walls, and roofs do not matter. 0.3 s plant, then 0.9 s in
+// the air, during which the pawn cannot be attacked in melee. The pole pushes the pawn up to the peak, the pawn whips the pole over its head, falls with it
+// held high, and 0.05 s before landing the pole extends down and slams the target cell: 20 blunt at
+// 30% armor penetration and a 1.5 s stun to a pawn on that cell, ally or enemy, and stagger to every
+// other pawn within 1.5 cells of it. The pawn lands
 // one cell short of the target. On an empty cell the slam only staggers. Cooldown 18 s. It is the
 // kit's engage: over the wall, onto the shooter behind it. Extend Thrust is one target far away
 // pushed back, Sweep is many targets close with no stun.

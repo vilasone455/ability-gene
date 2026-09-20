@@ -1,11 +1,13 @@
 // Power Pole: Extend Thrust — weapon ability proposal, not the game. Nothing in Source/RimArt draws this yet.
 //
-// What it is for (proposed, none of it agreed). The pawn carries a 1.2-cell red staff, a normal
-// 1-cell melee weapon. Extend Thrust targets a cell up to 12 cells away with line of sight. The
-// pole extends along that line in 0.15 s and hits the first pawn on it for 22 blunt. The pole keeps
-// extending and carries that pawn 3 cells further, stopping early at a wall, then retracts in 0.3 s.
-// The pawn that was hit is staggered. Cooldown 8 s. The reach exists only inside this ability; the
-// weapon's own melee verb stays at 1 cell.
+// What it is for (agreed 2026-09-21; the numbers are placeholders and will be XML fields; the full
+// kit is in docs/power-pole-kit.md). The pawn carries a 1.2-cell red staff, a normal 1-cell melee
+// weapon. Extend Thrust targets a cell up to 12 cells away with line of sight, 0.3 s warm-up. The
+// pole extends along that line in 0.15 s and hits the first pawn on it, ally or enemy, for 22 blunt
+// at 30% armor penetration. The pole keeps extending and carries that pawn 3 cells further, then
+// retracts in 0.3 s. If a wall stops the carry early the pawn takes 10 more blunt. The pawn that was
+// hit is staggered. Cooldown 8 s. The reach exists only inside this ability; the weapon's own melee
+// verb stays at 1 cell.
 //
 // Drawing: the pole lies flat at hand height (PoleHeight), so it turns freely with the aim and
 // needs no per-facing method. Only the shaft stretches; the two end ferrules are drawn at a fixed
