@@ -76,6 +76,9 @@ namespace UnityEngine
         public static float Atan2(float y, float x) => (float)Math.Atan2(y, x);
         public static float Acos(float v) => (float)Math.Acos(v);
         public static float Abs(float v) => Math.Abs(v);
+        public static int Abs(int v) => Math.Abs(v);
+        public static int CeilToInt(float v) => (int)Math.Ceiling(v);
+        public static int Clamp(int v, int min, int max) => v < min ? min : v > max ? max : v;
         public static float Min(float a, float b) => Math.Min(a, b);
         public static float Max(float a, float b) => Math.Max(a, b);
         public static int Min(int a, int b) => Math.Min(a, b);

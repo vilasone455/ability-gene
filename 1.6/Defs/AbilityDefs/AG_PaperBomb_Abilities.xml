@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The tag scroll's abilities, granted while the weapon is equipped (CompTagScroll). Decisions and
+       proposed numbers: docs/paper-bomb-kit.md. Every balance number is a field here.
+
+       warmupTime is when the thing leaves the hand in the clip and in the picture: 0.30 for Tag
+       Throw and Tag Line, 0.35 for Paper Shroud. The cast job (JobDriver_CastPaperBomb) then holds
+       the caster until the clip ends: 0.6 s, 2.8 s and 1.2 s. -->
+
+  <AbilityDef Name="AG_PaperBombAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastPaperBomb</jobDef>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_PaperBombAbilityBase">
+    <defName>AG_PaperBomb_TagThrow</defName>
+    <label>tag throw</label>
+    <description>Tear one tag off the scroll and throw it on a steel pin at a tile, a pawn or a wall up to 12 tiles away. It sticks where it hits, burns for 2 seconds, then bursts: 35 bomb damage in a 1.5 tile radius, allies included.\n\nStuck in a pawn, the tag goes where the pawn goes and bursts there. Stuck in a wall or other solid building, that building takes 4 times the damage. Uses 1 tag.\n\nHit chance uses the thrower's Melee skill, with distance, cover and weather counted like a gun. A miss still sticks near the target and bursts there. Needs line of sight.</description>
+    <iconPath>RimArt/PaperBomb/IconTagThrow</iconPath>
+    <cooldownTicksRange>240</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>12.9</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <accuracyTouch>0.9</accuracyTouch>
+      <accuracyShort>0.85</accuracyShort>
+      <accuracyMedium>0.7</accuracyMedium>
+      <accuracyLong>0.5</accuracyLong>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>true</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_TagThrow">
+        <fuseSeconds>2</fuseSeconds>
+        <radius>1.5</radius>
+        <damage>35</damage>
+        <stuckBuildingFactor>4</stuckBuildingFactor>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- The target tile gives the direction and the length. The first tag lies 2.5 tiles from the
+       caster, so that its 1.1 radius does not reach them; range 10.9 is 2.5 + 8 tags. -->
+  <AbilityDef ParentName="AG_PaperBombAbilityBase">
+    <defName>AG_PaperBomb_TagLine</defName>
+    <label>tag line</label>
+    <description>Flick the scroll's strip out along the ground toward a tile up to 10 tiles away. It takes 2.5 seconds, standing still. The first 2.5 tiles are plain strip; after that there is one tag per tile, up to 8, and each uses 1 tag from the scroll. A wall on the line stops it short.\n\nThe line lasts 1 day. Detonate lights it at the caster's end, or with the scroll's tripwire toggle on, the first hostile to step on a tag lights it there. The fuse reaches a new tag every 0.1 seconds and each tag bursts: 30 bomb damage in a 1.1 tile radius, allies included.</description>
+    <iconPath>RimArt/PaperBomb/IconTagLine</iconPath>
+    <cooldownTicksRange>1200</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>10.9</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_TagLine">
+        <maxTags>8</maxTags>
+        <perTagSeconds>0.1</perTagSeconds>
+        <radius>1.1</radius>
+        <damage>30</damage>
+        <lifetimeTicks>60000</lifetimeTicks>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_PaperBombAbilityBase">
+    <defName>AG_PaperBomb_Shroud</defName>
+    <label>paper shroud</label>
+    <description>Send 6 tags at one pawn up to 6 tiles away. They stick all over it. From the first tag landing, 0.9 seconds after the cast, the target is stunned for 2 seconds. Then all six go off: 60 bomb damage to the target, and 20 to everything else within 0.9 tiles, allies included. Uses 6 tags. Needs line of sight.</description>
+    <iconPath>RimArt/PaperBomb/IconShroud</iconPath>
+    <cooldownTicksRange>2700</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>6.9</range>
+      <warmupTime>0.35</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_Shroud">
+        <tags>6</tags>
+        <heldSeconds>2</heldSeconds>
+        <radius>0.9</radius>
+        <damage>20</damage>
+        <targetDamage>60</targetDamage>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- The hand seal. No target; shown only while the caster has a line that is down and not burning.
+       Core's cast job: the RimArt_TagSeal clip is not wired to it yet. -->
+  <AbilityDef>
+    <defName>AG_PaperBomb_Detonate</defName>
+    <label>detonate tag line</label>
+    <description>Make a hand seal and light every tag line this pawn has laid on the map, at the caster's end of each. Works at any distance and without line of sight. Uses no tags.</description>
+    <iconPath>RimArt/PaperBomb/IconTagLine</iconPath>
+    <category>AG_Genetic</category>
+    <jobDef>CastAbilityOnThingWithoutWeapon</jobDef>
+    <cooldownTicksRange>60</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>true</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>0</range>
+      <warmupTime>0.35</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_DetonateTagLine" />
+    </comps>
+  </AbilityDef>
+
+</Defs>
