@@ -83,7 +83,8 @@ static class ApiChecks
         string mimic = CheckMimicContract();
         CheckShinraAcquisition();
         string distortion = CheckShinraDistortion();
-        string sounds = CheckShinraSounds(assembly);
+        string sounds = CheckSounds(assembly, "Shinra", "AG_Shinra_Sounds.xml", "ShinraSoundDefOf")
+            + " " + CheckSounds(assembly, "Anchor", "AG_Anchor_Sounds.xml", "AnchorSoundDefOf");
         string retrieval = CheckRetrievalHookContract();
         string kunai = CheckKunaiContract();
         string makibishi = CheckMakibishiContract();
@@ -161,38 +162,38 @@ static class ApiChecks
     /// the release plays at a sane volume instead of Explosion_Thump's 80. Two things can rot
     /// silently: a DefOf field whose def is not declared, which fails at startup rather than at
     /// the cast; and a Core clip folder that moves, which leaves a SoundDef that resolves and
-    /// plays nothing at all.
+    /// plays nothing at all. The Anchor clap and puff are built the same way and checked the same.
     /// </summary>
-    static string CheckShinraSounds(Assembly assembly)
+    static string CheckSounds(Assembly assembly, string kit, string file, string defOfName)
     {
-        var declared = XDocument.Load("1.6/Defs/SoundDefs/AG_Shinra_Sounds.xml").Root
+        var declared = XDocument.Load("1.6/Defs/SoundDefs/" + file).Root
             .Elements("SoundDef").ToArray();
         var names = declared.Select(def => (string)def.Element("defName")).ToArray();
 
-        Type defOf = assembly.GetType("RimArt.ShinraSoundDefOf")
-            ?? throw new Exception("RimArt.ShinraSoundDefOf is gone; the sounds have no DefOf");
+        Type defOf = assembly.GetType("RimArt." + defOfName)
+            ?? throw new Exception($"RimArt.{defOfName} is gone; the sounds have no DefOf");
         foreach (FieldInfo field in defOf.GetFields(BindingFlags.Public | BindingFlags.Static))
         {
             if (!names.Contains(field.Name))
-                throw new Exception($"ShinraSoundDefOf.{field.Name} names no SoundDef in "
-                    + "AG_Shinra_Sounds.xml, which fails at startup rather than at the cast");
+                throw new Exception($"{defOfName}.{field.Name} names no SoundDef in "
+                    + $"{file}, which fails at startup rather than at the cast");
         }
 
         var folders = declared.Descendants("clipFolderPath").Select(e => e.Value).Distinct().ToArray();
-        if (folders.Length == 0) throw new Exception("The Shinra sounds reference no audio at all");
+        if (folders.Length == 0) throw new Exception($"The {kit} sounds reference no audio at all");
 
         const string Core = "/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Data/Core";
         if (!Directory.Exists(Core))
-            return $"Skipped the {folders.Length} Shinra audio paths: RimWorld's Core data is not installed.";
+            return $"Skipped the {folders.Length} {kit} audio paths: RimWorld's Core data is not installed.";
         foreach (string folder in folders)
         {
             bool referenced = Directory.EnumerateFiles(Path.Combine(Core, "Defs", "SoundDefs"), "*.xml")
                 .Any(file => File.ReadAllText(file).Contains(folder));
             if (!referenced)
-                throw new Exception($"No Core sound still uses '{folder}'; the Shinra sound would "
+                throw new Exception($"No Core sound still uses '{folder}'; the {kit} sound would "
                     + "resolve and play nothing");
         }
-        return $"Checked {names.Length} Shinra sound defs against their DefOf and {folders.Length} core audio paths.";
+        return $"Checked {names.Length} {kit} sound defs against their DefOf and {folders.Length} core audio paths.";
     }
 
     /// <summary>
