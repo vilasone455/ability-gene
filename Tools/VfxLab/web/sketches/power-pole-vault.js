@@ -1,4 +1,6 @@
 // Power Pole: Pole Vault — weapon ability proposal, not the game. Nothing in Source/RimArt draws this yet.
+// Superseded by Vault Strike (power-pole-vault-strike.js): this one is a jump with nothing at the end.
+// Kept for comparison; the kit's third ability is Vault Strike.
 //
 // What it is for (proposed, none of it agreed). Targets a standable cell up to 10 cells away. No
 // line of sight is needed: the pawn goes over walls. Neither the start cell nor the landing cell
@@ -17,9 +19,9 @@
 // aimed south they cancel: the pole shrank to a dot. So those aims get their own method: height
 // also shifts the drawing east, Bow x height x |sin(aim)| cells, which opens the arc and the pole
 // sideways. The amount follows the aim, so the change between directions is gradual. Shadows and
-// floor markers do not bow; they stay on the true cells. The ferrules keep a fixed length. Caster, hands and walls are stand-ins. Dust uses the
-// Six Paths SoftDisc and Puff textures as stand-ins for this kit's own. In game the flight would
-// be a PawnFlyer.
+// floor markers do not bow; they stay on the true cells. The ferrules keep a fixed length. Caster,
+// hands and walls are stand-ins. Dust uses the Six Paths SoftDisc and Puff textures as stand-ins
+// for this kit's own. In game the flight would be a PawnFlyer.
 import { AltitudeLayer, Color, MaterialPool, Mathf, Meshes, ShaderDatabase } from '../js/engine.js';
 import { draw } from './lib/six-paths-solid.js';
 import { P, Body, Y, Floor, Lift, sprite, band, trail, circle, soft, rand } from './lib/six-paths-impact.js';
