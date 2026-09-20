@@ -51,6 +51,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Power Pole", Prefix = "Power Pole:", Component = typeof(MapComponent_PowerPolePreview), Clock = "seconds",
+                Phases = label => label.Contains("sweep") ? SweepPhases() : label.Contains("vault") ? StrikePhases() : ThrustPhases(),
+            },
+            new Kit
+            {
                 Name = "Gravity Well", Prefix = "Gravity Well:", Component = typeof(MapComponent_GravityPreview), Clock = "seconds",
                 // The preview's own numbers (DebugActions_Gravity.cs): mass climbs for 6 s, then
                 // the implosion fades out by 6.5 s. There is no timing class to read them from.
@@ -71,6 +76,34 @@ namespace RimArt.VfxLab
         };
 
         public static Kit For(string label) => All.FirstOrDefault(k => label.StartsWith(k.Prefix, StringComparison.Ordinal));
+
+        private static Phase[] ThrustPhases() => new[]
+        {
+            new Phase("Wind-up", 0f),
+            new Phase("Extend", PowerPoleThrustTiming.ThrustAt),
+            new Phase("Hit and carry", PowerPoleThrustTiming.HitAt),
+            new Phase("Hold", PowerPoleThrustTiming.PushedAt),
+            new Phase("Retract", PowerPoleThrustTiming.RetractAt),
+            new Phase("Result", PowerPoleThrustTiming.HomeAt),
+        };
+
+        private static Phase[] SweepPhases() => new[]
+        {
+            new Phase("Wind-up", 0f),
+            new Phase("Swing", PowerPoleSweepTiming.SwingAt),
+            new Phase("Retract", PowerPoleSweepTiming.RetractAt),
+            new Phase("Result", PowerPoleSweepTiming.HomeAt),
+        };
+
+        private static Phase[] StrikePhases() => new[]
+        {
+            new Phase("Plant", 0f),
+            new Phase("Pole pushes up", PowerPoleStrikeTiming.LaunchAt),
+            new Phase("Whip overhead", PowerPoleStrikeTiming.PeakAt),
+            new Phase("Strike", PowerPoleStrikeTiming.StrikeStartAt),
+            new Phase("Land and retract", PowerPoleStrikeTiming.LandAt),
+            new Phase("Result", PowerPoleStrikeTiming.HomeAt),
+        };
 
         private static Phase[] SlamPhases() => new[]
         {

@@ -19,6 +19,8 @@
     <Compile Include="../../../Source/RimArt/SixPaths/*.cs" LinkBase="Linked/SixPaths" />
     <!-- Flying Thunder God -->
     <Compile Include="../../../Source/RimArt/ThunderGod/*.cs" LinkBase="Linked/ThunderGod" />
+    <!-- Drawing and previews only. The weapon and ability code goes in PowerPole/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/PowerPole/*.cs" LinkBase="Linked/PowerPole" />
     <!-- Gravity Well -->
     <Compile Include="../../../Source/RimArt/Gravity/GravityGraphics.cs" Link="Linked/Gravity/GravityGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Gravity/GravityRules.cs" Link="Linked/Gravity/GravityRules.cs" />
