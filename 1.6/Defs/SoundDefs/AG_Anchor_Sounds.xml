@@ -4,7 +4,9 @@
        audio files. -->
 
   <!-- One palm contact. A punch landing on a pawn is the nearest thing Core has to skin on
-       skin; pitched up it loses the weight of a blow and reads as a slap of two hands. -->
+       skin; pitched up it loses the weight of a blow and reads as a slap of two hands. Vanilla
+       plays the punch at 30 to 43, which was not heard at all at this pitch in the first game
+       test, so this is twice that. -->
   <SoundDef>
     <defName>AG_AnchorClap</defName>
     <context>MapOnly</context>
@@ -16,8 +18,8 @@
             <clipFolderPath>Impact/PunchHitPawn</clipFolderPath>
           </li>
         </grains>
-        <volumeRange>30~30</volumeRange>
-        <pitchRange>1.5~1.65</pitchRange>
+        <volumeRange>60~60</volumeRange>
+        <pitchRange>1.35~1.5</pitchRange>
       </li>
     </subSounds>
   </SoundDef>
@@ -35,7 +37,7 @@
             <clipFolderPath>Impact/BeatFire</clipFolderPath>
           </li>
         </grains>
-        <volumeRange>20~20</volumeRange>
+        <volumeRange>40~40</volumeRange>
         <pitchRange>0.75~0.85</pitchRange>
       </li>
     </subSounds>
