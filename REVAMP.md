@@ -24,6 +24,7 @@ genes instead of being forced onto abilities that come from training, technology
 | Implant | **Reflex booster** | Reflex Surge, Vector Manipulation, Vector Shove | Craft after Prosthetics research and install |
 | Implant | **Phase barrier** | Phase Guard | Find through quests or deep-space trade and install |
 | Equipment | **Stasis belt** | Stasis Field | Research Stasis Fields, craft and wear |
+| Equipment | **Power Pole** | Extend Thrust, Sweep, Vault Strike | Equip the weapon; found as a quest reward or with exotic goods traders, cannot be crafted |
 | Weapon trait | **Resonant** | Resonance | Find on a Unique Melee Weapon |
 | Weapon trait | **Arcing** | Arc | Find on a Unique Melee Weapon; requires Melee Animation |
 | Earned origin | **Origin: Blade** | Rain, Loose, Grasp | Meet the skill and blade-study requirements, then awaken |

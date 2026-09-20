@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Power Pole's three abilities, granted while the weapon is equipped. Agreed numbers and
+       texts: docs/power-pole-kit.md. Every balance number is a field here.
+
+       warmupTime is 0.3 on all three because the pictures spend their first 0.3 s on the wind-up:
+       the pole slides back, turns to the caster's left, or is planted. -->
+
+  <AbilityDef Name="AG_PowerPoleAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastPowerPole</jobDef>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_PowerPoleAbilityBase">
+    <defName>AG_PowerPole_ExtendThrust</defName>
+    <label>extend thrust</label>
+    <description>Extend the pole in a straight line toward a tile up to 12 tiles away. It stops at the first pawn on the line, ally or enemy: 22 blunt damage, 30% armor penetration. The pole keeps extending and pushes that pawn 3 tiles further, then retracts. The pawn is staggered. Large pawns are pushed less far.\n\nIf a wall or other solid object stops the push early, the pawn takes 10 more blunt damage. Needs line of sight. Does nothing to buildings.</description>
+    <iconPath>RimArt/PowerPole/IconThrust</iconPath>
+    <cooldownTicksRange>480</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>12.9</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_PowerPoleThrust">
+        <damage>22</damage>
+        <armorPenetration>0.3</armorPenetration>
+        <pushCells>3</pushCells>
+        <pushScalesWithBodySize>true</pushScalesWithBodySize>
+        <wallDamage>10</wallDamage>
+        <staggerTicks>95</staggerTicks>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- The target only gives the direction. The range is the reach, so the targeter's ring is the
+       swing's radius. -->
+  <AbilityDef ParentName="AG_PowerPoleAbilityBase">
+    <defName>AG_PowerPole_Sweep</defName>
+    <label>sweep</label>
+    <description>Extend the pole to 4 tiles and swing it through the half-circle in front of the wielder, from left to right. Every pawn in that area, ally or enemy, takes 12 blunt damage with 18% armor penetration and is staggered.\n\nThe pole shortens to pass a wall and lengthens again after it. A pawn standing behind a wall is not hit.</description>
+    <iconPath>RimArt/PowerPole/IconSweep</iconPath>
+    <cooldownTicksRange>1200</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>4.9</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_PowerPoleSweep">
+        <reach>4</reach>
+        <arc>180</arc>
+        <damage>12</damage>
+        <armorPenetration>0.18</armorPenetration>
+        <staggerTicks>95</staggerTicks>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- The time in the air and the peak are on the flyer, AG_PowerPoleVault. -->
+  <AbilityDef ParentName="AG_PowerPoleAbilityBase">
+    <defName>AG_PowerPole_VaultStrike</defName>
+    <label>vault strike</label>
+    <description>Plant the pole and let it push the wielder into the air, over walls and over other pawns, toward a pawn or tile up to 10 tiles away. No line of sight is needed. Just before landing, the wielder swings the extended pole down onto the target tile.\n\nA pawn on that tile takes 20 blunt damage with 30% armor penetration and is stunned for 1.5 seconds. Every other pawn within 1.5 tiles is staggered. The wielder lands next to the target. If the tile is empty, the strike only staggers.\n\nThe wielder cannot be attacked in melee while in the air. There must be a free tile next to the target to land on.</description>
+    <iconPath>RimArt/PowerPole/IconStrike</iconPath>
+    <cooldownTicksRange>1080</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>10.9</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_PowerPoleStrike">
+        <damage>20</damage>
+        <armorPenetration>0.3</armorPenetration>
+        <stunTicks>90</stunTicks>
+        <staggerRadius>1.5</staggerRadius>
+        <staggerTicks>95</staggerTicks>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

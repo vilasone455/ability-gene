@@ -51,6 +51,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Power Pole", Prefix = "Power Pole:", Component = typeof(MapComponent_PowerPolePreview), Clock = "seconds",
+                Phases = label => label.Contains("sweep") ? SweepPhases() : label.Contains("vault") ? StrikePhases() : ThrustPhases(),
+            },
+            new Kit
+            {
                 Name = "Anchor", Prefix = "Clap teleport:", Component = typeof(MapComponent_ClapPreview), Clock = "seconds",
                 Phases = label => ClapPhases(label.Contains("double")),
             },
@@ -83,6 +88,34 @@ namespace RimArt.VfxLab
         };
 
         public static Kit For(string label) => All.FirstOrDefault(k => label.StartsWith(k.Prefix, StringComparison.Ordinal));
+
+        private static Phase[] ThrustPhases() => new[]
+        {
+            new Phase("Wind-up", 0f),
+            new Phase("Extend", PowerPoleThrustTiming.ThrustAt),
+            new Phase("Hit and carry", PowerPoleThrustTiming.HitAt),
+            new Phase("Hold", PowerPoleThrustTiming.PushedAt),
+            new Phase("Retract", PowerPoleThrustTiming.RetractAt),
+            new Phase("Result", PowerPoleThrustTiming.HomeAt),
+        };
+
+        private static Phase[] SweepPhases() => new[]
+        {
+            new Phase("Wind-up", 0f),
+            new Phase("Swing", PowerPoleSweepTiming.SwingAt),
+            new Phase("Retract", PowerPoleSweepTiming.RetractAt),
+            new Phase("Result", PowerPoleSweepTiming.HomeAt),
+        };
+
+        private static Phase[] StrikePhases() => new[]
+        {
+            new Phase("Plant", 0f),
+            new Phase("Pole pushes up", PowerPoleStrikeTiming.Script.LaunchAt),
+            new Phase("Whip overhead", PowerPoleStrikeTiming.Script.PeakAt),
+            new Phase("Strike", PowerPoleStrikeTiming.Script.StrikeStartAt),
+            new Phase("Land and retract", PowerPoleStrikeTiming.Script.LandAt),
+            new Phase("Result", PowerPoleStrikeTiming.Script.HomeAt),
+        };
 
         private static Phase[] SlamPhases() => new[]
         {

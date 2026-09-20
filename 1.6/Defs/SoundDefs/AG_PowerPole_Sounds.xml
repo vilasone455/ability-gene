@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- The Power Pole's sounds. Core's own clips at this mod's volumes and pitches, as in
+       AG_Anchor_Sounds.xml and AG_Shinra_Sounds.xml: no new audio files.
+
+       Volumes are about twice what Core plays the same clips at (20 to 25 for the melee clips).
+       The Anchor's first game test found Core's volumes inaudible once a clip was repitched. -->
+
+  <!-- The pole shooting out: Extend Thrust's extension and Vault Strike's strike down. The big
+       animals' missed swipe is Core's heaviest whoosh; pitched up it is a fast thin thing. -->
+  <SoundDef>
+    <defName>AG_PowerPoleExtend</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Animal/Melee_Big/Miss</clipFolderPath></li></grains>
+        <volumeRange>45~45</volumeRange>
+        <pitchRange>1.25~1.4</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- The long pole swung: Sweep's swing and Vault Strike's whip over the head. The same whoosh
+       pitched down, so it is longer and heavier than the thrust's. -->
+  <SoundDef>
+    <defName>AG_PowerPoleSwing</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Animal/Melee_Big/Miss</clipFolderPath></li></grains>
+        <volumeRange>50~50</volumeRange>
+        <pitchRange>0.75~0.85</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- The pole coming back to its carried length: the same whoosh again, high and quiet. -->
+  <SoundDef>
+    <defName>AG_PowerPoleRetract</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Animal/Melee_Big/Miss</clipFolderPath></li></grains>
+        <volumeRange>25~25</volumeRange>
+        <pitchRange>1.6~1.75</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- The pole hitting a pawn, in Extend Thrust and Sweep: Core's wooden melee hit. -->
+  <SoundDef>
+    <defName>AG_PowerPoleHit</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>6</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Impact/MeleeHit_Wood</clipFolderPath></li></grains>
+        <volumeRange>50~50</volumeRange>
+        <pitchRange>0.9~1.05</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- A pushed pawn stopped by a wall: Core's melee hit on stone. -->
+  <SoundDef>
+    <defName>AG_PowerPoleWall</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Impact/MeleeHit_Stone</clipFolderPath></li></grains>
+        <volumeRange>45~45</volumeRange>
+        <pitchRange>0.95~1.05</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Vault Strike's strike on the ground, which cracks it: the stone hit pitched down and
+       louder, with the wooden hit under it for the pole itself. Two sub-sounds play together. -->
+  <SoundDef>
+    <defName>AG_PowerPoleSlam</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Impact/MeleeHit_Stone</clipFolderPath></li></grains>
+        <volumeRange>65~65</volumeRange>
+        <pitchRange>0.65~0.75</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Impact/MeleeHit_Wood</clipFolderPath></li></grains>
+        <volumeRange>50~50</volumeRange>
+        <pitchRange>0.8~0.9</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- The vault leaving the ground: Core's long jump, at Core's volume, since it is not repitched much. -->
+  <SoundDef>
+    <defName>AG_PowerPoleVault</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Abilities/Longjump/Jump</clipFolderPath></li></grains>
+        <volumeRange>60~60</volumeRange>
+        <pitchRange>1.05~1.15</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+</Defs>

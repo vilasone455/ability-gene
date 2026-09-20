@@ -126,4 +126,6 @@
 
   <AG_MimicProjecting>Projecting {0}. {1} left.</AG_MimicProjecting>
   <AG_MimicNoRoom>No room to project a decoy there.</AG_MimicNoRoom>
+
+  <AG_PowerPoleNoLanding>No free tile next to the target to land on.</AG_PowerPoleNoLanding>
 </LanguageData>
