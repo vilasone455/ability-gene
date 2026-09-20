@@ -40,7 +40,7 @@ import { Mathf, Meshes } from '../js/engine.js';
 import { draw } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
 import {
-  Ki, KiDeep, KiSky, KiIce, White, Gi, Dust, Ink, EnemyColour, Chest, pawn, sliced, blink, ringAt, kiBall, aura, strip, streak, whiteGlow, smooth, clamp,
+  Ki, KiDeep, KiSky, KiIce, White, Gi, Dust, Ink, EnemyColour, Chest, pawn, rock, sliced, blink, ringAt, kiBall, aura, strip, streak, whiteGlow, smooth, clamp,
 } from './lib/goku.js';
 
 const ring = Meshes.band(.84, 1, 40, 'kamehameha ring');
@@ -154,7 +154,7 @@ export default {
         const v = ((s - t.cast) * (.35 + .25 * rand(i + 2)) + rand(i)) % 1, ang = i * 2.399, rad = .55 + rand(i + 7) * 1.1, size0 = .05 + .05 * rand(i + 9);
         const ground = { x: stand.x + Math.cos(ang) * rad, z: stand.z + Math.sin(ang) * rad * .8 }, h = v * (.7 + .8 * rand(i + 4)) * grown, show = Math.sin(v * Math.PI) * seen * clamp(grown * 3);
         sprite({ x: ground.x + sun.x * h, z: ground.z + sun.z * h }, size0 * 2.4, size0 * 1.4, Ink.withAlpha(.35 * show), soft, Floor + .05);
-        sprite({ x: ground.x, z: ground.z + h * .6 }, size0 * 2, size0 * 2, Ink.withAlpha(.95 * show), soft, Y + .005);
+        rock({ x: ground.x, z: ground.z + h * .6 }, size0 * 2.4, i * 50 + s * 50, show, i, Y + .005);
       }
       for (let i = 0; i < Threads; i++) {
         const v = ((s - t.cast) * 1.5 + rand(i)) % 1, ang = (i * 30 + rand(i + 9) * 40) * Mathf.Deg2Rad, r0 = 1.7 * (1 - v) + size / 2, r1 = r0 + .35 * (1 - v) + .05;

@@ -8,7 +8,7 @@
 // Port notes: quads (MeshPool.plane10) with the white texture or SoftDisc, one disc and one ring
 // mesh, and strip meshes rebuilt while they show. strip and streak are the Flying Thunder God ones.
 // Ki is blue-white and Solar Flare is yellow-white; neither is the Six Paths violet.
-import { AltitudeLayer, Color, Mathf, Meshes, MeshPool } from '../../js/engine.js';
+import { AltitudeLayer, Color, Mathf, Mesh, Meshes, MeshPool } from '../../js/engine.js';
 import { draw } from './six-paths-solid.js';
 import { Y, Floor, sprite, glow, soft, rand } from './six-paths-impact.js';
 import { strip, streak, whiteGlow, downed, Skin, EnemyColour, Ink } from './flying-thunder-god.js';
@@ -157,6 +157,27 @@ export function aura(key, pos, s, power, colour = KiSky) {
   }
   strip(`${key} aura`, left, right, colour.withAlpha(.34 * power), whiteGlow, pawnLayer - .02);
   sprite({ x: pos.x, z: pos.z + .35 }, 1.5, 1.9, colour.withAlpha(.3 * power), glow, pawnLayer - .021);
+}
+
+// Debris. Six irregular outlines of 5 to 7 corners, built once, about 1 cell across before scaling.
+// A piece is the outline in a dark colour with a smaller, lighter copy shifted toward the light, so
+// it reads as a lump with a lit top and not as a flat chip. Odd variants are dirt, even are stone.
+const RockShapes = [0, 1, 2, 3, 4, 5].map(v => {
+  const m = new Mesh(`goku rock ${v}`), n = 5 + v % 3, vertices = [0, 0], tri = [];
+  for (let i = 0; i < n; i++) {
+    const ang = (i + (rand(v * 10 + i) - .5) * .7) / n * Math.PI * 2, rad = .5 * (.6 + .4 * rand(v * 20 + i + 3));
+    vertices.push(Math.cos(ang) * rad, Math.sin(ang) * rad * .8);
+    tri.push(0, 1 + i, 1 + (i + 1) % n);
+  }
+  m.setFlat(vertices, tri);
+  return m;
+});
+const StoneDark = new Color(.17, .15, .13), StoneLit = new Color(.47, .43, .38), DirtDark = new Color(.24, .16, .1), DirtLit = new Color(.5, .37, .25);
+export function rock(pos, size, angle, alpha, variant, layer) {
+  if (alpha <= 0 || size <= 0) return;
+  const v = Math.abs(Math.floor(variant)) % RockShapes.length, shape = RockShapes[v], dirt = v % 2 === 1;
+  draw(shape, pos.x, layer, pos.z, size, size, angle, (dirt ? DirtDark : StoneDark).withAlpha(alpha));
+  draw(shape, pos.x - size * .07, layer + .0005, pos.z + size * .09, size * .62, size * .58, angle, (dirt ? DirtLit : StoneLit).withAlpha(alpha));
 }
 
 // A square of wall on a cell, turned to deg.

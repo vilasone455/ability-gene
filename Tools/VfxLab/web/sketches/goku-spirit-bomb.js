@@ -19,7 +19,7 @@
 // dome). The weight of the impact follows the charge, from a small bomb to a full one:
 //   grind 0.3 to 0.75 s; white frame 0.03 to 0.09 s; dome holds 0.35 to 1 s; camera shake 0.05 to
 //   0.2; cracks 5 to 14; lightning veins 2 to 8; pillars 0 to 10; thrown rocks 5 to 32 and they
-//   fly 0.5x to 1.2x as high; dust rings 1 or 2; column 2.5 + 1.2 x radius + up to 5 cells; burn
+//   fly 0.5x to 1.2x as high; dust rings 1 or 2; column 2.5 + 1.9 x radius + up to 5 cells; burn
 //   streaks 8 to 26; rings left across the flight path 2 to 7. While it is channelled: above charge
 //   0.3 pebbles lift off the ground round the caster (up to 14) and wind rings run out from the
 //   caster's feet; above 0.5 the camera trembles every 0.5 s. The numbers in the order below are
@@ -52,8 +52,11 @@
 //   8.55  detonation: a white frame over the whole radius for 0.07 s, big camera shake. A dome
 //         opens to the blast radius in 0.4 s, fast then slow: 7 stacked levels, arcs turning on its
 //         surface, 7 lightning veins from the top to the rim re-rolled every 0.1 s, a white front
-//         on the true radius. A column of light 9 + radius cells tall stands in the middle with
-//         rings climbing it; it tapers to a point. 9 thin pillars. 26 rocks are thrown up and out and land. Two dust
+//         on the true radius. A column of light stands in the middle. It is drawn as light and not as
+//         an object: 16 overlapping soft sprites that ripple in width and dim with height, so it has
+//         no outline and no tip; streaks run up through it, rings climb it, a pool of light at its
+//         foot. 9 thin pillars drawn the same way. 26 rocks (irregular lumps, a few big and
+//         many small) are thrown up and out with dust behind them, land with a puff and stay as rubble. Two dust
 //         rings run out past the radius. Enemies inside go white and break into flecks that rise.
 //         The colonist, the animal and the wall inside are outlined in blue and nothing happens
 //         to them.
@@ -73,7 +76,7 @@ import { Color, Mathf, Meshes, MeshPool } from '../js/engine.js';
 import { draw } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
 import {
-  Ki, KiDeep, KiSky, KiIce, White, Gi, Ally, Dust, Ink, EnemyColour, Lift, pawnLayer, pawn, ringAt, glint, line, strip, streak, whiteGlow, wallCell, smooth, clamp,
+  Ki, KiDeep, KiSky, KiIce, White, Gi, Ally, Dust, Ink, EnemyColour, Lift, pawnLayer, pawn, rock, ringAt, glint, line, strip, streak, whiteGlow, wallCell, smooth, clamp,
 } from './lib/goku.js';
 
 const disc = Meshes.disc(56, 'spirit bomb disc'), rim = Meshes.band(.95, 1, 56, 'spirit bomb rim'), orbit = Meshes.band(.93, 1, 56, 'spirit bomb orbit');
@@ -87,7 +90,7 @@ const GrindSparks = 16, Chunks = 10, Flecks = 9, MaxPebbles = 14;
 // What follows the charge, as [small bomb, full bomb].
 const GrindTime = [.3, .75], HoldTime = [.35, 1], WhiteTime = [.03, .09], Shake = [.05, .2], CrackCount = [5, 14], VeinCount = [2, 8], PillarCount = [0, 10];
 const RockCount = [5, 32], RockHeight = [.5, 1.2], StreakCount = [8, 26], PathRingCount = [2, 7], ColumnExtra = 5;
-const Animal = new Color(.62, .5, .33), Rock = new Color(.2, .17, .14);
+const Animal = new Color(.62, .5, .33);
 // Orbit lines of the ball: [tilt speed, turn speed (degrees per second), starting angle].
 const Orbits = [[1.1, 25, 0], [-1.5, -35, 60], [.8, 45, 120]];
 // Lenders as [cells behind the caster, cells to the side].
@@ -334,7 +337,7 @@ export default {
         const u = ((s - t.cast) * (.3 + .2 * rand(i + 2)) + rand(i + 1)) % 1, ang = i * 2.399, d = .7 + rand(i + 7) * 2.6, size = .06 + .07 * rand(i + 9), h = u * (.8 + 1.4 * rand(i + 4)), show = Math.sin(u * Math.PI);
         const foot = { x: caster.x + Math.cos(ang) * d, z: caster.z + Math.sin(ang) * d * .8 };
         sprite({ x: foot.x + sun.x * h, z: foot.z + sun.z * h }, size * 2.4, size * 1.4, Ink.withAlpha(.35 * show), soft, Floor + .05);
-        draw(MeshPool.plane10, foot.x, Y + .005, foot.z + h * Lift, size, size * .8, i * 50 + s * 60, Rock.withAlpha(show));
+        rock({ x: foot.x, z: foot.z + h * Lift }, size * 1.8, i * 50 + s * 60, show, i, Y + .005);
       }
     }
 
@@ -411,14 +414,23 @@ export default {
     if (grind > 0 && domeAge < 0) for (let i = 0; i < Chunks; i++) {
       const ang = i * 2.399, d = r * .9 + rand(i + 44) * blast * .45, foot = polar(ang, d), h = smooth(grind * 1.4 - rand(i + 45) * .3) * (.5 + .7 * rand(i + 46)), size = .16 + .16 * rand(i + 47);
       sprite({ x: foot.x + sun.x * h, z: foot.z + sun.z * h }, size * 2.2, size * 1.2, Ink.withAlpha(.35), soft, Floor + .05);
-      draw(MeshPool.plane10, foot.x + Math.sin(s * 70 + i) * .02, Y + .02, foot.z + h * Lift, size, size * .8, i * 50 + s * 40, Rock);
+      rock({ x: foot.x + Math.sin(s * 70 + i) * .02, z: foot.z + h * Lift }, size * 1.7, i * 50 + s * 40, 1, i, Y + .02);
     }
+    // Thrown rocks: a few big, many small. Each leaves dust behind it in the air, lands with a puff and stays as rubble.
     if (domeAge >= 0) for (let i = 0; i < rocks; i++) {
-      const air = .9 + .9 * rand(i + 51), u = domeAge / air; if (u > 1.15) continue;
-      const ang = rand(i + 52) * TAU, d = blast * (.15 + .5 * rand(i + 53)) + blast * .75 * Math.min(1, u), h = Math.max(0, (3 + 5 * rand(i + 54)) * t.by(RockHeight) * 4 * u * (1 - u)), size = .14 + .2 * rand(i + 55);
-      const foot = polar(ang, d), gone = 1 - clamp((u - 1) / .15);
-      sprite({ x: foot.x + sun.x * h, z: foot.z + sun.z * h }, size * 2.2, size * 1.2, Ink.withAlpha(.3 * gone), soft, Floor + .05);
-      draw(MeshPool.plane10, foot.x, Y + .175, foot.z + h * Lift, size, size * .8, i * 47 + domeAge * (300 + 300 * rand(i + 56)), Rock.withAlpha(gone));
+      const air = .9 + .9 * rand(i + 51), u = domeAge / air, ang = rand(i + 52) * TAU, big = rand(i + 55), size = .24 + .75 * big * big;
+      const from = blast * (.15 + .5 * rand(i + 53)), reach = blast * .75, peak = (3 + 5 * rand(i + 54)) * t.by(RockHeight) * (1.15 - .5 * big);
+      const where = w => ({ foot: polar(ang, from + reach * Math.min(1, w)), h: w < 1 ? peak * 4 * w * (1 - w) : 0 });
+      const now = where(u), landed = u >= 1, turn = i * 47 + Math.min(u, 1) * air * (300 + 300 * rand(i + 56));
+      sprite({ x: now.foot.x + sun.x * now.h, z: now.foot.z + sun.z * now.h }, size * 2.2, size * 1.1, Ink.withAlpha(.32), soft, Floor + .05);
+      if (!landed) for (let k = 1; k <= 3; k++) {
+        const w = u - k * .05; if (w <= 0) continue;
+        const q = where(w);
+        sprite(up(q.foot, q.h), size * (1.2 + k * .5), size * (1 + k * .4), Dust.withAlpha(.3 * (1 - k / 4)), soft, Y + .174);
+      }
+      rock(up(now.foot, now.h), size, turn, 1, i, landed ? Floor + .06 : Y + .175);
+      const since = domeAge - air;
+      if (since >= 0 && since < .5) { const v = since / .5; sprite({ x: now.foot.x, z: now.foot.z + v * .25 }, size * (2 + 3 * v), size * (1.5 + 2.2 * v), Dust.withAlpha(.5 * Math.sin(v * Math.PI)), soft, Y + .006); }
     }
 
     // --- the detonation ------------------------------------------------------------------------------------------------------------------------
@@ -447,21 +459,40 @@ export default {
       }
       ringAt(target, R, KiIce.withAlpha(.9 * domeAlpha), Y + .168, true, whiteGlow);                        // the front, on the true radius
       // The column of light in the middle, with rings climbing it.
-      const tall = (2.5 + 1.2 * blast + ColumnExtra * t.charge) * smooth(domeAge / .25), girth = (1 - .85 * fading) * (.9 + .1 * Math.sin(s * 40)), spine = [];
-      for (let j = 0; j <= 12; j++) spine.push(up(target, tall * j / 12));
-      line('spirit bomb column glow', spine, blast * .8 * girth, Ki.withAlpha(.45 * domeAlpha), whiteGlow, Y + .17);
-      line('spirit bomb column sheath', spine, blast * .42 * girth, KiIce.withAlpha(.6 * domeAlpha), whiteGlow, Y + .1705);
-      line('spirit bomb column', spine, blast * .18 * girth, White.withAlpha(.95 * Math.min(1, domeAlpha * 1.5)), whiteGlow, Y + .171);
-      for (let n = 0; n < 5; n++) {
-        const u = (domeAge * .9 + n / 5) % 1, c = up(target, tall * u), rad = blast * .34 * Math.pow(1 - u, .6) * girth + .1;
-        ringAt(c, rad, KiIce.withAlpha(.85 * Math.sin(u * Math.PI) * domeAlpha), Y + .172, false, whiteGlow);
+      // The column of light. It is light, not an object: no mesh with an edge, only soft sprites that overlap up its
+      // height, each one rippling in width and dimmer than the one below, so it has no outline and no tip. Streaks
+      // run up through it, a pool of light sits at its foot, and rings climb it.
+      const tall = (2.5 + 1.9 * blast + ColumnExtra * t.charge) * smooth(domeAge / .25), girth = 1 - .85 * fading, parts = 16, piece = tall / parts;
+      const widthAt = u => blast * (.24 - .13 * Math.pow(u, .7)) * girth * (1 + .16 * Math.sin(u * 11 - s * 15) + .08 * Math.sin(u * 23 - s * 27));
+      sprite(target, blast * 1.2 * girth, blast * .7 * girth, KiIce.withAlpha(.7 * domeAlpha), glow, Y + .1695);
+      for (let j = 0; j < parts; j++) {
+        const u = (j + .5) / parts, c = up(target, tall * u), w = widthAt(u), dim = clamp((1 - u) / .4) * (1 - .3 * u) * domeAlpha * (.85 + .15 * Math.sin(s * 33 + j * 1.7));   // full to 60% of the height, then it thins out to nothing
+        sprite(c, w * 3.2, piece * Lift * 3.2, Ki.withAlpha(.6 * dim), glow, Y + .17);
+        sprite(c, w * 1.7, piece * Lift * 2.8, KiIce.withAlpha(.75 * dim), glow, Y + .1705);
+        sprite(c, w * .8, piece * Lift * 2.6, White.withAlpha(.85 * dim), glow, Y + .171);
       }
+      for (let i = 0; i < 18; i++) {
+        const u = (domeAge * (1.4 + rand(i + 61)) + rand(i + 62)) % 1, x = (rand(i + 63) - .5) * widthAt(u) * 1.8, long = tall * (.1 + .12 * rand(i + 64));
+        const from = up(target, tall * u), to = up(target, Math.min(tall, tall * u + long));
+        streak(`spirit bomb column streak ${i}`, { x: from.x + x, z: from.z }, { x: to.x + x, z: to.z }, .09, White.withAlpha(.8 * Math.sin(u * Math.PI) * (1 - u) * domeAlpha), whiteGlow, Y + .1715, 4);
+      }
+      for (let n = 0; n < 5; n++) {
+        const u = (domeAge * .9 + n / 5) % 1, c = up(target, tall * u);
+        ringAt(c, widthAt(u) * 1.9 + .1, KiIce.withAlpha(.7 * Math.sin(u * Math.PI) * (1 - u) * domeAlpha), Y + .172, false, whiteGlow);
+      }
+      // The thin pillars, the same way: a soft shaft that flickers, brightest at the floor, with a bead running up it.
       for (let i = 0; i < pillars; i++) {
         const ang = i * 2.399, d = blast * (.3 + .6 * rand(i + 60)), foot = polar(ang, d);
         if (R < d) continue;
-        const h = (3 + 4 * rand(i + 70)) * smooth((s - passes(d)) / .3) * (.8 + .2 * Math.sin(s * 30 + i));
-        streak(`spirit bomb pillar glow ${i}`, foot, up(foot, h), .6, Ki.withAlpha(.4 * domeAlpha), whiteGlow, Y + .166, 8);
-        streak(`spirit bomb pillar ${i}`, foot, up(foot, h), .18, White.withAlpha(.9 * domeAlpha), whiteGlow, Y + .167, 8);
+        const h = (3 + 4 * rand(i + 70)) * smooth((s - passes(d)) / .3), flick = (.7 + .3 * Math.sin(s * 30 + i * 2)) * domeAlpha;
+        for (let j = 0; j < 5; j++) {
+          const u = (j + .5) / 5, c = up(foot, h * u);
+          sprite(c, .9 - .4 * u, h * Lift * .5, Ki.withAlpha(.4 * (1 - u) * flick), glow, Y + .166);
+          sprite(c, .3 - .12 * u, h * Lift * .45, White.withAlpha(.75 * (1 - u) * flick), glow, Y + .167);
+        }
+        sprite(foot, 1.3, .8, KiIce.withAlpha(.6 * flick), glow, Y + .1665);
+        const bead = (s * 1.6 + rand(i + 75)) % 1;
+        sprite(up(foot, h * bead), .3, .5, White.withAlpha(.9 * (1 - bead) * flick), glow, Y + .168);
       }
     }
     // Two dust rings run out past the radius. They are dust, not light: the light stops on the true radius.
