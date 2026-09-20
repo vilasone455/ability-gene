@@ -11,6 +11,7 @@
     <iconPath>UI/Gizmos/RemoteRepair</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>600</cooldownTicksRange>
+    <jobDef>AG_CastAnchorMark</jobDef>
     <hostile>false</hostile>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
     <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>

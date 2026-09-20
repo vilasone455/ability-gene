@@ -28,4 +28,13 @@
     <playerInterruptible>false</playerInterruptible>
   </JobDef>
 
+  <!-- The Anchor organ's Mark. The same again, with the driver that plays the card flick, or the
+       catch when the target is already marked, over the warmup. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastAnchorMark</defName>
+    <driverClass>RimArt.JobDriver_CastMark</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
 </Defs>

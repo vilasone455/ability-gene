@@ -31,9 +31,11 @@ namespace RimArt
             Gene_Anchors gene = AnchorUtility.GeneOf(caster);
             if (gene == null) return;
 
+            var flicks = caster.Map?.GetComponent<MapComponent_MarkFlicks>();
             Anchor existing = gene.AnchorFor(target);
             if (existing != null)
             {
+                flicks?.Lifted(caster, existing);
                 gene.Remove(existing);
                 Messages.Message("AG_AnchorLifted".Translate(caster.LabelShort, existing.Label),
                     caster, MessageTypeDefOf.NeutralEvent, false);
@@ -46,6 +48,7 @@ namespace RimArt
                 : new Anchor(target.Cell, now);
 
             gene.Add(anchor);
+            if (gene.Holds(anchor)) flicks?.Placed(caster, anchor);
             Messages.Message("AG_AnchorPlaced".Translate(caster.LabelShort, anchor.Label),
                 caster, MessageTypeDefOf.NeutralEvent, false);
         }

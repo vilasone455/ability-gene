@@ -301,7 +301,8 @@ static class ApiChecks
         // a mistake worth catching.
         foreach (string clip in ThrowAnimation.Grenade.All.Concat(ThrowAnimation.Kunai.All).Concat(ThrowAnimation.Scatter.All).Concat(ThrowAnimation.Fuma.All)
                      .Select(name => name.Replace("AG_", "RimArt_")).Append("RimArt_ShinraPush").Append("RimArt_GravityChannel")
-                     .Append("RimArt_Clap").Append("RimArt_ClapTwice"))
+                     .Append("RimArt_Clap").Append("RimArt_ClapTwice")
+                     .Concat(ThrowAnimation.MarkFlick.All.Concat(ThrowAnimation.MarkCatch.All).Select(name => name.Replace("AG_", "RimArt_"))))
         {
             curves += CheckThrowAnimationJson(dataModel, partModel, clip);
             clips++;
@@ -326,6 +327,42 @@ static class ApiChecks
             float clipLength = clapJson.RootElement.GetProperty("Length").GetSingle();
             if (Math.Abs(clipLength - length) > 0.0001f)
                 throw new Exception($"{file}.json is {clipLength} s but ClapTeleport says {length} s - run make_clap_anim.py or fix the constant");
+        }
+        // Mark's clips start with the warmup too. The flying card is drawn in C# from MarkFlick's
+        // numbers: it leaves when the flick clip switches its card off and lands at the warmup's
+        // end; a lifted mark leaves at the warmup's end and arrives when the catch clip switches
+        // its card on. make_mark_anim.py, MarkFlick and the AbilityDef each carry these numbers.
+        {
+            var def = clapDefs.Single(e => (string)e.Element("defName") == "AG_AnchorMark");
+            float warmup = float.Parse((string)def.Element("verbProperties").Element("warmupTime"), System.Globalization.CultureInfo.InvariantCulture);
+            if (Math.Abs(warmup - RimArt.MarkFlick.Place) > 0.0001f)
+                throw new Exception($"AG_AnchorMark warmupTime {warmup} is not MarkFlick.Place {RimArt.MarkFlick.Place}, the time the Mark clips were authored against");
+            if ((string)def.Element("jobDef") != "AG_CastAnchorMark")
+                throw new Exception("AG_AnchorMark must cast through AG_CastAnchorMark, the job its clips are tied to");
+            foreach (var (style, length, cardOn, change) in new[] {
+                (ThrowAnimation.MarkFlick, RimArt.MarkFlick.FlickLength, false, RimArt.MarkFlick.Release),
+                (ThrowAnimation.MarkCatch, RimArt.MarkFlick.CatchLength, true, RimArt.MarkFlick.Place + RimArt.MarkFlick.CatchFlight) })
+            foreach (string clip in style.All)
+            {
+                string file = clip.Replace("AG_", "RimArt_");
+                if (!clapAnims.Any(e => (string)e.Element("defName") == clip && (string)e.Element("data") == file + ".json"
+                                        && (string)e.Element("rendererWorker") == "RimArt.MeleeAnimation.ThrowAimWorker"))
+                    throw new Exception($"No AM.AnimDef {clip} pointing at {file}.json with the throw aim worker");
+                using var markJson = System.Text.Json.JsonDocument.Parse(File.ReadAllText($"Animations/{file}.json"));
+                float clipLength = markJson.RootElement.GetProperty("Length").GetSingle();
+                if (Math.Abs(clipLength - length) > 0.0001f)
+                    throw new Exception($"{file}.json is {clipLength} s but MarkFlick says {length} s - run make_mark_anim.py or fix the constant");
+                var card = markJson.RootElement.GetProperty("Parts").EnumerateArray()
+                    .Single(p => p.GetProperty("CustomName").ValueKind == System.Text.Json.JsonValueKind.String
+                                 && p.GetProperty("CustomName").GetString() == "Grenade");
+                // The first key at which the card part has the value it changes to: off for the flick, on for the catch.
+                float changed = card.GetProperty("Curves").GetProperty("GameObject.m_IsActive").GetProperty("Keyframes")
+                    .EnumerateArray().First(k => k.GetProperty("value").GetSingle() == (cardOn ? 1f : 0f)).GetProperty("time").GetSingle();
+                if (Math.Abs(changed - change) > 0.0001f)
+                    throw new Exception($"{file}.json switches its card {(cardOn ? "on" : "off")} at {changed} s but MarkFlick says {change} s");
+                if (Math.Abs(changed / clipLength - style.ReleaseFraction) > 0.001f)
+                    throw new Exception($"{file}.json: {changed}s of {clipLength}s is {changed / clipLength:0.0000}, but ThrowAnimation says {style.ReleaseFraction}");
+            }
         }
         // The C# launches the thrown object at ReleaseFraction of the clip. The json hides the held
         // part at its release time, so the two must agree for every facing of every throw style.

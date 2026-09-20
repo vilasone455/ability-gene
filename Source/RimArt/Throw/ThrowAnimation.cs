@@ -93,6 +93,14 @@ namespace RimArt
         public static readonly Clips Scatter = new Clips("AG_ThrowScatter", 0.4286f);
         public static readonly Clips Fuma = new Clips("AG_ThrowFuma", 2f / 3f);
 
+        /// <summary>
+        /// The Anchor organ's Mark: a backhand card flick, 48 ticks, the card leaves at tick 23; and
+        /// the catch of a lifted mark, 57 ticks, where the fraction is when the card arrives in the
+        /// hand. Both run under JobDriver_CastMark's clock, which does not read the fraction.
+        /// </summary>
+        public static readonly Clips MarkFlick = new Clips("AG_MarkFlick", 0.475f);
+        public static readonly Clips MarkCatch = new Clips("AG_MarkCatch", 0.6526f);
+
         /// <summary>Which of the three clips a throw uses.</summary>
         public enum Facing
         {

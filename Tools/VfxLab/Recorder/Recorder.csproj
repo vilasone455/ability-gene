@@ -22,6 +22,8 @@
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleport.cs" Link="Linked/Anchor/ClapTeleport.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleportGraphics.cs" Link="Linked/Anchor/ClapTeleportGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/DebugActions_ClapTeleport.cs" Link="Linked/Anchor/DebugActions_ClapTeleport.cs" />
+    <Compile Include="../../../Source/RimArt/Anchor/MarkFlick.cs" Link="Linked/Anchor/MarkFlick.cs" />
+    <Compile Include="../../../Source/RimArt/Anchor/DebugActions_MarkFlick.cs" Link="Linked/Anchor/DebugActions_MarkFlick.cs" />
     <!-- Gravity Well -->
     <Compile Include="../../../Source/RimArt/Gravity/GravityGraphics.cs" Link="Linked/Gravity/GravityGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Gravity/GravityRules.cs" Link="Linked/Gravity/GravityRules.cs" />
