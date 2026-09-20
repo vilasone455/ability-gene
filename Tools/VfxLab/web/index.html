@@ -58,6 +58,8 @@
     <section class="panel" id="panel-export" role="tabpanel" aria-labelledby="tab-export" hidden></section>
     <section class="panel" id="panel-compare" role="tabpanel" aria-labelledby="tab-compare" hidden>
       <label class="check"><input type="checkbox" id="compare-on"> Side by side <kbd>C</kbd></label>
+      <label class="select"><span>Filter both lists</span><input type="search" id="compare-filter" placeholder="Words in the name, kit or type" autocomplete="off" spellcheck="false"></label>
+      <p class="hint" id="compare-count"></p>
       <label class="select"><span>A (left)</span><select id="compare-a"></select></label>
       <label class="select"><span>B (right)</span><select id="compare-b"></select></label>
       <button type="button" id="compare-swap">Swap A and B</button>

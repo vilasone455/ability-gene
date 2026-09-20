@@ -50,7 +50,23 @@ kbd { font: 11px var(--mono); color: var(--dim); border: 1px solid var(--line); 
 
 /* ---- browser */
 .browser { grid-area: browser; overflow-y: auto; border-right: 1px solid var(--line); background: var(--panel); padding-block: var(--s2); }
-.kit { padding: var(--s3) var(--s4) var(--s1); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); }
+.browser { padding-top: 0; }
+.filter { position: sticky; top: 0; z-index: 1; display: grid; gap: 6px; padding: var(--s2) var(--s3); background: var(--panel); border-bottom: 1px solid var(--line); }
+.filter-row { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+.filter input[type="search"] { flex: 1; min-width: 0; padding: 4px 8px; background: var(--ground); border: 1px solid var(--line); border-radius: 4px; }
+.chip { padding: 0 5px; border: 1px solid var(--line); border-radius: 10px; background: none; color: var(--dim); font-size: 11px; cursor: pointer; }
+.chip:hover { color: var(--text); }
+.chip[aria-pressed="true"] { color: var(--ground); background: var(--accent); border-color: var(--accent); }
+.chip.sketch[aria-pressed="true"] { background: var(--sketch); border-color: var(--sketch); }
+.filter .count { flex: 1; color: var(--dim); font-size: 11px; font-variant-numeric: tabular-nums; }
+.link { padding: 0 2px; border: 0; background: none; color: var(--dim); font-size: 11px; text-decoration: underline; cursor: pointer; }
+.link:hover { color: var(--text); }
+.kit { display: flex; align-items: baseline; gap: 6px; width: 100%; padding: var(--s3) var(--s3) var(--s1); border: 0; background: none; text-align: left; cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); }
+.kit:hover, .kit.current { color: var(--text); }
+.kit .fold { width: 10px; font-size: 10px; }
+.kit .kit-name { flex: 1; }
+.kit .kit-count { font: 11px var(--mono); letter-spacing: 0; }
+.kit[aria-expanded="false"] { padding-bottom: var(--s2); }
 .effect { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 2px var(--s2); width: 100%; padding: 6px var(--s4); border: 0; background: none; text-align: left; cursor: pointer; }
 .effect:hover { background: var(--raised); }
 .effect[aria-current="true"] { background: var(--raised); color: #fff; }
@@ -99,6 +115,7 @@ kbd { font: 11px var(--mono); color: var(--dim); border: 1px solid var(--line); 
 .slider output { font: 12px var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
 .select { display: grid; gap: 2px; }
 .select span { color: var(--dim); font-size: 12px; }
+.select input[type="search"] { width: 100%; padding: 4px 6px; background: var(--ground); border: 1px solid var(--line); border-radius: 4px; }
 select { width: 100%; padding: 4px 6px; background: var(--ground); border: 1px solid var(--line); border-radius: 4px; }
 .file input { width: 100%; font-size: 12px; }
 .group { display: flex; flex-direction: column; gap: var(--s2); padding-bottom: var(--s2); border-bottom: 1px solid var(--line); }
