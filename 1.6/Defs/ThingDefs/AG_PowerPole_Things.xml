@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Power Pole. Agreed numbers and texts: docs/power-pole-kit.md.
+
+       The parent is BaseWeapon, not BaseMeleeWeapon: BaseMeleeWeapon carries a recipeMaker, and
+       this weapon cannot be crafted. The melee fields BaseMeleeWeapon would have given are
+       restated. No CompQuality: there is one pole and one stat line. No weaponTags, so raiders
+       never carry it. It is found as a quest reward or with exotic goods traders. -->
+  <ThingDef ParentName="BaseWeapon">
+    <defName>AG_PowerPole</defName>
+    <label>Power Pole</label>
+    <description>A red staff a little over one tile long. On command it extends to many times its length in a fraction of a second and retracts just as fast. It does not bend, does not wear, and nobody knows how to make another.\n\nIn melee it is an ordinary blunt weapon with a reach of 1 tile. While it is equipped, the wielder can use Extend Thrust, Sweep and Vault Strike. The long reach exists only in those three abilities. All three hit allies as well as enemies.\n\nIt cannot be crafted. It turns up as a quest reward or with exotic goods traders.</description>
+    <graphicData>
+      <texPath>RimArt/PowerPole/PowerPole</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.35</drawSize>
+    </graphicData>
+    <techLevel>Archotech</techLevel>
+    <smeltable>false</smeltable>
+    <burnableByRecipe>false</burnableByRecipe>
+    <relicChance>0</relicChance>
+    <stackLimit>1</stackLimit>
+    <thingCategories>
+      <li>WeaponsMelee</li>
+    </thingCategories>
+    <weaponClasses>
+      <li>Melee</li>
+    </weaponClasses>
+    <tradeability>All</tradeability>
+    <tradeTags>
+      <li>ExoticMisc</li>
+    </tradeTags>
+    <thingSetMakerTags>
+      <li>RewardStandardCore</li>
+    </thingSetMakerTags>
+    <statBases>
+      <MarketValue>3500</MarketValue>
+      <Mass>1.5</Mass>
+      <MaxHitPoints>300</MaxHitPoints>
+      <Flammability>0</Flammability>
+      <DeteriorationRate>0</DeteriorationRate>
+      <Beauty>0</Beauty>
+    </statBases>
+    <comps>
+      <li Class="RimArt.CompProperties_PowerPole">
+        <abilities>
+          <li>AG_PowerPole_ExtendThrust</li>
+          <li>AG_PowerPole_Sweep</li>
+          <li>AG_PowerPole_VaultStrike</li>
+        </abilities>
+      </li>
+    </comps>
+    <tools>
+      <li>
+        <label>shaft</label>
+        <capacities><li>Blunt</li></capacities>
+        <power>14</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+      <li>
+        <label>tip</label>
+        <capacities><li>Poke</li></capacities>
+        <power>11</power>
+        <cooldownTime>1.6</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
+  <!-- The wielder in the air during Vault Strike. Core's flyer moves in a straight line on the
+       ground at constant speed and rises on a parabola, which is the picture's arc, so the
+       picture reads these two numbers.
+       flightDurationMin is the time in the air. flightSpeed is set so high that distance never
+       lengthens it: every vault takes the same 0.9 s.
+       heightFactor is how far north the peak is drawn: a peak of 2.5 tiles at 0.60 tiles north per
+       tile of height (SixPathsHeight.Lift). -->
+  <ThingDef ParentName="PawnFlyerBase">
+    <defName>AG_PowerPoleVault</defName>
+    <label>vaulting</label>
+    <thingClass>RimArt.PawnFlyer_PowerPoleVault</thingClass>
+    <pawnFlyer>
+      <flightDurationMin>0.9</flightDurationMin>
+      <flightSpeed>1000</flightSpeed>
+      <heightFactor>1.5</heightFactor>
+    </pawnFlyer>
+  </ThingDef>
+
+  <!-- A pawn that Extend Thrust is pushing. It slides along the ground for as long as the
+       picture's pole takes to carry it, 0.22 s (PowerPoleThrustTiming.Push), and slows the way the
+       pole's tip does: 1 - (1 - t) cubed. No height. -->
+  <ThingDef ParentName="PawnFlyerBase">
+    <defName>AG_PowerPoleCarried</defName>
+    <label>pushed</label>
+    <thingClass>PawnFlyer</thingClass>
+    <pawnFlyer>
+      <flightDurationMin>0.22</flightDurationMin>
+      <flightSpeed>1000</flightSpeed>
+      <heightFactor>0</heightFactor>
+      <progressCurve>
+        <points>
+          <li>(0, 0)</li>
+          <li>(0.1, 0.271)</li>
+          <li>(0.2, 0.488)</li>
+          <li>(0.4, 0.784)</li>
+          <li>(0.6, 0.936)</li>
+          <li>(0.8, 0.992)</li>
+          <li>(1, 1)</li>
+        </points>
+      </progressCurve>
+    </pawnFlyer>
+  </ThingDef>
+
+</Defs>

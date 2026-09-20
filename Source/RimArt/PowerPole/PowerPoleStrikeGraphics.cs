@@ -24,26 +24,41 @@ namespace RimArt
         private static readonly Vector2[] crackLine = new Vector2[T.CrackPoints];
 
         /// <summary>
-        /// <paramref name="centre"/> is halfway between the start cell and the target cell, as in the
-        /// lab's sketch, and <paramref name="toward"/> is the unit direction of the cast.
+        /// The preview. <paramref name="centre"/> is halfway between the start cell and the target cell,
+        /// as in the lab's sketch, and <paramref name="toward"/> is the unit direction of the cast.
         /// </summary>
-        public static void Draw(Vector3 centre, Vector2 toward, float seconds, Map map)
+        public static void DrawPreview(Vector3 centre, Vector2 toward, float seconds, Map map)
         {
-            if (seconds < 0f || seconds >= T.Duration) return;
             var middle = new Vector2(centre.x, centre.z);
-            Vector2 start = middle - toward * (T.Distance / 2f), target = start + toward * T.Distance, landing = start + toward * T.Landing;
+            Draw(middle - toward * (T.ScriptDistance / 2f), toward, T.Script, T.ScriptStaggerRadius, T.ScriptRange, seconds, map, middle, true);
+        }
+
+        /// <summary>
+        /// <paramref name="start"/> is the cell the caster leaves and <paramref name="toward"/> the unit
+        /// direction from it to the landing cell. <paramref name="range"/> draws the range ring round
+        /// the start; 0 leaves it out, because a real cast has the targeter's ring. A real cast stops
+        /// drawing the pole once it is the held staff again; the preview keeps it (<paramref name="keepPole"/>).
+        /// </summary>
+        public static void Draw(Vector2 start, Vector2 toward, in PowerPoleStrikeShot shot, float staggerRadius, float range, float seconds,
+            Map map, Vector2? anchor = null, bool keepPole = false)
+        {
+            if (seconds < 0f || seconds >= shot.Duration) return;
+            Vector2 left = new Vector2(-toward.y, toward.x);
+            Vector2 target = start + toward * shot.TargetAlong + left * shot.TargetAcross, landing = start + toward * shot.Landing;
             if (!Shown(start, map) || !Shown(target, map)) return;
-            Begin(middle);
+            Begin(anchor ?? start);
             Sun(map, out Vector2 sun, out float shadow);
-            float bow = T.Bow * Mathf.Abs(toward.y), struck = seconds - T.StrikeHitAt;
-            // A place (along, height) as it is drawn, and its shadow on the ground.
-            Vector2 Place(Vector2 place) => new Vector2(start.x + toward.x * place.x + place.y * bow, start.y + toward.y * place.x + place.y * SixPathsHeight.Lift);
-            Vector2 Cast(Vector2 place) => start + toward * place.x + sun * place.y;
+            float bow = T.Bow * Mathf.Abs(toward.y), struck = seconds - shot.StrikeHitAt, offLine = shot.TargetAcross;
+            // A place (along, height), a share of the target's sideways offset, as it is drawn; and its shadow on the ground.
+            Vector2 Place(Vector2 place, float across = 0f) => new Vector2(
+                start.x + toward.x * place.x + left.x * (offLine * across) + place.y * bow,
+                start.y + toward.y * place.x + left.y * (offLine * across) + place.y * SixPathsHeight.Lift);
+            Vector2 Cast(Vector2 place, float across = 0f) => start + toward * place.x + left * (offLine * across) + sun * place.y;
 
             // Floor rings at the rule's true places: range round the start, stagger radius on the target, the landing cell.
             float markers = 1f - Smooth(struck / 0.4f);
-            Circle(start, T.Range, 0.22f * markers, Floor, Cream);
-            Circle(target, T.StaggerRadius, 0.6f * markers, Floor + 0.0002f, Cream);
+            if (range > 0f) Circle(start, range, 0.22f * markers, Floor, Cream);
+            Circle(target, staggerRadius, 0.6f * markers, Floor + 0.0002f, Cream);
             Circle(landing, 0.45f, 0.45f * markers, Floor + 0.0004f, Cream);
 
             // Cracks in the ground from the strike, out to the stagger radius. They stay.
@@ -51,7 +66,7 @@ namespace RimArt
                 for (int i = 0; i < T.Cracks; i++)
                 {
                     float turn = i / (float)T.Cracks * Mathf.PI * 2f + Rand(i + 300) * 0.5f;
-                    float reach = T.StaggerRadius * (0.55f + Rand(i + 310) * 0.45f) * Mathf.Clamp01(struck / 0.08f);
+                    float reach = staggerRadius * (0.55f + Rand(i + 310) * 0.45f) * Mathf.Clamp01(struck / 0.08f);
                     crackLine[0] = target - new Vector2(Mathf.Cos(turn), Mathf.Sin(turn)) * 0.05f;
                     for (int j = 0; j < CrackShare.Length; j++)
                     {
@@ -62,9 +77,9 @@ namespace RimArt
                 }
 
             // The swept fan behind the pole's tip during the whip and the strike: three nested slices, newest brightest.
-            bool striking = seconds >= T.StrikeStartAt;
-            float fanFrom = striking ? T.StrikeStartAt : T.PeakAt, fanTo = striking ? T.StrikeHitAt : T.WhipEndAt;
-            if (seconds >= T.PeakAt && seconds < fanTo + 0.1f && !(seconds >= T.WhipEndAt + 0.1f && seconds < T.StrikeStartAt))
+            bool striking = seconds >= shot.StrikeStartAt;
+            float fanFrom = striking ? shot.StrikeStartAt : shot.PeakAt, fanTo = striking ? shot.StrikeHitAt : shot.WhipEndAt;
+            if (seconds >= shot.PeakAt && seconds < fanTo + 0.1f && !(seconds >= shot.WhipEndAt + 0.1f && seconds < shot.StrikeStartAt))
                 for (int k = 0; k < T.FanSpans.Length; k++)
                 {
                     float newest = Mathf.Min(seconds, fanTo), oldest = Mathf.Max(fanFrom, seconds - T.FanSpans[k]);
@@ -74,27 +89,28 @@ namespace RimArt
                     for (int i = 0; i <= T.FanSteps; i++)
                     {
                         float time = Mathf.Lerp(oldest, newest, i / (float)T.FanSteps);
-                        T.PoleAt(time, out Vector2 end, out _);
-                        inner[i] = Place(Vector2.Lerp(T.HandsAt(time), end, 0.25f));
-                        outer[i] = Place(end);
+                        T.PoleAt(time, shot, out Vector2 end, out _, out float endAcross);
+                        inner[i] = Place(Vector2.Lerp(T.HandsAt(time, shot), end, 0.25f), endAcross * 0.25f);
+                        outer[i] = Place(end, endAcross);
                     }
                     Strip(inner, outer, Fade(Cream, 0.16f * fade), solid, Overhead - 0.01f + k * 0.0002f);
                 }
 
-            T.PoleAt(seconds, out Vector2 tip, out Vector2 grip);
-            Pole(Place(tip), Place(grip), Cast(tip), Cast(grip), (grip - tip).magnitude, Width, shadow, Overhead + 0.04f);
+            T.PoleAt(seconds, shot, out Vector2 tip, out Vector2 grip, out float tipAcross);
+            if (keepPole || seconds < shot.HomeAt)
+                Pole(Place(tip, tipAcross), Place(grip), Cast(tip, tipAcross), Cast(grip), (grip - tip).magnitude, Width, shadow, Overhead + 0.04f);
 
             // Dust: a kick at the planted tip, a stream while the pole pushes, a small puff where the pawn lands.
             Vector2 foot = start + toward * T.Foot;
-            Burst(100, foot, seconds - T.LaunchAt, 9, 0.9f, 0.7f, Overhead - 0.02f);
-            if (seconds > T.LaunchAt && seconds < T.PeakAt)
+            Burst(100, foot, seconds - shot.LaunchAt, 9, 0.9f, 0.7f, Overhead - 0.02f);
+            if (seconds > shot.LaunchAt && seconds < shot.PeakAt)
                 for (int i = 0; i < 4; i++)
                 {
-                    float u = ((seconds - T.LaunchAt) * 3f + i / 4f) % 1f;
+                    float u = ((seconds - shot.LaunchAt) * 3f + i / 4f) % 1f;
                     Puff(new Vector2(foot.x + (Rand(i + 30) - 0.5f) * 0.5f, foot.y + u * 0.3f), 0.2f + u * 0.3f, 0.16f + u * 0.24f, u, 0.45f,
                         Overhead - 0.015f + i * 0.0002f);
                 }
-            Burst(200, landing, seconds - T.LandAt, 7, 0.7f, 0.55f, Overhead - 0.012f);
+            Burst(200, landing, seconds - shot.LandAt, 7, 0.7f, 0.55f, Overhead - 0.012f);
 
             // The strike: flash, a ring out to the stagger radius, a big dust burst.
             if (struck >= 0f && struck < 0.7f)
@@ -103,8 +119,8 @@ namespace RimArt
                 var spot = new Vector2(target.x, target.y + 0.15f);
                 Sprite(spot, 3.4f, 2.4f, Fade(Cream, flash * 0.7f), glow, Overhead + 0.06f);
                 Sprite(spot, 1.5f, 1.1f, Fade(Cream, flash), glow, Overhead + 0.062f);
-                Circle(target, T.StaggerRadius * Mathf.Clamp01(0.2f + struck / 0.18f), (1f - Mathf.Clamp01(struck / 0.5f)) * 0.8f, Floor + 0.006f, Cream);
-                Burst(400, target, struck, 16, T.StaggerRadius, 0.85f, Overhead - 0.008f, 1.4f);
+                Circle(target, staggerRadius * Mathf.Clamp01(0.2f + struck / 0.18f), (1f - Mathf.Clamp01(struck / 0.5f)) * 0.8f, Floor + 0.006f, Cream);
+                Burst(400, target, struck, 16, staggerRadius, 0.85f, Overhead - 0.008f, 1.4f);
             }
         }
     }

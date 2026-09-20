@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Patch>
+  <!-- The Power Pole under Combat Extended. CE reads melee tools as ToolCE and measures blunt
+       penetration in its own unit, so the vanilla numbers cannot be reused: without this CE logs
+       "AG_PowerPole ... has no support for Combat Extended".
+
+       Set against CE's own mace (Patches/Core/ThingDefs_Misc/Weapons_Melee.xml): head 15 power,
+       1.9 s, 5.625 blunt penetration, Bulk 3.5, parry 0.24. The pole hits a little softer than a
+       mace, as it does in vanilla, is longer to carry, and parries better, being a staff. -->
+  <Operation Class="PatchOperationAdd">
+    <xpath>Defs/ThingDef[defName="AG_PowerPole"]/statBases</xpath>
+    <value>
+      <Bulk>4</Bulk>
+      <MeleeCounterParryBonus>0.4</MeleeCounterParryBonus>
+    </value>
+  </Operation>
+  <Operation Class="PatchOperationAdd">
+    <xpath>Defs/ThingDef[defName="AG_PowerPole"]</xpath>
+    <value>
+      <equippedStatOffsets>
+        <MeleeCritChance>0.3</MeleeCritChance>
+        <MeleeParryChance>0.45</MeleeParryChance>
+        <MeleeDodgeChance>0.25</MeleeDodgeChance>
+      </equippedStatOffsets>
+    </value>
+  </Operation>
+  <Operation Class="PatchOperationReplace">
+    <xpath>Defs/ThingDef[defName="AG_PowerPole"]/tools</xpath>
+    <value>
+      <tools>
+        <li Class="CombatExtended.ToolCE">
+          <label>shaft</label>
+          <capacities><li>Blunt</li></capacities>
+          <power>13</power>
+          <cooldownTime>1.85</cooldownTime>
+          <armorPenetrationBlunt>4</armorPenetrationBlunt>
+        </li>
+        <li Class="CombatExtended.ToolCE">
+          <label>tip</label>
+          <capacities><li>Poke</li></capacities>
+          <power>9</power>
+          <cooldownTime>1.5</cooldownTime>
+          <armorPenetrationBlunt>2.5</armorPenetrationBlunt>
+        </li>
+      </tools>
+    </value>
+  </Operation>
+
+  <!-- The abilities deal their damage directly, and under CE a blunt hit's armorPenetration is
+       read in CE's unit too. 0.3 and 0.18 would be stopped by any armor at all. The thrust and the
+       overhead strike are one concentrated blow, above a mace head; the sweep is a glancing one. -->
+  <Operation Class="PatchOperationReplace">
+    <xpath>Defs/AbilityDef[defName="AG_PowerPole_ExtendThrust"]/comps/li[@Class="RimArt.CompProperties_PowerPoleThrust"]/armorPenetration</xpath>
+    <value><armorPenetration>8</armorPenetration></value>
+  </Operation>
+  <Operation Class="PatchOperationReplace">
+    <xpath>Defs/AbilityDef[defName="AG_PowerPole_Sweep"]/comps/li[@Class="RimArt.CompProperties_PowerPoleSweep"]/armorPenetration</xpath>
+    <value><armorPenetration>3.5</armorPenetration></value>
+  </Operation>
+  <Operation Class="PatchOperationReplace">
+    <xpath>Defs/AbilityDef[defName="AG_PowerPole_VaultStrike"]/comps/li[@Class="RimArt.CompProperties_PowerPoleStrike"]/armorPenetration</xpath>
+    <value><armorPenetration>8</armorPenetration></value>
+  </Operation>
+</Patch>

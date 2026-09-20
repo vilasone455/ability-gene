@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- The Power Pole's hands and body for Extend Thrust, Sweep and the plant that starts Vault
+       Strike. Written by make_power_pole_anim.py; started by RimArt.JobDriver_CastPowerPole through
+       RimArt.PowerPoleCastAnimation, tied to the AG_CastPowerPole job, which owns the clock.
+
+       No weapon part: the pole is drawn by RimArt.dll, long, and the clips put the two hands on it.
+       Four clips per ability, east, north, south and west, and none is mirrored, because a mirrored
+       Sweep would swing the wrong way. ThrowAimWorker turns the hands to the exact angle, as for
+       the throws in AG_Throw_Anims.xml. -->
+  <AM.AnimDef>
+    <defName>AG_PoleThrustEast</defName>
+    <label>Power Pole: extend thrust, east</label>
+    <description>Extending the Power Pole at a target.</description>
+    <jobString>Thrusting the pole.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_PoleThrustEast.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_PoleThrustNorth</defName>
+    <label>Power Pole: extend thrust, north</label>
+    <description>Extending the Power Pole at a target.</description>
+    <jobString>Thrusting the pole.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_PoleThrustNorth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_PoleThrustSouth</defName>
+    <label>Power Pole: extend thrust, south</label>
+    <description>Extending the Power Pole at a target.</description>
+    <jobString>Thrusting the pole.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_PoleThrustSouth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_PoleThrustWest</defName>
+    <label>Power Pole: extend thrust, west</label>
+    <description>Extending the Power Pole at a target.</description>
+    <jobString>Thrusting the pole.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_PoleThrustWest.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_PoleSweepEast</defName>
+    <label>Power Pole: sweep, east</label>
+    <description>Swinging the extended Power Pole from left to right.</description>
+    <jobString>Sweeping the pole.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_PoleSweepEast.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_PoleSweepNorth</defName>
+    <label>Power Pole: sweep, north</label>
+    <description>Swinging the extended Power Pole from left to right.</description>
+    <jobString>Sweeping the pole.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_PoleSweepNorth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_PoleSweepSouth</defName>
+    <label>Power Pole: sweep, south</label>
+    <description>Swinging the extended Power Pole from left to right.</description>
+    <jobString>Sweeping the pole.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_PoleSweepSouth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_PoleSweepWest</defName>
+    <label>Power Pole: sweep, west</label>
+    <description>Swinging the extended Power Pole from left to right.</description>
+    <jobString>Sweeping the pole.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_PoleSweepWest.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_PolePlantEast</defName>
+    <label>Power Pole: vault strike, plant, east</label>
+    <description>Planting the Power Pole to vault.</description>
+    <jobString>Vaulting.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_PolePlantEast.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_PolePlantNorth</defName>
+    <label>Power Pole: vault strike, plant, north</label>
+    <description>Planting the Power Pole to vault.</description>
+    <jobString>Vaulting.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_PolePlantNorth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_PolePlantSouth</defName>
+    <label>Power Pole: vault strike, plant, south</label>
+    <description>Planting the Power Pole to vault.</description>
+    <jobString>Vaulting.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_PolePlantSouth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_PolePlantWest</defName>
+    <label>Power Pole: vault strike, plant, west</label>
+    <description>Planting the Power Pole to vault.</description>
+    <jobString>Vaulting.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_PolePlantWest.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+</Defs>

@@ -20,6 +20,7 @@ if [ "${1:-}" = "anims" ]; then
   python3 "$SRC/make_clap_anim.py"
   python3 "$SRC/make_shinra_anim.py"
   python3 "$SRC/make_mark_anim.py"
+  python3 "$SRC/make_power_pole_anim.py"
   mkdir -p "$DEST/Animations"
   cp "$SRC/Animations/"*.json "$DEST/Animations/"
   echo "Clips updated in: $DEST/Animations"

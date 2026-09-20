@@ -37,4 +37,26 @@
     <playerInterruptible>false</playerInterruptible>
   </JobDef>
 
+  <!-- The Power Pole's three abilities. The driver tells the picture the cast has begun when the
+       warmup starts, and holds the job until the pole is back to its carried length. The weapon is
+       hidden for the job because the picture draws the pole. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastPowerPole</defName>
+    <driverClass>RimArt.JobDriver_CastPowerPole</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+  <!-- After a Vault Strike lands the pole is still pinned on the target and then retracts, 0.4 s
+       in all. The wielder stands for that long. Core's Wait driver with an expiry; the player
+       cannot interrupt it, so a move order given during it starts when it ends. -->
+  <JobDef>
+    <defName>AG_PowerPoleRecover</defName>
+    <driverClass>JobDriver_Wait</driverClass>
+    <reportString>recovering the pole.</reportString>
+    <playerInterruptible>false</playerInterruptible>
+    <checkOverrideOnDamage>Never</checkOverrideOnDamage>
+    <neverShowWeapon>true</neverShowWeapon>
+  </JobDef>
+
 </Defs>

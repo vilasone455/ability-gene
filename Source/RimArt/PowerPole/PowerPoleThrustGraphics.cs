@@ -16,25 +16,35 @@ namespace RimArt
     public static class PowerPoleThrustGraphics
     {
         /// <summary>
-        /// <paramref name="centre"/> is the middle of the scene, as in the lab's sketch: halfway between
-        /// the caster and where the target ends up. <paramref name="toward"/> is the unit direction of the thrust.
+        /// The preview. <paramref name="centre"/> is the middle of the scene, as in the lab's sketch:
+        /// halfway between the caster and where the target ends up.
         /// </summary>
-        public static void Draw(Vector3 centre, Vector2 toward, bool wall, float seconds, Map map)
+        public static void DrawPreview(Vector3 centre, Vector2 toward, bool wall, float seconds, Map map)
+        {
+            var middle = new Vector2(centre.x, centre.z);
+            Draw(middle - toward * ((T.ScriptDistance + T.ScriptPush) / 2f), toward, T.Script(wall), seconds, map, middle, true);
+        }
+
+        /// <summary>
+        /// <paramref name="feet"/> is where the caster stands and <paramref name="toward"/> the unit direction of the thrust.
+        /// Once the pole is back to its carried length it is the held staff again and the caster may walk
+        /// off, so a real cast stops drawing it there; the preview, which has no pawn, keeps it (<paramref name="keepPole"/>).
+        /// </summary>
+        public static void Draw(Vector2 feet, Vector2 toward, in PowerPoleThrustShot shot, float seconds, Map map, Vector2? anchor = null, bool keepPole = false)
         {
             if (seconds < 0f || seconds >= T.Duration) return;
-            var middle = new Vector2(centre.x, centre.z);
-            Vector2 feet = middle - toward * ((T.Distance + T.PushCells) / 2f), across = new Vector2(-toward.y, toward.x);
-            if (!Shown(feet, map) || !Shown(feet + toward * T.Reach(wall), map)) return;
-            Begin(middle);
+            Vector2 across = new Vector2(-toward.y, toward.x);
+            if (!Shown(feet, map) || !Shown(feet + toward * shot.Reach, map)) return;
+            Begin(anchor ?? feet);
             Sun(map, out Vector2 sun, out float shadow);
 
-            float tip = T.TipAt(seconds, wall), back = T.BackAt(seconds), reach = T.Reach(wall);
+            float tip = T.TipAt(seconds, shot), back = T.BackAt(seconds), reach = shot.Reach;
 
             // Dust kicked up on the ground under the tip as it passes, so the line reads when zoomed out.
             int puffs = Mathf.Max(4, Mathf.RoundToInt(reach * 1.6f));
             for (int i = 0; i < puffs; i++)
             {
-                float along = Mathf.Lerp(1.2f, reach, (i + 0.5f) / puffs), born = T.FirstTime(along, wall);
+                float along = Mathf.Lerp(1.2f, reach, (i + 0.5f) / puffs), born = T.FirstTime(along, shot);
                 if (born < 0f) continue;
                 float u = (seconds - born) / (0.45f + Rand(i) * 0.3f), size = 0.4f + u * 0.7f;
                 Vector2 at = feet + toward * (along - u * 0.3f) + across * ((Rand(i + 40) - 0.5f) * 0.5f);
@@ -42,7 +52,8 @@ namespace RimArt
             }
 
             Vector2 a = feet + toward * back, b = feet + toward * tip;
-            Pole(Raised(a, HandHeight), Raised(b, HandHeight), a + sun * HandHeight, b + sun * HandHeight, tip - back, Width, shadow, Overhead);
+            if (keepPole || seconds < T.HomeAt)
+                Pole(Raised(a, HandHeight), Raised(b, HandHeight), a + sun * HandHeight, b + sun * HandHeight, tip - back, Width, shadow, Overhead);
 
             // Speed lines beside the shaft while the tip is moving out.
             float moving = seconds >= T.ThrustAt && seconds < T.PushedAt
@@ -58,9 +69,9 @@ namespace RimArt
 
             // The hit: flash and ring on the target, a few dust puffs thrown along the aim.
             float hitAge = seconds - T.HitAt;
-            if (hitAge >= 0f && hitAge < 0.5f)
+            if (shot.Hit && hitAge >= 0f && hitAge < 0.5f)
             {
-                Vector2 spot = feet + toward * T.Contact;
+                Vector2 spot = feet + toward * shot.Contact;
                 Sprite(Raised(spot, HandHeight), 1.6f, 1.1f, Fade(Cream, Mathf.Max(0f, 1f - hitAge / 0.12f) * 0.85f), glow, Overhead + 0.02f);
                 Circle(spot, 0.25f + hitAge * 2.2f, (1f - hitAge / 0.5f) * 0.6f, Floor, Cream);
                 for (int i = 0; i < T.HitPuffs; i++)
@@ -73,9 +84,9 @@ namespace RimArt
 
             // A wall stops the carry: a smaller flash and dust on the wall's near face.
             float slamAge = seconds - T.PushedAt;
-            if (wall && T.Room(true) < T.PushCells && slamAge >= 0f && slamAge < 0.45f)
+            if (shot.Blocked && slamAge >= 0f && slamAge < 0.45f)
             {
-                Vector2 face = feet + toward * (T.WallAlong - 0.5f);
+                Vector2 face = feet + toward * shot.WallFace;
                 Sprite(Raised(face, 0.3f), 1.1f, 0.8f, Fade(Cream, Mathf.Max(0f, 1f - slamAge / 0.1f) * 0.5f), glow, Overhead + 0.021f);
                 float u = slamAge / 0.45f;
                 for (int i = 0; i < T.WallPuffs; i++)

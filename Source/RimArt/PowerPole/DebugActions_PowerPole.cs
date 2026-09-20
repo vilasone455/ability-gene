@@ -83,18 +83,17 @@ namespace RimArt
             {
                 case PowerPolePreview.Sweep:
                     duration = PowerPoleSweepTiming.Duration;
-                    // In the order the swing reaches them, because shakes are played in time order.
-                    float aim = ThunderGodTiming.Degrees(facing);
-                    for (float passed = PowerPoleSweepTiming.Half; passed >= -PowerPoleSweepTiming.Half; passed -= 1f)
-                        for (int e = 0; e < PowerPoleSweepTiming.EnemyPhi.Length; e++)
-                            if (Mathf.Abs(PowerPoleSweepTiming.EnemyPhi[e] - passed) < 0.5f && PowerPoleSweepTiming.HitAt(e, aim, option) >= 0f)
-                                Shake(PowerPoleSweepTiming.HitAt(e, aim, option), PowerPoleSweepTiming.HitShake);
+                    // Sorted, because shakes are played in time order.
+                    float[] hits = (float[])PowerPoleSweepTiming.Script(ThunderGodTiming.Degrees(facing), option).HitTime.Clone();
+                    System.Array.Sort(hits);
+                    for (int e = 0; e < hits.Length; e++) Shake(hits[e], PowerPoleSweepTiming.HitShake);
                     break;
                 case PowerPolePreview.Strike:
-                    duration = PowerPoleStrikeTiming.Duration;
-                    Shake(PowerPoleStrikeTiming.LaunchAt, PowerPoleStrikeTiming.LaunchShake);
-                    Shake(PowerPoleStrikeTiming.StrikeHitAt, PowerPoleStrikeTiming.StrikeShake);
-                    Shake(PowerPoleStrikeTiming.LandAt, PowerPoleStrikeTiming.LandShake);
+                    PowerPoleStrikeShot strike = PowerPoleStrikeTiming.Script;
+                    duration = strike.Duration;
+                    Shake(strike.LaunchAt, PowerPoleStrikeTiming.LaunchShake);
+                    Shake(strike.StrikeHitAt, PowerPoleStrikeTiming.StrikeShake);
+                    Shake(strike.LandAt, PowerPoleStrikeTiming.LandShake);
                     break;
                 default:
                     duration = PowerPoleThrustTiming.Duration;
@@ -122,13 +121,13 @@ namespace RimArt
             switch (mode)
             {
                 case PowerPolePreview.Sweep:
-                    PowerPoleSweepGraphics.Draw(centre, toward, flag, seconds, map);
+                    PowerPoleSweepGraphics.DrawPreview(centre, toward, flag, seconds, map);
                     break;
                 case PowerPolePreview.Strike:
-                    PowerPoleStrikeGraphics.Draw(centre, toward, seconds, map);
+                    PowerPoleStrikeGraphics.DrawPreview(centre, toward, seconds, map);
                     break;
                 default:
-                    PowerPoleThrustGraphics.Draw(centre, toward, flag, seconds, map);
+                    PowerPoleThrustGraphics.DrawPreview(centre, toward, flag, seconds, map);
                     break;
             }
             if (seconds >= duration) active = false;

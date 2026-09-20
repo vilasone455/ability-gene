@@ -1,7 +1,9 @@
 # Power Pole: the weapon and its three abilities
 
-Agreed 2026-09-21. Nothing here is in the game yet. Every number is a placeholder until the
-abilities are built and played, and every number is an XML field, not a C# constant. The pictures
+Agreed 2026-09-21. The weapon and the three abilities are built (`Source/RimArt/PowerPole/Kit/`,
+`1.6/Defs/ThingDefs/AG_PowerPole_Things.xml`, `1.6/Defs/AbilityDefs/AG_PowerPole_Abilities.xml`) but have
+not been played yet. Every number is a placeholder until they are, and every number is an XML
+field, not a C# constant. The pictures
 are the sketches under **Power Pole** in the VFX lab (`Tools/VfxLab/web/sketches/power-pole-*.js`);
 each sketch header carries the same numbers as this page.
 
@@ -16,8 +18,9 @@ One source, as `REVAMP.md` requires: the kit comes from equipping the weapon and
 |---|---|---|---|
 | Equipment (weapon) | **Power Pole** | Extend Thrust, Sweep, Vault Strike | Quest reward or exotic goods trader; cannot be crafted |
 
-Equipping the weapon grants the three abilities. Unequipping removes them. Proposed, not yet
-agreed: cooldowns are kept on the pawn, so swapping the weapon off and on does not reset them.
+Equipping the weapon grants the three abilities. Unequipping removes them. Each cooldown is kept
+on the weapon (`CompPowerPole`), as the belts keep theirs (`CompApparelAbility`), so dropping the
+pole and picking it up again does not skip a cooldown.
 
 ## The weapon: `AG_PowerPole`
 
@@ -35,7 +38,7 @@ agreed: cooldowns are kept on the pawn, so swapping the weapon off and on does n
 | Market value | 3 500 silver, set by hand | Vanilla eltex staff and ultratech melee 2 000, persona weapons 3 000, this mod's one-ability eyes 3 200. |
 | Sources | `thingSetMakerTags: RewardStandardCore`, `tradeTags: ExoticMisc` | Same tags as the Repulsion Eye and the Frost and Mimic items. |
 | Raider spawning | none | No weapon tags. |
-| Worn position | on the back, diagonal | |
+| Worn position | not drawn | Core does not draw a weapon that is not in the hands, and nothing here changes that. |
 
 Description:
 
@@ -55,11 +58,11 @@ Role: one target far away, pushed back. Sketch: `power-pole-extend-thrust.js`.
 | Warm-up | 0.3 s |
 | Cooldown | 8 s |
 | Damage | 22 blunt, 30% armor penetration, to the first pawn on the line, ally or enemy |
-| Push | 3 tiles along the line |
+| Push | 3 tiles along the line, divided by body size for pawns larger than a human (`pushScalesWithBodySize`, as Vector Shove does). Not yet agreed. |
 | Wall bonus | +10 blunt if a wall or other solid object stops the push early |
 | After | Staggered |
 
-> Extend the pole in a straight line toward a tile up to 12 tiles away. It stops at the first pawn on the line, ally or enemy: 22 blunt damage, 30% armor penetration. The pole keeps extending and pushes that pawn 3 tiles further, then retracts. The pawn is staggered.
+> Extend the pole in a straight line toward a tile up to 12 tiles away. It stops at the first pawn on the line, ally or enemy: 22 blunt damage, 30% armor penetration. The pole keeps extending and pushes that pawn 3 tiles further, then retracts. The pawn is staggered. Large pawns are pushed less far.
 >
 > If a wall or other solid object stops the push early, the pawn takes 10 more blunt damage. Needs line of sight. Does nothing to buildings.
 
@@ -103,7 +106,7 @@ comparison), which looked like a jump pack: up, down, nothing at the end.
 >
 > A pawn on that tile takes 20 blunt damage with 30% armor penetration and is stunned for 1.5 seconds. Every other pawn within 1.5 tiles is staggered. The wielder lands next to the target. If the tile is empty, the strike only staggers.
 >
-> The wielder cannot be attacked in melee while in the air. The landing tile must be standable and unoccupied.
+> The wielder cannot be attacked in melee while in the air. There must be a free tile next to the target to land on.
 
 ## Rules this kit follows
 
@@ -121,16 +124,37 @@ comparison), which looked like a jump pack: up, down, nothing at the end.
 | Debug previews | `[RimArtDebug("Power Pole", ...)]`, never `[DebugAction]`. |
 | Verification | Build, validate, ApiChecks, deploy. Only a clean game log proves it works. |
 
-## Open for the port
+## Built and played (2026-09-21)
 
-- Combat Extended: CE measures blunt penetration in its own units, so the three armor penetration
-  values need a CE patch entry under `Patch_CombatExtended`. Not designed yet.
-- Melee Animation: duel animations assume the usual weapon length. The held staff stays 1.2 tiles,
-  so nothing should change, but it has not been checked in game.
-- Textures: the sketches borrow the Six Paths `SoftDisc` and `Puff`. The kit needs its own PNGs
-  and a `make_power_pole_textures.py`.
-- The cracks Vault Strike leaves need a fade or a filth-style mark in game.
-- True long-reach auto-attacks (custom verb and job) are deferred until the three abilities work.
+| Piece | Where |
+|---|---|
+| Weapon, the two flyers | `1.6/Defs/ThingDefs/AG_PowerPole_Things.xml` |
+| Abilities, every balance number | `1.6/Defs/AbilityDefs/AG_PowerPole_Abilities.xml` |
+| Cast job, and the 0.4 s stand after a vault's landing that the player cannot interrupt | `AG_CastPowerPole`, `AG_PowerPoleRecover` in `1.6/Defs/JobDefs/AG_CastAbility.xml` |
+| Code | `Source/RimArt/PowerPole/Kit/` |
+| Combat Extended numbers, set against CE's own mace | `Patch_CombatExtended/1.6/Patches/AG_PowerPole_CE.xml` |
+| Clips: thrust, sweep and the vault's plant, each east, north, south and west, none mirrored | `make_power_pole_anim.py`, `Patch_MeleeAnimation/1.6/Defs/AG_PowerPole_Anims.xml` |
+| Sounds: seven, all Core clips repitched | `1.6/Defs/SoundDefs/AG_PowerPole_Sounds.xml` |
+| Textures: the staff and three icons | `make_power_pole_textures.py` |
+
+Things found in play, and what was done:
+
+- The clips' hands were hidden under the pole. The pole is on the overhead mote layer so that it
+  passes over every pawn; the hands' altitude in the clips is 1.95, above it.
+- A real cast stops drawing the pole once it is back to its carried length, and the held staff
+  shows again in the same tick. The sketches' 1.2 s tail is dust only. Before this the short pole
+  lay at the cast spot while the wielder walked away.
+- Vault Strike has a clip only for the plant. In the air the wielder is inside a flyer, off the
+  map, where Melee Animation cannot follow.
+
+## Still open
+
+- Textures: the dust and flashes borrow the Six Paths `SoftDisc` and `Puff`.
+- The cracks Vault Strike leaves last as long as the picture's tail and then go. A lasting mark
+  would be a filth.
+- Hands in the air during Vault Strike would have to be drawn in C#.
+- True long-reach auto-attacks (custom verb and job) are deferred until the abilities have been
+  played for a while.
 
 ## Port order
 

@@ -110,11 +110,11 @@ namespace RimArt.VfxLab
         private static Phase[] StrikePhases() => new[]
         {
             new Phase("Plant", 0f),
-            new Phase("Pole pushes up", PowerPoleStrikeTiming.LaunchAt),
-            new Phase("Whip overhead", PowerPoleStrikeTiming.PeakAt),
-            new Phase("Strike", PowerPoleStrikeTiming.StrikeStartAt),
-            new Phase("Land and retract", PowerPoleStrikeTiming.LandAt),
-            new Phase("Result", PowerPoleStrikeTiming.HomeAt),
+            new Phase("Pole pushes up", PowerPoleStrikeTiming.Script.LaunchAt),
+            new Phase("Whip overhead", PowerPoleStrikeTiming.Script.PeakAt),
+            new Phase("Strike", PowerPoleStrikeTiming.Script.StrikeStartAt),
+            new Phase("Land and retract", PowerPoleStrikeTiming.Script.LandAt),
+            new Phase("Result", PowerPoleStrikeTiming.Script.HomeAt),
         };
 
         private static Phase[] SlamPhases() => new[]
