@@ -56,6 +56,18 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Anchor", Prefix = "Clap teleport:", Component = typeof(MapComponent_ClapPreview), Clock = "seconds",
+                Phases = label => ClapPhases(label.Contains("double")),
+            },
+            new Kit
+            {
+                Name = "Anchor", Prefix = "Mark flick:", Component = typeof(MapComponent_MarkFlickPreview), Clock = "seconds",
+                Phases = label => label.Contains("lift")
+                    ? new[] { new Phase("Reach out", 0f), new Phase("Mark lifted: card leaves", MarkFlick.Place), new Phase("Caught", MarkFlick.Place + MarkFlick.CatchFlight), new Phase("Clip ends", MarkFlick.CatchLength) }
+                    : new[] { new Phase("Curl", 0f), new Phase("Card leaves the hand", MarkFlick.Release), new Phase("Mark placed", MarkFlick.Place), new Phase("Clip ends", MarkFlick.FlickLength) },
+            },
+            new Kit
+            {
                 Name = "Gravity Well", Prefix = "Gravity Well:", Component = typeof(MapComponent_GravityPreview), Clock = "seconds",
                 // The preview's own numbers (DebugActions_Gravity.cs): mass climbs for 6 s, then
                 // the implosion fades out by 6.5 s. There is no timing class to read them from.
@@ -185,6 +197,17 @@ namespace RimArt.VfxLab
             new Phase("Folds", SixPathsUmbrellaTiming.CloseAt),
             new Phase("Held again", SixPathsUmbrellaTiming.ClosedAt),
         };
+
+        private static Phase[] ClapPhases(bool twice)
+        {
+            float contact = twice ? ClapTeleport.SecondContact : ClapTeleport.FirstContact;
+            var phases = new List<Phase> { new Phase("Wind-up", 0f) };
+            if (twice) phases.Add(new Phase("First clap", ClapTeleport.FirstContact));
+            phases.Add(new Phase("Cards rise", contact - ClapTeleport.Rise));
+            phases.Add(new Phase("Contact: swap", contact));
+            phases.Add(new Phase("Cards fall", contact + ClapTeleport.Cover));
+            return phases.OrderBy(p => p.Seconds).ToArray();
+        }
 
         private static Phase[] JumpPhases(bool inEnemy)
         {

@@ -18,4 +18,23 @@
     <playerInterruptible>false</playerInterruptible>
   </JobDef>
 
+  <!-- The Anchor organ's clap and double clap. Same two fields, plus a driver that plays the clap
+       clip over the warmup and holds the job until the clip's open-hands pose is done. The clip is
+       tied to this job def: Melee Animation cancels a clip whose pawn is in any other job. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastAnchorClap</defName>
+    <driverClass>RimArt.JobDriver_CastClap</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+  <!-- The Anchor organ's Mark. The same again, with the driver that plays the card flick, or the
+       catch when the target is already marked, over the warmup. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastAnchorMark</defName>
+    <driverClass>RimArt.JobDriver_CastMark</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
 </Defs>

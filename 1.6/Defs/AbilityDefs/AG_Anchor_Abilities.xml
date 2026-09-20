@@ -11,6 +11,7 @@
     <iconPath>UI/Gizmos/RemoteRepair</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>600</cooldownTicksRange>
+    <jobDef>AG_CastAnchorMark</jobDef>
     <hostile>false</hostile>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
     <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
@@ -43,7 +44,7 @@
     <iconPath>UI/Icons/Genes/Gene_HandsHuman</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>1800</cooldownTicksRange>
-    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
+    <jobDef>AG_CastAnchorClap</jobDef>
     <hostile>false</hostile>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
     <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
@@ -81,7 +82,7 @@
     <iconPath>UI/Icons/Genes/Gene_LongJumpLegs</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>1800</cooldownTicksRange>
-    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
+    <jobDef>AG_CastAnchorClap</jobDef>
     <hostile>false</hostile>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
     <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>

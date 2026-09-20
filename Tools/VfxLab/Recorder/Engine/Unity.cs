@@ -74,6 +74,7 @@ namespace UnityEngine
         public static float Pow(float v, float e) => (float)Math.Pow(v, e);
         public static float Exp(float v) => (float)Math.Exp(v);
         public static float Atan2(float y, float x) => (float)Math.Atan2(y, x);
+        public static float Acos(float v) => (float)Math.Acos(v);
         public static float Abs(float v) => Math.Abs(v);
         public static float Min(float a, float b) => Math.Min(a, b);
         public static float Max(float a, float b) => Math.Max(a, b);

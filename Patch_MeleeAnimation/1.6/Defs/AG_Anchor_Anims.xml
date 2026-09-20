@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- One clip per ability, not one per facing: the clap is map-wide and sightless, so the gesture
+       has no direction to carry. The pawn is drawn facing south, the one facing that shows both
+       hands. No weapon, second pawn, animation events, or end-cell teleport: the carrier is moved
+       by the ability, and RimArt.ClapCastAnimation moves the clip's root with them. -->
+  <AM.AnimDef>
+    <defName>AG_Clap</defName>
+    <label>Anchor: clap</label>
+    <description>One clap, then the open hands of a finished trick.</description>
+    <jobString>Clapping.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_Clap.json</data>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_ClapTwice</defName>
+    <label>Anchor: double clap</label>
+    <description>Two claps, then the open hands of a finished trick.</description>
+    <jobString>Clapping twice.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ClapTwice.json</data>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+
+  <!-- Mark is aimed at something within 9.9 cells, so unlike the clap its gesture has a direction:
+       three clips per set, east (mirrored for west), north and south, and ThrowAimWorker turns the
+       hand and the card to the exact angle, as for the throws in AG_Throw_Anims.xml. MarkFlick
+       places a mark, MarkCatch takes one back. Written by make_mark_anim.py; started by
+       RimArt.JobDriver_CastMark through ThrowAnimation, tied to the AG_CastAnchorMark job. -->
+  <AM.AnimDef>
+    <defName>AG_MarkFlick</defName>
+    <label>Anchor: mark, east or west</label>
+    <description>Flicking a card at the thing to be marked.</description>
+    <jobString>Marking.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_MarkFlick.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_MarkFlickNorth</defName>
+    <label>Anchor: mark, north</label>
+    <description>Flicking a card at the thing to be marked.</description>
+    <jobString>Marking.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_MarkFlickNorth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_MarkFlickSouth</defName>
+    <label>Anchor: mark, south</label>
+    <description>Flicking a card at the thing to be marked.</description>
+    <jobString>Marking.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_MarkFlickSouth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_MarkCatch</defName>
+    <label>Anchor: lift a mark, east or west</label>
+    <description>Catching a mark's card as it comes back.</description>
+    <jobString>Lifting a mark.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_MarkCatch.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_MarkCatchNorth</defName>
+    <label>Anchor: lift a mark, north</label>
+    <description>Catching a mark's card as it comes back.</description>
+    <jobString>Lifting a mark.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_MarkCatchNorth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_MarkCatchSouth</defName>
+    <label>Anchor: lift a mark, south</label>
+    <description>Catching a mark's card as it comes back.</description>
+    <jobString>Lifting a mark.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_MarkCatchSouth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+</Defs>

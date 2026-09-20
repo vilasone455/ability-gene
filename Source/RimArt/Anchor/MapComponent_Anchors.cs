@@ -47,12 +47,12 @@ namespace RimArt
         public override void MapComponentUpdate()
         {
             base.MapComponentUpdate();
+            if (Find.CurrentMap != map) return;
 
             List<Pawn> colonists = map.mapPawns.FreeColonistsSpawned;
             if (colonists.Count == 0) return;
 
-            float pulse = 0.75f + 0.25f * Mathf.Sin(Time.realtimeSinceStartup * 3f);
-
+            var teleports = map.GetComponent<MapComponent_ClapTeleports>();
             for (int i = 0; i < colonists.Count; i++)
             {
                 Gene_Anchors gene = AnchorUtility.GeneOf(colonists[i]);
@@ -62,33 +62,28 @@ namespace RimArt
                 for (int j = 0; j < anchors.Count; j++)
                 {
                     if (!gene.Holds(anchors[j])) continue;
-                    DrawMark(anchors[j].CurrentCell, pulse);
+                    DrawMark(anchors[j], teleports);
                 }
             }
         }
 
-        private void DrawMark(IntVec3 cell, float pulse)
+        /// <summary>
+        /// The mark as a playing card: over the head of a marked pawn, flat on a marked tile inside
+        /// a gold outline. While a clap against it is in its warmup the card flips with the rising
+        /// ring, and the ring's drawing has the tile's outline.
+        /// </summary>
+        private void DrawMark(Anchor anchor, MapComponent_ClapTeleports teleports)
         {
+            IntVec3 cell = anchor.CurrentCell;
             if (!cell.InBounds(map) || cell.Fogged(map)) return;
 
-            Color glow = AnchorGraphics.MarkColor;
-            glow.a *= pulse;
-            Color edge = AnchorGraphics.EdgeColor;
-            edge.a *= pulse;
-
-            GenDraw.DrawFieldEdges(new List<IntVec3> { cell }, edge, null, null);
-
-            Vector3 drawPos = cell.ToVector3Shifted();
-            drawPos.y = AltitudeLayer.MoteOverhead.AltitudeFor();
-
-            AnchorGraphics.PropertyBlock.SetColor(ShaderPropertyIDs.Color, glow);
-
-            Matrix4x4 matrix = default(Matrix4x4);
-            matrix.SetTRS(drawPos, Quaternion.identity,
-                new Vector3(AnchorGraphics.MarkScale, 1f, AnchorGraphics.MarkScale));
-
-            Graphics.DrawMesh(MeshPool.plane10, matrix, AnchorGraphics.MarkMat, 0, null, 0,
-                AnchorGraphics.PropertyBlock);
+            float rising = -1f;
+            bool clapping = teleports != null && teleports.Rising(anchor, out rising);
+            Vector2 ground = ClapEnds.Ground(anchor, true);
+            int suit = Mathf.Clamp(anchor.suit, 0, 2);
+            float placed = (Find.TickManager.TicksGame - anchor.placedTick) / 60f;
+            ClapTeleportGraphics.Mark(ground, ClapEnds.Kind(anchor), suit, suit, Time.realtimeSinceStartup, rising, placed);
+            if (!anchor.IsOnPawn && !clapping) ClapTeleportGraphics.TileOutline(ground, 0.5f * SixPathsSlamTiming.Smooth(placed / MarkFlick.Settle));
         }
     }
 }
