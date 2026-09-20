@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- Core's own clips at this mod's volumes and pitches, as in AG_Shinra_Sounds.xml. No new
+       audio files. -->
+
+  <!-- One palm contact. A punch landing on a pawn is the nearest thing Core has to skin on
+       skin; pitched up it loses the weight of a blow and reads as a slap of two hands. Vanilla
+       plays the punch at 30 to 43, which was not heard at all at this pitch in the first game
+       test, so this is twice that. -->
+  <SoundDef>
+    <defName>AG_AnchorClap</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains>
+          <li Class="AudioGrain_Folder">
+            <clipFolderPath>Impact/PunchHitPawn</clipFolderPath>
+          </li>
+        </grains>
+        <volumeRange>60~60</volumeRange>
+        <pitchRange>1.35~1.5</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- The puff at each end of the swap: cloth beaten on a fire, slowed down, a soft whump
+       under the clap. It plays at both ends, so whichever one is on screen is heard. -->
+  <SoundDef>
+    <defName>AG_AnchorPuff</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains>
+          <li Class="AudioGrain_Folder">
+            <clipFolderPath>Impact/BeatFire</clipFolderPath>
+          </li>
+        </grains>
+        <volumeRange>40~40</volumeRange>
+        <pitchRange>0.75~0.85</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+</Defs>

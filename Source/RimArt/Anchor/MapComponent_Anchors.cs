@@ -81,8 +81,9 @@ namespace RimArt
             bool clapping = teleports != null && teleports.Rising(anchor, out rising);
             Vector2 ground = ClapEnds.Ground(anchor, true);
             int suit = Mathf.Clamp(anchor.suit, 0, 2);
-            ClapTeleportGraphics.Mark(ground, ClapEnds.Kind(anchor), suit, suit, Time.realtimeSinceStartup, rising);
-            if (!anchor.IsOnPawn && !clapping) ClapTeleportGraphics.TileOutline(ground, 0.5f);
+            float placed = (Find.TickManager.TicksGame - anchor.placedTick) / 60f;
+            ClapTeleportGraphics.Mark(ground, ClapEnds.Kind(anchor), suit, suit, Time.realtimeSinceStartup, rising, placed);
+            if (!anchor.IsOnPawn && !clapping) ClapTeleportGraphics.TileOutline(ground, 0.5f * SixPathsSlamTiming.Smooth(placed / MarkFlick.Settle));
         }
     }
 }

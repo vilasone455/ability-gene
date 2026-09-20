@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using RimWorld;
+using UnityEngine;
 using Verse;
 using Verse.AI;
 using T = RimArt.ClapTeleport;
@@ -41,7 +42,7 @@ namespace RimArt
 
             Toil cast = Toils_Combat.CastVerb(TargetIndex.A, TargetIndex.B, canHitNonTargetPawns: false);
             cast.FailOn(() => !job.ability.CanCast && !job.ability.Casting);
-            cast.AddPreTickAction(() => Seek());
+            cast.AddPreTickAction(() => { FirstClap(); Seek(); });
             yield return cast;
 
             Toil hold = ToilMaker.MakeToil("ClapHold");
@@ -62,6 +63,16 @@ namespace RimArt
             if (first == null || (Twice && second == null)) return;
             pawn.Map.GetComponent<MapComponent_ClapTeleports>()
                 .Begin(pawn, first, second, job.ability.def.verbProperties.warmupTime, Twice, animated);
+        }
+
+        /// <summary>
+        /// The double clap's first palm contact, which lands nothing and so has no other place to
+        /// be heard from. The last contact of either ability is the swap; Land plays that one.
+        /// </summary>
+        private void FirstClap()
+        {
+            if (Twice && Find.TickManager.TicksGame - clapStartTick == Mathf.RoundToInt(T.FirstContact * 60f))
+                AnchorSound.Clap(pawn);
         }
 
         /// <summary>Moves the clip to now. False once the clip is over, or when there is none.</summary>

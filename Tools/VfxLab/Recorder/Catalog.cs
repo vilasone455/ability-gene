@@ -56,6 +56,13 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Anchor", Prefix = "Mark flick:", Component = typeof(MapComponent_MarkFlickPreview), Clock = "seconds",
+                Phases = label => label.Contains("lift")
+                    ? new[] { new Phase("Reach out", 0f), new Phase("Mark lifted: card leaves", MarkFlick.Place), new Phase("Caught", MarkFlick.Place + MarkFlick.CatchFlight), new Phase("Clip ends", MarkFlick.CatchLength) }
+                    : new[] { new Phase("Curl", 0f), new Phase("Card leaves the hand", MarkFlick.Release), new Phase("Mark placed", MarkFlick.Place), new Phase("Clip ends", MarkFlick.FlickLength) },
+            },
+            new Kit
+            {
                 Name = "Gravity Well", Prefix = "Gravity Well:", Component = typeof(MapComponent_GravityPreview), Clock = "seconds",
                 // The preview's own numbers (DebugActions_Gravity.cs): mass climbs for 6 s, then
                 // the implosion fades out by 6.5 s. There is no timing class to read them from.

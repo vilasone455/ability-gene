@@ -112,19 +112,50 @@ namespace RimArt
         /// A mark's card. Over a pawn it floats above the head; on a tile it lies on the cell inside
         /// the gold outline. <paramref name="rising"/> is seconds since the cards of a clap against
         /// this mark began to rise, negative while no clap is under way: the card then flips fast,
-        /// and a tile's card lifts to the middle of the ring.
+        /// and a tile's card lifts to the middle of the ring. <paramref name="placed"/> is seconds
+        /// since the mark was placed: for the first <see cref="MarkFlick.Settle"/> the card is a
+        /// little oversize, and over a pawn it turns from edge on to its resting sway, standing up
+        /// out of the flat card that was flicked.
         /// </summary>
-        public static void Mark(Vector2 ground, ClapMark kind, int suit, int index, float seconds, float rising = -1f)
+        public static void Mark(Vector2 ground, ClapMark kind, int suit, int index, float seconds, float rising = -1f, float placed = 1000f)
         {
             if (kind == ClapMark.None) return;
-            float up = Smooth(rising / T.Rise);
-            float turn = rising < 0f ? Mathf.Sin(seconds * 2.2f + index) * 0.5f : rising * T.Flip * 2f;
-            float step = (20 + index) * CardStep;
+            float up = Smooth(rising / T.Rise), settled = Smooth(placed / MarkFlick.Settle);
+            float turn = rising < 0f ? Mathf.Lerp(Mathf.PI / 2f, Mathf.Sin(seconds * 2.2f + index) * 0.5f, settled) : rising * T.Flip * 2f;
+            float step = (20 + index) * CardStep, scale = T.MarkScale * (1f + MarkFlick.SettlePop * (1f - settled));
             if (kind == ClapMark.Pawn)
-                Card(T.Above(ground, 0f, 0f, T.MarkHeight + 0.05f * Mathf.Sin(seconds * 3f + index)), T.MarkScale, turn, 0f, suit, 1f, Overhead + 0.05f + step);
+                Card(T.Above(ground, 0f, 0f, T.MarkHeight + 0.05f * Mathf.Sin(seconds * 3f + index)), scale, turn, 0f, suit, 1f, Overhead + 0.05f + step);
             else
-                Card(T.Above(ground, 0f, 0f, T.Height * 0.7f * up), T.MarkScale, up > 0f ? turn : 0f, Mathf.Lerp(-14f, 0f, up), suit, 1f,
+                Card(T.Above(ground, 0f, 0f, T.Height * 0.7f * up), scale, up > 0f ? turn : 0f, Mathf.Lerp(-14f, 0f, up), suit, 1f,
                     (up > 0f ? Overhead + 0.05f : Floor + 0.02f) + step);
+        }
+
+        /// <summary>
+        /// The flicked card <paramref name="u"/> of the way from one screen point to another: back
+        /// up, turning flat on the screen, a pale streak behind it and its shadow on the ground
+        /// under it. Heights are cells above the ground at each end; <paramref name="flying"/> is
+        /// seconds since it left. A level card stays a card for every facing, so there is one drawing.
+        /// </summary>
+        public static void FlyingCard(Vector2 from, Vector2 to, float fromHeight, float toHeight, float fromScale, float toScale,
+            float u, float flying, Map map)
+        {
+            if (u < 0f || u >= 1f) return;
+            Vector2 at = Vector2.Lerp(from, to, u);
+            if (!Shown(at, map)) return;
+            Vector2 sun = GenCelestial.GetLightSourceInfo(map, GenCelestial.LightType.Shadow).vector * SixPathsSlamGraphics.SunScale;
+            float strength = 0.32f * GenCelestial.CurShadowStrength(map), height = Mathf.Lerp(fromHeight, toHeight, u);
+            Sprite(new Vector2(at.x, at.y - height * T.Lift) + sun * height, 0.2f, 0.1f, Fade(CardInk, strength * 0.6f), soft, Shadows + 30 * CardStep);
+            Begin(at);
+            Streak(Vector2.Lerp(from, to, Mathf.Max(0f, u - MarkFlick.Streak)), at, MarkFlick.StreakWidth, Fade(GoldPale, 0.55f), solid, Overhead + 0.02f, 6);
+            Card(at, Mathf.Lerp(fromScale, toScale, u), Mathf.PI, MarkFlick.Spin * flying, 0, 1f, Overhead + 0.04f + 30 * CardStep);
+        }
+
+        /// <summary>The small gold sparkle where a flicked card arrives, <paramref name="age"/> seconds after it did.</summary>
+        public static void FlickSparkle(Vector2 at, float size, float age)
+        {
+            float u = age / MarkFlick.SparkleLife;
+            if (u < 0f || u >= 1f) return;
+            Sparkle(at, size * (0.6f + 0.4f * u), (1f - u) * (1f - u), 45f + 90f * u, Overhead + 0.23f);
         }
 
         /// <summary>The gold outline of a marked tile.</summary>

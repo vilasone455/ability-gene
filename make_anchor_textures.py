@@ -7,6 +7,11 @@ SuitSpade.png, SuitHeart.png, SuitClub.png  white, the suit in the alpha. The dr
 them: red for the heart, near-black for the other two. One suit per mark slot, so two marks can
 be told apart when picking for Double Clap.
 
+CardBack.png  the card held in the hand by the Mark clips (make_mark_anim.py): ink edge, gold
+border, red middle, the same back the C# draws from quads for the ring and the flying card.
+Coloured in the file, because Melee Animation draws a clip part with one texture and no tint
+per region. 0.13 x 0.18 cells at a part scale of 0.18.
+
 These are the formulas the Clap teleport sketch was judged on
 (Tools/VfxLab/web/sketches/anchor-clap-teleport.js had them as lab/suit-* generators): the same
 64 pixels, the same four samples per pixel, the same sample positions. The puff and the soft
@@ -57,8 +62,25 @@ def raster(inside):
     return image
 
 
+def card_back():
+    # Portrait, 0.13 : 0.18 like CardWidth : CardHeight, one transparent pixel all round.
+    ink, gold, red = (26, 20, 23, 255), (224, 176, 64, 255), (176, 32, 46, 255)
+    image = Image.new("RGBA", (SIZE, SIZE))
+    pixels = image.load()
+    half_w, half_h = round((SIZE - 2) * 0.13 / 0.18 / 2), (SIZE - 2) // 2
+    for py in range(SIZE):
+        for px in range(SIZE):
+            # Distance in from the card's edge, in pixels; negative is outside the card.
+            inset = min(half_w - abs(px + 0.5 - SIZE / 2), half_h - abs(py + 0.5 - SIZE / 2))
+            if inset > 0:
+                pixels[px, py] = ink if inset < 2 else gold if inset < 7 else red
+    return image
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    card_back().save(OUT / "CardBack.png")
+    print(f"wrote {OUT / 'CardBack.png'}")
     for name, inside in (("SuitSpade", spade), ("SuitHeart", heart), ("SuitClub", club)):
         image = raster(inside)
         image.save(OUT / f"{name}.png")

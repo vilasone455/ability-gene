@@ -83,7 +83,8 @@ static class ApiChecks
         string mimic = CheckMimicContract();
         CheckShinraAcquisition();
         string distortion = CheckShinraDistortion();
-        string sounds = CheckShinraSounds(assembly);
+        string sounds = CheckSounds(assembly, "Shinra", "AG_Shinra_Sounds.xml", "ShinraSoundDefOf")
+            + " " + CheckSounds(assembly, "Anchor", "AG_Anchor_Sounds.xml", "AnchorSoundDefOf");
         string retrieval = CheckRetrievalHookContract();
         string kunai = CheckKunaiContract();
         string makibishi = CheckMakibishiContract();
@@ -161,38 +162,38 @@ static class ApiChecks
     /// the release plays at a sane volume instead of Explosion_Thump's 80. Two things can rot
     /// silently: a DefOf field whose def is not declared, which fails at startup rather than at
     /// the cast; and a Core clip folder that moves, which leaves a SoundDef that resolves and
-    /// plays nothing at all.
+    /// plays nothing at all. The Anchor clap and puff are built the same way and checked the same.
     /// </summary>
-    static string CheckShinraSounds(Assembly assembly)
+    static string CheckSounds(Assembly assembly, string kit, string file, string defOfName)
     {
-        var declared = XDocument.Load("1.6/Defs/SoundDefs/AG_Shinra_Sounds.xml").Root
+        var declared = XDocument.Load("1.6/Defs/SoundDefs/" + file).Root
             .Elements("SoundDef").ToArray();
         var names = declared.Select(def => (string)def.Element("defName")).ToArray();
 
-        Type defOf = assembly.GetType("RimArt.ShinraSoundDefOf")
-            ?? throw new Exception("RimArt.ShinraSoundDefOf is gone; the sounds have no DefOf");
+        Type defOf = assembly.GetType("RimArt." + defOfName)
+            ?? throw new Exception($"RimArt.{defOfName} is gone; the sounds have no DefOf");
         foreach (FieldInfo field in defOf.GetFields(BindingFlags.Public | BindingFlags.Static))
         {
             if (!names.Contains(field.Name))
-                throw new Exception($"ShinraSoundDefOf.{field.Name} names no SoundDef in "
-                    + "AG_Shinra_Sounds.xml, which fails at startup rather than at the cast");
+                throw new Exception($"{defOfName}.{field.Name} names no SoundDef in "
+                    + $"{file}, which fails at startup rather than at the cast");
         }
 
         var folders = declared.Descendants("clipFolderPath").Select(e => e.Value).Distinct().ToArray();
-        if (folders.Length == 0) throw new Exception("The Shinra sounds reference no audio at all");
+        if (folders.Length == 0) throw new Exception($"The {kit} sounds reference no audio at all");
 
         const string Core = "/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Data/Core";
         if (!Directory.Exists(Core))
-            return $"Skipped the {folders.Length} Shinra audio paths: RimWorld's Core data is not installed.";
+            return $"Skipped the {folders.Length} {kit} audio paths: RimWorld's Core data is not installed.";
         foreach (string folder in folders)
         {
             bool referenced = Directory.EnumerateFiles(Path.Combine(Core, "Defs", "SoundDefs"), "*.xml")
                 .Any(file => File.ReadAllText(file).Contains(folder));
             if (!referenced)
-                throw new Exception($"No Core sound still uses '{folder}'; the Shinra sound would "
+                throw new Exception($"No Core sound still uses '{folder}'; the {kit} sound would "
                     + "resolve and play nothing");
         }
-        return $"Checked {names.Length} Shinra sound defs against their DefOf and {folders.Length} core audio paths.";
+        return $"Checked {names.Length} {kit} sound defs against their DefOf and {folders.Length} core audio paths.";
     }
 
     /// <summary>
@@ -300,7 +301,8 @@ static class ApiChecks
         // a mistake worth catching.
         foreach (string clip in ThrowAnimation.Grenade.All.Concat(ThrowAnimation.Kunai.All).Concat(ThrowAnimation.Scatter.All).Concat(ThrowAnimation.Fuma.All)
                      .Select(name => name.Replace("AG_", "RimArt_")).Append("RimArt_ShinraPush").Append("RimArt_GravityChannel")
-                     .Append("RimArt_Clap").Append("RimArt_ClapTwice"))
+                     .Append("RimArt_Clap").Append("RimArt_ClapTwice")
+                     .Concat(ThrowAnimation.MarkFlick.All.Concat(ThrowAnimation.MarkCatch.All).Select(name => name.Replace("AG_", "RimArt_"))))
         {
             curves += CheckThrowAnimationJson(dataModel, partModel, clip);
             clips++;
@@ -325,6 +327,42 @@ static class ApiChecks
             float clipLength = clapJson.RootElement.GetProperty("Length").GetSingle();
             if (Math.Abs(clipLength - length) > 0.0001f)
                 throw new Exception($"{file}.json is {clipLength} s but ClapTeleport says {length} s - run make_clap_anim.py or fix the constant");
+        }
+        // Mark's clips start with the warmup too. The flying card is drawn in C# from MarkFlick's
+        // numbers: it leaves when the flick clip switches its card off and lands at the warmup's
+        // end; a lifted mark leaves at the warmup's end and arrives when the catch clip switches
+        // its card on. make_mark_anim.py, MarkFlick and the AbilityDef each carry these numbers.
+        {
+            var def = clapDefs.Single(e => (string)e.Element("defName") == "AG_AnchorMark");
+            float warmup = float.Parse((string)def.Element("verbProperties").Element("warmupTime"), System.Globalization.CultureInfo.InvariantCulture);
+            if (Math.Abs(warmup - RimArt.MarkFlick.Place) > 0.0001f)
+                throw new Exception($"AG_AnchorMark warmupTime {warmup} is not MarkFlick.Place {RimArt.MarkFlick.Place}, the time the Mark clips were authored against");
+            if ((string)def.Element("jobDef") != "AG_CastAnchorMark")
+                throw new Exception("AG_AnchorMark must cast through AG_CastAnchorMark, the job its clips are tied to");
+            foreach (var (style, length, cardOn, change) in new[] {
+                (ThrowAnimation.MarkFlick, RimArt.MarkFlick.FlickLength, false, RimArt.MarkFlick.Release),
+                (ThrowAnimation.MarkCatch, RimArt.MarkFlick.CatchLength, true, RimArt.MarkFlick.Place + RimArt.MarkFlick.CatchFlight) })
+            foreach (string clip in style.All)
+            {
+                string file = clip.Replace("AG_", "RimArt_");
+                if (!clapAnims.Any(e => (string)e.Element("defName") == clip && (string)e.Element("data") == file + ".json"
+                                        && (string)e.Element("rendererWorker") == "RimArt.MeleeAnimation.ThrowAimWorker"))
+                    throw new Exception($"No AM.AnimDef {clip} pointing at {file}.json with the throw aim worker");
+                using var markJson = System.Text.Json.JsonDocument.Parse(File.ReadAllText($"Animations/{file}.json"));
+                float clipLength = markJson.RootElement.GetProperty("Length").GetSingle();
+                if (Math.Abs(clipLength - length) > 0.0001f)
+                    throw new Exception($"{file}.json is {clipLength} s but MarkFlick says {length} s - run make_mark_anim.py or fix the constant");
+                var card = markJson.RootElement.GetProperty("Parts").EnumerateArray()
+                    .Single(p => p.GetProperty("CustomName").ValueKind == System.Text.Json.JsonValueKind.String
+                                 && p.GetProperty("CustomName").GetString() == "Grenade");
+                // The first key at which the card part has the value it changes to: off for the flick, on for the catch.
+                float changed = card.GetProperty("Curves").GetProperty("GameObject.m_IsActive").GetProperty("Keyframes")
+                    .EnumerateArray().First(k => k.GetProperty("value").GetSingle() == (cardOn ? 1f : 0f)).GetProperty("time").GetSingle();
+                if (Math.Abs(changed - change) > 0.0001f)
+                    throw new Exception($"{file}.json switches its card {(cardOn ? "on" : "off")} at {changed} s but MarkFlick says {change} s");
+                if (Math.Abs(changed / clipLength - style.ReleaseFraction) > 0.001f)
+                    throw new Exception($"{file}.json: {changed}s of {clipLength}s is {changed / clipLength:0.0000}, but ThrowAnimation says {style.ReleaseFraction}");
+            }
         }
         // The C# launches the thrown object at ReleaseFraction of the clip. The json hides the held
         // part at its release time, so the two must agree for every facing of every throw style.

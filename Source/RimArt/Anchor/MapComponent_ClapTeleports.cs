@@ -63,6 +63,9 @@ namespace RimArt
             cast.end0 = end0;
             cast.end1 = end1;
             if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(T.Shake);
+            AnchorSound.Clap(carrier);
+            AnchorSound.Puff(map, end0.ground);
+            AnchorSound.Puff(map, end1.ground);
         }
 
         /// <summary>The carrier's cast job is over. A cast that never landed has nothing left to show.</summary>
