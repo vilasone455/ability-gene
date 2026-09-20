@@ -5,14 +5,21 @@
 //
 // What it is for (proposed, none of it agreed; every number is a placeholder and will be an XML field).
 //   Self cast, warm-up 0.5 s, lasts 20 s, cooldown 45 s. 8 blades of blue light stand in a level ring
-//   0.95 cells round the carrier at chest height and circle at 160 degrees per second, points 20 degrees out from the
-//   direction of travel, like saw teeth.
+//   0.95 cells round the carrier at chest height and circle at 160 degrees per second,
+//   hilts toward the carrier and points straight outward, like spokes.
 //   Every 0.6 s one blade fires by itself at the nearest hostile within 12 cells with line of sight
 //   that holds fewer than 4 blades: 9 Stab, 30 % armour penetration. It is not the pawn's attack: no
 //   stance, no warm-up, the pawn keeps walking or meleeing. Allies are never picked.
 //   The blade stays in the target for 3 s. Each blade in a pawn is -15 % move speed, up to 4 (-60 %).
 //   A fired slot is empty for 2.4 s, then a new blade grows in it, so about 4 blades circle at a time.
 //   When it ends every blade breaks, the ones stuck in pawns too.
+//   Second mode, "spins and cuts" (asked for by the user 2026-09-20; the numbers are placeholders). The
+//   same 8 blades do not fire. In 0.3 s the ring widens from 0.95 to 1.2 cells and speeds up from 160
+//   to 420 degrees per second, so the blades pass through the 8 cells next to the carrier. Every 0.5 s
+//   each hostile within 1.6 cells takes 6 Cut at 20 % armour penetration. Allies are not cut. No slow,
+//   no blades left in pawns. Proposed as one ability with a toggle on its button: the mode can be
+//   switched while it runs, 0.3 s for the ring to change, and both modes share the 20 s and the 45 s
+//   cooldown. The sketch shows one mode per run.
 //   It differs from Needle Halo (Six Paths): that is a weapon form, the pawn's own attack in bursts of
 //   3 on the player's order, with a Seal active, drawn as needles on a hub above the head. This is a
 //   timed buff on a melee pawn, fires without orders, and is drawn as swords round the body.
@@ -35,8 +42,21 @@
 //   6.80  it ends: every blade in the ring and every stuck blade breaks into shards, one thin ring
 //         front, the floor rings fade over 0.4 s
 //   7.80  what stays: the red slits, one per hit; none on the ally or the far raider
+// Order in "spins and cuts" (the carrier stands):
+//   0.30  the blades rise as above. 3 raiders walk in from about 3.5 cells to the cells next to the
+//         carrier, arriving by 1.80. An ally stands next to the carrier, 1 raider stays 3.5 cells away
+//   0.80  the ring widens to 1.2 and speeds up to 420 degrees per second in 0.3 s. Each blade drags a
+//         thin arc of light 40 degrees long. A floor ring marks the 1.6 cell cut radius
+//   1.10  the cut ticks start, one every 0.5 s, but the raiders are still 2.1 cells out and the first
+//         two land on nobody
+//   1.60  the raiders are inside 1.6 cells and the cuts start landing: a short hot cut across the
+//         chest, a white flash, a flinch and a red slit. Each of the three takes 11 cuts in the 6 s
+//         shown. The ally standing 1.4 cells away and the far raider at 3.5 get none. Only the last 5
+//         slits are drawn, or they pile into a scribble
+//   6.80  every blade breaks, as above
 //
-// Drawing: the ring is a level circle and each blade is a flat shape lying at one height, so nothing
+// Drawing: swords point radially outward in both modes, with their hilts toward the carrier.
+// The ring is a level circle and each blade is a flat shape lying at one height, so nothing
 // needs a per-facing method; the ring only shifts north by its height. Blades on the north half draw
 // under the pawn layer, the south half over it. A blade is light: a dark blue under-line so it reads
 // on pale ground, a soft additive halo (the SoftDisc texture stretched along it), a blue-white body and a white
@@ -45,28 +65,49 @@ import { Color, Mathf, MeshPool } from '../js/engine.js';
 import { draw, Lift } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
 import {
-  Blue, Deep, Ice, White, Ink, EnemyColour, Ally, pawn, pawnLayer, shadowLayer, carrier, ringAt, strip, glint, aura, streak, whiteGlow, smooth, clamp,
+  Blue, Deep, Ice, White, Ink, EnemyColour, Ally, pawn, pawnLayer, shadowLayer, carrier, ringAt, strip, line, hitCut, glint, aura, streak, whiteGlow, smooth, clamp,
 } from './lib/vergil.js';
 
 // Decided values. The panel keeps only what is still being tuned.
 const Lead = .3, Tail = 1, Rise = .22, Grow = .22, Turn = .14, Speed = 45, Break = .35, RingFade = .4, FirstShot = .2;
-const Height = .5, Chest = .3, BladeLength = .62, Tilt = 20, BladeWide = .12, StuckOut = .5, Reach = .15, MaxPins = 4, Shards = 7, WalkSpeed = .8;
+const Height = .5, Chest = .3, BladeLength = .62, BladeWide = .12, StuckOut = .5, Reach = .15, MaxPins = 4, Shards = 7, WalkSpeed = .8;
+const SpinRing = 1.2, SpinRate = 420, CutRadius = 1.6, CutEvery = .5, Ramp = .3, ArcBehind = 40, WalkIn = 1, Slits = 5;
 const Wound = new Color(.55, .05, .05);
 // Pawns as [east, north] of the clicked cell, in cells. The last hostile starts outside the range.
 const Hostiles = [[6, 2.5], [-4.5, 4], [3.5, -5.5], [14.5, -3]], AllyAt = [2.5, 1.5];
+// "spins and cuts": where the raiders end up, next to the carrier; they walk in from 2.8 times as far. The last one stays away.
+const Melee = [[1.2, .3], [-1, -.9], [.2, 1.35], [3.2, -1.5]], MeleeAlly = [-1.25, .55];
 
 function times(p) {
   const cast = Lead, formed = cast + p.form, fire = formed + FirstShot, stop = formed + p.lasts;
   return { cast, formed, fire, stop, end: stop + Tail };
 }
 const turnTo = (a, b, u) => a + ((((b - a) % 360) + 540) % 360 - 180) * u;
-const casterAt = (p, t, o, s) => ({ x: o.x + (p.scenario === 'walks east' ? WalkSpeed * Math.max(0, Math.min(s, t.stop) - t.formed) : 0), z: o.z });
-const slotAngle = (i, n, p, s) => i / n * 360 + p.spin * s;
+const spins = p => p.mode === 'spins and cuts';
+const casterAt = (p, t, o, s) => ({ x: o.x + (p.scenario === 'walks east' && !spins(p) ? WalkSpeed * Math.max(0, Math.min(s, t.stop) - t.formed) : 0), z: o.z });
+// The spin speeds up over Ramp in the second mode, so the angle is the integral of the rate.
+const slotAngle = (i, n, p, t, s) => { const e = s - t.formed; return i / n * 360 + p.spin * s + (spins(p) && e > 0 ? (SpinRate - p.spin) * (e < Ramp ? e * e / (2 * Ramp) : e - Ramp / 2) : 0); };
+const ringRadius = (p, t, s) => spins(p) ? Mathf.Lerp(p.ring, SpinRing, smooth((s - t.formed) / Ramp)) : p.ring;
+// Where hostile j stands at time s, and the times of the cut ticks that landed on it up to s.
+function hostileAt(p, t, o, j, s) {
+  if (!spins(p)) return { x: o.x + Hostiles[j][0], z: o.z + Hostiles[j][1] };
+  const far = j === Melee.length - 1 ? 1 : 1 + 1.8 * (1 - smooth((s - t.cast) / (p.form + WalkIn)));
+  return { x: o.x + Melee[j][0] * far, z: o.z + Melee[j][1] * far };
+}
+function cutsOn(p, t, o, j, s) {
+  const list = [];
+  for (let T = t.formed + Ramp; spins(p) && T <= Math.min(s, t.stop - .05); T += CutEvery) {
+    const q = hostileAt(p, t, o, j, T);
+    if (Math.hypot(q.x - o.x, q.z - o.z) <= CutRadius) list.push(T);
+  }
+  return list;
+}
 const ringPoint = (c, deg, radius, height) => ({ x: c.x + Math.cos(deg * Mathf.Deg2Rad) * radius, z: c.z + height * Lift + Math.sin(deg * Mathf.Deg2Rad) * radius });
 
 // Every shot of the clip, worked out from zero each frame so the timeline can be scrubbed backwards.
 function play(p, t, o) {
   const n = Math.round(p.slots), free = Array(n).fill(t.formed), shots = [];
+  if (spins(p)) return shots;
   for (let k = 0; t.fire + k * p.every <= t.stop - .4; k++) {
     const T = t.fire + k * p.every, c = casterAt(p, t, o, T);
     let target = -1, near = p.range;
@@ -79,14 +120,14 @@ function play(p, t, o) {
     const aim = Math.atan2(chest.z - (c.z + Height * Lift), chest.x - c.x) / Mathf.Deg2Rad;
     let slot = -1, best = 1e9;
     for (let i = 0; i < n; i++) {
-      const off = Math.abs(turnTo(0, slotAngle(i, n, p, T) - aim, 1));
+      const off = Math.abs(turnTo(0, slotAngle(i, n, p, t, T) - aim, 1));
       if (free[i] <= T && off < best) { slot = i; best = off; }
     }
     if (slot < 0) continue;
     free[slot] = T + p.regrow + Grow;
-    const angle = slotAngle(slot, n, p, T), from = ringPoint(c, angle, p.ring, Height);
+    const angle = slotAngle(slot, n, p, t, T), from = ringPoint(c, angle, p.ring, Height);   // only "fires" gets this far, so the ring is never the wider spinning one
     const dist = Math.hypot(chest.x - from.x, chest.z - from.z), deg = Math.atan2(chest.z - from.z, chest.x - from.x) / Mathf.Deg2Rad;
-    shots.push({ k, fireAt: T, slot, target, from, chest, deg, tangent: angle + 90 - Tilt, out: angle, dist, hitAt: T + Turn + Math.max(0, dist - Reach) / Speed, regrowAt: T + p.regrow });
+    shots.push({ k, fireAt: T, slot, target, from, chest, deg, startAngle: angle, out: angle, dist, hitAt: T + Turn + Math.max(0, dist - Reach) / Speed, regrowAt: T + p.regrow });
   }
   return shots;
 }
@@ -131,7 +172,8 @@ function shards(key, seed, mid, deg, age) {
 export default {
   kit: 'Vergil', label: 'Summoned Swords (sketch)',
   params: {
-    scenario: { label: 'The carrier', value: 'walks east', options: ['walks east', 'stands'], group: 'Scene' },
+    mode: { label: 'Mode', value: 'fires', options: ['fires', 'spins and cuts'], group: 'Scene' },
+    scenario: { label: 'The carrier (fires mode)', value: 'walks east', options: ['walks east', 'stands'], group: 'Scene' },
     range: P('Range (cells)', 12, 6, 18, .5, 'Rule'),
     every: P('One shot every (s)', .6, .2, 1.5, .05, 'Rule'),
     regrow: P('A fired slot stays empty (s)', 2.4, .5, 6, .1, 'Rule'),
@@ -145,7 +187,7 @@ export default {
   duration(p) { return times(p).end; },
   phases(p) {
     const t = times(p);
-    return [{ name: 'Stands', t: 0 }, { name: 'The blades rise', t: t.cast }, { name: 'Fires on its own', t: t.fire }, { name: 'Every blade breaks', t: t.stop }];
+    return [{ name: 'Stands', t: 0 }, { name: 'The blades rise', t: t.cast }, { name: spins(p) ? 'Spins and cuts' : 'Fires on its own', t: spins(p) ? t.formed : t.fire }, { name: 'Every blade breaks', t: t.stop }];
   },
   events(p) {
     const t = times(p);
@@ -157,15 +199,16 @@ export default {
     if (s < 0 || s >= t.end) return;
     const sun = scene?.shadowVector ?? { x: -.45, z: -.32 }, strength = scene?.sun?.strength ?? .32;
     const n = Math.round(p.slots), shots = play(p, t, o), c = casterAt(p, t, o, s), sinceStop = s - t.stop;
-    const left = 1 - smooth(sinceStop / RingFade);
+    const left = 1 - smooth(sinceStop / RingFade), spinning = spins(p), R = ringRadius(p, t, s), spun = spinning ? smooth((s - t.formed) / Ramp) : 0;
 
     // --- the floor: the range, and the ring's mark under the carrier ----------------------------------------------------------
-    ringAt(c, p.range, Blue.withAlpha(.22 * (s < t.cast ? 1 : left)), Floor + .015);
-    if (s >= t.cast) ringAt(c, p.ring * smooth((s - t.cast) / (p.form * .6)), Blue.withAlpha((s < t.formed ? .7 : .3) * left), Floor + .02);
+    ringAt(c, spinning ? CutRadius : p.range, Blue.withAlpha((spinning ? .45 : .22) * (s < t.cast ? 1 : left)), Floor + .015);
+    if (s >= t.cast) ringAt(c, R * smooth((s - t.cast) / (p.form * .6)), Blue.withAlpha((s < t.formed ? .7 : .3) * left), Floor + .02);
 
     // --- pawns, north first -------------------------------------------------------------------------------------------------------------
-    const figures = [{ pos: c, caster: true }, { pos: { x: o.x + AllyAt[0], z: o.z + AllyAt[1] }, ally: true },
-      ...Hostiles.map((q, j) => ({ pos: { x: o.x + q[0], z: o.z + q[1] }, j }))];
+    const allyAt = spinning ? MeleeAlly : AllyAt;
+    const figures = [{ pos: c, caster: true }, { pos: { x: o.x + allyAt[0], z: o.z + allyAt[1] }, ally: true },
+      ...Hostiles.map((q, j) => ({ pos: hostileAt(p, t, o, j, s), j, cuts: cutsOn(p, t, o, j, s) }))];
     figures.sort((a, b) => b.pos.z - a.pos.z).forEach(g => {
       if (g.caster) {
         if (s >= t.cast && s < t.formed + .3) aura('summoned swords', c, s, .5 * clamp((s - t.cast) / p.form) * (1 - clamp((s - t.formed) / .3)), Blue);
@@ -173,39 +216,46 @@ export default {
         return;
       }
       if (g.ally) { pawn(g.pos, Ally, sun, strength); return; }
-      const mine = shots.filter(h => h.target === g.j && h.hitAt <= s), last = mine.length ? mine[mine.length - 1].hitAt : -9;
+      const mine = shots.filter(h => h.target === g.j && h.hitAt <= s), hits = spinning ? g.cuts : mine.map(h => h.hitAt), last = hits.length ? hits[hits.length - 1] : -9;
       const held = mine.filter(h => s < Math.min(h.hitAt + p.stuck, t.stop)).length, flash = .7 * clamp(1 - (s - last) / .1);
       const pos = { x: g.pos.x + (s - last < .15 ? Math.sin(s * 95 + g.j) * .035 : 0), z: g.pos.z };
       pawn(pos, Color.Lerp(EnemyColour, Blue, .12 * held), sun, strength, { tint: White, tintAmount: flash });
-      mine.forEach((h, i) => draw(MeshPool.plane10, pos.x + (rand(g.j * 9 + i) - .5) * .16, pawnLayer + .02 + i * .0005, pos.z + .06 + .05 * (i % 8), .2, .03, (i * 53 + g.j * 29) % 140 - 70, Wound.withAlpha(.85)));
+      // Only the last few slits are drawn: "spins and cuts" lands about 11 on one pawn in 6 s and they pile into a scribble.
+      hits.slice(-Slits).forEach((h, m) => { const i = hits.length - Math.min(hits.length, Slits) + m;
+        draw(MeshPool.plane10, pos.x + (rand(g.j * 9 + i) - .5) * .16, pawnLayer + .02 + m * .0005, pos.z + .06 + .09 * (m % Slits), .2, .03, (i * 53 + g.j * 29) % 140 - 70, Wound.withAlpha(.85));
+      });
     });
 
     // --- the ring: blades rise out of the floor, circle, regrow after a shot, break at the end --------------------------------------------
     for (let i = 0; i < n && s >= t.cast; i++) {
-      const fired = shots.filter(h => h.slot === i && h.fireAt <= s).pop(), angle = slotAngle(i, n, p, s), north = Math.sin(angle * Mathf.Deg2Rad) > 0;
+      const fired = shots.filter(h => h.slot === i && h.fireAt <= s).pop(), angle = slotAngle(i, n, p, t, s), north = Math.sin(angle * Mathf.Deg2Rad) > 0;
       const layer = north ? pawnLayer - .02 : Y + .03, key = `summoned swords slot ${i}`;
+      if (spun > 0 && sinceStop < 0) {   // the second mode: each blade drags a thin arc of light
+        const pts = Array.from({ length: 9 }, (_, j) => ringPoint(c, angle - ArcBehind * spun * j / 8, R, Height));
+        line(`${key} arc`, pts, .1, Blue.withAlpha(.5 * spun), whiteGlow, layer - .001, 'end');
+      }
       if (sinceStop >= 0) {
-        if (!fired || t.stop >= fired.regrowAt + Grow * .5) shards(key, i + 1, ringPoint(casterAt(p, t, o, t.stop), slotAngle(i, n, p, t.stop), p.ring, Height), slotAngle(i, n, p, t.stop) + 90 - Tilt, sinceStop);
+        if (!fired || t.stop >= fired.regrowAt + Grow * .5) shards(key, i + 1, ringPoint(casterAt(p, t, o, t.stop), slotAngle(i, n, p, t, t.stop), ringRadius(p, t, t.stop), Height), slotAngle(i, n, p, t, t.stop), sinceStop);
         continue;
       }
       if (fired) {
         const u = clamp((s - fired.regrowAt) / Grow);
         if (s < fired.regrowAt) continue;
-        const mid = ringPoint(c, angle, p.ring, Height);
+        const mid = ringPoint(c, angle, R, Height);
         if (u < 1) glint(`${key} regrow`, mid, .22 * (1 - u), 1 - u, White, 30);
-        blade(key, mid, angle + 90 - Tilt, u, { layer, shown: smooth(u), hot: 1 - u });
-        sprite({ x: mid.x + sun.x * Height, z: mid.z - Height * Lift + sun.z * Height }, .75, .14, Ink.withAlpha(strength * .6 * u), soft, shadowLayer, -(angle + 90 - Tilt));
+        blade(key, mid, angle, u, { layer, shown: smooth(u), hot: 1 - u });
+        sprite({ x: mid.x + sun.x * Height, z: mid.z - Height * Lift + sun.z * Height }, .75, .14, Ink.withAlpha(strength * .6 * u), soft, shadowLayer, -(angle));
         continue;
       }
       const appear = t.cast + i / n * Math.max(0, p.form - Rise), u = clamp((s - appear) / Rise);
       if (s < appear) continue;
-      const height = Height * smooth(u), mid = ringPoint(c, angle, p.ring, height);
-      if (u < 1) glint(`${key} rise`, ringPoint(c, angle, p.ring, 0), .3 * (1 - u), 1 - u, White, 30);
-      blade(key, mid, angle + 90 - Tilt, u, { layer, hot: 1 - u });
-      sprite({ x: mid.x + sun.x * height, z: mid.z - height * Lift + sun.z * height }, .75, .14, Ink.withAlpha(strength * .6 * u), soft, shadowLayer, -(angle + 90 - Tilt));
+      const height = Height * smooth(u), mid = ringPoint(c, angle, R, height);
+      if (u < 1) glint(`${key} rise`, ringPoint(c, angle, R, 0), .3 * (1 - u), 1 - u, White, 30);
+      blade(key, mid, angle, u, { layer, hot: 1 - u });
+      sprite({ x: mid.x + sun.x * height, z: mid.z - height * Lift + sun.z * height }, .75, .14, Ink.withAlpha(strength * .6 * u), soft, shadowLayer, -(angle));
     }
     // A thin line of light joins the blades, so the ring reads as one thing.
-    if (s >= t.formed - .1 && sinceStop < RingFade) ringAt({ x: c.x, z: c.z + Height * Lift }, p.ring, Blue.withAlpha(.16 * clamp((s - t.formed + .1) / .2) * left), Y + .02, false, whiteGlow);
+    if (s >= t.formed - .1 && sinceStop < RingFade) ringAt({ x: c.x, z: c.z + Height * Lift }, R, Blue.withAlpha(.16 * clamp((s - t.formed + .1) / .2) * left), Y + .02, false, whiteGlow);
 
     // --- the shots: turn, fly, stick, break ---------------------------------------------------------------------------------------------------
     shots.forEach(h => {
@@ -220,7 +270,7 @@ export default {
           sprite({ x: (mid.x + tail.x) / 2, z: (mid.z + tail.z) / 2 }, back * 1.2, .5, Blue.withAlpha(.4), glow, Y + .024, -h.deg);
           streak(`${key} trail`, tail, mid, .07, Ice.withAlpha(.6), whiteGlow, Y + .025, 6);
         }
-        blade(key, mid, turnTo(h.tangent, h.deg, smooth(u)), 1, { hot: u });
+        blade(key, mid, turnTo(h.startAngle, h.deg, smooth(u)), 1, { hot: u });
         return;
       }
       const breakAt = Math.min(h.hitAt + p.stuck, t.stop), lean = h.deg + (rand(h.k + 3) - .5) * 24, lr = lean * Mathf.Deg2Rad;
@@ -235,7 +285,10 @@ export default {
       }
     });
 
+    // --- the second mode's cuts: a short hot cut across each raider inside the radius, every tick ------------------------------------------------
+    if (spinning) figures.forEach(g => (g.cuts ?? []).forEach((T, m) => hitCut(`summoned swords cut ${g.j} ${m}`, g.pos, (m * 67 + g.j * 41) % 180, s - T)));
+
     // --- it ends: one thin ring front round the carrier -------------------------------------------------------------------------------------------
-    if (sinceStop >= 0 && sinceStop < .3) ringAt({ x: c.x, z: c.z + Height * Lift }, p.ring * (1 + .6 * smooth(sinceStop / .3)), Ice.withAlpha(.6 * (1 - sinceStop / .3)), Y + .03, false, whiteGlow);
+    if (sinceStop >= 0 && sinceStop < .3) ringAt({ x: c.x, z: c.z + Height * Lift }, R * (1 + .6 * smooth(sinceStop / .3)), Ice.withAlpha(.6 * (1 - sinceStop / .3)), Y + .03, false, whiteGlow);
   },
 };
