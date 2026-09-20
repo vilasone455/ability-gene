@@ -19,6 +19,9 @@
     <Compile Include="../../../Source/RimArt/SixPaths/*.cs" LinkBase="Linked/SixPaths" />
     <!-- Flying Thunder God -->
     <Compile Include="../../../Source/RimArt/ThunderGod/*.cs" LinkBase="Linked/ThunderGod" />
+    <Compile Include="../../../Source/RimArt/Anchor/ClapTeleport.cs" Link="Linked/Anchor/ClapTeleport.cs" />
+    <Compile Include="../../../Source/RimArt/Anchor/ClapTeleportGraphics.cs" Link="Linked/Anchor/ClapTeleportGraphics.cs" />
+    <Compile Include="../../../Source/RimArt/Anchor/DebugActions_ClapTeleport.cs" Link="Linked/Anchor/DebugActions_ClapTeleport.cs" />
     <!-- Gravity Well -->
     <Compile Include="../../../Source/RimArt/Gravity/GravityGraphics.cs" Link="Linked/Gravity/GravityGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Gravity/GravityRules.cs" Link="Linked/Gravity/GravityRules.cs" />

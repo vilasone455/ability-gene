@@ -112,8 +112,27 @@ namespace RimArt
 
         public void Add(Anchor anchor)
         {
+            anchor.suit = FreeSuit();
             anchors.Add(anchor);
         }
+
+        /// <summary>
+        /// The lowest suit no held mark is using. With more than three marks allowed (maxAnchors is
+        /// XML) suits repeat, least used first.
+        /// </summary>
+        private int FreeSuit()
+        {
+            int best = 0, fewest = int.MaxValue;
+            for (int suit = 0; suit < Suits; suit++)
+            {
+                int used = 0;
+                for (int i = 0; i < anchors.Count; i++) if (anchors[i].suit == suit) used++;
+                if (used < fewest) { fewest = used; best = suit; }
+            }
+            return best;
+        }
+
+        private const int Suits = 3;
 
         public void Remove(Anchor anchor)
         {
@@ -150,6 +169,10 @@ namespace RimArt
             if (Scribe.mode == LoadSaveMode.PostLoadInit && anchors == null)
             {
                 anchors = new List<Anchor>();
+            }
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                for (int i = 0; i < anchors.Count; i++) if (anchors[i].suit < 0) anchors[i].suit = FreeSuit();
             }
         }
     }
