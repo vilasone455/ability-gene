@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Both behind AG_ExplosiveTags. RecipeDefs rather than recipeMakers so the batch size and the
+       two ingredients are stated in one place each. Costs: docs/paper-bomb-kit.md, decision 3. -->
+
+  <RecipeDef>
+    <defName>AG_MakePaperTags</defName>
+    <label>make explosive tags x5</label>
+    <description>Make 5 explosive tags from 5 cloth and 10 chemfuel.</description>
+    <jobString>Making explosive tags.</jobString>
+    <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+    <workSkill>Crafting</workSkill>
+    <effectWorking>Cook</effectWorking>
+    <soundWorking>Recipe_Tailor</soundWorking>
+    <workAmount>1200</workAmount>
+    <researchPrerequisite>AG_ExplosiveTags</researchPrerequisite>
+    <recipeUsers>
+      <li>TableMachining</li>
+      <li>CraftingSpot</li>
+    </recipeUsers>
+    <ingredients>
+      <li>
+        <filter><thingDefs><li>Cloth</li></thingDefs></filter>
+        <count>5</count>
+      </li>
+      <li>
+        <filter><thingDefs><li>Chemfuel</li></thingDefs></filter>
+        <count>10</count>
+      </li>
+    </ingredients>
+    <fixedIngredientFilter>
+      <thingDefs>
+        <li>Cloth</li>
+        <li>Chemfuel</li>
+      </thingDefs>
+    </fixedIngredientFilter>
+    <products>
+      <AG_PaperTag>5</AG_PaperTag>
+    </products>
+    <skillRequirements>
+      <Crafting>4</Crafting>
+    </skillRequirements>
+  </RecipeDef>
+
+  <RecipeDef>
+    <defName>AG_MakeTagScroll</defName>
+    <label>make tag scroll</label>
+    <description>Make a tag scroll from 20 wood and 30 cloth. It comes loaded with 20 tags.</description>
+    <jobString>Making a tag scroll.</jobString>
+    <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+    <workSkill>Crafting</workSkill>
+    <effectWorking>Tailor</effectWorking>
+    <soundWorking>Recipe_Tailor</soundWorking>
+    <workAmount>4000</workAmount>
+    <researchPrerequisite>AG_ExplosiveTags</researchPrerequisite>
+    <recipeUsers>
+      <li>TableMachining</li>
+      <li>CraftingSpot</li>
+    </recipeUsers>
+    <ingredients>
+      <li>
+        <filter><thingDefs><li>WoodLog</li></thingDefs></filter>
+        <count>20</count>
+      </li>
+      <li>
+        <filter><thingDefs><li>Cloth</li></thingDefs></filter>
+        <count>30</count>
+      </li>
+    </ingredients>
+    <fixedIngredientFilter>
+      <thingDefs>
+        <li>WoodLog</li>
+        <li>Cloth</li>
+      </thingDefs>
+    </fixedIngredientFilter>
+    <products>
+      <AG_TagScroll>1</AG_TagScroll>
+    </products>
+    <skillRequirements>
+      <Crafting>5</Crafting>
+    </skillRequirements>
+  </RecipeDef>
+
+</Defs>

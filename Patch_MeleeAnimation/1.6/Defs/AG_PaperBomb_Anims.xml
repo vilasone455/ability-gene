@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- The Paper Bomb kit's clips. Written by make_paper_bomb_anim.py. Nothing starts them yet: the
+       kit is at sketch stage and has no abilities or C#. They are defined now so the clips can be
+       checked in the VFX lab and in Melee Animation's own previewer.
+
+       The tag scroll is a Scroll part in the off hand, not ItemA, so Melee Animation does not swap
+       its texture for the pawn's melee weapon. The three aimed clips have east (mirrored for west),
+       north and south files, and ThrowAimWorker turns the hand and what it holds to the exact
+       angle, as for the throws in AG_Throw_Anims.xml. TagSeal, the hand seal, is not aimed: one
+       clip, the pawn facing south, like the Anchor's clap. -->
+  <AM.AnimDef>
+    <defName>AG_TagThrow</defName>
+    <label>Paper Bomb: tag throw, east or west</label>
+    <description>Tearing a tag off the scroll and throwing it on a pin.</description>
+    <jobString>Throwing a tag.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_TagThrow.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_TagThrowNorth</defName>
+    <label>Paper Bomb: tag throw, north</label>
+    <description>Tearing a tag off the scroll and throwing it on a pin.</description>
+    <jobString>Throwing a tag.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_TagThrowNorth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_TagThrowSouth</defName>
+    <label>Paper Bomb: tag throw, south</label>
+    <description>Tearing a tag off the scroll and throwing it on a pin.</description>
+    <jobString>Throwing a tag.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_TagThrowSouth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_TagFlick</defName>
+    <label>Paper Bomb: tag line, east or west</label>
+    <description>Flicking the scroll's strip out along the ground, then tearing it off.</description>
+    <jobString>Laying a tag line.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_TagFlick.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_TagFlickNorth</defName>
+    <label>Paper Bomb: tag line, north</label>
+    <description>Flicking the scroll's strip out along the ground, then tearing it off.</description>
+    <jobString>Laying a tag line.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_TagFlickNorth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_TagFlickSouth</defName>
+    <label>Paper Bomb: tag line, south</label>
+    <description>Flicking the scroll's strip out along the ground, then tearing it off.</description>
+    <jobString>Laying a tag line.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_TagFlickSouth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_TagFan</defName>
+    <label>Paper Bomb: paper shroud, east or west</label>
+    <description>Fanning six tags off the scroll in one sweep.</description>
+    <jobString>Throwing a paper shroud.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_TagFan.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_TagFanNorth</defName>
+    <label>Paper Bomb: paper shroud, north</label>
+    <description>Fanning six tags off the scroll in one sweep.</description>
+    <jobString>Throwing a paper shroud.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_TagFanNorth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_TagFanSouth</defName>
+    <label>Paper Bomb: paper shroud, south</label>
+    <description>Fanning six tags off the scroll in one sweep.</description>
+    <jobString>Throwing a paper shroud.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_TagFanSouth.json</data>
+    <rendererWorker>RimArt.MeleeAnimation.ThrowAimWorker</rendererWorker>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+  <AM.AnimDef>
+    <defName>AG_TagSeal</defName>
+    <label>Paper Bomb: hand seal</label>
+    <description>Making the hand seal that sets the tags off.</description>
+    <jobString>Making a hand seal.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_TagSeal.json</data>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+</Defs>

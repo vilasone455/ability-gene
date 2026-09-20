@@ -56,6 +56,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Paper Bomb", Prefix = "Paper Bomb:", Component = typeof(MapComponent_PaperBombPreview), Clock = "seconds",
+                Phases = label => label.Contains("tag line") ? TagLinePhases() : label.Contains("shroud") ? ShroudPhases() : TagThrowPhases(),
+            },
+            new Kit
+            {
                 Name = "Anchor", Prefix = "Clap teleport:", Component = typeof(MapComponent_ClapPreview), Clock = "seconds",
                 Phases = label => ClapPhases(label.Contains("double")),
             },
@@ -88,6 +93,33 @@ namespace RimArt.VfxLab
         };
 
         public static Kit For(string label) => All.FirstOrDefault(k => label.StartsWith(k.Prefix, StringComparison.Ordinal));
+
+        private static Phase[] TagThrowPhases() => new[]
+        {
+            new Phase("Tear off", 0f),
+            new Phase("Flight", PaperBombTagThrowTiming.Release),
+            new Phase("Fuse", PaperBombTagThrowTiming.LandAt),
+            new Phase("Burst", PaperBombTagThrowTiming.BurstAt(PaperBombTagThrowTiming.ScriptFuse)),
+        };
+
+        private static Phase[] TagLinePhases() => new[]
+        {
+            new Phase("Flick", 0f),
+            new Phase("Strip runs out", PaperBombTagLineTiming.Flick),
+            new Phase("Armed", PaperBombTagLineTiming.Lay),
+            new Phase("Hand seal", PaperBombTagLineTiming.ScriptFuseAt - PaperBombGraphics.Seal),
+            new Phase("Fuse and bursts", PaperBombTagLineTiming.ScriptFuseAt),
+            new Phase("Aftermath", PaperBombTagLineTiming.ScriptDuration - PaperBombTagLineTiming.Aftermath),
+        };
+
+        private static Phase[] ShroudPhases() => new[]
+        {
+            new Phase("Wind-up", 0f),
+            new Phase("Tags fly", PaperBombShroudTiming.Wind),
+            new Phase("Held", PaperBombShroudTiming.FirstLand),
+            new Phase("Hand seal", PaperBombShroudTiming.SealAt(PaperBombShroudTiming.ScriptHeld)),
+            new Phase("Burst", PaperBombShroudTiming.BurstAt(PaperBombShroudTiming.ScriptHeld)),
+        };
 
         private static Phase[] ThrustPhases() => new[]
         {

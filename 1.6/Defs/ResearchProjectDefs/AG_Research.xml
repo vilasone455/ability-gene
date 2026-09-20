@@ -75,4 +75,20 @@
     <researchViewY>6.60</researchViewY>
   </ResearchProjectDef>
 
+  <!-- The Paper Bomb kit: the tag scroll and its explosive tags (docs/paper-bomb-kit.md). Chemfuel
+       paste on paper is cruder than a drone or a cryo charge, so it costs less than either and
+       needs only machining. It sits in the slot below holographic projection at 7.00/6.60. -->
+  <ResearchProjectDef>
+    <defName>AG_ExplosiveTags</defName>
+    <label>explosive tags</label>
+    <description>Make tag scrolls and the explosive tags they hold: paper slips that stick where they are thrown or laid and go off on a fuse or a hand seal. The wielder can throw single tags, lay a line of them along a corridor, or cover one enemy in them.</description>
+    <baseCost>1000</baseCost>
+    <techLevel>Industrial</techLevel>
+    <prerequisites>
+      <li>Machining</li>
+    </prerequisites>
+    <researchViewX>7.00</researchViewX>
+    <researchViewY>7.80</researchViewY>
+  </ResearchProjectDef>
+
 </Defs>

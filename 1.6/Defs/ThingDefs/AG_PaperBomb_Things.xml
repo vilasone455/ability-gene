@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Paper Bomb kit. Agreed decisions and proposed numbers: docs/paper-bomb-kit.md. Every
+       balance number is a field here or in AG_PaperBomb_Abilities.xml. -->
+
+  <!-- The ammunition. Loaded into a tag scroll by Core's reload job; each tag thrown or laid is
+       spent. Made in batches of 5 by AG_MakePaperTags. -->
+  <ThingDef ParentName="ResourceBase">
+    <defName>AG_PaperTag</defName>
+    <label>explosive tag</label>
+    <description>A paper slip with a seal inked on it and a charge of chemfuel paste under the ink. Loaded into a tag scroll, up to 20 at a time.\n\nTag Throw spends 1 tag, Tag Line spends 1 per tile of tags laid (up to 8), and Paper Shroud spends 6. A spent tag cannot be recovered.</description>
+    <graphicData>
+      <texPath>RimArt/PaperBomb/Tags</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.8</drawSize>
+    </graphicData>
+    <soundInteract>Standard_Drop</soundInteract>
+    <soundDrop>Standard_Drop</soundDrop>
+    <techLevel>Industrial</techLevel>
+    <stackLimit>60</stackLimit>
+    <healthAffectsPrice>false</healthAffectsPrice>
+    <statBases>
+      <MarketValue>9</MarketValue>
+      <Mass>0.03</Mass>
+      <MaxHitPoints>20</MaxHitPoints>
+      <Flammability>1.5</Flammability>
+      <DeteriorationRate>4</DeteriorationRate>
+    </statBases>
+    <thingCategories>
+      <li>Manufactured</li>
+    </thingCategories>
+  </ThingDef>
+
+  <!-- The weapon. comps is Inherit="False" because CompTagScroll has to be the weapon's
+       CompEquippable: Core's reload jobs look for IReloadableComp on Pawn_EquipmentTracker.PrimaryEq.
+       BaseWeapon's other two comps are repeated here; if BaseWeapon gains one, add it. -->
+  <ThingDef ParentName="BaseWeapon">
+    <defName>AG_TagScroll</defName>
+    <label>tag scroll</label>
+    <description>A roll of up to 20 explosive tags wound on a wooden rod, held in one hand while the other takes tags off it.\n\nWhile it is equipped, the wielder can use Tag Throw, Tag Line and Paper Shroud, and Detonate while a tag line is laid. Every burst hurts allies as well as enemies. In melee the rod is a weak blunt weapon.\n\nReload it with explosive tags: the wielder reloads on their own when the scroll is empty, or right-click tags to reload early. A new scroll comes with 20 tags. The toggle on the wielder sets whether a laid tag line waits for Detonate or goes off when a hostile steps on it.</description>
+    <graphicData>
+      <texPath>RimArt/PaperBomb/TagScroll</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.1</drawSize>
+    </graphicData>
+    <techLevel>Industrial</techLevel>
+    <smeltable>false</smeltable>
+    <burnableByRecipe>true</burnableByRecipe>
+    <relicChance>0</relicChance>
+    <stackLimit>1</stackLimit>
+    <thingCategories>
+      <li>WeaponsMelee</li>
+    </thingCategories>
+    <weaponClasses>
+      <li>Melee</li>
+    </weaponClasses>
+    <tradeability>All</tradeability>
+    <statBases>
+      <MarketValue>260</MarketValue>
+      <Mass>0.8</Mass>
+      <MaxHitPoints>80</MaxHitPoints>
+      <Flammability>1</Flammability>
+      <DeteriorationRate>2</DeteriorationRate>
+      <Beauty>0</Beauty>
+    </statBases>
+    <comps Inherit="False">
+      <li Class="RimArt.CompProperties_TagScroll">
+        <maxTags>20</maxTags>
+        <ammoDef>AG_PaperTag</ammoDef>
+        <ammoCountPerTag>1</ammoCountPerTag>
+        <baseReloadTicks>90</baseReloadTicks>
+        <soundReload>Standard_Reload</soundReload>
+        <abilities>
+          <li>AG_PaperBomb_TagThrow</li>
+          <li>AG_PaperBomb_TagLine</li>
+          <li>AG_PaperBomb_Shroud</li>
+          <li>AG_PaperBomb_Detonate</li>
+        </abilities>
+      </li>
+      <li Class="CompProperties_Forbiddable"/>
+      <li Class="CompProperties_Styleable"/>
+    </comps>
+    <tools>
+      <li>
+        <label>rod</label>
+        <capacities><li>Blunt</li></capacities>
+        <power>7</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
+</Defs>

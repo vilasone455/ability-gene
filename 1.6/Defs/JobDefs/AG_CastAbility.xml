@@ -59,4 +59,14 @@
     <neverShowWeapon>true</neverShowWeapon>
   </JobDef>
 
+  <!-- Tag Throw, Tag Line and Paper Shroud. The driver starts the ability's clip with the warmup and
+       holds the job until the clip ends. The weapon is hidden for the job because the clip draws the
+       scroll in the off hand. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastPaperBomb</defName>
+    <driverClass>RimArt.JobDriver_CastPaperBomb</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
 </Defs>

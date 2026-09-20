@@ -1,7 +1,7 @@
 // Tag Line — Paper Bomb weapon proposal, not the game. Nothing in Source/RimArt draws this yet.
 //
 // What it is for (proposed, none of it agreed; every number is a placeholder). The pawn holds a
-// tag scroll: a roll of explosive tags. Tag Line targets a cell within 8 tiles. Over 2.5 s the
+// tag scroll: a roll of explosive tags. Tag Line targets a cell within 10.9 tiles (2.5 of plain strip plus 8 tags). Over 2.5 s the
 // pawn flicks the roll and a paper strip shoots out along the floor from its feet to that cell,
 // one tag per cell, up to 8, after 2.5 cells of plain strip that keep the first burst off the
 // pawn. The roll stays in the hand; the strip tears off. The tags stay for
