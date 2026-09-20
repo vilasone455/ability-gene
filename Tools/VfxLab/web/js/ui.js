@@ -37,6 +37,7 @@ const state = {
   b: store.get('b', null),
   compare: store.get('compare', false),
   cell: store.get('cell', { ...RecordedCell }),
+  filter: { text: '', types: [], folded: [], compare: '', ...store.get('filter', {}) },
   hidden: new Set(),
   stamp: null,
   status: null,
@@ -399,30 +400,82 @@ function updateTime() {
 
 // ------------------------------------------------------------------ panels
 
+// The list is filtered by words typed in the box (every word must be in the kit, the name or the
+// type), by type chips (none pressed means all), and by folding kits. A kit's fold is ignored
+// while words are typed, so a search always shows its matches. All of it is remembered.
+const typeOf = (e) => e.tag ?? e.kind;
+const TypeNames = ['sketch', 'recorded', 'clip'];
+function saveFilter() { store.set('filter', state.filter); }
+function matches(e, words, types) {
+  if (types.length && !types.includes(typeOf(e))) return false;
+  const text = `${e.kit} ${e.label} ${typeOf(e)}`.toLowerCase();
+  return words.every((w) => text.includes(w));
+}
+
+function filterBar() {
+  const input = el('input', {
+    type: 'search', id: 'filter-text', placeholder: 'Filter by name or kit', 'aria-label': 'Filter effects', value: state.filter.text, autocomplete: 'off', spellcheck: 'false',
+    oninput: (e) => { state.filter.text = e.target.value; saveFilter(); renderBrowser(); },
+    onkeydown: (e) => {
+      if (e.key === 'Escape') { e.target.value = state.filter.text = ''; saveFilter(); renderBrowser(); e.target.blur(); }
+      else if (e.key === 'Enter') { const first = $('effect-list').querySelector('.effect'); if (first) first.click(); }
+    },
+  });
+  return el('div', { class: 'filter' },
+    el('div', { class: 'filter-row' }, input, el('kbd', { title: 'Press / to type a filter' }, '/')),
+    el('div', { class: 'filter-row chips', id: 'filter-chips' }),
+    el('div', { class: 'filter-row', id: 'filter-count' }));
+}
+
 function renderBrowser() {
   const box = $('browser');
   if (!state.entries.length) {
     box.replaceChildren(el('p', { class: 'empty' }, 'No recordings yet. Run python3 Tools/VfxLab/lab.py from the repository root.'));
     return;
   }
-  const kits = [...new Set(state.entries.map((e) => e.kit))];
-  box.replaceChildren(...kits.flatMap((kit) => [
-    el('div', { class: 'kit' }, kit),
-    ...state.entries.filter((e) => e.kit === kit).map((e) => {
-      const name = e.label.startsWith(`${kit}:`) ? e.label.slice(kit.length + 1).trim() : e.label;
-      const side = state.compare ? (e.id === state.a ? 'A' : e.id === state.b ? 'B' : null) : null;
-      return el('button', {
-        class: 'effect', type: 'button', 'aria-current': e.id === state.a || (state.compare && e.id === state.b) ? 'true' : 'false',
-        title: 'Click to play. Shift-click to compare on the right (B).',
-        onclick: (ev) => select(e.id, ev.shiftKey ? 'b' : 'a'),
-      },
-      el('span', { class: 'name' }, name),
-      el('span', { class: 'dur' }, e.still ? 'still' : `${fmt(e.seconds, 2)} s`),
-      el('span', { class: 'tags' },
-        el('span', { class: `tag ${e.tag ?? e.kind}` }, e.tag ?? (e.kind === 'recorded' ? 'recorded' : 'sketch')),
-        side && el('span', { class: 'tag side' }, side)));
-    }),
-  ]));
+  if (!$('effect-list')) box.replaceChildren(filterBar(), el('div', { id: 'effect-list' }));   // the bar is built once so typing keeps its focus
+  const f = state.filter, words = f.text.toLowerCase().split(/\s+/).filter(Boolean);
+  const byWords = state.entries.filter((e) => matches(e, words, [])), shown = byWords.filter((e) => matches(e, [], f.types));
+  const kits = [...new Set(state.entries.map((e) => e.kit))], allFolded = kits.every((k) => f.folded.includes(k));
+
+  $('filter-chips').replaceChildren(...TypeNames.filter((name) => state.entries.some((e) => typeOf(e) === name)).map((name) =>
+    el('button', {
+      class: `chip ${name}`, type: 'button', 'aria-pressed': f.types.includes(name) ? 'true' : 'false',
+      onclick: () => { f.types = f.types.includes(name) ? f.types.filter((n) => n !== name) : [...f.types, name]; saveFilter(); renderBrowser(); },
+    }, `${name} ${byWords.filter((e) => typeOf(e) === name).length}`)));
+  const filtered = words.length > 0 || f.types.length > 0;
+  $('filter-count').replaceChildren(...[
+    el('span', { class: 'count' }, filtered ? `${shown.length} of ${state.entries.length}` : `${state.entries.length} effects`),
+    !filtered ? null : el('button', { class: 'link', type: 'button', onclick: () => { f.text = ''; f.types = []; $('filter-text').value = ''; saveFilter(); renderBrowser(); } }, 'Clear'),
+    el('button', { class: 'link', type: 'button', onclick: () => { f.folded = allFolded ? [] : kits; saveFilter(); renderBrowser(); } }, allFolded ? 'Unfold all' : 'Fold all')].filter(Boolean));
+
+  const rows = kits.flatMap((kit) => {
+    const inKit = shown.filter((e) => e.kit === kit), total = state.entries.filter((e) => e.kit === kit).length;
+    if (!inKit.length) return [];
+    const folded = !words.length && f.folded.includes(kit), current = inKit.some((e) => e.id === state.a || (state.compare && e.id === state.b));
+    return [
+      el('button', {
+        class: `kit${current ? ' current' : ''}`, type: 'button', 'aria-expanded': folded ? 'false' : 'true',
+        onclick: () => { f.folded = f.folded.includes(kit) ? f.folded.filter((k) => k !== kit) : [...f.folded, kit]; saveFilter(); renderBrowser(); },
+      }, el('span', { class: 'fold', 'aria-hidden': 'true' }, folded ? '▸' : '▾'), el('span', { class: 'kit-name' }, kit),
+      el('span', { class: 'kit-count' }, inKit.length === total ? `${total}` : `${inKit.length}/${total}`)),
+      ...(folded ? [] : inKit.map((e) => {
+        const name = e.label.startsWith(`${kit}:`) ? e.label.slice(kit.length + 1).trim() : e.label;
+        const side = state.compare ? (e.id === state.a ? 'A' : e.id === state.b ? 'B' : null) : null;
+        return el('button', {
+          class: 'effect', type: 'button', 'aria-current': e.id === state.a || (state.compare && e.id === state.b) ? 'true' : 'false',
+          title: 'Click to play. Shift-click to compare on the right (B).',
+          onclick: (ev) => select(e.id, ev.shiftKey ? 'b' : 'a'),
+        },
+        el('span', { class: 'name' }, name),
+        el('span', { class: 'dur' }, e.still ? 'still' : `${fmt(e.seconds, 2)} s`),
+        el('span', { class: 'tags' },
+          el('span', { class: `tag ${typeOf(e)}` }, typeOf(e)),
+          side && el('span', { class: 'tag side' }, side)));
+      })),
+    ];
+  });
+  $('effect-list').replaceChildren(...(rows.length ? rows : [el('p', { class: 'empty' }, 'Nothing matches. Press Esc in the box to clear it.')]));
 }
 
 function renderParams() {
@@ -717,11 +770,21 @@ function renderLayers() {
   );
 }
 
+// The two compare lists: grouped by kit, narrowed by the words in the box above them (the same
+// matching as the effect list), and B starts with the other effects of A's kit, which is where a
+// sketch's recording is. The effect a side already shows stays in its list whatever is typed.
 function renderCompareSelects() {
+  const words = state.filter.compare.toLowerCase().split(/\s+/).filter(Boolean), kitOfA = state.entries.find((e) => e.id === state.a)?.kit;
+  const option = (e, side) => el('option', { value: e.id, selected: state[side] === e.id }, `${e.label.startsWith(`${e.kit}:`) ? e.label.slice(e.kit.length + 1).trim() : e.label}${e.label.includes(`(${typeOf(e)})`) ? '' : ` · ${typeOf(e)}`}`);
+  let shownCount = 0;
   for (const [id, side] of [['compare-a', 'a'], ['compare-b', 'b']]) {
-    const select = $(id);
-    select.replaceChildren(el('option', { value: '' }, '—'), ...state.entries.map((e) => el('option', { value: e.id, selected: state[side] === e.id }, `${e.label}${e.kind === 'sketch' && !e.tag ? ' (sketch)' : ''}`)));
+    const shown = state.entries.filter((e) => e.id === state[side] || matches(e, words, [])), kits = [...new Set(shown.map((e) => e.kit))];
+    if (side === 'b' && kitOfA && kits.includes(kitOfA)) kits.unshift(...kits.splice(kits.indexOf(kitOfA), 1));
+    shownCount = Math.max(shownCount, shown.length);
+    $(id).replaceChildren(el('option', { value: '' }, '—'), ...kits.map((kit) =>
+      el('optgroup', { label: side === 'b' && kit === kitOfA ? `${kit} (same kit as A)` : kit }, ...shown.filter((e) => e.kit === kit).map((e) => option(e, side)))));
   }
+  $('compare-count').textContent = words.length ? `${shownCount} of ${state.entries.length} in the lists` : `${state.entries.length} in the lists, grouped by kit`;
 }
 
 function renderStatus(index) {
@@ -835,6 +898,9 @@ function bindChrome() {
   };
   $('compare-a').onchange = async (e) => { if (e.target.value) { await ensureLoaded(e.target.value); state.a = e.target.value; selectionChanged(true); } };
   $('compare-b').onchange = async (e) => { if (e.target.value) { await ensureLoaded(e.target.value); state.b = e.target.value; state.compare = true; selectionChanged(true); } };
+  $('compare-filter').value = state.filter.compare;
+  $('compare-filter').oninput = (e) => { state.filter.compare = e.target.value; saveFilter(); renderCompareSelects(); };
+  $('compare-filter').onkeydown = (e) => { if (e.key === 'Escape') { e.target.value = state.filter.compare = ''; saveFilter(); renderCompareSelects(); } };
   $('compare-swap').onclick = () => { [state.a, state.b] = [state.b, state.a]; selectionChanged(false); };
 
   window.addEventListener('keydown', (e) => {
@@ -847,5 +913,6 @@ function bindChrome() {
     else if (k === 'g') { $('show-grid').checked = !scene.show.grid; $('show-grid').onchange({ target: $('show-grid') }); }
     else if (k === 'c') { $('compare-on').checked = !state.compare; $('compare-on').onchange({ target: $('compare-on') }); }
     else if (k === 'f') centreCamera();
+    else if (e.key === '/') { e.preventDefault(); $('filter-text')?.focus(); $('filter-text')?.select(); }
   });
 }

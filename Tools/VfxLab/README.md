@@ -132,9 +132,13 @@ Recorded now: Six Paths (7 actions), Gravity Well (2), Shinra Tensei (3).
 |---|---|
 | Play an effect | click it in the list |
 | Put an effect on the right for comparison | shift-click it |
+| Find an effect | press `/` and type; every word must be in the kit, the name or the type (`shadow grasp`, `pole recorded`). Enter plays the first match, Esc clears |
+| Show only sketches, recordings or clips | the chips under the filter box; none pressed shows all. The number is how many match the typed words |
+| Fold a kit | click its heading; Fold all / Unfold all does every kit. Typed words show their matches inside folded kits too |
 | Play / pause | Space |
 | Step one frame (10 frames) | ← → (Shift + ← →) |
 | Toggle compare | C |
+| Pick A and B from short lists | Compare tab: both lists are grouped by kit, and B starts with the kit A is from. Type in "Filter both lists" to narrow them (`sweep` leaves 8 of 193); Esc clears. The effect a side already shows stays in its list |
 | Toggle cell grid | G |
 | Centre the camera on the effect | F |
 | Move the effect | click a cell on the map |
