@@ -71,8 +71,11 @@ def build():
                         "Transform.m_LocalScale.y": HAND_SCALE,
                         "Transform.m_LocalScale.z": HAND_SCALE})
         parts.append(hand)
+    # The hands are driven directly, with no holding offset for the aim worker to swing.
+    still = [(t, 0.0) for t, _ in all_x]
     return {"ExportTimeUTC": "2026-09-12T00:00:00.0000000Z", "Name": NAME,
-            "Length": LENGTH, "Bounds": bounds(all_x, all_z, body_pos), "Events": [], "Parts": parts}
+            "Length": LENGTH, "Bounds": bounds(all_x, all_z, still, still, body_pos),
+            "Events": [], "Parts": parts}
 
 
 def main():
