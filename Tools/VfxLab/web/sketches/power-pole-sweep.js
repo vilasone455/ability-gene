@@ -126,22 +126,22 @@ export default {
     }
 
     // Enemies. One that is hit is shoved Shove cells the way the pole was moving and stays there.
-    if (p.actors) {
-      figure(o, new Color(.93, .50, .13));
-      enemies.forEach((e, i) => {
+    // The hit flash is part of the effect, so it draws with the stand-ins hidden too.
+    if (p.actors) figure(o, new Color(.93, .50, .13));
+    enemies.forEach((e, i) => {
         const age = e.hit === null ? -1 : s - e.hit, moved = age < 0 ? 0 : Shove * (1 - Math.pow(1 - clamp(age / .2), 3));
         const base = polar(e.r, e.phi), along = (p.aim + e.phi - 90) * Rad;
         const pos = { x: base.x + Math.cos(along) * moved, z: base.z + Math.sin(along) * moved };
-        figure(pos, new Color(.55, .38, .27));
+        if (p.actors) figure(pos, new Color(.55, .38, .27));
         if (age < 0) return;
         sprite({ x: pos.x, z: pos.z + PoleHeight * Lift }, 1.3, .9, Pale.withAlpha(Math.max(0, 1 - age / .12) * .85), glow, Y + .02);
+        if (!p.actors) return;
         const fade = 1 - smooth((age - StaggerShown) / .3);
         for (let k = 0; k < 3; k++) {
           const turn = s * 5 + k * 2.094 + i;
           sprite({ x: pos.x + Math.cos(turn) * .2, z: pos.z + .86 + Math.sin(turn) * .06 }, .08, .08, Pale.withAlpha(.9 * fade), soft, Y + .03);
         }
-      });
-    }
+    });
 
     // The swept fan behind the pole: three nested slices, so the newest part is the brightest.
     if (swinging || (s >= t.swung && s < t.swung + .12)) for (const [k, span] of [.12, .07, .035].entries()) {

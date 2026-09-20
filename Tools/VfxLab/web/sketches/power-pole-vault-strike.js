@@ -118,15 +118,15 @@ export default {
 
     // Floor markers at the rule's true places: range around the start, the stagger radius on the target, the landing cell.
     const markers = 1 - smooth((s - t.strikeHit) / .4), targetSpot = place(feet, D, 0);
-    circle(feet, Range, .22 * markers);
+    circle(feet, Range, .22 * markers, Floor, Pale);
     circle(targetSpot, StaggerRadius, .6 * markers, Floor, Pale);
     circle(place(feet, landAt, 0), .45, .45 * markers, Floor, Pale);
 
     // Cracks in the ground from the strike, out to the stagger radius. They stay.
     if (struck >= 0) for (let i = 0; i < 9; i++) {
       const turn = i / 9 * Math.PI * 2 + rand(i + 300) * .5, reach = StaggerRadius * (.55 + rand(i + 310) * .45) * clamp(struck / .08);
-      const pts = [0, .33, .66, 1].map(k => {
-        const bend = (rand(i * 7 + k * 10 + 320) - .5) * .35 * k;
+      const pts = [0, .33, .66, 1].map((k, j) => {
+        const bend = (rand(i * 7 + j * 10 + 320) - .5) * .35 * k;
         return { x: targetSpot.x + Math.cos(turn + bend) * reach * k, z: targetSpot.z + Math.sin(turn + bend) * reach * k };
       });
       pts.unshift({ x: targetSpot.x - Math.cos(turn) * .05, z: targetSpot.z - Math.sin(turn) * .05 });
