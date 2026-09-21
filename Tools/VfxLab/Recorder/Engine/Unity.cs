@@ -27,6 +27,7 @@ namespace UnityEngine
         public static Vector2 Lerp(Vector2 a, Vector2 b, float t) { t = Mathf.Clamp01(t); return new Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t); }
         public static Vector2 LerpUnclamped(Vector2 a, Vector2 b, float t) => new Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
         public static float Distance(Vector2 a, Vector2 b) => (a - b).magnitude;
+        public static float Dot(Vector2 lhs, Vector2 rhs) => lhs.x * rhs.x + lhs.y * rhs.y;
     }
 
     public struct Vector3
@@ -114,6 +115,8 @@ namespace UnityEngine
     public class Object
     {
         public string name = "";
+        /// <summary>The recorder keeps nothing on a GPU, so there is nothing to free.</summary>
+        public static void Destroy(Object obj) { }
     }
 
     public class Shader : Object

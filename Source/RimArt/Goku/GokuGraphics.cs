@@ -171,10 +171,15 @@ namespace RimArt
             Sprite(at, size * 0.9f * beat, size * 0.9f * beat, Fade(White, 0.9f * alpha), glow, Overhead + 0.121f);
         }
 
-        /// <summary>A flame-shaped aura standing round a pawn (<paramref name="pos"/> is its feet), drawn behind it. <paramref name="power"/> 0 to 1.</summary>
-        internal static void Aura(Vector2 pos, float seconds, float power)
+        /// <summary>
+        /// A flame-shaped aura standing round a pawn (<paramref name="pos"/> is its feet), drawn behind it.
+        /// <paramref name="power"/> 0 to 1. <paramref name="colour"/> defaults to ki blue; the Vergil kit
+        /// passes its own blue, as the lab's aura() takes a colour.
+        /// </summary>
+        internal static void Aura(Vector2 pos, float seconds, float power, Color? colour = null)
         {
             if (power <= 0f) return;
+            Color tint = colour ?? KiSky;
             const int steps = 12;
             Sides(steps + 1, out Vector2[] left, out Vector2[] right);
             for (int j = 0; j <= steps; j++)
@@ -184,8 +189,8 @@ namespace RimArt
                 left[j] = new Vector2(pos.x - half + sway + Mathf.Sin(seconds * 41f + j * 2.3f) * 0.025f, z);
                 right[j] = new Vector2(pos.x + half + sway + Mathf.Sin(seconds * 37f + j * 1.7f) * 0.025f, z);
             }
-            Strip(left, right, Fade(KiSky, 0.34f * power), whiteGlow, PawnLayer - 0.02f);
-            Sprite(new Vector2(pos.x, pos.y + 0.35f), 1.5f, 1.9f, Fade(KiSky, 0.3f * power), glow, PawnLayer - 0.021f);
+            Strip(left, right, Fade(tint, 0.34f * power), whiteGlow, PawnLayer - 0.02f);
+            Sprite(new Vector2(pos.x, pos.y + 0.35f), 1.5f, 1.9f, Fade(tint, 0.3f * power), glow, PawnLayer - 0.021f);
         }
     }
 }

@@ -70,6 +70,14 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Vergil", Prefix = "Vergil:", Component = typeof(MapComponent_VergilPreview), Clock = "seconds",
+                Phases = label => label.Contains("summoned swords") ? SwordsPhases(label.Contains("spin"))
+                    : label.Contains("yamato dash") ? DashPhases()
+                    : label.Contains("judgement cut end") ? CutEndPhases()
+                    : JudgementCutPhases(),
+            },
+            new Kit
+            {
                 Name = "Goku", Prefix = "Goku:", Component = typeof(MapComponent_GokuPreview), Clock = "seconds",
                 Phases = label => label.Contains("solar flare") ? SolarFlarePhases()
                     : label.Contains("instant transmission") ? TransmissionPhases()
@@ -119,6 +127,40 @@ namespace RimArt.VfxLab
             phases.Add(new Phase(end == ImitationEnd.Released ? "Released" : end == ImitationEnd.Cut ? "Line cut" : "Line goes dark", t.Release));
             return phases.ToArray();
         }
+
+        private static Phase[] JudgementCutPhases() => new[]
+        {
+            new Phase("Sheathed", 0f),
+            new Phase("Hand on the hilt", JudgementCutTiming.CastAt),
+            new Phase("The draw / the sphere", JudgementCutTiming.OpenAt(JudgementCutTiming.Warm)),
+            new Phase("Closes", JudgementCutTiming.CloseAt(JudgementCutTiming.Warm, JudgementCutTiming.Burst)),
+        };
+
+        private static Phase[] CutEndPhases() => new[]
+        {
+            new Phase("Raiders close in", 0f),
+            new Phase("Hand on the hilt", JudgementCutEndTiming.CastAt),
+            new Phase("Gone / the cuts", JudgementCutEndTiming.VanishAt),
+            new Phase("Kneel and sheathe", JudgementCutEndTiming.BackAt),
+            new Phase("Click: the cuts land", JudgementCutEndTiming.ClickAt),
+        };
+
+        private static Phase[] DashPhases() => new[]
+        {
+            new Phase("Ready", 0f),
+            new Phase("Hand to hilt", YamatoDashTiming.CastAt),
+            new Phase("Dash: the marks are set", YamatoDashTiming.LaunchAt),
+            new Phase("Sheathe", YamatoDashTiming.ArriveAt),
+            new Phase("Click: every mark lands", YamatoDashTiming.ClickAt),
+        };
+
+        private static Phase[] SwordsPhases(bool spins) => new[]
+        {
+            new Phase("Stands", 0f),
+            new Phase("The blades rise", SummonedSwordsTiming.CastAt),
+            spins ? new Phase("Spins and cuts", SummonedSwordsTiming.FormedAt) : new Phase("Fires on its own", SummonedSwordsTiming.FireAt),
+            new Phase("Every blade breaks", SummonedSwordsTiming.StopAt),
+        };
 
         private static Phase[] SeamPhases(SeamScene scene)
         {

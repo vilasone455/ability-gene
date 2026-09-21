@@ -101,13 +101,13 @@ namespace RimArt
             if (s >= t.Cast && age < 0f)
             {
                 float w = (s - t.Cast) / t.Warm;
-                Sprite(head, 0.5f + w * 0.9f, 0.5f + w * 0.9f, Fade(Flare, 0.7f * w), glow, Overhead + 0.05f);
+                Sprite(head, 0.5f + w * 0.9f, 0.5f + w * 0.9f, Fade(GokuGraphics.Flare, 0.7f * w), glow, Overhead + 0.05f);
                 Glint(head, 0.1f + 0.25f * w, w);
                 for (int i = 0; i < T.Gather; i++)
                 {
                     float v = (w * 1.6f + Rand(i)) % 1f, r0 = 1.1f * (1f - v) + 0.12f, r1 = r0 + 0.3f * (1f - v);
                     Vector2 way = Turn(i * 36f + Rand(i + 5) * 25f);
-                    Streak(head + way * r0, head + way * r1, 0.04f, Fade(Flare, 0.9f * Mathf.Sin(v * Mathf.PI)), whiteGlow, Overhead + 0.04f, 2);
+                    Streak(head + way * r0, head + way * r1, 0.04f, Fade(GokuGraphics.Flare, 0.9f * Mathf.Sin(v * Mathf.PI)), whiteGlow, Overhead + 0.04f, 2);
                 }
             }
 
@@ -115,7 +115,7 @@ namespace RimArt
             if (bright > 0f)
             {
                 float open = Smooth(age / T.Front);
-                Sprite(head, radius * 5f, radius * 5f, Fade(Flare, 0.8f * bright), glow, Overhead + 0.1f);            // whiteout, past the radius
+                Sprite(head, radius * 5f, radius * 5f, Fade(GokuGraphics.Flare, 0.8f * bright), glow, Overhead + 0.1f);            // whiteout, past the radius
                 Sprite(head, radius * 2.3f, radius * 2.3f, Fade(White, 0.95f * bright), glow, Overhead + 0.101f);
                 PaperBombGraphics.RingAt(o, radius * open, Fade(White, 0.9f * (1f - f)), Overhead + 0.102f, true, whiteGlow);   // the front, on the true radius
                 PaperBombGraphics.RingAt(head, radius * 0.34f * (0.7f + 0.3f * open), Fade(FlareWarm, 0.5f * bright), Overhead + 0.103f, false, whiteGlow);
