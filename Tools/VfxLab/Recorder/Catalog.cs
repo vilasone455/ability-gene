@@ -61,6 +61,15 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Shadow Plexus", Prefix = "Shadow Plexus:", Component = typeof(MapComponent_ShadowPlexusPreview), Clock = "seconds",
+                Phases = label => label.Contains("imitation") ? ImitationPhases(label.Contains("cut") ? ImitationEnd.Cut : label.Contains("dark") ? ImitationEnd.Dark : ImitationEnd.Released)
+                    : label.Contains("seam") ? SeamPhases(label.Contains("rescue") ? SeamScene.Rescue : SeamScene.Rusher)
+                    : label.Contains("grasp") ? GraspPhases(label.Contains("blocked") ? GraspScene.Blocked : label.Contains("rescue") ? GraspScene.Rescue : GraspScene.Grenade)
+                    : label.Contains("double") ? DoublePhases(label.Contains("fire") ? DoubleEnd.FireGoesOut : DoubleEnd.TimeRunsOut)
+                    : NeckBindPhases(label.Contains("cut")),
+            },
+            new Kit
+            {
                 Name = "Anchor", Prefix = "Clap teleport:", Component = typeof(MapComponent_ClapPreview), Clock = "seconds",
                 Phases = label => ClapPhases(label.Contains("double")),
             },
@@ -93,6 +102,63 @@ namespace RimArt.VfxLab
         };
 
         public static Kit For(string label) => All.FirstOrDefault(k => label.StartsWith(k.Prefix, StringComparison.Ordinal));
+
+        private static Phase[] ImitationPhases(ImitationEnd end)
+        {
+            ImitationPlan t = ShadowImitationTiming.Plan(end);
+            var phases = new List<Phase> { new Phase("Line runs out", 0f), new Phase("Held", ShadowImitationTiming.ScriptCast) };
+            if (t.Steps > 0) phases.Add(new Phase("Carrier walks", t.WalkStart));
+            phases.Add(new Phase(end == ImitationEnd.Released ? "Released" : end == ImitationEnd.Cut ? "Line cut" : "Line goes dark", t.Release));
+            return phases.ToArray();
+        }
+
+        private static Phase[] SeamPhases(SeamScene scene)
+        {
+            SeamPlan t = ShadowSeamTiming.Plan(scene);
+            return new[]
+            {
+                new Phase("Line runs out", 0f),
+                new Phase("Forks", ShadowSeamTiming.ScriptCast * ShadowSeamTiming.Fork),
+                new Phase("Sewn", t.Sewn),
+                new Phase("Taut at 4 cells", t.Taut),
+                new Phase("Seam undone", t.Undo),
+            };
+        }
+
+        private static Phase[] GraspPhases(GraspScene scene)
+        {
+            GraspShot t = ShadowGraspTiming.Script(scene, 0f, out _);
+            return new[]
+            {
+                new Phase("Tendril runs out", 0f),
+                new Phase("Hand opens and closes", t.Cast),
+                new Phase("Slide", t.SlideStart),
+                new Phase(scene == GraspScene.Blocked ? "Stopped by a pawn" : "Let go", t.Arrive),
+            };
+        }
+
+        private static Phase[] DoublePhases(DoubleEnd end)
+        {
+            DoublePlan t = ShadowDoubleTiming.Plan(end);
+            bool fire = end == DoubleEnd.FireGoesOut;
+            return new[]
+            {
+                new Phase("Shadow slides out", 0f),
+                new Phase("Stands up", ShadowDoubleTiming.ScriptCast),
+                new Phase("Copies the steps", t.WalkStart),
+                new Phase("Casts from the double", t.CastStart),
+                new Phase(fire ? "Raider goes dark: line dies" : "Imitation ends", t.Release),
+                new Phase(fire ? "Double goes dark" : "Double sinks", t.Gone),
+            };
+        }
+
+        private static Phase[] NeckBindPhases(bool cut) => new[]
+        {
+            new Phase("Hands crawl along the line", 0f),
+            new Phase("Climb the body", ShadowNeckBindTiming.Crawl),
+            new Phase("Closed on the neck", ShadowNeckBindTiming.Crawl + ShadowNeckBindTiming.ScriptClimb),
+            new Phase(cut ? "Line cut: hands fall off" : "Unconscious", ShadowNeckBindTiming.Release(cut)),
+        };
 
         private static Phase[] TagThrowPhases() => new[]
         {
