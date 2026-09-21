@@ -23,6 +23,8 @@
     <Compile Include="../../../Source/RimArt/PowerPole/*.cs" LinkBase="Linked/PowerPole" />
     <!-- Drawing and previews only, as for the Power Pole: the kit code will go in PaperBomb/Kit. -->
     <Compile Include="../../../Source/RimArt/PaperBomb/*.cs" LinkBase="Linked/PaperBomb" />
+    <!-- Shadow Plexus: drawing and previews only. -->
+    <Compile Include="../../../Source/RimArt/ShadowPlexus/*.cs" LinkBase="Linked/ShadowPlexus" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleport.cs" Link="Linked/Anchor/ClapTeleport.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleportGraphics.cs" Link="Linked/Anchor/ClapTeleportGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/DebugActions_ClapTeleport.cs" Link="Linked/Anchor/DebugActions_ClapTeleport.cs" />

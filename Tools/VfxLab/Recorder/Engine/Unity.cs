@@ -26,6 +26,7 @@ namespace UnityEngine
         public static Vector2 down => new Vector2(0f, -1f);
         public static Vector2 Lerp(Vector2 a, Vector2 b, float t) { t = Mathf.Clamp01(t); return new Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t); }
         public static Vector2 LerpUnclamped(Vector2 a, Vector2 b, float t) => new Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+        public static float Distance(Vector2 a, Vector2 b) => (a - b).magnitude;
     }
 
     public struct Vector3
