@@ -1,8 +1,14 @@
 // Yamato Dash — Vergil's gap closer. Direction agreed; numbers remain proposed placeholders.
 // Select a walkable cell up to 8 cells away along an unobstructed straight path. Prepare for
-// 0.35 s, dash in 0.15 s, then sheathe over 0.4 s. Each hostile in the 1-cell-wide path takes
-// 24 Cut at 40 % armour penetration once, as the carrier passes. Allies are unharmed.
-// Cooldown 8 s; no resource cost proposed. This sketch is not implemented in the game.
+// 0.35 s, dash in 0.15 s, then sheathe over 0.4 s. Each hostile in the 1-cell-wide path is marked
+// as the carrier passes and takes nothing yet. Every mark resolves together when the blade clicks
+// home, 0.4 s after the carrier stops: 24 Cut at 40 % armour penetration, once each. Allies are
+// never marked. Cooldown 8 s; no resource cost proposed. This sketch is not implemented in the game.
+//
+// The delayed click is the source's Rapid Slash, folded in here rather than made a second ability
+// (decided 2026-09-21): a separate dash down a line would have been the same picture twice. It is
+// what makes the ability a Vergil one and not a generic charge, and it is the part that matters in
+// RimWorld: 0.4 s in which the carrier stands still at the far end and the damage has not landed.
 //
 // Drawing: the carrier is the kit's shared stand-in, drawn exactly as Judgement Cut and Summoned
 // Swords draw it, wearing its scabbard on the left hip at a fixed angle. Only the drawn katana turns
@@ -11,21 +17,25 @@
 // aura stands up during the prepare, as in the other two sketches. The dash is one straight cut at
 // chest height that grows behind the carrier, six short speed lines flicking past on either side as
 // it goes, and three blue silhouettes of the same ellipses the carrier is drawn from, each with one
-// tapering line of light. No delayed damage on the sheath click. Wounds remain on three crossed
+// tapering line of light. A marked hostile keeps a quiet dark seam across its chest and turns a
+// little blue while it waits; at the click the seam opens into the red wound, the pawn flashes white
+// and flinches, a hot cut crosses it, and one thin white line runs the whole path for 0.12 s so the
+// three land as one. Wounds remain on three crossed
 // hostiles; an ally in the path and a hostile 0.9 cells off its centre stay unhurt. The selected cell
 // centres the demonstration path. Everything lies flat and rotates in the map plane, with height
 // represented only by a northward offset, so no part needs a per-facing method.
 // Existing summoned swords would follow the carrier in game; this clip demonstrates the dash alone.
-// Default phases: 0.30 prepare, 0.65 launch, 0.80 arrive, 1.20 sheath click, 2.20 end.
+// Default phases: 0.30 prepare, 0.65 launch, 0.80 arrive and the marks are set, 1.20 the click and
+// every mark resolves, 2.20 end.
 import { Color, Mathf, MeshPool } from '../js/engine.js';
 import { draw } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
 import {
-  Blue, Ice, White, Dust, EnemyColour, Ally, Chest,
+  Blue, Deep, Ice, White, Dust, EnemyColour, Ally, Chest,
   pawn, pawnLayer, carrier, heldKatana, streak, cut, hitCut, afterimage, aura, glint, whiteGlow, smooth, clamp,
 } from './lib/vergil.js';
 
-const Lead = .3, Tail = 1, Width = 1, TrailLife = .34, GhostLife = .34, Lines = 6, LineLife = .3, Ghosts = [.2, .5, .78];
+const Lead = .3, Tail = 1, Width = 1, TrailLife = .34, GhostLife = .34, Lines = 6, LineLife = .3, Flash = .12, Ghosts = [.2, .5, .78];
 const Wound = new Color(.55, .05, .05);
 const times = p => ({ launch: Lead + p.warm, arrive: Lead + p.warm + p.dash,
   click: Lead + p.warm + p.dash + p.sheathe, end: Lead + p.warm + p.dash + p.sheathe + Tail });
@@ -58,13 +68,14 @@ export default {
   duration(p) { return times(p).end; },
   phases(p) { const t = times(p); return [
     { name: 'Ready', t: 0 }, { name: 'Hand to hilt', t: Lead },
-    { name: 'Dash and cut', t: t.launch }, { name: 'Sheathe', t: t.arrive },
-    { name: 'Click', t: t.click },
+    { name: 'Dash: the marks are set', t: t.launch }, { name: 'Sheathe', t: t.arrive },
+    { name: 'Click: every mark lands', t: t.click },
   ]; },
   events(p) { const t = times(p); return [
     { t: t.launch, type: 'sound', def: 'AG_Vergil_YamatoDash' },
-    { t: t.arrive, type: 'shake', value: .025 },
+    { t: t.arrive, type: 'shake', value: .02 },
     { t: t.click, type: 'sound', def: 'AG_Vergil_Sheathe' },
+    { t: t.click, type: 'shake', value: .06 },
   ]; },
   draw(s, p, { origin: o, scene }) {
     const t = times(p);
@@ -101,14 +112,17 @@ export default {
         if (s >= t.click && s < t.click + .16) { const u = (s - t.click) / .16; glint('yamato click', hilt, .3 * (1 - u) + .06, 1 - u, White, 20); }
         return;
       }
-      const age = s - (t.launch + g.fraction * p.dash), hit = g.hit && age >= 0;
-      const recoil = hit ? .07 * Math.sin(Math.PI * clamp(age / .2)) : 0;
+      // Marked as the carrier passes, cut when the blade is home: one mark per target, both worked
+      // out from the clip time so scrubbing replays them exactly.
+      const marked = g.hit && s >= t.launch + g.fraction * p.dash, land = s - t.click, landed = marked && land >= 0;
+      const recoil = landed ? .07 * Math.sin(Math.PI * clamp(land / .2)) : 0;
       const q = { x: g.pos.x + d.x * recoil, z: g.pos.z + d.z * recoil };
-      pawn(q, g.ally ? Ally : EnemyColour, sun, strength, { tint: White, tintAmount: hit ? .8 * clamp(1 - age / .1) : 0 });
-      if (hit) {
-        draw(MeshPool.plane10, q.x, pawnLayer + .02, q.z + .31, .28, .035, -p.aim - 45, Wound);
-        hitCut(`yamato hit ${g.i}`, q, p.aim + 45, age);
-      }
+      pawn(q, g.ally ? Ally : EnemyColour, sun, strength,
+        landed ? { tint: White, tintAmount: .8 * clamp(1 - land / .1) } : { tint: Blue, tintAmount: marked ? .2 : 0 });
+      // The seam sits where the wound will open, so the mark becomes the cut in place.
+      if (marked) draw(MeshPool.plane10, q.x, pawnLayer + .02, q.z + .31, .28, landed ? .035 : .022, -p.aim - 45,
+        landed ? Wound : Deep.withAlpha(.75));
+      if (landed) hitCut(`yamato hit ${g.i}`, q, p.aim + 45, land);
     });
 
     if (s >= t.launch) {
@@ -140,5 +154,9 @@ export default {
         sprite(at(u * p.distance - .3 * v, (rand(i + 20) - .5) * .5), .3 + .5 * v, .2 + .32 * v, Dust.withAlpha(.26 * Math.sin(Math.PI * v)), soft, Floor + .022);
       }
     }
+
+    // The click: the whole path lights for 0.12 s, so the three marks read as one cut landing.
+    const land = s - t.click;
+    if (land >= 0 && land < Flash) cut('yamato land', at(0, 0, Chest), at(p.distance, 0, Chest), 1, 1 - land / Flash, { width: .02, hot: 1 });
   },
 };
