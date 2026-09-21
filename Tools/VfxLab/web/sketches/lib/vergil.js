@@ -13,8 +13,8 @@ import { Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '..
 import { registerLabTexture, pixels } from '../../js/standins.js';
 import { draw } from './six-paths-solid.js';
 import { Y, sprite, glow, soft, rand } from './six-paths-impact.js';
-import { Dust, pawn, ringAt, line, glint, aura, streak, strip, whiteGlow, wallCell, Ink, Skin, EnemyColour, Ally, White, pawnLayer, shadowLayer, smooth, clamp } from './goku.js';
-export { Dust, pawn, ringAt, line, glint, aura, streak, strip, whiteGlow, wallCell, Ink, Skin, EnemyColour, Ally, White, pawnLayer, shadowLayer, smooth, clamp };
+import { Chest, Dust, pawn, ringAt, line, glint, aura, streak, strip, whiteGlow, wallCell, Ink, Skin, EnemyColour, Ally, White, pawnLayer, shadowLayer, smooth, clamp } from './goku.js';
+export { Chest, Dust, pawn, ringAt, line, glint, aura, streak, strip, whiteGlow, wallCell, Ink, Skin, EnemyColour, Ally, White, pawnLayer, shadowLayer, smooth, clamp };
 
 export const Blue = new Color(.25, .5, 1), Deep = new Color(.05, .12, .5), Ice = new Color(.78, .9, 1), Void = new Color(.01, .015, .07);
 export const Coat = new Color(.09, .14, .4), CoatLit = new Color(.2, .3, .62), Silver = new Color(.88, .9, .95);
@@ -107,15 +107,55 @@ export function arcCut(key, pts, u, alpha, { width = .05, hot = 0 } = {}) {
   line(`${key} core`, shown, width * (1.2 + .8 * hot), White.withAlpha(alpha), whiteGlow, Y + .032, 'both');
 }
 
-// The carrier seen for a moment at the end of a dash: a blue ghost leaning along the dash, with a
-// short light trail behind it.
+// A blade outline from base along d: parallel edges for the first 70 % of its length, then a point.
+// The same shape the summoned swords use, so every blade in the kit is drawn alike.
+export function tapered(key, base, d, length, width, colour, material, layer) {
+  const a = [], b = [];
+  [0, .35, .7, .88, 1].forEach(u => {
+    const w = width / 2 * (u <= .7 ? 1 : (1 - u) / .3) + .004, x = base.x + d.x * length * u, z = base.z + d.z * length * u;
+    a.push({ x: x - d.z * w, z: z + d.x * w }); b.push({ x: x + d.z * w, z: z - d.x * w });
+  });
+  strip(key, a, b, colour, material, layer);
+}
+
+// The katana out of its scabbard and held in front of the carrier, pointing along deg: a dark
+// under-edge so it reads on pale ground, a steel blade, a gold guard, a dark grip and the hand on it.
+// out 0..1 is how much blade is clear of the scabbard (the carrier keeps wearing the empty scabbard).
+// hot 0..1 lights the edge, for the draw and the cut. Everything lies flat and turns with the aim, so
+// there is no per-facing method; the height is the fixed northward Chest offset. A blade pointing
+// north draws under the pawn layer and one pointing south over it, the rule the summoned swords use,
+// or aiming north puts the guard and the hand on top of the carrier's own head.
+// Returns the grip and the tip, for glints.
+export function heldKatana(key, pos, deg, out, { alpha = 1, hot = 0, layer = null } = {}) {
+  if (alpha <= 0) return null;
+  const r = deg * Mathf.Deg2Rad, d = { x: Math.cos(r), z: Math.sin(r) };
+  if (layer === null) layer = d.z > 0 ? pawnLayer - .02 : pawnLayer + .02;
+  const grip = { x: pos.x + d.x * .22, z: pos.z + Chest + d.z * .22 }, len = BladeLength * out;
+  const at = (along, side = 0) => ({ x: grip.x + d.x * along - d.z * side, z: grip.z + d.z * along + d.x * side });
+  streak(`${key} hilt`, at(-.26), at(-.02), .07, Scabbard.withAlpha(alpha), undefined, layer, 2);
+  if (len > .01) {
+    tapered(`${key} edge`, at(.02), d, len, .105, Void.withAlpha(.55 * alpha), undefined, layer + .001);
+    tapered(`${key} blade`, at(.02), d, len, .075, Color.Lerp(Steel, White, hot).withAlpha(alpha), undefined, layer + .002);
+    if (hot > 0) {
+      sprite(at(len * .5), len * 1.3, .4 * hot + .08, Ice.withAlpha(.55 * hot * alpha), glow, layer + .003, -deg);
+      tapered(`${key} sharp`, at(.02), d, len, .028, White.withAlpha(hot * alpha), whiteGlow, layer + .004);
+    }
+  }
+  streak(`${key} guard`, at(0, -.11), at(0, .11), .05, Guard.withAlpha(alpha), undefined, layer + .005, 2);
+  sprite(grip, .12, .13, Skin.withAlpha(alpha), soft, layer + .006);
+  return { grip, tip: at(Math.max(.02, len)) };
+}
+
+// The carrier seen for a moment behind a dash: a blue silhouette built from the same ellipses the
+// standing carrier is, with one thin line of light tapering back along the dash. It is a light and
+// not a solid, so it has no shadow and carries no weapon.
 export function afterimage(key, pos, from, age, life = .22) {
   if (age < 0 || age >= life) return;
   const f = 1 - age / life, dx = pos.x - from.x, dz = pos.z - from.z, d = Math.hypot(dx, dz) || 1;
-  const back = { x: pos.x - dx / d * 1.6, z: pos.z - dz / d * 1.6 + .3 };
-  streak(`${key} trail`, back, { x: pos.x, z: pos.z + .3 }, .5, Blue.withAlpha(.45 * f), whiteGlow, Y + .02, 6);
-  [[0, .18, .22, .32], [0, .58, .16, .17]].forEach(([cx, cz, rx, rz], k) =>
-    draw(discMesh, pos.x + cx, Y + .021 + k * .001, pos.z + cz, rx * (1 + .4 * (1 - f)), rz, 0, Color.Lerp(Deep, Ice, .35).withAlpha(.75 * f * f)));
+  const head = { x: pos.x, z: pos.z + Chest }, back = { x: head.x - dx / d * .95, z: head.z - dz / d * .95 };
+  line(`${key} trail`, [head, back], .18, Blue.withAlpha(.55 * f * f), whiteGlow, Y + .02, 'end');
+  [[0, .18, .22, .32, Deep], [.03, .22, .08, .24, Blue], [0, .58, .16, .17, Deep], [0, .69, .19, .1, Ice]].forEach(([cx, cz, rx, rz, colour], k) =>
+    draw(discMesh, pos.x + cx, Y + .021 + k * .001, pos.z + cz, rx, rz, 0, Color.Lerp(colour, Ice, .3).withAlpha(.62 * f * f)));
 }
 
 // A short cut across a pawn's chest when the damage lands: light, 0.14 s, plus a spark.
