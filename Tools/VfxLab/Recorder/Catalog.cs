@@ -70,6 +70,14 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Goku", Prefix = "Goku:", Component = typeof(MapComponent_GokuPreview), Clock = "seconds",
+                Phases = label => label.Contains("solar flare") ? SolarFlarePhases()
+                    : label.Contains("instant transmission") ? TransmissionPhases()
+                    : label.Contains("kamehameha") ? KamehamehaPhases(label.Contains("warp"))
+                    : SpiritBombPhases(label.Contains("alone") ? 0 : GokuSpiritBombTiming.ScriptLenders),
+            },
+            new Kit
+            {
                 Name = "Anchor", Prefix = "Clap teleport:", Component = typeof(MapComponent_ClapPreview), Clock = "seconds",
                 Phases = label => ClapPhases(label.Contains("double")),
             },
@@ -159,6 +167,43 @@ namespace RimArt.VfxLab
             new Phase("Closed on the neck", ShadowNeckBindTiming.Crawl + ShadowNeckBindTiming.ScriptClimb),
             new Phase(cut ? "Line cut: hands fall off" : "Unconscious", ShadowNeckBindTiming.Release(cut)),
         };
+
+        private static Phase[] SolarFlarePhases()
+        {
+            SolarFlarePlan t = GokuSolarFlareTiming.Plan();
+            return new[] { new Phase("Enemies close in", 0f), new Phase("Hands to the face", t.Cast), new Phase("Flash / stunned", t.Flash), new Phase("Stun ends, still blind", t.Wake) };
+        }
+
+        private static Phase[] TransmissionPhases()
+        {
+            TransmissionPlan t = GokuInstantTransmissionTiming.Plan();
+            return new[] { new Phase("Stand", 0f), new Phase("Fingers to the forehead", t.Cast), new Phase("Vanish", t.Go), new Phase("Arrive", t.Arrive), new Phase("Result", t.Landed) };
+        }
+
+        private static Phase[] KamehamehaPhases(bool warp)
+        {
+            KamehamehaPlan t = GokuKamehamehaTiming.Plan(warp);
+            var phases = new List<Phase> { new Phase("Stand", 0f), new Phase("Ka-me-ha-me (channel)", t.Cast) };
+            if (warp) phases.Add(new Phase("Warp", t.Go));
+            phases.Add(new Phase("HA", t.Fire));
+            phases.Add(new Phase("Beam holds", t.Out));
+            phases.Add(new Phase("Beam lets go", t.Release));
+            phases.Add(new Phase("End blast", t.Blast));
+            return phases.ToArray();
+        }
+
+        private static Phase[] SpiritBombPhases(int lenders)
+        {
+            SpiritBombPlan t = GokuSpiritBombTiming.Plan(lenders);
+            var phases = new List<Phase> { new Phase("Stand", 0f), new Phase("Channel", t.Cast) };
+            if (lenders > 0) phases.Add(new Phase("Lenders join", t.Joins(0)));
+            phases.Add(new Phase("Throw", t.Release));
+            phases.Add(new Phase("Grind", t.Hit));
+            phases.Add(new Phase("Detonation", t.Dome));
+            phases.Add(new Phase("Dome lifts", t.Fade));
+            phases.Add(new Phase("Aftermath", t.Gone));
+            return phases.ToArray();
+        }
 
         private static Phase[] TagThrowPhases() => new[]
         {
