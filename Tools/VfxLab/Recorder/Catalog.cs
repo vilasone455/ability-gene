@@ -71,7 +71,9 @@ namespace RimArt.VfxLab
             new Kit
             {
                 Name = "Vergil", Prefix = "Vergil:", Component = typeof(MapComponent_VergilPreview), Clock = "seconds",
-                Phases = label => label.Contains("summoned swords") ? SwordsPhases(label.Contains("spin")) : JudgementCutPhases(),
+                Phases = label => label.Contains("summoned swords") ? SwordsPhases(label.Contains("spin"))
+                    : label.Contains("yamato dash") ? DashPhases()
+                    : JudgementCutPhases(),
             },
             new Kit
             {
@@ -131,6 +133,15 @@ namespace RimArt.VfxLab
             new Phase("Hand on the hilt", JudgementCutTiming.CastAt),
             new Phase("The draw / the sphere", JudgementCutTiming.OpenAt(JudgementCutTiming.Warm)),
             new Phase("Closes", JudgementCutTiming.CloseAt(JudgementCutTiming.Warm, JudgementCutTiming.Burst)),
+        };
+
+        private static Phase[] DashPhases() => new[]
+        {
+            new Phase("Ready", 0f),
+            new Phase("Hand to hilt", YamatoDashTiming.CastAt),
+            new Phase("Dash: the marks are set", YamatoDashTiming.LaunchAt),
+            new Phase("Sheathe", YamatoDashTiming.ArriveAt),
+            new Phase("Click: every mark lands", YamatoDashTiming.ClickAt),
         };
 
         private static Phase[] SwordsPhases(bool spins) => new[]

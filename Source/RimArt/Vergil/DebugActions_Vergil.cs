@@ -8,7 +8,7 @@ namespace RimArt
     /// no pawn is drawn. Each entry plays one effect's drawing round the chosen cell, which is the cell
     /// the lab's sketch centres on — for Judgement Cut that is the caster, with the target the sketch's
     /// 8 cells away along the aim; for Summoned Swords it is where the carrier starts, with the blades'
-    /// targets at the sketch's fixed points round it.
+    /// targets at the sketch's fixed points round it; for Yamato Dash it is the middle of the 6-cell path.
     /// </summary>
     public static class DebugActions_Vergil
     {
@@ -33,6 +33,18 @@ namespace RimArt
         [RimArtDebug("Vergil", "summoned swords spin")]
         public static void SummonedSwordsSpin() => Play(VergilPreview.SummonedSwordsSpin, 0f);
 
+        [RimArtDebug("Vergil", "yamato dash")]
+        public static void YamatoDash() => Play(VergilPreview.YamatoDash, YamatoDashTiming.Aim);
+
+        [RimArtDebug("Vergil", "yamato dash north")]
+        public static void YamatoDashNorth() => Play(VergilPreview.YamatoDash, 90f);
+
+        [RimArtDebug("Vergil", "yamato dash west")]
+        public static void YamatoDashWest() => Play(VergilPreview.YamatoDash, 180f);
+
+        [RimArtDebug("Vergil", "yamato dash south")]
+        public static void YamatoDashSouth() => Play(VergilPreview.YamatoDash, 270f);
+
         [RimArtDebug("Vergil", "clear preview", RimArtDebugKind.Now)]
         public static void Clear()
         {
@@ -46,7 +58,7 @@ namespace RimArt
 
     public enum VergilPreview
     {
-        JudgementCut, SummonedSwords, SummonedSwordsStanding, SummonedSwordsSpin,
+        JudgementCut, SummonedSwords, SummonedSwordsStanding, SummonedSwordsSpin, YamatoDash,
     }
 
     public sealed class MapComponent_VergilPreview : MapComponent
@@ -60,9 +72,9 @@ namespace RimArt
         public MapComponent_VergilPreview(Map map) : base(map) { }
 
         public static float Duration(VergilPreview play) =>
-            play == VergilPreview.JudgementCut
-                ? JudgementCutTiming.Duration(JudgementCutTiming.Warm, JudgementCutTiming.Burst)
-                : SummonedSwordsTiming.Duration;
+            play == VergilPreview.JudgementCut ? JudgementCutTiming.Duration(JudgementCutTiming.Warm, JudgementCutTiming.Burst)
+            : play == VergilPreview.YamatoDash ? YamatoDashTiming.Duration
+            : SummonedSwordsTiming.Duration;
 
         private static SwordsScene Scene(VergilPreview play) =>
             play == VergilPreview.SummonedSwordsStanding ? SwordsScene.Stands
@@ -76,6 +88,7 @@ namespace RimArt
             (JudgementCutTiming.CloseAt(JudgementCutTiming.Warm, JudgementCutTiming.Burst), 0.08f),
         };
         private static readonly (float at, float value)[] SwordShakes = { (SummonedSwordsTiming.StopAt, 0.03f) };
+        private static readonly (float at, float value)[] DashShakes = { (YamatoDashTiming.ArriveAt, 0.02f), (YamatoDashTiming.ClickAt, 0.06f) };
 
         public void Play(IntVec3 at, VergilPreview play, float aim)
         {
@@ -95,11 +108,12 @@ namespace RimArt
             // Unscaled: the preview runs at the same rate whether the game is paused or at 3x.
             seconds += Time.unscaledDeltaTime;
 
-            var shakes = mode == VergilPreview.JudgementCut ? CutShakes : SwordShakes;
+            var shakes = mode == VergilPreview.JudgementCut ? CutShakes : mode == VergilPreview.YamatoDash ? DashShakes : SwordShakes;
             while (shaken < shakes.Length && seconds >= shakes[shaken].at) Find.CameraDriver.shaker.DoShake(shakes[shaken++].value);
 
             Vector3 centre = cell.ToVector3Shifted();
             if (mode == VergilPreview.JudgementCut) JudgementCutGraphics.DrawPreview(centre, aimDegrees, seconds, map);
+            else if (mode == VergilPreview.YamatoDash) YamatoDashGraphics.DrawPreview(centre, aimDegrees, seconds, map);
             else SummonedSwordsGraphics.DrawPreview(centre, Scene(mode), seconds, map);
             if (seconds >= duration) active = false;
         }
