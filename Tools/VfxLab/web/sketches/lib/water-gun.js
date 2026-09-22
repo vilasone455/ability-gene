@@ -121,58 +121,64 @@ export function splash(pos, age, big = 1, seed = 0) {
       (i % 3 ? WaterLit : Foam).withAlpha((1 - u) * .95), soft, Y + .035);
   }
 }
-// A water stream between two screen points, from u0 to u1 of the way (tail and head), with a
-// slight sag. Drawn as water, not as a rod: a chain of soft translucent discs whose width pulses
-// along the flow, a thin wavy core, bright glints riding along it, droplets breaking off ahead of
-// the head and at the sides, and faint mist. width in cells at the nozzle, s is the clip time.
+// A continuous translucent jet with a rounded pressure front and a torn, tapering wake.
+// All detail is alpha blended: pale patches are surface reflections, never emitted light.
+// Width is measured across the screen-space tangent, so cardinal facings keep their volume.
+// Mesh keys are stable and all breakup is derived from clip time for backwards scrubbing.
 export function stream(key, a, b, u0, u1, width, s, layer = Y + .02, sag = .05, seed = 0) {
   if (u1 <= u0) return;
-  const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1, nx = -dz / L, nz = dx / L;
-  const at = u => ({ x: lerp(a.x, b.x, u), z: lerp(a.z, b.z, u) - Math.sin(u * Math.PI) * sag * Lift });
-  const flow = s * 3.2 + seed * .37;                                     // cells travelled, for moving detail
-  const wave = u => 1 + .35 * Math.sin((u * L - flow * 1.0) * 6.0);      // bulges moving with the flow
-  const wobble = u => .06 * width / .07 * Math.sin((u * L - flow * 1.4) * 4.0 + seed);   // the core sways
-  const span = u1 - u0, tailFade = u => clamp((u - u0) / Math.max(.05, span * .3));     // tapers to nothing at the tail
-  const headFade = u => 1 - .5 * clamp((u - (u1 - .15)) / .15);
-  const w = u => width * (1 + .5 * u) * wave(u) * tailFade(u) * headFade(u);
+  const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1;
+  const nx = -dz / L, nz = dx / L, span = u1 - u0, length = L * span;
+  const flow = s * 18 + seed * 2.7;
+  const at = u => {
+    const ripple = width * (.22 * Math.sin(u * L * 5 - flow) + .12 * Math.sin(u * L * 11 - flow * 1.3));
+    return { x: lerp(a.x, b.x, u) + nx * ripple,
+      z: lerp(a.z, b.z, u) + nz * ripple - Math.sin(u * Math.PI) * sag * Lift };
+  };
+  const radius = v => {
+    const u = lerp(u0, u1, v);
+    const tail = u0 > 0 ? Math.pow(clamp(v / .48), .65) : .72 + .28 * smooth(v / .25);
+    const front = u1 < 1 ? Math.sqrt(clamp((1 - v) * length / (width * 2.8))) : 1;
+    const swell = 1 + .5 * Math.exp(-Math.pow((1 - v) * length / (width * 4) - .8, 2));
+    const ripple = 1 + .12 * Math.sin(u * L * 9 - flow) + .06 * Math.sin(u * L * 19 - flow * .8);
+    return width * (1.1 + .35 * u) * tail * front * swell * ripple;
+  };
+  const n = Math.max(12, Math.ceil(length / .055));
+  const pts = Array.from({ length: n + 1 }, (_, i) => at(lerp(u0, u1, i / n)));
+  // A blue silhouette with a darker underside and a narrower, translucent lit surface.
+  tube(`${key} body`, pts, radius, Water.withAlpha(.88), layer);
+  tube(`${key} underside`, pts, radius, WaterDark.withAlpha(.44), layer + .002, -.95, -.38);
+  tube(`${key} surface`, pts, radius, WaterLit.withAlpha(.63), layer + .004, -.12, .75);
 
-  // Body: overlapping soft discs every 0.16 cells. Two passes: a wide faint one and the body.
-  const n = Math.max(2, Math.ceil(L * span / .10));
-  for (let i = 0; i <= n; i++) {
-    const u = lerp(u0, u1, i / n), q = at(u), ww = w(u), off = wobble(u);
-    const pos = { x: q.x + nx * off, z: q.z + nz * off };
-    sprite(pos, ww * 8.0, ww * 8.0, WaterLit.withAlpha(.12), soft, layer);
-    sprite(pos, ww * 5.2, ww * 5.2, Water.withAlpha(.55), soft, layer + .002);
-    sprite(pos, ww * 3.0, ww * 3.0, WaterLit.withAlpha(.45), glow, layer + .004);
-  }
-  // Glints: short bright dashes moving along the core, additive.
-  for (let i = 0; i < 9; i++) {
-    const u = ((flow * .9 + i / 9 + rand(i + seed + 940) * .05) % 1);
-    if (u < u0 + .04 || u > u1 - .02) continue;
-    const q = at(u), off = wobble(u) + (rand(i + seed + 945) - .5) * width * .8, ang = Math.atan2(dz, dx) / Mathf.Deg2Rad;
-    sprite({ x: q.x + nx * off, z: q.z + nz * off }, .22 + .18 * width / .07, .05, Foam.withAlpha(.85), glow, layer + .006, ang);
-  }
-  // Head: the front breaks into blobs that run ahead and spread, then droplets.
-  const head = at(u1);
-  if (u1 < 1) {
-    for (let i = 0; i < 5; i++) {
-      const lead = .10 + i * .09, u = Math.min(1, u1 + lead / L);
-      const q = at(u), off = (rand(i + seed + 950) - .5) * width * (1.5 + i * .8) + wobble(u) * .5;
-      const size = width * (3.4 - i * .45);
-      sprite({ x: q.x + nx * off, z: q.z + nz * off }, size * 1.8, size * 1.8, Water.withAlpha(.6), soft, layer + .003);
-      sprite({ x: q.x + nx * off, z: q.z + nz * off }, size * 1.0, size * 1.0, WaterLit.withAlpha(.8), glow, layer + .005);
+  // Broken curved reflections slide along the water; gaps keep it from reading as a laser core.
+  const patches = Math.ceil(L / .5);
+  for (let i = 0; i < patches; i++) {
+    const u = ((s * 2.1 + i / patches + rand(i + seed + 940) * .04) % 1);
+    const end = Math.min(u1, u + (.14 + rand(i + seed + 941) * .2) / L);
+    if (u < u0 || u >= u1 || end - u < .012 / L) continue;
+    const glint = [];
+    for (let j = 0; j <= 6; j++) {
+      const t = j / 6, qU = lerp(u, end, t), q = at(qU);
+      const off = radius((qU - u0) / span) * (.38 + .18 * Math.sin(t * Math.PI));
+      glint.push({ x: q.x + nx * off, z: q.z + nz * off });
     }
-  } else {
-    sprite(head, width * 4, width * 4, WaterLit.withAlpha(.5), glow, layer + .005);   // pooling at the hit
+    tube(`${key} reflection ${i}`, glint, v => width * .16 * Math.sin(v * Math.PI), Foam.withAlpha(.88), layer + .006);
   }
-  // Droplets and mist breaking off the sides, further along the flow more of them.
-  for (let i = 0; i < 10; i++) {
-    const u = ((flow * .6 + rand(i + seed + 960)) % 1);
-    if (u < u0 + .1 || u > u1) continue;
-    const side = rand(i + seed + 970) < .5 ? -1 : 1, life = (flow * .6 + rand(i + seed + 960)) % 1;
-    const off = side * (width * 1.6 + life * .25 * (1 + u)), q = at(u);
-    sprite({ x: q.x + nx * off, z: q.z + nz * off + life * .05 }, .06, .08, WaterLit.withAlpha(.8 * (1 - life)), soft, layer + .004);
-    if (i % 3 === 0) sprite({ x: q.x + nx * off * 1.5, z: q.z + nz * off * 1.5 }, .28 + u * .2, .22 + u * .15, Foam.withAlpha(.12 * (1 - life)), puff, layer + .001);
+
+  // Drops peel away from the rear and sides, with blue bodies and small reflected caps.
+  // Keep every drop behind the true front so contact still happens exactly at the hit marker.
+  const angle = -Math.atan2(dz, dx) / Mathf.Deg2Rad;
+  for (let i = 0; i < 14; i++) {
+    const v = .05 + rand(i + seed + 960) * .83;
+    const u = lerp(u0, u1, v), q = at(u);
+    const cycle = (s * (2.5 + rand(i + seed + 961)) + rand(i + seed + 962)) % 1;
+    const side = i % 2 ? -1 : 1;
+    const off = side * (radius(v) + width * (1 + cycle * 3));
+    const alpha = Math.sin(cycle * Math.PI) * smooth(length / .35);
+    const r = width * (.2 + rand(i + seed + 963) * .27);
+    const x = q.x + nx * off, z = q.z + nz * off - cycle * cycle * .07;
+    draw(disc, x, layer + .008, z, r * (1.4 + cycle), r, angle, Water.withAlpha(alpha * .85));
+    draw(disc, x - r * .2, layer + .010, z + r * .3, r * .75, r * .38, angle, WaterLit.withAlpha(alpha));
   }
 }
 

@@ -18,10 +18,11 @@
 //   2.20  lower: the gun goes back to rest
 //
 // Drawing: the weapon itself is lib/water-gun.js (shared with Hydro Pump). Caster and target are
-// stand-ins. Steam and dust use the Six Paths Puff texture as a stand-in.
+// stand-ins. The jet is an alpha-blended blue body with a rounded front, broken reflections
+// and detached droplets; its tangent-based width holds in all facings. Steam uses the Six Paths Puff texture.
 import { Color, Mathf } from '../js/engine.js';
 import { P, Y, Floor, sprite, circle, glow, soft } from './lib/six-paths-impact.js';
-import { drawWaterGun, frame, figure, flames, steam, puddle, drips, splash, stream, bump, WaterLit, HandH, Lead, Raise, Lower, Tail } from './lib/water-gun.js';
+import { drawWaterGun, frame, figure, flames, steam, puddle, drips, splash, stream, bump, WaterLit, Water, HandH, Lead, Raise, Lower, Tail } from './lib/water-gun.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp;
 const Jet = .12;            // the jet lasts this long at the muzzle
@@ -86,13 +87,13 @@ export default {
     }
 
     // The jet: its head flies from the muzzle to the target over `flight`, its tail leaves the
-    // muzzle Jet seconds later, so a short rope of water crosses the gap and ends in the splash.
+    // muzzle Jet seconds later, so a short mass of water crosses the gap and ends in the splash.
     const target = { x: o.x, z: o.z + .38 };        // the pawn's chest
     const u0 = clamp((s - t.fire - Jet) / p.flight), u1 = clamp((s - t.fire) / p.flight);
     if (fired && u0 < 1) {
       stream('water gun jet', g.muzzleS, target, u0, u1, p.width, s);
       const mz = 1 - clamp((s - t.fire) / .12);
-      sprite(g.muzzleS, .5, .4, WaterLit.withAlpha(mz * .8), glow, Y + .03);   // muzzle spray
+      sprite(g.muzzleS, .26, .22, Water.withAlpha(mz * .6), soft, Y + .03);   // wet muzzle spray
     }
     splash(o, hitAge, .8, 1);
     splash({ x: o.x, z: o.z + .38 }, hitAge - .03, .5, 2);
