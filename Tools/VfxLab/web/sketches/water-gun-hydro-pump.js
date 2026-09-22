@@ -14,21 +14,25 @@
 //   0.20  raise: the gun comes up and points along the aim
 //   0.45  pump: the bag is squeezed in, the gun is pulled back, the wedge on the floor shows the
 //         true cone
-//   0.80  blast: a sheet of water crosses the cone in 0.2 s with three wavy cores, mist and droplets; the bag
-//         drains 10 units; the pawns in the cone slide 3 cells and fall; the one outside it stands
-//   1.30  spray ends; puddles cover the cone and the downed pawns drip
+//   0.80  blast: five jets fan from the muzzle to the cone's end in 0.2 s, drawn like Stream Shot
+//         (blue body, reflections, drops); the bag drains 10 units; the pawns in the cone are hit
+//         with the Stream Shot contact, slide 3 cells and fall; the one outside it stands
+//   1.00  each jet lands on the ground at the cone's end: fan, drops, wet patches, puddle
+//   1.30  spray ends; the jets' rear thirds tear into parcels that fall; puddles stay and the
+//         downed pawns drip
 //   3.35  the pawns get up
 //   3.85  lower: the gun goes back to rest
 //
-// Drawing: the weapon itself is lib/water-gun.js (shared with Stream Shot). Caster and pawns are
-// stand-ins. Mist and steam use the Six Paths Puff texture as a stand-in.
+// Drawing: the weapon, jets (stream with tailBreak), wakes (streamTrail) and contacts (shotImpact,
+// with a 0.15-cell contact height for the ground landings) are lib/water-gun.js, shared with
+// Stream Shot. Caster and pawns are stand-ins. Steam uses the Six Paths Puff texture.
 import { Color, Mathf } from '../js/engine.js';
-import { P, Y, Floor, sprite, band, circle, glow, soft, rand } from './lib/six-paths-impact.js';
-import { drawWaterGun, MuzzleAlong, frame, figure, flames, steam, puddle, drips, splash, stream, bump, puff, Water, WaterLit, WaterDark, Foam, HandH, Lead, Raise, Lower, Tail } from './lib/water-gun.js';
+import { P, Y, Floor, sprite, band, soft } from './lib/six-paths-impact.js';
+import { drawWaterGun, MuzzleAlong, frame, figure, flames, steam, puddle, drips, shotImpact, stream, streamTrail, bump, Water, WaterLit, Lead, Raise, Lower, Tail } from './lib/water-gun.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp, TAU = Math.PI * 2;
 const Cost = 10, Push = 3, Front = .2;     // units, cells, seconds for the blast front to reach the cone's end
-const Jets = 3, Slide = .4, Rise = .3;
+const Jets = 5, Slide = .4, Rise = .3;
 
 const pawns = [
   { along: 2.0, across: .45, colour: new Color(.55, .38, .27), inCone: true },
@@ -102,14 +106,13 @@ export default {
     if (p.actors) figure(caster, new Color(.93, .50, .13), sun, strength);
     const g = drawWaterGun(f, caster, s, { raise, units, slosh, squeeze, recoil, actors: p.actors, sun, strength });
 
-    // Puddles across the cone once the front has passed, staying to the end.
-    for (let i = 0; i < 7; i++) {
-      const along = .8 + i / 6 * (p.length - 1.2), across = (rand(i + 300) - .5) * 2 * halfW(along) * .8;
-      puddle(place(caster, along, across), s - t.blast - Front * along / p.length, .8 + rand(i + 310) * .5, .45);
-    }
+    // Where each jet lands: spread across the cone's end, its contact at the end of the flight.
+    const sprayAge = s - t.blast;
+    const jetEnd = j => lerp(-1, 1, j / (Jets - 1)) * halfW(p.length) * .8;
 
     // The pawns: three in the cone slide Push cells and fall as the front reaches them, drip while
-    // down, and get up together; the one outside is untouched.
+    // down, and get up together; the one outside is untouched. The hit is the Stream Shot contact
+    // (sideways fan, falling drops, wet patches, puddle) placed where the pawn stood.
     if (p.actors) pawns.forEach((q, i) => {
       const reach = t.blast + Front * q.along / p.length;
       const hitAge = s - reach;
@@ -121,43 +124,27 @@ export default {
       if (affected) puddle(place(caster, q.along + Push, q.across, -.3), hitAge - Slide, 1.1, .5);
       figure(pos, q.colour, sun, strength, { downed, tint: soaked });
       if (q.burning) { flames(pos, s, affected ? Math.max(0, 1 - hitAge / .12) : 1); steam(pos, hitAge, 1.0, i * 7); }
-      if (affected) { splash({ x: pos.x, z: pos.z + .3 }, hitAge, .6, i * 11); drips(pos, hitAge, 1 - smooth((s - t.up) / .5), i * 13); }
+      if (affected) { shotImpact(`water gun pump hit ${i}`, place(caster, q.along, q.across), hitAge, f, strength); drips(pos, hitAge, 1 - smooth((s - t.up) / .5), i * 13); }
     });
 
-    // The blast: five jets fan out from the muzzle to the cone's end, heads racing out over Front,
-    // tails leaving when the spray ends; mist fills the cone while they run.
-    const sprayAge = s - t.blast;
-    if (sprayAge >= 0 && sprayAge < p.spray + Front + .1) {
+    // The blast: Jets jets fan out from the muzzle to the cone's end, fronts racing out over
+    // Front, tails leaving when the spray ends and tearing into parcels; each jet lands on the
+    // ground at the cone's end with its own contact, and those puddles stay.
+    for (let j = 0; j < Jets; j++) {
+      const endG = place(caster, p.length, jetEnd(j)), end = place(caster, p.length, jetEnd(j), .15);
+      shotImpact(`water gun pump land ${j}`, endG, sprayAge - Front, f, strength, .15);
+    }
+    if (sprayAge >= 0 && sprayAge < p.spray + Front + .2) {
       const u1 = clamp(sprayAge / Front), u0 = clamp((sprayAge - p.spray) / Front);
-      // The sheet: soft translucent discs filling the cone between the tail and head fronts, wider
-      // and fainter further out, so the ground shows through and the edge fades.
-      for (let row = 0; row < 14; row++) {
-        const u = row / 13, along = lerp(Apex, p.length, u);
-        if (u > u1 || u < u0) continue;
-        const hw = halfW(along), count = 1 + Math.round(hw / .28);
-        for (let k = 0; k < count; k++) {
-          const across = count === 1 ? 0 : lerp(-hw, hw, k / (count - 1)) * .85;
-          const pos = place(caster, along, across, .12 + .25 * u), size = .35 + .55 * u + .1 * Math.sin(s * 40 + row * 1.3 + k);
-          sprite(pos, size * 1.9, size * 1.6, WaterLit.withAlpha(.10), soft, Y + .012);
-          sprite(pos, size * 1.2, size * 1.0, Water.withAlpha(.28 * (1 - u * .4)), soft, Y + .014);
-          sprite(pos, size * .8, size * .7, WaterLit.withAlpha(.30 * (1 - u * .5)), glow, Y + .016);
-        }
-      }
+      const tailBreak = smooth((sprayAge - p.spray) / .06);
       for (let j = 0; j < Jets; j++) {
-        const across = lerp(-1, 1, j / (Jets - 1)) * halfW(p.length) * .7;
-        const end = place(caster, p.length, across, .15);
-        stream(`water gun pump jet ${j}`, g.muzzleS, end, u0, u1, .07, s + j * .13, Y + .02 + j * .001, .12, j + 1);
+        const end = place(caster, p.length, jetEnd(j), .15), sway = .02 * Math.sin(s * 23 + j * 1.9);
+        const b = { x: end.x + sway * f.sa, z: end.z - sway * f.ca };
+        if (u0 < 1) stream(`water gun pump jet ${j}`, g.muzzleS, b, u0, u1, .075, s + j * .17, Y + .02 + j * .001, .12, j + 1, tailBreak);
+        streamTrail(`water gun pump wake ${j}`, g.muzzleS, b, .075, sprayAge, Front, p.spray, Y + .02 + j * .001);
       }
-      const spraying = sprayAge < p.spray ? 1 : Math.max(0, 1 - (sprayAge - p.spray) / .25);
-      sprite(g.muzzleS, .9 * spraying + .2, .7 * spraying + .2, WaterLit.withAlpha(.7 * spraying), glow, Y + .03);
-      for (let i = 0; i < 60; i++) {
-        const cycle = .35 + rand(i + 400) * .3, u = ((sprayAge + rand(i + 410) * cycle) % cycle) / cycle;
-        const along = u * p.length, across = (rand(i + 420) - .5) * 2 * halfW(along);
-        if (along / p.length > u1 || along / p.length < u0) continue;
-        const h = .3 + Math.sin(u * Math.PI) * .5 * rand(i + 430);
-        if (i % 2) sprite(place(caster, along, across, h), .18 + u * .35, .15 + u * .3, (i % 4 ? Foam : WaterLit).withAlpha(.35 * spraying * (1 - u * .5)), puff, Y + .028);
-        else sprite(place(caster, along, across, h), .07, .09, Foam.withAlpha(.9 * spraying), soft, Y + .03);
-      }
+      const mz = sprayAge < p.spray ? 1 : Math.max(0, 1 - (sprayAge - p.spray) / .12);
+      sprite(g.muzzleS, .30, .26, Water.withAlpha(mz * .6), soft, Y + .03);   // wet muzzle
     }
   },
 };

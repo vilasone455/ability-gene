@@ -124,9 +124,9 @@ export function splash(pos, age, big = 1, seed = 0) {
 // Stream Shot contact: a short sideways fan at chest height, ballistic drops, then wet ground.
 // Alpha blending only. Fan widths follow their screen tangent; ground spreading stays in the
 // aim plane and height is projected north, so all facings use the same drawing method.
-export function shotImpact(key, pos, age, f, strength = .32) {
+export function shotImpact(key, pos, age, f, strength = .32, contactH = .38 / Lift) {
   if (age < 0) return;
-  const height = .38 / Lift, gravity = 9;
+  const height = contactH, gravity = 9;
   // Runoff begins reaching the floor after 0.18 s; the central pool grows during the landings.
   puddle({ x: pos.x, z: pos.z - .08 }, age - .18, 1.05, .5);
   const burst = smooth(age / .025) * (1 - smooth((age - .065) / .12));
