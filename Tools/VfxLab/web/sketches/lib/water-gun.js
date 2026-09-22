@@ -121,6 +121,63 @@ export function splash(pos, age, big = 1, seed = 0) {
       (i % 3 ? WaterLit : Foam).withAlpha((1 - u) * .95), soft, Y + .035);
   }
 }
+// Stream Shot contact: a short sideways fan at chest height, ballistic drops, then wet ground.
+// Alpha blending only. Fan widths follow their screen tangent; ground spreading stays in the
+// aim plane and height is projected north, so all facings use the same drawing method.
+export function shotImpact(key, pos, age, f, strength = .32) {
+  if (age < 0) return;
+  const height = .38 / Lift, gravity = 9;
+  // Runoff begins reaching the floor after 0.18 s; the central pool grows during the landings.
+  puddle({ x: pos.x, z: pos.z - .08 }, age - .18, 1.05, .5);
+  const burst = smooth(age / .025) * (1 - smooth((age - .065) / .12));
+  if (burst > 0) {
+    const reach = .2 + .8 * smooth(age / .10);
+    for (let i = 0; i < 6; i++) {
+      const side = i % 2 ? -1 : 1, branch = Math.floor(i / 2);
+      const across = side * (.32 + branch * .14 + rand(i + 1150) * .16) * reach;
+      const along = (.20 - branch * .17 + (rand(i + 1160) - .5) * .12) * reach;
+      const pts = [];
+      for (let j = 0; j <= 12; j++) {
+        const v = j / 12;
+        pts.push(f.place(pos, along * v - .10 * Math.sin(v * Math.PI) * reach,
+          across * v, height + .08 * Math.sin(v * Math.PI) * reach));
+      }
+      const radius = v => (.07 + branch * .014) * Math.pow(Math.sin(v * Math.PI), .65) * (1 - .3 * v);
+      tube(`${key} fan ${i}`, pts, radius, Water.withAlpha(burst * .8), Y + .04);
+      tube(`${key} fan surface ${i}`, pts, radius, WaterLit.withAlpha(burst * .85), Y + .042, .05, .65);
+    }
+    const contact = f.place(pos, 0, 0, height);
+    draw(disc, contact.x, Y + .044, contact.z, .11, .13, 0, WaterLit.withAlpha(burst * .7));
+  }
+  for (let i = 0; i < 18; i++) {
+    const life = .20 + rand(i + 1100) * .32;
+    const side = i % 2 ? -1 : 1;
+    const across = side * (.18 + rand(i + 1110) * .63);
+    const along = -.34 + rand(i + 1120) * .56;
+    const size = .025 + rand(i + 1130) * .034;
+    const land = f.place(pos, along, across);
+    if (age >= life) {
+      // The same drop leaves a small wet patch at its exact ground landing point.
+      const spread = smooth((age - life) / .08);
+      sprite(land, size * (3 + spread * 2), size * (2 + spread), WaterDark.withAlpha(.18 * spread), soft, Floor + .025);
+      sprite(land, size * (2 + spread * 2), size * (1.5 + spread), Water.withAlpha(.33 * spread), soft, Floor + .035);
+      continue;
+    }
+    const u = age / life, launch = (gravity * life * life / 2 - height) / life;
+    const h = Math.max(0, height + launch * age - gravity * age * age / 2);
+    const q = f.place(pos, along * u, across * u, h);
+    const sh = f.cast(pos, along * u, across * u, h);
+    const alpha = smooth(age / .025);
+    sprite(sh, size * 3, size * 2, Body.withAlpha(strength * .3 * alpha), soft, shadowLayer);
+    // Stretch along the projected velocity, then keep a small reflected cap on each drop.
+    const vx = (f.ca * along - f.sa * across) / life;
+    const vz = (f.sa * along + f.ca * across) / life + (launch - gravity * age) * Lift;
+    const angle = -Math.atan2(vz, vx) / Mathf.Deg2Rad;
+    draw(disc, q.x, Y + .046, q.z, size * (1.3 + .5 * u), size, angle, Water.withAlpha(alpha * .9));
+    draw(disc, q.x - size * .15, Y + .048, q.z + size * .25, size * .7, size * .38, angle, WaterLit.withAlpha(alpha * .95));
+  }
+}
+
 // A continuous translucent jet with a rounded pressure front and a torn, tapering wake.
 // All detail is alpha blended: pale patches are surface reflections, never emitted light.
 // Width is measured across the screen-space tangent, so cardinal facings keep their volume.
