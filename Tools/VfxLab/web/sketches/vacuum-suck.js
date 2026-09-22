@@ -22,7 +22,7 @@
 //   0.97  swallow: each thing enters the head and runs down the hose as a bulge; when a bulge
 //         lands the canister swells a step and the eyes blink
 //   1.60  result: the ring fades and the mouth closes. The chunk and filth are gone, the pawn
-//         stands unarmed, the canister stays larger
+//         stands unarmed, the canister stays larger by the kg it took (chunk 20, rifle 4, filth 0)
 //   2.80  sink: the canister goes back into the floor and the hose coils up again
 //
 // Drawing: the weapon itself is lib/vacuum.js (shared with Spit); see its header. Caster, enemy,
@@ -30,7 +30,7 @@
 import { Color, Mathf } from '../js/engine.js';
 import { draw } from './lib/six-paths-solid.js';
 import { P, Body, Y, Floor, Lift, sprite, band, trail, circle, soft, rand } from './lib/six-paths-impact.js';
-import { drawVacuum, frame, figure, chunk, rifle, bump, disc, puff, pawnLayer, Pale, Dust, Blood, HandH, Bulge, Lead, Rise, Sink, Tail } from './lib/vacuum.js';
+import { drawVacuum, frame, figure, chunk, rifle, bump, swellFor, Mass, disc, puff, pawnLayer, Pale, Dust, Blood, HandH, Bulge, Lead, Rise, Sink, Tail } from './lib/vacuum.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp, TAU = Math.PI * 2;
 const Stagger = .14;                       // the next thing starts its flight this much later
@@ -63,6 +63,7 @@ export default {
     pull: P('Pull', .6, .3, 1.5, .05, 'Timing (s)'),
     hold: P('Show the result', 1.2, .3, 3, .1, 'Timing (s)'),
     radius: P('Radius (cells)', 2, 1, 4, .5, 'Rule'),
+    inside: P('Already inside (kg)', 20, 0, 100, 5, 'Rule'),
     slack: P('Hose slack (cells)', .6, 0, 1.5, .05, 'Shape'),
   },
   duration(p) { return times(p).end; },
@@ -83,7 +84,9 @@ export default {
 
     // How far the suction is on: rises in the wind-up, holds through the pull, fades in the result.
     const suck = smooth((s - t.rise0) / p.windup) * (1 - smooth((s - t.result) / .35));
+    // The canister's size is its fullness in kg: what was already inside plus each thing as it lands.
     const landed = items.filter((_, i) => s >= land(i)).length;
+    const kg = p.inside + items.reduce((m, it, i) => m + (s >= land(i) ? Mass[it.kind] : 0), 0);
     const pulse = items.reduce((m, _, i) => m + bump((s - land(i)) / .25), 0);
     const blink = items.reduce((m, _, i) => Math.max(m, bump((s - land(i)) / Blink)), 0);
     const present = s < t.rise0 ? 0 : s < t.sink0 ? smooth((s - t.rise0) / Rise) : 1 - smooth((s - t.sink0) / Sink);
@@ -92,7 +95,7 @@ export default {
 
     // ---- the weapon and the caster ------------------------------------------------------------
     if (p.actors) figure(caster, new Color(.93, .50, .13), sun, strength);
-    const v = drawVacuum(f, caster, o, { present, churn, swell: landed, pulse, blink, mouthOpen: .18 + .82 * suck * (1 - .6 * blink), bulges, slack: p.slack, actors: p.actors, sun, strength });
+    const v = drawVacuum(f, caster, o, { present, churn, swell: swellFor(kg), pulse, blink, mouthOpen: .18 + .82 * suck * (1 - .6 * blink), bulges, slack: p.slack, actors: p.actors, sun, strength });
     const tipG = v.tipG, tipS = v.tipS;
 
     // ---- the target area: true radius on the floor, a faint cone from the head, air streaks -----

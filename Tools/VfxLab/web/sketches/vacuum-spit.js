@@ -9,10 +9,10 @@
 //
 // Order (times with the default sliders):
 //   0.00  wand at rest, no canister
-//   0.25  wind-up: the canister rises (one step larger, it holds the thing), the wand lifts and
-//         points, the hose unwinds, the mouth opens wide
+//   0.25  wind-up: the canister rises, sized by the kg inside, the wand lifts and points, the hose
+//         unwinds, the mouth opens wide
 //   0.55  heave: the thing runs up the hose from the canister to the head as a bulge; the canister
-//         shrinks back a step when it leaves and the eyes blink
+//         shrinks by the thing's mass when it leaves and the eyes blink
 //   0.90  launch: the thing leaves the head with a puff and a small shake; it flies to the cell
 //   1.35  impact: chunk scenario, it hits the pawn standing on the cell with a dust burst, the
 //         pawn is dazed and the chunk lies on the ground beside it. Rifle scenario, it lands on
@@ -23,7 +23,7 @@
 // are stand-ins. Dust uses the Six Paths Puff texture as a stand-in.
 import { Color, Mathf } from '../js/engine.js';
 import { P, Body, Y, Floor, Lift, sprite, circle, glow, soft, rand } from './lib/six-paths-impact.js';
-import { drawVacuum, frame, figure, chunk, rifle, bump, puff, pawnLayer, Pale, Dust, HandH, Bulge, Lead, Rise, Sink, Tail } from './lib/vacuum.js';
+import { drawVacuum, frame, figure, chunk, rifle, bump, swellFor, Mass, puff, pawnLayer, Pale, Dust, HandH, Bulge, Lead, Rise, Sink, Tail } from './lib/vacuum.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp, TAU = Math.PI * 2;
 const Blink = .16, Dazed = 1.2, Arc = .9;   // flight arc height in cells
@@ -43,6 +43,7 @@ export default {
     windup: P('Wind-up', .3, .1, .8, .05, 'Timing (s)'),
     flight: P('Flight', .45, .2, 1, .05, 'Timing (s)'),
     hold: P('Show the result', 1.2, .3, 3, .1, 'Timing (s)'),
+    inside: P('Inside before the cast (kg)', 40, 5, 100, 5, 'Rule'),
     slack: P('Hose slack (cells)', .6, 0, 1.5, .05, 'Shape'),
   },
   duration(p) { return times(p).end; },
@@ -65,7 +66,8 @@ export default {
     const present = s < t.rise0 ? 0 : s < t.sink0 ? smooth((s - t.rise0) / Rise) : 1 - smooth((s - t.sink0) / Sink);
     const churn = Math.max(bump((s - t.rise0) / Rise), bump((s - t.sink0) / Sink));
     const heaveU = (s - t.heave) / Bulge;                 // 0..1 while the thing runs up the hose
-    const held = s < t.heave ? 1 : 0;                       // the canister holds one thing until it heaves
+    // The canister's size is its fullness in kg; the thing's own mass leaves with it at the heave.
+    const kg = p.inside - (s < t.heave ? 0 : Math.min(p.inside, Mass[isChunk ? 'chunk' : 'rifle']));
     const pulse = bump((s - t.heave) / .25) * .6;           // a squeeze as it pushes the thing out
     const blink = bump((s - t.heave) / Blink);
     const open = smooth((s - t.rise0) / p.windup);
@@ -73,7 +75,7 @@ export default {
     const bulges = heaveU > 0 && heaveU < 1 ? [1 - heaveU] : [];
 
     if (p.actors) figure(caster, new Color(.93, .50, .13), sun, strength);
-    const v = drawVacuum(f, caster, o, { present, churn, swell: held, pulse, blink, mouthOpen, bulges, slack: p.slack, actors: p.actors, sun, strength });
+    const v = drawVacuum(f, caster, o, { present, churn, swell: swellFor(kg), pulse, blink, mouthOpen, bulges, slack: p.slack, actors: p.actors, sun, strength });
     const tipG = v.tipG;
 
     // The pawn on the cell (chunk scenario): hit at impact, dazed after, standing throughout.

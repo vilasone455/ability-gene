@@ -30,6 +30,11 @@ export const HoseW = .085;                        // hose half width
 export const Bulge = .35;                         // one thing takes this long to run the hose
 export const Lead = .25, Rise = .25, Sink = .3, Tail = .25;  // wand alone, canister rising, sinking, wand alone again
 export const bump = x => (x >= 0 && x <= 1) ? Math.sin(x * Math.PI) : 0;
+// Fullness: the mass swallowed since the last digest, in kg. Capacity 100 kg shows as six swell
+// steps (about 1.3x the base radius). Stand-in masses for the things the sketches use.
+export const Capacity = 100, FullSwell = 6;
+export const swellFor = kg => FullSwell * kg / Capacity;
+export const Mass = { chunk: 20, rifle: 4, filth: 0 };
 
 // The aim frame: along the cast direction, across it, h cells up. cast() is the same point's shadow.
 export function frame(aimDeg, sun) {

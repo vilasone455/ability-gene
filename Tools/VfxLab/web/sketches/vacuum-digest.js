@@ -24,10 +24,9 @@
 import { Color, Mathf } from '../js/engine.js';
 import { draw } from './lib/six-paths-solid.js';
 import { P, Body, Y, Floor, Lift, sprite, soft, glow, rand } from './lib/six-paths-impact.js';
-import { drawVacuum, frame, figure, bump, disc, puff, CanDark, Pale, Dust, Lead, Rise, Sink, Tail } from './lib/vacuum.js';
+import { drawVacuum, frame, figure, bump, swellFor, disc, puff, CanDark, Pale, Dust, Lead, Rise, Sink, Tail } from './lib/vacuum.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp, TAU = Math.PI * 2;
-const Capacity = 100, FullSwell = 6;        // 100 kg shows as six swell steps (about 1.3x radius)
 const ChompHz = 4, Burp = .35, Crumbs = 14;
 const Burped = new Color(.55, .72, .40), Crumb = new Color(.16, .13, .10);
 
@@ -64,7 +63,7 @@ export default {
     const present = s < t.rise0 ? 0 : s < t.sink0 ? smooth((s - t.rise0) / Rise) : 1 - smooth((s - t.sink0) / Sink);
     const churn = Math.max(bump((s - t.rise0) / Rise), bump((s - t.sink0) / Sink));
     const digested = clamp((s - t.chew0) / t.chew);                       // share of the mass gone
-    const swell = FullSwell * (p.kg / Capacity) * (1 - digested);
+    const swell = swellFor(p.kg * (1 - digested));
     const chewing = s >= t.chew0 && s < t.done;
     const chomp = chewing ? (Math.sin((s - t.chew0) * ChompHz * TAU) + 1) / 2 : 0;   // 1 = mouth wide, 0 = shut
     const bite = chewing ? Math.pow(1 - chomp, 3) : 0;                    // sharp at the shut moment
