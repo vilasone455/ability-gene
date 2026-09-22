@@ -125,7 +125,7 @@ export function splash(pos, age, big = 1, seed = 0) {
 // All detail is alpha blended: pale patches are surface reflections, never emitted light.
 // Width is measured across the screen-space tangent, so cardinal facings keep their volume.
 // Mesh keys are stable and all breakup is derived from clip time for backwards scrubbing.
-export function stream(key, a, b, u0, u1, width, s, layer = Y + .02, sag = .05, seed = 0) {
+export function stream(key, a, b, u0, u1, width, s, layer = Y + .02, sag = .05, seed = 0, tailBreak = 0) {
   if (u1 <= u0) return;
   const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1;
   const nx = -dz / L, nz = dx / L, span = u1 - u0, length = L * span;
@@ -143,23 +143,31 @@ export function stream(key, a, b, u0, u1, width, s, layer = Y + .02, sag = .05, 
     const ripple = 1 + .12 * Math.sin(u * L * 9 - flow) + .06 * Math.sin(u * L * 19 - flow * .8);
     return width * (1.1 + .35 * u) * tail * front * swell * ripple;
   };
-  const n = Math.max(12, Math.ceil(length / .055));
-  const pts = Array.from({ length: n + 1 }, (_, i) => at(lerp(u0, u1, i / n)));
+  // Stream Shot tears the rear third into separate parcels after the nozzle closes.
+  // The default stays continuous for Hydro Pump's sustained flow.
+  const cut = .32 * tailBreak;
+  const bodyU = lerp(u0, u1, cut);
+  const bodyRadius = v => {
+    const original = lerp(cut, 1, v);
+    return radius(original) * (cut > 0 ? smooth(v / .09) : 1);
+  };
+  const n = Math.max(12, Math.ceil(length * (1 - cut) / .055));
+  const pts = Array.from({ length: n + 1 }, (_, i) => at(lerp(bodyU, u1, i / n)));
   // A blue silhouette with a darker underside and a narrower, translucent lit surface.
-  tube(`${key} body`, pts, radius, Water.withAlpha(.88), layer);
-  tube(`${key} underside`, pts, radius, WaterDark.withAlpha(.44), layer + .002, -.95, -.38);
-  tube(`${key} surface`, pts, radius, WaterLit.withAlpha(.63), layer + .004, -.12, .75);
+  tube(`${key} body`, pts, bodyRadius, Water.withAlpha(.88), layer);
+  tube(`${key} underside`, pts, bodyRadius, WaterDark.withAlpha(.44), layer + .002, -.95, -.38);
+  tube(`${key} surface`, pts, bodyRadius, WaterLit.withAlpha(.63), layer + .004, -.12, .75);
 
   // Broken curved reflections slide along the water; gaps keep it from reading as a laser core.
   const patches = Math.ceil(L / .5);
   for (let i = 0; i < patches; i++) {
     const u = ((s * 2.1 + i / patches + rand(i + seed + 940) * .04) % 1);
     const end = Math.min(u1, u + (.14 + rand(i + seed + 941) * .2) / L);
-    if (u < u0 || u >= u1 || end - u < .012 / L) continue;
+    if (u < bodyU || u >= u1 || end - u < .012 / L) continue;
     const glint = [];
     for (let j = 0; j <= 6; j++) {
       const t = j / 6, qU = lerp(u, end, t), q = at(qU);
-      const off = radius((qU - u0) / span) * (.38 + .18 * Math.sin(t * Math.PI));
+      const off = bodyRadius((qU - bodyU) / (u1 - bodyU)) * (.38 + .18 * Math.sin(t * Math.PI));
       glint.push({ x: q.x + nx * off, z: q.z + nz * off });
     }
     tube(`${key} reflection ${i}`, glint, v => width * .16 * Math.sin(v * Math.PI), Foam.withAlpha(.88), layer + .006);
@@ -170,6 +178,7 @@ export function stream(key, a, b, u0, u1, width, s, layer = Y + .02, sag = .05, 
   const angle = -Math.atan2(dz, dx) / Mathf.Deg2Rad;
   for (let i = 0; i < 14; i++) {
     const v = .05 + rand(i + seed + 960) * .83;
+    if (v < cut) continue;
     const u = lerp(u0, u1, v), q = at(u);
     const cycle = (s * (2.5 + rand(i + seed + 961)) + rand(i + seed + 962)) % 1;
     const side = i % 2 ? -1 : 1;
@@ -179,6 +188,49 @@ export function stream(key, a, b, u0, u1, width, s, layer = Y + .02, sag = .05, 
     const x = q.x + nx * off, z = q.z + nz * off - cycle * cycle * .07;
     draw(disc, x, layer + .008, z, r * (1.4 + cycle), r, angle, Water.withAlpha(alpha * .85));
     draw(disc, x - r * .2, layer + .010, z + r * .3, r * .75, r * .38, angle, WaterLit.withAlpha(alpha));
+  }
+}
+
+// Stream Shot only: detached water from the last third of the nozzle pulse. Each parcel has
+// a fixed emission time and travels slower than the main jet, spreading and falling as it ages.
+// It survives the main tail reaching the target, then disappears at its own contact. No state.
+export function streamTrail(key, a, b, width, age, flight, jet, layer = Y + .02) {
+  const released = age - jet, breakup = smooth(released / .06);
+  if (breakup <= 0 || age > flight + jet + .14) return;
+  const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1;
+  const tx = dx / L, tz = dz / L, nx = -tz, nz = tx;
+  const angle = -Math.atan2(dz, dx) / Mathf.Deg2Rad;
+  for (let i = 0; i < 13; i++) {
+    const big = i < 5;
+    const emission = big ? .72 + i * .055 + (rand(i + 1010) - .5) * .012 : .73 + rand(i + 1010) * .27;
+    const drag = (big ? .09 + i * .012 : .07 + rand(i + 1020) * .08) * released * breakup;
+    const u = (age - jet * emission - drag) / flight;
+    if (u <= 0 || u >= 1) continue;
+    const spread = width * (big ? .45 : 1.2) + released * (big ? .22 : .65);
+    const side = (rand(i + 1030) - .5) * 2 * spread * breakup;
+    const x = lerp(a.x, b.x, u) + nx * side;
+    const z = lerp(a.z, b.z, u) + nz * side - Math.sin(u * Math.PI) * .05 * Lift
+      - released * released * (big ? .45 : .8);
+    const alpha = breakup * (1 - smooth((u - .96) / .04));
+    const size = width * (big ? .48 + rand(i + 1040) * .3 : .18 + rand(i + 1040) * .18);
+    if (big) {
+      // Uneven, stretched parcels shrink toward the rear; they round out as they lose speed.
+      const halfLength = Math.min(width * (1.25 - i * .13), L * jet / flight * .025)
+        * (1 - .35 * clamp(released / flight));
+      const pts = [];
+      for (let j = 0; j <= 12; j++) {
+        const v = j / 12, along = (v * 2 - 1) * halfLength;
+        const bend = Math.sin(v * Math.PI) * size * .2 * Math.sin(i * 2.7 + released * 12);
+        pts.push({ x: x + tx * along + nx * bend, z: z + tz * along + nz * bend });
+      }
+      const radius = v => size * Math.pow(Math.sin(v * Math.PI), .7) * (.7 + .3 * v);
+      tube(`${key} parcel ${i}`, pts, radius, Water.withAlpha(alpha * .88), layer);
+      tube(`${key} parcel shade ${i}`, pts, radius, WaterDark.withAlpha(alpha * .35), layer + .002, -.9, -.35);
+      tube(`${key} parcel sheen ${i}`, pts, radius, WaterLit.withAlpha(alpha * .8), layer + .004, .05, .68);
+    } else {
+      draw(disc, x, layer + .006, z, size * 1.6, size, angle, Water.withAlpha(alpha * .8));
+      draw(disc, x - size * .2, layer + .008, z + size * .25, size * .7, size * .35, angle, WaterLit.withAlpha(alpha * .9));
+    }
   }
 }
 
