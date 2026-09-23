@@ -15,8 +15,8 @@
 import { AltitudeLayer, Color, Mathf, Meshes } from '../../js/engine.js';
 import { draw, mesh } from './six-paths-solid.js';
 import { Body, Y, Floor, Lift, sprite, band, circle, soft, glow, rand } from './six-paths-impact.js';
-import { figure, rect, tube, screen, shadow, frame, easeOut, bump, Skin, Pale, Dust, Enemy, Holder, shadowLayer, pawnLayer, puff } from './chain-sickle.js';
-export { figure, rect, tube, screen, shadow, frame, easeOut, bump, Skin, Pale, Dust, Enemy, Holder, shadowLayer, pawnLayer, puff, rand };
+import { figure, rect, tube, screen, shadow, frame, easeOut, bump, Skin, Pale, Dust, Enemy, Ally, Holder, shadowLayer, pawnLayer, puff } from './chain-sickle.js';
+export { figure, rect, tube, screen, shadow, frame, easeOut, bump, Skin, Pale, Dust, Enemy, Ally, Holder, shadowLayer, pawnLayer, puff, rand };
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp, TAU = Math.PI * 2;
 export const disc = Meshes.disc(32, 'samehada disc');
@@ -213,7 +213,7 @@ export function bite(key, pos, deg, age, alpha = 1) {
 export function tally(key, pos, charges, aimDeg = 0, alpha = 1) {
   const above = Math.sin(aimDeg * Mathf.Deg2Rad) < -.5;
   for (let i = 0; i < MaxCharges; i++) {
-    const c = { x: pos.x - .28 + i * .14, z: pos.z + (above ? .90 : -.34) }, fill = clamp(charges - i);
+    const c = { x: pos.x - .28 + i * .14, z: pos.z + (above ? 1.15 : -.55) }, fill = clamp(charges - i);
     draw(scaleM, c.x, Floor + .05, c.z, .11, .12, 0, ScaleEdge.withAlpha(.7 * alpha));
     draw(scaleM, c.x, Floor + .051, c.z, .085, .095, 0, Color.Lerp(Hide, ScaleLit, fill).withAlpha(alpha * (.5 + .5 * fill)));
   }
@@ -229,4 +229,90 @@ export function strip(key, start, vx, vz, rise, age, deg, alpha = 1) {
   const turn = deg + t * 300;
   if (!landed) rect(`${key} shadow`, { x: gx, z: gz }, .16, .05, turn, Body.withAlpha(.3 * alpha), shadowLayer);
   rect(key, { x: gx, z: gz + h * Lift }, .16, .045, turn, Bandage.withAlpha(alpha), landed ? Floor + .03 : Y + .06);
+}
+
+// ---- Fusion --------------------------------------------------------------------------------
+// The shark form: a scaled overlay drawn over the stand-in pawn, with a dorsal fin, a tail and
+// gills. `amount` 0..1 fades it in over the body. This is the one piece of the kit with a
+// per-facing method, because it wraps a pawn instead of lying flat:
+//   'up'   (aim north, back to the camera): the fin runs down the spine as a dark strip, the tail
+//          hangs below the body
+//   'down' (aim south, face to the camera): the fin rises above the head (height shifts north),
+//          gills on both cheeks, the tail shows only as two flukes beside the feet
+//   'side' (aim east or west): the fin stands up from the mid-back, the tail trails behind the
+//          pawn, away from the aim, with a vertical fluke
+// `walk` 0..1 phase drives a small tail sway. In game: three textures or three quad sets.
+export function facingOf(aimDeg) {
+  const sn = Math.sin(aimDeg * Mathf.Deg2Rad);
+  return sn > .5 ? 'up' : sn < -.5 ? 'down' : 'side';
+}
+function tri(key, a, b, c, colour, layer) {
+  band(key, [a, b], [c, c], colour, layer);
+}
+export function sharkForm(key, pos, aimDeg, amount, s, { alpha = 1 } = {}) {
+  if (amount <= 0) return;
+  const A = alpha * amount, facing = facingOf(aimDeg), west = Math.cos(aimDeg * Mathf.Deg2Rad) < 0;
+  const L = pawnLayer + .012, sway = Math.sin(s * 9) * .05;
+  const skin = Color.Lerp(Hide, HideLit, .25).withAlpha(A), lit = HideLit.withAlpha(A * .8), edge = ScaleEdge.withAlpha(A);
+  // Body: an ellipse a little larger than the stand-in's, dark hide with a lit belly stripe.
+  draw(disc, pos.x, L, pos.z + .18, .25, .35, 0, skin);
+  draw(disc, pos.x + (facing === 'side' ? (west ? -.06 : .06) : 0), L + .001, pos.z + .16, .10, .26, 0, lit);
+  // Scales: four rows of three across the body.
+  for (let r = 0; r < 4; r++) for (let k = -1; k <= 1; k++) {
+    const x = pos.x + k * .13 + (r % 2 ? .05 : 0), z = pos.z + .04 + r * .1, litS = (r + k) % 2 === 0;
+    draw(scaleM, x, L + .002, z, .08, .09, 0, edge);
+    draw(scaleM, x, L + .003, z + .005, .06, .07, 0, (litS ? ScaleLit : Scale).withAlpha(A));
+  }
+  // Head: the hide over the face leaves the eyes; gills as three short lines on each side.
+  draw(disc, pos.x, L + .004, pos.z + .58, .18, .19, 0, skin);
+  draw(disc, pos.x, L + .005, pos.z + .56, .12, .10, 0, Color.Lerp(Skin, Hide, .55).withAlpha(A));
+  for (const k of [-1, 1]) for (let i = 0; i < 3; i++)
+    rect(`${key} gill ${k} ${i}`, { x: pos.x + k * (.15 + i * .012), z: pos.z + .47 + i * .06 }, .06, .014, 80 * k, Flesh.withAlpha(A), L + .006);
+  // Fin and tail by facing.
+  const finC = ScaleEdge.withAlpha(A), finLit = ScaleLit.withAlpha(A * .85);
+  if (facing === 'up') {
+    // Spine strip down the back, a fin outline either side, tail below the feet.
+    rect(`${key} spine`, { x: pos.x, z: pos.z + .22 }, .55, .08, 90, finC, L + .007);
+    rect(`${key} spine lit`, { x: pos.x, z: pos.z + .22 }, .5, .035, 90, finLit, L + .008);
+    tri(`${key} tail`, { x: pos.x - .06 + sway, z: pos.z - .05 }, { x: pos.x + .06 + sway, z: pos.z - .05 }, { x: pos.x + sway * 2, z: pos.z - .38 }, finC, L - .03);
+    tri(`${key} fluke`, { x: pos.x - .16 + sway * 2, z: pos.z - .42 }, { x: pos.x + .16 + sway * 2, z: pos.z - .42 }, { x: pos.x + sway * 2, z: pos.z - .3 }, finC, L - .03);
+  } else if (facing === 'down') {
+    // The fin rises above the head: a triangle whose base is at the shoulders, apex 0.55 up.
+    tri(`${key} fin`, { x: pos.x - .11, z: pos.z + .62 }, { x: pos.x + .11, z: pos.z + .62 }, { x: pos.x + .04, z: pos.z + .62 + .55 * Lift }, finC, L - .03);
+    tri(`${key} fin lit`, { x: pos.x - .04, z: pos.z + .63 }, { x: pos.x + .06, z: pos.z + .63 }, { x: pos.x + .03, z: pos.z + .62 + .42 * Lift }, finLit, L - .029);
+    for (const k of [-1, 1]) tri(`${key} fluke ${k}`, { x: pos.x + k * .12, z: pos.z - .02 }, { x: pos.x + k * .3 + sway, z: pos.z - .1 }, { x: pos.x + k * .2 + sway, z: pos.z + .02 }, finC, L - .03);
+  } else {
+    // Profile: the fin stands up from the mid-back, the tail trails behind.
+    const back = west ? 1 : -1;       // screen direction away from the aim
+    tri(`${key} fin`, { x: pos.x + back * .04, z: pos.z + .3 }, { x: pos.x - back * .16, z: pos.z + .3 }, { x: pos.x + back * .16, z: pos.z + .3 + .6 * Lift }, finC, L + .007);
+    tri(`${key} fin lit`, { x: pos.x - back * .02, z: pos.z + .31 }, { x: pos.x - back * .11, z: pos.z + .31 }, { x: pos.x + back * .09, z: pos.z + .31 + .45 * Lift }, finLit, L + .008);
+    // Tail: a thin tube out of the hip and a crescent fluke (two thin lobes), no arrowhead.
+    const tailBase = { x: pos.x + back * .18, z: pos.z + .12 + sway }, tailTip = { x: pos.x + back * .42, z: pos.z + .1 + sway * 2 };
+    tube(`${key} tail`, [tailBase, tailTip], u => .045 * (1 - u * .5), finC, L - .03);
+    tube(`${key} fluke up`, [tailTip, { x: tailTip.x + back * .06, z: tailTip.z + .2 }], u => .03 * (1 - u * .7), finC, L - .03);
+    tube(`${key} fluke down`, [tailTip, { x: tailTip.x + back * .05, z: tailTip.z - .14 }], u => .03 * (1 - u * .7), finC, L - .03);
+  }
+  // Seams: a little purple flesh shows where the hide meets, as in Shark Skin.
+  sprite({ x: pos.x, z: pos.z + .38 }, .3, .12, Flesh.withAlpha(.35 * A), soft, L + .009);
+}
+
+// A regen pulse every second while fused: one soft green ring rising off the body.
+export function regenPulse(pos, s, alpha = 1) {
+  const u = s % 1;
+  circle({ x: pos.x, z: pos.z + .15 + u * .5 * Lift }, .22 + u * .12, .45 * (1 - u) * alpha, pawnLayer + .03, Heal);
+}
+
+// A deep-water patch on the floor: a dark blue body with a paler rim, lying across the walk. The
+// holder can cross it fused; a normal pawn stops at its edge. A stand-in for map terrain.
+export const Water = new Color(.10, .26, .48), WaterRim = new Color(.45, .70, .90);
+export function waterPatch(key, centre, along, across, deg, s) {
+  const r = deg * Mathf.Deg2Rad, cx = Math.cos(r), sx = Math.sin(r);
+  const c = (a, b) => ({ x: centre.x + cx * a - sx * b, z: centre.z + sx * a + cx * b });
+  rect(`${key} rim`, centre, along + .16, across + .16, deg, WaterRim.withAlpha(.35), Floor + .008);
+  rect(`${key} body`, centre, along, across, deg, Water.withAlpha(.85), Floor + .009);
+  // Slow ripples: three faint bands drifting across.
+  for (let i = 0; i < 3; i++) {
+    const u = ((s * .12 + i / 3) % 1) - .5;
+    rect(`${key} ripple ${i}`, c(u * along * .9, (rand(i + 50) - .5) * across * .6), .04, across * .7, deg, WaterRim.withAlpha(.18), Floor + .010);
+  }
 }
