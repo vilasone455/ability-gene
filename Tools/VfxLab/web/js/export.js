@@ -58,7 +58,7 @@ export function renderFrames({ renderer, scene, camera, source, cell, hidden }, 
   const shots = [];
   for (const t of times) {
     const frame = source.frameAt(Math.min(t, source.duration || t), cell, scene);
-    const calls = settings.transparent
+    const calls = settings.transparent || source.ownMap
       ? frame.calls
       : scene.calls({ x: centre.cx, z: centre.cz }, view).concat(frame.calls);
     renderer.renderExport({ camera: { ...centre, ppc }, calls, hidden }, px, px,
@@ -92,11 +92,12 @@ export async function composeSheet(shots, px, columns) {
  * The scene alone at the export's framing, with nothing of the effect in it: the bed an overlay
  * is stacked on, so the terrain is drawn once instead of once per frame.
  */
-export function renderBackdrop({ renderer, scene, cell }, settings) {
+export function renderBackdrop({ renderer, scene, source, cell }, settings) {
   const px = Math.max(16, Math.round(settings.px));
   const ppc = px / Math.max(1, settings.cells);
   const centre = { cx: cell.x + 0.5, cz: cell.z + 0.5 + settings.north };
-  renderer.renderExport({ camera: { ...centre, ppc }, calls: scene.calls({ x: centre.cx, z: centre.cz }, px / ppc / 2), hidden: new Set() },
+  const calls = source?.ownMap ? [] : scene.calls({ x: centre.cx, z: centre.cz }, px / ppc / 2);
+  renderer.renderExport({ camera: { ...centre, ppc }, calls, hidden: new Set() },
     px, px, { transparent: false });
   return renderer.canvas.toDataURL('image/png');
 }
