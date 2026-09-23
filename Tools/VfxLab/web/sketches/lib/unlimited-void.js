@@ -19,7 +19,7 @@ import { draw, mesh } from './six-paths-solid.js';
 import { Y, Floor, Lift, sprite, glow, soft, rand } from './six-paths-impact.js';
 import { stunStars } from './goku.js';
 import {
-  blackHole, domeOutline, pawn, ringAt, glint, streak, strip, line, whiteGlow, Ink, Skin, Ally, White, Ice, Blue, Void,
+  domeOutline, pawn, ringAt, glint, streak, strip, line, whiteGlow, Ink, Skin, Ally, White, Ice, Blue, Void,
   Violet, Pink, Gold, EyeBlue, pawnLayer, shadowLayer, smooth, clamp,
 } from './gojo.js';
 
@@ -29,7 +29,7 @@ const TAU = Math.PI * 2, Deg = Mathf.Deg2Rad;
 
 // ---- colours ----------------------------------------------------------------------------------
 export const Frozen = new Color(.62, .8, 1);                     // tint on a frozen pawn
-export const Navy = new Color(.012, .02, .06), Haze = new Color(.16, .55, .62), Indigo = new Color(.26, .22, .72), Dusk = new Color(.45, .28, .72);
+export const Navy = new Color(.02, .03, .08), Haze = new Color(.16, .55, .62), Indigo = new Color(.26, .22, .72), Dusk = new Color(.45, .28, .72);
 export const MechDark = new Color(.17, .18, .21), MechLit = new Color(.36, .38, .43), MechEye = new Color(1, .22, .16);
 export const Steel = new Color(.78, .82, .87), Visor = new Color(.4, .92, 1);
 
@@ -200,21 +200,96 @@ function galaxy(key, g, size, flat, tilt, turn, colour, fade) {
   }
 }
 
-// The black hole under the void (anime ep. 7): lib/gojo.js blackHole laid in the space, gas
-// spiralling in to its ring, and light streaming out past the ring. live 0..1 fades it.
-export function voidHole(key, h, radius, s, live, { swirl = .35, rays = 1 } = {}) {
-  if (radius <= .02 || live <= 0) return;
-  blackHole(key, h, radius, s, live, V.deep + .08);
-  // Gas curling in close round the ring (the anime's pale-blue swirl), not a whirlpool over the map.
-  for (let i = 0; i < 12; i++) {
-    const a0 = i / 12 * TAU + s * .3 + rand(i + 1100), len = .25 + .45 * rand(i + 1105), turn = 1.1 + .7 * rand(i + 1110), pts = [];
-    for (let k = 0; k <= 10; k++) {
-      const v = k / 10, r = radius * (1.03 + len * (1 - v)), a = a0 + v * turn;
-      pts.push({ x: h.x + Math.cos(a) * r, z: h.z + Math.sin(a) * r });
-    }
-    line(`${key} inflow ${i}`, pts, radius * (.025 + .035 * rand(i + 1120)), (i % 3 ? Ice : White).withAlpha((.12 + .12 * rand(i + 1130)) * live), whiteGlow, V.deep + .16, 'both');
+// ---- the black hole (anime ep. 7, the frame with Jogo in front of it) -------------------------------
+// Built from that frame (colours sampled from it on 2026-09-23), disc radius R:
+//   - the disc: pure black, crisp edge
+//   - the gas: grey-blue (about 120, 128, 150 where lit), a light rim hugging the disc at 1.2 R,
+//     then a wide band of feathery streaks leaning into a spiral out to 2.15 R, turning slowly;
+//     lit on the upper right and the left, near black along the bottom
+//   - the ring: thin, at 2.2 R (a little wider toward the upper left), gold outside, white, blue
+//     inside; peach-gold on top, white upper right, blue-white on the left, weak lower right
+//   - the smoke: a soft pale blue-white cloud with a cyan tinge off the ring's east side, 2.4 to
+//     4.4 R east and a little north, with cyan sparkles in it
+// The gas and the ring are lab textures (lab/gojo-hole-gas, lab/gojo-hole-wisps, lab/gojo-hole-ring)
+// still to be made PNGs; the ring's colours are baked into its texture because it needs several at
+// once. Gas turning = the sprites turning, so in game it is two quads and a rotation.
+const ss = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+const polarPixels = (n, f) => pixels(n, (u, v) => {
+  const dx = u - .5, dz = .5 - v, r = Math.hypot(dx, dz) * 2;
+  if (r >= 1) return [0, 0, 0, 0];
+  return f(r, (Math.atan2(dz, dx) / TAU + 1) % 1);
+});
+// The texture's edge (r = 1) is GasOut x R; the disc edge sits at 1 / GasOut.
+const GasOut = 2.15, RingAt = 2.2, RingQuad = 2.6, RingShift = { x: -.05, z: .06 };
+registerLabTexture('lab/gojo-hole-gas', () => polarPixels(512, (r, phi) => {
+  const n = fbm((phi + r * .55) * 12, r * 7, 404, 4, 12);
+  const rim = .85 * Math.exp(-(((r - .56) / .04) ** 2)) * ss(.47, .52, r);        // the light rim at 1.2 R
+  const band = ss(.5, .64, r) * (1 - ss(.82, .99, r));
+  return [1, 1, 1, clamp(rim + band * (.2 + .8 * n * n))];
+}));
+registerLabTexture('lab/gojo-hole-wisps', () => polarPixels(512, (r, phi) => {
+  const n = fbm((phi + r * .8) * 16, r * 11, 505, 4, 16);
+  const band = ss(.53, .66, r) * (1 - ss(.88, .98, r));
+  return [1, 1, 1, band * ss(.58, .86, n)];
+}));
+registerLabTexture('lab/gojo-hole-ring', () => polarPixels(512, (r, phi) => {
+  const R0 = RingAt / RingQuad, deg = phi * 360;
+  const round = .3 + .7 * (.5 + .5 * Math.cos((deg - 125) * Deg));                // brightest top-left
+  const w = .012 + .01 * round, d = (r - R0) / w;                                   // and widest there
+  if (Math.abs(d) > 5) return [0, 0, 0, 0];
+  const east = 1 - .8 * Math.exp(-((((deg + 180) % 360 - 185) / 38) ** 2));          // faint round 5 degrees (east)
+  const t = clamp((d + 1.8) / 3.6), gold = clamp(.2 + .8 * Math.cos((deg - 110) * Deg));
+  const warm = [1, .78 + .1 * (1 - gold), .35 + .45 * (1 - gold)];
+  const col = t < .5 ? [.45 + .55 * t * 2, .7 + .3 * t * 2, 1] : [1 + (warm[0] - 1) * (t - .5) * 2, 1 + (warm[1] - 1) * (t - .5) * 2, 1 + (warm[2] - 1) * (t - .5) * 2];
+  const a = clamp((Math.exp(-d * d * 1.1) + .3 * Math.exp(-d * d * .12)) * round * east);
+  return [col[0], col[1], col[2], a];
+}));
+const holeGas = MaterialPool.MatFrom('lab/gojo-hole-gas', ShaderDatabase.MoteGlow);
+const holeWisps = MaterialPool.MatFrom('lab/gojo-hole-wisps', ShaderDatabase.MoteGlow);
+const holeRing = MaterialPool.MatFrom('lab/gojo-hole-ring', ShaderDatabase.MoteGlow);
+const puff = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.MoteGlow);
+export const GasBody = new Color(.3, .32, .44), GasLight = new Color(.85, .9, 1), Smoke = new Color(.7, .92, .95);
+
+// The black hole under the void, disc radius R at h. live 0..1 fades it; rays 0..1 its light dashes.
+export function voidHole(key, h, R, s, live, { swirl = .1, rays = 1 } = {}) {
+  if (R <= .02 || live <= 0) return;
+  const L = V.deep + .08, gas = R * GasOut * 2;
+  sprite(h, R * 5.5, R * 5.5, Indigo.withAlpha(.2 * live), glow, L);                                  // the haze round it
+  sprite(h, gas, gas, GasBody.withAlpha(.95 * live), holeGas, L + .005, -s * 5);                       // the gas body
+  sprite(h, gas, gas, GasLight.withAlpha(.8 * live), holeWisps, L + .01, -s * 9);                      // pale streaks, faster
+  // Light and shade that stay put while the gas turns: lit upper right and left, dark bottom.
+  sprite({ x: h.x + R * .1, z: h.z - R * 1.55 }, R * 3.6, R * 1.9, Navy.withAlpha(.72 * live), soft, L + .011);
+  sprite({ x: h.x + R * 1.3, z: h.z - R * .9 }, R * 1.8, R * 1.8, Navy.withAlpha(.5 * live), soft, L + .0112);
+  sprite({ x: h.x - R * .1, z: h.z + R * 1.8 }, R * 1.6, R * .7, Navy.withAlpha(.4 * live), soft, L + .0114);
+  sprite({ x: h.x + R * 1.05, z: h.z + R * 1.05 }, R * 1.6, R * 1.0, GasLight.withAlpha(.2 * live), glow, L + .012, -45);
+  sprite({ x: h.x - R * 1.65, z: h.z + R * .1 }, R * .9, R * 2.6, GasLight.withAlpha(.2 * live), glow, L + .0122);
+  for (let i = 0; i < 18; i++) {                                                                       // a few loose streaks on top, turning faster near the disc
+    const r0 = R * (1.1 + .75 * rand(i + 1100)), spin = .5 * Math.pow(R / r0, 1.5), a0 = rand(i + 1105) * TAU + s * spin, span = .35 + .6 * rand(i + 1110), pts = [];
+    for (let k = 0; k <= 8; k++) { const v = k / 8, r = r0 * (1 - .06 * v), a = a0 + v * span; pts.push({ x: h.x + Math.cos(a) * r, z: h.z + Math.sin(a) * r }); }
+    line(`${key} streak ${i}`, pts, R * (.02 + .025 * rand(i + 1120)), GasLight.withAlpha((.1 + .18 * rand(i + 1130)) * live), whiteGlow, L + .015, 'both');
   }
-  if (rays > 0) voidRays(`${key} rays`, h, s, radius * 1.1, radius * 1.1 + 14, swirl, .8 * live * rays);
+  ringAt(h, R * 1.2, GasLight.withAlpha(.2 * live), L + .016, true, whiteGlow);                        // the light rim hugging the disc
+  ringAt(h, R * 1.13, GasLight.withAlpha(.16 * live), L + .017, true, whiteGlow);
+  draw(disc, h.x, L + .02, h.z, R, R, 0, Void.withAlpha(live));
+  const q = R * RingQuad * 2;
+  sprite({ x: h.x + R * RingShift.x, z: h.z + R * RingShift.z }, q, q, White.withAlpha(live), holeRing, L + .03);
+  plume(`${key} plume`, h, R, s, live, L + .04);
+  if (rays > 0) voidRays(`${key} rays`, h, s, R * RingAt * 1.04, R * RingAt + 14, swirl, .7 * live * rays, 40);
+}
+
+// The smoke streaming off the ring's east side: soft puffs drifting out and growing, and sparkles.
+function plume(key, h, R, s, live, L) {
+  const path = v => ({ x: h.x + R * (2.25 + 2.2 * v), z: h.z + R * (.05 + .55 * v) });
+  for (let i = 0; i < 18; i++) {
+    const v = (s * .05 + i / 18) % 1, p = path(v), wob = R * .18 * Math.sin(i * 1.7 + s * .4);
+    const size = R * (.45 + 1.25 * v) * (.8 + .4 * rand(i + 1600)), a = live * .3 * ss(0, .12, v) * (1 - ss(.65, 1, v));
+    sprite({ x: p.x, z: p.z + wob }, size * 1.35, size, [White, GasLight, Smoke][i % 3].withAlpha(a), puff, L + i * .0004, rand(i + 1610) * 360 + s * 7 * (i % 2 ? 1 : -1));
+  }
+  for (let i = 0; i < 12; i++) {
+    const v = .25 + .7 * rand(i + 1650), p = path(v), tw = .4 + .6 * Math.abs(Math.sin(s * (1.5 + rand(i + 1660) * 2) + i));
+    const at = { x: p.x + R * (rand(i + 1670) - .5) * 1.4 * v, z: p.z + R * (rand(i + 1680) - .5) * 1.1 * v };
+    sprite(at, .16, .16, Smoke.withAlpha(.9 * tw * live), glow, L + .01);
+  }
 }
 
 // Dashes of white, pink and violet light running out from the ring (the anime's speed lines), on

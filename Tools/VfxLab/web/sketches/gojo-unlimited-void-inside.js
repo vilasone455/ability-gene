@@ -24,9 +24,13 @@
 //   0.00  white (the camera switches maps behind it); a white burst and ring on Gojo, the crowd
 //         frozen round him (anime ep. 33); the splatter burst
 //   0.10  the space fades in over 0.7 s: navy, haze, 180 stars, 6 galaxies, 8 white ink patches;
-//         the black hole opens 5 cells north of Gojo, radius 4.5, so its ring passes just behind
-//         him (black disc, gold and teal ring, gas curling in close to the ring, wisps streaming
-//         east, 70 dashes of light running out nearly straight, 5 degrees of curl per cell)
+//         the black hole opens 7.5 cells north of Gojo, as anime ep. 7 draws it (colours sampled
+//         from the frame): a black disc of radius 3.2; a light rim of gas hugging it; grey-blue
+//         feathery gas out to 6.9 cells, turning slowly, lit upper right and left, dark along the
+//         bottom; a thin ring at 7 cells (so it passes just behind Gojo), peach-gold on top, white
+//         upper right, blue-white on the left, weak lower right; a soft pale blue-white smoke
+//         cloud with cyan sparkles off the ring's east side; 40 dashes of light running out past
+//         the ring, 5 degrees of curl per cell
 //   0.25  every frozen pawn: pale tint, white edge, specks of light running into the head, the head
 //         glowing, eyes wide. The android and the mech: specks glance off them.
 //   0.40  Gojo acts (4.6 cells/s): walks to the near colonist and touches it (a blue ring opens,
@@ -69,8 +73,8 @@ export default {
     touch: P('A touch takes', .3, .1, 1, .05, 'Timing (s)'),
     arrive: P('White clears', .8, .3, 2, .05, 'Timing (s)'),
     collapse: P('Collapse', .7, .3, 1.5, .05, 'Timing (s)'),
-    hole: P('Black hole radius (cells)', 4.5, 1.5, 8, .1, 'Shape'),
-    holeNorth: P('Black hole north of Gojo (cells)', 5, -6, 12, .5, 'Shape'),
+    hole: P('Black hole radius (cells)', 3.2, 1.5, 6, .1, 'Shape'),
+    holeNorth: P('Black hole north of Gojo (cells)', 7.5, -6, 14, .5, 'Shape'),
     swirl: P('Ray spiral (degrees per cell)', 5, 0, 60, 1, 'Shape'),
   },
   duration(p) { return times(p).total; },
