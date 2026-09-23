@@ -53,7 +53,11 @@ try {
   const send = (method, params = {}) => new Promise((r) => { const n = ++id; pending.set(n, r); ws.send(JSON.stringify({ id: n, method, params })); });
   const evaluate = async (expression) => {
     const r = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
-    if (r.result?.exceptionDetails) console.error('[page error]', r.result.exceptionDetails.exception?.description ?? r.result.exceptionDetails.text);
+    if (r.result?.exceptionDetails) {
+      const text = r.result.exceptionDetails.exception?.description ?? r.result.exceptionDetails.text;
+      if (!/__lab/.test(text)) console.error('[page error]', text);   // a missing hook is 'not ready', not a sketch error
+      return undefined;
+    }
     return r.result?.result?.value;
   };
 
@@ -61,8 +65,11 @@ try {
   await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false });
   await send('Page.navigate', { url });
   // Wait for the lab to finish loading: __lab appears once the page's main() reaches the debug hook.
-  for (let i = 0; i < wait / 100; i++) { if (await evaluate('Boolean(window.__lab && window.__lab.sourceA())')) break; await sleep(100); }
-  await sleep(settle * 3);   // textures the first frame requested
+  // Poll for the debug hook up to 20 s (the lab lists recordings and loads every sketch first).
+  let ready = false;
+  for (let i = 0; i < 200 && !ready; i++) { ready = await evaluate('Boolean(window.__lab && window.__lab.sourceA())'); if (!ready) await sleep(100); }
+  if (!ready) throw new Error('the lab did not expose __lab within 20 s');
+  await sleep(Math.max(settle * 3, wait - 2000));   // textures the first frame requested
 
   const known = await evaluate('JSON.stringify(Object.keys(window.__lab.sourceA().values || {}))');
   const keys = new Set(JSON.parse(known ?? '[]'));

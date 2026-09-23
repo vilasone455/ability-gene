@@ -86,6 +86,7 @@ export default {
 | `events(p)` | no | Timeline events: `{ t, type: 'shake', value }` shakes the camera; `{ t, type: 'sound', def: 'AG_Something' }` puts a marker on the timeline and plays nothing. |
 | `draw(seconds, p, ctx)` | yes | Draws the frame at `seconds`. |
 | `compareWith` | no | Label of a recorded effect to show beside this one on the Compare tab. |
+| `scene` | no | `false` leaves out the lab's grass, trees and rocks, for an effect set on a map of its own (a pocket map) that draws its own ground. The Infinity Castle sketches use it. |
 
 ### Params
 
