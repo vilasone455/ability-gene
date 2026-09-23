@@ -1,4 +1,5 @@
-// The map camera: a centre in cells, a zoom in px per cell, and RimWorld's camera shake.
+// The map camera: a centre in cells, a zoom in px per cell, RimWorld's camera shake, and scripted
+// camera moves for effects that take the camera over for a moment.
 //
 // Shake uses the game's own constants (Verse.CameraShaker, RimWorld 1.6): each DoShake adds its
 // magnitude, the total is capped at 0.2 and decays by 0.5 per second, and the offset oscillates
@@ -19,6 +20,30 @@ export function shakeAt(events, t) {
   if (mag <= 0) return { x: 0, z: 0, mag: 0 };
   const phase = t * ShakeFrequency * Math.PI * 2;
   return { x: Math.sin(phase) * mag, z: Math.sin(phase * 1.31 + 1.7) * mag, mag };
+}
+
+// A scripted camera move, as a cutscene would drive CameraDriver's root position and size:
+// { t, type: 'camera', over, zoom, pan, x, z }. From t, eased over `over` seconds, the view goes
+// `pan` of the way from where the viewer left it (0) onto the point (x, z) (1), in cells from the
+// effect's cell centre, and the viewer's zoom is multiplied by `zoom`. A move starts from wherever
+// the one before it had got to, so a push and the return are two events; a field left out keeps
+// its value. Returns { pan, zoom, x, z }; no events gives { pan: 0, zoom: 1 }, the viewer's camera.
+export function cameraMoveAt(events, t) {
+  const moves = events.filter((e) => e.type === 'camera' && e.t <= t).sort((a, b) => a.t - b.t);
+  let at = { pan: 0, zoom: 1, x: 0, z: 0 };
+  moves.forEach((e, i) => {
+    const until = i + 1 < moves.length ? moves[i + 1].t : t;
+    const u = Math.min(1, Math.max(0, (until - e.t) / Math.max(1e-6, e.over ?? 0))), k = u * u * (3 - 2 * u);
+    const to = { pan: e.pan ?? at.pan, zoom: e.zoom ?? at.zoom, x: e.x ?? at.x, z: e.z ?? at.z };
+    at = { pan: at.pan + (to.pan - at.pan) * k, zoom: at.zoom * Math.pow(to.zoom / at.zoom, k), x: at.x + (to.x - at.x) * k, z: at.z + (to.z - at.z) * k };
+  });
+  return at;
+}
+
+/** The viewer's camera with a move applied: centre and zoom, for the effect played on `cell`. */
+export function movedView(camera, move, cell) {
+  const fx = cell.x + 0.5 + move.x, fz = cell.z + 0.5 + move.z;
+  return { cx: camera.cx + (fx - camera.cx) * move.pan, cz: camera.cz + (fz - camera.cz) * move.pan, ppc: camera.ppc * move.zoom };
 }
 
 export class Camera {
