@@ -11,26 +11,44 @@
 //   buildings or terrain, so it cannot eat a base.
 //   Cost: the caster gets Bleeding eye for 60 s (Sight -50%). Casting again while it is on blinds
 //   them for 10 s. This is the kit's finisher, not something for every fight.
-// Pairs with Amenotejikara: swap a burning pawn into its own line, or a burning kunai into a path.
+// Pairs with Amenotejikara: swap a burning pawn in among its own side, or a burning kunai into a path.
 //
-// Showcase: 0.00–0.50 gaze; 0.50 ignition / 0.18 s eruption; 2.00 adjacent pawn
-// catches; 4.00 caster releases; 4.30 flames gone, permanent char remains to 4.90.
-// Drawing: curved black tongues with independently flowing charcoal/violet inner wisps rise from
-// staggered ground-depth rows. Back flames draw behind the pawn, shorter front flames across its
-// feet; height projects north by Lift. The outline is screen-oriented for every caster facing.
-// Ignition overshoots, spits radial black scraps, then settles into upward travelling curls.
-// Hooked black strands carry two cobalt-edged rails and spaced crossbars, with real open gaps.
-// Four attached curls roll independently; two loose curled fragments unwind and rise.
-// Cinders shrink into translucent smoke, interleaved with small rising violet sparks.
-// All particle births are analytic, including on release: scrubbing is deterministic.
-// Area-fire roots fill a disc and sort north to south, avoiding visible ranks of flames.
-// A continuous purple-black radial stain anchors the roots at ground height and persists.
-// Contact soot and sun-aligned shadows sit over that stain; the cell footprint stays circular.
-// Only the cinders use lab/black-flame (generator below; still needs a PNG before a C# port).
-// The gameplay proposal above is unchanged; no orb cost belongs to this eye technique.
+// Look, taken from the anime (Itachi vs Sasuke, Shippuden 137-138; Sasuke vs Killer Bee, 142-143;
+// Sasuke vs Danzo; the Kaguya fight): the flames are pure black, with no glow and no coloured rim.
+// They appear on the target at once, with no projectile. They cling to the body as ragged blotches,
+// rise from it as thin wavy strands whose tops tear off as black flecks, and pool on the ground
+// under it. The cost shows on the caster: the casting eye bleeds. The games give the flames a
+// purple sheen; the anime does not, so this does not either.
+//
+// Showcase, default timings:
+//   0.00-0.50  gaze: a red glint on the caster's eye. The Mangekyo mark on the target is an option,
+//              off by default, because the anime shows the eye close-up and nothing at the target.
+//   0.50       ignition: a black mass bursts out of the target's chest (0.2-0.3 s) and throws 30
+//              shards up and out (0.32-0.57 s, the upward ones furthest), a soot splash rings its
+//              feet, the fire catches from the chest out in 0.12 s and the strands surge to 1.3x,
+//              settling by 0.45 s. Camera shake 0.075, screen dim 0.18. Blood runs from the caster's
+//              eye from here on, two streaks.
+//   burning    26 strands and 5 short base tongues per pawn, each on its own 0.4-0.95 s cycle: it
+//              grows, sways, tears its top off as a fleck and regrows. Most strands root on the floor
+//              round the feet, 30% on the body. 8 blotches lick up the body; the pawn shows through
+//              the gaps. 12 loose flecks rise and vanish. A dark pool stains the floor under the feet.
+//   2.00       the neighbour catches: 3 flecks jump across in 0.22 s, then blotches and strands creep
+//              over it from the touching side in 0.3 s. No burst: it caught, nobody cast it.
+//   4.00       the caster releases: strands and blotches sink over 0.3 s, flecks already in the air
+//              finish, a puff of grey smoke rises from above the head for 0.8 s. The scorch stays.
+// Cell scenario: the same parts spread over a disc of the fire's radius (44 strands, 12 base
+// tongues), 0.7x as tall, standing in a see-through pool so the black flames still read against
+// it, with the burst at its centre.
+//
+// Drawing: strands and tongues are band meshes on a wavy spine with a tapered, ragged width, height
+// drawn north by Lift. On a pawn, strands rooted on the ground north of its feet draw under the pawn
+// layer and the rest over it, so the pawn stands inside the fire. Blotches, flecks and shards are
+// sprites of two generated textures, lab/black-blot and lab/black-shred (both need PNGs before a C#
+// port). Everything is screen-oriented, so there is no per-facing drawing. All births are analytic
+// from the clip time, so scrubbing is deterministic.
 import { AltitudeLayer, Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../js/engine.js';
 import { registerLabTexture, pixels, fbm } from '../js/standins.js';
-import { draw, mesh, Body, Lift } from './lib/six-paths-solid.js';
+import { draw, Lift } from './lib/six-paths-solid.js';
 import { P, Y, Floor, at, sprite, band, trail, glow, soft, rand } from './lib/six-paths-impact.js';
 import { figure, whiteGlow, CasterColour, EnemyColour } from './lib/flying-thunder-god.js';
 
@@ -38,33 +56,47 @@ const smooth = Mathf.Smooth, clamp = Mathf.Clamp01;
 const pawnLayer = AltitudeLayer.Pawn.AltitudeFor(), topLayer = AltitudeLayer.MetaOverlays.AltitudeFor();
 const flatDisc = Meshes.disc(48, 'amaterasu disc');
 
-// A flame tongue: a teardrop, widest a third of the way up, with a noisy soft edge. White in the
-// alpha so the draw colour sets black, crimson or ember.
-registerLabTexture('lab/black-flame', () => pixels(128, (u, v) => {
-  const y = 1 - v, x = (u - .5) * 2;
-  const width = Math.sin(Math.min(1, y / .35) * Math.PI / 2) * Math.pow(Math.max(0, 1 - y), .5) * .9;
-  const edge = .18 + .55 * fbm(u * 3, v * 3, 23, 3, 3) - .3;
-  const d = Math.abs(x) / Math.max(1e-3, width);
-  const a = Math.max(0, 1 - Math.max(0, d - .55 + edge) / .5) * (y < .06 ? y / .06 : 1);
-  return [1, 1, 1, Math.min(1, a)];
+// A torn black scrap, taller than wide: two lopsided lumps with a notched edge and a hole, so it
+// reads as a torn piece of flame rather than a leaf or a teardrop. White in the alpha.
+registerLabTexture('lab/black-shred', () => pixels(128, (u, v) => {
+  const x = (u - .5) * 2, y = (.5 - v) * 2;
+  const low = Math.hypot(x / .5, (y + .2) / .62), high = Math.hypot((x - .14) / .3, (y - .38) / .38);
+  const n = fbm(u * 6, v * 6, 41, 3, 6) - .5, notch = fbm(u * 13, v * 13, 7, 2, 13) - .5;
+  let a = clamp((1 + n * .7 + notch * .4 - Math.min(low, high)) / .08);
+  const hole = fbm(u * 7, v * 7, 97, 2, 7);
+  if (hole > .7) a *= clamp((.78 - hole) / .08);
+  return [1, 1, 1, a * clamp(Math.min(u, 1 - u, v, 1 - v) / .04)];
 }));
-const flame = MaterialPool.MatFrom('lab/black-flame', ShaderDatabase.Transparent);
-const flameGlow = MaterialPool.MatFrom('lab/black-flame', ShaderDatabase.MoteGlow);
+// A ragged round blot with a few specks thrown off its edge. White in the alpha.
+registerLabTexture('lab/black-blot', () => pixels(128, (u, v) => {
+  const r = Math.hypot(u - .5, v - .5) * 2;
+  const rag = fbm(u * 4, v * 4, 13, 3, 4);
+  let a = clamp((.52 + (rag - .5) * 1.1 - r) / .07);
+  const speck = fbm(u * 10, v * 10, 57, 2, 10);
+  if (r > .5 && r < .88 && speck > .66) a = Math.max(a, clamp((speck - .66) / .05));
+  return [1, 1, 1, a * clamp((.98 - r) / .06)];
+}));
+const shred = MaterialPool.MatFrom('lab/black-shred', ShaderDatabase.Transparent);
+const blot = MaterialPool.MatFrom('lab/black-blot', ShaderDatabase.Transparent);
+const puff = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.Transparent);
 
-// Decided looks.
-const Ember = new Color(.55, .06, .10), EmberLit = new Color(.85, .16, .14), Crimson = new Color(.75, .08, .12);
-const Scorch = new Color(.05, .03, .04), Ally = new Color(.45, .62, .40);
-const Gaze = .5, MarkR = .55, Sink = .3, DimLife = .18, ShakeSize = .075;
+// Decided looks. The flame is one colour, black; blood and the eye glint are the only red.
+const Ink = new Color(.010, .008, .014);
+const Scorch = new Color(.05, .035, .04), Smoke = new Color(.17, .16, .18);
+const Crimson = new Color(.75, .08, .12), EmberLit = new Color(.85, .16, .14), Blood = new Color(.52, .03, .05);
+const Ally = new Color(.45, .62, .40);
+const Gaze = .5, MarkR = .55, Sink = .3, DimLife = .18, ShakeSize = .075, SmokeLife = .8, JumpTime = .22;
+const Strands = 26, BaseTongues = 5, CellStrands = 44, CellTongues = 12, Blotches = 8, LooseFlecks = 12;
 const Scenarios = ['pawn', 'pawn, spreads', 'cell'];
 
 function times(p) {
   const ignite = Gaze, release = p.release ? ignite + p.releaseAt : Infinity;
-  const end = p.release ? release + Sink + .6 : ignite + p.burn; // showcase cut, not a gameplay expiry
+  const end = p.release ? release + SmokeLife + .2 : ignite + p.burn; // showcase cut, not a gameplay expiry
   return { ignite, release, end };
 }
 
-// The Mangekyo mark: a pupil and 3 curved blades, drawn from the centre outward as u goes 0..1,
-// turning by spin radians.
+// The Mangekyo mark (optional): a pupil and 3 curved blades, drawn from the centre outward as u goes
+// 0..1, turning by spin radians.
 function mark(key, c, u, spin, alpha) {
   if (u <= 0 || alpha <= 0) return;
   draw(flatDisc, c.x, Floor + .03, c.z, .1 * u, .1 * u, 0, Crimson.withAlpha(alpha));
@@ -85,299 +117,205 @@ function redStar(pos, size, alpha) {
   draw(MeshPool.plane10, pos.x, Y + .21, pos.z, size * .12, size * 2, 0, EmberLit.withAlpha(alpha), whiteGlow);
 }
 
-// Black silhouettes contain broad, dark inner wisps. Their width and position flow on a
-// separate clock so the mid-tones move through the body instead of outlining a solid object.
-const Ink = new Color(.009, .006, .016), Plum = new Color(.20, .065, .23);
-const Hot = new Color(.77, .25, .42);
-const Charcoal = new Color(.105, .085, .145), VioletWisp = new Color(.20, .12, .255);
-const Spark = new Color(.63, .32, .88), SparkCore = new Color(.84, .65, 1);
-const Smoke = new Color(.105, .075, .14), GroundViolet = new Color(.065, .025, .095);
-const puff = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.Transparent);
-const shadowLayer = AltitudeLayer.Shadows.AltitudeFor();
-const TongueSteps = 24;
-
-function tongue(key, root, h, w, clock, seed, alpha, layer, edge, lean = 0, inner = .75) {
-  if (h < .005 || alpha <= 0) return;
-  const phase = rand(seed) * Math.PI * 2, left = [], right = [], innerL = [], innerR = [];
-  const lip = [], lipInner = [], shadeL = [], shadeR = [], wispL = [], wispR = [];
-  for (let j = 0; j <= TongueSteps; j++) {
-    const u = j / TongueSteps;
-    // The wave runs from root to tip; frequencies differ per flame so the bed never sways as one.
-    const wave = Math.sin(u * 6.2 - clock * (5.2 + rand(seed + 2)) + phase);
-    const curl = Math.sin(u * 3.8 - clock * 2.8 + phase);
-    const cx = root.x + lean * u + h * (.065 * wave * u + .095 * curl * u * u * u);
-    const cz = root.z + h * Lift * u;
-    const taper = Math.pow(1 - u, .82) * (.90 + .26 * Math.sin(u * Math.PI));
-    const scallop = 1 + .14 * Math.sin(u * 14 - clock * 7 + phase) * Math.sin(u * Math.PI);
-    const half = w * taper * scallop;
-    const rim = Math.min(half * .22, .014 + .012 * Math.sin(u * Math.PI)) * edge;
-    left.push({ x: cx - half, z: cz }); right.push({ x: cx + half, z: cz });
-    innerL.push({ x: cx - half + rim, z: cz }); innerR.push({ x: cx + half - rim * .5, z: cz });
-    // A warm broken seam on one side. Tapers out at both ends, avoiding a uniform neon contour.
-    const seam = .018 * edge * Math.pow(Math.max(0, Math.sin(u * 9 - clock * 5 + phase)), 3) * Math.sin(u * Math.PI);
-    lip.push({ x: cx - half + rim, z: cz });
-    lipInner.push({ x: cx - half + rim + seam, z: cz });
-    // A broad inner flame, with its own moving shoulder and height. Its darkest side remains
-    // the opaque silhouette, so it reads as black fire even with the mid-tones at full strength.
-    const innerTip = .76 + .1 * Math.sin(clock * 3.1 + phase);
-    const v = clamp(u / innerTip), belly = Math.pow(Math.max(0, Math.sin(v * Math.PI)), .72);
-    const flow = Math.sin(u * 10 - clock * 6.3 + phase);
-    const centre = cx + half * (-.12 + .20 * flow);
-    const spread = half * belly * (.59 + .13 * Math.sin(u * 16 - clock * 8 + phase));
-    shadeL.push({ x: centre - spread, z: cz });
-    shadeR.push({ x: centre + spread * .82, z: cz });
-    // The lighter wisp occupies only one moving lobe, not the entire inner flame.
-    const lobe = Math.pow(Math.max(0, Math.sin(u * 8.5 - clock * 4.8 + phase)), 2);
-    const litCentre = centre - spread * .28;
-    const litWidth = spread * (.18 + .36 * lobe);
-    wispL.push({ x: litCentre - litWidth, z: cz });
-    wispR.push({ x: litCentre + litWidth * .6, z: cz });
-  }
-  band(key + ' edge', left, right, Plum.withAlpha(alpha), layer);
-  band(key + ' body', innerL, innerR, Ink.withAlpha(alpha), layer + .0002);
-  if (inner > 0) {
-    band(key + ' inner charcoal', shadeL, shadeR, Charcoal.withAlpha(alpha * inner), layer + .0003);
-    band(key + ' inner violet', wispL, wispR, VioletWisp.withAlpha(alpha * inner * .72), layer + .0004);
-  }
-  if (edge > 0) band(key + ' seam', lip, lipInner, Hot.withAlpha(alpha * edge * .45), layer + .00045);
+// Bleeding eye: two streaks of blood run down from the casting eye after the cast. In game this is
+// the cost hediff, shown on the pawn.
+function bleed(eye, age) {
+  const l1 = .05 + .15 * smooth(age / 1.2), l2 = .03 + .08 * smooth((age - .3) / 1.2);
+  draw(MeshPool.plane10, eye.x + .025, pawnLayer + .01, eye.z - .04 - l1 / 2, .03, l1, 0, Blood);
+  if (age > .3) draw(MeshPool.plane10, eye.x - .02, pawnLayer + .01, eye.z - .04 - l2 / 2, .022, l2, 0, Blood);
 }
 
-// The second motif in the references: two curling rails joined by short ribs, with actual
-// transparent gaps. These are flame filaments, not solid ribbons painted with stripes.
-const CurlEdge = new Color(.18, .20, .62), CurlLight = new Color(.27, .28, .78);
-const CurlSamples = 72, RibPitch = .085;
-
-function ribbedStrand(key, path, width, alpha, layer, edge) {
-  if (alpha <= .001 || width < .004) return;
-  // Resample by arc length so tight hooks retain legible, evenly spaced ribs.
-  const lengths = [0];
-  for (let i = 1; i < path.length; i++) lengths.push(lengths[i - 1] + Math.hypot(path[i].x - path[i - 1].x, path[i].z - path[i - 1].z));
-  const total = lengths[lengths.length - 1];
-  if (total < .025) return;
-  const count = Math.max(8, Math.ceil(total / .025)), left = [], right = [];
-  let segment = 1;
-  for (let i = 0; i <= count; i++) {
-    const u = i / count, distance = total * u;
-    while (segment < path.length - 1 && lengths[segment] < distance) segment++;
-    const a = path[segment - 1], b = path[segment];
-    const span = lengths[segment] - lengths[segment - 1] || 1, t = (distance - lengths[segment - 1]) / span;
-    const dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz) || 1;
-    // Both rails narrow into the curled tip; no closed circle or regular coil at the end.
-    const half = width * .5 * Math.pow(Math.sin(u * Math.PI), .4) * (1 + .20 * Math.sin(u * 23) + .12 * Math.sin(u * 47));
-    const q = { x: a.x + dx * t, z: a.z + dz * t };
-    left.push({ x: q.x - dz / len * half, z: q.z + dx / len * half });
-    right.push({ x: q.x + dz / len * half, z: q.z - dx / len * half });
+// One strand: a black ribbon on a wavy spine. The wave runs up it, each edge boils upward on its own
+// rhythm, and the width tapers from the root to a point.
+const StrandSteps = 16;
+function strand(key, root, h, hw, clock, seed, alpha, layer, lean, rootW = .6) {
+  if (h < .03 || hw < .004 || alpha <= .003) return;
+  const phase = rand(seed) * 6.283, f1 = 5 + rand(seed + 1) * 3, f2 = 2 + rand(seed + 2) * 1.5;
+  const amp = .05 + .05 * h, left = [], right = [];
+  for (let j = 0; j <= StrandSteps; j++) {
+    const u = j / StrandSteps;
+    const sway = amp * u * (.7 * Math.sin(u * f1 - clock * 7 + phase) + .5 * u * Math.sin(u * f2 - clock * 3.3 + phase * 1.7));
+    const cx = root.x + lean * u * h + sway, cz = root.z + h * Lift * u;
+    const profile = (rootW + (1 - rootW) * Math.sin(Math.min(1, u / .3) * Math.PI / 2)) * Math.pow(1 - u, .8);
+    const ragL = 1 + .38 * Math.sin(u * 17 - clock * 10 + phase) * Math.sin(u * 5.3 + phase * 2);
+    const ragR = 1 + .38 * Math.sin(u * 15 - clock * 9 + phase * 1.3) * Math.sin(u * 4.1 + phase * 3);
+    left.push({ x: cx - hw * profile * ragL, z: cz }); right.push({ x: cx + hw * profile * ragR, z: cz });
   }
-  // Batched disconnected quads: empty space between ribs stays empty, including over terrain.
-  const verts = [], tris = [], ribCount = Math.max(4, Math.floor(total / RibPitch));
-  for (let i = 1; i < ribCount; i++) {
-    const u = (i + (rand(i * 13) - .5) * .32) / ribCount, j = Math.round(u * count);
-    const a = left[j], b = right[Math.min(count, Math.max(0, j + Math.round((rand(i * 7) - .5) * 4)))];
-    const dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz) || 1;
-    const thick = .018 * (.65 + rand(i * 17) * .8) * Math.sin(u * Math.PI), nx = -dz / len * thick, nz = dx / len * thick;
-    const n = verts.length / 2;
-    verts.push(a.x+nx,a.z+nz, b.x+nx,b.z+nz, b.x-nx,b.z-nz, a.x-nx,a.z-nz);
-    tris.push(n,n+1,n+2,n,n+2,n+3);
-  }
-  const ribs = mesh(key + ' ribs'); ribs.setFlat(verts, tris);
-  draw(ribs, 0, layer, 0, 1, 1, 0, Ink.withAlpha(alpha));
-  // Cobalt glancing light traces one side; the rails and crossbars keep black centres.
-  trail(key + ' left edge', left, .041, CurlEdge.withAlpha(alpha * edge), layer + .0001);
-  trail(key + ' right edge', right, .038, CurlLight.withAlpha(alpha * edge * .85), layer + .0001);
-  trail(key + ' left ink', left, .029, Ink.withAlpha(alpha), layer + .0002);
-  trail(key + ' right ink', right, .027, Ink.withAlpha(alpha), layer + .0002);
+  band(key, left, right, Ink.withAlpha(alpha), layer);
 }
 
-function curlPath(root, reach, rise, radius, turn, side, phase, stem = true) {
-  const path = [];
-  // A rising stem meets an inward spiral at its bottom tangent. Signed mirroring preserves
-  // left/right curls without rotating height away from the screen's northward lift.
-  const startAngle = -Math.PI / 2;
-  const centre = at(root, side * reach, rise + radius);
-  const stemSteps = stem ? 24 : 0;
-  for (let i = 0; i < stemSteps; i++) {
-    const u = i / stemSteps, k = u * u;
-    path.push(at(root, side * (reach * k + Math.sin(u * Math.PI) * .07 * Math.sin(phase)), rise * smooth(u)));
-  }
-  for (let i = 0; i <= CurlSamples; i++) {
-    const u = i / CurlSamples, a = startAngle + turn * u;
-    const r = radius * (1 - .76 * smooth(u));
-    // Uneven lobes and flattening keep the scroll from becoming a perfect mechanical coil.
-    const rough = 1 + .09 * Math.sin(u * 17 + phase) * Math.sin(u * Math.PI);
-    const skew = .16 * Math.sin(u * Math.PI) * Math.sin(phase * .8);
-    path.push(at(centre, side * (Math.cos(a) + skew) * r * rough,
-      Math.sin(a) * r + radius * .13 * Math.sin(u * Math.PI) * Math.sin(u * 9 + phase)));
-  }
-  return path;
+// A strand's life, in clock time: it grows from 35% to full height over the first 45% of its cycle,
+// holds, and over the last 20% its top tears off as a fleck while the stem drops back to 35%.
+function cycleOf(clock, period, offset) {
+  const c = (clock + offset) / period, n = Math.floor(c), u = c - n;
+  return { n, k: .35 + .65 * (smooth(u / .45) - smooth((u - .8) / .2)) };
 }
 
-function flameCurls(key, c, w, height, age, clock, life, t0, t, seed, p) {
-  if (life > .001) {
-    // Four hooks on the shoulders and above the fire; their open centres read against the map.
-    const hooks = [
-      { side:-1, root:-.62, base:.30, rise:.24, r:.23, reach:.43 },
-      { side: 1, root: .65, base:.36, rise:.33, r:.28, reach:.46 },
-      { side:-1, root:-.25, base:.72, rise:.16, r:.24, reach:.30 },
-      { side: 1, root: .22, base:.88, rise:.12, r:.20, reach:.25 },
-    ];
-    const scale = Math.min(1.3, .8 + w * .3) * life;
-    hooks.forEach((h,i) => {
-      const phase = clock * (2.1 + i * .17) + seed + i * 4;
-      const root = at(c, h.root * w, 0, height * h.base * life);
-      const radius = h.r * scale * (.78 + .22 * Math.sin(phase));
-      const reach = h.reach * scale * (.83 + .17 * Math.sin(phase * .7));
-      const turn = Math.PI * (1.38 + .37 * Math.sin(phase));
-      const pts = curlPath(root, reach, h.rise * scale, radius, turn, h.side, phase);
-      ribbedStrand(key + ' attached curl ' + i, pts, .125 * scale * (.82 + .18 * Math.sin(phase + 1)), Math.min(1, life * 3), Y + .116 + i * .001, .45 + p.edge * .55);
-    });
+// The cast: a black mass bursts out of the focal point and throws shards up and out, the upward
+// ones furthest, and a soot splash rings the floor.
+function eruption(c, age, seed, scale) {
+  if (age < 0 || age > .6) return;
+  const splash = age / .35;
+  if (splash < 1) {
+    const d = (.9 + 2.4 * smooth(splash)) * scale;
+    sprite(c, d, d, Ink.withAlpha(.5 * (1 - splash)), puff, Floor + .022);
   }
-  // Two curled fragments peel upward, gradually open and fade. Analytic births stop at release.
-  if (p.particles <= 0) return;
-  for (let i = 0; i < 2; i++) {
-    const period = .86, offset = .24 + i * .34;
-    const last = Math.min(age, t.release - t0 - .001);
-    const cycle = Math.floor((last - offset) / period);
-    if (cycle < 0) continue;
-    const born = offset + cycle * period, u = (age - born) / period;
-    if (u < 0 || u >= 1) continue;
-    const side = i === 0 ? -1 : 1, k = seed + cycle * 31 + i * 17;
-    const q = at(c, side * w * (.7 + .3 * u), 0,
-      height * (.72 + rand(k) * .18) * smooth(born / p.rise) + u * .8);
-    const r = (.16 + rand(k + 1) * .07) * (1 - u * .3);
-    const pts = curlPath(q, 0, 0, r, Math.PI * (1.7 - u * .65), side, 0, false);
-    ribbedStrand(key + ' loose curl ' + i, pts, .085 * (1 - u * .5), Math.sin(u * Math.PI) * (1 - u), Y + .125, .55 + p.edge * .45);
-  }
-}
-
-function ignition(key, c, w, age, seed) {
-  if (age < 0 || age > .48) return;
-  const flash = Math.pow(1 - clamp(age / .13), 2);
-  sprite(at(c, 0, .28), w * 3.8, w * 3.8, Crimson.withAlpha(flash * .65), glow, Y + .16);
-  // One brutal horizontal eye-cut, followed by the black eruption. No projectile travels here.
-  sprite(at(c, 0, .35), w * 4.8, .075, Hot.withAlpha(flash), whiteGlow, Y + .17);
-  for (let i = 0; i < 13; i++) {
-    const k = seed + i * 7, a = i * 2.399, u = clamp(age / (.26 + rand(k) * .22));
+  const focus = at(c, 0, 0, .55);
+  for (let i = 0; i < 5; i++) {
+    const k = seed + 950 + i * 3, u = age / (.2 + rand(k) * .1);
     if (u >= 1) continue;
-    const reach = w * (.45 + rand(k + 1) * 1.4) * Math.sin(u * Math.PI / 2);
-    const pts = [];
-    for (let j = 0; j <= 10; j++) {
-      const v = j / 10, r = reach * (.3 + v * .7);
-      pts.push(at(c, Math.cos(a) * r, Math.sin(a) * r,
-        Math.sin(v * Math.PI) * .25 + u * (.4 + rand(k + 2))));
-    }
-    trail(key + ' eruption ' + i, pts, (.04 + rand(k + 3) * .09) * (1 - u), Ink.withAlpha(1 - u), Y + .14);
+    const size = (.35 + .7 * smooth(u * 2)) * (.7 + .5 * rand(k + 1)) * scale;
+    sprite(at(focus, (rand(k + 2) - .5) * .4, (rand(k + 3) - .3) * .5), size, size * 1.2,
+      Ink.withAlpha(1 - smooth((u - .4) / .6)), blot, Y + .139 + i * .0002, rand(k + 4) * 360);
+  }
+  for (let i = 0; i < 30; i++) {
+    const k = seed + 900 + i * 7, life = .32 + rand(k) * .25, u = age / life;
+    if (u >= 1) continue;
+    const a = (15 + rand(k + 1) * 150) * Math.PI / 180; // up and out, none straight down
+    const d = (.6 + rand(k + 2) * 1.5) * (.7 + .5 * Math.sin(a)) * scale * (1 - Math.pow(1 - u, 3));
+    const len = (.22 + rand(k + 3) * .35) * scale * (1 - .5 * u), wid = len * (.22 + rand(k + 4) * .18);
+    sprite({ x: focus.x + Math.cos(a) * d, z: focus.z + Math.sin(a) * d }, wid, len,
+      Ink.withAlpha(1 - smooth((u - .45) / .55)), shred, Y + .14 + i * .0003, 90 - a * 180 / Math.PI);
   }
 }
 
-function fire(key, c, w, height, t0, s, p, t, seed, sun, strength, cell = false) {
+// Three flecks jump from the burning pawn to the one beside it just before it catches.
+function jump(a, b, s, t0) {
+  const age = s - (t0 - JumpTime);
+  if (age < 0 || age > JumpTime) return;
+  const x0 = a.x + .3, x1 = b.x - .2;
+  for (let i = 0; i < 3; i++) {
+    const u = clamp((age - i * .03) / (JumpTime - .06));
+    if (u <= 0 || u >= 1) continue;
+    const h = .75 + .45 * Math.sin(u * Math.PI) + i * .12;
+    const pos = { x: Mathf.Lerp(x0, x1, u), z: Mathf.Lerp(a.z, b.z, u) + (i - 1) * .07 + h * Lift };
+    const slope = Math.atan2(.45 * Math.PI * Math.cos(u * Math.PI) * Lift, x1 - x0);
+    sprite(pos, .07, .2, Ink.withAlpha(Math.sin(u * Math.PI) * 1.5), shred, Y + .135 + i * .0003, 90 - slope * 180 / Math.PI);
+  }
+}
+
+// The fire on one pawn, or with cell on the ground over a disc of radius w. from is -1 or 1 when it
+// caught from a neighbour on that side, 0 when the caster lit it.
+function fire(key, c, w, height, t0, s, p, t, seed, from = 0, cell = false) {
   const age = s - t0;
   if (age < 0 || t0 >= t.release) return;
-  const release = 1 - smooth((s - t.release) / Sink);
-  const grow = smooth(age / p.rise), life = grow * release;
-  const depth = cell ? w : w * .55;
-  const clock = age * p.speed;
-  // A rough bed, with little glowing fissures. It remains after the caster releases the fire.
-  const stain = smooth(age / .22);
-  // Continuous radial gradient at the true ground position. A dark contact centre and a
-  // restrained purple penumbra stay visible beneath the flames and after they release.
-  sprite(c, w * 3.5, w * 3.5, GroundViolet.withAlpha(.68 * stain), soft, Floor + .018);
-  sprite(c, w * 2.45, w * 2.45, Ink.withAlpha(.85 * stain), soft, Floor + .019);
-  sprite(c, w * 2.9, depth * 2.9, Scorch.withAlpha(.62 * stain), puff, Floor + .02);
-  for (let i = 0; i < 12; i++) {
-    const a = i * 2.399, r = .55 + rand(seed + i) * .5;
-    const q = at(c, Math.cos(a) * w * r, Math.sin(a) * depth * r);
-    sprite(q, w * (.38 + rand(i) * .4), depth * .6, Ink.withAlpha(stain * .30), puff, Floor + .021);
-    if (life > 0) {
-      const pts = [q, at(q, Math.cos(a + .4) * .13, Math.sin(a + .4) * .13), at(q, Math.cos(a) * .25, Math.sin(a) * .25)];
-      trail(key + ' coal ' + i, pts, .025, EmberLit.withAlpha(life * (.3 + .2 * Math.sin(clock * 8 + i))), Floor + .025);
-    }
-  }
-  ignition(key, c, w, age, seed);
-  if (life > 0) {
-    const surge = 1 + .42 * Math.exp(-Math.pow((age - p.rise) / .15, 2));
-    sprite(c, w * 3.4, depth * 3.4, Ember.withAlpha(.44 * life), glow, Floor + .022);
-    // Low soot welds the roots together. Separate noisy puffs avoid a ruler-straight base.
-    for (let i = 0; i < 7; i++) {
-      const x = (i / 6 * 2 - 1) * w * .8;
-      const q = at(c, x, -depth * .12 + .06 * Math.sin(clock * 4 + i));
-      sprite(q, w * .9, depth * .85, Ink.withAlpha(life * .92), puff, Y + .032);
-    }
-    // The area fire gets more small tongues, not stretched pawn flames. Overlapping soot
-    // patches join their feet across the circular footprint, including the far row.
-    if (cell) {
-      for (let i = 0; i < 23; i++) {
-        const a = i * 2.399, r = Math.sqrt((i + .5) / 23) * w * .88;
-        const q = at(c, Math.cos(a) * r, Math.sin(a) * r);
-        sprite(q, .95, .95, Ink.withAlpha(life * .85), puff, Floor + .027);
-      }
-    }
-    // Roots at different depths, rather than a single straight lower edge.
-    const cellRoots = cell ? Array.from({ length: 40 }, (_, i) => {
-      const a = i * 2.399, r = Math.sqrt((i + .5) / 40) * w * .93;
-      return at(c, Math.cos(a) * r, Math.sin(a) * r);
-    }).sort((a, b) => b.z - a.z) : null;
-    const rows = cell ? 4 : 3;
-    for (let row = 0; row < rows; row++) {
-      const count = cell ? (row === 0 || row === 3 ? 9 : 11) : (row === 1 ? 6 : 5);
-      for (let i = 0; i < count; i++) {
-        const k = seed + row * 71 + i * 13, x = (i / (count - 1) * 2 - 1);
-        const root = cell ? cellRoots[[0, 9, 20, 31][row] + i] :
-          at(c, x * w * (row === 1 ? .92 : .76), (1 - row) * depth * .65 + (rand(k + 1) - .5) * depth * .25);
-        const envelope = .7 + .3 * Math.sqrt(1 - x * x);
-        const rowHeight = cell ? [.90, .82, .65, .52][row] : [1, .78, .43][row];
-        const breathing = .80 + .20 * Math.sin(clock * (4 + rand(k + 2) * 2) + rand(k) * 12);
-        const h = height * rowHeight * envelope * (.78 + rand(k + 3) * .4) * breathing * life * surge;
-        const width = (cell ? Math.min(.8, w) : w) * (.24 + rand(k + 4) * .08) * (.7 + .3 * life);
-        const layer = row === 0 ? pawnLayer - .018 + i * .0007 : Y + .04 + row * .014 + i * .0007;
-        const lean = x * .18 * w + Math.sin(clock * 2 + k) * .05;
-        // A stretched soft shadow runs from the root along the scene sun.
-        const mid = at(root, sun.x * h * .5, sun.z * h * .5);
-        const shadowLen = Math.hypot(sun.x, sun.z) * h;
-        sprite(mid, width * 2.5, shadowLen + width, Ink.withAlpha(strength * life * .35), soft,
-          shadowLayer + .003, -Math.atan2(sun.x, sun.z) * 180 / Math.PI);
-        tongue(key + ' tongue ' + row + '-' + i, root, h, width, clock, k, Math.min(1, life * 4), layer, p.edge, lean, p.inner);
-        // A smaller fork peels away from a flank. It shares the flame's base but not its rhythm.
-        if (i % 3 === 0) tongue(key + ' fork ' + row + '-' + i,
-          at(root, (rand(k + 6) - .5) * width, 0), h * .62, width * .50,
-          clock * 1.18, k + 33, Math.min(1, life * 4), layer + .0005, p.edge * .6, lean - width * .8, p.inner * .8);
-      }
-    }
-  }
-  flameCurls(key, c, w, height, age, clock, life, t0, t, seed, p);
-  // Analytic births stop at release; already airborne scraps finish their own lifetime.
-  // No frame-to-frame simulation, and no particle jumps caused by changing random seeds mid-flight.
-  for (let i = 0; i < Math.round(20 * p.particles); i++) {
-    const k = seed + i * 17, period = .55 + rand(k) * .35, offset = rand(k + 1) * period;
-    const lastBirth = Math.min(age, t.release - t0 - .001);
-    const cycle = Math.floor((lastBirth - offset) / period);
-    if (cycle < 0) continue;
-    const born = offset + cycle * period, u = (age - born) / period;
-    if (u < 0 || u >= 1) continue;
-    const r = k + cycle * 31, x = (rand(r + 2) * 2 - 1) * w;
-    const h = height * (.4 + .4 * rand(r + 3)) * smooth(born / p.rise) + u * (1.0 + rand(r + 4));
-    const pos = at(c, x + Math.sin(u * 4 + r) * .14 + u * .18, (rand(r + 5) - .5) * depth, h);
-    const fade = Math.sin(u * Math.PI) * (1 - u), size = .04 + rand(r + 6) * .08;
-    const cinder = 1 - smooth((u - .28) / .45);
-    sprite(pos, size * 1.5 * (1 - u * .55), size * (2.5 - u),
-      Ink.withAlpha(fade * 1.6 * cinder), flame, Y + .13, Math.sin(u * 5 + k) * 28);
-    // The same scrap dissolves into a growing, translucent puff as it rises.
-    const smoke = smooth((u - .28) / .3) * (1 - smooth((u - .62) / .38));
-    sprite(at(pos, .035 * u, .06 * u), size * (2 + u * 3.5), size * (2.5 + u * 4),
-      Smoke.withAlpha(smoke * .28), puff, Y + .129);
-    if (i % 2 === 0) {
-      const sparkPos = at(pos, Math.sin(u * 5 + r) * .09, .12 + u * .22);
-      const sparkFade = Math.sin(u * Math.PI) * (1 - smooth((u - .65) / .35));
-      sprite(sparkPos, .15, .18, Spark.withAlpha(sparkFade * .38), glow, Y + .131);
-      sprite(sparkPos, .025, .05, SparkCore.withAlpha(sparkFade * .82), flameGlow, Y + .132);
-      trail(key + ' spark ' + i, [at(sparkPos, -.02, -.13), at(sparkPos, -.01, -.04), sparkPos],
-        .013, Spark.withAlpha(sparkFade * .45), Y + .131);
-    }
-  }
-}
+  const rel = 1 - smooth((s - t.release) / Sink);
+  const clock = age * p.speed, lastBirth = (t.release - t0) * p.speed;
+  // Each part catches after a delay: from the chest outward on a cast, from the touching side on a spread.
+  const delayOf = x => from ? clamp((-from * x / w + 1) / 2) * .3 : Math.abs(x) / w * .08;
+  const catchAt = (x, a) => smooth((a - delayOf(x)) / p.rise);
+  const surge = from ? 1 : 1 + .3 * Math.exp(-Math.pow((age - p.rise) / .12, 2));
 
-// A pawn in the fire: darkened, so it reads as inside the flame and showing through the gaps.
-function charred(pos, life) {
-  if (life > 0) sprite(at(pos, 0, .38), .55, .95, Body.withAlpha(.5 * life), soft, pawnLayer + .003);
+  // Floor: the pool under the fire. It keeps a third of its black after release, over the scorch.
+  // The pool is a dark stain, not solid black, so black flames standing in it still read.
+  const stain = smooth(age / .25), poolAlpha = (cell ? .5 : .65) * stain * (.5 + .5 * rel);
+  if (cell) {
+    sprite(c, w * 2.4, w * 2.4, Scorch.withAlpha(.6 * stain), puff, Floor + .018);
+    sprite(c, w * 1.6, w * 1.6, Ink.withAlpha(poolAlpha), blot, Floor + .02, seed % 360);
+    for (let i = 0; i < 10; i++) {
+      const a = i * 2.399, q = at(c, Math.cos(a) * w * .62, Math.sin(a) * w * .62);
+      sprite(q, w * .95, w * .95, Ink.withAlpha(poolAlpha), blot, Floor + .0202 + i * .0001, (seed + i * 71) % 360);
+    }
+  } else {
+    sprite(c, w * 2.3, w * 2.3, Scorch.withAlpha(.6 * stain), puff, Floor + .018);
+    sprite(at(c, 0, -.05), w * 1.9, w * 1.9, Ink.withAlpha(poolAlpha), blot, Floor + .02, seed % 360);
+  }
+  if (!from) eruption(c, age, seed, cell ? 1.3 : 1);
+
+  if (rel > 0) {
+    // The pawn inside: darkened, with blotches clinging to it and licking upward.
+    if (!cell) {
+      const cover = catchAt(0, age) * rel;
+      sprite(at(c, 0, .3), .5, .9, Ink.withAlpha(.3 * cover), soft, pawnLayer + .003);
+      for (let i = 0; i < Blotches; i++) {
+        const k = seed + 500 + i * 11, head = i >= 6;
+        const bx = (rand(k) - .5) * (head ? .2 : .36), bz = head ? .46 + rand(k + 1) * .2 : -.06 + rand(k + 1) * .46;
+        const g = catchAt(bx, age) * rel;
+        if (g <= 0) continue;
+        const period = .7 + rand(k + 2) * .5, u = ((clock + rand(k + 3) * period) / period) % 1;
+        const size = (head ? .17 : .21) * (.8 + .4 * rand(k + 4)) * (1 - .35 * u) * g;
+        sprite(at(c, bx + Math.sin(clock * 3 + k) * .02, bz + u * .14), size, size * 1.15,
+          Ink.withAlpha(Math.min(1, Math.sin(u * Math.PI) * 2.2) * .95), blot, pawnLayer + .004 + i * .0002, (k * 47 + clock * 40) % 360);
+      }
+    }
+
+    // Strands and broad base tongues, drawn north to south so nearer ones overlap.
+    const parts = [], total = cell ? CellStrands + CellTongues : Strands + BaseTongues;
+    for (let i = 0; i < total; i++) {
+      const k = seed + i * 13, base = i >= (cell ? CellStrands : Strands);
+      let x, dz, rootH = 0;
+      if (cell) {
+        const n = base ? i - CellStrands : i, count = base ? CellTongues : CellStrands;
+        const a = n * 2.399 + (base ? 1.1 : 0), r = Math.sqrt((n + .5) / count) * w * (base ? .7 : .92);
+        x = Math.cos(a) * r; dz = Math.sin(a) * r;
+      } else {
+        // Base tongues sit at fixed, uneven places across the feet so they never line up into a block.
+        x = base ? [-.62, -.2, .12, .5, -.4][i - Strands] * w : (rand(k) * 2 - 1) * w * .8;
+        dz = base ? [.06, -.08, .1, -.04, -.12][i - Strands] : (rand(k + 1) - .5) * .3;
+        if (!base && rand(k + 2) > .7) rootH = .2 + rand(k + 3) * .6; // a few start on the body, not the floor
+      }
+      parts.push({ i, k, base, x, dz, rootH });
+    }
+    parts.sort((a, b) => b.dz - a.dz);
+    parts.forEach((q, order) => {
+      const { i, k, base, x, dz, rootH } = q;
+      const env = Math.sqrt(Math.max(0, 1 - (x / w) ** 2)), tall = rand(k + 4);
+      const full = height * (cell ? .7 : 1) * (base ? .18 + .22 * tall : (.35 + .65 * env) * (.45 + .55 * tall));
+      const hw = base ? .09 + .06 * rand(k + 5) : .035 + .06 * (1 - tall);
+      const period = base ? .4 + rand(k + 6) * .2 : .55 + rand(k + 6) * .4, offset = rand(k + 7) * period;
+      const cyc = cycleOf(clock, period, offset);
+      const g = catchAt(x, age);
+      const h = full * cyc.k * g * surge * rel;
+      const root = at(c, x, dz, rootH);
+      const lean = x / w * (base ? .25 : .1) + .03 * Math.sin(clock * 1.3 + k);
+      const behind = !cell && rootH === 0 && dz > .02;
+      const layer = (behind ? pawnLayer - .02 : Y + .03) + order * .0004;
+      strand(`${key} strand ${i}`, root, h, hw * (.5 + .5 * rel), clock, k, Math.min(1, g * 3), layer, lean, rootH > 0 ? .2 : .6);
+
+      // The torn-off top of this strand's last two cycles, rising as a fleck. None are born after release.
+      if (base || p.particles <= 0) return;
+      for (const n of [cyc.n, cyc.n - 1]) {
+        const tear = (n + .8) * period - offset, life = .5 + rand(k + n * 31) * .3, fu = (clock - tear) / life;
+        if (tear < 0 || tear > lastBirth || fu < 0 || fu >= 1) continue;
+        const kk = k + n * 31, top = full * catchAt(x, tear / p.speed);
+        const pos = at(c, x + lean * top + (rand(kk + 1) - .5) * .25 * fu + Math.sin(fu * 5 + kk) * .05, dz,
+          rootH + top * .85 + fu * (.5 + rand(kk + 2) * .6) * height / 2.4);
+        // About twice as tall as wide: a torn piece, not a leaf.
+        const fw = Math.max(.08, hw * 2) * (.8 + .5 * rand(kk + 3)) * (1 - .45 * fu);
+        sprite(pos, fw, fw * (1.5 + .7 * rand(kk + 4)) * (1 - .2 * fu),
+          Ink.withAlpha((1 - smooth((fu - .45) / .55)) * Math.min(1, p.particles)), shred, Y + .128 + (i % 20) * .0002,
+          (rand(kk + 5) - .5) * 70 + Math.sin(fu * 4 + kk) * 25);
+      }
+    });
+  }
+
+  // Loose flecks rising out of the flames. Births stop at release; flecks in the air finish.
+  const loose = Math.round(LooseFlecks * p.particles * (cell ? 1.6 : 1));
+  for (let i = 0; i < loose; i++) {
+    const k = seed + 300 + i * 17, period = .6 + rand(k) * .35, offset = rand(k + 1) * period;
+    const n = Math.floor((Math.min(clock, lastBirth) - offset) / period);
+    if (n < 0) continue;
+    const born = offset + n * period, u = (clock - born) / period;
+    if (u < 0 || u >= 1) continue;
+    const r = k + n * 31, x = (rand(r) * 2 - 1) * w * .8;
+    const z0 = cell ? (rand(r + 5) - .5) * w * 1.6 : (rand(r + 5) - .5) * .2;
+    const h0 = height * (cell ? .3 : .5) * (.4 + .6 * rand(r + 2)) * catchAt(x, born / p.speed);
+    const size = .05 + rand(r + 4) * .07;
+    sprite(at(c, x + Math.sin(u * 5 + r) * .1, z0, h0 + u * (.8 + rand(r + 3) * .8)), size * (1 - .5 * u), size * 2 * (1 - .4 * u),
+      Ink.withAlpha(Math.min(1, Math.sin(u * Math.PI) * 1.4)), shred, Y + .13 + i * .0002, Math.sin(u * 5 + r) * 35);
+  }
+
+  // After release: a last puff of grey smoke rises and thins out.
+  const since = s - t.release;
+  if (since >= 0 && since < SmokeLife) {
+    for (let i = 0; i < 6; i++) {
+      const k = seed + 700 + i * 5, u = clamp((since - i * .04) / (SmokeLife - .2));
+      if (u <= 0 || u >= 1) continue;
+      const spread = cell ? w * 1.4 : w * 1.2, size = (.35 + u * .6) * (cell ? 1.4 : 1);
+      sprite(at(c, (rand(k) - .5) * spread, cell ? (rand(k + 2) - .5) * spread : 0, (cell ? .4 : 1.1) + u * (1.2 + rand(k + 1))), size * 1.3, size * 1.3,
+        Smoke.withAlpha(.22 * Math.sin(u * Math.PI)), puff, Y + .12 + i * .0002);
+    }
+  }
 }
 
 export default {
@@ -386,16 +324,15 @@ export default {
     scenario: { label: 'Scenario', value: Scenarios[1], options: Scenarios, group: 'Showcase' },
     distance: P('Caster distance (cells)', 6, 3, 12, .5, 'Showcase'),
     release: { label: 'Caster releases it', value: true, group: 'Showcase' },
+    gazeMark: { label: 'Mangekyo mark on the target (not in the anime)', value: false, group: 'Showcase' },
     releaseAt: P('Release after ignite', 3.5, 1, 8, .25, 'Timing (s)'),
     burn: P('Burns out after (showcase)', 5, 2, 20, .5, 'Timing (s)'),
-    rise: P('Tongues rise', .18, .1, .6, .05, 'Timing (s)'),
+    rise: P('Catch time per part', .12, .05, .5, .01, 'Timing (s)'),
     spreadAt: P('Neighbour catches after ignite', 1.5, .5, 4, .25, 'Timing (s)'),
-    height: P('Flame height (cells)', 2.6, 1, 4, .1, 'Flame'),
-    width: P('Flame half-width on a pawn (cells)', .7, .4, 1.5, .05, 'Flame'),
+    height: P('Flame height (cells up)', 2.4, 1, 4, .1, 'Flame'),
+    width: P('Flame half-width on a pawn (cells)', .55, .35, 1.2, .05, 'Flame'),
     speed: P('Flame speed', 1, .3, 2.5, .1, 'Flame'),
-    inner: P('Inner flame mid-tones', .85, 0, 1, .05, 'Flame'),
-    particles: P('Cinders and sparks', 1, 0, 2, .1, 'Flame'),
-    edge: P('Flame edge intensity (0-1)', .65, 0, 1, .05, 'Flame'),
+    particles: P('Flecks', 1, 0, 2, .1, 'Flame'),
     radius: P('Cell fire radius (cells)', 1.5, .8, 2, .1, 'Flame'),
     dim: P('Screen dim on ignite (0-1)', .18, 0, .7, .05, 'Flame'),
   },
@@ -418,22 +355,23 @@ export default {
     if (!cell) figure(o, EnemyColour, 1, 0, sun, strength);
     if (spreads) figure(neighbour, Ally, 1, 0, sun, strength);
 
-    // The gaze: eye star on the caster, the mark drawing itself and spinning up at the target.
+    // The gaze: a red glint on the caster's eye while it looks; after the cast that eye bleeds.
     const eye = { x: caster.x + .04, z: caster.z + .62 };
-    if (s < t.ignite + .08) redStar(eye, .2 + .1 * clamp(s / Gaze), s < t.ignite ? .6 + .4 * s / Gaze : 1 - (s - t.ignite) / .08);
-    // Bleeding eye: a drip from the cast on. In game this is the hediff's cost, shown on the pawn.
-    if (s >= t.ignite) {
-      const len = .06 + .1 * clamp((s - t.ignite) / 1.5);
-      draw(MeshPool.plane10, eye.x + .03, pawnLayer + .01, eye.z - .06 - len / 2, .035, len, 0, Crimson.withAlpha(.9));
+    if (s < t.ignite + .08) redStar(eye, .16 + .08 * clamp(s / Gaze), s < t.ignite ? .5 + .5 * s / Gaze : 1 - (s - t.ignite) / .08);
+    if (s >= t.ignite) bleed(eye, s - t.ignite);
+    if (p.gazeMark) {
+      if (s < t.ignite) mark('amaterasu', o, smooth(s / (Gaze * .7)), s * 6, .9);
+      else if (s < t.ignite + .1) mark('amaterasu', o, 1 + (s - t.ignite) * 6, t.ignite * 6, 1 - (s - t.ignite) / .1);
     }
-    if (s < t.ignite) mark('amaterasu', o, smooth(s / (Gaze * .7)), s * 6, .9);
-    else if (s < t.ignite + .1) mark('amaterasu', o, 1 + (s - t.ignite) * 6, t.ignite * 6, 1 - (s - t.ignite) / .1);
 
     // The fires. A pawn burns on its own cell; the cell fire covers 3x3.
-    const lifeOf = t0 => s < t0 || t0 >= t.release ? 0 : smooth((s - t0) / p.rise) * (1 - smooth((s - t.release) / Sink));
-    if (cell) fire('amaterasu cell', o, p.radius, p.height, t.ignite, s, p, t, 100, sun, strength, true);
-    else { fire('amaterasu pawn', { x: o.x, z: o.z - .1 }, p.width, p.height, t.ignite, s, p, t, 100, sun, strength); charred(o, lifeOf(t.ignite)); }
-    if (spreads) { fire('amaterasu spread', { x: neighbour.x, z: neighbour.z - .1 }, p.width * .9, p.height * .9, t.ignite + p.spreadAt, s, p, t, 300, sun, strength); charred(neighbour, lifeOf(t.ignite + p.spreadAt)); }
+    if (cell) fire('amaterasu cell', o, p.radius, p.height, t.ignite, s, p, t, 100, 0, true);
+    else fire('amaterasu pawn', o, p.width, p.height, t.ignite, s, p, t, 100);
+    if (spreads) {
+      const catches = t.ignite + p.spreadAt;
+      if (catches < t.release) jump(o, neighbour, s, catches);
+      fire('amaterasu spread', neighbour, p.width * .9, p.height * .9, catches, s, p, t, 300, -1);
+    }
 
     // Screen dim on ignite, so the black reads as darker than the world for a moment.
     const dimAge = s - t.ignite;
