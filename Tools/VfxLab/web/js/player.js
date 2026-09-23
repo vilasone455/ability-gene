@@ -65,6 +65,9 @@ export class SketchSource {
     this.label = module.label;
     this.kit = module.kit;
     this.still = false;
+    // scene: false -- the effect happens on a map of its own (a pocket map) and draws its own ground,
+    // so the lab's grass, trees and rocks are left out under it.
+    this.ownMap = module.scene === false;
     this.values = SketchSource.defaults(module);
   }
 

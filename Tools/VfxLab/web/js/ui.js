@@ -255,7 +255,7 @@ function drawStage() {
     views.push({
       rect,
       camera: { cx: camera.cx + shake.x, cz: camera.cz + shake.z, ppc: camera.ppc },
-      calls: scene.calls({ x: camera.cx, z: camera.cz }, cells).concat(frame.calls),
+      calls: (source.ownMap ? [] : scene.calls({ x: camera.cx, z: camera.cz }, cells)).concat(frame.calls),
       hidden: state.hidden,
     });
     frames.push({ source, frame, shake, t });
