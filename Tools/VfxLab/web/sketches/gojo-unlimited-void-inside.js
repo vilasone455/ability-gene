@@ -23,22 +23,23 @@
 // Order, with the default sliders (scenario "mixed", plan "touch allies first"):
 //   0.00  white (the camera switches maps behind it); a white burst and ring on Gojo, the crowd
 //         frozen round him (anime ep. 33); the splatter burst
-//   0.10  the space fades in over 0.7 s: navy, haze, 180 stars, 6 galaxies, 8 white ink patches;
-//         the black hole opens 7.5 cells north of Gojo, as anime ep. 7 draws it (colours sampled
-//         from the frame): a black disc of radius 3.2; a light rim of gas hugging it; grey-blue
-//         feathery gas out to 6.9 cells, turning slowly, lit upper right and left, dark along the
-//         bottom; a thin ring at 7 cells (so it passes just behind Gojo), peach-gold on top, white
-//         upper right, blue-white on the left, weak lower right; a soft pale blue-white smoke
-//         cloud with cyan sparkles off the ring's east side
-//   0.10  speed lines ("Speed lines" = warp): 90 dashes of white, pink and violet light rush out
-//         from Gojo at 22-38 cells/s for 0.5 s as the white clears (the warp-in). Then, all through
-//         the hold, light rushes straight out of the black hole's centre as out of a vanishing point
-//         (manga ch. 225): 96 needles in 16 bundles with gaps, starting just past the ring and
-//         running 17 cells out, speeding up as they go (the head moves out by the same factor each
-//         second; "Speed lines: ring to edge", default 2 s, each line 0.8-1.25 x that), each stretched to a third of its distance
-//         and thickening from 0.035 to 0.115 cells, white cores in pink, violet or ice glows; every
-//         1.4 s a wave of 32 leaves the ring together and crosses in 0.55 of the ring-to-edge time. Straight by default ("Ray spiral" 0).
-//         ("old dashes" shows the earlier look: 40 curled dashes.)
+//   0.10  the space fades in over 0.7 s: navy, haze, 180 stars, 6 galaxies, 8 white ink patches
+//   0.10  the speed-line tunnel (the opening only, as anime ep. 7 has it: the lines fill the screen
+//         after the hand sign and are gone once the black hole appears): out of the point where
+//         the black hole will open, 7.5 cells north of Gojo, a dense tunnel of lines rushes out
+//         over the whole view, mostly magenta and violet with white cores, over a violet haze.
+//         150 lines in 20 bundles with gaps, from 0.5 to 26 cells out; they speed up as they go
+//         (the head moves out by the same factor each second; "Speed lines: point to edge",
+//         default 2 s, each line 0.8-1.25 x that), each stretched to a third of its distance and
+//         thickening from 0.03 to 0.14 cells; every 1.4 s a wave of 32 leaves the point together.
+//         Straight by default ("Ray spiral" 0). They last "Speed lines last" (1.6 s), then fade in
+//         0.45 s while the black hole opens at their vanishing point.
+//   1.35  the black hole opens there over 0.7 s, as anime ep. 7 draws it (colours sampled from the
+//         frame): a black disc of radius 3.2; a light rim of gas hugging it; grey-blue feathery gas
+//         out to 6.9 cells, turning slowly, lit upper right and left, dark along the bottom; a thin
+//         ring at 7 cells (so it passes just behind Gojo), peach-gold on top, white upper right,
+//         blue-white on the left, weak lower right; a soft pale blue-white smoke cloud with cyan
+//         sparkles off the ring's east side. No speed lines from here on.
 //   0.25  every frozen pawn: pale tint, white edge, specks of light running into the head, the head
 //         glowing, eyes wide. The android and the mech: specks glance off them.
 //   0.40  Gojo acts (4.6 cells/s): walks to the near colonist and touches it (a blue ring opens,
@@ -57,7 +58,7 @@
 import { P, Y, sprite, glow } from './lib/six-paths-impact.js';
 import { caster, splatter, pawn, ringAt, whiteGlow, EnemyColour, Ally, White, Ice, Pink, Teal, smooth, clamp } from './lib/gojo.js';
 import {
-  voidFloor, voidHole, warpBurst, infoFlood, deflect, touchPulse, reachOut, blowFlash, overloadMark, mech, android, brawl,
+  voidFloor, voidHole, tunnel, infoFlood, deflect, touchPulse, reachOut, blowFlash, overloadMark, mech, android, brawl,
   plan, gojoAt, gojoDoing, immuneAt, blows, ActFrom, Frozen, Deg,
 } from './lib/unlimited-void.js';
 import { draw } from './lib/six-paths-solid.js';
@@ -75,14 +76,14 @@ export default {
   params: {
     scenario: { label: 'Who is caught', value: 'mixed', options: ['raiders only', 'mixed'], group: 'Showcase' },
     order: { label: "Gojo's plan", value: 'touch allies first', options: ['touch allies first', 'attack first'], group: 'Showcase' },
-    lines: { label: 'Speed lines', value: 'warp', options: ['warp', 'old dashes'], group: 'Showcase' },
     radius: P('Radius (cells)', 9, 5, 14, .5, 'Rule'),
     speed: P('Gojo walks (cells/s)', 4.6, 2, 8, .1, 'Rule'),
     hold: P('Domain lasts', 10, 3, 15, .5, 'Timing (s)'),
     touch: P('A touch takes', .3, .1, 1, .05, 'Timing (s)'),
     arrive: P('White clears', .8, .3, 2, .05, 'Timing (s)'),
     collapse: P('Collapse', .7, .3, 1.5, .05, 'Timing (s)'),
-    lineTrip: P('Speed lines: ring to edge', 2, .4, 6, .1, 'Timing (s)'),
+    linesFor: P('Speed lines last', 1.6, .3, 4, .05, 'Timing (s)'),
+    lineTrip: P('Speed lines: point to edge', 2, .4, 6, .1, 'Timing (s)'),
     hole: P('Black hole radius (cells)', 3.2, 1.5, 6, .1, 'Shape'),
     holeNorth: P('Black hole north of Gojo (cells)', 7.5, -6, 14, .5, 'Shape'),
     swirl: P('Ray spiral (degrees per cell)', 0, 0, 60, 1, 'Shape'),
@@ -90,7 +91,7 @@ export default {
   duration(p) { return times(p).total; },
   phases(p) {
     const t = times(p);
-    return [{ name: 'White (map switch)', t: 0 }, { name: 'Void', t: .1 }, { name: 'Gojo acts', t: t.act },
+    return [{ name: 'White (map switch)', t: 0 }, { name: 'Speed lines', t: .1 }, { name: 'Gojo acts', t: t.act }, { name: 'Black hole', t: p.linesFor - .25 },
       { name: 'Domain ends', t: t.end }, { name: 'White (back)', t: t.end + p.collapse * .6 }];
   },
   events(p) {
@@ -109,9 +110,11 @@ export default {
     // --- the space and the black hole ------------------------------------------------------------------------
     voidFloor('uv inside floor', o, s, fadeIn);
     const H = { x: o.x, z: o.z + p.holeNorth };
-    const open = smooth(clamp((s - .15) / (p.arrive * .8))), shut = smooth(clamp(ending / .6));
-    const warp = p.lines === 'warp';
-    voidHole('uv inside hole', H, p.hole * open * (1 - shut), s * (1 + 3 * ending), open, { swirl: (warp ? p.swirl : p.swirl || 5) * Deg, rays: 1 - ending, lines: warp ? 'speed' : 'dashes', trip: p.lineTrip });
+    // The speed lines run first; the black hole opens at their vanishing point as they fade.
+    const lines = clamp((s - .08) / .15) * (1 - smooth(clamp((s - p.linesFor) / .45)));
+    tunnel('uv inside tunnel', H, s, lines, { swirl: p.swirl * Deg, trip: p.lineTrip });
+    const open = smooth(clamp((s - (p.linesFor - .25)) / .7)), shut = smooth(clamp(ending / .6));
+    voidHole('uv inside hole', H, p.hole * open * (1 - shut), s * (1 + 3 * ending), open);
 
     // --- who stands where --------------------------------------------------------------------------------------
     const figs = [];
@@ -185,7 +188,6 @@ export default {
       sprite({ x: o.x, z: o.z + .5 }, 5 * (1 - ringAge * .5), 5 * (1 - ringAge * .5), White.withAlpha(.7 * fade), glow, Y + .103);
     }
     splatter('uv inside splatter', { x: o.x, z: o.z + .5 }, 4, s, (1 - smooth(clamp((s - .1) / .8))) * clamp(s / .05));
-    if (warp) warpBurst('uv inside warp', o, s - .1);
 
     // --- the end: the black hole collapses to a point and white fills the view ---------------------------------
     if (ending > 0) {
