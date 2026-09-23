@@ -23,18 +23,31 @@
 // Order, with the default sliders (scenario "mixed", plan "touch allies first"):
 //   0.00  white (the camera switches maps behind it); a white burst and ring on Gojo, the crowd
 //         frozen round him (anime ep. 33); the splatter burst
-//   0.10  the space fades in over 0.7 s: navy, haze, 180 stars, 6 galaxies, 8 white ink patches
-//   0.10  the speed-line tunnel (the opening only, as anime ep. 7 has it: the lines fill the screen
-//         after the hand sign and are gone once the black hole appears): out of the point where
-//         the black hole will open, 7.5 cells north of Gojo, a dense tunnel of lines rushes out
-//         over the whole view, mostly magenta and violet with white cores, over a violet haze.
-//         150 lines in 20 bundles with gaps, from 0.5 to 26 cells out; they speed up as they go
-//         (the head moves out by the same factor each second; "Speed lines: point to edge",
-//         default 2 s, each line 0.8-1.25 x that), each stretched to a third of its distance and
-//         thickening from 0.03 to 0.14 cells; every 1.4 s a wave of 32 leaves the point together.
-//         Straight by default ("Ray spiral" 0). They last "Speed lines last" (1.6 s), then fade in
-//         0.45 s while the black hole opens at their vanishing point.
-//   1.35  the black hole opens there over 0.7 s, as anime ep. 7 draws it (colours sampled from the
+//   0.10  the space fades in over 0.7 s: navy, haze, 180 stars, 6 galaxies, 7 white ink patches
+//   0.08  the speed-line tunnel, the opening only (anime ep. 7 22-28 s and Cursed Clash 14-20 s both
+//         have it; the lines are gone once the black hole is there): the view fills with streaks
+//         rushing out of the point where the black hole will open, 7.5 cells north of Gojo, and the
+//         victims fly through it. 360 streaks ("Streaks") at random angles, so they clump and leave
+//         gaps, from 0.6 cells out to 60 (in game to the farthest corner of the view, so it fills the
+//         screen at any zoom). Each reaches back 0.75 of its distance ("Streak length"; each 0.75-1.25 x
+//         that) and stops 1.2 cells short of the point, so the far end of the tunnel is dark; the gap
+//         widens with the opening black hole, so the streaks pour out of its rim. Sharp at the head,
+//         thin at the point end, wider with distance; heads speed up as they go ("Speed lines: point
+//         to edge", 2 s, each 0.8-1.2 x that); they flicker 12 times a second as redrawn anime speed
+//         lines do. Two colour sets ("Speed-line colours"): anime ep. 7
+//         (purple-black, magenta glow, pink-white cores) and Cursed Clash (indigo, violet glow,
+//         lavender-white cores); gojo-unlimited-void-inside-cc.js lists this sketch again with the
+//         Cursed Clash set so the Compare tab can show both. Dust streams out with the streaks, slower:
+//         16 clouds of glitter (Cursed Clash) or white ink bits (anime). The lines last "Speed lines
+//         last" (1.6 s), then fade in 0.45 s.
+//   0.08  the fly-in: the stars, galaxies and white patches start 16 x nearer the point and that much
+//         smaller ("Fly-in depth") and spread out to where they lie, settling as the lines end (2.05 s);
+//         every third star leaves a trail. The pawns fly with the camera, so they stay put.
+//   0.10  the camera pushes in ("Camera push", 1.25 x; 1 = no camera move) and centres the point by
+//         1.6 s, then goes back to where the player had it over 1 s from 2.05 s. In game this sets
+//         CameraDriver's position and size each frame and gives them back after (a setting to skip).
+//   1.00  a white light grows at the point (Cursed Clash 19 s), brightest at 1.45 s, gone by 1.9 s
+//   1.35  the black hole opens under the light over 0.7 s, as anime ep. 7 draws it (colours sampled from the
 //         frame): a black disc of radius 3.2; a light rim of gas hugging it; grey-blue feathery gas
 //         out to 6.9 cells, turning slowly, lit upper right and left, dark along the bottom; a thin
 //         ring at 7 cells (so it passes just behind Gojo), peach-gold on top, white upper right,
@@ -58,7 +71,7 @@
 import { P, Y, sprite, glow } from './lib/six-paths-impact.js';
 import { caster, splatter, pawn, ringAt, whiteGlow, EnemyColour, Ally, White, Ice, Pink, Teal, smooth, clamp } from './lib/gojo.js';
 import {
-  voidFloor, voidHole, tunnel, infoFlood, deflect, touchPulse, reachOut, blowFlash, overloadMark, mech, android, brawl,
+  voidFloor, voidHole, tunnel, tunnelDust, tunnelLight, flight, Palettes, infoFlood, deflect, touchPulse, reachOut, blowFlash, overloadMark, mech, android, brawl,
   plan, gojoAt, gojoDoing, immuneAt, blows, ActFrom, Frozen, Deg,
 } from './lib/unlimited-void.js';
 import { draw } from './lib/six-paths-solid.js';
@@ -67,8 +80,10 @@ import { MeshPool } from '../js/engine.js';
 // Decided values. The panel keeps only what is still being tuned or shows the rule.
 const Shadow = .08, FloodFrom = .25, Unfreeze = .3, BurstRing = .55, WhiteFade = .25, Fall = .3;
 
+// "opening only" stops once the camera is back (for comparing the speed lines); "whole domain" runs to the white.
 function times(p) {
-  return { act: ActFrom, end: p.hold, gone: p.hold + p.collapse, total: p.hold + p.collapse + .15 };
+  const whole = p.show !== 'opening only';
+  return { act: ActFrom, end: p.hold, gone: p.hold + p.collapse, total: whole ? p.hold + p.collapse + .15 : p.linesFor + 1.55, whole };
 }
 
 export default {
@@ -76,26 +91,37 @@ export default {
   params: {
     scenario: { label: 'Who is caught', value: 'mixed', options: ['raiders only', 'mixed'], group: 'Showcase' },
     order: { label: "Gojo's plan", value: 'touch allies first', options: ['touch allies first', 'attack first'], group: 'Showcase' },
+    show: { label: 'Show', value: 'whole domain', options: ['whole domain', 'opening only'], group: 'Showcase' },
     radius: P('Radius (cells)', 9, 5, 14, .5, 'Rule'),
     speed: P('Gojo walks (cells/s)', 4.6, 2, 8, .1, 'Rule'),
     hold: P('Domain lasts', 10, 3, 15, .5, 'Timing (s)'),
     touch: P('A touch takes', .3, .1, 1, .05, 'Timing (s)'),
     arrive: P('White clears', .8, .3, 2, .05, 'Timing (s)'),
     collapse: P('Collapse', .7, .3, 1.5, .05, 'Timing (s)'),
-    linesFor: P('Speed lines last', 1.6, .3, 4, .05, 'Timing (s)'),
-    lineTrip: P('Speed lines: point to edge', 2, .4, 6, .1, 'Timing (s)'),
+    palette: { label: 'Speed-line colours', value: Palettes[0], options: Palettes, group: 'Speed lines' },
+    count: P('Streaks', 360, 60, 800, 10, 'Speed lines'),
+    length: P('Streak length (share of its distance)', .75, .2, .95, .01, 'Speed lines'),
+    linesFor: P('Speed lines last (s)', 1.6, .3, 4, .05, 'Speed lines'),
+    lineTrip: P('Speed lines: point to edge (s)', 2, .4, 6, .1, 'Speed lines'),
+    flyIn: P('Fly-in depth (x nearer at the start)', 16, 1, 40, 1, 'Speed lines'),
+    push: P('Camera push (x zoom, 1 = off)', 1.25, 1, 2, .05, 'Speed lines'),
     hole: P('Black hole radius (cells)', 3.2, 1.5, 6, .1, 'Shape'),
     holeNorth: P('Black hole north of Gojo (cells)', 7.5, -6, 14, .5, 'Shape'),
-    swirl: P('Ray spiral (degrees per cell)', 0, 0, 60, 1, 'Shape'),
   },
   duration(p) { return times(p).total; },
   phases(p) {
     const t = times(p);
-    return [{ name: 'White (map switch)', t: 0 }, { name: 'Speed lines', t: .1 }, { name: 'Gojo acts', t: t.act }, { name: 'Black hole', t: p.linesFor - .25 },
-      { name: 'Domain ends', t: t.end }, { name: 'White (back)', t: t.end + p.collapse * .6 }];
+    const list = [{ name: 'White (map switch)', t: 0 }, { name: 'Speed lines', t: .1 }, { name: 'Gojo acts', t: t.act },
+      { name: 'White light', t: Math.max(.1, p.linesFor - .6) }, { name: 'Black hole', t: Math.max(.1, p.linesFor - .25) }];
+    if (t.whole) list.push({ name: 'Domain ends', t: t.end }, { name: 'White (back)', t: t.end + p.collapse * .6 });
+    return list.sort((a, b) => a.t - b.t);
   },
   events(p) {
-    return [{ t: 0, type: 'sound', def: 'AG_Gojo_VoidInside' }, { t: p.hold, type: 'sound', def: 'AG_Gojo_DomainClose' }];
+    const list = [{ t: 0, type: 'sound', def: 'AG_Gojo_VoidInside' }];
+    if (p.push > 1) list.push({ t: .1, type: 'camera', over: p.linesFor - .1, zoom: p.push, pan: 1, x: 0, z: p.holeNorth },   // push in on the point
+      { t: p.linesFor + .45, type: 'camera', over: 1, zoom: 1, pan: 0 });                                                     // and back
+    if (times(p).whole) list.push({ t: p.hold, type: 'sound', def: 'AG_Gojo_DomainClose' });
+    return list;
   },
 
   draw(s, p, { origin: o, scene }) {
@@ -107,13 +133,16 @@ export default {
     const fadeIn = smooth(clamp((s - .1) / (p.arrive * .9)));
     const at = ([x, z]) => ({ x: o.x + x, z: o.z + z }), off = q => ({ x: o.x + q.x, z: o.z + q.z });
 
-    // --- the space and the black hole ------------------------------------------------------------------------
-    voidFloor('uv inside floor', o, s, fadeIn);
-    const H = { x: o.x, z: o.z + p.holeNorth };
-    // The speed lines run first; the black hole opens at their vanishing point as they fade.
-    const lines = clamp((s - .08) / .15) * (1 - smooth(clamp((s - p.linesFor) / .45)));
-    tunnel('uv inside tunnel', H, s, lines, { swirl: p.swirl * Deg, trip: p.lineTrip });
+    // --- the space, the speed-line tunnel and the black hole ------------------------------------------------
+    // The space flies in from the vanishing point while the lines run and settles as they end; the white
+    // light grows at that point and the black hole opens under it as it fades.
+    const H = { x: o.x, z: o.z + p.holeNorth }, land = p.linesFor + .45;
+    voidFloor('uv inside floor', o, s, fadeIn, { fly: { at: H, g: flight(s, .08, land, p.flyIn), g0: flight(s - .1, .08, land, p.flyIn) } });
+    const lines = clamp((s - .08) / .15) * (1 - smooth(clamp((s - p.linesFor) / .45))), look = { palette: p.palette, trip: p.lineTrip };
     const open = smooth(clamp((s - (p.linesFor - .25)) / .7)), shut = smooth(clamp(ending / .6));
+    tunnel('uv inside tunnel', H, s, lines, { ...look, count: p.count, length: p.length, hollow: Math.max(1.2, p.hole * open * 1.25) });
+    tunnelDust('uv inside dust', H, s, lines, look);
+    tunnelLight('uv inside light', H, smooth(clamp((s - (p.linesFor - .6)) / .45)) * (1 - smooth(clamp((s - (p.linesFor - .15)) / .45))), p.palette);
     voidHole('uv inside hole', H, p.hole * open * (1 - shut), s * (1 + 3 * ending), open);
 
     // --- who stands where --------------------------------------------------------------------------------------

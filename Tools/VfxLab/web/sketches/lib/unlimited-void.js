@@ -152,10 +152,15 @@ export function immuneAt(u, budget, mechTaken = true) {
 
 // ---- the space under the void -----------------------------------------------------------------
 // Deep navy, drifting haze, stars, far galaxies and the anime's white ink patches, all under a
-// see-through void terrain. fade 0..1 brings everything but the navy in.
-export function voidFloor(key, c, s, fade, { reach = 24, patches = 1 } = {}) {
+// see-through void terrain. fade 0..1 brings everything but the navy in. fly = { at, g, g0 } is the
+// fly-in at the opening (see flight): the stars, galaxies and patches sit g of their distance from the
+// point `at` and are g of their size, stars dimmer while far; every third star that has moved since
+// g0 (a moment before) is drawn as a trail from where it was. The haze stays as it is.
+export function voidFloor(key, c, s, fade, { reach = 24, patches = 1, fly = null } = {}) {
   draw(plane, c.x, V.back, c.z, reach * 5, reach * 5, 0, Navy);
   if (fade <= 0) return;
+  const g = fly ? fly.g : 1, far = Math.sqrt(g);
+  const place = (x, z, k = g) => (fly ? { x: fly.at.x + (x - fly.at.x) * k, z: fly.at.z + (z - fly.at.z) * k } : { x, z });
   for (let i = 0; i < 8; i++) {
     const ang = rand(i + 700) * TAU, d = reach * (.1 + .75 * rand(i + 710)), size = 7 + 10 * rand(i + 720), drift = .7 * Math.sin(s * .07 + i);
     sprite({ x: c.x + Math.cos(ang) * d + drift, z: c.z + Math.sin(ang) * d }, size * 1.4, size, [Haze, Indigo, Dusk][i % 3].withAlpha((.14 + .1 * rand(i + 730)) * fade),
@@ -163,22 +168,25 @@ export function voidFloor(key, c, s, fade, { reach = 24, patches = 1 } = {}) {
   }
   for (let i = 0; i < 6; i++) {
     const ang = rand(i + 800) * TAU, d = 7 + (reach - 7) * rand(i + 810);
-    galaxy(`${key} galaxy ${i}`, { x: c.x + Math.cos(ang) * d, z: c.z + Math.sin(ang) * d }, .8 + 1.2 * rand(i + 820), .4 + .35 * rand(i + 830),
-      rand(i + 840) * 180, s * (5 + 5 * rand(i + 850)) * (i % 2 ? 1 : -1), [Violet, Ice, Gold][i % 3], fade);
+    galaxy(`${key} galaxy ${i}`, place(c.x + Math.cos(ang) * d, c.z + Math.sin(ang) * d), (.8 + 1.2 * rand(i + 820)) * g, .4 + .35 * rand(i + 830),
+      rand(i + 840) * 180, s * (5 + 5 * rand(i + 850)) * (i % 2 ? 1 : -1), [Violet, Ice, Gold][i % 3], fade * far);
   }
   for (let i = 0; i < 180; i++) {
-    const x = (rand(i + 900) - .5) * reach * 2, z = (rand(i + 1900) - .5) * reach * 2, size = .035 + .1 * rand(i + 2900) ** 3;
-    const tw = .45 + .55 * Math.abs(Math.sin(s * (1 + 2.2 * rand(i + 3900)) + i));
-    const at = { x: c.x + x, z: c.z + z };
-    sprite(at, size * 2.6, size * 2.6, (i % 9 ? White : Ice).withAlpha(.9 * tw * fade), glow, V.deep + .03);
-    if (i % 15 === 0) [0, 90].forEach(deg => sprite(at, .03, size * 9, White.withAlpha(.5 * tw * fade), glow, V.deep + .031, deg + 45 * (i % 2)));
+    const x = c.x + (rand(i + 900) - .5) * reach * 2, z = c.z + (rand(i + 1900) - .5) * reach * 2, size = (.035 + .1 * rand(i + 2900) ** 3) * (.4 + .6 * g);
+    const tw = .45 + .55 * Math.abs(Math.sin(s * (1 + 2.2 * rand(i + 3900)) + i)), at = place(x, z), a = tw * fade * far;
+    if (fly && i % 3 === 0) {
+      const was = place(x, z, fly.g0);
+      if (Math.hypot(at.x - was.x, at.z - was.z) > size * 3) streak(`${key} trail ${i}`, was, at, size * 1.6, White.withAlpha(.55 * a), whiteGlow, V.deep + .029, 2);
+    }
+    sprite(at, size * 2.6, size * 2.6, (i % 9 ? White : Ice).withAlpha(.9 * a), glow, V.deep + .03);
+    if (i % 15 === 0) [0, 90].forEach(deg => sprite(at, .03, size * 9, White.withAlpha(.5 * a), glow, V.deep + .031, deg + 45 * (i % 2)));
   }
   draw(plane, c.x, V.fog, c.z, reach * 5, reach * 5, 0, Navy.withAlpha(.22 * fade));
   // The white patches: light breaking through, not things lying in the space, so they sit over the
   // void terrain, pure white with a pale halo.
   for (let i = 0; i < 7; i++) {
-    const ang = i / 7 * TAU + rand(i + 1000) * .6, d = 11 + 8 * rand(i + 1010), size = 2.5 + 3.5 * rand(i + 1020);
-    const breathe = .8 + .2 * Math.sin(s * .8 + i * 2.1), at = { x: c.x + Math.cos(ang) * d, z: c.z + Math.sin(ang) * d };
+    const ang = i / 7 * TAU + rand(i + 1000) * .6, d = 11 + 8 * rand(i + 1010), size = (2.5 + 3.5 * rand(i + 1020)) * g;
+    const breathe = .8 + .2 * Math.sin(s * .8 + i * 2.1), at = place(c.x + Math.cos(ang) * d, c.z + Math.sin(ang) * d);
     sprite(at, size * 1.9, size * 1.6, Ice.withAlpha(.18 * breathe * fade * patches), glow, V.fog + .01);
     sprite(at, size, size * (.75 + .35 * rand(i + 1030)), White.withAlpha(breathe * fade * patches), splat, V.fog + .011 + i * .0005, rand(i + 1040) * 360);
   }
@@ -292,46 +300,140 @@ function plume(key, h, R, s, live, L) {
   }
 }
 
-// ---- the speed-line tunnel at the opening (checked against anime ep. 7, 2026-09-23) -------------
-// In the anime the speed lines belong to the opening only: after the hand sign the screen fills with
-// a dense tunnel of mostly magenta and violet lines with white cores, rushing out of one vanishing
-// point in the middle of the frame while Jogo is pulled through it (about 45-50 s in the clip); the
-// black hole then appears at that point (51 s) and the lines are gone. Here the vanishing point is
-// where the black hole will open. A warp tunnel seen from above: a line's head moves out by the same
-// factor every second, so lines speed up as they go, and each is stretched to about a third of its
-// distance and thickens (thin near the point, wide far out). 150 lines in 20 bundles with gaps, like
-// manga speed lines, plus a wave of 32 leaving the point together every Wave seconds; a violet haze
-// over the view while they run. trip: seconds a line takes from the point to the edge (each line
-// 0.8-1.25 x that); a wave takes 0.55 of it.
-export const Magenta = new Color(.86, .25, .92);
-export const Speed = { count: 150, bundles: 20, from: .5, reach: 26, trip: 2, stretch: .34, wave: 1.4, waveLines: 32, waveShare: .55 };
-export function tunnel(key, h, s, alpha, { swirl = 0, trip = Speed.trip } = {}) {
+// ---- the speed-line tunnel at the opening (anime ep. 7 and Cursed Clash, checked 2026-09-23) -------------
+// Both sources: after the hand sign the victims fly through a dense tunnel of streaks toward one
+// vanishing point, and the black hole is then at that point (the anime ep. 7 upload nmvkhLz8t7I at
+// 22-28 s; Cursed Clash, mxw3_ujSYDo at 14-20 s). Most streaks run from the frame edge nearly to the
+// point; streaks cover 33-63 % of an anime frame and 43-91 % of a game frame. Cursed Clash adds clouds
+// of glittering dust between the streaks and a white light that grows at the point just before the
+// hole opens in it (tunnelDust, tunnelLight). Here the point is where the black hole will open.
+// A streak's head moves out by the same factor each second (a warp tunnel seen from above: streaks
+// speed up as they go); the streak reaches back `length` of its distance (each 0.75-1.25 x that), is
+// sharp at the head, widest just behind it and thin at the point end, and gets wider with distance.
+// Angles are random, so streaks clump and leave gaps, and they flicker 12 times a second as anime
+// speed lines are redrawn every few frames. reach: in game the distance from the point to the
+// farthest corner of the view (CameraDriver.CurrentViewRect), so the tunnel fills the screen at any
+// zoom; the lab uses 60 cells. hollow: the streaks stop this far from the point, so the far end of the
+// tunnel is dark as in both sources; the sketch widens it with the opening black hole so the streaks pour
+// out of its rim. The streaks are drawn in batches, one mesh per colour and brightness step (addRay).
+export const Tunnel = { count: 360, from: .6, reach: 60, trip: 2, length: .75, flicker: 12, hollow: 1.2 };
+
+// Two colour sets from those frames, frame colours (0-255) in the comments. grade is laid over the space
+// (normal blend, under the white patches) to bring its colour to the frame's dark; tint is added over the
+// whole view while the lines run; bloom sits faintly round the point; glows are the wide dim body of a
+// streak and cores its thin bright middle; cored is the share of streaks that have a core; dust,
+// dustHalo and bits are the dust clouds (bits: the anime's white ink bits instead of a soft cloud);
+// light is the halo of the white light.
+export const LinePalettes = {
+  'anime ep 7': {                           // purple-black (25, 8, 25), magenta glow (88, 29, 70), pink-white cores (238, 180, 230)
+    grade: new Color(.09, .02, .07, .55), tint: new Color(.08, 0, .04), bloom: new Color(.6, .1, .45),
+    glows: [new Color(.82, .16, .52), new Color(.62, .14, .66), new Color(.88, .2, .36), new Color(.72, .12, .46)],
+    cores: [new Color(1, .7, .92), new Color(1, .82, .95), new Color(1, .6, .84)], glowAlpha: .45, coreAlpha: .8, cored: .45,
+    dust: White, dustHalo: new Color(.7, .15, .6), bits: true, light: new Color(1, .72, .95),
+  },
+  'Cursed Clash': {                         // indigo (15, 5, 46), violet glow (45, 35, 80), lavender-white cores (230, 212, 235)
+    grade: new Color(0, 0, 0, 0), tint: new Color(.05, .01, .12), bloom: new Color(.4, .35, .85),
+    glows: [new Color(.45, .38, .8), new Color(.36, .36, .9), new Color(.6, .45, .82), new Color(.42, .33, .75)],
+    cores: [new Color(.92, .86, .96), White, new Color(.84, .86, 1)], glowAlpha: .32, coreAlpha: .85, cored: .8,
+    dust: White, dustHalo: new Color(.55, .5, .95), bits: false, light: new Color(.86, .82, 1),
+  },
+};
+export const Palettes = Object.keys(LinePalettes);
+const paletteOf = name => LinePalettes[name] ?? LinePalettes[Palettes[0]];
+
+export function tunnel(key, h, s, alpha, { palette = Palettes[0], count = Tunnel.count, length = Tunnel.length, trip = Tunnel.trip, reach = Tunnel.reach, hollow = Tunnel.hollow } = {}) {
   if (alpha <= 0) return;
-  const from = Speed.from, to = Speed.reach, k = Math.log(to / from), glows = [Magenta, Violet, Pink, Magenta];
-  sprite(h, to * 2.2, to * 2.2, Violet.withAlpha(.14 * alpha), glow, V.fog + .018);                    // the violet haze
-  sprite(h, 6, 6, Magenta.withAlpha(.35 * alpha), glow, V.fog + .019);                                  // the bright point
-  const one = (id, ang, phase, bright) => {
-    const r1 = from * Math.exp(k * phase), len = Math.min(r1 - from + .1, Speed.stretch * r1 * (.65 + .6 * rand(id + 1940)));
-    if (len < .15 || phase <= 0 || phase >= 1) return;
-    const r0 = r1 - len, fade = Math.pow(Math.sin(Math.PI * phase), .6) * bright, pts = [];
-    for (let j = 0; j <= 4; j++) { const r = r0 + len * j / 4, a = ang + swirl * r; pts.push({ x: h.x + Math.cos(a) * r, z: h.z + Math.sin(a) * r }); }
-    const w = .03 + .11 * phase;
-    line(`${key} glow ${id}`, pts, w * 3.4, glows[id % 4].withAlpha(.28 * alpha * fade), whiteGlow, V.fog + .02, 'both');
-    line(`${key} core ${id}`, pts, w, (id % 5 === 0 ? Pink : White).withAlpha(.8 * alpha * fade), whiteGlow, V.fog + .021, 'both');
-  };
-  for (let i = 0; i < Speed.count; i++) {                                              // the steady stream, in bundles
-    const b = i % Speed.bundles, ang = b / Speed.bundles * TAU + rand(b + 1900) * .2 + (rand(i + 1910) - .5) * .09;
-    one(i, ang, (s / trip * (.8 + .4 * rand(i + 1920)) + rand(i + 1930)) % 1, .55 + .45 * rand(i + 1950));
+  const pal = paletteOf(palette), from = Tunnel.from, k = Math.log(reach / from), frame = Math.floor(s * Tunnel.flicker);
+  if (pal.grade.a > 0) draw(plane, h.x, V.fog + .005, h.z, reach * 2.2, reach * 2.2, 0, pal.grade.withAlpha(pal.grade.a * alpha));   // the space to the frame's dark
+  draw(plane, h.x, V.fog + .016, h.z, reach * 2.2, reach * 2.2, 0, pal.tint.withAlpha(alpha), whiteGlow);   // the tint over the view
+  sprite(h, 14, 14, pal.bloom.withAlpha(.14 * alpha), glow, V.fog + .017);                                  // a faint bloom round the point
+  const glows = new Map(), cores = new Map();
+  for (let i = 0; i < count; i++) {
+    const phase = (s / trip * (.8 + .4 * rand(i + 1920)) + rand(i + 1930)) % 1;
+    const r1 = from * Math.exp(k * phase), r0 = Math.max(hollow * (.85 + .3 * rand(i + 1945)), r1 * (1 - length * (.75 + .5 * rand(i + 1940))));
+    const a = alpha * smooth(clamp(phase / .12)) * (1 - smooth(clamp((phase - .9) / .1))) * (.75 + .25 * rand(i * 131 + frame * 7919 + 17));
+    if (a <= .01 || r1 - r0 < .15) continue;
+    const ang = rand(i + 1910) * TAU, w = (.02 + .0065 * r1) * (.6 + .8 * rand(i + 1960)), bright = rand(i + 1950);
+    addRay(glows, i % 4, pal.glowAlpha * (.45 + .55 * bright) * a, h, ang, r0, r1, w * 3.2);
+    if (rand(i + 1970) < pal.cored) addRay(cores, i % 3, pal.coreAlpha * (.5 + .5 * bright) * a, h, ang, r0, r1, w);
   }
-  const travel = trip * Speed.waveShare, last = Math.floor(s / Speed.wave);           // the waves; a slow trip can have several out
-  for (let wave = last; wave >= 0 && wave >= last - Math.ceil(travel / Speed.wave); wave--) {
-    const phase = (s - wave * Speed.wave) / travel;
-    if (phase >= 1) continue;
-    for (let i = 0; i < Speed.waveLines; i++) {
-      const ang = (i + rand(wave * 50 + i + 2000)) / Speed.waveLines * TAU;
-      one(500 + (wave % 4) * 100 + i, ang, Math.pow(phase, .85) * (.92 + .08 * rand(wave * 50 + i + 2010)), 1);
+  drawRays(`${key} glow`, glows, pal.glows, V.fog + .02);
+  drawRays(`${key} core`, cores, pal.cores, V.fog + .021);
+}
+
+// Streaks are batched: one mesh per colour and brightness step (alpha in twelfths), about 50 meshes
+// for 360 streaks, as the C# port should draw them. A streak runs straight out from h at angle ang
+// (radians) from r0 to r1: sharp at the head, widest just behind it, thinning to nothing at the
+// point end.
+const RaySteps = 12;
+function addRay(batches, colour, alpha, h, ang, r0, r1, w) {
+  const step = Math.round(alpha * RaySteps);
+  if (step <= 0) return;
+  const bucket = `${colour} ${step}`;
+  let b = batches.get(bucket);
+  if (!b) batches.set(bucket, b = { colour, step, v: [], tri: [] });
+  const c = Math.cos(ang), sn = Math.sin(ang), base = b.v.length / 2;
+  for (let j = 0; j <= 5; j++) {
+    const u = j / 5, r = r1 - (r1 - r0) * u, half = w / 2 * (j ? Math.pow(1 - u, .8) : .25) + .003;
+    b.v.push(h.x + c * r - sn * half, h.z + sn * r + c * half, h.x + c * r + sn * half, h.z + sn * r - c * half);
+    if (j) { const n = base + j * 2; b.tri.push(n - 2, n, n - 1, n - 1, n, n + 1); }
+  }
+}
+function drawRays(key, batches, colours, layer) {
+  for (const [bucket, b] of batches) {
+    const m = mesh(`${key} ${bucket}`);
+    m.setFlat(b.v, b.tri);
+    draw(m, 0, layer, 0, 1, 1, 0, colours[b.colour].withAlpha(b.step / RaySteps), whiteGlow);
+  }
+}
+
+// The dust between the streaks: Cursed Clash's clouds of glitter, the anime's white bits. Clouds stream
+// out from the point more slowly than the streaks and grow as they come; each is a soft cloud stretched
+// along its path with glitter twinkling in it, a few specks crossed like stars (anime: a fainter cloud
+// and small white ink bits among the glitter).
+export const Dust = { clouds: 16, glitter: 12, crossed: 2, bits: 3, from: 1.5, slower: 1.6 };
+export function tunnelDust(key, h, s, alpha, { palette = Palettes[0], trip = Tunnel.trip, reach = Tunnel.reach } = {}) {
+  if (alpha <= 0) return;
+  const pal = paletteOf(palette), k = Math.log(reach / Dust.from);
+  for (let c = 0; c < Dust.clouds; c++) {
+    const phase = (s / (trip * Dust.slower) + rand(c + 2110)) % 1, ang = rand(c + 2100) * TAU;
+    const r = Dust.from * Math.exp(k * phase), size = .7 + .24 * r, grow = .7 + .09 * r;
+    const fade = alpha * smooth(clamp(phase / .15)) * (1 - smooth(clamp((phase - .8) / .2)));
+    if (fade <= .01) continue;
+    const ca = Math.cos(ang), sa = Math.sin(ang);
+    const at = (along, across) => ({ x: h.x + ca * (r + along) - sa * across, z: h.z + sa * (r + along) + ca * across });
+    sprite(at(0, 0), size * 2.2, size * 1.1, pal.dustHalo.withAlpha((pal.bits ? .16 : .38) * fade), puff, V.fog + .022, -ang / Deg + rand(c + 2120) * 30 - 15);
+    for (let g = 0; g < Dust.glitter; g++) {
+      const n = c * 31 + g, q = at((rand(n + 2200) - .5) * size * 1.9, (rand(n + 2300) - .5) * size * .9);
+      const tw = .35 + .65 * Math.abs(Math.sin(s * (5 + 6 * rand(n + 2400)) + g * 1.7)), gs = (.06 + .1 * rand(n + 2500)) * grow;
+      sprite(q, gs * 2.4, gs * 2.4, pal.dust.withAlpha(tw * fade), glow, V.fog + .023);
+      if (g < Dust.crossed) [45, 135].forEach(deg => sprite(q, gs * .35, gs * 7, pal.dust.withAlpha(.8 * tw * fade), glow, V.fog + .0232, deg));
+    }
+    if (pal.bits) for (let b = 0; b < Dust.bits; b++) {
+      const n = c * 17 + b, q = at((rand(n + 2600) - .5) * size * 1.6, (rand(n + 2700) - .5) * size * .9), bs = (.12 + .16 * rand(n + 2800)) * grow;
+      sprite(q, bs, bs * (.6 + .5 * rand(n + 2900)), White.withAlpha(.9 * fade), splat, V.fog + .0235, rand(n + 3000) * 360);
     }
   }
+}
+
+// The white light at the vanishing point (Cursed Clash 19 s): it grows as the lines finish and the
+// black hole opens under it as it fades. a 0..1.
+export function tunnelLight(key, h, a, palette = Palettes[0]) {
+  if (a <= 0) return;
+  const pal = paletteOf(palette);
+  sprite(h, 22 * a, 22 * a, pal.bloom.withAlpha(.22 * a), glow, V.fog + .03);
+  sprite(h, 9 * a, 9 * a, pal.light.withAlpha(.6 * a), glow, V.fog + .031);
+  sprite(h, 1.2 + 3.2 * a, 1.2 + 3.2 * a, White.withAlpha(a), glow, V.fog + .032);
+  sprite(h, .6 + 1.4 * a, .6 + 1.4 * a, White.withAlpha(a), glow, V.fog + .033);
+}
+
+// The fly-in at the opening: the space starts `depth` times nearer the vanishing point (and that much
+// smaller) and spreads out to where it lies, fast at first and settled by `land`, as a camera flying
+// toward the point and stopping would see it. The pawns fly with the camera, so they stay put. Returns
+// the scale about the point at time s (1 = landed); voidFloor's fly option takes it.
+export function flight(s, from, land, depth) {
+  const u = clamp((s - from) / (land - from));
+  return Math.exp(-Math.log(Math.max(1, depth)) * (1 - u) * (1 - u));
 }
 
 // ---- pawns inside ----------------------------------------------------------------------------
