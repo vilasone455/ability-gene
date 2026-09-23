@@ -15,7 +15,7 @@ Per weapon it writes:
   <Name>Mask.png     the silhouette in white: the scan line and flashes
 
 and prints the tip and pommel in uv (v up) and the blade's extent across its axis in 16 steps
-from the tip, which is the Weapons table in Tools/VfxLab/web/sketches/trace-planted-trial.js. The tip is the
+from the tip, which is the Weapons table in Tools/VfxLab/web/sketches/lib/trace.js. The tip is the
 end with the larger u + v, which holds for these six; a texture drawn tip-down-left would need its
 tip given by hand.
 
