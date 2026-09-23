@@ -29,8 +29,16 @@
 //         feathery gas out to 6.9 cells, turning slowly, lit upper right and left, dark along the
 //         bottom; a thin ring at 7 cells (so it passes just behind Gojo), peach-gold on top, white
 //         upper right, blue-white on the left, weak lower right; a soft pale blue-white smoke
-//         cloud with cyan sparkles off the ring's east side; 40 dashes of light running out past
-//         the ring, 5 degrees of curl per cell
+//         cloud with cyan sparkles off the ring's east side
+//   0.10  speed lines ("Speed lines" = warp): 90 dashes of white, pink and violet light rush out
+//         from Gojo at 22-38 cells/s for 0.5 s as the white clears (the warp-in). Then, all through
+//         the hold, light rushes straight out of the black hole's centre as out of a vanishing point
+//         (manga ch. 225): 96 needles in 16 bundles with gaps, starting just past the ring and
+//         running 17 cells out, speeding up as they go (the head moves out by the same factor each
+//         second; "Speed lines: ring to edge", default 2 s, each line 0.8-1.25 x that), each stretched to a third of its distance
+//         and thickening from 0.035 to 0.115 cells, white cores in pink, violet or ice glows; every
+//         1.4 s a wave of 32 leaves the ring together and crosses in 0.55 of the ring-to-edge time. Straight by default ("Ray spiral" 0).
+//         ("old dashes" shows the earlier look: 40 curled dashes.)
 //   0.25  every frozen pawn: pale tint, white edge, specks of light running into the head, the head
 //         glowing, eyes wide. The android and the mech: specks glance off them.
 //   0.40  Gojo acts (4.6 cells/s): walks to the near colonist and touches it (a blue ring opens,
@@ -49,7 +57,7 @@
 import { P, Y, sprite, glow } from './lib/six-paths-impact.js';
 import { caster, splatter, pawn, ringAt, whiteGlow, EnemyColour, Ally, White, Ice, Pink, Teal, smooth, clamp } from './lib/gojo.js';
 import {
-  voidFloor, voidHole, infoFlood, deflect, touchPulse, reachOut, blowFlash, overloadMark, mech, android, brawl,
+  voidFloor, voidHole, warpBurst, infoFlood, deflect, touchPulse, reachOut, blowFlash, overloadMark, mech, android, brawl,
   plan, gojoAt, gojoDoing, immuneAt, blows, ActFrom, Frozen, Deg,
 } from './lib/unlimited-void.js';
 import { draw } from './lib/six-paths-solid.js';
@@ -67,15 +75,17 @@ export default {
   params: {
     scenario: { label: 'Who is caught', value: 'mixed', options: ['raiders only', 'mixed'], group: 'Showcase' },
     order: { label: "Gojo's plan", value: 'touch allies first', options: ['touch allies first', 'attack first'], group: 'Showcase' },
+    lines: { label: 'Speed lines', value: 'warp', options: ['warp', 'old dashes'], group: 'Showcase' },
     radius: P('Radius (cells)', 9, 5, 14, .5, 'Rule'),
     speed: P('Gojo walks (cells/s)', 4.6, 2, 8, .1, 'Rule'),
     hold: P('Domain lasts', 10, 3, 15, .5, 'Timing (s)'),
     touch: P('A touch takes', .3, .1, 1, .05, 'Timing (s)'),
     arrive: P('White clears', .8, .3, 2, .05, 'Timing (s)'),
     collapse: P('Collapse', .7, .3, 1.5, .05, 'Timing (s)'),
+    lineTrip: P('Speed lines: ring to edge', 2, .4, 6, .1, 'Timing (s)'),
     hole: P('Black hole radius (cells)', 3.2, 1.5, 6, .1, 'Shape'),
     holeNorth: P('Black hole north of Gojo (cells)', 7.5, -6, 14, .5, 'Shape'),
-    swirl: P('Ray spiral (degrees per cell)', 5, 0, 60, 1, 'Shape'),
+    swirl: P('Ray spiral (degrees per cell)', 0, 0, 60, 1, 'Shape'),
   },
   duration(p) { return times(p).total; },
   phases(p) {
@@ -100,7 +110,8 @@ export default {
     voidFloor('uv inside floor', o, s, fadeIn);
     const H = { x: o.x, z: o.z + p.holeNorth };
     const open = smooth(clamp((s - .15) / (p.arrive * .8))), shut = smooth(clamp(ending / .6));
-    voidHole('uv inside hole', H, p.hole * open * (1 - shut), s * (1 + 3 * ending), open, { swirl: p.swirl * Deg, rays: 1 - ending });
+    const warp = p.lines === 'warp';
+    voidHole('uv inside hole', H, p.hole * open * (1 - shut), s * (1 + 3 * ending), open, { swirl: (warp ? p.swirl : p.swirl || 5) * Deg, rays: 1 - ending, lines: warp ? 'speed' : 'dashes', trip: p.lineTrip });
 
     // --- who stands where --------------------------------------------------------------------------------------
     const figs = [];
@@ -174,6 +185,7 @@ export default {
       sprite({ x: o.x, z: o.z + .5 }, 5 * (1 - ringAge * .5), 5 * (1 - ringAge * .5), White.withAlpha(.7 * fade), glow, Y + .103);
     }
     splatter('uv inside splatter', { x: o.x, z: o.z + .5 }, 4, s, (1 - smooth(clamp((s - .1) / .8))) * clamp(s / .05));
+    if (warp) warpBurst('uv inside warp', o, s - .1);
 
     // --- the end: the black hole collapses to a point and white fills the view ---------------------------------
     if (ending > 0) {

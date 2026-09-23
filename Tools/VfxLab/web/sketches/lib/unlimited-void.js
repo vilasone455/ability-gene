@@ -251,7 +251,7 @@ const puff = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.MoteGlo
 export const GasBody = new Color(.3, .32, .44), GasLight = new Color(.85, .9, 1), Smoke = new Color(.7, .92, .95);
 
 // The black hole under the void, disc radius R at h. live 0..1 fades it; rays 0..1 its light dashes.
-export function voidHole(key, h, R, s, live, { swirl = .1, rays = 1 } = {}) {
+export function voidHole(key, h, R, s, live, { swirl = .1, rays = 1, lines = 'speed', trip = Speed.trip } = {}) {
   if (R <= .02 || live <= 0) return;
   const L = V.deep + .08, gas = R * GasOut * 2;
   sprite(h, R * 5.5, R * 5.5, Indigo.withAlpha(.2 * live), glow, L);                                  // the haze round it
@@ -274,7 +274,8 @@ export function voidHole(key, h, R, s, live, { swirl = .1, rays = 1 } = {}) {
   const q = R * RingQuad * 2;
   sprite({ x: h.x + R * RingShift.x, z: h.z + R * RingShift.z }, q, q, White.withAlpha(live), holeRing, L + .03);
   plume(`${key} plume`, h, R, s, live, L + .04);
-  if (rays > 0) voidRays(`${key} rays`, h, s, R * RingAt * 1.04, R * RingAt + 14, swirl, .7 * live * rays, 40);
+  if (rays > 0 && lines === 'speed') speedLines(`${key} speed`, h, s, R * RingAt * 1.06, R * RingAt + 17, live * rays, { swirl, trip });
+  else if (rays > 0) voidRays(`${key} rays`, h, s, R * RingAt * 1.04, R * RingAt + 14, swirl, .7 * live * rays, 40);
 }
 
 // The smoke streaming off the ring's east side: soft puffs drifting out and growing, and sparkles.
@@ -292,7 +293,61 @@ function plume(key, h, R, s, live, L) {
   }
 }
 
-// Dashes of white, pink and violet light running out from the ring (the anime's speed lines), on
+// ---- speed lines (2026-09-23) ------------------------------------------------------------------
+// Light rushing out of one vanishing point, as the manga (ch. 225) and the anime draw it round the
+// void: every line runs straight out from the black hole's centre, starting past the ring. It is a
+// warp tunnel seen from above: a line's head moves out by the same factor every second, so lines
+// speed up as they go, and each is stretched to about a third of its distance and thickens (inner
+// lines short and thin, outer ones long and wide). They come in 16 bundles with gaps between, like
+// manga speed lines, and every Wave seconds a wave of 32 leaves the ring together on top of the
+// steady stream. Each line is a white core in a pink, violet or ice glow, tapered at both ends.
+// trip: seconds a line takes from the ring to the edge (each line 0.8-1.25 x that); a wave takes 0.55 of it.
+export const Speed = { count: 96, bundles: 16, trip: 2, stretch: .34, wave: 1.4, waveLines: 32, waveShare: .55 };
+export function speedLines(key, h, s, from, to, alpha, { swirl = 0, count = Speed.count, trip = Speed.trip } = {}) {
+  if (alpha <= 0 || to <= from + 1) return;
+  const k = Math.log(to / from), glows = [Pink, Violet, Ice];
+  const one = (id, ang, phase, bright) => {
+    const r1 = from * Math.exp(k * phase), len = Math.min(r1 - from + .2, Speed.stretch * r1 * (.65 + .6 * rand(id + 1940)));
+    if (len < .2 || phase <= 0 || phase >= 1) return;
+    const r0 = r1 - len, fade = Math.pow(Math.sin(Math.PI * phase), .6) * bright, pts = [];
+    for (let j = 0; j <= 4; j++) { const r = r0 + len * j / 4, a = ang + swirl * (r - from); pts.push({ x: h.x + Math.cos(a) * r, z: h.z + Math.sin(a) * r }); }
+    const w = .035 + .08 * phase;
+    line(`${key} glow ${id}`, pts, w * 3.4, glows[id % 3].withAlpha(.2 * alpha * fade), whiteGlow, V.fog + .02, 'both');
+    line(`${key} core ${id}`, pts, w, White.withAlpha(.8 * alpha * fade), whiteGlow, V.fog + .021, 'both');
+  };
+  for (let i = 0; i < count; i++) {                                                   // the steady stream, in bundles
+    const b = i % Speed.bundles, ang = b / Speed.bundles * TAU + rand(b + 1900) * .22 + (rand(i + 1910) - .5) * .1;
+    one(i, ang, (s / trip * (.8 + .4 * rand(i + 1920)) + rand(i + 1930)) % 1, .55 + .45 * rand(i + 1950));
+  }
+  // The waves, all lines of one wave together. A slow trip can have several waves out at once.
+  const travel = trip * Speed.waveShare, last = Math.floor(s / Speed.wave);
+  for (let wave = last; wave >= 0 && wave >= last - Math.ceil(travel / Speed.wave); wave--) {
+    const phase = (s - wave * Speed.wave) / travel;
+    if (phase >= 1) continue;
+    for (let i = 0; i < Speed.waveLines; i++) {
+      const ang = (i + rand(wave * 50 + i + 2000)) / Speed.waveLines * TAU;
+      one(500 + (wave % 4) * 100 + i, ang, Math.pow(phase, .85) * (.92 + .08 * rand(wave * 50 + i + 2010)), 1);
+    }
+  }
+}
+
+// The warp-in as the white clears (the anime's lines rushing out as the domain opens): count dashes
+// rushing out from o at 22-38 cells a second, for life seconds from age 0.
+export function warpBurst(key, o, age, life = .5, count = 90, reach = 16) {
+  if (age < 0 || age > life) return;
+  const f = age / life;
+  for (let i = 0; i < count; i++) {
+    const ang = rand(i + 1700) * TAU, speed = 22 + 16 * rand(i + 1710), len = 1.5 + 2.5 * rand(i + 1720);
+    const head = .8 + age * speed + rand(i + 1730) * 3, tail = head - len;
+    if (tail > reach) continue;
+    const r0 = Math.max(.6, tail), r1 = Math.min(head, reach);
+    if (r1 - r0 < .2) continue;
+    const pts = [r0, (r0 + r1) / 2, r1].map(r => ({ x: o.x + Math.cos(ang) * r, z: o.z + Math.sin(ang) * r }));
+    line(`${key} ${i}`, pts, .06 + .05 * rand(i + 1740), [White, White, Pink, Violet, Ice][i % 5].withAlpha((1 - f) * (.6 + .4 * rand(i + 1750))), whiteGlow, Y + .26, 'both');
+  }
+}
+
+// The earlier look ("old dashes"): dashes of white, pink and violet light running out from the ring, on
 // spirals of swirl radians per cell. From lib/gojo.js rays, starting at the ring instead of the centre.
 export function voidRays(key, o, s, from, to, swirl, alpha, count = 70) {
   if (alpha <= 0) return;
