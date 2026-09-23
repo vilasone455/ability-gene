@@ -13,25 +13,31 @@
 //   them for 10 s. This is the kit's finisher, not something for every fight.
 // Pairs with Amenotejikara: swap a burning pawn in among its own side, or a burning kunai into a path.
 //
-// Look, taken from the anime (Itachi vs Sasuke, Shippuden 137-138; Sasuke vs Killer Bee, 142-143;
-// Sasuke vs Danzo; the Kaguya fight): the flames are pure black, with no glow and no coloured rim.
-// They appear on the target at once, with no projectile. They cling to the body as ragged blotches,
-// rise from it as thin wavy strands whose tops tear off as black flecks, and pool on the ground
-// under it. The cost shows on the caster: the casting eye bleeds. The games give the flames a
-// purple sheen; the anime does not, so this does not either.
+// Look. The main reference is Storm 4 (YouTube LFZhDUGq6kQ, 1:07-1:09, Sasuke on Killer Bee), chosen
+// by the user: black flames lit from inside by thin violet streaks, black curling wisps with a violet
+// edge peeling off the sides, a wide dark shadow on the ground, small black flames popping up on the
+// floor round the target as it catches, and a fire that balloons out wide first and then stretches
+// into a tall column. The rest comes from the anime (Shippuden 137-138, 142-143, Sasuke vs Danzo):
+// the flames appear on the target at once with no projectile, cling to the body as ragged blotches,
+// tear off at the top as flecks, and the casting eye bleeds. The inner light is a dropdown: violet
+// (Storm 4), crimson (Shinobi Striker's jutsu) or none (the anime, pure black).
 //
 // Showcase, default timings:
 //   0.00-0.50  gaze: a red glint on the caster's eye. The Mangekyo mark on the target is an option,
-//              off by default, because the anime shows the eye close-up and nothing at the target.
-//   0.50       ignition: a black mass bursts out of the target's chest (0.2-0.3 s) and throws 30
-//              shards up and out (0.32-0.57 s, the upward ones furthest), a soot splash rings its
-//              feet, the fire catches from the chest out in 0.12 s and the strands surge to 1.3x,
-//              settling by 0.45 s. Camera shake 0.075, screen dim 0.18. Blood runs from the caster's
-//              eye from here on, two streaks.
-//   burning    26 strands and 5 short base tongues per pawn, each on its own 0.4-0.95 s cycle: it
-//              grows, sways, tears its top off as a fleck and regrows. Most strands root on the floor
-//              round the feet, 30% on the body. 8 blotches lick up the body; the pawn shows through
-//              the gaps. 12 loose flecks rise and vanish. A dark pool stains the floor under the feet.
+//              off by default, because the sources show the eye close-up and nothing at the target.
+//   0.50       ignition: a black mass bursts out of the target's chest (0.2-0.3 s) and throws 18
+//              shards up and out (0.32-0.57 s), a soot splash rings its feet, the fire catches from
+//              the chest out in 0.12 s. It starts 1.45x as wide and half as tall and stretches into
+//              its column by 1.4 s. 6 small ground flames pop up 0.6-1.05 cells round the target at
+//              0.02-0.2 s intervals and die down within about a second. Camera shake 0.075, screen dim
+//              0.18. Blood runs from the caster's eye from here on, two streaks.
+//   burning    26 strands, 5 short base tongues and 3 tall core tongues (behind the pawn, the column's
+//              body) per pawn, each on its own 0.4-0.95 s cycle: it grows, sways, tears its top off and
+//              regrows. Torn tops from the flanks are curling wisps (a thin hook on a tightening arc,
+//              violet rim) that fly outward; from the middle, small black flecks. Every strand carries
+//              two thin violet streaks that creep up it and flicker in steps 12 times a second, and one
+//              violet speck. 8 blotches lick up the body; the pawn shows through the gaps. 12 loose
+//              flecks rise and vanish. A dark pool and a wide soft shadow darken the floor.
 //   2.00       the neighbour catches: 3 flecks jump across in 0.22 s, then blotches and strands creep
 //              over it from the touching side in 0.3 s. No burst: it caught, nobody cast it.
 //   4.00       the caster releases: strands and blotches sink over 0.3 s, flecks already in the air
@@ -48,7 +54,7 @@
 // from the clip time, so scrubbing is deterministic.
 import { AltitudeLayer, Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../js/engine.js';
 import { registerLabTexture, pixels, fbm } from '../js/standins.js';
-import { draw, Lift } from './lib/six-paths-solid.js';
+import { draw, mesh, Lift } from './lib/six-paths-solid.js';
 import { P, Y, Floor, at, sprite, band, trail, glow, soft, rand } from './lib/six-paths-impact.js';
 import { figure, whiteGlow, CasterColour, EnemyColour } from './lib/flying-thunder-god.js';
 
@@ -85,8 +91,12 @@ const Ink = new Color(.010, .008, .014);
 const Scorch = new Color(.05, .035, .04), Smoke = new Color(.17, .16, .18);
 const Crimson = new Color(.75, .08, .12), EmberLit = new Color(.85, .16, .14), Blood = new Color(.52, .03, .05);
 const Ally = new Color(.45, .62, .40);
+// The light inside the black, per source: violet (Storm 4, 1:07-1:09 of the reference clip), crimson
+// (Shinobi Striker's jutsu) or none (the anime). It is additive, so it only shows on the black.
+const Lights = { 'violet (Storm 4)': new Color(.50, .24, .95), 'crimson (Shinobi Striker)': new Color(.85, .10, .12), 'none (anime)': null };
+const LightNames = Object.keys(Lights);
 const Gaze = .5, MarkR = .55, Sink = .3, DimLife = .18, ShakeSize = .075, SmokeLife = .8, JumpTime = .22;
-const Strands = 26, BaseTongues = 5, CellStrands = 44, CellTongues = 12, Blotches = 8, LooseFlecks = 12;
+const Strands = 26, BaseTongues = 5, CoreTongues = 3, CellStrands = 44, CellTongues = 12, Blotches = 8, LooseFlecks = 12;
 const Scenarios = ['pawn', 'pawn, spreads', 'cell'];
 
 function times(p) {
@@ -131,7 +141,7 @@ const StrandSteps = 16;
 function strand(key, root, h, hw, clock, seed, alpha, layer, lean, rootW = .6) {
   if (h < .03 || hw < .004 || alpha <= .003) return;
   const phase = rand(seed) * 6.283, f1 = 5 + rand(seed + 1) * 3, f2 = 2 + rand(seed + 2) * 1.5;
-  const amp = .05 + .05 * h, left = [], right = [];
+  const amp = .05 + .05 * h, left = [], right = [], spine = [];
   for (let j = 0; j <= StrandSteps; j++) {
     const u = j / StrandSteps;
     const sway = amp * u * (.7 * Math.sin(u * f1 - clock * 7 + phase) + .5 * u * Math.sin(u * f2 - clock * 3.3 + phase * 1.7));
@@ -140,8 +150,94 @@ function strand(key, root, h, hw, clock, seed, alpha, layer, lean, rootW = .6) {
     const ragL = 1 + .38 * Math.sin(u * 17 - clock * 10 + phase) * Math.sin(u * 5.3 + phase * 2);
     const ragR = 1 + .38 * Math.sin(u * 15 - clock * 9 + phase * 1.3) * Math.sin(u * 4.1 + phase * 3);
     left.push({ x: cx - hw * profile * ragL, z: cz }); right.push({ x: cx + hw * profile * ragR, z: cz });
+    spine.push({ x: cx, z: cz, hw: hw * profile });
   }
   band(key, left, right, Ink.withAlpha(alpha), layer);
+  return spine;
+}
+
+// band() and trail() from the impact lib, with a material, for the additive light.
+function bandMat(key, a, b, colour, layer, material) {
+  const vertices = [], tri = [];
+  for (let i = 0; i < a.length; i++) {
+    vertices.push(a[i].x, a[i].z, b[i].x, b[i].z);
+    if (i) { const n = i * 2; tri.push(n - 2, n, n - 1, n - 1, n, n + 1); }
+  }
+  const m = mesh(key); m.setFlat(vertices, tri);
+  draw(m, 0, layer, 0, 1, 1, 0, colour, material);
+}
+function trailMat(key, pts, width, colour, layer, material) {
+  const a = [], b = [];
+  pts.forEach((q, i) => {
+    const prev = pts[Math.max(0, i - 1)], next = pts[Math.min(pts.length - 1, i + 1)];
+    const dx = next.x - prev.x, dz = next.z - prev.z, len = Math.hypot(dx, dz) || 1;
+    const w = Math.sin(i / (pts.length - 1) * Math.PI) * width / 2;
+    a.push({ x: q.x - dz / len * w, z: q.z + dx / len * w }); b.push({ x: q.x + dz / len * w, z: q.z - dx / len * w });
+  });
+  bandMat(key, a, b, colour, layer, material);
+}
+
+// The light inside a strand (Storm 4's violet streaks): two thin wavy lines crawl up it and flicker in
+// steps, 12 times a second, plus one speck. They stay inside the strand's width, so they only show
+// on the black.
+function veins(key, spine, clock, seed, alpha, layer, light) {
+  if (!spine || !light || alpha <= .01) return;
+  const step = Math.floor(clock * 12), n = spine.length - 1;
+  const along = (u, off) => {
+    const f = clamp(u) * n, i0 = Math.min(n - 1, Math.floor(f)), t = f - i0, p0 = spine[i0], p1 = spine[i0 + 1];
+    return { x: p0.x + (p1.x - p0.x) * t + off * (p0.hw + (p1.hw - p0.hw) * t), z: p0.z + (p1.z - p0.z) * t };
+  };
+  for (let v = 0; v < 2; v++) {
+    const k = seed + v * 101, len = .2 + rand(k) * .2;
+    const f = (clock * (.45 + rand(k + 1) * .35) + rand(k + 2)) % 1;
+    const u0 = .05 + f * (.8 - len), off = (rand(k + 3) - .5) * .55;
+    const a = alpha * (.3 + .7 * rand(step * 13 + k)) * Math.sin(f * Math.PI);
+    if (a <= .01) continue;
+    const pts = [];
+    for (let j = 0; j <= 6; j++) {
+      const u = u0 + len * j / 6, q = along(u, off);
+      pts.push({ x: q.x + Math.sin(u * 23 + clock * 9 + k) * .012, z: q.z });
+    }
+    trailMat(`${key} ${v}`, pts, .018 + rand(k + 4) * .01, light.withAlpha(a), layer, whiteGlow);
+  }
+  const q = along(.15 + rand(seed + 7) * .5, (rand(seed + 8) - .5) * .8);
+  sprite(q, .05, .05, light.withAlpha(alpha * rand(step * 7 + seed) * .9), glow, layer + .00005);
+}
+
+// A curling black wisp torn off the side of the flame (Storm 4): a comma-shaped stroke on a tightening
+// arc round pos, with a thin rim of the inner light on its outer edge. rot is in radians.
+function wisp(key, pos, r, side, rot, sweep, alpha, layer, light) {
+  if (alpha <= .01 || r < .01) return;
+  const N = 14, outer = [], inner = [], rim = [];
+  for (let j = 0; j <= N; j++) {
+    const t = j / N, ang = rot + side * sweep * t * t, rad = r * (1.6 - 1.25 * t);
+    const cx = pos.x + Math.cos(ang) * rad, cz = pos.z + Math.sin(ang) * rad;
+    const half = r * .13 * Math.sin(Math.PI * Math.pow(t, .6)), ox = Math.cos(ang), oz = Math.sin(ang);
+    outer.push({ x: cx + ox * half, z: cz + oz * half }); inner.push({ x: cx - ox * half, z: cz - oz * half });
+    rim.push({ x: cx + ox * (half + .014), z: cz + oz * (half + .014) });
+  }
+  bandMat(key, outer, inner, Ink.withAlpha(alpha), layer);
+  if (light) bandMat(key + ' rim', rim, outer, light.withAlpha(alpha * .75), layer + .0001, whiteGlow);
+}
+
+// Storm 4: as the target catches, small black flames pop up on the floor round it and die down within
+// about a second. They are splash, not a burning area.
+function clumps(key, c, age, clock, seed, height, light) {
+  if (age < 0 || age > 1.4) return;
+  for (let i = 0; i < 6; i++) {
+    const k = seed + 800 + i * 19, t0 = .02 + i * .035, u = (age - t0) / (.7 + rand(k) * .4);
+    if (u <= 0 || u >= 1) continue;
+    const a = (i * 60 + 25 + rand(k + 1) * 30) * Math.PI / 180, r = .6 + rand(k + 2) * .45;
+    const q = at(c, Math.cos(a) * r, Math.sin(a) * r);
+    const life = smooth(u / .15) * (1 - smooth((u - .55) / .45));
+    const layer = (q.z > c.z + .05 ? pawnLayer - .03 : Y + .025) + i * .001;
+    for (let j = 0; j < 3; j++) {
+      const kk = k + j * 7;
+      const sp = strand(`${key} clump ${i}-${j}`, at(q, (j - 1) * .07, 0), (.3 + rand(kk) * .35) * life * height / 2.4,
+        .045 + rand(kk + 1) * .025, clock, kk, Math.min(1, life * 3), layer + j * .0002, (j - 1) * .15);
+      veins(`${key} clump vein ${i}-${j}`, sp, clock, kk, life * .8, layer + j * .0002 + .0001, light);
+    }
+  }
 }
 
 // A strand's life, in clock time: it grows from 35% to full height over the first 45% of its cycle,
@@ -168,11 +264,11 @@ function eruption(c, age, seed, scale) {
     sprite(at(focus, (rand(k + 2) - .5) * .4, (rand(k + 3) - .3) * .5), size, size * 1.2,
       Ink.withAlpha(1 - smooth((u - .4) / .6)), blot, Y + .139 + i * .0002, rand(k + 4) * 360);
   }
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 18; i++) {
     const k = seed + 900 + i * 7, life = .32 + rand(k) * .25, u = age / life;
     if (u >= 1) continue;
     const a = (15 + rand(k + 1) * 150) * Math.PI / 180; // up and out, none straight down
-    const d = (.6 + rand(k + 2) * 1.5) * (.7 + .5 * Math.sin(a)) * scale * (1 - Math.pow(1 - u, 3));
+    const d = (.5 + rand(k + 2) * 1.1) * (.7 + .5 * Math.sin(a)) * scale * (1 - Math.pow(1 - u, 3));
     const len = (.22 + rand(k + 3) * .35) * scale * (1 - .5 * u), wid = len * (.22 + rand(k + 4) * .18);
     sprite({ x: focus.x + Math.cos(a) * d, z: focus.z + Math.sin(a) * d }, wid, len,
       Ink.withAlpha(1 - smooth((u - .45) / .55)), shred, Y + .14 + i * .0003, 90 - a * 180 / Math.PI);
@@ -204,11 +300,16 @@ function fire(key, c, w, height, t0, s, p, t, seed, from = 0, cell = false) {
   // Each part catches after a delay: from the chest outward on a cast, from the touching side on a spread.
   const delayOf = x => from ? clamp((-from * x / w + 1) / 2) * .3 : Math.abs(x) / w * .08;
   const catchAt = (x, a) => smooth((a - delayOf(x)) / p.rise);
-  const surge = from ? 1 : 1 + .3 * Math.exp(-Math.pow((age - p.rise) / .12, 2));
+  // Storm 4's growth on a cast: the fire balloons out wide and low, then stretches up into a column
+  // over 0.9 s. A spread catches at its full shape.
+  const swell = from ? 0 : 1 - smooth(age / .9), widthF = 1 + .45 * swell, heightF = 1 - .5 * swell;
+  const light = Lights[p.light] ?? null;
 
-  // Floor: the pool under the fire. It keeps a third of its black after release, over the scorch.
-  // The pool is a dark stain, not solid black, so black flames standing in it still read.
+  // Floor: a wide soft shadow darkens the ground round the fire (Storm 4) and thins out after release.
+  // Over it the pool, a dark stain rather than solid black so black flames standing in it still read.
   const stain = smooth(age / .25), poolAlpha = (cell ? .5 : .65) * stain * (.5 + .5 * rel);
+  const shade = w * (cell ? 3.2 : 4.6);
+  sprite(c, shade, shade, Ink.withAlpha(.38 * stain * (.3 + .7 * rel)), soft, Floor + .016);
   if (cell) {
     sprite(c, w * 2.4, w * 2.4, Scorch.withAlpha(.6 * stain), puff, Floor + .018);
     sprite(c, w * 1.6, w * 1.6, Ink.withAlpha(poolAlpha), blot, Floor + .02, seed % 360);
@@ -221,6 +322,7 @@ function fire(key, c, w, height, t0, s, p, t, seed, from = 0, cell = false) {
     sprite(at(c, 0, -.05), w * 1.9, w * 1.9, Ink.withAlpha(poolAlpha), blot, Floor + .02, seed % 360);
   }
   if (!from) eruption(c, age, seed, cell ? 1.3 : 1);
+  if (!from && !cell && rel > 0) clumps(key, c, age, clock, seed, height, light);
 
   if (rel > 0) {
     // The pawn inside: darkened, with blotches clinging to it and licking upward.
@@ -240,9 +342,10 @@ function fire(key, c, w, height, t0, s, p, t, seed, from = 0, cell = false) {
     }
 
     // Strands and broad base tongues, drawn north to south so nearer ones overlap.
-    const parts = [], total = cell ? CellStrands + CellTongues : Strands + BaseTongues;
+    const parts = [], total = cell ? CellStrands + CellTongues : Strands + BaseTongues + CoreTongues;
     for (let i = 0; i < total; i++) {
       const k = seed + i * 13, base = i >= (cell ? CellStrands : Strands);
+      const core = !cell && i >= Strands + BaseTongues; // tall, broad tongues behind the pawn: the column's body
       let x, dz, rootH = 0;
       if (cell) {
         const n = base ? i - CellStrands : i, count = base ? CellTongues : CellStrands;
@@ -250,35 +353,46 @@ function fire(key, c, w, height, t0, s, p, t, seed, from = 0, cell = false) {
         x = Math.cos(a) * r; dz = Math.sin(a) * r;
       } else {
         // Base tongues sit at fixed, uneven places across the feet so they never line up into a block.
-        x = base ? [-.62, -.2, .12, .5, -.4][i - Strands] * w : (rand(k) * 2 - 1) * w * .8;
-        dz = base ? [.06, -.08, .1, -.04, -.12][i - Strands] : (rand(k + 1) - .5) * .3;
+        x = core ? [-.3, .04, .34][i - Strands - BaseTongues] * w : base ? [-.62, -.2, .12, .5, -.4][i - Strands] * w : (rand(k) * 2 - 1) * w * .8;
+        dz = core ? [.14, .18, .12][i - Strands - BaseTongues] : base ? [.06, -.08, .1, -.04, -.12][i - Strands] : (rand(k + 1) - .5) * .3;
         if (!base && rand(k + 2) > .7) rootH = .2 + rand(k + 3) * .6; // a few start on the body, not the floor
       }
-      parts.push({ i, k, base, x, dz, rootH });
+      parts.push({ i, k, base, core, x, dz, rootH });
     }
     parts.sort((a, b) => b.dz - a.dz);
     parts.forEach((q, order) => {
-      const { i, k, base, x, dz, rootH } = q;
+      const { i, k, base, core, x, dz, rootH } = q;
       const env = Math.sqrt(Math.max(0, 1 - (x / w) ** 2)), tall = rand(k + 4);
-      const full = height * (cell ? .7 : 1) * (base ? .18 + .22 * tall : (.35 + .65 * env) * (.45 + .55 * tall));
-      const hw = base ? .09 + .06 * rand(k + 5) : .035 + .06 * (1 - tall);
+      const full = height * (cell ? .7 : 1) * (core ? .68 + .2 * tall : base ? .18 + .22 * tall : (.35 + .65 * env) * (.45 + .55 * tall));
+      const hw = core ? .15 + .05 * rand(k + 5) : base ? .09 + .06 * rand(k + 5) : .035 + .06 * (1 - tall);
       const period = base ? .4 + rand(k + 6) * .2 : .55 + rand(k + 6) * .4, offset = rand(k + 7) * period;
       const cyc = cycleOf(clock, period, offset);
       const g = catchAt(x, age);
-      const h = full * cyc.k * g * surge * rel;
-      const root = at(c, x, dz, rootH);
+      const h = full * cyc.k * g * heightF * rel;
+      const root = at(c, x * widthF, dz, rootH);
       const lean = x / w * (base ? .25 : .1) + .03 * Math.sin(clock * 1.3 + k);
       const behind = !cell && rootH === 0 && dz > .02;
       const layer = (behind ? pawnLayer - .02 : Y + .03) + order * .0004;
-      strand(`${key} strand ${i}`, root, h, hw * (.5 + .5 * rel), clock, k, Math.min(1, g * 3), layer, lean, rootH > 0 ? .2 : .6);
+      const spine = strand(`${key} strand ${i}`, root, h, hw * (.5 + .5 * rel) * (base ? 1 + .6 * swell : 1), clock, k, Math.min(1, g * 3), layer, lean, rootH > 0 ? .2 : .6);
+      veins(`${key} vein ${i}`, spine, clock, k, g * rel * (base ? .8 : 1), layer + .0001, light);
 
-      // The torn-off top of this strand's last two cycles, rising as a fleck. None are born after release.
+      // The torn-off top of this strand's last two cycles. From the flanks it is a curling wisp that
+      // flies outward (Storm 4); from the middle a small fleck that rises. None are born after release.
       if (base || p.particles <= 0) return;
       for (const n of [cyc.n, cyc.n - 1]) {
         const tear = (n + .8) * period - offset, life = .5 + rand(k + n * 31) * .3, fu = (clock - tear) / life;
         if (tear < 0 || tear > lastBirth || fu < 0 || fu >= 1) continue;
         const kk = k + n * 31, top = full * catchAt(x, tear / p.speed);
-        const pos = at(c, x + lean * top + (rand(kk + 1) - .5) * .25 * fu + Math.sin(fu * 5 + kk) * .05, dz,
+        if (Math.abs(x) > w * .45) {
+          const side = x >= 0 ? 1 : -1;
+          const wpos = at(c, x * widthF + lean * top + side * fu * (.3 + rand(kk + 1) * .4), dz,
+            rootH + top * .8 + fu * (.45 + rand(kk + 2) * .5) * height / 2.4);
+          wisp(`${key} wisp ${i} ${n & 1}`, wpos, (.11 + rand(kk + 3) * .08) * (1 - .25 * fu), side,
+            (rand(kk + 4) * 2 - 1) * .8 + side * fu * 2.2, 1.4 + fu * 1.2,
+            (1 - smooth((fu - .5) / .5)) * Math.min(1, p.particles), Y + .127 + (i % 20) * .0003, light);
+          continue;
+        }
+        const pos = at(c, x * widthF + lean * top + (rand(kk + 1) - .5) * .25 * fu + Math.sin(fu * 5 + kk) * .05, dz,
           rootH + top * .85 + fu * (.5 + rand(kk + 2) * .6) * height / 2.4);
         // About twice as tall as wide: a torn piece, not a leaf.
         const fw = Math.max(.08, hw * 2) * (.8 + .5 * rand(kk + 3)) * (1 - .45 * fu);
@@ -335,6 +449,7 @@ export default {
     particles: P('Flecks', 1, 0, 2, .1, 'Flame'),
     radius: P('Cell fire radius (cells)', 1.5, .8, 2, .1, 'Flame'),
     dim: P('Screen dim on ignite (0-1)', .18, 0, .7, .05, 'Flame'),
+    light: { label: 'Light inside the black', value: LightNames[0], options: LightNames, group: 'Flame' },
   },
   duration(p) { return times(p).end; },
   phases(p) { const t = times(p); return [
