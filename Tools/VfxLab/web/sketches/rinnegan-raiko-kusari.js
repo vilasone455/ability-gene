@@ -26,26 +26,39 @@
 // line) and Amaterasu (burning kunai can be corners).
 //
 // Look. Neither "Raikō Kusari" nor "Amenoyodomi" is a canon name, so the picture is Sasuke's
-// Chidori: a white-hot core in the hand with jagged bolts, redrawn about 12 times a second as the
-// anime does, in the Six Paths "Dark Chidori" colours (the Storm 4 name; the anime frame shows black
-// jagged lines crawling over his arm and chest round a white core). Colour is a dropdown: Dark
-// Chidori (default, the user's pick), Chidori blue-white, Rinnegan violet.
+// Chidori, in the Six Paths "Dark Chidori" colours (the Storm 4 name; the anime frame shows black
+// jagged lines crawling over his arm and chest round a white core). From the Chidori Current frame
+// (Narutopedia): bolts with a few big kinks and fine crackle on top, a core that swells and
+// pinches, white flash frames, the light thrown on everything round it, current running through
+// whoever touches it. Colour is a dropdown: Dark Chidori (default, the user's pick), Chidori
+// blue-white, Rinnegan violet.
 //
 // Showcase, default timings:
 //   0.00-0.60  charge: a white core beats in the caster's hand, bolts crackle out of it and up the arm
-//   0.60       the Chidori leaps to the first weapon (0.05 s) and runs down the chain, 0.05 s per
-//              link; each weapon flashes as it is reached, a ring closes with a larger flash. Camera
+//   0.60       the Chidori leaps to the first weapon (0.05 s, a white flash) and runs down the chain,
+//              0.05 s per link; each weapon flashes as it is reached, a ring closes with a larger
+//              flash. When the last link closes the whole net flashes white for 0.06 s. Camera
 //              shake 0.03.
-//   net        each line: a soft halo, jagged bolts (the first with a white thread) and a side branch
-//              per bolt, all redrawn 12 times a second, and a faint strip on the floor under it. The
-//              weapons hang 0.55 cells up over a small lavender ring (Amenoyodomi's stand-in mark).
-//   caught     a burst where it touched; the pawn freezes mid-step, bolts crawl over its body, it
+//   net        each line: a soft halo; 2 bolts, each with 2-4 big kinks and fine crackle, its width
+//              swelling and pinching from 0.5 to 1.6 times, a side branch, all redrawn 12 times a
+//              second; bolt 0 carries a white thread. Every 0.4-0.7 s (fixed per line) the line
+//              flashes for 0.07 s: bolts 1.8 times as wide, the thread wide and white, a third bolt,
+//              the halo brighter. Two white-hot pulses run along each line at 7 cells/s, one each
+//              way. Under it the floor carries a dark trace (Dark Chidori) or a flickering coloured
+//              light, and white light during each flash; the same pools sit under each weapon. 3
+//              sparks a second drop from each line to the floor (0.43 s fall) and flash as they land.
+//              The weapons hang 0.55 cells up over a small lavender ring (Amenoyodomi's stand-in).
+//   caught     a burst where it touched; the pawn freezes mid-step and shakes 0.02 cells on every
+//              redraw, the line bends to run through its chest, bolts crawl over its body, it
 //              flashes white about 3 times a second, and a scorch grows under its feet and stays
-//   end        the lines thin out over 0.3 s; a let-go or a snap cuts them in 0.12 s with sparks
+//   end        the lines break: they vanish in 0.12 s and fall as sparks, 3 per cell of length; a
+//              let-go or a snap adds sparks at both ends
 // Scenarios:
 //   fence         3 kunai across the approach, 6.4 cells end to end, so no ring. A raider, a raider
-//                 with a shield belt and a mechanoid run in and are caught; the shield pops. At the
-//                 end the raiders run on and the mech stays stunned 3 s more (blue EMP crackle).
+//                 with a shield belt and a mechanoid run in and are caught; the shield pops. A raider
+//                 behind the net shoots at the caster every 0.55 s from 1.0 s: the tracers go
+//                 through the lines untouched and wide of the caster. At the end the raiders run on
+//                 and the mech stays stunned 3 s more (blue EMP crackle).
 //   ring          4 kunai round a group, 3.8 cells apart: the ring closes. A colonist standing on a
 //                 line when it forms is caught, a raider walking out is caught at the line, and a
 //                 raider who stays inside is not.
@@ -56,26 +69,28 @@
 //                 the kunai fly on at 24 cells/s: two hit raiders further back (stuck, stunned 2 s),
 //                 the third flies on out of view.
 //   Fūma corner   kunai, Fūma, kunai. Lines join the Fūma at the blade tip nearest the next weapon,
-//                 and arcs jump between its blade tips as it turns. A raider is caught on its line.
-//                 Let go: the Fūma flies its line at 14.4 cells/s at full spin, crackling, cuts three
-//                 raiders (each stunned 2 s) and lands 12 cells from the caster.
+//                 and arcs run round its rim from blade tip to blade tip as it turns. A raider is
+//                 caught on its line. Let go: the Fūma flies its line at 14.4 cells/s at full spin
+//                 inside a spinning ring of lightning, cuts three raiders (each stunned 2 s) and lands
+//                 12 cells from the caster.
 //
 // Drawing: every line joins two weapons at the same height, so the net is a flat shape at one
-// height and turns freely with the direction: no per-facing method. Bolts and pawn crackle are
-// screen-oriented strips rebuilt on every redraw from a hash of the redraw step, so scrubbing is
-// deterministic. Who is caught, and when, is replayed from the cast in 1/60 s steps each frame. Here
-// a pawn touches a line within 0.45 cells of its ground track; the port should use the cells the
-// line crosses ("Show the cells that catch" draws them). The hold is a stand-in until Amenoyodomi
-// has a sketch: a weapon thrown at a cell reached it at 0 s and goes on at the hold speed (1 %: a
-// kunai 0.24 cells/s, the Fūma 0.144), and a let-go sends it on at full speed along its heading.
-// The weapons use the game's textures and numbers: RimArt/Kunai/Kunai at 0.75 and 24 cells/s,
-// range 14.9; RimArt/Fuma/Unfolded at 1.4 and 14.4 cells/s, range 12, spin 720 degrees/s (a
-// stand-in, as in the Amaterasu sketch). The halo and floor strip are soft-disc sprites stretched
-// along the line, so the light has no hard edge; only the thin bolts are strips.
+// height and turns freely with the direction: no per-facing method. The Fūma's rim arcs and flying
+// ring are level circles. Bolts are strips with a width per point, rebuilt on every redraw from a
+// hash of the redraw step; the halo and the floor light are soft-disc sprites stretched along the
+// line, so the light has no hard edge. Sparks are computed from their birth time (fall under 6
+// cells/s² from 0.55 cells), so scrubbing is deterministic. Who is caught, and when, is replayed
+// from the cast in 1/60 s steps each frame. Here a pawn touches a line within 0.45 cells of its
+// ground track; the port should use the cells the line crosses ("Show the cells that catch" draws
+// them). The hold is a stand-in until Amenoyodomi has a sketch: a weapon thrown at a cell reached it
+// at 0 s and goes on at the hold speed (1 %: a kunai 0.24 cells/s, the Fūma 0.144), and a let-go
+// sends it on at full speed along its heading. The weapons use the game's textures and numbers:
+// RimArt/Kunai/Kunai at 0.75 and 24 cells/s, range 14.9; RimArt/Fuma/Unfolded at 1.4 and 14.4
+// cells/s, range 12, spin 720 degrees/s (a stand-in, as in the Amaterasu sketch).
 import { AltitudeLayer, Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../js/engine.js';
-import { draw } from './lib/six-paths-solid.js';
+import { draw, Lift } from './lib/six-paths-solid.js';
 import { P, Y, Floor, at, sprite, circle, glow, soft, rand } from './lib/six-paths-impact.js';
-import { figure, whiteGlow, kunaiMat, stuckKunai, CasterColour, EnemyColour } from './lib/flying-thunder-god.js';
+import { figure, strip, whiteGlow, kunaiMat, stuckKunai, CasterColour, EnemyColour } from './lib/flying-thunder-god.js';
 import { line } from './lib/goku.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp;
@@ -91,6 +106,7 @@ const White = new Color(1, 1, 1), Ink = new Color(.02, .018, .03), ShadowInk = n
 const Lavender = new Color(.80, .74, .98), Ally = new Color(.45, .62, .40);
 const ShieldBlue = new Color(.45, .72, 1), EmpBlue = new Color(.55, .82, 1);
 const MechGrey = new Color(.46, .48, .52), MechDark = new Color(.24, .25, .28), MechEye = new Color(.95, .22, .15);
+const Tracer = new Color(1, .9, .6), Gun = new Color(.2, .2, .22);
 const Palettes = {
   'Dark Chidori': { dark: true, bolt: Ink, halo: new Color(.72, .68, .88), haloA: .14, floor: Ink, floorA: .24 },
   'Chidori blue-white': { dark: false, bolt: new Color(.82, .93, 1), halo: new Color(.22, .5, 1), haloA: .32, floor: new Color(.22, .5, 1), floorA: .1 },
@@ -104,9 +120,12 @@ const Scenarios = ['fence', 'ring', 'drifting net', 'let go', 'Fūma corner'];
 const KunaiSpeed = 24, KunaiSize = .75, KunaiRange = 14.9, FumaSpeed = 14.4, FumaSize = 1.4, FumaRange = 12, FumaSpin = 720;
 const Hold = .55, Creep = .01, Drift = .1, TipR = .55;
 // Timing and the rule.
-const Leap = .05, PerLink = .05, FadeOut = .3, SnapOut = .12, CornerFlash = .15, Touch = .45, Step = 1 / 60;
+const Leap = .05, PerLink = .05, FadeOut = .3, CutOut = .12, CornerFlash = .15, CloseFlash = .06, Touch = .45, Step = 1 / 60;
 const MechExtra = 3, HitStun = 2, HitReach = .4, CutReach = .55;
 const RunSpeed = 3, WalkSpeed = 1.5, MechSpeed = 2.2, ShakeSize = .03;
+// The look in motion.
+const SurgeTime = .07, PulseSpeed = 7, SparkRate = 3, BreakPerCell = 3, Gravity = 6, ShakeHeld = .02, ShakeHit = .012;
+const TracerSpeed = 40, FirstShot = 1, ShotGap = .55;
 
 // The scene, laid out along the aim d from the caster (n is d's left); o is the middle of the net.
 // Weapons are listed in the order they were thrown.
@@ -144,7 +163,7 @@ function scene(p, o) {
       break;
     default: // fence
       W = [weapon('kunai', .2, 3.2), weapon('kunai', .5, 0), weapon('kunai', .2, -3.2)];
-      pawns = [runIn('raider', 4, 1.6, 0), runIn('shield', 5, -1, .2), runIn('mech', 5.6, -2.3, .3, MechSpeed)];
+      pawns = [runIn('raider', 4, 1.6, 0), runIn('shield', 5, -1, .2), runIn('mech', 5.6, -2.3, .3, MechSpeed), pawn('shooter', 4.6, .4)];
   }
   return { d, n, caster, W, pawns, letsGo };
 }
@@ -166,8 +185,9 @@ function turnAt(w, s, T) {
 }
 // Blade k of the Fūma at r texture widths from its middle, turned clockwise by turn degrees, as a
 // ground offset. Measured off RimArt/Fuma/Unfolded (see the Amaterasu sketch): 22 + 40 r + 90 k.
+const bladeAngle = (turn, k, r) => (22 + 40 * r + 90 * k - turn) * Mathf.Deg2Rad;
 function blade(c, turn, k, r) {
-  const a = (22 + 40 * r + 90 * k - turn) * Mathf.Deg2Rad;
+  const a = bladeAngle(turn, k, r);
   return { x: c.x + Math.cos(a) * r * FumaSize, z: c.z + Math.sin(a) * r * FumaSize };
 }
 // Where a line meets weapon i at time s, on the ground: a kunai's middle, or the Fūma's blade tip
@@ -260,13 +280,14 @@ function build(p, o) {
   const S = scene(p, o), T = timeline(S, p);
   flights(S, T);
   S.pawns.forEach((P, k) => {
-    // The first moment it touches a live line, replayed from the cast.
-    P.caught = Infinity;
+    // The first moment it touches a live line, replayed from the cast, and which line it was.
+    P.caught = Infinity; P.link = -1;
     for (let t = T.reach0; t < T.netEnd && !isFinite(P.caught); t += Step) {
       const q = runAt(P, t);
-      for (const L of T.links) {
+      for (let li = 0; li < T.links.length; li++) {
+        const L = T.links[li];
         if (L.fails || t < L.lit || t >= L.snap) continue;
-        if (segDist(q, joint(S, T, L.a, L.b, t), joint(S, T, L.b, L.a, t)) <= Touch) { P.caught = t; break; }
+        if (segDist(q, joint(S, T, L.a, L.b, t), joint(S, T, L.b, L.a, t)) <= Touch) { P.caught = t; P.link = li; break; }
       }
     }
     P.hits = [];
@@ -284,21 +305,58 @@ function build(p, o) {
   return Object.assign(S, { T, end });
 }
 
-// A jagged bolt from a to b: inner points pushed sideways by up to jag (most in the middle, less on
-// a short bolt) and jittered along it; seed picks the shape.
-function boltPts(a, b, jag, seed, seg = .3) {
+// A jagged bolt from a to b: 2-4 big kinks it meanders through, with fine crackle on top, both zero
+// at the ends and smaller on a short bolt; seed picks the shape.
+function boltPts(a, b, jag, seed, seg = .15) {
   const dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz) || 1e-6;
-  const n = Math.max(3, Math.round(len / seg)), nx = -dz / len, nz = dx / len, j = jag * Math.min(1, len / .8), pts = [];
-  for (let i = 0; i <= n; i++) {
-    const u = i / n, inner = i > 0 && i < n;
-    const off = inner ? (rand(seed + i * 7) - .5) * 2 * j * Math.min(1, Math.sin(u * Math.PI) * 1.8) : 0;
-    const v = inner ? u + (rand(seed + i * 7 + 3) - .5) * .5 / n : u;
-    pts.push({ x: a.x + dx * v + nx * off, z: a.z + dz * v + nz * off });
+  const n = Math.max(4, Math.round(len / seg)), nx = -dz / len, nz = dx / len, j = jag * Math.min(1, len / .8);
+  const kinks = 2 + Math.floor(rand(seed + 1) * 3), ku = [0], kv = [0];
+  for (let k = 1; k <= kinks; k++) { ku.push((k - .5 + (rand(seed + 10 + k) - .5) * .6) / kinks); kv.push((rand(seed + 20 + k) - .5) * 3 * j); }
+  ku.push(1); kv.push(0);
+  const pts = [];
+  for (let i = 0, k = 1; i <= n; i++) {
+    const u = i / n;
+    while (k < ku.length - 1 && u > ku[k]) k++;
+    const meander = kv[k - 1] + (kv[k] - kv[k - 1]) * clamp((u - ku[k - 1]) / Math.max(1e-6, ku[k] - ku[k - 1]));
+    const off = i > 0 && i < n ? meander + (rand(seed + i * 7) - .5) * .7 * j : 0;
+    pts.push({ x: a.x + dx * u + nx * off, z: a.z + dz * u + nz * off });
   }
   return pts;
 }
-// One bolt through pts. Dark Chidori: black, with a white thread when core > 0. Light looks: an
-// additive halo strip, a pale core and the white thread.
+// Width along a bolt of n segments: swells and pinches between 0.5 and 1.6 times w through three
+// random control values, and thins to half at the ends.
+function widths(n, w, seed) {
+  const c = [.5, .5 + 1.1 * rand(seed + 41), .5 + 1.1 * rand(seed + 42), .5 + 1.1 * rand(seed + 43), .5];
+  return Array.from({ length: n + 1 }, (_, i) => {
+    const f = i / n * (c.length - 1), k = Math.min(c.length - 2, Math.floor(f)), e = (1 - Math.cos((f - k) * Math.PI)) / 2;
+    return w * (c[k] + (c[k + 1] - c[k]) * e);
+  });
+}
+// A strip through pts with a width per point.
+function stroke(key, pts, ws, colour, material, layer) {
+  const a = [], b = [], last = pts.length - 1;
+  pts.forEach((q, i) => {
+    const prev = pts[Math.max(0, i - 1)], next = pts[Math.min(last, i + 1)], dx = next.x - prev.x, dz = next.z - prev.z;
+    const len = Math.hypot(dx, dz) || 1, w = ws[i] / 2 + .003;
+    a.push({ x: q.x - dz / len * w, z: q.z + dx / len * w }); b.push({ x: q.x + dz / len * w, z: q.z - dx / len * w });
+  });
+  strip(key, a, b, colour, material, layer);
+}
+// One bolt with a width per point. Dark Chidori: black, with a white thread (core 0..1; at 1 it
+// fills most of the bolt, a white flash frame). Light looks: a coloured halo strip, a pale core and
+// the white thread.
+function boltStroke(key, pts, ws, alpha, look, layer, core) {
+  if (alpha <= .01 || pts.length < 2) return;
+  if (look.dark) {
+    stroke(key, pts, ws, look.bolt.withAlpha(Math.min(1, alpha)), undefined, layer);
+    if (core > 0) stroke(`${key} core`, pts, ws.map(w => w * (.3 + .45 * core)), White.withAlpha(Math.min(1, alpha * core)), whiteGlow, layer + .0002);
+    return;
+  }
+  stroke(key, pts, ws.map(w => w * 2), look.halo.withAlpha(alpha * .45), whiteGlow, layer);
+  stroke(`${key} core`, pts, ws.map(w => w * .7), look.bolt.withAlpha(Math.min(1, alpha)), whiteGlow, layer + .0002);
+  if (core > 0) stroke(`${key} white`, pts, ws.map(w => w * (.3 + .25 * core)), White.withAlpha(Math.min(1, alpha * core)), whiteGlow, layer + .0003);
+}
+// A small bolt of even width that tapers: hand crackle, branches, bursts, body crawl.
 function boltLine(key, pts, width, alpha, look, layer, taper = 'none', core = 0) {
   if (alpha <= .01 || pts.length < 2) return;
   if (look.dark) {
@@ -310,37 +368,132 @@ function boltLine(key, pts, width, alpha, look, layer, taper = 'none', core = 0)
   line(`${key} core`, pts, width * .7, look.bolt.withAlpha(Math.min(1, alpha)), whiteGlow, layer + .0002, taper);
   if (core > 0) line(`${key} white`, pts, width * .3, White.withAlpha(Math.min(1, alpha * core)), whiteGlow, layer + .0003, taper);
 }
-// A lit line from a to b (screen points): a soft halo of stretched soft discs, then p.bolts jagged
-// bolts with one side branch each, all redrawn p.boil times a second. Bolt 0 carries the white thread;
-// the others drop out for a redraw now and then.
-function lightning(key, a, b, s, p, look, alpha, seed, widthF = 1) {
-  const dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz);
-  if (len < .03 || alpha <= .01) return;
-  const step = Math.floor(s * p.boil), ang = Math.atan2(dz, dx) * Mathf.Rad2Deg, k = Math.max(1, Math.ceil(len / 1.1));
-  for (let i = 0; i < k; i++) {
-    const u = (i + .5) / k;
-    sprite({ x: a.x + dx * u, z: a.z + dz * u }, len / k * 1.9, p.glowW * (.8 + .4 * rand(step * 7 + i + seed)),
-      look.halo.withAlpha(look.haloA * alpha), glow, Y + .02, -ang);
-  }
-  for (let j = 0; j < p.bolts; j++) {
+// A white flash on one line every 0.4-0.7 s (fixed per line), SurgeTime long, 1 falling to 0.
+function surgeOf(seed, s) {
+  const period = .4 + .3 * rand(seed + 5), age = (Math.max(0, s) + rand(seed + 6) * period) % period;
+  return age < SurgeTime ? 1 - age / SurgeTime : 0;
+}
+// A lit line through ctrl (screen points: its two ends and any chest it runs through): a soft halo,
+// p.bolts bolts (one more during a flash) with a side branch each, redrawn p.boil times a second.
+// Bolt 0 carries the white thread. surge 0..1 flares the lot. Returns bolt 0's points.
+function lightning(key, ctrl, s, p, look, alpha, seed, surge = 0) {
+  if (alpha <= .01) return null;
+  const step = Math.floor(s * p.boil);
+  ctrl.slice(1).forEach((b, m) => {
+    const a = ctrl[m], dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz);
+    if (len < .03) return;
+    const ang = Math.atan2(dz, dx) * Mathf.Rad2Deg, k = Math.max(1, Math.ceil(len / 1.1));
+    for (let i = 0; i < k; i++) {
+      const u = (i + .5) / k;
+      sprite({ x: a.x + dx * u, z: a.z + dz * u }, len / k * 1.9, p.glowW * (1 + .6 * surge) * (.8 + .4 * rand(step * 7 + i + m * 31 + seed)),
+        look.halo.withAlpha(Math.min(1, look.haloA * (1 + 1.5 * surge)) * alpha), glow, Y + .02, -ang);
+    }
+  });
+  let first = null;
+  const count = p.bolts + (surge > .3 ? 1 : 0);
+  for (let j = 0; j < count; j++) {
     const sd = seed * 7 + step * 131 + j * 17;
-    if (j > 0 && rand(sd + 999) < .15) continue;
-    const flick = .65 + .35 * rand(sd + 5), pts = boltPts(a, b, p.jag * (j ? 1.3 : 1), sd);
-    boltLine(`${key} bolt ${j}`, pts, (j ? .035 : .05) * widthF, alpha * flick, look, Y + .03 + j * .002, 'none', j ? 0 : .65);
+    if (j > 0 && surge < .3 && rand(sd + 999) < .15) continue;
+    const flick = .65 + .35 * rand(sd + 5), jag = p.jag * (j ? 1.3 : 1), pts = [];
+    ctrl.slice(1).forEach((b, m) => { const piece = boltPts(ctrl[m], b, jag, sd + m * 101); pts.push(...(m ? piece.slice(1) : piece)); });
+    first = first ?? pts;
+    boltStroke(`${key} bolt ${j}`, pts, widths(pts.length - 1, (j ? .035 : .05) * (1 + .8 * surge), sd), alpha * Math.max(flick, surge), look,
+      Y + .03 + j * .002, j ? .8 * surge : .65 + .35 * surge);
     const bi = 1 + Math.floor(rand(sd + 11) * (pts.length - 2)), q0 = pts[bi], q1 = pts[Math.min(pts.length - 1, bi + 1)];
     const dir = Math.atan2(q1.z - q0.z, q1.x - q0.x) + (rand(sd + 12) < .5 ? -1 : 1) * (.5 + .6 * rand(sd + 13)), bl = .14 + .3 * rand(sd + 14);
     boltLine(`${key} branch ${j}`, boltPts(q0, { x: q0.x + Math.cos(dir) * bl, z: q0.z + Math.sin(dir) * bl }, .04, sd + 21, .07),
-      .03 * widthF, alpha * flick * .8, look, Y + .029 + j * .002, 'end');
+      .03, alpha * flick * .8, look, Y + .029 + j * .002, 'end');
+  }
+  return first;
+}
+// Two white-hot pulses running along a line at PulseSpeed, one each way, dim at the weapons.
+function pulses(pts, s, seed, look, alpha) {
+  if (!pts || alpha <= .01) return;
+  const L = [0];
+  for (let i = 1; i < pts.length; i++) L.push(L[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z));
+  const total = L[L.length - 1];
+  if (total < .3) return;
+  for (let k = 0; k < 2; k++) {
+    let f = (s * PulseSpeed / total + rand(seed + k * 3)) % 1;
+    if (k) f = 1 - f;
+    const d = f * total;
+    let i = 1;
+    while (i < L.length - 1 && L[i] < d) i++;
+    const t = (d - L[i - 1]) / Math.max(1e-6, L[i] - L[i - 1]), q = { x: lerp(pts[i - 1].x, pts[i].x, t), z: lerp(pts[i - 1].z, pts[i].z, t) };
+    const a = alpha * Math.min(1, Math.sin(f * Math.PI) * 3);
+    sprite(q, .42, .42, look.dark ? White.withAlpha(.22 * a) : look.halo.withAlpha(.5 * a), glow, Y + .046);
+    sprite(q, .2, .2, White.withAlpha(.95 * a), glow, Y + .047);
   }
 }
-// A bright point: a white core, over a dark smudge (Dark Chidori) or a coloured glow.
+// The floor under a line: a dark trace (Dark Chidori) or a flickering coloured light, and white light
+// thrown on the ground during a flash. The same pool sits under each weapon of the net.
+function lightPool(A, B, look, alpha, surge, flick) {
+  const dx = B.x - A.x, dz = B.z - A.z, len = Math.hypot(dx, dz), ang = Math.atan2(dz, dx) * Mathf.Rad2Deg, k = Math.max(1, Math.ceil(len / 1.2));
+  for (let i = 0; i < k; i++) {
+    const c = { x: A.x + dx * (i + .5) / k, z: A.z + dz * (i + .5) / k }, l = len / k * 1.9;
+    if (look.dark) sprite(c, l, .6, Ink.withAlpha(look.floorA * alpha), soft, Floor + .014, -ang);
+    else sprite(c, l, .95, look.floor.withAlpha((.1 + .08 * flick) * alpha), glow, Floor + .014, -ang);
+    if (surge > 0) sprite(c, l, 1.2, (look.dark ? White : look.floor).withAlpha((look.dark ? .16 : .3) * surge * alpha), glow, Floor + .015, -ang);
+  }
+}
+function cornerPool(g, look, surge, flick) {
+  if (!look.dark) sprite(g, 1.3, 1.3, look.floor.withAlpha(.1 + .06 * flick + .2 * surge), glow, Floor + .016);
+  else if (surge > 0) sprite(g, 1.2, 1.2, White.withAlpha(.14 * surge), glow, Floor + .016);
+}
+// One spark: falls from the net's height under Gravity with a sideways drift (vx, vz cells/s), a
+// short tail behind it, and a small flash where it lands. g0 is where it left, on the ground.
+function fallingSpark(key, g0, vx, vz, age, look) {
+  const fall = Math.sqrt(2 * Hold / Gravity);
+  if (age < 0 || age >= fall + .1) return;
+  if (age < fall) {
+    const pos = at({ x: g0.x + vx * age, z: g0.z + vz * age }, 0, 0, Hold - .5 * Gravity * age * age);
+    const sx = vx, sz = vz - Gravity * age * Lift, sl = Math.hypot(sx, sz) || 1;
+    line(key, [{ x: pos.x - sx / sl * .14, z: pos.z - sz / sl * .14 }, pos], .03, look.bolt.withAlpha(.9), look.dark ? undefined : whiteGlow, Y + .043, 'none');
+    sprite(pos, .08, .08, White, glow, Y + .045);
+    return;
+  }
+  const u = (age - fall) / .1;
+  sprite({ x: g0.x + vx * fall, z: g0.z + vz * fall }, .18 * (1 - u), .12 * (1 - u), White.withAlpha(.8 * (1 - u)), glow, Floor + .02);
+}
+// Sparks spitting off a live line, SparkRate a second, each from where the line was when it left.
+// ends(t) gives the line's two ground ends at time t.
+function lineSparks(key, ends, lit, end, s, seed, look) {
+  const fall = Math.sqrt(2 * Hold / Gravity);
+  const first = Math.max(0, Math.floor((s - fall - .1 - lit) * SparkRate)), last = Math.floor((Math.min(s, end) - lit) * SparkRate);
+  for (let k = first; k <= last; k++) {
+    const sd = seed * 13 + k * 17, born = lit + (k + rand(sd)) / SparkRate;
+    if (born > s || born >= end) continue;
+    const [A, B] = ends(born), u = rand(sd + 1);
+    fallingSpark(`${key} ${k}`, { x: lerp(A.x, B.x, u), z: lerp(A.z, B.z, u) }, (rand(sd + 2) - .5) * 1.2, (rand(sd + 3) - .5) * 1.2, s - born, look);
+  }
+}
+// When a line ends it breaks and falls as sparks, BreakPerCell per cell of its length.
+function breakSparks(key, A, B, end, s, seed, look) {
+  const age = s - end;
+  if (age < 0 || age > .7) return;
+  const n = Math.ceil(Math.hypot(B.x - A.x, B.z - A.z) * BreakPerCell);
+  for (let k = 0; k < n; k++) {
+    const sd = seed * 29 + 500 + k * 13, u = (k + rand(sd + 1)) / n;
+    fallingSpark(`${key} ${k}`, { x: lerp(A.x, B.x, u), z: lerp(A.z, B.z, u) }, (rand(sd + 2) - .5) * 1.6, (rand(sd + 3) - .5) * 1.6, age - rand(sd) * .05, look);
+  }
+}
+// Points round the circle of radius R about c from angle a0 to a1 (radians), jittered in and out,
+// lifted by h. A level circle stays round on screen, so the Fūma's arcs need no per-facing work.
+function arcPts(c, R, a0, a1, jag, seed, h) {
+  const n = Math.max(6, Math.round(Math.abs(a1 - a0) * R / .1)), pts = [];
+  for (let i = 0; i <= n; i++) {
+    const u = i / n, a = a0 + (a1 - a0) * u, r = R + (i > 0 && i < n ? (rand(seed + i * 7) - .5) * 2 * jag * Math.sin(u * Math.PI) : 0);
+    pts.push(at({ x: c.x + Math.cos(a) * r, z: c.z + Math.sin(a) * r }, 0, 0, h));
+  }
+  return pts;
+}
+// A flash with short bolts thrown out of it: a weapon reached, a pawn caught or hit, a line cut.
 function spark(pos, size, look, alpha) {
   if (alpha <= 0) return;
   if (look.dark) sprite(pos, size * 1.6, size * 1.6, Ink.withAlpha(.3 * alpha), soft, Y + .044);
   else sprite(pos, size * 2.4, size * 2.4, look.halo.withAlpha(.4 * alpha), glow, Y + .044);
   sprite(pos, size, size, White.withAlpha(alpha), glow, Y + .046);
 }
-// A flash with short bolts thrown out of it: a weapon reached, a pawn caught or hit, a line cut.
 function burst(key, pos, age, life, size, look, count, seed) {
   if (age < 0 || age >= life) return;
   const u = age / life, f = 1 - u;
@@ -358,14 +511,6 @@ function fizzle(key, a, b, age, s, p, look) {
   boltLine(key, boltPts(a, head, .08, 77 + Math.floor(s * p.boil) * 13), .035, 1 - u, look, Y + .03, 'end', .5);
   burst(`${key} end`, head, age, .3, .25, look, 4, 31);
 }
-// Soft stretched discs along a line's ground track: the floor under the net.
-function floorStrip(A, B, look, alpha) {
-  const dx = B.x - A.x, dz = B.z - A.z, len = Math.hypot(dx, dz), ang = Math.atan2(dz, dx) * Mathf.Rad2Deg, k = Math.max(1, Math.ceil(len / 1.2));
-  for (let i = 0; i < k; i++) {
-    const u = (i + .5) / k;
-    sprite({ x: A.x + dx * u, z: A.z + dz * u }, len / k * 1.8, .6, look.floor.withAlpha(look.floorA * alpha), look.dark ? soft : glow, Floor + .014, -ang);
-  }
-}
 // The rule overlay: the cells a line's ground track crosses.
 function cells(A, B, o, alpha) {
   const seen = new Set(), n = Math.max(1, Math.ceil(Math.hypot(B.x - A.x, B.z - A.z) / .1));
@@ -375,6 +520,11 @@ function cells(A, B, o, alpha) {
     seen.add(key);
     draw(MeshPool.plane10, x, Floor + .006, z, .94, .94, 0, White.withAlpha(.13 * alpha));
   }
+}
+// The shake of a body the current runs through: a new offset of up to size on every redraw.
+function shakeOf(k, s, p, size) {
+  const step = Math.floor(s * p.boil);
+  return { x: (rand(step * 13 + k * 71 + 1) - .5) * 2 * size, z: (rand(step * 17 + k * 71 + 2) - .5) * 2 * size };
 }
 // Bolts crawling over a body at q (a pawn's ground position; the body spans 0 to 0.75 up the screen),
 // and a white flash about 3 times a second: the muscles lock.
@@ -392,7 +542,7 @@ function crackle(key, q, s, p, look, alpha, count, size, seed) {
 }
 
 // The Chidori charging in the caster's hand: a white core that beats and grows, bolts crackling out of
-// it and two up the arm (the Dark Chidori frame). Gone 0.15 s after the leap.
+// it and up the arm (the Dark Chidori frame). Gone 0.15 s after the leap.
 function chargeHand(hand, caster, s, p, look, T) {
   const u = clamp(s / T.leap), a = Math.min(1, u * 3) * (1 - clamp((s - T.leap) / .15));
   if (a <= 0) return;
@@ -414,7 +564,7 @@ function chargeHand(hand, caster, s, p, look, T) {
 }
 
 // Stand-ins. A shield belt's bubble, and how it pops; a mechanoid (a scyther-like body with two
-// blades); the blue EMP crackle a mechanoid keeps after the net.
+// blades); the blue EMP crackle a mechanoid keeps after the net; the shooter's gun and tracers.
 function bubble(q) {
   const c = at(q, 0, .32);
   sprite(c, 1.25, 1.25, ShieldBlue.withAlpha(.14), glow, Y + .01);
@@ -442,6 +592,23 @@ function emp(key, q, s, age, p) {
   crackle(key, q, s, p, EmpLook, .7, 2, 1, 900);
   const u = (age * 1.6) % 1;
   circle(at(q, 0, .32), .25 + .35 * u, .6 * (1 - u), Y + .02, EmpBlue);
+}
+// The raider behind the net shoots at the caster every ShotGap s while it holds. The tracers fly
+// through the lines untouched and wide of the caster: the net stops bodies, not bullets.
+function shots(shooter, caster, T, s) {
+  const dx = caster.x - shooter.x, dz = caster.z - shooter.z, len = Math.hypot(dx, dz), ux = dx / len, uz = dz / len;
+  const muzzle = { x: shooter.x + ux * .32, z: shooter.z + .3 + uz * .32 };
+  draw(MeshPool.plane10, shooter.x + ux * .18, pawnLayer + .003, shooter.z + .3 + uz * .18, .3, .05, -Math.atan2(dz, dx) * Mathf.Rad2Deg, Gun);
+  for (let i = 0, t0 = FirstShot; t0 < T.netEnd && t0 <= s; i++, t0 += ShotGap) {
+    const age = s - t0, miss = (rand(i * 31 + 7) < .5 ? -1 : 1) * (.5 + .4 * rand(i * 31 + 8));
+    if (age < .06) sprite(muzzle, .32, .32, Tracer.withAlpha(1 - age / .06), glow, Y + .04);
+    const end = { x: caster.x - uz * miss + ux * 2, z: caster.z + .3 + ux * miss + uz * 2 }, dl = Math.hypot(end.x - muzzle.x, end.z - muzzle.z);
+    const head = age * TracerSpeed;
+    if (head > dl + .6) continue;
+    const at1 = f => ({ x: lerp(muzzle.x, end.x, clamp(f / dl)), z: lerp(muzzle.z, end.z, clamp(f / dl)) }), h = at1(head), t = at1(head - .6);
+    line(`raiko tracer ${i}`, [t, h], .07, Tracer.withAlpha(.9), whiteGlow, Y + .04, 'none');
+    line(`raiko tracer ${i} core`, [t, h], .025, White, whiteGlow, Y + .0402, 'none');
+  }
 }
 
 export default {
@@ -492,6 +659,16 @@ export default {
     const lift = g => at(g, 0, 0, Hold);
     const live = (L, t) => !L.fails && t >= L.lit && t < Math.min(L.snap, T.netEnd);
 
+    // Where each pawn is drawn: a body the current runs through shakes on every redraw.
+    const bodies = S.pawns.map((P, k) => {
+      const q = pawnAt(P, s), held = s >= P.caught && s < T.netEnd;
+      const emped = P.kind === 'mech' && isFinite(P.caught) && s >= T.netEnd && s < T.netEnd + MechExtra;
+      const size = held ? ShakeHeld : emped || P.hits.some(th => s >= th && s < th + HitStun) ? ShakeHit : 0;
+      if (!size) return q;
+      const j = shakeOf(k, s, p, size);
+      return { x: q.x + j.x, z: q.z + j.z };
+    });
+
     // The caster: the Chidori charges in its hand, then leaps to the first weapon; the bolt lingers.
     figure(S.caster, CasterColour, 1, 0, sun, strength);
     const hand = { x: S.caster.x + S.d.x * .26, z: S.caster.z + .25 + S.d.z * .26 };
@@ -499,31 +676,44 @@ export default {
     const lu = (s - T.leap) / Leap;
     if (lu >= 0 && s < T.leap + Leap + .12) {
       const first = lift(weaponAt(S.W[0], s, T)), head = lu < 1 ? { x: lerp(hand.x, first.x, lu), z: lerp(hand.z, first.z, lu) } : first;
-      lightning('raiko leap', hand, head, s, p, look, lu < 1 ? 1 : 1 - (s - T.leap - Leap) / .12, 11);
+      lightning('raiko leap', [hand, head], s, p, look, lu < 1 ? 1 : 1 - (s - T.leap - Leap) / .12, 11, lu < 1 ? 1 : 0);
       if (lu < 1) spark(head, .3, look, 1);
     }
 
-    // The lines, lit one after another; each weapon flashes as the run reaches it.
+    // The lines, lit one after another. Each flashes on its own rhythm, carries two pulses, lights
+    // the floor, spits sparks, bends through the chest of everyone it holds, and breaks into sparks.
+    const cornerSurge = S.W.map(() => 0);
     T.links.forEach((L, i) => {
       if (s < L.start) return;
-      const key = `raiko link ${i}`, A = joint(S, T, L.a, L.b, s), B = joint(S, T, L.b, L.a, s), a = lift(A), b = lift(B);
+      const key = `raiko link ${i}`, seed = 20 + i * 7, A = joint(S, T, L.a, L.b, s), B = joint(S, T, L.b, L.a, s), a = lift(A), b = lift(B);
       if (L.fails) { fizzle(key, a, b, s - L.start, s, p, look); return; }
       const u = (s - L.start) / PerLink;
       if (u < 1) {
         const head = { x: lerp(a.x, b.x, u), z: lerp(a.z, b.z, u) };
-        lightning(key, a, head, s, p, look, 1, 20 + i * 7);
+        lightning(key, [a, head], s, p, look, 1, seed, 1);
         spark(head, .26, look, 1);
         return;
       }
-      const end = Math.min(L.snap, T.netEnd), cut = L.snap <= T.netEnd || S.letsGo, f = 1 - clamp((s - end) / (cut ? SnapOut : FadeOut));
+      const end = Math.min(L.snap, T.netEnd), cut = L.snap <= T.netEnd || S.letsGo, f = 1 - clamp((s - end) / CutOut);
+      lineSparks(`${key} spark`, t => [joint(S, T, L.a, L.b, t), joint(S, T, L.b, L.a, t)], L.lit, end, s, seed, look);
       if (f > 0) {
-        lightning(key, a, b, s, p, look, f, 20 + i * 7, .5 + .5 * f);
-        floorStrip(A, B, look, f);
+        const surge = Math.max(surgeOf(seed, s), s >= T.formed && s < T.formed + CloseFlash ? 1 : 0) * f;
+        const dx = b.x - a.x, dz = b.z - a.z, l2 = dx * dx + dz * dz || 1;
+        const chests = S.pawns.map((P, k) => ({ P, k })).filter(({ P }) => P.link === i && s >= P.caught && s < T.netEnd)
+          .map(({ k }) => { const c = at(bodies[k], 0, .38); return { x: c.x, z: c.z, u: ((c.x - a.x) * dx + (c.z - a.z) * dz) / l2 }; })
+          .filter(c => c.u > .02 && c.u < .98).sort((m, n) => m.u - n.u);
+        pulses(lightning(key, [a, ...chests, b], s, p, look, f, seed, surge), s, seed, look, f);
+        lightPool(A, B, look, f, surge, .7 + .3 * rand(step * 3 + i));
         if (p.cells) cells(A, B, o, f);
+        cornerSurge[L.a] = Math.max(cornerSurge[L.a], surge);
+        cornerSurge[L.b] = Math.max(cornerSurge[L.b], surge);
       }
-      if (cut && s >= end) {
-        burst(`${key} cut a`, a, s - end, .22, .35, look, 4, 60 + i);
-        burst(`${key} cut b`, b, s - end, .22, .35, look, 4, 80 + i);
+      if (s >= end) {
+        breakSparks(`${key} break`, joint(S, T, L.a, L.b, end), joint(S, T, L.b, L.a, end), end, s, seed, look);
+        if (cut) {
+          burst(`${key} cut a`, a, s - end, .22, .35, look, 4, 60 + i);
+          burst(`${key} cut b`, b, s - end, .22, .35, look, 4, 80 + i);
+        }
       }
     });
     const reached = [{ i: 0, t: T.reach0, ring: false }];
@@ -531,14 +721,15 @@ export default {
     reached.forEach((R, j) => burst(`raiko reach ${j}`, lift(weaponAt(S.W[R.i], s, T)), s - R.t, CornerFlash * (R.ring ? 1.6 : 1),
       R.ring ? .6 : .38, look, R.ring ? 7 : 5, 140 + j * 9));
 
-    // The weapons: held over Amenoyodomi's mark, then flying on charged after a let-go.
+    // The weapons: held over Amenoyodomi's mark, lit while they are corners, then flying on charged.
     S.W.forEach((w, i) => {
-      const g = weaponAt(w, s, T), deg = Math.atan2(w.dir.z, w.dir.x) * Mathf.Rad2Deg;
+      const g = weaponAt(w, s, T), deg = Math.atan2(w.dir.z, w.dir.x) * Mathf.Rad2Deg, sg = cornerSurge[i];
       const flying = s >= T.letGo && s < w.stopT, corner = T.links.some(L => (L.a === i || L.b === i) && live(L, s));
       if (s < T.letGo) {
         const pulse = .9 + .1 * Math.sin(s * 5 + i);
         draw(heldRing, g.x, Floor + .02, g.z, HeldRing * pulse, HeldRing * pulse, 0, Lavender.withAlpha(.3));
       }
+      if (corner) cornerPool(g, look, sg, .7 + .3 * rand(step * 5 + i));
       if (w.kind === 'fuma') {
         const turn = turnAt(w, s, T);
         if (s >= w.stopT) {
@@ -550,22 +741,28 @@ export default {
         sprite({ x: g.x + sun.x * h, z: g.z + sun.z * h }, 1, 1, ShadowInk.withAlpha(strength * .7), soft, shadowLayer);
         sprite(c, FumaSize, FumaSize, Color.white, fumaMat, projectileLayer, turn);
         if (flying) {
+          // Charged in flight: broken arcs of lightning spinning round it (never a closed ring: a black
+          // ring round the Fūma read as a tyre in the Amaterasu sketch), and a jagged tail.
           for (let k = 1; k <= 2; k++) sprite(c, FumaSize, FumaSize, Color.white.withAlpha(.45 - .15 * k), fumaGhost, projectileLayer - .001 * k, turn - 22 * k);
-          for (let k = 0; k < 5; k++) {
-            const sd = step * 41 + k * 7, ang = rand(sd) * Math.PI * 2, r0 = .5 * FumaSize, r1 = r0 + .15 + .25 * rand(sd + 1);
-            boltLine(`raiko fuma rim ${k}`, boltPts({ x: c.x + Math.cos(ang) * r0, z: c.z + Math.sin(ang) * r0 }, { x: c.x + Math.cos(ang) * r1, z: c.z + Math.sin(ang) * r1 }, .05, sd + 2, .07),
-              .03, .9, look, Y + .031 + k * .0003, 'end');
+          for (let k = 0; k < 3; k++) {
+            const sd = step * 37 + k * 5, a0 = -turn * Mathf.Deg2Rad + k * 2.094 + rand(sd) * .5, span = .9 + .5 * rand(sd + 1);
+            const pts = arcPts(g, (.46 + .1 * rand(sd + 2)) * FumaSize, a0, a0 + span, .1, sd + 3, h);
+            boltStroke(`raiko fuma ring ${k}`, pts, widths(pts.length - 1, .04, sd), .95, look, Y + .031 + k * .0003, k ? 0 : .7);
           }
           boltLine('raiko fuma trail', boltPts(at({ x: g.x - w.dir.x * 1.1, z: g.z - w.dir.z * 1.1 }, 0, 0, h), c, .1, step * 43, .15), .04, .85, look, Y + .03, 'both', .6);
         } else if (corner) {
-          // Part of the net: arcs jump between the blade tips as it turns.
+          // Part of the net: arcs jump round the rim from a blade tip toward the next as it turns. Each
+          // shows on about 60 % of redraws and covers 55-90 of the 90 degrees, so they never close
+          // into a ring (a black ring round the Fūma read as a tyre in the Amaterasu sketch).
           for (let k = 0; k < 4; k++) {
-            const A = lift(blade(g, turn, k, TipR)), B = lift(blade(g, turn, (k + 1) % 4, TipR));
-            boltLine(`raiko fuma arc ${k}`, boltPts(A, B, .09, step * 37 + k * 5, .16), .03, .8, look, Y + .031 + k * .0003, 'none', k ? 0 : .5);
+            const sd = step * 37 + k * 5;
+            if (rand(sd + 9) > .6 && sg < .3) continue;
+            const a0 = bladeAngle(turn, k, TipR), pts = arcPts(g, TipR * FumaSize, a0, a0 + Math.PI / 2 * (.6 + .4 * rand(sd + 1)), .1, sd, Hold);
+            boltStroke(`raiko fuma arc ${k}`, pts, widths(pts.length - 1, .032 * (1 + .8 * sg), sd), .85, look, Y + .031 + k * .0003, k ? .8 * sg : .5 + .5 * sg);
           }
           T.links.forEach(L => {
             if (!live(L, s) || (L.a !== i && L.b !== i)) return;
-            spark(lift(joint(S, T, i, L.a === i ? L.b : L.a, s)), .2 * (.75 + .25 * Math.sin(s * 37 + i * 2)), look, .9);
+            spark(lift(joint(S, T, i, L.a === i ? L.b : L.a, s)), .2 * (.75 + .25 * Math.sin(s * 37 + i * 2)) * (1 + .8 * sg), look, .9);
           });
         }
         return;
@@ -573,19 +770,19 @@ export default {
       if (s < w.stopT) {
         sprite({ x: g.x + sun.x * Hold, z: g.z + sun.z * Hold }, .1, .5, ShadowInk.withAlpha(strength * .8), soft, shadowLayer, 90 - deg);
         sprite(lift(g), KunaiSize, KunaiSize, Color.white, kunaiMat, projectileLayer, 90 - deg);
-        if (corner) spark(lift(g), .2 * (.75 + .25 * Math.sin(s * 37 + i * 2)), look, .9);
+        if (corner) spark(lift(g), .2 * (.75 + .25 * Math.sin(s * 37 + i * 2)) * (1 + .8 * sg), look, .9);
         if (flying) {
           const tail = lift({ x: g.x - w.dir.x * .8, z: g.z - w.dir.z * .8 });
           boltLine(`raiko trail ${i}`, boltPts(tail, lift(g), .07, step * 29 + i * 3, .13), .035, .9, look, Y + .03, 'both', .6);
           spark(lift(g), .16, look, .8);
         }
-      } else if (w.hit) stuckKunai(pawnAt(S.pawns[w.hit.pawn], s), deg, 0);
+      } else if (w.hit) stuckKunai(bodies[w.hit.pawn], deg, 0);
       else sprite(g, .62, .62, Color.white, kunaiMat, Floor + .06, 90 - deg);
     });
 
     // The pawns: caught, held, let go; a scorch stays where each one was held.
     S.pawns.forEach((P, k) => {
-      const q = pawnAt(P, s), key = `raiko pawn ${k}`, held = s >= P.caught;
+      const q = bodies[k], key = `raiko pawn ${k}`, held = s >= P.caught;
       if (held) {
         const cq = pawnAt(P, P.caught);
         sprite(at(cq, 0, .02), .78, .46, Ink.withAlpha(.34 * smooth((Math.min(s, T.netEnd) - P.caught) / 1.5)), soft, Floor + .012);
@@ -593,6 +790,7 @@ export default {
       if (P.kind === 'mech') mechFigure(q, sun, strength);
       else figure(q, P.kind === 'ally' ? Ally : EnemyColour, 1, 0, sun, strength);
       if (P.kind === 'shield') { if (!held) bubble(q); else bubbleBreak(q, s - P.caught); }
+      if (P.kind === 'shooter') shots(q, S.caster, T, s);
       if (held) {
         burst(`${key} catch`, at(q, 0, .4), s - P.caught, .16, .5, look, 6, 200 + k * 11);
         crackle(`${key} held`, q, s, p, look, 1 - clamp((s - T.netEnd) / FadeOut), 3, 1, 300 + k * 17);
