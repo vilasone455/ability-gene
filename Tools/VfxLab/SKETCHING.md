@@ -192,6 +192,7 @@ Create materials once, at the top of the file.
 | `ShaderDatabase.Mote` | Same as Transparent in the lab | |
 | `ShaderDatabase.MoteGlow` | Additive: adds its colour to what is under it and never darkens | Glows, flashes, energy |
 | `ShaderDatabase.Cutout` | A pixel is either drawn fully or not at all, at 50 % alpha | Hard-edged sprites |
+| `InvertShader` (from `engine.js`) | Negative of what is under it, by alpha: draw with colour `(a, a, a, a)`. Not in ShaderDatabase: in C# it is `Hidden/Internal-Colored` with `_SrcBlend` OneMinusDstColor and `_DstBlend` OneMinusSrcAlpha | Screen-negative flashes |
 
 ### Random numbers
 

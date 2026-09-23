@@ -15,18 +15,22 @@
 //
 // Showcase: 0.00–0.50 gaze; 0.50 ignition / 0.18 s eruption; 2.00 adjacent pawn
 // catches; 4.00 caster releases; 4.30 flames gone, permanent char remains to 4.90.
-// Drawing: independent curved tongues, with narrow plum rims and black centres, rise from
+// Drawing: curved black tongues with independently flowing charcoal/violet inner wisps rise from
 // staggered ground-depth rows. Back flames draw behind the pawn, shorter front flames across its
 // feet; height projects north by Lift. The outline is screen-oriented for every caster facing.
 // Ignition overshoots, spits radial black scraps, then settles into upward travelling curls.
-// Detached cinders have analytic birth times, including on release: scrubbing is deterministic.
+// Hooked black strands carry two cobalt-edged rails and spaced crossbars, with real open gaps.
+// Four attached curls roll independently; two loose curled fragments unwind and rise.
+// Cinders shrink into translucent smoke, interleaved with small rising violet sparks.
+// All particle births are analytic, including on release: scrubbing is deterministic.
 // Area-fire roots fill a disc and sort north to south, avoiding visible ranks of flames.
-// Ground soot and shadows follow the actual footprint / sun, never a floating flattened ring.
+// A continuous purple-black radial stain anchors the roots at ground height and persists.
+// Contact soot and sun-aligned shadows sit over that stain; the cell footprint stays circular.
 // Only the cinders use lab/black-flame (generator below; still needs a PNG before a C# port).
 // The gameplay proposal above is unchanged; no orb cost belongs to this eye technique.
 import { AltitudeLayer, Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../js/engine.js';
 import { registerLabTexture, pixels, fbm } from '../js/standins.js';
-import { draw, Body, Lift } from './lib/six-paths-solid.js';
+import { draw, mesh, Body, Lift } from './lib/six-paths-solid.js';
 import { P, Y, Floor, at, sprite, band, trail, glow, soft, rand } from './lib/six-paths-impact.js';
 import { figure, whiteGlow, CasterColour, EnemyColour } from './lib/flying-thunder-god.js';
 
@@ -81,18 +85,21 @@ function redStar(pos, size, alpha) {
   draw(MeshPool.plane10, pos.x, Y + .21, pos.z, size * .12, size * 2, 0, EmberLit.withAlpha(alpha), whiteGlow);
 }
 
-// The black body stays opaque. Only the thin broken edges carry light; a full bright outline
-// makes black fire look like neon ropes. Each tongue narrows irregularly and hooks at its tip.
+// Black silhouettes contain broad, dark inner wisps. Their width and position flow on a
+// separate clock so the mid-tones move through the body instead of outlining a solid object.
 const Ink = new Color(.009, .006, .016), Plum = new Color(.20, .065, .23);
 const Hot = new Color(.77, .25, .42);
+const Charcoal = new Color(.105, .085, .145), VioletWisp = new Color(.20, .12, .255);
+const Spark = new Color(.63, .32, .88), SparkCore = new Color(.84, .65, 1);
+const Smoke = new Color(.105, .075, .14), GroundViolet = new Color(.065, .025, .095);
 const puff = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.Transparent);
 const shadowLayer = AltitudeLayer.Shadows.AltitudeFor();
 const TongueSteps = 24;
 
-function tongue(key, root, h, w, clock, seed, alpha, layer, edge, lean = 0) {
+function tongue(key, root, h, w, clock, seed, alpha, layer, edge, lean = 0, inner = .75) {
   if (h < .005 || alpha <= 0) return;
   const phase = rand(seed) * Math.PI * 2, left = [], right = [], innerL = [], innerR = [];
-  const lip = [], lipInner = [];
+  const lip = [], lipInner = [], shadeL = [], shadeR = [], wispL = [], wispR = [];
   for (let j = 0; j <= TongueSteps; j++) {
     const u = j / TongueSteps;
     // The wave runs from root to tip; frequencies differ per flame so the bed never sways as one.
@@ -110,10 +117,136 @@ function tongue(key, root, h, w, clock, seed, alpha, layer, edge, lean = 0) {
     const seam = .018 * edge * Math.pow(Math.max(0, Math.sin(u * 9 - clock * 5 + phase)), 3) * Math.sin(u * Math.PI);
     lip.push({ x: cx - half + rim, z: cz });
     lipInner.push({ x: cx - half + rim + seam, z: cz });
+    // A broad inner flame, with its own moving shoulder and height. Its darkest side remains
+    // the opaque silhouette, so it reads as black fire even with the mid-tones at full strength.
+    const innerTip = .76 + .1 * Math.sin(clock * 3.1 + phase);
+    const v = clamp(u / innerTip), belly = Math.pow(Math.max(0, Math.sin(v * Math.PI)), .72);
+    const flow = Math.sin(u * 10 - clock * 6.3 + phase);
+    const centre = cx + half * (-.12 + .20 * flow);
+    const spread = half * belly * (.59 + .13 * Math.sin(u * 16 - clock * 8 + phase));
+    shadeL.push({ x: centre - spread, z: cz });
+    shadeR.push({ x: centre + spread * .82, z: cz });
+    // The lighter wisp occupies only one moving lobe, not the entire inner flame.
+    const lobe = Math.pow(Math.max(0, Math.sin(u * 8.5 - clock * 4.8 + phase)), 2);
+    const litCentre = centre - spread * .28;
+    const litWidth = spread * (.18 + .36 * lobe);
+    wispL.push({ x: litCentre - litWidth, z: cz });
+    wispR.push({ x: litCentre + litWidth * .6, z: cz });
   }
   band(key + ' edge', left, right, Plum.withAlpha(alpha), layer);
   band(key + ' body', innerL, innerR, Ink.withAlpha(alpha), layer + .0002);
-  if (edge > 0) band(key + ' seam', lip, lipInner, Hot.withAlpha(alpha * edge * .8), layer + .0004);
+  if (inner > 0) {
+    band(key + ' inner charcoal', shadeL, shadeR, Charcoal.withAlpha(alpha * inner), layer + .0003);
+    band(key + ' inner violet', wispL, wispR, VioletWisp.withAlpha(alpha * inner * .72), layer + .0004);
+  }
+  if (edge > 0) band(key + ' seam', lip, lipInner, Hot.withAlpha(alpha * edge * .45), layer + .00045);
+}
+
+// The second motif in the references: two curling rails joined by short ribs, with actual
+// transparent gaps. These are flame filaments, not solid ribbons painted with stripes.
+const CurlEdge = new Color(.18, .20, .62), CurlLight = new Color(.27, .28, .78);
+const CurlSamples = 72, RibPitch = .085;
+
+function ribbedStrand(key, path, width, alpha, layer, edge) {
+  if (alpha <= .001 || width < .004) return;
+  // Resample by arc length so tight hooks retain legible, evenly spaced ribs.
+  const lengths = [0];
+  for (let i = 1; i < path.length; i++) lengths.push(lengths[i - 1] + Math.hypot(path[i].x - path[i - 1].x, path[i].z - path[i - 1].z));
+  const total = lengths[lengths.length - 1];
+  if (total < .025) return;
+  const count = Math.max(8, Math.ceil(total / .025)), left = [], right = [];
+  let segment = 1;
+  for (let i = 0; i <= count; i++) {
+    const u = i / count, distance = total * u;
+    while (segment < path.length - 1 && lengths[segment] < distance) segment++;
+    const a = path[segment - 1], b = path[segment];
+    const span = lengths[segment] - lengths[segment - 1] || 1, t = (distance - lengths[segment - 1]) / span;
+    const dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz) || 1;
+    // Both rails narrow into the curled tip; no closed circle or regular coil at the end.
+    const half = width * .5 * Math.pow(Math.sin(u * Math.PI), .4) * (1 + .20 * Math.sin(u * 23) + .12 * Math.sin(u * 47));
+    const q = { x: a.x + dx * t, z: a.z + dz * t };
+    left.push({ x: q.x - dz / len * half, z: q.z + dx / len * half });
+    right.push({ x: q.x + dz / len * half, z: q.z - dx / len * half });
+  }
+  // Batched disconnected quads: empty space between ribs stays empty, including over terrain.
+  const verts = [], tris = [], ribCount = Math.max(4, Math.floor(total / RibPitch));
+  for (let i = 1; i < ribCount; i++) {
+    const u = (i + (rand(i * 13) - .5) * .32) / ribCount, j = Math.round(u * count);
+    const a = left[j], b = right[Math.min(count, Math.max(0, j + Math.round((rand(i * 7) - .5) * 4)))];
+    const dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz) || 1;
+    const thick = .018 * (.65 + rand(i * 17) * .8) * Math.sin(u * Math.PI), nx = -dz / len * thick, nz = dx / len * thick;
+    const n = verts.length / 2;
+    verts.push(a.x+nx,a.z+nz, b.x+nx,b.z+nz, b.x-nx,b.z-nz, a.x-nx,a.z-nz);
+    tris.push(n,n+1,n+2,n,n+2,n+3);
+  }
+  const ribs = mesh(key + ' ribs'); ribs.setFlat(verts, tris);
+  draw(ribs, 0, layer, 0, 1, 1, 0, Ink.withAlpha(alpha));
+  // Cobalt glancing light traces one side; the rails and crossbars keep black centres.
+  trail(key + ' left edge', left, .041, CurlEdge.withAlpha(alpha * edge), layer + .0001);
+  trail(key + ' right edge', right, .038, CurlLight.withAlpha(alpha * edge * .85), layer + .0001);
+  trail(key + ' left ink', left, .029, Ink.withAlpha(alpha), layer + .0002);
+  trail(key + ' right ink', right, .027, Ink.withAlpha(alpha), layer + .0002);
+}
+
+function curlPath(root, reach, rise, radius, turn, side, phase, stem = true) {
+  const path = [];
+  // A rising stem meets an inward spiral at its bottom tangent. Signed mirroring preserves
+  // left/right curls without rotating height away from the screen's northward lift.
+  const startAngle = -Math.PI / 2;
+  const centre = at(root, side * reach, rise + radius);
+  const stemSteps = stem ? 24 : 0;
+  for (let i = 0; i < stemSteps; i++) {
+    const u = i / stemSteps, k = u * u;
+    path.push(at(root, side * (reach * k + Math.sin(u * Math.PI) * .07 * Math.sin(phase)), rise * smooth(u)));
+  }
+  for (let i = 0; i <= CurlSamples; i++) {
+    const u = i / CurlSamples, a = startAngle + turn * u;
+    const r = radius * (1 - .76 * smooth(u));
+    // Uneven lobes and flattening keep the scroll from becoming a perfect mechanical coil.
+    const rough = 1 + .09 * Math.sin(u * 17 + phase) * Math.sin(u * Math.PI);
+    const skew = .16 * Math.sin(u * Math.PI) * Math.sin(phase * .8);
+    path.push(at(centre, side * (Math.cos(a) + skew) * r * rough,
+      Math.sin(a) * r + radius * .13 * Math.sin(u * Math.PI) * Math.sin(u * 9 + phase)));
+  }
+  return path;
+}
+
+function flameCurls(key, c, w, height, age, clock, life, t0, t, seed, p) {
+  if (life > .001) {
+    // Four hooks on the shoulders and above the fire; their open centres read against the map.
+    const hooks = [
+      { side:-1, root:-.62, base:.30, rise:.24, r:.23, reach:.43 },
+      { side: 1, root: .65, base:.36, rise:.33, r:.28, reach:.46 },
+      { side:-1, root:-.25, base:.72, rise:.16, r:.24, reach:.30 },
+      { side: 1, root: .22, base:.88, rise:.12, r:.20, reach:.25 },
+    ];
+    const scale = Math.min(1.3, .8 + w * .3) * life;
+    hooks.forEach((h,i) => {
+      const phase = clock * (2.1 + i * .17) + seed + i * 4;
+      const root = at(c, h.root * w, 0, height * h.base * life);
+      const radius = h.r * scale * (.78 + .22 * Math.sin(phase));
+      const reach = h.reach * scale * (.83 + .17 * Math.sin(phase * .7));
+      const turn = Math.PI * (1.38 + .37 * Math.sin(phase));
+      const pts = curlPath(root, reach, h.rise * scale, radius, turn, h.side, phase);
+      ribbedStrand(key + ' attached curl ' + i, pts, .125 * scale * (.82 + .18 * Math.sin(phase + 1)), Math.min(1, life * 3), Y + .116 + i * .001, .45 + p.edge * .55);
+    });
+  }
+  // Two curled fragments peel upward, gradually open and fade. Analytic births stop at release.
+  if (p.particles <= 0) return;
+  for (let i = 0; i < 2; i++) {
+    const period = .86, offset = .24 + i * .34;
+    const last = Math.min(age, t.release - t0 - .001);
+    const cycle = Math.floor((last - offset) / period);
+    if (cycle < 0) continue;
+    const born = offset + cycle * period, u = (age - born) / period;
+    if (u < 0 || u >= 1) continue;
+    const side = i === 0 ? -1 : 1, k = seed + cycle * 31 + i * 17;
+    const q = at(c, side * w * (.7 + .3 * u), 0,
+      height * (.72 + rand(k) * .18) * smooth(born / p.rise) + u * .8);
+    const r = (.16 + rand(k + 1) * .07) * (1 - u * .3);
+    const pts = curlPath(q, 0, 0, r, Math.PI * (1.7 - u * .65), side, 0, false);
+    ribbedStrand(key + ' loose curl ' + i, pts, .085 * (1 - u * .5), Math.sin(u * Math.PI) * (1 - u), Y + .125, .55 + p.edge * .45);
+  }
 }
 
 function ignition(key, c, w, age, seed) {
@@ -145,11 +278,15 @@ function fire(key, c, w, height, t0, s, p, t, seed, sun, strength, cell = false)
   const clock = age * p.speed;
   // A rough bed, with little glowing fissures. It remains after the caster releases the fire.
   const stain = smooth(age / .22);
-  sprite(c, w * 3.3, depth * 3.3, Scorch.withAlpha(.75 * stain), puff, Floor + .02);
+  // Continuous radial gradient at the true ground position. A dark contact centre and a
+  // restrained purple penumbra stay visible beneath the flames and after they release.
+  sprite(c, w * 3.5, w * 3.5, GroundViolet.withAlpha(.68 * stain), soft, Floor + .018);
+  sprite(c, w * 2.45, w * 2.45, Ink.withAlpha(.85 * stain), soft, Floor + .019);
+  sprite(c, w * 2.9, depth * 2.9, Scorch.withAlpha(.62 * stain), puff, Floor + .02);
   for (let i = 0; i < 12; i++) {
     const a = i * 2.399, r = .55 + rand(seed + i) * .5;
     const q = at(c, Math.cos(a) * w * r, Math.sin(a) * depth * r);
-    sprite(q, w * (.38 + rand(i) * .4), depth * .6, Ink.withAlpha(stain * .6), puff, Floor + .021);
+    sprite(q, w * (.38 + rand(i) * .4), depth * .6, Ink.withAlpha(stain * .30), puff, Floor + .021);
     if (life > 0) {
       const pts = [q, at(q, Math.cos(a + .4) * .13, Math.sin(a + .4) * .13), at(q, Math.cos(a) * .25, Math.sin(a) * .25)];
       trail(key + ' coal ' + i, pts, .025, EmberLit.withAlpha(life * (.3 + .2 * Math.sin(clock * 8 + i))), Floor + .025);
@@ -198,17 +335,18 @@ function fire(key, c, w, height, t0, s, p, t, seed, sun, strength, cell = false)
         const shadowLen = Math.hypot(sun.x, sun.z) * h;
         sprite(mid, width * 2.5, shadowLen + width, Ink.withAlpha(strength * life * .35), soft,
           shadowLayer + .003, -Math.atan2(sun.x, sun.z) * 180 / Math.PI);
-        tongue(key + ' tongue ' + row + '-' + i, root, h, width, clock, k, Math.min(1, life * 4), layer, p.edge, lean);
+        tongue(key + ' tongue ' + row + '-' + i, root, h, width, clock, k, Math.min(1, life * 4), layer, p.edge, lean, p.inner);
         // A smaller fork peels away from a flank. It shares the flame's base but not its rhythm.
         if (i % 3 === 0) tongue(key + ' fork ' + row + '-' + i,
           at(root, (rand(k + 6) - .5) * width, 0), h * .62, width * .50,
-          clock * 1.18, k + 33, Math.min(1, life * 4), layer + .0005, p.edge * .6, lean - width * .8);
+          clock * 1.18, k + 33, Math.min(1, life * 4), layer + .0005, p.edge * .6, lean - width * .8, p.inner * .8);
       }
     }
   }
+  flameCurls(key, c, w, height, age, clock, life, t0, t, seed, p);
   // Analytic births stop at release; already airborne scraps finish their own lifetime.
   // No frame-to-frame simulation, and no particle jumps caused by changing random seeds mid-flight.
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < Math.round(20 * p.particles); i++) {
     const k = seed + i * 17, period = .55 + rand(k) * .35, offset = rand(k + 1) * period;
     const lastBirth = Math.min(age, t.release - t0 - .001);
     const cycle = Math.floor((lastBirth - offset) / period);
@@ -219,8 +357,21 @@ function fire(key, c, w, height, t0, s, p, t, seed, sun, strength, cell = false)
     const h = height * (.4 + .4 * rand(r + 3)) * smooth(born / p.rise) + u * (1.0 + rand(r + 4));
     const pos = at(c, x + Math.sin(u * 4 + r) * .14 + u * .18, (rand(r + 5) - .5) * depth, h);
     const fade = Math.sin(u * Math.PI) * (1 - u), size = .04 + rand(r + 6) * .08;
-    sprite(pos, size * 1.5, size * (2.5 + u), Ink.withAlpha(fade * 1.6), flame, Y + .13, Math.sin(u * 5 + k) * 28);
-    if (i % 3 === 0) sprite(at(pos, -.02, -.025), size * .34, size * .55, EmberLit.withAlpha(fade), flameGlow, Y + .131);
+    const cinder = 1 - smooth((u - .28) / .45);
+    sprite(pos, size * 1.5 * (1 - u * .55), size * (2.5 - u),
+      Ink.withAlpha(fade * 1.6 * cinder), flame, Y + .13, Math.sin(u * 5 + k) * 28);
+    // The same scrap dissolves into a growing, translucent puff as it rises.
+    const smoke = smooth((u - .28) / .3) * (1 - smooth((u - .62) / .38));
+    sprite(at(pos, .035 * u, .06 * u), size * (2 + u * 3.5), size * (2.5 + u * 4),
+      Smoke.withAlpha(smoke * .28), puff, Y + .129);
+    if (i % 2 === 0) {
+      const sparkPos = at(pos, Math.sin(u * 5 + r) * .09, .12 + u * .22);
+      const sparkFade = Math.sin(u * Math.PI) * (1 - smooth((u - .65) / .35));
+      sprite(sparkPos, .15, .18, Spark.withAlpha(sparkFade * .38), glow, Y + .131);
+      sprite(sparkPos, .025, .05, SparkCore.withAlpha(sparkFade * .82), flameGlow, Y + .132);
+      trail(key + ' spark ' + i, [at(sparkPos, -.02, -.13), at(sparkPos, -.01, -.04), sparkPos],
+        .013, Spark.withAlpha(sparkFade * .45), Y + .131);
+    }
   }
 }
 
@@ -242,6 +393,8 @@ export default {
     height: P('Flame height (cells)', 2.6, 1, 4, .1, 'Flame'),
     width: P('Flame half-width on a pawn (cells)', .7, .4, 1.5, .05, 'Flame'),
     speed: P('Flame speed', 1, .3, 2.5, .1, 'Flame'),
+    inner: P('Inner flame mid-tones', .85, 0, 1, .05, 'Flame'),
+    particles: P('Cinders and sparks', 1, 0, 2, .1, 'Flame'),
     edge: P('Flame edge intensity (0-1)', .65, 0, 1, .05, 'Flame'),
     radius: P('Cell fire radius (cells)', 1.5, .8, 2, .1, 'Flame'),
     dim: P('Screen dim on ignite (0-1)', .18, 0, .7, .05, 'Flame'),
