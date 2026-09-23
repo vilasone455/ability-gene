@@ -14,8 +14,8 @@
 // Pairs with Amenotejikara: swap a burning pawn in among its own side, or a burning kunai into a path.
 //
 // Look. The main reference is Storm 4 (YouTube LFZhDUGq6kQ, 1:07-1:09, Sasuke on Killer Bee), chosen
-// by the user: black flames lit from inside by thin violet streaks, black curling wisps with a violet
-// edge peeling off the sides, a wide dark shadow on the ground, small black flames popping up on the
+// by the user: black flames lit from inside by thin violet streaks, black brush-stroke wisps flung
+// off the sides, a wide dark shadow on the ground, small black flames popping up on the
 // floor round the target as it catches, and a fire that balloons out wide first and then stretches
 // into a tall column. The rest comes from the anime (Shippuden 137-138, 142-143, Sasuke vs Danzo):
 // the flames appear on the target at once with no projectile, cling to the body as ragged blotches,
@@ -33,9 +33,11 @@
 //              0.18. Blood runs from the caster's eye from here on, two streaks.
 //   burning    26 strands, 5 short base tongues and 3 tall core tongues (behind the pawn, the column's
 //              body) per pawn, each on its own 0.4-0.95 s cycle: it grows, sways, tears its top off and
-//              regrows. Torn tops from the flanks are curling wisps (a thin hook on a tightening arc,
-//              violet rim) that fly outward; from the middle, small black flecks. Every strand carries
-//              two thin violet streaks that creep up it and flicker in steps 12 times a second, and one
+//              regrows. About a third of the tops torn from the flanks are flung outward as black
+//              brush-stroke wisps (a blunt ragged head thinning into a tail that curls, 0.35-0.65
+//              cells long, a short violet streak on the inside of the curl), 3-6 in the air at once;
+//              the rest, and tops from the middle, are small black flecks. Every strand carries two
+//              thin violet streaks that creep up it and flicker in steps 12 times a second, and one
 //              violet speck. 8 blotches lick up the body; the pawn shows through the gaps. 12 loose
 //              flecks rise and vanish. A dark pool and a wide soft shadow darken the floor.
 //   2.00       the neighbour catches: 3 flecks jump across in 0.22 s, then blotches and strands creep
@@ -204,20 +206,32 @@ function veins(key, spine, clock, seed, alpha, layer, light) {
   sprite(q, .05, .05, light.withAlpha(alpha * rand(step * 7 + seed) * .9), glow, layer + .00005);
 }
 
-// A curling black wisp torn off the side of the flame (Storm 4): a comma-shaped stroke on a tightening
-// arc round pos, with a thin rim of the inner light on its outer edge. rot is in radians.
-function wisp(key, pos, r, side, rot, sweep, alpha, layer, light) {
-  if (alpha <= .01 || r < .01) return;
-  const N = 14, outer = [], inner = [], rim = [];
+// A black wisp flung off the side of the flame (Storm 4, 1:08-1:09): a brush stroke with a blunt,
+// ragged head that leaves the flame outward and upward, thins along its length and curls at the tail.
+// The inner light is a short streak along the inside of the curl near the head: not a midline, which
+// made it read as a leaf with a vein. dir is in radians, curl in radians per cell (its sign is the
+// side it curls to).
+function wisp(key, start, dir, len, width, curl, alpha, layer, light, seed) {
+  if (alpha <= .01 || len < .02) return;
+  const N = 16, ds = len / N, spine = [], left = [], right = [];
+  let ang = dir, x = start.x, z = start.z;
   for (let j = 0; j <= N; j++) {
-    const t = j / N, ang = rot + side * sweep * t * t, rad = r * (1.6 - 1.25 * t);
-    const cx = pos.x + Math.cos(ang) * rad, cz = pos.z + Math.sin(ang) * rad;
-    const half = r * .13 * Math.sin(Math.PI * Math.pow(t, .6)), ox = Math.cos(ang), oz = Math.sin(ang);
-    outer.push({ x: cx + ox * half, z: cz + oz * half }); inner.push({ x: cx - ox * half, z: cz - oz * half });
-    rim.push({ x: cx + ox * (half + .014), z: cz + oz * (half + .014) });
+    const t = j / N;
+    spine.push({ x, z, ang, h: width * .5 * (t < .1 ? .55 + 4.5 * t : 1) * Math.pow(1 - t, 1.1) });
+    ang += curl * 3 * t * t * ds;
+    x += Math.cos(ang) * ds; z += Math.sin(ang) * ds;
   }
-  bandMat(key, outer, inner, Ink.withAlpha(alpha), layer);
-  if (light) bandMat(key + ' rim', rim, outer, light.withAlpha(alpha * .75), layer + .0001, whiteGlow);
+  spine.forEach(q => {
+    const nx = -Math.sin(q.ang), nz = Math.cos(q.ang);
+    left.push({ x: q.x + nx * q.h, z: q.z + nz * q.h }); right.push({ x: q.x - nx * q.h, z: q.z - nz * q.h });
+  });
+  bandMat(key, left, right, Ink.withAlpha(alpha), layer);
+  sprite(start, width * 1.25, width * 1.25, Ink.withAlpha(alpha), blot, layer - .00005, rand(seed) * 360);
+  if (light) {
+    const inside = Math.sign(curl) || 1;
+    const pts = spine.slice(1, 8).map(q => ({ x: q.x - Math.sin(q.ang) * q.h * .5 * inside, z: q.z + Math.cos(q.ang) * q.h * .5 * inside }));
+    trailMat(key + ' light', pts, width * .2, light.withAlpha(alpha * .6), layer + .0001, whiteGlow);
+  }
 }
 
 // Storm 4: as the target catches, small black flames pop up on the floor round it and die down within
@@ -384,12 +398,15 @@ function fire(key, c, w, height, t0, s, p, t, seed, from = 0, cell = false) {
         if (tear < 0 || tear > lastBirth || fu < 0 || fu >= 1) continue;
         const kk = k + n * 31, top = full * catchAt(x, tear / p.speed);
         if (Math.abs(x) > w * .45) {
-          const side = x >= 0 ? 1 : -1;
-          const wpos = at(c, x * widthF + lean * top + side * fu * (.3 + rand(kk + 1) * .4), dz,
-            rootH + top * .8 + fu * (.45 + rand(kk + 2) * .5) * height / 2.4);
-          wisp(`${key} wisp ${i} ${n & 1}`, wpos, (.11 + rand(kk + 3) * .08) * (1 - .25 * fu), side,
-            (rand(kk + 4) * 2 - 1) * .8 + side * fu * 2.2, 1.4 + fu * 1.2,
-            (1 - smooth((fu - .5) / .5)) * Math.min(1, p.particles), Y + .127 + (i % 20) * .0003, light);
+          // About a third of the flank tears throw a wisp: 3-6 in the air at once, as in Storm 4.
+          if (rand(kk + 9) > .35) continue;
+          const side = x >= 0 ? 1 : -1, out = 1 - (1 - fu) * (1 - fu);
+          const start = at(c, x * widthF + lean * top + side * out * (.25 + rand(kk + 1) * .35), dz,
+            rootH + top * .75 + out * (.3 + rand(kk + 2) * .45) * height / 2.4);
+          const dir = side > 0 ? (20 + rand(kk + 3) * 50) * Math.PI / 180 : Math.PI - (20 + rand(kk + 3) * 50) * Math.PI / 180;
+          wisp(`${key} wisp ${i} ${n & 1}`, start, dir, (.35 + rand(kk + 4) * .3) * (1 - .45 * fu) * height / 2.4,
+            (.07 + rand(kk + 7) * .05) * (1 - .3 * fu), -side * (2.6 + rand(kk + 6) * 2 + fu * 2.5),
+            (1 - smooth((fu - .45) / .55)) * Math.min(1, p.particles), Y + .127 + (i % 20) * .0003, light, kk);
           continue;
         }
         const pos = at(c, x * widthF + lean * top + (rand(kk + 1) - .5) * .25 * fu + Math.sin(fu * 5 + kk) * .05, dz,
