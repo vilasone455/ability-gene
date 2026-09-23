@@ -1,0 +1,382 @@
+// Unlimited Void as a pocket map: the pieces shared by "Unlimited Void: open and return" (the home
+// map) and "Unlimited Void: inside" (the pocket map). Not a sketch itself, so it is not listed in
+// sketches/index.js. The dome and cutscene sketches keep using lib/gojo.js as they were.
+//
+// Direction (2026-09-23): everyone within the radius is taken into Gojo's domain, a small pocket map
+// of its own. From outside only a black ball the size of a basketball shows (manga ch. 227-228).
+// Allies are taken too (the Shibuya dilemma) and Gojo spares one by touching it before the domain
+// ends. Androids and mechanoids have no living brain, so they are taken but not frozen. The cast,
+// Gojo's route and the immune pawns' walk live here so both sketches agree on who comes back how.
+//
+// Drawing: level circles, quads, strips and flat polygons, so no per-facing method. The space under
+// the void is drawn in the BelowTerrain layer under a see-through Terrain layer, as the Infinity
+// Castle's depth rooms are: in game the void terrain needs a see-through texture and the mod draws
+// the space under it. Textures: SoftDisc, Puff, white, and one lab texture (lab/gojo-splatter, the
+// white ink patches) still to be made a PNG.
+import { AltitudeLayer, Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../../js/engine.js';
+import { registerLabTexture, pixels, fbm, hash } from '../../js/standins.js';
+import { draw, mesh } from './six-paths-solid.js';
+import { Y, Floor, Lift, sprite, glow, soft, rand } from './six-paths-impact.js';
+import { stunStars } from './goku.js';
+import {
+  blackHole, domeOutline, pawn, ringAt, glint, streak, strip, line, whiteGlow, Ink, Skin, Ally, White, Ice, Blue, Void,
+  Violet, Pink, Gold, EyeBlue, pawnLayer, shadowLayer, smooth, clamp,
+} from './gojo.js';
+
+const disc = Meshes.disc(40, 'unlimited void pocket disc');
+const plane = MeshPool.plane10;
+const TAU = Math.PI * 2, Deg = Mathf.Deg2Rad;
+
+// ---- colours ----------------------------------------------------------------------------------
+export const Frozen = new Color(.62, .8, 1);                     // tint on a frozen pawn
+export const Navy = new Color(.012, .02, .06), Haze = new Color(.16, .55, .62), Indigo = new Color(.26, .22, .72), Dusk = new Color(.45, .28, .72);
+export const MechDark = new Color(.17, .18, .21), MechLit = new Color(.36, .38, .43), MechEye = new Color(1, .22, .16);
+export const Steel = new Color(.78, .82, .87), Visor = new Color(.4, .92, 1);
+
+// ---- altitudes --------------------------------------------------------------------------------
+// The space is under the terrain; the see-through void terrain lies over it; pawns and effects as usual.
+const layer = n => AltitudeLayer[n].AltitudeFor();
+export const V = { back: layer('BelowTerrain'), deep: layer('BelowTerrain') + .01, fog: layer('Terrain') };
+
+// ---- the white ink patches (anime ep. 7): a ragged blot with droplets thrown round it -----------
+registerLabTexture('lab/gojo-splatter', () => pixels(256, (u, v) => {
+  const r = Math.hypot(u - .5, v - .5) * 2;
+  if (r > .96) return [1, 1, 1, 0];
+  const n = fbm(u * 4, v * 4, 313, 4, 4), m = fbm(u * 11, v * 11, 919, 3, 11);
+  let a = clamp((.6 - r + (n - .5) * .75 + (m - .5) * .2) * 14);
+  for (let i = 0; i < 16; i++) {
+    const ang = hash(i, 1, 77) * TAU, d = .3 + .14 * hash(i, 2, 77), rr = .012 + .026 * hash(i, 3, 77);
+    a = Math.max(a, clamp((rr - Math.hypot(u - .5 - Math.cos(ang) * d, v - .5 - Math.sin(ang) * d)) / .006));
+  }
+  return [1, 1, 1, a * clamp((.96 - r) / .06)];
+}));
+const splat = MaterialPool.MatFrom('lab/gojo-splatter', ShaderDatabase.MoteGlow);
+
+// ---- the rule's numbers (placeholders, XML fields in game) --------------------------------------
+export const Hold = 10;                    // seconds the domain lasts
+export const ActFrom = .4;                 // Gojo and the immune can act once the white has mostly cleared
+export const Reach = .75;                  // how close Gojo stands to touch or strike
+export const Walk = { gojo: 4.6, mech: 2.2, android: 3 };      // cells a second
+export const Strike = { first: .2, every: 1.7, toDown: 4 };    // Gojo's blows on a frozen raider (a melee cooldown)
+
+// The stand-in cast: offsets in cells from where Gojo stands when he casts.
+export const Cast = {
+  raiders: [[2.4, 1.2], [-2.0, 2.6], [3.6, -2.2], [-4.4, -1.2], [1.2, 5.2], [-3.2, -4.8]],
+  colonists: [[-1.6, -2.4], [6.8, 4.2]],   // one near Gojo, one far
+  android: [4.6, -5.0],                    // a colony android: taken, not frozen
+  mech: [-6.4, 3.4],                       // a hostile mechanoid: taken, not frozen
+};
+
+// Everyone in the scene; taken = within the radius.
+export function castList(scenario, radius) {
+  const list = Cast.raiders.map((at, i) => ({ id: `r${i}`, kind: 'raider', at }));
+  if (scenario === 'mixed') {
+    Cast.colonists.forEach((at, i) => list.push({ id: `c${i}`, kind: 'colonist', at }));
+    list.push({ id: 'android', kind: 'android', at: Cast.android }, { id: 'mech', kind: 'mech', at: Cast.mech });
+  }
+  list.forEach(g => { g.taken = Math.hypot(g.at[0], g.at[1]) <= radius; g.immune = g.kind === 'android' || g.kind === 'mech'; });
+  return list;
+}
+
+// What Gojo does inside, as timed steps from when he can act (u = 0). "touch allies first": every
+// caught colonist, nearest first, then blows on the raider nearest him until it goes down. "attack
+// first": blows on raider 2 until it goes down, then the colonists. budget = seconds he has. Returns
+// the steps, who was spared (id -> time) and who was beaten down (id -> time) within the budget.
+export function plan({ scenario, order, radius, speed = Walk.gojo, touch = .3, budget = Hold - ActFrom }) {
+  const cast = castList(scenario, radius).filter(g => g.taken);
+  const allies = cast.filter(g => g.kind === 'colonist'), raiders = cast.filter(g => g.kind === 'raider');
+  const steps = [];
+  let t = 0, here = { x: 0, z: 0 };
+  const dist = g => Math.hypot(g.at[0] - here.x, g.at[1] - here.z);
+  const go = (g, kind) => {
+    const dx = g.at[0] - here.x, dz = g.at[1] - here.z, d = Math.hypot(dx, dz) || 1, walk = Math.max(0, d - Reach);
+    const to = { x: here.x + dx / d * walk, z: here.z + dz / d * walk };
+    if (walk > 0) steps.push({ kind: 'walk', t0: t, t1: t + walk / speed, from: here, to });
+    t += walk / speed; here = to;
+    const len = kind === 'touch' ? touch : Strike.first + Strike.every * (Strike.toDown - 1) + .3;
+    steps.push({ kind, t0: t, t1: t + len, target: g, from: here });
+    t += len;
+  };
+  const touchAll = () => { const left = allies.slice(); while (left.length) { left.sort((a, b) => dist(a) - dist(b)); go(left.shift(), 'touch'); } };
+  const strikeOne = () => {
+    const r = order === 'attack first' ? (raiders.find(g => g.id === 'r2') ?? raiders[0]) : raiders.slice().sort((a, b) => dist(a) - dist(b))[0];
+    if (r) go(r, 'strike');
+  };
+  if (order === 'attack first') { strikeOne(); touchAll(); } else { touchAll(); strikeOne(); }
+  const spared = new Map(), downed = new Map();
+  steps.forEach(st => {
+    if (st.kind === 'touch' && st.t1 <= budget) spared.set(st.target.id, st.t1);
+    if (st.kind === 'strike') { const last = lastBlow(st); if (last <= budget) downed.set(st.target.id, last); }
+  });
+  return { steps, spared, downed, budget, cast };
+}
+export const blows = st => Array.from({ length: Strike.toDown }, (_, k) => st.t0 + Strike.first + Strike.every * k);
+const lastBlow = st => st.t0 + Strike.first + Strike.every * (Strike.toDown - 1);
+
+// Where Gojo stands at u (offset from his cast cell), and the touch or strike going on, if any.
+export function gojoAt(pl, u) {
+  u = Math.min(u, pl.budget);
+  let pos = { x: 0, z: 0 };
+  for (const st of pl.steps) {
+    if (u < st.t0) break;
+    if (st.kind === 'walk') { const f = clamp((u - st.t0) / (st.t1 - st.t0)); pos = { x: st.from.x + (st.to.x - st.from.x) * f, z: st.from.z + (st.to.z - st.from.z) * f }; }
+    else pos = st.from;
+  }
+  return pos;
+}
+export function gojoDoing(pl, u) {
+  if (u >= pl.budget) return null;
+  for (const st of pl.steps) if (st.kind !== 'walk' && u >= st.t0 && u < st.t1) return { st, age: u - st.t0 };
+  return null;
+}
+
+// The immune pair in "mixed": the mech walks at where Gojo landed; the android cuts it off where
+// it can get to first, and they fight there. Offsets from the cast cell; u is clamped to budget.
+export function immuneAt(u, budget, mechTaken = true) {
+  u = Math.max(0, Math.min(u, budget));
+  const M = { x: Cast.mech[0], z: Cast.mech[1] }, N = { x: Cast.android[0], z: Cast.android[1] };
+  if (!mechTaken) return { mech: M, android: N, fighting: false, fightAge: 0, mechTo: 0 };
+  const dM = Math.hypot(M.x, M.z), ux = -M.x / dM, uz = -M.z / dM, stop = dM - .9;
+  let meet = stop;
+  for (let x = 0; x <= stop; x += .05) {
+    const q = { x: M.x + ux * x, z: M.z + uz * x };
+    if ((Math.hypot(q.x - N.x, q.z - N.z) - .7) / Walk.android <= x / Walk.mech) { meet = x; break; }
+  }
+  const I = { x: M.x + ux * meet, z: M.z + uz * meet };
+  const mw = Math.min(u * Walk.mech, meet), mech = { x: M.x + ux * mw, z: M.z + uz * mw };
+  const ax = I.x - N.x, az = I.z - N.z, ad = Math.hypot(ax, az) || 1, aw = Math.min(u * Walk.android, Math.max(0, ad - .7));
+  const android = { x: N.x + ax / ad * aw, z: N.z + az / ad * aw };
+  const fightFrom = Math.max(meet / Walk.mech, (ad - .7) / Walk.android);
+  return { mech, android, fighting: u >= fightFrom, fightAge: u - fightFrom };
+}
+
+// ---- the space under the void -----------------------------------------------------------------
+// Deep navy, drifting haze, stars, far galaxies and the anime's white ink patches, all under a
+// see-through void terrain. fade 0..1 brings everything but the navy in.
+export function voidFloor(key, c, s, fade, { reach = 24, patches = 1 } = {}) {
+  draw(plane, c.x, V.back, c.z, reach * 5, reach * 5, 0, Navy);
+  if (fade <= 0) return;
+  for (let i = 0; i < 8; i++) {
+    const ang = rand(i + 700) * TAU, d = reach * (.1 + .75 * rand(i + 710)), size = 7 + 10 * rand(i + 720), drift = .7 * Math.sin(s * .07 + i);
+    sprite({ x: c.x + Math.cos(ang) * d + drift, z: c.z + Math.sin(ang) * d }, size * 1.4, size, [Haze, Indigo, Dusk][i % 3].withAlpha((.14 + .1 * rand(i + 730)) * fade),
+      glow, V.deep + .001 * i, rand(i + 740) * 180);
+  }
+  for (let i = 0; i < 6; i++) {
+    const ang = rand(i + 800) * TAU, d = 7 + (reach - 7) * rand(i + 810);
+    galaxy(`${key} galaxy ${i}`, { x: c.x + Math.cos(ang) * d, z: c.z + Math.sin(ang) * d }, .8 + 1.2 * rand(i + 820), .4 + .35 * rand(i + 830),
+      rand(i + 840) * 180, s * (5 + 5 * rand(i + 850)) * (i % 2 ? 1 : -1), [Violet, Ice, Gold][i % 3], fade);
+  }
+  for (let i = 0; i < 180; i++) {
+    const x = (rand(i + 900) - .5) * reach * 2, z = (rand(i + 1900) - .5) * reach * 2, size = .035 + .1 * rand(i + 2900) ** 3;
+    const tw = .45 + .55 * Math.abs(Math.sin(s * (1 + 2.2 * rand(i + 3900)) + i));
+    const at = { x: c.x + x, z: c.z + z };
+    sprite(at, size * 2.6, size * 2.6, (i % 9 ? White : Ice).withAlpha(.9 * tw * fade), glow, V.deep + .03);
+    if (i % 15 === 0) [0, 90].forEach(deg => sprite(at, .03, size * 9, White.withAlpha(.5 * tw * fade), glow, V.deep + .031, deg + 45 * (i % 2)));
+  }
+  draw(plane, c.x, V.fog, c.z, reach * 5, reach * 5, 0, Navy.withAlpha(.22 * fade));
+  // The white patches: light breaking through, not things lying in the space, so they sit over the
+  // void terrain, pure white with a pale halo.
+  for (let i = 0; i < 7; i++) {
+    const ang = i / 7 * TAU + rand(i + 1000) * .6, d = 11 + 8 * rand(i + 1010), size = 2.5 + 3.5 * rand(i + 1020);
+    const breathe = .8 + .2 * Math.sin(s * .8 + i * 2.1), at = { x: c.x + Math.cos(ang) * d, z: c.z + Math.sin(ang) * d };
+    sprite(at, size * 1.9, size * 1.6, Ice.withAlpha(.18 * breathe * fade * patches), glow, V.fog + .01);
+    sprite(at, size, size * (.75 + .35 * rand(i + 1030)), White.withAlpha(breathe * fade * patches), splat, V.fog + .011 + i * .0005, rand(i + 1040) * 360);
+  }
+}
+
+// A far galaxy: a soft oval, a bright core and two arms, turning slowly. tilt and turn in degrees.
+function galaxy(key, g, size, flat, tilt, turn, colour, fade) {
+  sprite(g, size * 1.7, size * 1.7 * flat, colour.withAlpha(.2 * fade), glow, V.deep + .02, tilt);
+  sprite(g, size * .45, size * .45 * flat, White.withAlpha(.55 * fade), glow, V.deep + .021, tilt);
+  const ct = Math.cos(tilt * Deg), st = Math.sin(tilt * Deg);
+  for (let arm = 0; arm < 2; arm++) {
+    const pts = [];
+    for (let k = 0; k <= 8; k++) {
+      const v = k / 8, r = size * (.12 + .8 * v), a = arm * Math.PI + v * 2.6 + turn * Deg;
+      const lx = Math.cos(a) * r, lz = Math.sin(a) * r * flat;
+      pts.push({ x: g.x + lx * ct + lz * st, z: g.z - lx * st + lz * ct });     // turned clockwise by tilt, as the sprites are
+    }
+    line(`${key} ${arm}`, pts, size * .18, colour.withAlpha(.32 * fade), whiteGlow, V.deep + .022, 'both');
+  }
+}
+
+// The black hole under the void (anime ep. 7): lib/gojo.js blackHole laid in the space, gas
+// spiralling in to its ring, and light streaming out past the ring. live 0..1 fades it.
+export function voidHole(key, h, radius, s, live, { swirl = .35, rays = 1 } = {}) {
+  if (radius <= .02 || live <= 0) return;
+  blackHole(key, h, radius, s, live, V.deep + .08);
+  // Gas curling in close round the ring (the anime's pale-blue swirl), not a whirlpool over the map.
+  for (let i = 0; i < 12; i++) {
+    const a0 = i / 12 * TAU + s * .3 + rand(i + 1100), len = .25 + .45 * rand(i + 1105), turn = 1.1 + .7 * rand(i + 1110), pts = [];
+    for (let k = 0; k <= 10; k++) {
+      const v = k / 10, r = radius * (1.03 + len * (1 - v)), a = a0 + v * turn;
+      pts.push({ x: h.x + Math.cos(a) * r, z: h.z + Math.sin(a) * r });
+    }
+    line(`${key} inflow ${i}`, pts, radius * (.025 + .035 * rand(i + 1120)), (i % 3 ? Ice : White).withAlpha((.12 + .12 * rand(i + 1130)) * live), whiteGlow, V.deep + .16, 'both');
+  }
+  if (rays > 0) voidRays(`${key} rays`, h, s, radius * 1.1, radius * 1.1 + 14, swirl, .8 * live * rays);
+}
+
+// Dashes of white, pink and violet light running out from the ring (the anime's speed lines), on
+// spirals of swirl radians per cell. From lib/gojo.js rays, starting at the ring instead of the centre.
+export function voidRays(key, o, s, from, to, swirl, alpha, count = 70) {
+  if (alpha <= 0) return;
+  const span = to - from;
+  for (let i = 0; i < count; i++) {
+    const a0 = rand(i + 1500) * TAU, speed = 6 + 6 * rand(i + 1510), len = 1.4 + 2.4 * rand(i + 1520), cycle = span + len;
+    const head = (s * speed + rand(i + 1530) * cycle) % cycle, tail = head - len;
+    const r0 = Math.max(0, tail), r1 = Math.min(span, head);
+    if (r1 - r0 < .15) continue;
+    const pts = [];
+    for (let k = 0; k <= 6; k++) {
+      const r = from + r0 + (r1 - r0) * k / 6, a = a0 + swirl * (r - from);
+      pts.push({ x: o.x + Math.cos(a) * r, z: o.z + Math.sin(a) * r });
+    }
+    const pick = rand(i + 1540), colour = pick < .6 ? White : pick < .85 ? Pink : Violet, edge = 1 - clamp((r1 - span + 3) / 3);
+    line(`${key} ${i}`, pts, .05 + .05 * rand(i + 1550), colour.withAlpha(alpha * edge * (.55 + .45 * rand(i + 1560))), whiteGlow, V.deep + .18, 'both');
+  }
+}
+
+// ---- pawns inside ----------------------------------------------------------------------------
+// A frozen pawn's overload: specks of light from every side run into the head, the head glows and
+// the eyes stand wide open. s drives it; alpha fades it.
+export function infoFlood(key, pos, s, alpha, streams = 8) {
+  if (alpha <= 0) return;
+  const head = { x: pos.x, z: pos.z + .58 };
+  sprite(head, .5, .5, Ice.withAlpha((.42 + .14 * Math.sin(s * 9 + pos.x)) * alpha), glow, Y + .04);
+  for (let i = 0; i < streams; i++) {
+    const ang = i / streams * TAU + rand(i + 1200 + Math.round(pos.x * 7)) * .5;
+    for (let k = 0; k < 3; k++) {
+      const v = (s * (1.2 + .5 * rand(i + 1210)) + k / 3 + rand(i + 1220)) % 1;         // 0 far out, 1 at the head
+      const r = .12 + 1.05 * (1 - v), a = ang + .4 * (1 - v);
+      const p = { x: head.x + Math.cos(a) * r, z: head.z + Math.sin(a) * r };
+      sprite(p, .045, .14, [White, Ice, Pink, EyeBlue][(i + k) % 4].withAlpha(alpha * Math.sin(v * Math.PI)), glow, Y + .041, 90 - a / Deg);
+    }
+  }
+  [-.055, .055].forEach(dx => draw(disc, head.x + dx, pawnLayer + .02, head.z + .02, .032, .032, 0, White.withAlpha(alpha)));
+}
+
+// Specks that run at an immune pawn's head and glance off it: the overload finds no brain.
+export function deflect(key, pos, s, alpha, count = 5) {
+  if (alpha <= 0) return;
+  const head = { x: pos.x, z: pos.z + .58 };
+  for (let i = 0; i < count; i++) {
+    const ang = i / count * TAU + rand(i + 1300) * .8, v = (s * 1.1 + rand(i + 1310)) % 1, inward = v < .6, w = inward ? v / .6 : (v - .6) / .4;
+    const r = inward ? 1.1 - .62 * w : .48 + .7 * w, a = inward ? ang : ang + .9 * w;
+    sprite({ x: head.x + Math.cos(a) * r, z: head.z + Math.sin(a) * r }, .06, .06, (inward ? Ice : Visor).withAlpha(alpha * .8 * (inward ? w : 1 - w)), glow, Y + .041);
+    if (!inward && w < .3) sprite({ x: head.x + Math.cos(ang) * .48, z: head.z + Math.sin(ang) * .48 }, .2, .2, Visor.withAlpha(alpha * .7 * (1 - w / .3)), glow, Y + .042);
+  }
+}
+
+// A pawn spared by Gojo's touch: a blue ring opens off it and a faint ring stays at its feet.
+export function touchPulse(key, pos, age) {
+  if (age < 0) return;
+  if (age < .5) {
+    const f = age / .5;
+    ringAt({ x: pos.x, z: pos.z + .35 }, .2 + .8 * f, EyeBlue.withAlpha(.9 * (1 - f)), Y + .05, true, whiteGlow);
+    sprite({ x: pos.x, z: pos.z + .4 }, .9, .9, EyeBlue.withAlpha(.5 * (1 - f)), glow, Y + .049);
+  }
+  ringAt(pos, .38, EyeBlue.withAlpha(.35 * clamp(age / .3)), Floor + .02, false, whiteGlow);
+}
+
+// An arm from the shoulder toward a point; amount 0..1 how far it reaches (up to 0.6 cells).
+export function reachOut(from, to, amount) {
+  if (amount <= 0) return;
+  const sh = { x: from.x, z: from.z + .36 }, dx = to.x - sh.x, dz = to.z - sh.z, d = Math.hypot(dx, dz) || 1, len = Math.min(.6, d) * amount;
+  draw(plane, sh.x + dx / d * len / 2, pawnLayer + .02, sh.z + dz / d * len / 2, .07, len, 90 - Math.atan2(dz, dx) / Deg, Skin);
+  draw(disc, sh.x + dx / d * len, pawnLayer + .021, sh.z + dz / d * len, .05, .05, 0, Skin);
+}
+
+// A blow landing: a short white arc facing the striker, and a glint. age from the hit.
+export function blowFlash(key, at, fromDeg, age) {
+  if (age < 0 || age > .25) return;
+  const f = age / .25, pts = [];
+  for (let k = 0; k <= 6; k++) { const a = (fromDeg + 180 - 55 + 110 * k / 6) * Deg; pts.push({ x: at.x + Math.cos(a) * .32, z: at.z + Math.sin(a) * .32 }); }
+  line(`${key} arc`, pts, .1, White.withAlpha(1 - f), whiteGlow, Y + .06, 'both');
+  glint(`${key} glint`, at, .22 * (1 - f * .5), 1 - f, Ice, 20);
+}
+
+// The overload once it has taken a pawn down: a violet ring over the head and violet stars.
+export function overloadMark(key, pos, s, alpha) {
+  if (alpha <= 0) return;
+  ringAt({ x: pos.x + .42, z: pos.z + .14 }, .15, Violet.withAlpha(.75 * alpha), Y + .03, false, whiteGlow);
+  stunStars(key, { x: pos.x + .42, z: pos.z - .5 }, s, .8 * alpha, Violet);
+}
+
+// Stand-ins for the immune: a mechanoid (dark plating, red eye, two blades) and a colony android
+// (a colonist body with a steel head and a visor).
+export function mech(pos, sun, strength, alpha = 1) {
+  if (alpha <= 0) return;
+  sprite({ x: pos.x + sun.x * .45, z: pos.z + sun.z * .45 }, 1, .45, Ink.withAlpha(strength * alpha), soft, shadowLayer);
+  [-1, 1].forEach(k => draw(plane, pos.x + k * .3, pawnLayer - .001, pos.z + .36, .05, .38, k * 28, MechLit.withAlpha(alpha)));
+  draw(disc, pos.x, pawnLayer, pos.z + .2, .3, .34, 0, MechDark.withAlpha(alpha));
+  draw(disc, pos.x + .05, pawnLayer + .002, pos.z + .26, .17, .2, 0, MechLit.withAlpha(alpha));
+  draw(disc, pos.x, pawnLayer + .004, pos.z + .56, .15, .12, 0, MechDark.withAlpha(alpha));
+  draw(disc, pos.x, pawnLayer + .006, pos.z + .56, .045, .035, 0, MechEye.withAlpha(alpha));
+  sprite({ x: pos.x, z: pos.z + .56 }, .25, .2, MechEye.withAlpha(.6 * alpha), glow, pawnLayer + .007);
+}
+export function android(pos, sun, strength, alpha = 1) {
+  if (alpha <= 0) return;
+  pawn(pos, Ally, sun, strength, { alpha });
+  draw(disc, pos.x, pawnLayer + .01, pos.z + .58, .16, .17, 0, Steel.withAlpha(alpha));
+  draw(plane, pos.x, pawnLayer + .012, pos.z + .6, .2, .035, 0, Visor.withAlpha(alpha));
+}
+
+// Two immune pawns trading blows: sparks between them every 0.7 s.
+export function brawl(key, a, b, age, alpha) {
+  if (age < 0 || alpha <= 0) return;
+  const k = Math.floor(age / .7), f = (age % .7) / .7, hit = k % 2 ? a : b, from = k % 2 ? b : a;
+  if (f < .35) blowFlash(`${key} ${k % 2}`, { x: hit.x, z: hit.z + .35 }, Math.atan2(from.z - hit.z, from.x - hit.x) / Deg, f * .7);
+}
+
+// ---- the home map: the barrier and the ball --------------------------------------------------
+// From outside, the barrier closing over the radius: a dark sphere (the dome under the 0.6 lift, as
+// lib/gojo.js domeOutline draws it) built from three see-through fills so its edge is soft, with a
+// thin light rim and a faint lit cap. c is the sphere's ground point (it rises while it shrinks).
+export function darkDome(key, c, radius, alpha) {
+  if (radius <= .05 || alpha <= 0) return;
+  [[1, .22], [.95, .28], [.88, .32], [.8, .3]].forEach(([k, a], j) => {
+    const pts = domeOutline(radius * k), vertices = [c.x, c.z], tri = [];
+    pts.forEach((q, i) => { vertices.push(c.x + q.x, c.z + q.z); tri.push(0, 1 + i, 1 + (i + 1) % pts.length); });
+    const m = mesh(`${key} fill ${j}`); m.setFlat(vertices, tri);
+    draw(m, 0, Y + .02 + j * .001, 0, 1, 1, 0, Void.withAlpha(a * alpha));
+  });
+  const pts = domeOutline(radius), e = Math.min(.08, radius * .2) / radius;
+  const outer = pts.map(q => ({ x: c.x + q.x, z: c.z + q.z })), inner = pts.map(q => ({ x: c.x + q.x * (1 - e), z: c.z + q.z * (1 - e) }));
+  outer.push(outer[0]); inner.push(inner[0]);
+  strip(`${key} rim`, outer, inner, Ice.withAlpha(.3 * alpha), whiteGlow, Y + .024);
+  sprite({ x: c.x - radius * .3, z: c.z + radius * .72 }, radius * .9, radius * .45, Blue.withAlpha(.16 * alpha), glow, Y + .025, -20);
+}
+
+// The barrier shrunk to a ball (manga ch. 227-228): a black ball hanging height cells over its
+// ground point, a thin light rim, a faint blue-violet halo, a slow glint, and its shadow.
+export function ball(key, ground, height, size, s, alpha, sun, strength) {
+  if (alpha <= 0 || size <= 0) return;
+  const c = { x: ground.x, z: ground.z + height * Lift }, r = size / 2;
+  sprite({ x: ground.x + sun.x * height, z: ground.z + sun.z * height }, size * 1.3, size * .7, Ink.withAlpha(Math.min(.8, strength * 1.6) * alpha), soft, shadowLayer);
+  sprite(c, size * 5, size * 5, Violet.withAlpha(.14 * alpha), glow, Y + .03);
+  sprite(c, size * 2.6, size * 2.6, EyeBlue.withAlpha(.22 * alpha), glow, Y + .031);
+  draw(disc, c.x, Y + .032, c.z, r, r, 0, Void.withAlpha(alpha));
+  ringAt(c, r * 1.02, Ice.withAlpha(.75 * alpha), Y + .033, false, whiteGlow);
+  const g = s * 1.3;
+  sprite({ x: c.x + Math.cos(g) * r * .55, z: c.z + Math.sin(g) * r * .55 }, r * .5, r * .5, White.withAlpha(.3 * alpha), glow, Y + .034);
+  sprite({ x: c.x - r * .35, z: c.z + r * .4 }, r * .45, r * .32, Ice.withAlpha(.5 * alpha), glow, Y + .035);
+}
+
+// The ball breaking at the end: cracks of light across it, then a white flash out to the radius.
+export function ballBurst(key, ground, height, size, age, R) {
+  if (age < 0 || age > 1.2) return;
+  const c = { x: ground.x, z: ground.z + height * Lift };
+  if (age < .12) for (let i = 0; i < 4; i++) {
+    const a = (i * 47 + 20) * Deg, l = size * .75;
+    streak(`${key} crack ${i}`, { x: c.x - Math.cos(a) * l * .25, z: c.z - Math.sin(a) * l * .25 }, { x: c.x + Math.cos(a) * l, z: c.z + Math.sin(a) * l },
+      .035, White.withAlpha(1 - age / .12), whiteGlow, Y + .04, 3);
+  }
+  const f = smooth(clamp((age - .08) / .3)), fade = 1 - clamp((age - .2) / .6);
+  if (f > 0) {
+    sprite(c, R * 2 * f, R * 2 * f, White.withAlpha(.5 * fade), glow, Y + .05);
+    ringAt(ground, R * f, White.withAlpha(.6 * fade), Y + .051, false, whiteGlow);
+  }
+}
+
+export { TAU, Deg };

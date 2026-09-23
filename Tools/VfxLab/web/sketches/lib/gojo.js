@@ -27,7 +27,12 @@ const puffGlow = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.Mot
 //   sign 0..1       the hands move from the sides to meet at the chest; past .85 the two index
 //                   fingers stand up (the domain hand sign)
 //   layer           altitude of the figure (default the pawn layer); the cutscene draws it over its overlay
-export function caster(pos, sun, strength, { blindfold = 1, sign = 0, alpha = 1, tint = null, tintAmount = 0, rim = 0, layer = pawnLayer } = {}) {
+//   crossed         the source's sign instead (anime ep. 7 and 33, manga ch. 225): one hand rises in
+//                   front of the face with the middle finger crossed over the index finger, and the
+//                   other hand pulls the blindfold down to the neck (blindfold 1 on the eyes, 0 at
+//                   the neck) instead of it fading. The dome and cutscene sketches keep the old sign.
+export function caster(pos, sun, strength, { blindfold = 1, sign = 0, alpha = 1, tint = null, tintAmount = 0, rim = 0, layer = pawnLayer, crossed = false } = {}) {
+  if (crossed) return casterCrossed(pos, sun, strength, { blindfold, sign, alpha, tint, tintAmount, rim, layer });
   if (alpha <= 0) return;
   const c = q => (tint ? Color.Lerp(q, tint, tintAmount) : q).withAlpha(alpha * q.a), pawnLayer = layer;
   // Rim light (the game's cyan-violet edge on Gojo): a glow behind the figure and a pale edge round the body.
@@ -54,6 +59,38 @@ export function caster(pos, sun, strength, { blindfold = 1, sign = 0, alpha = 1,
   });
   const fingers = clamp((sign - .85) / .15);
   if (fingers > 0) [-1, 1].forEach(side => draw(MeshPool.plane10, pos.x + side * .022, top + .003, pos.z + .53 + .06 * fingers, .034, .16 * fingers, 0, c(Skin)));
+}
+
+// caster() with crossed: the same figure, the source's hand sign and the blindfold pulled down.
+function casterCrossed(pos, sun, strength, { blindfold, sign, alpha, tint, tintAmount, rim, layer }) {
+  if (alpha <= 0) return;
+  const c = q => (tint ? Color.Lerp(q, tint, tintAmount) : q).withAlpha(alpha * q.a), L = layer;
+  if (rim > 0) {
+    sprite({ x: pos.x, z: pos.z + .3 }, .9, 1.2, EyeBlue.withAlpha(.5 * rim * alpha), glow, L - .005);
+    draw(disc, pos.x, L - .003, pos.z + .18, .26, .36, 0, Violet.withAlpha(.7 * rim * alpha));
+    draw(disc, pos.x, L - .003, pos.z + .58, .19, .2, 0, Violet.withAlpha(.7 * rim * alpha));
+  }
+  sprite({ x: pos.x + sun.x * .45, z: pos.z + sun.z * .45 }, .85, .4, Ink.withAlpha(strength * alpha), soft, shadowLayer);
+  [[0, .18, .22, .32, Uniform], [.04, .22, .08, .24, UniformLit], [0, .58, .16, .17, Skin], [0, .69, .19, .1, Hair]]
+    .forEach(([cx, cz, rx, rz, colour], k) => draw(disc, pos.x + cx, L + k * .002, pos.z + cz, rx, rz, 0, c(colour)));
+  const top = L + .012, face = { x: pos.x, z: pos.z + .6 };
+  const eyes = clamp(1 - blindfold);
+  if (eyes > 0) [-.055, .055].forEach((dx, i) => {
+    draw(disc, face.x + dx, top, face.z, .028, .022, 0, EyeBlue.withAlpha(alpha));
+    sprite({ x: face.x + dx, z: face.z }, .16, .12, EyeBlue.withAlpha(.6 * eyes * alpha), glow, top + .004 + i * .0005);
+  });
+  // The blindfold slides from the eyes to the neck; it is not taken off.
+  const band = face.z - .14 * (1 - blindfold);
+  draw(MeshPool.plane10, face.x, top + .001, band, .32, .075, 0, Blindfold.withAlpha(alpha));
+  // Left hand: goes up to the band's end while it is pulled down, then back to the side.
+  const grab = clamp(sign * 2.5) * clamp(blindfold * 5);
+  draw(MeshPool.plane10, pos.x + Mathf.Lerp(-.22, -.15, grab), top + .002, Mathf.Lerp(pos.z + .28, band, grab), .085, .1, -12 * (1 - grab), c(Skin));
+  // Right hand: rises in front of the face; the index and middle fingers stand up and cross.
+  const hx = pos.x + Mathf.Lerp(.22, .07, sign), hz = pos.z + Mathf.Lerp(.28, .5, sign);
+  draw(MeshPool.plane10, hx, top + .004, hz, .085, .1, 12 * (1 - sign), c(Skin));
+  const fingers = clamp((sign - .6) / .4);
+  if (fingers > 0) [[-1, 16], [1, -16]].forEach(([k, lean], i) =>
+    draw(MeshPool.plane10, hx + k * .014, top + .005 + i * .0005, hz + .05 + .045 * fingers, .024, .12 * fingers, lean * fingers, c(Skin)));
 }
 
 // The black hole that hangs over the caster (the anime's Unlimited Void horizon): a black disc, a thin
