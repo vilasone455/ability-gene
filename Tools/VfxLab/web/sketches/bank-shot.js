@@ -8,7 +8,7 @@
 //   targeting, no aim line. 12 sharp, range 20, 1.2 s between shots. A bullet that misses and
 //   hits a wall bounces once and can still find someone.
 //   Charge mode (this sketch): an ability. Targets a wall cell, not a pawn, up to 30 cells of
-//   flight away. The pawn charges 1.5 s (the lead here; a glow on the barrel comes later), then
+//   flight away. The pawn charges 1.5 s (a glow builds on the barrel, motes are drawn in), then
 //   the bullet flies level to that wall, mirrors off the face it hits, and keeps going: up to 3
 //   bounces, then it embeds in the next wall. It stops at the first pawn it crosses, friend or
 //   foe. No line of sight to the victim is needed, so it shoots round corners, down bent
@@ -26,8 +26,11 @@
 //   0.00  aim: the bounce path is drawn as pale dashes from the muzzle, with a square on the wall
 //         cell targeted and a dot at each contact; red floor dashes show the straight shot the
 //         wall blocks
-//   0.35  fire: muzzle flash, recoil, the tracer leaves; the aim line fades over 0.1 s
-//   0.35+ flight: the bullet walks the path at 28 cells/s; a bright trace fades 0.5 s behind it
+//   0.20  charge, 1.5 s: a glow at the muzzle grows from 0.3 to 1.1 cells and turns from pale
+//         to hot, a heat line runs the barrel, 12 motes spiral in from about a cell around into
+//         the muzzle; at full charge the glow flickers
+//   1.70  fire: muzzle flash, recoil, the tracer leaves; the aim line and the charge fade over 0.1 s
+//   1.70+ flight: the bullet walks the path at 28 cells/s; a bright trace fades 0.5 s behind it
 //         and a smoke thread lingers about 2 s
 //   at each contact: a flash on the wall, 7 + 3n sparks thrown away from the face, dust off the
 //         face, a chip that stays; the tracer comes off wider and hotter
@@ -45,7 +48,7 @@ import { Mathf } from '../js/engine.js';
 import { P } from './lib/six-paths-impact.js';
 import { Layouts, cells, wallSet, trace, blocked, along } from './lib/bank-shot-path.js';
 import {
-  walls, figure, pistol, muzzle, bullet, trail, ricochet, embed, wound, preview, blockedLine,
+  walls, figure, pistol, charge, muzzle, bullet, trail, ricochet, embed, wound, preview, blockedLine,
   Enemy, Holder, HandH, GripAlong, MuzzleAlong, Lead, Tail, bump, dirOf, move,
 } from './lib/bank-shot.js';
 
@@ -71,7 +74,7 @@ function shot(p) {
   return trace(wallSet(cells(L)), m, aim, L.enemy);
 }
 function times(p) {
-  const path = shot(p), fire = Lead, flight = path.length / p.speed, endT = fire + flight;
+  const path = shot(p), fire = Lead + p.charge, flight = path.length / p.speed, endT = fire + flight;
   return { path, fire, endT, end: endT + p.hold + Tail };
 }
 const toWorld = (path, o) => ({
@@ -90,12 +93,13 @@ export default {
     actors: { label: 'Show caster and target', value: true, group: 'Showcase' },
     ui: { label: 'Show the aim line and the blocked shot', value: true, group: 'Showcase' },
     speed: P('Bullet speed (cells/s)', 28, 8, 60, 1, 'Rule'),
+    charge: P('Charge', 1.5, .3, 3, .05, 'Timing (s)'),
     trailLife: P('Trace fade', .5, .1, 2, .05, 'Timing (s)'),
     hold: P('Show the result', 1.5, .3, 3, .1, 'Timing (s)'),
   },
   duration(p) { return times(p).end; },
   phases(p) {
-    const t = times(p), out = [{ name: 'Aim', t: 0 }, { name: 'Fire', t: t.fire }];
+    const t = times(p), out = [{ name: 'Aim', t: 0 }, { name: 'Charge', t: Lead }, { name: 'Fire', t: t.fire }];
     t.path.bounces.forEach(b => out.push({ name: `Bounce ${b.n}`, t: t.fire + b.d / p.speed }));
     out.push({ name: t.path.end.kind === 'hit' ? 'Hit' : t.path.end.kind === 'embed' ? 'Embed' : 'Spent', t: t.endT });
     return out;
@@ -133,6 +137,8 @@ export default {
     pistol('bank gun', hand, aim, sun, strength, kick);
 
     preview('bank preview', path, uiAlpha);
+    const chargeU = clamp((s - Lead) / p.charge) * (fired ? 1 - clamp((s - t.fire) / Fade) : 1);
+    charge('bank charge', hand, m, aim, chargeU, s);
     if (!fired) return;
     muzzle('bank muzzle', m, aim, s - t.fire);
     trail('bank trail', path, dNow, s, t.fire, p.speed, p.trailLife);

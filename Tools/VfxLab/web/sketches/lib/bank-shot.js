@@ -22,6 +22,7 @@ export { walls, WallTop };
 const clamp = Mathf.Clamp01, lerp = Mathf.Lerp, D2R = Mathf.Deg2Rad, TAU = Math.PI * 2;
 const puff = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.Transparent);
 const flat = MaterialPool.MatFrom('white', ShaderDatabase.Transparent);
+const glowMat = MaterialPool.MatFrom('RimArt/SixPaths/SoftDisc', ShaderDatabase.MoteGlow);
 export const Tracer = new Color(1, .93, .62), TracerHot = new Color(1, .58, .18), Core = new Color(1, 1, 1);
 export const Smoke = new Color(.42, .40, .37), Chip = new Color(.12, .11, .10), ChipLit = new Color(.62, .58, .54);
 export const Blocked = new Color(.75, .16, .10);
@@ -31,7 +32,7 @@ export const HandH = .5;                       // the gun and the bullet, cells 
 export const GripAlong = .12, MuzzleAlong = .5; // from the caster's feet, along the aim
 export const ChestH = .45;
 export const BaseDamage = 18, BounceDamage = 6; // shown as the tracer growing wider and hotter per bounce
-export const Lead = .35, Tail = .3;
+export const Lead = .2, Tail = .3;           // rest before the charge starts, rest after the result
 export const bump = x => (x >= 0 && x <= 1) ? Math.sin(x * Math.PI) : 0;
 export const heat = n => clamp(n / MaxBounces);
 export const tracerColour = n => Color.Lerp(Tracer, TracerHot, heat(n));
@@ -59,6 +60,30 @@ export function pistol(key, hand, deg, sun, strength, kick = 0, layer = pawnLaye
   rect(`${key} slide`, off(p, .17, .005), .30, .055, deg, Iron, layer + .004);
   rect(`${key} barrel`, off(p, .36, 0), .10, .045, deg, Iron, layer + .004);
   rect(`${key} lit`, off(p, .17, .025), .27, .014, deg, IronLit.withAlpha(.9), layer + .006);
+}
+
+// The charge building on the barrel before the shot. u is 0..1 of the charge, s the clip time for
+// the flicker. A glow at the muzzle grows and turns from pale to hot, a heat line runs the length
+// of the barrel, and motes are drawn in from about a cell around into the muzzle. At full charge
+// the glow flickers until the shot. Everything is additive light, nothing solid.
+export function charge(key, hand, m, deg, u, s) {
+  if (u <= 0) return;
+  const q = lift(m), dir = dirOf(deg), col = Color.Lerp(Tracer, TracerHot, u), full = u >= .97;
+  const flick = full ? .12 * Math.sin(s * 42) : 0, a = clamp(u * 1.2) + flick;
+  const grip = lift(move(hand, dir, .05));
+  streak(`${key} heat`, grip, q, .09 + .07 * u, col.withAlpha(.8 * a), whiteGlow, Y + .07, 4);
+  sprite(q, .3 + .8 * u, .27 + .7 * u, col.withAlpha(.6 * a), glowMat, Y + .071);
+  sprite(q, .12 + .24 * u, .11 + .21 * u, Core.withAlpha(.95 * a), glowMat, Y + .072);
+  const motes = 12;
+  for (let i = 0; i < motes; i++) {
+    const ph = (s * (1.1 + rand(i + 300) * .5) + rand(i + 310)) % 1;         // 0 far out, 1 at the muzzle
+    const r = (1.15 - .25 * u) * (1 - ph) + .04, ang = rand(i + 320) * TAU + s * 1.6 * (i % 2 ? 1 : -1) + ph * 1.2;
+    const g = { x: q.x + Math.cos(ang) * r, z: q.z + Math.sin(ang) * r * .75 };
+    const al = clamp(u * 1.5) * Math.sin(ph * Math.PI) * .8;
+    const tail = { x: q.x + Math.cos(ang) * (r + .12), z: q.z + Math.sin(ang) * (r + .12) * .75 };
+    streak(`${key} mote ${i}`, tail, g, .04, col.withAlpha(al), whiteGlow, Y + .073, 3);
+    sprite(g, .09, .08, Core.withAlpha(al), glowMat, Y + .074);
+  }
 }
 
 // The muzzle flash and the smoke that follows it. `m` is the muzzle's ground point.
