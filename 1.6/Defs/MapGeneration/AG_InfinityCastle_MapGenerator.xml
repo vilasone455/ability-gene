@@ -27,6 +27,11 @@
         <shiftCellsPerSecond>8</shiftCellsPerSecond>
         <strumGapSeconds>1.5</strumGapSeconds>
         <voidDropStunSeconds>1</voidDropStunSeconds>
+        <crushMinSize>7</crushMinSize>
+        <crushBand>2</crushBand>
+        <crushDamage>15</crushDamage>
+        <crushStunSeconds>1</crushStunSeconds>
+        <crushCooldownSeconds>10</crushCooldownSeconds>
       </li>
     </modExtensions>
   </MapGeneratorDef>

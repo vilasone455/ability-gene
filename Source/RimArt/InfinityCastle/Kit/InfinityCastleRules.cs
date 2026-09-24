@@ -20,6 +20,21 @@ namespace RimArt
         /// <summary>The Void rule: a pawn dropped through the void is stunned this long after it lands.</summary>
         public float voidDropStunSeconds = 1f;
 
+        /// <summary>Crush: a room must be at least this many cells each way, walls included.</summary>
+        public int crushMinSize = 7;
+
+        /// <summary>Crush: the walls slam this many cells in; everyone in that band of the floor is hit.</summary>
+        public int crushBand = 2;
+
+        /// <summary>Crush: blunt damage to each pawn under the walls, own pawns included.</summary>
+        public float crushDamage = 15f;
+
+        /// <summary>Crush: how long each pawn hit is stunned.</summary>
+        public float crushStunSeconds = 1f;
+
+        /// <summary>Crush: its own cooldown, on top of the gap between strums.</summary>
+        public float crushCooldownSeconds = 10f;
+
         private static readonly InfinityCastleRules fallback = new InfinityCastleRules();
 
         /// <summary>The numbers from the def, or the defaults above if the def carries none.</summary>

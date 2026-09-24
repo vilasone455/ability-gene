@@ -96,6 +96,44 @@ namespace RimArt
         }
     }
 
+    /// <summary>
+    /// Crush, the castle command: a room's four walls slam in and draw back, and everyone in the outer
+    /// band of its floor is hit. The hit lands at <see cref="Hit"/> after the strum; the picture (the
+    /// band lit, the slabs, dust, splinters, the stun stars) is the Crush sketch's. A castle loaded with a
+    /// crush in flight lands the hit at once and skips the picture.
+    /// </summary>
+    public sealed class CastleCrush : IExposable
+    {
+        public int room;
+        public float startAt;
+        public bool hitDone;
+
+        // The Crush sketch's order, in seconds from the strum.
+        public const float Mark = 0.05f, Telegraph = 0.3f, SlamFor = 0.12f, HoldFor = 0.3f, BackFor = 0.8f;
+        public const float Slam = Mark + Telegraph, Hit = Slam + SlamFor, Back = Hit + HoldFor, Open = Back + BackFor;
+        /// <summary>Over when the walls are back and the last stun star has gone (1 s from the hit).</summary>
+        public const float Length = Open + 0.2f;
+
+        public float AgeAt(float now) => now - startAt;
+
+        /// <summary>How far in the walls are at <paramref name="t"/>, 0..1: speeding up into the hit, a short hold, easing back.</summary>
+        public static float In(float t)
+        {
+            if (t < Slam) return 0f;
+            if (t < Hit) return Mathf.Pow((t - Slam) / SlamFor, 2f);
+            if (t < Back) return 1f;
+            return 1f - ThunderGodGraphics.Smooth((t - Back) / BackFor);
+        }
+
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref room, "room");
+            Scribe_Values.Look(ref startAt, "startAt");
+            Scribe_Values.Look(ref hitDone, "hitDone");
+            if (Scribe.mode == LoadSaveMode.PostLoadInit) startAt = -1000f;
+        }
+    }
+
     /// <summary>A Seal or Open being drawn: which doorway, which way, and when the strum was. Not saved; a loaded seal is simply shut.</summary>
     internal sealed class CastleSealAnim
     {
