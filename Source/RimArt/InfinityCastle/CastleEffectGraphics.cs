@@ -143,10 +143,14 @@ namespace RimArt
         }
 
         /// <summary>A pale outline round a room's walls (Shift's afterimages). The port of outline.</summary>
-        public static void Outline(CastleRoom room, Vector2 centre, float alpha, float wallAltitude, float width = 0.16f)
+        public static void Outline(CastleRoom room, Vector2 centre, float alpha, float wallAltitude, float width = 0.16f) =>
+            OutlineRect(centre, room.W, room.H, alpha, wallAltitude, width);
+
+        /// <summary>A pale outline round a w x h rectangle at <paramref name="centre"/> (a doorway lit by a command).</summary>
+        public static void OutlineRect(Vector2 centre, float w, float h, float alpha, float wallAltitude, float width = 0.16f)
         {
             if (alpha <= 0.005f) return;
-            float w = room.W, h = room.H, t = width;
+            float t = width;
             Color line = Fade(CastleRoomGraphics.Strum, alpha);
             Sprite(new Vector2(centre.x, centre.y - h / 2f + t / 2f), w, t, line, whiteGlow, wallAltitude + 0.05f);
             Sprite(new Vector2(centre.x, centre.y + h / 2f - t / 2f), w, t, line, whiteGlow, wallAltitude + 0.0501f);

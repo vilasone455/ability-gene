@@ -33,6 +33,10 @@ namespace RimArt
         private List<int> roomPlaces = new List<int>();
         private CastleShift shift;
         private List<CastleVoidDrop> drops = new List<CastleVoidDrop>();
+        /// <summary>Sealed doorways, by key (A-B): shut, barred, and walled in both cells.</summary>
+        private List<string> sealedDoors = new List<string>();
+        /// <summary>Seals and openings still being drawn: the leaves and the bar on the move.</summary>
+        private readonly List<CastleSealAnim> seals = new List<CastleSealAnim>();
         private float lastStrumAt = -1000f;
         private const float Backstop = 700f;
 
@@ -59,7 +63,7 @@ namespace RimArt
         /// <summary>The room drawn on its own this frame, or -1: a sliding room, until it stops.</summary>
         private int SlidingRoom => shift != null && shift.picture && !shift.stopped ? shift.room : -1;
 
-        private CastleRoomGraphics.CastleBatch Batch => batch ?? (batch = CastleRoomGraphics.CastleBatch.Build(Castle, SlidingRoom));
+        private CastleRoomGraphics.CastleBatch Batch => batch ?? (batch = CastleRoomGraphics.CastleBatch.Build(Castle, SlidingRoom, sealedDoors));
 
         /// <summary>The carrier's cell on the dais.</summary>
         public IntVec3 DaisCell
@@ -81,6 +85,8 @@ namespace RimArt
             roomPlaces.Clear();
             shift = null;
             drops.Clear();
+            sealedDoors.Clear();
+            seals.Clear();
             seconds = 0f;
             releasedAt = -1f;
             closing = false;
@@ -217,6 +223,7 @@ namespace RimArt
                 }
             }
 
+            foreach (CastleDoorway door in broken) sealedDoors.Remove(door.Key);
             castle = after;
             roomPlaces = after.Rooms.SelectMany(r => new[] { r.X, r.Z }).ToList();
             shift = moved;
@@ -242,6 +249,53 @@ namespace RimArt
             float seamZ = dz > 0 ? z + room.H : z;
             float x0 = Mathf.Max(x, other.X), x1 = Mathf.Min(x + room.W, other.X + other.W);
             return (new Vector2(x0 + 0.5f, seamZ), new Vector2(x1 - 0.5f, seamZ));
+        }
+
+        // ---- Seal and Open ---------------------------------------------------------------------------------
+
+        /// <summary>The doorway with a door cell at <paramref name="cell"/>, or null.</summary>
+        private CastleDoorway DoorwayAt(IntVec3 cell) =>
+            Castle.Doorways.FirstOrDefault(d => d.Cells[0] == (cell.x, cell.z) || d.Cells[1] == (cell.x, cell.z));
+
+        /// <summary>
+        /// Seal the doorway with a door cell at <paramref name="cell"/>: its leaves shut, a bar across, a wall
+        /// in both cells. Refused for the biwa room's own doorways, a doorway already sealed, one with a
+        /// pawn standing in it, while a room slides, or before the last strum has faded.
+        /// </summary>
+        public bool TrySeal(IntVec3 cell, out string why) => TrySealOrOpen(cell, true, out why);
+
+        /// <summary>Open a sealed doorway again: the bar slides away, the leaves open, the walls go.</summary>
+        public bool TryOpen(IntVec3 cell, out string why) => TrySealOrOpen(cell, false, out why);
+
+        private bool TrySealOrOpen(IntVec3 cell, bool seal, out string why)
+        {
+            why = null;
+            if (!IsCastle || closing || releasedAt >= 0f) { why = "The castle is closing."; return false; }
+            CastleDoorway door = DoorwayAt(cell);
+            if (door == null) { why = "No doorway there: click one of its two door cells."; return false; }
+            if (door.A == Castle.Biwa.Id || door.B == Castle.Biwa.Id) { why = "The biwa room's doorways cannot be sealed."; return false; }
+            bool sealedNow = sealedDoors.Contains(door.Key);
+            if (seal && sealedNow) { why = "That doorway is already sealed."; return false; }
+            if (!seal && !sealedNow) { why = "That doorway is not sealed."; return false; }
+            if (shift != null && !shift.stopped) { why = "A room is still sliding."; return false; }
+            if (seconds - lastStrumAt < InfinityCastleRules.Of.strumGapSeconds) { why = "The last strum is still sounding."; return false; }
+            var step = InfinityCastleDefOf.AG_InfinityCastleRooms?.genStep as GenStep_InfinityCastle;
+            if (step?.wall == null) return false;
+            var cells = new[] { new IntVec3(door.Cells[0].x, 0, door.Cells[0].z), new IntVec3(door.Cells[1].x, 0, door.Cells[1].z) };
+            if (seal && cells.Any(c => c.InBounds(map) && c.GetThingList(map).Any(t => t is Pawn))) { why = "Someone is standing in that doorway."; return false; }
+
+            foreach (IntVec3 c in cells)
+            {
+                if (!c.InBounds(map)) continue;
+                if (seal) { if (c.GetFirstThing(map, step.wall) == null) GenSpawn.Spawn(ThingMaker.MakeThing(step.wall), c, map); }
+                else c.GetFirstThing(map, step.wall)?.DeSpawn();
+            }
+            if (seal) sealedDoors.Add(door.Key); else sealedDoors.Remove(door.Key);
+            seals.RemoveAll(a => a.key == door.Key);
+            seals.Add(new CastleSealAnim { key = door.Key, door = door, sealing = seal, startAt = seconds });
+            lastStrumAt = seconds;
+            batch = null;
+            return true;
         }
 
         /// <summary>
@@ -287,6 +341,7 @@ namespace RimArt
                 }
                 if (t >= shift.EndAt || !shift.picture && shift.stopped) { shift = null; batch = null; }
             }
+            seals.RemoveAll(a => seconds - a.startAt > CastleSealAnim.Length);
             for (int i = drops.Count - 1; i >= 0; i--)
             {
                 CastleVoidDrop drop = drops[i];
@@ -316,6 +371,7 @@ namespace RimArt
             CellRect view = Find.CameraDriver.CurrentViewRect;
             InfinityCastleInsideGraphics.Draw(Castle, Vector2.zero, timeline, seconds, false, CastleLayers.Pocket, view, Batch, SlidingRoom);
             if (shift != null && shift.picture) DrawShift(view);
+            DrawSeals();
             DrawDrops();
         }
 
@@ -376,6 +432,48 @@ namespace RimArt
             Strum(new Vector2((float)biwaX, (float)biwaZ), t, 5f, 0.6f, layers.Fx);
         }
 
+        /// <summary>
+        /// Every sealed doorway shut and barred, and the ones on the move: Seal shuts the leaves over
+        /// 0.15 s from 0.05 s after the strum and slides the bar in over 0.25 s from 0.2 s; Open slides the
+        /// bar out over 0.2 s from 0.05 s and opens the leaves over 0.2 s from 0.2 s. The doorway's
+        /// outline lights as the command lands. The Seal and Open sketch's timings.
+        /// </summary>
+        private void DrawSeals()
+        {
+            CastleLayers layers = CastleLayers.Pocket;
+            var (seatX, seatZ) = CastleLayout.SeatOf(Castle.Biwa);
+            var (biwaX, biwaZ) = CastleLayout.BiwaOf((seatX, seatZ));
+            foreach (string key in sealedDoors)
+            {
+                if (seals.Any(a => a.key == key)) continue;
+                CastleDoorway door = Castle.Doorways.FirstOrDefault(d => d.Key == key);
+                if (door == null) continue;
+                foreach (var (x, z) in door.Cells) WallDoor(new Vector2(x + 0.5f, z + 0.5f), door.AlongZ, 0f, 1f, 1f, layers.Wall + 0.03f);
+            }
+            foreach (CastleSealAnim a in seals)
+            {
+                float t = seconds - a.startAt, open, bar;
+                if (a.sealing)
+                {
+                    open = 1f - Smooth((t - 0.05f) / 0.15f);
+                    bar = Smooth((t - 0.2f) / 0.25f);
+                }
+                else
+                {
+                    bar = 1f - Smooth((t - 0.05f) / 0.2f);
+                    open = EaseOut((t - 0.2f) / 0.2f);
+                }
+                foreach (var (x, z) in a.door.Cells) WallDoor(new Vector2(x + 0.5f, z + 0.5f), a.door.AlongZ, open, bar, 1f, layers.Wall + 0.03f);
+                var (ax, az) = a.door.Cells[0];
+                var (bx, bz) = a.door.Cells[1];
+                var mid = new Vector2((ax + bx) / 2f + 0.5f, (az + bz) / 2f + 0.5f);
+                float age = t - 0.05f;
+                if (age >= 0f && age < 0.45f)
+                    OutlineRect(mid, a.door.AlongZ ? 2.6f : 1.6f, a.door.AlongZ ? 1.6f : 2.6f, 0.6f * (1f - age / 0.45f), layers.Wall, 0.12f);
+                Strum(new Vector2((float)biwaX, (float)biwaZ), t, 5f, 0.6f, layers.Fx);
+            }
+        }
+
         /// <summary>Each Void-rule drop: a floor door where the pawn stood, and one it comes up through, the shaft's dark lifting.</summary>
         private void DrawDrops()
         {
@@ -410,6 +508,7 @@ namespace RimArt
             Scribe_Collections.Look(ref roomPlaces, "roomPlaces", LookMode.Value);
             Scribe_Deep.Look(ref shift, "shift");
             Scribe_Collections.Look(ref drops, "drops", LookMode.Deep);
+            Scribe_Collections.Look(ref sealedDoors, "sealedDoors", LookMode.Value);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 // A loaded castle opens in its hold: the arrival doors are not played again. A slide in
@@ -417,6 +516,8 @@ namespace RimArt
                 roomPlaces = roomPlaces ?? new List<int>();
                 drops = drops ?? new List<CastleVoidDrop>();
                 drops.RemoveAll(d => d.pawn == null);
+                sealedDoors = sealedDoors ?? new List<string>();
+                seals.Clear();
                 lastStrumAt = -1000f;
                 castle = null;
                 batch = null;
