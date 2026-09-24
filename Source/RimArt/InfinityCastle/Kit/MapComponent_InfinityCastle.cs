@@ -33,6 +33,10 @@ namespace RimArt
         private List<int> roomPlaces = new List<int>();
         private CastleShift shift;
         private List<CastleVoidDrop> drops = new List<CastleVoidDrop>();
+        private CastleCrush crush;
+        private float lastCrushAt = -1000f;
+        /// <summary>Pawns hit by the last crush, for the stun stars over them.</summary>
+        private readonly List<Pawn> crushed = new List<Pawn>();
         /// <summary>Sealed doorways, by key (A-B): shut, barred, and walled in both cells.</summary>
         private List<string> sealedDoors = new List<string>();
         /// <summary>Seals and openings still being drawn: the leaves and the bar on the move.</summary>
@@ -87,6 +91,8 @@ namespace RimArt
             drops.Clear();
             sealedDoors.Clear();
             seals.Clear();
+            crush = null;
+            crushed.Clear();
             seconds = 0f;
             releasedAt = -1f;
             closing = false;
@@ -251,6 +257,62 @@ namespace RimArt
             return (new Vector2(x0 + 0.5f, seamZ), new Vector2(x1 - 0.5f, seamZ));
         }
 
+        // ---- Crush ---------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Crush the room under <paramref name="cell"/>: its walls slam crushBand cells in and draw back, and
+        /// every pawn in that band of the floor takes crushDamage blunt and a stun. Refused for the biwa
+        /// room, a room under crushMinSize each way, during its own cooldown, while a room slides, or
+        /// before the last strum has faded.
+        /// </summary>
+        public bool TryCrush(IntVec3 cell, out string why)
+        {
+            why = null;
+            if (!IsCastle || closing || releasedAt >= 0f) { why = "The castle is closing."; return false; }
+            CastleRoom room = Castle.RoomAt(cell.x, cell.z);
+            if (room == null) { why = "No room there."; return false; }
+            if (room.Kind == CastleKind.Biwa) { why = "The biwa room is never crushed."; return false; }
+            InfinityCastleRules rules = InfinityCastleRules.Of;
+            if (room.W < rules.crushMinSize || room.H < rules.crushMinSize) { why = $"Too small: a room must be {rules.crushMinSize} x {rules.crushMinSize} or more."; return false; }
+            if (shift != null && !shift.stopped) { why = "A room is still sliding."; return false; }
+            if (crush != null && !crush.hitDone) { why = "The walls are still moving."; return false; }
+            if (seconds - lastCrushAt < rules.crushCooldownSeconds) { why = $"Crush is not ready: {Mathf.CeilToInt(rules.crushCooldownSeconds - (seconds - lastCrushAt))} s."; return false; }
+            if (seconds - lastStrumAt < rules.strumGapSeconds) { why = "The last strum is still sounding."; return false; }
+            crush = new CastleCrush { room = room.Id, startAt = seconds };
+            crushed.Clear();
+            lastStrumAt = lastCrushAt = seconds;
+            return true;
+        }
+
+        /// <summary>The floor cells a crush hits: the outer <paramref name="band"/> cells inside the wall ring.</summary>
+        private static bool InBand(CastleRoom room, int x, int z, int band)
+        {
+            int fx0 = room.X + 1, fz0 = room.Z + 1, fx1 = room.X + room.W - 2, fz1 = room.Z + room.H - 2;
+            if (x < fx0 || x > fx1 || z < fz0 || z > fz1) return false;
+            return x - fx0 < band || fx1 - x < band || z - fz0 < band || fz1 - z < band;
+        }
+
+        /// <summary>The impact: everyone in the band, own pawns included, takes the blow and is stunned; the camera shakes.</summary>
+        private void LandCrush()
+        {
+            crush.hitDone = true;
+            CastleRoom room = Castle.Rooms[crush.room];
+            InfinityCastleRules rules = InfinityCastleRules.Of;
+            var centre = new Vector3(room.X + room.W / 2f, 0f, room.Z + room.H / 2f);
+            foreach (IntVec3 cell in new CellRect(room.X, room.Z, room.W, room.H))
+            {
+                if (!cell.InBounds(map) || !InBand(room, cell.x, cell.z, rules.crushBand)) continue;
+                foreach (Pawn pawn in cell.GetThingList(map).OfType<Pawn>().ToList())
+                {
+                    float angle = (centre - pawn.DrawPos).AngleFlat();
+                    pawn.TakeDamage(new DamageInfo(DamageDefOf.Blunt, rules.crushDamage, 0f, angle));
+                    if (!pawn.Dead) pawn.stances?.stunner.StunFor(Mathf.CeilToInt(rules.crushStunSeconds * 60f), null, false, false);
+                    crushed.Add(pawn);
+                }
+            }
+            if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(0.06f);
+        }
+
         // ---- Seal and Open ---------------------------------------------------------------------------------
 
         /// <summary>The doorway with a door cell at <paramref name="cell"/>, or null.</summary>
@@ -342,6 +404,12 @@ namespace RimArt
                 if (t >= shift.EndAt || !shift.picture && shift.stopped) { shift = null; batch = null; }
             }
             seals.RemoveAll(a => seconds - a.startAt > CastleSealAnim.Length);
+            if (crush != null)
+            {
+                float t = crush.AgeAt(seconds);
+                if (!crush.hitDone && t >= CastleCrush.Hit) LandCrush();
+                if (t >= CastleCrush.Length) { crush = null; crushed.Clear(); }
+            }
             for (int i = drops.Count - 1; i >= 0; i--)
             {
                 CastleVoidDrop drop = drops[i];
@@ -372,6 +440,7 @@ namespace RimArt
             InfinityCastleInsideGraphics.Draw(Castle, Vector2.zero, timeline, seconds, false, CastleLayers.Pocket, view, Batch, SlidingRoom);
             if (shift != null && shift.picture) DrawShift(view);
             DrawSeals();
+            if (crush != null) DrawCrush();
             DrawDrops();
         }
 
@@ -474,6 +543,119 @@ namespace RimArt
             }
         }
 
+        private static readonly Color PanelWood = Color.Lerp(CastleRoomGraphics.WallWood, CastleRoomGraphics.WallTop, 0.35f);
+        private static readonly Color PanelPaper = Color.Lerp(CastleRoomGraphics.Paper, CastleRoomGraphics.WallWood, 0.25f);
+
+        /// <summary>
+        /// The Crush sketch's picture over the real room: the room's outline flashes at the strum, the hit
+        /// band lights and pulses until the walls come in, slabs slide out of the wall ring over the
+        /// pawns and draw back, dust and splinters at the impact, a flash and stun stars over each pawn
+        /// hit. Nothing on the map moves; the real pawns are not squashed.
+        /// </summary>
+        private void DrawCrush()
+        {
+            CastleLayers layers = CastleLayers.Pocket;
+            CastleCrush c = crush;
+            float t = c.AgeAt(seconds);
+            CastleRoom room = Castle.Rooms[c.room];
+            int band = InfinityCastleRules.Of.crushBand;
+            var centre = CastleRoomGraphics.CentreOf(Vector2.zero, room);
+            ThunderGodGraphics.Begin(centre);
+            RoomFlash(room, centre, t - CastleCrush.Mark, layers.Wall);
+            var (seatX, seatZ) = CastleLayout.SeatOf(Castle.Biwa);
+            var (biwaX, biwaZ) = CastleLayout.BiwaOf((seatX, seatZ));
+            Strum(new Vector2((float)biwaX, (float)biwaZ), t, 5f, 0.6f, layers.Fx);
+
+            // The floor inside the walls, in cells; the four bands d cells deep along its sides.
+            float fx0 = room.X + 1, fz0 = room.Z + 1, fx1 = room.X + room.W - 1, fz1 = room.Z + room.H - 1;
+            void Rect(float x0, float z0, float x1, float z1, Color colour, float altitude, Material material) =>
+                Sprite(new Vector2((x0 + x1) / 2f, (z0 + z1) / 2f), x1 - x0, z1 - z0, colour, material, altitude);
+            (float x0, float z0, float x1, float z1, char side)[] Bands(float d) => new[]
+            {
+                (fx0, fz1 - d, fx1, fz1, 'n'), (fx0, fz0, fx1, fz0 + d, 's'), (fx0, fz0 + d, fx0 + d, fz1 - d, 'w'), (fx1 - d, fz0 + d, fx1, fz1 - d, 'e'),
+            };
+
+            // The hit area: the outer band lights up and pulses until the walls come in.
+            float markA = t >= CastleCrush.Mark && t < CastleCrush.Hit ? Smooth((t - CastleCrush.Mark) / 0.1f) * (0.75f + 0.25f * Mathf.Sin((t - CastleCrush.Mark) * 30f)) : 0f;
+            if (markA > 0f)
+                foreach (var (x0, z0, x1, z1, _) in Bands(band))
+                    Rect(x0, z0, x1, z1, Fade(CastleRoomGraphics.Strum, 0.16f * markA), layers.Floor + 0.03f, whiteGlow);
+
+            // The walls: slabs out of the wall ring, drawn over the pawns while they are in.
+            float d = band * CastleCrush.In(t);
+            if (d > 0.01f)
+            {
+                float y = layers.Fx - 0.1f;
+                foreach (var (x0, z0, x1, z1, side) in Bands(d))
+                {
+                    Rect(x0, z0, x1, z1, CastleRoomGraphics.WallWood, y, solid);
+                    bool alongX = side == 'n' || side == 's';
+                    float inset = Mathf.Min(0.3f, d * 0.2f);
+                    // A shoji strip down the middle of each slab, lattice every half cell.
+                    if (alongX)
+                    {
+                        Rect(x0 + 0.2f, z0 + inset, x1 - 0.2f, z1 - inset, PanelPaper, y + 0.002f, solid);
+                        for (float x = x0 + 0.5f; x < x1 - 0.3f; x += 0.5f) Rect(x - 0.02f, z0 + inset, x + 0.02f, z1 - inset, CastleRoomGraphics.Lattice, y + 0.003f, solid);
+                    }
+                    else
+                    {
+                        Rect(x0 + inset, z0 + 0.2f, x1 - inset, z1 - 0.2f, PanelPaper, y + 0.002f, solid);
+                        for (float z = z0 + 0.5f; z < z1 - 0.3f; z += 0.5f) Rect(x0 + inset, z - 0.02f, x1 - inset, z + 0.02f, CastleRoomGraphics.Lattice, y + 0.003f, solid);
+                    }
+                    // The front edge: red lacquer and a lit lip, where the slab meets the room.
+                    const float e = 0.09f;
+                    switch (side)
+                    {
+                        case 'n': Rect(x0, z0, x1, z0 + e, CastleRoomGraphics.Lacquer, y + 0.004f, solid); Rect(x0, z0 + e, x1, z0 + e + 0.05f, PanelWood, y + 0.004f, solid); break;
+                        case 's': Rect(x0, z1 - e, x1, z1, CastleRoomGraphics.Lacquer, y + 0.004f, solid); Rect(x0, z1 - e - 0.05f, x1, z1 - e, PanelWood, y + 0.004f, solid); break;
+                        case 'w': Rect(x1 - e, z0, x1, z1, CastleRoomGraphics.Lacquer, y + 0.004f, solid); Rect(x1 - e - 0.05f, z0, x1 - e, z1, PanelWood, y + 0.004f, solid); break;
+                        default: Rect(x0, z0, x0 + e, z1, CastleRoomGraphics.Lacquer, y + 0.004f, solid); Rect(x0 + e, z0, x0 + e + 0.05f, z1, PanelWood, y + 0.004f, solid); break;
+                    }
+                }
+            }
+
+            // Impact: dust along the four wall fronts, splinters thrown into the room.
+            float age = t - CastleCrush.Hit;
+            var fronts = new[]
+            {
+                (new Vector2(fx0 + band, fz1 - band), new Vector2(fx1 - band, fz1 - band)), (new Vector2(fx0 + band, fz0 + band), new Vector2(fx1 - band, fz0 + band)),
+                (new Vector2(fx0 + band, fz0 + band), new Vector2(fx0 + band, fz1 - band)), (new Vector2(fx1 - band, fz0 + band), new Vector2(fx1 - band, fz1 - band)),
+            };
+            for (int k = 0; k < 4; k++) DustLine(fronts[k].Item1, fronts[k].Item2, age, layers.Fx, 0.9f, 9, 0.6f, k * 17, 0.5f);
+            if (age >= 0f && age < 0.8f)
+            {
+                const float Lift = 0.6f;
+                for (int i = 0; i < 24; i++)
+                {
+                    var (a, b) = fronts[i % 4];
+                    float u = Rand(i + 300);
+                    var at = new Vector2(a.x + (b.x - a.x) * u, a.y + (b.y - a.y) * u);
+                    float cx = (fx0 + fx1) / 2f - at.x, cz = (fz0 + fz1) / 2f - at.y, len = Mathf.Max(0.001f, Mathf.Sqrt(cx * cx + cz * cz));
+                    float life = 0.45f + Rand(i + 310) * 0.35f, k = Clamp(age / life);
+                    if (k >= 1f) continue;
+                    float reach = 0.6f + Rand(i + 320) * 1.2f, h = 1.4f * k * (1f - k) * (0.6f + Rand(i + 330));
+                    var q = new Vector2(at.x + cx / len * reach * k, at.y + cz / len * reach * k + h * Lift);
+                    Rect(q.x - 0.06f, q.y - 0.02f, q.x + 0.06f, q.y + 0.02f, Fade(CastleRoomGraphics.WallTop, 1f - k * k), layers.Fx + 0.02f, solid);
+                }
+            }
+
+            // Each pawn hit: a flash as the walls land, stun stars once they draw back.
+            foreach (Pawn pawn in crushed)
+            {
+                if (pawn == null || !pawn.Spawned || pawn.Map != map) continue;
+                var pos = new Vector2(pawn.DrawPos.x, pawn.DrawPos.z);
+                if (age >= 0f && age < 0.18f) Sprite(new Vector2(pos.x, pos.y + 0.45f), 1.1f, 1.1f, Fade(CastleRoomGraphics.Strum, 0.7f * (1f - age / 0.18f)), glow, layers.Fx + 0.08f);
+                float stars = t - CastleCrush.Back, life = InfinityCastleRules.Of.crushStunSeconds - CastleCrush.HoldFor;
+                if (stars < 0f || stars > life) continue;
+                float sa = Mathf.Min(1f, stars / 0.1f) * (1f - Clamp((stars - life + 0.2f) / 0.2f));
+                for (int i = 0; i < 4; i++)
+                {
+                    float ang = stars * 5f + i * Mathf.PI / 2f;
+                    Sprite(new Vector2(pos.x + Mathf.Cos(ang) * 0.2f, pos.y + 0.95f + Mathf.Sin(ang) * 0.08f), 0.11f, 0.11f, Fade(CastleRoomGraphics.Strum, 0.9f * sa), glow, layers.Fx + 0.03f);
+                }
+            }
+        }
+
         /// <summary>Each Void-rule drop: a floor door where the pawn stood, and one it comes up through, the shaft's dark lifting.</summary>
         private void DrawDrops()
         {
@@ -509,6 +691,8 @@ namespace RimArt
             Scribe_Deep.Look(ref shift, "shift");
             Scribe_Collections.Look(ref drops, "drops", LookMode.Deep);
             Scribe_Collections.Look(ref sealedDoors, "sealedDoors", LookMode.Value);
+            Scribe_Deep.Look(ref crush, "crush");
+            Scribe_Values.Look(ref lastCrushAt, "lastCrushAt", -1000f);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 // A loaded castle opens in its hold: the arrival doors are not played again. A slide in
@@ -518,6 +702,8 @@ namespace RimArt
                 drops.RemoveAll(d => d.pawn == null);
                 sealedDoors = sealedDoors ?? new List<string>();
                 seals.Clear();
+                lastCrushAt = -1000f;
+                crushed.Clear();
                 lastStrumAt = -1000f;
                 castle = null;
                 batch = null;

@@ -52,6 +52,16 @@ namespace RimArt
         [RimArtDebug("Infinity Castle", "castle: shift south", RimArtDebugKind.Cell)]
         public static void ShiftSouth() => Shift(0, -1);
 
+        [RimArtDebug("Infinity Castle", "castle: crush", RimArtDebugKind.Cell)]
+        public static void Crush()
+        {
+            Map map = Find.CurrentMap;
+            MapComponent_InfinityCastle castle = map?.GetComponent<MapComponent_InfinityCastle>();
+            if (castle == null || !castle.IsCastle) { Messages.Message("The map on screen is not a castle.", MessageTypeDefOf.RejectInput, false); return; }
+            IntVec3 cell = UI.MouseCell();
+            if (cell.InBounds(map) && !castle.TryCrush(cell, out string why)) Messages.Message(why, MessageTypeDefOf.RejectInput, false);
+        }
+
         [RimArtDebug("Infinity Castle", "castle: seal doorway", RimArtDebugKind.Cell)]
         public static void Seal() => SealOrOpen(true);
 
