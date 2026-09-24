@@ -9,6 +9,10 @@
     <isUnderground>true</isUnderground>
     <ignoreAreaRevealedLetter>true</ignoreAreaRevealedLetter>
     <disableCallAid>true</disableCallAid>
+    <!-- The game paints a grey frame (MapEdgeClipDrawer, 0.1 grey, above everything) beyond every map
+         edge. Off here: the castle's void plane and its drifting depth rooms run on past the edge, and
+         MapComponent_InfinityCastle draws a black backstop under them for the far corners. -->
+    <disableMapClippers>true</disableMapClippers>
     <pocketMapProperties>
       <biome>AG_InfinityCastle</biome>
       <temperature>16</temperature>

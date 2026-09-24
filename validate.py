@@ -20,6 +20,7 @@ runtime, in the order they have actually bitten this project:
      carrying CompProperties_Explosive must tick Normal
   6c. SoundDef.ConfigErrors: a sustainer must not use priorityMode PrioritizeNewest,
      which is the default when priorityMode is left out
+  6d. TerrainDef tags that are not fields of the 1.6 TerrainDef (holdSnow vs holdSnowOrSand)
   7. Translate keys used in C# but not defined in Languages/
   8. Concrete abilities with zero or multiple acquisition sources
 
@@ -333,6 +334,52 @@ for f in my_files:
             fail("config error", f, (el.findtext("defName") or "?").strip()
                  + " is a sustainer with priorityMode PrioritizeNewest (the default when it is not set)"
                  + " -- the game refuses that; use PrioritizeNearest")
+
+# 6d. "<holdSnow> doesn't correspond to any field in type TerrainDef." A tag the game cannot
+#    match to a field is a red error at load and the value is dropped. Found for AG_CastleVoid
+#    and AG_CastleFloor after build, validator and API checks were all clean: the 1.6 field is
+#    holdSnowOrSand. The list below is every public instance field of Verse.TerrainDef and its
+#    bases in RimWorld 1.6, read from the decompiled Assembly-CSharp on 2026-09-24; regenerate
+#    it with ilspycmd when the game updates. Only TerrainDef is checked this way because it is
+#    the one def type this mod writes by hand from memory rather than by copying a vanilla def.
+TERRAIN_DEF_FIELDS = set("""
+affordances altitudeLayer artisticSkillPrerequisite autoRebuildable avoidWander blocksAltitudes
+blueprintDef bridge bridgePropsLoopGraphic bridgePropsPath bridgePropsRightGraphic
+buildingPrerequisites burnDamage burnIntervalTicks burnedDef canBePolluted canEverTerraform
+canFreeze canGenerateDefaultDesignator categoryType changeable clearBuildingArea color colorDef
+colorPerStuff constructEffect constructionSkillPrerequisite costList costListForDifficulty
+costStuffCount cropIcon customShader customShaderParameters dangerous defName
+defaultPlacingRot description descriptionHyperlinks designationCategory designationHotKey
+designatorDropdown destroyBuildingsOnDestroyed destroyEffect destroyEffectWater
+destroyOnBombDamageThreshold discoveryPrerequisites dominantStyleCategory dontRender
+drawStyleCategory driesTo edgeType exposesToVacuum extinguishesFire extraDeteriorationFactor
+extraDraftedPerceivedPathCost extraNonDraftedPerceivedPathCost fertility filthAcceptanceMask
+fleckData floodTerrain forceMoveItemsBeforeConstruction forcePassableByFlyingPawns frameDef
+generated generatedFilth glowColor glowRadius graphic graphicPolluted gravshipReplacementTerrain
+heatPerTick holdSnowOrSand ideoBuilding ignitePawnsIntervalTicks igniteRadius ignoreConfigErrors
+ignoreIllegalLabelCharacterConfigError installBlueprintDef isAltar isFoundation isPaintable label
+layerable maxTechLevelToBuild meltSnowRadius minMonolithLevel minTechLevelToBuild modExtensions
+natural passability pathCost pathCostIgnoreRepeat placeWorkers pollutedTexturePath
+pollutionCloudColor pollutionColor pollutionOverlayScale pollutionOverlayScrollSpeed
+pollutionOverlayTexturePath pollutionShaderType pollutionTintColor preventCraters renderPrecedence
+repairEffect requireInspectedGravEngine researchPrerequisites resourcesFractionWhenDeconstructed
+scatterType smoothedTerrain spaceBridgePropsLoopGraphic spaceBridgePropsPath
+spaceBridgePropsRightGraphic spaceEdgeGraphicData specialDisplayRadius statBases stuffCategories
+supportsRock tags takeFootprints takeSplashes tempTerrain temporary terrainAffordanceNeeded
+texturePath throwFleckChance tools toxicBuildupFactor traversedThought uiIcon uiIconAngle
+uiIconColor uiIconColorTwo uiIconForStackCount uiIconOffset uiIconPath uiIconPathsStuff uiOrder
+useStuffTerrainAffordance waterBodyType waterDepthMaterial waterDepthShader
+waterDepthShaderParameters
+""".split())
+for f in my_files:
+    for el in ET.parse(f).getroot():
+        if el.tag != "TerrainDef": continue
+        label = el.get("Name") or (el.findtext("defName") or "").strip()
+        for child in el:
+            if child.tag not in TERRAIN_DEF_FIELDS:
+                fail("unknown field", f, label + " uses <" + child.tag
+                     + ">, which is not a field of TerrainDef in RimWorld 1.6"
+                     + (" (the 1.6 name is holdSnowOrSand)" if child.tag == "holdSnow" else ""))
 
 # 7. translate keys
 used = set()

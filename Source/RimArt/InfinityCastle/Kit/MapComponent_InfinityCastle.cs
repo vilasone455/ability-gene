@@ -1,5 +1,6 @@
 using UnityEngine;
 using Verse;
+using static RimArt.ThunderGodGraphics;
 using T = RimArt.InfinityCastleInsideTiming;
 
 namespace RimArt
@@ -21,6 +22,7 @@ namespace RimArt
         private float seconds, releasedAt = -1f;
         private bool closing;
         private CastleLayout castle;
+        private const float Backstop = 700f;
 
         public MapComponent_InfinityCastle(Map map) : base(map) { }
 
@@ -66,6 +68,11 @@ namespace RimArt
                 InfinityCastleMap.CloseLater(map);
                 return;
             }
+            // The generator def turns the game's grey map-edge frame off (disableMapClippers), so the
+            // void plane (270 cells) and the depth rooms show past the edge. This plane, under it, is
+            // what the far corners see at full zoom-out, where the camera reaches ~110 cells outside.
+            DrawMesh(MeshPool.plane10, new Vector2(map.Size.x / 2f, map.Size.z / 2f), CastleLayers.Pocket.Back - 0.002f,
+                Backstop, Backstop, 0f, CastleRoomGraphics.VoidDeep, solid);
             InfinityCastleInsideGraphics.Draw(Castle, Vector2.zero, timeline, seconds, false, CastleLayers.Pocket, Find.CameraDriver.CurrentViewRect);
         }
 
