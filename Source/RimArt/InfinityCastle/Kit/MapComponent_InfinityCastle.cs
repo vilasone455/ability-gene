@@ -32,7 +32,7 @@ namespace RimArt
         /// <summary>The rooms' places, x then z per room, once a command has moved one; empty for a castle as generated.</summary>
         private List<int> roomPlaces = new List<int>();
         private CastleShift shift;
-        private List<CastleVoidDrop> drops = new List<CastleVoidDrop>();
+        private List<CastleDrop> drops = new List<CastleDrop>();
         private CastleCrush crush;
         private float lastCrushAt = -1000f;
         /// <summary>Pawns hit by the last crush, for the stun stars over them.</summary>
@@ -360,23 +360,62 @@ namespace RimArt
             return true;
         }
 
+        // ---- Drop and the Void rule ---------------------------------------------------------------------
+
+        /// <summary>
+        /// Drop: <paramref name="pawn"/> goes through the floor and comes up in the room under
+        /// <paramref name="cell"/>. No damage; stunned only while in transit. Refused for a pawn not in the
+        /// castle, no room under the cell, the pawn's own room, while a room slides, or before the last
+        /// strum has faded.
+        /// </summary>
+        public bool TryDrop(Pawn pawn, IntVec3 cell, out string why)
+        {
+            why = null;
+            if (!IsCastle || closing || releasedAt >= 0f) { why = "The castle is closing."; return false; }
+            if (pawn == null || !pawn.Spawned || pawn.Map != map) { why = "That pawn is not in the castle."; return false; }
+            CastleRoom room = Castle.RoomAt(cell.x, cell.z);
+            if (room == null) { why = "No room there."; return false; }
+            if (Castle.RoomAt(pawn.Position.x, pawn.Position.z) == room) { why = "The pawn is already in that room."; return false; }
+            if (shift != null && !shift.stopped) { why = "A room is still sliding."; return false; }
+            if (seconds - lastStrumAt < InfinityCastleRules.Of.strumGapSeconds) { why = "The last strum is still sounding."; return false; }
+            if (drops.Any(d => d.pawn == pawn)) { why = "That pawn is already falling."; return false; }
+            DropPawn(pawn, room, 0.1f, true, 0f);
+            lastStrumAt = seconds;
+            return true;
+        }
+
         /// <summary>
         /// The Void rule: <paramref name="pawn"/> drops through the void and comes up in a random room
-        /// (not the biwa room, not <paramref name="notRoom"/>) through a floor door, unharmed. The move
-        /// is now; the picture hides the pawn until it is up.
+        /// (not the biwa room, not <paramref name="notRoom"/>) through a floor door, unharmed but stunned
+        /// a moment. No strum: the castle does this on its own.
         /// </summary>
         public void VoidDrop(Pawn pawn, int notRoom = -1)
         {
             List<CastleRoom> choices = Castle.Rooms.Where(r => r.Kind != CastleKind.Biwa && r.Id != notRoom).ToList();
             if (choices.Count == 0 || !pawn.Spawned) return;
-            CastleRoom room = choices.RandomElement();
-            IntVec3 from = pawn.Position, to = new IntVec3(room.X + room.W / 2, 0, room.Z + room.H / 2);
+            DropPawn(pawn, choices.RandomElement(), 0f, false, InfinityCastleRules.Of.voidDropStunSeconds);
+        }
+
+        /// <summary>
+        /// The move, now: the pawn goes to a free floor cell near the room's middle and is stunned for the
+        /// transit (plus <paramref name="stunAfter"/>); the drop's picture then plays over it.
+        /// </summary>
+        private void DropPawn(Pawn pawn, CastleRoom room, float doorUnder, bool strum, float stunAfter)
+        {
+            IntVec3 from = pawn.Position, middle = new IntVec3(room.X + room.W / 2, 0, room.Z + room.H / 2);
+            bool Free(IntVec3 c) => c.InBounds(map) && !room.IsWall(c.x, c.z) && room.Contains(c.x, c.z) && c.Standable(map) && !c.GetThingList(map).Any(t => t is Pawn);
+            IntVec3 to = Free(middle) ? middle : CellFinder.TryFindRandomCellNear(middle, map, 3, Free, out IntVec3 near) ? near : middle;
+            var drop = new CastleDrop
+            {
+                pawn = pawn, from = from, to = to, startAt = seconds, doorUnder = doorUnder, strum = strum,
+                fromRoom = Castle.RoomAt(from.x, from.z)?.Id ?? -1, toRoom = room.Id,
+            };
             pawn.DeSpawnOrDeselect();
             GenSpawn.Spawn(pawn, to, map);
             pawn.Notify_Teleported(true, true);
-            pawn.stances?.stunner.StunFor(Mathf.CeilToInt((CastleVoidDrop.Land + CastleVoidDrop.Rise + InfinityCastleRules.Of.voidDropStunSeconds) * 60f), null, false, false);
-            InfinityCastleRide.Hide(pawn);
-            drops.Add(new CastleVoidDrop { pawn = pawn, from = from, to = to, startAt = seconds });
+            pawn.stances?.stunner.StunFor(Mathf.CeilToInt((drop.Arrive + CastleDrop.Rise + stunAfter) * 60f), null, false, false);
+            InfinityCastleRide.Ride(pawn, new Vector2(from.x - to.x, from.z - to.z));
+            drops.Add(drop);
         }
 
         // ---- ticking and drawing --------------------------------------------------------------------------
@@ -412,9 +451,13 @@ namespace RimArt
             }
             for (int i = drops.Count - 1; i >= 0; i--)
             {
-                CastleVoidDrop drop = drops[i];
+                // Where the pawn is drawn: back at its old cell while it sinks, nowhere in between, then up.
+                CastleDrop drop = drops[i];
                 if (drop.pawn == null || drop.DoneAt(seconds)) { if (drop.pawn != null) InfinityCastleRide.Release(drop.pawn); drops.RemoveAt(i); continue; }
-                if (drop.AgeAt(seconds) >= CastleVoidDrop.Land + DoorThrough) InfinityCastleRide.Release(drop.pawn);
+                float t = drop.AgeAt(seconds);
+                if (t < drop.SinkEnd) InfinityCastleRide.Ride(drop.pawn, new Vector2(drop.from.x - drop.to.x, drop.from.z - drop.to.z));
+                else if (t < drop.Arrive + DoorThrough) InfinityCastleRide.Hide(drop.pawn);
+                else InfinityCastleRide.Release(drop.pawn);
             }
         }
 
@@ -656,21 +699,35 @@ namespace RimArt
             }
         }
 
-        /// <summary>Each Void-rule drop: a floor door where the pawn stood, and one it comes up through, the shaft's dark lifting.</summary>
+        /// <summary>
+        /// Each drop: the room's flash and the strum for a Drop, a floor door under the pawn with the
+        /// shaft's dark closing over it as it sinks, then the far room's flash, its floor door and the
+        /// dark lifting off the pawn as it rises. The Drop sketch's picture.
+        /// </summary>
         private void DrawDrops()
         {
             CastleLayers layers = CastleLayers.Pocket;
-            foreach (CastleVoidDrop drop in drops)
+            var (seatX, seatZ) = CastleLayout.SeatOf(Castle.Biwa);
+            var (biwaX, biwaZ) = CastleLayout.BiwaOf((seatX, seatZ));
+            foreach (CastleDrop drop in drops)
             {
-                float age = drop.AgeAt(seconds);
+                float t = drop.AgeAt(seconds);
                 var from = new Vector2(drop.from.x + 0.5f, drop.from.z + 0.5f);
                 var to = new Vector2(drop.to.x + 0.5f, drop.to.z + 0.5f);
-                DoorAt(age, 0.3f, out float fromAlpha, out float fromOpen);
-                if (age < DoorEnd(0.3f)) FloorDoor(from, fromOpen, fromAlpha, seconds, layers.Door);
-                float landAge = age - CastleVoidDrop.Land;
-                DoorAt(landAge, CastleVoidDrop.Rise * 0.75f, out float toAlpha, out float toOpen);
-                if (landAge >= -0.2f && landAge < DoorEnd(CastleVoidDrop.Rise * 0.75f)) FloorDoor(to, toOpen, toAlpha, seconds, layers.Door);
-                if (landAge >= DoorThrough) Rising(to, Clamp((landAge - DoorThrough) / CastleVoidDrop.Rise), layers);
+                if (drop.strum)
+                {
+                    Strum(new Vector2((float)biwaX, (float)biwaZ), t, 5f, 0.6f, layers.Fx);
+                    if (drop.fromRoom >= 0) RoomFlash(Castle.Rooms[drop.fromRoom], CastleRoomGraphics.CentreOf(Vector2.zero, Castle.Rooms[drop.fromRoom]), t - 0.05f, layers.Wall);
+                }
+                float under = t - drop.doorUnder;
+                DoorAt(under, CastleDrop.Sink + 0.05f, out float fromAlpha, out float fromOpen);
+                if (under < DoorEnd(CastleDrop.Sink + 0.05f)) FloorDoor(from, fromOpen, fromAlpha, seconds, layers.Door);
+                if (under >= DoorThrough && t < drop.SinkEnd) Sinking(from, Clamp((under - DoorThrough) / CastleDrop.Sink), layers);
+                float land = t - drop.Arrive;
+                if (drop.toRoom >= 0) RoomFlash(Castle.Rooms[drop.toRoom], CastleRoomGraphics.CentreOf(Vector2.zero, Castle.Rooms[drop.toRoom]), land, layers.Wall);
+                DoorAt(land, CastleDrop.Rise * 0.75f, out float toAlpha, out float toOpen);
+                if (land >= -0.2f && land < DoorEnd(CastleDrop.Rise * 0.75f)) FloorDoor(to, toOpen, toAlpha, seconds, layers.Door);
+                if (land >= DoorThrough) Rising(to, Clamp((land - DoorThrough) / CastleDrop.Rise), layers);
             }
         }
 
@@ -678,7 +735,7 @@ namespace RimArt
         {
             if (!IsCastle) return;
             if (shift != null) foreach (Pawn rider in shift.riders) InfinityCastleRide.Release(rider);
-            foreach (CastleVoidDrop drop in drops) if (drop.pawn != null) InfinityCastleRide.Release(drop.pawn);
+            foreach (CastleDrop drop in drops) if (drop.pawn != null) InfinityCastleRide.Release(drop.pawn);
         }
 
         public override void ExposeData()
@@ -698,7 +755,7 @@ namespace RimArt
                 // A loaded castle opens in its hold: the arrival doors are not played again. A slide in
                 // progress finishes without its picture; a drop in progress keeps its doors.
                 roomPlaces = roomPlaces ?? new List<int>();
-                drops = drops ?? new List<CastleVoidDrop>();
+                drops = drops ?? new List<CastleDrop>();
                 drops.RemoveAll(d => d.pawn == null);
                 sealedDoors = sealedDoors ?? new List<string>();
                 seals.Clear();

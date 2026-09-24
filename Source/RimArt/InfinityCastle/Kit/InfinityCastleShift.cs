@@ -145,25 +145,41 @@ namespace RimArt
         public const float Length = 0.6f;
     }
 
-    /// <summary>A pawn dropped by the Void rule: hidden while it falls, shown rising through a floor door in another room.</summary>
-    public sealed class CastleVoidDrop : IExposable
+    /// <summary>
+    /// A pawn going through the floor: Drop (the carrier picks the pawn and the room) and the Void rule
+    /// (a random room). The move is at once; the picture is the Drop sketch's: a door opens under the
+    /// pawn <see cref="doorUnder"/> after the strum, the pawn sinks for 0.4 s and is gone, a door opens
+    /// in the far room 0.2 s later and the pawn rises out of it over 0.55 s. While it sinks the pawn is
+    /// drawn back at its old cell; in between it is not drawn at all.
+    /// </summary>
+    public sealed class CastleDrop : IExposable
     {
         public Pawn pawn;
         public IntVec3 from, to;
-        /// <summary>When the drop began, on the castle map's clock.</summary>
+        public int fromRoom = -1, toRoom = -1;
         public float startAt;
+        /// <summary>Seconds after the strum before the door opens: 0.1 for Drop, 0 for the Void rule.</summary>
+        public float doorUnder;
+        /// <summary>Whether this was a strum (Drop): the rings from the dais and the room's flash.</summary>
+        public bool strum;
 
-        /// <summary>The fall takes 0.5 s, the far door opens 0.25 s later, and the pawn is up 0.55 s after that.</summary>
-        public const float Fall = 0.5f, Land = 0.75f, Rise = 0.55f;
+        public const float Sink = 0.4f, Rise = 0.55f;
+        public float SinkStart => doorUnder + DoorThrough;
+        public float SinkEnd => SinkStart + Sink;
+        public float Arrive => SinkEnd + 0.2f;
         public float AgeAt(float now) => now - startAt;
-        public bool DoneAt(float now) => AgeAt(now) > Land + DoorEnd(Rise * 0.75f);
+        public bool DoneAt(float now) => AgeAt(now) > Arrive + DoorEnd(Rise * 0.75f);
 
         public void ExposeData()
         {
             Scribe_References.Look(ref pawn, "pawn");
             Scribe_Values.Look(ref from, "from");
             Scribe_Values.Look(ref to, "to");
+            Scribe_Values.Look(ref fromRoom, "fromRoom", -1);
+            Scribe_Values.Look(ref toRoom, "toRoom", -1);
             Scribe_Values.Look(ref startAt, "startAt");
+            Scribe_Values.Look(ref doorUnder, "doorUnder");
+            Scribe_Values.Look(ref strum, "strum");
             if (Scribe.mode == LoadSaveMode.PostLoadInit) startAt = -1000f;
         }
     }
@@ -179,8 +195,8 @@ namespace RimArt
         private static readonly HashSet<Pawn> hidden = new HashSet<Pawn>();
 
         public static int Count => offsets.Count + hidden.Count;
-        public static void Ride(Pawn pawn, Vector2 behind) => offsets[pawn] = new Vector3(behind.x, 0f, behind.y);
-        public static void Hide(Pawn pawn) => hidden.Add(pawn);
+        public static void Ride(Pawn pawn, Vector2 behind) { hidden.Remove(pawn); offsets[pawn] = new Vector3(behind.x, 0f, behind.y); }
+        public static void Hide(Pawn pawn) { offsets.Remove(pawn); hidden.Add(pawn); }
         public static void Release(Pawn pawn) { offsets.Remove(pawn); hidden.Remove(pawn); }
         public static void Clear() { offsets.Clear(); hidden.Clear(); }
         public static bool Hidden(Pawn pawn) => hidden.Contains(pawn);
