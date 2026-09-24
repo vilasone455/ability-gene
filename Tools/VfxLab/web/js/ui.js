@@ -3,7 +3,7 @@
 
 import { Renderer } from './gl.js';
 import { Scene } from './scene.js';
-import { Camera, bindCamera, shakeAt } from './camera.js';
+import { Camera, bindCamera, shakeAt, cameraMoveAt, movedView } from './camera.js';
 import { RecordedSource, SketchSource, Clock, RecordedCell } from './player.js';
 import { layerOf } from './engine.js';
 import { listPresets, savePreset, deletePreset, applyPreset, presetFile, importPresets } from './presets.js';
@@ -251,14 +251,15 @@ function drawStage() {
     const t = Math.min(clock.t, source.duration);
     const frame = source.frameAt(t, state.cell, scene);
     const shake = shakeAt(source.events, clock.t);
-    const cells = Math.max(rect[2], rect[3]) / camera.ppc / 2;
+    const move = cameraMoveAt(source.events, clock.t), view = movedView(camera, move, state.cell);
+    const cells = Math.max(rect[2], rect[3]) / view.ppc / 2;
     views.push({
       rect,
-      camera: { cx: camera.cx + shake.x, cz: camera.cz + shake.z, ppc: camera.ppc },
-      calls: scene.calls({ x: camera.cx, z: camera.cz }, cells).concat(frame.calls),
+      camera: { cx: view.cx + shake.x, cz: view.cz + shake.z, ppc: view.ppc },
+      calls: (source.ownMap ? [] : scene.calls({ x: view.cx, z: view.cz }, cells)).concat(frame.calls),
       hidden: state.hidden,
     });
-    frames.push({ source, frame, shake, t });
+    frames.push({ source, frame, shake, move, view: Object.assign(new Camera(), view), t });
   });
   state.standIns = renderer.render(views);
   state.frames = frames;
@@ -279,30 +280,31 @@ function drawOverlay(rects) {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
-  for (const rect of rects.slice(0, state.frames.length || 1)) {
+  rects.slice(0, state.frames.length || 1).forEach((rect, i) => {
+    const cam = state.frames[i]?.view ?? camera;   // a scripted camera move carries the grid and the cell marker with the map
     ctx.save();
     ctx.beginPath(); ctx.rect(...rect); ctx.clip();
-    if (scene.show.grid && camera.ppc >= 6) {
-      const left = camera.toWorld(rect[0], 0, rect).x, right = camera.toWorld(rect[0] + rect[2], 0, rect).x;
-      const top = camera.toWorld(0, rect[1], rect).z, bottom = camera.toWorld(0, rect[1] + rect[3], rect).z;
+    if (scene.show.grid && cam.ppc >= 6) {
+      const left = cam.toWorld(rect[0], 0, rect).x, right = cam.toWorld(rect[0] + rect[2], 0, rect).x;
+      const top = cam.toWorld(0, rect[1], rect).z, bottom = cam.toWorld(0, rect[1] + rect[3], rect).z;
       for (let x = Math.floor(left); x <= Math.ceil(right); x++) {
-        const [sx] = camera.toScreen(x, 0, rect);
+        const [sx] = cam.toScreen(x, 0, rect);
         ctx.strokeStyle = x % 10 === 0 ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.08)';
         ctx.beginPath(); ctx.moveTo(Math.round(sx) + 0.5, rect[1]); ctx.lineTo(Math.round(sx) + 0.5, rect[1] + rect[3]); ctx.stroke();
       }
       for (let z = Math.floor(bottom); z <= Math.ceil(top); z++) {
-        const [, sy] = camera.toScreen(0, z, rect);
+        const [, sy] = cam.toScreen(0, z, rect);
         ctx.strokeStyle = z % 10 === 0 ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.08)';
         ctx.beginPath(); ctx.moveTo(rect[0], Math.round(sy) + 0.5); ctx.lineTo(rect[0] + rect[2], Math.round(sy) + 0.5); ctx.stroke();
       }
     }
     // The cell the effect is played on, as the dev tool's cursor would show it.
-    const [x0, y0] = camera.toScreen(state.cell.x, state.cell.z + 1, rect);
+    const [x0, y0] = cam.toScreen(state.cell.x, state.cell.z + 1, rect);
     ctx.strokeStyle = 'rgba(217,164,65,0.9)';
     ctx.lineWidth = 1.5;
-    ctx.strokeRect(x0 + 0.75, y0 + 0.75, camera.ppc - 1.5, camera.ppc - 1.5);
+    ctx.strokeRect(x0 + 0.75, y0 + 0.75, cam.ppc - 1.5, cam.ppc - 1.5);
     ctx.restore();
-  }
+  });
   if (rects.length > 1) { ctx.fillStyle = '#394046'; ctx.fillRect(rects[1][0] - 2, 0, 2, h); }
 }
 
@@ -317,6 +319,8 @@ function updateHud() {
     rows.push(['draw calls', state.frames.map((x) => x.frame.calls.length).join(' | ')]);
     const shake = Math.max(...state.frames.map((x) => x.shake.mag));
     if (shake > 0) rows.push(['shake', fmt(shake)]);
+    const move = state.frames.find((x) => x.move && (x.move.pan > 0.001 || Math.abs(x.move.zoom - 1) > 0.001))?.move;
+    if (move) rows.push(['camera', `${fmt(move.zoom, 2)}x, ${Math.round(move.pan * 100)} % to the point`]);
   }
   rows.push(['zoom', `${fmt(camera.ppc, 1)} px/cell`]);
   rows.push(['cell', `${state.cell.x}, ${state.cell.z}`]);
@@ -367,7 +371,7 @@ function drawTimeline() {
       ctx.restore();
     });
     for (const e of source.events ?? []) {
-      ctx.fillStyle = e.type === 'shake' ? '#8f6fd8' : '#6fb3b8';
+      ctx.fillStyle = e.type === 'shake' ? '#8f6fd8' : e.type === 'camera' ? '#b9a45c' : '#6fb3b8';
       ctx.fillRect(x(e.t) - 1, top - 3, 2, laneH + 6);
     }
   });
