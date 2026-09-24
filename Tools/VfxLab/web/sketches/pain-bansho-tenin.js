@@ -67,22 +67,21 @@
 // the projection. The streaks lie flat along the pull line. No per-facing method. Pain, the raiders,
 // the thrumbo and the sandbags are stand-ins.
 import { AltitudeLayer, Color, Mathf, Meshes, MeshPool } from '../js/engine.js';
-import { draw, mesh } from './lib/six-paths-solid.js';
-import { P, Y, Floor, Lift, sprite, band, glow, soft, rand } from './lib/six-paths-impact.js';
+import { draw } from './lib/six-paths-solid.js';
+import { P, Y, Floor, Lift, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
 import { rock, ringAt, line, stunStars, streak, whiteGlow, Skin, EnemyColour, Ink } from './lib/goku.js';
 import { frame, beast, crack, scuff, kick, puff, rect, bump, easeOut } from './lib/chain-sickle.js';
 import { eyeStar } from './lib/amenoyodomi.js';
+import { Core, PaleBlue, DustC, BodyZ, ShoulderH, HandH, Reach, poly, pain, standing, lying, arm } from './lib/pain.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp, TAU = Math.PI * 2, D2R = Mathf.Deg2Rad;
 const disc = Meshes.disc(40, 'bansho disc');
 const shadowLayer = AltitudeLayer.Shadows.AltitudeFor(), buildingLayer = AltitudeLayer.Building.AltitudeFor();
-const lyingLayer = AltitudeLayer.LayingPawn.AltitudeFor(), pawnLayer = AltitudeLayer.Pawn.AltitudeFor();
+const pawnLayer = AltitudeLayer.Pawn.AltitudeFor();
 
-// The kit's colours: Gravity Well's black core and pale blue rim, Shinra Tensei's blue-white.
-const Core = new Color(.015, .015, .035), PaleBlue = new Color(.85, .94, 1);
+// The kit's colours are in lib/pain.js; these are this sketch's own.
 const Red = new Color(.86, .12, .18), InkBlack = new Color(.03, .02, .03), WarmWhite = new Color(1, .95, .92);
-const DustC = new Color(.76, .70, .59), StreakC = new Color(.92, .88, .78);
-const Cloak = new Color(.07, .065, .085), Cloud = new Color(.74, .1, .12), CloudEdge = new Color(.95, .93, .9), Hair = new Color(.93, .46, .16);
+const StreakC = new Color(.92, .88, .78);
 const EarthDark = new Color(.2, .15, .1), EarthLit = new Color(.56, .45, .33), StoneDark = new Color(.25, .23, .21), StoneLit = new Color(.6, .57, .52);
 const SlabEdge = new Color(.08, .06, .04);
 const Bag = new Color(.64, .57, .42), BagDark = new Color(.36, .31, .22), Beast = new Color(.45, .36, .28);
@@ -95,11 +94,8 @@ const BlockStun = 1;                      // seconds, both pawns when one steps 
 // Decided timing and shape.
 const Lead = .2, Catch = .1, Drop = .12, Tail = .4;
 const Tug = .15, TugSlide = .25, TugLean = .3;     // the pull takes hold: seconds, cells slid, lean toward Pain
-const ShoulderH = .52, HandH = .56, Reach = .48;   // Pain's arm: cells up, and how far the hand goes out
-const BodyZ = .18;                        // a stand-in pawn's body centre above its ground point on screen
 const OrbR = .2, BindR = .44;             // palm orb, and the sphere once it has closed on the chest
 const OrbGap = .2;                        // cells from the palm to the orb's back edge, past the fingertips
-const Cuff = new Color(.22, .21, .24);
 
 const Scenarios = ['raider behind sandbags', 'another raider steps into the line', 'thrumbo (body size 4)'];
 const Looks = { 'Storm 4: black core, pale glow': 'storm', 'Naruto Mobile: red and ink': 'mobile', 'anime: no visible force': 'anime' };
@@ -134,39 +130,12 @@ function heightAt(s, p, t) {
 }
 
 // ---- small shapes -------------------------------------------------------------------------------
-function poly(key, pts, colour, layer, material) {
-  const v = [], tri = [];
-  pts.forEach(q => v.push(q.x, q.z));
-  for (let i = 1; i < pts.length - 1; i++) tri.push(0, i, i + 1);
-  const m = mesh(key); m.setFlat(v, tri);
-  draw(m, 0, layer, 0, 1, 1, 0, colour, material);
-}
 function grow(pts, d) {
   const cx = pts.reduce((a, q) => a + q.x, 0) / pts.length, cz = pts.reduce((a, q) => a + q.z, 0) / pts.length;
   return pts.map(q => { const dx = q.x - cx, dz = q.z - cz, l = Math.hypot(dx, dz) || 1; return { x: q.x + dx / l * d, z: q.z + dz / l * d }; });
 }
 
-// ---- stand-ins ----------------------------------------------------------------------------------
-// Pain: the two-disc pawn in the black cloak with two red clouds, spiky orange hair.
-function pain(g, sun, strength) {
-  sprite({ x: g.x + sun.x * .45, z: g.z + sun.z * .45 }, .85, .4, Ink.withAlpha(strength), soft, shadowLayer);
-  draw(disc, g.x, pawnLayer, g.z + BodyZ, .22, .32, 0, Cloak);
-  [[-.08, .1, .07, .045], [.075, .28, .06, .04]].forEach(([dx, dz, rx, rz], i) => {
-    draw(disc, g.x + dx, pawnLayer + .0005 + i * .0002, g.z + dz, rx + .016, rz + .016, 0, CloudEdge);
-    draw(disc, g.x + dx, pawnLayer + .0006 + i * .0002, g.z + dz, rx, rz, 0, Cloud);
-  });
-  draw(disc, g.x, pawnLayer + .002, g.z + .58, .16, .17, 0, Skin);
-  for (let i = 0; i < 5; i++) {
-    const deg = -60 + i * 30, a = deg * D2R;
-    draw(disc, g.x + Math.sin(a) * .14, pawnLayer + .003, g.z + .67 + Math.cos(a) * .1, .045, .08, deg, Hair);
-  }
-  draw(disc, g.x, pawnLayer + .0032, g.z + .69, .16, .085, 0, Hair);
-}
-function standing(g, colour, sun, strength, alpha = 1) {
-  sprite({ x: g.x + sun.x * .45, z: g.z + sun.z * .45 }, .85, .4, Ink.withAlpha(strength * alpha), soft, shadowLayer);
-  draw(disc, g.x, pawnLayer, g.z + BodyZ, .22, .32, 0, colour.withAlpha(alpha));
-  draw(disc, g.x, pawnLayer + .002, g.z + .58, .16, .17, 0, Skin.withAlpha(alpha));
-}
+// ---- stand-ins (Pain, standing and lying pawns and Pain's arm are in lib/pain.js) -----------------
 // A pawn pulled back-first: the body turns so the head trails away from Pain (tilt 0 is upright, 1
 // lies along the pull line; below 0 it leans toward Pain, as in the tug) and the arms trail behind the
 // shoulders. g is its ground point, h its height, back the unit vector away from Pain. strength 0
@@ -185,17 +154,6 @@ function flying(key, g, h, colour, back, tilt, s, sun, strength, alpha = 1, laye
   draw(disc, mid.x, layer, mid.z, .22, .32, Math.atan2(hx, hz) / D2R, colour.withAlpha(alpha));
   draw(disc, mid.x + hx * .4, layer + .002, mid.z + hz * .4, .16, .17, 0, Skin.withAlpha(alpha));
 }
-// Face-down on the floor, head toward Pain, arms out to the sides.
-function lying(key, g, colour, toward, sun, strength) {
-  sprite({ x: g.x + sun.x * .15, z: g.z + sun.z * .15 }, 1, .5, Ink.withAlpha(strength), soft, shadowLayer);
-  const px = -toward.z, pz = toward.x, c = { x: g.x, z: g.z + .08 };
-  for (const side of [-1, 1]) {
-    const sh = { x: c.x + toward.x * .2 + px * side * .12, z: c.z + toward.z * .2 + pz * side * .12 };
-    line(`${key} arm ${side}`, [sh, { x: sh.x + toward.x * .16 + px * side * .2, z: sh.z + toward.z * .16 + pz * side * .2 }], .07, Skin, undefined, lyingLayer - .001, 'none');
-  }
-  draw(disc, c.x, lyingLayer, c.z, .21, .34, Math.atan2(toward.x, toward.z) / D2R, colour);
-  draw(disc, c.x + toward.x * .4, lyingLayer + .002, c.z + toward.z * .4, .15, .16, 0, Skin);
-}
 // A wall of three sandbag cells across the line: a bottom course two bags deep and three across, a
 // top course of two, 0.24 cells up. Bags are drawn north first so the nearer ones overlap.
 function sandbags(f, P0, along, aim, sun, strength) {
@@ -212,25 +170,6 @@ function sandbags(f, P0, along, aim, sun, strength) {
     draw(disc, q.x - .012, lay + .0002, z + .025, .16, .1, turn, Bag);
   });
 }
-// Pain's arm, drawn by the ability: a sleeve in the cloak's colour that narrows from the shoulder to the
-// wrist, a grey cuff, and an open hand, a palm with the thumb and four fingers spread at the target (the
-// anime's pose). grip 0..1 closes the fingers round the target's head at the catch. dir points at the
-// target. The hand lies level at its height, so it turns with the aim.
-function arm(key, shoulder, hand, dir, grip) {
-  const dx = hand.x - shoulder.x, dz = hand.z - shoulder.z, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, px = -uz, pz = ux;
-  const wrist = { x: hand.x - ux * .045, z: hand.z - uz * .045 }, w0 = .065, w1 = .042;
-  band(`${key} sleeve`, [{ x: shoulder.x + px * w0, z: shoulder.z + pz * w0 }, { x: wrist.x + px * w1, z: wrist.z + pz * w1 }],
-    [{ x: shoulder.x - px * w0, z: shoulder.z - pz * w0 }, { x: wrist.x - px * w1, z: wrist.z - pz * w1 }], Cloak, pawnLayer + .01);
-  rect(`${key} cuff`, wrist, .03, w1 * 2.3, Math.atan2(uz, ux) / D2R, Cuff, pawnLayer + .0102);
-  const base = Math.atan2(dir.z, dir.x) / D2R, spread = lerp(64, 30, grip), reach = lerp(1, .6, grip);
-  // [angle as a share of the spread, length]: the thumb out to one side, the middle fingers longest.
-  [[-1.2, .09], [-.5, .125], [-.17, .14], [.17, .13], [.5, .105]].forEach(([k, len], i) => {
-    const ang = (base + k * spread) * D2R, cx = Math.cos(ang), cz = Math.sin(ang), root = { x: hand.x + cx * .04, z: hand.z + cz * .04 };
-    line(`${key} finger ${i}`, [root, { x: root.x + cx * len * reach, z: root.z + cz * len * reach }], .034, Skin, undefined, pawnLayer + .0106, 'none');
-  });
-  draw(disc, hand.x, pawnLayer + .0108, hand.z, .062, .062, 0, Skin);
-}
-
 // ---- the force ----------------------------------------------------------------------------------
 // The black core in front of the palm, as Naruto Mobile draws it: a black hole sitting in a soft pale
 // glow that fades outward, with no hard line on it anywhere. Its edge wobbles slowly, so it reads as a
