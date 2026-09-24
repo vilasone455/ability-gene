@@ -5,10 +5,11 @@
 // What it is for (proposed 2026-09-24, the user said "let sketch"; every number is a placeholder and
 // will be an XML field).
 //   Target one hostile pawn or animal up to 12 cells away, line of sight. Warm-up 0.4 s: Pain raises
-//   the palm at it. The target is lifted 0.6 cells and flies in a straight line to the cell in front
-//   of Pain at 20 cells/s (12 cells in 0.6 s). Because it is lifted it passes over low cover
-//   (sandbags, barricades). On arrival Pain pushes it down face-first on that cell: 15 blunt, stunned
-//   2 s.
+//   the palm at it. The pull takes hold for 0.15 s (the target slides 0.25 cells toward Pain), then
+//   the target is lifted 0.6 cells and flies in a straight line to the cell in front of Pain at 20
+//   cells/s (12 cells in 0.6 s). Because it is lifted it passes over low cover (sandbags,
+//   barricades). On arrival Pain grabs its head and pushes it down face-first on that cell: 15 blunt,
+//   stunned 2 s.
 //   A standing pawn that gets into the line stops it: both take 8 blunt and are stunned 1 s, and the
 //   target drops where it stopped. A wall cannot be in the line (line of sight).
 //   Body size over 2 (thrumbo, centipede): it is not lifted; it is dragged along the floor half the
@@ -23,20 +24,25 @@
 //
 // Order, with the default sliders (scenario "raider behind sandbags", 8 cells):
 //   0.00  rest
-//   0.20  warm-up 0.4 s: Pain's arm comes up at the target and a Rinnegan glint flashes at the eyes; a
-//         black orb with a turning pale crescent forms at the palm (Storm 4); a see-through dark sphere
-//         with a pale rim closes on the target's chest; a dashed line and a ring on the landing cell
-//         show on the floor
-//   0.60  grip: the target is snatched 0.6 cells up, a small shake; from here three rings keep
-//         closing into the palm orb until the catch
-//   0.60  pull, 0.35 s: it flies back-first at Pain, speeding up, head and arms trailing, two faint
+//   0.20  warm-up 0.4 s: Pain's arm comes up at the target, the hand open with the fingers spread (the
+//         anime's pose), and a Rinnegan glint flashes at the eyes; a black orb with a turning pale
+//         crescent forms just past the fingertips (Storm 4); a see-through dark sphere with a pale rim
+//         closes on the target's chest; a dashed line and a ring on the landing cell show on the floor
+//   0.60  the pull takes hold, 0.15 s, with a small shake: the target leans toward Pain and slides
+//         0.25 cells, its feet scraping two short furrows and kicking dust; the orb stretches into a
+//         teardrop, 1.6 times as long as it is wide, its point aimed at the target; dark streaks start
+//         round the target and flow along the line into the point; three rings close into the orb
+//   0.75  lift: the target leaves the floor 0.6 cells up, its head snaps back, a puff of dust where the
+//         feet were
+//   0.75  flight, 0.34 s: back-first at Pain, speeding up, head and arms trailing, two faint
 //         afterimages; pale speed lines and a dark smoke trail behind it; dust streaks on the floor
 //         slide toward Pain (the anime's speed lines, laid on the ground); it clears the sandbags
-//   0.95  catch: it reaches the cell in front of Pain; Pain's hand pushes it down in 0.1 s
-//   1.05  slam: shake, pale rays, a dust ring and a cloud that hangs 1.7 s; 7 plates of ground tilt up
+//   1.09  catch: it reaches the cell in front of Pain; the orb snaps back round with one pale ring
+//         and is gone into the hand in 0.1 s; the fingers close on the head and push it down in 0.1 s
+//   1.19  slam: shake, pale rays, a dust ring and a cloud that hangs 1.7 s; 7 plates of ground tilt up
 //         round it (earth, every third one stone) with a gap on Pain's side (Naruto Mobile's crater),
 //         rocks thrown out, a dent with cracks; it lies face-down, head at Pain
-//   1.05-3.05  stunned (stars); the plates, dent, cracks and rocks stay to the end
+//   1.19-3.19  stunned (stars); the plates, dent, cracks, furrows and rocks stay to the end
 //
 // Looks (dropdown). Storm 4, the default: the black orb with a pale swirl, in the kit's colours (Gravity
 // Well's black core and pale blue rim, Shinra Tensei's blue-white). Naruto Mobile: the target turns red,
@@ -45,16 +51,19 @@
 // slam and the dust. The Rinnegan cut-in (Naruto Mobile) is a checkbox, off: it is a screen overlay,
 // drawn here as a 16-cell band over the middle of the scene as a stand-in for the screen.
 //
-// Drawing: Pain's arm is drawn by the ability (a sleeve strip in the cloak's colour and a skin hand),
-// not a Melee Animation clip. The pulled pawn is drawn Lift x h north of its ground point with its
-// shadow on the floor; its body turns so the head trails. The palm orb, the sphere, the landing ring
-// and the crater are level circles; each plate is a flat polygon with its base on the floor and its
+// Drawing: Pain's arm is drawn by the ability, not a Melee Animation clip: a sleeve in the cloak's
+// colour that narrows to the wrist, a grey cuff, a skin palm and five finger strips that lie level at
+// the hand's height and turn with the aim. The pulled pawn is drawn Lift x h north of its ground point
+// with its shadow on the floor; its body turns so the head trails. The orb is one fan mesh whose front
+// half is pulled out to the point, rebuilt while it stretches; the streaks into it are short separate
+// strips, never one line (one line would read as the Chain Sickle's chain). The sphere, the landing
+// ring and the crater are level circles; each plate is a flat polygon with its base on the floor and its
 // torn top raised by its height, leaning outward, more upright on the south side so it does not fold
 // into a line under the projection. The streaks lie flat along the pull line. No per-facing method.
 // Pain, the raiders, the thrumbo and the sandbags are stand-ins.
 import { AltitudeLayer, Color, Mathf, Meshes, MeshPool } from '../js/engine.js';
 import { draw, mesh } from './lib/six-paths-solid.js';
-import { P, Y, Floor, Lift, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
+import { P, Y, Floor, Lift, sprite, band, glow, soft, rand } from './lib/six-paths-impact.js';
 import { rock, ringAt, line, stunStars, strip, streak, whiteGlow, Skin, EnemyColour, Ink } from './lib/goku.js';
 import { frame, beast, crack, scuff, kick, puff, rect, bump, easeOut } from './lib/chain-sickle.js';
 import { eyeStar } from './lib/amenoyodomi.js';
@@ -80,30 +89,40 @@ const HeavyShare = .5, HeavySpeed = .35;  // body size over 2: half the distance
 const BlockStun = 1;                      // seconds, both pawns when one steps into the line
 // Decided timing and shape.
 const Lead = .2, Catch = .1, Drop = .12, Tail = .4;
+const Tug = .15, TugSlide = .25, TugLean = .3;     // the pull takes hold: seconds, cells slid, lean toward Pain
 const ShoulderH = .52, HandH = .56, Reach = .48;   // Pain's arm: cells up, and how far the hand goes out
 const BodyZ = .18;                        // a stand-in pawn's body centre above its ground point on screen
 const OrbR = .2, BindR = .44;             // palm orb, and the sphere once it has closed on the chest
+const OrbGap = .2;                        // cells from the palm to the orb's back edge, past the fingertips
+const Cuff = new Color(.22, .21, .24);
 
 const Scenarios = ['raider behind sandbags', 'another raider steps into the line', 'thrumbo (body size 4)'];
 const Looks = { 'Storm 4: black orb, pale swirl': 'storm', 'Naruto Mobile: red and ink': 'mobile', 'anime: no visible force': 'anime' };
 
+// grip: the pull takes hold; lift: the target leaves the floor (a dragged one never does, and has no tug).
 function times(p) {
   const heavy = p.scenario === Scenarios[2], blocked = p.scenario === Scenarios[1];
   const cast = Lead, grip = cast + p.warm, blockAt = p.distance * .5;
-  const path = heavy ? (p.distance - LandGap) * HeavyShare : blocked ? p.distance - blockAt - .5 : p.distance - LandGap;
+  const tug = heavy ? 0 : Tug, slide = heavy ? 0 : TugSlide, lift = grip + tug;
+  const path = heavy ? (p.distance - LandGap) * HeavyShare : blocked ? p.distance - slide - blockAt - .5 : p.distance - slide - LandGap;
   const fly = path / (p.speed * (heavy ? HeavySpeed : 1));
-  const arrive = grip + fly, down = arrive + (heavy ? 0 : blocked ? Drop : Catch);
-  return { heavy, blocked, cast, grip, blockAt, path, fly, arrive, down, end: down + p.hold + Tail };
+  const arrive = lift + fly, down = arrive + (heavy ? 0 : blocked ? Drop : Catch);
+  return { heavy, blocked, cast, grip, tug, slide, lift, blockAt, path, fly, arrive, down, end: down + p.hold + Tail };
 }
-// Cells from Pain along the aim. A lifted pawn speeds up toward the hand; a dragged one eases in and out.
+// Cells from Pain along the aim. During the tug the target slides TugSlide cells, speeding up; the
+// flight then starts at the speed the slide ended at and keeps speeding up toward the hand. A dragged
+// one eases in and out.
 function alongAt(s, p, t) {
   if (s < t.grip) return p.distance;
-  const u = clamp((s - t.grip) / t.fly);
-  return p.distance - t.path * (t.heavy ? smooth(u) : Math.pow(u, 1.6));
+  if (s < t.lift) { const u = (s - t.grip) / t.tug; return p.distance - t.slide * u * u; }
+  const u = clamp((s - t.lift) / t.fly);
+  if (t.heavy) return p.distance - t.path * smooth(u);
+  const k = Math.min(.6, 2 * t.slide / t.tug * t.fly / t.path);
+  return p.distance - t.slide - t.path * (k * u + (1 - k) * Math.pow(u, 1.6));
 }
 function heightAt(s, p, t) {
-  if (t.heavy || s < t.grip) return 0;
-  const up = p.lift * smooth(clamp((s - t.grip) / .07));
+  if (t.heavy || s < t.lift) return 0;
+  const up = p.lift * smooth(clamp((s - t.lift) / .07));
   if (s < t.arrive) return up;
   const d = clamp((s - t.arrive) / (t.down - t.arrive));
   return up * (1 - d * d);
@@ -153,13 +172,14 @@ function standing(g, colour, sun, strength, alpha = 1) {
   draw(disc, g.x, pawnLayer, g.z + BodyZ, .22, .32, 0, colour.withAlpha(alpha));
   draw(disc, g.x, pawnLayer + .002, g.z + .58, .16, .17, 0, Skin.withAlpha(alpha));
 }
-// A pawn in the air, pulled back-first: the body turns so the head trails away from Pain (tilt 0 is
-// upright, 1 lies along the pull line) and the arms trail behind the shoulders. g is its ground point,
-// h its height, back the unit vector away from Pain. strength 0 draws no shadow (the afterimages).
+// A pawn pulled back-first: the body turns so the head trails away from Pain (tilt 0 is upright, 1
+// lies along the pull line; below 0 it leans toward Pain, as in the tug) and the arms trail behind the
+// shoulders. g is its ground point, h its height, back the unit vector away from Pain. strength 0
+// draws no shadow (the afterimages).
 function flying(key, g, h, colour, back, tilt, s, sun, strength, alpha = 1, layer = Y + .02) {
   const mid = { x: g.x, z: g.z + BodyZ + h * Lift };
   sprite({ x: g.x + sun.x * (.3 + h), z: g.z + sun.z * (.3 + h) }, .8, .4, Ink.withAlpha(strength * alpha / (1 + h)), soft, shadowLayer);
-  let hx = back.x * tilt, hz = 1 - tilt + back.z * tilt;
+  let hx = back.x * tilt, hz = 1 - Math.abs(tilt) + back.z * tilt;
   const hl = Math.hypot(hx, hz) || 1; hx /= hl; hz /= hl;
   const px = -hz, pz = hx;
   for (const side of [-1, 1]) {
@@ -197,18 +217,67 @@ function sandbags(f, P0, along, aim, sun, strength) {
     draw(disc, q.x - .012, lay + .0002, z + .025, .16, .1, turn, Bag);
   });
 }
+// Pain's arm, drawn by the ability: a sleeve in the cloak's colour that narrows from the shoulder to the
+// wrist, a grey cuff, and an open hand, a palm with the thumb and four fingers spread at the target (the
+// anime's pose). grip 0..1 closes the fingers round the target's head at the catch. dir points at the
+// target. The hand lies level at its height, so it turns with the aim.
+function arm(key, shoulder, hand, dir, grip) {
+  const dx = hand.x - shoulder.x, dz = hand.z - shoulder.z, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, px = -uz, pz = ux;
+  const wrist = { x: hand.x - ux * .045, z: hand.z - uz * .045 }, w0 = .065, w1 = .042;
+  band(`${key} sleeve`, [{ x: shoulder.x + px * w0, z: shoulder.z + pz * w0 }, { x: wrist.x + px * w1, z: wrist.z + pz * w1 }],
+    [{ x: shoulder.x - px * w0, z: shoulder.z - pz * w0 }, { x: wrist.x - px * w1, z: wrist.z - pz * w1 }], Cloak, pawnLayer + .01);
+  rect(`${key} cuff`, wrist, .03, w1 * 2.3, Math.atan2(uz, ux) / D2R, Cuff, pawnLayer + .0102);
+  const base = Math.atan2(dir.z, dir.x) / D2R, spread = lerp(64, 30, grip), reach = lerp(1, .6, grip);
+  // [angle as a share of the spread, length]: the thumb out to one side, the middle fingers longest.
+  [[-1.2, .09], [-.5, .125], [-.17, .14], [.17, .13], [.5, .105]].forEach(([k, len], i) => {
+    const ang = (base + k * spread) * D2R, cx = Math.cos(ang), cz = Math.sin(ang), root = { x: hand.x + cx * .04, z: hand.z + cz * .04 };
+    line(`${key} finger ${i}`, [root, { x: root.x + cx * len * reach, z: root.z + cz * len * reach }], .034, Skin, undefined, pawnLayer + .0106, 'none');
+  });
+  draw(disc, hand.x, pawnLayer + .0108, hand.z, .062, .062, 0, Skin);
+}
 
 // ---- the force ----------------------------------------------------------------------------------
-// The black orb at the palm (Storm 4): soft light, a see-through rim, the black ball, a pale crescent
-// turning round it. Red for the Naruto Mobile look.
-function palmOrb(key, c, r, spin, alpha, look) {
-  if (r <= .005 || alpha <= 0) return;
+// The black orb in front of the palm (Storm 4): soft light, a see-through rim, the black ball, a pale
+// crescent turning round it. While it pulls it stretches into a teardrop whose point aims at the target
+// (stretch 1: 1.6 times as long as it is wide; the round back stays where it was) and it snaps back
+// round at the catch. Red for the Naruto Mobile look. Returns the point, where the streaks flow in.
+function palmOrb(key, c, r, dir, stretch, spin, alpha, look) {
+  const tip = r * (1 + 1.2 * stretch), point = { x: c.x + dir.x * tip, z: c.z + dir.z * tip };
+  if (r <= .005 || alpha <= 0) return point;
   const rim = look === 'mobile' ? Red : PaleBlue, light = look === 'mobile' ? Red : Periwinkle;
-  sprite(c, r * 5, r * 5, light.withAlpha(.3 * alpha), glow, Y + .1);
-  ringAt(c, r * 1.4, rim.withAlpha(.3 * alpha), Y + .101);
-  draw(disc, c.x, Y + .102, c.z, r, r, 0, Core.withAlpha(alpha));
+  // The outline, grown by `out`: a circle whose front half is pulled out to the point and narrowed.
+  const outline = out => {
+    const pts = [];
+    for (let i = 0; i < 40; i++) {
+      const a = i / 40 * TAU, front = Math.max(0, Math.cos(a));
+      const x = (r + out) * Math.cos(a) + (tip - r) * Math.pow(front, 1.5), y = (r + out) * Math.sin(a) * (1 - .25 * front * stretch);
+      pts.push({ x: c.x + dir.x * x - dir.z * y, z: c.z + dir.z * x + dir.x * y });
+    }
+    return pts;
+  };
+  sprite({ x: c.x + dir.x * (tip - r) * .5, z: c.z + dir.z * (tip - r) * .5 }, r * 5 + tip - r, r * 5, light.withAlpha(.3 * alpha), glow, Y + .1, -Math.atan2(dir.z, dir.x) / D2R);
+  const inner = outline(r * .32), outer = outline(r * .4);
+  band(`${key} rim`, [...inner, inner[0]], [...outer, outer[0]], rim.withAlpha(.3 * alpha), Y + .101);
+  poly(`${key} ball`, outline(0), Core.withAlpha(alpha), Y + .102);
   crescent(`${key} crescent`, c, r * .98, r * 1.3, spin, 150, rim.withAlpha(.9 * alpha), Y + .103);
   crescent(`${key} crescent back`, c, r * .98, r * 1.12, spin + 190, 80, rim.withAlpha(.5 * alpha), Y + .103);
+  return point;
+}
+// Dark streaks in the air between the target and the orb, flowing into the orb's point (Storm 4's dark
+// streaks that close on the catch point). They start spread round the target and converge. Short
+// separate strips, so it never reads as one line like the Chain Sickle's chain.
+function inflow(key, from, to, s, alpha, colour) {
+  const dx = to.x - from.x, dz = to.z - from.z, D = Math.hypot(dx, dz);
+  if (D < .35 || alpha <= 0) return;
+  const px = -dz / D, pz = dx / D;
+  // Each is a thin core in a wider faint haze, so it reads as dark air, not a hard black needle.
+  for (let i = 0; i < 10; i++) {
+    const ph = (s * 2.4 + rand(i + 900)) % 1, off = (rand(i + 901) - .5) * 1.2, len = Math.min(.55 * D, .6 + rand(i + 902) * .6) / D;
+    const at = u => { const k = off * Math.pow(1 - u, 1.3); return { x: from.x + dx * u + px * k, z: from.z + dz * u + pz * k }; };
+    const a0 = at(Math.max(0, ph - len)), a1 = at(ph), fade = alpha * Math.sin(ph * Math.PI);
+    streak(`${key} ${i} haze`, a0, a1, .09, colour.withAlpha(.12 * fade), undefined, Y + .029, 4);
+    streak(`${key} ${i}`, a0, a1, .026, colour.withAlpha(.42 * fade), undefined, Y + .03, 4);
+  }
 }
 // What holds the target. Storm 4: a see-through black sphere round the chest with a pale rim and a
 // swirl. Naruto Mobile: a dark dome round the pawn (dome = its own fade, gone early in the flight) and
@@ -253,7 +322,7 @@ function speedLines(key, chest, back, s, alpha) {
 function floorStreaks(key, P0, p, t, s) {
   const span = p.distance + 1.2, v = p.speed * (t.heavy ? HeavySpeed : 1) * .65;
   for (let i = 0; i < 16; i++) {
-    const born = t.grip + rand(i + 300) * t.fly * .9, life = .22 + rand(i + 301) * .14, age = s - born;
+    const born = t.grip + rand(i + 300) * (t.tug + t.fly) * .9, life = .22 + rand(i + 301) * .14, age = s - born;
     if (age < 0 || age > life) continue;
     const ang = (p.aim + (rand(i + 302) - .5) * 44) * D2R, r0 = .6 + rand(i + 303) * span - v * age;
     if (r0 < .45) continue;
@@ -265,9 +334,9 @@ function floorStreaks(key, P0, p, t, s) {
 // Ink that drips off the pawn while it flies and stays on the floor (Naruto Mobile).
 function inkDrops(key, f, P0, p, t, s) {
   for (let j = 0; j < 8; j++) {
-    const u = (j + .5) / 8, age = s - (t.grip + t.fly * Math.pow(u, 1 / 1.6));
+    const when = t.lift + t.fly * (j + .5) / 8, age = s - when;
     if (age < 0) continue;
-    const g = f.ground(P0, p.distance - t.path * u, (rand(j + 600) - .5) * .5), fall = clamp(age / .16), r = .07 + rand(j + 601) * .07;
+    const g = f.ground(P0, alongAt(when, p, t), (rand(j + 600) - .5) * .5), fall = clamp(age / .16), r = .07 + rand(j + 601) * .07;
     if (fall < 1) draw(disc, g.x, Y + .017, g.z + (.5 + p.lift) * (1 - fall * fall) * Lift, r * .7, r, 0, InkBlack.withAlpha(.85));
     else draw(disc, g.x, Floor + .018, g.z, r * 1.5, r * 1.1, rand(j + 602) * 180, InkBlack.withAlpha(lerp(.7, .35, clamp((age - .16) / 1.5))));
   }
@@ -385,7 +454,7 @@ export default {
   duration(p) { return times(p).end; },
   phases(p) {
     const t = times(p);
-    return [{ name: 'Rest', t: 0 }, { name: 'Warm-up', t: t.cast }, { name: 'Pull', t: t.grip },
+    return [{ name: 'Rest', t: 0 }, { name: 'Warm-up', t: t.cast }, { name: 'Pull', t: t.grip }, ...(t.heavy ? [] : [{ name: 'Lift', t: t.lift }]),
       { name: t.heavy ? 'Stop' : t.blocked ? 'Hit' : 'Catch', t: t.arrive }, { name: 'Result', t: t.down }];
   },
   events(p) {
@@ -421,6 +490,13 @@ export default {
     ringAt(L, .45, PaleBlue.withAlpha(.4 * smooth(clamp((s - t.cast) / .15)) * (1 - smooth(clamp((s - t.down - .3) / .4)))), Floor + .014);
     if (s >= t.grip && s < t.arrive + .25) floorStreaks('bansho floor', P0, p, t, s);
     if (t.heavy && s >= t.grip) scuff('bansho drag', start, g, 1, .45);
+    // The tug: the feet scrape two short furrows, and a puff of dust where they leave the floor. Both stay.
+    const liftAt = f.ground(P0, p.distance - t.slide, 0);
+    if (!t.heavy && s >= t.grip) scuff('bansho tug', start, liftAt, clamp((s - t.grip) / t.tug), .4);
+    if (!t.heavy && s >= t.lift) for (let i = 0; i < 6; i++) {
+      const u = clamp((s - t.lift) / (.35 + rand(i + 780) * .2)), an = i * 1.05 + rand(i + 781) * .5, d = .1 + easeOut(u) * .45;
+      if (u < 1) sprite({ x: liftAt.x + Math.cos(an) * d, z: liftAt.z + Math.sin(an) * d * .8 + u * .15 }, .25 + u * .35, .2 + u * .3, DustC.withAlpha(.5 * (1 - u)), puff, Y + .005);
+    }
     if (look === 'mobile' && !t.heavy) inkDrops('bansho ink', f, P0, p, t, s);
     if (normal) crater('bansho crater', L, s - t.down, p.slabs, toward, sun, strength);
     if (t.blocked && s >= t.down) crack('bansho drop', g, .9 * smooth(clamp((s - t.down) / .08)), 21);
@@ -434,24 +510,23 @@ export default {
       const jitter = s >= t.grip && s < t.arrive ? Math.sin(s * 60) * .03 : 0;
       ground.push({ z: g.z, draw: () => beast(f.ground(P0, a, jitter), 4, sun, strength, tint) });
     } else if (s < t.grip) ground.push({ z: g.z, draw: () => standing(g, tint, sun, strength) });
+    else if (s < t.lift) ground.push({ z: g.z, draw: () => flying('bansho target', g, 0, tint, back, -TugLean * smooth((s - t.grip) / t.tug), s, sun, strength, 1, pawnLayer) });
     else if (s >= t.down) ground.push({ z: g.z, draw: () => lying('bansho target', g, tint, toward, sun, strength) });
     if (t.blocked) ground.push({ z: B.z, draw: () => standing({ x: B.x + (s >= t.arrive && s < t.arrive + .2 ? Math.sin(s * 90) * .03 : 0), z: B.z }, EnemyColour, sun, strength) });
     ground.sort((m, n) => n.z - m.z).forEach(q => q.draw());
 
-    // Pain's arm: up at the target during the warm-up, held through the pull, pushing down at the catch.
+    // Pain's arm: up at the target during the warm-up with the fingers spread, held through the pull; at
+    // the catch the fingers close on the head and the hand pushes it down.
     const armUp = smooth(clamp((s - t.cast) / (p.warm * .6))), armBack = smooth(clamp((s - (normal ? t.down + .45 : t.arrive + .35)) / .3));
     const push = normal ? smooth(clamp((s - t.arrive) / Catch)) : 0;
     const reach = Reach * armUp * (1 - armBack), handH = lerp(lerp(HandH, .32, push), .38, armBack);
     const hand = f.place(P0, .12 + reach, -.1, handH);
-    if (armUp > 0 && armBack < 1) {
-      line('bansho sleeve', [f.place(P0, .05, -.1, ShoulderH), hand], .1, Cloak, undefined, pawnLayer + .01, 'none');
-      draw(disc, hand.x, pawnLayer + .011, hand.z, .055, .055, 0, Skin);
-    }
+    if (armUp > 0 && armBack < 1) arm('bansho arm', f.place(P0, .05, -.1, ShoulderH), hand, back, push);
 
-    // --- the pulled pawn in the air, with two afterimages -------------------------------------------------------
-    if (!t.heavy && s >= t.grip && s < t.down) {
-      const tilt = s < t.arrive ? .7 * smooth(clamp((s - t.grip) / .08)) : lerp(.7, 1, clamp((s - t.arrive) / (t.down - t.arrive)));
-      const blur = clamp((s - t.grip) / .08) * (1 - clamp((s - t.arrive) / .04));
+    // --- the pulled pawn in the air, with two afterimages; the head snaps back as it leaves the floor ----------
+    if (!t.heavy && s >= t.lift && s < t.down) {
+      const tilt = s < t.arrive ? lerp(-TugLean, .7, smooth(clamp((s - t.lift) / .08))) : lerp(.7, 1, clamp((s - t.arrive) / (t.down - t.arrive)));
+      const blur = clamp((s - t.lift) / .08) * (1 - clamp((s - t.arrive) / .04));
       for (let k = 2; k >= 1; k--) flying(`bansho ghost ${k}`, f.ground(P0, a + .32 * k, 0), h, tint, back, tilt, s, sun, 0, (k === 1 ? .3 : .14) * blur, Y + .015 + k * .001);
       flying('bansho target', g, h, tint, back, tilt, s, sun, strength);
     }
@@ -460,22 +535,34 @@ export default {
     const chest = t.heavy ? { x: g.x, z: g.z + .45 } : { x: g.x, z: g.z + .3 + h * Lift };
     const spin = s * 300 + Math.max(0, s - t.grip) * 700;
     if (look !== 'anime') {
-      const orbA = smooth(clamp(warmU * 1.4)) * (1 - clamp((s - (normal ? t.down : t.arrive + .2)) / .15));
-      const burst = normal ? 1 + .3 * clamp((s - t.down) / .15) : 1, strain = t.heavy && pulling ? .02 * Math.sin(s * 70) : 0;
-      const orbAt = f.place(P0, .12 + reach + OrbR * .9, -.1, handH);
-      palmOrb('bansho palm', { x: orbAt.x + strain, z: orbAt.z }, OrbR * smooth(clamp(warmU * 1.25)) * burst, spin, orbA, look);
-      if (pulling) for (let n = 0; n < 3; n++) {                  // rings sucked into the palm while it pulls
+      const rimC = look === 'mobile' ? Red : PaleBlue;
+      // The orb stretches toward the target as the pull takes hold (a dragged beast: as the drag starts),
+      // snaps back round at the catch and goes into the grip in 0.1 s; after a drag it relaxes and fades.
+      const caught = t.heavy ? 0 : clamp((s - t.arrive) / .1);
+      const orbA = smooth(clamp(warmU * 1.4)) * (t.heavy ? 1 - clamp((s - t.arrive - .2) / .15) : 1 - caught);
+      const stretch = (t.heavy ? smooth(clamp((s - t.grip) / .2)) * (1 - smooth(clamp((s - t.arrive) / .1)))
+        : smooth(clamp((s - t.grip) / t.tug)) * (1 - smooth(clamp((s - t.arrive) / .05)))) * (1 + .06 * Math.sin(s * 40));
+      const strain = t.heavy && pulling ? .02 * Math.sin(s * 70) : 0, orbAt = f.place(P0, .12 + reach + OrbGap + OrbR, -.1, handH);
+      const point = palmOrb('bansho palm', { x: orbAt.x + strain, z: orbAt.z }, OrbR * smooth(clamp(warmU * 1.25)) * (1 - .6 * smooth(caught)),
+        back, stretch, spin, orbA, look);
+      if (pulling) for (let n = 0; n < 3; n++) {                  // rings sucked into the orb while it pulls
         const v = ((s - t.grip) * 5 + n / 3) % 1;
-        ringAt(orbAt, lerp(.75, OrbR, v), (look === 'mobile' ? Red : PaleBlue).withAlpha(.45 * Math.sin(v * Math.PI)), Y + .099);
+        ringAt(orbAt, lerp(.75, OrbR, v), rimC.withAlpha(.45 * Math.sin(v * Math.PI)), Y + .099);
       }
+      if (!t.heavy && s >= t.arrive && s < t.arrive + .15) {       // the snap back to round: one pale ring runs out
+        const u = (s - t.arrive) / .15;
+        ringAt(orbAt, lerp(OrbR, OrbR * 2.6, easeOut(u)), rimC.withAlpha(.7 * (1 - u)), Y + .104);
+      }
+      inflow('bansho inflow', chest, point, s, clamp((s - t.grip) / .1) * (1 - clamp((s - t.arrive) / .05)), look === 'mobile' ? InkBlack : Core);
       const holdA = s < t.grip ? smooth(clamp(warmU * 2)) : 1 - clamp((s - t.arrive) / .12);
       const big = t.heavy ? 2.1 : 1, R = s < t.grip ? lerp(t.heavy ? 1.6 : 1.15, BindR * big, smooth(warmU)) : BindR * big * (1 + .04 * Math.sin(s * 40));
       hold('bansho hold', chest, R, -spin * 1.3, holdA, look, 1 - clamp((s - t.grip) / .1));
     }
-    if (pulling && !t.heavy) {
-      trail('bansho trail', chest, back, p.distance - a, look);
-      speedLines('bansho speed', chest, back, s, clamp((s - t.grip) / .05));
+    if (!t.heavy && s >= t.lift && s < t.arrive) {
+      trail('bansho trail', chest, back, p.distance - t.slide - a, look);
+      speedLines('bansho speed', chest, back, s, clamp((s - t.lift) / .05));
     }
+    if (!t.heavy && s >= t.grip && s < t.lift) kick(g, s - t.grip, 1, 13);   // dust at the scraping feet
     if (t.heavy && pulling) kick(g, s - t.grip, 1, 5);
 
     // --- the landing -------------------------------------------------------------------------------------------
