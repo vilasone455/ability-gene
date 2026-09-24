@@ -80,6 +80,21 @@ namespace RimArt
             if (!done) Messages.Message(why, MessageTypeDefOf.RejectInput, false);
         }
 
+        [RimArtDebug("Infinity Castle", "castle: drop (pawn, then room)", RimArtDebugKind.Pawn)]
+        public static void Drop(Pawn pawn)
+        {
+            MapComponent_InfinityCastle castle = pawn.Map?.GetComponent<MapComponent_InfinityCastle>();
+            if (castle == null || !castle.IsCastle) { Messages.Message("That pawn is not in a castle.", MessageTypeDefOf.RejectInput, false); return; }
+            // The second click: the room it comes up in.
+            LudeonTK.DebugTools.curTool = new LudeonTK.DebugTool("castle: drop " + pawn.LabelShortCap + " into which room?", () =>
+            {
+                IntVec3 cell = UI.MouseCell();
+                if (!cell.InBounds(pawn.Map)) return;
+                if (!castle.TryDrop(pawn, cell, out string why)) Messages.Message(why, MessageTypeDefOf.RejectInput, false);
+                LudeonTK.DebugTools.curTool = null;
+            });
+        }
+
         [RimArtDebug("Infinity Castle", "castle: void drop", RimArtDebugKind.Pawn)]
         public static void VoidDrop(Pawn pawn)
         {
