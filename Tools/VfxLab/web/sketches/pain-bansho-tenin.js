@@ -25,46 +25,51 @@
 // Order, with the default sliders (scenario "raider behind sandbags", 8 cells):
 //   0.00  rest
 //   0.20  warm-up 0.4 s: Pain's arm comes up at the target, the hand open with the fingers spread (the
-//         anime's pose), and a Rinnegan glint flashes at the eyes; a black orb with a turning pale
-//         crescent forms just past the fingertips (Storm 4); a see-through dark sphere with a pale rim
-//         closes on the target's chest; a dashed line and a ring on the landing cell show on the floor
+//         anime's pose), and a Rinnegan glint flashes at the eyes; a black core in a soft pale glow
+//         forms just past the fingertips (Naruto Mobile's black core); a see-through dark sphere,
+//         darkest at its edge, closes on the target's chest; a dashed line on the floor shows the pull
 //   0.60  the pull takes hold, 0.15 s, with a small shake: the target leans toward Pain and slides
-//         0.25 cells, its feet scraping two short furrows and kicking dust; the orb stretches into a
-//         teardrop, 1.6 times as long as it is wide, its point aimed at the target; dark streaks start
-//         round the target and flow along the line into the point; three rings close into the orb
+//         0.25 cells, its feet scraping two short furrows and kicking dust; the core stretches into a
+//         teardrop, 1.6 times as long as it is wide, its point aimed at the target, and its glow
+//         brightens; dark streaks start round the target and flow along the line into the point
 //   0.75  lift: the target leaves the floor 0.6 cells up, its head snaps back, a puff of dust where the
 //         feet were
 //   0.75  flight, 0.34 s: back-first at Pain, speeding up, head and arms trailing, two faint
 //         afterimages; pale speed lines and a dark smoke trail behind it; dust streaks on the floor
 //         slide toward Pain (the anime's speed lines, laid on the ground); it clears the sandbags
-//   1.09  catch: it reaches the cell in front of Pain; the orb snaps back round with one pale ring
+//   1.09  catch: it reaches the cell in front of Pain; the core snaps back round with a soft flash
 //         and is gone into the hand in 0.1 s; the fingers close on the head and push it down in 0.1 s
 //   1.19  slam: shake, pale rays, a dust ring and a cloud that hangs 1.7 s; 7 plates of ground tilt up
 //         round it (earth, every third one stone) with a gap on Pain's side (Naruto Mobile's crater),
 //         rocks thrown out, a dent with cracks; it lies face-down, head at Pain
 //   1.19-3.19  stunned (stars); the plates, dent, cracks, furrows and rocks stay to the end
 //
-// Looks (dropdown). Storm 4, the default: the black orb with a pale swirl, in the kit's colours (Gravity
-// Well's black core and pale blue rim, Shinra Tensei's blue-white). Naruto Mobile: the target turns red,
-// a dark dome and a small black core hold it, a thick ink trail with a red line, ink drops that stay,
-// a red flash with ink splashes. Anime: no visible force at all, only the pose, the speed lines, the
-// slam and the dust. The Rinnegan cut-in (Naruto Mobile) is a checkbox, off: it is a screen overlay,
-// drawn here as a 16-cell band over the middle of the scene as a stand-in for the screen.
+// Looks (dropdown). Storm 4, the default, in the kit's colours (Gravity Well's black and pale blue,
+// Shinra Tensei's blue-white): the see-through black sphere with a dark edge on the target (Nagato's
+// pull), the dark streaks that close on the catch point, the pale rays at the catch; the palm core is
+// Naruto Mobile's (a black hole in a soft glow, no hard line on it). Naruto Mobile: the target turns
+// red, a dark dome and a small black core hold it, a thick ink trail with a red line, ink drops that
+// stay, a red flash with ink splashes, the palm core's glow warm white. Anime: no visible force at
+// all, only the pose, the speed lines, the slam and the dust. No rings in any look: none of the games
+// has them on the pull (Storm 4's white rings and swirls belong to Almighty Push). The Rinnegan
+// cut-in (Naruto Mobile) is a checkbox, off: it is a screen overlay, drawn here as a 16-cell band
+// over the middle of the scene as a stand-in for the screen.
 //
 // Drawing: Pain's arm is drawn by the ability, not a Melee Animation clip: a sleeve in the cloak's
 // colour that narrows to the wrist, a grey cuff, a skin palm and five finger strips that lie level at
 // the hand's height and turn with the aim. The pulled pawn is drawn Lift x h north of its ground point
-// with its shadow on the floor; its body turns so the head trails. The orb is one fan mesh whose front
-// half is pulled out to the point, rebuilt while it stretches; the streaks into it are short separate
-// strips, never one line (one line would read as the Chain Sickle's chain). The sphere, the landing
-// ring and the crater are level circles; each plate is a flat polygon with its base on the floor and its
-// torn top raised by its height, leaning outward, more upright on the south side so it does not fold
-// into a line under the projection. The streaks lie flat along the pull line. No per-facing method.
-// Pain, the raiders, the thrumbo and the sandbags are stand-ins.
+// with its shadow on the floor; its body turns so the head trails. The palm core is one fan mesh round
+// its centre, its front half pulled out to the point and its edge wobbling, rebuilt every frame, over
+// three soft glow quads stretched with it; the streaks into it are short separate strips, never one
+// line (one line would read as the Chain Sickle's chain). The sphere, the dome and the crater are
+// level circles; each plate is a flat polygon with its base on the floor and its torn top raised by
+// its height, leaning outward, more upright on the south side so it does not fold into a line under
+// the projection. The streaks lie flat along the pull line. No per-facing method. Pain, the raiders,
+// the thrumbo and the sandbags are stand-ins.
 import { AltitudeLayer, Color, Mathf, Meshes, MeshPool } from '../js/engine.js';
 import { draw, mesh } from './lib/six-paths-solid.js';
 import { P, Y, Floor, Lift, sprite, band, glow, soft, rand } from './lib/six-paths-impact.js';
-import { rock, ringAt, line, stunStars, strip, streak, whiteGlow, Skin, EnemyColour, Ink } from './lib/goku.js';
+import { rock, ringAt, line, stunStars, streak, whiteGlow, Skin, EnemyColour, Ink } from './lib/goku.js';
 import { frame, beast, crack, scuff, kick, puff, rect, bump, easeOut } from './lib/chain-sickle.js';
 import { eyeStar } from './lib/amenoyodomi.js';
 
@@ -74,8 +79,8 @@ const shadowLayer = AltitudeLayer.Shadows.AltitudeFor(), buildingLayer = Altitud
 const lyingLayer = AltitudeLayer.LayingPawn.AltitudeFor(), pawnLayer = AltitudeLayer.Pawn.AltitudeFor();
 
 // The kit's colours: Gravity Well's black core and pale blue rim, Shinra Tensei's blue-white.
-const Core = new Color(.015, .015, .035), PaleBlue = new Color(.85, .94, 1), Periwinkle = new Color(.45, .55, 1);
-const Red = new Color(.86, .12, .18), InkBlack = new Color(.03, .02, .03);
+const Core = new Color(.015, .015, .035), PaleBlue = new Color(.85, .94, 1);
+const Red = new Color(.86, .12, .18), InkBlack = new Color(.03, .02, .03), WarmWhite = new Color(1, .95, .92);
 const DustC = new Color(.76, .70, .59), StreakC = new Color(.92, .88, .78);
 const Cloak = new Color(.07, .065, .085), Cloud = new Color(.74, .1, .12), CloudEdge = new Color(.95, .93, .9), Hair = new Color(.93, .46, .16);
 const EarthDark = new Color(.2, .15, .1), EarthLit = new Color(.56, .45, .33), StoneDark = new Color(.25, .23, .21), StoneLit = new Color(.6, .57, .52);
@@ -97,7 +102,7 @@ const OrbGap = .2;                        // cells from the palm to the orb's ba
 const Cuff = new Color(.22, .21, .24);
 
 const Scenarios = ['raider behind sandbags', 'another raider steps into the line', 'thrumbo (body size 4)'];
-const Looks = { 'Storm 4: black orb, pale swirl': 'storm', 'Naruto Mobile: red and ink': 'mobile', 'anime: no visible force': 'anime' };
+const Looks = { 'Storm 4: black core, pale glow': 'storm', 'Naruto Mobile: red and ink': 'mobile', 'anime: no visible force': 'anime' };
 
 // grip: the pull takes hold; lift: the target leaves the floor (a dragged one never does, and has no tug).
 function times(p) {
@@ -139,16 +144,6 @@ function poly(key, pts, colour, layer, material) {
 function grow(pts, d) {
   const cx = pts.reduce((a, q) => a + q.x, 0) / pts.length, cz = pts.reduce((a, q) => a + q.z, 0) / pts.length;
   return pts.map(q => { const dx = q.x - cx, dz = q.z - cz, l = Math.hypot(dx, dz) || 1; return { x: q.x + dx / l * d, z: q.z + dz / l * d }; });
-}
-// A crescent round c: thick in the middle of its sweep, pointed at both ends.
-function crescent(key, c, r0, r1, startDeg, sweepDeg, colour, layer, material = whiteGlow) {
-  const a = [], b = [], n = 16;
-  for (let i = 0; i <= n; i++) {
-    const u = i / n, ang = (startDeg + u * sweepDeg) * D2R, r = r0 + (r1 - r0) * Math.sin(u * Math.PI);
-    a.push({ x: c.x + Math.cos(ang) * r0, z: c.z + Math.sin(ang) * r0 });
-    b.push({ x: c.x + Math.cos(ang) * r, z: c.z + Math.sin(ang) * r });
-  }
-  strip(key, a, b, colour, material, layer);
 }
 
 // ---- stand-ins ----------------------------------------------------------------------------------
@@ -237,30 +232,27 @@ function arm(key, shoulder, hand, dir, grip) {
 }
 
 // ---- the force ----------------------------------------------------------------------------------
-// The black orb in front of the palm (Storm 4): soft light, a see-through rim, the black ball, a pale
-// crescent turning round it. While it pulls it stretches into a teardrop whose point aims at the target
-// (stretch 1: 1.6 times as long as it is wide; the round back stays where it was) and it snaps back
-// round at the catch. Red for the Naruto Mobile look. Returns the point, where the streaks flow in.
-function palmOrb(key, c, r, dir, stretch, spin, alpha, look) {
+// The black core in front of the palm, as Naruto Mobile draws it: a black hole sitting in a soft pale
+// glow that fades outward, with no hard line on it anywhere. Its edge wobbles slowly, so it reads as a
+// hole in the air rather than a ball. While it pulls it stretches into a teardrop whose point aims at
+// the target (stretch 1: 1.6 times as long as it is wide; the round back stays where it was), the glow
+// brightens and stretches with it, and it snaps back round at the catch. Returns the point, where the
+// streaks flow in.
+function palmOrb(key, c, r, dir, stretch, s, alpha, look) {
   const tip = r * (1 + 1.2 * stretch), point = { x: c.x + dir.x * tip, z: c.z + dir.z * tip };
   if (r <= .005 || alpha <= 0) return point;
-  const rim = look === 'mobile' ? Red : PaleBlue, light = look === 'mobile' ? Red : Periwinkle;
-  // The outline, grown by `out`: a circle whose front half is pulled out to the point and narrowed.
-  const outline = out => {
-    const pts = [];
-    for (let i = 0; i < 40; i++) {
-      const a = i / 40 * TAU, front = Math.max(0, Math.cos(a));
-      const x = (r + out) * Math.cos(a) + (tip - r) * Math.pow(front, 1.5), y = (r + out) * Math.sin(a) * (1 - .25 * front * stretch);
-      pts.push({ x: c.x + dir.x * x - dir.z * y, z: c.z + dir.z * x + dir.x * y });
-    }
-    return pts;
-  };
-  sprite({ x: c.x + dir.x * (tip - r) * .5, z: c.z + dir.z * (tip - r) * .5 }, r * 5 + tip - r, r * 5, light.withAlpha(.3 * alpha), glow, Y + .1, -Math.atan2(dir.z, dir.x) / D2R);
-  const inner = outline(r * .32), outer = outline(r * .4);
-  band(`${key} rim`, [...inner, inner[0]], [...outer, outer[0]], rim.withAlpha(.3 * alpha), Y + .101);
-  poly(`${key} ball`, outline(0), Core.withAlpha(alpha), Y + .102);
-  crescent(`${key} crescent`, c, r * .98, r * 1.3, spin, 150, rim.withAlpha(.9 * alpha), Y + .103);
-  crescent(`${key} crescent back`, c, r * .98, r * 1.12, spin + 190, 80, rim.withAlpha(.5 * alpha), Y + .103);
+  const light = look === 'mobile' ? WarmWhite : PaleBlue, deg = -Math.atan2(dir.z, dir.x) / D2R, pull = .7 + .3 * stretch;
+  const mid = { x: c.x + dir.x * (tip - r) * .5, z: c.z + dir.z * (tip - r) * .5 };
+  sprite(mid, r * 5.6 + tip - r, r * 5.6, light.withAlpha(.35 * alpha * pull), glow, Y + .1, deg);              // wide faint glow
+  sprite(mid, r * 3.4 + (tip - r) * 1.1, r * 3.4, light.withAlpha(.8 * alpha * pull), glow, Y + .1005, deg);   // the glow it sits in
+  sprite(mid, r * 2.5 + (tip - r) * 1.05, r * 2.5, light.withAlpha(.9 * alpha * pull), glow, Y + .1008, deg);  // bright soft edge
+  const pts = [c];
+  for (let i = 0; i <= 44; i++) {
+    const a = i / 44 * TAU, front = Math.max(0, Math.cos(a)), wob = 1 + .03 * Math.sin(2 * a + s * 4) + .02 * Math.sin(3 * a - s * 6);
+    const x = r * wob * Math.cos(a) + (tip - r) * Math.pow(front, 1.5), y = r * wob * Math.sin(a) * (1 - .25 * front * stretch);
+    pts.push({ x: c.x + dir.x * x - dir.z * y, z: c.z + dir.z * x + dir.x * y });
+  }
+  poly(`${key} core`, pts, Core.withAlpha(alpha), Y + .102);
   return point;
 }
 // Dark streaks in the air between the target and the orb, flowing into the orb's point (Storm 4's dark
@@ -279,21 +271,28 @@ function inflow(key, from, to, s, alpha, colour) {
     streak(`${key} ${i}`, a0, a1, .026, colour.withAlpha(.42 * fade), undefined, Y + .03, 4);
   }
 }
-// What holds the target. Storm 4: a see-through black sphere round the chest with a pale rim and a
-// swirl. Naruto Mobile: a dark dome round the pawn (dome = its own fade, gone early in the flight) and
-// a small black core with a white rim at the chest that rides with it.
-function hold(key, c, R, spin, alpha, look, dome = 1) {
+// What holds the target. Storm 4 (Nagato's pull): a see-through black sphere round the chest, darkest at
+// its edge. Naruto Mobile: a dark dome round the pawn, darker at its edge (dome = its own fade, gone
+// early in the flight), and a small black core at the chest that rides with it. No pale line on either:
+// neither game has one.
+function hold(c, R, alpha, look, dome = 1) {
   if (alpha <= 0 || look === 'anime') return;
   if (look === 'storm') {
     draw(disc, c.x, Y + .04, c.z, R, R, 0, Core.withAlpha(.34 * alpha));
-    ringAt(c, R, PaleBlue.withAlpha(.5 * alpha), Y + .041);
-    crescent(`${key} swirl`, c, R * .97, R * 1.14, spin, 130, PaleBlue.withAlpha(.85 * alpha), Y + .042);
+    darkEdge(c, R, alpha, Y + .041);
     return;
   }
   draw(disc, c.x, Y + .035, c.z, R * 2.4, R * 2.4, 0, Core.withAlpha(.2 * alpha * dome));
-  ringAt(c, R * 2.4, new Color(.8, .78, .85).withAlpha(.28 * alpha * dome), Y + .036, true);
-  draw(disc, c.x, Y + .045, c.z, .13, .13, 0, PaleBlue.withAlpha(.85 * alpha));
+  darkEdge(c, R * 2.4, .7 * alpha * dome, Y + .036);
   draw(disc, c.x, Y + .046, c.z, .1, .1, 0, Core.withAlpha(alpha));
+}
+// A dark edge on a see-through circle: darkest at the rim, fading inward over a quarter of the radius.
+// Six level band meshes of the kit's black, stacked; small steps, so on a big sphere it reads as a
+// fade, not as rings.
+const EdgeBands = [[.97, .4], [.93, .2], [.89, .13], [.84, .1], [.79, .07], [.73, .05]]
+  .map(([inner, a]) => ({ mesh: Meshes.band(inner, 1, 64, `bansho edge ${inner}`), a }));
+function darkEdge(c, R, alpha, layer) {
+  EdgeBands.forEach((b, k) => draw(b.mesh, c.x, layer + k * .0002, c.z, R, R, 0, Core.withAlpha(b.a * alpha)));
 }
 // Behind the pulled pawn: dark smoke (Storm 4) or a thick ink streak with a red line in it (Naruto Mobile).
 function trail(key, chest, back, gone, look) {
@@ -481,13 +480,12 @@ export default {
     const red = look === 'mobile' ? .65 * clamp((s - t.grip + .1) / .1) * (1 - clamp((s - t.down) / .4)) : 0;
     const tint = Color.Lerp(t.heavy ? Beast : EnemyColour, Red, red);
 
-    // --- on the floor: the target line and landing ring while it is aimed, streaks, drag marks ---------------
+    // --- on the floor: the target line while it is aimed, streaks, drag marks ----------------------------------
     if (s >= t.cast && s < t.grip + .1) {
       const vis = smooth(clamp(warmU * 3)) * (1 - clamp((s - t.grip) / .1));
       for (let i = 0; i < 12; i++)
         rect(`bansho aim dash ${i}`, f.ground(P0, .7 + (p.distance - 1.2) * i / 12 + .1, 0), .2, .035, p.aim, PaleBlue.withAlpha(.4 * vis), Floor + .012);
     }
-    ringAt(L, .45, PaleBlue.withAlpha(.4 * smooth(clamp((s - t.cast) / .15)) * (1 - smooth(clamp((s - t.down - .3) / .4)))), Floor + .014);
     if (s >= t.grip && s < t.arrive + .25) floorStreaks('bansho floor', P0, p, t, s);
     if (t.heavy && s >= t.grip) scuff('bansho drag', start, g, 1, .45);
     // The tug: the feet scrape two short furrows, and a puff of dust where they leave the floor. Both stay.
@@ -533,9 +531,7 @@ export default {
 
     // --- the force: the palm orb, what holds the target, the trail --------------------------------------------
     const chest = t.heavy ? { x: g.x, z: g.z + .45 } : { x: g.x, z: g.z + .3 + h * Lift };
-    const spin = s * 300 + Math.max(0, s - t.grip) * 700;
     if (look !== 'anime') {
-      const rimC = look === 'mobile' ? Red : PaleBlue;
       // The orb stretches toward the target as the pull takes hold (a dragged beast: as the drag starts),
       // snaps back round at the catch and goes into the grip in 0.1 s; after a drag it relaxes and fades.
       const caught = t.heavy ? 0 : clamp((s - t.arrive) / .1);
@@ -544,19 +540,15 @@ export default {
         : smooth(clamp((s - t.grip) / t.tug)) * (1 - smooth(clamp((s - t.arrive) / .05)))) * (1 + .06 * Math.sin(s * 40));
       const strain = t.heavy && pulling ? .02 * Math.sin(s * 70) : 0, orbAt = f.place(P0, .12 + reach + OrbGap + OrbR, -.1, handH);
       const point = palmOrb('bansho palm', { x: orbAt.x + strain, z: orbAt.z }, OrbR * smooth(clamp(warmU * 1.25)) * (1 - .6 * smooth(caught)),
-        back, stretch, spin, orbA, look);
-      if (pulling) for (let n = 0; n < 3; n++) {                  // rings sucked into the orb while it pulls
-        const v = ((s - t.grip) * 5 + n / 3) % 1;
-        ringAt(orbAt, lerp(.75, OrbR, v), rimC.withAlpha(.45 * Math.sin(v * Math.PI)), Y + .099);
-      }
-      if (!t.heavy && s >= t.arrive && s < t.arrive + .15) {       // the snap back to round: one pale ring runs out
-        const u = (s - t.arrive) / .15;
-        ringAt(orbAt, lerp(OrbR, OrbR * 2.6, easeOut(u)), rimC.withAlpha(.7 * (1 - u)), Y + .104);
+        back, stretch, s, orbA, look);
+      if (!t.heavy && s >= t.arrive && s < t.arrive + .15) {       // the snap back to round: a soft flash that spreads and fades
+        const u = (s - t.arrive) / .15, size = OrbR * lerp(3, 6.5, easeOut(u));
+        sprite(orbAt, size, size, (look === 'mobile' ? WarmWhite : PaleBlue).withAlpha(.6 * (1 - u)), glow, Y + .0995);
       }
       inflow('bansho inflow', chest, point, s, clamp((s - t.grip) / .1) * (1 - clamp((s - t.arrive) / .05)), look === 'mobile' ? InkBlack : Core);
       const holdA = s < t.grip ? smooth(clamp(warmU * 2)) : 1 - clamp((s - t.arrive) / .12);
       const big = t.heavy ? 2.1 : 1, R = s < t.grip ? lerp(t.heavy ? 1.6 : 1.15, BindR * big, smooth(warmU)) : BindR * big * (1 + .04 * Math.sin(s * 40));
-      hold('bansho hold', chest, R, -spin * 1.3, holdA, look, 1 - clamp((s - t.grip) / .1));
+      hold(chest, R, holdA, look, 1 - clamp((s - t.grip) / .1));
     }
     if (!t.heavy && s >= t.lift && s < t.arrive) {
       trail('bansho trail', chest, back, p.distance - t.slide - a, look);
