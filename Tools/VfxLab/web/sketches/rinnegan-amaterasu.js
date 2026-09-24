@@ -51,18 +51,22 @@
 //              over it from the touching side in 0.3 s. No burst: it caught, nobody cast it.
 //   4.00       the caster releases: strands and blotches sink over 0.3 s, flecks already in the air
 //              finish, a puff of grey smoke rises from above the head for 0.8 s. The scorch stays.
-// Held kunai scenario: three kunai hang where Amenoyodomi stopped them, 40% of the way to where they
-// will land, 0.55 cells up. 0.50-0.60 they catch one after another: a small black burst, then
-// flames up to 0.8 cells tall on each, tallest over the middle. 1.70 Amenoyodomi lets go: they fly
-// on at 24 cells/s, the flames bent back into a black tail. Two hit and stick in their pawns, which
-// catch from the chest out (1.85, 1.86); the third was a miss and lands on the floor 1.9 cells past
-// them (1.90), where it keeps burning as a patch about a cell wide. At 2.90 a raider walking in
+// Held kunai scenario: three kunai hang where Amenoyodomi holds them, thrown at cells 40 % of the way
+// to two raiders and to a point beside them, 0.55 cells up and creeping on at 1 %. 0.50-0.60 they
+// catch one after another: a small black burst, then flames up to 0.8 cells tall on each, tallest
+// over the middle. 1.70 Amenoyodomi lets go: they fly on along their lines at 24 cells/s, the
+// flames bent back into a black tail. Two hit and stick in their raiders, which catch from the chest
+// out (1.84, 1.85); the third passes them, stops against the wall behind (1.89) and lies burning on
+// the floor in front of it as a patch about a cell wide. At 2.89 a raider walking along the wall
 // steps on it and catches from the feet up.
-// Held Fūma scenario: the Fūma hangs 1.6 cells in front of the caster, turning at 1% of its spin.
-// 0.50 its hub and blades catch; flames up to 1.15 cells tall stand on the blades. 1.70 it is let
-// go: back to full spin, 14.4 cells/s along its line; the blades blur and the fire streams back
-// off the whole disc like a comet. The three raiders on the line catch as it cuts them (1.92, 2.02,
-// 2.12); it lands 3.2 cells past the middle one (2.23) and lies there with flames on its blades.
+// Held Fūma scenario: the Fūma hangs where it was thrown, 1.6 cells in front of the caster, turning
+// at 1 % of its spin. 0.50 its hub and blades catch; flames up to 1.15 cells tall stand on the
+// blades. 1.70 it is let go: back to full spin, 14.4 cells/s along its line; the blades blur and the
+// fire streams back off the whole disc like a comet. The three raiders on the line catch as it cuts
+// them (1.91, 2.00, 2.10); it stops against a wall behind them and lands 3.2 cells past the middle
+// one (2.21), lying there with flames on its blades.
+// Both walls are there because a let-go weapon that hits nobody flies on up to its range from where
+// it hung (kunai 14.9, Fūma 12), which would take it out of view.
 //
 // Drawing: strands and tongues are band meshes on a wavy spine with a tapered, ragged width, height
 // drawn north by Lift. On a pawn, strands rooted on the ground north of its feet draw under the pawn
@@ -70,11 +74,12 @@
 // sprites of two generated textures, lab/black-blot and lab/black-shred (both need PNGs before a C#
 // port). Everything is screen-oriented, so there is no per-facing drawing. All births are analytic
 // from the clip time, so scrubbing is deterministic.
-// The held weapons use the game's textures and numbers: RimArt/Kunai/Kunai at the projectile's
-// drawSize 0.75 and 24 cells/s (AG_KunaiProjectile), RimArt/Fuma/Unfolded at 1.4 and 14.4 cells/s
-// (AG_FumaProjectile). The hold is a stand-in, since Amenoyodomi has no sketch yet: the weapons just
-// hang still with a shadow under them (at 1% a kunai would creep 0.24 cells/s; not drawn). The
-// Fūma's spin (720 degrees/s, clockwise as in the backhand throw sketch) is a stand-in too. Held or
+// The held weapons are lib/amenoyodomi.js's, the rule of the Amenoyodomi sketch: thrown at their
+// cells before the clip, held from 0 s at 1 % (a kunai creeps 0.24 cells/s, the Fūma 0.144) and let
+// go along their heading. The lib draws the weapons with the game's textures and numbers (kunai 0.75
+// and 24 cells/s, Fūma 1.4 and 14.4 cells/s), their rings, dots and afterimages, their flight and
+// where they lie; this file draws the fire on them. The Fūma's spin (720 degrees/s, clockwise as in
+// the backhand throw sketch) is a stand-in, turning in step with the distance it travels. Held or
 // landed, its flames root on the blades, measured off the Unfolded texture: blade k runs at
 // 22 + 40 r + 90 k degrees at r texture widths from the middle. In flight they root round the rim
 // instead, and two see-through copies of the blades 22 and 44 degrees behind show the spin (a black
@@ -84,11 +89,12 @@ import { AltitudeLayer, Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderData
 import { registerLabTexture, pixels, fbm } from '../js/standins.js';
 import { draw, mesh, Lift } from './lib/six-paths-solid.js';
 import { P, Y, Floor, at, sprite, band, trail, glow, soft, rand } from './lib/six-paths-impact.js';
-import { figure, whiteGlow, kunaiMat, stuckKunai, CasterColour, EnemyColour } from './lib/flying-thunder-god.js';
+import { figure, whiteGlow, stuckKunai, CasterColour, EnemyColour } from './lib/flying-thunder-god.js';
+import { wallCell } from './lib/goku.js';
+import { placed, motion, where, ground, heldU, turnOf, drawWeapon, Hold, FumaSize } from './lib/amenoyodomi.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp;
 const pawnLayer = AltitudeLayer.Pawn.AltitudeFor(), topLayer = AltitudeLayer.MetaOverlays.AltitudeFor();
-const projectileLayer = AltitudeLayer.Projectile.AltitudeFor(), shadowLayer = AltitudeLayer.Shadows.AltitudeFor();
 const flatDisc = Meshes.disc(48, 'amaterasu disc');
 
 // A torn black scrap, taller than wide: two lopsided lumps with a notched edge and a hole, so it
@@ -114,12 +120,10 @@ registerLabTexture('lab/black-blot', () => pixels(128, (u, v) => {
 const shred = MaterialPool.MatFrom('lab/black-shred', ShaderDatabase.Transparent);
 const blot = MaterialPool.MatFrom('lab/black-blot', ShaderDatabase.Transparent);
 const puff = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.Transparent);
-const fumaMat = MaterialPool.MatFrom('RimArt/Fuma/Unfolded', ShaderDatabase.Cutout);
-const fumaGhost = MaterialPool.MatFrom('RimArt/Fuma/Unfolded', ShaderDatabase.Transparent);
 
 // Decided looks. The flame is one colour, black; blood and the eye glint are the only red.
 const Ink = new Color(.010, .008, .014);
-const Scorch = new Color(.05, .035, .04), Smoke = new Color(.17, .16, .18), ShadowInk = new Color(.03, .03, .05);
+const Scorch = new Color(.05, .035, .04), Smoke = new Color(.17, .16, .18);
 const Crimson = new Color(.75, .08, .12), EmberLit = new Color(.85, .16, .14), Blood = new Color(.52, .03, .05);
 const Ally = new Color(.45, .62, .40);
 // The light inside the black, per source: violet (Storm 4, 1:07-1:09 of the reference clip), crimson
@@ -129,10 +133,10 @@ const LightNames = Object.keys(Lights);
 const Gaze = .5, MarkR = .55, Sink = .3, DimLife = .18, ShakeSize = .075, SmokeLife = .8, JumpTime = .22;
 const Strands = 26, BaseTongues = 5, CoreTongues = 3, Blotches = 8, LooseFlecks = 12;
 const Scenarios = ['pawn', 'pawn, spreads', 'held kunai', 'held Fūma'];
-// Held scenes. Speeds and sizes are the game's (see the header); the hold, its height and the spin
-// are stand-ins. HoldShare is how far along its path a kunai was stopped.
-const KunaiSpeed = 24, KunaiSize = .75, FumaSpeed = 14.4, FumaSize = 1.4, FumaSpin = 720, HeldSpin = FumaSpin * .01;
-const HoldLift = .55, HoldShare = .4, FumaHold = 1.6, HitLift = .35, KunaiStagger = .05;
+// Held scenes. The weapons and the hold are lib/amenoyodomi.js's. HoldShare: how far along the way to
+// its raider a kunai was thrown to hang; FumaHold: how far out the Fūma hangs; the walls stand this far
+// past the middle of the targets (cell centres), so the weapon that hits nobody lands in view.
+const HoldShare = .4, FumaHold = 1.6, KunaiStagger = .05, KunaiWall = 2.8, FumaWall = 4, LandBefore = .3;
 const TailTime = .09, TailLean = 1.3, FumaLean = 1.2, WalkSpeed = 2.2, StepAfter = 1;
 const NoLean = { x: 0, z: 0 };
 
@@ -143,25 +147,33 @@ function times(p) {
 }
 
 // The held scenes, laid out along the throw direction d from the caster (n is d's left); o is the
-// middle of the targets. Each weapon records where it hangs, where it ends and when it gets there.
+// middle of the targets. Each weapon is a lib record held from 0 s and let go at t.letGo; its flight
+// ends at its raider (hit) or on the floor in front of the wall (land), which is w.stop.
 function layout(p, o) {
   const a = p.aim * Mathf.Deg2Rad, d = { x: Math.cos(a), z: Math.sin(a) }, n = { x: -d.z, z: d.x };
   const go = (q, u, v = 0) => ({ x: q.x + d.x * u + n.x * v, z: q.z + d.z * u + n.z * v });
   const t = times(p), caster = go(o, -p.distance);
-  // Kunai: the first two hit their pawns; the third was thrown at the first and misses wide.
-  const pawns = [go(o, 0, .9), go(o, .5, -.8)], miss = go(o, 1.9, .25);
-  const kunai = [pawns[0], pawns[1], miss].map((end, i) => {
-    const hold = { x: lerp(caster.x, end.x, HoldShare), z: lerp(caster.z, end.z, HoldShare) };
-    return {
-      hold, end, hit: i < 2, lit: t.ignite + i * KunaiStagger,
-      arrive: t.letGo + Math.hypot(end.x - hold.x, end.z - hold.z) / KunaiSpeed,
-      deg: Math.atan2(end.z - hold.z, end.x - hold.x) * Mathf.Rad2Deg,
-    };
+  // How far along a weapon's line from its let-go point it reaches the point pt, or the wall face at
+  // wall cells past o (less LandBefore, where it drops).
+  const alongTo = (w, q, pt) => (pt.x - q.x) * w.dir.x + (pt.z - q.z) * w.dir.z;
+  const toWall = (w, q, wall) => (wall - .5 - LandBefore - ((q.x - o.x) * d.x + (q.z - o.z) * d.z)) / (w.dir.x * d.x + w.dir.z * d.z);
+  // Kunai: thrown at cells on the way to two raiders and to a point beside them. The first two hit
+  // their raiders; the third passes them and stops against the wall.
+  const pawns = [go(o, 0, .9), go(o, .5, -.8)], aims = [pawns[0], pawns[1], go(o, 1.9, .25)];
+  const kunai = aims.map((aim, i) => {
+    const w = placed('kunai', caster, { x: lerp(caster.x, aim.x, HoldShare), z: lerp(caster.z, aim.z, HoldShare) }, 0, { seed: i, letGo: t.letGo });
+    const uL = heldU(w, t.letGo), q = ground(w, uL), reach = i < 2 ? alongTo(w, q, aim) : toWall(w, q, KunaiWall);
+    w.stop = { t: t.letGo + reach / w.speed, u: uL + reach, how: i < 2 ? 'hit' : 'land' };
+    return { w, hit: i < 2, lit: t.ignite + i * KunaiStagger, deg: w.deg, arrive: w.stop.t, end: i < 2 ? aim : ground(w, w.stop.u) };
   });
-  // Fūma: hangs FumaHold cells out, three raiders stand on its line, it lands on the target cell.
-  const fumaHold = go(caster, FumaHold), line = [go(o, -1.2), go(o, .2), go(o, 1.6)], land = go(o, 3.2);
-  const reach = q => t.letGo + Math.hypot(q.x - fumaHold.x, q.z - fumaHold.z) / FumaSpeed;
-  return { d, go, caster, pawns, miss, kunai, step: kunai[2].arrive + StepAfter, fumaHold, line, land, cuts: line.map(reach), landed: reach(land) };
+  // Fūma: hangs FumaHold cells out, three raiders stand on its line, it stops against the wall.
+  const fuma = placed('fuma', caster, go(caster, FumaHold), 0, { seed: 9, letGo: t.letGo });
+  const uF = heldU(fuma, t.letGo), qF = ground(fuma, uF), line = [go(o, -1.2), go(o, .2), go(o, 1.6)], reachF = toWall(fuma, qF, FumaWall);
+  fuma.stop = { t: t.letGo + reachF / fuma.speed, u: uF + reachF, how: 'land' };
+  const walls = [-1, 0, 1].map(v => go(o, p.scenario === Scenarios[3] ? FumaWall : KunaiWall, v));
+  const landed = kunai[2].end;
+  return { d, go, caster, pawns, kunai, landed, step: kunai[2].arrive + StepAfter, walls, fuma, line,
+    land: ground(fuma, fuma.stop.u), cuts: line.map(r => t.letGo + alongTo(fuma, qF, r) / fuma.speed), landedAt: fuma.stop.t };
 }
 
 // The Mangekyo mark (optional): a pupil and 3 curved blades, drawn from the centre outward as u goes
@@ -651,32 +663,25 @@ function fumaTrailRoots(c, d, h, seed, scale) {
   return roots;
 }
 
-// The spin blur: two fading copies of the blades where they were a moment ago, under the real one.
-function spinBlur(pos, turn, alpha) {
-  for (let i = 1; i <= 2; i++) sprite(pos, FumaSize, FumaSize, Color.white.withAlpha(alpha * (.45 - .15 * i)), fumaGhost, projectileLayer - .001 * i, turn - 22 * i);
-}
-
 // Held kunai: three kunai hang, catch, fly on when Amenoyodomi lets go. Two hit and their pawns catch;
-// the third burns on the floor until a raider walking in steps on it.
+// the third stops at the wall and burns on the floor until a raider walking along it steps on it.
 function kunaiScene(L, s, p, t, sun, strength, light) {
+  L.walls.forEach(c => wallCell(c, p.aim));
   L.pawns.forEach(q => figure(q, EnemyColour, 1, 0, sun, strength));
-  const walker = s < L.step ? L.go(L.miss, WalkSpeed * (L.step - s)) : L.miss;
+  const walker = s < L.step ? L.go(L.landed, 0, WalkSpeed * (L.step - s)) : L.landed;
   figure(walker, EnemyColour, 1, 0, sun, strength);
-  const order = L.kunai.map((_, i) => i).sort((a, b) => L.kunai[b].hold.z - L.kunai[a].hold.z);
+  const order = L.kunai.map((_, i) => i).sort((a, b) => L.kunai[b].w.cell.z - L.kunai[a].w.cell.z);
   L.kunai.forEach((K, i) => {
-    const seed = 1000 + i * 100, layer = Y + .06 + order.indexOf(i) * .006, flight = K.arrive - t.letGo;
-    const e = { x: Math.cos(K.deg * Mathf.Deg2Rad), z: Math.sin(K.deg * Mathf.Deg2Rad) }, endH = K.hit ? HitLift : 0;
-    const posAt = time => {
-      const u = clamp((time - t.letGo) / flight);
-      return { x: lerp(K.hold.x, K.end.x, u), z: lerp(K.hold.z, K.end.z, u), h: lerp(HoldLift, endH, u) };
-    };
+    const w = K.w, seed = 1000 + i * 100, layer = Y + .06 + order.indexOf(i) * .006;
+    const e = { x: Math.cos(K.deg * Mathf.Deg2Rad), z: Math.sin(K.deg * Mathf.Deg2Rad) };
+    // Where the kunai is drawn, up to the moment it arrives (lib/amenoyodomi.js).
+    const posAt = time => { const W = where(w, Math.min(time, K.arrive - 1e-4)); return { x: W.g.x, z: W.g.z, h: W.h }; };
     const age = s - K.lit, lit = age >= 0 && K.lit < t.release, rel = 1 - smooth((s - t.release) / Sink);
     const clock = Math.max(0, age) * p.speed, g = lit ? smooth(age / .15) : 0;
+    drawWeapon(`amaterasu kunai weapon ${i}`, w, s, { sun, strength, streak: false });
     if (s < K.arrive) {
-      // In the air: the kunai, its shadow on the floor under it, its flames and two clinging blotches.
+      // In the air: its flames and two clinging blotches.
       const q = posAt(s), moving = s > t.letGo;
-      sprite({ x: q.x + sun.x * q.h, z: q.z + sun.z * q.h }, .1, .5, ShadowInk.withAlpha(strength * .8), soft, shadowLayer, 90 - K.deg);
-      sprite(at(q, 0, 0, q.h), KunaiSize, KunaiSize, Color.white, kunaiMat, projectileLayer, 90 - K.deg);
       if (lit && rel > 0) {
         // Seven strands along the kunai, tallest over its middle, and two broad base tongues that
         // join them at the bottom so it reads as one flame, not a comb.
@@ -694,10 +699,9 @@ function kunaiScene(L, s, p, t, sun, strength, light) {
     } else if (K.hit) {
       stuckKunai(K.end, K.deg, 0);
     } else {
-      sprite(K.end, .62, .62, Color.white, kunaiMat, Floor + .06, 90 - K.deg);
       floorFire(`amaterasu floor kunai ${i}`, K.end, floorRoots(K.end, 9, .36, seed + 30, p.height / 2.4), .45, K.arrive, K.lit, s, p, t, seed + 50, light);
     }
-    if (lit) burst(at(K.hold, 0, 0, HoldLift), age, seed, .7, 6);
+    if (lit) { const c = posAt(K.lit); burst(at(c, 0, 0, c.h), age, seed, .7, 6); }
     if (lit && s > t.letGo) {
       tail(`amaterasu kunai tail ${i}`, posAt, t.letGo, K.arrive, s, .07 * rel, clock, seed);
       pathFlecks(posAt, t.letGo, Math.min(K.arrive, t.release), s, 8, seed, p.particles);
@@ -708,31 +712,28 @@ function kunaiScene(L, s, p, t, sun, strength, light) {
       fire(`amaterasu hit ${i}`, K.end, p.width, p.height, K.arrive, s, p, t, 200 + i * 100, 'hit');
     }
   });
-  fire('amaterasu walker', L.miss, p.width, p.height, L.step, s, p, t, 700, 'feet');
+  fire('amaterasu walker', L.landed, p.width, p.height, L.step, s, p, t, 700, 'feet');
 }
 
 // Held Fūma: it hangs and turns slowly, catches, then is let go: full spin along its line, every
-// raider on the line catches as it is cut, and it lands and lies burning.
+// raider on the line catches as it is cut, and it stops at the wall and lies burning.
 function fumaScene(L, s, p, t, sun, strength, light) {
-  const seed = 3000, flight = L.landed - t.letGo, rel = 1 - smooth((s - t.release) / Sink);
-  const posAt = time => {
-    const u = clamp((time - t.letGo) / flight);
-    return { x: lerp(L.fumaHold.x, L.land.x, u), z: lerp(L.fumaHold.z, L.land.z, u), h: lerp(HoldLift, 0, u) };
-  };
-  // Clockwise degrees turned: 1% of the spin while held, full spin in flight, still once it lands.
-  const turnAt = time => Math.min(time, t.letGo) * HeldSpin + Math.max(0, Math.min(time, L.landed) - t.letGo) * FumaSpin;
+  const w = L.fuma, seed = 3000, rel = 1 - smooth((s - t.release) / Sink);
+  // Where it is drawn up to the moment it lands, and how far it has turned (lib/amenoyodomi.js: its
+  // spin keeps step with the distance it travels, so 1 % while held and still once it lies).
+  const posAt = time => { const W = where(w, Math.min(time, L.landedAt - 1e-4)); return { x: W.g.x, z: W.g.z, h: W.h }; };
+  const turnAt = time => turnOf(w, motion(w, Math.max(0, time)).u);
   const age = s - t.ignite, lit = age >= 0 && t.ignite < t.release, clock = Math.max(0, age) * p.speed, g = lit ? smooth(age / .2) : 0;
+  L.walls.forEach(c => wallCell(c, p.aim));
   L.line.forEach((r, i) => {
     figure(r, EnemyColour, 1, 0, sun, strength);
     if (L.cuts[i] >= t.release) return;
     burst(at(r, 0, 0, .55), s - L.cuts[i], 1600 + i * 50, .9, 8);
     fire(`amaterasu cut ${i}`, r, p.width, p.height, L.cuts[i], s, p, t, 400 + i * 100, 'hit');
   });
-  if (s < L.landed) {
+  drawWeapon('amaterasu fuma weapon', w, s, { sun, strength, streak: false });
+  if (s < L.landedAt) {
     const q = posAt(s), turn = turnAt(s), flying = s > t.letGo;
-    sprite({ x: q.x + sun.x * q.h, z: q.z + sun.z * q.h }, 1, 1, ShadowInk.withAlpha(strength * .7), soft, shadowLayer);
-    sprite(at(q, 0, 0, q.h), FumaSize, FumaSize, Color.white, fumaMat, projectileLayer, turn);
-    if (flying) spinBlur(at(q, 0, 0, q.h), turn, smooth((s - t.letGo) / .06));
     if (lit && rel > 0) {
       const spots = [{ x: q.x, z: q.z }, ...(flying ? [] : [0, 1, 2, 3].map(k => blade(q, turn, k, .33)))]
         .map((b, j) => ({ ...b, h: q.h, k: seed + 60 + j * 9, size: j ? .15 : .2 }));
@@ -743,15 +744,14 @@ function fumaScene(L, s, p, t, sun, strength, light) {
     }
     if (lit) {
       const c0 = posAt(t.ignite), turn0 = turnAt(t.ignite);
-      burst(at(c0, 0, 0, HoldLift), age, seed + 90, .8, 6);
-      for (let k = 0; k < 4; k++) burst(at(blade(c0, turn0, k, .38), 0, 0, HoldLift), age - .02 - k * .03, seed + k * 20, .75, 5);
+      burst(at(c0, 0, 0, Hold), age, seed + 90, .8, 6);
+      for (let k = 0; k < 4; k++) burst(at(blade(c0, turn0, k, .38), 0, 0, Hold), age - .02 - k * .03, seed + k * 20, .75, 5);
     }
   } else {
-    const rest = turnAt(L.landed);
-    sprite(L.land, FumaSize, FumaSize, Color.white, fumaMat, Floor + .05, rest);
-    floorFire('amaterasu floor fuma', L.land, fumaRoots(L.land, rest, 0, seed + 77, p.height / 2.4), .75, L.landed, t.ignite, s, p, t, seed + 90, light);
+    const rest = turnAt(L.landedAt);
+    floorFire('amaterasu floor fuma', L.land, fumaRoots(L.land, rest, 0, seed + 77, p.height / 2.4), .75, L.landedAt, t.ignite, s, p, t, seed + 90, light);
   }
-  if (lit && s > t.letGo) pathFlecks(posAt, t.letGo, Math.min(L.landed, t.release), s, 14, seed, p.particles);
+  if (lit && s > t.letGo) pathFlecks(posAt, t.letGo, Math.min(L.landedAt, t.release), s, 14, seed, p.particles);
 }
 
 const heldScenario = p => p.scenario === Scenarios[2] || p.scenario === Scenarios[3];
@@ -783,7 +783,7 @@ export default {
     if (p.scenario === Scenarios[1]) marks.push({ name: 'Spreads', t: t.ignite + p.spreadAt });
     if (L) marks.push({ name: 'Let go', t: t.letGo });
     if (p.scenario === Scenarios[2]) marks.push({ name: 'Hits', t: Math.min(L.kunai[0].arrive, L.kunai[1].arrive) }, { name: 'Steps in', t: L.step });
-    if (p.scenario === Scenarios[3]) marks.push({ name: 'Cuts', t: L.cuts[0] }, { name: 'Lands', t: L.landed });
+    if (p.scenario === Scenarios[3]) marks.push({ name: 'Cuts', t: L.cuts[0] }, { name: 'Lands', t: L.landedAt });
     if (p.release) marks.push({ name: 'Release', t: t.release });
     return marks.filter(m => m.t < t.end).sort((a, b) => a.t - b.t);
   },

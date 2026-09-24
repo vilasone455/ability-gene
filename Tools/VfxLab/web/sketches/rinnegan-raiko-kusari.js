@@ -47,7 +47,7 @@
 //              way. Under it the floor carries a dark trace (Dark Chidori) or a flickering coloured
 //              light, and white light during each flash; the same pools sit under each weapon. 3
 //              sparks a second drop from each line to the floor (0.43 s fall) and flash as they land.
-//              The weapons hang 0.55 cells up over a small lavender ring (Amenoyodomi's stand-in).
+//              The weapons hang 0.55 cells up with Amenoyodomi's rings, dots and afterimages.
 //   caught     a burst where it touched; the pawn freezes mid-step and shakes 0.02 cells on every
 //              redraw, the line bends to run through its chest, bolts crawl over its body, it
 //              flashes white about 3 times a second, and a scorch grows under its feet and stays
@@ -71,8 +71,8 @@
 //   Fūma corner   kunai, Fūma, kunai. Lines join the Fūma at the blade tip nearest the next weapon,
 //                 and arcs run round its rim from blade tip to blade tip as it turns. A raider is
 //                 caught on its line. Let go: the Fūma flies its line at 14.4 cells/s at full spin
-//                 inside a spinning ring of lightning, cuts three raiders (each stunned 2 s) and lands
-//                 12 cells from the caster.
+//                 inside a spinning ring of lightning, cuts three raiders (each stunned 2 s) and flies
+//                 out of view, to land 12 cells past where it hung.
 //
 // Drawing: every line joins two weapons at the same height, so the net is a flat shape at one
 // height and turns freely with the direction: no per-facing method. The Fūma's rim arcs and flying
@@ -82,28 +82,26 @@
 // cells/s² from 0.55 cells), so scrubbing is deterministic. Who is caught, and when, is replayed
 // from the cast in 1/60 s steps each frame. Here a pawn touches a line within 0.45 cells of its
 // ground track; the port should use the cells the line crosses ("Show the cells that catch" draws
-// them). The hold is a stand-in until Amenoyodomi has a sketch: a weapon thrown at a cell reached it
-// at 0 s and goes on at the hold speed (1 %: a kunai 0.24 cells/s, the Fūma 0.144), and a let-go
-// sends it on at full speed along its heading. The weapons use the game's textures and numbers:
-// RimArt/Kunai/Kunai at 0.75 and 24 cells/s, range 14.9; RimArt/Fuma/Unfolded at 1.4 and 14.4
-// cells/s, range 12, spin 720 degrees/s (a stand-in, as in the Amaterasu sketch).
-import { AltitudeLayer, Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../js/engine.js';
+// them). The held weapons are lib/amenoyodomi.js's, the rule of the Amenoyodomi sketch: each was
+// thrown at its cell before the clip and hangs there from 0 s, going on along its heading at the
+// hold share (1 %: a kunai 0.24 cells/s, the Fūma 0.144; 10 % in the drifting net), and a let-go
+// sends it on at full speed up to its range from where it hung (kunai 14.9, Fūma 12). The lib
+// draws the weapons, their marks and afterimages, their flight and where they lie; this file adds
+// the charge: sparks on the corners, the Fūma's arcs, the lightning trail and ring in flight.
+import { AltitudeLayer, Color, Mathf, Meshes, MeshPool } from '../js/engine.js';
 import { draw, Lift } from './lib/six-paths-solid.js';
 import { P, Y, Floor, at, sprite, circle, glow, soft, rand } from './lib/six-paths-impact.js';
-import { figure, strip, whiteGlow, kunaiMat, stuckKunai, CasterColour, EnemyColour } from './lib/flying-thunder-god.js';
+import { figure, strip, whiteGlow, stuckKunai, CasterColour, EnemyColour } from './lib/flying-thunder-god.js';
 import { line } from './lib/goku.js';
+import { placed, motion, ground, heldU, turnOf, drawWeapon, Hold, Hang, Drift, FumaSize } from './lib/amenoyodomi.js';
 
 const smooth = Mathf.Smooth, clamp = Mathf.Clamp01, lerp = Mathf.Lerp;
 const pawnLayer = AltitudeLayer.Pawn.AltitudeFor(), shadowLayer = AltitudeLayer.Shadows.AltitudeFor();
-const projectileLayer = AltitudeLayer.Projectile.AltitudeFor();
 const flatDisc = Meshes.disc(40, 'raiko disc');
-const HeldRing = .32, heldRing = Meshes.band(1 - .035 / HeldRing, 1, 48, 'raiko held ring');
-const fumaMat = MaterialPool.MatFrom('RimArt/Fuma/Unfolded', ShaderDatabase.Cutout);
-const fumaGhost = MaterialPool.MatFrom('RimArt/Fuma/Unfolded', ShaderDatabase.Transparent);
 
 // Decided looks. Dark Chidori is black bolts round a white thread; the other two are light.
 const White = new Color(1, 1, 1), Ink = new Color(.02, .018, .03), ShadowInk = new Color(.03, .03, .05);
-const Lavender = new Color(.80, .74, .98), Ally = new Color(.45, .62, .40);
+const Ally = new Color(.45, .62, .40);
 const ShieldBlue = new Color(.45, .72, 1), EmpBlue = new Color(.55, .82, 1);
 const MechGrey = new Color(.46, .48, .52), MechDark = new Color(.24, .25, .28), MechEye = new Color(.95, .22, .15);
 const Tracer = new Color(1, .9, .6), Gun = new Color(.2, .2, .22);
@@ -116,9 +114,8 @@ const EmpLook = { dark: false, bolt: new Color(.82, .94, 1), halo: EmpBlue, halo
 const PaletteNames = Object.keys(Palettes);
 const Scenarios = ['fence', 'ring', 'drifting net', 'let go', 'Fūma corner'];
 
-// The game's weapon numbers (AG_KunaiProjectile, AG_FumaProjectile); the hold is a stand-in.
-const KunaiSpeed = 24, KunaiSize = .75, KunaiRange = 14.9, FumaSpeed = 14.4, FumaSize = 1.4, FumaRange = 12, FumaSpin = 720;
-const Hold = .55, Creep = .01, Drift = .1, TipR = .55;
+// The weapons' numbers and the hold are lib/amenoyodomi.js's. TipR: a Fūma blade tip, in texture widths.
+const TipR = .55;
 // Timing and the rule.
 const Leap = .05, PerLink = .05, FadeOut = .3, CutOut = .12, CornerFlash = .15, CloseFlash = .06, Touch = .45, Step = 1 / 60;
 const MechExtra = 3, HitStun = 2, HitReach = .4, CutReach = .55;
@@ -133,10 +130,9 @@ function scene(p, o) {
   const a = p.aim * Mathf.Deg2Rad, d = { x: Math.cos(a), z: Math.sin(a) }, n = { x: -d.z, z: d.x };
   const place = (u, v) => ({ x: o.x + d.x * u + n.x * v, z: o.z + d.z * u + n.z * v });
   const caster = place(-p.distance, 0), back = { x: -d.x, z: -d.z };
-  const weapon = (kind, u, v, share = Creep) => {
-    const cell = place(u, v), dx = cell.x - caster.x, dz = cell.z - caster.z, l = Math.hypot(dx, dz);
-    return { kind, cell, dir: { x: dx / l, z: dz / l }, share, speed: kind === 'fuma' ? FumaSpeed : KunaiSpeed };
-  };
+  // A weapon thrown at the cell u, v before the clip, held there from 0 s at its hold share.
+  let thrown = 0;
+  const weapon = (kind, u, v, share = Hang) => placed(kind, caster, place(u, v), 0, { shares: [[0, share]], seed: thrown++ });
   // A pawn: what it is, where it starts, which way it moves, how fast, from when, and how far at most.
   const pawn = (kind, u, v, dir = d, speed = 0, t0 = 0, reach = 0) => ({ kind, start: place(u, v), dir, speed, t0, reach });
   const runIn = (kind, u, v, t0, speed = RunSpeed) => pawn(kind, u, v, back, speed, t0, u + 2.6);
@@ -168,21 +164,11 @@ function scene(p, o) {
   return { d, n, caster, W, pawns, letsGo };
 }
 
-// Where a weapon is on the ground: at its cell at 0 s, then on at its hold share of its speed; after a
-// let-go at full speed along its heading until it stops (stopT).
-function heldAt(w, s) {
-  const u = w.speed * w.share * Math.max(0, s);
-  return { x: w.cell.x + w.dir.x * u, z: w.cell.z + w.dir.z * u };
-}
-function weaponAt(w, s, T) {
-  if (s <= T.letGo) return heldAt(w, s);
-  const q = heldAt(w, T.letGo), u = w.speed * (Math.min(s, w.stopT ?? Infinity) - T.letGo);
-  return { x: q.x + w.dir.x * u, z: q.z + w.dir.z * u };
-}
-// Clockwise degrees the Fūma has turned: its hold share of the spin while held, full spin in flight.
-function turnAt(w, s, T) {
-  return Math.max(0, Math.min(s, T.letGo)) * FumaSpin * w.share + Math.max(0, Math.min(s, w.stopT ?? Infinity) - T.letGo) * FumaSpin;
-}
+// Where a weapon is on the ground at time s (lib/amenoyodomi.js: held at its share from 0 s, then after
+// a let-go at full speed along its heading until w.stop), and how far the Fūma has turned.
+const along = (w, s) => motion(w, Math.max(0, s))?.u ?? w.dist;
+const weaponAt = (w, s) => ground(w, along(w, s));
+const turnAt = (w, s) => turnOf(w, along(w, s));
 // Blade k of the Fūma at r texture widths from its middle, turned clockwise by turn degrees, as a
 // ground offset. Measured off RimArt/Fuma/Unfolded (see the Amaterasu sketch): 22 + 40 r + 90 k.
 const bladeAngle = (turn, k, r) => (22 + 40 * r + 90 * k - turn) * Mathf.Deg2Rad;
@@ -236,10 +222,10 @@ function timeline(S, p) {
 // After a let-go: a kunai flies on until the first standing pawn on its path or the end of its
 // range; the Fūma flies to the end of its range and cuts every standing pawn on its line.
 function flights(S, T) {
-  S.W.forEach(w => { w.stopT = Infinity; w.hit = null; w.cuts = []; });
+  S.W.forEach(w => { w.stopT = Infinity; w.hit = null; w.cuts = []; w.stop = null; w.letGo = T.letGo; });
   if (!isFinite(T.letGo)) return;
   S.W.forEach(w => {
-    const q = heldAt(w, T.letGo), range = Math.max(0, (w.kind === 'fuma' ? FumaRange : KunaiRange) - Math.hypot(q.x - S.caster.x, q.z - S.caster.z));
+    const uL = heldU(w, T.letGo), q = ground(w, uL), range = w.range;
     const ahead = pos => {
       const dx = pos.x - q.x, dz = pos.z - q.z;
       return { u: dx * w.dir.x + dz * w.dir.z, off: Math.abs(dx * w.dir.z - dz * w.dir.x) };
@@ -251,6 +237,7 @@ function flights(S, T) {
         if (u > 0 && u < range && off < CutReach) w.cuts.push({ pawn: k, t: T.letGo + u / w.speed });
       });
       w.stopT = T.letGo + range / w.speed;
+      w.stop = { t: w.stopT, u: uL + range, how: 'range' };
       return;
     }
     let best = null;
@@ -261,6 +248,7 @@ function flights(S, T) {
     });
     w.hit = best && { pawn: best.pawn, t: T.letGo + best.u / w.speed };
     w.stopT = best ? w.hit.t : T.letGo + range / w.speed;
+    w.stop = { t: w.stopT, u: uL + (best ? best.u : range), how: best ? 'hit' : 'range' };
   });
 }
 
@@ -721,35 +709,29 @@ export default {
     reached.forEach((R, j) => burst(`raiko reach ${j}`, lift(weaponAt(S.W[R.i], s, T)), s - R.t, CornerFlash * (R.ring ? 1.6 : 1),
       R.ring ? .6 : .38, look, R.ring ? 7 : 5, 140 + j * 9));
 
-    // The weapons: held over Amenoyodomi's mark, lit while they are corners, then flying on charged.
+    // The weapons, drawn by lib/amenoyodomi.js (held with its marks and afterimages, flying, lying), with
+    // the charge on top: lit while they are corners, then flying on charged.
     S.W.forEach((w, i) => {
-      const g = weaponAt(w, s, T), deg = Math.atan2(w.dir.z, w.dir.x) * Mathf.Rad2Deg, sg = cornerSurge[i];
+      const g = weaponAt(w, s, T), deg = w.deg, sg = cornerSurge[i];
       const flying = s >= T.letGo && s < w.stopT, corner = T.links.some(L => (L.a === i || L.b === i) && live(L, s));
-      if (s < T.letGo) {
-        const pulse = .9 + .1 * Math.sin(s * 5 + i);
-        draw(heldRing, g.x, Floor + .02, g.z, HeldRing * pulse, HeldRing * pulse, 0, Lavender.withAlpha(.3));
-      }
+      drawWeapon(`raiko weapon ${i}`, w, s, { sun, strength, streak: false });
       if (corner) cornerPool(g, look, sg, .7 + .3 * rand(step * 5 + i));
       if (w.kind === 'fuma') {
         const turn = turnAt(w, s, T);
         if (s >= w.stopT) {
-          sprite(g, FumaSize, FumaSize, Color.white, fumaMat, Floor + .05, turn);
           burst('raiko fuma lands', at(g, 0, .1), s - w.stopT, .5, .7, look, 6, 500);
           return;
         }
-        const h = flying ? lerp(Hold, 0, clamp((s - T.letGo) / (w.stopT - T.letGo))) : Hold, c = at(g, 0, 0, h);
-        sprite({ x: g.x + sun.x * h, z: g.z + sun.z * h }, 1, 1, ShadowInk.withAlpha(strength * .7), soft, shadowLayer);
-        sprite(c, FumaSize, FumaSize, Color.white, fumaMat, projectileLayer, turn);
+        const c = at(g, 0, 0, Hold);
         if (flying) {
           // Charged in flight: broken arcs of lightning spinning round it (never a closed ring: a black
           // ring round the Fūma read as a tyre in the Amaterasu sketch), and a jagged tail.
-          for (let k = 1; k <= 2; k++) sprite(c, FumaSize, FumaSize, Color.white.withAlpha(.45 - .15 * k), fumaGhost, projectileLayer - .001 * k, turn - 22 * k);
           for (let k = 0; k < 3; k++) {
             const sd = step * 37 + k * 5, a0 = -turn * Mathf.Deg2Rad + k * 2.094 + rand(sd) * .5, span = .9 + .5 * rand(sd + 1);
-            const pts = arcPts(g, (.46 + .1 * rand(sd + 2)) * FumaSize, a0, a0 + span, .1, sd + 3, h);
+            const pts = arcPts(g, (.46 + .1 * rand(sd + 2)) * FumaSize, a0, a0 + span, .1, sd + 3, Hold);
             boltStroke(`raiko fuma ring ${k}`, pts, widths(pts.length - 1, .04, sd), .95, look, Y + .031 + k * .0003, k ? 0 : .7);
           }
-          boltLine('raiko fuma trail', boltPts(at({ x: g.x - w.dir.x * 1.1, z: g.z - w.dir.z * 1.1 }, 0, 0, h), c, .1, step * 43, .15), .04, .85, look, Y + .03, 'both', .6);
+          boltLine('raiko fuma trail', boltPts(at({ x: g.x - w.dir.x * 1.1, z: g.z - w.dir.z * 1.1 }, 0, 0, Hold), c, .1, step * 43, .15), .04, .85, look, Y + .03, 'both', .6);
         } else if (corner) {
           // Part of the net: arcs jump round the rim from a blade tip toward the next as it turns. Each
           // shows on about 60 % of redraws and covers 55-90 of the 90 degrees, so they never close
@@ -768,8 +750,6 @@ export default {
         return;
       }
       if (s < w.stopT) {
-        sprite({ x: g.x + sun.x * Hold, z: g.z + sun.z * Hold }, .1, .5, ShadowInk.withAlpha(strength * .8), soft, shadowLayer, 90 - deg);
-        sprite(lift(g), KunaiSize, KunaiSize, Color.white, kunaiMat, projectileLayer, 90 - deg);
         if (corner) spark(lift(g), .2 * (.75 + .25 * Math.sin(s * 37 + i * 2)) * (1 + .8 * sg), look, .9);
         if (flying) {
           const tail = lift({ x: g.x - w.dir.x * .8, z: g.z - w.dir.z * .8 });
@@ -777,7 +757,6 @@ export default {
           spark(lift(g), .16, look, .8);
         }
       } else if (w.hit) stuckKunai(bodies[w.hit.pawn], deg, 0);
-      else sprite(g, .62, .62, Color.white, kunaiMat, Floor + .06, 90 - deg);
     });
 
     // The pawns: caught, held, let go; a scorch stays where each one was held.

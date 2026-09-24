@@ -14,6 +14,9 @@
 //   falling  after a drop (toggle off, caster down, a wall, 60 s): straight down in DropTime
 //   lying / land / hit / range   on the floor, or stuck in a pawn (the sketch draws that one)
 // A normal throw (at a pawn, or the 6th kunai) flies at full speed to w.stop and is never held.
+// `placed()` makes one that was already hanging when the clip starts (no throw, no catch drawn), as
+// the other sketches need. w.moves = [[time, dx, dz], ...] moves a held weapon, as an Amenotejikara
+// swap does: it keeps its heading and speed, and everything drawn round it moves with it.
 //
 // Drawing: the weapon hangs Hold cells up, drawn Hold x Lift north of its ground point, with its
 // shadow on the ground. The marks under it (two rings, three dots that turn at the hold share, the
@@ -50,6 +53,9 @@ const WakeGap = .3, WakeLife = .8, WakeFrom = .05;          // ripples left behi
 const PullIn = .08, LetGoFlash = .1, RingFade = .2, DustLife = .35;
 const GhostAlpha = [.5, .32, .2, .12, .07], GhostPerSpeed = .08;
 const DotTurn = 360;                                        // degrees the dots turn per cell of the flight speed crept
+// The look settings the Amenoyodomi sketch exposes as sliders; the other sketches take these.
+export const Look = { ghosts: 3, ghostGap: .16, ringR: .32, rippleEvery: 2, releaseTo: null, streak: true,
+  sun: { x: -.45, z: -.32 }, strength: .32 };
 
 const rings = [1, InnerShare].map((f, i) => Meshes.band(1 - Stroke / (.32 * f), 1, 48, `amenoyodomi ring ${i}`));
 const dot = Meshes.disc(16, 'amenoyodomi dot');
@@ -76,6 +82,14 @@ export function weapon(kind, from, cell, thrown, opts = {}) {
   w.easeDist = Math.min(dist, (speed + speed * shareAt(w, thrown + dist / speed)) / 2 * Ease);
   w.easeStart = thrown + (dist - w.easeDist) / speed;
   w.caught = w.held ? w.easeStart + Ease : Infinity;
+  return w;
+}
+// A held weapon already hanging over cell at time since: thrown before the clip, so neither the throw
+// nor the catch is drawn, and it is not there before since.
+export function placed(kind, from, cell, since, opts = {}) {
+  const w = weapon(kind, from, cell, since, opts);
+  w.thrown = w.easeStart = w.caught = since;
+  w.quiet = true;
   return w;
 }
 
@@ -108,6 +122,20 @@ export function creptTime(w, d) {
 }
 // The ground point u cells along its heading.
 export const ground = (w, u) => ({ x: w.from.x + w.dir.x * u, z: w.from.z + w.dir.z * u });
+// The same, plus every move (swap) made by time t.
+export function placeAt(w, u, t) {
+  const g = ground(w, u);
+  for (const [t0, dx, dz] of w.moves ?? []) if (t >= t0) { g.x += dx; g.z += dz; }
+  return g;
+}
+// Where it is drawn at time t: its motion, its ground point g and the point it is drawn at, pos
+// (h cells up), or null while it is in the hand.
+export function where(w, t) {
+  const m = motion(w, t);
+  if (!m) return null;
+  const g = placeAt(w, m.u, t);
+  return { m, g, h: m.h, pos: at(g, 0, 0, m.h), turn: w.kind === 'fuma' ? turnOf(w, m.u) : 0 };
+}
 // Where it was let go or dropped from: cells along its heading.
 export const heldU = (w, t) => w.dist + crept(w, w.caught, Math.min(t, w.letGo, w.drop));
 // Clockwise degrees the Fūma has turned: its spin in step with the distance it has travelled, so it
@@ -186,19 +214,21 @@ function dust(g, age, size) {
 }
 
 // Everything for one weapon at time t. look: { sun, strength, ghosts, ghostGap, ringR, rippleEvery,
-// releaseTo (ground point a let-go would reach from here, for the rule overlay; null for none) }.
+// releaseTo (ground point a let-go would reach from here, for the rule overlay; null for none),
+// streak (false when the sketch draws its own trail in flight) }. Defaults: Look.
 // A weapon stuck in a pawn (phase 'hit') is not drawn here: the sketch draws it on the pawn.
-export function drawWeapon(key, w, t, look) {
+export function drawWeapon(key, w, t, look = {}) {
+  look = { ...Look, ...look };
   const m = motion(w, t);
   if (!m) return;
-  const g = ground(w, m.u), deg = w.deg, turn = w.kind === 'fuma' ? turnOf(w, m.u) : 0;
+  const g = placeAt(w, m.u, t), deg = w.deg, turn = w.kind === 'fuma' ? turnOf(w, m.u) : 0;
   // The Fūma's rings sit outside its blades; its ripples and flashes are a little larger.
   const r = look.ringR * (w.kind === 'fuma' ? FumaRing : 1), big = w.kind === 'fuma' ? 1.8 : 1;
-  const hang = w.held && isFinite(w.caught) ? ground(w, heldU(w, t)) : null;
+  const hang = w.held && isFinite(w.caught);
 
   // The ripple it makes as it stops, and the flash on the weapon.
-  if (hang && t >= w.caught) {
-    const age = t - w.caught, c = ground(w, w.dist);
+  if (hang && !w.quiet && t >= w.caught) {
+    const age = t - w.caught, c = placeAt(w, w.dist, w.caught);
     ripple(c, age, CatchLife, r, CatchReach * big, .7);
     ripple(c, age - .08, CatchLife, r * .8, CatchReach * big * .7, .45);
     if (age < CatchFlash) sprite(at(c, 0, 0, Hold), .5 * big, .5 * big, Lavender.withAlpha(.65 * (1 - age / CatchFlash)), glow, Y + .02);
@@ -207,7 +237,7 @@ export function drawWeapon(key, w, t, look) {
   if (m.phase === 'flying' || m.phase === 'easing') {
     const pos = at(g, 0, 0, m.h), len = Math.min(.6, m.u, m.speed * .025);
     shadowOf(w, g, m.h, deg, turn, look.sun, look.strength);
-    if (len > .03) streak(`${key} streak`, at(ground(w, m.u - len), 0, 0, m.h), pos, w.kind === 'fuma' ? .12 : .05,
+    if (look.streak && len > .03) streak(`${key} streak`, at(placeAt(w, m.u - len, t), 0, 0, m.h), pos, w.kind === 'fuma' ? .12 : .05,
       White.withAlpha(.45), whiteGlow, projectileLayer - .003, 6);
     if (w.kind === 'fuma' && m.speed > w.speed * .5) {
       for (let k = 1; k <= 2; k++) sprite(pos, FumaSize, FumaSize, White.withAlpha(.45 - .15 * k), fumaGhost, projectileLayer - .001 * k, turn - 22 * k);
@@ -222,7 +252,7 @@ export function drawWeapon(key, w, t, look) {
     // when it drifts faster.
     const gap = look.ghostGap + GhostPerSpeed * m.speed;
     for (let k = 1; k <= look.ghosts; k++) {
-      const q = at(ground(w, m.u - gap * k), 0, 0, Hold);
+      const q = at(placeAt(w, m.u - gap * k, t), 0, 0, Hold);
       const tint = Lavender.withAlpha(GhostAlpha[k - 1] * fade);
       if (w.kind === 'fuma') sprite(q, FumaSize, FumaSize, tint, ghostFuma, projectileLayer - .001 * k, turn);
       else sprite(q, KunaiSize, KunaiSize, tint, ghostKunai, projectileLayer - .001 * k, 90 - deg);
@@ -233,13 +263,13 @@ export function drawWeapon(key, w, t, look) {
     const every = look.rippleEvery, first = w.caught + every * (.5 + ((w.seed * .37) % .5));
     for (let n = Math.max(0, Math.floor((t - first) / every)); n >= 0 && n >= Math.floor((t - first) / every) - 1; n--) {
       const born = first + n * every;
-      if (born <= t) ripple(ground(w, heldU(w, born)), t - born, RippleLife, r, r * RippleReach, .3);
+      if (born <= t) ripple(placeAt(w, heldU(w, born), born), t - born, RippleLife, r, r * RippleReach, .3);
     }
     for (let k = Math.floor(creptNow / WakeGap); k >= 1; k--) {
       const born = creptTime(w, k * WakeGap), age = t - born;
       if (age >= WakeLife) break;
       if (shareAt(w, born) < WakeFrom) continue;
-      const q = ground(w, w.dist + k * WakeGap), f = age / WakeLife;
+      const q = placeAt(w, w.dist + k * WakeGap, born), f = age / WakeLife;
       draw(rings[0], q.x, Floor + .018, q.z, r * (.8 + .6 * f), r * (.8 + .6 * f), 0, Lavender.withAlpha(.24 * (1 - f)));
     }
     // Rule overlay: where a let-go would send it, and what is left of its 60 s.
@@ -258,7 +288,7 @@ export function drawWeapon(key, w, t, look) {
 
   // Let go: the rings pull in to the point it hung over and a small flash, as it leaves at full speed.
   if (hang && isFinite(w.letGo) && w.letGo <= w.drop && t >= w.letGo) {
-    const age = t - w.letGo, c = ground(w, heldU(w, w.letGo));
+    const age = t - w.letGo, c = placeAt(w, heldU(w, w.letGo), w.letGo);
     if (age < PullIn) marks(c, r * (1 - smooth(age / PullIn)), 0, 1 - age / PullIn);
     if (age < LetGoFlash) {
       sprite(at(c, 0, 0, Hold), .7 * big, .7 * big, Lavender.withAlpha(.7 * (1 - age / LetGoFlash)), glow, Y + .03);

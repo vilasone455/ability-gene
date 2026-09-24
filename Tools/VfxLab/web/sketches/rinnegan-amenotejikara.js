@@ -12,8 +12,9 @@
 // sign is the Rinnegan's own ring pattern at each end.
 //
 // Order, with the default timings:
-//   0.00-0.50  before: the three scenarios show who stands where. A held kunai drifts east at 1% of
-//              its flight speed (0.24 cells/s) inside a small pulsing ring
+//   0.00-0.50  before: the three scenarios show who stands where. A held kunai hangs 0.55 cells up
+//              and drifts east at 1 % of its flight speed (0.24 cells/s), with Amenoyodomi's rings,
+//              dots and afterimages (lib/amenoyodomi.js, the same held kunai as the Amenoyodomi sketch)
 //   0.50  cast and swap on one frame: a small violet 4-point star on the caster's eye, 0.1 s. The
 //         occupants change places. At both ends the Rinnegan pattern appears on the floor: 4 rings
 //         (radius 1.2 cells, so the two inner rings clear the pawn's body), pupil, 6 tomoe (3 on
@@ -28,19 +29,21 @@
 // an attack.
 //
 // Drawing: everything is a level circle or a flat quad, so no per-facing method. The pattern is
-// drawn around the thing it swaps, on the floor for a pawn and around the kunai for a held kunai
-// (a bullet in RimWorld is drawn on the ground at its cell, so there is no height to lift it by).
+// drawn on the floor round the thing it swaps: under a pawn's feet, or under a held kunai at its
+// ground point. The held kunai is drawn by lib/amenoyodomi.js at 0.55 cells up; the swap moves it
+// (w.moves) and its rings, dots and afterimages go with it. Its ghost crosses at that height.
 // Pawns are two-disc stand-ins. The negative flash is InvertShader, which in C# is
 // Hidden/Internal-Colored with _SrcBlend OneMinusDstColor, _DstBlend OneMinusSrcAlpha, drawn with
 // colour (a, a, a, a) on AltitudeLayer.MetaOverlays, then a mid-grey Transparent quad on top to
 // pull the colours toward grey. Full screen is a quad over the camera's view rect.
 import { AltitudeLayer, Color, InvertShader, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../js/engine.js';
-import { draw } from './lib/six-paths-solid.js';
+import { draw, Lift } from './lib/six-paths-solid.js';
 import { P, Y, Floor, at, sprite, glow, trail } from './lib/six-paths-impact.js';
 import { figure, kunaiMat, whiteGlow, CasterColour, EnemyColour } from './lib/flying-thunder-god.js';
+import { placed, where, drawWeapon, Hold, KunaiSize } from './lib/amenoyodomi.js';
 
 const smooth = Mathf.Smooth, lerp = Mathf.Lerp;
-const pawnLayer = AltitudeLayer.Pawn.AltitudeFor();
+const pawnLayer = AltitudeLayer.Pawn.AltitudeFor(), projectileLayer = AltitudeLayer.Projectile.AltitudeFor();
 const topLayer = AltitudeLayer.MetaOverlays.AltitudeFor();
 const invertMat = MaterialPool.MatFrom('white', InvertShader);
 const greyMat = MaterialPool.MatFrom('white', ShaderDatabase.Transparent);
@@ -51,8 +54,7 @@ const Lavender = new Color(.80, .74, .98), LavenderDeep = new Color(.46, .36, .7
 const SecondEnemy = new Color(.62, .30, .30);
 const Lead = .5, EyeLife = .1, AfterLife = .2, Stroke = .035, GhostW = .5, GhostH = .95;
 const RingFractions = [.28, .52, .76, 1];        // of the pattern radius
-const KunaiSpeed = 24 * .01;                      // 40 speed = 24 cells/s; held at 1%
-const HeldRing = .32;
+const KunaiThrow = 4;                             // the held kunai was thrown east from this far west of its cell
 const Scenarios = ['caster <-> enemy', 'enemy <-> enemy', 'enemy <-> held kunai'];
 const Flashes = ['full screen', 'disc at each end', 'off'];
 
@@ -93,15 +95,11 @@ function star(pos, size, alpha) {
   draw(MeshPool.plane10, pos.x, Y + .21, pos.z, size * .12, size * 2, 0, EyeStar.withAlpha(alpha), whiteGlow);
 }
 
-// The held kunai: on its cell, pointing along its heading (degrees, 0 east), inside Amenoyodomi's
-// small ring.
-function heldKunai(pos, deg, s, alpha, ring) {
+// A pale copy of the held kunai at a drawn point pos (already lifted), pointing along deg: its ghost
+// crossing to the other end, and the afterimage it leaves where it was.
+function paleKunai(pos, deg, alpha) {
   if (alpha <= 0) return;
-  if (ring) {
-    const pulse = .5 + .5 * Math.sin(s * 5);
-    draw(ringMesh[3], pos.x, Floor + .02, pos.z, HeldRing * (.9 + .1 * pulse), HeldRing * (.9 + .1 * pulse), 0, Lavender.withAlpha(.35 * alpha));
-  }
-  sprite(pos, .5, .5, Color.white.withAlpha(alpha), kunaiMat, pawnLayer + .01, 90 - deg);
+  sprite(pos, KunaiSize, KunaiSize, Lavender.withAlpha(alpha), kunaiMat, projectileLayer + .01, 90 - deg);
 }
 
 export default {
@@ -136,10 +134,12 @@ export default {
     const casterEnd = p.scenario === Scenarios[0];
     const casterHome = casterEnd ? { x: o.x - half, z: o.z } : { x: o.x, z: o.z - 1.6 };
 
-    // The kunai drifts all through the clip; the swap moves it, not its heading or speed.
-    const drift = KunaiSpeed * s;
+    // The held kunai drifts east all through the clip; the swap moves it onto the enemy's cell without
+    // turning or stopping it.
     const west = { x: o.x - half, z: o.z }, east = { x: o.x + half, z: o.z };
-    const kunaiEast = { x: east.x + drift, z: east.z }, kunaiWest = { x: west.x + drift - (swapped ? KunaiSpeed * t.swap : 0), z: west.z };
+    const kunai = p.scenario === Scenarios[2] ? placed('kunai', { x: east.x - KunaiThrow, z: east.z }, east, 0, { seed: 3 }) : null;
+    const kunaiAtSwap = kunai ? where(kunai, t.swap).g : east;
+    if (kunai) kunai.moves = [[t.swap, west.x - kunaiAtSwap.x, west.z - kunaiAtSwap.z]];
 
     // Ends: what stands there before and after, and where the pattern is centred.
     const ends = casterEnd
@@ -147,7 +147,7 @@ export default {
       : p.scenario === Scenarios[1]
         ? [{ pos: west, before: 'enemy', after: 'enemy2' }, { pos: east, before: 'enemy2', after: 'enemy' }]
         // The enemy lands where the kunai was at the swap; the kunai goes on east from the enemy's cell.
-        : [{ pos: west, before: 'enemy', after: 'kunai' }, { pos: { x: east.x + KunaiSpeed * t.swap, z: east.z }, before: 'kunai', after: 'enemy' }];
+        : [{ pos: west, before: 'enemy', after: 'kunai' }, { pos: kunaiAtSwap, before: 'kunai', after: 'enemy' }];
     const colourOf = who => who === 'caster' ? CasterColour : who === 'enemy' ? EnemyColour : SecondEnemy;
 
     // A caster who is not an end stands to the south and watches.
@@ -156,16 +156,16 @@ export default {
     const eyeAge = s - t.cast;
     if (eyeAge >= 0 && eyeAge < EyeLife) star({ x: casterHome.x + .04, z: casterHome.z + .62 }, .22, 1 - eyeAge / EyeLife);
 
+    if (kunai) drawWeapon('amenotejikara kunai', kunai, s, { sun, strength });
     ends.forEach((e, n) => {
       const who = swapped ? e.after : e.before, old = e.before;
-      const pos = who === 'kunai' ? (swapped ? kunaiWest : kunaiEast) : e.pos;
-      if (who === 'kunai') heldKunai(pos, 0, s, 1, true);
-      else figure(pos, colourOf(who), 1, 0, sun, strength);
+      const pos = who === 'kunai' ? where(kunai, s).g : e.pos;
+      if (who !== 'kunai') figure(pos, colourOf(who), 1, 0, sun, strength);
 
       // Afterimage of who was here, pale and fading.
       if (swapped && age < AfterLife) {
         const a = .35 * (1 - age / AfterLife);
-        if (old === 'kunai') heldKunai({ x: e.pos.x, z: e.pos.z }, 0, s, a, false);
+        if (old === 'kunai') paleKunai(at(e.pos, 0, 0, Hold), kunai.deg, a);
         else sprite(at(e.pos, 0, .38), .3, .8, Lavender.withAlpha(a), glow, pawnLayer + .02);
       }
 
@@ -174,12 +174,12 @@ export default {
       if (swapped && age < p.cross) {
         const u = age / p.cross, other = ends[1 - n].pos, a = 1 - Math.max(0, u - .5) * 2;
         const along = v => ({ x: lerp(e.pos.x, other.x, v), z: lerp(e.pos.z, other.z, v) });
-        const g = along(u), lift = old === 'kunai' ? 0 : .38;
+        const g = along(u), lift = old === 'kunai' ? Hold * Lift : .38;
         // A streak a quarter of the way back along the crossing, so the ghost reads as moving.
         const pts = [];
         for (let k = 0; k <= 6; k++) pts.push(at(along(Math.max(0, u - .25 * (1 - k / 6))), 0, lift));
         trail(`amenotejikara ghost ${n}`, pts, .3, LavenderDeep.withAlpha(.7 * a), Y + .09);
-        if (old === 'kunai') heldKunai(g, 0, s, a, false);
+        if (old === 'kunai') paleKunai(at(g, 0, lift), kunai.deg, a);
         else sprite(at(g, 0, lift), GhostW, GhostH, Lavender.withAlpha(.9 * a), glow, Y + .1);
       }
 
