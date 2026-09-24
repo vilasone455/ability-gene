@@ -31,6 +31,10 @@ export const Hole = new Color(.05, .04, .03), Black = new Color(0, 0, 0);
 export const DirtDark = new Color(.2, .14, .09), DirtMid = new Color(.36, .27, .18), DirtLit = new Color(.55, .43, .3);
 export const Trace = new Color(.35, 1, .82), TraceHot = new Color(.82, 1, .95);
 export const grey = g => new Color(g, g, g);
+// A grey, or with tint that grey times the tint: the light of the Unlimited Blade Works world, as its
+// baked field is drawn (lib/ubw-pocket.js drawField).
+const shade = (g, tint) => tint ? new Color(g * tint.r, g * tint.g, g * tint.b) : grey(g);
+const tinted = (c, tint) => tint ? new Color(c.r * tint.r, c.g * tint.g, c.b * tint.b, c.a) : c;
 
 // Per texture, from its alpha: tip and pommel in uv (v up), and the blade's extent across its axis
 // in 16 steps from the tip (0) to the pommel (1), in uv. image: cells the whole picture spans at
@@ -139,15 +143,15 @@ export function texPoly(key, poly, b, project, material, colour, layer, shift = 
 
 // A blade standing in (or lying on, or flying over) the ground. fillTo limits the steel to below
 // that height; wireTo draws the outline below that height; scan puts the bright line at a height.
-// upright false leaves out the thickness and the dark bands low on the blade.
-export function blade(key, b, sun, strength, layer, { alpha = 1, upright = true, fillTo = Infinity, wireTo = -1, wireAlpha = 0, scan = -1, shadow = .42, thick = .03 } = {}) {
+// upright false leaves out the thickness and the dark bands low on the blade. tint colours the steel.
+export function blade(key, b, sun, strength, layer, { alpha = 1, upright = true, fillTo = Infinity, wireTo = -1, wireAlpha = 0, scan = -1, shadow = .42, thick = .03, tint = null } = {}) {
   const above = clip(Square, higherThan(b, 0));
   const steel = fillTo < Infinity ? clip(above, lowerThan(b, fillTo)) : above;
   texPoly(`${key} shadow`, steel, b, alongSun(sun), b.w.face, Black.withAlpha(shadow * strength / .32 * alpha), shadowLayer + .002);
   if (upright && thick > 0) [1, .5].forEach((f, i) => texPoly(`${key} edge ${i}`, steel, b, onScreen, b.w.face,
-    grey(.28 + .1 * i).withAlpha(alpha), layer + .0004 + i * .0001, v3(-b.N.x * thick * f, -b.N.y * thick * f, -b.N.z * thick * f)));
+    shade(.28 + .1 * i, tint).withAlpha(alpha), layer + .0004 + i * .0001, v3(-b.N.x * thick * f, -b.N.y * thick * f, -b.N.z * thick * f)));
   const light = Math.max(0, dot3(b.N, unit(v3(-sun.x, 1, -sun.z))));
-  texPoly(`${key} face`, steel, b, onScreen, b.w.face, grey(.8 + .2 * light).withAlpha(alpha), layer + .001);
+  texPoly(`${key} face`, steel, b, onScreen, b.w.face, shade(.8 + .2 * light, tint).withAlpha(alpha), layer + .001);
   if (upright) {
     texPoly(`${key} low`, clip(steel, lowerThan(b, .2)), b, onScreen, b.w.face, Black.withAlpha(.24 * alpha), layer + .0013);
     texPoly(`${key} lower`, clip(steel, lowerThan(b, .08)), b, onScreen, b.w.face, Black.withAlpha(.24 * alpha), layer + .0015);
@@ -174,8 +178,8 @@ export function cutOf(b, sink) {
 // Shadow, cracks and slit only darken whatever the floor is; the lips and crumbs are soil. The
 // front lip is drawn over the blade and reaches a little north over its foot, which is what puts
 // the steel into the ground. forward (a direction on the floor) tips the cracks that way. dirt
-// scales cracks and earth.
-export function plant(key, cut, layer, seed, sun, { dirt = 1, grow = 1, alpha = 1, forward = null, cracks = 6, crumbs = 3 } = {}) {
+// scales cracks and earth. tint colours the earth of the lips.
+export function plant(key, cut, layer, seed, sun, { dirt = 1, grow = 1, alpha = 1, forward = null, cracks = 6, crumbs = 3, tint = null } = {}) {
   if (grow <= 0 || alpha <= 0) return;
   const { D, F, half } = cut, rot = -Math.atan2(D.z, D.x) / D2R, k = dirt;
   const pt = (along, out) => ({ x: cut.x + D.x * along + F.x * out, z: cut.z + D.z * along + F.z * out });
@@ -198,8 +202,8 @@ export function plant(key, cut, layer, seed, sun, { dirt = 1, grow = 1, alpha = 
     line(`${key} crack ${i}`, pts, .024, Black.withAlpha(.5 * alpha), solid, Floor + .002, 'end');
   }
   line(`${key} slit`, [pt(-half - .035, 0), pt(0, 0), pt(half + .035, 0)], .055, Hole.withAlpha(.92 * alpha), solid, Floor + .004, 'both');
-  lip(`${key} back`, cut, -1, half, .026 * k, grow, alpha, layer - .0006, seed, sun);
-  lip(`${key} front`, cut, 1, half, .032 * k, grow, alpha, layer + .0025, seed + 3, sun);
+  lip(`${key} back`, cut, -1, half, .026 * k, grow, alpha, layer - .0006, seed, sun, tint);
+  lip(`${key} front`, cut, 1, half, .032 * k, grow, alpha, layer + .0025, seed + 3, sun, tint);
   for (let i = 0; i < crumbs; i++) {
     const side = i % 2 ? 1 : -1;
     rock(pt(side * (half + .07 + rand(seed * 17 + i) * .12), (rand(seed * 19 + i) - .3) * .16),
@@ -208,7 +212,7 @@ export function plant(key, cut, layer, seed, sun, { dirt = 1, grow = 1, alpha = 
 }
 // One lip of earth pushed up along the slit, tapering to nothing at both ends. side 1 is the camera
 // side. Its slope toward the sun is lit.
-function lip(key, cut, side, half, reach, grow, alpha, layer, seed, sun) {
+function lip(key, cut, side, half, reach, grow, alpha, layer, seed, sun, tint = null) {
   const { D } = cut, F = { x: cut.F.x * side, z: cut.F.z * side }, n = 9;
   const inner = [], crest = [], outer = [];
   for (let i = 0; i < n; i++) {
@@ -220,8 +224,8 @@ function lip(key, cut, side, half, reach, grow, alpha, layer, seed, sun) {
     outer.push({ x: base.x + F.x * out, z: base.z + F.z * out });
   }
   const sunward = -(F.x * sun.x + F.z * sun.z) > 0;
-  band(`${key} lip`, inner, outer, (sunward ? DirtMid : DirtDark).withAlpha(alpha), layer);
-  band(`${key} lip top`, inner, crest, (sunward ? DirtLit : DirtMid).withAlpha(alpha), layer + .0002);
+  band(`${key} lip`, inner, outer, tinted(sunward ? DirtMid : DirtDark, tint).withAlpha(alpha), layer);
+  band(`${key} lip top`, inner, crest, tinted(sunward ? DirtLit : DirtMid, tint).withAlpha(alpha), layer + .0002);
 }
 
 // The floor breaking as a blade comes up or drives in: crumbs thrown that land and stay, and a puff.

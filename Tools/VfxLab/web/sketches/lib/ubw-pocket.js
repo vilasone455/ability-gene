@@ -13,7 +13,11 @@
 //   sunGlow, hill, skyGears, embers    patches, the haze past the map edge, the low sun, the hill of
 //                                      swords, the shadows of the gears overhead, drifting embers
 //   field, drawField                   the standing swords, laid out once and baked into three meshes
-//                                      (shadows, ground marks, blades) from one atlas texture
+//                                      (shadows, ground marks, blades) from one atlas texture; a
+//                                      command's swords can be left out and drawn one by one between
+//                                      parts of the blades mesh (the commands sketch)
+//   Look, fieldList, standingPose,     the world's decided look, its swords without the bake, one
+//   mapEdge                            sword's standing pose, the lab's dashed map edge
 //
 // Atlas: Textures/RimArt/TraceTrial/Atlas.png, made by make_trace_trial_textures.py from the six
 // local reference weapons (git-excluded; it never ships). One texture means every part of every
@@ -22,7 +26,7 @@
 // edge greys, the face lit three ways, the two dark bands low on the blade. Row 6 holds flat swatches
 // for the ground marks. The numbers below match the script's. In game the kit builds the same atlas
 // at load from the studied weapons' own textures.
-import { AltitudeLayer, Color, MaterialPool, Meshes, MeshPool, ShaderDatabase } from '../../js/engine.js';
+import { AltitudeLayer, Color, MaterialPool, Mesh, Meshes, MeshPool, ShaderDatabase } from '../../js/engine.js';
 import { registerLabTexture, pixels, fbm, hash } from '../../js/standins.js';
 import { draw, mesh } from './six-paths-solid.js';
 import { Y, Floor, Lift, sprite, soft, glow, rand } from './six-paths-impact.js';
@@ -37,6 +41,9 @@ export const Radius = [6, 9, 12], VerseTime = 2, LinesOut = 1.8, Lines = 10;
 // The pocket map is 40 x 40 with the caster in the middle. Inside the world the sun is low: shadows
 // run twice as long as the scene's.
 export const MapHalf = 20, DuskShadow = 2;
+// The world as the user passed it (2026-09-24, "otherwise it's perfect"): the world sketch's defaults, and
+// the commands sketch's constants.
+export const Look = { density: .24, hill: 5.5, beyond: 16, size: 1.3, lean: 22, twilight: .8, gears: .28 };
 export const WhiteHot = new Color(1, .97, .9), White = new Color(1, 1, 1);
 export const Tint = new Color(1, .86, .76), Twilight = new Color(1, .7, .55), Haze = new Color(.7, .45, .4);
 const EarthDark = new Color(.22, .12, .08), EarthLit = new Color(.58, .38, .25), FarEarth = new Color(.46, .3, .25);
@@ -313,10 +320,21 @@ export function backstop(c) {
 }
 const hazeBands = Array.from({ length: 8 }, (_, k) => Meshes.band((MapHalf + 2 + k * 2.4) / 240, 1, 96, `ubwp haze ${k}`));
 // Haze past the map edge, thicker the further out, over the swords and under the pawns: the field goes on
-// but fades, as the twilight does to the horizon.
+// but fades, as the twilight does to the horizon. Above every part of a split field (see drawField).
+const HazeLayer = buildingLayer + .6;
 export function haze(c, alpha) {
   if (alpha <= 0) return;
-  hazeBands.forEach((m, k) => draw(m, c.x, buildingLayer + .2 + k * .0001, c.z, 240, 240, 0, Haze.withAlpha(.1 * alpha), solid));
+  hazeBands.forEach((m, k) => draw(m, c.x, HazeLayer + k * .0001, c.z, 240, 240, 0, Haze.withAlpha(.1 * alpha), solid));
+}
+// The pocket map's edge, MapHalf cells out each way: a dashed line, lab only.
+export function mapEdge(key, c) {
+  const dashes = [];
+  for (let k = -MapHalf; k < MapHalf; k += 1.6) {
+    const m = k + .5;
+    dashes.push({ x: c.x + m, z: c.z - MapHalf, w: 1, h: .07 }, { x: c.x + m, z: c.z + MapHalf, w: 1, h: .07 });
+    dashes.push({ x: c.x - MapHalf, z: c.z + m, w: .07, h: 1 }, { x: c.x + MapHalf, z: c.z + m, w: .07, h: 1 });
+  }
+  quads(key, dashes, White.withAlpha(.45), solid, HazeLayer + .01);
 }
 const toSun = sun => { const d = Math.hypot(sun.x, sun.z) || 1; return { x: -sun.x / d, z: -sun.z / d }; };
 // The low sun's side of the sky warms the ground on that side.
@@ -518,39 +536,73 @@ export function makeField({ density, hill: hillRadius, beyond, size, lean }, kee
   }
   return list.sort((a, b) => b.z - a.z);
 }
+// makeField without the bake, for a sketch's plan and clock: the same swords, the same seeds. Kept per
+// settings and landing spots; the list is shared, so it is not to be changed.
+const lists = new Map();
+export function fieldList(settings, keep = []) {
+  const id = JSON.stringify([settings, keep]);
+  if (!lists.has(id)) {
+    lists.set(id, makeField(settings, keep));
+    if (lists.size > 8) lists.delete(lists.keys().next().value);
+  }
+  return lists.get(id);
+}
+// A sword of the field standing in its place round c (field() bakes this pose as sw.b).
+export const standingPose = (sw, c) => upright(sw.w, sw.size, { x: c.x + sw.x, z: c.z + sw.z }, sw.lean, sw.dir, sw.turn, sw.sink);
+
 const fields = new Map();
-// The field for these settings round c under this sun, baked: each sword's pose b, and three meshes.
-// Swords past the map edge get no lips or cracks (they are far off and hazed). The last three settings
-// are kept.
-export function field(settings, c, sun, keep = []) {
-  const id = JSON.stringify([settings, c.x, c.z, sun.x, sun.z, keep]);
+// The field for these settings round c under this sun, baked: each sword's pose b, and the meshes.
+// Swords past the map edge get no lips or cracks (they are far off and hazed). The last three bakes are
+// kept; their meshes are dropped with them.
+//   omit: seeds of swords left out of the bake. A command's swords: the sketch draws them one by one.
+//   cuts: map z values where the blades mesh is split, so that what the sketch draws one by one (a
+//         command's sword standing at z, or stuck in the ground at z) goes between the swords north of it
+//         and those south of it (drawField's inserts). Without cuts the blades are one mesh.
+export function field(settings, c, sun, keep = [], { omit = [], cuts = [] } = {}) {
+  const gone = new Set(omit), zs = cuts.slice().sort((a, b) => b - a);
+  const id = JSON.stringify([settings, c.x, c.z, sun.x, sun.z, keep, [...gone].sort((a, b) => a - b), zs]);
   let f = fields.get(id);
   if (f) return f;
-  const list = makeField(settings, keep), shadows = buffer(), marks = buffer(), blades = buffer();
+  const list = makeField(settings, keep), shadows = buffer(), marks = buffer(), parts = [buffer()];
   list.forEach(sw => {
-    const row = AtlasNames.indexOf(sw.w.name);
-    sw.b = upright(sw.w, sw.size, { x: c.x + sw.x, z: c.z + sw.z }, sw.lean, sw.dir, sw.turn, sw.sink);
+    // the list is north first: a sword at or south of the next cut starts the next part
+    while (parts.length <= zs.length && c.z + sw.z <= zs[parts.length - 1]) parts.push(buffer());
+    sw.b = standingPose(sw, c);
     sw.top = pommelOf(sw.b).y + .05;
-    const cut = cutOf(sw.b, sw.sink);
+    if (gone.has(sw.seed)) return;
+    const blades = parts[parts.length - 1], row = AtlasNames.indexOf(sw.w.name), cut = cutOf(sw.b, sw.sink);
     marksInto(marks, cut, sw.seed, sw.far ? 0 : 4);
     if (!sw.far) lipInto(blades, cut, -1, .026, sw.seed, sun);
     bladeInto(shadows, blades, sw.b, sun, row);
     if (!sw.far) lipInto(blades, cut, 1, .032, sw.seed + 3, sun);
   });
-  const bake = (name, b) => { const m = mesh(`ubwp field ${name} ${id}`); m.setFlat(b.xz, b.tri); m.uv = new Float32Array(b.uv); return m; };
-  f = { list, shadows: bake('shadows', shadows), marks: bake('marks', marks), blades: bake('blades', blades), vertices: (shadows.xz.length + marks.xz.length + blades.xz.length) / 2 };
+  while (parts.length <= zs.length) parts.push(buffer());
+  const bake = (name, b) => { const m = new Mesh(`ubwp field ${name}`); m.setFlat(b.xz, b.tri); m.uv = new Float32Array(b.uv); return m; };
+  f = {
+    list, cuts: zs, shadows: bake('shadows', shadows), marks: bake('marks', marks),
+    blades: parts.map((b, k) => b.tri.length ? bake(`blades ${k}`, b) : null),
+    vertices: (shadows.xz.length + marks.xz.length + parts.reduce((sum, b) => sum + b.xz.length, 0)) / 2,
+  };
   fields.set(id, f);
   if (fields.size > 3) fields.delete(fields.keys().next().value);
   return f;
 }
-// The baked field: shadows, ground marks, blades, three draws. tint colours the marks and blades.
-export function drawField(f, strength, tint, alpha = 1) {
+// Part k of a split field's blades draws at buildingLayer + k * CutStep, and what goes in after it at
+// + CutStep * 0.375: room for lib/trace.js plant() and blade(), which reach from 0.0006 below their layer
+// to 0.003 above it. 60 cuts stay under the haze.
+const CutStep = .008;
+// The baked field: shadows, ground marks, blades. tint colours the marks and blades. inserts: what the
+// sketch draws one by one, each { z, fn(layer) } with z one of the field's cuts; it is drawn after the
+// blades north of z and before those south of it.
+export function drawField(f, strength, tint, alpha = 1, inserts = []) {
   draw(f.shadows, 0, shadowLayer + .002, 0, 1, 1, 0, Black.withAlpha(.42 * strength / .32 * alpha), atlas);
   draw(f.marks, 0, Floor + .002, 0, 1, 1, 0, tint.withAlpha(alpha), atlas);
-  draw(f.blades, 0, buildingLayer, 0, 1, 1, 0, tint.withAlpha(alpha), atlas);
+  f.blades.forEach((m, k) => { if (m) draw(m, 0, buildingLayer + k * CutStep, 0, 1, 1, 0, tint.withAlpha(alpha), atlas); });
+  // after part k: the number of cuts north of z
+  inserts.forEach(q => q.fn(buildingLayer + f.cuts.filter(z => z > q.z).length * CutStep + CutStep * .375));
 }
 // One sword's trace drawn over its baked steel: the wire outline at wireAlpha and, if scan >= 0, the
 // bright line that runs up it (a scan of 0..1 of its height).
 export function traceOver(sw, sun, strength, wireAlpha, scan = -1) {
-  blade(`ubwp over ${sw.seed}`, sw.b, sun, strength, buildingLayer + .25, { fillTo: -1, wireTo: 9, wireAlpha, scan: scan >= 0 ? sw.top * scan : -1 });
+  blade(`ubwp over ${sw.seed}`, sw.b, sun, strength, HazeLayer + .05, { fillTo: -1, wireTo: 9, wireAlpha, scan: scan >= 0 ? sw.top * scan : -1 });
 }

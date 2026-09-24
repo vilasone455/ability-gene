@@ -44,12 +44,12 @@
 // lab texture (lab/ubw-flame). The pawns and the map-edge line are lab stand-ins ("Stand-ins and map edge").
 import { Color } from '../js/engine.js';
 import { P, Y, Floor, glow, rand } from './lib/six-paths-impact.js';
-import { pawn, EnemyColour, Ally, buildingLayer } from './lib/goku.js';
-import { smooth, clamp, TraceHot, solid, onScreen, plus } from './lib/trace.js';
+import { pawn, EnemyColour, Ally } from './lib/goku.js';
+import { smooth, clamp, TraceHot, onScreen, plus } from './lib/trace.js';
 import { SceneNorth } from './lib/ubw.js';
 import {
-  MapHalf, DuskShadow, White, Tint, Twilight, field, drawField, traceOver, floor, patches, backstop, haze, sunGlow, hill, skyGears, embers,
-  cover, fireWall, quads,
+  MapHalf, DuskShadow, White, Tint, Twilight, Look, field, drawField, traceOver, floor, patches, backstop, haze, sunGlow, hill, skyGears, embers,
+  cover, fireWall, quads, mapEdge,
 } from './lib/ubw-pocket.js';
 
 const Caster = new Color(.55, .3, .24);
@@ -72,31 +72,20 @@ const inAt = (s, p, t) => t.reach * (1 - clamp((s - t.close) / p.close)) ** Clos
 const passes = (d, p, t) => Start + p.sweep * (d / t.reach) ** (1 / SweepPow);
 const covers = (d, p, t) => t.close + p.close * (1 - (d / t.reach) ** (1 / ClosePow));
 
-// The pocket map's edge, 20 cells out each way: a dashed line, lab only.
-function mapEdge(c) {
-  const dashes = [];
-  for (let k = -MapHalf; k < MapHalf; k += 1.6) {
-    const m = k + .5;
-    dashes.push({ x: c.x + m, z: c.z - MapHalf, w: 1, h: .07 }, { x: c.x + m, z: c.z + MapHalf, w: 1, h: .07 });
-    dashes.push({ x: c.x - MapHalf, z: c.z + m, w: .07, h: 1 }, { x: c.x + MapHalf, z: c.z + m, w: .07, h: 1 });
-  }
-  quads('ubwp world edge', dashes, White.withAlpha(.45), solid, buildingLayer + .21);
-}
-
 export default {
   kit: 'Trace', label: 'Unlimited Blade Works: world (pocket) (sketch)', scene: false,
   params: {
     actors: { label: 'Stand-ins and map edge', value: true, group: 'World' },
-    density: P('Swords per cell on the map', .24, .1, .8, .01, 'World'),
-    hill: P('Hill of swords radius (cells)', 5.5, 0, 10, .5, 'World'),
-    beyond: P('Field past the map edge (cells)', 16, 0, 30, 1, 'World'),
+    density: P('Swords per cell on the map', Look.density, .1, .8, .01, 'World'),
+    hill: P('Hill of swords radius (cells)', Look.hill, 0, 10, .5, 'World'),
+    beyond: P('Field past the map edge (cells)', Look.beyond, 0, 30, 1, 'World'),
     sweep: P('Fire runs out', 1.5, .6, 3, .05, 'Timing (s)'),
     hold: P('World stands (20-30 s in game)', 4, 1, 10, .5, 'Timing (s)'),
     close: P('White closes in', 1.2, .5, 3, .05, 'Timing (s)'),
-    size: P('Sword size (x image)', 1.3, .8, 2.2, .05, 'Look'),
-    lean: P('Sword lean, most (degrees)', 22, 0, 40, 1, 'Look'),
-    twilight: P('Twilight light', .8, 0, 1, .05, 'Look'),
-    gears: P('Gear shadow opacity', .28, 0, .5, .01, 'Look'),
+    size: P('Sword size (x image)', Look.size, .8, 2.2, .05, 'Look'),
+    lean: P('Sword lean, most (degrees)', Look.lean, 0, 40, 1, 'Look'),
+    twilight: P('Twilight light', Look.twilight, 0, 1, .05, 'Look'),
+    gears: P('Gear shadow opacity', Look.gears, 0, .5, .01, 'Look'),
   },
   duration(p) { return times(p).end; },
   phases(p) {
@@ -155,7 +144,7 @@ export default {
     }
 
     if (!p.actors) return;
-    mapEdge(c);
+    mapEdge('ubwp world edge', c);
     const warm = { tint: Twilight, tintAmount: .3 * p.twilight };
     pawn(c, Caster, sun, strength, { hair: true, ...warm });
     Landed.forEach(q => pawn({ x: c.x + q.x, z: c.z + q.z }, q.colour, sun, strength, warm));
