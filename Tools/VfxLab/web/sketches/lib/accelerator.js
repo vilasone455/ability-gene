@@ -5,7 +5,12 @@
 // function takes times and keeps no state.
 //
 // Port notes: the stand-in is the goku pawn with a white hair disc; the arm is one plane10 quad
-// turned to the aim. Plasma is white with a violet shell; the wind that feeds it is pale blue-white.
+// turned to the aim.
+//
+// Palette (decided 2026-09-24): monochrome. Everything Accelerator controls is white light with a
+// black edge: the lane, the pull ring, caught rounds, the Apply stroke. The only hue is inside the
+// plasma ball and its burst, a desaturated blue as the anime draws it (Index episode 14: a white
+// sphere with blue light), and never violet. No other kit uses white and black.
 import { Color, Mathf, Meshes, MeshPool } from '../../js/engine.js';
 import { draw } from './six-paths-solid.js';
 import { Y, sprite, glow, rand } from './six-paths-impact.js';
@@ -16,8 +21,8 @@ const disc = Meshes.disc(32, 'accelerator disc'), thinRing = Meshes.band(.93, 1,
 const clamp = Mathf.Clamp01, TAU = Math.PI * 2;
 
 export const Shirt = new Color(.13, .13, .15), HairWhite = new Color(.93, .93, .96);
-export const Air = new Color(.85, .95, 1), AirDeep = new Color(.6, .8, 1);
-export const Plasma = new Color(.72, .6, 1), PlasmaDeep = new Color(.42, .22, .95), PlasmaHot = new Color(.95, .9, 1);
+export const Air = new Color(.93, .94, .96), AirDeep = new Color(.72, .78, .86), Edge = new Color(.05, .05, .07);
+export const Plasma = new Color(.88, .93, 1), PlasmaDeep = new Color(.55, .7, .95), PlasmaHot = new Color(1, 1, 1);
 
 // Accelerator as a stand-in: the goku pawn in a dark shirt with white hair.
 export function accelerator(pos, sun, strength, opts = {}) {
@@ -38,9 +43,9 @@ export function plasmaBall(key, at, size, s, alpha, stage) {
   if (size <= .01 || alpha <= 0) return;
   const r = size / 2 * (1.9 - .9 * stage), beat = 1 + .1 * Math.sin(s * 41) * stage, hot = clamp((stage - .6) / .4);
   const shell = Color.Lerp(Air, Plasma, stage), halo = Color.Lerp(AirDeep, PlasmaDeep, stage);
-  sprite(at, r * 7, r * 7, halo.withAlpha((.06 + .55 * stage) * alpha), glow, Y + .1);
-  draw(disc, at.x, Y + .11, at.z, r, r, 0, shell.withAlpha((.1 + .8 * stage) * alpha));
-  draw(thinRing, at.x, Y + .112, at.z, r, r, 0, Color.Lerp(AirDeep, PlasmaDeep, stage).withAlpha((.25 + .75 * stage) * alpha));
+  sprite(at, r * 7, r * 7, halo.withAlpha((.05 + .4 * stage) * alpha), glow, Y + .1);
+  draw(disc, at.x, Y + .11, at.z, r, r, 0, shell.withAlpha((.1 + .85 * stage) * alpha));
+  draw(thinRing, at.x, Y + .112, at.z, r, r, 0, Edge.withAlpha((.35 + .55 * stage) * alpha));   // the black edge
   // Air spiralling into the ball: three arcs turning round it that tighten as it compresses.
   for (let i = 0; i < 3; i++) {
     const pts = [], a0 = s * (5 + stage * 6) + i * TAU / 3, span = 1.6 - .5 * stage, rr = r * (1.25 - .15 * stage);

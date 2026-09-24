@@ -43,6 +43,9 @@
 //         With the wall on, the lance stops at the wall 3 cells short, the wall is scorched and
 //         burns, and every pawn stands.
 //
+// Palette: monochrome, see lib/accelerator.js. White light with black edges for what he controls;
+// desaturated blue only inside the ball and the burst; no violet.
+//
 // Drawing: the ball, the lane and the burst are level circles and flat shapes at chest height, so
 // they turn with the aim and need no per-facing method. The wind lines and the tail are strip
 // meshes rebuilt while they show. Fires are the Flame Gauntlet ones. Pawns and the wall are
@@ -116,7 +119,7 @@ export default {
         if (run < 1) { const d = laneEnd * run, fade = Math.sin(run * Math.PI); streak('plasma lane pulse', place(d, -W / 2), place(d, W / 2), .25, Air.withAlpha(.8 * fade * show), whiteGlow, Floor + .025, 4); }
       }
     }
-    if (flying) sprite(place(Math.max(0, reach - 1.5)), 4, W * 2.5, PlasmaDeep.withAlpha(.5), glow, Floor + .012, -p.aim);
+    if (flying) sprite(place(Math.max(0, reach - 1.5)), 4, W * 2.5, PlasmaDeep.withAlpha(.35), glow, Floor + .012, -p.aim);
     if (age >= 0) {
       const burnt = smooth(age / .3) * (1 - .25 * smooth(age / Tail));
       sprite(end, R * 2.3, R * 2.3, Ink.withAlpha(.55 * burnt), soft, Floor + .011);
@@ -185,7 +188,7 @@ export default {
       if (g.caster) {
         const armOut = channelling || fired < .5 ? (channelling ? .4 * smooth((s - t.cast) / .3) : .48 * (1 - smooth((fired - .2) / .3))) : 0;
         arm(g.pos, p.aim, armOut);
-        accelerator(g.pos, sun, strength, { tint: struck > 0 ? White : Plasma, tintAmount: struck > 0 ? .9 * struck : .3 * hot * (channelling ? 1 : 1 - clamp(fired / .3)), outline: struck });
+        accelerator(g.pos, sun, strength, { tint: White, tintAmount: struck > 0 ? .9 * struck : .3 * hot * (channelling ? 1 : 1 - clamp(fired / .3)), outline: struck });
         return;
       }
       if (g.shooter) { pawn(g.pos, EnemyColour, sun, strength); return; }
@@ -226,11 +229,11 @@ export default {
     }
     if (flying) {
       const head = place(reach, 0, Chest / Lift), back = place(Math.max(.4, reach - 5), 0, Chest / Lift), core = place(Math.max(.4, reach - 2.5), 0, Chest / Lift);
-      streak('plasma tail', back, head, .55, PlasmaDeep.withAlpha(.7), whiteGlow, Y + .1, 6);
-      streak('plasma tail core', core, head, .2, PlasmaHot.withAlpha(.9), whiteGlow, Y + .101, 6);
-      for (let i = 0; i < 6; i++) {
+      streak('plasma tail', back, head, .55, PlasmaDeep.withAlpha(.45), whiteGlow, Y + .1, 6);
+      streak('plasma tail core', core, head, .2, PlasmaHot.withAlpha(.95), whiteGlow, Y + .101, 6);
+      for (let i = 0; i < 6; i++) {                                                     // black speed lines
         const side = (i % 2 ? 1 : -1) * (.35 + .5 * rand(i + 30)), from0 = Math.max(.4, reach - 3 - 2 * rand(i)), to0 = Math.max(.4, reach - .6 - rand(i + 3));
-        streak(`plasma speed ${i}`, place(from0, side, Chest / Lift), place(to0, side, Chest / Lift), .05, Air.withAlpha(.6), whiteGlow, Y + .09, 3);
+        streak(`plasma speed ${i}`, place(from0, side, Chest / Lift), place(to0, side, Chest / Lift), .06, Ink.withAlpha(.7), undefined, Y + .09, 3);
       }
       plasmaBall('plasma head', head, p.ballSize, s, 1, 1);
     }
@@ -243,7 +246,7 @@ export default {
       if (fade > 0) {
         for (let lvl = 0; lvl < 4; lvl++) {
           const rr = R * open * (1.15 - lvl * .22), c = Color.Lerp(PlasmaDeep, White, lvl / 3);
-          sprite(end, rr * 2.4, rr * 2.4, c.withAlpha((.3 + .15 * lvl) * fade), glow, Y + .05 + lvl * .001);
+          sprite(end, rr * 2.4, rr * 2.4, c.withAlpha((.25 + .15 * lvl) * fade), glow, Y + .05 + lvl * .001);
         }
         ringAt(end, R * open, PlasmaHot.withAlpha(.7 * fade), Y + .06, false, whiteGlow);
       }
@@ -252,7 +255,7 @@ export default {
         const ang = i * TAU / Sparks + rand(i + 3) * .4, speed = 2.5 + 3 * rand(i + 7), rise = 2 + 2.5 * rand(i + 9), h = rise * age - 4.9 * age * age;
         if (h < 0) continue;
         const d = speed * age, at = { x: end.x + Math.cos(ang) * d, z: end.z + Math.sin(ang) * d + h * Lift }, prev = { x: end.x + Math.cos(ang) * (d - .25), z: end.z + Math.sin(ang) * (d - .25) + h * Lift };
-        streak(`plasma spark ${i}`, prev, at, .08, Color.Lerp(PlasmaHot, Plasma, rand(i)).withAlpha(.9), whiteGlow, Y + .12, 3);
+        streak(`plasma spark ${i}`, prev, at, .08, White.withAlpha(.9), whiteGlow, Y + .12, 3);
       }
       for (let i = 0; i < SmokePuffs; i++) {
         const v = clamp((age - .3 - i * .08) / 2);
