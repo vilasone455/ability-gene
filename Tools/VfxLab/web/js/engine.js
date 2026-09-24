@@ -90,6 +90,13 @@ export const Shader = (name) => ({ name });
 export const ShaderDatabase = {
   Transparent: Shader('Transparent'), Mote: Shader('Mote'), MoteGlow: Shader('MoteGlow'), Cutout: Shader('Cutout'),
 };
+/**
+ * Not a ShaderDatabase shader. Stands in for Unity's built-in Hidden/Internal-Colored with
+ * _SrcBlend = OneMinusDstColor and _DstBlend = OneMinusSrcAlpha, which C# builds as its own
+ * Material (Shader.Find). Drawn with colour (a, a, a, a) it gives lerp(screen, 1 - screen, a):
+ * a negative of everything already drawn under it.
+ */
+export const InvertShader = Shader('Invert');
 export const ShaderPropertyIDs = { Color: 'Color', AgeSecs: 'AgeSecs' };
 
 export class Texture2D { constructor(path) { this.path = path; } }

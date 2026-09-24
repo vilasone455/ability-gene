@@ -6,6 +6,7 @@
 //   Transparent, Mote   texture x colour, alpha blended
 //   MoteGlow            texture x colour, additive
 //   Cutout              alpha tested at 0.5
+//   Invert              1 - what is under it, by alpha (Hidden/Internal-Colored, see engine.js)
 //   MoteLargeDistortionWave   screen warp, approximated (the real shader is a vanilla asset)
 
 import { standIn } from './standins.js';
@@ -308,6 +309,7 @@ export class Renderer {
           gl.uniform1f(u.u_cutoff, mat.shader === 'Cutout' ? 0.5 : 0.002);
           gl.enable(gl.BLEND);
           if (mat.shader === 'MoteGlow') gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ZERO, gl.ONE);
+          else if (mat.shader === 'Invert') gl.blendFuncSeparate(gl.ONE_MINUS_DST_COLOR, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
           else gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         }
         gl.bindVertexArray(mesh.vao);
