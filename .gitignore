@@ -16,3 +16,5 @@ __pycache__/
 Tools/VfxLab/recordings/
 Tools/VfxLab/Recorder/bin/
 Tools/VfxLab/Recorder/obj/
+Tests/Kamui/bin/
+Tests/Kamui/obj/
