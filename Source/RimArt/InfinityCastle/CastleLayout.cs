@@ -48,7 +48,8 @@ namespace RimArt
     /// The Infinity Castle's layout: rooms hanging in the void, the doorways where their walls touch, and
     /// how many doorways each room is from the biwa room. The port of the generator in
     /// Tools/VfxLab/web/sketches/lib/infinity-castle.js (generate, local, contact, doorsOf, distances,
-    /// arrivalRooms, lanternsOf, and the rooms at other depths from drawVoid).
+    /// arrivalRooms, lanternsOf, the rooms at other depths from drawVoid, and Shift's slideDistance, moved and
+    /// doorChanges).
     ///
     /// It is exact, not only the same rules: the sketch's Mulberry32 numbers are drawn in the same order
     /// and the maths is in double precision, so seed N with M rooms is the same castle as the sketch's
@@ -287,6 +288,69 @@ namespace RimArt
                 rooms.Add(room);
             }
             return new CastleLayout(rooms, seed);
+        }
+
+        /// <summary>The same rooms at other places (a castle loaded from a save, or after a Shift): ids, kinds and sizes kept.</summary>
+        public static CastleLayout FromRooms(IEnumerable<CastleRoom> rooms, int seed) =>
+            new CastleLayout(rooms.Select(r => new CastleRoom { Id = r.Id, X = r.X, Z = r.Z, W = r.W, H = r.H, Kind = r.Kind }).ToList(), seed);
+
+        /// <summary>The room whose cells hold (x, z), or null over the void. Rooms own their walls, so at most one.</summary>
+        public CastleRoom RoomAt(int x, int z)
+        {
+            foreach (CastleRoom room in Rooms) if (room.Contains(x, z)) return room;
+            return null;
+        }
+
+        // ---- Shift --------------------------------------------------------------------------------------
+
+        public static bool Overlaps(CastleRoom a, CastleRoom b) => a.X < b.X + b.W && b.X < a.X + a.W && a.Z < b.Z + b.H && b.Z < a.Z + a.H;
+
+        /// <summary>
+        /// How far room <paramref name="id"/> slides one cell at a time (dx, dz one of -1, 0, 1) before its
+        /// next step would overlap another room or leave the map's margin, up to <paramref name="max"/>.
+        /// Rooms may touch, and sliding along a touching room is fine. <paramref name="blocked"/>: it
+        /// stopped against a room, not at max or the edge. The port of the sketch's slideDistance, with
+        /// the edge rule added: the sketch's hand-placed castles have no edge.
+        /// </summary>
+        public int SlideDistance(int id, int dx, int dz, int max, out bool blocked)
+        {
+            CastleRoom r = Rooms[id];
+            blocked = false;
+            int d = 0;
+            while (d < max)
+            {
+                var next = new CastleRoom { X = r.X + dx * (d + 1), Z = r.Z + dz * (d + 1), W = r.W, H = r.H };
+                if (next.X < Margin || next.Z < Margin || next.X + next.W > Size - Margin || next.Z + next.H > Size - Margin) return d;
+                foreach (CastleRoom q in Rooms)
+                    if (q.Id != id && Overlaps(next, q)) { blocked = true; return d; }
+                d++;
+            }
+            return d;
+        }
+
+        /// <summary>The same castle with one room moved, its doorways worked out again. The port of moved.</summary>
+        public CastleLayout Moved(int id, int dx, int dz)
+        {
+            CastleLayout after = FromRooms(Rooms, Seed);
+            after.Rooms[id].X += dx;
+            after.Rooms[id].Z += dz;
+            return new CastleLayout(after.Rooms, Seed);
+        }
+
+        /// <summary>A doorway is the same when both its rooms and both its cells are the same.</summary>
+        public static bool SameDoorway(CastleDoorway a, CastleDoorway b) =>
+            a.A == b.A && a.B == b.B && a.Cells[0] == b.Cells[0] && a.Cells[1] == b.Cells[1];
+
+        /// <summary>
+        /// Doorways of <paramref name="before"/> still there in <paramref name="after"/>, those gone (the
+        /// rooms parted, or the stretch moved), and the new ones. The port of doorChanges.
+        /// </summary>
+        public static void DoorChanges(CastleLayout before, CastleLayout after,
+            out List<CastleDoorway> kept, out List<CastleDoorway> broken, out List<CastleDoorway> made)
+        {
+            kept = before.Doorways.Where(d => after.Doorways.Any(e => SameDoorway(d, e))).ToList();
+            broken = before.Doorways.Where(d => !after.Doorways.Any(e => SameDoorway(d, e))).ToList();
+            made = after.Doorways.Where(d => !before.Doorways.Any(e => SameDoorway(d, e))).ToList();
         }
 
         /// <summary>A hand-placed castle for the command sketches: (kind, x, z, w, h) per room, the first the biwa room.</summary>

@@ -20,6 +20,15 @@
     <genSteps>
       <li>AG_InfinityCastleRooms</li>
     </genSteps>
+    <!-- The castle's numbers (docs/infinity-castle-kit.md); the shapes and timings of the pictures are code. -->
+    <modExtensions>
+      <li Class="RimArt.InfinityCastleRules">
+        <shiftMaxCells>20</shiftMaxCells>
+        <shiftCellsPerSecond>8</shiftCellsPerSecond>
+        <strumGapSeconds>1.5</strumGapSeconds>
+        <voidDropStunSeconds>1</voidDropStunSeconds>
+      </li>
+    </modExtensions>
   </MapGeneratorDef>
 
   <!-- One step, the whole castle, from the same generator as the lab's Castle sketch

@@ -40,6 +40,37 @@ namespace RimArt
             InfinityCastleMap.CloseLater(map);
         }
 
+        [RimArtDebug("Infinity Castle", "castle: shift east", RimArtDebugKind.Cell)]
+        public static void ShiftEast() => Shift(1, 0);
+
+        [RimArtDebug("Infinity Castle", "castle: shift north", RimArtDebugKind.Cell)]
+        public static void ShiftNorth() => Shift(0, 1);
+
+        [RimArtDebug("Infinity Castle", "castle: shift west", RimArtDebugKind.Cell)]
+        public static void ShiftWest() => Shift(-1, 0);
+
+        [RimArtDebug("Infinity Castle", "castle: shift south", RimArtDebugKind.Cell)]
+        public static void ShiftSouth() => Shift(0, -1);
+
+        [RimArtDebug("Infinity Castle", "castle: void drop", RimArtDebugKind.Pawn)]
+        public static void VoidDrop(Pawn pawn)
+        {
+            MapComponent_InfinityCastle castle = pawn.Map?.GetComponent<MapComponent_InfinityCastle>();
+            if (castle == null || !castle.IsCastle) { Messages.Message("That pawn is not in a castle.", MessageTypeDefOf.RejectInput, false); return; }
+            castle.VoidDrop(pawn, castle.Castle.RoomAt(pawn.Position.x, pawn.Position.z)?.Id ?? -1);
+        }
+
+        /// <summary>Shift the room under the mouse: the Shift command with no biwa yet (the strum's rings still leave the dais).</summary>
+        private static void Shift(int dx, int dz)
+        {
+            Map map = Find.CurrentMap;
+            MapComponent_InfinityCastle castle = map?.GetComponent<MapComponent_InfinityCastle>();
+            if (castle == null || !castle.IsCastle) { Messages.Message("The map on screen is not a castle.", MessageTypeDefOf.RejectInput, false); return; }
+            IntVec3 cell = UI.MouseCell();
+            if (!cell.InBounds(map)) return;
+            if (!castle.TryShift(cell, dx, dz, out string why)) Messages.Message(why, MessageTypeDefOf.RejectInput, false);
+        }
+
         private static void OpenCastle(int seed, int rooms)
         {
             Map source = Find.CurrentMap;

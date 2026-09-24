@@ -157,6 +157,36 @@ foreach (int count in new[] { 30, 38, 45 })
     }
 
 Console.WriteLine($"{castles} castles and {depthLists} depth lists checked against the sketch; rules checked on {ruled} castles.");
+// ---- Shift: slide distance and doorway changes against the sketch --------------------------------
+int shifts = 0;
+foreach (JsonElement expected in fixture.RootElement.GetProperty("shifts").EnumerateArray())
+{
+    int seed = expected.GetProperty("seed").GetInt32(), id = expected.GetProperty("id").GetInt32();
+    int dx = expected.GetProperty("dx").GetInt32(), dz = expected.GetProperty("dz").GetInt32();
+    string at = $"seed {seed} room {id} slid ({dx},{dz})";
+    CastleLayout castle = CastleLayout.Generate(seed, 38);
+    int d = castle.SlideDistance(id, dx, dz, 20, out bool blocked);
+    Check(d == expected.GetProperty("d").GetInt32() && blocked == expected.GetProperty("blocked").GetBoolean(),
+        $"{at}: {d} cells, blocked {blocked}; the sketch has {expected.GetProperty("d")} and {expected.GetProperty("blocked")}");
+    CastleLayout after = castle.Moved(id, dx * d, dz * d);
+    CastleLayout.DoorChanges(castle, after, out var kept, out var broken, out var made);
+    bool SameList(List<CastleDoorway> got, JsonElement want) =>
+        got.Count == want.GetArrayLength() && got.Zip(want.EnumerateArray()).All(q =>
+        {
+            int[] e = Ints(q.Second);
+            return q.First.A == e[0] && q.First.B == e[1] && q.First.Cells[0] == (e[2], e[3]) && q.First.Cells[1] == (e[4], e[5]);
+        });
+    Check(SameList(kept, expected.GetProperty("kept")), $"{at}: the kept doorways differ from the sketch's");
+    Check(SameList(broken, expected.GetProperty("broken")), $"{at}: the broken doorways differ from the sketch's");
+    Check(SameList(made, expected.GetProperty("made")), $"{at}: the made doorways differ from the sketch's");
+    Check(after.Rooms[id].X == castle.Rooms[id].X + dx * d && after.Rooms[id].Z == castle.Rooms[id].Z + dz * d, $"{at}: the room did not move");
+    Check(after.Rooms.Count == castle.Rooms.Count && after.Rooms.Where(r => r.Id != id).All(r => r.X == castle.Rooms[r.Id].X && r.Z == castle.Rooms[r.Id].Z),
+        $"{at}: another room moved");
+    Check(!after.Rooms.Any(a => after.Rooms.Any(b => a.Id < b.Id && CastleLayout.Overlaps(a, b))), $"{at}: rooms overlap after the slide");
+    shifts++;
+}
+Console.WriteLine($"{shifts} shifts checked against the sketch.");
+
 if (failures > 0)
 {
     Console.WriteLine($"{failures} checks failed.");
