@@ -14,7 +14,11 @@ Per weapon it writes:
   <Name>Outline.png  white line on the silhouette edge plus a fainter inset line: the trace wire
   <Name>Mask.png     the silhouette in white: the scan line and flashes
 
-and prints the tip and pommel in uv (v up) and the blade's extent across its axis in 16 steps
+and Atlas.png, every weapon in the shades the Unlimited Blade Works world draws its standing
+swords with, plus flat swatches for their ground marks (see atlas()). With --atlas-only it rebuilds
+just the atlas from the PNGs already in the output folder, without the Melee Animation source.
+
+It prints the tip and pommel in uv (v up) and the blade's extent across its axis in 16 steps
 from the tip, which is the Weapons table in Tools/VfxLab/web/sketches/lib/trace.js. The tip is the
 end with the larger u + v, which holds for these six; a texture drawn tip-down-left would need its
 tip given by hand.
@@ -32,6 +36,16 @@ OUT = ROOT / "Textures/RimArt/TraceTrial"
 NAMES = ["Knife", "LongSword", "Spear", "MonoSword", "LargeSword", "Wyrmslayer"]
 WORK = 256          # outline and mask are drawn at this size
 BINS = 16
+
+# The atlas (Tools/VfxLab/web/sketches/lib/ubw-pocket.js reads it with the same numbers). Cells of
+# ATLAS_CELL pixels on an ATLAS_GRID square; each picture fills the cell but for ATLAS_PAD clear
+# pixels round it, so mipmaps do not bleed between cells. Row r is NAMES[r] with its colour times
+# SHADES[c] in column c: the blade's two edge greys, the face lit three ways, and the two dark bands
+# low on the blade (the middle face under one and two 24 % black layers). Row 6 holds flat swatches
+# for the ground marks: crack, slit, the three soils, the soft contact shadow, white.
+ATLAS_CELL, ATLAS_PAD, ATLAS_GRID = 128, 8, 8
+SHADES = [.28, .38, .82, .91, 1.0, .91 * .76, .91 * .76 * .76]
+SWATCHES = [(0, 0, 0, .5), (.05, .04, .03, .92), (.2, .14, .09, 1), (.36, .27, .18, 1), (.55, .43, .3, 1), "soft", (1, 1, 1, 1)]
 
 
 def exclude_output():
@@ -103,11 +117,42 @@ def axis(mask):
     return {"tip": [round(tip[0], 4), round(tip[1], 4)], "pommel": [round(pommel[0], 4), round(pommel[1], 4)], "width": width}
 
 
+def atlas():
+    """Atlas.png from the pictures already in OUT: every weapon in every shade, then the swatches."""
+    side, inner = ATLAS_CELL * ATLAS_GRID, ATLAS_CELL - 2 * ATLAS_PAD
+    out = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+    for row, name in enumerate(NAMES):
+        # premultiplied while resizing, so clear pixels do not darken the edge
+        pic = Image.open(OUT / f"{name}.png").convert("RGBA").convert("RGBa").resize((inner, inner), Image.LANCZOS).convert("RGBA")
+        r, g, b, a = pic.split()
+        a = a.point(lambda v: 0 if v < 8 else v)     # two of the copies carry a 1 % black background
+        for col, shade in enumerate(SHADES):
+            dim = lambda v, k=shade: int(round(v * k))
+            out.paste(Image.merge("RGBA", (r.point(dim), g.point(dim), b.point(dim), a)),
+                      (col * ATLAS_CELL + ATLAS_PAD, row * ATLAS_CELL + ATLAS_PAD))
+    soft = Image.open(ROOT / "Textures/RimArt/SixPaths/SoftDisc.png").convert("RGBA").resize((inner, inner), Image.LANCZOS)
+    for col, swatch in enumerate(SWATCHES):
+        at = (col * ATLAS_CELL + ATLAS_PAD, 6 * ATLAS_CELL + ATLAS_PAD)
+        if swatch == "soft":
+            cell = Image.new("RGBA", (inner, inner), (0, 0, 0, 0))
+            cell.putalpha(soft.split()[3].point(lambda v: int(round(v * .34))))
+        else:
+            cell = Image.new("RGBA", (inner, inner), tuple(int(round(c * 255)) for c in swatch))
+        out.paste(cell, at)
+    out.save(OUT / "Atlas.png")
+    print(f"wrote {OUT / 'Atlas.png'} ({side} x {side}, {len(NAMES)} weapons x {len(SHADES)} shades, {len(SWATCHES)} swatches)")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--source", default=os.path.expanduser("~/projects/Melee-Animation/Source/Animations/Assets/Resources"))
-    source = Path(ap.parse_args().source)
+    ap.add_argument("--atlas-only", action="store_true", help="rebuild Atlas.png from the PNGs already written")
+    args = ap.parse_args()
     exclude_output()
+    if args.atlas_only:
+        atlas()
+        return
+    source = Path(args.source)
     OUT.mkdir(parents=True, exist_ok=True)
     for name in NAMES:
         im = load(source, name)
@@ -120,6 +165,7 @@ def main():
         white(mask.filter(ImageFilter.GaussianBlur(.6))).save(OUT / f"{name}Mask.png")
         print(f"  {name}: {json.dumps(axis(mask), separators=(',', ':'))},")
     print(f"wrote {len(NAMES) * 3} textures to {OUT} (git-excluded)")
+    atlas()
 
 
 if __name__ == "__main__":

@@ -39,7 +39,7 @@ const Gears = [
 
 // A gear's silhouette at radius 1: toothed rim, spokes and hub, one mesh per tooth count.
 const gearMeshes = new Map();
-function gearMesh(teeth) {
+export function gearMesh(teeth) {
   if (gearMeshes.has(teeth)) return gearMeshes.get(teeth);
   const m = new Mesh(`ubw gear ${teeth}`), xz = [], tri = [], n = teeth * 4;
   for (let j = 0; j < n; j++) {
