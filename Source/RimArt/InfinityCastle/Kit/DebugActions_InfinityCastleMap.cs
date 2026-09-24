@@ -52,6 +52,24 @@ namespace RimArt
         [RimArtDebug("Infinity Castle", "castle: shift south", RimArtDebugKind.Cell)]
         public static void ShiftSouth() => Shift(0, -1);
 
+        [RimArtDebug("Infinity Castle", "castle: seal doorway", RimArtDebugKind.Cell)]
+        public static void Seal() => SealOrOpen(true);
+
+        [RimArtDebug("Infinity Castle", "castle: open doorway", RimArtDebugKind.Cell)]
+        public static void OpenDoorway() => SealOrOpen(false);
+
+        /// <summary>Seal or open the doorway under the mouse (either of its two door cells).</summary>
+        private static void SealOrOpen(bool seal)
+        {
+            Map map = Find.CurrentMap;
+            MapComponent_InfinityCastle castle = map?.GetComponent<MapComponent_InfinityCastle>();
+            if (castle == null || !castle.IsCastle) { Messages.Message("The map on screen is not a castle.", MessageTypeDefOf.RejectInput, false); return; }
+            IntVec3 cell = UI.MouseCell();
+            if (!cell.InBounds(map)) return;
+            bool done = seal ? castle.TrySeal(cell, out string why) : castle.TryOpen(cell, out why);
+            if (!done) Messages.Message(why, MessageTypeDefOf.RejectInput, false);
+        }
+
         [RimArtDebug("Infinity Castle", "castle: void drop", RimArtDebugKind.Pawn)]
         public static void VoidDrop(Pawn pawn)
         {

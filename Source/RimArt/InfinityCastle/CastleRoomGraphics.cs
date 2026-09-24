@@ -548,7 +548,8 @@ namespace RimArt
             public static CastleBatch BuildRoom(CastleRoom room) => Build(CastleLayout.FromRooms(new[] { room }, 0));
 
             /// <param name="skipRoom">A room left out, with every doorway into it: a room that is sliding is drawn on its own.</param>
-            public static CastleBatch Build(CastleLayout castle, int skipRoom = -1)
+            /// <param name="sealedDoors">Doorway keys left out: a sealed doorway is drawn shut and barred each frame.</param>
+            public static CastleBatch Build(CastleLayout castle, int skipRoom = -1, ICollection<string> sealedDoors = null)
             {
                 // Insertion order is draw order within a layer, which only matters where two parts overlap:
                 // never at one height, since rooms keep apart.
@@ -585,6 +586,7 @@ namespace RimArt
                     foreach (var (x, z) in door.Cells)
                     {
                         if (door.A == skipRoom || door.B == skipRoom) continue;
+                        if (sealedDoors != null && sealedDoors.Contains(door.Key)) continue;
                         double cx = x + 0.5, cz = z + 0.5;
                         Box Rect(double a, double b, double la, double lb) =>
                             door.AlongZ ? new Box(la, a, lb, b) : new Box(a, la, b, lb);

@@ -96,6 +96,17 @@ namespace RimArt
         }
     }
 
+    /// <summary>A Seal or Open being drawn: which doorway, which way, and when the strum was. Not saved; a loaded seal is simply shut.</summary>
+    internal sealed class CastleSealAnim
+    {
+        public string key;
+        public CastleDoorway door;
+        public bool sealing;
+        public float startAt;
+        /// <summary>Both pictures are over within this: the bar's 0.25 s from 0.2 s, plus the outline's fade.</summary>
+        public const float Length = 0.6f;
+    }
+
     /// <summary>A pawn dropped by the Void rule: hidden while it falls, shown rising through a floor door in another room.</summary>
     public sealed class CastleVoidDrop : IExposable
     {
