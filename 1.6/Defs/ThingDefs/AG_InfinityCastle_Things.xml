@@ -19,7 +19,10 @@
     <coversFloor>true</coversFloor>
     <blockWind>true</blockWind>
     <blockLight>true</blockLight>
-    <holdsRoof>true</holdsRoof>
+    <!-- Not a roof holder. The castle's thick roof hangs over the void with nothing under it; the game only
+         checks a roof when a holder despawns, and a Shift despawns the room's walls: with holdsRoof the
+         roof over the old cells collapsed into rock rubble. -->
+    <holdsRoof>false</holdsRoof>
     <castEdgeShadows>false</castEdgeShadows>
     <staticSunShadowHeight>0</staticSunShadowHeight>
     <useHitPoints>false</useHitPoints>

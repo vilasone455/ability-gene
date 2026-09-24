@@ -44,11 +44,14 @@ namespace RimArt
 
         /// <param name="s">The timeline's clock (doors, flashes, the fade).</param>
         /// <param name="ambient">The clock the lanterns flicker and the depth rooms drift on; the preview passes <paramref name="s"/>.</param>
-        public static void Draw(CastleLayout castle, Vector2 corner, float s, float ambient, bool walk, in CastleLayers layers, CellRect? view)
+        /// <param name="batch">The castle's own baked rooms, when a command has changed it; null for the seed's castle.</param>
+        /// <param name="skipRoom">A room drawn elsewhere this frame (sliding), left out with its lantern glows.</param>
+        public static void Draw(CastleLayout castle, Vector2 corner, float s, float ambient, bool walk, in CastleLayers layers, CellRect? view,
+            CastleRoomGraphics.CastleBatch batch = null, int skipRoom = -1)
         {
             if (s < 0f || s >= T.Duration) return;
             Begin(new Vector2(corner.x + CastleLayout.Size / 2f, corner.y + CastleLayout.Size / 2f));
-            CastleRoomGraphics.DrawCastle(castle, corner, ambient, layers, true, view);
+            CastleRoomGraphics.DrawCastle(castle, corner, ambient, layers, true, view, batch, skipRoom);
 
             // Release: every room answers the strum, nearest first.
             float releaseAge = s - T.Release;

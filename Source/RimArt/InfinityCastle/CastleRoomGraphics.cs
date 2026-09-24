@@ -341,13 +341,15 @@ namespace RimArt
         /// castle's cell (0, 0) has its lower-left corner. <paramref name="view"/> skips what moves and
         /// lies outside it; the baked rooms are a few meshes and always drawn.
         /// </summary>
-        internal static void DrawCastle(CastleLayout castle, Vector2 corner, float seconds, in CastleLayers layers, bool depth = true, CellRect? view = null)
+        internal static void DrawCastle(CastleLayout castle, Vector2 corner, float seconds, in CastleLayers layers, bool depth = true, CellRect? view = null,
+            CastleBatch batch = null, int skipRoom = -1)
         {
             var middle = new Vector2(corner.x + CastleLayout.Size / 2f, corner.y + CastleLayout.Size / 2f);
             DrawVoid(middle, seconds, castle.Seed, VoidReach, depth, 1f, layers, view);
-            BatchFor(castle).Draw(corner, layers);
+            (batch ?? BatchFor(castle)).Draw(corner, layers);
             foreach (CastleRoom room in castle.Rooms)
             {
+                if (room.Id == skipRoom) continue;
                 if (view.HasValue && !Overlaps(view.Value, corner.x + room.X, corner.y + room.Z, corner.x + room.X + room.W, corner.y + room.Z + room.H, 2f))
                     continue;
                 LanternGlows(room, CentreOf(corner, room), seconds, layers);
@@ -364,7 +366,7 @@ namespace RimArt
             x1 + margin >= view.minX && x0 - margin <= view.maxX + 1 && z1 + margin >= view.minZ && z0 - margin <= view.maxZ + 1;
 
         /// <summary>A resting room's lanterns: a warm pool on the floor and a bright core over the baked body, flickering a little.</summary>
-        private static void LanternGlows(CastleRoom room, Vector2 centre, float s, in CastleLayers layers)
+        internal static void LanternGlows(CastleRoom room, Vector2 centre, float s, in CastleLayers layers)
         {
             List<(double x, double z)> lanterns = CastleLayout.LanternsOf(room);
             for (int i = 0; i < lanterns.Count; i++)
@@ -542,7 +544,11 @@ namespace RimArt
                     DrawMesh(mesh, corner, (wall ? layers.Wall : layers.Floor) + step, 1f, 1f, 0f, colour, solid);
             }
 
-            public static CastleBatch Build(CastleLayout castle)
+            /// <summary>One room on its own, no doorways: what a sliding room is drawn with, at its offset.</summary>
+            public static CastleBatch BuildRoom(CastleRoom room) => Build(CastleLayout.FromRooms(new[] { room }, 0));
+
+            /// <param name="skipRoom">A room left out, with every doorway into it: a room that is sliding is drawn on its own.</param>
+            public static CastleBatch Build(CastleLayout castle, int skipRoom = -1)
             {
                 // Insertion order is draw order within a layer, which only matters where two parts overlap:
                 // never at one height, since rooms keep apart.
@@ -557,6 +563,7 @@ namespace RimArt
 
                 foreach (CastleRoom room in castle.Rooms)
                 {
+                    if (room.Id == skipRoom) continue;
                     double cx = room.X + room.W / 2.0, cz = room.Z + room.H / 2.0;
                     Shape shape = ShapeOf(room.Kind, room.W, room.H);
                     foreach (var (part, wall, step, colour) in RestingParts(room.Kind))
@@ -577,6 +584,7 @@ namespace RimArt
                 foreach (CastleDoorway door in castle.Doorways)
                     foreach (var (x, z) in door.Cells)
                     {
+                        if (door.A == skipRoom || door.B == skipRoom) continue;
                         double cx = x + 0.5, cz = z + 0.5;
                         Box Rect(double a, double b, double la, double lb) =>
                             door.AlongZ ? new Box(la, a, lb, b) : new Box(a, la, b, lb);
