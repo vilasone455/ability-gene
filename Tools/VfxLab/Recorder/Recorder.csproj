@@ -30,6 +30,8 @@
     <Compile Include="../../../Source/RimArt/Vergil/*.cs" LinkBase="Linked/Vergil" />
     <!-- Gojo: Unlimited Void's drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/Gojo/*.cs" LinkBase="Linked/Gojo" />
+    <!-- Infinity Castle: the castle's drawing, its generator and the previews. The pocket map (GenStep, map component, defs) is in InfinityCastle/Kit, not linked here. -->
+    <Compile Include="../../../Source/RimArt/InfinityCastle/*.cs" LinkBase="Linked/InfinityCastle" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleport.cs" Link="Linked/Anchor/ClapTeleport.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleportGraphics.cs" Link="Linked/Anchor/ClapTeleportGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/DebugActions_ClapTeleport.cs" Link="Linked/Anchor/DebugActions_ClapTeleport.cs" />

@@ -91,6 +91,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Infinity Castle", Prefix = "Infinity Castle:", Component = typeof(MapComponent_InfinityCastlePreview), Clock = "seconds",
+                Phases = label => label.Contains("open (take)") ? CastleTakePhases() : label.Contains("open (return)") ? CastleReturnPhases() : CastlePhases(),
+            },
+            new Kit
+            {
                 Name = "Anchor", Prefix = "Clap teleport:", Component = typeof(MapComponent_ClapPreview), Clock = "seconds",
                 Phases = label => ClapPhases(label.Contains("double")),
             },
@@ -177,6 +182,31 @@ namespace RimArt.VfxLab
             new Phase("Black hole", UnlimitedVoidInsideTiming.OpensAt),
             new Phase("Domain ends", UnlimitedVoidInsideTiming.Hold),
             new Phase("White (back)", UnlimitedVoidInsideTiming.WhiteBackAt),
+        };
+
+        private static Phase[] CastleTakePhases() => new[]
+        {
+            new Phase("Warm-up", 0f),
+            new Phase("Strum", InfinityCastleOpenTiming.StrumAt),
+            new Phase("Carrier follows", InfinityCastleOpenTiming.CasterDoor),
+            new Phase("Result", InfinityCastleOpenTiming.TakeDuration - InfinityCastleOpenTiming.Hold),
+        };
+
+        private static Phase[] CastleReturnPhases() => new[]
+        {
+            new Phase("Castle ends", 0f),
+            new Phase("Doors open", InfinityCastleOpenTiming.First),
+            new Phase("Back", InfinityCastleOpenTiming.ReturnDuration - InfinityCastleOpenTiming.Hold),
+        };
+
+        private static Phase[] CastlePhases() => new[]
+        {
+            new Phase("Empty castle", 0f),
+            new Phase("Carrier lands", InfinityCastleInsideTiming.CasterLands),
+            new Phase("Enemies land", InfinityCastleInsideTiming.FirstEnemy),
+            new Phase("Hold", InfinityCastleInsideTiming.Landed),
+            new Phase("Release", InfinityCastleInsideTiming.Release),
+            new Phase("Castle removed", InfinityCastleInsideTiming.FadeAt),
         };
 
         private static Phase[] SwordsPhases(bool spins) => new[]

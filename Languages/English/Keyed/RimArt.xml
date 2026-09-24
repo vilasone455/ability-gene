@@ -128,4 +128,6 @@
   <AG_MimicNoRoom>No room to project a decoy there.</AG_MimicNoRoom>
 
   <AG_PowerPoleNoLanding>No free tile next to the target to land on.</AG_PowerPoleNoLanding>
+
+  <AG_InfinityCastleClosing>Closing the castle</AG_InfinityCastleClosing>
 </LanguageData>

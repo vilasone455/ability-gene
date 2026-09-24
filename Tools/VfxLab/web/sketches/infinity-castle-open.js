@@ -1,5 +1,8 @@
-// Infinity Castle: Open — ability proposal for the Infinity Castle kit, not the game. Nothing in
-// Source/RimArt draws this yet.
+// Infinity Castle: Open — ability proposal for the Infinity Castle kit, not the game. Ported to C#
+// as pictures only (2026-09-24): Source/RimArt/InfinityCastle/InfinityCastleOpen{Timing,Graphics}.cs
+// and CastleEffectGraphics.cs, previewed from the RimArts debug window, Infinity Castle, "open
+// (take)" and "open (return)". The stand-ins and everything drawn on them are not ported: untick
+// "Stand-in pawns" to see what the C# draws.
 //
 // What it is for (agreed in outline 2026-09-23; every number is a placeholder and will be an XML
 // field). The castle gene's carrier targets a cell within 35 cells; no line of sight needed. Warm-up
@@ -34,6 +37,7 @@
 //
 // Drawing: floor doors and rings are level shapes; the pawns and the carrier are stand-ins; no
 // per-facing method. The floor door (lib/infinity-castle.js floorDoor) is the same in the castle.
+// With the stand-ins off, a pawn going through a door leaves only the shaft's dark and streaks.
 import { Color } from '../js/engine.js';
 import { P } from './lib/six-paths-impact.js';
 import {
@@ -71,6 +75,7 @@ export default {
     part: { label: 'Part', value: 'take', options: ['take', 'return'], group: 'Showcase' },
     count: P('Hostiles in range (8 taken)', 10, 1, 10, 1, 'Showcase'),
     extras: { label: 'Show the rule stand-ins', value: true, group: 'Showcase' },
+    actors: { label: 'Stand-in pawns (and the corpse)', value: true, group: 'Showcase' },
     warmup: P('Warm-up', 1, .3, 2, .05, 'Timing (s)'),
     hold: P('Show the result', 1.2, .3, 3, .1, 'Timing (s)'),
   },
@@ -101,13 +106,13 @@ export default {
 
     // Pawns that are never taken: the downed raider, the colonist, the raiders past the cap,
     // and the raider walking in from outside the radius.
-    if (p.extras) {
+    if (p.extras && p.actors) {
       figure(at([Downed.x, Downed.z]), Enemy, sun, strength, { downed: 1 });
       figure(at([Colonist.x, Colonist.z]), Ally, sun, strength);
       const walked = Math.min(s * WalkSpeed, 3.2);
       figure(at([Walker.x - walked, Walker.z]), Enemy, sun, strength);
     }
-    for (let i = Cap; i < p.count; i++) figure(at(Hostiles[i]), Enemy, sun, strength);
+    if (p.actors) for (let i = Cap; i < p.count; i++) figure(at(Hostiles[i]), Enemy, sun, strength);
 
     if (take) {
       // Warm-up: the radius and the doors to come.
@@ -127,11 +132,11 @@ export default {
         const pos = at(Hostiles[i]), age = s - t.doorOf(i), d = doorAt(age, Sink + .05);
         if (age < doorEnd(Sink + .05)) floorDoor(`open take ${i}`, pos, d.open, d.alpha, { s });
         if (age < Door0) {
-          figure(pos, Enemy, sun, strength);
-          if (i === Kidnapper) figure({ x: pos.x + .05, z: pos.z + .1 }, Ally, sun, 0, { downed: 1, h: .55 });
-        } else sinking(`open sink ${i}`, pos, Enemy, clamp((age - Door0) / Sink), sun, strength);
+          if (p.actors) figure(pos, Enemy, sun, strength);
+          if (p.actors && i === Kidnapper) figure({ x: pos.x + .05, z: pos.z + .1 }, Ally, sun, 0, { downed: 1, h: .55 });
+        } else sinking(`open sink ${i}`, pos, Enemy, clamp((age - Door0) / Sink), sun, strength, { actors: p.actors });
         // The carried colonist drops beside the door and stays.
-        if (i === Kidnapper && age >= Door0) {
+        if (p.actors && i === Kidnapper && age >= Door0) {
           const u = clamp((age - Door0) / .28), rest = { x: pos.x + .95, z: pos.z - .25 };
           const q = { x: lerp(pos.x + .05, rest.x, easeOut(u)), z: lerp(pos.z + .1, rest.z, easeOut(u)) };
           figure(q, Ally, sun, strength, { downed: 1, h: .55 * (1 - u) * (1 - u) + .12 * bump(clamp((u - .7) / .3)) });
@@ -141,7 +146,8 @@ export default {
       const cAge = s - t.casterDoor, cd = doorAt(cAge, Sink + .05);
       if (cAge >= -.2) floorDoor('open carrier', caster, cd.open, cd.alpha, { s });
       const strumAge = s - t.strumAt;
-      if (cAge < Door0) nakime('open carrier', caster, sun, strength, { seated: false, strum: strumAge > -.25 ? strumAge : null });
+      if (!p.actors) { /* the carrier is the game's pawn */ }
+      else if (cAge < Door0) nakime('open carrier', caster, sun, strength, { seated: false, strum: strumAge > -.25 ? strumAge : null });
       else {
         const u = clamp((cAge - Door0) / Sink);
         if (u < 1) nakime('open carrier', { x: caster.x, z: caster.z - .18 * smooth(u) }, sun, strength, { seated: false, dark: smooth(u) * .85, scale: 1 - .5 * smooth(u), alpha: 1 - smooth((u - .75) / .25) });
@@ -160,20 +166,20 @@ export default {
       if (age < Door0) continue;
       const u = clamp((age - Door0) / Rise);
       if (dead) {
-        if (u >= 1) sprite({ x: pos.x - .1, z: pos.z + .05 }, .9, .45, Blood.withAlpha(.7), soft, Floor + .02);
-        rising('open corpse', pos, Corpse, u, sun, strength, { downed: 1 });
-        if (u > .5) rifle({ x: pos.x + .15, z: pos.z - .45 }, 20, smooth((u - .5) / .5));
+        if (p.actors && u >= 1) sprite({ x: pos.x - .1, z: pos.z + .05 }, .9, .45, Blood.withAlpha(.7), soft, Floor + .02);
+        rising('open corpse', pos, Corpse, u, sun, strength, { downed: 1, actors: p.actors });
+        if (p.actors && u > .5) rifle({ x: pos.x + .15, z: pos.z - .45 }, 20, smooth((u - .5) / .5));
         continue;
       }
       // Back up, then on toward the colony (the carrier's side) at a walk.
       const walk = Math.max(0, age - Door0 - Rise - .2) * .6, dx = caster.x - pos.x, dz = caster.z - pos.z, L0 = Math.hypot(dx, dz) || 1;
       const q = { x: pos.x + dx / L0 * walk, z: pos.z + dz / L0 * walk };
-      if (u < 1) rising(`open rise ${i}`, pos, Enemy, u, sun, strength);
-      else figure(q, Enemy, sun, strength);
+      if (u < 1) rising(`open rise ${i}`, pos, Enemy, u, sun, strength, { actors: p.actors });
+      else if (p.actors) figure(q, Enemy, sun, strength);
     }
     const cAge = s - t.casterDoor, cd = doorAt(cAge, Rise * .75);
     if (cAge < doorEnd(Rise * .75)) floorDoor('open carrier back', caster, cd.open, cd.alpha, { s });
-    if (cAge >= Door0) {
+    if (p.actors && cAge >= Door0) {
       const u = clamp((cAge - Door0) / Rise), up = smooth(Math.min(1, u / .7));
       nakime('open carrier', { x: caster.x, z: caster.z - .18 * (1 - up) }, sun, strength, { seated: false, dark: (1 - up) * .85, scale: .5 + .5 * up, alpha: Math.min(1, u * 4) });
     }

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The castle has no sun and no weather. As in the Involute volume, the four sky slots are the
+       same so nothing changes over a day, and every cell is under thick roof, so the light is all
+       the lanterns'. Unlike the volume's, the colours are near neutral and saturation is 1, so the
+       lanterns' warm light and the rooms' colours are the sketch's, not tinted. Placeholder values:
+       to be tuned in game. -->
+  <WeatherDef>
+    <defName>AG_InfinityCastle</defName>
+    <label>still</label>
+    <description>Nothing moves here but the rooms.</description>
+    <repeatable>true</repeatable>
+    <favorability>Neutral</favorability>
+    <perceivePriority>0</perceivePriority>
+    <windSpeedFactor>0</windSpeedFactor>
+    <windSpeedOffset>0</windSpeedOffset>
+    <rainRate>0</rainRate>
+    <snowRate>0</snowRate>
+    <durationRange>20000~40000</durationRange>
+    <skyColorsDay>
+      <sky>(0.45, 0.42, 0.40)</sky>
+      <shadow>(0.85, 0.85, 0.85)</shadow>
+      <overlay>(0.60, 0.58, 0.56)</overlay>
+      <saturation>1.0</saturation>
+    </skyColorsDay>
+    <skyColorsDusk>
+      <sky>(0.45, 0.42, 0.40)</sky>
+      <shadow>(0.85, 0.85, 0.85)</shadow>
+      <overlay>(0.60, 0.58, 0.56)</overlay>
+      <saturation>1.0</saturation>
+    </skyColorsDusk>
+    <skyColorsNightEdge>
+      <sky>(0.45, 0.42, 0.40)</sky>
+      <shadow>(0.85, 0.85, 0.85)</shadow>
+      <overlay>(0.60, 0.58, 0.56)</overlay>
+      <saturation>1.0</saturation>
+    </skyColorsNightEdge>
+    <skyColorsNightMid>
+      <sky>(0.45, 0.42, 0.40)</sky>
+      <shadow>(0.85, 0.85, 0.85)</shadow>
+      <overlay>(0.60, 0.58, 0.56)</overlay>
+      <saturation>1.0</saturation>
+    </skyColorsNightMid>
+  </WeatherDef>
+
+</Defs>
