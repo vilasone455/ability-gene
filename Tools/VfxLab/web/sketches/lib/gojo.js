@@ -35,12 +35,7 @@ export function caster(pos, sun, strength, { blindfold = 1, sign = 0, alpha = 1,
   if (crossed) return casterCrossed(pos, sun, strength, { blindfold, sign, alpha, tint, tintAmount, rim, layer });
   if (alpha <= 0) return;
   const c = q => (tint ? Color.Lerp(q, tint, tintAmount) : q).withAlpha(alpha * q.a), pawnLayer = layer;
-  // Rim light (the game's cyan-violet edge on Gojo): a glow behind the figure and a pale edge round the body.
-  if (rim > 0) {
-    sprite({ x: pos.x, z: pos.z + .3 }, .9, 1.2, EyeBlue.withAlpha(.5 * rim * alpha), glow, pawnLayer - .005);
-    draw(disc, pos.x, pawnLayer - .003, pos.z + .18, .26, .36, 0, Violet.withAlpha(.7 * rim * alpha));
-    draw(disc, pos.x, pawnLayer - .003, pos.z + .58, .19, .2, 0, Violet.withAlpha(.7 * rim * alpha));
-  }
+  rimLight(pos, rim, alpha, layer);
   sprite({ x: pos.x + sun.x * .45, z: pos.z + sun.z * .45 }, .85, .4, Ink.withAlpha(strength * alpha), soft, shadowLayer);
   [[0, .18, .22, .32, Uniform], [.04, .22, .08, .24, UniformLit], [0, .58, .16, .17, Skin], [0, .69, .19, .1, Hair]]
     .forEach(([cx, cz, rx, rz, colour], k) => draw(disc, pos.x + cx, pawnLayer + k * .002, pos.z + cz, rx, rz, 0, c(colour)));
@@ -61,15 +56,21 @@ export function caster(pos, sun, strength, { blindfold = 1, sign = 0, alpha = 1,
   if (fingers > 0) [-1, 1].forEach(side => draw(MeshPool.plane10, pos.x + side * .022, top + .003, pos.z + .53 + .06 * fingers, .034, .16 * fingers, 0, c(Skin)));
 }
 
+// Rim light (the game's cyan-violet edge on Gojo): a glow behind the figure and a pale edge round the
+// body, drawn just under the figure's layer. caster() draws it; alone it is what the C# port draws round
+// a real pawn (GojoGraphics.RimLight), so a sketch with its stand-ins hidden still shows it.
+export function rimLight(pos, rim, alpha = 1, layer = pawnLayer) {
+  if (rim <= 0 || alpha <= 0) return;
+  sprite({ x: pos.x, z: pos.z + .3 }, .9, 1.2, EyeBlue.withAlpha(.5 * rim * alpha), glow, layer - .005);
+  draw(disc, pos.x, layer - .003, pos.z + .18, .26, .36, 0, Violet.withAlpha(.7 * rim * alpha));
+  draw(disc, pos.x, layer - .003, pos.z + .58, .19, .2, 0, Violet.withAlpha(.7 * rim * alpha));
+}
+
 // caster() with crossed: the same figure, the source's hand sign and the blindfold pulled down.
 function casterCrossed(pos, sun, strength, { blindfold, sign, alpha, tint, tintAmount, rim, layer }) {
   if (alpha <= 0) return;
   const c = q => (tint ? Color.Lerp(q, tint, tintAmount) : q).withAlpha(alpha * q.a), L = layer;
-  if (rim > 0) {
-    sprite({ x: pos.x, z: pos.z + .3 }, .9, 1.2, EyeBlue.withAlpha(.5 * rim * alpha), glow, L - .005);
-    draw(disc, pos.x, L - .003, pos.z + .18, .26, .36, 0, Violet.withAlpha(.7 * rim * alpha));
-    draw(disc, pos.x, L - .003, pos.z + .58, .19, .2, 0, Violet.withAlpha(.7 * rim * alpha));
-  }
+  rimLight(pos, rim, alpha, L);
   sprite({ x: pos.x + sun.x * .45, z: pos.z + sun.z * .45 }, .85, .4, Ink.withAlpha(strength * alpha), soft, shadowLayer);
   [[0, .18, .22, .32, Uniform], [.04, .22, .08, .24, UniformLit], [0, .58, .16, .17, Skin], [0, .69, .19, .1, Hair]]
     .forEach(([cx, cz, rx, rz, colour], k) => draw(disc, pos.x + cx, L + k * .002, pos.z + cz, rx, rz, 0, c(colour)));

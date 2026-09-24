@@ -1,6 +1,13 @@
-// Unlimited Void: inside — the pocket-map version of the Gojo kit's ultimate, not the game. Nothing
-// in Source/RimArt draws this yet. The home-map side (cast, the ball, the return) is "Unlimited Void:
-// open and return"; the old dome and cutscene sketches stay as they were.
+// Unlimited Void: inside — the pocket-map version of the Gojo kit's ultimate, not the game. The
+// home-map side (cast, the ball, the return) is "Unlimited Void: open and return"; the old dome and
+// cutscene sketches stay as they were.
+//
+// Ported to C# as pictures only, in the Cursed Clash colours (2026-09-24): Source/RimArt/Gojo/
+// UnlimitedVoidInside{Timing,Graphics}.cs, VoidSpaceGraphics.cs (space, speed lines, dust, light,
+// black hole) and CameraMove.cs (the push), previewed from the RimArts debug window, Gojo,
+// "unlimited void: inside". The stand-ins and everything drawn on them (the rules) are not ported:
+// untick "Stand-in pawns" to see what the C# draws. The recording carries no camera move, so compare
+// it with "Camera push" at 1.
 //
 // What it is for (proposed 2026-09-23; the ally, touch and immune rules are the user's; every number
 // is a placeholder and will be an XML field).
@@ -91,6 +98,7 @@ export default {
   params: {
     scenario: { label: 'Who is caught', value: 'mixed', options: ['raiders only', 'mixed'], group: 'Showcase' },
     order: { label: "Gojo's plan", value: 'touch allies first', options: ['touch allies first', 'attack first'], group: 'Showcase' },
+    actors: { label: 'Stand-in pawns (and what happens to them)', value: true, group: 'Showcase' },
     show: { label: 'Show', value: 'whole domain', options: ['whole domain', 'opening only'], group: 'Showcase' },
     radius: P('Radius (cells)', 9, 5, 14, .5, 'Rule'),
     speed: P('Gojo walks (cells/s)', 4.6, 2, 8, .1, 'Rule'),
@@ -170,7 +178,7 @@ export default {
 
     // --- pawns, north first ------------------------------------------------------------------------------------
     const floodOn = clamp((s - FloodFrom) / .3) * (1 - ending);
-    figs.sort((a, b) => b.pos.z - a.pos.z).forEach(f => {
+    if (p.actors) figs.sort((a, b) => b.pos.z - a.pos.z).forEach(f => {
       if (f.kind === 'gojo') {
         const lower = 1 - smooth(clamp(u / .5));                  // the sign is held as he lands, then the hand comes down
         caster(f.pos, sun, strength, { blindfold: 0, sign: lower, rim: 1, crossed: true });
@@ -190,7 +198,7 @@ export default {
     });
 
     // --- Gojo's hand: a touch, or blows -----------------------------------------------------------------------
-    if (doing) {
+    if (p.actors && doing) {
       const target = figs.find(q => q.g === doing.st.target);
       if (target) {
         const aim = { x: target.pos.x, z: target.pos.z + .3 };
@@ -203,7 +211,7 @@ export default {
         }
       }
     }
-    if (mechTaken && imm.fighting) brawl('uv inside brawl', off(imm.mech), off(imm.android), imm.fightAge, 1 - ending);
+    if (p.actors && mechTaken && imm.fighting) brawl('uv inside brawl', off(imm.mech), off(imm.android), imm.fightAge, 1 - ending);
 
     // --- the arrival: white, the burst and ring on Gojo (anime ep. 33), the splatter burst -----------------
     const white = 1 - smooth(clamp(s / WhiteFade));

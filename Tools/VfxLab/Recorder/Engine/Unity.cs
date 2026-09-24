@@ -75,6 +75,7 @@ namespace UnityEngine
         public static float Sqrt(float v) => (float)Math.Sqrt(v);
         public static float Pow(float v, float e) => (float)Math.Pow(v, e);
         public static float Exp(float v) => (float)Math.Exp(v);
+        public static float Log(float v) => (float)Math.Log(v);
         public static float Atan2(float y, float x) => (float)Math.Atan2(y, x);
         public static float Acos(float v) => (float)Math.Acos(v);
         public static float Abs(float v) => Math.Abs(v);
@@ -177,6 +178,15 @@ namespace UnityEngine
         public int[] triangles { get => triangleData; set => triangleData = (int[])value.Clone(); }
         public void RecalculateNormals() { }
         public void RecalculateBounds() { }
+        public void Clear(bool keepVertexLayout = true)
+        {
+            vertexData = Array.Empty<Vector3>();
+            uvData = null;
+            triangleData = Array.Empty<int>();
+        }
+        public void SetVertices(List<Vector3> inVertices) => vertexData = inVertices.ToArray();
+        public void SetTriangles(List<int> triangles, int submesh, bool calculateBounds = true, int baseVertex = 0) =>
+            triangleData = triangles.ToArray();
     }
 
     public class Camera : Object { }

@@ -83,7 +83,49 @@ namespace Verse
         public void DoShake(float mag, int ticks) => RimArt.VfxLab.Tap.Event("shake", mag, null);
     }
 
-    public class CameraDriver { public CameraShaker shaker = new CameraShaker(); }
+    public struct CellRect
+    {
+        public int minX, maxX, minZ, maxZ;
+
+        public CellRect(int minX, int minZ, int width, int height)
+        {
+            this.minX = minX;
+            this.minZ = minZ;
+            maxX = minX + width - 1;
+            maxZ = minZ + height - 1;
+        }
+
+        public int Width => maxX - minX + 1;
+        public int Height => maxZ - minZ + 1;
+        public Vector3 CenterVector3 => new Vector3((minX + maxX + 1) / 2f, 0f, (minZ + maxZ + 1) / 2f);
+    }
+
+    public struct FloatRange
+    {
+        public float min, max;
+        public FloatRange(float min, float max) { this.min = min; this.max = max; }
+    }
+
+    public class CameraMapConfig { public FloatRange sizeRange = new FloatRange(11f, 60f); }
+
+    public class CameraDriver
+    {
+        public CameraShaker shaker = new CameraShaker();
+        public CameraMapConfig config = new CameraMapConfig();
+        // Private in the game too. A camera move (Gojo's CameraMove) reads them by reflection to give
+        // the camera back; moves are not recorded, so SetRootPosAndSize does nothing here.
+        private Vector3 rootPos = new Vector3(60.5f, 0f, 60.5f);
+        private float rootSize = 24f;
+
+        /// <summary>
+        /// A fixed view round the recording cell, 89 x 51 cells: a 16:9 screen at root size 24. It changes
+        /// pictures: Unlimited Void sizes its white and its space to it, and reaches its speed lines to its
+        /// farthest corner (55 cells from the vanishing point, so the sketch's 60 still holds).
+        /// </summary>
+        public CellRect CurrentViewRect => new CellRect(16, 35, 89, 51);
+
+        public void SetRootPosAndSize(Vector3 rootPos, float rootSize) { }
+    }
 
     public static class Find
     {

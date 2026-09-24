@@ -89,9 +89,10 @@ static class ApiChecks
         string kunai = CheckKunaiContract();
         string makibishi = CheckMakibishiContract();
         string gravity = CheckGravityContract(assembly);
+        string gojo = CheckGojoCameraContract();
         Console.WriteLine(CheckFumaContract());
         Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, "
-            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval} {kunai} {makibishi} {gravity}");
+            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval} {kunai} {makibishi} {gravity} {gojo}");
     }
 
     static void CheckShinraAcquisition()
@@ -778,6 +779,25 @@ static class ApiChecks
         }
 
         return "Checked the mimic beacon's IAttackTarget and PawnRenderer contracts.";
+    }
+
+    /// <summary>
+    /// Gojo's camera move (Source/RimArt/Gojo/CameraMove.cs) reads CameraDriver's private rootPos and
+    /// rootSize by reflection to give the player's camera back after the push, and sets both through
+    /// SetRootPosAndSize. A renamed field throws nothing in game: the push is skipped with one warning
+    /// and Unlimited Void plays without it, so a rename only shows here.
+    /// </summary>
+    static string CheckGojoCameraContract()
+    {
+        const BindingFlags Fields = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        Type camera = typeof(Verse.CameraDriver);
+        if (camera.GetField("rootPos", Fields)?.FieldType != typeof(UnityEngine.Vector3))
+            throw new Exception("Gojo: CameraDriver.rootPos (Vector3) is gone - the camera push would be skipped");
+        if (camera.GetField("rootSize", Fields)?.FieldType != typeof(float))
+            throw new Exception("Gojo: CameraDriver.rootSize (float) is gone - the camera push would be skipped");
+        if (camera.GetMethod("SetRootPosAndSize", new[] { typeof(UnityEngine.Vector3), typeof(float) }) == null)
+            throw new Exception("Gojo: CameraDriver.SetRootPosAndSize(Vector3, float) is gone");
+        return "Checked the CameraDriver members Gojo's camera move reads.";
     }
 
     /// <summary>

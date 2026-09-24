@@ -11,8 +11,11 @@
 // Drawing: level circles, quads, strips and flat polygons, so no per-facing method. The space under
 // the void is drawn in the BelowTerrain layer under a see-through Terrain layer, as the Infinity
 // Castle's depth rooms are: in game the void terrain needs a see-through texture and the mod draws
-// the space under it. Textures: SoftDisc, Puff, white, and one lab texture (lab/gojo-splatter, the
-// white ink patches) still to be made a PNG.
+// the space under it. Textures: SoftDisc, Puff, white, and four lab textures (lab/gojo-splatter and the
+// three lab/gojo-hole-*); the game has them as Textures/RimArt/Gojo/*.png, made by make_gojo_textures.py
+// from the same formulas. The C# port (pictures only, Cursed Clash colours) is Source/RimArt/Gojo/: the
+// space, lines, dust, light and hole in VoidSpaceGraphics.cs, the dome and ball in
+// UnlimitedVoidOpenGraphics.cs. The cast, plan and the pawn overlays here are not ported.
 import { AltitudeLayer, Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../../js/engine.js';
 import { registerLabTexture, pixels, fbm, hash } from '../../js/standins.js';
 import { draw, mesh } from './six-paths-solid.js';
@@ -218,9 +221,9 @@ function galaxy(key, g, size, flat, tilt, turn, colour, fade) {
 //     inside; peach-gold on top, white upper right, blue-white on the left, weak lower right
 //   - the smoke: a soft pale blue-white cloud with a cyan tinge off the ring's east side, 2.4 to
 //     4.4 R east and a little north, with cyan sparkles in it
-// The gas and the ring are lab textures (lab/gojo-hole-gas, lab/gojo-hole-wisps, lab/gojo-hole-ring)
-// still to be made PNGs; the ring's colours are baked into its texture because it needs several at
-// once. Gas turning = the sprites turning, so in game it is two quads and a rotation.
+// The gas and the ring are lab textures (lab/gojo-hole-gas, lab/gojo-hole-wisps, lab/gojo-hole-ring;
+// Textures/RimArt/Gojo/Hole*.png in the game); the ring's colours are baked into its texture because it
+// needs several at once. Gas turning = the sprites turning, so in game it is two quads and a rotation.
 const ss = (a, b, x) => { const t = clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 const polarPixels = (n, f) => pixels(n, (u, v) => {
   const dx = u - .5, dz = .5 - v, r = Math.hypot(dx, dz) * 2;
