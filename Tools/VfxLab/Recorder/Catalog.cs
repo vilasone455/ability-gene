@@ -86,6 +86,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Gojo", Prefix = "Gojo:", Component = typeof(MapComponent_GojoPreview), Clock = "seconds",
+                Phases = label => label.Contains("inside") ? VoidInsidePhases() : VoidOpenPhases(),
+            },
+            new Kit
+            {
                 Name = "Anchor", Prefix = "Clap teleport:", Component = typeof(MapComponent_ClapPreview), Clock = "seconds",
                 Phases = label => ClapPhases(label.Contains("double")),
             },
@@ -152,6 +157,26 @@ namespace RimArt.VfxLab
             new Phase("Dash: the marks are set", YamatoDashTiming.LaunchAt),
             new Phase("Sheathe", YamatoDashTiming.ArriveAt),
             new Phase("Click: every mark lands", YamatoDashTiming.ClickAt),
+        };
+
+        private static Phase[] VoidOpenPhases() => new[]
+        {
+            new Phase("Stands", 0f),
+            new Phase("Hand sign", UnlimitedVoidOpenTiming.CastAt),
+            new Phase("Barrier closes", UnlimitedVoidOpenTiming.OpenAt),
+            new Phase("Shrinks", UnlimitedVoidOpenTiming.FullAt),
+            new Phase("Ball hangs", UnlimitedVoidOpenTiming.HangAt),
+            new Phase("Ball breaks", UnlimitedVoidOpenTiming.BurstAt),
+        };
+
+        private static Phase[] VoidInsidePhases() => new[]
+        {
+            new Phase("White (map switch)", 0f),
+            new Phase("Speed lines", UnlimitedVoidInsideTiming.SpeedLinesAt),
+            new Phase("White light", UnlimitedVoidInsideTiming.LightAt),
+            new Phase("Black hole", UnlimitedVoidInsideTiming.OpensAt),
+            new Phase("Domain ends", UnlimitedVoidInsideTiming.Hold),
+            new Phase("White (back)", UnlimitedVoidInsideTiming.WhiteBackAt),
         };
 
         private static Phase[] SwordsPhases(bool spins) => new[]

@@ -28,6 +28,8 @@
     <!-- Goku: drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/Goku/*.cs" LinkBase="Linked/Goku" />
     <Compile Include="../../../Source/RimArt/Vergil/*.cs" LinkBase="Linked/Vergil" />
+    <!-- Gojo: Unlimited Void's drawing and previews only. -->
+    <Compile Include="../../../Source/RimArt/Gojo/*.cs" LinkBase="Linked/Gojo" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleport.cs" Link="Linked/Anchor/ClapTeleport.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleportGraphics.cs" Link="Linked/Anchor/ClapTeleportGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/DebugActions_ClapTeleport.cs" Link="Linked/Anchor/DebugActions_ClapTeleport.cs" />
