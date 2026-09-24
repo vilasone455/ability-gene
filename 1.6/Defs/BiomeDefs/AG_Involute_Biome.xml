@@ -17,7 +17,7 @@
     </baseWeatherCommonalities>
     <terrainsByFertility>
       <li>
-        <terrain>Gravel</terrain>
+        <terrain>AG_KamuiVoid</terrain>
         <min>-999</min>
         <max>999</max>
       </li>

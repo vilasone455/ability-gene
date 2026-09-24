@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Kamui's dimension's two terrains. The mod draws the dimension's look over both
+       (MapComponent_KamuiDimension: the block tops, their faces, the lower blocks and the blocks past
+       the edge), so these textures are only flat fallbacks in the sketch's colours. -->
+
+  <!-- Nobody can walk it; shots fly over it. -->
+  <TerrainDef>
+    <defName>AG_KamuiVoid</defName>
+    <label>void</label>
+    <description>Nothing to stand on, between blocks that go down further than anyone can see.</description>
+    <texturePath>RimArt/Kamui/Void</texturePath>
+    <edgeType>Hard</edgeType>
+    <renderPrecedence>32</renderPrecedence>
+    <passability>Impassable</passability>
+    <pathCost>0</pathCost>
+    <holdSnowOrSand>false</holdSnowOrSand>
+    <fertility>0</fertility>
+    <affordances />
+    <statBases>
+      <Beauty>0</Beauty>
+    </statBases>
+  </TerrainDef>
+
+  <!-- The top of a block: everywhere a pawn can stand in the dimension. -->
+  <TerrainDef>
+    <defName>AG_KamuiTop</defName>
+    <label>block top</label>
+    <description>The flat top of a stone block, pale and cold, with nothing above it and nothing below.</description>
+    <texturePath>RimArt/Kamui/Top</texturePath>
+    <edgeType>Hard</edgeType>
+    <renderPrecedence>33</renderPrecedence>
+    <pathCost>0</pathCost>
+    <holdSnowOrSand>false</holdSnowOrSand>
+    <fertility>0</fertility>
+    <affordances>
+      <li>Light</li>
+      <li>Medium</li>
+      <li>Heavy</li>
+    </affordances>
+    <statBases>
+      <Beauty>0</Beauty>
+    </statBases>
+  </TerrainDef>
+
+</Defs>

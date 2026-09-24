@@ -52,4 +52,45 @@
     </comps>
   </ThingDef>
 
+  <!-- Kamui's dimension has no light source: the blocks are lit evenly from nowhere. These unseen
+       glowers, one every 6 cells over the whole map (GenStep_InvoluteVolume), stand in for that, so the
+       light is the same at every hour. Nothing to select, build, break or walk round. -->
+  <ThingDef>
+    <defName>AG_KamuiLight</defName>
+    <label>light</label>
+    <description>Light with nothing giving it.</description>
+    <thingClass>Building</thingClass>
+    <category>Building</category>
+    <altitudeLayer>Floor</altitudeLayer>
+    <drawerType>MapMeshOnly</drawerType>
+    <passability>Standable</passability>
+    <fillPercent>0</fillPercent>
+    <coversFloor>false</coversFloor>
+    <blockWind>false</blockWind>
+    <blockLight>false</blockLight>
+    <castEdgeShadows>false</castEdgeShadows>
+    <canOverlapZones>true</canOverlapZones>
+    <useHitPoints>false</useHitPoints>
+    <destroyable>false</destroyable>
+    <rotatable>false</rotatable>
+    <selectable>false</selectable>
+    <tickerType>Never</tickerType>
+    <building>
+      <isInert>true</isInert>
+      <isEdifice>false</isEdifice>
+      <deconstructible>false</deconstructible>
+      <claimable>false</claimable>
+    </building>
+    <graphicData>
+      <texPath>RimArt/InfinityCastle/Blank</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <comps>
+      <li Class="CompProperties_Glower">
+        <glowRadius>9</glowRadius>
+        <glowColor>(215, 228, 255, 0)</glowColor>
+      </li>
+    </comps>
+  </ThingDef>
+
 </Defs>

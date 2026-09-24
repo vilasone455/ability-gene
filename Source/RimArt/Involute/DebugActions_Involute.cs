@@ -182,6 +182,15 @@ namespace RimArt
             }
 
             CameraJumper.TryJump(new GlobalTargetInfo(InvoluteUtility.MouthCell(volume), volume));
+
+            // Kamui's dimension: say which map it is, so the lab's sketch can be set to the same one.
+            MapComponent_KamuiDimension kamui = volume.GetComponent<MapComponent_KamuiDimension>();
+            if (kamui != null && kamui.IsKamui)
+            {
+                Messages.Message($"Kamui dimension: seed {kamui.seed}, {volume.Size.x} cells, walkable share {kamui.cover:0.##}, "
+                    + $"islands at least {kamui.islands}, colours {kamui.palette}. Set the Kamui dimension sketch to these to compare.",
+                    MessageTypeDefOf.NeutralEvent, false);
+            }
         }
     }
 }

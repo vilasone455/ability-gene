@@ -7,6 +7,10 @@
     <isUnderground>true</isUnderground>
     <ignoreAreaRevealedLetter>true</ignoreAreaRevealedLetter>
     <disableCallAid>true</disableCallAid>
+    <!-- The game paints a grey frame (MapEdgeClipDrawer) beyond every map edge. Off here: the
+         dimension's blocks run on past the edge and fade out, and MapComponent_KamuiDimension draws a
+         black backstop under them for the far corners, as the Infinity Castle does. -->
+    <disableMapClippers>true</disableMapClippers>
     <pocketMapProperties>
       <biome>AG_InvoluteVoid</biome>
       <temperature>16</temperature>
@@ -16,38 +20,23 @@
     </genSteps>
   </MapGeneratorDef>
 
-  <!-- One step, doing the whole room. Alpha Genes needs KCSG from Vanilla Expanded Framework
-       for this; writing it keeps the mod's dependency list at Biotech and Harmony, and gives a
-       different room every time rather than four fixed prefabs.
-
-       Every def named below is Core except AncientExostriderRemains, which is Biotech. -->
+  <!-- One step, the whole dimension, from the same generator as the lab's Kamui dimension sketch
+       (Source/RimArt/Involute/Kamui/KamuiLayout.cs): a given seed, size, cover and island count is the
+       same map in both. The map's size is the gene's volumeSizeX (square). seeds is what a new volume
+       picks from (the sketch's seed slider); cover and islands are the sketch's "Walkable share" and
+       "Islands at least"; palette is "fight" (the anime seen from above) or "still" (darker). -->
   <GenStepDef>
     <defName>AG_InvoluteVolume</defName>
     <order>500</order>
     <genStep Class="RimArt.GenStep_InvoluteVolume">
-      <floor>Gravel</floor>
-      <patchTerrain>SoftSand</patchTerrain>
-      <poolTerrain>WaterOceanDeep</poolTerrain>
-      <patchChance>0.18</patchChance>
-      <poolCount>2~5</poolCount>
-      <poolRadius>1~3</poolRadius>
-      <lightCount>16~24</lightCount>
-      <lights>
-        <li>Agarilux</li>
-        <li>Bryolux</li>
-        <li>Glowstool</li>
-      </lights>
-      <wreckageCount>3~7</wreckageCount>
-      <wreckage>
-        <li>AncientWarwalkerTorso</li>
-        <li>AncientWarwalkerLeg</li>
-        <li>AncientWarwalkerClaw</li>
-        <li>AncientWarwalkerFoot</li>
-        <li>AncientMegaCannonBarrel</li>
-        <li>ChunkMechanoidSlag</li>
-        <li>ShipChunk</li>
-        <li MayRequire="Ludeon.RimWorld.Biotech">AncientExostriderRemains</li>
-      </wreckage>
+      <voidTerrain>AG_KamuiVoid</voidTerrain>
+      <topTerrain>AG_KamuiTop</topTerrain>
+      <light>AG_KamuiLight</light>
+      <lightSpacing>6</lightSpacing>
+      <cover>0.55</cover>
+      <islands>6</islands>
+      <seeds>1~60</seeds>
+      <palette>fight</palette>
     </genStep>
   </GenStepDef>
 

@@ -44,15 +44,16 @@ namespace RimArt
             Map volume = gene.EnsureVolume();
             if (volume == null) return;
 
-            IntVec3 mouth = InvoluteUtility.MouthCell(volume);
-            if (!mouth.IsValid) return;
+            // An enemy lands on an island of its own in Kamui's dimension; anyone else at the mouth.
+            IntVec3 landing = InvoluteUtility.LandingCell(volume, victim, caster);
+            if (!landing.IsValid) return;
 
             InvoluteUtility.FlashAt(victim);
 
             Lord lord = victim.GetLord();
 
             victim.DeSpawnOrDeselect();
-            GenSpawn.Spawn(victim, mouth, volume, Rot4.Random);
+            GenSpawn.Spawn(victim, landing, volume, Rot4.Random);
             victim.Notify_Teleported(false, true);
 
             if (lord != null) lord.Notify_PawnLost(victim, PawnLostCondition.ExitedMap);

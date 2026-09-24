@@ -96,6 +96,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Obito", Prefix = "Kamui dimension:", Component = typeof(MapComponent_KamuiPreview), Clock = "seconds",
+                Phases = _ => new[] { new Phase("Map", 0f) },
+            },
+            new Kit
+            {
                 Name = "Anchor", Prefix = "Clap teleport:", Component = typeof(MapComponent_ClapPreview), Clock = "seconds",
                 Phases = label => ClapPhases(label.Contains("double")),
             },

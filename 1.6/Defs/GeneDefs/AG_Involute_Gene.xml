@@ -29,8 +29,8 @@
     <biostatArc>1</biostatArc>
     <modExtensions>
       <li Class="RimArt.InvoluteGeneExtension">
-        <volumeSizeX>32</volumeSizeX>
-        <volumeSizeZ>32</volumeSizeZ>
+        <volumeSizeX>48</volumeSizeX>
+        <volumeSizeZ>48</volumeSizeZ>
         <volumeGenerator>AG_InvoluteVolume</volumeGenerator>
 
         <!-- The roll can reach the torso and the head, not just limbs. Rare - one candidate in
