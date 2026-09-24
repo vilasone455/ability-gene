@@ -1,5 +1,8 @@
 // Unlimited Void: open and return — the pocket-map version of the Gojo kit's ultimate, seen on the
-// home map. Not the game; nothing in Source/RimArt draws this yet. The inside is "Unlimited Void:
+// home map. Not the game. Ported to C# as pictures only up to the ball breaking (2026-09-24):
+// Source/RimArt/Gojo/UnlimitedVoidOpen{Timing,Graphics}.cs and GojoGraphics.cs, previewed from the
+// RimArts debug window, Gojo, "unlimited void: open"; the stand-ins and the return (who comes back
+// how) are not ported: untick "Stand-in pawns" to see what the C# draws. The inside is "Unlimited Void:
 // inside", whose header has the full proposed mechanic (the ally, touch and immune rules are the
 // user's; every number is a placeholder and will be an XML field). In short: everyone within 9
 // cells but Gojo is taken into his pocket-map domain for 10 s; the living are frozen there unless
@@ -33,7 +36,7 @@
 // inside sketch's default speed, touch time and 10 s hold. Stand-ins for every pawn.
 import { Mathf } from '../js/engine.js';
 import { P, Y, Floor, sprite, glow } from './lib/six-paths-impact.js';
-import { caster, pawn, ringAt, glint, streak, whiteGlow, EnemyColour, Ally, White, Ice, Violet, EyeBlue, smooth, clamp } from './lib/gojo.js';
+import { caster, rimLight, pawn, ringAt, glint, streak, whiteGlow, EnemyColour, Ally, White, Ice, Violet, EyeBlue, smooth, clamp } from './lib/gojo.js';
 import {
   darkDome, ball, ballBurst, touchPulse, overloadMark, mech, android, brawl,
   castList, plan, gojoAt, immuneAt, Hold, ActFrom, Frozen, Deg,
@@ -55,6 +58,7 @@ export default {
     scenario: { label: 'Who is caught', value: 'mixed', options: ['raiders only', 'mixed'], group: 'Showcase' },
     order: { label: "Gojo's plan inside", value: 'touch allies first', options: ['touch allies first', 'attack first'], group: 'Showcase' },
     walker: { label: 'A raider outside walks in', value: true, group: 'Showcase' },
+    actors: { label: 'Stand-in pawns (and the return)', value: true, group: 'Showcase' },
     radius: P('Radius (cells)', 9, 5, 14, .5, 'Rule'),
     ballSize: P('Ball across (cells)', .5, .2, 1.2, .05, 'Shape'),
     ballHeight: P('Ball height (cells)', 1.2, .5, 3, .1, 'Shape'),
@@ -129,9 +133,11 @@ export default {
       if (f.kind === 'gojo') {
         const sign = returned ? 0 : smooth((s - t.cast) / p.warm), pull = smooth((s - t.cast) / (p.warm * .6));
         const rim = returned ? 1 - smooth(backAge / 1.2) : smooth((s - t.cast) / (p.warm * .5));
-        caster(f.pos, sun, strength, { blindfold: 1 - pull, sign, rim, crossed: true, alpha: pop });
+        if (p.actors) caster(f.pos, sun, strength, { blindfold: 1 - pull, sign, rim, crossed: true, alpha: pop });
+        else if (!returned) rimLight(f.pos, rim);   // the C# draws the rim light round the real Gojo
         return;
       }
+      if (!p.actors) return;
       if (f.kind === 'walker') { pawn(f.pos, EnemyColour, sun, strength); return; }
       if (f.kind === 'mech') { mech(f.pos, sun, strength, pop); return; }
       if (f.kind === 'android') { android(f.pos, sun, strength, pop); return; }
@@ -145,7 +151,7 @@ export default {
       if (lie < 1) pawn({ x: f.pos.x + sway, z: f.pos.z }, colour, sun, strength, { alpha: pop * (1 - lie), tint: Frozen, tintAmount: .45, outline: .35 });
       if (lie > 0) { pawn(f.pos, colour, sun, strength, { lie: true, alpha: pop * lie, tint: Frozen, tintAmount: .25 }); overloadMark(`uv open mark ${f.g.id}`, f.pos, s, pop * lie); }
     });
-    if (returned && imm.fighting) brawl('uv open brawl', off(imm.mech), off(imm.android), backAge, 1);
+    if (p.actors && returned && imm.fighting) brawl('uv open brawl', off(imm.mech), off(imm.android), backAge, 1);
 
     // --- warm-up: light gathers at the raised hand -------------------------------------------------------------
     if (s >= t.cast && s < t.open) {
