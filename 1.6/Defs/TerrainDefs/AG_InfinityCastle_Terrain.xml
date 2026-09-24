@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The castle's two terrains. The mod draws the castle's look over both (Source/RimArt/InfinityCastle):
+       the void's rooms at other depths and its fog, and every room's floor, so these textures are
+       only flat fallbacks in the sketch's colours. -->
+
+  <!-- Nobody can walk it. Opaque near-black; the depth rooms are drawn just above it. -->
+  <TerrainDef>
+    <defName>AG_CastleVoid</defName>
+    <label>void</label>
+    <description>Nothing to stand on. Far below, other rooms drift in the dark.</description>
+    <texturePath>RimArt/InfinityCastle/Void</texturePath>
+    <edgeType>Hard</edgeType>
+    <renderPrecedence>30</renderPrecedence>
+    <passability>Impassable</passability>
+    <pathCost>0</pathCost>
+    <holdSnow>false</holdSnow>
+    <fertility>0</fertility>
+    <affordances />
+    <statBases>
+      <Beauty>0</Beauty>
+    </statBases>
+  </TerrainDef>
+
+  <!-- Under every room, its wall ring and its doorways. -->
+  <TerrainDef>
+    <defName>AG_CastleFloor</defName>
+    <label>castle floor</label>
+    <description>Old dark boards and tatami, lit by paper lanterns.</description>
+    <texturePath>RimArt/InfinityCastle/Floor</texturePath>
+    <edgeType>Hard</edgeType>
+    <renderPrecedence>31</renderPrecedence>
+    <pathCost>0</pathCost>
+    <holdSnow>false</holdSnow>
+    <fertility>0</fertility>
+    <affordances>
+      <li>Light</li>
+      <li>Medium</li>
+      <li>Heavy</li>
+    </affordances>
+    <statBases>
+      <Beauty>0</Beauty>
+    </statBases>
+  </TerrainDef>
+
+</Defs>

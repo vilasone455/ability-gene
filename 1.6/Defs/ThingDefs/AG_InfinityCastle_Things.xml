@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The castle's walls and lanterns: its body, not its look. The mod draws every room with the
+       sketch's meshes over them (Source/RimArt/InfinityCastle), so the wall's texture is a flat
+       fallback in the sketch's wall colour and the lantern has none. -->
+
+  <!-- Castle walls cannot be dug, broken or taken apart. No sun shadow: the mod draws the walls. -->
+  <ThingDef>
+    <defName>AG_CastleWall</defName>
+    <label>castle wall</label>
+    <description>A wall of the Infinity Castle. It cannot be dug through, broken or taken down.</description>
+    <thingClass>Building</thingClass>
+    <category>Building</category>
+    <altitudeLayer>Building</altitudeLayer>
+    <drawerType>MapMeshOnly</drawerType>
+    <passability>Impassable</passability>
+    <fillPercent>1</fillPercent>
+    <coversFloor>true</coversFloor>
+    <blockWind>true</blockWind>
+    <blockLight>true</blockLight>
+    <holdsRoof>true</holdsRoof>
+    <castEdgeShadows>false</castEdgeShadows>
+    <staticSunShadowHeight>0</staticSunShadowHeight>
+    <useHitPoints>false</useHitPoints>
+    <destroyable>false</destroyable>
+    <rotatable>false</rotatable>
+    <selectable>true</selectable>
+    <tickerType>Never</tickerType>
+    <building>
+      <isInert>true</isInert>
+      <deconstructible>false</deconstructible>
+      <claimable>false</claimable>
+      <ai_chillDestination>false</ai_chillDestination>
+    </building>
+    <graphicData>
+      <texPath>RimArt/InfinityCastle/Wall</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <statBases>
+      <Beauty>0</Beauty>
+    </statBases>
+  </ThingDef>
+
+  <!-- A paper lantern's light. The lantern itself is drawn by the mod; this is its glow on the map,
+       warm like the sketch's Lantern colour (1, 0.60, 0.24). Standable and not an edifice, so it
+       never blocks a room. Glow radius is a placeholder, to be tuned in game. -->
+  <ThingDef>
+    <defName>AG_CastleLantern</defName>
+    <label>castle lantern</label>
+    <description>A paper lantern of the Infinity Castle.</description>
+    <thingClass>Building</thingClass>
+    <category>Building</category>
+    <altitudeLayer>Floor</altitudeLayer>
+    <drawerType>MapMeshOnly</drawerType>
+    <passability>Standable</passability>
+    <fillPercent>0</fillPercent>
+    <coversFloor>false</coversFloor>
+    <blockWind>false</blockWind>
+    <blockLight>false</blockLight>
+    <castEdgeShadows>false</castEdgeShadows>
+    <canOverlapZones>true</canOverlapZones>
+    <useHitPoints>false</useHitPoints>
+    <destroyable>false</destroyable>
+    <rotatable>false</rotatable>
+    <selectable>false</selectable>
+    <tickerType>Never</tickerType>
+    <building>
+      <isInert>true</isInert>
+      <isEdifice>false</isEdifice>
+      <deconstructible>false</deconstructible>
+      <claimable>false</claimable>
+    </building>
+    <graphicData>
+      <texPath>RimArt/InfinityCastle/Blank</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <comps>
+      <li Class="CompProperties_Glower">
+        <glowRadius>6</glowRadius>
+        <glowColor>(255, 153, 61, 0)</glowColor>
+      </li>
+    </comps>
+  </ThingDef>
+
+</Defs>

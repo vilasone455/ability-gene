@@ -1,6 +1,8 @@
 # Infinity Castle: the gene, the castle and its commands
 
-Agreed in outline on 2026-09-23. Nothing is built in `Source/RimArt` yet. Every number below is a
+Agreed in outline on 2026-09-23. Since 2026-09-24 `Source/RimArt/InfinityCastle` has the castle's
+pictures and its pocket map, with no mechanics (see "Port notes": nobody is taken, no commands, no
+gene). Every number below is a
 placeholder and will be an XML field (the ability's comp properties or the gene's
 `DefModExtension`), not a C# constant. The pictures are the sketches under **Infinity Castle** in
 the VFX lab (`Tools/VfxLab/web/sketches/infinity-castle-*.js`); the shared drawing and the room
@@ -129,12 +131,35 @@ them), Door (move one pawn across the map; same job as the Anchor organ's rescue
 - Pocket map: the Involute kit already calls `PocketMapUtility.GeneratePocketMap`
   (`Source/RimArt/Involute/InvoluteUtility.cs`) with a hand-written GenStep.
 - Swallow drops the victim's lord and gives none, so returning enemies need a lord made for them.
-- The void is a terrain. For the depth rooms to show under it, the void terrain needs a see-through
-  texture and the depth rooms are drawn at `BelowTerrain`, where real floors cover them. They can
-  be baked into one mesh per depth.
+- The void is a terrain. It is opaque near-black (`AG_CastleVoid`), and the mod draws the depth
+  rooms and the void's fog just above it, under the rooms' floors, which the mod also draws
+  (`CastleLayers.Pocket`). The sketch draws the depth rooms under a see-through void terrain instead;
+  the picture is the same, and it needs no terrain transparency, which could not be tested.
 - A sliding room is drawn with the same meshes as a room at rest while the real room is hidden,
   and its cells move at the stop. Drawing riding pawns needs `MimicRender` (not yet verified) or
   a fade.
+
+### What is ported (2026-09-24, pictures and the pocket map, no mechanics)
+
+- `CastleLayout.cs` is the sketch's generator, exact: the same Mulberry32 numbers in the same order,
+  in double precision (JS rounding and stable sorts kept), so seed N with M rooms is the same castle
+  in game and in the lab. `Tests/InfinityCastle` checks 80 castles and 4 depth-room lists against
+  the JS (`dump-layouts.mjs` writes `layouts.json`) and the castle's rules on 600 castles.
+- The rooms are the sketch's meshes drawn by the mod over real cells (final, not a stand-in: Shift
+  and Crush need the same meshes). Rooms at rest, open doorways and lantern bodies are baked once
+  into one mesh per height and colour (`CastleRoomGraphics.CastleBatch`), about 30 draws for a
+  castle; lantern glows and the depth rooms are drawn each frame and culled to the view on the
+  pocket map.
+- Previews (RimArts debug window, Infinity Castle): "open (take)", "open (return)", "castle",
+  "castle (biwa room)"; recorded by the lab and compared with the Open and Castle sketches with
+  "Stand-in pawns" off. The pocket map: "castle map: open" (the lab's castle, seed 1 with 38 rooms),
+  "castle map: open (random)", "castle map: release", "castle map: close now".
+- The pocket map (`Kit/`, defs `AG_InfinityCastle*`): void terrain everywhere, castle floor under
+  every room, walls in every wall cell but the doorways (open passages; no door things), a glower
+  at every lantern, thick roof, no fog. Walls and lanterns carry flat or blank textures; the mod
+  draws the look.
+- Not ported: the stand-ins (pawns, Nakime with the biwa and the bachi, corpse, rifle), sounds,
+  and the command sketches (Shift, Drop/Summon, Seal/Open, Crush, Sunlight).
 - The castle is the largest system in the mod: generator, moving a group in and out, lords after
   return, moving rooms, the commands, cleanup, and save/load while the castle is open. Measure the
   hitch of generating the map mid-fight.

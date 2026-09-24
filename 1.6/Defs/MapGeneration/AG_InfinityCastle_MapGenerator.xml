@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Infinity Castle: a 100 x 100 pocket map of rooms hanging in a void. Opened from the RimArts
+       debug window (Infinity Castle, "castle map: open"); no ability makes one yet. -->
+  <MapGeneratorDef>
+    <defName>AG_InfinityCastle</defName>
+    <label>infinity castle</label>
+    <isUnderground>true</isUnderground>
+    <ignoreAreaRevealedLetter>true</ignoreAreaRevealedLetter>
+    <disableCallAid>true</disableCallAid>
+    <pocketMapProperties>
+      <biome>AG_InfinityCastle</biome>
+      <temperature>16</temperature>
+    </pocketMapProperties>
+    <genSteps>
+      <li>AG_InfinityCastleRooms</li>
+    </genSteps>
+  </MapGeneratorDef>
+
+  <!-- One step, the whole castle, from the same generator as the lab's Castle sketch
+       (Source/RimArt/InfinityCastle/CastleLayout.cs): a given seed and room count is the same castle
+       in both. seeds and rooms are what a castle opened without a seed picks from (the sketch's
+       sliders). -->
+  <GenStepDef>
+    <defName>AG_InfinityCastleRooms</defName>
+    <order>500</order>
+    <genStep Class="RimArt.GenStep_InfinityCastle">
+      <voidTerrain>AG_CastleVoid</voidTerrain>
+      <floorTerrain>AG_CastleFloor</floorTerrain>
+      <wall>AG_CastleWall</wall>
+      <lantern>AG_CastleLantern</lantern>
+      <seeds>1~60</seeds>
+      <rooms>30~45</rooms>
+    </genStep>
+  </GenStepDef>
+
+</Defs>
