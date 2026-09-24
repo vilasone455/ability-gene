@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- The whole otherworld, in numbers, with no art behind it.
+  <!-- Kamui's dimension, in numbers.
 
-       All four sky slots are identical on purpose: the volume has no sun to be on one side of,
+       All four sky slots are identical on purpose: the dimension has no sun to be on one side of,
        so it should not brighten and dim over a day. What the sky colours do here is tint, not
-       light - every cell in the volume is under thick roof and takes no sky glow at all, so the
-       actual brightness comes entirely from the bioluminescence the GenStep scattered.
-
-       Saturation above 1 is what keeps this from being grey sludge. The trick is to lower the
-       sky and push the colour up, not to dim everything and hope. -->
+       light - every cell is under thick roof and takes no sky glow at all, so the brightness comes
+       entirely from the unseen lights the GenStep spreads. The tint is a near-neutral cold grey,
+       so the block field keeps the colours measured from the references (make_kamui_textures.py). -->
   <WeatherDef>
     <defName>AG_InvoluteVoid</defName>
     <label>involute</label>
@@ -23,28 +21,28 @@
     <snowRate>0</snowRate>
     <durationRange>20000~40000</durationRange>
     <skyColorsDay>
-      <sky>(0.32, 0.22, 0.48)</sky>
-      <shadow>(0.85, 0.85, 0.90)</shadow>
-      <overlay>(0.55, 0.45, 0.70)</overlay>
-      <saturation>1.30</saturation>
+      <sky>(0.45, 0.47, 0.50)</sky>
+      <shadow>(0.85, 0.86, 0.88)</shadow>
+      <overlay>(0.60, 0.62, 0.65)</overlay>
+      <saturation>1.0</saturation>
     </skyColorsDay>
     <skyColorsDusk>
-      <sky>(0.32, 0.22, 0.48)</sky>
-      <shadow>(0.85, 0.85, 0.90)</shadow>
-      <overlay>(0.55, 0.45, 0.70)</overlay>
-      <saturation>1.30</saturation>
+      <sky>(0.45, 0.47, 0.50)</sky>
+      <shadow>(0.85, 0.86, 0.88)</shadow>
+      <overlay>(0.60, 0.62, 0.65)</overlay>
+      <saturation>1.0</saturation>
     </skyColorsDusk>
     <skyColorsNightEdge>
-      <sky>(0.32, 0.22, 0.48)</sky>
-      <shadow>(0.85, 0.85, 0.90)</shadow>
-      <overlay>(0.55, 0.45, 0.70)</overlay>
-      <saturation>1.30</saturation>
+      <sky>(0.45, 0.47, 0.50)</sky>
+      <shadow>(0.85, 0.86, 0.88)</shadow>
+      <overlay>(0.60, 0.62, 0.65)</overlay>
+      <saturation>1.0</saturation>
     </skyColorsNightEdge>
     <skyColorsNightMid>
-      <sky>(0.32, 0.22, 0.48)</sky>
-      <shadow>(0.85, 0.85, 0.90)</shadow>
-      <overlay>(0.55, 0.45, 0.70)</overlay>
-      <saturation>1.30</saturation>
+      <sky>(0.45, 0.47, 0.50)</sky>
+      <shadow>(0.85, 0.86, 0.88)</shadow>
+      <overlay>(0.60, 0.62, 0.65)</overlay>
+      <saturation>1.0</saturation>
     </skyColorsNightMid>
   </WeatherDef>
 

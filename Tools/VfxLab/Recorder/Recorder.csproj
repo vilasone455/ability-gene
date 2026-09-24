@@ -32,6 +32,8 @@
     <Compile Include="../../../Source/RimArt/Gojo/*.cs" LinkBase="Linked/Gojo" />
     <!-- Infinity Castle: the castle's drawing, its generator and the previews. The pocket map (GenStep, map component, defs) is in InfinityCastle/Kit, not linked here. -->
     <Compile Include="../../../Source/RimArt/InfinityCastle/*.cs" LinkBase="Linked/InfinityCastle" />
+    <!-- Kamui dimension (Obito): the dimension's generator, its drawing and the preview. The pocket map itself (GenStep, map component, defs) is the Fold organ's, in Involute/, not linked here. -->
+    <Compile Include="../../../Source/RimArt/Involute/Kamui/*.cs" LinkBase="Linked/Kamui" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleport.cs" Link="Linked/Anchor/ClapTeleport.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleportGraphics.cs" Link="Linked/Anchor/ClapTeleportGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/DebugActions_ClapTeleport.cs" Link="Linked/Anchor/DebugActions_ClapTeleport.cs" />

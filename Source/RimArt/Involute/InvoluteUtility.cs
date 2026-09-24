@@ -139,21 +139,29 @@ namespace RimArt
                 return null;
             }
 
-            int x = ext != null ? ext.volumeSizeX : 32;
-            int z = ext != null ? ext.volumeSizeZ : 32;
+            // Kamui's dimension is square: its layout is one size a side, so volumeSizeX is used for both.
+            int size = ext != null ? ext.volumeSizeX : KamuiLayout.DefaultSize;
 
             Map source = gene.pawn != null ? gene.pawn.MapHeld : null;
-            return PocketMapUtility.GeneratePocketMap(new IntVec3(x, 1, z), generator, null, source);
+            return PocketMapUtility.GeneratePocketMap(new IntVec3(size, 1, size), generator, null, source);
         }
 
         /// <summary>
         /// The mouth. Everything that goes in on purpose - the carrier, a posted item, a
         /// swallowed pawn - arrives here, because the volume has one opening and this is the
-        /// inside of it. Only things that arrive by accident land anywhere else.
+        /// inside of it. Only things that arrive by accident land anywhere else. In Kamui's
+        /// dimension it is the middle of the main top.
         /// </summary>
         public static IntVec3 MouthCell(Map volume)
         {
             if (volume == null) return IntVec3.Invalid;
+
+            MapComponent_KamuiDimension kamui = volume.GetComponent<MapComponent_KamuiDimension>();
+            if (kamui != null && kamui.IsKamui)
+            {
+                IntVec3 mouth = kamui.MouthCell;
+                if (mouth.IsValid && mouth.Standable(volume)) return mouth;
+            }
 
             IntVec3 centre = volume.Center;
             if (centre.Standable(volume)) return centre;
@@ -164,6 +172,25 @@ namespace RimArt
                 return found;
             }
             return centre;
+        }
+
+        /// <summary>
+        /// Where a swallowed pawn arrives. In Kamui's dimension a pawn hostile to the one who put it
+        /// there lands on an island of its own, away from the main top, where nobody can walk to or
+        /// from it; everyone else arrives at the mouth. A volume with no islands, or none with room,
+        /// takes everyone at the mouth.
+        /// </summary>
+        public static IntVec3 LandingCell(Map volume, Pawn arriving, Pawn sender)
+        {
+            if (volume == null) return IntVec3.Invalid;
+
+            MapComponent_KamuiDimension kamui = volume.GetComponent<MapComponent_KamuiDimension>();
+            if (kamui != null && kamui.IsKamui && arriving != null && sender != null && arriving.HostileTo(sender))
+            {
+                IntVec3 island = kamui.IslandLanding();
+                if (island.IsValid) return island;
+            }
+            return MouthCell(volume);
         }
 
         /// <summary>
@@ -310,8 +337,10 @@ namespace RimArt
             ThingDef projectile = ProjectileOf(dinfo.Weapon);
             if (projectile == null) return false;
 
+            // Any edge cell. Kamui's dimension keeps void along its edge, which nothing stands on and a
+            // round flies over; asking for a standable edge cell there would find none.
             IntVec3 from;
-            if (!CellFinder.TryFindRandomEdgeCellWith(c => c.Standable(volume), volume, 0f, out from)) return false;
+            if (!CellFinder.TryFindRandomEdgeCellWith(c => true, volume, 0f, out from)) return false;
 
             IntVec3 to = InteriorCell(volume);
             if (!to.IsValid || to == from) return false;

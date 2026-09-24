@@ -1,41 +1,36 @@
-using System.Collections.Generic;
 using RimWorld;
 using Verse;
 
 namespace RimArt
 {
     /// <summary>
-    /// Builds the inside of the volume.
+    /// Builds the inside of the volume: Kamui's dimension, from <see cref="KamuiLayout"/>, the same map the
+    /// lab's Kamui dimension sketch draws for the same seed, size, cover and island count. The layout's
+    /// cell (x, z) is the map's cell (x, z); the map is square (the gene's volumeSizeX is used for both
+    /// sides, see <see cref="InvoluteUtility.GenerateVolume"/>).
     ///
-    /// This is written rather than borrowed because the mod depends on no framework. Alpha
-    /// Genes lays its pocket plane out with KCSG structure layouts, which come from Vanilla
-    /// Expanded Framework; adding a framework dependency for set dressing is not a trade worth
-    /// making, and scattering procedurally gives a different room every time instead of four
-    /// fixed prefabs.
+    /// What it places is the dimension's body, not its look: void terrain nobody can walk on every cell,
+    /// block-top terrain under every walkable top, thick roof everywhere, an unseen cold light every
+    /// <see cref="lightSpacing"/> cells (so the light is even and the same at every hour: nothing in the
+    /// source casts it), and no fog. <see cref="MapComponent_KamuiDimension"/> draws the blocks over the
+    /// terrain with the sketch's meshes.
     ///
-    /// Every def named here is Core or Biotech. Nothing in this file resolves to a texture the
-    /// mod ships, and nothing resolves to a DLC the mod does not already require.
+    /// Every def named here is the mod's own; nothing resolves to a DLC.
     /// </summary>
     public class GenStep_InvoluteVolume : GenStep
     {
-        public TerrainDef floor;
-        public TerrainDef patchTerrain;
-        public TerrainDef poolTerrain;
-
-        /// <summary>Share of cells that get the patch terrain, as loose blotches.</summary>
-        public float patchChance = 0.18f;
-
-        /// <summary>Number of pools, and how big each one gets.</summary>
-        public IntRange poolCount = new IntRange(2, 5);
-        public IntRange poolRadius = new IntRange(1, 3);
-
-        /// <summary>Bioluminescence. This is the only light in here, so it is not optional.</summary>
-        public List<ThingDef> lights = new List<ThingDef>();
-        public IntRange lightCount = new IntRange(14, 22);
-
-        /// <summary>Wreckage, for scale. Something was here and it was not a person.</summary>
-        public List<ThingDef> wreckage = new List<ThingDef>();
-        public IntRange wreckageCount = new IntRange(3, 7);
+        public TerrainDef voidTerrain;
+        public TerrainDef topTerrain;
+        /// <summary>An unseen glower. Placed on a grid over the whole map, void included.</summary>
+        public ThingDef light;
+        public int lightSpacing = 6;
+        /// <summary>Walkable share of the map the generator grows toward, and the fewest islands it makes.</summary>
+        public double cover = KamuiLayout.DefaultCover;
+        public int islands = 6;
+        /// <summary>A new volume takes its seed from these (the sketch's seed slider runs 1 to 60).</summary>
+        public IntRange seeds = new IntRange(1, 60);
+        /// <summary>"fight" (the anime seen from above) or "still" (the darker Narutopedia picture).</summary>
+        public string palette = KamuiGraphics.Fight;
 
         public override int SeedPart => 0x1CF01E;
 
@@ -43,98 +38,28 @@ namespace RimArt
         {
             if (map == null) return;
 
-            PaintFloor(map);
-            PourPools(map);
-            Roof(map);
-            Scatter(map, lights, lightCount.RandomInRange);
-            Scatter(map, wreckage, wreckageCount.RandomInRange);
+            int seed = seeds.RandomInRange;
+            int size = System.Math.Min(map.Size.x, map.Size.z);
+            KamuiLayout layout = KamuiLayout.Generate(seed, size, cover, islands);
 
-            // A pocket map generated behind the player's back would otherwise open fogged, and
-            // the carrier arrives in the middle of it with no way to explore outward.
+            RoofDef roof = RoofDefOf.RoofRockThick;
+            foreach (IntVec3 cell in map.AllCells)
+            {
+                map.terrainGrid.SetTerrain(cell, layout.IsWalkable(cell.x, cell.z) ? topTerrain : voidTerrain);
+                map.roofGrid.SetRoof(cell, roof);
+            }
+
+            if (light != null && lightSpacing > 0)
+            {
+                int first = lightSpacing / 2;
+                for (int x = first; x < map.Size.x; x += lightSpacing)
+                    for (int z = first; z < map.Size.z; z += lightSpacing)
+                        GenSpawn.Spawn(ThingMaker.MakeThing(light), new IntVec3(x, 0, z), map);
+            }
+
+            // A pocket map generated behind the player's back would otherwise open fogged.
             map.fogGrid.ClearAllFog();
-        }
-
-        private void PaintFloor(Map map)
-        {
-            TerrainDef basic = floor ?? TerrainDefOf.Gravel;
-            TerrainDef patch = patchTerrain;
-
-            foreach (IntVec3 cell in map.AllCells)
-            {
-                TerrainDef chosen = basic;
-                if (patch != null && Rand.Chance(patchChance)) chosen = patch;
-                map.terrainGrid.SetTerrain(cell, chosen);
-            }
-        }
-
-        private void PourPools(Map map)
-        {
-            if (poolTerrain == null) return;
-
-            int count = poolCount.RandomInRange;
-            for (int i = 0; i < count; i++)
-            {
-                IntVec3 centre;
-                if (!CellFinderLoose.TryGetRandomCellWith(c => c.InBounds(map), map, 200, out centre)) continue;
-
-                int radius = poolRadius.RandomInRange;
-                foreach (IntVec3 cell in GenRadial.RadialCellsAround(centre, radius, true))
-                {
-                    if (!cell.InBounds(map)) continue;
-                    map.terrainGrid.SetTerrain(cell, poolTerrain);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Roofed to the edges, and thick.
-        ///
-        /// Nothing here is decoration. A roofed cell takes no sky glow, so the light level is
-        /// entirely what this GenStep scattered - which is what makes the place look the same
-        /// at every hour and lets the weather's sky colours be a tint rather than a clock.
-        /// </summary>
-        private void Roof(Map map)
-        {
-            RoofDef thick = RoofDefOf.RoofRockThick;
-            foreach (IntVec3 cell in map.AllCells)
-            {
-                map.roofGrid.SetRoof(cell, thick);
-            }
-        }
-
-        private void Scatter(Map map, List<ThingDef> pool, int count)
-        {
-            if (pool == null || pool.Count == 0) return;
-
-            for (int i = 0; i < count; i++)
-            {
-                ThingDef def = pool.RandomElement();
-                if (def == null) continue;
-
-                IntVec3 cell;
-                if (!CellFinderLoose.TryGetRandomCellWith(c => Fits(map, c, def), map, 300, out cell)) continue;
-
-                Thing thing = ThingMaker.MakeThing(def, GenStuff.DefaultStuffFor(def));
-                GenSpawn.Spawn(thing, cell, map, Rot4.Random);
-            }
-        }
-
-        /// <summary>
-        /// Whether a thing of this size can stand here. Checked over the whole footprint rather
-        /// than the origin cell, because the wreckage is the part of this that is several cells
-        /// across and half of it landing inside a pool reads as a bug.
-        /// </summary>
-        private bool Fits(Map map, IntVec3 cell, ThingDef def)
-        {
-            CellRect rect = GenAdj.OccupiedRect(cell, Rot4.North, def.size);
-            foreach (IntVec3 c in rect)
-            {
-                if (!c.InBounds(map)) return false;
-                if (!c.Standable(map)) return false;
-                if (c.GetFirstBuilding(map) != null) return false;
-                if (c.GetPlant(map) != null) return false;
-            }
-            return true;
+            map.GetComponent<MapComponent_KamuiDimension>().Begin(seed, cover, islands, palette);
         }
     }
 }
