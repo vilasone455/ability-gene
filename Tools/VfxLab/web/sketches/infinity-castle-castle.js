@@ -1,5 +1,10 @@
 // Infinity Castle: the castle — pocket-map proposal for the Infinity Castle kit, not the game.
-// Nothing in Source/RimArt draws this yet.
+// Ported to C# as pictures and a generated pocket map, with no rules (2026-09-24):
+// Source/RimArt/InfinityCastle/ (CastleLayout.cs is this generator, exact for a seed and room count;
+// CastleRoomGraphics.cs, CastleEffectGraphics.cs, InfinityCastleInside{Timing,Graphics}.cs), previewed
+// from the RimArts debug window, Infinity Castle, "castle" and "castle (biwa room)"; the pocket map
+// itself is "castle map: open" (Kit/). The stand-ins are not ported: untick "Stand-in pawns" to see
+// what the C# draws.
 //
 // What it is (agreed in outline 2026-09-23; every number is a placeholder and will be an XML field).
 // The carrier's Infinity Castle ability takes up to 8 hostiles (total body size 8) within 5.9 cells
@@ -91,6 +96,7 @@ export default {
     depth: { label: 'Rooms at other depths', value: true, group: 'Castle' },
     view: { label: 'Centre the view on', value: 'the castle', options: ['the castle', 'the biwa room'], group: 'Showcase' },
     enemies: P('Enemies taken in', 6, 1, 8, 1, 'Showcase'),
+    actors: { label: 'Stand-in pawns', value: true, group: 'Showcase' },
     hold: P('Time before Release', 3.2, 1, 10, .1, 'Timing (s)'),
   },
   duration(p) { return times(p).end; },
@@ -135,9 +141,9 @@ export default {
       const outAt = t.release + ReleaseDoors + i * .05, outAge = s - outAt, outDoor = doorAt(outAge, Sink + .05);
       if (outAge >= -.2 && outAge < doorEnd(Sink + .05)) floorDoor(`castle out ${i}`, pos, outDoor.open, outDoor.alpha, { s });
       if (inAge < 0) return;
-      if (inAge < Rise + Door0) rising(`castle rise ${i}`, at, Enemy, clamp((inAge - Door0) / Rise), sun, strength);
-      else if (outAge < Door0) figure(pos, Enemy, sun, strength);
-      else sinking(`castle sink ${i}`, pos, Enemy, clamp((outAge - Door0) / Sink), sun, strength);
+      if (inAge < Rise + Door0) rising(`castle rise ${i}`, at, Enemy, clamp((inAge - Door0) / Rise), sun, strength, { actors: p.actors });
+      else if (outAge < Door0) { if (p.actors) figure(pos, Enemy, sun, strength); }
+      else sinking(`castle sink ${i}`, pos, Enemy, clamp((outAge - Door0) / Sink), sun, strength, { actors: p.actors });
     });
 
     // The carrier: rises onto the dais, plays, strums Release, goes down last.
@@ -146,7 +152,7 @@ export default {
     if (cIn >= -.2 && cIn < doorEnd(Rise * .75)) floorDoor('castle carrier in', seat, cInDoor.open, cInDoor.alpha, { s });
     if (cOut >= -.2) floorDoor('castle carrier out', seat, cOutDoor.open, cOutDoor.alpha, { s });
     const strumAge = relAge;
-    if (cIn >= Door0) {
+    if (p.actors && cIn >= Door0) {
       if (cOut < Door0) {
         const up = clamp((cIn - Door0) / Rise);
         nakime('castle carrier', seat, sun, strength, { strum: strumAge > -.25 ? strumAge : null, dark: (1 - smooth(up)) * .85, scale: .5 + .5 * smooth(up), alpha: Math.min(1, up * 4) });

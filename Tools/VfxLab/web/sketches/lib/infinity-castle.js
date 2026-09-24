@@ -394,27 +394,31 @@ function flight(len, c, { k = 1, rot = 0, dim = 0, layer = L.depth, alpha = 1 } 
     draw(plane, c.x + ux * mid * k, layer + .006, c.z + uz * mid * k, span * k, 3 * k, rot, VoidDeep.withAlpha(alpha * a));
   }
 }
+// The drawn-only rooms and stair flights for a seed, further ones (level 2) first. Exported so
+// Tests/InfinityCastle can check the C# list (CastleLayout.DepthItems) against it.
+export function depthItems(seed, reach) {
+  const R = rng(seed * 31 + 7);
+  const items = [];
+  for (let i = 0; i < DepthRooms; i++) {
+    const [kind, , dims] = pickKind(R), flat = R() < .5, [w, h] = dims(R, flat);
+    const level = R() < .45 ? 2 : 1;                           // 2 = further down
+    const x = (R() - .5) * reach * 2, z = (R() - .5) * reach * 2;
+    const turned = R() < .3, rot = turned ? (R() < .5 ? 90 : (R() - .5) * 30) : 0;
+    const driftA = (R() - .5) * 1.4, driftP = R() * TAU, spin = turned && R() < .4 ? (R() - .5) * 6 : 0;
+    items.push({ r: { id: 1000 + i, kind, w, h }, level, x, z, rot, driftA, driftP, spin });
+  }
+  // Stair flights hanging on their own between levels, some turned: the castle's look of stairs
+  // running every way. Drawn-only, like the rooms.
+  for (let i = 0; i < Flights; i++) {
+    const len = int(R, 8, 16), level = R() < .5 ? 2 : 1, rot = R() < .6 ? (R() < .5 ? 0 : 90) + (R() - .5) * 8 : (R() - .5) * 70;
+    items.push({ flight: len, level, x: (R() - .5) * reach * 2, z: (R() - .5) * reach * 2, rot, driftA: (R() - .5), driftP: R() * TAU, spin: 0, r: { id: 2000 + i } });
+  }
+  return items.sort((a, b) => b.level - a.level);
+}
 export function drawVoid(centre, s, { seed = 1, reach = 90, depth = true, alpha = 1 } = {}) {
   draw(plane, centre.x, L.back, centre.z, reach * 3, reach * 3, 0, VoidDeep.withAlpha(alpha));
   if (depth) {
-    const R = rng(seed * 31 + 7);
-    const items = [];
-    for (let i = 0; i < DepthRooms; i++) {
-      const [kind, , dims] = pickKind(R), flat = R() < .5, [w, h] = dims(R, flat);
-      const level = R() < .45 ? 2 : 1;                         // 2 = further down
-      const x = (R() - .5) * reach * 2, z = (R() - .5) * reach * 2;
-      const turned = R() < .3, rot = turned ? (R() < .5 ? 90 : (R() - .5) * 30) : 0;
-      const driftA = (R() - .5) * 1.4, driftP = R() * TAU, spin = turned && R() < .4 ? (R() - .5) * 6 : 0;
-      items.push({ r: { id: 1000 + i, kind, w, h }, level, x, z, rot, driftA, driftP, spin });
-    }
-    // Stair flights hanging on their own between levels, some turned: the castle's look of stairs
-    // running every way. Drawn-only, like the rooms.
-    for (let i = 0; i < Flights; i++) {
-      const len = int(R, 8, 16), level = R() < .5 ? 2 : 1, rot = R() < .6 ? (R() < .5 ? 0 : 90) + (R() - .5) * 8 : (R() - .5) * 70;
-      items.push({ flight: len, level, x: (R() - .5) * reach * 2, z: (R() - .5) * reach * 2, rot, driftA: (R() - .5), driftP: R() * TAU, spin: 0, r: { id: 2000 + i } });
-    }
-    items.sort((a, b) => b.level - a.level);
-    items.forEach((it, i) => {
+    depthItems(seed, reach).forEach((it, i) => {
       const k = it.level === 2 ? .5 : .72, dim = it.level === 2 ? .72 : .52;
       const drift = Math.sin(s * .18 + it.driftP) * it.driftA * (it.level === 2 ? .6 : 1);
       const c = { x: centre.x + it.x + drift, z: centre.z + it.z + drift * .4 };
@@ -552,19 +556,20 @@ export function figure(pos, colour, sun, strength, { alpha = 1, scale = 1, dark 
 
 // A pawn going down through an open floor door: u 0..1, standing on the open door to gone. It
 // shrinks toward the shaft, darkens, and the shaft's dark covers it; pale streaks run up past it.
-export function sinking(key, pos, colour, u, sun, strength, { downed = 0 } = {}) {
+// actors false leaves the stand-in out and draws only the shaft's part, which is what the C# draws.
+export function sinking(key, pos, colour, u, sun, strength, { downed = 0, actors = true } = {}) {
   if (u >= 1) return;
   const e = smooth(u);
-  figure({ x: pos.x, z: pos.z - .18 * e }, colour, sun, strength, { scale: 1 - .5 * e, dark: e * .85, alpha: 1 - smooth((u - .75) / .25), downed });
+  if (actors) figure({ x: pos.x, z: pos.z - .18 * e }, colour, sun, strength, { scale: 1 - .5 * e, dark: e * .85, alpha: 1 - smooth((u - .75) / .25), downed });
   const H = DoorSize - .26;
   draw(plane, pos.x, L.pawn + .01, pos.z, H, H, 0, VoidDeep.withAlpha(.85 * Math.pow(e, 1.4)));
   streaks(key, pos, u, 1);
 }
 // The reverse: out of the shaft, growing and brightening, then a small hop onto the floor.
-export function rising(key, pos, colour, u, sun, strength, { hop = .35, downed = 0 } = {}) {
+export function rising(key, pos, colour, u, sun, strength, { hop = .35, downed = 0, actors = true } = {}) {
   if (u <= 0) return;
   const up = smooth(Math.min(1, u / .7)), hopU = clamp((u - .6) / .4);
-  figure({ x: pos.x, z: pos.z - .18 * (1 - up) }, colour, sun, strength, { scale: .5 + .5 * up, dark: (1 - up) * .85, h: downed ? 0 : hop * bump(hopU), alpha: Math.min(1, u * 4), downed });
+  if (actors) figure({ x: pos.x, z: pos.z - .18 * (1 - up) }, colour, sun, strength, { scale: .5 + .5 * up, dark: (1 - up) * .85, h: downed ? 0 : hop * bump(hopU), alpha: Math.min(1, u * 4), downed });
   const H = DoorSize - .26;
   draw(plane, pos.x, L.pawn + .01, pos.z, H, H, 0, VoidDeep.withAlpha(.85 * Math.pow(1 - up, 1.4)));
   streaks(key, pos, u, -1);
