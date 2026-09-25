@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The flame gauntlet's Overheating: added and removed by FlameGauntletHeat while the gauntlet's
+       Heat is at its overheatAt or over. The arm burns come from the same code (every
+       overheatBurnSeconds on the weapon), not from this hediff. -->
+  <HediffDef>
+    <defName>AG_FlameOverheating</defName>
+    <label>overheating</label>
+    <description>The flame gauntlet on this person's arm holds more heat than it can bear. They move and work slower, and the arm under the gauntlet burns every few seconds until the heat is spent.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(1, 0.45, 0.2)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>true</isBad>
+    <maxSeverity>1</maxSeverity>
+    <initialSeverity>1</initialSeverity>
+    <stages>
+      <li>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <postFactor>0.8</postFactor>
+          </li>
+          <li>
+            <capacity>Manipulation</capacity>
+            <postFactor>0.8</postFactor>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

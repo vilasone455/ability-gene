@@ -83,6 +83,13 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Flame Gauntlet", Prefix = "Flame Gauntlet:", Component = typeof(MapComponent_FlameGauntletPreview), Clock = "seconds",
+                Phases = label => label.Contains("release")
+                    ? ReleasePhases(label.Contains("too cold") ? 3f : label.Contains("8 heat") ? 8f : 20f)
+                    : DevourPhases(label.Contains("burning pawn") ? 1 : label.Contains("starting hot") ? 2 : 0, label.Contains("south") ? 270f : 0f),
+            },
+            new Kit
+            {
                 Name = "Shadow Plexus", Prefix = "Shadow Plexus:", Component = typeof(MapComponent_ShadowPlexusPreview), Clock = "seconds",
                 Phases = label => label.Contains("imitation") ? ImitationPhases(label.Contains("cut") ? ImitationEnd.Cut : label.Contains("dark") ? ImitationEnd.Dark : ImitationEnd.Released)
                     : label.Contains("seam") ? SeamPhases(label.Contains("rescue") ? SeamScene.Rescue : SeamScene.Rusher)
@@ -391,6 +398,31 @@ namespace RimArt.VfxLab
                 new Phase("Wrap", ChainSickleSnagTiming.Hit),
                 new Phase("Reel", ChainSickleSnagTiming.Reel0),
                 new Phase("Result", ChainSickleSnagTiming.ReelEnd(reel)),
+            };
+        }
+
+        private static Phase[] DevourPhases(int scenario, float aim)
+        {
+            FlameDevourShot shot = FlameGauntletDevourGraphics.Script(default, aim, scenario, scenario == 2 ? 14f : 0f);
+            var phases = new List<Phase> { new Phase("Rest", 0f), new Phase("Wind-up", FlameGauntletTiming.Lead), new Phase("Pull", FlameDevourTiming.Pull) };
+            if (shot.RefusedAt >= 0f) phases.Add(new Phase("Too hot", shot.RefusedAt));
+            phases.Add(new Phase("Result", shot.Result));
+            return phases.ToArray();
+        }
+
+        private static Phase[] ReleasePhases(float heat)
+        {
+            FlameReleaseShot shot = FlameGauntletReleaseGraphics.Script(default, 0f, heat, true);
+            if (shot.Lit == 0)
+                return new[] { new Phase("Rest", 0f), new Phase("Wind-up", FlameGauntletTiming.Lead), new Phase("Too cold", FlameReleaseTiming.Go), new Phase("Result", FlameReleaseTiming.Result(shot)) };
+            return new[]
+            {
+                new Phase("Rest", 0f),
+                new Phase("Wind-up", FlameGauntletTiming.Lead),
+                new Phase("Release", FlameReleaseTiming.Go),
+                new Phase("Wave", FlameReleaseTiming.Go + FlameReleaseTiming.JetLand),
+                new Phase("Stops", FlameReleaseTiming.Stop(shot)),
+                new Phase("Result", FlameReleaseTiming.Result(shot)),
             };
         }
 

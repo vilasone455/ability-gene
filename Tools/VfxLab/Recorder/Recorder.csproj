@@ -14,6 +14,9 @@
     <NoWarn>CS0169;CS0414;CS0649</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <!-- The drawing helpers every ported picture shares (Shared/CastClips and ItemAbilityGrant are game code, not linked). -->
+    <Compile Include="../../../Source/RimArt/Shared/VfxDraw.cs" Link="Linked/Shared/VfxDraw.cs" />
+    <Compile Include="../../../Source/RimArt/Shared/VfxMath.cs" Link="Linked/Shared/VfxMath.cs" />
     <!-- Six Paths -->
     <Compile Include="../../../Source/RimArt/Debug/RimArtDebugAttribute.cs" Link="Linked/Debug/RimArtDebugAttribute.cs" />
     <Compile Include="../../../Source/RimArt/SixPaths/*.cs" LinkBase="Linked/SixPaths" />
@@ -31,6 +34,8 @@
     <Compile Include="../../../Source/RimArt/WaterGun/*.cs" LinkBase="Linked/WaterGun" />
     <!-- Chain Sickle: the weight rule, drawing, timing and previews only. The weapon and ability code is in ChainSickle/Kit, which is not linked here. -->
     <Compile Include="../../../Source/RimArt/ChainSickle/*.cs" LinkBase="Linked/ChainSickle" />
+    <!-- Flame Gauntlet: drawing, timing and previews only. The weapon and ability code is in FlameGauntlet/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/FlameGauntlet/*.cs" LinkBase="Linked/FlameGauntlet" />
     <!-- Shadow Plexus: drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/ShadowPlexus/*.cs" LinkBase="Linked/ShadowPlexus" />
     <!-- Goku: drawing and previews only. -->
