@@ -115,4 +115,50 @@
     </comps>
   </AbilityDef>
 
+  <!-- A walk-up punch, the vanilla touch shape (Bloodfeed, Coagulate): the carrier paths to the
+       target and hits. The window is read on the hit, so the walk counts against it. -->
+  <AbilityDef>
+    <defName>AG_AnchorBlackFlash</defName>
+    <label>black flash</label>
+    <description>A bare-handed punch. Within 3 seconds of a clap that moved someone, it is a Black Flash: 2.5 times the damage, the target is stunned for 1 second, and the carrier is in the zone for 10 seconds (+15% melee hit chance). One Black Flash per clap.\n\nOutside that window it is an ordinary punch.</description>
+    <iconPath>UI/Icons/Genes/Gene_StrongMeleeDamage</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>360</cooldownTicksRange>
+    <jobDef>CastAbilityOnThingMelee</jobDef>
+    <stunTargetWhileCasting>true</stunTargetWhileCasting>
+    <hostile>true</hostile>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbilityTouch</verbClass>
+      <drawAimPie>false</drawAimPie>
+      <range>-1</range>
+      <warmupTime>0.2</warmupTime>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetLocations>false</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityBlackFlash">
+        <damage>9</damage>
+        <armorPenetration>0.15</armorPenetration>
+        <damageDef>Blunt</damageDef>
+        <windowTicks>180</windowTicks>
+        <flashFactor>2.5</flashFactor>
+        <stunTicks>60</stunTicks>
+        <zoneHediff>AG_BlackFlashZone</zoneHediff>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Manipulation</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
 </Defs>

@@ -50,6 +50,7 @@ namespace RimArt
                 return;
             }
             ClapTargets.Pay(gene, cost, a, b);
+            gene.NoteSwap();
             ClapTargets.Stun(caster, gene, a);
             ClapTargets.Stun(caster, gene, b);
             teleports.Land(caster, first, second, parent.def.verbProperties.warmupTime, true);

@@ -73,6 +73,7 @@
   <AG_AnchorLongNeedsAll>A stone this far needs all {0} claps. {1} ready.</AG_AnchorLongNeedsAll>
   <AG_AnchorNoWeapon>The clap needs both hands. {0} is holding {1}.</AG_AnchorNoWeapon>
   <AG_AnchorCannotEquip>Needs both hands free to clap.</AG_AnchorCannotEquip>
+  <AG_BlackFlashText>Black Flash</AG_BlackFlashText>
 
 
   <AG_LarynxNoVoice>{0} has no voice left to spend.</AG_LarynxNoVoice>

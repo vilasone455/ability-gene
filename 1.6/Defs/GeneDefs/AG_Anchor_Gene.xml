@@ -4,7 +4,7 @@
   <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_AnchorOrgan</defName>
     <label>anchor organ</label>
-    <description>Clap to change places with anyone in sight nearby, or clap twice to make two others change places. Stones thrown onto the ground can be clapped with from anywhere on the map, without line of sight.\n\nThree claps at a time, growing back one every 10 seconds. The clap takes both hands, so this carrier never carries a weapon.</description>
+    <description>Clap to change places with anyone in sight nearby, or clap twice to make two others change places. Stones thrown onto the ground can be clapped with from anywhere on the map, without line of sight.\n\nThree claps at a time, growing back one every 10 seconds. A punch thrown within 3 seconds of a clap is a Black Flash. The clap takes both hands, so this carrier never carries a weapon.</description>
     <geneClass>RimArt.Gene_Anchors</geneClass>
     <iconPath>UI/Icons/Genes/Gene_ElongatedFingers</iconPath>
     <displayCategory>Ability</displayCategory>
@@ -14,11 +14,13 @@
       <li>AG_AnchorMark</li>
       <li>AG_AnchorClap</li>
       <li>AG_AnchorDoubleClap</li>
+      <li>AG_AnchorBlackFlash</li>
     </abilities>
     <descriptionHyperlinks>
       <AbilityDef>AG_AnchorMark</AbilityDef>
       <AbilityDef>AG_AnchorClap</AbilityDef>
       <AbilityDef>AG_AnchorDoubleClap</AbilityDef>
+      <AbilityDef>AG_AnchorBlackFlash</AbilityDef>
     </descriptionHyperlinks>
     <biostatMet>-2</biostatMet>
     <biostatCpx>4</biostatCpx>
