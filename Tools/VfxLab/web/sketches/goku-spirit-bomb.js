@@ -62,7 +62,7 @@
 //         floor, 0.45 s each; its edge is a ring of flame, a row of 60 pointed flame tips that each
 //         rise, flicker and surge out every 0.28 to 0.4 s (taller on the top edge, where flames
 //         rise), in three nested layers from faint blue outside to white inside, with wisps that
-//         break off the tips; flashes boil up through the face; the middle beats 14 times a second. On the floor round it, hidden behind it on the far side:
+//         break off the tips; the middle beats 14 times a second. On the floor round it, hidden behind it on the far side:
 //         a shock ring every 0.35 s, 7 low jagged discharges of lightning, 20 sparks. The flame
 //         edge starts on the true radius. It hides what is inside. A column of light comes out of its
 //         top (the part inside is under the dome's body): 16 overlapping soft sprites that ripple
@@ -73,7 +73,12 @@
 //         puff and stay as rubble. Two dust rings run out past the radius. Under the dome each
 //         enemy the front reaches turns white-hot and falls 0.3 s later: the damage lands at the
 //         hit, and the body stays.
-//   8.99  the dome holds for 0.84 s, its glow and fringe building up
+//   8.99  the dome holds for 0.84 s. It throbs 2.4 times a second (its radius 1.8% in and out, a
+//         white pulse over it, its flames surging with each throb); soft blobs of light boil up
+//         its surface (0.6 s each); 4 short bolts of lightning crawl over it (0.12 s each); 24
+//         embers rise off its top; the ground rumbles every 0.2 s, harder toward the end. Over the
+//         last third of the hold it swells 4%, brightens and its flames surge harder. The cracks
+//         under it stay hidden until it bursts.
 //   9.83  burst: a soft flash and a small shake. The dome swells 5% and is gone in 0.25 s, broken
 //         into 346 flecks of light, a little over half from its surface and the rest from inside
 //         it, that drift up and a little out, twinkle, and fade over 1.1 to 2 s, over a thin haze
@@ -123,9 +128,9 @@ const Wisps = 16, WispsPerLender = 8, WispReach = 10;
 const SurgeTime = .45, SurgeSwell = .14, Stretch = .16, FlightSpin = 3, TailSpan = .3, FallSparks = 16;
 const GrindSparks = 16, Chunks = 10, MaxPebbles = 14;
 // The dome is the ball grown to the blast and exploding: its radius as a share of the blast radius (its fringe reaches
-// about 1.07 of its radius, so the fringe lands on the true radius), its rays and flame tips, how long the burst
+// about 1.07 of its radius, so the fringe lands on the true radius), its rays, boiling blobs and flame tips, how long the burst
 // takes to clear it and how much it swells, and how long the flecks last at most.
-const DomeFill = .93, DomeRays = 16, FlameTips = 60, Pop = .25, PopSwell = .05, Scatter = 2;
+const DomeFill = .93, DomeRays = 16, DomeBoils = 18, FlameTips = 60, Pop = .25, PopSwell = .05, Scatter = 2;
 // A hit enemy falls this long after the front passes it.
 const Fall = .3;
 // What follows the charge, as [small bomb, full bomb].
@@ -225,12 +230,16 @@ function bomb(at, r, s, alpha, { v = { x: 1, z: 0 }, stretch = 0, spin = 1, surg
 // shadows fall.
 function blastDome(at, r, s, alpha, build, sun) {
   if (r <= .01 || alpha <= 0) return;
+  // While it stands it throbs 2.4 times a second; rush is the end of the hold, when it swells, brightens and its flames
+  // surge before it bursts.
+  const throb = .5 + .5 * Math.sin(s * 15), rush = build * build * build;
+  r *= 1 + .018 * Math.sin(s * 15) + .04 * rush;
   const beat = 1 + (.07 + .05 * build) * Math.sin(s * 14), floor = (ang, rad) => ({ x: at.x + Math.cos(ang) * rad, z: at.z + Math.sin(ang) * rad });
   // A point on the half sphere as drawn: az the direction from the centre, el the angle up from the floor.
   const on = (az, el, rad = r) => ({ x: at.x + Math.cos(az) * rad * Math.cos(el), z: at.z + Math.sin(az) * rad * Math.cos(el) + Lift * rad * Math.sin(el) });
   // The lowest angle up at which the surface faces the viewer: 0 facing south, up to the outline facing north.
   const low = az => Math.atan(Lift * Math.max(0, Math.sin(az))), mid = on(0, Math.PI / 2, r * .42), sunAz = Math.atan2(-sun.z, -sun.x);
-  sprite(mid, r * 3.2, r * 3.2, Ki.withAlpha((.5 + .25 * build) * alpha), glow, Y + .1385);
+  sprite(mid, r * 3.2, r * 3.2, Ki.withAlpha((.5 + .15 * throb + .25 * rush) * alpha), glow, Y + .1385);
   // On the floor, behind the body where the dome covers it: shock rings every 0.35 s, lightning jumping out from the foot
   // and back (0.16 s each), sparks thrown off (0.5 s each).
   for (let n = 0; n < 3; n++) { const u = (s / 1.05 + n / 3) % 1; ringAt(at, r * (1.02 + .33 * smooth(u)), KiIce.withAlpha(.7 * (1 - u) * alpha), Y + .139, false, whiteGlow); }
@@ -253,7 +262,7 @@ function blastDome(at, r, s, alpha, build, sun) {
   for (let k = 0; k < FlameTips; k++) {
     const phase = s / (.28 + .12 * rand(k + 71)) + rand(k + 72), u = phase - Math.floor(phase), flicker = .7 + .3 * Math.sin(s * (19 + 7 * rand(k + 73)) + k * 2.1);
     const ang = (k + .5 + (rand(k + 70) - .5) * .8) / FlameTips * TAU;
-    tips.push({ ang, u, h: (.025 + .05 * rand(k + 74)) * flicker * (1 + .8 * Math.sin(u * Math.PI)) * (1 + .6 * Math.max(0, Math.sin(ang))) * (1 + .3 * build) });
+    tips.push({ ang, u, h: (.025 + .05 * rand(k + 74)) * flicker * (1 + .8 * Math.sin(u * Math.PI)) * (1 + .6 * Math.max(0, Math.sin(ang))) * (1 + .35 * throb + .5 * rush) });
   }
   // A point of the outline at any angle, as drawn, at k radii.
   const rimAt = (ang, k) => { const el = Math.atan(Lift * Math.max(0, Math.sin(ang))); return { x: at.x + Math.cos(ang) * Math.cos(el) * r * k, z: at.z + (Math.sin(ang) * Math.cos(el) + Lift * Math.sin(el)) * r * k }; };
@@ -277,7 +286,7 @@ function blastDome(at, r, s, alpha, build, sun) {
   });
   // The body: the half sphere's outline filled, then the pale inside as a soft gradient round its middle, then the limb:
   // deep blue just inside the outline, darkest on the side away from the sun.
-  draw(domeShape, at.x, Y + .141, at.z, r, r, 0, KiSky.withAlpha(.92 * alpha));
+  draw(domeShape, at.x, Y + .141, at.z, r, r, 0, KiSky.withAlpha(alpha));   // opaque: nothing under it shows through
   sprite(mid, r * 1.8, r * 1.7, KiIce.withAlpha(.8 * alpha), soft, Y + .1415);
   for (let i = 0; i < OutlineParts; i++) {
     const q = Outline[i], shade = .5 - .5 * Math.cos(i / OutlineParts * TAU - sunAz);
@@ -290,15 +299,36 @@ function blastDome(at, r, s, alpha, build, sun) {
     for (let j = 0; j <= 8; j++) pts.push(on(az, Mathf.Lerp(tail, head, j / 8)));
     line(`spirit bomb dome ray ${i}`, pts, r * .02 + .04, White.withAlpha(.5 * Math.sin(u * Math.PI) * alpha), whiteGlow, Y + .143, 'both');
   }
-  // Flashes where the energy boils up through the face, on the side that shows, rolled again every 0.2 s.
-  for (let i = 0; i < 8; i++) {
-    const phase = s / .2 + i * .41, cycle = Math.floor(phase), u = phase - cycle, seed = cycle * 17 + i * 5, az = rand(seed) * TAU;
-    sprite(on(az, Mathf.Lerp(low(az) + .1, 1.4, rand(seed + 2))), r * .3 + .15, r * .3 + .15, White.withAlpha(.65 * (1 - u) * alpha), glow, Y + .1435);
+  // Light boils up the surface: soft blobs rise from low on the side that shows to near the top, growing as they go, each
+  // 0.6 s and started again somewhere else.
+  for (let i = 0; i < DomeBoils; i++) {
+    const phase = s / .6 + rand(i + 80), cycle = Math.floor(phase), u = phase - cycle, seed = cycle * 19 + i * 3, az = rand(seed) * TAU;
+    const size = r * (.1 + .12 * u) * (.8 + .4 * rand(seed + 1));
+    sprite(on(az, Mathf.Lerp(low(az) + .05, 1.35, u)), size, size * .85, Color.Lerp(KiIce, White, rand(seed + 2)).withAlpha(.35 * Math.sin(u * Math.PI) * alpha), glow, Y + .1435);
+  }
+  // Lightning crawls over the surface: short bolts that wander across the side that shows, each rolled again every 0.12 s.
+  for (let b = 0; b < 4; b++) {
+    const cycle = Math.floor(s / .12 + b * .29), seed = cycle * 37 + b * 11, az = rand(seed) * TAU, floorEl = low(az) + .02;
+    const el = Mathf.Lerp(low(az) + .1, 1.2, rand(seed + 1)), daz = (rand(seed + 2) - .5) * 1.4, del = (rand(seed + 3) - .5) * .9, pts = [];
+    for (let j = 0; j <= 10; j++) {
+      const k = j / 10;
+      pts.push(on(az + daz * k + (rand(seed + 4 + j) - .5) * .08, Math.max(floorEl, Math.min(1.5, el + del * k + (rand(seed + 20 + j) - .5) * .08))));
+    }
+    line(`spirit bomb dome crawl glow ${b}`, pts, .3 + r * .03, KiIce.withAlpha(.35 * alpha), whiteGlow, Y + .1437, 'both');
+    line(`spirit bomb dome crawl ${b}`, pts, .07 + r * .012, White.withAlpha(.95 * alpha), whiteGlow, Y + .1438, 'both');
+  }
+  // Embers rise off the top and drift up, each 0.8 s.
+  for (let i = 0; i < 24; i++) {
+    const phase = s / .8 + rand(i + 90), cycle = Math.floor(phase), u = phase - cycle, seed = cycle * 29 + i * 7;
+    const from = on(rand(seed) * TAU, Mathf.Lerp(.7, 1.4, rand(seed + 1))), size = .12 + .1 * rand(seed + 2), at2 = { x: from.x + Math.sin(u * 5 + i) * .2, z: from.z + u * (1.5 + 2 * rand(seed + 3)) };
+    if (i % 3 === 0) glint(`spirit bomb dome ember ${i}`, at2, size * 2.2, .9 * (1 - u) * alpha, KiIce, 45);
+    else draw(MeshPool.plane10, at2.x, Y + .1448, at2.z, size, size, 45 + u * 90, Color.Lerp(White, KiIce, u).withAlpha(.9 * (1 - u) * alpha), whiteGlow);
   }
   // The white-hot middle, and a highlight toward the sun near the top.
   sprite(mid, r * 1.25 * beat, r * 1.2 * beat, White.withAlpha(.7 * alpha), glow, Y + .144);
   sprite(mid, r * .55 * beat, r * .5 * beat, White.withAlpha(.8 * alpha), glow, Y + .1442);
   sprite(on(sunAz, .8), r * .7, r * .55, White.withAlpha(.4 * alpha), glow, Y + .1445);
+  sprite(mid, r * 2, r * 1.9, White.withAlpha((.1 * throb + .2 * rush) * alpha), glow, Y + .1446);   // the pulse of each throb
 }
 
 export default {
@@ -323,6 +353,8 @@ export default {
     // A heavy bomb makes the camera tremble while it is still over the caster's head.
     for (let at = t.cast + .5; at < t.release; at += .5) { const c = powerAt(at, p, t) / FullPower; if (c > .5) list.push({ t: at, type: 'shake', value: .012 + .02 * Math.min(1, c) }); }
     for (let at = t.hit; at < t.dome - .01; at += .1) list.push({ t: at, type: 'shake', value: big * (.15 + .2 * (at - t.hit) / (t.dome - t.hit)) });
+    // While the dome stands the ground rumbles every 0.2 s, harder toward the burst.
+    for (let at = t.open; at < t.burst - .05; at += .2) list.push({ t: at, type: 'shake', value: big * (.12 + .25 * (at - t.open) / (t.burst - t.open)) });
     return [...list, { t: t.dome, type: 'shake', value: big }, { t: t.dome + .25, type: 'shake', value: big * .55 }, { t: t.dome + .5, type: 'shake', value: big * .3 }, { t: t.burst, type: 'shake', value: big * .35 }];
   },
 
@@ -389,8 +421,9 @@ export default {
         streak(`spirit bomb burn ${i}`, polar(ang, from), polar(ang, to), .22 + .2 * rand(i + 93), Ink.withAlpha(.4 * burnt), undefined, Floor + .012, 5);
       }
     }
-    // Jagged cracks of light. They grow through the grind, blaze in the blast, and cool afterwards.
-    if (s >= t.hit) {
+    // Jagged cracks of light. They grow through the grind, are hidden while the dome stands, show again when it bursts, and
+    // cool afterwards.
+    if (s >= t.hit && !hiding) {
       const grown = domeAge >= 0 ? 1 : smooth(grind) * .75, heat = domeAge < 0 ? 1 : 1 - .85 * smooth((s - t.open) / Cool);
       for (let i = 0; i < cracks; i++) {
         const ang = i * TAU / cracks + rand(i + 3) * .35, reach = blast * (.5 + .45 * rand(i + 8)), nx = -Math.sin(ang), nz = Math.cos(ang), n = 8;
