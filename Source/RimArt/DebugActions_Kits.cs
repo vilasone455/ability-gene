@@ -149,6 +149,7 @@ namespace RimArt
                 new Kit { Label = "Bubble pipe", Grant = GrantBubblePipe },
                 new Kit { Label = "Water gun", Grant = GrantWaterGun },
                 new Kit { Label = "Chain sickle", Grant = GrantChainSickle },
+                new Kit { Label = "Vacuum", Grant = GrantVacuum },
                 new Kit { Label = "Shinra Tensei (repulsion eye)", Grant = GrantShinraTensei },
                 new Kit { Label = "Gravity Well (attraction eye)", Grant = GravityAcquisition.Grant },
 
@@ -283,6 +284,10 @@ namespace RimArt
         /// <summary>The kusarigama, with Snag and Stake ready; the research is finished so more can be made.</summary>
         private static string GrantChainSickle(Pawn pawn)
             => GrantWeapon(pawn, "AG_ChainSickle", "AG_ChainSickle");
+
+        /// <summary>The vacuum comes empty, with Suck, Spit and Digest; the research is finished so more can be made.</summary>
+        private static string GrantVacuum(Pawn pawn)
+            => GrantWeapon(pawn, "AG_Vacuum", "AG_Vacuum");
 
         /// <summary>
         /// Puts a weapon in the pawn's hands, ready to use.

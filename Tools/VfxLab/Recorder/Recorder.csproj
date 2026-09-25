@@ -36,6 +36,8 @@
     <Compile Include="../../../Source/RimArt/ChainSickle/*.cs" LinkBase="Linked/ChainSickle" />
     <!-- Flame Gauntlet: drawing, timing and previews only. The weapon and ability code is in FlameGauntlet/Kit, which is not linked here. -->
     <Compile Include="../../../Source/RimArt/FlameGauntlet/*.cs" LinkBase="Linked/FlameGauntlet" />
+    <!-- Vacuum: drawing, timing and previews only. The weapon and ability code is in Vacuum/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/Vacuum/*.cs" LinkBase="Linked/Vacuum" />
     <!-- Shadow Plexus: drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/ShadowPlexus/*.cs" LinkBase="Linked/ShadowPlexus" />
     <!-- Goku: drawing and previews only. -->

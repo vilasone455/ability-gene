@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Vacuum kit: a machined canister, a cloth hose and a motor, so industrial and after
+       machining, as the water gun and the flame gauntlet are. It sits in this mod's column at
+       8.00/10.20, under the flame gauntlet (8.00/9.00); the used slots are 7.00 at 4.20, 5.40, 6.60,
+       7.80, 9.00, 10.20, 11.40, 8.00 at 7.80 and 9.00, and 13.00/2.60. Not checked against vanilla or
+       other mods' projects in the research tab. -->
+  <ResearchProjectDef>
+    <defName>AG_Vacuum</defName>
+    <label>vacuum</label>
+    <description>Make vacuums: a wand whose canister rises out of the floor to suck up items, filth and enemy weapons, spit the last thing back out, and digest the rest.</description>
+    <baseCost>1000</baseCost>
+    <techLevel>Industrial</techLevel>
+    <prerequisites>
+      <li>Machining</li>
+    </prerequisites>
+    <researchViewX>8.00</researchViewX>
+    <researchViewY>10.20</researchViewY>
+  </ResearchProjectDef>
+
+</Defs>

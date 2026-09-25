@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Suck and Spit. The driver starts the picture with the warmup and holds the job until the
+       canister is back in the floor. The weapon is hidden for the job because the picture draws the
+       wand, the hose and the canister. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastVacuum</defName>
+    <driverClass>RimArt.JobDriver_CastVacuum</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+  <!-- Digest: the same driver, but the player can interrupt it; the chew then stops and what is left
+       stays inside. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastVacuumDigest</defName>
+    <driverClass>RimArt.JobDriver_CastVacuum</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>true</playerInterruptible>
+  </JobDef>
+
+</Defs>

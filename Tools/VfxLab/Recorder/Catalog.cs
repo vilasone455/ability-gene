@@ -90,6 +90,13 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Vacuum", Prefix = "Vacuum:", Component = typeof(MapComponent_VacuumPreview), Clock = "seconds",
+                Phases = label => label.Contains("digest") ? DigestPhases()
+                    : label.Contains("spit") ? SpitPhases()
+                    : SuckPhases(label.Contains("loose") ? 2 : 3),
+            },
+            new Kit
+            {
                 Name = "Shadow Plexus", Prefix = "Shadow Plexus:", Component = typeof(MapComponent_ShadowPlexusPreview), Clock = "seconds",
                 Phases = label => label.Contains("imitation") ? ImitationPhases(label.Contains("cut") ? ImitationEnd.Cut : label.Contains("dark") ? ImitationEnd.Dark : ImitationEnd.Released)
                     : label.Contains("seam") ? SeamPhases(label.Contains("rescue") ? SeamScene.Rescue : SeamScene.Rusher)
@@ -384,6 +391,39 @@ namespace RimArt.VfxLab
                 new Phase("Fire", WaterGunStreamTiming.Fire),
                 new Phase("Hit", WaterGunStreamTiming.Hit(d)),
                 new Phase("Lower", WaterGunStreamTiming.Lower0(d, hold)),
+            };
+        }
+
+        private static Phase[] SuckPhases(int things) => new[]
+        {
+            new Phase("Wand", 0f),
+            new Phase("Rise", VacuumSuckTiming.Rise0),
+            new Phase("Pull", VacuumSuckTiming.Pull0),
+            new Phase("Swallow", VacuumSuckTiming.Swallow),
+            new Phase("Result", VacuumSuckTiming.Result(things)),
+            new Phase("Sink", VacuumSuckTiming.Sink0(things, VacuumSuckTiming.ScriptHold)),
+        };
+
+        private static Phase[] SpitPhases() => new[]
+        {
+            new Phase("Wand", 0f),
+            new Phase("Rise", VacuumSpitTiming.Rise0),
+            new Phase("Heave", VacuumSpitTiming.Heave),
+            new Phase("Launch", VacuumSpitTiming.Launch),
+            new Phase("Impact", VacuumSpitTiming.Impact),
+            new Phase("Sink", VacuumSpitTiming.Sink0(VacuumSpitTiming.ScriptHold)),
+        };
+
+        private static Phase[] DigestPhases()
+        {
+            var shot = new VacuumDigestShot();
+            return new[]
+            {
+                new Phase("Wand", 0f),
+                new Phase("Rise", VacuumDigestTiming.Rise0),
+                new Phase("Chew", VacuumDigestTiming.Chew0),
+                new Phase("Burp", VacuumDigestTiming.Done(shot)),
+                new Phase("Sink", VacuumDigestTiming.Sink0(shot)),
             };
         }
 

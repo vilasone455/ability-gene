@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Vacuum kit (Hunter x Hunter, Shizuku's Blinky): a wand with a floor head, held as a blunt
+       melee weapon. On each cast a canister with a face rises out of the floor beside the holder and
+       sinks back after; between casts only the wand is held. Rules agreed 2026-09-25; the numbers are
+       placeholders from the sketches (Tools/VfxLab/web/sketches/vacuum-*.js, lib/vacuum.js) and every
+       one is a field here or in AG_Vacuum_Abilities.xml.
+
+       Mouth and stomach: the mouth holds one real thing, the last swallowed, which Spit fires. When
+       something new comes in, what was in the mouth is destroyed and its kg go to the stomach, a
+       weight only. Fullness = mouth + stomach, at most capacityKg. The holder is slowed by slowPerKg
+       per kg (AG_VacuumFull), never under minMoveFactor. It is all kept on the weapon: a dropped or
+       handed-over vacuum keeps its contents, nothing spills when the holder dies, and the mouth's
+       thing is lost if the weapon is destroyed.
+
+       The comps are listed with Inherit="False" because CompProperties_Vacuum is the weapon's
+       CompEquippable (its fullness readout is an equipped gizmo), as the flame gauntlet's is.
+       BaseWeapon's other two comps are repeated here; if BaseWeapon gains one, add it. Not
+       smeltable: it has no cost to give back, like the water gun. No weaponTags, so raiders never
+       carry it. -->
+  <ThingDef ParentName="BaseWeapon">
+    <defName>AG_Vacuum</defName>
+    <label>vacuum</label>
+    <description>The wand and floor head of a conjured vacuum cleaner. When it is used, a squat canister with a face rises out of the floor beside the wielder, unwinds its hose to the wand, and sinks back when it is done. In melee the wand is a blunt club.\n\nWhile it is equipped, the wielder can use Suck, Spit and Digest.\n\nSuck takes every loose item and all filth within 2 tiles of a spot up to 12 tiles away, and the weapon out of the hands of the nearest hostile there. Spit fires the last thing swallowed back out: 1.5 blunt damage per kg, at most 40, and it lands as itself. Digest destroys everything inside.\n\nThe mouth holds only the last thing swallowed; anything older is in the stomach for good. The vacuum holds 100 kg, and the wielder moves 0.4% slower for every kg inside.</description>
+    <graphicData>
+      <texPath>RimArt/Vacuum/Vacuum</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.0</drawSize>
+    </graphicData>
+    <techLevel>Industrial</techLevel>
+    <smeltable>false</smeltable>
+    <relicChance>0</relicChance>
+    <stackLimit>1</stackLimit>
+    <thingCategories>
+      <li>WeaponsMelee</li>
+    </thingCategories>
+    <weaponClasses>
+      <li>Melee</li>
+    </weaponClasses>
+    <tradeability>All</tradeability>
+    <statBases>
+      <MarketValue>400</MarketValue>
+      <Mass>2.5</Mass>
+      <MaxHitPoints>120</MaxHitPoints>
+      <Flammability>0.4</Flammability>
+      <DeteriorationRate>1</DeteriorationRate>
+      <Beauty>0</Beauty>
+    </statBases>
+    <comps Inherit="False">
+      <li Class="RimArt.CompProperties_Vacuum">
+        <capacityKg>100</capacityKg>
+        <slowPerKg>0.004</slowPerKg>
+        <minMoveFactor>0.1</minMoveFactor>
+        <abilities>
+          <li>AG_Vacuum_Suck</li>
+          <li>AG_Vacuum_Spit</li>
+          <li>AG_Vacuum_Digest</li>
+        </abilities>
+      </li>
+      <li Class="CompProperties_Forbiddable"/>
+      <li Class="CompProperties_Styleable"/>
+    </comps>
+    <tools>
+      <li>
+        <label>head</label>
+        <capacities><li>Blunt</li></capacities>
+        <power>9</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+      <li>
+        <label>wand</label>
+        <capacities><li>Blunt</li></capacities>
+        <power>7</power>
+        <cooldownTime>1.8</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
+</Defs>
