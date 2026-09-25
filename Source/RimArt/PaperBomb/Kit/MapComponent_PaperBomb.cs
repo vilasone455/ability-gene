@@ -120,6 +120,11 @@ namespace RimArt
         private List<Thrown> thrown = new List<Thrown>();
         private List<Laid> lines = new List<Laid>();
         private List<Wrapped> shrouds = new List<Wrapped>();
+        /// <summary>
+        /// Casters whose throw, line or shroud has left the hand in a cast job that has not ended yet
+        /// (<see cref="Fired"/>). Not saved: a game loaded during the hold ends that job, as before.
+        /// </summary>
+        private readonly HashSet<Pawn> fired = new HashSet<Pawn>();
 
         public MapComponent_PaperBomb(Map map) : base(map) { }
 
@@ -133,6 +138,7 @@ namespace RimArt
                 fuse = props.fuseSeconds, radius = props.radius, damage = props.damage, buildingFactor = props.stuckBuildingFactor,
                 castTick = Find.TickManager.TicksGame,
             });
+            fired.Add(caster);
         }
 
         public void Lay(Pawn caster, Vector2 feet, Vector2 toward, int tags, bool tripwire, float warmup, CompProperties_TagLine props)
@@ -143,6 +149,7 @@ namespace RimArt
                 caster = caster, feet = feet, toward = toward, tags = tags, tripwire = tripwire, damage = props.damage, radius = props.radius,
                 perTag = props.perTagSeconds, castTick = now - Mathf.RoundToInt(warmup * 60f), expireTick = now + props.lifetimeTicks,
             });
+            fired.Add(caster);
         }
 
         public void Shroud(Pawn caster, Vector2 feet, Pawn victim, CompProperties_Shroud props)
@@ -152,7 +159,14 @@ namespace RimArt
                 caster = caster, victim = victim, feet = feet, at = Ground(victim), held = props.heldSeconds, radius = props.radius,
                 damage = props.damage, targetDamage = props.targetDamage, castTick = Find.TickManager.TicksGame,
             });
+            fired.Add(caster);
         }
+
+        /// <summary>Whether the caster's tag has left the hand in the cast job still running: the job holds from here (CastJobFail).</summary>
+        public bool Fired(Pawn caster) => fired.Contains(caster);
+
+        /// <summary>The caster's cast job is over.</summary>
+        public void Ended(Pawn caster) => fired.Remove(caster);
 
         public bool HasArmedLine(Pawn caster)
         {

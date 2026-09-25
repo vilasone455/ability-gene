@@ -23,7 +23,7 @@ namespace RimArt
 
         protected override IEnumerable<Toil> MakeNewToils()
         {
-            this.FailOn(() => !Thrown() && (TargetGone() || !job.ability.CanCast && !job.ability.Casting));
+            this.FailBeforeFired(Thrown);
             AddFinishAction(delegate
             {
                 if (job.ability != null && job.def.abilityCasting)
@@ -49,12 +49,6 @@ namespace RimArt
         }
 
         private bool Thrown() => pawn.Map?.GetComponent<MapComponent_ChainSickle>()?.Thrown(pawn) ?? false;
-
-        private bool TargetGone()
-        {
-            Thing target = job.targetA.Thing;
-            return target == null || !target.Spawned || target.Map != pawn.Map;
-        }
 
         private void Begin()
         {
