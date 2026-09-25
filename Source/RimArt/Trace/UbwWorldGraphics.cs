@@ -37,7 +37,7 @@ namespace RimArt
         /// </summary>
         public static readonly UbwLayers Pocket = new UbwLayers(
             Terrain + 0.001f, Terrain + 0.005f, Terrain + 0.015f, ThunderGodGraphics.Floor + 0.002f, ThunderGodGraphics.Floor + 0.01f,
-            ThunderGodGraphics.Floor + 0.0105f, Shadows, Shadows + 0.002f, Building, Building + 0.6f, 0.0005f,
+            ThunderGodGraphics.Floor + 0.0105f, Shadows, Shadows + 0.002f, UbwGraphics.Building, UbwGraphics.Building + 0.6f, 0.0005f,
             Terrain + 0.002f, Terrain + 0.003f, Shadows + 0.0015f);
 
         /// <summary>
