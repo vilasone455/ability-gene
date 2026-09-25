@@ -37,7 +37,7 @@ namespace RimArt
         /// when the target is too heavy), that the cast job held the holder until the reel was over and
         /// then ended, and that the holder walks when ordered afterwards.
         /// </summary>
-        private static IEnumerable<int> Snag(RimArtTestContext t, Pawn holder, Pawn target, string shot, bool walkAfter = true)
+        private static IEnumerable<int> Snag(RimArtTestContext t, Pawn holder, Pawn target, string shot, bool walkAfter = true, bool mayMiss = false)
         {
             yield return 2;
             CompChainSickle sickle = CompChainSickle.HeldBy(holder);
@@ -57,7 +57,7 @@ namespace RimArt
 
             // The picture's reel ends at ReelEnd seconds from its start (Spin0 before the cast).
             int reelEndTick = cast + UnityEngine.Mathf.RoundToInt((ChainSickleSnagTiming.ReelEnd(w.Reel) - ChainSickleSnagTiming.Spin0) * 60f);
-            bool sawFlyer = false;
+            bool sawFlyer = false, hit = false;
             int jobEndTick = -1;
             // Measured on the first tick both are back on the map after a flyer: the target walks on after.
             float landed = -1f;
@@ -66,6 +66,7 @@ namespace RimArt
             {
                 Trace(t, holder, target);
                 bool flying = target.ParentHolder is PawnFlyer || holder.ParentHolder is PawnFlyer;
+                if (sickle.Snags(target)) hit = true;
                 if (flying) sawFlyer = true;
                 else if (sawFlyer && landed < 0f)
                 {
@@ -79,6 +80,16 @@ namespace RimArt
             float after = landed >= 0f ? landed : Distance(holder, target);
             t.Log("distance before " + before.ToString("0.0") + ", at landing " + after.ToString("0.0") + "; holder " + holderFrom + " -> " + Cell(holder)
                 + ", target " + targetFrom + " -> " + Cell(target) + "; job ended at " + jobEndTick + ", reel ends at " + reelEndTick);
+            if (!hit && mayMiss)
+            {
+                // A moving target that left the chain's reach during the warmup is missed: the cast is
+                // over, and all that is left to check is that it let the holder go.
+                t.Log("the weight missed: the target was out of reach at the hit");
+                t.Check(jobEndTick >= 0, "the cast job ended after the miss");
+            }
+            else
+            {
+            t.Check(hit, "the weight hit and snagged the target");
             // A raider that charged into melee during the warmup is already next to the holder: nothing to pull.
             t.Check(sawFlyer || Distance(holder, target) <= 2f, "a pawn was put in the reel flyer, or the target was already next to the holder");
             t.Check(holder.Spawned && (target.Dead || target.Spawned), "both pawns are back on the map");
@@ -87,13 +98,16 @@ namespace RimArt
             t.Check(jobEndTick >= 0, "the cast job ended");
             // A dragged holder rides the flyer instead, which ends its job at the start of the drag.
             if (!w.Dragged) t.Check(jobEndTick < 0 || jobEndTick >= reelEndTick - 3, "the cast job held the holder until the reel was over (ended " + (jobEndTick - reelEndTick) + " ticks from the reel's end)");
+            }
             yield return t.ShotAs(shot + "-after");
             if (!walkAfter) yield break;
 
             IntVec3 from = holder.Position, to = holder.Position + new IntVec3(-3, 0, 0);
             holder.drafter.Drafted = true;
             holder.jobs.TryTakeOrderedJob(JobMaker.MakeJob(JobDefOf.Goto, to), JobTag.DraftedOrder);
-            for (int i = 0; i < 6; i++)
+            // Up to 4 s: a drafted holder fighting an adjacent raider finishes its melee cooldown (the
+            // sickle's is 2 s) before the order moves it.
+            for (int i = 0; i < 12 && holder.Position == from; i++)
             {
                 Trace(t, holder, target);
                 yield return 20;
@@ -132,7 +146,10 @@ namespace RimArt
             yield return 30;
             Pawn target = raiders.Where(p => !p.Downed && p.Spawned).OrderBy(p => p.Position.DistanceTo(holder.Position)).FirstOrDefault();
             if (!t.Check(target != null && target.Position.DistanceTo(holder.Position) < 7.5f, "a raider is in reach")) yield break;
-            foreach (int step in Snag(t, holder, target, "raider")) yield return step;
+            // Raiders move on their own: the weight may miss one that walks out of reach during the
+            // warmup. No walk check after: a holder a raider has grappled or engaged in a Melee
+            // Animation duel cannot take a move order until the animation ends.
+            foreach (int step in Snag(t, holder, target, "raider", walkAfter: false, mayMiss: true)) yield return step;
         }
 
         [RimArtTest("Chain Sickle", "snag 4 too heavy drags the holder")]

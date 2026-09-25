@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Devour and Release. The driver starts the picture with the warmup and holds the job until the
+       result. The weapon is hidden for the job because the picture draws the gauntlet. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastFlameGauntlet</defName>
+    <driverClass>RimArt.JobDriver_CastFlameGauntlet</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>

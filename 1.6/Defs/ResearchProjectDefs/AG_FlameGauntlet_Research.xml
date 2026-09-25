@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Flame Gauntlet kit: machined iron and a chemfuel burner, so industrial and after machining,
+       as the water gun is. It sits in this mod's column at 8.00/9.00, under the water gun
+       (8.00/7.80); the used slots are 7.00 at 4.20, 5.40, 6.60, 7.80, 9.00, 10.20, 11.40, 8.00/7.80
+       and 13.00/2.60. Not checked against vanilla or other mods' projects in the research tab. -->
+  <ResearchProjectDef>
+    <defName>AG_FlameGauntlet</defName>
+    <label>flame gauntlet</label>
+    <description>Machine flame gauntlets: an iron gauntlet that pulls fire into its palm and throws it back out as a cone of flame.</description>
+    <baseCost>1200</baseCost>
+    <techLevel>Industrial</techLevel>
+    <prerequisites>
+      <li>Machining</li>
+    </prerequisites>
+    <researchViewX>8.00</researchViewX>
+    <researchViewY>9.00</researchViewY>
+  </ResearchProjectDef>
+
+</Defs>

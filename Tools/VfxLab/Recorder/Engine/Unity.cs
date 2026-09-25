@@ -32,6 +32,12 @@ namespace UnityEngine
         public static float Dot(Vector2 lhs, Vector2 rhs) => lhs.x * rhs.x + lhs.y * rhs.y;
     }
 
+    public struct Vector2Int
+    {
+        public int x, y;
+        public Vector2Int(int x, int y) { this.x = x; this.y = y; }
+    }
+
     public struct Vector3
     {
         public float x, y, z;

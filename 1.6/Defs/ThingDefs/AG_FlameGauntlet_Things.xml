@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Flame Gauntlet kit: an iron gauntlet held as the melee weapon. It eats fire (Devour) and
+       spends it as a cone of flame (Release); one meter, Heat, holds what it has eaten. Rules agreed
+       2026-09-25; the numbers are placeholders from the sketches (Tools/VfxLab/web/sketches/
+       flame-gauntlet-*.js, lib/flame-gauntlet.js) and every one is a field here or in
+       AG_FlameGauntlet_Abilities.xml.
+
+       Heat 0..20. Devour +1 per burning cell, +2 per burning pawn; +1 per fire hit the wearer's
+       immunity blocks; chemfuel 1 = +2 on the player's order, only up to 14. Release -1 per cone
+       cell, needs 5. One heat lost every 30 s. At 15 or more: AG_FlameOverheating and a burn on the
+       gauntlet arm every 5 s. The wearer never catches fire and takes no fire damage.
+
+       The comps are listed with Inherit="False" because CompProperties_FlameGauntlet is the weapon's
+       CompEquippable: Core's reload jobs look for IReloadableComp on Pawn_EquipmentTracker.PrimaryEq.
+       BaseWeapon's other two comps are repeated here; if BaseWeapon gains one, add it. No weaponTags,
+       so raiders never carry it. -->
+  <ThingDef ParentName="BaseWeapon">
+    <defName>AG_FlameGauntlet</defName>
+    <label>flame gauntlet</label>
+    <description>A blackened iron gauntlet with brass seams and vents at the elbow, worn on one arm and used as the weapon. It eats fire and spits it back. In melee it is an iron fist.\n\nWhile it is equipped, the wielder can use Devour and Release, and cannot catch fire or be hurt by it.\n\nDevour pulls every fire within 3 tiles of a spot into the open palm, burning colonists included, and turns it into heat: 1 per burning tile, 2 per burning person, up to 20. Release spends heat as a cone of fire 6 tiles long and 3 wide, 1 heat per tile, at least 5. Every fire hit the wielder shrugs off adds 1 heat. Heat drains by 1 every 30 seconds.\n\nAt 15 heat or more the wielder overheats: 20% slower, 20% clumsier, and the gauntlet arm takes a burn every 5 seconds until the heat is spent.\n\nRight-click chemfuel to feed it: 1 chemfuel gives 2 heat, up to 14.</description>
+    <graphicData>
+      <texPath>RimArt/FlameGauntlet/FlameGauntlet</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.9</drawSize>
+    </graphicData>
+    <techLevel>Industrial</techLevel>
+    <smeltable>true</smeltable>
+    <!-- What smelting gives part of back; the steel of AG_MakeFlameGauntlet. -->
+    <costList>
+      <Steel>70</Steel>
+      <ComponentIndustrial>2</ComponentIndustrial>
+    </costList>
+    <relicChance>0</relicChance>
+    <stackLimit>1</stackLimit>
+    <thingCategories>
+      <li>WeaponsMelee</li>
+    </thingCategories>
+    <weaponClasses>
+      <li>Melee</li>
+    </weaponClasses>
+    <tradeability>All</tradeability>
+    <statBases>
+      <MarketValue>450</MarketValue>
+      <Mass>3</Mass>
+      <MaxHitPoints>200</MaxHitPoints>
+      <Flammability>0</Flammability>
+      <DeteriorationRate>1</DeteriorationRate>
+      <Beauty>0</Beauty>
+    </statBases>
+    <comps Inherit="False">
+      <li Class="RimArt.CompProperties_FlameGauntlet">
+        <maxHeat>20</maxHeat>
+        <overheatAt>15</overheatAt>
+        <secondsPerHeatLost>30</secondsPerHeatLost>
+        <heatPerCell>1</heatPerCell>
+        <heatPerPawn>2</heatPerPawn>
+        <heatPerBlockedHit>1</heatPerBlockedHit>
+        <heatPerConeCell>1</heatPerConeCell>
+        <minReleaseHeat>5</minReleaseHeat>
+        <overheatBurnSeconds>5</overheatBurnSeconds>
+        <overheatBurnSeverity>1</overheatBurnSeverity>
+        <ammoDef>Chemfuel</ammoDef>
+        <heatPerAmmo>2</heatPerAmmo>
+        <reloadUpTo>14</reloadUpTo>
+        <baseReloadTicks>90</baseReloadTicks>
+        <soundReload>Standard_Reload</soundReload>
+        <abilities>
+          <li>AG_FlameGauntlet_Devour</li>
+          <li>AG_FlameGauntlet_Release</li>
+        </abilities>
+      </li>
+      <li Class="CompProperties_Forbiddable"/>
+      <li Class="CompProperties_Styleable"/>
+    </comps>
+    <tools>
+      <li>
+        <label>fist</label>
+        <capacities><li>Blunt</li></capacities>
+        <power>12</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
+</Defs>
