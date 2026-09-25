@@ -106,4 +106,16 @@
     <researchViewY>9.00</researchViewY>
   </ResearchProjectDef>
 
+  <!-- The Bubble Pipe kit: a bamboo pipe and a jar of soap. Cheap and low-tech, so no
+       prerequisites and half the cost of explosive tags. It sits at 7.00/10.20, below Bank Shot at 9.00. -->
+  <ResearchProjectDef>
+    <defName>AG_BubblePipe</defName>
+    <label>bubble pipe</label>
+    <description>Make bubble pipes: a bamboo blowpipe and a jar of soap solution. The wielder can blow drifting bubbles that burst on whoever touches them, or burst one on an enemy's face to blind it for a moment.</description>
+    <baseCost>500</baseCost>
+    <techLevel>Medieval</techLevel>
+    <researchViewX>7.00</researchViewX>
+    <researchViewY>10.20</researchViewY>
+  </ResearchProjectDef>
+
 </Defs>

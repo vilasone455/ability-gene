@@ -146,6 +146,8 @@ namespace RimArt
                 new Kit { Label = "Fūma Shuriken", Grant = GrantFumaShuriken },
                 new Kit { Label = "Tag scroll (Paper Bomb)", Grant = GrantTagScroll },
                 new Kit { Label = "Bank shot pistol", Grant = GrantBankShot },
+                new Kit { Label = "Bubble pipe", Grant = GrantBubblePipe },
+                new Kit { Label = "Water gun", Grant = GrantWaterGun },
                 new Kit { Label = "Shinra Tensei (repulsion eye)", Grant = GrantShinraTensei },
                 new Kit { Label = "Gravity Well (attraction eye)", Grant = GravityAcquisition.Grant },
 
@@ -268,6 +270,14 @@ namespace RimArt
         /// <summary>The ricochet pistol, with its charge ability ready; the research is finished so more can be made.</summary>
         private static string GrantBankShot(Pawn pawn)
             => GrantWeapon(pawn, "AG_BankShot", "AG_BankShot");
+
+        /// <summary>The pipe comes with a full jar of 10 blows; the research is finished so more can be made.</summary>
+        private static string GrantBubblePipe(Pawn pawn)
+            => GrantWeapon(pawn, "AG_BubblePipe", "AG_BubblePipe");
+
+        /// <summary>The gun comes with a full 30-unit bag; the research is finished so more can be made.</summary>
+        private static string GrantWaterGun(Pawn pawn)
+            => GrantWeapon(pawn, "AG_WaterGun", "AG_WaterGun");
 
         /// <summary>
         /// Puts a weapon in the pawn's hands, ready to use.

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Bubble Pipe kit (Utakata's soap-bubble pipe). Soap and breath only, no chakra. Every
+       balance number is a field here or in AG_BubblePipe_Abilities.xml; the numbers are placeholders.
+
+       The soap jar is part of the pipe: CompBubblePipe counts its blows, MapComponent_BubblePipe
+       draws it on the holder's hip with its level showing and refills it while the holder stands on
+       or next to a water cell. There is no ammunition item and no reload job.
+
+       The parent is BaseWeapon, as the Power Pole's: the recipe is AG_MakeBubblePipe, and
+       BaseWeapon's own comps (CompEquippable and the rest) are kept. No weaponTags, so raiders
+       never carry it. -->
+  <ThingDef ParentName="BaseWeapon">
+    <defName>AG_BubblePipe</defName>
+    <label>bubble pipe</label>
+    <description>A bamboo blowpipe and a small jar of soap solution on a strap, worn at the hip. The jar holds 10 blows.\n\nWhile it is equipped, the wielder can use Drifting Burst and Eye Pop. Drifting Burst blows 6 bubbles that drift toward the target and burst on the first pawn to touch them, the wielder's allies included. Eye Pop bursts one bubble on a pawn's face and leaves soap in its eyes for a few seconds.\n\nThe jar refills, 1 blow per second, while the wielder stands on or next to water. In melee the pipe is a weak blunt poke.</description>
+    <graphicData>
+      <texPath>RimArt/BubblePipe/BubblePipe</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.0</drawSize>
+    </graphicData>
+    <techLevel>Medieval</techLevel>
+    <smeltable>false</smeltable>
+    <burnableByRecipe>true</burnableByRecipe>
+    <relicChance>0</relicChance>
+    <stackLimit>1</stackLimit>
+    <thingCategories>
+      <li>WeaponsMelee</li>
+    </thingCategories>
+    <weaponClasses>
+      <li>Melee</li>
+    </weaponClasses>
+    <tradeability>All</tradeability>
+    <statBases>
+      <MarketValue>90</MarketValue>
+      <Mass>0.6</Mass>
+      <MaxHitPoints>60</MaxHitPoints>
+      <Flammability>1</Flammability>
+      <DeteriorationRate>2</DeteriorationRate>
+      <Beauty>0</Beauty>
+    </statBases>
+    <comps>
+      <li Class="RimArt.CompProperties_BubblePipe">
+        <maxBlows>10</maxBlows>
+        <refillPerSecond>1</refillPerSecond>
+        <abilities>
+          <li>AG_BubblePipe_DriftingBurst</li>
+          <li>AG_BubblePipe_EyePop</li>
+        </abilities>
+      </li>
+    </comps>
+    <tools>
+      <li>
+        <label>pipe</label>
+        <capacities><li>Blunt</li></capacities>
+        <power>5</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
+</Defs>

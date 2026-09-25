@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The water gun's abilities, granted while the weapon is equipped (CompWaterGun). Numbers are
+       placeholders; every balance number is a field here.
+
+       warmupTime is the picture's: 0.25 s to raise the gun for Stream Shot, 0.25 + 0.35 s pump
+       wind-up for Hydro Pump. The cast job (JobDriver_CastWaterGun) then holds the caster until the
+       gun is back at rest: about 0.8 s more for a 6-tile Stream Shot, 1.2 s more for Hydro Pump.
+
+       Sounds are vanilla placeholders: Stream Shot Interact_BeatFire; Hydro Pump AcidSpray_Warmup
+       and AcidSpray_Resolve (Biotech). -->
+
+  <AbilityDef Name="AG_WaterGunAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastWaterGun</jobDef>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_WaterGunAbilityBase">
+    <defName>AG_WaterGun_StreamShot</defName>
+    <label>stream shot</label>
+    <description>Fire one jet of water at a pawn or a tile up to 20 tiles away. It always lands. A pawn takes 6 blunt damage and is soaked for 60 seconds: 10% slower, feels the cold sooner, cannot catch fire. Fire on the target pawn and on the target tile is put out. Uses 1 unit of water. Needs line of sight.</description>
+    <iconPath>RimArt/WaterGun/IconStreamShot</iconPath>
+    <cooldownTicksRange>0</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>20.9</range>
+      <warmupTime>0.25</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <soundCast>Interact_BeatFire</soundCast>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_StreamShot">
+        <cost>1</cost>
+        <damage>6</damage>
+        <armorPenetration>0</armorPenetration>
+        <soakedSeconds>60</soakedSeconds>
+        <followRadius>1.5</followRadius>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- The target tile gives only the direction; the cone is always the length below. range is
+       the length, so a click inside the cone is accepted. -->
+  <AbilityDef ParentName="AG_WaterGunAbilityBase">
+    <defName>AG_WaterGun_HydroPump</defName>
+    <label>hydro pump</label>
+    <description>Pump the bag up to pressure and blast a cone of water 5 tiles long and 3 wide at its end toward a tile. Every pawn in the cone that the wielder can see, allies included, takes 8 blunt damage, is pushed 3 tiles away from the gun, knocked down for 2 seconds and soaked for 60 seconds. Fire in the cone is put out. Uses 10 units of water.</description>
+    <iconPath>RimArt/WaterGun/IconHydroPump</iconPath>
+    <cooldownTicksRange>720</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>5.9</range>
+      <warmupTime>0.6</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <soundCast>AcidSpray_Resolve</soundCast>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <warmupStartSound>AcidSpray_Warmup</warmupStartSound>
+    <comps>
+      <li Class="RimArt.CompProperties_HydroPump">
+        <cost>10</cost>
+        <length>5</length>
+        <width>3</width>
+        <pushCells>3</pushCells>
+        <knockdownSeconds>2</knockdownSeconds>
+        <damage>8</damage>
+        <armorPenetration>0</armorPenetration>
+        <soakedSeconds>60</soakedSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

@@ -66,6 +66,16 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Bubble Pipe", Prefix = "Bubble Pipe:", Component = typeof(MapComponent_BubblePipePreview), Clock = "seconds",
+                Phases = label => label.Contains("eye pop") ? EyePopPhases() : DriftingBurstPhases(),
+            },
+            new Kit
+            {
+                Name = "Water Gun", Prefix = "Water Gun:", Component = typeof(MapComponent_WaterGunPreview), Clock = "seconds",
+                Phases = label => label.Contains("pump") ? PumpPhases() : StreamPhases(),
+            },
+            new Kit
+            {
                 Name = "Shadow Plexus", Prefix = "Shadow Plexus:", Component = typeof(MapComponent_ShadowPlexusPreview), Clock = "seconds",
                 Phases = label => label.Contains("imitation") ? ImitationPhases(label.Contains("cut") ? ImitationEnd.Cut : label.Contains("dark") ? ImitationEnd.Dark : ImitationEnd.Released)
                     : label.Contains("seam") ? SeamPhases(label.Contains("rescue") ? SeamScene.Rescue : SeamScene.Rusher)
@@ -350,6 +360,30 @@ namespace RimArt.VfxLab
             return phases.ToArray();
         }
 
+        private static Phase[] StreamPhases()
+        {
+            float d = WaterGunStreamTiming.ScriptDistance, hold = WaterGunStreamTiming.ScriptHold;
+            return new[]
+            {
+                new Phase("Rest", 0f),
+                new Phase("Raise", WaterGunStreamTiming.Raise0),
+                new Phase("Fire", WaterGunStreamTiming.Fire),
+                new Phase("Hit", WaterGunStreamTiming.Hit(d)),
+                new Phase("Lower", WaterGunStreamTiming.Lower0(d, hold)),
+            };
+        }
+
+        private static Phase[] PumpPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Raise", WaterGunPumpTiming.Raise0),
+            new Phase("Pump", WaterGunPumpTiming.Pump0),
+            new Phase("Blast", WaterGunPumpTiming.Blast),
+            new Phase("Spray ends", WaterGunPumpTiming.SprayEnd),
+            new Phase("Up", WaterGunPumpTiming.Up(WaterGunPumpTiming.ScriptDown)),
+            new Phase("Lower", WaterGunPumpTiming.Lower0(WaterGunPumpTiming.ScriptGunHold)),
+        };
+
         private static Phase[] TagThrowPhases() => new[]
         {
             new Phase("Tear off", 0f),
@@ -375,6 +409,27 @@ namespace RimArt.VfxLab
             new Phase("Held", PaperBombShroudTiming.FirstLand),
             new Phase("Hand seal", PaperBombShroudTiming.SealAt(PaperBombShroudTiming.ScriptHeld)),
             new Phase("Burst", PaperBombShroudTiming.BurstAt(PaperBombShroudTiming.ScriptHeld)),
+        };
+
+        private static Phase[] DriftingBurstPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Raise", BubblePipeGraphics.Lead),
+            new Phase("Blow", BubblePipeDriftingBurstTiming.BlowAt),
+            new Phase("Drift", BubblePipeDriftingBurstTiming.AllOutAt(BubblePipeDriftingBurstTiming.ScriptCount)),
+            new Phase("Expire", BubblePipeDriftingBurstTiming.ExpireAt(BubblePipeDriftingBurstTiming.ScriptLife)),
+            new Phase("Lower", BubblePipeDriftingBurstTiming.ScriptLowerAt(BubblePipeDriftingBurstTiming.ScriptLife)),
+        };
+
+        private static Phase[] EyePopPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Raise", BubblePipeGraphics.Lead),
+            new Phase("Blow", BubblePipeEyePopTiming.BlowAt),
+            new Phase("Fly", BubblePipeEyePopTiming.LaunchAt),
+            new Phase("Hit", BubblePipeEyePopTiming.ScriptHitAt),
+            new Phase("Clear", BubblePipeEyePopTiming.ScriptHitAt + BubblePipeEyePopTiming.ScriptDebuff),
+            new Phase("Lower", BubblePipeEyePopTiming.ScriptLowerAt),
         };
 
         private static Phase[] ThrustPhases() => new[]

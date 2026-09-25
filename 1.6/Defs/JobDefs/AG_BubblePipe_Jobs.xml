@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The bubble pipe's cast job. neverShowWeapon: while the job runs the picture draws the pipe
+       (raised to the mouth, then lowered), so the held pipe is not drawn as well. -->
+  <JobDef>
+    <defName>AG_CastBubblePipe</defName>
+    <driverClass>RimArt.JobDriver_CastBubblePipe</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The bubble pipe's abilities, granted while the weapon is equipped (CompBubblePipe). Every
+       balance number is a field here; the numbers are placeholders.
+
+       warmupTime 0.45 is when the blow starts in the picture (BubblePipeDriftingBurstTiming.BlowAt:
+       0.2 s at rest, 0.25 s raising the pipe). The cast job (JobDriver_CastBubblePipe) then holds
+       the caster until the pipe is lowered: 1.85 s in all for Drifting Burst with 6 bubbles, 1.05 s
+       for Eye Pop. -->
+
+  <AbilityDef Name="AG_BubblePipeAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastBubblePipe</jobDef>
+    <!-- Placeholder for a blow sound: Core's beat-fire pat, played when the warmup ends. -->
+    <soundCast>Interact_BeatFire</soundCast>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+  </AbilityDef>
+
+  <!-- The target tile sets only the direction. Range 6.9 is about as far as a bubble drifts:
+       0.93 from the feet to the pipe's tip, plus 0.7 cells/s for 8 s. -->
+  <AbilityDef ParentName="AG_BubblePipeAbilityBase">
+    <defName>AG_BubblePipe_DriftingBurst</defName>
+    <label>drifting burst</label>
+    <description>Blow 6 soap bubbles toward a tile. They leave the pipe one after another and drift that way at 0.7 tiles per second, fanning out over 50 degrees and floating at about half a tile up, for 8 seconds.\n\nThe first pawn other than the wielder to touch a bubble pops it: 5 blunt damage and a 1 second stagger to every pawn within 0.8 tiles, allies included. A bubble that drifts into a wall pops harmlessly, and bubbles nobody touched pop harmlessly after 8 seconds.\n\nUses 2 blows of soap.</description>
+    <iconPath>RimArt/BubblePipe/IconDriftingBurst</iconPath>
+    <cooldownTicksRange>600</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>6.9</range>
+      <warmupTime>0.45</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>true</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_DriftingBurst">
+        <blows>2</blows>
+        <count>6</count>
+        <spreadDegrees>50</spreadDegrees>
+        <driftSpeed>0.7</driftSpeed>
+        <lifeSeconds>8</lifeSeconds>
+        <touchRadius>0.56</touchRadius>
+        <blastRadius>0.8</blastRadius>
+        <damage>5</damage>
+        <armorPenetration>0</armorPenetration>
+        <staggerTicks>60</staggerTicks>
+        <staggerMoveSpeedFactor>0.17</staggerMoveSpeedFactor>
+        <soundPop>Standard_Drop</soundPop>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- The hit is decided at cast; the bubble's flight at 5 tiles/s is only the picture and the
+       delay before the soap lands (1.2 s at 6 tiles). Mechanoids cannot be targeted. -->
+  <AbilityDef ParentName="AG_BubblePipeAbilityBase">
+    <defName>AG_BubblePipe_EyePop</defName>
+    <label>eye pop</label>
+    <description>Blow one soap bubble at a pawn up to 8 tiles away. It always reaches the face and bursts there: soap in the eyes for 5 seconds. Shooting accuracy -30%, melee hit chance halved, move speed -30%. No damage.\n\nUses 1 blow of soap. Needs line of sight.</description>
+    <iconPath>RimArt/BubblePipe/IconEyePop</iconPath>
+    <cooldownTicksRange>480</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>8.9</range>
+      <warmupTime>0.45</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>false</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_EyePop">
+        <blows>1</blows>
+        <flightSpeed>5</flightSpeed>
+        <debuffSeconds>5</debuffSeconds>
+        <hediff>AG_SoapInTheEyes</hediff>
+        <soundHit>Standard_Drop</soundHit>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Water Gun kit. Numbers are placeholders from the sketches' headers
+       (Tools/VfxLab/web/sketches/water-gun-*.js); every balance number is a field here or in
+       AG_WaterGun_Abilities.xml and AG_WaterGun_Hediffs.xml.
+
+       The parent is BaseWeapon, as the tag scroll's is: made by AG_MakeWaterGun, not a recipeMaker.
+       It has no shooting verb. Stream Shot is its attack; in melee it is a weak pistol-whip, as
+       vanilla guns are. The water bag is part of the gun (CompWaterGun) and is drawn on the
+       holder's back with its level showing; it is not an apparel item. -->
+  <ThingDef ParentName="BaseWeapon">
+    <defName>AG_WaterGun</defName>
+    <label>water gun</label>
+    <description>A pump-action water gun fed by a hose from a 30-unit water bag worn on the back. The bag's level shows on the wearer.\n\nWhile it is equipped, the wielder can use Stream Shot (1 unit: a jet at a pawn or tile up to 20 tiles away, 6 blunt damage, soaks, puts out fire) and Hydro Pump (10 units: a cone 5 tiles long and 3 wide that pushes pawns 3 tiles, knocks them down for 2 seconds, soaks them and puts out fire). A soaked pawn moves 10% slower, feels the cold sooner and cannot catch fire for 60 seconds.\n\nThe bag refills 10 units a second while the wielder stands on or next to water, and 1 unit every 5 seconds outdoors in rain. In melee the gun is a weak blunt weapon.</description>
+    <graphicData>
+      <texPath>RimArt/WaterGun/WaterGun</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.0</drawSize>
+    </graphicData>
+    <techLevel>Industrial</techLevel>
+    <smeltable>true</smeltable>
+    <relicChance>0</relicChance>
+    <stackLimit>1</stackLimit>
+    <thingCategories>
+      <li>WeaponsMelee</li>
+    </thingCategories>
+    <weaponClasses>
+      <li>Melee</li>
+    </weaponClasses>
+    <tradeability>All</tradeability>
+    <statBases>
+      <MarketValue>250</MarketValue>
+      <Mass>1.6</Mass>
+      <MaxHitPoints>100</MaxHitPoints>
+      <Flammability>0.4</Flammability>
+      <DeteriorationRate>1</DeteriorationRate>
+      <Beauty>0</Beauty>
+    </statBases>
+    <comps>
+      <li Class="RimArt.CompProperties_WaterGun">
+        <capacity>30</capacity>
+        <refillPerSecondNearWater>10</refillPerSecondNearWater>
+        <refillPerSecondInRain>0.2</refillPerSecondInRain>
+        <minRainRate>0.1</minRainRate>
+        <abilities>
+          <li>AG_WaterGun_StreamShot</li>
+          <li>AG_WaterGun_HydroPump</li>
+        </abilities>
+      </li>
+    </comps>
+    <tools>
+      <li>
+        <label>grip</label>
+        <capacities><li>Blunt</li></capacities>
+        <power>7</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+      <li>
+        <label>nozzle</label>
+        <capacities><li>Poke</li></capacities>
+        <power>6</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
+  <!-- A pawn Hydro Pump pushes. It slides along the ground for as long as the picture's slide
+       takes, 0.4 s (WaterGunPumpTiming.Slide), easing out as the picture's smooth() does. No height. -->
+  <ThingDef ParentName="PawnFlyerBase">
+    <defName>AG_WaterGunPushed</defName>
+    <label>washed back</label>
+    <thingClass>PawnFlyer</thingClass>
+    <pawnFlyer>
+      <flightDurationMin>0.4</flightDurationMin>
+      <flightSpeed>1000</flightSpeed>
+      <heightFactor>0</heightFactor>
+      <progressCurve>
+        <points>
+          <li>(0, 0)</li>
+          <li>(0.2, 0.104)</li>
+          <li>(0.4, 0.352)</li>
+          <li>(0.6, 0.648)</li>
+          <li>(0.8, 0.896)</li>
+          <li>(1, 1)</li>
+        </points>
+      </progressCurve>
+    </pawnFlyer>
+  </ThingDef>
+
+</Defs>
