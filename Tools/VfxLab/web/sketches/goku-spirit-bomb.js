@@ -21,8 +21,8 @@
 //   grind 0.3 to 0.75 s; white frame 0.03 to 0.09 s; dome holds 0.9 to 2 s before it bursts (the Dome stands slider is the full-charge value);
 //   flecks in the burst 120 to 420; camera shake 0.05 to 0.2; cracks 5 to 14; pillars 0 to 10;
 //   thrown rocks 5 to 32 and they fly 0.5x to 1.2x as high; dust rings 1 or 2;
-//   column 2.5 + 1.9 x radius + up to 5 cells; burn streaks 8 to 26; rings left across the flight
-//   path 2 to 7. While it is channelled: above charge
+//   column 2.5 + 1.9 x radius + up to 5 cells; burn streaks 8 to 26. While it is
+//   channelled: above charge
 //   0.3 pebbles lift off the ground round the caster (up to 14) and wind rings run out from the
 //   caster's feet; above 0.5 the camera trembles every 0.5 s. The numbers in the order below are
 //   the default run's.
@@ -34,8 +34,10 @@
 //         ball forms high over the hands. Wisps of light leave the ground up to 10 cells round the
 //         caster, rise and curve into it. The ball climbs as it grows (its centre is 2.2 + 1.6 x
 //         radius cells up), so it never covers the caster. Blue light on the floor under it.
-//         The ball is never still: a flame edge that licks round its rim, 3 tilting orbit lines that
-//         make it read as a turning sphere, 4 arcs and a two-armed spiral turning on its face, short
+//         The ball is made of the same stuff as the dome it becomes: the same ring of flame round its
+//         rim (28 pointed tips, flaring when a lender joins) and the same sphere shading (a pale middle
+//         toward the light, a deep blue limb darker away from it, a highlight). It is never still: 3
+//         tilting orbit lines that make it read as a turning sphere, 4 arcs and a two-armed spiral turning on its face, short
 //         lightning that crawls round the rim and re-rolls every 0.22 s, flashes where wisps land,
 //         a halo ring shed every 0.9 s, motes circling it, a core that beats.
 //   1.10  the lenders join one by one, 0.7 s apart: a hand goes up, the pawn glows, a ribbon of
@@ -43,10 +45,13 @@
 //         join makes the ball surge: it swells 14% for 0.45 s, flashes, and throws a ring.
 //   6.30  throw: over 0.25 s the ball draws back and up 0.5 cells, the arms come down, the ribbons
 //         let go
-//   6.55  flight 1.4 s, slow then fast. The ball stretches along its path (up to 16%), spins 3x
-//         faster, carries a bow arc in front and a wavy tapered tail behind; 6 rings open across the
-//         path where it passed, sparks fall behind it, and over the last 45% dust is blown out from
-//         under it along the ground.
+//   6.55  flight 1.4 s, slow then fast. It is slow and heavy, so nothing says speed. The ball
+//         stretches along its path (up to 16%) and spins 3x faster; the flames on its back half sweep
+//         back, up to 2.5 times longer, and 20 wisps break off them and stream behind (0.4 s each)
+//         over a soft glow trail; a soft bright front where it pushes the air; sparks fall behind
+//         it; its pool of light on the floor tightens and brightens as it comes down. Over the last
+//         45% it presses the air down: a soft ring spreads over the floor from under it every 0.2 s,
+//         and dust is blown out along the ground.
 //   7.95  the grind, 0.6 s: the ball flattens against the ground and shakes; 16 sparks spray along
 //         the floor; 12 jagged cracks of light run out (5 of them fork); 10 chunks of ground lift and
 //         tremble; lines of light run inward from the blast edge; the floor inside the radius
@@ -117,7 +122,7 @@ import {
   Ki, KiDeep, KiSky, KiIce, White, Gi, Ally, Dust, Ink, Skin, EnemyColour, Lift, pawnLayer, pawn, rock, ringAt, glint, line, strip, streak, whiteGlow, wallCell, smooth, clamp,
 } from './lib/goku.js';
 
-const disc = Meshes.disc(56, 'spirit bomb disc'), rim = Meshes.band(.95, 1, 56, 'spirit bomb rim'), orbit = Meshes.band(.93, 1, 56, 'spirit bomb orbit');
+const disc = Meshes.disc(56, 'spirit bomb disc'), orbit = Meshes.band(.93, 1, 56, 'spirit bomb orbit');
 const lerp = Mathf.Lerp, TAU = Math.PI * 2;
 // The dome's outline at radius 1 round its centre, as drawn: for an outward direction az the edge lies on the level circle
 // atan(Lift x sin az) up, and facing south on the floor circle. Built once; the body is a fan of it, churned and scaled.
@@ -130,12 +135,12 @@ const Outline = Array.from({ length: OutlineParts }, (_, i) => {
 const Lead = .3, Tail = 2, Swing = .25, Open = .4, Fade = 1, FullPower = 30;
 const FirstLender = .8, LenderEvery = .7, BaseRadius = 2, StartSize = .25, Hang = 2.2, Climb = 1.6;
 const Wisps = 16, WispsPerLender = 8, WispReach = 10;
-const SurgeTime = .45, SurgeSwell = .14, Stretch = .16, FlightSpin = 3, TailSpan = .3, FallSparks = 16;
+const SurgeTime = .45, SurgeSwell = .14, Stretch = .16, FlightSpin = 3, TailSpan = .3, FallSparks = 16, TrailWisps = 20;
 const GrindSparks = 16, Chunks = 10, MaxPebbles = 14;
-// The dome is the ball grown to the blast and exploding: its radius as a share of the blast radius (its fringe reaches
+// The dome is the ball grown to the blast and exploding (BallTips is the ball's own flame tips): its radius as a share of the blast radius (its fringe reaches
 // about 1.07 of its radius, so the fringe lands on the true radius), its rays, boiling blobs and flame tips, how long the burst
 // takes to clear it and how much it swells, and how long the flecks last at most.
-const DomeFill = .93, DomeRays = 16, DomeBoils = 18, FlameTips = 60, Pop = .25, PopSwell = .05, Scatter = 2;
+const DomeFill = .93, DomeRays = 16, DomeBoils = 18, FlameTips = 60, BallTips = 28, Pop = .25, PopSwell = .05, Scatter = 2;
 // The dome's heartbeat: the gap between pulses at the start of the hold and just before the burst.
 const PulseGap = [.3, .12];
 // A hit enemy falls this long after the front passes it.
@@ -144,7 +149,7 @@ const Fall = .3;
 // How long a small bomb's dome stands, as a share of a full one's (the "Dome stands" slider).
 const HoldShare = .45;
 const GrindTime = [.3, .75], WhiteTime = [.03, .09], Shake = [.05, .2], CrackCount = [5, 14], PillarCount = [0, 10];
-const RockCount = [5, 32], RockHeight = [.5, 1.2], StreakCount = [8, 26], PathRingCount = [2, 7], ColumnExtra = 5, FleckCount = [120, 420];
+const RockCount = [5, 32], RockHeight = [.5, 1.2], StreakCount = [8, 26], ColumnExtra = 5, FleckCount = [120, 420];
 const Animal = new Color(.62, .5, .33), Smoke = new Color(.28, .28, .3);
 // The mod's noisy soft spot, for burnt blotches and smoke.
 const puff = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.Transparent);
@@ -183,28 +188,68 @@ function domePulses(t, pace) {
   return list;
 }
 
+// A ring of flame round an outline, shared by the ball and the dome so they are made of the same stuff. Its outer edge is a
+// row of pointed tips; each rises and falls on its own, flickers, surges out once every 0.28 to 0.4 s, and is up to 1.6
+// times taller on the top edge, where flames rise. It is three nested strips, the widest and faintest blue outside and
+// narrower and whiter inside, over a soft blue glow, so it is light and not a flat band; at the top of each surge a wisp
+// breaks off the tip and drifts out and up. The strips start just inside the edge, under the body, so the flame comes from
+// behind it. rimAt(ang, k) is the outline's point at angle ang (0 east, anticlockwise) and k radii; count is how many tips;
+// boost multiplies their height; layer is where the ring starts, just under the body it edges. sweep, for something moving,
+// is { ang, amount }: ang the way it moves, and the tips on its back half are up to 1 + amount times longer, swept back.
+function flameRing(key, rimAt, r, s, alpha, count, boost, layer, sweep = null) {
+  for (let i = 0; i < 48; i++) sprite(rimAt(i / 48 * TAU, 1), r * .24, r * .24, Ki.withAlpha(.24 * alpha), glow, layer - .0001);
+  const tips = [];
+  for (let k = 0; k < count; k++) {
+    const phase = s / (.28 + .12 * rand(k + 71)) + rand(k + 72), u = phase - Math.floor(phase), flicker = .7 + .3 * Math.sin(s * (19 + 7 * rand(k + 73)) + k * 2.1);
+    const ang = (k + .5 + (rand(k + 70) - .5) * .8) / count * TAU;
+    tips.push({ ang, u, h: (.025 + .05 * rand(k + 74)) * flicker * (1 + .8 * Math.sin(u * Math.PI)) * (1 + .6 * Math.max(0, Math.sin(ang))) * boost * (sweep ? 1 + sweep.amount * Math.max(0, -Math.cos(ang - sweep.ang)) : 1) });
+  }
+  // How far the flame reaches past the edge at an angle: the tallest tip there, each a point with hollow sides, so neighbours
+  // leave a dip between them.
+  const half = TAU / count * .9, steps = count * 6, reach = [];
+  for (let i = 0; i <= steps; i++) {
+    const ang = i / steps * TAU; let h = 0;
+    tips.forEach(p => { const d = Math.abs(Math.atan2(Math.sin(ang - p.ang), Math.cos(ang - p.ang))) / half; if (d < 1) h = Math.max(h, p.h * Math.pow(1 - d, 1.8)); });
+    reach.push(h);
+  }
+  [[1, Ki, .35], [.6, KiSky, .45], [.3, White, .5]].forEach(([share, colour, a], j) => {
+    const inner = [], outer = [];
+    for (let i = 0; i <= steps; i++) { const ang = i / steps * TAU; inner.push(rimAt(ang, .97)); outer.push(rimAt(ang, 1.01 + reach[i] * share)); }
+    strip(`${key} flame ${j}`, inner, outer, colour.withAlpha(a * alpha), whiteGlow, layer + j * .0002);
+  });
+  tips.forEach(p => {
+    if (p.u <= .5) return;
+    const v = (p.u - .5) / .5, from = rimAt(p.ang, 1.01 + p.h), to = rimAt(p.ang, 1.01 + p.h * 1.8), size = r * (.07 - .035 * v);
+    sprite({ x: lerp(from.x, to.x, v), z: lerp(from.z, to.z, v) + .4 * v }, size, size, KiIce.withAlpha(.6 * (1 - v) * alpha), glow, layer + .0006);
+  });
+}
+
 // The ball. r is its radius in cells. look: v is the unit direction it is stretched along and
 // stretch how much (negative flattens it), spin multiplies every turning speed, surge 0..1 is the
 // swell of a lender joining.
-function bomb(at, r, s, alpha, { v = { x: 1, z: 0 }, stretch = 0, spin = 1, surge = 0 } = {}) {
+function bomb(at, r, s, alpha, { v = { x: 1, z: 0 }, stretch = 0, spin = 1, surge = 0, sun = { x: -.45, z: -.32 }, pace = 1, sweep = 0 } = {}) {
   if (r <= .01 || alpha <= 0) return;
   const beat = 1 + (.06 + .1 * surge) * Math.sin(s * 9), breathe = 1 + .05 * Math.sin(s * 3.1), turn = -Math.atan2(v.z, v.x) / Mathf.Deg2Rad;
   const sx = 1 + stretch, sz = 1 - .35 * stretch, time = s * spin;
   // A point of the round ball, stretched along v.
   const on = (dx, dz) => { const al = (dx * v.x + dz * v.z) * sx, ac = (-dx * v.z + dz * v.x) * sz; return { x: at.x + al * v.x - ac * v.z, z: at.z + al * v.z + ac * v.x }; };
   const round = (ang, rad) => on(Math.cos(ang) * rad, Math.sin(ang) * rad);
+  // Toward the light: opposite to where shadows fall.
+  const light = Math.hypot(sun.x, sun.z) || 1, lx = -sun.x / light, lz = -sun.z / light, sunAz = Math.atan2(lz, lx);
 
   sprite(at, r * 4.6 * breathe, r * 4.6 * breathe, Ki.withAlpha((.5 + .3 * surge) * alpha), glow, Y + .14);
-  // The flame edge: an outline that licks in and out round the rim.
-  const inner = [], outer = [], steps = 56;
-  for (let i = 0; i <= steps; i++) {
-    const ang = i / steps * TAU, lick = 1.07 + .06 * Math.sin(ang * 7 + time * 6) + .045 * Math.sin(ang * 13 - time * 9.5) + .03 * Math.sin(ang * 3 + time * 2.2) + .08 * surge;
-    inner.push(round(ang, r * .9)); outer.push(round(ang, r * lick));
+  // The same ring of flame as the dome's, with fewer tips; it flares when a lender joins. It runs on the dome's clock (pace).
+  // Taller than the dome's for its size, so they read on a small ball; in flight the back half sweeps back (sweep).
+  flameRing('spirit bomb', (ang, k) => round(ang, r * k), r, s * pace, alpha, BallTips, 1.6 + 1.2 * surge, Y + .1405, sweep > 0 ? { ang: Math.atan2(v.z, v.x), amount: sweep } : null);
+  // Shaded as a sphere, like the dome: the body, a pale middle as a soft gradient a little toward the light, a deep blue limb
+  // darker on the side away from the light, and a highlight toward it.
+  draw(disc, at.x, Y + .141, at.z, r * sx, r * sz, turn, KiSky.withAlpha(alpha));
+  sprite(on(lx * r * .15, lz * r * .15), r * 1.75 * sx, r * 1.75 * sz, KiIce.withAlpha(.85 * alpha), soft, Y + .142, turn);
+  for (let i = 0; i < 48; i++) {
+    const ang = i / 48 * TAU, shade = .5 - .5 * Math.cos(ang - sunAz);
+    sprite(round(ang, r * .9), r * .34, r * .34, KiDeep.withAlpha((.08 + .24 * shade) * alpha), soft, Y + .143);
   }
-  strip('spirit bomb flame', inner, outer, Ki.withAlpha(.75 * alpha), whiteGlow, Y + .1405);
-  draw(disc, at.x, Y + .141, at.z, r * sx, r * sz, turn, KiSky.withAlpha(.92 * alpha));
-  draw(disc, at.x, Y + .142, at.z, r * .86 * sx, r * .86 * sz, turn, KiIce.withAlpha(.9 * alpha));
-  draw(rim, at.x, Y + .143, at.z, r * sx, r * sz, turn, Ki.withAlpha(alpha));
+  sprite(on(lx * r * .45, lz * r * .45), r * .5, r * .4, White.withAlpha(.4 * alpha), glow, Y + .1432);
   // Orbit lines that tilt and turn: the ball reads as a sphere that is turning.
   Orbits.forEach(([tilt, speed, start], k) => {
     const q = Math.cos(time * tilt + k * 1.3), flat = Math.max(.08, Math.abs(q));
@@ -287,38 +332,9 @@ function blastDome(at, r, s, alpha, build, sun, beats, pace) {
     const phase = s / .5 + rand(i + 40), cycle = Math.floor(phase), u = phase - cycle;
     glint(`spirit bomb dome spark ${i}`, floor(rand(cycle * 13 + i) * TAU, r * (.98 + .35 * u)), .1 + .06 * rand(i), .9 * (1 - u) * alpha, KiIce, 45);
   }
-  // The flame edge: one ring of flame round the outline, so it never breaks into dots. Its outer edge is a row of pointed
-  // flame tips; each tip rises and falls on its own, flickers, surges out once every 0.28 to 0.4 s, and is up to 1.6 times
-  // taller on the top edge, where flames rise. It is three nested strips, the widest and faintest blue outside and narrower
-  // and whiter inside, over a soft blue glow, so it is light and not a flat band. At the top of each surge a wisp breaks off
-  // the tip and drifts out and up. The strips start just inside the edge, under the body, so the flame comes from behind it.
-  for (let i = 0; i < OutlineParts; i += 2) { const q = Outline[i], k = r * churn(i / OutlineParts * TAU); sprite({ x: at.x + q.x * k, z: at.z + q.z * k }, r * .24, r * .24, Ki.withAlpha(.24 * alpha), glow, Y + .1404); }
-  const tips = [];
-  for (let k = 0; k < FlameTips; k++) {
-    const phase = s / (.28 + .12 * rand(k + 71)) + rand(k + 72), u = phase - Math.floor(phase), flicker = .7 + .3 * Math.sin(s * (19 + 7 * rand(k + 73)) + k * 2.1);
-    const ang = (k + .5 + (rand(k + 70) - .5) * .8) / FlameTips * TAU;
-    tips.push({ ang, u, h: (.025 + .05 * rand(k + 74)) * flicker * (1 + .8 * Math.sin(u * Math.PI)) * (1 + .6 * Math.max(0, Math.sin(ang))) * (1 + .9 * flare + .5 * rush) });
-  }
-  // A point of the churning outline at any angle, as drawn, at k radii.
+  // The flame ring round the churning outline (flameRing): it flares when a pulse lands and surges in the rush.
   const rimAt = (ang, k) => { const el = Math.atan(Lift * Math.max(0, Math.sin(ang))); k *= churn(ang); return { x: at.x + Math.cos(ang) * Math.cos(el) * r * k, z: at.z + (Math.sin(ang) * Math.cos(el) + Lift * Math.sin(el)) * r * k }; };
-  // How far the flame reaches past the edge at an angle: the tallest tip there, each a point with hollow sides, so neighbours
-  // leave a dip between them.
-  const half = TAU / FlameTips * .9, steps = 360, reach = [];
-  for (let i = 0; i <= steps; i++) {
-    const ang = i / steps * TAU; let h = 0;
-    tips.forEach(p => { const d = Math.abs(Math.atan2(Math.sin(ang - p.ang), Math.cos(ang - p.ang))) / half; if (d < 1) h = Math.max(h, p.h * Math.pow(1 - d, 1.8)); });
-    reach.push(h);
-  }
-  [[1, Ki, .35], [.6, KiSky, .45], [.3, White, .5]].forEach(([share, colour, a], j) => {
-    const inner = [], outer = [];
-    for (let i = 0; i <= steps; i++) { const ang = i / steps * TAU; inner.push(rimAt(ang, .97)); outer.push(rimAt(ang, 1.01 + reach[i] * share)); }
-    strip(`spirit bomb dome flame ${j}`, inner, outer, colour.withAlpha(a * alpha), whiteGlow, Y + .1405 + j * .0002);
-  });
-  tips.forEach((p, k) => {
-    if (p.u <= .5) return;
-    const v = (p.u - .5) / .5, from = rimAt(p.ang, 1.01 + p.h), to = rimAt(p.ang, 1.01 + p.h * 1.8), size = r * (.07 - .035 * v);
-    sprite({ x: lerp(from.x, to.x, v), z: lerp(from.z, to.z, v) + .4 * v }, size, size, KiIce.withAlpha(.6 * (1 - v) * alpha), glow, Y + .1407);
-  });
+  flameRing('spirit bomb dome', rimAt, r, s, alpha, FlameTips, 1 + .9 * flare + .5 * rush, Y + .1405);
   // The body: the half sphere's churning outline filled, one fan built again each frame, opaque so nothing under it shows
   // through; then the pale inside as a soft gradient round its middle, then the limb: deep blue just inside the outline,
   // darkest on the side away from the sun.
@@ -420,7 +436,7 @@ export default {
     const up = (ground, h) => ({ x: ground.x, z: ground.z + h * Lift });
     const polar = (ang, d) => ({ x: target.x + Math.cos(ang) * d, z: target.z + Math.sin(ang) * d });
 
-    const cracks = t.count(CrackCount), pillars = t.count(PillarCount), rocks = t.count(RockCount), burns = t.count(StreakCount), pathRings = t.count(PathRingCount);
+    const cracks = t.count(CrackCount), pillars = t.count(PillarCount), rocks = t.count(RockCount), burns = t.count(StreakCount);
     const Grind = t.dome - t.hit, Cool = t.gone - t.open + Tail * .8, WhiteFrame = t.by(WhiteTime), chargeNow = clamp(powerAt(s, p, t) / FullPower);
     const power = powerAt(s, p, t), r = StartSize + p.sizePer * power, blast = BaseRadius + p.blastPer * power;
     const channelling = s >= t.cast && s < t.release, formed = smooth((s - t.cast) / .5);
@@ -460,7 +476,10 @@ export default {
       ringAt(target, blast, KiSky.withAlpha(Math.min(1, pulse + .4 * grind) * formed), Floor + .02);        // what a throw would cover right now
       draw(disc, target.x, Floor + .006, target.z, blast, blast, 0, KiDeep.withAlpha((.1 + .3 * grind * strobe) * formed), whiteGlow);
       const low = 1 - clamp(height / (hang + .01));
-      sprite(ground, (r * 3 + 2) * (1 + low), (r * 3 + 2) * (.8 + low), Ki.withAlpha((.32 + .4 * low) * formed), glow, Floor + .008);   // light under the ball
+      // The pool of light on the floor under the ball: wide and faint while it is high, tight and bright as it comes down, so
+      // the gap between the ball and its light shows its height.
+      sprite(ground, (r * 3 + 2) * (1.6 - .8 * low), (r * 3 + 2) * (1.3 - .6 * low), Ki.withAlpha((.18 + .5 * low) * formed), glow, Floor + .008);
+      sprite(ground, r * (1 + .6 * low), r * (.8 + .5 * low), KiIce.withAlpha(.45 * low * low * formed), glow, Floor + .0085);
     }
     // The scorch: the burn the blast leaves, which stays. It is burnt ground, not a drawn shape: a ragged edge of soft dark
     // blotches round the blast radius with a few gaps, uneven blackening inside that is darkest at the middle, and blast
@@ -618,46 +637,50 @@ export default {
       }
     }
 
-    // --- the ball in flight: rings left across its path, tail, falling sparks, bow arc, dust under it --------------------------------------
+    // --- the ball in flight: a trail of its own flames, falling sparks, a soft bright front, the air pressed down under it ----------------
+    // It is slow and heavy, so nothing here says speed: no tail strip, no rings across the path, no hard bow arc.
     const flying = flight > 0 && grind <= 0;
     const ahead = seenAt(Math.min(1, flight + .01)), before = seenAt(Math.max(0, flight - .01)), vl = Math.hypot(ahead.x - before.x, ahead.z - before.z) || 1;
     const v = flight > 0 ? { x: (ahead.x - before.x) / vl, z: (ahead.z - before.z) / vl } : { x: 0, z: -1 };
-    if (flight > 0 && s < t.dome) {
-      for (let n = 0; n < pathRings; n++) {
-        const w = (n + .7) / (pathRings + .7), age = s - (t.fly + p.fly * w); if (age < 0 || age >= .55) continue;
-        const u = age / .55, c = seenAt(w), e0 = seenAt(w - .01), e1 = seenAt(w + .01), deg = Math.atan2(e1.z - e0.z, e1.x - e0.x) / Mathf.Deg2Rad;
-        draw(orbit, c.x, Y + .132, c.z, r * (.18 + .25 * u), r * (1.1 + .9 * u), -deg, KiIce.withAlpha(.8 * (1 - u)));
-        draw(orbit, c.x, Y + .131, c.z, r * (.3 + .3 * u), r * (1.25 + 1 * u), -deg, Ki.withAlpha(.5 * (1 - u)), whiteGlow);
-      }
-      for (let i = 0; i < FallSparks; i++) {
-        const w = (i + .5) / FallSparks, age = s - (t.fly + p.fly * w), life = .5 + .4 * rand(i + 70); if (age < 0 || age >= life) continue;
-        const u = age / life, c = seenAt(w);
-        glint(`spirit bomb fall spark ${i}`, { x: c.x + (rand(i + 71) - .5) * r * 1.6, z: c.z + (rand(i + 72) - .5) * r * 1.6 - u * .8 }, .1 + .08 * rand(i), 1 - u, KiIce, 45);
-      }
+    if (flight > 0 && s < t.dome) for (let i = 0; i < FallSparks; i++) {
+      const w = (i + .5) / FallSparks, age = s - (t.fly + p.fly * w), life = .5 + .4 * rand(i + 70); if (age < 0 || age >= life) continue;
+      const u = age / life, c = seenAt(w);
+      glint(`spirit bomb fall spark ${i}`, { x: c.x + (rand(i + 71) - .5) * r * 1.6, z: c.z + (rand(i + 72) - .5) * r * 1.6 - u * .8 }, .1 + .08 * rand(i), 1 - u, KiIce, 45);
     }
     if (flying) {
-      const speed = clamp(flight * 3), pts = [], n = 16;
-      for (let j = 0; j <= n; j++) {
-        const w = Math.max(0, flight - TailSpan * flight * j / n), c = seenAt(w), wave = Math.sin(j * 1.1 - s * 28) * r * .12 * j / n;
-        pts.push({ x: c.x - v.z * wave, z: c.z + v.x * wave });
+      const speed = clamp(flight * 3), face = Math.atan2(v.z, v.x);
+      // A soft glow along the path behind it, shrinking and dimming: light, with no edge.
+      for (let j = 1; j <= 8; j++) {
+        const c = seenAt(Math.max(0, flight - TailSpan * flight * j / 8)), k = 1 - j / 9;
+        sprite(c, r * (.5 + 1.1 * k), r * (.5 + 1.1 * k), Ki.withAlpha(.35 * k * speed), glow, Y + .133);
       }
-      line('spirit bomb tail glow', pts, r * 2.3, Ki.withAlpha(.5 * speed), whiteGlow, Y + .133);
-      line('spirit bomb tail', pts, r * 1.2, KiIce.withAlpha(.55 * speed), whiteGlow, Y + .134);
-      const bow = [], face = Math.atan2(v.z, v.x);
-      for (let j = 0; j <= 12; j++) { const ang = face + (j / 12 - .5) * 1.9; bow.push({ x: ball.x + Math.cos(ang) * r * 1.35, z: ball.z + Math.sin(ang) * r * 1.35 }); }
-      line('spirit bomb bow', bow, r * .16 + .04, White.withAlpha(.75 * speed), whiteGlow, Y + .153, 'both');
-      // Dust blown out from under it once it is low.
-      if (flight > .55) for (let i = 0; i < 14; i++) {
-        const u = ((s - t.fly) * 2.2 + rand(i + 33)) % 1, side = i % 2 ? 1 : -1, d = r * .5 + u * (1.5 + rand(i + 34) * 1.5), back = rand(i + 35) * 1.5;
-        const at = { x: ground.x - ca * back - sa * side * d, z: ground.z - sa * back + ca * side * d };
-        sprite({ x: at.x, z: at.z + u * .3 }, .7 + u, .5 + u * .8, Dust.withAlpha(.45 * Math.sin(u * Math.PI) * clamp((flight - .55) / .2)), soft, Y + .005);
+      // Wisps break off its swept flames and stream behind, each for 0.4 s, drifting back and up as they fade.
+      for (let i = 0; i < TrailWisps; i++) {
+        const u = ((s - t.fly) / .4 + rand(i + 600)) % 1, then = seenAt(clamp((s - u * .4 - t.fly) / p.fly)), ang = face + Math.PI + (rand(i + 601) - .5) * 2.2;
+        const at = { x: then.x + Math.cos(ang) * r * 1.05 - v.x * u * r * .5, z: then.z + Math.sin(ang) * r * 1.05 - v.z * u * r * .5 + u * .4 }, size = r * (.12 + .1 * rand(i + 602)) * (1 - .5 * u);
+        sprite(at, size, size, KiIce.withAlpha(.6 * (1 - u) * speed), glow, Y + .1335);
+      }
+      // A soft bright front where it pushes the air.
+      for (let j = 0; j <= 6; j++) {
+        const ang = face + (j / 6 - .5) * 1.7;
+        sprite({ x: ball.x + Math.cos(ang) * r * 1.2, z: ball.z + Math.sin(ang) * r * 1.2 }, r * .6, r * .6, KiIce.withAlpha(.35 * speed * (1 - Math.abs(j / 6 - .5))), glow, Y + .153);
+      }
+      // Once it is low it presses the air down: a soft ring spreads over the floor from under it every 0.2 s, and dust is blown out.
+      if (flight > .55) {
+        const lowIn = clamp((flight - .55) / .2);
+        for (let n = 0; n < 3; n++) { const u = ((s - t.fly) / .6 + n / 3) % 1; ringAt(ground, r * (.8 + 1.4 * smooth(u)), KiIce.withAlpha(.45 * (1 - u) * lowIn), Floor + .025, false, whiteGlow); }
+        for (let i = 0; i < 14; i++) {
+          const u = ((s - t.fly) * 2.2 + rand(i + 33)) % 1, side = i % 2 ? 1 : -1, d = r * .5 + u * (1.5 + rand(i + 34) * 1.5), back = rand(i + 35) * 1.5;
+          const at = { x: ground.x - ca * back - sa * side * d, z: ground.z - sa * back + ca * side * d };
+          sprite({ x: at.x, z: at.z + u * .3 }, .7 + u, .5 + u * .8, Dust.withAlpha(.45 * Math.sin(u * Math.PI) * lowIn), soft, Y + .005);
+        }
       }
     }
     // Up to the detonation; from then on the ball is drawn as the dome, so bomb() runs once a frame.
     if (s >= t.cast && s < t.dome) {
       const swell = 1 + SurgeSwell * surge + .18 * grind + .05 * Math.sin(s * 60) * grind;
       const look = grind > 0 ? { v: { x: 0, z: -1 }, stretch: -.3 * sink, spin: FlightSpin + 3 * grind } : { v, stretch: Stretch * clamp(flight * 3), spin: 1 + (FlightSpin - 1) * clamp(flight * 3) + 1.5 * surge, surge };
-      bomb(ball, r * formed * swell, s, 1, look);
+      bomb(ball, r * formed * swell, s, 1, { ...look, sun, pace: p.domePace, sweep: grind > 0 ? 0 : 1.5 * clamp(flight * 3) });
     }
 
     // --- chunks of ground that lift in the grind, and the rocks the blast throws ------------------------------------------------------------
