@@ -91,4 +91,19 @@
     <researchViewY>7.80</researchViewY>
   </ResearchProjectDef>
 
+  <!-- The Bank Shot kit: the ricochet pistol (Defs/ThingDefs/AG_BankShot_Things.xml). A gun, so it
+       sits past gunsmithing, in this mod's column below explosive tags at 7.00/7.80. -->
+  <ResearchProjectDef>
+    <defName>AG_BankShot</defName>
+    <label>ricochet rounds</label>
+    <description>Make the bank shot pistol, a heavy pistol whose bullets bounce off walls. Its charged shot bounces off up to 3 walls and can hit a pawn the shooter cannot see.</description>
+    <baseCost>1000</baseCost>
+    <techLevel>Industrial</techLevel>
+    <prerequisites>
+      <li>Gunsmithing</li>
+    </prerequisites>
+    <researchViewX>7.00</researchViewX>
+    <researchViewY>9.00</researchViewY>
+  </ResearchProjectDef>
+
 </Defs>

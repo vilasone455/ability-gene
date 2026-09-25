@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Bank Shot's charge. The driver tells the picture the charge has begun when the warmup starts,
+       so the glow builds on the barrel over the 1.5 s warmup. The weapon stays shown: the pawn's own
+       gun is drawn aiming during the charge, and the picture draws only the glow at its muzzle. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastBankShot</defName>
+    <driverClass>RimArt.JobDriver_CastBankShot</driverClass>
+    <neverShowWeapon>false</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>

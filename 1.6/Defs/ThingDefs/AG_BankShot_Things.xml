@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Bank Shot kit: a heavy pistol whose bullets mirror off walls. Two modes and no toggle:
+       normal is the gun's own verb (below), charge is the ability AG_BankShot_Charge, granted while
+       the gun is equipped (CompBankShotGun). Every balance number is a field here or in
+       AG_BankShot_Abilities.xml; the numbers are placeholders. The mechanic is in the header of
+       Tools/VfxLab/web/sketches/bank-shot.js. -->
+
+  <!-- The normal bullet. Damage and the hit roll are vanilla Bullet. A bullet that meets a wall
+       (a building with Full fillage: walls, rock, closed doors) mirrors off the face once and flies
+       on up to reboundRange tiles; the first standing pawn on that line (not the shooter) is hit
+       with reboundHitChance, otherwise the rebound flies past to the next wall. -->
+  <ThingDef ParentName="BaseBullet">
+    <defName>AG_BankShot_Bullet</defName>
+    <label>bank shot bullet</label>
+    <thingClass>RimArt.Projectile_BankShot</thingClass>
+    <graphicData>
+      <texPath>RimArt/BankShot/Bullet</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <shaderType>TransparentPostLight</shaderType>
+    </graphicData>
+    <projectile>
+      <damageDef>Bullet</damageDef>
+      <damageAmountBase>12</damageAmountBase>
+      <armorPenetrationBase>0.18</armorPenetrationBase>
+      <stoppingPower>1</stoppingPower>
+      <speed>55</speed>
+    </projectile>
+    <modExtensions>
+      <li Class="RimArt.BankShotReboundExtension">
+        <reboundRange>12</reboundRange>
+        <reboundHitChance>0.5</reboundHitChance>
+      </li>
+    </modExtensions>
+  </ThingDef>
+
+  <!-- The gun. A revolver's accuracy and 12 sharp damage, range 19.9, 0.3 s aim and 0.9 s cooldown
+       (1.2 s between shots). Made at the machining table after AG_BankShot research, by the
+       recipe BaseHumanMakeableGun's recipeMaker generates, as every vanilla gun is: cost and work
+       are a revolver's plus about a third. No weaponTags, so no pawn kind spawns with one. -->
+  <ThingDef ParentName="BaseHumanMakeableGun">
+    <defName>AG_BankShot</defName>
+    <label>bank shot pistol</label>
+    <description>A heavy pistol whose bullets bounce off walls.\n\nNormal fire works like a revolver: 12 damage, range 20, 1.2 seconds between shots. A bullet that misses and hits a wall bounces off it once and can still hit someone on the rebound.\n\nWhile it is equipped, the wielder can use Bank Shot: charge the gun for 1.5 seconds and fire at a wall. The bullet bounces off up to 3 walls, then embeds in the next. It hits the first standing pawn it crosses, ally or enemy, for 18 damage plus 6 for every bounce, and needs no line of sight to that pawn. The whole path is shown while aiming.</description>
+    <graphicData>
+      <texPath>RimArt/BankShot/BankShot</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <uiIconScale>1.2</uiIconScale>
+    <soundInteract>Interact_Revolver</soundInteract>
+    <techLevel>Industrial</techLevel>
+    <statBases>
+      <WorkToMake>16000</WorkToMake>
+      <Mass>1.6</Mass>
+      <AccuracyTouch>0.80</AccuracyTouch>
+      <AccuracyShort>0.75</AccuracyShort>
+      <AccuracyMedium>0.45</AccuracyMedium>
+      <AccuracyLong>0.35</AccuracyLong>
+      <RangedWeapon_Cooldown>0.9</RangedWeapon_Cooldown>
+    </statBases>
+    <costList>
+      <Steel>40</Steel>
+      <ComponentIndustrial>3</ComponentIndustrial>
+    </costList>
+    <recipeMaker>
+      <researchPrerequisite>AG_BankShot</researchPrerequisite>
+      <skillRequirements>
+        <Crafting>5</Crafting>
+      </skillRequirements>
+    </recipeMaker>
+    <verbs>
+      <li>
+        <verbClass>Verb_Shoot</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>AG_BankShot_Bullet</defaultProjectile>
+        <warmupTime>0.3</warmupTime>
+        <range>19.9</range>
+        <soundCast>Shot_Revolver</soundCast>
+        <soundCastTail>GunTail_Light</soundCastTail>
+        <muzzleFlashScale>9</muzzleFlashScale>
+      </li>
+    </verbs>
+    <comps>
+      <li Class="RimArt.CompProperties_BankShotGun">
+        <abilities>
+          <li>AG_BankShot_Charge</li>
+        </abilities>
+      </li>
+    </comps>
+    <tools>
+      <li>
+        <label>grip</label>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>9</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+      <li>
+        <label>barrel</label>
+        <capacities>
+          <li>Blunt</li>
+          <li>Poke</li>
+        </capacities>
+        <power>9</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
+</Defs>

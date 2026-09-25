@@ -61,6 +61,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Bank Shot", Prefix = "Bank Shot:", Component = typeof(MapComponent_BankShotPreview), Clock = "seconds",
+                Phases = label => BankShotPhases(label.Contains("corridor") ? BankShotPath.Scene.Corridor : label.Contains("room") ? BankShotPath.Scene.Room : BankShotPath.Scene.Corner),
+            },
+            new Kit
+            {
                 Name = "Shadow Plexus", Prefix = "Shadow Plexus:", Component = typeof(MapComponent_ShadowPlexusPreview), Clock = "seconds",
                 Phases = label => label.Contains("imitation") ? ImitationPhases(label.Contains("cut") ? ImitationEnd.Cut : label.Contains("dark") ? ImitationEnd.Dark : ImitationEnd.Released)
                     : label.Contains("seam") ? SeamPhases(label.Contains("rescue") ? SeamScene.Rescue : SeamScene.Rusher)
@@ -138,6 +143,15 @@ namespace RimArt.VfxLab
         };
 
         public static Kit For(string label) => All.FirstOrDefault(k => label.StartsWith(k.Prefix, StringComparison.Ordinal));
+
+        private static Phase[] BankShotPhases(BankShotPath.Scene scene)
+        {
+            BankShotShot t = BankShotTiming.Script(scene, default);
+            var phases = new List<Phase> { new Phase("Aim", 0f), new Phase("Charge", BankShotTiming.Lead), new Phase("Fire", t.FireAt) };
+            for (int i = 0; i < t.Path.Bounces.Count; i++) phases.Add(new Phase("Bounce " + t.Path.Bounces[i].N, t.BounceAt(i)));
+            phases.Add(new Phase(t.Path.End == BankShotEnd.Hit ? "Hit" : t.Path.End == BankShotEnd.Embed ? "Embed" : "Spent", t.EndAt));
+            return phases.ToArray();
+        }
 
         private static Phase[] ImitationPhases(ImitationEnd end)
         {

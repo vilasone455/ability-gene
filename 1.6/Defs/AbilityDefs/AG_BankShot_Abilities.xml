@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Bank Shot's charge mode, granted while AG_BankShot is equipped (CompBankShotGun). Every
+       balance number is a field here; the numbers are placeholders.
+
+       warmupTime is the charge: the glow builds on the barrel for 1.5 s and the shot leaves at its
+       end. The target cell gives the aim only; the range is the targeter's reach, and the flight
+       itself is capped by the comp's range (30 cells, bounces included). No line of sight is
+       needed: the path, drawn while aiming, is what decides who is hit. -->
+  <AbilityDef>
+    <defName>AG_BankShot_Charge</defName>
+    <label>bank shot</label>
+    <description>Charge the pistol for 1.5 seconds, then fire toward a tile, usually a wall. The bullet bounces off walls and closed doors, up to 3 times, and embeds in the next wall it meets. It stops at the first standing pawn it crosses, ally or enemy: 18 sharp damage, plus 6 for every bounce before the hit (18, 24, 30, 36).\n\nIt flies 30 tiles at most, bounces included, and needs no line of sight to the pawn it hits. The whole path is drawn while aiming.</description>
+    <iconPath>RimArt/BankShot/IconBankShot</iconPath>
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastBankShot</jobDef>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <cooldownTicksRange>240</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>29.9</range>
+      <warmupTime>1.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>true</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_BankShotCharge">
+        <baseDamage>18</baseDamage>
+        <damagePerBounce>6</damagePerBounce>
+        <armorPenetrationPerDamage>0.015</armorPenetrationPerDamage>
+        <maxBounces>3</maxBounces>
+        <range>30</range>
+        <speed>28</speed>
+        <damageDef>Bullet</damageDef>
+        <soundFire>Shot_Revolver</soundFire>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>
