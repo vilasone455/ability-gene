@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The stone Mark throws (AnchorGeneExtension.stoneDef). It is an ordinary item, spawned
+       forbidden; ClapStone makes it vanish once its owner's gene no longer holds it (faded, taken
+       back, used by a long-range swap). No hit points, so nothing destroys it early and it does not
+       deteriorate outdoors. Drawn in real time because a swap moves it by setting its Position,
+       which a map-mesh item would not show until its section is rebuilt. Worth nothing and in no
+       stockpile category, so it is not counted, sold or looted. -->
+  <ThingDef ParentName="ResourceBase">
+    <defName>AG_ClapStone</defName>
+    <label>clap stone</label>
+    <description>A small stone thrown to be clapped with. Its owner can change places with it from anywhere on the map. It fades after about a day.</description>
+    <thingClass>RimArt.ClapStone</thingClass>
+    <graphicData>
+      <texPath>RimArt/Anchor/ClapStone</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.45</drawSize>
+    </graphicData>
+    <drawerType>RealtimeOnly</drawerType>
+    <tickerType>Rare</tickerType>
+    <useHitPoints>false</useHitPoints>
+    <stackLimit>1</stackLimit>
+    <countAsResource>false</countAsResource>
+    <tradeability>None</tradeability>
+    <healthAffectsPrice>false</healthAffectsPrice>
+    <statBases>
+      <MarketValue>0</MarketValue>
+      <Mass>0.2</Mass>
+      <Flammability>0</Flammability>
+    </statBases>
+  </ThingDef>
+
+</Defs>

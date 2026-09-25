@@ -18,6 +18,9 @@ namespace RimArt
     [HarmonyPatch(typeof(CompAbilityEffect_WithDest), nameof(CompAbilityEffect_WithDest.DrawHighlight))]
     public static class Patch_CompAbilityEffect_WithDest_DrawHighlight
     {
+        /// <summary>DrawRadiusRing has a precalculated cell list; past this it logs an error every frame.</summary>
+        private const float MaxRing = 50f;
+
         public static bool Prefix(CompAbilityEffect_WithDest __instance, LocalTargetInfo target)
         {
             CompAbilityEffect_DoubleClap clap = __instance as CompAbilityEffect_DoubleClap;
@@ -29,11 +32,13 @@ namespace RimArt
                 List<Anchor> anchors = gene.AnchorsRaw;
                 for (int i = 0; i < anchors.Count; i++)
                 {
-                    if (!gene.Holds(anchors[i])) continue;
+                    if (!gene.Holds(anchors[i]) || !anchors[i].Usable) continue;
 
                     GenDraw.DrawFieldEdges(new List<IntVec3> { anchors[i].CurrentCell },
                         AnchorGraphics.EdgeColor, null, null);
                 }
+                // Pawns inside this ring and in sight need no stone.
+                if (gene.DirectSwapRange <= MaxRing) GenDraw.DrawRadiusRing(clap.parent.pawn.Position, gene.DirectSwapRange);
             }
 
             if (target.IsValid) GenDraw.DrawTargetHighlight(target);

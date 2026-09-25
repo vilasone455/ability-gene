@@ -61,7 +61,8 @@ namespace RimArt
                 List<Anchor> anchors = gene.AnchorsRaw;
                 for (int j = 0; j < anchors.Count; j++)
                 {
-                    if (!gene.Holds(anchors[j])) continue;
+                    // A carried stone has no card; it is back when the stone is on the ground.
+                    if (!gene.Holds(anchors[j]) || !anchors[j].Usable) continue;
                     DrawMark(anchors[j], teleports);
                 }
             }

@@ -12,11 +12,12 @@ namespace RimArt
     }
 
     /// <summary>
-    /// Places or lifts a mark. Marking is the expensive half of the gene and the range on the
-    /// AbilityDef is the reason: you have to have been near the thing you intend to move, which
-    /// makes the clap a plan rather than a reaction.
+    /// Throws a stone onto a tile, or takes one back. The stone is a real item lying there (the
+    /// gene's stoneDef), spawned forbidden so nobody hauls it away. It is what the carrier claps
+    /// with when the other end is out of sight or out of range; pawns in sight need no stone, so
+    /// Mark never targets a pawn.
     ///
-    /// Marking something already marked lifts it instead, so a slot can be freed without
+    /// Targeting one of the carrier's own stones takes it back, so a slot can be freed without
     /// waiting out the duration.
     /// </summary>
     public class CompAbilityEffect_Mark : CompAbilityEffect
@@ -29,9 +30,10 @@ namespace RimArt
 
             Pawn caster = parent.pawn;
             Gene_Anchors gene = AnchorUtility.GeneOf(caster);
-            if (gene == null) return;
+            Map map = caster.Map;
+            if (gene == null || map == null) return;
 
-            var flicks = caster.Map?.GetComponent<MapComponent_MarkFlicks>();
+            var flicks = map.GetComponent<MapComponent_MarkFlicks>();
             Anchor existing = gene.AnchorFor(target);
             if (existing != null)
             {
@@ -42,16 +44,24 @@ namespace RimArt
                 return;
             }
 
-            int now = Find.TickManager.TicksGame;
-            Anchor anchor = target.Pawn != null
-                ? new Anchor(target.Pawn, now)
-                : new Anchor(target.Cell, now);
+            if (gene.StoneDef == null || !CanHoldStone(map, target.Cell) || gene.LiveCount >= gene.MaxAnchors)
+            {
+                flicks?.Ended(caster);
+                return;
+            }
 
+            Thing stone = ThingMaker.MakeThing(gene.StoneDef);
+            if (stone is ClapStone owned) owned.owner = caster;
+            GenSpawn.Spawn(stone, target.Cell, map);
+            stone.SetForbidden(true, false);
+
+            Anchor anchor = new Anchor(stone, Find.TickManager.TicksGame);
             gene.Add(anchor);
-            if (gene.Holds(anchor)) flicks?.Placed(caster, anchor);
-            Messages.Message("AG_AnchorPlaced".Translate(caster.LabelShort, anchor.Label),
-                caster, MessageTypeDefOf.NeutralEvent, false);
+            flicks?.Placed(caster, anchor);
         }
+
+        private static bool CanHoldStone(Map map, IntVec3 cell) =>
+            cell.IsValid && cell.InBounds(map) && cell.Standable(map);
 
         public override bool CanApplyOn(LocalTargetInfo target, LocalTargetInfo dest)
         {
@@ -62,24 +72,19 @@ namespace RimArt
         {
             Pawn caster = parent.pawn;
             Gene_Anchors gene = AnchorUtility.GeneOf(caster);
-            if (gene == null) return false;
+            if (gene == null || caster.Map == null) return false;
 
-            // Lifting an existing mark is always allowed, including when the carrier is full.
+            // Taking a stone back is always allowed, including when the carrier is full.
             if (gene.IsMarked(target)) return base.Valid(target, throwMessages);
 
-            if (target.Pawn == null)
+            if (!CanHoldStone(caster.Map, target.Cell))
             {
-                Map map = caster.Map;
-                IntVec3 cell = target.Cell;
-                if (map == null || !cell.IsValid || !cell.InBounds(map) || !cell.Standable(map))
+                if (throwMessages)
                 {
-                    if (throwMessages)
-                    {
-                        Messages.Message("AG_AnchorBadTile".Translate(),
-                            caster, MessageTypeDefOf.RejectInput, false);
-                    }
-                    return false;
+                    Messages.Message("AG_AnchorBadTile".Translate(),
+                        caster, MessageTypeDefOf.RejectInput, false);
                 }
+                return false;
             }
 
             if (gene.LiveCount >= gene.MaxAnchors)

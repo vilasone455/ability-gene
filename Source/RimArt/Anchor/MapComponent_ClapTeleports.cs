@@ -111,7 +111,7 @@ namespace RimArt
                 ClapTeleportGraphics.DrawEnd(cast.end1, 1, seconds, cast.warmup, false, map);
                 if (!cast.animated) continue;
                 // The clip's palms meet at its own times, which for the last one is the warmup's end.
-                ClapTeleportGraphics.PalmStar(cast.palms, seconds - (cast.twice ? T.FirstContact : cast.warmup), 0);
+                ClapTeleportGraphics.PalmStar(cast.palms, seconds - (cast.twice ? T.FirstContactAt(cast.warmup) : cast.warmup), 0);
                 if (cast.twice) ClapTeleportGraphics.PalmStar(cast.palms, seconds - cast.warmup, 1);
             }
         }

@@ -7,6 +7,9 @@ SuitSpade.png, SuitHeart.png, SuitClub.png  white, the suit in the alpha. The dr
 them: red for the heart, near-black for the other two. One suit per mark slot, so two marks can
 be told apart when picking for Double Clap.
 
+ClapStone.png  the stone Mark throws (AG_ClapStone, drawn 0.45 cells): an irregular grey pebble, lit
+from the upper left, with a dark rim. A placeholder until the Todo VFX pass decides its look.
+
 CardBack.png  the card held in the hand by the Mark clips (make_mark_anim.py): ink edge, gold
 border, red middle, the same back the C# draws from quads for the ring and the flying card.
 Coloured in the file, because Melee Animation draws a clip part with one texture and no tint
@@ -77,8 +80,51 @@ def card_back():
     return image
 
 
+def clap_stone():
+    # Radius wobbles with the angle so the outline is a pebble, not a disc. Fixed terms, no randomness.
+    rim, light, dark = (38, 36, 34), (156, 150, 140), (92, 88, 82)
+    image = Image.new("RGBA", (SIZE, SIZE))
+    pixels = image.load()
+    for py in range(SIZE):
+        for px in range(SIZE):
+            a = 0.0
+            shade = 0.0
+            for du, dv in SUB:
+                x = ((px + 0.5 + du) / SIZE - 0.5) * 2.0
+                y = (0.5 - (py + 0.5 + dv) / SIZE) * 2.0
+                ang = math.atan2(y, x)
+                r = 0.78 + 0.07 * math.sin(3 * ang + 0.6) + 0.04 * math.sin(5 * ang + 2.1)
+                d = math.hypot(x / 1.12, y / 0.86)
+                if d < r:
+                    a += 0.25
+                    shade += 0.25 * (1.0 if d > r - 0.1 else max(0.0, min(1.0, 0.55 + 0.45 * (-x * 0.6 + y * 0.8) / r)))
+            if a <= 0:
+                continue
+            t = shade / a
+            if t >= 1.0 and a < 1.0:
+                col = rim
+            else:
+                col = tuple(round(dark[i] + (light[i] - dark[i]) * t) for i in range(3))
+            # The outermost ring of the stone is the rim.
+            pixels[px, py] = (*col, int(a * 255))
+    # Rim: pixels next to transparency darken.
+    out = image.copy()
+    op = out.load()
+    for py in range(SIZE):
+        for px in range(SIZE):
+            if pixels[px, py][3] == 0:
+                continue
+            edge = any(not (0 <= px + dx < SIZE and 0 <= py + dy < SIZE) or pixels[px + dx, py + dy][3] < 128
+                       for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+            if edge:
+                op[px, py] = (*rim, pixels[px, py][3])
+    return out
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    clap_stone().save(OUT / "ClapStone.png")
+    print(f"wrote {OUT / 'ClapStone.png'}")
     card_back().save(OUT / "CardBack.png")
     print(f"wrote {OUT / 'CardBack.png'}")
     for name, inside in (("SuitSpade", spade), ("SuitHeart", heart), ("SuitClub", club)):

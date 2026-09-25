@@ -59,7 +59,8 @@ namespace RimArt
             bool animated = ClapCastAnimation.TryStart(pawn, Twice, job.def);
 
             Gene_Anchors gene = AnchorUtility.GeneOf(pawn);
-            Anchor first = gene?.AnchorFor(job.targetA), second = Twice ? gene?.AnchorFor(job.targetB) : null;
+            Anchor first = ClapTargets.EndFor(pawn, gene, job.targetA, out _);
+            Anchor second = Twice ? ClapTargets.EndFor(pawn, gene, job.targetB, out _) : null;
             if (first == null || (Twice && second == null)) return;
             pawn.Map.GetComponent<MapComponent_ClapTeleports>()
                 .Begin(pawn, first, second, job.ability.def.verbProperties.warmupTime, Twice, animated);
@@ -71,14 +72,20 @@ namespace RimArt
         /// </summary>
         private void FirstClap()
         {
-            if (Twice && Find.TickManager.TicksGame - clapStartTick == Mathf.RoundToInt(T.FirstContact * 60f))
+            if (Twice && Find.TickManager.TicksGame - clapStartTick == Mathf.RoundToInt(T.FirstContactAt(ClapWarmup) * 60f))
                 AnchorSound.Clap(pawn);
         }
 
-        /// <summary>Moves the clip to now. False once the clip is over, or when there is none.</summary>
+        private float ClapWarmup => job.ability.def.verbProperties.warmupTime;
+
+        /// <summary>
+        /// Moves the clip to now. False once the clip is over, or when there is none. The clip starts
+        /// part-way in when the warmup is shorter than the clip's palm contact, so the palms still
+        /// meet as the swap happens.
+        /// </summary>
         private bool Seek()
         {
-            float seconds = (Find.TickManager.TicksGame - clapStartTick) / 60f;
+            float seconds = (Find.TickManager.TicksGame - clapStartTick) / 60f + T.ClipOffset(ClapWarmup, Twice);
             return seconds < (Twice ? T.ClipTwiceLength : T.ClipLength) && ClapCastAnimation.Seek(pawn, job.def, seconds);
         }
 

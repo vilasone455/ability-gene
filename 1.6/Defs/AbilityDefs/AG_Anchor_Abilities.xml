@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- Marking is the expensive half. The short range is the cost: you have to have been next to
-       the thing you intend to move, so the clap is a plan you made earlier rather than an answer
-       to what is currently happening. -->
+  <!-- Mark throws a stone onto a tile. Pawns in sight need no stone, so this never targets a
+       pawn: the stone is for places and for anyone who will be out of sight or out of range. -->
   <AbilityDef>
     <defName>AG_AnchorMark</defName>
     <label>mark</label>
-    <description>Leave a mark on a person, an animal or a patch of ground, and it stays with them wherever they go. The carrier holds three at once, and marking something already marked takes that mark back instead.\n\nMarks fade after about a day, and placing one means walking close enough to touch.</description>
+    <description>Throw a stone onto a patch of ground. A clap can reach the stone from anywhere on the map, without line of sight. Up to three stones at once; throwing at one of your own stones takes it back.\n\nStones fade after about a day. They lie on the ground forbidden, so nobody hauls them away.</description>
     <iconPath>UI/Gizmos/RemoteRepair</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>600</cooldownTicksRange>
@@ -23,9 +22,9 @@
       <warmupTime>0.5</warmupTime>
       <targetParams>
         <canTargetSelf>false</canTargetSelf>
-        <canTargetPawns>true</canTargetPawns>
-        <canTargetAnimals>true</canTargetAnimals>
-        <canTargetMechs>true</canTargetMechs>
+        <canTargetPawns>false</canTargetPawns>
+        <canTargetAnimals>false</canTargetAnimals>
+        <canTargetMechs>false</canTargetMechs>
         <canTargetBuildings>false</canTargetBuildings>
         <canTargetLocations>true</canTargetLocations>
       </targetParams>
@@ -35,32 +34,33 @@
     </comps>
   </AbilityDef>
 
-  <!-- Range is deliberately map-wide and sightless. Distance is the thing the gene does not
-       care about; getting there in the first place is. -->
+  <!-- The verb's range is map-wide and sightless because a stone can be anywhere. Pawns without
+       a stone are held to directSwapRange and line of sight by the comp, and every clap is paid
+       from the gene's shared charges (AG_Anchor_Gene.xml), so there is no cooldown here. -->
   <AbilityDef>
     <defName>AG_AnchorClap</defName>
     <label>clap</label>
-    <description>Clap once and change places with one of your marks, at any distance and without line of sight. A mark on someone is a straight swap; a mark on the ground simply moves the carrier there.\n\nThe mark is spent, and both hands have to be empty.</description>
+    <description>Clap once and change places with a living person or animal in sight within 15 cells, or with one of your stones anywhere on the map. A stone lands where you stood, so a second clap brings you back. A hostile that is swapped loses track of where it is for a moment.\n\nUses one of three claps, which grow back one every 10 seconds. A stone more than 25 cells away needs all three and is used up. Both hands have to be empty.</description>
     <iconPath>UI/Icons/Genes/Gene_HandsHuman</iconPath>
     <category>AG_Genetic</category>
-    <cooldownTicksRange>1800</cooldownTicksRange>
+    <cooldownTicksRange>0</cooldownTicksRange>
     <jobDef>AG_CastAnchorClap</jobDef>
     <hostile>false</hostile>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
     <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
     <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
-    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
     <verbProperties>
       <verbClass>Verb_CastAbility</verbClass>
       <range>9999</range>
-      <warmupTime>0.5</warmupTime>
+      <warmupTime>0.3</warmupTime>
       <requireLineOfSight>false</requireLineOfSight>
       <drawAimPie>false</drawAimPie>
       <targetParams>
         <canTargetSelf>false</canTargetSelf>
         <canTargetPawns>true</canTargetPawns>
         <canTargetAnimals>true</canTargetAnimals>
-        <canTargetMechs>true</canTargetMechs>
+        <canTargetMechs>false</canTargetMechs>
         <canTargetBuildings>false</canTargetBuildings>
         <canTargetLocations>true</canTargetLocations>
       </targetParams>
@@ -74,31 +74,31 @@
   </AbilityDef>
 
   <!-- Two selected targets, the same shape as the Skip psycast: pick a thing, then pick where.
-       Here both picks have to be marks the carrier is already holding. -->
+       Each pick is a pawn in sight within directSwapRange or one of the carrier's stones. -->
   <AbilityDef>
     <defName>AG_AnchorDoubleClap</defName>
     <label>double clap</label>
-    <description>Clap twice and any two of your marks change places with each other. The carrier does not move and is not one of the ends - this is how a raider ends up in your killbox without anyone standing in it.\n\nBoth marks are spent, at least one must be on something that can move, and both hands have to be empty.</description>
+    <description>Clap twice and two others change places: people or animals in sight within 15 cells, or your stones anywhere on the map. The carrier does not move - this is how a raider ends up in your killbox without anyone standing in it.\n\nAt least one end has to be a person or animal. Uses one of the three shared claps; a stone more than 25 cells away needs all three and is used up. Both hands have to be empty.</description>
     <iconPath>UI/Icons/Genes/Gene_LongJumpLegs</iconPath>
     <category>AG_Genetic</category>
-    <cooldownTicksRange>1800</cooldownTicksRange>
+    <cooldownTicksRange>0</cooldownTicksRange>
     <jobDef>AG_CastAnchorClap</jobDef>
     <hostile>false</hostile>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
     <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
     <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
-    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
     <verbProperties>
       <verbClass>Verb_CastAbility</verbClass>
       <range>9999</range>
-      <warmupTime>0.75</warmupTime>
+      <warmupTime>0.5</warmupTime>
       <drawAimPie>false</drawAimPie>
       <requireLineOfSight>false</requireLineOfSight>
       <targetParams>
         <canTargetSelf>false</canTargetSelf>
         <canTargetPawns>true</canTargetPawns>
         <canTargetAnimals>true</canTargetAnimals>
-        <canTargetMechs>true</canTargetMechs>
+        <canTargetMechs>false</canTargetMechs>
         <canTargetBuildings>false</canTargetBuildings>
         <canTargetLocations>true</canTargetLocations>
       </targetParams>
