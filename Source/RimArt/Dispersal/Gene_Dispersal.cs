@@ -16,6 +16,7 @@ namespace RimArt
     /// it when told, and shows the player how many are in hand - the dispersal itself is in
     /// <see cref="Scatter"/>, reached from a Thing.TakeDamage prefix, while the player controls whether automatic scatter is enabled.
     /// </summary>
+    [StaticConstructorOnStartup]
     public class Gene_Dispersal : Gene
     {
         private int charges = -1;

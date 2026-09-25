@@ -15,9 +15,9 @@ runtime, in the order they have actually bitten this project:
      without that DLC)
   5. Custom Class= values that do not exist in the built assembly
   6. Comp classes a def ends up with twice once inheritance is applied
-  6b. Two ThingDef.ConfigErrors rules the game enforces at load: an explosive projectile
+  6b. Three ThingDef.ConfigErrors rules the game enforces at load: an explosive projectile
      verb must declare a forcedMissRadius (and a non-explosive one must not), and a def
-     carrying CompProperties_Explosive must tick Normal
+     carrying CompProperties_Explosive must tick Normal, and a smeltable def must have a cost
   6c. SoundDef.ConfigErrors: a sustainer must not use priorityMode PrioritizeNewest,
      which is the default when priorityMode is left out
   6d. TerrainDef tags that are not fields of the 1.6 TerrainDef (holdSnow vs holdSnowOrSand)
@@ -322,6 +322,28 @@ for defname, rec in sorted(things_by_defname.items()):
                  + (" launches explosive " + projectile + " but has no forcedMissRadius"
                     if explodes else
                     " has a forcedMissRadius but " + projectile + " is not explosive"))
+
+
+# "is smeltable but does not give anything for smelting" (ThingDef.ConfigErrors): smeltable
+# needs something to smelt into, a costList, costStuffCount or smeltProducts. Found in game for
+# AG_WaterGun, which has no cost. Judged through this mod's own parents only; a vanilla parent
+# is taken to add no cost.
+def _chain(rec):
+    seen = []
+    while rec is not None and rec not in seen:
+        seen.append(rec)
+        rec = things_by_name.get(rec["parent"]) if rec["parent"] else None
+    return seen
+
+for defname, rec in things_by_defname.items():
+    chain = _chain(rec)
+    smeltable = next(((r["el"].findtext("smeltable") or "").strip().lower() for r in chain
+                      if r["el"].find("smeltable") is not None), "")
+    if smeltable != "true": continue
+    if any(r["el"].find(tag) is not None for r in chain for tag in ("costList", "costStuffCount", "smeltProducts")):
+        continue
+    fail("config error", rec["file"], defname + " is smeltable but has no costList, costStuffCount or"
+         + " smeltProducts -- the game says it does not give anything for smelting")
 
 # 6c. "PrioritizeNewest is not supported with sustainers." SoundDef.priorityMode defaults to
 #    PrioritizeNewest, so a sustainer that says nothing about priority is refused at load. Found

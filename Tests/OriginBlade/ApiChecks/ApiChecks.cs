@@ -78,6 +78,7 @@ static class ApiChecks
             if (className != null && assembly.GetType(className) == null)
                 throw new Exception($"Missing class {className}");
         }
+        string defFields = CheckDefFields(assembly);
         string combatExtended = CheckCombatExtended();
         string meleeAnimation = CheckMeleeAnimation();
         string mimic = CheckMimicContract();
@@ -92,7 +93,53 @@ static class ApiChecks
         string gojo = CheckGojoCameraContract();
         Console.WriteLine(CheckFumaContract());
         Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, "
-            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval} {kunai} {makibishi} {gravity} {gojo}");
+            + $"plus trait and job definition checks. {defFields} {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval} {kunai} {makibishi} {gravity} {gojo}");
+    }
+
+    // "<soundCast> doesn't correspond to any field in type AbilityDef": a tag the game cannot match
+    // to a field is a red error at load and its value is dropped. Found in game on 2026-09-25 for
+    // AG_BubblePipeAbilityBase (soundCast belongs inside verbProperties) and AG_ClapStone
+    // (countAsResource is a read-only property in 1.6). Every tag directly under a def is looked up
+    // the way XmlToObjectUtils.DoFieldSearch does: the exact name through the type and its bases,
+    // then a [LoadAlias]. Nested objects are not walked, and a def type the installed game does not
+    // define (Melee Animation's AM.AnimDef in Patch_MeleeAnimation) is skipped.
+    static string CheckDefFields(Assembly mod)
+    {
+        Assembly game = typeof(Verse.Def).Assembly;
+        const BindingFlags Declared = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+        var folders = new[] { "1.6/Defs" }.Concat(Directory.GetDirectories(".", "Patch_*").Select(d => Path.Combine(d, "1.6", "Defs")))
+            .Where(Directory.Exists);
+        int defs = 0, tags = 0, skipped = 0;
+        var problems = new List<string>();
+        foreach (string file in folders.SelectMany(d => Directory.EnumerateFiles(d, "*.xml", SearchOption.AllDirectories)))
+        {
+            foreach (XElement def in XDocument.Load(file).Root.Elements())
+            {
+                string className = (string)def.Attribute("Class");
+                Type type = className != null
+                    ? mod.GetType(className) ?? game.GetType(className) ?? game.GetType("Verse." + className) ?? game.GetType("RimWorld." + className)
+                    : game.GetType("Verse." + def.Name.LocalName) ?? game.GetType("RimWorld." + def.Name.LocalName);
+                if (type == null || !typeof(Verse.Def).IsAssignableFrom(type)) { skipped++; continue; }
+                defs++;
+                foreach (XElement tag in def.Elements())
+                {
+                    tags++;
+                    string name = tag.Name.LocalName;
+                    if (string.Equals((string)tag.Attribute("IgnoreIfNoMatchingField"), "true", StringComparison.OrdinalIgnoreCase)) continue;
+                    bool found = false;
+                    for (Type t = type; t != null && !found; t = t.BaseType)
+                        found = t.GetField(name, Declared) != null;
+                    for (Type t = type; t != null && !found; t = t.BaseType)
+                        found = t.GetFields(Declared).Any(f => f.GetCustomAttributes<Verse.LoadAliasAttribute>(true)
+                            .Any(a => string.Equals(a.alias, name, StringComparison.OrdinalIgnoreCase)));
+                    if (!found)
+                        problems.Add($"{file}: {(string)def.Element("defName") ?? (string)def.Attribute("Name")} uses <{name}>, which is not a field of {type.Name}");
+                }
+            }
+        }
+        if (problems.Count > 0)
+            throw new Exception("Def tags the game cannot match to a field (a red XML error at load):\n  " + string.Join("\n  ", problems));
+        return $"Checked {tags} tags on {defs} defs against their types' fields ({skipped} defs of types the game does not define skipped).";
     }
 
     static void CheckShinraAcquisition()

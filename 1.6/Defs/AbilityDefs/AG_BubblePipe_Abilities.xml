@@ -12,13 +12,16 @@
   <AbilityDef Name="AG_BubblePipeAbilityBase" Abstract="True">
     <category>AG_Genetic</category>
     <jobDef>AG_CastBubblePipe</jobDef>
-    <!-- Placeholder for a blow sound: Core's beat-fire pat, played when the warmup ends. -->
-    <soundCast>Interact_BeatFire</soundCast>
     <targetRequired>true</targetRequired>
     <hostile>true</hostile>
     <aiCanUse>false</aiCanUse>
     <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
     <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <!-- Placeholder for a blow sound: Core's beat-fire pat, played when the warmup ends. Each
+           ability's own verbProperties merge into this one. -->
+      <soundCast>Interact_BeatFire</soundCast>
+    </verbProperties>
   </AbilityDef>
 
   <!-- The target tile sets only the direction. Range 6.9 is about as far as a bubble drifts:
