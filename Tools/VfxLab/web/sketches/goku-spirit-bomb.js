@@ -90,7 +90,9 @@
 //         that rises and is gone in 1.2 s. The column narrows to a thread over 1 s. The scorch
 //         burns in as the light clears, and the colonist, the animal and the wall inside stand in
 //         blue shells for 0.5 s: nothing happened to them.
-//  12.72  a scorch with a burnt edge and 22 radial burn streaks; the cracks still glow and cool
+//  12.72  the scorch: a ragged burnt edge of soft blotches with a few gaps, uneven blackening darkest
+//         at the middle, and 22 blast streaks of uneven spacing, length and width, some past the
+//         edge, with thin smoke rising off it until about 12.7 s; the cracks still glow and cool
 //         over 2 s; the 5 enemies inside are down, the one outside is not, the colonist, the animal
 //         and the wall are as they were.
 //
@@ -108,7 +110,7 @@
 // source; it does not drop from the sky onto the target. Wisps, ribbons, arcs, cracks, lightning
 // and the tail are strip meshes rebuilt while they show. Pawns, the animal and the wall are
 // stand-ins. Shared shapes are in lib/goku.js.
-import { Color, Mathf, Meshes, MeshPool } from '../js/engine.js';
+import { Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../js/engine.js';
 import { draw, mesh } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
 import {
@@ -143,7 +145,11 @@ const Fall = .3;
 const HoldShare = .45;
 const GrindTime = [.3, .75], WhiteTime = [.03, .09], Shake = [.05, .2], CrackCount = [5, 14], PillarCount = [0, 10];
 const RockCount = [5, 32], RockHeight = [.5, 1.2], StreakCount = [8, 26], PathRingCount = [2, 7], ColumnExtra = 5, FleckCount = [120, 420];
-const Animal = new Color(.62, .5, .33);
+const Animal = new Color(.62, .5, .33), Smoke = new Color(.28, .28, .3);
+// The mod's noisy soft spot, for burnt blotches and smoke.
+const puff = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.Transparent);
+// The scorch: patches of blackening inside it and blotches round its ragged edge.
+const ScorchPatches = 16, ScorchEdge = 40;
 // Orbit lines of the ball: [tilt speed, turn speed (degrees per second), starting angle].
 const Orbits = [[1.1, 25, 0], [-1.5, -35, 60], [.8, 45, 120]];
 // Lenders as [cells behind the caster, cells to the side].
@@ -456,14 +462,30 @@ export default {
       const low = 1 - clamp(height / (hang + .01));
       sprite(ground, (r * 3 + 2) * (1 + low), (r * 3 + 2) * (.8 + low), Ki.withAlpha((.32 + .4 * low) * formed), glow, Floor + .008);   // light under the ball
     }
-    // The scorch: a burnt edge, radial burn streaks, a dark middle. It stays.
-    if (domeAge >= 0) {
-      const burnt = smooth(burstAge / .8) * (1 - .35 * smooth((s - t.gone) / Tail));
-      sprite(target, blast * 2.2, blast * 2.2, Ink.withAlpha(.34 * burnt), soft, Floor + .01);
-      ringAt(target, blast * .98, Ink.withAlpha(.5 * burnt), Floor + .011, true);
+    // The scorch: the burn the blast leaves, which stays. It is burnt ground, not a drawn shape: a ragged edge of soft dark
+    // blotches round the blast radius with a few gaps, uneven blackening inside that is darkest at the middle, and blast
+    // streaks of uneven spacing, length and width, some running past the edge. It burns in as the light clears, and thin
+    // smoke rises off it for about 2 s.
+    const burnt = domeAge >= 0 ? smooth(burstAge / .8) * (1 - .35 * smooth((s - t.gone) / Tail)) : 0;
+    if (burnt > 0) {
+      sprite(target, blast * 1.3, blast * 1.2, Ink.withAlpha(.32 * burnt), soft, Floor + .01);                           // darkest at the middle
+      for (let i = 0; i < ScorchPatches; i++) {
+        const d = blast * .9 * Math.sqrt(rand(i + 500)), size = blast * (.18 + .22 * rand(i + 502));
+        sprite(polar(rand(i + 501) * TAU, d), size, size * (.7 + .3 * rand(i + 503)), Ink.withAlpha((.12 + .14 * rand(i + 504)) * (1 - .5 * d / blast) * burnt), puff, Floor + .0102, rand(i + 505) * 180);
+      }
+      for (let i = 0; i < ScorchEdge; i++) {
+        if (rand(i + 513) < .15) continue;                                                                                // a gap
+        const ang = (i + rand(i + 510) * .8) / ScorchEdge * TAU, size = blast * (.1 + .12 * rand(i + 512));
+        sprite(polar(ang, blast * (.9 + .14 * rand(i + 511))), size * 1.4, size, Ink.withAlpha((.2 + .2 * rand(i + 514)) * burnt), puff, Floor + .0104, -(ang + Math.PI / 2) / Mathf.Deg2Rad);
+      }
       for (let i = 0; i < burns; i++) {
-        const ang = i * TAU / burns + rand(i + 90) * .2, from = blast * (.25 + .2 * rand(i + 91)), to = blast * (.8 + .18 * rand(i + 92));
-        streak(`spirit bomb burn ${i}`, polar(ang, from), polar(ang, to), .22 + .2 * rand(i + 93), Ink.withAlpha(.4 * burnt), undefined, Floor + .012, 5);
+        const ang = (i + (rand(i + 90) - .5) * .9) / burns * TAU, from = blast * (.15 + .25 * rand(i + 91)), to = blast * (.6 + .55 * rand(i + 92));
+        streak(`spirit bomb burn ${i}`, polar(ang, from), polar(ang, to), .15 + .35 * rand(i + 93) * rand(i + 94), Ink.withAlpha((.22 + .2 * rand(i + 95)) * burnt), undefined, Floor + .012, 5);
+      }
+      for (let i = 0; i < 12; i++) {
+        const u = (burstAge - rand(i + 520) * 1.2) / (1.6 + .8 * rand(i + 521)); if (u < 0 || u > 1) continue;
+        const from = polar(rand(i + 522) * TAU, blast * .7 * Math.sqrt(rand(i + 523))), size = .8 + 1.6 * u;
+        sprite({ x: from.x + Math.sin(u * 3 + i) * .3, z: from.z + u * (1.5 + 1.5 * rand(i + 524)) }, size, size * .85, Smoke.withAlpha(.22 * Math.sin(u * Math.PI)), puff, Y + .05, u * 40 + i * 30);
       }
     }
     // Jagged cracks of light. They grow through the grind, are hidden while the dome stands, show again when it bursts, and
