@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The world's light comes from a low sun that never sets. These unseen warm glowers, one every 6
+       cells over the whole map (GenStep_UnlimitedBladeWorks), stand in for it under the map's roof, so
+       the light is the same at every hour. Nothing to select, build, break or walk round; the same
+       shape as the Kamui dimension's light, in the twilight's colour. -->
+  <ThingDef>
+    <defName>AG_UbwLight</defName>
+    <label>twilight</label>
+    <description>Light with nothing giving it.</description>
+    <thingClass>Building</thingClass>
+    <category>Building</category>
+    <altitudeLayer>Floor</altitudeLayer>
+    <drawerType>MapMeshOnly</drawerType>
+    <passability>Standable</passability>
+    <fillPercent>0</fillPercent>
+    <coversFloor>false</coversFloor>
+    <blockWind>false</blockWind>
+    <blockLight>false</blockLight>
+    <castEdgeShadows>false</castEdgeShadows>
+    <canOverlapZones>true</canOverlapZones>
+    <useHitPoints>false</useHitPoints>
+    <destroyable>false</destroyable>
+    <rotatable>false</rotatable>
+    <selectable>false</selectable>
+    <tickerType>Never</tickerType>
+    <building>
+      <isInert>true</isInert>
+      <isEdifice>false</isEdifice>
+      <deconstructible>false</deconstructible>
+      <claimable>false</claimable>
+    </building>
+    <graphicData>
+      <texPath>RimArt/InfinityCastle/Blank</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <comps>
+      <li Class="CompProperties_Glower">
+        <glowRadius>9</glowRadius>
+        <glowColor>(255, 214, 178, 0)</glowColor>
+      </li>
+    </comps>
+  </ThingDef>
+
+</Defs>

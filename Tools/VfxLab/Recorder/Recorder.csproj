@@ -34,6 +34,8 @@
     <Compile Include="../../../Source/RimArt/InfinityCastle/*.cs" LinkBase="Linked/InfinityCastle" />
     <!-- Kamui dimension (Obito): the dimension's generator, its drawing and the preview. The pocket map itself (GenStep, map component, defs) is the Fold organ's, in Involute/, not linked here. -->
     <Compile Include="../../../Source/RimArt/Involute/Kamui/*.cs" LinkBase="Linked/Kamui" />
+    <!-- Trace: Unlimited Blade Works' drawing, timing, field layout and previews. The pocket map (GenStep, map component, the atlas built from the weapons' textures, defs) is in Trace/Kit, not linked here. -->
+    <Compile Include="../../../Source/RimArt/Trace/*.cs" LinkBase="Linked/Trace" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleport.cs" Link="Linked/Anchor/ClapTeleport.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleportGraphics.cs" Link="Linked/Anchor/ClapTeleportGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/DebugActions_ClapTeleport.cs" Link="Linked/Anchor/DebugActions_ClapTeleport.cs" />

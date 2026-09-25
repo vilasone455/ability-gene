@@ -1,5 +1,5 @@
-// Unlimited Blade Works: cast (pocket) — Trace kit proposal, not the game. Nothing in Source/RimArt
-// draws this yet. The home-map side of the pocket-map version of the kit's ultimate: the chant, the fire
+// Unlimited Blade Works: cast (pocket) — Trace kit proposal, not the game. Ported: Source/RimArt/Trace/UbwCastGraphics.cs
+// draws this (the lab's "Trace: unlimited blade works: cast"), stand-ins aside; nothing takes anyone yet. The home-map side of the pocket-map version of the kit's ultimate: the chant, the fire
 // that runs out along the chant's lines, the white that takes everyone standing inside, the ring left
 // burning while they are away, the return. The inside is "Unlimited Blade Works: world (pocket)", whose
 // header has the whole mechanic. The first two UBW sketches (the world standing in place) stay as they

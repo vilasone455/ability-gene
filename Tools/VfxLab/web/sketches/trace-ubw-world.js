@@ -1,5 +1,5 @@
-// Unlimited Blade Works: world (pocket) — Trace kit proposal, not the game. Nothing in Source/RimArt
-// draws this yet. The inside of the pocket-map version of the kit's ultimate: what everyone taken sees.
+// Unlimited Blade Works: world (pocket) — Trace kit proposal, not the game. Ported: Source/RimArt/Trace/UbwWorldGraphics.cs
+// draws this (the lab's "Trace: unlimited blade works: world", and the real pocket map under Trace/Kit), stand-ins aside. The inside of the pocket-map version of the kit's ultimate: what everyone taken sees.
 // The home-map side (the chant, the fire along its lines, the white that takes them, the ring left
 // burning, the return) is "Unlimited Blade Works: cast (pocket)". The first two UBW sketches, the world
 // standing in place on the home map, stay as they were for reference.

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The world's one terrain. The mod draws the world's ground over it (MapComponent_UnlimitedBladeWorks:
+       the cracked earth in 8-cell tiles, the dust patches, the hill's light), so this texture is only a
+       flat fallback in the earth's colour. Walkable everywhere: the swords are drawings and block nothing. -->
+  <TerrainDef>
+    <defName>AG_UbwEarth</defName>
+    <label>cracked earth</label>
+    <description>Dry red-brown earth, cracked and dusty, that has never seen rain.</description>
+    <texturePath>RimArt/Trace/Terrain</texturePath>
+    <edgeType>Hard</edgeType>
+    <renderPrecedence>34</renderPrecedence>
+    <pathCost>0</pathCost>
+    <holdSnowOrSand>false</holdSnowOrSand>
+    <fertility>0</fertility>
+    <affordances>
+      <li>Light</li>
+      <li>Medium</li>
+      <li>Heavy</li>
+    </affordances>
+    <statBases>
+      <Beauty>0</Beauty>
+    </statBases>
+  </TerrainDef>
+
+</Defs>

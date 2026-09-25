@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The world's twilight. As in the castle, the four sky slots are the same so nothing changes over a
+       day, and every cell is under thick roof, so the light is all the unseen warm lights'. The tint is
+       warm, toward the sketch's twilight (1, 0.86, 0.76 at full), so the ground and the swords take the
+       world's light rather than the map's. Placeholder values: to be tuned in game. -->
+  <WeatherDef>
+    <defName>AG_UnlimitedBladeWorks</defName>
+    <label>twilight</label>
+    <description>A low sun that never sets, and embers on the wind.</description>
+    <repeatable>true</repeatable>
+    <favorability>Neutral</favorability>
+    <perceivePriority>0</perceivePriority>
+    <windSpeedFactor>0</windSpeedFactor>
+    <windSpeedOffset>0</windSpeedOffset>
+    <rainRate>0</rainRate>
+    <snowRate>0</snowRate>
+    <durationRange>20000~40000</durationRange>
+    <skyColorsDay>
+      <sky>(0.50, 0.42, 0.36)</sky>
+      <shadow>(0.88, 0.82, 0.78)</shadow>
+      <overlay>(0.64, 0.56, 0.50)</overlay>
+      <saturation>1.0</saturation>
+    </skyColorsDay>
+    <skyColorsDusk>
+      <sky>(0.50, 0.42, 0.36)</sky>
+      <shadow>(0.88, 0.82, 0.78)</shadow>
+      <overlay>(0.64, 0.56, 0.50)</overlay>
+      <saturation>1.0</saturation>
+    </skyColorsDusk>
+    <skyColorsNightEdge>
+      <sky>(0.50, 0.42, 0.36)</sky>
+      <shadow>(0.88, 0.82, 0.78)</shadow>
+      <overlay>(0.64, 0.56, 0.50)</overlay>
+      <saturation>1.0</saturation>
+    </skyColorsNightEdge>
+    <skyColorsNightMid>
+      <sky>(0.50, 0.42, 0.36)</sky>
+      <shadow>(0.88, 0.82, 0.78)</shadow>
+      <overlay>(0.64, 0.56, 0.50)</overlay>
+      <saturation>1.0</saturation>
+    </skyColorsNightMid>
+  </WeatherDef>
+
+</Defs>
