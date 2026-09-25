@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Water Gun kit. Industrial, after machining, the same cost as explosive tags. Placed at
+       8.00/7.80, the slot beside explosive tags (7.00/7.80); not checked against vanilla or other
+       mods' projects in the research tab. -->
+  <ResearchProjectDef>
+    <defName>AG_WaterGun</defName>
+    <label>water gun</label>
+    <description>Make water guns: a pump gun fed from a water bag on the back. It fires jets that soak and knock back, and puts out fires. The bag refills from open water and rain.</description>
+    <baseCost>1000</baseCost>
+    <techLevel>Industrial</techLevel>
+    <prerequisites>
+      <li>Machining</li>
+    </prerequisites>
+    <researchViewX>8.00</researchViewX>
+    <researchViewY>7.80</researchViewY>
+  </ResearchProjectDef>
+
+</Defs>
