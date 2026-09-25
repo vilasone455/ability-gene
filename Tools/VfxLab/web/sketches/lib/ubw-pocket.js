@@ -343,12 +343,13 @@ export function sunGlow(c, sun, alpha) {
   const to = toSun(sun);
   sprite({ x: c.x + to.x * 24, z: c.z + to.z * 24 }, 80, 80, Twilight.withAlpha(.14 * alpha), glow, Floor + .0105);
 }
-// The hill of swords under the caster, shown by its light: lit toward the sun, shaded away from it.
-export function hill(c, radius, sun, alpha) {
+// The hill of swords under the caster, shown by its light: lit toward the sun, shaded away from it (dark
+// is the shaded side's opacity; the v2 world asks for more).
+export function hill(c, radius, sun, alpha, dark = .36) {
   if (radius <= 0 || alpha <= 0) return;
   const to = toSun(sun);
   sprite({ x: c.x + to.x * radius * .25, z: c.z + to.z * radius * .25 }, radius * 2.3, radius * 2.3, Sunset.withAlpha(.2 * alpha), glow, Floor + .0101);
-  sprite({ x: c.x - to.x * radius * .45, z: c.z - to.z * radius * .45 }, radius * 2.1, radius * 1.9, DuskDark.withAlpha(.36 * alpha), soft, Floor + .01);
+  sprite({ x: c.x - to.x * radius * .45, z: c.z - to.z * radius * .45 }, radius * 2.1, radius * 1.9, DuskDark.withAlpha(dark * alpha), soft, Floor + .01);
 }
 // The gears turning in the sky, seen by their shadows: big, slow, stretched along the low sun.
 export const SkyGears = [
@@ -504,9 +505,9 @@ const Mix = ['LongSword', 'LongSword', 'LongSword', 'Spear', 'Spear', 'MonoSword
 // rule, margin wider either side. A pawn draws over every sword, so a sword whose blade rises through a
 // landing spot would look run through the pawn standing there.
 function screenBox(sw, margin) {
-  const L = sw.w.length * sw.w.image * sw.size * (1 - sw.sink), l = sw.lean * D2R, d = sw.dir * D2R;
-  const px = sw.x + Math.sin(l) * Math.cos(d) * L, pz = sw.z + Math.sin(l) * Math.sin(d) * L + Math.cos(l) * L * Lift;
-  return { x0: Math.min(sw.x, px) - margin, x1: Math.max(sw.x, px) + margin, z0: Math.min(sw.z, pz) - .15, z1: Math.max(sw.z, pz) + .15 };
+  const L = sw.w.length * sw.w.image * sw.size * (1 - sw.sink), l = sw.lean * D2R, d = sw.dir * D2R, sz = sw.z + sw.lift;
+  const px = sw.x + Math.sin(l) * Math.cos(d) * L, pz = sz + Math.sin(l) * Math.sin(d) * L + Math.cos(l) * L * Lift;
+  return { x0: Math.min(sw.x, px) - margin, x1: Math.max(sw.x, px) + margin, z0: Math.min(sz, pz) - .15, z1: Math.max(sz, pz) + .15 };
 }
 // A stand-in pawn on the screen: its shadow's reach below its feet to the top of its head.
 const pawnBox = q => ({ x0: q.x - .32, x1: q.x + .32, z0: q.z - .2, z1: q.z + .9 });
@@ -515,8 +516,10 @@ const clearOf = (box, keep) => !keep.some(q => { const b = pawnBox(q); return bo
 // the field even; density is swords per cell on the map, doubling toward the top of the hill, 0.6 of
 // it past the map edge. On the hill they lean out, down its slope. Every sword is its weapon's own size
 // (a copy of a studied weapon), give or take 10 %. keep: the landing spots; no sword is drawn over one
-// (in game the pocket map is made after everyone taken is known, so it can do the same).
-export function makeField({ density, hill: hillRadius, beyond, size, lean }, keep = []) {
+// (in game the pocket map is made after everyone taken is known, so it can do the same). heightAt(x, z),
+// if given, is the ground's height under a sword (lib/ubw-terrain.js): the sword stands that much higher,
+// drawn Lift cells further north per cell (sw.lift), and the list is ordered by that screen foot.
+export function makeField({ density, hill: hillRadius, beyond, size, lean }, keep = [], heightAt = null) {
   const step = 1.2, reach = MapHalf + beyond, list = [];
   let n = 0;
   for (let gz = -reach; gz <= reach + 1e-6; gz += step) for (let gx = -reach; gx <= reach + 1e-6; gx += step) {
@@ -531,24 +534,25 @@ export function makeField({ density, hill: hillRadius, beyond, size, lean }, kee
       lean: lean * (onHill ? .45 + .55 * rand(seed * 13) : rand(seed * 13)),
       dir: onHill ? Math.atan2(z, x) / D2R + (rand(seed * 17) - .5) * 60 : rand(seed * 17) * 360,
       turn: (rand(seed * 19) - .5) * 60, sink: .16 + rand(seed * 23) * .12, size: size * (.9 + .2 * rand(seed * 29)),
+      lift: heightAt ? heightAt(x, z) * Lift : 0,
     };
     if (clearOf(screenBox(sw, .3), keep)) list.push(sw);
   }
-  return list.sort((a, b) => b.z - a.z);
+  return list.sort((a, b) => (b.z + b.lift) - (a.z + a.lift));
 }
 // makeField without the bake, for a sketch's plan and clock: the same swords, the same seeds. Kept per
 // settings and landing spots; the list is shared, so it is not to be changed.
 const lists = new Map();
-export function fieldList(settings, keep = []) {
-  const id = JSON.stringify([settings, keep]);
+export function fieldList(settings, keep = [], ground = null) {
+  const id = JSON.stringify([settings, keep, ground?.key ?? null]);
   if (!lists.has(id)) {
-    lists.set(id, makeField(settings, keep));
+    lists.set(id, makeField(settings, keep, ground?.heightAt));
     if (lists.size > 8) lists.delete(lists.keys().next().value);
   }
   return lists.get(id);
 }
 // A sword of the field standing in its place round c (field() bakes this pose as sw.b).
-export const standingPose = (sw, c) => upright(sw.w, sw.size, { x: c.x + sw.x, z: c.z + sw.z }, sw.lean, sw.dir, sw.turn, sw.sink);
+export const standingPose = (sw, c) => upright(sw.w, sw.size, { x: c.x + sw.x, z: c.z + sw.z + (sw.lift || 0) }, sw.lean, sw.dir, sw.turn, sw.sink);
 
 const fields = new Map();
 // The field for these settings round c under this sun, baked: each sword's pose b, and the meshes.
@@ -558,15 +562,16 @@ const fields = new Map();
 //   cuts: map z values where the blades mesh is split, so that what the sketch draws one by one (a
 //         command's sword standing at z, or stuck in the ground at z) goes between the swords north of it
 //         and those south of it (drawField's inserts). Without cuts the blades are one mesh.
-export function field(settings, c, sun, keep = [], { omit = [], cuts = [] } = {}) {
+//   ground: the ground with height (lib/ubw-terrain.js terrain()): the swords stand on its plates.
+export function field(settings, c, sun, keep = [], { omit = [], cuts = [], ground = null } = {}) {
   const gone = new Set(omit), zs = cuts.slice().sort((a, b) => b - a);
-  const id = JSON.stringify([settings, c.x, c.z, sun.x, sun.z, keep, [...gone].sort((a, b) => a - b), zs]);
+  const id = JSON.stringify([settings, c.x, c.z, sun.x, sun.z, keep, [...gone].sort((a, b) => a - b), zs, ground?.key ?? null]);
   let f = fields.get(id);
   if (f) return f;
-  const list = makeField(settings, keep), shadows = buffer(), marks = buffer(), parts = [buffer()];
+  const list = makeField(settings, keep, ground?.heightAt), shadows = buffer(), marks = buffer(), parts = [buffer()];
   list.forEach(sw => {
-    // the list is north first: a sword at or south of the next cut starts the next part
-    while (parts.length <= zs.length && c.z + sw.z <= zs[parts.length - 1]) parts.push(buffer());
+    // the list is north first (by the screen foot): a sword at or south of the next cut starts the next part
+    while (parts.length <= zs.length && c.z + sw.z + sw.lift <= zs[parts.length - 1]) parts.push(buffer());
     sw.b = standingPose(sw, c);
     sw.top = pommelOf(sw.b).y + .05;
     if (gone.has(sw.seed)) return;
