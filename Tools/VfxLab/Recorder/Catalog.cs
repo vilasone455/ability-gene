@@ -331,7 +331,7 @@ namespace RimArt.VfxLab
             phases.Add(new Phase("Throw", t.Release));
             phases.Add(new Phase("Grind", t.Hit));
             phases.Add(new Phase("Detonation", t.Dome));
-            phases.Add(new Phase("Dome lifts", t.Fade));
+            phases.Add(new Phase("Burst", t.Burst));
             phases.Add(new Phase("Aftermath", t.Gone));
             return phases.ToArray();
         }

@@ -40,8 +40,8 @@ namespace RimArt
 
         // One mesh per thing drawn in a frame: Graphics.DrawMesh reads a mesh when the frame
         // renders. Strips are handed out from a pool that starts again each frame, so two effects
-        // in one frame never share one. The Kamehameha beam takes up to 141 points.
-        internal const int MostPoints = 144;
+        // in one frame never share one. The Spirit Bomb dome's flame ring takes 361 points.
+        internal const int MostPoints = 361;
         private static readonly List<SixPathsStrip>[] pool = new List<SixPathsStrip>[MostPoints + 1];
         private static readonly int[] taken = new int[MostPoints + 1];
         private static readonly Vector2[][] sideA = new Vector2[MostPoints + 1][], sideB = new Vector2[MostPoints + 1][];
