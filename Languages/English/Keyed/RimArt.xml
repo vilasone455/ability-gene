@@ -58,15 +58,19 @@
   <AG_ArrearsSettleLabel>Settle debt ({0})</AG_ArrearsSettleLabel>
   <AG_ArrearsSettleDesc>Stop holding the wounds back. Every wound on the books lands immediately, so settle while in cover and near a doctor.</AG_ArrearsSettleDesc>
 
-  <AG_AnchorTileLabel>that spot</AG_AnchorTileLabel>
-  <AG_AnchorPlaced>{0} marked {1}.</AG_AnchorPlaced>
-  <AG_AnchorLifted>{0} took back their mark on {1}.</AG_AnchorLifted>
-  <AG_AnchorFaded>{0}'s mark on {1} has faded.</AG_AnchorFaded>
-  <AG_AnchorFull>{0} is already holding {1} marks. Take one back first.</AG_AnchorFull>
+  <AG_AnchorTileLabel>a stone</AG_AnchorTileLabel>
+  <AG_AnchorLifted>{0} took back {1}.</AG_AnchorLifted>
+  <AG_AnchorFaded>{0}'s stone has faded.</AG_AnchorFaded>
+  <AG_AnchorFull>{0} already has {1} stones out. Take one back first.</AG_AnchorFull>
   <AG_AnchorBadTile>Nothing can stand there.</AG_AnchorBadTile>
-  <AG_AnchorNotMarked>That is not marked.</AG_AnchorNotMarked>
-  <AG_AnchorNeedTwo>{0} needs two marks to clap them together.</AG_AnchorNeedTwo>
-  <AG_AnchorTwoTiles>Two marked patches of ground have nothing to exchange.</AG_AnchorTwoTiles>
+  <AG_AnchorNotMarked>Not a person in sight, and not one of the stones.</AG_AnchorNotMarked>
+  <AG_AnchorNotReachable>The clap cannot reach {0}. Only living people and animals, or a stone.</AG_AnchorNotReachable>
+  <AG_AnchorTooFar>{0} is more than {1} cells away. Throw a stone first.</AG_AnchorTooFar>
+  <AG_AnchorNoSight>{0} is out of sight. Throw a stone first.</AG_AnchorNoSight>
+  <AG_AnchorSameEnd>The two ends are the same.</AG_AnchorSameEnd>
+  <AG_AnchorTwoTiles>Two stones have nothing to exchange.</AG_AnchorTwoTiles>
+  <AG_AnchorNoClaps>No claps left. Next in {0} s.</AG_AnchorNoClaps>
+  <AG_AnchorLongNeedsAll>A stone this far needs all {0} claps. {1} ready.</AG_AnchorLongNeedsAll>
   <AG_AnchorNoWeapon>The clap needs both hands. {0} is holding {1}.</AG_AnchorNoWeapon>
   <AG_AnchorCannotEquip>Needs both hands free to clap.</AG_AnchorCannotEquip>
 

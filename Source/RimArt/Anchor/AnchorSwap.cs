@@ -5,7 +5,10 @@ namespace RimArt
     /// <summary>
     /// Exchanging two positions. There is no projectile, no travel and no intervening state -
     /// the two ends are read, then written to each other, which is why the ability is a swap
-    /// rather than a move: something always comes back the other way.
+    /// rather than a move: something always comes back the other way. With a stone, the stone is
+    /// what comes back, so it lies where the pawn stood and a second clap returns them.
+    ///
+    /// Only the ends move. The tiles and whatever is on them - fire, filth, items - stay.
     ///
     /// Pawn.Position on a spawned pawn re-registers them with the map's grids and regions;
     /// Notify_Teleported resets the pather so nobody keeps walking a route that started on the
@@ -34,37 +37,36 @@ namespace RimArt
         }
 
         /// <summary>
-        /// Moves one pawn onto a cell. Nothing comes back, because a marked tile has nothing
-        /// standing on it to send.
+        /// A pawn and a stone change places. The stone's def draws in real time, so setting its
+        /// Position is enough to move the picture as well as the grids.
         /// </summary>
-        public static bool MoveTo(Pawn pawn, IntVec3 cell, Pawn carrier = null)
+        public static bool Swap(Pawn pawn, Thing stone, Pawn carrier = null)
         {
-            if (pawn == null || !pawn.Spawned) return false;
+            if (pawn == null || stone == null || !pawn.Spawned || !stone.Spawned || pawn.Map != stone.Map) return false;
 
             Map map = pawn.Map;
-            if (!cell.IsValid || !cell.InBounds(map) || !cell.Standable(map)) return false;
-            if (pawn.Position == cell) return false;
+            IntVec3 pawnCell = pawn.Position;
+            IntVec3 stoneCell = stone.Position;
+            if (pawnCell == stoneCell || !stoneCell.Standable(map)) return false;
 
-            pawn.Position = cell;
+            pawn.Position = stoneCell;
             pawn.Notify_Teleported(pawn != carrier, true);
+            stone.Position = pawnCell;
             return true;
         }
 
-        /// <summary>
-        /// One end of a clap against one anchor. A pawn mark is a swap; a tile mark is a move.
-        /// </summary>
-        public static bool Resolve(Pawn caster, Anchor anchor)
+        /// <summary>The carrier against one end: a pawn or a stone.</summary>
+        public static bool Resolve(Pawn caster, Anchor end)
         {
-            return anchor.IsOnPawn ? Swap(caster, anchor.pawn, caster) : MoveTo(caster, anchor.cell, caster);
+            return end.IsOnPawn ? Swap(caster, end.pawn, caster) : Swap(caster, end.stone, caster);
         }
 
-        /// <summary>Both anchors against each other. Tile ends move whoever is on the other end.</summary>
+        /// <summary>Two ends against each other, the carrier not one of them. Two stones have nothing to exchange.</summary>
         public static bool Resolve(Anchor a, Anchor b)
         {
             if (a.IsOnPawn && b.IsOnPawn) return Swap(a.pawn, b.pawn);
-            if (a.IsOnPawn) return MoveTo(a.pawn, b.cell);
-            if (b.IsOnPawn) return MoveTo(b.pawn, a.cell);
-            // Two tile marks have nothing to exchange; the caller refuses this before it gets here.
+            if (a.IsOnPawn) return Swap(a.pawn, b.stone);
+            if (b.IsOnPawn) return Swap(b.pawn, a.stone);
             return false;
         }
     }

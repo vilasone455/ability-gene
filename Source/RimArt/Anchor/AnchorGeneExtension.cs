@@ -8,10 +8,10 @@ namespace RimArt
     /// </summary>
     public class AnchorGeneExtension : DefModExtension
     {
-        /// <summary>How many marks can be held at once. Three leaves one still in hand after a double clap.</summary>
+        /// <summary>How many stones can be out at once.</summary>
         public int maxAnchors = 3;
 
-        /// <summary>Game ticks a mark lasts. 60000 is one in-game day. Zero means marks never fade.</summary>
+        /// <summary>Game ticks a stone lasts. 60000 is one in-game day. Zero means stones never fade.</summary>
         public int markDurationTicks = 60000;
 
         /// <summary>
@@ -20,5 +20,26 @@ namespace RimArt
         /// ability on an armed pawn - a large balance swing, hence a field rather than a rule.
         /// </summary>
         public bool banWeapons = true;
+
+        /// <summary>The item Mark throws. Its ThingDef holds the look; the rules are here.</summary>
+        public ThingDef stoneDef;
+
+        /// <summary>A living flesh pawn in sight this close (cells) is swapped without a stone.</summary>
+        public float directSwapRange = 15f;
+
+        /// <summary>
+        /// A swap with any end farther than this (cells) from the carrier is a long-range swap:
+        /// it needs every charge, spends every charge, and the stones it used are gone.
+        /// </summary>
+        public float longSwapRange = 25f;
+
+        /// <summary>Claps held, shared by Clap and Double Clap.</summary>
+        public int clapCharges = 3;
+
+        /// <summary>Ticks to grow back one clap. Charges come back one at a time.</summary>
+        public int chargeRechargeTicks = 600;
+
+        /// <summary>Ticks a hostile pawn is stunned after it is swapped: it has lost track of where it is.</summary>
+        public int swapStunTicks = 30;
     }
 }

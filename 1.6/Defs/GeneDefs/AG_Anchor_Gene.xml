@@ -4,7 +4,7 @@
   <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_AnchorOrgan</defName>
     <label>anchor organ</label>
-    <description>Leave marks on people, animals or bare ground, then clap to change places with one - or clap twice and swap any two marks with each other. Neither distance nor line of sight matters.\n\nThe clap takes both hands, so this carrier never carries a weapon, and every mark has to be placed within arm's reach.</description>
+    <description>Clap to change places with anyone in sight nearby, or clap twice to make two others change places. Stones thrown onto the ground can be clapped with from anywhere on the map, without line of sight.\n\nThree claps at a time, growing back one every 10 seconds. The clap takes both hands, so this carrier never carries a weapon.</description>
     <geneClass>RimArt.Gene_Anchors</geneClass>
     <iconPath>UI/Icons/Genes/Gene_ElongatedFingers</iconPath>
     <displayCategory>Ability</displayCategory>
@@ -27,6 +27,12 @@
         <maxAnchors>3</maxAnchors>
         <markDurationTicks>60000</markDurationTicks>
         <banWeapons>true</banWeapons>
+        <stoneDef>AG_ClapStone</stoneDef>
+        <directSwapRange>15</directSwapRange>
+        <longSwapRange>25</longSwapRange>
+        <clapCharges>3</clapCharges>
+        <chargeRechargeTicks>600</chargeRechargeTicks>
+        <swapStunTicks>30</swapStunTicks>
       </li>
     </modExtensions>
     <symbolPack>

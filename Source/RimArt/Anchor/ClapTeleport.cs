@@ -60,6 +60,15 @@ namespace RimArt
 
         public static float Duration(float contact) => contact + Fade + Tail;
 
+        /// <summary>
+        /// Seconds into the clip a cast with this warmup starts, so the clip's last palm contact
+        /// lands on the warmup's end. Zero when the warmup is as long as the clip's contact or longer.
+        /// </summary>
+        public static float ClipOffset(float warmup, bool twice) => Mathf.Max(0f, (twice ? SecondContact : FirstContact) - warmup);
+
+        /// <summary>A double clap's first palm contact, counted from the start of the warmup.</summary>
+        public static float FirstContactAt(float warmup) => warmup - (SecondContact - FirstContact);
+
         /// <summary>A point <paramref name="height"/> cells above a ground point.</summary>
         public static Vector2 Above(Vector2 ground, float east, float north, float height) =>
             new Vector2(ground.x + east, ground.y + north + height * Lift);
