@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Snag and Stake. The driver starts the picture with the warmup and holds the job until the reel
+       is over or the weight is in the floor. The weapon is hidden for the job because the picture
+       draws the sickle. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastChainSickle</defName>
+    <driverClass>RimArt.JobDriver_CastChainSickle</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Stake's pin. The pawn cannot move, shoot or fight in melee because MapComponent_ChainSickle
+       stuns it for the pin; this hediff shows the pin, marks the pawn for the sickle's 1.5x cut
+       (Patch_ChainSickle_StakedCut) and is removed when the pin ends early. The length is the weight
+       rule's pin, set on the Disappears comp when the stake lands; 360 ticks here is only its
+       default. -->
+  <HediffDef>
+    <defName>AG_ChainStaked</defName>
+    <label>staked</label>
+    <description>A chain is wrapped tight round this person's chest and its weight is driven into the floor. They cannot move or attack until it is pulled out.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.75, 0.75, 0.8)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>true</isBad>
+    <maxSeverity>1</maxSeverity>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>360</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+  </HediffDef>
+
+</Defs>

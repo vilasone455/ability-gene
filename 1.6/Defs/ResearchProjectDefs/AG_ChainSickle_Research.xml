@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Chain Sickle kit: a forged weapon, so medieval and after smithing. It sits in this mod's
+       column at 7.00/11.40, below bubble pipe (7.00/10.20); the used slots are 7.00 at 4.20, 5.40,
+       6.60, 7.80, 9.00, 10.20, 8.00/7.80 and 13.00/2.60. Not checked against vanilla or other mods'
+       projects in the research tab. -->
+  <ResearchProjectDef>
+    <defName>AG_ChainSickle</defName>
+    <label>chain sickle</label>
+    <description>Forge chain sickles: a hand sickle on a long chain with an iron weight. The wielder can snag an enemy with the weight and reel it in, and stake a snagged enemy to the floor.</description>
+    <baseCost>800</baseCost>
+    <techLevel>Medieval</techLevel>
+    <prerequisites>
+      <li>Smithing</li>
+    </prerequisites>
+    <researchViewX>7.00</researchViewX>
+    <researchViewY>11.40</researchViewY>
+  </ResearchProjectDef>
+
+</Defs>

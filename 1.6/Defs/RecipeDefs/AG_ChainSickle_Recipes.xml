@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Behind AG_ChainSickle, at the smithy. A RecipeDef rather than a recipeMaker, as the kunai's
+       and the water gun's are. Proposed cost: 50 steel for the sickle, as a vanilla medieval melee
+       weapon, plus 30 for the chain and the weight. -->
+  <RecipeDef>
+    <defName>AG_MakeChainSickle</defName>
+    <label>make chain sickle</label>
+    <description>Forge a chain sickle from 80 steel.</description>
+    <jobString>Making a chain sickle.</jobString>
+    <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+    <workSkill>Crafting</workSkill>
+    <effectWorking>Smith</effectWorking>
+    <soundWorking>Recipe_Smith</soundWorking>
+    <workAmount>8000</workAmount>
+    <researchPrerequisite>AG_ChainSickle</researchPrerequisite>
+    <recipeUsers>
+      <li>FueledSmithy</li>
+      <li>ElectricSmithy</li>
+    </recipeUsers>
+    <ingredients>
+      <li>
+        <filter><thingDefs><li>Steel</li></thingDefs></filter>
+        <count>80</count>
+      </li>
+    </ingredients>
+    <fixedIngredientFilter>
+      <thingDefs>
+        <li>Steel</li>
+      </thingDefs>
+    </fixedIngredientFilter>
+    <products>
+      <AG_ChainSickle>1</AG_ChainSickle>
+    </products>
+    <skillRequirements>
+      <Crafting>5</Crafting>
+    </skillRequirements>
+  </RecipeDef>
+
+</Defs>
