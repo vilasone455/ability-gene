@@ -23,7 +23,7 @@ namespace RimArt
         public float Width, Sway;
 
         /// <summary>The share of Item to Dest the thing has slid by <paramref name="t"/>.</summary>
-        public float SlidAt(float t) => Share * ShadowPlexusTiming.Smooth((t - SlideStart) / (Arrive - SlideStart));
+        public float SlidAt(float t) => Share * VfxMath.Smooth((t - SlideStart) / (Arrive - SlideStart));
     }
 
     /// <summary>

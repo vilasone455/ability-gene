@@ -1,7 +1,8 @@
 using RimWorld;
 using UnityEngine;
 using Verse;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -119,7 +120,7 @@ namespace RimArt
         }
 
         /// <summary>The clamped ease the sketches call smooth.</summary>
-        internal static float Smooth01(float t) => SixPathsSlamTiming.Smooth(t);
+        internal static float Smooth01(float t) => VfxMath.Smooth(t);
 
         internal static float EaseOut(float t)
         {

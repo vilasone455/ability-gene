@@ -2,6 +2,7 @@ using System;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using static RimArt.VfxDraw;
 
 namespace RimArt
 {
@@ -23,7 +24,7 @@ namespace RimArt
         private static readonly Material soft = MaterialPool.MatFrom("RimArt/SixPaths/SoftDisc", ShaderDatabase.Transparent);
         private static readonly Material softGlow = MaterialPool.MatFrom("RimArt/SixPaths/SoftDisc", ShaderDatabase.MoteGlow);
         private static readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
-        private static readonly Mesh ring = Band(0.965f), shard = Shard();
+        private static readonly Mesh ring = VfxDraw.Ring(0.965f, "Six Paths umbrella ring"), shard = Shard();
 
         // One mesh per thing drawn in a frame, never one reused: Graphics.DrawMesh reads a mesh
         // when the frame renders, not when it is called.
@@ -93,7 +94,7 @@ namespace RimArt
                     Vector2 home = Home(sage, slot), at = Vector2.Lerp(home, apexOpen, called);
                     // They swell on the way up and are gone into the apex by the time they reach it.
                     float radius = SixPathsCarried.DeployRadius(called * 2f, SixPathsCarried.OnPawn)
-                        * (1f - SixPathsSlamTiming.Smooth((called - 0.5f) / 0.5f) * 0.95f);
+                        * (1f - VfxMath.Smooth((called - 0.5f) / 0.5f) * 0.95f);
                     DrawBall(sage, at, called < 0.15f ? SixPathsGraphics.CarriedAltitude(slot) : overhead, radius);
                     if (called >= 1f) continue;
                     three[0] = home; three[1] = (home + at) * 0.5f + new Vector2(0f, 0.15f); three[2] = at;
@@ -303,8 +304,6 @@ namespace RimArt
             DrawMesh(strip.mesh, at, 1f, 1f, 0f, colour, solid);
         }
 
-        private static Color Fade(Color colour, float alpha) => new Color(colour.r, colour.g, colour.b, alpha);
-
         private static void DrawMesh(Mesh mesh, Vector3 position, float width, float depth,
             float rotation, Color colour, Material material)
         {
@@ -323,27 +322,6 @@ namespace RimArt
         }
 
         /// <summary>A thin unit-radius band, for the canopy's true radius on the floor.</summary>
-        private static Mesh Band(float inner)
-        {
-            const int segments = 64;
-            var vertices = new Vector3[(segments + 1) * 2];
-            var indices = new int[segments * 6];
-            for (int i = 0; i <= segments; i++)
-            {
-                float angle = i * Mathf.PI * 2f / segments;
-                var direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
-                vertices[i * 2] = direction * inner;
-                vertices[i * 2 + 1] = direction;
-                if (i == segments) continue;
-                int v = i * 2, j = i * 6;
-                indices[j] = v; indices[j + 1] = v + 2; indices[j + 2] = v + 1;
-                indices[j + 3] = v + 1; indices[j + 4] = v + 2; indices[j + 5] = v + 3;
-            }
-            var mesh = new Mesh { name = "Six Paths umbrella ring", vertices = vertices, triangles = indices };
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
-            return mesh;
-        }
 
         /// <summary>One unit shard, its corners listed clockwise on screen. It is turned and scaled by the draw.</summary>
         private static Mesh Shard()

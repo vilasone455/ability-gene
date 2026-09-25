@@ -1,6 +1,7 @@
 using UnityEngine;
 using Verse;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -77,7 +78,7 @@ namespace RimArt
         internal static readonly float PawnLayer = AltitudeLayer.Pawn.AltitudeFor();
 
         /// <summary>Most points one strip takes: ThunderGodGraphics' pool size.</summary>
-        private const int MostPoints = ThunderGodGraphics.MostPoints;
+        private const int MostPoints = VfxDraw.MostPoints;
         // One line of points and its half-widths, filled by a routine and handed to Tube. Only ever
         // used for one tube at a time; Tube copies them into a strip from the pool.
         private static readonly Vector2[] P = new Vector2[MostPoints];

@@ -55,8 +55,12 @@ namespace RimArt
 {
     public static class ShinraCastAnimation
     {
-        public static float Speed = 1f;
-        public static bool TryRestore(Verse.Pawn p, out Handle h) { h = new Handle(); return true; }
+        public static readonly CastClips Clip = new CastClips();
+    }
+    public sealed class CastClips
+    {
+        public float Speed = 1f;
+        public bool TryRestore(Verse.Pawn p, out Handle h) { h = new Handle(); return true; }
         public class Handle
         {
             public float Time;

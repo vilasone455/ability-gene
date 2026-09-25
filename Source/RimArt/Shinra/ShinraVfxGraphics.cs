@@ -113,7 +113,7 @@ namespace RimArt
 
                 // One sweep up the shell as it expands. A continuous oscillation here reads as
                 // ribbons floating in place rather than a surface being driven outward.
-                float sweep = ShinraVfxTiming.Smooth(ShinraVfxTiming.Progress(time,
+                float sweep = VfxMath.Smooth(ShinraVfxTiming.Progress(time,
                     ShinraVfxTiming.ChargeEnd, ShinraVfxTiming.ExpansionEnd + 0.30f));
                 for (int i = 0; i < 4; i++)
                 {
@@ -144,7 +144,7 @@ namespace RimArt
         {
             float charge = ShinraVfxTiming.Progress(time, 0f, ShinraVfxTiming.ChargeEnd);
             float flash = 1f - ShinraVfxTiming.Progress(time, ShinraVfxTiming.ChargeEnd, 0.64f);
-            float opacity = ShinraVfxTiming.Smooth(charge) * flash;
+            float opacity = VfxMath.Smooth(charge) * flash;
             if (opacity <= 0f) return;
             float size = ShinraVfxTiming.Radius * Mathf.Lerp(0.35f, 0.081f, charge);
             Plane(glow, At(centre, altitude + 0.01f), size, size, 0f,

@@ -1,4 +1,5 @@
 using UnityEngine;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -57,9 +58,6 @@ namespace RimArt
         public static float RetractAt => StandAt + PreviewStand;
         public static float GoneAt => RetractAt + Retract + Close;
         public static float Duration => GoneAt + Return + Settle;
-
-        private static float Smooth(float t) => SixPathsSlamTiming.Smooth(t);
-        private static float Rand(int index) => SixPathsBloomTiming.Rand(index);
 
         /// <summary>
         /// A ground point <paramref name="along"/> the cast direction and <paramref name="across"/>

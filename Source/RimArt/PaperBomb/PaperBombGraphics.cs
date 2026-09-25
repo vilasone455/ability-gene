@@ -1,6 +1,7 @@
 using UnityEngine;
 using Verse;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -25,7 +26,7 @@ namespace RimArt
         /// <summary>One tag, in cells. A hand seal lasts Seal before ignition; a tag curls for Burn before it bursts.</summary>
         internal const float TagLong = 0.7f, TagWide = 0.26f, Seal = 0.35f, Burn = 0.12f;
 
-        private static readonly Mesh sealRing = SixPathsBurstGraphics.Band(0.78f, "Paper Bomb seal ring");
+        private static readonly Mesh sealRing = VfxDraw.Ring(0.78f, "Paper Bomb seal ring");
         // A ring mesh scales its thickness with its radius, so rings are picked from a set by the thickness wanted.
         private static readonly float[] BandInner = { 0.995f, 0.99f, 0.98f, 0.96f, 0.93f, 0.86f, 0.75f };
         private static readonly Mesh[] bands = MakeBands();
@@ -34,7 +35,7 @@ namespace RimArt
         private static Mesh[] MakeBands()
         {
             var made = new Mesh[BandInner.Length];
-            for (int i = 0; i < made.Length; i++) made[i] = SixPathsBurstGraphics.Band(BandInner[i], "Paper Bomb band " + i);
+            for (int i = 0; i < made.Length; i++) made[i] = VfxDraw.Ring(BandInner[i], "Paper Bomb band " + i);
             return made;
         }
 

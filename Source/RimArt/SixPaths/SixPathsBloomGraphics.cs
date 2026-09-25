@@ -1,6 +1,7 @@
 using RimWorld;
 using UnityEngine;
 using Verse;
+using static RimArt.VfxDraw;
 
 namespace RimArt
 {
@@ -20,7 +21,7 @@ namespace RimArt
         private static readonly Material soft = MaterialPool.MatFrom("RimArt/SixPaths/SoftDisc", ShaderDatabase.Transparent);
         private static readonly Material softGlow = MaterialPool.MatFrom("RimArt/SixPaths/SoftDisc", ShaderDatabase.MoteGlow);
         private static readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
-        private static readonly Mesh ring = Band(0.965f);
+        private static readonly Mesh ring = VfxDraw.Ring(0.965f, "Six Paths bloom ring");
 
         // One mesh per thing drawn in a frame, never one reused: Graphics.DrawMesh reads a mesh
         // when the frame renders, not when it is called.
@@ -61,7 +62,7 @@ namespace RimArt
             float reach = SixPathsBloomTiming.Radius * 2f * sunk;
             DrawMesh(MeshPool.plane10, patient.WithY(floor), reach, reach, 0f,
                 Fade(Body, 0.3f * (1f - SixPathsBloomTiming.Reformed(seconds))), soft);
-            float open = 1f - SixPathsSlamTiming.Smooth((seconds - SixPathsBloomTiming.FoldAt) / SixPathsBloomTiming.Fold);
+            float open = 1f - VfxMath.Smooth((seconds - SixPathsBloomTiming.FoldAt) / SixPathsBloomTiming.Fold);
             DrawRing(patient.WithY(floor + 0.001f), SixPathsBloomTiming.Radius * 0.95f, Fade(Rim, 0.2f * sunk * open));
         }
 
@@ -93,7 +94,7 @@ namespace RimArt
             for (int j = 0; j < trailPoints.Length; j++)
                 trailPoints[j] = SixPathsBloomTiming.Path(from,
                     1f - SixPathsBloomTiming.Reformed(Mathf.Max(SixPathsBloomTiming.ReturnAt, seconds - Lag(j))));
-            float fade = 1f - SixPathsSlamTiming.Smooth((seconds - SixPathsBloomTiming.Duration + 0.15f) / 0.15f);
+            float fade = 1f - VfxMath.Smooth((seconds - SixPathsBloomTiming.Duration + 0.15f) / 0.15f);
             DrawTrail(patient.WithY(overhead), Fade(Rim, 0.5f * fade));
         }
 
@@ -156,8 +157,6 @@ namespace RimArt
 
         private static bool Shown(Vector3 at, Map map) => at.ToIntVec3().InBounds(map) && !at.ToIntVec3().Fogged(map);
 
-        private static Color Fade(Color colour, float alpha) => new Color(colour.r, colour.g, colour.b, alpha);
-
         private static void DrawMesh(Mesh mesh, Vector3 position, float width, float depth,
             float rotation, Color colour, Material material)
         {
@@ -174,27 +173,6 @@ namespace RimArt
         }
 
         /// <summary>A thin unit-radius band, for the rings on the floor.</summary>
-        private static Mesh Band(float inner)
-        {
-            const int segments = 64;
-            var vertices = new Vector3[(segments + 1) * 2];
-            var indices = new int[segments * 6];
-            for (int i = 0; i <= segments; i++)
-            {
-                float angle = i * Mathf.PI * 2f / segments;
-                var direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
-                vertices[i * 2] = direction * inner;
-                vertices[i * 2 + 1] = direction;
-                if (i == segments) continue;
-                int v = i * 2, j = i * 6;
-                indices[j] = v; indices[j + 1] = v + 2; indices[j + 2] = v + 1;
-                indices[j + 3] = v + 1; indices[j + 4] = v + 2; indices[j + 5] = v + 3;
-            }
-            var mesh = new Mesh { name = "Six Paths bloom ring", vertices = vertices, triangles = indices };
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
-            return mesh;
-        }
 
         /// <summary>One petal's meshes: its ground shadow, its dark and lit halves, the seam on its edge and the line down its spine.</summary>
         private sealed class Petal

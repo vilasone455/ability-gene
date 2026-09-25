@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -51,17 +52,12 @@ namespace RimArt
         public static float ReturnAt => UncurlAt + Uncurl;
         public static float Duration => ReturnAt + Reform;
 
-        private static float Smooth(float t) => SixPathsSlamTiming.Smooth(t);
-
         /// <summary>
         /// 0 to 1, fixed per index. The same sine hash as the lab's six-paths-impact.js, in double
         /// precision as it is there, so the motes rise where they did in the sketch.
         /// </summary>
-        public static float Rand(int index)
-        {
-            double n = Math.Sin(index * 127.1 + 17) * 43758.5453;
-            return (float)(n - Math.Floor(n));
-        }
+        /// <summary>Kept for callers outside this branch's reach; new code calls VfxMath.Rand.</summary>
+        public static float Rand(int index) => VfxMath.Rand(index);
 
         /// <summary>How far under the patient the orb has spread, which is what the floor darkens by.</summary>
         public static float Sunk(float seconds) => Smooth(seconds / Sink);

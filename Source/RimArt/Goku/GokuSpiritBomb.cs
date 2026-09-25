@@ -156,8 +156,8 @@ namespace RimArt
             for (; at < t.Burst - 0.03f && n < MostPulses; n++)
             {
                 float progress = (at - t.Open) / span;
-                into[n] = new SpiritBombPulse { At = at, Strength = (0.025f + 0.015f * progress) * (0.8f + 0.4f * G.Rand(n + 400)), Progress = progress };
-                at += Mathf.Lerp(FirstGap, LastGap, progress * progress) * (0.85f + 0.3f * G.Rand(n + 410)) / t.Pace;
+                into[n] = new SpiritBombPulse { At = at, Strength = (0.025f + 0.015f * progress) * (0.8f + 0.4f * VfxMath.Rand(n + 400)), Progress = progress };
+                at += Mathf.Lerp(FirstGap, LastGap, progress * progress) * (0.85f + 0.3f * VfxMath.Rand(n + 410)) / t.Pace;
             }
             return n;
         }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -59,8 +60,6 @@ namespace RimArt
         public static float CloseAt => UpAt + Hold;
         public static float ClosedAt => CloseAt + Close;
         public static float Duration => ClosedAt + Tail;
-
-        private static float Smooth(float t) => SixPathsSlamTiming.Smooth(t);
 
         /// <summary>Hits that land while it is open, one every <see cref="ShotGap"/>.</summary>
         public static int Shots
@@ -193,15 +192,15 @@ namespace RimArt
             Vector2 at;
             if (mode == UmbrellaMode.Canopy)
             {
-                float angle = Mathf.Atan2(toward.y, toward.x) + SixPathsBloomTiming.Rand(index) - 0.5f;
-                float reach = Radius * (0.5f + SixPathsBloomTiming.Rand(index + 4) * 0.5f) + u * 0.5f;
+                float angle = Mathf.Atan2(toward.y, toward.x) + VfxMath.Rand(index) - 0.5f;
+                float reach = Radius * (0.5f + VfxMath.Rand(index + 4) * 0.5f) + u * 0.5f;
                 at = new Vector2(Mathf.Cos(angle) * reach,
                     Mathf.Sin(angle) * reach + (RimHeight + Dome * 0.4f) * fall * SixPathsHeight.Lift);
             }
             else
-                at = Rel(toward, GuardReach - 0.3f + u * 0.6f * SixPathsBloomTiming.Rand(index + 2),
-                    (SixPathsBloomTiming.Rand(index) - 0.5f) * 1.6f * (1f + u * 0.5f),
-                    (GuardHeight + (SixPathsBloomTiming.Rand(index + 7) - 0.5f) * 1.4f) * fall);
+                at = Rel(toward, GuardReach - 0.3f + u * 0.6f * VfxMath.Rand(index + 2),
+                    (VfxMath.Rand(index) - 0.5f) * 1.6f * (1f + u * 0.5f),
+                    (GuardHeight + (VfxMath.Rand(index + 7) - 0.5f) * 1.4f) * fall);
             return new ImpactParticle
             {
                 x = at.x, z = at.y, size = 0.13f * (1f - u * 0.4f),

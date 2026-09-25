@@ -1,6 +1,7 @@
 using UnityEngine;
 using Verse;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -64,8 +65,8 @@ namespace RimArt
         internal static readonly float Shadows = AltitudeLayer.Shadows.AltitudeFor();
         internal static readonly float PawnAltitude = AltitudeLayer.Pawn.AltitudeFor();
 
-        private static readonly Mesh ring = SixPathsBurstGraphics.Band(0.93f, "Bubble Pipe ring");
-        private static readonly Mesh thin = SixPathsBurstGraphics.Band(0.965f, "Bubble Pipe thin ring");
+        private static readonly Mesh ring = VfxDraw.Ring(0.93f, "Bubble Pipe ring");
+        private static readonly Mesh thin = VfxDraw.Ring(0.965f, "Bubble Pipe thin ring");
 
         internal static float Bump(float x) => x >= 0f && x <= 1f ? Mathf.Max(0f, Mathf.Sin(x * Mathf.PI)) : 0f;
 

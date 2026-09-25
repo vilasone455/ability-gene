@@ -3,7 +3,8 @@ using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 using static RimArt.CastleEffectGraphics;
 using T = RimArt.InfinityCastleInsideTiming;
 
@@ -496,7 +497,7 @@ namespace RimArt
             CastleRoom room = Castle.Rooms[s.room];
             Vector2 behind = s.Behind(t), slid = new Vector2(s.dx * s.Slid(t), s.dz * s.Slid(t));
             Vector2 centre = CastleRoomGraphics.CentreOf(behind, room);
-            ThunderGodGraphics.Begin(centre);
+            VfxDraw.Begin(centre);
             for (int i = 0; i < s.riders.Count; i++) InfinityCastleRide.Ride(s.riders[i], behind);
 
             // The room on its own while it slides; once stopped it is back in the baked castle.
@@ -603,7 +604,7 @@ namespace RimArt
             CastleRoom room = Castle.Rooms[c.room];
             int band = InfinityCastleRules.Of.crushBand;
             var centre = CastleRoomGraphics.CentreOf(Vector2.zero, room);
-            ThunderGodGraphics.Begin(centre);
+            VfxDraw.Begin(centre);
             RoomFlash(room, centre, t - CastleCrush.Mark, layers.Wall);
             var (seatX, seatZ) = CastleLayout.SeatOf(Castle.Biwa);
             var (biwaX, biwaZ) = CastleLayout.BiwaOf((seatX, seatZ));

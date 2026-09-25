@@ -97,7 +97,7 @@ namespace RimArt
             hitAt = Passes(plan, d, length);
             float since = inLane ? s - hitAt : -1f;
             float walked = EnemyWalks[i] ? WalkIn * Mathf.Min(s, hitAt) : 0f;
-            float carried = inLane ? Mathf.Min(Push * G.Smooth(since / 0.5f), Mathf.Max(0f, stop - 0.6f - d)) : 0f;
+            float carried = inLane ? Mathf.Min(Push * VfxMath.Smooth(since / 0.5f), Mathf.Max(0f, stop - 0.6f - d)) : 0f;
             return new Vector2(d - walked + carried, across);
         }
 

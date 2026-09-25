@@ -140,7 +140,7 @@ var pawn = new Pawn { Map = map };
 void Tick(int count = 1)
 { for (int i = 0; i < count; i++) { Find.TickManager.TicksGame++; controller.GameComponentTick(); } }
 ShinraPawnState Begin(Pawn p)
-{ casts.Begin(p, new ShinraCastAnimation.Handle()); return controller.For(p); }
+{ casts.Begin(p, new CastClips.Handle()); return controller.For(p); }
 var state = Begin(pawn);
 Tick(16);
 Check(state.charge.time < ShinraCharge.Hold, "Opening must play before holding");
@@ -213,13 +213,13 @@ Tick(2);
 Check(automatic.charge.releasing, "Full charge releases on threat");
 ShinraCombat.Threat = false;
 var fast = Begin(new Pawn { Map = map });
-ShinraCastAnimation.Speed = 2f;
+ShinraCastAnimation.Clip.Speed = 2f;
 Tick(9);
 Check(fast.charge.Held && Near(fast.charge.Power, 9f / 180f), "Animation speed must not change charge rate");
 fast.Release();
 Tick(4);
 Check(fast.charge.burst, "Animation setting advances release twice as quickly");
-ShinraCastAnimation.Speed = 1f;
+ShinraCastAnimation.Clip.Speed = 1f;
 
 var saved = Begin(new Pawn { Map = map });
 Tick(180);

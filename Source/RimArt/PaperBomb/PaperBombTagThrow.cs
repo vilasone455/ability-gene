@@ -36,7 +36,7 @@ namespace RimArt
         public static float ScriptCarrierAlong(float seconds)
         {
             if (seconds < LandAt) return Mathf.Lerp(-0.6f, 0f, seconds / LandAt);
-            return ScriptCarrierWalks * SixPathsSlamTiming.Smooth((seconds - LandAt) / (ScriptFuse - 0.1f));
+            return ScriptCarrierWalks * VfxMath.Smooth((seconds - LandAt) / (ScriptFuse - 0.1f));
         }
     }
 }

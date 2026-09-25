@@ -84,7 +84,7 @@ namespace RimArt
             int suit = Mathf.Clamp(anchor.suit, 0, 2);
             float placed = (Find.TickManager.TicksGame - anchor.placedTick) / 60f;
             ClapTeleportGraphics.Mark(ground, ClapEnds.Kind(anchor), suit, suit, Time.realtimeSinceStartup, rising, placed);
-            if (!anchor.IsOnPawn && !clapping) ClapTeleportGraphics.TileOutline(ground, 0.5f * SixPathsSlamTiming.Smooth(placed / MarkFlick.Settle));
+            if (!anchor.IsOnPawn && !clapping) ClapTeleportGraphics.TileOutline(ground, 0.5f * VfxMath.Smooth(placed / MarkFlick.Settle));
         }
     }
 }
