@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The world's pocket map. Nothing lives or grows here; the terrain entry is a fallback the player
+       never sees, because the GenStep paints every cell. -->
+  <BiomeDef>
+    <defName>AG_UnlimitedBladeWorks</defName>
+    <label>unlimited blade works</label>
+    <description>A barren wasteland under a twilight sky, swords standing in it like grave markers, gears turning far overhead.</description>
+    <generatesNaturally>false</generatesNaturally>
+    <animalDensity>0</animalDensity>
+    <plantDensity>0</plantDensity>
+    <wildAnimalsCanWanderInto>false</wildAnimalsCanWanderInto>
+    <hasVirtualPlants>false</hasVirtualPlants>
+    <baseWeatherCommonalities>
+      <AG_UnlimitedBladeWorks>1</AG_UnlimitedBladeWorks>
+    </baseWeatherCommonalities>
+    <terrainsByFertility>
+      <li>
+        <terrain>AG_UbwEarth</terrain>
+        <min>-999</min>
+        <max>999</max>
+      </li>
+    </terrainsByFertility>
+  </BiomeDef>
+
+</Defs>

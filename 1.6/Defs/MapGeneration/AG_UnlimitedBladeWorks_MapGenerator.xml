@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Unlimited Blade Works: a 40 x 40 pocket map of red-brown earth with the field of swords drawn
+       over it. Opened from the RimArts debug window (Trace, "world map: open"); no ability makes one yet. -->
+  <MapGeneratorDef>
+    <defName>AG_UnlimitedBladeWorks</defName>
+    <label>unlimited blade works</label>
+    <isUnderground>true</isUnderground>
+    <ignoreAreaRevealedLetter>true</ignoreAreaRevealedLetter>
+    <disableCallAid>true</disableCallAid>
+    <!-- The game paints a grey frame (MapEdgeClipDrawer, 0.1 grey, above everything) beyond every map
+         edge. Off here: the world's ground and its swords run on past the edge into the haze, and
+         MapComponent_UnlimitedBladeWorks draws a backstop under them for the far corners. -->
+    <disableMapClippers>true</disableMapClippers>
+    <pocketMapProperties>
+      <biome>AG_UnlimitedBladeWorks</biome>
+      <temperature>21</temperature>
+    </pocketMapProperties>
+    <genSteps>
+      <li>AG_UnlimitedBladeWorksField</li>
+    </genSteps>
+    <!-- The world's numbers (proposed, not agreed: the sketches' headers); the shapes and timings of the pictures are code. -->
+    <modExtensions>
+      <li Class="RimArt.UbwRules">
+        <radiusByVerse>
+          <li>6</li>
+          <li>9</li>
+          <li>12</li>
+        </radiusByVerse>
+        <verseSeconds>2</verseSeconds>
+        <worldSecondsByVerse>
+          <li>20</li>
+          <li>25</li>
+          <li>30</li>
+        </worldSecondsByVerse>
+        <swordCostSeconds>0.5</swordCostSeconds>
+        <cooldownDays>2</cooldownDays>
+      </li>
+    </modExtensions>
+  </MapGeneratorDef>
+
+  <!-- One step, the whole world's body: earth on every cell, roof, unseen lights. The swords are not
+       things; the map component draws them from the same layout as the lab's world sketch
+       (Source/RimArt/Trace/UbwField.cs). -->
+  <GenStepDef>
+    <defName>AG_UnlimitedBladeWorksField</defName>
+    <order>500</order>
+    <genStep Class="RimArt.GenStep_UnlimitedBladeWorks">
+      <earthTerrain>AG_UbwEarth</earthTerrain>
+      <light>AG_UbwLight</light>
+      <lightSpacing>6</lightSpacing>
+    </genStep>
+  </GenStepDef>
+
+</Defs>

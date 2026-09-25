@@ -101,6 +101,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Trace", Prefix = "Trace:", Component = typeof(MapComponent_UbwPreview), Clock = "seconds",
+                Phases = label => label.Contains("cast") ? UbwCastPhases() : UbwWorldPhases(),
+            },
+            new Kit
+            {
                 Name = "Anchor", Prefix = "Clap teleport:", Component = typeof(MapComponent_ClapPreview), Clock = "seconds",
                 Phases = label => ClapPhases(label.Contains("double")),
             },
@@ -212,6 +217,30 @@ namespace RimArt.VfxLab
             new Phase("Hold", InfinityCastleInsideTiming.Landed),
             new Phase("Release", InfinityCastleInsideTiming.Release),
             new Phase("Castle removed", InfinityCastleInsideTiming.FadeAt),
+        };
+
+        private static Phase[] UbwCastPhases()
+        {
+            UbwCastTiming.Plan t = UbwCastTiming.For(UbwCastTiming.Verse);
+            return new[]
+            {
+                new Phase("Verse 1", 0f),
+                new Phase("Release", t.Open),
+                new Phase("Ring closes", t.Lit),
+                new Phase("Taken", t.Taken),
+                new Phase("Away", t.Clear),
+                new Phase("World ends", t.Ends),
+                new Phase("Back", t.Home),
+            };
+        }
+
+        private static Phase[] UbwWorldPhases() => new[]
+        {
+            new Phase("White", 0f),
+            new Phase("Fire runs out", UbwWorldTiming.Start),
+            new Phase("World stands", UbwWorldTiming.Swept),
+            new Phase("Close", UbwWorldTiming.CloseAt),
+            new Phase("White", UbwWorldTiming.Shut),
         };
 
         private static Phase[] SwordsPhases(bool spins) => new[]
