@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Behind AG_BubblePipe. A RecipeDef rather than a recipeMaker so the ingredients are stated in
+       one place. Cheap: a bamboo tube and a jar on a strap. -->
+  <RecipeDef>
+    <defName>AG_MakeBubblePipe</defName>
+    <label>make bubble pipe</label>
+    <description>Make a bubble pipe from 15 wood and 5 cloth. It comes with a full jar of 10 blows.</description>
+    <jobString>Making a bubble pipe.</jobString>
+    <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+    <workSkill>Crafting</workSkill>
+    <effectWorking>Tailor</effectWorking>
+    <soundWorking>Recipe_Tailor</soundWorking>
+    <workAmount>1500</workAmount>
+    <researchPrerequisite>AG_BubblePipe</researchPrerequisite>
+    <recipeUsers>
+      <li>CraftingSpot</li>
+      <li>TableMachining</li>
+    </recipeUsers>
+    <ingredients>
+      <li>
+        <filter><thingDefs><li>WoodLog</li></thingDefs></filter>
+        <count>15</count>
+      </li>
+      <li>
+        <filter><thingDefs><li>Cloth</li></thingDefs></filter>
+        <count>5</count>
+      </li>
+    </ingredients>
+    <fixedIngredientFilter>
+      <thingDefs>
+        <li>WoodLog</li>
+        <li>Cloth</li>
+      </thingDefs>
+    </fixedIngredientFilter>
+    <products>
+      <AG_BubblePipe>1</AG_BubblePipe>
+    </products>
+    <skillRequirements>
+      <Crafting>3</Crafting>
+    </skillRequirements>
+  </RecipeDef>
+
+</Defs>

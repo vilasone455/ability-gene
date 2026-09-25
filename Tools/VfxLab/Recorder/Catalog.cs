@@ -61,6 +61,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Bubble Pipe", Prefix = "Bubble Pipe:", Component = typeof(MapComponent_BubblePipePreview), Clock = "seconds",
+                Phases = label => label.Contains("eye pop") ? EyePopPhases() : DriftingBurstPhases(),
+            },
+            new Kit
+            {
                 Name = "Shadow Plexus", Prefix = "Shadow Plexus:", Component = typeof(MapComponent_ShadowPlexusPreview), Clock = "seconds",
                 Phases = label => label.Contains("imitation") ? ImitationPhases(label.Contains("cut") ? ImitationEnd.Cut : label.Contains("dark") ? ImitationEnd.Dark : ImitationEnd.Released)
                     : label.Contains("seam") ? SeamPhases(label.Contains("rescue") ? SeamScene.Rescue : SeamScene.Rusher)
@@ -361,6 +366,27 @@ namespace RimArt.VfxLab
             new Phase("Held", PaperBombShroudTiming.FirstLand),
             new Phase("Hand seal", PaperBombShroudTiming.SealAt(PaperBombShroudTiming.ScriptHeld)),
             new Phase("Burst", PaperBombShroudTiming.BurstAt(PaperBombShroudTiming.ScriptHeld)),
+        };
+
+        private static Phase[] DriftingBurstPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Raise", BubblePipeGraphics.Lead),
+            new Phase("Blow", BubblePipeDriftingBurstTiming.BlowAt),
+            new Phase("Drift", BubblePipeDriftingBurstTiming.AllOutAt(BubblePipeDriftingBurstTiming.ScriptCount)),
+            new Phase("Expire", BubblePipeDriftingBurstTiming.ExpireAt(BubblePipeDriftingBurstTiming.ScriptLife)),
+            new Phase("Lower", BubblePipeDriftingBurstTiming.ScriptLowerAt(BubblePipeDriftingBurstTiming.ScriptLife)),
+        };
+
+        private static Phase[] EyePopPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Raise", BubblePipeGraphics.Lead),
+            new Phase("Blow", BubblePipeEyePopTiming.BlowAt),
+            new Phase("Fly", BubblePipeEyePopTiming.LaunchAt),
+            new Phase("Hit", BubblePipeEyePopTiming.ScriptHitAt),
+            new Phase("Clear", BubblePipeEyePopTiming.ScriptHitAt + BubblePipeEyePopTiming.ScriptDebuff),
+            new Phase("Lower", BubblePipeEyePopTiming.ScriptLowerAt),
         };
 
         private static Phase[] ThrustPhases() => new[]
