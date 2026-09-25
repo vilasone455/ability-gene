@@ -78,15 +78,15 @@ namespace RimArt
             var sort = new List<(float key, int k)>(count);
             for (int k = 0; k < count; k++)
             {
-                float far = (0.2f + 0.5f * VergilTiming.Rand(k * 5 + 3)) * radius, turn = (k * 137f + VergilTiming.Rand(k * 3 + 9) * 60f) * Mathf.Deg2Rad;
+                float far = (0.2f + 0.5f * VfxMath.Rand(k * 5 + 3)) * radius, turn = (k * 137f + VfxMath.Rand(k * 3 + 9) * 60f) * Mathf.Deg2Rad;
                 Vector2 q = k < marked.Count
-                    ? new Vector2(marked[k].x + (VergilTiming.Rand(k * 13 + 1) - 0.5f) * 0.2f, marked[k].y + Chest)
+                    ? new Vector2(marked[k].x + (VfxMath.Rand(k * 13 + 1) - 0.5f) * 0.2f, marked[k].y + Chest)
                     : new Vector2(Mathf.Cos(turn) * far, Mathf.Sin(turn) * far);
-                float angle = Mathf.Atan2(q.y, q.x) + Mathf.PI / 2f + (VergilTiming.Rand(k * 11 + 4) - 0.5f) * 80f * Mathf.Deg2Rad;
+                float angle = Mathf.Atan2(q.y, q.x) + Mathf.PI / 2f + (VfxMath.Rand(k * 11 + 4) - 0.5f) * 80f * Mathf.Deg2Rad;
                 var d = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
                 VergilTiming.Chord(q, d, radius, out Vector2 a, out Vector2 b);
                 cuts.Add(new CutEndCut { Line = new VergilChord { Q = q, D = d, A = k % 2 == 0 ? a : b, B = k % 2 == 0 ? b : a } });
-                sort.Add((VergilTiming.Rand(k + 50), k));
+                sort.Add((VfxMath.Rand(k + 50), k));
             }
             sort.Sort((m, n) => m.key != n.key ? m.key.CompareTo(n.key) : m.k.CompareTo(n.k));
             for (int i = 0; i < sort.Count; i++)

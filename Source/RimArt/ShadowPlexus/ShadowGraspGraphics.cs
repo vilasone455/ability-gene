@@ -1,7 +1,7 @@
 using UnityEngine;
 using Verse;
 using static RimArt.ShadowPlexusGraphics;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
 using P = RimArt.ShadowPlexusTiming;
 using T = RimArt.ShadowGraspTiming;
 
@@ -50,11 +50,11 @@ namespace RimArt
             Vector2 carrier = shot.Carrier, item = shot.Item;
             float slid = shot.SlidAt(s);
             Vector2 at = P.PointOn(item, shot.Dest, slid), stop = P.PointOn(item, shot.Dest, shot.Share);
-            if (shot.Range > 0f) RangeRing(carrier, shot.Range, 1f - P.Smooth((s - shot.Arrive) / 0.4f));
+            if (shot.Range > 0f) RangeRing(carrier, shot.Range, 1f - VfxMath.Smooth((s - shot.Arrive) / 0.4f));
 
             // The tendril: carrier to the pick-up cell, then on to the hand. It runs back along both legs.
             float leg1 = Vector2.Distance(carrier, item), leg2 = Vector2.Distance(item, shot.Dest) * slid;
-            float back = P.Smooth((s - shot.Arrive - T.LetGo) / T.Back);
+            float back = VfxMath.Smooth((s - shot.Arrive - T.LetGo) / T.Back);
             float left = (s < shot.Cast ? P.EaseOut(s / shot.Cast) : 1f - back) * (leg1 + (s < shot.Cast ? 0f : leg2));
             // Blunt while it ends in the wrist.
             Line(carrier, item, 0f, Mathf.Clamp01(left / leg1), s, shot.Sway, shot.Width, point: s < shot.Cast || back > 0f);
@@ -67,7 +67,7 @@ namespace RimArt
             Pool(carrier, 0.28f * Mathf.Clamp01(left * 3f), 1f, s);
 
             // The feeler: the path the thing will take. A pawn standing on it stops the thing there.
-            float feel = P.Smooth((s - shot.Cast) / T.Open) * (1f - P.Smooth((s - shot.Arrive) / 0.1f));
+            float feel = VfxMath.Smooth((s - shot.Cast) / T.Open) * (1f - VfxMath.Smooth((s - shot.Arrive) / 0.1f));
             if (feel > 0f)
             {
                 P.Path(feeler, at, shot.Share < 1f ? stop : shot.Dest, 0f, feel, s, 0f);
@@ -75,9 +75,9 @@ namespace RimArt
             }
 
             // The hand. The wrist stays on the tendril: it turns as the second leg grows.
-            float open = P.Smooth((s - shot.Cast) / T.Open) * (1f - P.Smooth((s - shot.Arrive - T.LetGo) / 0.15f));
-            float curl = P.Smooth((s - shot.Cast - T.Open) / T.Curl) * (1f - P.Smooth((s - shot.Arrive) / T.LetGo));
-            Hand(at, shot.Aim + shot.Turn * P.Smooth(leg2 / T.TurnOver), open, curl, shot.HandSize);
+            float open = VfxMath.Smooth((s - shot.Cast) / T.Open) * (1f - VfxMath.Smooth((s - shot.Arrive - T.LetGo) / 0.15f));
+            float curl = VfxMath.Smooth((s - shot.Cast - T.Open) / T.Curl) * (1f - VfxMath.Smooth((s - shot.Arrive) / T.LetGo));
+            Hand(at, shot.Aim + shot.Turn * VfxMath.Smooth(leg2 / T.TurnOver), open, curl, shot.HandSize);
             Shreds(at, s - shot.Arrive - T.LetGo, 6, 0.35f, 0.5f);
         }
     }

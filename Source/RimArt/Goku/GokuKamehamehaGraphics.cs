@@ -1,7 +1,8 @@
 using UnityEngine;
 using Verse;
 using static RimArt.GokuGraphics;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 using G = RimArt.GokuTiming;
 using T = RimArt.GokuKamehamehaTiming;
 
@@ -28,7 +29,7 @@ namespace RimArt
     public static class GokuKamehamehaGraphics
     {
         private static readonly Color Grey = new Color(0.42f, 0.42f, 0.44f);
-        private static readonly Mesh beamRing = SixPathsBurstGraphics.Band(0.9f, "Kamehameha ring");
+        private static readonly Mesh beamRing = VfxDraw.Ring(0.9f, "Kamehameha ring");
         private const int MostEnemies = 8;
         private static readonly Vector2[] struck = new Vector2[MostEnemies];
         private static readonly float[] struckAt = new float[MostEnemies];

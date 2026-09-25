@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -28,8 +29,6 @@ namespace RimArt
         /// <summary>A piece smaller than this is dropped, as the sketch drops it.</summary>
         private const float SmallestPiece = 0.02f;
 
-        public static float Smooth(float t) => SixPathsSlamTiming.Smooth(t);
-        public static float Rand(int index) => SixPathsBloomTiming.Rand(index);
         public static float Clamp(float t) => Mathf.Clamp01(t);
 
         /// <summary>

@@ -36,7 +36,7 @@ namespace RimArt
         private static readonly Material softGlow = MaterialPool.MatFrom("RimArt/SixPaths/SoftDisc", ShaderDatabase.MoteGlow);
         private static readonly Material puff = MaterialPool.MatFrom("RimArt/SixPaths/Puff", ShaderDatabase.Transparent);
         private static readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
-        private static readonly Mesh ring = Band(0.90f);
+        private static readonly Mesh ring = VfxDraw.Ring(0.90f, "Six Paths slam ring");
 
         // One mesh per thing drawn in a frame, never one reused. Graphics.DrawMesh reads a mesh
         // when the frame renders rather than when it is called, so the block and its two motion
@@ -254,27 +254,6 @@ namespace RimArt
         }
 
         /// <summary>A unit-radius band, for the shock ring on the floor.</summary>
-        private static Mesh Band(float inner)
-        {
-            const int segments = 64;
-            var vertices = new Vector3[(segments + 1) * 2];
-            var indices = new int[segments * 6];
-            for (int i = 0; i <= segments; i++)
-            {
-                float angle = i * Mathf.PI * 2f / segments;
-                var direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
-                vertices[i * 2] = direction * inner;
-                vertices[i * 2 + 1] = direction;
-                if (i == segments) continue;
-                int v = i * 2, j = i * 6;
-                indices[j] = v; indices[j + 1] = v + 2; indices[j + 2] = v + 1;
-                indices[j + 3] = v + 1; indices[j + 4] = v + 2; indices[j + 5] = v + 3;
-            }
-            var mesh = new Mesh { name = "Six Paths slam ring", vertices = vertices, triangles = indices };
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
-            return mesh;
-        }
 
         /// <summary>
         /// Thin quads along line segments, all in one mesh and one draw. Capacity is fixed at

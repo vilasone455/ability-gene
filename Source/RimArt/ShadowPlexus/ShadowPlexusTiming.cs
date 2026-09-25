@@ -1,4 +1,5 @@
 using UnityEngine;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -31,8 +32,6 @@ namespace RimArt
         public const float SkyShare = 0.5f, DarkBelow = 0.3f, FireRadius = 10f;
         /// <summary>How long the two halves of a cut line take to run back.</summary>
         public const float SnapTime = 0.4f;
-
-        public static float Smooth(float t) => SixPathsSlamTiming.Smooth(t);
 
         /// <summary>The ease the sketches use for a line running out: fast, then slowing.</summary>
         public static float EaseOut(float t)

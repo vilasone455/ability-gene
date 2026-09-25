@@ -14,7 +14,7 @@ namespace RimArt
         public IntVec3 anchor, cell;
         public GravityClock clock = new GravityClock();
         public float mass;
-        public GravityCastAnimation.Handle animation;
+        public CastClips.Handle animation;
         public bool restore;
         private Sustainer sound;
         public bool Active => clock.phase != GravityPhase.Finished;
@@ -34,7 +34,7 @@ namespace RimArt
             if (restore)
             {
                 restore = false;
-                if (caster == null || !caster.Spawned || !GravityCastAnimation.TryRestore(caster, out animation))
+                if (caster == null || !caster.Spawned || !GravityCastAnimation.Clip.TryRestore(caster, out animation))
                 { Finish(false); return; }
             }
             if (!Active)

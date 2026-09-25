@@ -34,11 +34,7 @@ namespace RimArt
 
         public static float Clamp01(float value) => Math.Max(0f, Math.Min(1f, value));
         public static float Progress(float time, float start, float end) => Clamp01((time - start) / (end - start));
-        public static float Smooth(float value)
-        {
-            float t = Clamp01(value);
-            return t * t * (3f - 2f * t);
-        }
+        public static float Smooth(float value) => VfxMath.Smooth(value);
 
         /// <summary>Outward travel of the ground ring and the dust it drives, 0 to 1.</summary>
         public static float Expansion(float time)

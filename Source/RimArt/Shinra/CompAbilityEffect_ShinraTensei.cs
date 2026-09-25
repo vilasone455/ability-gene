@@ -21,9 +21,9 @@ namespace RimArt
 
         public override bool GizmoDisabled(out string reason)
         {
-            if (!ShinraCastAnimation.Present)
+            if (!ShinraCastAnimation.Clip.Present)
             { reason = "Shinra Tensei's hand animation requires Melee Animation."; return true; }
-            if (!ShinraCastAnimation.CanAnimate(parent.pawn))
+            if (!ShinraCastAnimation.Clip.CanAnimate(parent.pawn))
             { reason = "The caster must be a standing humanlike pawn, outside another animation."; return true; }
             if (parent.pawn.Map.GetComponent<MapComponent_ShinraCasts>().Running(parent.pawn))
             { reason = "Shinra Tensei is still playing."; return true; }
@@ -38,7 +38,7 @@ namespace RimArt
             MapComponent_ShinraCasts component = pawn.Map.GetComponent<MapComponent_ShinraCasts>();
             if (component.Running(pawn) || !GameComponent_Shinra.HasEye(pawn)
                 || GameComponent_Shinra.Instance.For(pawn).cooldownUntil > Find.TickManager.TicksGame) return;
-            if (ShinraCastAnimation.TryStart(pawn, out ShinraCastAnimation.Handle animation))
+            if (ShinraCastAnimation.Clip.TryStart(pawn, out CastClips.Handle animation))
                 component.Begin(pawn, animation);
         }
     }

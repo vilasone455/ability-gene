@@ -70,7 +70,7 @@ namespace RimArt
             for (int i = 0; i < count; i++)
             {
                 float age = seconds - (BlowAt + i * Gap);
-                if (age >= 0f && age < Form) forming = Mathf.Max(forming, Radius * SixPathsSlamTiming.Smooth(age / Form));
+                if (age >= 0f && age < Form) forming = Mathf.Max(forming, Radius * VfxMath.Smooth(age / Form));
             }
             return forming;
         }
@@ -90,8 +90,8 @@ namespace RimArt
             float tip = BubblePipeGraphics.TipH;
             bubble.Along = along;
             bubble.Across = across + sway * Mathf.Cos(fan);
-            bubble.Height = forming ? tip : Mathf.Lerp(tip, Hover + Bob * Mathf.Sin(run * 1.7f + seed), SixPathsSlamTiming.Smooth(run / 1.2f));
-            bubble.Radius = forming ? Radius * SixPathsSlamTiming.Smooth(age / Form) : Radius;
+            bubble.Height = forming ? tip : Mathf.Lerp(tip, Hover + Bob * Mathf.Sin(run * 1.7f + seed), VfxMath.Smooth(run / 1.2f));
+            bubble.Radius = forming ? Radius * VfxMath.Smooth(age / Form) : Radius;
             bubble.Forming = forming;
             bubble.Age = age;
             return true;

@@ -1,7 +1,7 @@
 using UnityEngine;
 using Verse;
 using static RimArt.ShadowPlexusGraphics;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
 using P = RimArt.ShadowPlexusTiming;
 using T = RimArt.ShadowNeckBindTiming;
 
@@ -47,29 +47,29 @@ namespace RimArt
             // The Imitation line that is already there, and how it ends.
             if (since < 0f) Line(carrier, target, 0f, 1f, s, shot.Sway, shot.Width);
             else if (shot.Cut) BrokenLine(carrier, target, shot.CutAt, since, shot.Width, s, shot.Sway);
-            else Line(carrier, target, 0f, 1f - P.Smooth(since / T.LineBack), s, shot.Sway, shot.Width);
-            float held = 1f - P.Smooth(since / 0.25f);
-            Pool(carrier, (0.3f + 0.04f * Mathf.Sin(s * 5f)) * (1f - P.Smooth(since / T.LineBack)), 1f, s);
+            else Line(carrier, target, 0f, 1f - VfxMath.Smooth(since / T.LineBack), s, shot.Sway, shot.Width);
+            float held = 1f - VfxMath.Smooth(since / 0.25f);
+            Pool(carrier, (0.3f + 0.04f * Mathf.Sin(s * 5f)) * (1f - VfxMath.Smooth(since / T.LineBack)), 1f, s);
             Pool(target, T.PoolRadius * held, 1f, s);
             Grip(target, held, s, 4, 0.35f);
 
             // The two hands. k is -1 for the one on the left of the screen, 1 for the right.
-            float gone = P.Smooth(since / 0.2f);
+            float gone = VfxMath.Smooth(since / 0.2f);
             for (int k = -1; k <= 1; k += 2)
             {
                 float work = 0.2f + 0.25f * (0.5f + 0.5f * Mathf.Sin(s * 22f + k * 1.5f));    // fingers working while it crawls
                 if (s < T.Crawl)
                 {
-                    Vector2 c = P.PointOn(carrier, target, P.Smooth(s / T.Crawl));
-                    Hand(c + left * (k * T.Beside), shot.Aim, P.Smooth(s / 0.15f), work, T.HandSize, k > 0, LineLayer + 0.006f);
+                    Vector2 c = P.PointOn(carrier, target, VfxMath.Smooth(s / T.Crawl));
+                    Hand(c + left * (k * T.Beside), shot.Aim, VfxMath.Smooth(s / 0.15f), work, T.HandSize, k > 0, LineLayer + 0.006f);
                     continue;
                 }
                 if (gone >= 1f) continue;
-                float u = P.Smooth((s - T.Crawl) / shot.Climb);
+                float u = VfxMath.Smooth((s - T.Crawl) / shot.Climb);
                 for (int i = 0; i < arm.Length; i++) arm[i] = OnBody(target, k, u * i / 10f);
                 ShadowLine(arm, T.ArmWidth, 1f - gone, s, flare: false, point: false, layer: Overhead + 0.018f);
-                float close = P.Smooth((u - 0.85f) / 0.15f), squeeze = s >= shot.Closed ? 0.88f + 0.08f * Mathf.Sin(s * 6f) : Mathf.Lerp(work, 0.88f, close);
-                Hand(OnBody(target, k, u), 90f + k * T.TurnIn * P.Smooth((u - 0.75f) / 0.25f), 1f - gone, squeeze, T.HandSize, k > 0, Overhead + 0.02f);
+                float close = VfxMath.Smooth((u - 0.85f) / 0.15f), squeeze = s >= shot.Closed ? 0.88f + 0.08f * Mathf.Sin(s * 6f) : Mathf.Lerp(work, 0.88f, close);
+                Hand(OnBody(target, k, u), 90f + k * T.TurnIn * VfxMath.Smooth((u - 0.75f) / 0.25f), 1f - gone, squeeze, T.HandSize, k > 0, Overhead + 0.02f);
             }
             Shreds(new Vector2(target.x, target.y + T.NeckHeight), since, 10, 0.45f, 0.6f);
         }

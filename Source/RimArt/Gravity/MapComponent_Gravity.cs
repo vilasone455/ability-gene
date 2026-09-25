@@ -52,7 +52,7 @@ namespace RimArt
         {
             if (For(pawn) != null || GameComponent_Gravity.Instance.Remaining(pawn) > 0
                 || !GravityAcquisition.HasEye(pawn) || !GravityCommands.ValidTarget(pawn, cell)) return;
-            if (!GravityCastAnimation.TryStart(pawn, out var animation)) return;
+            if (!GravityCastAnimation.Clip.TryStart(pawn, out var animation)) return;
             casts.Add(new GravityCast { id = GameComponent_Gravity.Instance.NextId(), caster = pawn,
                 anchor = pawn.Position, cell = cell, map = map, animation = animation });
         }

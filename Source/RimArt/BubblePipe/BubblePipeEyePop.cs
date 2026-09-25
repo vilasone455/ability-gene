@@ -42,7 +42,7 @@ namespace RimArt
         public static float Forming(float seconds)
         {
             float age = seconds - BlowAt;
-            return age >= 0f && age < Form ? Radius * SixPathsSlamTiming.Smooth(age / Form) : 0f;
+            return age >= 0f && age < Form ? Radius * VfxMath.Smooth(age / Form) : 0f;
         }
 
         /// <summary>When tiny bubble <paramref name="k"/> leaves the face, from the hit, for a debuff of <paramref name="debuff"/> seconds.</summary>

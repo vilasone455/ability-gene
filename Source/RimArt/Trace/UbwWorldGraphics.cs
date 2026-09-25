@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 using static RimArt.UbwGraphics;
 using T = RimArt.UbwWorldTiming;
 
@@ -36,8 +37,8 @@ namespace RimArt
         /// Building as a planted blade (a Building) is, the haze 0.6 over that: over the swords, under pawns.
         /// </summary>
         public static readonly UbwLayers Pocket = new UbwLayers(
-            Terrain + 0.001f, Terrain + 0.005f, Terrain + 0.015f, ThunderGodGraphics.Floor + 0.002f, ThunderGodGraphics.Floor + 0.01f,
-            ThunderGodGraphics.Floor + 0.0105f, Shadows, Shadows + 0.002f, UbwGraphics.Building, UbwGraphics.Building + 0.6f, 0.0005f,
+            Terrain + 0.001f, Terrain + 0.005f, Terrain + 0.015f, VfxDraw.Floor + 0.002f, VfxDraw.Floor + 0.01f,
+            VfxDraw.Floor + 0.0105f, Shadows, Shadows + 0.002f, UbwGraphics.Building, UbwGraphics.Building + 0.6f, 0.0005f,
             Terrain + 0.002f, Terrain + 0.003f, Shadows + 0.0015f);
 
         /// <summary>

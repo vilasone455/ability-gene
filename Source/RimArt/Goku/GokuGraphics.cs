@@ -1,6 +1,7 @@
 using UnityEngine;
 using Verse;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -32,7 +33,7 @@ namespace RimArt
         internal const float Chest = 0.3f, Lift = SixPathsHeight.Lift;
         internal static readonly float PawnLayer = AltitudeLayer.Pawn.AltitudeFor();
 
-        private static readonly Mesh thinRing = SixPathsBurstGraphics.Band(0.93f, "Goku thin ring");
+        private static readonly Mesh thinRing = VfxDraw.Ring(0.93f, "Goku thin ring");
         private static readonly Vector2[][] scratch = new Vector2[MostPoints + 1][];
 
         // The stand-in pawn's parts as ellipses: centre x, centre z, radius x, radius z. The slices are cut from them.

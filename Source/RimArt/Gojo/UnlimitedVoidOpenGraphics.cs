@@ -1,6 +1,7 @@
 using UnityEngine;
 using Verse;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 using static RimArt.GojoGraphics;
 using T = RimArt.UnlimitedVoidOpenTiming;
 

@@ -38,7 +38,7 @@ namespace RimArt
 
         /// <summary>Radius of an orb <paramref name="flown"/> of the way (0 to 1) from its slot to where it works.</summary>
         public static float DeployRadius(float flown, float target) =>
-            Mathf.Lerp(IdleRadius, target, SixPathsSlamTiming.Smooth(flown));
+            Mathf.Lerp(IdleRadius, target, VfxMath.Smooth(flown));
 
         /// <summary><paramref name="ground"/> is where the sage stands.</summary>
         public static CarriedSlot Slot(Vector3 ground, int index, float seconds)

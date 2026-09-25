@@ -1,4 +1,5 @@
 using UnityEngine;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -65,7 +66,5 @@ namespace RimArt
             new CameraEvent(SpeedLinesAt, LinesFor - SpeedLinesAt, Push, 1f, 0f, HoleNorth),
             new CameraEvent(LinesFor + 0.45f, 1f, 1f, 0f),
         };
-
-        private static float Smooth(float t) => SixPathsSlamTiming.Smooth(t);
     }
 }

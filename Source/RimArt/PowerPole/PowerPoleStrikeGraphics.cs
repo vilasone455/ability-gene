@@ -1,7 +1,8 @@
 using UnityEngine;
 using Verse;
 using static RimArt.PowerPoleGraphics;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 using T = RimArt.PowerPoleStrikeTiming;
 
 namespace RimArt

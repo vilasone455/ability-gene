@@ -7,7 +7,7 @@ namespace RimArt
     {
         public MapComponent_ShinraCasts(Map map) : base(map) { }
         public bool Running(Pawn pawn) => GameComponent_Shinra.Instance.For(pawn).active;
-        public void Begin(Pawn pawn, ShinraCastAnimation.Handle animation) =>
+        public void Begin(Pawn pawn, CastClips.Handle animation) =>
             GameComponent_Shinra.Instance.Begin(pawn, animation);
         public override void MapComponentUpdate()
         {

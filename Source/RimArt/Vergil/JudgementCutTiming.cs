@@ -47,12 +47,12 @@ namespace RimArt
         /// </summary>
         public static VergilChord CutLine(int k, float radius)
         {
-            float turn = (k * 137f + VergilTiming.Rand(k + 5) * 50f) * Mathf.Deg2Rad;
-            float off = Mathf.Sqrt(VergilTiming.Rand(k * 3 + 1)) * radius * 0.6f;
+            float turn = (k * 137f + VfxMath.Rand(k + 5) * 50f) * Mathf.Deg2Rad;
+            float off = Mathf.Sqrt(VfxMath.Rand(k * 3 + 1)) * radius * 0.6f;
             var q = new Vector2(Mathf.Cos(turn) * off, Mathf.Sin(turn) * off);
-            float angle = (k * 67f + VergilTiming.Rand(k * 7 + 2) * 60f) * Mathf.Deg2Rad;
+            float angle = (k * 67f + VfxMath.Rand(k * 7 + 2) * 60f) * Mathf.Deg2Rad;
             var d = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-            float over = radius + OverLeast + (OverMost - OverLeast) * VergilTiming.Rand(k * 11 + 3);
+            float over = radius + OverLeast + (OverMost - OverLeast) * VfxMath.Rand(k * 11 + 3);
             VergilTiming.Chord(q, d, over, out Vector2 a, out Vector2 b);
             return new VergilChord { Q = q, D = d, A = k % 2 == 0 ? a : b, B = k % 2 == 0 ? b : a };
         }
