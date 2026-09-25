@@ -1,5 +1,7 @@
-// Bank Shot gun: Bank Shot — weapon ability proposal, not the game. Nothing in Source/RimArt draws
-// this yet.
+// Bank Shot gun: Bank Shot — weapon ability. Ported to C# (uncommitted, 2026-09-25): the picture is
+// Source/RimArt/BankShot (recorded as "Bank Shot: corner / corridor / room"), the rule is
+// BankShotPath.cs (Tests/BankShot checks it against lib/bank-shot-path.js), the weapon and ability
+// are BankShot/Kit and 1.6/Defs/*/AG_BankShot_*.xml. Not yet run in game.
 //
 // What it is for (chosen 2026-09-23 as the last v1 weapon; two modes agreed 2026-09-23; the
 // numbers are placeholders and will be XML fields). The pawn carries a heavy pistol whose every

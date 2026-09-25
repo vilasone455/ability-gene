@@ -145,6 +145,7 @@ namespace RimArt
                 new Kit { Label = "Makibishi pouch", Grant = GrantMakibishiPouch },
                 new Kit { Label = "Fūma Shuriken", Grant = GrantFumaShuriken },
                 new Kit { Label = "Tag scroll (Paper Bomb)", Grant = GrantTagScroll },
+                new Kit { Label = "Bank shot pistol", Grant = GrantBankShot },
                 new Kit { Label = "Bubble pipe", Grant = GrantBubblePipe },
                 new Kit { Label = "Water gun", Grant = GrantWaterGun },
                 new Kit { Label = "Shinra Tensei (repulsion eye)", Grant = GrantShinraTensei },
@@ -265,6 +266,10 @@ namespace RimArt
         /// <summary>The scroll comes loaded with 20 tags; the research is finished so more can be made.</summary>
         private static string GrantTagScroll(Pawn pawn)
             => GrantWeapon(pawn, "AG_TagScroll", "AG_ExplosiveTags");
+
+        /// <summary>The ricochet pistol, with its charge ability ready; the research is finished so more can be made.</summary>
+        private static string GrantBankShot(Pawn pawn)
+            => GrantWeapon(pawn, "AG_BankShot", "AG_BankShot");
 
         /// <summary>The pipe comes with a full jar of 10 blows; the research is finished so more can be made.</summary>
         private static string GrantBubblePipe(Pawn pawn)

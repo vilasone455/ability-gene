@@ -23,6 +23,8 @@
     <Compile Include="../../../Source/RimArt/PowerPole/*.cs" LinkBase="Linked/PowerPole" />
     <!-- Drawing and previews only, as for the Power Pole: the kit code will go in PaperBomb/Kit. -->
     <Compile Include="../../../Source/RimArt/PaperBomb/*.cs" LinkBase="Linked/PaperBomb" />
+    <!-- Bank Shot: the ricochet rule, the charged shot's drawing and the previews. The weapon, the ability and the bouncing bullet are in BankShot/Kit, not linked here. -->
+    <Compile Include="../../../Source/RimArt/BankShot/*.cs" LinkBase="Linked/BankShot" />
     <!-- Bubble Pipe: drawing, timing and previews only. The weapon and ability code is in BubblePipe/Kit, not linked here. -->
     <Compile Include="../../../Source/RimArt/BubblePipe/*.cs" LinkBase="Linked/BubblePipe" />
     <!-- Water Gun: drawing and previews only. The weapon and ability code is in WaterGun/Kit, which is not linked here. -->
