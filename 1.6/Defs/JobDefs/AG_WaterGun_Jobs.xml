@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Stream Shot and Hydro Pump. The driver starts the picture with the warmup and holds the job
+       until the gun is back at rest. The weapon is hidden for the job because the picture draws the
+       gun, the hose and the bag. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastWaterGun</defName>
+    <driverClass>RimArt.JobDriver_CastWaterGun</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>

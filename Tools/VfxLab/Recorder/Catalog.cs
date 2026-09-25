@@ -61,6 +61,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Water Gun", Prefix = "Water Gun:", Component = typeof(MapComponent_WaterGunPreview), Clock = "seconds",
+                Phases = label => label.Contains("pump") ? PumpPhases() : StreamPhases(),
+            },
+            new Kit
+            {
                 Name = "Shadow Plexus", Prefix = "Shadow Plexus:", Component = typeof(MapComponent_ShadowPlexusPreview), Clock = "seconds",
                 Phases = label => label.Contains("imitation") ? ImitationPhases(label.Contains("cut") ? ImitationEnd.Cut : label.Contains("dark") ? ImitationEnd.Dark : ImitationEnd.Released)
                     : label.Contains("seam") ? SeamPhases(label.Contains("rescue") ? SeamScene.Rescue : SeamScene.Rusher)
@@ -335,6 +340,30 @@ namespace RimArt.VfxLab
             phases.Add(new Phase("Aftermath", t.Gone));
             return phases.ToArray();
         }
+
+        private static Phase[] StreamPhases()
+        {
+            float d = WaterGunStreamTiming.ScriptDistance, hold = WaterGunStreamTiming.ScriptHold;
+            return new[]
+            {
+                new Phase("Rest", 0f),
+                new Phase("Raise", WaterGunStreamTiming.Raise0),
+                new Phase("Fire", WaterGunStreamTiming.Fire),
+                new Phase("Hit", WaterGunStreamTiming.Hit(d)),
+                new Phase("Lower", WaterGunStreamTiming.Lower0(d, hold)),
+            };
+        }
+
+        private static Phase[] PumpPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Raise", WaterGunPumpTiming.Raise0),
+            new Phase("Pump", WaterGunPumpTiming.Pump0),
+            new Phase("Blast", WaterGunPumpTiming.Blast),
+            new Phase("Spray ends", WaterGunPumpTiming.SprayEnd),
+            new Phase("Up", WaterGunPumpTiming.Up(WaterGunPumpTiming.ScriptDown)),
+            new Phase("Lower", WaterGunPumpTiming.Lower0(WaterGunPumpTiming.ScriptGunHold)),
+        };
 
         private static Phase[] TagThrowPhases() => new[]
         {

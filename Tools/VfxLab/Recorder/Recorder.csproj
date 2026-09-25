@@ -23,6 +23,8 @@
     <Compile Include="../../../Source/RimArt/PowerPole/*.cs" LinkBase="Linked/PowerPole" />
     <!-- Drawing and previews only, as for the Power Pole: the kit code will go in PaperBomb/Kit. -->
     <Compile Include="../../../Source/RimArt/PaperBomb/*.cs" LinkBase="Linked/PaperBomb" />
+    <!-- Water Gun: drawing and previews only. The weapon and ability code is in WaterGun/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/WaterGun/*.cs" LinkBase="Linked/WaterGun" />
     <!-- Shadow Plexus: drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/ShadowPlexus/*.cs" LinkBase="Linked/ShadowPlexus" />
     <!-- Goku: drawing and previews only. -->

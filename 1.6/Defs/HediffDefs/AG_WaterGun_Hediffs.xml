@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Soaked, from the water gun. Its length is set by whatever soaks the pawn
+       (soakedSeconds on the ability; HediffComp_Disappears.SetDuration), so disappearsAfterTicks
+       here is only the fallback: 3600 ticks, 60 s. A second soak sets it back to full.
+
+       Cannot burn: Patch_WaterGun_SoakedCannotBurn makes FireUtility.CanEverAttachFire false for a
+       soaked pawn, and the soak puts out a fire already on it. The cold rule is a small shift of
+       the comfortable minimum, so hypothermia builds sooner in cold weather; nothing else reads it.
+
+       Not isBad, as Frostbound is not: nothing treats it and it passes on its own. -->
+  <HediffDef>
+    <defName>AG_Soaked</defName>
+    <label>soaked</label>
+    <description>Drenched to the skin. Wet clothes drag and chill: this person moves a little slower and feels the cold sooner. Nothing on them can catch fire until they dry.\n\nIt dries on its own.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.45, 0.70, 0.95)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>false</isBad>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>3600</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <statFactors>
+          <MoveSpeed>0.9</MoveSpeed>
+        </statFactors>
+        <statOffsets>
+          <ComfyTemperatureMin>10</ComfyTemperatureMin>
+        </statOffsets>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>
