@@ -22,7 +22,7 @@ namespace RimArt
 
         protected override IEnumerable<Toil> MakeNewToils()
         {
-            this.FailOnDespawnedOrNull(TargetIndex.A);
+            this.FailBeforeFired(Fired);
             AddFinishAction(delegate
             {
                 if (job.ability != null && job.def.abilityCasting)
@@ -37,7 +37,6 @@ namespace RimArt
             yield return begin;
 
             Toil cast = Toils_Combat.CastVerb(TargetIndex.A, TargetIndex.B, canHitNonTargetPawns: false);
-            cast.FailOn(() => !job.ability.CanCast && !job.ability.Casting);
             cast.AddPreTickAction(Seek);
             yield return cast;
 
@@ -51,6 +50,8 @@ namespace RimArt
             hold.defaultCompleteMode = ToilCompleteMode.Never;
             yield return hold;
         }
+
+        private bool Fired() => pawn.Map?.GetComponent<MapComponent_PowerPoleCasts>()?.Fired(pawn) ?? false;
 
         private void Begin()
         {

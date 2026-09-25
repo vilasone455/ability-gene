@@ -81,10 +81,16 @@ namespace RimArt
 
         internal void Write(string line) => results.WriteLine(line);
 
+        /// <summary>Melee Animation's own diagnostics (a pawn in one of its animations got a job it did not expect), logged as errors.</summary>
+        private const string MeleeAnimationTag = "<color=#66ffb5>[MeleeAnim]</color>";
+
         private void OnLog(string message, string stackTrace, LogType type)
         {
             if (steps == null || (type != LogType.Error && type != LogType.Exception)) return;
-            errors.Add(message.Split('\n')[0]);
+            string line = message.Split('\n')[0];
+            // Written down, not failed: raiders grapple and duel with Melee Animation in any fight.
+            if (line.StartsWith(MeleeAnimationTag)) Write("    note: " + line);
+            else errors.Add(line);
         }
 
         private void Next()

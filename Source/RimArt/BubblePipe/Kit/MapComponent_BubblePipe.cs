@@ -28,6 +28,8 @@ namespace RimArt
         {
             public Pawn caster;
             public bool eyePop, landed;
+            /// <summary>The cast job this cast landed in has ended.</summary>
+            public bool jobOver;
             public int startTick, warmupTicks, cost, count;
             public float blowsBefore, cap;
             public Vector2 feet, toward;
@@ -251,7 +253,19 @@ namespace RimArt
         public void Ended(Pawn caster)
         {
             for (int i = casts.Count - 1; i >= 0; i--)
-                if (casts[i].caster == caster && !casts[i].landed) casts.RemoveAt(i);
+            {
+                if (casts[i].caster != caster) continue;
+                if (!casts[i].landed) casts.RemoveAt(i);
+                else casts[i].jobOver = true;
+            }
+        }
+
+        /// <summary>Whether the caster's cast has blown and its job has not ended: the job holds from here (CastJobFail).</summary>
+        public bool Fired(Pawn caster)
+        {
+            for (int i = 0; i < casts.Count; i++)
+                if (casts[i].caster == caster && casts[i].landed && !casts[i].jobOver) return true;
+            return false;
         }
 
         /// <summary>Whether the cast job should still hold the caster: the pipe is not lowered yet.</summary>

@@ -12,10 +12,7 @@ namespace RimArt
     /// the palm, or the wave has stopped). The picture draws the gauntlet, so the job hides the held
     /// weapon (neverShowWeapon).
     ///
-    /// The vanilla fail conditions (target gone, ability can no longer be cast) apply only until the
-    /// ability is applied: after it the ability is on cooldown (Ability.PreActivate starts it) and
-    /// would end the job at once. The target is a cell for both abilities, so "gone" only applies
-    /// when a thing was clicked.
+    /// The vanilla fail conditions apply only until the ability is applied (CastJobFail.FailBeforeFired).
     /// </summary>
     public class JobDriver_CastFlameGauntlet : JobDriver_CastAbility
     {
@@ -23,7 +20,7 @@ namespace RimArt
 
         protected override IEnumerable<Toil> MakeNewToils()
         {
-            this.FailOn(() => !Applied() && (TargetGone() || !job.ability.CanCast && !job.ability.Casting));
+            this.FailBeforeFired(Applied);
             AddFinishAction(delegate
             {
                 if (job.ability != null && job.def.abilityCasting)
@@ -49,13 +46,6 @@ namespace RimArt
         }
 
         private bool Applied() => pawn.Map?.GetComponent<MapComponent_FlameGauntlet>()?.Applied(pawn) ?? false;
-
-        private bool TargetGone()
-        {
-            if (!job.targetA.HasThing) return !job.targetA.Cell.IsValid;
-            Thing target = job.targetA.Thing;
-            return target == null || !target.Spawned || target.Map != pawn.Map;
-        }
 
         private void Begin()
         {

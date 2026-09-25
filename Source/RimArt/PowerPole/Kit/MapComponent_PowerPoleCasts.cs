@@ -30,6 +30,8 @@ namespace RimArt
             public bool landed;
             /// <summary>The pole is back to its carried length: the held staff is drawn again and the caster may go.</summary>
             public bool home;
+            /// <summary>The cast job this cast landed in has ended.</summary>
+            public bool jobOver;
             public bool retractHeard, whipHeard, strikeHeard;
             /// <summary>Where the caster stood when the cast began, and the unit direction of the cast.</summary>
             public Vector2 feet, toward;
@@ -166,7 +168,26 @@ namespace RimArt
         public void Ended(Pawn caster)
         {
             for (int i = casts.Count - 1; i >= 0; i--)
-                if (casts[i].caster == caster && !casts[i].landed) Remove(i);
+            {
+                if (casts[i].caster != caster) continue;
+                if (!casts[i].landed) Remove(i);
+                else casts[i].jobOver = true;
+            }
+        }
+
+        /// <summary>
+        /// Whether the caster's thrust or sweep has landed and its job has not ended: the job holds from
+        /// here (CastJobFail). Not a vault: its wielder leaves in the flyer, and the job resumed after
+        /// the flight has to end on the cooldown as before, not cast again.
+        /// </summary>
+        public bool Fired(Pawn caster)
+        {
+            for (int i = 0; i < casts.Count; i++)
+            {
+                Cast cast = casts[i];
+                if (cast.caster == caster && cast.landed && !cast.jobOver && cast.kind != PowerPoleCastKind.Strike) return true;
+            }
+            return false;
         }
 
         /// <summary>Whether the caster's cast job should still hold it in place: the pole is out.</summary>

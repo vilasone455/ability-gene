@@ -18,7 +18,7 @@ namespace RimArt
 
         protected override IEnumerable<Toil> MakeNewToils()
         {
-            this.FailOnDespawnedOrNull(TargetIndex.A);
+            this.FailBeforeFired(Fired);
             AddFinishAction(delegate
             {
                 if (job.ability != null && job.def.abilityCasting)
@@ -31,9 +31,7 @@ namespace RimArt
             begin.defaultCompleteMode = ToilCompleteMode.Instant;
             yield return begin;
 
-            Toil cast = Toils_Combat.CastVerb(TargetIndex.A, TargetIndex.B, canHitNonTargetPawns: false);
-            cast.FailOn(() => !job.ability.CanCast && !job.ability.Casting);
-            yield return cast;
+            yield return Toils_Combat.CastVerb(TargetIndex.A, TargetIndex.B, canHitNonTargetPawns: false);
 
             Toil hold = ToilMaker.MakeToil("WaterGunHold");
             hold.tickAction = () =>
@@ -44,6 +42,8 @@ namespace RimArt
             hold.defaultCompleteMode = ToilCompleteMode.Never;
             yield return hold;
         }
+
+        private bool Fired() => pawn.Map?.GetComponent<MapComponent_WaterGun>()?.Fired(pawn) ?? false;
 
         private void Begin()
         {
