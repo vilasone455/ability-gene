@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The vacuum's abilities, granted while the weapon is equipped (CompVacuum). The weapon's own
+       numbers (capacity, slow) are on AG_Vacuum; the rest here. Placeholders.
+
+       warmupTime is the picture's: the canister rises during it (Suck and Spit 0.3 s, the sketches'
+       wind-up; Digest 0.3 s, the rise and a beat). The cast job (JobDriver_CastVacuum) then holds the
+       holder until the canister is back in the floor: Suck 0.42 s flight + 0.14 s per thing after the
+       first (the gap shrinks with many things, the last starts at most 0.7 s after the first) + 0.35 s
+       down the hose + 0.3 s result + 0.3 s sink; Spit 0.35 + 0.45 + 0.3 + 0.3 s; Digest the chew +
+       0.35 s burp + 0.3 + 0.3 s.
+
+       Suck and Spit share one cooldown through AG_VacuumMouth (cooldownTicks): casting either starts
+       both. Digest has none.
+
+       Sounds are vanilla placeholders: Suck's wind-up Hive_Spawn (warmupStartSound), each thing
+       swallowed Standard_Pickup; Spit's launch ThrowGrenade, a pawn hit Pawn_Melee_Punch_HitPawn, the
+       thing's own drop sound when it lands; Digest Crunch every other bite and Hive_Spawn for the
+       burp. Played by MapComponent_Vacuum. -->
+
+  <AbilityGroupDef>
+    <defName>AG_VacuumMouth</defName>
+    <label>vacuum mouth</label>
+    <cooldownTicks>480</cooldownTicks>
+  </AbilityGroupDef>
+
+  <AbilityDef Name="AG_VacuumAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastVacuum</jobDef>
+    <aiCanUse>false</aiCanUse>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_VacuumAbilityBase">
+    <defName>AG_Vacuum_Suck</defName>
+    <label>suck</label>
+    <description>Point the wand at a spot up to 12 tiles away. Every loose item within 2 tiles of it (stacks, chunks, corpses, weapons on the floor) and all filth there flies into the head, lightest first: the heaviest ends up in the mouth, the rest in the stomach. The hostile nearest the spot loses the weapon in its hands the same way; allies and neutrals keep theirs. Filth weighs nothing and is simply gone. Anything that would take the vacuum over 100 kg stays where it is. Cannot be used when full. Needs line of sight. Shares its cooldown with Spit.</description>
+    <iconPath>RimArt/Vacuum/IconSuck</iconPath>
+    <groupDef>AG_VacuumMouth</groupDef>
+    <targetRequired>true</targetRequired>
+    <!-- Not hostile: it is also how a floor is cleaned. The disarm only ever takes a hostile's weapon. -->
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>12.9</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>false</canTargetPawns>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <warmupStartSound>Hive_Spawn</warmupStartSound>
+    <comps>
+      <li Class="RimArt.CompProperties_VacuumSuck">
+        <radius>2</radius>
+        <disarmPawns>1</disarmPawns>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_VacuumAbilityBase">
+    <defName>AG_Vacuum_Spit</defName>
+    <label>spit</label>
+    <description>Fire the thing in the mouth at a pawn or a tile up to 12 tiles away. A pawn there takes 1.5 blunt damage per kg of the thing, at most 40, and is dazed for 1.2 seconds. The thing lands as itself, beside the pawn it hit or on the tile. Only its weight leaves the vacuum; the stomach keeps the rest. Needs something in the mouth and line of sight. Shares its cooldown with Suck.</description>
+    <iconPath>RimArt/Vacuum/IconSpit</iconPath>
+    <groupDef>AG_VacuumMouth</groupDef>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>12.9</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_VacuumSpit">
+        <damagePerKg>1.5</damagePerKg>
+        <maxDamage>40</maxDamage>
+        <armorPenetration>0</armorPenetration>
+        <stunSeconds>1.2</stunSeconds>
+        <followRadius>1.5</followRadius>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_VacuumAbilityBase">
+    <defName>AG_Vacuum_Digest</defName>
+    <label>digest</label>
+    <description>Stand still while the vacuum chews everything inside: 0.05 seconds per kg, 5 seconds when full. The thing in the mouth goes first, then the stomach, and all of it is destroyed. Stop it early and what is left stays inside. No cooldown.</description>
+    <iconPath>RimArt/Vacuum/IconDigest</iconPath>
+    <jobDef>AG_CastVacuumDigest</jobDef>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>0</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_VacuumDigest">
+        <secondsPerKg>0.05</secondsPerKg>
+        <minSeconds>0.5</minSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>
