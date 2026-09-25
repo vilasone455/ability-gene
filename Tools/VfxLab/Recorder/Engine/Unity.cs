@@ -27,6 +27,8 @@ namespace UnityEngine
         public static Vector2 Lerp(Vector2 a, Vector2 b, float t) { t = Mathf.Clamp01(t); return new Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t); }
         public static Vector2 LerpUnclamped(Vector2 a, Vector2 b, float t) => new Vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
         public static float Distance(Vector2 a, Vector2 b) => (a - b).magnitude;
+        public static Vector2 Min(Vector2 a, Vector2 b) => new Vector2(Math.Min(a.x, b.x), Math.Min(a.y, b.y));
+        public static Vector2 Max(Vector2 a, Vector2 b) => new Vector2(Math.Max(a.x, b.x), Math.Max(a.y, b.y));
         public static float Dot(Vector2 lhs, Vector2 rhs) => lhs.x * rhs.x + lhs.y * rhs.y;
     }
 
@@ -78,6 +80,9 @@ namespace UnityEngine
         public static float Log(float v) => (float)Math.Log(v);
         public static float Atan2(float y, float x) => (float)Math.Atan2(y, x);
         public static float Acos(float v) => (float)Math.Acos(v);
+        public static float Asin(float v) => (float)Math.Asin(v);
+        public static float Atan(float v) => (float)Math.Atan(v);
+        public static float Tan(float v) => (float)Math.Tan(v);
         public static float Abs(float v) => Math.Abs(v);
         public static int Abs(int v) => Math.Abs(v);
         public static int CeilToInt(float v) => (int)Math.Ceiling(v);

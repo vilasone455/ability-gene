@@ -1,6 +1,6 @@
 // Spirit Bomb (Genki Dama) — technique proposal for the Goku kit, not the game. The picture port in
-// Source/RimArt/Goku/GokuSpiritBomb*.cs still draws the older detonation (a banded dome that lifts
-// and thins, no burst). The kit's ultimate: the whole colony stops to feed one attack.
+// Source/RimArt/Goku/GokuSpiritBomb*.cs draws this version (the shells without the stand-ins in
+// them). The kit's ultimate: the whole colony stops to feed one attack.
 //
 // What it is for (from the user's draft; every number is a placeholder).
 //   Target an area up to 35 cells away. The caster raises both hands and channels with no upper

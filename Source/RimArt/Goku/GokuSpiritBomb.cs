@@ -11,9 +11,11 @@ namespace RimArt
     /// </summary>
     public struct SpiritBombPlan
     {
-        /// <summary>The channel starts; the throw; the flight; the grind; the detonation; the dome is fully open; it starts to lift; it is gone; the preview ends.</summary>
-        public float Cast, Release, Fly, Hit, Dome, Open, Fade, Gone, End;
+        /// <summary>The channel starts; the throw; the flight; the grind; the detonation; the dome is fully open; it bursts; the flecks are gone; the preview ends.</summary>
+        public float Cast, Release, Fly, Hit, Dome, Open, Burst, Gone, End;
         public float Charge, FlyTime;
+        /// <summary>How fast everything the dome does runs, 1 being the speed it was first sketched at.</summary>
+        public float Pace;
         public int Lenders;
         public float Lend, BlastPer, SizePer;
 
@@ -34,6 +36,24 @@ namespace RimArt
 
         public float BlastAt(float s) => GokuSpiritBombTiming.BaseRadius + BlastPer * PowerAt(s);
         public float RadiusAt(float s) => GokuSpiritBombTiming.StartSize + SizePer * PowerAt(s);
+
+        /// <summary>
+        /// When the front of the dome passes a point <paramref name="d"/> cells from the centre: the
+        /// dome grows from the ball's size at the throw to the blast radius over
+        /// <see cref="GokuSpiritBombTiming.Open"/>, fast then slow, so inside the ball's own radius
+        /// that is at once. The damage lands then.
+        /// </summary>
+        public float Passes(float d)
+        {
+            float r = RadiusAt(Release), blast = BlastAt(Release);
+            return Dome + GokuSpiritBombTiming.Open * (1f - Mathf.Pow(1f - Mathf.Clamp01((d - r) / (blast - r)), 1f / 3f));
+        }
+    }
+
+    /// <summary>One heartbeat of the standing dome: when, how hard (a share of its radius), and how far through the hold.</summary>
+    public struct SpiritBombPulse
+    {
+        public float At, Strength, Progress;
     }
 
     /// <summary>What a Spirit Bomb looks like now. Points are ground points on the map.</summary>
@@ -45,13 +65,15 @@ namespace RimArt
         public SpiritBombPlan Plan;
         /// <summary>The lenders, <see cref="SpiritBombPlan.Lenders"/> of them, in the order they join.</summary>
         public Vector2[] Lenders;
-        /// <summary>Hostile pawns round the target. Those inside the blast break into flecks as the dome passes them.</summary>
-        public Vector2[] Foes;
-        public int FoeCount;
-        /// <summary>Pawns round the target it spares (colonists, animals): they glow blue as the dome passes them.</summary>
+        /// <summary>
+        /// Pawns round the target it spares (colonists, animals): they stand in a blue shell as the
+        /// dome bursts. Hostile pawns get nothing drawn: they are hit under the dome at
+        /// <see cref="SpiritBombPlan.Passes"/>, which hides them, and what the hit does to them is
+        /// the game's.
+        /// </summary>
         public Vector2[] Spared;
         public int SparedCount;
-        /// <summary>Structure cells inside the blast: they glow blue while the dome stands.</summary>
+        /// <summary>Structure cells inside the blast, in one row: a blue shell round the row as the dome bursts.</summary>
         public Vector2[] Walls;
         public int WallCount;
     }
@@ -67,49 +89,83 @@ namespace RimArt
     {
         public const float Lead = 0.3f, Tail = 2f, Swing = 0.25f, Open = 0.4f, Fade = 1f, FullPower = 30f;
         public const float FirstLender = 0.8f, LenderEvery = 0.7f, BaseRadius = 2f, StartSize = 0.25f, Hang = 2.2f, Climb = 1.6f;
-        public const int Wisps = 16, WispsPerLender = 8, Levels = 7, Sparkles = 60;
+        public const int Wisps = 16, WispsPerLender = 8;
         public const float WispReach = 10f;
         public const float SurgeTime = 0.45f, SurgeSwell = 0.14f, Stretch = 0.16f, FlightSpin = 3f, TailSpan = 0.3f;
-        public const int FallSparks = 16, GrindSparks = 16, Chunks = 10, Flecks = 9, MaxPebbles = 14;
+        public const int FallSparks = 16, TrailWisps = 20, GrindSparks = 16, Chunks = 10, MaxPebbles = 14;
         public const float ColumnExtra = 5f;
+        /// <summary>
+        /// The dome is the ball grown to the blast and exploding: its radius as a share of the blast
+        /// radius (its flame fringe reaches about 1.07 of it, so the fringe lands on the true radius),
+        /// how long the burst takes to clear it and how much it swells, and how long the flecks last
+        /// at most. Then its rays, boiling blobs and flame tips, and the ball's own flame tips.
+        /// </summary>
+        public const float DomeFill = 0.93f, Pop = 0.25f, PopSwell = 0.05f, Scatter = 2f;
+        public const int DomeRays = 16, DomeBoils = 18, FlameTips = 60, BallTips = 28;
+        /// <summary>The heartbeat: the gap between pulses at the start of the hold and just before the burst, at pace 1.</summary>
+        public const float FirstGap = 0.3f, LastGap = 0.12f;
+        public const int MostPulses = 40;
+        /// <summary>How long a small bomb's dome stands, as a share of a full one's.</summary>
+        public const float HoldShare = 0.45f;
+        /// <summary>The scorch: patches of blackening inside it and blotches round its ragged edge.</summary>
+        public const int ScorchPatches = 16, ScorchEdge = 40;
         // What follows the charge, as small bomb and full bomb.
-        public static readonly Vector2 GrindTime = new Vector2(0.3f, 0.75f), HoldTime = new Vector2(0.35f, 1f), WhiteTime = new Vector2(0.03f, 0.09f),
-            Shake = new Vector2(0.05f, 0.2f), CrackCount = new Vector2(5f, 14f), VeinCount = new Vector2(2f, 8f), PillarCount = new Vector2(0f, 10f),
-            RockCount = new Vector2(5f, 32f), RockHeight = new Vector2(0.5f, 1.2f), StreakCount = new Vector2(8f, 26f), PathRingCount = new Vector2(2f, 7f);
+        public static readonly Vector2 GrindTime = new Vector2(0.3f, 0.75f), WhiteTime = new Vector2(0.03f, 0.09f),
+            Shake = new Vector2(0.05f, 0.2f), CrackCount = new Vector2(5f, 14f), PillarCount = new Vector2(0f, 10f),
+            RockCount = new Vector2(5f, 32f), RockHeight = new Vector2(0.5f, 1.2f), StreakCount = new Vector2(8f, 26f), FleckCount = new Vector2(120f, 420f);
         /// <summary>The ball's orbit lines: tilt speed, turn speed (degrees per second), starting angle.</summary>
         public static readonly float[] OrbitTilt = { 1.1f, -1.5f, 0.8f }, OrbitSpeed = { 25f, -35f, 45f }, OrbitStart = { 0f, 60f, 120f };
 
         /// <summary>The script's lenders: cells behind the caster, cells to its left.</summary>
         public static readonly Vector2[] LenderAt = { new Vector2(2.5f, 2f), new Vector2(3f, -1.6f), new Vector2(1f, -3.3f), new Vector2(1.2f, 3.5f), new Vector2(4.6f, 0.4f), new Vector2(4.2f, 3.1f) };
-        /// <summary>At the target, cells east and north of its centre: five enemies, a colonist in melee with them, an animal, and where three cells of colony wall start.</summary>
-        public static readonly Vector2[] FoeAt = { new Vector2(-0.8f, 0.6f), new Vector2(1.1f, -0.4f), new Vector2(0.3f, 1.9f), new Vector2(-1.9f, -1.2f), new Vector2(2.4f, 1.3f) };
+        /// <summary>At the target, cells east and north of its centre: a colonist in melee with the enemies, an animal, and where three cells of colony wall start.</summary>
         public static readonly Vector2 FriendAt = new Vector2(-0.1f, -0.5f), BeastAt = new Vector2(1.6f, -1.9f), WallFrom = new Vector2(-2.6f, 1.6f);
-        /// <summary>One more enemy stands this far past the final blast radius, at this bearing (radians).</summary>
-        public const float OutsideBy = 2.5f, OutsideBearing = -0.6f;
 
         // The preview's script: the sketch's sliders at their defaults.
         public const int ScriptLenders = 4;
-        public const float ScriptDistance = 16f, ScriptChannel = 6f, ScriptFly = 1.4f, ScriptLend = 1f, ScriptBlastPer = 0.25f, ScriptSizePer = 0.12f;
+        public const float ScriptDistance = 16f, ScriptChannel = 6f, ScriptFly = 1.4f, ScriptHold = 2f, ScriptPace = 0.6f,
+            ScriptLend = 1f, ScriptBlastPer = 0.25f, ScriptSizePer = 0.12f;
 
-        public static SpiritBombPlan Plan(int lenders, float channel = ScriptChannel, float fly = ScriptFly, float lend = ScriptLend,
-            float blastPer = ScriptBlastPer, float sizePer = ScriptSizePer)
+        public static SpiritBombPlan Plan(int lenders, float channel = ScriptChannel, float fly = ScriptFly, float hold = ScriptHold, float pace = ScriptPace,
+            float lend = ScriptLend, float blastPer = ScriptBlastPer, float sizePer = ScriptSizePer)
         {
-            var plan = new SpiritBombPlan { Cast = Lead, Lenders = lenders, Lend = lend, BlastPer = blastPer, SizePer = sizePer, FlyTime = fly };
+            var plan = new SpiritBombPlan { Cast = Lead, Lenders = lenders, Lend = lend, BlastPer = blastPer, SizePer = sizePer, FlyTime = fly, Pace = pace };
             plan.Release = plan.Cast + channel;
             plan.Charge = Mathf.Clamp01(plan.PowerAt(plan.Release) / FullPower);
             plan.Fly = plan.Release + Swing;
             plan.Hit = plan.Fly + fly;
             plan.Dome = plan.Hit + plan.By(GrindTime.x, GrindTime.y);
             plan.Open = plan.Dome + Open;
-            plan.Fade = plan.Open + plan.By(HoldTime.x, HoldTime.y);
-            plan.Gone = plan.Fade + Fade;
+            plan.Burst = plan.Open + plan.By(HoldShare * hold, hold);
+            plan.Gone = plan.Burst + Scatter;
             plan.End = plan.Gone + Tail;
             return plan;
         }
 
         /// <summary>
+        /// The dome's heartbeat, written into <paramref name="into"/> (at least
+        /// <see cref="MostPulses"/> long); returns how many. Pulses run from when it has opened until
+        /// it bursts. The gaps shrink from <see cref="FirstGap"/> to <see cref="LastGap"/> toward the
+        /// burst, divided by the pace, each a little uneven, and the pulses grow from 2.5% to 4% of
+        /// the radius.
+        /// </summary>
+        public static int Pulses(in SpiritBombPlan t, SpiritBombPulse[] into)
+        {
+            float span = t.Burst - t.Open, at = t.Open + 0.04f;
+            int n = 0;
+            for (; at < t.Burst - 0.03f && n < MostPulses; n++)
+            {
+                float progress = (at - t.Open) / span;
+                into[n] = new SpiritBombPulse { At = at, Strength = (0.025f + 0.015f * progress) * (0.8f + 0.4f * G.Rand(n + 400)), Progress = progress };
+                at += Mathf.Lerp(FirstGap, LastGap, progress * progress) * (0.85f + 0.3f * G.Rand(n + 410)) / t.Pace;
+            }
+            return n;
+        }
+
+        /// <summary>
         /// The camera shakes: a heavy bomb trembles every 0.5 s while it is still over the caster's
-        /// head, the grind shakes every 0.1 s, then the detonation and two echoes.
+        /// head, the grind shakes every 0.1 s, then the detonation and two echoes, each heartbeat of
+        /// the dome (harder toward the burst), and the burst.
         /// </summary>
         public static List<GokuShake> Shakes(in SpiritBombPlan plan)
         {
@@ -125,9 +181,13 @@ namespace RimArt
                 float at = plan.Hit + k * 0.1f;
                 list.Add(new GokuShake(at, big * (0.15f + 0.2f * (at - plan.Hit) / (plan.Dome - plan.Hit))));
             }
+            var pulses = new SpiritBombPulse[MostPulses];
+            int count = Pulses(plan, pulses);
+            for (int i = 0; i < count; i++) list.Add(new GokuShake(pulses[i].At, big * (0.15f + 0.25f * pulses[i].Progress)));
             list.Add(new GokuShake(plan.Dome, big));
             list.Add(new GokuShake(plan.Dome + 0.25f, big * 0.55f));
             list.Add(new GokuShake(plan.Dome + 0.5f, big * 0.3f));
+            list.Add(new GokuShake(plan.Burst, big * 0.35f));
             return list;
         }
     }
