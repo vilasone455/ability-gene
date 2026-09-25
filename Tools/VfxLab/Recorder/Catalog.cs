@@ -76,6 +76,13 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Chain Sickle", Prefix = "Chain Sickle:", Component = typeof(MapComponent_ChainSicklePreview), Clock = "seconds",
+                Phases = label => label.Contains("refused") ? new[] { new Phase("Snagged (Stake refused: too heavy)", 0f) }
+                    : label.Contains("stake") ? StakePhases()
+                    : SnagPhases(label.Contains("raider") ? 1 : label.Contains("muffalo") ? 2 : label.Contains("thrumbo") ? 3 : 0),
+            },
+            new Kit
+            {
                 Name = "Shadow Plexus", Prefix = "Shadow Plexus:", Component = typeof(MapComponent_ShadowPlexusPreview), Clock = "seconds",
                 Phases = label => label.Contains("imitation") ? ImitationPhases(label.Contains("cut") ? ImitationEnd.Cut : label.Contains("dark") ? ImitationEnd.Dark : ImitationEnd.Released)
                     : label.Contains("seam") ? SeamPhases(label.Contains("rescue") ? SeamScene.Rescue : SeamScene.Rusher)
@@ -370,6 +377,34 @@ namespace RimArt.VfxLab
                 new Phase("Fire", WaterGunStreamTiming.Fire),
                 new Phase("Hit", WaterGunStreamTiming.Hit(d)),
                 new Phase("Lower", WaterGunStreamTiming.Lower0(d, hold)),
+            };
+        }
+
+        private static Phase[] SnagPhases(int target)
+        {
+            float reel = ChainSickleRule.Script(target).Reel;
+            return new[]
+            {
+                new Phase("Rest", 0f),
+                new Phase("Spin", ChainSickleSnagTiming.Spin0),
+                new Phase("Throw", ChainSickleSnagTiming.Throw0),
+                new Phase("Wrap", ChainSickleSnagTiming.Hit),
+                new Phase("Reel", ChainSickleSnagTiming.Reel0),
+                new Phase("Result", ChainSickleSnagTiming.ReelEnd(reel)),
+            };
+        }
+
+        private static Phase[] StakePhases()
+        {
+            float swing = ChainSickleStakeTiming.ScriptSwingAt;
+            return new[]
+            {
+                new Phase("Snagged", 0f),
+                new Phase("Yank", ChainSickleStakeTiming.Yank0),
+                new Phase("Staked", ChainSickleStakeTiming.Staked),
+                new Phase("Step in", ChainSickleStakeTiming.Step0(swing)),
+                new Phase("Cut", swing),
+                new Phase("Result", ChainSickleStakeTiming.Cut(swing)),
             };
         }
 

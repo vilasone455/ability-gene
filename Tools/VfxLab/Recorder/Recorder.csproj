@@ -29,6 +29,8 @@
     <Compile Include="../../../Source/RimArt/BubblePipe/*.cs" LinkBase="Linked/BubblePipe" />
     <!-- Water Gun: drawing and previews only. The weapon and ability code is in WaterGun/Kit, which is not linked here. -->
     <Compile Include="../../../Source/RimArt/WaterGun/*.cs" LinkBase="Linked/WaterGun" />
+    <!-- Chain Sickle: the weight rule, drawing, timing and previews only. The weapon and ability code is in ChainSickle/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/ChainSickle/*.cs" LinkBase="Linked/ChainSickle" />
     <!-- Shadow Plexus: drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/ShadowPlexus/*.cs" LinkBase="Linked/ShadowPlexus" />
     <!-- Goku: drawing and previews only. -->

@@ -148,6 +148,7 @@ namespace RimArt
                 new Kit { Label = "Bank shot pistol", Grant = GrantBankShot },
                 new Kit { Label = "Bubble pipe", Grant = GrantBubblePipe },
                 new Kit { Label = "Water gun", Grant = GrantWaterGun },
+                new Kit { Label = "Chain sickle", Grant = GrantChainSickle },
                 new Kit { Label = "Shinra Tensei (repulsion eye)", Grant = GrantShinraTensei },
                 new Kit { Label = "Gravity Well (attraction eye)", Grant = GravityAcquisition.Grant },
 
@@ -278,6 +279,10 @@ namespace RimArt
         /// <summary>The gun comes with a full 30-unit bag; the research is finished so more can be made.</summary>
         private static string GrantWaterGun(Pawn pawn)
             => GrantWeapon(pawn, "AG_WaterGun", "AG_WaterGun");
+
+        /// <summary>The kusarigama, with Snag and Stake ready; the research is finished so more can be made.</summary>
+        private static string GrantChainSickle(Pawn pawn)
+            => GrantWeapon(pawn, "AG_ChainSickle", "AG_ChainSickle");
 
         /// <summary>
         /// Puts a weapon in the pawn's hands, ready to use.

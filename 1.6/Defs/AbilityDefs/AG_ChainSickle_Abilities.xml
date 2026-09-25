@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The chain sickle's abilities, granted while the weapon is equipped (CompChainSickle). Numbers
+       are placeholders; the weight rule's numbers are on the weapon (AG_ChainSickle), the rest here.
+
+       warmupTime is the picture's: 0.5 s spinning the weight up for Snag, 0.3 s holding the chain
+       taut before the yank for Stake. The cast job (JobDriver_CastChainSickle) then holds the
+       wielder until the reel is over (Snag: 0.7 s more plus the reel, 1 s / ratio at most 2 s) or
+       the weight is in the floor (Stake: 0.35 s more).
+
+       Sounds are this mod's Power Pole placeholders, played by MapComponent_ChainSickle at the
+       picture's times: AG_PowerPoleSwing at the throw, AG_PowerPoleHit at the wrap, AG_PowerPoleSlam
+       at the stake. -->
+
+  <AbilityDef Name="AG_ChainSickleAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastChainSickle</jobDef>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_ChainSickleAbilityBase">
+    <defName>AG_ChainSickle_Snag</defName>
+    <label>snag</label>
+    <description>Spin the weight up and throw it at a hostile pawn or wild animal up to 7 tiles away. It always lands: 4 blunt damage, and the chain wraps the body. Then reel it in. The weight ratio is the wielder's carrying capacity over the target's mass plus everything it carries: the target is pulled 5 tiles x the ratio (at most 5) over 1 second / the ratio (at most 2). A wall or another pawn stops it early, and it stops next to the wielder. Below a ratio of 0.4 the target does not move and the wielder is dragged 2 tiles toward it over 1 second.\n\nThe target stays snagged for 10 seconds, or until one of the two is more than 7 tiles from the other. Stake needs a snagged pawn. Needs line of sight.</description>
+    <iconPath>RimArt/ChainSickle/IconSnag</iconPath>
+    <cooldownTicksRange>1200</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>7.9</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_ChainSickleSnag">
+        <damage>4</damage>
+        <armorPenetration>0</armorPenetration>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_ChainSickleAbilityBase">
+    <defName>AG_ChainSickle_Stake</defName>
+    <label>stake</label>
+    <description>Yank the chain on the snagged pawn: the coil tightens on its chest and the weight is driven into the floor by its feet. It drops the weapon it holds and cannot move, shoot or fight in melee for 6 seconds x the weight ratio (at most 6), while the wielder stays within 7 tiles. The sickle does 50% more damage to a staked pawn. The snag ends with the pin.\n\nNot possible on a pawn too heavy to pull (weight ratio under 0.4).</description>
+    <iconPath>RimArt/ChainSickle/IconStake</iconPath>
+    <cooldownTicksRange>1800</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>7.9</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_ChainSickleStake">
+        <dropWeapon>true</dropWeapon>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>
