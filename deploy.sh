@@ -11,8 +11,9 @@
 # restart, no reload of the save. Every clip generator runs here, so adding one means adding it
 # to this branch too.
 set -euo pipefail
-DEST="/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Mods/RimArt"
 SRC="$(cd "$(dirname "$0")" && pwd)"
+# The Mac's RimWorldMac.app/Mods when that install exists, otherwise the Windows Mods folder via WSL.
+DEST="$(python3 "$SRC/rimworld_paths.py" MODS)/RimArt"
 
 if [ "${1:-}" = "anims" ]; then
   python3 "$SRC/make_throw_anim.py"

@@ -49,6 +49,7 @@ namespace RimArt
     /// carries that honestly - the carrier's perception is what sped up - but the effect is on
     /// the person holding the mouse, not on the pawn.
     /// </summary>
+    [StaticConstructorOnStartup]
     public class HediffComp_VectorSurge : HediffComp
     {
         private int ticksLeft = -1;

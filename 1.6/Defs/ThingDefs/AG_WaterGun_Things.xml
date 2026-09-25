@@ -19,7 +19,8 @@
       <drawSize>1.0</drawSize>
     </graphicData>
     <techLevel>Industrial</techLevel>
-    <smeltable>true</smeltable>
+    <!-- Not smeltable: it has no cost to give back, like the other kit weapons. -->
+    <smeltable>false</smeltable>
     <relicChance>0</relicChance>
     <stackLimit>1</stackLimit>
     <thingCategories>

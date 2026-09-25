@@ -21,7 +21,8 @@
     <tickerType>Rare</tickerType>
     <useHitPoints>false</useHitPoints>
     <stackLimit>1</stackLimit>
-    <countAsResource>false</countAsResource>
+    <!-- Left out of the colony's resource count; CountAsResource is read from this in 1.6. -->
+    <resourceReadoutPriority>Uncounted</resourceReadoutPriority>
     <tradeability>None</tradeability>
     <healthAffectsPrice>false</healthAffectsPrice>
     <statBases>

@@ -36,6 +36,7 @@ namespace RimArt
     /// moment that may well not be survivable. That is the entire cost, and it needs no invented
     /// penalty on top.
     /// </summary>
+    [StaticConstructorOnStartup]
     public class HediffComp_Arrears : HediffComp
     {
         /// <summary>

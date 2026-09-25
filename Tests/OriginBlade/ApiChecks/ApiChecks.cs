@@ -78,6 +78,7 @@ static class ApiChecks
             if (className != null && assembly.GetType(className) == null)
                 throw new Exception($"Missing class {className}");
         }
+        string defFields = CheckDefFields(assembly);
         string combatExtended = CheckCombatExtended();
         string meleeAnimation = CheckMeleeAnimation();
         string mimic = CheckMimicContract();
@@ -92,7 +93,53 @@ static class ApiChecks
         string gojo = CheckGojoCameraContract();
         Console.WriteLine(CheckFumaContract());
         Console.WriteLine($"Passed {count} Harmony target/signature checks against installed RimWorld, "
-            + $"plus trait and job definition checks. {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval} {kunai} {makibishi} {gravity} {gojo}");
+            + $"plus trait and job definition checks. {defFields} {combatExtended} {meleeAnimation} {mimic} {distortion} {sounds} {retrieval} {kunai} {makibishi} {gravity} {gojo}");
+    }
+
+    // "<soundCast> doesn't correspond to any field in type AbilityDef": a tag the game cannot match
+    // to a field is a red error at load and its value is dropped. Found in game on 2026-09-25 for
+    // AG_BubblePipeAbilityBase (soundCast belongs inside verbProperties) and AG_ClapStone
+    // (countAsResource is a read-only property in 1.6). Every tag directly under a def is looked up
+    // the way XmlToObjectUtils.DoFieldSearch does: the exact name through the type and its bases,
+    // then a [LoadAlias]. Nested objects are not walked, and a def type the installed game does not
+    // define (Melee Animation's AM.AnimDef in Patch_MeleeAnimation) is skipped.
+    static string CheckDefFields(Assembly mod)
+    {
+        Assembly game = typeof(Verse.Def).Assembly;
+        const BindingFlags Declared = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+        var folders = new[] { "1.6/Defs" }.Concat(Directory.GetDirectories(".", "Patch_*").Select(d => Path.Combine(d, "1.6", "Defs")))
+            .Where(Directory.Exists);
+        int defs = 0, tags = 0, skipped = 0;
+        var problems = new List<string>();
+        foreach (string file in folders.SelectMany(d => Directory.EnumerateFiles(d, "*.xml", SearchOption.AllDirectories)))
+        {
+            foreach (XElement def in XDocument.Load(file).Root.Elements())
+            {
+                string className = (string)def.Attribute("Class");
+                Type type = className != null
+                    ? mod.GetType(className) ?? game.GetType(className) ?? game.GetType("Verse." + className) ?? game.GetType("RimWorld." + className)
+                    : game.GetType("Verse." + def.Name.LocalName) ?? game.GetType("RimWorld." + def.Name.LocalName);
+                if (type == null || !typeof(Verse.Def).IsAssignableFrom(type)) { skipped++; continue; }
+                defs++;
+                foreach (XElement tag in def.Elements())
+                {
+                    tags++;
+                    string name = tag.Name.LocalName;
+                    if (string.Equals((string)tag.Attribute("IgnoreIfNoMatchingField"), "true", StringComparison.OrdinalIgnoreCase)) continue;
+                    bool found = false;
+                    for (Type t = type; t != null && !found; t = t.BaseType)
+                        found = t.GetField(name, Declared) != null;
+                    for (Type t = type; t != null && !found; t = t.BaseType)
+                        found = t.GetFields(Declared).Any(f => f.GetCustomAttributes<Verse.LoadAliasAttribute>(true)
+                            .Any(a => string.Equals(a.alias, name, StringComparison.OrdinalIgnoreCase)));
+                    if (!found)
+                        problems.Add($"{file}: {(string)def.Element("defName") ?? (string)def.Attribute("Name")} uses <{name}>, which is not a field of {type.Name}");
+                }
+            }
+        }
+        if (problems.Count > 0)
+            throw new Exception("Def tags the game cannot match to a field (a red XML error at load):\n  " + string.Join("\n  ", problems));
+        return $"Checked {tags} tags on {defs} defs against their types' fields ({skipped} defs of types the game does not define skipped).";
     }
 
     static void CheckShinraAcquisition()
@@ -135,7 +182,7 @@ static class ApiChecks
     /// </summary>
     static string CheckShinraDistortion()
     {
-        const string Core = "/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Data/Core";
+        string Core = GamePaths.Core;
         string mask = Path.Combine(Directory.GetCurrentDirectory(), "Textures/RimArt/Shinra/Distort.png");
         if (!File.Exists(mask))
             throw new Exception("Missing Textures/RimArt/Shinra/Distort.png; run make_shinra_textures.py");
@@ -183,7 +230,7 @@ static class ApiChecks
         var folders = declared.Descendants("clipFolderPath").Select(e => e.Value).Distinct().ToArray();
         if (folders.Length == 0) throw new Exception($"The {kit} sounds reference no audio at all");
 
-        const string Core = "/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Data/Core";
+        string Core = GamePaths.Core;
         if (!Directory.Exists(Core))
             return $"Skipped the {folders.Length} {kit} audio paths: RimWorld's Core data is not installed.";
         foreach (string folder in folders)
@@ -308,8 +355,9 @@ static class ApiChecks
             curves += CheckThrowAnimationJson(dataModel, partModel, clip);
             clips++;
         }
-        // The clap clips start with the warmup, so the last palm contact has to be the warmup's end:
-        // make_clap_anim.py, ClapTeleport and the two AbilityDefs each carry these numbers.
+        // The swap happens at the warmup's end. JobDriver_CastClap starts the clip ClipOffset seconds
+        // in so the last palm contact lands there, which only works while the warmup is no longer
+        // than the clip's contact: a longer warmup would have the palms meet before the swap.
         var clapDefs = XDocument.Load("1.6/Defs/AbilityDefs/AG_Anchor_Abilities.xml").Root.Elements("AbilityDef").ToList();
         var clapAnims = XDocument.Load("Patch_MeleeAnimation/1.6/Defs/AG_Anchor_Anims.xml").Root.Elements().ToList();
         foreach (var (ability, anim, file, contact, length) in new[] {
@@ -318,8 +366,8 @@ static class ApiChecks
         {
             var def = clapDefs.Single(e => (string)e.Element("defName") == ability);
             float warmup = float.Parse((string)def.Element("verbProperties").Element("warmupTime"), System.Globalization.CultureInfo.InvariantCulture);
-            if (Math.Abs(warmup - contact) > 0.0001f)
-                throw new Exception($"{ability} warmupTime {warmup} is not the clip's last palm contact {contact}");
+            if (warmup > contact + 0.0001f)
+                throw new Exception($"{ability} warmupTime {warmup} is longer than the clip's last palm contact {contact}");
             if ((string)def.Element("jobDef") != "AG_CastAnchorClap")
                 throw new Exception($"{ability} must cast through AG_CastAnchorClap, the job its clip is tied to");
             if (!clapAnims.Any(e => (string)e.Element("defName") == anim && (string)e.Element("data") == file + ".json"))
@@ -582,7 +630,7 @@ static class ApiChecks
     /// <summary>The workshop copy, whichever folder Steam gave it. Null when it is not there.</summary>
     static string FindMeleeAnimation()
     {
-        const string Workshop = "/mnt/c/Program Files (x86)/Steam/steamapps/workshop/content/294100";
+        string Workshop = GamePaths.Workshop;
         if (!Directory.Exists(Workshop)) return null;
 
         return Directory.EnumerateDirectories(Workshop)
@@ -702,7 +750,7 @@ static class ApiChecks
     /// <summary>The workshop copy, whichever folder Steam gave it. Null when CE is not there.</summary>
     static string FindCombatExtended()
     {
-        const string Workshop = "/mnt/c/Program Files (x86)/Steam/steamapps/workshop/content/294100";
+        string Workshop = GamePaths.Workshop;
         if (!Directory.Exists(Workshop)) return null;
 
         return Directory.EnumerateDirectories(Workshop)
@@ -1143,7 +1191,7 @@ static class ApiChecks
         var folders = XDocument.Load("1.6/Defs/SoundDefs/AG_Gravity_Sounds.xml").Root
             .Descendants("clipFolderPath").Select(e => e.Value).Distinct().ToArray();
         if (folders.Length == 0) throw new Exception("The Gravity Well sounds reference no audio at all");
-        const string Core = "/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Data/Core";
+        string Core = GamePaths.Core;
         if (!Directory.Exists(Core))
             return $"Skipped the {folders.Length} Gravity Well audio paths: RimWorld's Core data is not installed.";
         // The well's warp takes the same shader as Shinra Tensei's but masks it with a third core
@@ -1207,4 +1255,19 @@ static class ApiChecks
         return "Checked Fuma equipment ownership interfaces, projectile interception, melee command, and folding/release assets.";
     }
 
+}
+
+/// <summary>
+/// Where RimWorld is on this machine: the Mac's Steam install when it exists, otherwise the
+/// Windows install as WSL sees it. The same choice as Directory.Build.props and rimworld_paths.py.
+/// </summary>
+static class GamePaths
+{
+    static readonly string SteamMac = Path.Combine(
+        Environment.GetEnvironmentVariable("HOME") ?? "", "Library/Application Support/Steam/steamapps");
+    static readonly bool Mac = Directory.Exists(Path.Combine(SteamMac, "common/RimWorld/RimWorldMac.app"));
+    static readonly string Steam = Mac ? SteamMac : "/mnt/c/Program Files (x86)/Steam/steamapps";
+
+    public static readonly string Core = Path.Combine(Steam, "common/RimWorld", Mac ? "RimWorldMac.app/Data" : "Data", "Core");
+    public static readonly string Workshop = Path.Combine(Steam, "workshop/content/294100");
 }

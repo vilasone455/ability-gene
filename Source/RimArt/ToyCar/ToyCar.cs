@@ -26,6 +26,7 @@ namespace RimArt
     /// not affect regions - ThingDef.AffectsRegions is true only for Impassable, doors and
     /// fences - which is what makes it legal to move by assigning Position.
     /// </summary>
+    [StaticConstructorOnStartup]
     public class ToyCar : Building
     {
         /// <summary>
