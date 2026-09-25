@@ -167,6 +167,14 @@ namespace RimArt
             return false;
         }
 
+        /// <summary>Whether the caster's weapon has left its hand: a cast has landed and its job has not ended.</summary>
+        public bool Thrown(Pawn caster)
+        {
+            for (int i = 0; i < casts.Count; i++)
+                if (casts[i].caster == caster && casts[i].landed && !casts[i].home) return true;
+            return false;
+        }
+
         private bool Pictured(Pawn holder)
         {
             for (int i = 0; i < casts.Count; i++)
@@ -218,8 +226,9 @@ namespace RimArt
                 ChainSickleCombat.Hit(target, caster, cast.snagProps?.damage ?? 4f, cast.snagProps?.armorPenetration ?? 0f, at.Value - from.Value);
                 if (target.Dead || target.Downed) return true;
                 StartLink(cast.sickle, target);
-                // The coil holds the target still until the reel begins.
-                target.pather?.StopDead();
+                // The coil holds the target still until the reel begins. The stun alone stops it: a
+                // stunned pawn's path waits (FullBodyBusy). pather.StopDead() here left the target's
+                // move job waiting for an arrival that never came, so it stood still for good.
                 target.stances?.stunner?.StunFor(Mathf.CeilToInt((Snag.Reel0 - Snag.Hit) * 60f) + 2, caster, false, false);
             }
             if (cast.hitDone && !cast.reelStarted && s >= Snag.Reel0)
@@ -294,7 +303,7 @@ namespace RimArt
                     target.health.AddHediff(staked);
                 }
                 staked.TryGetComp<HediffComp_Disappears>()?.SetDuration(ticks);
-                target.pather?.StopDead();
+                // No pather.StopDead(): the stun holds the pawn, and its job carries on after the pin.
                 target.stances?.stunner?.StunFor(ticks, caster, false, false);
                 cast.sickle.StartPin(now, pin);
             }
@@ -326,7 +335,11 @@ namespace RimArt
             if (target.Downed) { Release(holder, sickle, label + " is down"); return; }
             Vector2? h = ChainSickleCombat.Ground(holder, map), t = ChainSickleCombat.Ground(target, map);
             if (h == null || t == null) { Release(holder, sickle, null); return; }
-            if ((h.Value - t.Value).magnitude > sickle.Props.chainLength)
+            // While a cast's picture runs, the picture has checked the reach at the hit (with a cell of
+            // slack) and the reel is closing the gap; the 7-cell rule starts when it is over. Checked
+            // from the hit, a target that stepped back to 7.1 cells during the warmup was hit and let
+            // go on the same tick.
+            if (!Pictured(holder) && (h.Value - t.Value).magnitude > sickle.Props.chainLength)
             {
                 Release(holder, sickle, sickle.staked ? "the stake was pulled out: " + label + " is out of the chain's reach" : label + " is out of the chain's reach");
                 return;

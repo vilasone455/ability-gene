@@ -11,8 +11,11 @@ namespace RimArt
     /// because the weight is spun up (Snag) or the chain held taut (Stake) during the warmup; and the
     /// job holds the holder in place until the reel is over (Snag) or the weight is in the floor
     /// (Stake). The picture draws the sickle, so the job hides the held weapon (neverShowWeapon).
-    /// A reeled target leaves the map inside a flyer, which ends this job early (FailOnDespawnedOrNull);
-    /// the picture and the reel go on without it.
+    ///
+    /// The vanilla fail conditions (target despawned, ability can no longer be cast) apply only until
+    /// the weight is thrown. After it the ability is on cooldown (Ability.PreActivate starts it), and
+    /// a reeled target is off the map inside a flyer; either one ended the job at the throw, and an
+    /// undrafted holder then fled out of the chain's reach before the reel.
     /// </summary>
     public class JobDriver_CastChainSickle : JobDriver_CastAbility
     {
@@ -20,7 +23,7 @@ namespace RimArt
 
         protected override IEnumerable<Toil> MakeNewToils()
         {
-            this.FailOnDespawnedOrNull(TargetIndex.A);
+            this.FailOn(() => !Thrown() && (TargetGone() || !job.ability.CanCast && !job.ability.Casting));
             AddFinishAction(delegate
             {
                 if (job.ability != null && job.def.abilityCasting)
@@ -33,9 +36,7 @@ namespace RimArt
             begin.defaultCompleteMode = ToilCompleteMode.Instant;
             yield return begin;
 
-            Toil cast = Toils_Combat.CastVerb(TargetIndex.A, TargetIndex.B, canHitNonTargetPawns: false);
-            cast.FailOn(() => !job.ability.CanCast && !job.ability.Casting);
-            yield return cast;
+            yield return Toils_Combat.CastVerb(TargetIndex.A, TargetIndex.B, canHitNonTargetPawns: false);
 
             Toil hold = ToilMaker.MakeToil("ChainSickleHold");
             hold.tickAction = () =>
@@ -45,6 +46,14 @@ namespace RimArt
             };
             hold.defaultCompleteMode = ToilCompleteMode.Never;
             yield return hold;
+        }
+
+        private bool Thrown() => pawn.Map?.GetComponent<MapComponent_ChainSickle>()?.Thrown(pawn) ?? false;
+
+        private bool TargetGone()
+        {
+            Thing target = job.targetA.Thing;
+            return target == null || !target.Spawned || target.Map != pawn.Map;
         }
 
         private void Begin()
