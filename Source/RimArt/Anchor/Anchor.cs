@@ -25,7 +25,8 @@ namespace RimArt
         /// <summary>
         /// Which card the stone is drawn with: ClapTeleport.Spade, Heart or Club. Kept on the mark, not
         /// read off its place in the list, so a stone does not change suit when an older one is gone.
-        /// -1 is a mark from a save older than the cards; the gene deals it a suit on load.
+        /// -1 is a mark from a save older than the cards; the gene deals it a suit on load. A pawn end
+        /// is always a Heart.
         /// </summary>
         public int suit = -1;
 
@@ -37,6 +38,7 @@ namespace RimArt
             this.pawn = pawn;
             this.cell = pawn.Position;
             this.placedTick = placedTick;
+            suit = ClapTeleport.Heart;
         }
 
         public Anchor(Thing stone, int placedTick)
