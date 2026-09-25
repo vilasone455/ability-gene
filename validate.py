@@ -28,9 +28,9 @@ Usage: python3 validate.py [path/to/RimWorld/Data]
 """
 import os, re, sys, glob, subprocess
 import xml.etree.ElementTree as ET
+import rimworld_paths
 
-DATA = sys.argv[1] if len(sys.argv) > 1 else \
-    "/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Data"
+DATA = sys.argv[1] if len(sys.argv) > 1 else rimworld_paths.DATA
 DLCS = ("Core", "Royalty", "Biotech")
 REF_TAGS = {
     "hediffDef", "stateDef", "fleckDef", "jobDef", "capacity", "soundCast",
@@ -140,7 +140,10 @@ if DATA is not None:
             vals = []
             if el in enum_categories:
                 pass
-            elif el.tag in REF_TAGS and el.text and el.text.strip():
+            # A number is a comp's own field that shares a tag name with a def reference, such as
+            # the water gun's <capacity>30</capacity> beside a capMod's <capacity>Moving</capacity>.
+            elif el.tag in REF_TAGS and el.text and el.text.strip() \
+                    and not re.fullmatch(r"-?\d+(\.\d+)?", el.text.strip()):
                 vals = [el.text.strip()]
             elif el.tag in LIST_TAGS:
                 vals = [c.text.strip() for c in el if c.text]

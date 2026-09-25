@@ -2139,7 +2139,12 @@ Needs a .NET SDK and Vanilla Expanded Framework for RimWorld 1.6; assemblies are
 dotnet build Source/RimArt/RimArt.csproj
 ```
 
-Output goes directly to `1.6/Assemblies/`. Override the game and VEF paths if yours differ:
+Output goes directly to `1.6/Assemblies/`. The same commands work on a Mac and on Windows
+through WSL: `Directory.Build.props` uses the Mac's Steam install
+(`~/Library/Application Support/Steam/steamapps`) when it exists, otherwise
+`/mnt/c/Program Files (x86)/Steam/steamapps`. `rimworld_paths.py` makes the same choice for
+`validate.py`, `make_wiki.py`, `deploy.sh` and the VFX lab (`python3 rimworld_paths.py LOG` prints
+where the game log is). Override the game and VEF paths if yours differ:
 
 ```bash
 dotnet build Source/RimArt/RimArt.csproj \
@@ -2202,7 +2207,7 @@ what it cannot show and how to add a kit.
 
 ## Testing
 
-`./deploy.sh` copies the mod into the local RimWorld `Mods/` folder.
+`./deploy.sh` copies the mod into the local RimWorld `Mods/` folder (`RimWorldMac.app/Mods` on a Mac).
 
 Verified statically: the C# compiles against the real 1.6 assembly, every def/texture
 reference is checked to resolve in Core or Biotech, and every custom `Class=` in XML is

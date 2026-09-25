@@ -14,8 +14,6 @@
     <DebugType>none</DebugType>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <Deterministic>true</Deterministic>
-    <RimWorldManaged Condition="'$(RimWorldManaged)' == ''">/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/RimWorldWin64_Data/Managed</RimWorldManaged>
-    <MeleeAnimationAssemblies Condition="'$(MeleeAnimationAssemblies)' == ''">/mnt/c/Program Files (x86)/Steam/steamapps/workshop/content/294100/2944488802/1.6/Assemblies</MeleeAnimationAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
