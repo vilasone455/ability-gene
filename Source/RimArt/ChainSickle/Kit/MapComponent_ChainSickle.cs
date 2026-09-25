@@ -419,8 +419,8 @@ namespace RimArt
     {
         public static void Draw(Vector2 holder, Vector2 target, float size, Map map)
         {
-            if (!ThunderGodGraphics.Shown(holder, map) && !ThunderGodGraphics.Shown(target, map)) return;
-            ThunderGodGraphics.Begin(holder);
+            if (!VfxDraw.Shown(holder, map) && !VfxDraw.Shown(target, map)) return;
+            VfxDraw.Begin(holder);
             PowerPoleGraphics.Sun(map, out Vector2 sun, out float strength);
             ChainSickleGraphics.Snagged(holder, target, size, sun, strength);
         }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using Verse;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -33,7 +34,7 @@ namespace RimArt
     /// A point with height is a Vector3 (x east, y = cells up, z north). It is drawn height x Lift
     /// cells north (<see cref="Screen"/>) and its shadow falls along the sun (<see cref="Shadow"/>).
     /// Everything lies at one height or is a level circle, so nothing has a per-facing method.
-    /// Strips, sprites, discs and rings come from ThunderGodGraphics; call its Begin first.
+    /// Strips, sprites, discs and rings come from VfxDraw; call its Begin first.
     /// </summary>
     [StaticConstructorOnStartup]
     internal static class ChainSickleGraphics
@@ -71,7 +72,7 @@ namespace RimArt
         private static readonly Vector2[] T = new Vector2[16];
 
         internal static float Clamp01(float x) => Mathf.Clamp01(x);
-        internal static float SmoothStep(float t) => SixPathsSlamTiming.Smooth(t);
+        internal static float SmoothStep(float t) => VfxMath.Smooth(t);
         internal static float EaseOut(float x) { float u = 1f - Mathf.Clamp01(x); return 1f - u * u * u; }
         internal static float Bump(float x) => x >= 0f && x <= 1f ? Mathf.Max(0f, Mathf.Sin(x * Mathf.PI)) : 0f;
         /// <summary>JavaScript's Math.round: halves go up.</summary>
