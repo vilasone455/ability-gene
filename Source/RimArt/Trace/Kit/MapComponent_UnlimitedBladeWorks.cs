@@ -21,6 +21,8 @@ namespace RimArt
     public sealed class MapComponent_UnlimitedBladeWorks : MapComponent
     {
         public bool world;
+        /// <summary>The world v2: the plate ground with height and the sky, instead of the flat earth.</summary>
+        public bool depth;
         public Map source;
         /// <summary>The landing spots, in cells from the middle: no sword stands over one.</summary>
         private List<IntVec3> keep = new List<IntVec3>();
@@ -29,6 +31,7 @@ namespace RimArt
         private float closeAt = -1f;
         private bool closing, shaken;
         private UbwFieldBake bake;
+        private UbwTerrainBake terrain;
         /// <summary>The lab scene's shadow vector, made low as the sketch makes it, and its shadow strength.</summary>
         private static readonly Vector2 Sun = new Vector2(-0.45f, -0.32f) * UbwWorldTiming.DuskShadow;
         private const float Strength = 0.32f;
@@ -47,9 +50,11 @@ namespace RimArt
         public IntVec3 LandingCell(int i) => i >= 0 && i < keep.Count ? CentreCell + keep[i] : CentreCell;
 
         /// <summary>Called by the GenStep: this map is the world made for these landing spots.</summary>
-        public void Begin(List<IntVec3> keepOffsets)
+        public void Begin(List<IntVec3> keepOffsets, bool depth = false)
         {
             world = true;
+            this.depth = depth;
+            terrain = null;
             keep = keepOffsets ?? new List<IntVec3>();
             seconds = 0f;
             closeAt = -1f;
@@ -81,12 +86,14 @@ namespace RimArt
             {
                 var spots = new UbwXZ[keep.Count];
                 for (int i = 0; i < keep.Count; i++) spots[i] = new UbwXZ(keep[i].x, keep[i].z);
-                bake = UbwWorldGraphics.BakeFor(spots, Sun);
+                UbwTerrain ground = depth ? UbwTerrainGraphics.For(1) : null;
+                bake = UbwWorldGraphics.BakeFor(spots, Sun, ground);
+                terrain = ground != null ? UbwTerrainGraphics.BakeFor(ground, Sun) : null;
             }
 
             var centre = new Vector2(map.Size.x / 2f, map.Size.z / 2f);
-            Sprite(centre, Backstop, Backstop, Far, solid, UbwLayers.Pocket.Back - 0.002f);
-            UbwWorldGraphics.Draw(centre, bake, seconds, CloseAtOrNever, UbwLayers.Pocket, Sun, Strength, map);
+            Sprite(centre, Backstop, Backstop, Far, solid, UbwLayers.Pocket.Back - 0.0005f);
+            UbwWorldGraphics.Draw(centre, bake, seconds, CloseAtOrNever, UbwLayers.Pocket, Sun, Strength, map, terrain);
 
             // Past the end of the close: white until the map is gone, and the map goes.
             float end = CloseAtOrNever + UbwWorldTiming.Close + 0.35f;
@@ -101,6 +108,7 @@ namespace RimArt
         {
             base.ExposeData();
             Scribe_Values.Look(ref world, "ubwWorld");
+            Scribe_Values.Look(ref depth, "ubwDepth");
             Scribe_References.Look(ref source, "ubwSource");
             Scribe_Collections.Look(ref keep, "ubwKeep", LookMode.Value);
             Scribe_Values.Look(ref seconds, "ubwSeconds");

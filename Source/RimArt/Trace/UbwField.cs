@@ -60,7 +60,8 @@ namespace RimArt
         /// down its slope. Every sword is its weapon's own size, give or take 10 %. keep: the landing spots;
         /// no sword is drawn over one. weapons: the set the mix picks from.
         /// </summary>
-        public static List<UbwSword> Make(UbwFieldSettings o, IList<UbwXZ> keep, UbwWeapon[] weapons)
+        /// <param name="heightAt">The ground's height under a sword (the world v2's plates): the sword stands that much higher, drawn Lift cells further north per cell, and the list is ordered by that screen foot. Null for flat ground.</param>
+        public static List<UbwSword> Make(UbwFieldSettings o, IList<UbwXZ> keep, UbwWeapon[] weapons, Func<double, double, double> heightAt = null)
         {
             double reach = MapHalf + o.Beyond;
             var list = new List<UbwSword>();
@@ -82,7 +83,7 @@ namespace RimArt
                         Lean = o.Lean * (onHill ? .45 + .55 * Rand(seed * 13) : Rand(seed * 13)),
                         Dir = onHill ? Math.Atan2(z, x) / UbwBlade.D2R + (Rand(seed * 17) - .5) * 60 : Rand(seed * 17) * 360,
                         Turn = (Rand(seed * 19) - .5) * 60, Sink = .16 + Rand(seed * 23) * .12, Size = o.Size * (.9 + .2 * Rand(seed * 29)),
-                        Lift = 0,
+                        Lift = heightAt != null ? heightAt(x, z) * UbwBlade.Lift : 0,
                     };
                     if (ClearOf(ScreenBox(sw, .3), keep)) list.Add(sw);
                 }

@@ -14,20 +14,20 @@ namespace RimArt
     {
         /// <summary>The map is 40 x 40 with the caster in the middle (the sketches' MapHalf).</summary>
         public const int Size = (int)UbwField.MapHalf * 2;
-        private static List<IntVec3> request;
+        private static (List<IntVec3> keep, bool depth)? request;
 
-        /// <summary>The landing spots asked for, in cells from the middle, once: the GenStep reads them while it builds.</summary>
-        internal static List<IntVec3> TakeRequest()
+        /// <summary>The landing spots asked for, in cells from the middle, and whether the world is the v2 one with depth, once: the GenStep reads them while it builds.</summary>
+        internal static (List<IntVec3> keep, bool depth)? TakeRequest()
         {
-            List<IntVec3> asked = request;
+            var asked = request;
             request = null;
             return asked;
         }
 
-        /// <summary>Makes the world beside <paramref name="source"/> with no sword over these spots (cells from the middle), and takes the camera to the middle.</summary>
-        public static void Open(Map source, List<IntVec3> keep)
+        /// <summary>Makes the world beside <paramref name="source"/> with no sword over these spots (cells from the middle), and takes the camera to the middle. <paramref name="depth"/>: the world v2, plates with height and a sky.</summary>
+        public static void Open(Map source, List<IntVec3> keep, bool depth = false)
         {
-            request = keep;
+            request = (keep, depth);
             Map world = PocketMapUtility.GeneratePocketMap(new IntVec3(Size, 1, Size), UbwDefOf.AG_UnlimitedBladeWorks, null, source);
             request = null;
             if (world == null) return;
@@ -52,7 +52,7 @@ namespace RimArt
             LongEventHandler.QueueLongEvent(() => Close(world), "AG_UnlimitedBladeWorksClosing", false, null);
 
         /// <summary>Open, as a long event, behind the game's own "generating map" screen.</summary>
-        public static void OpenLater(Map source, List<IntVec3> keep) =>
-            LongEventHandler.QueueLongEvent(() => Open(source, keep), "GeneratingMap", false, null);
+        public static void OpenLater(Map source, List<IntVec3> keep, bool depth = false) =>
+            LongEventHandler.QueueLongEvent(() => Open(source, keep, depth), "GeneratingMap", false, null);
     }
 }

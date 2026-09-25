@@ -4,6 +4,8 @@
     <Compile Include="../../Source/RimArt/Trace/UbwWeapons.cs" Link="UbwWeapons.cs" />
     <Compile Include="../../Source/RimArt/Trace/UbwBlade.cs" Link="UbwBlade.cs" />
     <Compile Include="../../Source/RimArt/Trace/UbwField.cs" Link="UbwField.cs" />
+    <Compile Include="../../Source/RimArt/Trace/UbwTerrain.cs" Link="UbwTerrain.cs" />
     <None Include="fields.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="terrains.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

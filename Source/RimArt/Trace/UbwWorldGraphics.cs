@@ -19,11 +19,15 @@ namespace RimArt
         public readonly float Back, Floor, Patch, Marks, Hill, Glow, GearShadow, FieldShadow, Blades, Haze;
         /// <summary>The step between the blades' meshes when the field needs more than one.</summary>
         public readonly float BladeStep;
+        /// <summary>The world v2's crack floor and its sky, both under the plates (which are at Floor), and the plates' cast shadows between the gear shadows and the swords'.</summary>
+        public readonly float Base, Sky, TerrainShadow;
 
-        public UbwLayers(float back, float floor, float patch, float marks, float hill, float glow, float gearShadow, float fieldShadow, float blades, float haze, float bladeStep)
+        public UbwLayers(float back, float floor, float patch, float marks, float hill, float glow, float gearShadow, float fieldShadow, float blades, float haze, float bladeStep,
+            float baseFloor, float sky, float terrainShadow)
         {
             Back = back; Floor = floor; Patch = patch; Marks = marks; Hill = hill; Glow = glow; GearShadow = gearShadow;
             FieldShadow = fieldShadow; Blades = blades; Haze = haze; BladeStep = bladeStep;
+            Base = baseFloor; Sky = sky; TerrainShadow = terrainShadow;
         }
 
         /// <summary>
@@ -32,8 +36,9 @@ namespace RimArt
         /// Building as a planted blade (a Building) is, the haze 0.6 over that: over the swords, under pawns.
         /// </summary>
         public static readonly UbwLayers Pocket = new UbwLayers(
-            Terrain + 0.003f, Terrain + 0.005f, Terrain + 0.015f, ThunderGodGraphics.Floor + 0.002f, ThunderGodGraphics.Floor + 0.01f,
-            ThunderGodGraphics.Floor + 0.0105f, Shadows + 0.001f, Shadows + 0.002f, Building, Building + 0.6f, 0.0005f);
+            Terrain + 0.001f, Terrain + 0.005f, Terrain + 0.015f, ThunderGodGraphics.Floor + 0.002f, ThunderGodGraphics.Floor + 0.01f,
+            ThunderGodGraphics.Floor + 0.0105f, Shadows, Shadows + 0.002f, Building, Building + 0.6f, 0.0005f,
+            Terrain + 0.002f, Terrain + 0.003f, Shadows + 0.0015f);
 
         /// <summary>
         /// A home map, for the preview: packed between ItemImportant + 0.1 and + 0.27, as the castle's and
@@ -44,7 +49,8 @@ namespace RimArt
             AltitudeLayer.ItemImportant.AltitudeFor() + 0.1f, AltitudeLayer.ItemImportant.AltitudeFor() + 0.105f, AltitudeLayer.ItemImportant.AltitudeFor() + 0.11f,
             AltitudeLayer.ItemImportant.AltitudeFor() + 0.12f, AltitudeLayer.ItemImportant.AltitudeFor() + 0.13f, AltitudeLayer.ItemImportant.AltitudeFor() + 0.133f,
             AltitudeLayer.ItemImportant.AltitudeFor() + 0.14f, AltitudeLayer.ItemImportant.AltitudeFor() + 0.145f, AltitudeLayer.ItemImportant.AltitudeFor() + 0.15f,
-            AltitudeLayer.ItemImportant.AltitudeFor() + 0.26f, 0.0005f);
+            AltitudeLayer.ItemImportant.AltitudeFor() + 0.26f, 0.0005f,
+            AltitudeLayer.ItemImportant.AltitudeFor() + 0.101f, AltitudeLayer.ItemImportant.AltitudeFor() + 0.102f, AltitudeLayer.ItemImportant.AltitudeFor() + 0.1445f);
     }
 
     /// <summary>
@@ -227,15 +233,15 @@ namespace RimArt
             return keep;
         }
 
-        /// <summary>The field for these landing spots under this sun, baked; the last three are kept.</summary>
-        public static UbwFieldBake BakeFor(IList<UbwXZ> keep, Vector2 sun)
+        /// <summary>The field for these landing spots under this sun, baked; the last three are kept. With <paramref name="ground"/> (the world v2) the swords stand on its plates.</summary>
+        public static UbwFieldBake BakeFor(IList<UbwXZ> keep, Vector2 sun, UbwTerrain ground = null)
         {
             UbwWeaponSet set = Set;
             string key = keep.Count + ":";
             for (int i = 0; i < keep.Count; i++) key += keep[i].X.ToString("0.###") + "," + keep[i].Z.ToString("0.###") + ";";
-            key += sun.x.ToString("0.000") + "," + sun.y.ToString("0.000") + "|" + set.Weapons.Length;
+            key += sun.x.ToString("0.000") + "," + sun.y.ToString("0.000") + "|" + set.Weapons.Length + (ground != null ? "|v2 " + ground.Seed : "");
             for (int i = 0; i < bakes.Count; i++) if (bakes[i].key == key) return bakes[i].bake;
-            UbwFieldBake bake = UbwFieldBake.Build(UbwField.Make(UbwField.Look, keep, set.Weapons), sun, set);
+            UbwFieldBake bake = UbwFieldBake.Build(UbwField.Make(UbwField.Look, keep, set.Weapons, ground != null ? ground.HeightAt : (Func<double, double, double>)null), sun, set);
             bakes.Add((key, bake));
             if (bakes.Count > 3) bakes.RemoveAt(0);
             return bake;
@@ -372,14 +378,15 @@ namespace RimArt
 
         // ---- the world -------------------------------------------------------------------------------------------------------
 
-        /// <summary>The preview: the world drawn over the map's ground, centred 2 cells north of the chosen cell as the sketch is, with the sketch's landing spots and the map's sun made low.</summary>
-        public static void DrawPreview(Vector3 centre, float seconds, Map map)
+        /// <summary>The preview: the world drawn over the map's ground, centred 2 cells north of the chosen cell as the sketch is, with the sketch's landing spots and the map's sun made low. <paramref name="depth"/>: the world v2, on the plate ground with the sky (seed 1, the sketch's).</summary>
+        public static void DrawPreview(Vector3 centre, float seconds, Map map, bool depth = false)
         {
             var o = new Vector2(centre.x, centre.z + SceneNorth);
             PowerPoleGraphics.Sun(map, out Vector2 sun, out float strength);
             sun *= T.DuskShadow;
-            UbwFieldBake bake = BakeFor(PreviewKeep(), sun);
-            Draw(o, bake, seconds, T.CloseAt, UbwLayers.Preview, sun, strength, map);
+            UbwTerrain ground = depth ? UbwTerrainGraphics.For(1) : null;
+            UbwFieldBake bake = BakeFor(PreviewKeep(), sun, ground);
+            Draw(o, bake, seconds, T.CloseAt, UbwLayers.Preview, sun, strength, map, ground != null ? UbwTerrainGraphics.BakeFor(ground, sun) : null);
         }
 
         /// <summary>
@@ -388,7 +395,8 @@ namespace RimArt
         /// while the world stands. <paramref name="sun"/> is the shadow vector per cell of height, already
         /// made low, and <paramref name="strength"/> how dark shadows are.
         /// </summary>
-        public static void Draw(Vector2 o, UbwFieldBake bake, float s, float closeAt, in UbwLayers layers, Vector2 sun, float strength, Map map)
+        /// <param name="terrain">The world v2's ground baked, or null for the flat world: with it the plates stand in for the earth tiles, the hill's shade is deeper, the gears hang in a sky north of the ridge and cast their shadows from there, and the haze stops at the ridge.</param>
+        public static void Draw(Vector2 o, UbwFieldBake bake, float s, float closeAt, in UbwLayers layers, Vector2 sun, float strength, Map map, UbwTerrainBake terrain = null)
         {
             if (s < 0f || s >= closeAt + T.Close + 0.35f || !Shown(o, map)) return;
             Begin(o);
@@ -398,13 +406,23 @@ namespace RimArt
 
             // The ground, the light and the air; the field.
             Backstop(o, layers.Back);
-            FloorTiles(o, T.MapHalf + beyond + 8f, 8f, tint, layers.Floor);
+            if (terrain != null)
+            {
+                UbwTerrainGraphics.TerrainBase(o, terrain.Terrain, layers.Base);
+                terrain.Draw(o, layers.Floor, layers.TerrainShadow, tint, strength);
+            }
+            else FloorTiles(o, T.MapHalf + beyond + 8f, 8f, tint, layers.Floor);
             Patches(o, T.MapHalf + beyond, 40, layers.Patch);
             SunGlow(o, sun, twilight, layers.Glow);
-            Hill(o, hillR, sun, 1f, layers.Hill);
-            SkyGears("UBW gears", o, s, sun, (float)UbwField.GearShadow, layers.GearShadow);
+            Hill(o, hillR, sun, 1f, layers.Hill, terrain != null ? 0.5f : 0.36f);
+            if (terrain == null) SkyGears("UBW gears", o, s, sun, (float)UbwField.GearShadow, layers.GearShadow);
             bake.Draw(o, layers, strength, tint);
-            HazeBands(o, 1f, layers.Haze);
+            if (terrain != null)
+            {
+                UbwTerrainGraphics.HazeToRidge(terrain.Terrain, o, 1f, layers.Haze);
+                UbwTerrainGraphics.Sky("UBW sky", terrain.Terrain, o, s, sun, (float)UbwField.GearShadow, layers.Sky, layers.GearShadow);
+            }
+            else HazeBands(o, 1f, layers.Haze);
             Embers("UBW embers", o, s, 140, 1f);
 
             // The fire going out traces each sword near the caster as it passes.

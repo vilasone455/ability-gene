@@ -9,8 +9,9 @@ namespace RimArt
     /// camera. "unlimited blade works: cast" plays the home-map side (the chant, the fire along its lines,
     /// the white, the ring burning while everyone is away, the return); "unlimited blade works: world"
     /// plays the inside over the map's ground (the white, the fire running out, the world standing, the
-    /// white closing in). The real world, a pocket map of its own, is under Kit/: RimArts debug window,
-    /// Trace, "world map: open".
+    /// white closing in); "world v2" the same on the plate ground with the sky (the v2 sketch, an
+    /// experiment). The real world, a pocket map of its own, is under Kit/: RimArts debug window, Trace,
+    /// "world map: open" and "open (v2 depth)".
     /// </summary>
     public static class DebugActions_Ubw
     {
@@ -20,6 +21,9 @@ namespace RimArt
         [RimArtDebug("Trace", "unlimited blade works: world")]
         public static void World() => Play(UbwPreview.World);
 
+        [RimArtDebug("Trace", "unlimited blade works: world v2")]
+        public static void WorldV2() => Play(UbwPreview.WorldV2);
+
         [RimArtDebug("Trace", "clear preview", RimArtDebugKind.Now)]
         public static void Clear() => Find.CurrentMap?.GetComponent<MapComponent_UbwPreview>()?.Stop();
 
@@ -27,7 +31,7 @@ namespace RimArt
             Find.CurrentMap.GetComponent<MapComponent_UbwPreview>().Play(UI.MouseCell(), play);
     }
 
-    public enum UbwPreview { Cast, World }
+    public enum UbwPreview { Cast, World, WorldV2 }
 
     public sealed class MapComponent_UbwPreview : MapComponent
     {
@@ -72,7 +76,7 @@ namespace RimArt
 
             Vector3 centre = cell.ToVector3Shifted();
             if (mode == UbwPreview.Cast) UbwCastGraphics.DrawPreview(centre, seconds, map);
-            else UbwWorldGraphics.DrawPreview(centre, seconds, map);
+            else UbwWorldGraphics.DrawPreview(centre, seconds, map, mode == UbwPreview.WorldV2);
             if (seconds >= duration) Stop();
         }
     }

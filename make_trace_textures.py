@@ -9,6 +9,13 @@ Earth.png    256 x 256, the world's ground: red-brown dust over two sizes of dry
 Fade.png     64 x 64, white, alpha rising west to east as a smoothstep (lib/ubw-pocket.js lab/ubw-fade):
              the soft inner edge of the white and the soot outside the wall of fire
 Terrain.png  64 x 64, flat, the fallback for the AG_UbwEarth terrain (the mod draws Earth over it)
+TerrainAtlas.png  1024 x 1024, the world v2's ground (lib/ubw-terrain.js lab/ubw-terrain-atlas): the earth
+             tile of 384 px in four shades in a 2 x 2 block at the top left (the earth without its big
+             cracks: the plates are those), the face gradient (crest colour at the top, foot colour at the
+             bottom) in a column right of it, and swatches of 64 px along the bottom: the lit lip, the
+             crest, the solid foot, the crack floor, a hairline crack
+Sky.png      64 x 64, the world v2's sky gradient (lib/ubw-sky.js lab/ubw-sky): orange horizon at the
+             bottom to dusk red at the top
 
 The formulas are the ones the lab sketches were tuned with, and hash, noise and fbm below are
 Tools/VfxLab/web/js/standins.js's, integer overflow included, so the game draws the pixels the sketches
@@ -115,6 +122,56 @@ def fade(u, v):
     return (1, 1, 1, u * u * (3 - 2 * u))
 
 
+# ---- the world v2's ground and sky ----------------------------------------------------------------------
+ATLAS_SIDE, TILE_PX, GRAD_X0, GRAD_X1, GRAD_H, SWATCH_Y, SWATCH_PX = 1024, 384, 800, 832, 768, 900, 64
+SHADES = [(1, 1, 1), (.84, .82, .8), (1.12, 1.06, 1), (.95, .9, .86)]
+CREST, FOOT, LIP_LIT, BASE = (.32, .18, .12), (.11, .06, .045), (.66, .46, .32), (.07, .045, .035)
+HORIZON, MID, HIGH, TOP = (1, .62, .3), (.86, .36, .2), (.5, .17, .16), (.28, .1, .13)
+
+
+def mix(a, b, t):
+    return tuple(x + (y - x) * t for x, y in zip(a, b))
+
+
+def earth_tile(px, py):
+    """The earth once, at tile size: the dust and fine cracks of earth(), without the big cracks."""
+    tu, tv = px / TILE_PX, py / TILE_PX
+    n, fine, small = fbm(tu * 4, tv * 4, 301, 4, 4), fbm(tu * 16, tv * 16, 305, 2, 16), border(tu, tv, 7, 331)
+    k = (1 - .15 * (1 - edge(0, .03, small))) * (.92 + .16 * fine)
+    pebble = .18 if hash01(math.floor(tu * 128), math.floor(tv * 128), 337) > .995 else 0
+    r, g, b = mix(EARTH_DARK, EARTH_LIT, .2 + .6 * n)
+    return (r * k + pebble, g * k + pebble * .8, b * k + pebble * .6)
+
+
+def terrain_atlas():
+    image = Image.new("RGBA", (ATLAS_SIDE, ATLAS_SIDE), (0, 0, 0, 0))
+    px = image.load()
+    tile = [[earth_tile(x, y) for x in range(TILE_PX)] for y in range(TILE_PX)]
+    for y in range(2 * TILE_PX):
+        for x in range(2 * TILE_PX):
+            k = (y // TILE_PX) * 2 + x // TILE_PX
+            r, g, b = tile[y % TILE_PX][x % TILE_PX]
+            sh = SHADES[k]
+            px[x, y] = (byte(min(1, r * sh[0])), byte(min(1, g * sh[1])), byte(min(1, b * sh[2])), 255)
+    for y in range(GRAD_H):
+        t = y / GRAD_H
+        c = mix(CREST, FOOT, t * t * (3 - 2 * t))
+        for x in range(GRAD_X0, GRAD_X1):
+            px[x, y] = tuple(byte(k) for k in c) + (255,)
+    swatches = [LIP_LIT, CREST, FOOT, BASE, FOOT]
+    for y in range(SWATCH_Y, SWATCH_Y + SWATCH_PX):
+        for x in range(ATLAS_SIDE):
+            k = min(4, x // SWATCH_PX)
+            px[x, y] = tuple(byte(v) for v in swatches[k]) + (byte(.55) if k == 4 else 255,)
+    return image
+
+
+def sky(u, v):
+    h = 1 - v
+    c = mix(HORIZON, MID, h / .3) if h < .3 else mix(MID, HIGH, (h - .3) / .35) if h < .65 else mix(HIGH, TOP, (h - .65) / .35)
+    return c + (1,)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     pixels(128, flame).save(OUT / "Flame.png")
@@ -122,6 +179,8 @@ def main():
     pixels(64, fade).save(OUT / "Fade.png")
     flat = tuple(byte((EARTH_DARK[i] + EARTH_LIT[i]) / 2 * .9) for i in range(3)) + (255,)
     Image.new("RGBA", (64, 64), flat).save(OUT / "Terrain.png")
+    terrain_atlas().save(OUT / "TerrainAtlas.png")
+    pixels(64, sky).save(OUT / "Sky.png")
     for f in sorted(OUT.glob("*.png")):
         print(f"{f.relative_to(OUT.parent.parent.parent)}  {f.stat().st_size} bytes")
 
