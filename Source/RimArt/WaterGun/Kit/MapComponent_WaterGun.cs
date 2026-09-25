@@ -182,6 +182,14 @@ namespace RimArt
             }
         }
 
+        /// <summary>Whether the caster's cast has landed and its job has not ended: the job holds from here (CastJobFail).</summary>
+        public bool Fired(Pawn caster)
+        {
+            for (int i = 0; i < casts.Count; i++)
+                if (casts[i].caster == caster && casts[i].landed && !casts[i].home) return true;
+            return false;
+        }
+
         /// <summary>Whether the caster's cast job should still hold it in place: the gun is still up.</summary>
         public bool Holds(Pawn caster)
         {

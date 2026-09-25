@@ -31,6 +31,8 @@ namespace RimArt
             public BankShotShot shot;
             public int startTick, fireTick = -1, bouncesHeard;
             public bool ended;
+            /// <summary>The cast job this shot was fired in has ended.</summary>
+            public bool jobOver;
             public Pawn victim;
         }
 
@@ -80,7 +82,11 @@ namespace RimArt
         public void Ended(Pawn caster)
         {
             casts.RemoveAll(c => c.caster == caster && c.fireTick < 0);
+            foreach (Cast cast in casts) if (cast.caster == caster) cast.jobOver = true;
         }
+
+        /// <summary>Whether the caster's shot has left and its job has not ended: only the job's own toils end it from here (CastJobFail).</summary>
+        public bool Fired(Pawn caster) => casts.Exists(c => c.caster == caster && c.fireTick >= 0 && !c.jobOver);
 
         public override void MapComponentTick()
         {
