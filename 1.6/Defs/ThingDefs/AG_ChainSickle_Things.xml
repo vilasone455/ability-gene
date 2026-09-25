@@ -29,6 +29,11 @@
     </graphicData>
     <techLevel>Medieval</techLevel>
     <smeltable>true</smeltable>
+    <!-- What smelting gives part of back; the same 80 steel AG_MakeChainSickle takes. Without it the
+         game refuses smeltable ("does not give anything for smelting"). MarketValue is set above. -->
+    <costList>
+      <Steel>80</Steel>
+    </costList>
     <relicChance>0</relicChance>
     <stackLimit>1</stackLimit>
     <thingCategories>
