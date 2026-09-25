@@ -17,10 +17,10 @@ Usage: python3 make_wiki.py [path/to/RimWorld/Data] [-o docs/wiki.md]
 """
 import argparse, copy, glob, os, re
 import xml.etree.ElementTree as ET
+import rimworld_paths
 
 parser = argparse.ArgumentParser()
-parser.add_argument("data", nargs="?",
-                    default="/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Data")
+parser.add_argument("data", nargs="?", default=rimworld_paths.DATA)
 parser.add_argument("-o", "--out", default="docs/wiki.md")
 args = parser.parse_args()
 

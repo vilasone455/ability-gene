@@ -55,6 +55,7 @@ namespace RimArt
     /// the same reason the time lattice does it - a pawn running accelerated ticks its own
     /// hediffs several times per game tick, which would suffocate them at the multiplier.
     /// </summary>
+    [StaticConstructorOnStartup]
     public class HediffComp_Recursion : HediffComp
     {
         private static Texture2D closeIcon;

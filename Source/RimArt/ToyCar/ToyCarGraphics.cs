@@ -5,6 +5,7 @@ using Verse;
 namespace RimArt
 {
     /// <summary>Separate chassis and wheels keep all animation independent of navigation.</summary>
+    [StaticConstructorOnStartup]
     internal static class ToyCarGraphics
     {
         private static Material tread;

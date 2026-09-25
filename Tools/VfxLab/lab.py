@@ -33,6 +33,7 @@ ANIMATIONS = ROOT / "Animations"
 # Melee Animation, Steam workshop item 2944488802. First folder that exists wins.
 MELEE_ANIMATION_DIRS = [
     os.environ.get("RIMART_MELEE_ANIMATION", ""),
+    os.path.expanduser("~/Library/Application Support/Steam/steamapps/workshop/content/294100/2944488802"),
     "/mnt/c/Program Files (x86)/Steam/steamapps/workshop/content/294100/2944488802",
     "/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Mods/MeleeAnimation",
     os.path.expanduser("~/.steam/steam/steamapps/workshop/content/294100/2944488802"),

@@ -1,0 +1,16 @@
+<Project>
+  <!-- Where RimWorld and its workshop mods are, for every project in this repo. The Mac's Steam
+       install is used when it exists, otherwise the Windows install as WSL sees it. Any of these
+       can be set on the command line instead: dotnet build -p:RimWorldManaged=... -->
+  <PropertyGroup>
+    <SteamAppsMac>$(HOME)/Library/Application Support/Steam/steamapps</SteamAppsMac>
+    <SteamAppsWsl>/mnt/c/Program Files (x86)/Steam/steamapps</SteamAppsWsl>
+    <SteamApps Condition="'$(SteamApps)' == '' and Exists('$(SteamAppsMac)/common/RimWorld/RimWorldMac.app')">$(SteamAppsMac)</SteamApps>
+    <SteamApps Condition="'$(SteamApps)' == ''">$(SteamAppsWsl)</SteamApps>
+    <RimWorldManaged Condition="'$(RimWorldManaged)' == '' and Exists('$(SteamApps)/common/RimWorld/RimWorldMac.app')">$(SteamApps)/common/RimWorld/RimWorldMac.app/Contents/Resources/Data/Managed</RimWorldManaged>
+    <RimWorldManaged Condition="'$(RimWorldManaged)' == ''">$(SteamApps)/common/RimWorld/RimWorldWin64_Data/Managed</RimWorldManaged>
+    <RimWorldWorkshop Condition="'$(RimWorldWorkshop)' == ''">$(SteamApps)/workshop/content/294100</RimWorldWorkshop>
+    <VEFAssemblies Condition="'$(VEFAssemblies)' == ''">$(RimWorldWorkshop)/2023507013/1.6/Assemblies</VEFAssemblies>
+    <MeleeAnimationAssemblies Condition="'$(MeleeAnimationAssemblies)' == ''">$(RimWorldWorkshop)/2944488802/1.6/Assemblies</MeleeAnimationAssemblies>
+  </PropertyGroup>
+</Project>
