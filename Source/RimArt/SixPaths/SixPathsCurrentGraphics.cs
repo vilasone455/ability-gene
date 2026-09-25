@@ -1,6 +1,7 @@
 using RimWorld;
 using UnityEngine;
 using Verse;
+using static RimArt.VfxDraw;
 
 namespace RimArt
 {
@@ -19,7 +20,7 @@ namespace RimArt
         private static readonly Material soft = MaterialPool.MatFrom("RimArt/SixPaths/SoftDisc", ShaderDatabase.Transparent);
         private static readonly Material softGlow = MaterialPool.MatFrom("RimArt/SixPaths/SoftDisc", ShaderDatabase.MoteGlow);
         private static readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
-        private static readonly Mesh disc = SixPathsBurstGraphics.Band(0f, "Six Paths current disc");
+        private static readonly Mesh disc = VfxDraw.Ring(0f, "Six Paths current disc");
 
         // One mesh per thing drawn in a frame, never one reused: Graphics.DrawMesh reads a mesh
         // when the frame renders, not when it is called.
@@ -153,8 +154,6 @@ namespace RimArt
         }
 
         private static bool Shown(Vector3 at, Map map) => at.ToIntVec3().InBounds(map) && !at.ToIntVec3().Fogged(map);
-
-        private static Color Fade(Color colour, float alpha) => new Color(colour.r, colour.g, colour.b, alpha);
 
         private static void DrawMesh(Mesh mesh, Vector3 position, float width, float depth, Color colour, Material material)
         {

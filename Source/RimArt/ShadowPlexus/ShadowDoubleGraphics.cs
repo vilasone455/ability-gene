@@ -1,7 +1,7 @@
 using UnityEngine;
 using Verse;
 using static RimArt.ShadowPlexusGraphics;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
 using P = RimArt.ShadowPlexusTiming;
 using T = RimArt.ShadowDoubleTiming;
 
@@ -50,21 +50,21 @@ namespace RimArt
             Vector2 carrier = shot.Carrier, spot = shot.Spot;
 
             // Where the shadow is: sliding out, standing, or (time runs out) sliding home.
-            float homeward = sinks ? P.Smooth((after - T.Rise) / T.Home) : 0f, outward = s < shot.Cast ? P.Smooth(s / shot.Cast) : 1f - homeward;
-            float up = P.Smooth((s - shot.Cast) / T.Rise) * (sinks ? 1f - P.Smooth(after / T.Rise) : 1f), seen = sinks ? 1f : 1f - P.Smooth(after / T.Burst);
+            float homeward = sinks ? VfxMath.Smooth((after - T.Rise) / T.Home) : 0f, outward = s < shot.Cast ? VfxMath.Smooth(s / shot.Cast) : 1f - homeward;
+            float up = VfxMath.Smooth((s - shot.Cast) / T.Rise) * (sinks ? 1f - VfxMath.Smooth(after / T.Rise) : 1f), seen = sinks ? 1f : 1f - VfxMath.Smooth(after / T.Burst);
             bool away = sinks ? homeward < 1f : after < T.Burst + T.LineBack;
 
             // The thin line back to the carrier. It is the only line allowed over dark cells.
-            float tie = !sinks && after > T.Burst ? 1f - P.Smooth((after - T.Burst) / T.LineBack) : outward;
+            float tie = !sinks && after > T.Burst ? 1f - VfxMath.Smooth((after - T.Burst) / T.LineBack) : outward;
             if (away) Line(carrier, spot, 0f, tie, s, 0.06f, T.TieWidth, flare: false, point: false);
             FlatFigure(Vector2.Lerp(carrier, spot, outward), shot.Aim, 1f - up, away ? seen : 0f);
             Pool(spot, T.PoolRadius * up * seen, 1f, s);
 
             // Imitation cast from the double.
-            float since = s - shot.Release, grab = P.Smooth((s - shot.HeldAt) / 0.25f) * (1f - P.Smooth(since / 0.25f));
+            float since = s - shot.Release, grab = VfxMath.Smooth((s - shot.HeldAt) / 0.25f) * (1f - VfxMath.Smooth(since / 0.25f));
             if (s >= shot.CastStart && since < T.LineBack)
-                Line(spot, shot.Enemy, 0f, since < 0f ? P.EaseOut((s - shot.CastStart) / T.LineOut) : 1f - P.Smooth(since / T.LineBack), s, 0.1f, T.LineWidth);
-            if (shot.Range > 0f) RangeRing(spot, shot.Range, P.Smooth((s - shot.CastStart + 0.2f) / 0.2f) * (1f - P.Smooth(since / 0.4f)));
+                Line(spot, shot.Enemy, 0f, since < 0f ? P.EaseOut((s - shot.CastStart) / T.LineOut) : 1f - VfxMath.Smooth(since / T.LineBack), s, 0.1f, T.LineWidth);
+            if (shot.Range > 0f) RangeRing(spot, shot.Range, VfxMath.Smooth((s - shot.CastStart + 0.2f) / 0.2f) * (1f - VfxMath.Smooth(since / 0.4f)));
             Pool(shot.Enemy, T.PoolRadius * grab, 1f, s);
             Grip(shot.Enemy, grab, s, 4, 0.35f);
             Shreds(shot.Enemy, since, 7);

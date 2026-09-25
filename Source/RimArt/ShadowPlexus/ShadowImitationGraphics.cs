@@ -1,7 +1,7 @@
 using UnityEngine;
 using Verse;
 using static RimArt.ShadowPlexusGraphics;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
 using P = RimArt.ShadowPlexusTiming;
 using T = RimArt.ShadowImitationTiming;
 
@@ -48,18 +48,18 @@ namespace RimArt
             if (s < 0f || !Shown(shot.Carrier, map)) return;
             Begin(shot.Carrier);
             Vector2 carrier = shot.Carrier, target = shot.Target;
-            if (shot.Range > 0f) RangeRing(carrier, shot.Range, 1f - P.Smooth(since / 0.5f));
+            if (shot.Range > 0f) RangeRing(carrier, shot.Range, 1f - VfxMath.Smooth(since / 0.5f));
 
             // The line.
             if (s < shot.Release) Line(carrier, target, 0f, P.EaseOut(s / shot.Cast), s, shot.Sway, shot.Width);
-            else if (shot.End == ImitationEnd.Released) Line(carrier, target, 0f, 1f - P.Smooth(since / T.Retract), s, shot.Sway, shot.Width);
+            else if (shot.End == ImitationEnd.Released) Line(carrier, target, 0f, 1f - VfxMath.Smooth(since / T.Retract), s, shot.Sway, shot.Width);
             else if (shot.End == ImitationEnd.Cut) BrokenLine(carrier, target, shot.CutShare, since, shot.Width, s, shot.Sway);
-            else Line(carrier, target, 0f, 1f - P.Smooth(since / P.SnapTime), s, shot.Sway, shot.Width);
+            else Line(carrier, target, 0f, 1f - VfxMath.Smooth(since / P.SnapTime), s, shot.Sway, shot.Width);
 
             // The hold on the target: pool and knee threads. All of it lets go at the release.
-            float grab = P.Smooth((s - shot.Cast) / 0.25f) * (1f - P.Smooth(since / 0.25f));
+            float grab = VfxMath.Smooth((s - shot.Cast) / 0.25f) * (1f - VfxMath.Smooth(since / 0.25f));
             Pool(target, T.PoolRadius * grab, 1f, s);
-            Pool(carrier, 0.3f * (1f - P.Smooth(since / T.After(shot.End))), 1f, s);
+            Pool(carrier, 0.3f * (1f - VfxMath.Smooth(since / T.After(shot.End))), 1f, s);
             Grip(target, grab, s, 4, T.KneeThreads);
             Shreds(target, since, 7);
         }

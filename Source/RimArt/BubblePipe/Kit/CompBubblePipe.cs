@@ -25,16 +25,13 @@ namespace RimArt
     /// on the holder's hip with its level showing (MapComponent_BubblePipe), and it refills at water
     /// (MapComponent_BubblePipe's refill pass), so there is no ammunition and no reload job.
     ///
-    /// Each cooldown is kept here too, as CompPowerPole keeps the pole's, so dropping the pipe and
-    /// picking it up again does not skip one.
+    /// <see cref="ItemAbilityGrant"/> keeps the cooldowns on the pipe.
     /// </summary>
     public class CompBubblePipe : ThingComp
     {
         /// <summary>Soap in blows; below zero means a pipe that has never been used, which is full.</summary>
         private float soap = -1f;
-        private Dictionary<AbilityDef, int> readyAtTick = new Dictionary<AbilityDef, int>();
-        private List<AbilityDef> scribeDefs;
-        private List<int> scribeTicks;
+        private readonly ItemAbilityGrant grant = new ItemAbilityGrant();
 
         public CompProperties_BubblePipe Props => (CompProperties_BubblePipe)props;
 
@@ -68,32 +65,13 @@ namespace RimArt
         {
             base.Notify_Equipped(pawn);
             pawn?.MapHeld?.GetComponent<MapComponent_BubblePipe>()?.Track(pawn);
-            if (pawn?.abilities == null || Props.abilities == null) return;
-            int now = Find.TickManager.TicksGame;
-            for (int i = 0; i < Props.abilities.Count; i++)
-            {
-                AbilityDef def = Props.abilities[i];
-                pawn.abilities.GainAbility(def);
-                if (!readyAtTick.TryGetValue(def, out int ready) || ready <= now) continue;
-                pawn.abilities.GetAbility(def, true)?.StartCooldown(ready - now);
-            }
+            grant.Give(pawn, Props.abilities);
         }
 
         public override void Notify_Unequipped(Pawn pawn)
         {
             base.Notify_Unequipped(pawn);
-            if (pawn?.abilities == null || Props.abilities == null) return;
-            int now = Find.TickManager.TicksGame;
-            for (int i = 0; i < Props.abilities.Count; i++)
-            {
-                AbilityDef def = Props.abilities[i];
-                Ability ability = pawn.abilities.GetAbility(def, true);
-                if (ability != null && ability.CooldownTicksRemaining > 0) readyAtTick[def] = now + ability.CooldownTicksRemaining;
-                else readyAtTick.Remove(def);
-
-                if (!TraitAbilityUtility.GrantedByOtherSource(pawn, def, null, this))
-                    pawn.abilities.RemoveAbility(def);
-            }
+            grant.Take(pawn, Props.abilities, this);
         }
 
         public override string CompInspectStringExtra() => "Soap: " + LabelRemaining + " blows";
@@ -102,8 +80,7 @@ namespace RimArt
         {
             base.PostExposeData();
             Scribe_Values.Look(ref soap, "soap", -1f);
-            Scribe_Collections.Look(ref readyAtTick, "readyAtTick", LookMode.Def, LookMode.Value, ref scribeDefs, ref scribeTicks);
-            if (Scribe.mode == LoadSaveMode.PostLoadInit && readyAtTick == null) readyAtTick = new Dictionary<AbilityDef, int>();
+            grant.ExposeData();
         }
     }
 }

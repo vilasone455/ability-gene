@@ -1,7 +1,8 @@
 using UnityEngine;
 using Verse;
 using static RimArt.GokuGraphics;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 using G = RimArt.GokuTiming;
 using T = RimArt.GokuSpiritBombTiming;
 
@@ -37,7 +38,7 @@ namespace RimArt
     [StaticConstructorOnStartup]
     public static class GokuSpiritBombGraphics
     {
-        private static readonly Mesh orbit = SixPathsBurstGraphics.Band(0.93f, "Spirit Bomb orbit");
+        private static readonly Mesh orbit = VfxDraw.Ring(0.93f, "Spirit Bomb orbit");
         private static readonly Material puff = MaterialPool.MatFrom("RimArt/SixPaths/Puff", ShaderDatabase.Transparent);
         private static readonly Color Smoke = new Color(0.28f, 0.28f, 0.3f);
         private static readonly Vector2[] lenders = new Vector2[6], spared = new Vector2[2], walls = new Vector2[3];

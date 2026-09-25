@@ -62,7 +62,7 @@ namespace RimArt
             var feet = new Vector2(c.x, c.z);
             Vector2 toward = new Vector2(target.x - caster.Position.x, target.z - caster.Position.z);
             float aim = toward.sqrMagnitude < 0.01f ? 0f : Mathf.Atan2(toward.y, toward.x) * Mathf.Rad2Deg;
-            Vector2 muzzle = feet + ThunderGodGraphics.Turn(aim) * BankShotTiming.MuzzleAlong;
+            Vector2 muzzle = feet + VfxDraw.Turn(aim) * BankShotTiming.MuzzleAlong;
             return new BankShotShot
             {
                 Path = Trace(caster.Map, muzzle, aim, props.maxBounces, props.range, caster),

@@ -69,8 +69,8 @@ namespace RimArt
             {
                 float phi = ScriptEnemyPhi[e];
                 if (Passes(phi, shot) < 0f || ScriptEnemyRange[e] > ScriptLength(phi, aim, wall) + BodyRadius) continue;
-                shot.HitPlace[hits] = ThunderGodGraphics.Turn(aim + phi) * ScriptEnemyRange[e];
-                shot.HitShove[hits] = ThunderGodGraphics.Turn(aim + phi - 90f);
+                shot.HitPlace[hits] = VfxDraw.Turn(aim + phi) * ScriptEnemyRange[e];
+                shot.HitShove[hits] = VfxDraw.Turn(aim + phi - 90f);
                 shot.HitTime[hits++] = Passes(phi, shot);
             }
             return shot;

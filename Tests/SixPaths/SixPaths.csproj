@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework></PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../Source/RimArt/Shared/VfxMath.cs" Link="VfxMath.cs" />
     <Compile Include="../../Source/RimArt/SixPaths/SixPathsShapes.cs" Link="SixPathsShapes.cs" />
     <Compile Include="../../Source/RimArt/SixPaths/SixPathsSlab.cs" Link="SixPathsSlab.cs" />
     <Compile Include="../../Source/RimArt/SixPaths/SixPathsSlam.cs" Link="SixPathsSlam.cs" />

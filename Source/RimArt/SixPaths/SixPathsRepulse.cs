@@ -1,4 +1,5 @@
 using UnityEngine;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -59,8 +60,6 @@ namespace RimArt
         public static float CentreHeight => Mathf.Max(1.05f, Size + 0.12f);
         public static float PostTop => CentreHeight + Size;
         public static float Half => Spacing * 0.5f;
-
-        private static float Smooth(float t) => SixPathsSlamTiming.Smooth(t);
 
         public static float Gathered(float seconds) => Smooth(seconds / Gather);
         public static float Formed(float seconds) => Smooth((seconds - FormAt) / Form);
@@ -167,7 +166,7 @@ namespace RimArt
             if (u < 0f || u > 1f) return default;
             return new SlingDust
             {
-                at = Ground(toward, Travel(emitted) - u * 0.18f, (SixPathsBloomTiming.Rand(index + 44) - 0.5f) * (0.45f + u * 0.8f)),
+                at = Ground(toward, Travel(emitted) - u * 0.18f, (VfxMath.Rand(index + 44) - 0.5f) * (0.45f + u * 0.8f)),
                 width = 0.22f + u * 0.45f, depth = 0.16f + u * 0.3f,
                 alpha = Mathf.Max(0f, Mathf.Sin(u * Mathf.PI)) * 0.26f,
             };

@@ -66,7 +66,7 @@ namespace RimArt
         /// <summary>Where melee enemy <paramref name="i"/> stands at <paramref name="s"/>, from the caster.</summary>
         public static Vector2 Melee(int i, float s, in SolarFlarePlan plan)
         {
-            float age = s - plan.Flash, before = Mathf.Max(0f, plan.Flash - s) * WalkIn, recoil = Recoil * G.Smooth(age / 0.1f), after = Mathf.Max(0f, s - plan.Wake) * WalkBlind;
+            float age = s - plan.Flash, before = Mathf.Max(0f, plan.Flash - s) * WalkIn, recoil = Recoil * VfxMath.Smooth(age / 0.1f), after = Mathf.Max(0f, s - plan.Wake) * WalkBlind;
             float sway = age >= 0f && s < plan.Wake ? Mathf.Sin(s * 6f + i * 2f) * 0.04f : 0f;
             return G.Polar(Vector2.zero, MeleeDegrees[i] + sway * 20f, Mathf.Max(1f, MeleeDistance[i] + before + recoil - after));
         }

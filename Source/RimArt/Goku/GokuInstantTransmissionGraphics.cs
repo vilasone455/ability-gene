@@ -1,7 +1,8 @@
 using UnityEngine;
 using Verse;
 using static RimArt.GokuGraphics;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 using G = RimArt.GokuTiming;
 using T = RimArt.GokuInstantTransmissionTiming;
 

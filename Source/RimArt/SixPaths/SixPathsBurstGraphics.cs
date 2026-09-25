@@ -1,5 +1,6 @@
 using UnityEngine;
 using Verse;
+using static RimArt.VfxDraw;
 
 namespace RimArt
 {
@@ -15,7 +16,7 @@ namespace RimArt
         private static readonly Material softGlow = MaterialPool.MatFrom("RimArt/SixPaths/SoftDisc", ShaderDatabase.MoteGlow);
         private static readonly Material puff = MaterialPool.MatFrom("RimArt/SixPaths/Puff", ShaderDatabase.Transparent);
         private static readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
-        private static readonly Mesh ring = Band(0.965f, "Six Paths burst ring");
+        private static readonly Mesh ring = VfxDraw.Ring(0.965f, "Six Paths burst ring");
 
         private static readonly Color Body = new Color(0.035f, 0.028f, 0.050f);
         private static readonly Color Rim = new Color(0.52f, 0.36f, 0.86f);
@@ -50,8 +51,6 @@ namespace RimArt
             }
         }
 
-        private static Color Fade(Color colour, float alpha) => new Color(colour.r, colour.g, colour.b, alpha);
-
         private static void DrawMesh(Mesh mesh, Vector3 position, float width, float depth, Color colour, Material material)
         {
             properties.SetColor(ShaderPropertyIDs.Color, colour);
@@ -60,26 +59,5 @@ namespace RimArt
         }
 
         /// <summary>A unit-radius band from <paramref name="inner"/> to 1.</summary>
-        internal static Mesh Band(float inner, string name)
-        {
-            const int segments = 64;
-            var vertices = new Vector3[(segments + 1) * 2];
-            var indices = new int[segments * 6];
-            for (int i = 0; i <= segments; i++)
-            {
-                float angle = i * Mathf.PI * 2f / segments;
-                var direction = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
-                vertices[i * 2] = direction * inner;
-                vertices[i * 2 + 1] = direction;
-                if (i == segments) continue;
-                int v = i * 2, j = i * 6;
-                indices[j] = v; indices[j + 1] = v + 2; indices[j + 2] = v + 1;
-                indices[j + 3] = v + 1; indices[j + 4] = v + 2; indices[j + 5] = v + 3;
-            }
-            var mesh = new Mesh { name = name, vertices = vertices, triangles = indices };
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
-            return mesh;
-        }
     }
 }

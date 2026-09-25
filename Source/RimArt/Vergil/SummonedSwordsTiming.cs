@@ -72,7 +72,7 @@ namespace RimArt
         }
 
         public static float RingRadius(SwordsScene scene, float s) =>
-            Spins(scene) ? Mathf.Lerp(Ring, SpinRing, VergilTiming.Smooth((s - FormedAt) / Ramp)) : Ring;
+            Spins(scene) ? Mathf.Lerp(Ring, SpinRing, VfxMath.Smooth((s - FormedAt) / Ramp)) : Ring;
 
         /// <summary>A point on the ring round <paramref name="c"/>, <paramref name="height"/> cells up, as it is drawn.</summary>
         public static Vector2 RingPoint(Vector2 c, float deg, float radius, float height) =>

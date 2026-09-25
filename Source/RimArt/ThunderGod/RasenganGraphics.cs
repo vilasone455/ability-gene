@@ -1,6 +1,8 @@
 using UnityEngine;
 using Verse;
 using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 using T = RimArt.RasenganTiming;
 
 namespace RimArt
@@ -20,8 +22,8 @@ namespace RimArt
     [StaticConstructorOnStartup]
     public static class RasenganGraphics
     {
-        private static readonly Mesh orbit = SixPathsBurstGraphics.Band(0.86f, "Rasengan ring"),
-            rim = SixPathsBurstGraphics.Band(0.94f, "Rasengan thin ring");
+        private static readonly Mesh orbit = VfxDraw.Ring(0.86f, "Rasengan ring"),
+            rim = VfxDraw.Ring(0.94f, "Rasengan thin ring");
         private static readonly Color Blue = new Color(0.3f, 0.62f, 1f), Deep = new Color(0.1f, 0.32f, 0.9f),
             Sky = new Color(0.5f, 0.78f, 1f), Ice = new Color(0.78f, 0.91f, 1f), White = new Color(1f, 1f, 1f),
             Dust = new Color(0.52f, 0.45f, 0.37f);

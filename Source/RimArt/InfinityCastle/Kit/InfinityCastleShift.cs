@@ -62,7 +62,7 @@ namespace RimArt
         public float Slid(float t)
         {
             float u = Clamp((t - Slide0) / SlideTime);
-            return distance * (blocked ? Mathf.Pow(u, 1.5f) : ThunderGodGraphics.Smooth(u));
+            return distance * (blocked ? Mathf.Pow(u, 1.5f) : VfxMath.Smooth(u));
         }
 
         /// <summary>The picture's offset from the real cells at <paramref name="t"/>: zero once the room has arrived.</summary>
@@ -122,7 +122,7 @@ namespace RimArt
             if (t < Slam) return 0f;
             if (t < Hit) return Mathf.Pow((t - Slam) / SlamFor, 2f);
             if (t < Back) return 1f;
-            return 1f - ThunderGodGraphics.Smooth((t - Back) / BackFor);
+            return 1f - VfxMath.Smooth((t - Back) / BackFor);
         }
 
         public void ExposeData()

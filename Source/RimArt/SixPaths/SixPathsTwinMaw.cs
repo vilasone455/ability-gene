@@ -1,4 +1,5 @@
 using UnityEngine;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -56,8 +57,6 @@ namespace RimArt
         public static float SinkAt => ReleaseAt + Open;
         public static float GoneAt => SinkAt + Sink;
         public static float Duration => GoneAt + Recall + Settle;
-
-        private static float Smooth(float t) => SixPathsSlamTiming.Smooth(t);
 
         /// <summary>The jaws: 0 open, 1 shut. Two re-clenches after the first bite, then a slow breathing grip.</summary>
         public static float Shutness(float seconds)

@@ -86,7 +86,7 @@ namespace RimArt
                 if (placed >= 0f)
                 {
                     ClapTeleportGraphics.Mark(target, kind, T.Heart, 0, seconds, -1f, placed);
-                    if (kind == ClapMark.Tile) ClapTeleportGraphics.TileOutline(target, 0.5f * SixPathsSlamTiming.Smooth(placed / F.Settle));
+                    if (kind == ClapMark.Tile) ClapTeleportGraphics.TileOutline(target, 0.5f * VfxMath.Smooth(placed / F.Settle));
                     ClapTeleportGraphics.FlickSparkle(mark, 0.22f, placed);
                 }
             }

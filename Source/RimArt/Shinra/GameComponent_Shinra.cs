@@ -16,7 +16,7 @@ namespace RimArt
         public bool active, autoRelease;
         public int cooldownUntil, defenseUntil;
         public List<Thing> redirected = new List<Thing>();
-        public ShinraCastAnimation.Handle animation;
+        public CastClips.Handle animation;
         public bool restore;
         public float tail = -1f;
         public bool Protected => defenseUntil > Find.TickManager.TicksGame;
@@ -70,7 +70,7 @@ namespace RimArt
         }
         public static bool HasEye(Pawn pawn) => pawn?.health?.hediffSet.hediffs.Any(h =>
             h.def.defName == "AG_RepulsionEye" || h.def.defName == "AG_ShinraTenseiKit") == true;
-        public void Begin(Pawn pawn, ShinraCastAnimation.Handle animation)
+        public void Begin(Pawn pawn, CastClips.Handle animation)
         {
             var s = For(pawn);
             if (s.active || s.cooldownUntil > Find.TickManager.TicksGame) { animation.Stop(); return; }
@@ -113,7 +113,7 @@ namespace RimArt
                 if (s.restore)
                 {
                     s.restore = false;
-                    bool restored = ShinraCastAnimation.TryRestore(s.pawn, out s.animation);
+                    bool restored = ShinraCastAnimation.Clip.TryRestore(s.pawn, out s.animation);
                     // A release interrupted by loading keeps its cooldown and any committed effects.
                     if (s.charge.releasing || !restored) { s.Cancel(); continue; }
                     if (s.charge.Held) s.charge.time = ShinraCharge.Hold;
@@ -122,7 +122,7 @@ namespace RimArt
                 if (s.pawn.CurJobDef?.defName != "AM_InAnimation"
                     || s.animation == null || !s.animation.Read(out _, out bool finished) || finished)
                 { s.Cancel(); continue; }
-                float speed = ShinraCastAnimation.Speed;
+                float speed = ShinraCastAnimation.Clip.Speed;
                 if (s.autoRelease && !s.charge.releasing && s.charge.Power >= 1f
                     && ShinraCombat.Threatened(s, s.charge.SecondsToBurst(speed) + 0.15f)) s.Release();
                 bool burst = s.charge.Advance(speed);

@@ -62,6 +62,6 @@ namespace RimArt
             scene == TransmissionScene.Kidnap ? KidnapWaiting : scene == TransmissionScene.Rescue ? RescueWaiting : System.Array.Empty<Vector2>();
 
         /// <summary>How far the caster has felt for the destination: up over 0.15 s from the cast, gone 0.1 s after the vanish starts.</summary>
-        public static float Sensing(float s, in TransmissionPlan plan) => G.Smooth((s - plan.Cast) / 0.15f) * (1f - G.Smooth((s - plan.Go) / 0.1f));
+        public static float Sensing(float s, in TransmissionPlan plan) => VfxMath.Smooth((s - plan.Cast) / 0.15f) * (1f - VfxMath.Smooth((s - plan.Go) / 0.1f));
     }
 }

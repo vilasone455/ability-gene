@@ -35,10 +35,10 @@ namespace RimArt
         public static bool Piece(int index, float age, float strength, float size, float dust, out BurstPiece piece)
         {
             piece = default;
-            float life = 0.35f + SixPathsBloomTiming.Rand(index) * 0.4f, u = age / life;
+            float life = 0.35f + VfxMath.Rand(index) * 0.4f, u = age / life;
             if (u > 1f) return false;
             float angle = index * 2.399f;
-            float reach = size * (0.3f + age * (1.2f + SixPathsBloomTiming.Rand(index + 20) * 2f));
+            float reach = size * (0.3f + age * (1.2f + VfxMath.Rand(index + 20) * 2f));
             var along = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
             // Sin of pi is a hair below zero in single precision; an alpha must not be.
             float arch = Mathf.Max(0f, Mathf.Sin(u * Mathf.PI));

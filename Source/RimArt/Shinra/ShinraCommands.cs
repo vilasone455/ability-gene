@@ -30,14 +30,14 @@ namespace RimArt
                 action = () =>
                 {
                     if (s.active) s.Release();
-                    else if (GameComponent_Shinra.HasEye(pawn) && ShinraCastAnimation.TryStart(pawn, out var animation))
+                    else if (GameComponent_Shinra.HasEye(pawn) && ShinraCastAnimation.Clip.TryStart(pawn, out var animation))
                         GameComponent_Shinra.Instance.Begin(pawn, animation);
                 }
             };
             if (s.active && s.charge.releasing) action.Disable("Recovering from release.");
             else if (!s.active && s.cooldownUntil > Find.TickManager.TicksGame)
                 action.Disable($"Cooldown: {(s.cooldownUntil - Find.TickManager.TicksGame) / 60f:0.0}s");
-            else if (!s.active && (!GameComponent_Shinra.HasEye(pawn) || !ShinraCastAnimation.CanAnimate(pawn)))
+            else if (!s.active && (!GameComponent_Shinra.HasEye(pawn) || !ShinraCastAnimation.Clip.CanAnimate(pawn)))
                 action.Disable("Requires a repulsion eye, a standing humanlike caster, and Melee Animation.");
             yield return action;
             if (s.active && !s.charge.releasing)

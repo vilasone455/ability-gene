@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
 
 namespace RimArt
 {

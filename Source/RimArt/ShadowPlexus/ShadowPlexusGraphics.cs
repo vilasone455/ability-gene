@@ -1,6 +1,7 @@
 using UnityEngine;
 using Verse;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 using T = RimArt.ShadowPlexusTiming;
 
 namespace RimArt
@@ -83,7 +84,7 @@ namespace RimArt
         /// </summary>
         internal static void BrokenLine(Vector2 from, Vector2 to, float cutU, float age, float width, float seconds, float sway)
         {
-            float r = T.Smooth(age / T.SnapTime);
+            float r = VfxMath.Smooth(age / T.SnapTime);
             if (r < 1f)
             {
                 Line(from, to, 0f, cutU * (1f - r), seconds, sway, width);
