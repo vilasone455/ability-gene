@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Samehada's abilities, granted while the weapon is equipped (CompSamehada). Feed's numbers and the
+       charges are on AG_Samehada; the rest here. Placeholders.
+
+       warmupTime 0.2 s is the sketches' lead-in. The cast job (JobDriver_CastSamehada) then holds the
+       wielder: Shark Skin through the tear and the flare (0.35 + 0.25 s), Fusion through the merge
+       (0.5 s).
+
+       Sounds are vanilla placeholders, played by MapComponent_Samehada: the tear
+       Pawn_Melee_SmallScratch_Miss, the flare Hive_Spawn, each Shark Skin attack's sweep
+       Pawn_Melee_BigBash_Miss, the merge and the revert Hive_Spawn, each fed hit
+       Pawn_Melee_HumanBite_Hit. -->
+
+  <AbilityDef Name="AG_SamehadaAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastSamehada</jobDef>
+    <aiCanUse>false</aiCanUse>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_SamehadaAbilityBase">
+    <defName>AG_Samehada_SharkSkin</defName>
+    <label>shark skin</label>
+    <description>Spend 2 of the blade's charges to tear its bandage off. For 10 seconds the scales stand up and every melee attack with it also hits every hostile in the 3 tiles in front of the wielder: the tile attacked and the two beside it. Each one hit is fed on, so a sweep through several enemies puts charges back. Needs at least 2 charges.</description>
+    <iconPath>RimArt/Samehada/IconSharkSkin</iconPath>
+    <cooldownTicksRange>1800</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>0</range>
+      <warmupTime>0.2</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_SamehadaSharkSkin">
+        <chargeCost>2</chargeCost>
+        <seconds>10</seconds>
+        <sweepRadius>1.5</sweepRadius>
+        <sweepHalfAngle>60</sweepHalfAngle>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_SamehadaAbilityBase">
+    <defName>AG_Samehada_Fusion</defName>
+    <label>fusion</label>
+    <description>Spend all 5 of the blade's charges to fuse with it for 15 seconds. The wielder takes on a shark's hide, fin and gills, moves 30% faster and regenerates 2 hit points a second. The blade stays in hand and keeps feeding. When the fusion ends the blade has no charges. Needs 5 charges.</description>
+    <iconPath>RimArt/Samehada/IconFusion</iconPath>
+    <cooldownTicksRange>2400</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>0</range>
+      <warmupTime>0.2</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_SamehadaFusion">
+        <needsCharges>5</needsCharges>
+        <seconds>15</seconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

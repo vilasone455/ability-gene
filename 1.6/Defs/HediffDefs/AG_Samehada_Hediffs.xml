@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Drained, from Samehada's Feed. Severity is the stack count: each fed hit adds one, up to the
+       weapon's maxDrainedStacks (3), and sets the time left back to its drainedSeconds (20 s;
+       HediffComp_Disappears.SetDuration), so disappearsAfterTicks here is only the fallback. What each
+       stack does is its stage: -10% consciousness and -10% move speed per stack. -->
+  <HediffDef>
+    <defName>AG_SamehadaDrained</defName>
+    <label>drained</label>
+    <description>Samehada has drunk this creature's strength. Each drain dulls it and slows it further, up to three times. It passes on its own.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.72, 0.78, 0.88)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>true</isBad>
+    <initialSeverity>1</initialSeverity>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>1200</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <minSeverity>0</minSeverity>
+        <label>x1</label>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.10</offset>
+          </li>
+        </capMods>
+        <statFactors>
+          <MoveSpeed>0.9</MoveSpeed>
+        </statFactors>
+      </li>
+      <li>
+        <minSeverity>1.5</minSeverity>
+        <label>x2</label>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.20</offset>
+          </li>
+        </capMods>
+        <statFactors>
+          <MoveSpeed>0.8</MoveSpeed>
+        </statFactors>
+      </li>
+      <li>
+        <minSeverity>2.5</minSeverity>
+        <label>x3</label>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.30</offset>
+          </li>
+        </capMods>
+        <statFactors>
+          <MoveSpeed>0.7</MoveSpeed>
+        </statFactors>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <!-- Fused with Samehada (Fusion). Its length is the ability's seconds (15 s; SetDuration), so
+       disappearsAfterTicks here is only the fallback. +30% move speed; HediffComp_SamehadaFused heals
+       hpPerSecond off the pawn's injuries once a second and sets the held blade to no charge when it
+       ends. Not isBad. -->
+  <HediffDef>
+    <defName>AG_SamehadaFused</defName>
+    <label>fused with Samehada</label>
+    <description>Fused with the shark-skin blade: a shark's hide, fin and gills. Faster, and wounds close as they are made. The blade gives back everything it held when this ends.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.55, 0.78, 1.0)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>false</isBad>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>900</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+      <li Class="RimArt.HediffCompProperties_SamehadaFused">
+        <hpPerSecond>2</hpPerSecond>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <statFactors>
+          <MoveSpeed>1.3</MoveSpeed>
+        </statFactors>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

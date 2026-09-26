@@ -150,6 +150,7 @@ namespace RimArt
                 new Kit { Label = "Water gun", Grant = GrantWaterGun },
                 new Kit { Label = "Chain sickle", Grant = GrantChainSickle },
                 new Kit { Label = "Vacuum", Grant = GrantVacuum },
+                new Kit { Label = "Samehada", Grant = GrantSamehada },
                 new Kit { Label = "Shinra Tensei (repulsion eye)", Grant = GrantShinraTensei },
                 new Kit { Label = "Gravity Well (attraction eye)", Grant = GravityAcquisition.Grant },
 
@@ -288,6 +289,10 @@ namespace RimArt
         /// <summary>The vacuum comes empty, with Suck, Spit and Digest; the research is finished so more can be made.</summary>
         private static string GrantVacuum(Pawn pawn)
             => GrantWeapon(pawn, "AG_Vacuum", "AG_Vacuum");
+
+        /// <summary>Samehada comes with no charge, with Shark Skin and Fusion; the research is finished so more can be made.</summary>
+        private static string GrantSamehada(Pawn pawn)
+            => GrantWeapon(pawn, "AG_Samehada", "AG_Samehada");
 
         /// <summary>
         /// Puts a weapon in the pawn's hands, ready to use.

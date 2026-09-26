@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Behind AG_Samehada, at the smithy. A RecipeDef rather than a recipeMaker, as the chain
+       sickle's is. Proposed cost: 90 steel for the blade (a vanilla longsword is 75 with no stuff
+       choice here), 40 leather of any kind for the skin, 20 cloth for the bandage. -->
+  <RecipeDef>
+    <defName>AG_MakeSamehada</defName>
+    <label>make samehada</label>
+    <description>Forge Samehada from 90 steel, 40 leather and 20 cloth. It comes with no charge.</description>
+    <jobString>Making Samehada.</jobString>
+    <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+    <workSkill>Crafting</workSkill>
+    <effectWorking>Smith</effectWorking>
+    <soundWorking>Recipe_Smith</soundWorking>
+    <workAmount>12000</workAmount>
+    <researchPrerequisite>AG_Samehada</researchPrerequisite>
+    <recipeUsers>
+      <li>FueledSmithy</li>
+      <li>ElectricSmithy</li>
+    </recipeUsers>
+    <ingredients>
+      <li>
+        <filter><thingDefs><li>Steel</li></thingDefs></filter>
+        <count>90</count>
+      </li>
+      <li>
+        <filter><categories><li>Leathers</li></categories></filter>
+        <count>40</count>
+      </li>
+      <li>
+        <filter><thingDefs><li>Cloth</li></thingDefs></filter>
+        <count>20</count>
+      </li>
+    </ingredients>
+    <fixedIngredientFilter>
+      <thingDefs>
+        <li>Steel</li>
+        <li>Cloth</li>
+      </thingDefs>
+      <categories>
+        <li>Leathers</li>
+      </categories>
+    </fixedIngredientFilter>
+    <products>
+      <AG_Samehada>1</AG_Samehada>
+    </products>
+    <skillRequirements>
+      <Crafting>6</Crafting>
+    </skillRequirements>
+  </RecipeDef>
+
+</Defs>

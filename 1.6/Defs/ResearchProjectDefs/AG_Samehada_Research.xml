@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Samehada kit: a forged blade under a skin that feeds, so industrial and after smithing, as
+       the chain sickle is after smithing. It sits in this mod's column at 7.00/12.60, below the chain
+       sickle (7.00/11.40); the used slots are 7.00 at 4.20, 5.40, 6.60, 7.80, 9.00, 10.20, 11.40, 8.00
+       at 7.80, 9.00 and 10.20, and 13.00/2.60. Vanilla projects in column 7.00 end at 4.80. Not
+       checked against other mods' projects in the research tab. -->
+  <ResearchProjectDef>
+    <defName>AG_Samehada</defName>
+    <label>samehada</label>
+    <description>Forge Samehada: a greatsword under living shark skin. It drinks from what it cuts to heal its wielder and store charges, which it spends to tear off its bandage and sweep, or to fuse with the wielder.</description>
+    <baseCost>1200</baseCost>
+    <techLevel>Industrial</techLevel>
+    <prerequisites>
+      <li>Smithing</li>
+    </prerequisites>
+    <researchViewX>7.00</researchViewX>
+    <researchViewY>12.60</researchViewY>
+  </ResearchProjectDef>
+
+</Defs>

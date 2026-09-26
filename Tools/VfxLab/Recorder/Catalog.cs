@@ -97,6 +97,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Samehada", Prefix = "Samehada:", Component = typeof(MapComponent_SamehadaPreview), Clock = "seconds",
+                Phases = label => label.Contains("fusion") ? FusionPhases() : label.Contains("shark") ? SharkSkinPhases() : FeedPhases(),
+            },
+            new Kit
+            {
                 Name = "Shadow Plexus", Prefix = "Shadow Plexus:", Component = typeof(MapComponent_ShadowPlexusPreview), Clock = "seconds",
                 Phases = label => label.Contains("imitation") ? ImitationPhases(label.Contains("cut") ? ImitationEnd.Cut : label.Contains("dark") ? ImitationEnd.Dark : ImitationEnd.Released)
                     : label.Contains("seam") ? SeamPhases(label.Contains("rescue") ? SeamScene.Rescue : SeamScene.Rusher)
@@ -426,6 +431,36 @@ namespace RimArt.VfxLab
                 new Phase("Sink", VacuumDigestTiming.Sink0(shot)),
             };
         }
+
+        private static Phase[] FeedPhases()
+        {
+            var phases = new List<Phase> { new Phase("Rest", 0f) };
+            for (int i = 0; i < SamehadaFeedTiming.ScriptHits; i++)
+            {
+                phases.Add(new Phase("Hit " + (i + 1), SamehadaFeedTiming.HitStart(i)));
+                phases.Add(new Phase("Bite", SamehadaFeedTiming.Bite(i)));
+            }
+            phases.Add(new Phase("Result", SamehadaFeedTiming.Result));
+            return phases.ToArray();
+        }
+
+        private static Phase[] SharkSkinPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Tear", SamehadaSharkSkinTiming.Tear0),
+            new Phase("Flare", SamehadaSharkSkinTiming.Flare0),
+            new Phase("Sweep", SamehadaSharkSkinTiming.Sweep0),
+            new Phase("Result", SamehadaSharkSkinTiming.Result),
+        };
+
+        private static Phase[] FusionPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Merge", SamehadaFusionTiming.Merge0),
+            new Phase("Fused", SamehadaFusionTiming.Fused0),
+            new Phase("Revert", SamehadaFusionTiming.Revert0),
+            new Phase("Result", SamehadaFusionTiming.Done),
+        };
 
         private static Phase[] SnagPhases(int target)
         {
