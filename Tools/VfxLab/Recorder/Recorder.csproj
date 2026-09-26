@@ -40,6 +40,8 @@
     <Compile Include="../../../Source/RimArt/Vacuum/*.cs" LinkBase="Linked/Vacuum" />
     <!-- Samehada: drawing, timing and previews only. The weapon and ability code is in Samehada/Kit, which is not linked here. -->
     <Compile Include="../../../Source/RimArt/Samehada/*.cs" LinkBase="Linked/Samehada" />
+    <!-- Coil Gun: drawing, timing and previews only. The weapon, ability and projectile code is in CoilGun/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/CoilGun/*.cs" LinkBase="Linked/CoilGun" />
     <!-- Shadow Plexus: drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/ShadowPlexus/*.cs" LinkBase="Linked/ShadowPlexus" />
     <!-- Goku: drawing and previews only. -->

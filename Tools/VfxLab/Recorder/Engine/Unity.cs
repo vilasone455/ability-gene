@@ -88,6 +88,7 @@ namespace UnityEngine
         public static float Acos(float v) => (float)Math.Acos(v);
         public static float Asin(float v) => (float)Math.Asin(v);
         public static float Atan(float v) => (float)Math.Atan(v);
+        public static float Sign(float f) => f >= 0f ? 1f : -1f;
         public static float Tan(float v) => (float)Math.Tan(v);
         public static float Abs(float v) => Math.Abs(v);
         public static int Abs(int v) => Math.Abs(v);

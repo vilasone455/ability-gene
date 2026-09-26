@@ -102,6 +102,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Coil Gun", Prefix = "Coil Gun:", Component = typeof(MapComponent_CoilGunPreview), Clock = "seconds",
+                Phases = label => label.Contains("chain arc") ? ChainArcPhases() : label.Contains("recharge") ? new[] { new Phase("Charging", 0f) } : CoilShotPhases(),
+            },
+            new Kit
+            {
                 Name = "Shadow Plexus", Prefix = "Shadow Plexus:", Component = typeof(MapComponent_ShadowPlexusPreview), Clock = "seconds",
                 Phases = label => label.Contains("imitation") ? ImitationPhases(label.Contains("cut") ? ImitationEnd.Cut : label.Contains("dark") ? ImitationEnd.Dark : ImitationEnd.Released)
                     : label.Contains("seam") ? SeamPhases(label.Contains("rescue") ? SeamScene.Rescue : SeamScene.Rusher)
@@ -431,6 +436,25 @@ namespace RimArt.VfxLab
                 new Phase("Sink", VacuumDigestTiming.Sink0(shot)),
             };
         }
+
+        private static Phase[] ChainArcPhases()
+        {
+            float fire = CoilGunArcTiming.ScriptFire;
+            var phases = new List<Phase> { new Phase("Rest", 0f), new Phase("Charge", CoilGunArcTiming.Lead), new Phase("Fire", fire) };
+            for (int i = 0; i < CoilGunArcTiming.ScriptTargets.Length; i++)
+                phases.Add(new Phase("Hit " + (i + 1) + (i == CoilGunArcTiming.ScriptSoaked ? " (Soaked)" : ""), CoilGunArcTiming.Hit(fire, i)));
+            phases.Add(new Phase("Faded", CoilGunArcTiming.LastHit(fire, CoilGunArcTiming.ScriptTargets.Length) + CoilGunArcTiming.Lit + CoilGunArcTiming.Fade + CoilGunArcTiming.Strike));
+            return phases.ToArray();
+        }
+
+        private static Phase[] CoilShotPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Round 1", CoilGunShotTiming.Fired(0)),
+            new Phase("Round 2", CoilGunShotTiming.Fired(1)),
+            new Phase("Hit 1", CoilGunShotTiming.Impact(0)),
+            new Phase("Hit 2", CoilGunShotTiming.Impact(1)),
+        };
 
         private static Phase[] FeedPhases()
         {
