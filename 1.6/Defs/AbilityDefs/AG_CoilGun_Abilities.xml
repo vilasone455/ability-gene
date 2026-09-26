@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The coil gun's ability, granted while the weapon is equipped (CompCoilGun). Numbers are
+       placeholders; every balance number is a field here.
+
+       warmupTime 0.5 is the picture's charge at the muzzle. The cast job (JobDriver_CastCoilGun)
+       then holds the caster until the chain has run: 0.03 s to the first pawn, 0.08 s per jump, and
+       0.2 s after the last hit (0.47 s for four pawns). defaultCooldownTime keeps the gun aimed
+       0.4 s after the shot.
+
+       Sounds are vanilla placeholders: warmup Interact_ChargeRifle, cast ChargeLance_Fire (Core). -->
+  <AbilityDef>
+    <defName>AG_CoilGun_ChainArc</defName>
+    <label>chain arc</label>
+    <description>Fire a bolt of lightning at a hostile pawn up to 26 tiles away. It jumps on to the nearest hostile pawn within 3 tiles of the last one hit, up to 3 more times; allies and downed pawns are skipped. Each pawn hit takes 12 electrical burn damage, 1.5 times as much if it is a mechanoid or soaked. From a soaked pawn the next jump reaches 6 tiles. Uses 5 of the gun's battery. Needs line of sight.</description>
+    <iconPath>RimArt/CoilGun/IconChainArc</iconPath>
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastCoilGun</jobDef>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <cooldownTicksRange>1200</cooldownTicksRange>
+    <warmupStartSound>Interact_ChargeRifle</warmupStartSound>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>25.9</range>
+      <warmupTime>0.5</warmupTime>
+      <defaultCooldownTime>0.4</defaultCooldownTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <soundCast>ChargeLance_Fire</soundCast>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_ChainArc">
+        <cost>5</cost>
+        <damage>12</damage>
+        <armorPenetration>0.35</armorPenetration>
+        <jumps>3</jumps>
+        <jumpRadius>3</jumpRadius>
+        <soakedJumpFactor>2</soakedJumpFactor>
+        <soakedDamageFactor>1.5</soakedDamageFactor>
+        <mechDamageFactor>1.5</mechDamageFactor>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The coil gun's damage, for its bolts and for Chain Arc: Core's Bullet (Sharp armour, ranged)
+       that leaves Core's electrical burn hediff instead of a gunshot. Not a Heat damage: every
+       mechanoid has ArmorRating_Heat 2.00 (Races_Mechanoid.xml), so a Burn-type bolt would do nothing
+       to the mechanoids this gun is meant to be good against. Core's own ElectricalBurn damage def
+       needs Anomaly. -->
+  <DamageDef ParentName="Bullet">
+    <defName>AG_CoilBurn</defName>
+    <label>electrical burn</label>
+    <hediff>ElectricalBurn</hediff>
+    <deathMessage>{0} has been electrocuted.</deathMessage>
+  </DamageDef>
+
+</Defs>
