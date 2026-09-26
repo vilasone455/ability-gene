@@ -2,7 +2,8 @@
 <Defs>
 
   <!-- Unlimited Blade Works: a 40 x 40 pocket map of red-brown earth with the field of swords drawn
-       over it. Opened from the RimArts debug window (Trace, "world map: open"); no ability makes one yet. -->
+       over it. Made by the ability AG_Trace_UnlimitedBladeWorks (its numbers are on that def), or empty from
+       the RimArts debug window (Trace, "world map: open"). -->
   <MapGeneratorDef>
     <defName>AG_UnlimitedBladeWorks</defName>
     <label>unlimited blade works</label>
@@ -20,24 +21,6 @@
     <genSteps>
       <li>AG_UnlimitedBladeWorksField</li>
     </genSteps>
-    <!-- The world's numbers (proposed, not agreed: the sketches' headers); the shapes and timings of the pictures are code. -->
-    <modExtensions>
-      <li Class="RimArt.UbwRules">
-        <radiusByVerse>
-          <li>6</li>
-          <li>9</li>
-          <li>12</li>
-        </radiusByVerse>
-        <verseSeconds>2</verseSeconds>
-        <worldSecondsByVerse>
-          <li>20</li>
-          <li>25</li>
-          <li>30</li>
-        </worldSecondsByVerse>
-        <swordCostSeconds>0.5</swordCostSeconds>
-        <cooldownDays>2</cooldownDays>
-      </li>
-    </modExtensions>
   </MapGeneratorDef>
 
   <!-- One step, the whole world's body: earth on every cell, roof, unseen lights. The swords are not

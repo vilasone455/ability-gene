@@ -69,10 +69,16 @@ static class ApiChecks
         if ((float)trait.Element("commonality") != 0 || (float)trait.Element("commonalityFemale") != 0
             || (bool)trait.Element("allowOnHostileSpawn") || (bool)trait.Element("canBeSuppressed"))
             throw new Exception("Earned trait must not generate randomly or be suppressed");
-        var abilities = trait.Descendants("abilities").Single().Elements("li").Select(e => e.Value).ToArray();
-        if (!abilities.SequenceEqual(new[] { "AG_Panoply_Rain", "AG_Panoply_Loose", "AG_Panoply_Grasp" }))
-            throw new Exception("Trait must grant the complete kit");
-        foreach (string file in new[] { "1.6/Defs/TraitDefs/AG_OriginBlade.xml", "1.6/Defs/JobDefs/AG_StudyBlade.xml" })
+        if (trait.Descendants("abilities").Any())
+            throw new Exception("Origin: Blade grants nothing; Unlimited Blade Works comes from the Shirou Echo");
+        var shirou = XDocument.Load("1.6/Defs/EchoDefs/AG_Echoes.xml").Root.Elements("RimArt.EchoDef")
+            .Single(e => (string)e.Element("defName") == "AG_Echo_Shirou");
+        if (!shirou.Element("abilities").Elements("li").Select(e => e.Value).SequenceEqual(new[] { "AG_Trace_UnlimitedBladeWorks" })
+            || !shirou.Element("trials").Elements("li").Any(e => (string)e.Attribute("Class") == "RimArt.Trial_Trait"
+                && (string)e.Element("trait") == "AG_OriginBlade"))
+            throw new Exception("The Shirou Echo must grant Unlimited Blade Works behind an Origin: Blade trial");
+        foreach (string file in new[] { "1.6/Defs/TraitDefs/AG_OriginBlade.xml", "1.6/Defs/JobDefs/AG_StudyBlade.xml",
+                     "1.6/Defs/AbilityDefs/AG_Trace_Abilities.xml", "1.6/Defs/JobDefs/AG_Trace_Jobs.xml" })
         foreach (var element in XDocument.Load(file).Descendants())
         {
             string className = (string)element.Attribute("Class")

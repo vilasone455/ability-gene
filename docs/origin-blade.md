@@ -1,6 +1,7 @@
 # Origin: Blade
 
-A permanent earned pawn trait granting the existing Rain, Loose, and Grasp kit.
+A permanent earned pawn trait granting Unlimited Blade Works (the Trace kit's ultimate, see
+[unlimited-blade-works.md](unlimited-blade-works.md)). Until 2026-09-25 it granted Rain, Loose and Grasp.
 The trait does not roll on generated pawns and cannot be suppressed by another trait.
 
 ## Awakening
@@ -41,11 +42,13 @@ The study dialog warns before starting that awakening removes psycasting and ran
 weapon use, and the same warning is repeated on the offer itself, at the moment the choice is
 actually made. Psytrainers and psylink neuroformers reject use before consuming the item.
 
-## Existing kit behavior
+## Kit
 
-Origin: Blade is the sole source of Rain, Loose and Grasp. It uses the trait ability
-extension and does not require Unique Melee Weapons. Deployed blades belong to the pawn,
-create a burden while maintained, and can become permanent steel longswords through Grasp.
+Origin: Blade grants no abilities. It is the one Trial of the Shirou Echo (`Trial_Trait`, see
+docs/hero-echo.md): a colonist with it can be tuned at the resonance device and awakened as Shirou,
+whose hero form grants Unlimited Blade Works (docs/unlimited-blade-works.md). Until 2026-09-25 the
+trait granted Rain, Loose and Grasp; those now have no source, and their defs and code stay. A pawn
+awakened in an older save keeps the three it had (the sync only grants).
 
 Royalty is optional; the restriction hooks reference base-game types without adding
 Royalty-only XML definitions. Vanilla Psycasts Expanded and other replacement psycast

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace RimArt
@@ -74,6 +75,12 @@ namespace RimArt
             if (charge < amount) return false;
             charge -= amount;
             return true;
+        }
+
+        /// <summary>Gives back charge a cast took and did not use, up to the device's maximum.</summary>
+        public void Refund(float amount)
+        {
+            if (amount > 0f) charge = Mathf.Min(MaxCharge, charge + amount);
         }
 
         public override void GameComponentTick()

@@ -31,6 +31,15 @@ namespace RimArt
             UnlimitedBladeWorksMap.OpenLater(source, new List<IntVec3> { IntVec3.Zero }, depth);
         }
 
+        /// <summary>The ability's cooldown gone, to cast again at once. Origin: Blade grants the ability: Kits, "Origin: Blade".</summary>
+        [RimArtDebug("Trace", "unlimited blade works: ready", RimArtDebugKind.Pawn)]
+        public static void Ready(Pawn pawn)
+        {
+            Ability ability = pawn.abilities?.GetAbility(UbwDefOf.AG_Trace_UnlimitedBladeWorks);
+            if (ability == null) { Messages.Message(pawn.LabelShortCap + " does not have Unlimited Blade Works.", MessageTypeDefOf.RejectInput, false); return; }
+            ability.ResetCooldown();
+        }
+
         [RimArtDebug("Trace", "world map: close", RimArtDebugKind.Now)]
         public static void Close()
         {

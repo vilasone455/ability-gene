@@ -65,7 +65,7 @@ MOD_NAMES = {
 }
 # Weapon categories that live in other mods, so their labels are not in the game's Data folder.
 CATEGORY_NAMES = {"UMW_Melee": "unique melee weapons", "UMW_Bladed": "unique bladed weapons"}
-TYPE_ORDER = ["Gene", "Archite gene", "Trait", "Implant", "Wearable", "Weapon trait", "Weapon"]
+TYPE_ORDER = ["Hero", "Gene", "Archite gene", "Trait", "Implant", "Wearable", "Weapon trait", "Weapon"]
 
 
 # ---------------------------------------------------------------- loading and inheritance
@@ -313,6 +313,36 @@ for tag, name in mod_keys:
         add_kit("Wearable", text_of(el, "label"), text_of(el, "description"), how,
                 [li.text.strip() for li in el.findall("comps/li/abilities/li")], el)
 
+    elif tag == "RimArt.EchoDef" and el.findall("abilities/li"):
+        hero = text_of(el, "label")
+        how = ["Research the resonance device and build it. In its tab, tune it to " + hero + " and one "
+               "adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a "
+               "few heroes (2, then 4 and 6 with more resonance research), and " + hero + " can have one Host."]
+        for trial in el.findall("trials/li"):
+            kind = trial.get("Class", "").replace("RimArt.", "")
+            if kind == "Trial_Trait":
+                trait = text_of(trial, "trait")
+                how.append("Trial: has " + label("TraitDef", trait) + ".")
+                how += ["(" + label("TraitDef", trait) + ") " + line for line in EARNED.get(trait, [])]
+            elif kind == "Trial_NotTrait":
+                how.append("Trial: does not have " + label("TraitDef", text_of(trial, "trait")) + ".")
+            elif kind == "Trial_Skill":
+                how.append("Trial: " + label("SkillDef", text_of(trial, "skill")) + " " + text_of(trial, "level") + ".")
+            elif kind == "Trial_Record":
+                how.append("Trial: " + label("RecordDef", text_of(trial, "record")) + " " + text_of(trial, "count") + ".")
+            elif kind == "Trial_KillsWith":
+                how.append("Trial: " + text_of(trial, "count") + " kills with a " + (text_of(trial, "weaponLabel") or "named weapon") + ".")
+        forced = [label("TraitDef", text_of(li, "trait")) for li in el.findall("forcedTraits/li")]
+        if forced:
+            how.append("Awakening gives the trait " + join(forced) + ", replacing any trait it conflicts with.")
+        how.append("The abilities are there only while the Host is manifested (hero form). Hero form drains "
+                   + text_of(el, "upkeepPerHour") + " of the colony's charge an hour.")
+        for li in el.findall("castCosts/li"):
+            how.append(label("AbilityDef", text_of(li, "ability")).capitalize() + " costs " + text_of(li, "cost") + " charge a cast.")
+        subtitle = text_of(el, "subtitle")
+        add_kit("Hero", hero + (" — " + subtitle if subtitle else ""), text_of(el, "description"), how,
+                [li.text.strip() for li in el.findall("abilities/li")], el)
+
     elif tag == "WeaponTraitDef" and el.find("abilityProps/abilityDef") is not None:
         category = text_of(el, "weaponCategory")
         cat = CATEGORY_NAMES.get(category) or label("WeaponCategoryDef", category)
@@ -407,7 +437,7 @@ current_type = None
 for k in kits:
     if k["type"] != current_type:
         current_type = k["type"]
-        out += ["", "## " + current_type + ("s" if not current_type.endswith("s") else "")]
+        out += ["", "## " + ("Heroes" if current_type == "Hero" else current_type + ("s" if not current_type.endswith("s") else ""))]
     out += ["", "### " + cap(k["name"]), ""]
     out += [p + "\n" for p in paragraphs(k["desc"])]
     if k["mods"]:
