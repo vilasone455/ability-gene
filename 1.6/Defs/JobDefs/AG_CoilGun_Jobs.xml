@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Chain Arc. The driver starts the picture (the coil charging at the muzzle) with the warmup and
+       holds the job until the chain has run. Core's gun stays drawn: it is what aims. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastCoilGun</defName>
+    <driverClass>RimArt.JobDriver_CastCoilGun</driverClass>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>

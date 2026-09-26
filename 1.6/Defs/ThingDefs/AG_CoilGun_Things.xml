@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Coil Gun kit: a rifle whose normal fire is Core's own shooting verb (a 2-round burst of
+       coil bolts) and one ability, Chain Arc (AG_CoilGun_Abilities.xml), which spends charge from the
+       gun's battery. Every balance number is a field here, in AG_CoilGun_Abilities.xml or on
+       AG_CoilGun_Research; the numbers are placeholders. There is no sketch: the pictures are C#
+       (Source/RimArt/CoilGun), checked as VFX-lab recordings. -->
+
+  <!-- The round. Aiming, the hit roll and damage are vanilla Bullet; the damage def is AG_CoilBurn.
+       A mechanoid hit takes mechDamageFactor times the damage (no EMP stun). The texture is not
+       drawn: Projectile_CoilBolt draws a short jagged bolt in code. -->
+  <ThingDef ParentName="BaseBullet">
+    <defName>AG_CoilGun_Bolt</defName>
+    <label>coil bolt</label>
+    <thingClass>RimArt.Projectile_CoilBolt</thingClass>
+    <graphicData>
+      <texPath>RimArt/CoilGun/Bolt</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <shaderType>MoteGlow</shaderType>
+    </graphicData>
+    <projectile>
+      <damageDef>AG_CoilBurn</damageDef>
+      <damageAmountBase>9</damageAmountBase>
+      <armorPenetrationBase>0.35</armorPenetrationBase>
+      <stoppingPower>0.5</stoppingPower>
+      <speed>80</speed>
+    </projectile>
+    <modExtensions>
+      <li Class="RimArt.CoilBoltExtension">
+        <mechDamageFactor>1.5</mechDamageFactor>
+      </li>
+    </modExtensions>
+  </ThingDef>
+
+  <!-- The gun. A 2-round burst of 9 damage, range 25.9, 1.0 s aim and 1.7 s cooldown; accuracy
+       between an assault rifle's and a charge rifle's. Made at the machining table after
+       AG_CoilGun research, by the recipe BaseHumanMakeableGun's recipeMaker generates.
+       weaponTags are cleared so no raider or trader pawn kind spawns carrying one.
+       The comps are listed with Inherit="False" because CompProperties_CoilGun is the weapon's
+       CompEquippable (its battery gizmo is an equipped gizmo); the rest are the ones
+       BaseHumanMakeableGun would give: forbiddable, styleable, art, quality, biocodable. -->
+  <ThingDef ParentName="BaseHumanMakeableGun">
+    <defName>AG_CoilGun</defName>
+    <label>coil gun</label>
+    <description>A rifle that throws its rounds with magnetic coils, fed from a battery in the stock.\n\nNormal fire: a burst of 2 electric bolts, 9 damage each, range 26. Mechanoids take 1.5 times the damage. Normal fire uses no charge.\n\nWhile it is equipped, the wielder can use Chain Arc: a bolt at a hostile pawn that jumps on to up to 3 more hostile pawns, each within 3 tiles of the last one hit, for 12 damage each. A soaked pawn takes 1.5 times the damage and the jump from it reaches 6 tiles. Uses 5 of the gun's 20 charge.\n\nThe gun's battery does not refill on its own: standing within 1.5 tiles of a charged battery recharges it by 1 a second, taking 10 Wd of the battery's stored energy for each.</description>
+    <graphicData>
+      <texPath>RimArt/CoilGun/CoilGun</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.25</drawSize>
+    </graphicData>
+    <uiIconScale>1.2</uiIconScale>
+    <soundInteract>Interact_ChargeRifle</soundInteract>
+    <techLevel>Industrial</techLevel>
+    <weaponTags Inherit="False" />
+    <statBases>
+      <WorkToMake>30000</WorkToMake>
+      <Mass>3.8</Mass>
+      <AccuracyTouch>0.60</AccuracyTouch>
+      <AccuracyShort>0.70</AccuracyShort>
+      <AccuracyMedium>0.62</AccuracyMedium>
+      <AccuracyLong>0.50</AccuracyLong>
+      <RangedWeapon_Cooldown>1.7</RangedWeapon_Cooldown>
+    </statBases>
+    <costList>
+      <Steel>60</Steel>
+      <Plasteel>20</Plasteel>
+      <ComponentIndustrial>4</ComponentIndustrial>
+    </costList>
+    <recipeMaker>
+      <researchPrerequisite>AG_CoilGun</researchPrerequisite>
+      <skillRequirements>
+        <Crafting>6</Crafting>
+      </skillRequirements>
+    </recipeMaker>
+    <verbs>
+      <li>
+        <verbClass>Verb_Shoot</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>AG_CoilGun_Bolt</defaultProjectile>
+        <warmupTime>1.0</warmupTime>
+        <range>25.9</range>
+        <burstShotCount>2</burstShotCount>
+        <ticksBetweenBurstShots>8</ticksBetweenBurstShots>
+        <soundCast>Shot_ChargeRifle</soundCast>
+        <soundCastTail>GunTail_Medium</soundCastTail>
+        <muzzleFlashScale>0</muzzleFlashScale>
+      </li>
+    </verbs>
+    <comps Inherit="False">
+      <li Class="RimArt.CompProperties_CoilGun">
+        <capacity>20</capacity>
+        <chargePerSecond>1</chargePerSecond>
+        <wattDaysPerCharge>10</wattDaysPerCharge>
+        <rechargeRadius>1.5</rechargeRadius>
+        <abilities>
+          <li>AG_CoilGun_ChainArc</li>
+        </abilities>
+      </li>
+      <li Class="CompProperties_Forbiddable"/>
+      <li Class="CompProperties_Styleable"/>
+      <li Class="CompProperties_Art">
+        <nameMaker>NamerArtWeaponGun</nameMaker>
+        <descriptionMaker>ArtDescription_WeaponGun</descriptionMaker>
+        <minQualityForArtistic>Excellent</minQualityForArtistic>
+      </li>
+      <li>
+        <compClass>CompQuality</compClass>
+      </li>
+      <li Class="CompProperties_Biocodable"/>
+    </comps>
+    <tools>
+      <li>
+        <label>stock</label>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>9</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+      <li>
+        <label>barrel</label>
+        <capacities>
+          <li>Blunt</li>
+          <li>Poke</li>
+        </capacities>
+        <power>9</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
+</Defs>
