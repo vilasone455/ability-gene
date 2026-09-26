@@ -23,6 +23,11 @@ namespace RimArt.VfxLab
         public Func<string, Phase[]> Phases = _ => Array.Empty<Phase>();
         /// <summary>For previews that loop forever: stop after this many seconds on their own clock.</summary>
         public Func<string, float?> LoopSeconds = _ => null;
+        /// <summary>
+        /// Previews that draw the same frame for their first half second on purpose (the sketch's stand-in
+        /// walks up, and the port draws no stand-in): record them whole instead of as a still.
+        /// </summary>
+        public Func<string, bool> StartsStill = _ => false;
 
         public static readonly Kit[] All =
         {
@@ -99,6 +104,15 @@ namespace RimArt.VfxLab
             {
                 Name = "Samehada", Prefix = "Samehada:", Component = typeof(MapComponent_SamehadaPreview), Clock = "seconds",
                 Phases = label => label.Contains("fusion") ? FusionPhases() : label.Contains("shark") ? SharkSkinPhases() : FeedPhases(),
+            },
+            new Kit
+            {
+                Name = "Nezuko's Box", Prefix = "Nezuko's Box:", Component = typeof(MapComponent_NezukoBoxPreview), Clock = "seconds",
+                Phases = label => label.Contains("go in") ? BoxGoInPhases()
+                    : label.Contains("strike") ? BoxStrikePhases()
+                    : label.Contains("come out") ? BoxCalmPhases(label.Contains("time up") ? NezukoExit.TimeUp : NezukoExit.Downed)
+                    : new[] { new Phase("Loop", 0f) },
+                StartsStill = label => label.Contains("go in"),
             },
             new Kit
             {
@@ -502,6 +516,32 @@ namespace RimArt.VfxLab
             phases.Add(new Phase("Result", SamehadaFeedTiming.Result));
             return phases.ToArray();
         }
+
+        private static Phase[] BoxGoInPhases() => new[]
+        {
+            new Phase("Approach", NezukoBoxGoInTiming.Approach0),
+            new Phase("Open", NezukoBoxGoInTiming.Open0),
+            new Phase("Enter", NezukoBoxGoInTiming.Enter0),
+            new Phase("Shut", NezukoBoxGoInTiming.Shut0),
+            new Phase("Asleep", NezukoBoxGoInTiming.Latch),
+        };
+
+        private static Phase[] BoxStrikePhases() => new[]
+        {
+            new Phase("Rumble", NezukoBoxComeOutTiming.Rumble0),
+            new Phase("Burst", NezukoBoxComeOutTiming.BurstAt),
+            new Phase("Leap", NezukoBoxComeOutTiming.Leap0),
+            new Phase("Land", NezukoBoxComeOutTiming.Land(NezukoBoxComeOutTiming.Flight)),
+            new Phase("Strike", NezukoBoxComeOutTiming.StrikeAt(NezukoBoxComeOutTiming.Flight)),
+            new Phase("Shut", NezukoBoxComeOutTiming.Shut0(NezukoExit.Strike, NezukoBoxComeOutTiming.Flight)),
+        };
+
+        private static Phase[] BoxCalmPhases(NezukoExit kind) => new[]
+        {
+            new Phase("Open", NezukoBoxComeOutTiming.Open0),
+            new Phase("Out", NezukoBoxComeOutTiming.Out0),
+            new Phase("Shut", NezukoBoxComeOutTiming.Shut0(kind, NezukoBoxComeOutTiming.Flight)),
+        };
 
         private static Phase[] SharkSkinPhases() => new[]
         {

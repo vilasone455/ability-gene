@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The sleeper box: planks, iron bands and straps, so neolithic and after complex furniture. It
+       sits in this mod's column at 7.00/13.80, below Samehada (7.00/12.60). -->
+  <ResearchProjectDef>
+    <defName>AG_NezukoBox</defName>
+    <label>sleeper box</label>
+    <description>Build the sleeper box: a wooden box worn on the back that one pawn sleeps in, safe from harm, and leaps out of to strike.</description>
+    <baseCost>600</baseCost>
+    <techLevel>Neolithic</techLevel>
+    <prerequisites>
+      <li>ComplexFurniture</li>
+    </prerequisites>
+    <researchViewX>7.00</researchViewX>
+    <researchViewY>13.80</researchViewY>
+  </ResearchProjectDef>
+
+</Defs>

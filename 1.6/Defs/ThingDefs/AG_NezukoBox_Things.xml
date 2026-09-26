@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- A layer for things carried on the back. Apparel conflicts only within one layer, so the box
+       is worn with armour, a belt and headgear; nothing else uses this layer yet. -->
+  <ApparelLayerDef>
+    <defName>AG_Back</defName>
+    <label>back</label>
+    <drawOrder>250</drawOrder>
+  </ApparelLayerDef>
+
+  <!-- The sleeper box (Nezuko's box, Demon Slayer). Worn on the back in AG_Back over the torso. It
+       holds one pawn (CompNezukoBox) and grants Go in (CompApparelAbility); Come out and Let out are
+       gizmos on the worn box, so they work while the wearer is downed. It is drawn by code
+       (MapComponent_NezukoBox), so it has no worn texture. No apparel tags: nothing generates wearing
+       one, and the AI does not use it. Every number on CompProperties_NezukoBox is a placeholder. -->
+  <ThingDef ParentName="ApparelBase">
+    <defName>AG_NezukoBox</defName>
+    <label>sleeper box</label>
+    <description>A wooden box worn on the back. It holds one pawn of body size 1.0 or less: a colonist, slave or colony animal, or any downed pawn. The wearer moves 15% slower per 1.0 body size inside.\n\nInside, the pawn sleeps. It cannot be hurt, bleeding stops, hunger and recreation pause, and cold, heat and sunlight do not reach it. Rest fills as when sleeping on the ground, wounds heal at the lying-down rate, and diseases and immunity keep running.\n\nIt comes out by itself after 12 hours, or within 1 hour of being fully rested. A pawn that came out cannot go back into a box for 2 hours. If the wearer dies or the box comes off, the pawn comes out where the box is.\n\nCome out: a colony pawn that is not downed leaps to a cell within 4 tiles. If an enemy stands next to where it lands, it makes one melee attack that cannot miss and stuns that enemy for 1.5 seconds. Other pawns are let out next to the box.</description>
+    <thingClass>Apparel</thingClass>
+    <graphicData>
+      <texPath>RimArt/NezukoBox/Box</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <techLevel>Neolithic</techLevel>
+    <statBases>
+      <MaxHitPoints>200</MaxHitPoints>
+      <Mass>6</Mass>
+      <WorkToMake>9000</WorkToMake>
+      <Flammability>1</Flammability>
+      <EquipDelay>2</EquipDelay>
+    </statBases>
+    <costList>
+      <WoodLog>60</WoodLog>
+      <Steel>15</Steel>
+      <Cloth>10</Cloth>
+    </costList>
+    <recipeMaker>
+      <researchPrerequisite>AG_NezukoBox</researchPrerequisite>
+      <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+      <workSkill>Crafting</workSkill>
+      <effectWorking>Smith</effectWorking>
+      <soundWorking>Recipe_Smith</soundWorking>
+      <recipeUsers>
+        <li>CraftingSpot</li>
+      </recipeUsers>
+      <useIngredientsForColor>false</useIngredientsForColor>
+      <skillRequirements>
+        <Crafting>4</Crafting>
+      </skillRequirements>
+      <displayPriority>336</displayPriority>
+    </recipeMaker>
+    <thingCategories>
+      <li>ApparelUtility</li>
+    </thingCategories>
+    <apparel>
+      <countsAsClothingForNudity>false</countsAsClothingForNudity>
+      <careIfWornByCorpse>false</careIfWornByCorpse>
+      <careIfDamaged>false</careIfDamaged>
+      <wearPerDay>0</wearPerDay>
+      <bodyPartGroups>
+        <li>Torso</li>
+      </bodyPartGroups>
+      <layers>
+        <li>AG_Back</li>
+      </layers>
+      <developmentalStageFilter>Adult</developmentalStageFilter>
+    </apparel>
+    <comps>
+      <li Class="RimArt.CompProperties_ApparelAbility">
+        <abilities>
+          <li>AG_NezukoBoxGoIn</li>
+        </abilities>
+      </li>
+      <li Class="RimArt.CompProperties_NezukoBox">
+        <maxBodySize>1.0</maxBodySize>
+        <slowPerBodySize>0.15</slowPerBodySize>
+        <minMoveFactor>0.3</minMoveFactor>
+        <maxHoursInside>12</maxHoursInside>
+        <wakeWithinHours>1</wakeWithinHours>
+        <restedLevel>0.99</restedLevel>
+        <restEffectiveness>0.8</restEffectiveness>
+        <reentryHours>2</reentryHours>
+        <leapRange>4</leapRange>
+        <stunSeconds>1.5</stunSeconds>
+      </li>
+    </comps>
+  </ThingDef>
+
+  <!-- The pawn leaping out of the box. flightSpeed is so high that distance never lengthens the
+       flight: every leap takes flightDurationMin, 0.45 s, which the picture reads. The ground moves on
+       the sketch's smoothstep; heightFactor is 0 because PawnFlyer_NezukoBox draws the height itself
+       (from the box top, plus the arc). -->
+  <ThingDef ParentName="PawnFlyerBase">
+    <defName>AG_NezukoBoxLeap</defName>
+    <label>leaping</label>
+    <thingClass>RimArt.PawnFlyer_NezukoBox</thingClass>
+    <pawnFlyer>
+      <flightDurationMin>0.45</flightDurationMin>
+      <flightSpeed>1000</flightSpeed>
+      <heightFactor>0</heightFactor>
+      <progressCurve>
+        <points Inherit="False">
+          <li>(0, 0)</li>
+          <li>(0.1, 0.028)</li>
+          <li>(0.2, 0.104)</li>
+          <li>(0.3, 0.216)</li>
+          <li>(0.4, 0.352)</li>
+          <li>(0.5, 0.5)</li>
+          <li>(0.6, 0.648)</li>
+          <li>(0.7, 0.784)</li>
+          <li>(0.8, 0.896)</li>
+          <li>(0.9, 0.972)</li>
+          <li>(1, 1)</li>
+        </points>
+      </progressCurve>
+    </pawnFlyer>
+  </ThingDef>
+
+</Defs>
