@@ -55,6 +55,10 @@ namespace RimArt
         public static bool GrantedByOtherSource(Pawn pawn, AbilityDef ability, Trait exclude,
             ThingComp excludeComp)
         {
+            // A manifested Echo. EchoUtility.Revert clears manifested before it takes, so the Echo
+            // never counts as another source of its own abilities.
+            if (EchoUtility.ManifestedWith(pawn, ability) != null) return true;
+
             if (pawn.genes != null)
             {
                 List<Gene> genes = pawn.genes.GenesListForReading;

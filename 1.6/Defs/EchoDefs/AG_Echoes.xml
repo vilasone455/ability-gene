@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Echoes: heroes a colonist can become (docs/hero-echo.md). Every number is a placeholder.
+       The four here are the ones whose abilities already work in game; Vergil has no abilities
+       until his kit is ported and is here to exercise the kill-with-weapon trial. -->
+  <RimArt.EchoDef Name="AG_EchoBase" Abstract="True">
+    <bodyType>Thin</bodyType>
+  </RimArt.EchoDef>
+
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Accelerator</defName>
+    <label>Accelerator</label>
+    <subtitle>One Who Turns All Vectors</subtitle>
+    <description>Nothing that touches him keeps its direction.</description>
+    <order>10</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Intellectual</skill>
+        <level>12</level>
+      </li>
+      <li Class="RimArt.Trial_Record">
+        <record>DamageTaken</record>
+        <count>300</count>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>Abrasive</trait>
+      </li>
+    </forcedTraits>
+    <abilities>
+      <li>AG_VectorReflection</li>
+      <li>AG_VectorSurge</li>
+      <li>AG_VectorShove</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Accelerator</manifestHediff>
+    <upkeepPerHour>12</upkeepPerHour>
+    <castCosts>
+      <li>
+        <ability>AG_VectorSurge</ability>
+        <cost>10</cost>
+      </li>
+      <li>
+        <ability>AG_VectorShove</ability>
+        <cost>8</cost>
+      </li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.95, 0.95, 0.95)</hairColor>
+  </RimArt.EchoDef>
+
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Pain</defName>
+    <label>Pain</label>
+    <subtitle>Judge of the Rippled Eye</subtitle>
+    <description>He pulls and pushes the world at will.</description>
+    <order>20</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Intellectual</skill>
+        <level>10</level>
+      </li>
+      <li Class="RimArt.Trial_Record">
+        <record>Kills</record>
+        <count>25</count>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>Nerves</trait>
+        <degree>2</degree>
+      </li>
+    </forcedTraits>
+    <abilities>
+      <li>AG_ShinraTensei</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Pain</manifestHediff>
+    <upkeepPerHour>15</upkeepPerHour>
+    <castCosts>
+      <li>
+        <ability>AG_ShinraTensei</ability>
+        <cost>20</cost>
+      </li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.95, 0.45, 0.1)</hairColor>
+  </RimArt.EchoDef>
+
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Inumaki</defName>
+    <label>Inumaki</label>
+    <subtitle>Voice That Must Not Speak</subtitle>
+    <description>He speaks rarely, and the word is law.</description>
+    <order>30</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Social</skill>
+        <level>10</level>
+      </li>
+      <li Class="RimArt.Trial_NotTrait">
+        <trait>Psychopath</trait>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>Kind</trait>
+      </li>
+    </forcedTraits>
+    <abilities>
+      <li>AG_Imperative_Stop</li>
+      <li>AG_Imperative_Drop</li>
+      <li>AG_Imperative_Kneel</li>
+      <li>AG_Imperative_Come</li>
+      <li>AG_Imperative_Run</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Inumaki</manifestHediff>
+    <upkeepPerHour>8</upkeepPerHour>
+    <castCosts>
+      <li><ability>AG_Imperative_Stop</ability><cost>5</cost></li>
+      <li><ability>AG_Imperative_Drop</ability><cost>5</cost></li>
+      <li><ability>AG_Imperative_Kneel</ability><cost>5</cost></li>
+      <li><ability>AG_Imperative_Come</ability><cost>5</cost></li>
+      <li><ability>AG_Imperative_Run</ability><cost>5</cost></li>
+    </castCosts>
+    <wealth>3000</wealth>
+    <hairColor>(0.92, 0.92, 0.95)</hairColor>
+  </RimArt.EchoDef>
+
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Vergil</defName>
+    <label>Vergil</label>
+    <subtitle>Son of the Dark Knight</subtitle>
+    <description>His sword cuts from farther than he stands.</description>
+    <order>40</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Melee</skill>
+        <level>16</level>
+      </li>
+      <li Class="RimArt.Trial_KillsWith">
+        <weapons>
+          <li>MeleeWeapon_LongSword</li>
+        </weapons>
+        <weaponLabel>longsword</weaponLabel>
+        <count>20</count>
+      </li>
+      <li Class="RimArt.Trial_NotTrait">
+        <trait>Wimp</trait>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>Bloodlust</trait>
+      </li>
+    </forcedTraits>
+    <manifestHediff>AG_EchoManifest_Vergil</manifestHediff>
+    <upkeepPerHour>10</upkeepPerHour>
+    <wealth>6000</wealth>
+    <hairColor>(0.85, 0.87, 0.9)</hairColor>
+  </RimArt.EchoDef>
+
+</Defs>
