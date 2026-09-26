@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- On the pawn inside the sleeper box, added and removed by CompNezukoBox. Bleeding and hunger
+       stop; the comfortable temperature range is widened by 200 C each way, so no cold or heat
+       injury. Rest and recreation are kept by CompNezukoBox, not here. -->
+  <HediffDef>
+    <defName>AG_NezukoBoxSleep</defName>
+    <label>asleep in a box</label>
+    <description>Asleep inside a sleeper box. Bleeding and hunger stop, recreation does not fall, cold and heat do not reach this pawn, and rest fills.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(1, 0.55, 0.72)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>false</isBad>
+    <everCurableByItem>false</everCurableByItem>
+    <stages>
+      <li>
+        <totalBleedFactor>0</totalBleedFactor>
+        <hungerRateFactor>0</hungerRateFactor>
+        <statOffsets>
+          <ComfyTemperatureMin>-200</ComfyTemperatureMin>
+          <ComfyTemperatureMax>200</ComfyTemperatureMax>
+        </statOffsets>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <!-- On the wearer while the box is full. Severity is the body size inside; Hediff_NezukoBoxLoad
+       makes the move speed factor from the box's slowPerBodySize. Not isBad: nothing treats it. -->
+  <HediffDef>
+    <defName>AG_NezukoBoxLoad</defName>
+    <label>carrying someone</label>
+    <description>Carrying a pawn asleep in a sleeper box. The weight slows every step.</description>
+    <hediffClass>RimArt.Hediff_NezukoBoxLoad</hediffClass>
+    <defaultLabelColor>(0.86, 0.52, 0.27)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>false</isBad>
+    <initialSeverity>1</initialSeverity>
+    <everCurableByItem>false</everCurableByItem>
+  </HediffDef>
+
+  <!-- On a pawn that came out of a sleeper box: it cannot go into one again until this is gone.
+       CompNezukoBox sets the duration from the box's reentryHours. -->
+  <HediffDef>
+    <defName>AG_NezukoBoxRested</defName>
+    <label>just out of a box</label>
+    <description>Came out of a sleeper box recently and cannot go back into one until this wears off.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.8, 0.8, 0.8)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>false</isBad>
+    <everCurableByItem>false</everCurableByItem>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>5000</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+  </HediffDef>
+
+</Defs>

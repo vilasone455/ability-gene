@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Go in, granted while the sleeper box is worn (CompApparelAbility). The range is only for
+       picking the pawn: the cast job walks the wearer to it, and the pawn must be within touchRange
+       when the ability fires. warmupTime 0.25 s is the door opening; the job then holds the wearer
+       until the latch (0.5 s). Who may go in is CompNezukoBox.CannotTake. No cooldown: the box holds
+       one pawn, and a pawn that came out waits 2 hours (AG_NezukoBoxRested).
+
+       Sounds are vanilla placeholders, played by MapComponent_NezukoBox: the door Door_OpenManual,
+       going in Hive_Spawn, the latch Door_CloseManual; Come out's burst BulletImpact_Wood and the
+       strike Pawn_Melee_Punch_HitPawn. -->
+  <AbilityDef>
+    <defName>AG_NezukoBoxGoIn</defName>
+    <label>go in</label>
+    <description>Put a pawn into the box on the wearer's back. The wearer walks to it; the pawn goes in when the wearer touches it.\n\nWho: colonists, slaves and colony animals, and any downed pawn, of body size 1.0 or less. Not mechanoids, and not a pawn in a mental break unless it is downed. A pawn that came out of a box cannot go back in for 2 hours.</description>
+    <iconPath>RimArt/NezukoBox/IconGoIn</iconPath>
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastNezukoBox</jobDef>
+    <targetRequired>true</targetRequired>
+    <hostile>false</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>30</range>
+      <warmupTime>0.25</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetHumans>true</canTargetHumans>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <mapObjectTargetsMustBeAutoAttackable>false</mapObjectTargetsMustBeAutoAttackable>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_NezukoBoxGoIn">
+        <touchRange>1.5</touchRange>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>
