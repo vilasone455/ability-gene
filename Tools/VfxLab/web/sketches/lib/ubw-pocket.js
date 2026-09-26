@@ -326,12 +326,16 @@ export function haze(c, alpha) {
   if (alpha <= 0) return;
   hazeBands.forEach((m, k) => draw(m, c.x, HazeLayer + k * .0001, c.z, 240, 240, 0, Haze.withAlpha(.1 * alpha), solid));
 }
-// The pocket map's edge, MapHalf cells out each way: a dashed line, lab only.
-export function mapEdge(key, c) {
+// The pocket map's edge, MapHalf cells out each way (north cells out north, for the v3 world): a dashed
+// line, lab only.
+export function mapEdge(key, c, north = MapHalf) {
   const dashes = [];
   for (let k = -MapHalf; k < MapHalf; k += 1.6) {
     const m = k + .5;
-    dashes.push({ x: c.x + m, z: c.z - MapHalf, w: 1, h: .07 }, { x: c.x + m, z: c.z + MapHalf, w: 1, h: .07 });
+    dashes.push({ x: c.x + m, z: c.z - MapHalf, w: 1, h: .07 }, { x: c.x + m, z: c.z + north, w: 1, h: .07 });
+  }
+  for (let k = -MapHalf; k < north; k += 1.6) {
+    const m = k + .5;
     dashes.push({ x: c.x - MapHalf, z: c.z + m, w: .07, h: 1 }, { x: c.x + MapHalf, z: c.z + m, w: .07, h: 1 });
   }
   quads(key, dashes, White.withAlpha(.45), solid, HazeLayer + .01);
@@ -454,16 +458,17 @@ function spriteInto(out, pos, w, h, angle, r) {
   out.tri.push(base, base + 1, base + 2, base, base + 2, base + 3);
 }
 // blade() of lib/trace.js for a sword standing at rest: its shadow, both edges, the face lit one of three
-// ways, the two dark bands low on the blade.
-function bladeInto(shadows, blades, b, sun, row) {
+// ways, the two dark bands low on the blade. project puts a 3D point on the screen (the kit's height rule
+// unless the v3 world's horizon squeezes it); shadows may be null.
+export function bladeInto(shadows, blades, b, sun, row, project = onScreen) {
   const above = clip(Square, higherThan(b, 0));
-  polyInto(shadows, above, b, alongSun(sun), cell(Faces[2][1], row));
-  [1, .5].forEach((f, i) => polyInto(blades, above, b, onScreen, cell(i ? Edge1 : Edge0, row), v3(-b.N.x * .03 * f, -b.N.y * .03 * f, -b.N.z * .03 * f)));
+  if (shadows) polyInto(shadows, above, b, alongSun(sun), cell(Faces[2][1], row));
+  [1, .5].forEach((f, i) => polyInto(blades, above, b, project, cell(i ? Edge1 : Edge0, row), v3(-b.N.x * .03 * f, -b.N.y * .03 * f, -b.N.z * .03 * f)));
   const lit = .8 + .2 * Math.max(0, dot3(b.N, unit(v3(-sun.x, 1, -sun.z))));
   const face = Faces.reduce((best, f) => Math.abs(f[0] - lit) < Math.abs(best[0] - lit) ? f : best);
-  polyInto(blades, above, b, onScreen, cell(face[1], row));
-  polyInto(blades, clip(above, lowerThan(b, .2)), b, onScreen, cell(LowBand, row));
-  polyInto(blades, clip(above, lowerThan(b, .08)), b, onScreen, cell(LowerBand, row));
+  polyInto(blades, above, b, project, cell(face[1], row));
+  polyInto(blades, clip(above, lowerThan(b, .2)), b, project, cell(LowBand, row));
+  polyInto(blades, clip(above, lowerThan(b, .08)), b, project, cell(LowerBand, row));
 }
 // plant() of lib/trace.js on the floor: the contact shadow, cracks, the slit.
 function marksInto(marks, cut, seed, cracks) {
@@ -500,7 +505,7 @@ function lipInto(blades, cut, side, reach, seed, sun) {
   stripInto(blades, inner, crest, swatch(sunward ? SwDirtLit : SwDirtMid));
 }
 
-const Mix = ['LongSword', 'LongSword', 'LongSword', 'Spear', 'Spear', 'MonoSword', 'MonoSword', 'Knife', 'LargeSword', 'Wyrmslayer'];
+export const Mix = ['LongSword', 'LongSword', 'LongSword', 'Spear', 'Spear', 'MonoSword', 'MonoSword', 'Knife', 'LargeSword', 'Wyrmslayer'];
 // The part of the screen a standing sword covers: from its foot to its pommel drawn with the height
 // rule, margin wider either side. A pawn draws over every sword, so a sword whose blade rises through a
 // landing spot would look run through the pawn standing there.
@@ -519,15 +524,21 @@ const clearOf = (box, keep) => !keep.some(q => { const b = pawnBox(q); return bo
 // (in game the pocket map is made after everyone taken is known, so it can do the same). heightAt(x, z),
 // if given, is the ground's height under a sword (lib/ubw-terrain.js): the sword stands that much higher,
 // drawn Lift cells further north per cell (sw.lift), and the list is ordered by that screen foot.
-export function makeField({ density, hill: hillRadius, beyond, size, lean }, keep = [], heightAt = null) {
+// Two settings only the v3 world passes: north, the map edge there (no sword north of it: lib/ubw-horizon.js
+// draws the squeezed ground past it), and cluster, 0 to 1, how far the density follows a slow noise instead
+// of staying even: bare patches and thick groves, none on the hill.
+export const clusterAt = (x, z) => clamp((fbm(x * .11 + 40, z * .11 + 40, 77, 2, 64) - .32) * 5, 0, 2.2);
+export function makeField({ density, hill: hillRadius, beyond, size, lean, north = Infinity, cluster = 0 }, keep = [], heightAt = null) {
   const step = 1.2, reach = MapHalf + beyond, list = [];
   let n = 0;
   for (let gz = -reach; gz <= reach + 1e-6; gz += step) for (let gx = -reach; gx <= reach + 1e-6; gx += step) {
     const seed = ++n;
     const x = gx + (rand(seed * 3 + 1) - .5) * step * .9, z = gz + (rand(seed * 5 + 2) - .5) * step * .9;
+    if (z > north) continue;
     const d = Math.hypot(x, z), far = Math.max(Math.abs(x), Math.abs(z)) > MapHalf, onHill = d < hillRadius;
     let want = density * (far ? .6 : 1);
     if (onHill) want *= 1 + 2 * (1 - d / hillRadius);
+    else if (cluster > 0) want *= 1 + (clusterAt(x, z) - 1) * cluster;
     if (rand(seed * 7 + 3) > want * step * step || d < 1) continue;
     const sw = {
       seed, x, z, d, far, w: Weapons[Mix[Math.floor(rand(seed * 11 + 4) * Mix.length)]],

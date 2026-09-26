@@ -201,9 +201,10 @@ export function makeTerrain(o, seed = 1) {
       poly = clipBy(poly, s, (n.x - s.x) / d, (n.z - s.z) / d, d / 2, j);
       if (poly.length < 3) return null;
     }
-    // The outermost plates end at the world's edge instead of running on to their search box.
+    // The outermost plates end at the world's edge instead of running on to their search box. o.northClip,
+    // if set, moves the north end (the v3 world squeezes the ground north of its map edge itself).
     for (const [nx, nz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      poly = clipBy(poly, { x: 0, z: 0 }, nx, nz, edgeAt, -1);
+      poly = clipBy(poly, { x: 0, z: 0 }, nx, nz, nz > 0 && o.northClip != null ? o.northClip : edgeAt, -1);
       if (poly.length < 3) return null;
     }
     // Each edge's crack: wider past the map, and varying edge to edge, the same width seen from both plates.
@@ -344,6 +345,17 @@ export function bakeTerrain(T, sun, key) {
   }
   return { ground: bake(`ubw terrain ${key}`, ground), shadows: bake(`ubw terrain shadows ${key}`, shadows), vertices: (ground.xz.length + shadows.xz.length) / 2 };
 }
+
+// The top of plate i as bakeTerrain draws it (its window of its shade of the earth tile), as a function of a
+// point in cells from the caster, with the plate's own bounds: for the v3 world (lib/ubw-horizon.js), which
+// draws the part of a plate past the map edge itself and needs it to line up with the part baked here.
+export function topUV(T, i) {
+  const p = T.plates[i], t = tileUV(p.shade), extent = Math.max(p.maxX - p.minX, p.maxZ - p.minZ), tile = Math.max(Tile, extent), span = extent / tile * t.span;
+  const room = Math.max(0, t.span - span - .012);
+  const u0 = t.u0 + .006 + hash(i, 5, T.seed) * room, v0 = t.v0 + .006 + hash(i, 6, T.seed) * room;
+  return q => [u0 + (q.x - p.minX) / tile * t.span, v0 + (q.z - p.minZ) / tile * t.span];
+}
+export { atlas as terrainAtlas };
 
 // Kept per settings and per sun, three of each.
 const terrains = new Map(), bakes = new Map();
