@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Flash Freeze. The driver starts the picture (frost at the muzzle) with the warmup and holds
+       the job until the beam has landed. The weapon stays shown: the held rifle is Core's. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastFrostGun</defName>
+    <driverClass>RimArt.JobDriver_CastFrostGun</driverClass>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>

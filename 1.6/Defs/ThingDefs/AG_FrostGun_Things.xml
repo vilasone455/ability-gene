@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Frost Gun kit: a rifle whose bolts chill, with one ability (Flash Freeze, granted while
+       it is equipped) and one resource (coolant, a tank on the gun). Mechanic agreed 2026-09-26;
+       every number is a placeholder and a field here, in AG_FrostGun_Abilities.xml or in
+       AG_FrostGun_Hediffs.xml. Distinct from the frost bomb (AG_FrostBomb, an area burst that
+       freezes everyone): Flash Freeze is one target that has to be set up first.
+
+       The shot: the gun's own verb, a normal aimed shot with Core's hit roll. Each bolt that hits a
+       pawn adds one Chilled stack (AG_FrostGunChilled: -10% move speed per stack, up to 3, 10 s,
+       refreshed on each hit). It uses no coolant. -->
+
+  <!-- The bolt's damage: cold, so heat armour stops it, and a frostbite injury rather than a
+       gunshot. Its own def because vanilla Frostbite is not external violence (a pawn shot with it
+       would count as hurt by the weather), and AG_Cryo is the frost bomb's and freezes the area it
+       hits. -->
+  <DamageDef>
+    <defName>AG_FrostGunCold</defName>
+    <label>frost bolt</label>
+    <workerClass>DamageWorker_AddInjury</workerClass>
+    <externalViolence>true</externalViolence>
+    <deathMessage>{0} has been frozen to death by a frost bolt.</deathMessage>
+    <hediff>Frostbite</hediff>
+    <harmAllLayersUntilOutside>true</harmAllLayersUntilOutside>
+    <impactSoundType>Bullet</impactSoundType>
+    <armorCategory>Heat</armorCategory>
+    <makesBlood>false</makesBlood>
+    <isRanged>true</isRanged>
+    <makesAnimalsFlee>true</makesAnimalsFlee>
+    <canUseDeflectMetalEffect>false</canUseDeflectMetalEffect>
+  </DamageDef>
+
+  <!-- The bolt. It is drawn from code (Projectile_FrostGun, FrostGunGraphics.Bolt): a pale core, a
+       cold glow and a frost trail; the texture is the fallback. Speed 70 is 0.7 cells a tick, 42 a
+       second. maxChilledStacks and chilledSeconds are what each hit does. -->
+  <ThingDef ParentName="BaseBullet">
+    <defName>AG_FrostGun_Bolt</defName>
+    <label>frost bolt</label>
+    <thingClass>RimArt.Projectile_FrostGun</thingClass>
+    <graphicData>
+      <texPath>RimArt/FrostGun/Bolt</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <shaderType>MoteGlow</shaderType>
+    </graphicData>
+    <projectile>
+      <damageDef>AG_FrostGunCold</damageDef>
+      <damageAmountBase>7</damageAmountBase>
+      <armorPenetrationBase>0.10</armorPenetrationBase>
+      <stoppingPower>0.5</stoppingPower>
+      <speed>70</speed>
+    </projectile>
+    <modExtensions>
+      <li Class="RimArt.FrostGunBoltExtension">
+        <maxChilledStacks>3</maxChilledStacks>
+        <chilledSeconds>10</chilledSeconds>
+      </li>
+    </modExtensions>
+  </ThingDef>
+
+  <!-- The rifle. One bolt per shot, range 22, 0.9 s aim and 1.1 s cooldown (2 s between shots, so
+       three hits fit well inside Chilled's 10 s), assault-rifle accuracy at range. Made at the
+       machining table after AG_FrostGun research by the recipe BaseHumanMakeableGun's recipeMaker
+       generates.
+
+       The comps are listed with Inherit="False" because CompProperties_FrostGun is the weapon's
+       CompEquippable (the coolant is an equipped gizmo, and the verb lives on it). The other comps
+       of BaseHumanMakeableGun are repeated here; if it gains one, add it. weaponTags are cleared so
+       no pawn kind spawns with one. -->
+  <ThingDef ParentName="BaseHumanMakeableGun">
+    <defName>AG_FrostGun</defName>
+    <label>frost rifle</label>
+    <description>A rifle that fires bolts of supercooled gas from a coolant tank under the barrel.\n\nNormal fire: 7 cold damage per bolt, range 22, one shot every 2 seconds. Each hit chills a creature: 10% slower per stack, up to 3 stacks, for 10 seconds, renewed by every hit. Normal fire uses no coolant.\n\nWhile it is equipped, the wielder can use Flash Freeze (10 coolant, 30 s cooldown): a beam that freezes one soaked or 3-times-chilled creature solid in ice for 5 seconds. It cannot move or act. The next hit it takes shatters the ice for 15 more damage.\n\nThe 30-unit tank refills 0.1 a second while the rifle is held, and 2 a second while the wielder stands somewhere below 0 °C.</description>
+    <graphicData>
+      <texPath>RimArt/FrostGun/FrostGun</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <uiIconScale>1.2</uiIconScale>
+    <soundInteract>Interact_ChargeRifle</soundInteract>
+    <techLevel>Industrial</techLevel>
+    <weaponTags Inherit="False" />
+    <statBases>
+      <WorkToMake>32000</WorkToMake>
+      <Mass>3.8</Mass>
+      <AccuracyTouch>0.65</AccuracyTouch>
+      <AccuracyShort>0.75</AccuracyShort>
+      <AccuracyMedium>0.65</AccuracyMedium>
+      <AccuracyLong>0.50</AccuracyLong>
+      <RangedWeapon_Cooldown>1.1</RangedWeapon_Cooldown>
+    </statBases>
+    <costList>
+      <Steel>70</Steel>
+      <ComponentIndustrial>5</ComponentIndustrial>
+    </costList>
+    <recipeMaker>
+      <researchPrerequisite>AG_FrostGun</researchPrerequisite>
+      <skillRequirements>
+        <Crafting>6</Crafting>
+      </skillRequirements>
+    </recipeMaker>
+    <verbs>
+      <li>
+        <verbClass>Verb_Shoot</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>AG_FrostGun_Bolt</defaultProjectile>
+        <warmupTime>0.9</warmupTime>
+        <range>22.9</range>
+        <soundCast>Shot_ChargeRifle</soundCast>
+        <soundCastTail>GunTail_Light</soundCastTail>
+        <muzzleFlashScale>6</muzzleFlashScale>
+      </li>
+    </verbs>
+    <comps Inherit="False">
+      <li Class="CompProperties_Forbiddable"/>
+      <li Class="RimArt.CompProperties_FrostGun">
+        <capacity>30</capacity>
+        <refillPerSecond>0.1</refillPerSecond>
+        <refillPerSecondCold>2</refillPerSecondCold>
+        <coldBelowCelsius>0</coldBelowCelsius>
+        <abilities>
+          <li>AG_FrostGun_FlashFreeze</li>
+        </abilities>
+      </li>
+      <li Class="CompProperties_Styleable"/>
+      <li Class="CompProperties_Art">
+        <nameMaker>NamerArtWeaponGun</nameMaker>
+        <descriptionMaker>ArtDescription_WeaponGun</descriptionMaker>
+        <minQualityForArtistic>Excellent</minQualityForArtistic>
+      </li>
+      <li>
+        <compClass>CompQuality</compClass>
+      </li>
+      <li Class="CompProperties_Biocodable"/>
+    </comps>
+    <tools>
+      <li>
+        <label>stock</label>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>9</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+      <li>
+        <label>barrel</label>
+        <capacities>
+          <li>Blunt</li>
+          <li>Poke</li>
+        </capacities>
+        <power>9</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
+</Defs>

@@ -107,6 +107,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Frost Gun", Prefix = "Frost Gun:", Component = typeof(MapComponent_FrostGunPreview), Clock = "seconds",
+                Phases = label => label.Contains("shot") ? FrostShotPhases() : FlashFreezePhases(label.Contains("shatter")),
+            },
+            new Kit
+            {
                 Name = "Shadow Plexus", Prefix = "Shadow Plexus:", Component = typeof(MapComponent_ShadowPlexusPreview), Clock = "seconds",
                 Phases = label => label.Contains("imitation") ? ImitationPhases(label.Contains("cut") ? ImitationEnd.Cut : label.Contains("dark") ? ImitationEnd.Dark : ImitationEnd.Released)
                     : label.Contains("seam") ? SeamPhases(label.Contains("rescue") ? SeamScene.Rescue : SeamScene.Rusher)
@@ -388,6 +393,36 @@ namespace RimArt.VfxLab
             phases.Add(new Phase("Detonation", t.Dome));
             phases.Add(new Phase("Burst", t.Burst));
             phases.Add(new Phase("Aftermath", t.Gone));
+            return phases.ToArray();
+        }
+
+        private static Phase[] FrostShotPhases()
+        {
+            var phases = new List<Phase>();
+            for (int k = 0; k < FrostGunShotTiming.ScriptShots; k++)
+            {
+                phases.Add(new Phase("Shot " + (k + 1), FrostGunShotTiming.Fire(k)));
+                phases.Add(new Phase("Hit (" + (k + 1) + " chilled)", FrostGunShotTiming.Hit(k, FrostGunShotTiming.ScriptDistance)));
+            }
+            return phases.ToArray();
+        }
+
+        private static Phase[] FlashFreezePhases(bool shatter)
+        {
+            float hit = FrostGunFreezeTiming.Hit(FrostGunFreezeTiming.ScriptWarmup, FrostGunFreezeTiming.ScriptDistance - FrostGunGraphics.MuzzleAlong);
+            var phases = new List<Phase>
+            {
+                new Phase("Charge", 0f),
+                new Phase("Beam", FrostGunFreezeTiming.ScriptWarmup),
+                new Phase("Freeze", hit),
+                new Phase("Frozen", hit + FrostGunFreezeTiming.Grow),
+            };
+            if (shatter) phases.Add(new Phase("Shatter", hit + FrostGunFreezeTiming.Grow + FrostGunFreezeTiming.ScriptShatterAfter));
+            else
+            {
+                phases.Add(new Phase("Thaw", hit + FrostGunFreezeTiming.ScriptFreeze));
+                phases.Add(new Phase("Puddle", hit + FrostGunFreezeTiming.ScriptFreeze + FrostGunFreezeTiming.Thaw));
+            }
             return phases.ToArray();
         }
 

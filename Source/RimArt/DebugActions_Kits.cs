@@ -152,6 +152,7 @@ namespace RimArt
                 new Kit { Label = "Vacuum", Grant = GrantVacuum },
                 new Kit { Label = "Samehada", Grant = GrantSamehada },
                 new Kit { Label = "Coil gun", Grant = GrantCoilGun },
+                new Kit { Label = "Frost rifle", Grant = GrantFrostGun },
                 new Kit { Label = "Shinra Tensei (repulsion eye)", Grant = GrantShinraTensei },
                 new Kit { Label = "Gravity Well (attraction eye)", Grant = GravityAcquisition.Grant },
 
@@ -298,6 +299,10 @@ namespace RimArt
         /// <summary>The coil gun comes with a full 20-charge battery and Chain Arc; the research is finished so more can be made.</summary>
         private static string GrantCoilGun(Pawn pawn)
             => GrantWeapon(pawn, "AG_CoilGun", "AG_CoilGun");
+
+        /// <summary>The frost rifle comes with a full 30-unit coolant tank and Flash Freeze; the research is finished so more can be made.</summary>
+        private static string GrantFrostGun(Pawn pawn)
+            => GrantWeapon(pawn, "AG_FrostGun", "AG_FrostGun");
 
         /// <summary>
         /// Puts a weapon in the pawn's hands, ready to use.
