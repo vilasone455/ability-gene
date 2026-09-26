@@ -249,57 +249,65 @@ export function facingOf(aimDeg) {
 function tri(key, a, b, c, colour, layer) {
   band(key, [a, b], [c, c], colour, layer);
 }
+// The form is laid out on a body 0.89 cells tall (the stand-in's feet to the top of its head) and
+// fitted to a real humanlike pawn by SharkFit: in game a pawn's body and head are 1.5-cell meshes, and
+// what shows of them runs from 0.51 cells below its position to 0.66 above (1.17 tall, the body about
+// 0.5 to 0.6 wide). So every offset and size is scaled by SharkFit.scale and the whole form moves down
+// by SharkFit.drop: the body ellipse is centred on the torso (0.10 below the pawn's position) and the
+// head covers the real head and hair, not the face alone.
+export const SharkFit = { scale: 1.3, drop: -0.33 };
 export function sharkForm(key, pos, aimDeg, amount, s, { alpha = 1 } = {}) {
   if (amount <= 0) return;
   const A = alpha * amount, facing = facingOf(aimDeg), west = Math.cos(aimDeg * Mathf.Deg2Rad) < 0;
+  const S = SharkFit.scale, P = (dx, dz) => ({ x: pos.x + dx * S, z: pos.z + SharkFit.drop + dz * S });
   const L = pawnLayer + .012, sway = Math.sin(s * 9) * .05;
   const skin = Color.Lerp(Hide, HideLit, .25).withAlpha(A), lit = HideLit.withAlpha(A * .8), edge = ScaleEdge.withAlpha(A);
-  // Body: an ellipse a little larger than the stand-in's, dark hide with a lit belly stripe.
-  draw(disc, pos.x, L, pos.z + .18, .25, .35, 0, skin);
-  draw(disc, pos.x + (facing === 'side' ? (west ? -.06 : .06) : 0), L + .001, pos.z + .16, .10, .26, 0, lit);
+  // Body: an ellipse over the pawn's torso, dark hide with a lit belly stripe.
+  { const c = P(0, .18); draw(disc, c.x, L, c.z, .25 * S, .35 * S, 0, skin); }
+  { const c = P(facing === 'side' ? (west ? -.06 : .06) : 0, .16); draw(disc, c.x, L + .001, c.z, .10 * S, .26 * S, 0, lit); }
   // Scales: four rows of three across the body.
   for (let r = 0; r < 4; r++) for (let k = -1; k <= 1; k++) {
-    const x = pos.x + k * .13 + (r % 2 ? .05 : 0), z = pos.z + .04 + r * .1, litS = (r + k) % 2 === 0;
-    draw(scaleM, x, L + .002, z, .08, .09, 0, edge);
-    draw(scaleM, x, L + .003, z + .005, .06, .07, 0, (litS ? ScaleLit : Scale).withAlpha(A));
+    const c = P(k * .13 + (r % 2 ? .05 : 0), .04 + r * .1), litS = (r + k) % 2 === 0;
+    draw(scaleM, c.x, L + .002, c.z, .08 * S, .09 * S, 0, edge);
+    draw(scaleM, c.x, L + .003, c.z + .005 * S, .06 * S, .07 * S, 0, (litS ? ScaleLit : Scale).withAlpha(A));
   }
-  // Head: the hide over the face leaves the eyes; gills as three short lines on each side.
-  draw(disc, pos.x, L + .004, pos.z + .58, .18, .19, 0, skin);
-  draw(disc, pos.x, L + .005, pos.z + .56, .12, .10, 0, Color.Lerp(Skin, Hide, .55).withAlpha(A));
+  // Head: the hide over the head leaves the eyes; gills as three short lines on each side.
+  { const c = P(0, .58); draw(disc, c.x, L + .004, c.z, .18 * S, .19 * S, 0, skin); }
+  { const c = P(0, .56); draw(disc, c.x, L + .005, c.z, .12 * S, .10 * S, 0, Color.Lerp(Skin, Hide, .55).withAlpha(A)); }
   for (const k of [-1, 1]) for (let i = 0; i < 3; i++)
-    rect(`${key} gill ${k} ${i}`, { x: pos.x + k * (.15 + i * .012), z: pos.z + .47 + i * .06 }, .06, .014, 80 * k, Flesh.withAlpha(A), L + .006);
+    rect(`${key} gill ${k} ${i}`, P(k * (.15 + i * .012), .47 + i * .06), .06 * S, .014 * S, 80 * k, Flesh.withAlpha(A), L + .006);
   // Fin and tail by facing.
   const finC = ScaleEdge.withAlpha(A), finLit = ScaleLit.withAlpha(A * .85);
   if (facing === 'up') {
     // Spine strip down the back, a fin outline either side, tail below the feet.
-    rect(`${key} spine`, { x: pos.x, z: pos.z + .22 }, .55, .08, 90, finC, L + .007);
-    rect(`${key} spine lit`, { x: pos.x, z: pos.z + .22 }, .5, .035, 90, finLit, L + .008);
-    tri(`${key} tail`, { x: pos.x - .06 + sway, z: pos.z - .05 }, { x: pos.x + .06 + sway, z: pos.z - .05 }, { x: pos.x + sway * 2, z: pos.z - .38 }, finC, L - .03);
-    tri(`${key} fluke`, { x: pos.x - .16 + sway * 2, z: pos.z - .42 }, { x: pos.x + .16 + sway * 2, z: pos.z - .42 }, { x: pos.x + sway * 2, z: pos.z - .3 }, finC, L - .03);
+    rect(`${key} spine`, P(0, .22), .55 * S, .08 * S, 90, finC, L + .007);
+    rect(`${key} spine lit`, P(0, .22), .5 * S, .035 * S, 90, finLit, L + .008);
+    tri(`${key} tail`, P(-.06 + sway, -.05), P(.06 + sway, -.05), P(sway * 2, -.38), finC, L - .03);
+    tri(`${key} fluke`, P(-.16 + sway * 2, -.42), P(.16 + sway * 2, -.42), P(sway * 2, -.3), finC, L - .03);
   } else if (facing === 'down') {
     // The fin rises above the head: a triangle whose base is at the shoulders, apex 0.55 up.
-    tri(`${key} fin`, { x: pos.x - .11, z: pos.z + .62 }, { x: pos.x + .11, z: pos.z + .62 }, { x: pos.x + .04, z: pos.z + .62 + .55 * Lift }, finC, L - .03);
-    tri(`${key} fin lit`, { x: pos.x - .04, z: pos.z + .63 }, { x: pos.x + .06, z: pos.z + .63 }, { x: pos.x + .03, z: pos.z + .62 + .42 * Lift }, finLit, L - .029);
-    for (const k of [-1, 1]) tri(`${key} fluke ${k}`, { x: pos.x + k * .12, z: pos.z - .02 }, { x: pos.x + k * .3 + sway, z: pos.z - .1 }, { x: pos.x + k * .2 + sway, z: pos.z + .02 }, finC, L - .03);
+    tri(`${key} fin`, P(-.11, .62), P(.11, .62), P(.04, .62 + .55 * Lift), finC, L - .03);
+    tri(`${key} fin lit`, P(-.04, .63), P(.06, .63), P(.03, .62 + .42 * Lift), finLit, L - .029);
+    for (const k of [-1, 1]) tri(`${key} fluke ${k}`, P(k * .12, -.02), P(k * .3 + sway, -.1), P(k * .2 + sway, .02), finC, L - .03);
   } else {
     // Profile: the fin stands up from the mid-back, the tail trails behind.
     const back = west ? 1 : -1;       // screen direction away from the aim
-    tri(`${key} fin`, { x: pos.x + back * .04, z: pos.z + .3 }, { x: pos.x - back * .16, z: pos.z + .3 }, { x: pos.x + back * .16, z: pos.z + .3 + .6 * Lift }, finC, L + .007);
-    tri(`${key} fin lit`, { x: pos.x - back * .02, z: pos.z + .31 }, { x: pos.x - back * .11, z: pos.z + .31 }, { x: pos.x + back * .09, z: pos.z + .31 + .45 * Lift }, finLit, L + .008);
+    tri(`${key} fin`, P(back * .04, .3), P(-back * .16, .3), P(back * .16, .3 + .6 * Lift), finC, L + .007);
+    tri(`${key} fin lit`, P(-back * .02, .31), P(-back * .11, .31), P(back * .09, .31 + .45 * Lift), finLit, L + .008);
     // Tail: a thin tube out of the hip and a crescent fluke (two thin lobes), no arrowhead.
-    const tailBase = { x: pos.x + back * .18, z: pos.z + .12 + sway }, tailTip = { x: pos.x + back * .42, z: pos.z + .1 + sway * 2 };
-    tube(`${key} tail`, [tailBase, tailTip], u => .045 * (1 - u * .5), finC, L - .03);
-    tube(`${key} fluke up`, [tailTip, { x: tailTip.x + back * .06, z: tailTip.z + .2 }], u => .03 * (1 - u * .7), finC, L - .03);
-    tube(`${key} fluke down`, [tailTip, { x: tailTip.x + back * .05, z: tailTip.z - .14 }], u => .03 * (1 - u * .7), finC, L - .03);
+    const tailBase = P(back * .18, .12 + sway), tailTip = P(back * .42, .1 + sway * 2);
+    tube(`${key} tail`, [tailBase, tailTip], u => .045 * S * (1 - u * .5), finC, L - .03);
+    tube(`${key} fluke up`, [tailTip, { x: tailTip.x + back * .06 * S, z: tailTip.z + .2 * S }], u => .03 * S * (1 - u * .7), finC, L - .03);
+    tube(`${key} fluke down`, [tailTip, { x: tailTip.x + back * .05 * S, z: tailTip.z - .14 * S }], u => .03 * S * (1 - u * .7), finC, L - .03);
   }
   // Seams: a little purple flesh shows where the hide meets, as in Shark Skin.
-  sprite({ x: pos.x, z: pos.z + .38 }, .3, .12, Flesh.withAlpha(.35 * A), soft, L + .009);
+  sprite(P(0, .38), .3 * S, .12 * S, Flesh.withAlpha(.35 * A), soft, L + .009);
 }
 
-// A regen pulse every second while fused: one soft green ring rising off the body.
+// A regen pulse every second while fused: one soft green ring rising off the body (fitted as the form is).
 export function regenPulse(pos, s, alpha = 1) {
-  const u = s % 1;
-  circle({ x: pos.x, z: pos.z + .15 + u * .5 * Lift }, .22 + u * .12, .45 * (1 - u) * alpha, pawnLayer + .03, Heal);
+  const u = s % 1, S = SharkFit.scale;
+  circle({ x: pos.x, z: pos.z + SharkFit.drop + (.15 + u * .5 * Lift) * S }, (.22 + u * .12) * S, .45 * (1 - u) * alpha, pawnLayer + .03, Heal);
 }
 
 // A deep-water patch on the floor: a dark blue body with a paler rim, lying across the walk. The

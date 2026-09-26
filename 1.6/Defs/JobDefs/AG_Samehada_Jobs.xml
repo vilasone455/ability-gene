@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Shark Skin and Fusion. The driver starts the picture with the warmup and holds the job through
+       the tear and flare, or the merge. The weapon is hidden for the job because the picture draws the
+       blade. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastSamehada</defName>
+    <driverClass>RimArt.JobDriver_CastSamehada</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>

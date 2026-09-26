@@ -38,6 +38,8 @@
     <Compile Include="../../../Source/RimArt/FlameGauntlet/*.cs" LinkBase="Linked/FlameGauntlet" />
     <!-- Vacuum: drawing, timing and previews only. The weapon and ability code is in Vacuum/Kit, which is not linked here. -->
     <Compile Include="../../../Source/RimArt/Vacuum/*.cs" LinkBase="Linked/Vacuum" />
+    <!-- Samehada: drawing, timing and previews only. The weapon and ability code is in Samehada/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/Samehada/*.cs" LinkBase="Linked/Samehada" />
     <!-- Shadow Plexus: drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/ShadowPlexus/*.cs" LinkBase="Linked/ShadowPlexus" />
     <!-- Goku: drawing and previews only. -->
