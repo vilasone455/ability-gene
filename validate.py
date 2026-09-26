@@ -15,9 +15,9 @@ runtime, in the order they have actually bitten this project:
      without that DLC)
   5. Custom Class= values that do not exist in the built assembly
   6. Comp classes a def ends up with twice once inheritance is applied
-  6b. Two ThingDef.ConfigErrors rules the game enforces at load: an explosive projectile
+  6b. Three ThingDef.ConfigErrors rules the game enforces at load: an explosive projectile
      verb must declare a forcedMissRadius (and a non-explosive one must not), and a def
-     carrying CompProperties_Explosive must tick Normal
+     carrying CompProperties_Explosive must tick Normal, and a smeltable def must have a cost
   6c. SoundDef.ConfigErrors: a sustainer must not use priorityMode PrioritizeNewest,
      which is the default when priorityMode is left out
   6d. TerrainDef tags that are not fields of the 1.6 TerrainDef (holdSnow vs holdSnowOrSand)
@@ -28,9 +28,9 @@ Usage: python3 validate.py [path/to/RimWorld/Data]
 """
 import os, re, sys, glob, subprocess
 import xml.etree.ElementTree as ET
+import rimworld_paths
 
-DATA = sys.argv[1] if len(sys.argv) > 1 else \
-    "/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/Data"
+DATA = sys.argv[1] if len(sys.argv) > 1 else rimworld_paths.DATA
 DLCS = ("Core", "Royalty", "Biotech")
 REF_TAGS = {
     "hediffDef", "stateDef", "fleckDef", "jobDef", "capacity", "soundCast",
@@ -43,10 +43,12 @@ REF_TAGS = {
     "researchPrerequisite", "requiredResearchBuilding", "unfinishedThingDef", "addsHediff",
     # Reloadable apparel ammunition (the kunai belt). A wrong name leaves the belt unreloadable.
     "ammoDef", "soundReload", "soundInteract", "soundDrop",
+    # Echo defs: trials, costs, cast costs, the manifest hediff and the device tiers.
+    "manifestHediff", "skill", "record", "trait", "ability", "research", "bodyType",
 }
 LIST_TAGS = {"abilities", "descriptionHyperlinks", "exceptions",
              "recipeUsers", "thingDefs", "prerequisites", "thingCategories",
-             "categories", "appliedOnFixedBodyParts"}
+             "categories", "appliedOnFixedBodyParts", "weapons", "researchPrerequisites"}
 
 problems = []
 def fail(kind, where, detail):
@@ -140,7 +142,10 @@ if DATA is not None:
             vals = []
             if el in enum_categories:
                 pass
-            elif el.tag in REF_TAGS and el.text and el.text.strip():
+            # A number is a comp's own field that shares a tag name with a def reference, such as
+            # the water gun's <capacity>30</capacity> beside a capMod's <capacity>Moving</capacity>.
+            elif el.tag in REF_TAGS and el.text and el.text.strip() \
+                    and not re.fullmatch(r"-?\d+(\.\d+)?", el.text.strip()):
                 vals = [el.text.strip()]
             elif el.tag in LIST_TAGS:
                 vals = [c.text.strip() for c in el if c.text]
@@ -320,6 +325,28 @@ for defname, rec in sorted(things_by_defname.items()):
                     if explodes else
                     " has a forcedMissRadius but " + projectile + " is not explosive"))
 
+
+# "is smeltable but does not give anything for smelting" (ThingDef.ConfigErrors): smeltable
+# needs something to smelt into, a costList, costStuffCount or smeltProducts. Found in game for
+# AG_WaterGun, which has no cost. Judged through this mod's own parents only; a vanilla parent
+# is taken to add no cost.
+def _chain(rec):
+    seen = []
+    while rec is not None and rec not in seen:
+        seen.append(rec)
+        rec = things_by_name.get(rec["parent"]) if rec["parent"] else None
+    return seen
+
+for defname, rec in things_by_defname.items():
+    chain = _chain(rec)
+    smeltable = next(((r["el"].findtext("smeltable") or "").strip().lower() for r in chain
+                      if r["el"].find("smeltable") is not None), "")
+    if smeltable != "true": continue
+    if any(r["el"].find(tag) is not None for r in chain for tag in ("costList", "costStuffCount", "smeltProducts")):
+        continue
+    fail("config error", rec["file"], defname + " is smeltable but has no costList, costStuffCount or"
+         + " smeltProducts -- the game says it does not give anything for smelting")
+
 # 6c. "PrioritizeNewest is not supported with sustainers." SoundDef.priorityMode defaults to
 #    PrioritizeNewest, so a sustainer that says nothing about priority is refused at load. Found
 #    in the game log for AG_GravityHum after build, validator and API checks were all clean.
@@ -409,6 +436,8 @@ for f in my_files:
             refs = [n.text.strip() for n in el.findall("./comps/li/abilities/li") if n.text]
         elif el.tag == "WeaponTraitDef":
             refs = [n.text.strip() for n in el.findall("./abilityProps/abilityDef") if n.text]
+        elif el.tag == "RimArt.EchoDef":
+            refs = [n.text.strip() for n in el.findall("./abilities/li") if n.text]
         for ability in refs:
             grants.setdefault(ability, set()).add(source)
 
@@ -416,9 +445,21 @@ for f in my_files:
 # granted Rain, Loose and Grasp until 2026-09-25, when it took Unlimited Blade Works instead.
 RETIRED = {"AG_Panoply_Rain", "AG_Panoply_Loose", "AG_Panoply_Grasp"}
 
+# Hero abilities that still have their pre-hero source (an implant, a gene or a trait) while the
+# Echo that uses them is being built. Each is to lose one source once it is decided whether the
+# old item stays in the game; until then two sources are expected, and only these two.
+SHARED_WITH_ECHO = {
+    "AG_VectorReflection", "AG_VectorSurge", "AG_VectorShove", "AG_ShinraTensei",
+    "AG_Imperative_Stop", "AG_Imperative_Drop", "AG_Imperative_Kneel", "AG_Imperative_Come",
+    "AG_Imperative_Run",
+}
+
 for ability, f in sorted(ability_defs.items()):
     sources = grants.get(ability, set())
     if ability in RETIRED and not sources:
+        continue
+    if ability in SHARED_WITH_ECHO and len(sources) == 2 \
+            and sum(1 for src in sources if src.startswith("RimArt.EchoDef:")) == 1:
         continue
     if len(sources) != 1:
         fail("ability source count", f,

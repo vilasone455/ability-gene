@@ -14,6 +14,9 @@
     <NoWarn>CS0169;CS0414;CS0649</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <!-- The drawing helpers every ported picture shares (Shared/CastClips and ItemAbilityGrant are game code, not linked). -->
+    <Compile Include="../../../Source/RimArt/Shared/VfxDraw.cs" Link="Linked/Shared/VfxDraw.cs" />
+    <Compile Include="../../../Source/RimArt/Shared/VfxMath.cs" Link="Linked/Shared/VfxMath.cs" />
     <!-- Six Paths -->
     <Compile Include="../../../Source/RimArt/Debug/RimArtDebugAttribute.cs" Link="Linked/Debug/RimArtDebugAttribute.cs" />
     <Compile Include="../../../Source/RimArt/SixPaths/*.cs" LinkBase="Linked/SixPaths" />
@@ -23,6 +26,26 @@
     <Compile Include="../../../Source/RimArt/PowerPole/*.cs" LinkBase="Linked/PowerPole" />
     <!-- Drawing and previews only, as for the Power Pole: the kit code will go in PaperBomb/Kit. -->
     <Compile Include="../../../Source/RimArt/PaperBomb/*.cs" LinkBase="Linked/PaperBomb" />
+    <!-- Bank Shot: the ricochet rule, the charged shot's drawing and the previews. The weapon, the ability and the bouncing bullet are in BankShot/Kit, not linked here. -->
+    <Compile Include="../../../Source/RimArt/BankShot/*.cs" LinkBase="Linked/BankShot" />
+    <!-- Bubble Pipe: drawing, timing and previews only. The weapon and ability code is in BubblePipe/Kit, not linked here. -->
+    <Compile Include="../../../Source/RimArt/BubblePipe/*.cs" LinkBase="Linked/BubblePipe" />
+    <!-- Water Gun: drawing and previews only. The weapon and ability code is in WaterGun/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/WaterGun/*.cs" LinkBase="Linked/WaterGun" />
+    <!-- Chain Sickle: the weight rule, drawing, timing and previews only. The weapon and ability code is in ChainSickle/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/ChainSickle/*.cs" LinkBase="Linked/ChainSickle" />
+    <!-- Flame Gauntlet: drawing, timing and previews only. The weapon and ability code is in FlameGauntlet/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/FlameGauntlet/*.cs" LinkBase="Linked/FlameGauntlet" />
+    <!-- Vacuum: drawing, timing and previews only. The weapon and ability code is in Vacuum/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/Vacuum/*.cs" LinkBase="Linked/Vacuum" />
+    <!-- Samehada: drawing, timing and previews only. The weapon and ability code is in Samehada/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/Samehada/*.cs" LinkBase="Linked/Samehada" />
+    <!-- Coil Gun: drawing, timing and previews only. The weapon, ability and projectile code is in CoilGun/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/CoilGun/*.cs" LinkBase="Linked/CoilGun" />
+    <!-- Frost Gun: drawing, timing and previews only. The weapon, ability and projectile code is in FrostGun/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/FrostGun/*.cs" LinkBase="Linked/FrostGun" />
+    <!-- Nezuko's Box: drawing, timing and previews only. The apparel, its abilities and the flyer are in NezukoBox/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/NezukoBox/*.cs" LinkBase="Linked/NezukoBox" />
     <!-- Shadow Plexus: drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/ShadowPlexus/*.cs" LinkBase="Linked/ShadowPlexus" />
     <!-- Goku: drawing and previews only. -->

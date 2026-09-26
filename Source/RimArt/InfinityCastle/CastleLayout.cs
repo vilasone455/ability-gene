@@ -110,12 +110,8 @@ namespace RimArt
             public int Int(int lo, int hi) => lo + (int)Math.Floor(Next() * (hi - lo + 1));
         }
 
-        /// <summary>The lab's rand(i), the sine hash, in double as it is there (SixPathsBloomTiming.Rand returns a float).</summary>
-        public static double Hash(int i)
-        {
-            double n = Math.Sin(i * 127.1 + 17) * 43758.5453;
-            return n - Math.Floor(n);
-        }
+        /// <summary>The lab's rand(i), the sine hash, in double as it is there (VfxMath.Rand returns a float).</summary>
+        public static double Hash(int i) => VfxMath.Hash(i);
 
         /// <summary>JavaScript's Math.round: halves go up. Math.Round would send 2.5 to 2.</summary>
         public static int RoundHalfUp(double v) => (int)Math.Floor(v + 0.5);

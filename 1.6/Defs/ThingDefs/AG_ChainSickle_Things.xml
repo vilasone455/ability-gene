@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Chain Sickle kit: a kusarigama, a hand sickle on a 7-cell chain with an iron weight on
+       the far end. Numbers are placeholders from the sketches' headers
+       (Tools/VfxLab/web/sketches/chain-sickle-*.js, lib/chain-sickle.js); every balance number is a
+       field here or in AG_ChainSickle_Abilities.xml.
+
+       The parent is BaseWeapon, as the Power Pole's and the water gun's: the recipe is
+       AG_MakeChainSickle (a RecipeDef at the smithy), not a recipeMaker. No weaponTags, so raiders
+       never carry it. In melee it is a sickle: 12 cut, and 1.5x on a staked pawn
+       (stakedMeleeFactor, Patch_ChainSickle_StakedCut).
+
+       The weight rule, shared by Snag and Stake:
+         ratio = holder Carrying Capacity (kg) / (target Mass stat + apparel, equipment and inventory kg)
+         pull  = fullPullCells x ratio, at most fullPullCells
+         reel  = reelSeconds / ratio, at most maxReelSeconds
+         pin   = maxPinSeconds x ratio, at most maxPinSeconds
+         ratio under dragRatio: the target stays, the holder is dragged dragCells over dragSeconds,
+         and Stake is refused ("too heavy"). -->
+  <ThingDef ParentName="BaseWeapon">
+    <defName>AG_ChainSickle</defName>
+    <label>chain sickle</label>
+    <description>A kusarigama: a hand sickle joined by a 7-tile chain to an iron weight. In melee it is a sickle.\n\nWhile it is equipped, the wielder can use Snag and Stake. Snag spins the weight up and throws it at a hostile pawn or wild animal up to 7 tiles away: 4 blunt damage, the chain wraps the body, and the wielder reels the target in. How far and how fast depends on weight: the wielder's carrying capacity against the target's mass plus everything it carries. A 75 kg carrier pulls a 65 kg tribal 5 tiles; a target over 2.5 times the carrying capacity does not move, and drags the wielder 2 tiles toward it instead.\n\nThe chain stays on for 10 seconds. Stake, on the snagged pawn, drives the weight into the floor: the pawn drops its weapon and cannot move or attack for up to 6 seconds, while the wielder stays within 7 tiles. The sickle does 50% more damage to a staked pawn. Stake does not work on a pawn too heavy to pull.</description>
+    <graphicData>
+      <texPath>RimArt/ChainSickle/ChainSickle</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.0</drawSize>
+    </graphicData>
+    <techLevel>Medieval</techLevel>
+    <smeltable>true</smeltable>
+    <!-- What smelting gives part of back; the same 80 steel AG_MakeChainSickle takes. Without it the
+         game refuses smeltable ("does not give anything for smelting"). MarketValue is set above. -->
+    <costList>
+      <Steel>80</Steel>
+    </costList>
+    <relicChance>0</relicChance>
+    <stackLimit>1</stackLimit>
+    <thingCategories>
+      <li>WeaponsMelee</li>
+    </thingCategories>
+    <weaponClasses>
+      <li>Melee</li>
+    </weaponClasses>
+    <tradeability>All</tradeability>
+    <statBases>
+      <MarketValue>180</MarketValue>
+      <Mass>2.5</Mass>
+      <MaxHitPoints>150</MaxHitPoints>
+      <Flammability>0.2</Flammability>
+      <DeteriorationRate>1</DeteriorationRate>
+      <Beauty>0</Beauty>
+    </statBases>
+    <comps>
+      <li Class="RimArt.CompProperties_ChainSickle">
+        <chainLength>7</chainLength>
+        <snagSeconds>10</snagSeconds>
+        <fullPullCells>5</fullPullCells>
+        <reelSeconds>1</reelSeconds>
+        <maxReelSeconds>2</maxReelSeconds>
+        <dragRatio>0.4</dragRatio>
+        <dragCells>2</dragCells>
+        <dragSeconds>1</dragSeconds>
+        <maxPinSeconds>6</maxPinSeconds>
+        <stakedMeleeFactor>1.5</stakedMeleeFactor>
+        <abilities>
+          <li>AG_ChainSickle_Snag</li>
+          <li>AG_ChainSickle_Stake</li>
+        </abilities>
+      </li>
+    </comps>
+    <tools>
+      <li>
+        <label>blade</label>
+        <capacities><li>Cut</li></capacities>
+        <power>12</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+      <li>
+        <label>handle</label>
+        <capacities><li>Blunt</li></capacities>
+        <power>7</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
+  <!-- A pawn Snag reels in, or a wielder dragged toward a target too heavy to move. It slides along
+       the ground and slows as the picture's easeOut does: 1 - (1 - t) cubed. The time is set per
+       flight from the weight rule's reel (PawnFlyer_ChainSickleReel), so flightDurationMin is only a
+       floor. No height. -->
+  <ThingDef ParentName="PawnFlyerBase">
+    <defName>AG_ChainSickleReeled</defName>
+    <label>reeled in</label>
+    <thingClass>RimArt.PawnFlyer_ChainSickleReel</thingClass>
+    <pawnFlyer>
+      <flightDurationMin>0.1</flightDurationMin>
+      <flightSpeed>1000</flightSpeed>
+      <heightFactor>0</heightFactor>
+      <progressCurve>
+        <points>
+          <li>(0, 0)</li>
+          <li>(0.1, 0.271)</li>
+          <li>(0.2, 0.488)</li>
+          <li>(0.4, 0.784)</li>
+          <li>(0.6, 0.936)</li>
+          <li>(0.8, 0.992)</li>
+          <li>(1, 1)</li>
+        </points>
+      </progressCurve>
+    </pawnFlyer>
+  </ThingDef>
+
+</Defs>

@@ -53,7 +53,7 @@ namespace RimArt
             var shot = new PowerPoleSweepShot { Aim = ThunderGodTiming.Degrees(toward), Reach = Props.reach, Arc = Props.arc, Length = new float[Mathf.RoundToInt(Props.arc) + 1] };
             for (int i = 0; i < shot.Length.Length; i++)
             {
-                Vector2 line = ThunderGodGraphics.Turn(shot.Aim + shot.Half - i);
+                Vector2 line = VfxDraw.Turn(shot.Aim + shot.Half - i);
                 float length = Props.reach;
                 for (float d = Step; d <= Props.reach; d += Step)
                 {

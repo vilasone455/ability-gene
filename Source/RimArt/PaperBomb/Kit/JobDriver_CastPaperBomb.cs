@@ -22,7 +22,7 @@ namespace RimArt
         /// <summary>RimArt_TagThrow, RimArt_TagFlick and RimArt_TagFan: release fraction, then length in seconds.</summary>
         private static readonly ThrowAnimation.Clips TagThrow = new ThrowAnimation.Clips("AG_TagThrow", 0.5f),
             TagFlick = new ThrowAnimation.Clips("AG_TagFlick", 0.1071f), TagFan = new ThrowAnimation.Clips("AG_TagFan", 0.2917f);
-        private const float ThrowLength = 0.6f, FlickLength = 2.8f, FanLength = 1.2f;
+        internal const float ThrowLength = 0.6f, FlickLength = 2.8f, FanLength = 1.2f;
 
         private int startTick = -1;
 
@@ -34,12 +34,13 @@ namespace RimArt
 
         protected override IEnumerable<Toil> MakeNewToils()
         {
-            this.FailOnDespawnedOrNull(TargetIndex.A);
+            this.FailBeforeFired(Fired);
             AddFinishAction(delegate
             {
                 if (job.ability != null && job.def.abilityCasting)
                     job.ability.StartCooldown(job.ability.def.cooldownTicksRange.RandomInRange);
                 ThrowAnimation.UpdateCustomThrow(pawn, job.def, 0f, true);
+                pawn.MapHeld?.GetComponent<MapComponent_PaperBomb>()?.Ended(pawn);
             });
 
             Toil begin = ToilMaker.MakeToil("PaperBombBegin");
@@ -48,7 +49,6 @@ namespace RimArt
             yield return begin;
 
             Toil cast = Toils_Combat.CastVerb(TargetIndex.A, TargetIndex.B, canHitNonTargetPawns: false);
-            cast.FailOn(() => !job.ability.CanCast && !job.ability.Casting);
             cast.AddPreTickAction(Seek);
             yield return cast;
 
@@ -61,6 +61,8 @@ namespace RimArt
             hold.defaultCompleteMode = ToilCompleteMode.Never;
             yield return hold;
         }
+
+        private bool Fired() => pawn.Map?.GetComponent<MapComponent_PaperBomb>()?.Fired(pawn) ?? false;
 
         private void Begin()
         {

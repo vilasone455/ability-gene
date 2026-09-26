@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Go in: walk to the pawn, the warmup (the door opening), then hold until the latch
+       (JobDriver_CastNezukoBox). -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastNezukoBox</defName>
+    <driverClass>RimArt.JobDriver_CastNezukoBox</driverClass>
+    <reportString>putting TargetA in the box.</reportString>
+  </JobDef>
+
+</Defs>

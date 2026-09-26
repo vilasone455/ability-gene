@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Samehada kit: a shark-skin greatsword wrapped in bandages that drinks from what it cuts.
+       Rules agreed 2026-09-25; the numbers are placeholders from the sketches
+       (Tools/VfxLab/web/sketches/samehada-*.js, lib/samehada.js) and every one is a field here, in
+       AG_Samehada_Abilities.xml or in AG_Samehada_Hediffs.xml.
+
+       Feed (passive), on every landed melee hit with the blade on a flesh pawn (mechanoids give
+       nothing): the target gets a stack of AG_SamehadaDrained for 20 s (up to 3; each hit sets the time
+       back to 20 s), the wielder heals 4 hit points, the blade takes 1 charge (up to 5). Each charge
+       adds 2 melee damage (Patch_Samehada_ChargeDamage). One charge is lost every 60 s without a hit.
+       In the picture each charge lengthens the blade 0.15 cells and uncovers one band of scales; the
+       reach stays 1 cell.
+
+       The held blade is drawn from code (Patch_Samehada_HeldDrawing); the texture below is the item on
+       the floor and in menus. No weaponTags, so raiders never carry it.
+
+       The comps are listed with Inherit="False" because CompProperties_Samehada is the weapon's
+       CompEquippable, so the charges can be an equipped gizmo. BaseWeapon's other two comps are
+       repeated here; if BaseWeapon gains one, add it. -->
+  <ThingDef ParentName="BaseWeapon">
+    <defName>AG_Samehada</defName>
+    <label>samehada</label>
+    <description>A greatsword covered in living shark skin, wrapped in bandages. It is heavy and slow, and it feeds on what it cuts.\n\nFeed: every melee hit on a living creature drains it. The target is Drained for 20 seconds (10% less consciousness and 10% slower per stack, up to 3 stacks), the wielder heals 4 hit points, and the blade takes a charge, up to 5. Each charge adds 2 damage to the blade's hits. The blade loses a charge every 60 seconds without a hit. Mechanoids and other creatures without flesh give nothing.\n\nWhile it is equipped, the wielder can use Shark Skin and Fusion, which spend charges.</description>
+    <graphicData>
+      <texPath>RimArt/Samehada/Samehada</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.4</drawSize>
+    </graphicData>
+    <techLevel>Industrial</techLevel>
+    <smeltable>true</smeltable>
+    <!-- What smelting gives part of back; the steel of AG_MakeSamehada. -->
+    <costList>
+      <Steel>90</Steel>
+    </costList>
+    <relicChance>0</relicChance>
+    <stackLimit>1</stackLimit>
+    <thingCategories>
+      <li>WeaponsMelee</li>
+    </thingCategories>
+    <weaponClasses>
+      <li>Melee</li>
+    </weaponClasses>
+    <tradeability>All</tradeability>
+    <statBases>
+      <MarketValue>650</MarketValue>
+      <Mass>4</Mass>
+      <MaxHitPoints>200</MaxHitPoints>
+      <Flammability>0.3</Flammability>
+      <DeteriorationRate>1</DeteriorationRate>
+      <Beauty>0</Beauty>
+    </statBases>
+    <comps Inherit="False">
+      <li Class="RimArt.CompProperties_Samehada">
+        <maxCharges>5</maxCharges>
+        <chargesPerHit>1</chargesPerHit>
+        <damagePerCharge>2</damagePerCharge>
+        <secondsPerChargeLost>60</secondsPerChargeLost>
+        <healPerHit>4</healPerHit>
+        <drainedSeconds>20</drainedSeconds>
+        <maxDrainedStacks>3</maxDrainedStacks>
+        <abilities>
+          <li>AG_Samehada_SharkSkin</li>
+          <li>AG_Samehada_Fusion</li>
+        </abilities>
+      </li>
+      <li Class="CompProperties_Forbiddable"/>
+      <li Class="CompProperties_Styleable"/>
+    </comps>
+    <!-- 1-cell melee, 14 cut, slow: a longsword's cooldown is 2.6 s, this is 3. -->
+    <tools>
+      <li>
+        <label>blade</label>
+        <capacities><li>Cut</li></capacities>
+        <power>14</power>
+        <cooldownTime>3</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
+</Defs>

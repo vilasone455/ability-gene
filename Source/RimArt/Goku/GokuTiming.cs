@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -16,8 +17,6 @@ namespace RimArt
     /// </summary>
     public static class GokuTiming
     {
-        public static float Smooth(float t) => SixPathsSlamTiming.Smooth(t);
-        public static float Rand(int index) => SixPathsBloomTiming.Rand(index);
         /// <summary>Math.round: halves go up, not to even.</summary>
         public static int Round(float v) => Mathf.FloorToInt(v + 0.5f);
 

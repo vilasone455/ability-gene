@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
+using static RimArt.VfxDraw;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -15,123 +17,13 @@ namespace RimArt
     [StaticConstructorOnStartup]
     internal static class ThunderGodGraphics
     {
-        internal static readonly Material solid =
-            new Material(ShaderDatabase.Transparent) { mainTexture = BaseContent.WhiteTex };
-        internal static readonly Material whiteGlow =
-            new Material(ShaderDatabase.MoteGlow) { mainTexture = BaseContent.WhiteTex };
-        internal static readonly Material soft = MaterialPool.MatFrom("RimArt/SixPaths/SoftDisc", ShaderDatabase.Transparent);
-        internal static readonly Material glow = MaterialPool.MatFrom("RimArt/SixPaths/SoftDisc", ShaderDatabase.MoteGlow);
-        private static readonly MaterialPropertyBlock properties = new MaterialPropertyBlock();
-        internal static readonly Mesh disc = SixPathsBurstGraphics.Band(0f, "Thunder God disc");
-        private static readonly Mesh ring = SixPathsBurstGraphics.Band(0.965f, "Thunder God ring");
-
         internal static readonly Color Gold = new Color(1f, 0.78f, 0.18f);
         internal static readonly Color Pale = new Color(1f, 0.95f, 0.68f);
-        internal static readonly Color Ink = new Color(0.13f, 0.09f, 0.02f);
-
-        /// <summary>The sketches' Y and Floor.</summary>
-        internal static readonly float Overhead = AltitudeLayer.MoteOverhead.AltitudeFor();
-        internal static readonly float Floor = AltitudeLayer.Filth.AltitudeFor();
 
         // Star glint: angle, half length and width of each ray, as a share of the flash radius.
         private static readonly float[] RayAngle = { 0f, 90f, 45f, 135f }, RayReach = { 1.25f, 1f, 0.5f, 0.5f },
             RayWidth = { 0.1f, 0.1f, 0.06f, 0.06f };
         private static readonly float[] CrossTurns = { 0f, 90f, 180f, 270f };
-
-        // One mesh per thing drawn in a frame: Graphics.DrawMesh reads a mesh when the frame
-        // renders. Strips are handed out from a pool that starts again each frame, so two effects
-        // in one frame never share one. The Kamehameha beam takes up to 141 points.
-        internal const int MostPoints = 144;
-        private static readonly List<SixPathsStrip>[] pool = new List<SixPathsStrip>[MostPoints + 1];
-        private static readonly int[] taken = new int[MostPoints + 1];
-        private static readonly Vector2[][] sideA = new Vector2[MostPoints + 1][], sideB = new Vector2[MostPoints + 1][];
-        private static int frame = -1;
-        /// <summary>Strip meshes are written relative to this ground point and drawn at it.</summary>
-        private static Vector2 anchor;
-
-        /// <summary>Call once at the start of an effect's Draw with the effect's ground point.</summary>
-        internal static void Begin(Vector2 ground) => anchor = ground;
-
-        internal static bool Shown(Vector2 at, Map map)
-        {
-            IntVec3 cell = new Vector3(at.x, 0f, at.y).ToIntVec3();
-            return cell.InBounds(map) && !cell.Fogged(map);
-        }
-
-        internal static float Smooth(float t) => SixPathsSlamTiming.Smooth(t);
-        internal static float Rand(int index) => SixPathsBloomTiming.Rand(index);
-        internal static Color Fade(Color colour, float alpha) => new Color(colour.r, colour.g, colour.b, alpha);
-        internal static Vector2 Turn(float degrees) =>
-            new Vector2(Mathf.Cos(degrees * Mathf.Deg2Rad), Mathf.Sin(degrees * Mathf.Deg2Rad));
-
-        /// <summary>
-        /// <paramref name="angle"/> is clockwise seen from above, as Unity turns about the vertical,
-        /// so a shape that follows a direction of d degrees (0 east, 90 north) is given -d.
-        /// </summary>
-        internal static void DrawMesh(Mesh mesh, Vector2 at, float altitude, float width, float depth, float angle,
-            Color colour, Material material)
-        {
-            if (colour.a <= 0.001f) return;
-            properties.SetColor(ShaderPropertyIDs.Color, colour);
-            Graphics.DrawMesh(mesh, Matrix4x4.TRS(new Vector3(at.x, altitude, at.y), Quaternion.AngleAxis(angle, Vector3.up),
-                new Vector3(width, 1f, depth)), material, 0, null, 0, properties);
-        }
-
-        internal static void Sprite(Vector2 at, float width, float depth, Color colour, Material material, float altitude, float angle = 0f) =>
-            DrawMesh(MeshPool.plane10, at, altitude, width, depth, angle, colour, material);
-
-        internal static void Circle(Vector2 at, float radius, float alpha, float altitude, Color colour)
-        {
-            if (radius <= 0f) return;
-            DrawMesh(ring, at, altitude, radius, radius, 0f, Fade(colour, alpha), solid);
-        }
-
-        /// <summary>Two lines of <paramref name="points"/> points to fill in, then hand to <see cref="Strip"/>.</summary>
-        internal static void Sides(int points, out Vector2[] a, out Vector2[] b)
-        {
-            a = sideA[points] ?? (sideA[points] = new Vector2[points]);
-            b = sideB[points] ?? (sideB[points] = new Vector2[points]);
-        }
-
-        /// <summary>A ribbon between the two lines from <see cref="Sides"/>, in map coordinates.</summary>
-        internal static void Strip(Vector2[] a, Vector2[] b, Color colour, Material material, float altitude)
-        {
-            if (colour.a <= 0.001f) return;
-            for (int i = 0; i < a.Length; i++) { a[i] -= anchor; b[i] -= anchor; }
-            SixPathsStrip strip = Next(a.Length);
-            strip.Between(a, b);
-            DrawMesh(strip.mesh, anchor, altitude, 1f, 1f, 0f, colour, material);
-        }
-
-        private static SixPathsStrip Next(int points)
-        {
-            if (Time.frameCount != frame)
-            {
-                frame = Time.frameCount;
-                for (int i = 0; i < taken.Length; i++) taken[i] = 0;
-            }
-            List<SixPathsStrip> made = pool[points] ?? (pool[points] = new List<SixPathsStrip>());
-            if (taken[points] == made.Count) made.Add(new SixPathsStrip("Thunder God strip " + points + " " + made.Count, points));
-            return made[taken[points]++];
-        }
-
-        /// <summary>A straight line from a to b, widest in the middle.</summary>
-        internal static void Streak(Vector2 a, Vector2 b, float width, Color colour, Material material, float altitude, int steps = 8)
-        {
-            if (colour.a <= 0.001f) return;
-            Vector2 along = b - a;
-            float length = along.magnitude;
-            if (length < 1e-5f) length = 1f;
-            var normal = new Vector2(-along.y / length, along.x / length);
-            Sides(steps + 1, out Vector2[] left, out Vector2[] right);
-            for (int i = 0; i <= steps; i++)
-            {
-                float u = i / (float)steps, half = Mathf.Max(0f, Mathf.Sin(u * Mathf.PI)) * width / 2f;
-                left[i] = a + along * u + normal * half;
-                right[i] = a + along * u - normal * half;
-            }
-            Strip(left, right, colour, material, altitude);
-        }
 
         /// <summary>
         /// The teleport flash: a bright core, a thin ring that opens round it, 2 long rays and 2 short

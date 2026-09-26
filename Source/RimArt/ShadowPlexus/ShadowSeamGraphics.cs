@@ -1,7 +1,7 @@
 using UnityEngine;
 using Verse;
 using static RimArt.ShadowPlexusGraphics;
-using static RimArt.ThunderGodGraphics;
+using static RimArt.VfxDraw;
 using P = RimArt.ShadowPlexusTiming;
 using T = RimArt.ShadowSeamTiming;
 
@@ -59,13 +59,13 @@ namespace RimArt
             Vector2 mid = P.PointOn(a, b, 0.5f);
             float toCarrier = Vector2.Distance(mid, carrier);
             Vector2 forkAt = P.PointOn(mid, carrier, 0.8f / (toCarrier < 1e-5f ? 1f : toCarrier));
-            if (shot.Range > 0f) RangeRing(carrier, shot.Range, 1f - P.Smooth((s - sewn - T.FeederBack) / 0.4f));
+            if (shot.Range > 0f) RangeRing(carrier, shot.Range, 1f - VfxMath.Smooth((s - sewn - T.FeederBack) / 0.4f));
 
             // The carrier's line and the fork. After the sewing the fork point moves onto the straight
             // line between the two, and the carrier's line runs back.
-            float gone = P.Smooth((s - shot.Undo) / T.Undo), apart = Vector2.Distance(a, b), slack = Mathf.Clamp01(1f - apart / T.MaxApart);
-            Vector2 joint = P.PointOn(forkAt, mid, P.Smooth((s - sewn - 0.15f) / T.Straighten));
-            float feeder = s < sewn + 0.15f ? P.EaseOut(s / (shot.Cast * T.Fork)) : 1f - P.Smooth((s - sewn - 0.15f) / T.FeederBack);
+            float gone = VfxMath.Smooth((s - shot.Undo) / T.Undo), apart = Vector2.Distance(a, b), slack = Mathf.Clamp01(1f - apart / T.MaxApart);
+            Vector2 joint = P.PointOn(forkAt, mid, VfxMath.Smooth((s - sewn - 0.15f) / T.Straighten));
+            float feeder = s < sewn + 0.15f ? P.EaseOut(s / (shot.Cast * T.Fork)) : 1f - VfxMath.Smooth((s - sewn - 0.15f) / T.FeederBack);
             Line(carrier, joint, 0f, feeder, s, 0.08f, shot.Width);
             Pool(carrier, 0.28f * Mathf.Clamp01(feeder * 4f), 1f, s);
 
@@ -98,7 +98,7 @@ namespace RimArt
             }
 
             // The two targets' pools and the loops over their feet.
-            float held = P.Smooth((s - sewn) / 0.3f) * (1f - gone);
+            float held = VfxMath.Smooth((s - sewn) / 0.3f) * (1f - gone);
             Pool(a, T.PoolRadius * held, 1f, s);
             Pool(b, T.PoolRadius * shot.PoolB * held, 1f, s);
             StitchOver(a, held, 1f);

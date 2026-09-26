@@ -1,4 +1,5 @@
 using UnityEngine;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -39,8 +40,6 @@ namespace RimArt
         public static float StopAt => ReleaseAt + Release;
         public static float Duration => StopAt + Settle;
 
-        private static float Smooth(float t) => SixPathsSlamTiming.Smooth(t);
-        private static float Rand(int index) => SixPathsBloomTiming.Rand(index);
         private static float Arch(float u) => Mathf.Max(0f, Mathf.Sin(u * Mathf.PI));
 
         /// <summary>Seconds since the release; negative before.</summary>

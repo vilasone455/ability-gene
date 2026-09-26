@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The weight in the vacuum on its holder. Added, set and removed by VacuumLoad (CompVacuum and
+       MapComponent_Vacuum): severity is the kg inside, and Hediff_VacuumFull makes its one stage from
+       the weapon's slowPerKg, so the slow is a number on AG_Vacuum and not here. Removed at 0 kg and
+       when the vacuum is put down; a new holder gets it. Not isBad: nothing treats it. -->
+  <HediffDef>
+    <defName>AG_VacuumFull</defName>
+    <label>vacuum load</label>
+    <description>The vacuum this person carries is holding things, and its weight drags at every step. The more it holds, the slower they move.\n\nSpit fires the last thing swallowed back out; Digest empties it.</description>
+    <hediffClass>RimArt.Hediff_VacuumFull</hediffClass>
+    <defaultLabelColor>(0.34, 0.60, 0.62)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>false</isBad>
+    <initialSeverity>1</initialSeverity>
+    <everCurableByItem>false</everCurableByItem>
+  </HediffDef>
+
+</Defs>

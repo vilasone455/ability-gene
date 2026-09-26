@@ -22,13 +22,23 @@ Every kit in the mod, how to get it, and what each ability does.
 | [Phase barrier](#phase-barrier) | Implant | Phase guard | - |
 | [Reflex booster](#reflex-booster) | Implant | Reflex surge, Vector manipulation, Vector shove | - |
 | [Repulsion eye](#repulsion-eye) | Implant | Shinra Tensei | - |
+| [Bank shot pistol](#bank-shot-pistol) | Wearable | Bank shot | - |
+| [Bubble pipe](#bubble-pipe) | Wearable | Drifting burst, Eye pop | - |
+| [Chain sickle](#chain-sickle) | Wearable | Snag, Stake | - |
+| [Coil gun](#coil-gun) | Wearable | Chain arc | - |
 | [Drone control rig](#drone-control-rig) | Wearable | Deploy toy car | - |
+| [Flame gauntlet](#flame-gauntlet) | Wearable | Devour, Release | - |
+| [Frost rifle](#frost-rifle) | Wearable | Flash freeze | - |
 | [Kunai belt](#kunai-belt) | Wearable | Throw kunai | - |
 | [Makibishi pouch](#makibishi-pouch) | Wearable | Scatter makibishi | - |
 | [Power Pole](#power-pole) | Wearable | Extend thrust, Sweep, Vault strike | - |
 | [Retrieval hook belt](#retrieval-hook-belt) | Wearable | Retrieval hook | - |
+| [Samehada](#samehada) | Wearable | Shark skin, Fusion | - |
+| [Sleeper box](#sleeper-box) | Wearable | Go in | - |
 | [Stasis belt](#stasis-belt) | Wearable | Stasis field | - |
 | [Tag scroll](#tag-scroll) | Wearable | Tag throw, Tag line, Paper shroud, Detonate tag line | - |
+| [Vacuum](#vacuum) | Wearable | Suck, Spit, Digest | - |
+| [Water gun](#water-gun) | Wearable | Stream shot, Hydro pump | - |
 | [Arcing](#arcing) | Weapon trait | Arc | Unique Melee Weapons, Melee Animation |
 | [Resonant](#resonant) | Weapon trait | Resonance | Unique Melee Weapons |
 | [Frost bomb](#frost-bomb) | Weapon | Throw frost bomb | - |
@@ -332,6 +342,7 @@ An uncraftable artificial eye that supplies normal sight and lets its bearer cha
 
 - Cannot be crafted.
 - Can be given as a quest reward.
+- Can be bought from traders.
 - Install it by surgery in the eye. Needs Medicine skill 8. Uses the item and 2 medicine.
 - Can be removed by surgery and given to another colonist.
 
@@ -348,8 +359,9 @@ A brain implant that changes its user's internal rate of time. Acceleration leav
 
 **How to get it**
 
-- Cannot be crafted.
+- Craft it at a fabrication bench after researching **bionic replacements** (which needs fabrication). Needs Crafting skill 8. Costs plasteel ×20 and advanced component ×4.
 - Can be given as a quest reward.
+- Can be bought from traders.
 - Install it by surgery in the brain. Needs Medicine skill 6. Uses the item and 2 medicine.
 
 #### Time alter: double accel
@@ -385,6 +397,7 @@ An archotech brain implant that halves the distance an incoming thing has left t
 
 - Cannot be crafted.
 - Can be given as a quest reward.
+- Can be bought from traders.
 - Install it by surgery in the brain. Needs Medicine skill 8. Uses the item and 2 medicine.
 
 #### Phase guard
@@ -402,9 +415,10 @@ A spinal implant that reads and redirects momentum before its user can conscious
 
 **How to get it**
 
-- Cannot be crafted.
+- Craft it at a machining table after researching **prosthetics** (which needs machining). Needs Crafting skill 5. Costs steel ×35 and component ×6.
 - Can be given as a quest reward.
-- Install it by surgery in the spine. Uses the item and 2 medicine.
+- Can be bought from traders.
+- Install it by surgery in the spine. Needs Medicine skill 5. Uses the item and 2 medicine.
 
 #### Reflex surge
 
@@ -439,6 +453,7 @@ An uncraftable artificial eye that supplies normal sight and lets its bearer cha
 
 - Cannot be crafted.
 - Can be given as a quest reward.
+- Can be bought from traders.
 - Install it by surgery in the eye. Needs Medicine skill 8. Uses the item and 2 medicine.
 - Can be removed by surgery and given to another colonist.
 
@@ -451,6 +466,114 @@ Charge for up to three seconds of power, then release a four-cell repulsion wave
 
 ## Wearables
 
+### Bank shot pistol
+
+A heavy pistol whose bullets bounce off walls.
+
+Normal fire works like a revolver: 12 damage, range 20, 1.2 seconds between shots. A bullet that misses and hits a wall bounces off it once and can still hit someone on the rebound.
+
+While it is equipped, the wielder can use Bank Shot: charge the gun for 1.5 seconds and fire at a wall. The bullet bounces off up to 3 walls, then embeds in the next. It hits the first standing pawn it crosses, ally or enemy, for 18 damage plus 6 for every bounce, and needs no line of sight to that pawn. The whole path is shown while aiming.
+
+**How to get it**
+
+- Craft it at a machining table after researching **ricochet rounds** (which needs gunsmithing). Needs Crafting skill 5. Costs steel ×40 and component ×3.
+- Can be bought from traders.
+- Wear it to use the ability. Taking it off removes the ability.
+
+#### Bank shot
+
+Charge the pistol for 1.5 seconds, then fire toward a tile, usually a wall. The bullet bounces off walls and closed doors, up to 3 times, and embeds in the next wall it meets. It stops at the first standing pawn it crosses, ally or enemy: 18 sharp damage, plus 6 for every bounce before the hit (18, 24, 30, 36).
+
+It flies 30 tiles at most, bounces included, and needs no line of sight to the pawn it hits. The whole path is drawn while aiming.
+
+**Cooldown:** 4 seconds | **Range:** 29.9 cells | **Cast time:** 1.5 seconds
+
+
+### Bubble pipe
+
+A bamboo blowpipe and a small jar of soap solution on a strap, worn at the hip. The jar holds 10 blows.
+
+While it is equipped, the wielder can use Drifting Burst and Eye Pop. Drifting Burst blows 6 bubbles that drift toward the target and burst on the first pawn to touch them, the wielder's allies included. Eye Pop bursts one bubble on a pawn's face and leaves soap in its eyes for a few seconds.
+
+The jar refills, 1 blow per second, while the wielder stands on or next to water. In melee the pipe is a weak blunt poke.
+
+**How to get it**
+
+- Cannot be crafted.
+- Wear it to use the ability. Taking it off removes the ability.
+
+#### Drifting burst
+
+Blow 6 soap bubbles toward a tile. They leave the pipe one after another and drift that way at 0.7 tiles per second, fanning out over 50 degrees and floating at about half a tile up, for 8 seconds.
+
+The first pawn other than the wielder to touch a bubble pops it: 5 blunt damage and a 1 second stagger to every pawn within 0.8 tiles, allies included. A bubble that drifts into a wall pops harmlessly, and bubbles nobody touched pop harmlessly after 8 seconds.
+
+Uses 2 blows of soap.
+
+**Cooldown:** 10 seconds | **Range:** 6.9 cells | **Cast time:** 0.5 seconds
+
+#### Eye pop
+
+Blow one soap bubble at a pawn up to 8 tiles away. It always reaches the face and bursts there: soap in the eyes for 5 seconds. Shooting accuracy -30%, melee hit chance halved, move speed -30%. No damage.
+
+Uses 1 blow of soap. Needs line of sight.
+
+**Cooldown:** 8 seconds | **Range:** 8.9 cells | **Cast time:** 0.5 seconds
+
+
+### Chain sickle
+
+A kusarigama: a hand sickle joined by a 7-tile chain to an iron weight. In melee it is a sickle.
+
+While it is equipped, the wielder can use Snag and Stake. Snag spins the weight up and throws it at a hostile pawn or wild animal up to 7 tiles away: 4 blunt damage, the chain wraps the body, and the wielder reels the target in. How far and how fast depends on weight: the wielder's carrying capacity against the target's mass plus everything it carries. A 75 kg carrier pulls a 65 kg tribal 5 tiles; a target over 2.5 times the carrying capacity does not move, and drags the wielder 2 tiles toward it instead.
+
+The chain stays on for 10 seconds. Stake, on the snagged pawn, drives the weight into the floor: the pawn drops its weapon and cannot move or attack for up to 6 seconds, while the wielder stays within 7 tiles. The sickle does 50% more damage to a staked pawn. Stake does not work on a pawn too heavy to pull.
+
+**How to get it**
+
+- Cannot be crafted.
+- Wear it to use the ability. Taking it off removes the ability.
+
+#### Snag
+
+Spin the weight up and throw it at a hostile pawn or wild animal up to 7 tiles away. It always lands: 4 blunt damage, and the chain wraps the body. Then reel it in. The weight ratio is the wielder's carrying capacity over the target's mass plus everything it carries: the target is pulled 5 tiles x the ratio (at most 5) over 1 second / the ratio (at most 2). A wall or another pawn stops it early, and it stops next to the wielder. Below a ratio of 0.4 the target does not move and the wielder is dragged 2 tiles toward it over 1 second.
+
+The target stays snagged for 10 seconds, or until one of the two is more than 7 tiles from the other. Stake needs a snagged pawn. Needs line of sight.
+
+**Cooldown:** 20 seconds | **Range:** 7.9 cells | **Cast time:** 0.5 seconds
+
+#### Stake
+
+Yank the chain on the snagged pawn: the coil tightens on its chest and the weight is driven into the floor by its feet. It drops the weapon it holds and cannot move, shoot or fight in melee for 6 seconds x the weight ratio (at most 6), while the wielder stays within 7 tiles. The sickle does 50% more damage to a staked pawn. The snag ends with the pin.
+
+Not possible on a pawn too heavy to pull (weight ratio under 0.4).
+
+**Cooldown:** 30 seconds | **Range:** 7.9 cells | **Cast time:** 0.3 seconds
+
+
+### Coil gun
+
+A rifle that throws its rounds with magnetic coils, fed from a battery in the stock.
+
+Normal fire: a burst of 2 electric bolts, 9 damage each, range 26. Mechanoids take 1.5 times the damage. Normal fire uses no charge.
+
+While it is equipped, the wielder can use Chain Arc: a bolt at a hostile pawn that jumps on to up to 3 more hostile pawns, each within 3 tiles of the last one hit, for 12 damage each. A soaked pawn takes 1.5 times the damage and the jump from it reaches 6 tiles. Uses 5 of the gun's 20 charge.
+
+The gun's battery does not refill on its own: standing within 1.5 tiles of a charged battery recharges it by 1 a second, taking 10 Wd of the battery's stored energy for each.
+
+**How to get it**
+
+- Craft it at a machining table after researching **coil gun** (which needs microelectronics). Needs Crafting skill 6. Costs steel ×60, plasteel ×20 and component ×4.
+- Can be bought from traders.
+- Wear it to use the ability. Taking it off removes the ability.
+
+#### Chain arc
+
+Fire a bolt of lightning at a hostile pawn up to 26 tiles away. It jumps on to the nearest hostile pawn within 3 tiles of the last one hit, up to 3 more times; allies and downed pawns are skipped. Each pawn hit takes 12 electrical burn damage, 1.5 times as much if it is a mechanoid or soaked. From a soaked pawn the next jump reaches 6 tiles. Uses 5 of the gun's battery. Needs line of sight.
+
+**Cooldown:** 20 seconds | **Range:** 25.9 cells | **Cast time:** 0.5 seconds
+
+
 ### Drone control rig
 
 A belt-mounted transmitter and handset for a demolition drone. It builds and deploys one toy car at a time.
@@ -459,7 +582,7 @@ Driving the car takes the operator's whole attention: while controlling it they 
 
 **How to get it**
 
-- Craft it at a table machining after researching **remote ordnance** (which needs machining and microelectronics basics). Needs Crafting skill 6. Costs steel ×40 and component industrial ×3.
+- Craft it at a machining table after researching **remote ordnance** (which needs machining and microelectronics). Needs Crafting skill 6. Costs steel ×40 and component ×3.
 - Can be bought from traders.
 - Wear it to use the ability. Taking it off removes the ability.
 
@@ -470,6 +593,59 @@ Assemble and place a remote demolition drone just in front of you.
 The drone does nothing until somebody takes control of it. Controlling it costs the operator everything else: while driving they cannot move, shoot or work. It can be detonated on command, and detonates by itself if the operator is downed or killed while driving.
 
 **Cooldown:** 6 hours (in-game) | **Range:** self | **Cast time:** 0.8 seconds
+
+
+### Flame gauntlet
+
+A blackened iron gauntlet with brass seams and vents at the elbow, worn on one arm and used as the weapon. It eats fire and spits it back. In melee it is an iron fist.
+
+While it is equipped, the wielder can use Devour and Release, and cannot catch fire or be hurt by it.
+
+Devour pulls every fire within 3 tiles of a spot into the open palm, burning colonists included, and turns it into heat: 1 per burning tile, 2 per burning person, up to 20. Release spends heat as a cone of fire 6 tiles long and 3 wide, 1 heat per tile, at least 5. Every fire hit the wielder shrugs off adds 1 heat. Heat drains by 1 every 30 seconds.
+
+At 15 heat or more the wielder overheats: 20% slower, 20% clumsier, and the gauntlet arm takes a burn every 5 seconds until the heat is spent.
+
+Right-click chemfuel to feed it: 1 chemfuel gives 2 heat, up to 14.
+
+**How to get it**
+
+- Cannot be crafted.
+- Wear it to use the ability. Taking it off removes the ability.
+
+#### Devour
+
+Open the gauntlet's palm at a spot up to 10 tiles away and pull in every fire within 3 tiles of it: burning tiles and burning people, colonists included. Each fire goes out and flies into the palm: 1 heat per tile, 2 per person, nearest first. What the gauntlet has no room for is left burning. Cannot be used at a full gauntlet. Needs line of sight.
+
+**Cooldown:** 6 seconds | **Range:** 10.9 cells | **Cast time:** 0.3 seconds
+
+#### Release
+
+Spend the gauntlet's heat as a cone of fire toward a spot: 6 tiles long, 1 tile wide next to the wielder and 3 wide after, 16 tiles. The fire runs along the ground from the fist outward and sets every tile it reaches alight, and anyone standing there. Each tile costs 1 heat, nearest first, so with less heat the cone is shorter. Needs at least 5 heat. The wielder is immune to the fire. Walls stop it.
+
+**Cooldown:** 10 seconds | **Range:** 6.9 cells | **Cast time:** 0.3 seconds
+
+
+### Frost rifle
+
+A rifle that fires bolts of supercooled gas from a coolant tank under the barrel.
+
+Normal fire: 7 cold damage per bolt, range 22, one shot every 2 seconds. Each hit chills a creature: 10% slower per stack, up to 3 stacks, for 10 seconds, renewed by every hit. Normal fire uses no coolant.
+
+While it is equipped, the wielder can use Flash Freeze (10 coolant, 30 s cooldown): a beam that freezes one soaked or 3-times-chilled creature solid in ice for 5 seconds. It cannot move or act. The next hit it takes shatters the ice for 15 more damage.
+
+The 30-unit tank refills 0.1 a second while the rifle is held, and 2 a second while the wielder stands somewhere below 0 °C.
+
+**How to get it**
+
+- Craft it at a machining table after researching **frost rifle** (which needs cryogenic munitions). Needs Crafting skill 6. Costs steel ×70 and component ×5.
+- Can be bought from traders.
+- Wear it to use the ability. Taking it off removes the ability.
+
+#### Flash freeze
+
+Charge the rifle and fire a freezing beam at one creature in sight that is soaked or chilled 3 times. It is frozen solid in ice for 5 seconds: it cannot move or act. The next hit it takes shatters the ice for 15 more damage; otherwise it thaws. Freezing uses up the soaking or the chill. Uses 10 coolant.
+
+**Cooldown:** 30 seconds | **Range:** 22.9 cells | **Cast time:** 0.8 seconds
 
 
 ### Kunai belt
@@ -505,7 +681,7 @@ Range 9.9 tiles. Each throw uses one handful and spikes a 3x3 patch for 30 secon
 
 **How to get it**
 
-- Craft it at a hand tailoring bench or electric tailoring bench. Needs Crafting skill 3. Costs cloth ×30.
+- Craft it at a hand tailor bench or electric tailor bench. Needs Crafting skill 3. Costs cloth ×30.
 - Holds 3 charges and starts full. Reload with makibishi (1 per charge). Make 5 from 10 steel at a fueled smithy or electric smithy after researching **smithing**.
 - Wear it to use the ability. Taking it off removes the ability.
 
@@ -572,7 +748,7 @@ Dragging an injured person worsens one of their wounds by up to 1 severity and r
 
 **How to get it**
 
-- Craft it at a table machining after researching **machining**. Needs Crafting skill 5. Costs steel ×60, component industrial ×2 and cloth ×20.
+- Craft it at a machining table after researching **machining** (which needs electricity and smithing). Needs Crafting skill 5. Costs steel ×60, component ×2 and cloth ×20.
 - Wear it to use the ability. Taking it off removes the ability.
 
 #### Retrieval hook
@@ -588,6 +764,56 @@ Dragging an injured person worsens one wound by up to 1 severity and removes its
 **Range:** 15 cells | **Cast time:** 0.5 seconds
 
 
+### Samehada
+
+A greatsword covered in living shark skin, wrapped in bandages. It is heavy and slow, and it feeds on what it cuts.
+
+Feed: every melee hit on a living creature drains it. The target is Drained for 20 seconds (10% less consciousness and 10% slower per stack, up to 3 stacks), the wielder heals 4 hit points, and the blade takes a charge, up to 5. Each charge adds 2 damage to the blade's hits. The blade loses a charge every 60 seconds without a hit. Mechanoids and other creatures without flesh give nothing.
+
+While it is equipped, the wielder can use Shark Skin and Fusion, which spend charges.
+
+**How to get it**
+
+- Cannot be crafted.
+- Wear it to use the ability. Taking it off removes the ability.
+
+#### Shark skin
+
+Spend 2 of the blade's charges to tear its bandage off. For 10 seconds the scales stand up and every melee attack with it also hits every hostile in the 3 tiles in front of the wielder: the tile attacked and the two beside it. Each one hit is fed on, so a sweep through several enemies puts charges back. Needs at least 2 charges.
+
+**Cooldown:** 30 seconds | **Range:** self | **Cast time:** 0.2 seconds
+
+#### Fusion
+
+Spend all 5 of the blade's charges to fuse with it for 15 seconds. The wielder takes on a shark's hide, fin and gills, moves 30% faster and regenerates 2 hit points a second. The blade stays in hand and keeps feeding. When the fusion ends the blade has no charges. Needs 5 charges.
+
+**Cooldown:** 40 seconds | **Range:** self | **Cast time:** 0.2 seconds
+
+
+### Sleeper box
+
+A wooden box worn on the back. It holds one pawn of body size 1.0 or less: a colonist, slave or colony animal, or any downed pawn. The wearer moves 15% slower per 1.0 body size inside.
+
+Inside, the pawn sleeps. It cannot be hurt, bleeding stops, hunger and recreation pause, and cold, heat and sunlight do not reach it. Rest fills as when sleeping on the ground, wounds heal at the lying-down rate, and diseases and immunity keep running.
+
+It comes out by itself after 12 hours, or within 1 hour of being fully rested. A pawn that came out cannot go back into a box for 2 hours. If the wearer dies or the box comes off, the pawn comes out where the box is.
+
+Come out: a colony pawn that is not downed leaps to a cell within 4 tiles. If an enemy stands next to where it lands, it makes one melee attack that cannot miss and stuns that enemy for 1.5 seconds. Other pawns are let out next to the box.
+
+**How to get it**
+
+- Craft it at a crafting spot after researching **sleeper box** (which needs complex furniture). Needs Crafting skill 4. Costs wood ×60, steel ×15 and cloth ×10.
+- Wear it to use the ability. Taking it off removes the ability.
+
+#### Go in
+
+Put a pawn into the box on the wearer's back. The wearer walks to it; the pawn goes in when the wearer touches it.
+
+Who: colonists, slaves and colony animals, and any downed pawn, of body size 1.0 or less. Not mechanoids, and not a pawn in a mental break unless it is downed. A pawn that came out of a box cannot go back in for 2 hours.
+
+**Range:** 30 cells | **Cast time:** 0.2 seconds
+
+
 ### Stasis belt
 
 A field generator worn at the waist. Triggered, it collapses a sphere of stopped time around the wearer: nothing inside moves, burns, bleeds or can be harmed, and it does not spare the person wearing it.
@@ -596,7 +822,7 @@ The lattice takes many days to wind back up, and the charge stays with the belt 
 
 **How to get it**
 
-- Craft it at a table machining after researching **stasis fields** (which needs shield belt). Needs Crafting skill 8. Costs component spacer ×2, plasteel ×60 and gold ×20.
+- Craft it at a machining table after researching **stasis fields** (which needs shields). Needs Crafting skill 8. Costs advanced component ×2, plasteel ×60 and gold ×20.
 - Can be given as a quest reward.
 - Wear it to use the ability. Taking it off removes the ability.
 
@@ -653,6 +879,66 @@ Make a hand seal and light every tag line this pawn has laid on the map, at the 
 **Cooldown:** 1 second | **Range:** self | **Cast time:** 0.3 seconds
 
 
+### Vacuum
+
+The wand and floor head of a conjured vacuum cleaner. When it is used, a squat canister with a face rises out of the floor beside the wielder, unwinds its hose to the wand, and sinks back when it is done. In melee the wand is a blunt club.
+
+While it is equipped, the wielder can use Suck, Spit and Digest.
+
+Suck takes every loose item and all filth within 2 tiles of a spot up to 12 tiles away, and the weapon out of the hands of the nearest hostile there. Spit fires the last thing swallowed back out: 1.5 blunt damage per kg, at most 40, and it lands as itself. Digest destroys everything inside.
+
+The mouth holds only the last thing swallowed; anything older is in the stomach for good. The vacuum holds 100 kg, and the wielder moves 0.4% slower for every kg inside.
+
+**How to get it**
+
+- Cannot be crafted.
+- Wear it to use the ability. Taking it off removes the ability.
+
+#### Suck
+
+Point the wand at a spot up to 12 tiles away. Every loose item within 2 tiles of it (stacks, chunks, corpses, weapons on the floor) and all filth there flies into the head, lightest first: the heaviest ends up in the mouth, the rest in the stomach. The hostile nearest the spot loses the weapon in its hands the same way; allies and neutrals keep theirs. Filth weighs nothing and is simply gone. Anything that would take the vacuum over 100 kg stays where it is. Cannot be used when full. Needs line of sight. Shares its cooldown with Spit.
+
+**Range:** 12.9 cells | **Cast time:** 0.3 seconds
+
+#### Spit
+
+Fire the thing in the mouth at a pawn or a tile up to 12 tiles away. A pawn there takes 1.5 blunt damage per kg of the thing, at most 40, and is dazed for 1.2 seconds. The thing lands as itself, beside the pawn it hit or on the tile. Only its weight leaves the vacuum; the stomach keeps the rest. Needs something in the mouth and line of sight. Shares its cooldown with Suck.
+
+**Range:** 12.9 cells | **Cast time:** 0.3 seconds
+
+#### Digest
+
+Stand still while the vacuum chews everything inside: 0.05 seconds per kg, 5 seconds when full. The thing in the mouth goes first, then the stomach, and all of it is destroyed. Stop it early and what is left stays inside. No cooldown.
+
+**Range:** self | **Cast time:** 0.3 seconds
+
+
+### Water gun
+
+A pump-action water gun fed by a hose from a 30-unit water bag worn on the back. The bag's level shows on the wearer.
+
+While it is equipped, the wielder can use Stream Shot (1 unit: a jet at a pawn or tile up to 20 tiles away, 6 blunt damage, soaks, puts out fire) and Hydro Pump (10 units: a cone 5 tiles long and 3 wide that pushes pawns 3 tiles, knocks them down for 2 seconds, soaks them and puts out fire). A soaked pawn moves 10% slower, feels the cold sooner and cannot catch fire for 60 seconds.
+
+The bag refills 10 units a second while the wielder stands on or next to water, and 1 unit every 5 seconds outdoors in rain. In melee the gun is a weak blunt weapon.
+
+**How to get it**
+
+- Cannot be crafted.
+- Wear it to use the ability. Taking it off removes the ability.
+
+#### Stream shot
+
+Fire one jet of water at a pawn or a tile up to 20 tiles away. It always lands. A pawn takes 6 blunt damage and is soaked for 60 seconds: 10% slower, feels the cold sooner, cannot catch fire. Fire on the target pawn and on the target tile is put out. Uses 1 unit of water. Needs line of sight.
+
+**Cooldown:** 0 seconds | **Range:** 20.9 cells | **Cast time:** 0.2 seconds
+
+#### Hydro pump
+
+Pump the bag up to pressure and blast a cone of water 5 tiles long and 3 wide at its end toward a tile. Every pawn in the cone that the wielder can see, allies included, takes 8 blunt damage, is pushed 3 tiles away from the gun, knocked down for 2 seconds and soaked for 60 seconds. Fire in the cone is put out. Uses 10 units of water.
+
+**Cooldown:** 12 seconds | **Range:** 5.9 cells | **Cast time:** 0.6 seconds
+
+
 ## Weapon traits
 
 ### Arcing
@@ -705,7 +991,7 @@ It does not choose sides. Your own people freeze in it exactly as well as the pe
 
 **How to get it**
 
-- Craft it after researching **cryogenic munitions** (which needs machining). Needs Crafting skill 5. Costs steel ×20, component industrial ×2 and chemfuel ×40.
+- Craft it at a machining table after researching **cryogenic munitions** (which needs machining). Needs Crafting skill 5. Costs steel ×20, component ×2 and chemfuel ×40.
 - Can be bought from traders.
 - Equip it as a weapon; the throw is a button on the pawn.
 
@@ -724,7 +1010,8 @@ Throwing leaves you unarmed. The same weapon lands on the ground with its qualit
 
 **How to get it**
 
-- Craft it after researching **smithing**. Needs Crafting skill 6. Costs steel ×80.
+- Craft it at a electric smithy or fueled smithy after researching **smithing**. Needs Crafting skill 6. Costs steel ×80.
+- Can be bought from traders.
 - Equip it as a melee weapon; the throw is a button on the pawn.
 
 **Details**
@@ -751,7 +1038,7 @@ It is a projection, not a shield: the light stops nothing, and the projector fai
 
 **How to get it**
 
-- Craft it after researching **holographic projection** (which needs machining and microelectronics basics). Needs Crafting skill 6. Costs steel ×40, component industrial ×4 and gold ×10.
+- Craft it at a machining table after researching **holographic projection** (which needs machining and microelectronics). Needs Crafting skill 6. Costs steel ×40, component ×4 and gold ×10.
 - Can be bought from traders.
 - Equip it as a weapon; the throw is a button on the pawn.
 

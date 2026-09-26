@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The flame gauntlet's abilities, granted while the weapon is equipped (CompFlameGauntlet). The
+       meter's numbers are on the weapon (AG_FlameGauntlet); the rest here. Placeholders.
+
+       warmupTime is the picture's wind-up, 0.3 s for both. The cast job (JobDriver_CastFlameGauntlet)
+       then holds the wielder until the result: Devour until the last fire is in the palm (0.45 s + 0.08
+       s per fire after the first + 0.15 s), Release until the wave has stopped (at most about 0.6 s).
+
+       Sounds are vanilla placeholders played by MapComponent_FlameGauntlet: FireSpew_Warmup at
+       Devour's pull, FireSpew_Resolve at the release, Interact_BeatFire when refused. -->
+
+  <AbilityDef Name="AG_FlameGauntletAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastFlameGauntlet</jobDef>
+    <targetRequired>true</targetRequired>
+    <aiCanUse>false</aiCanUse>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_FlameGauntletAbilityBase">
+    <defName>AG_FlameGauntlet_Devour</defName>
+    <label>devour</label>
+    <description>Open the gauntlet's palm at a spot up to 10 tiles away and pull in every fire within 3 tiles of it: burning tiles and burning people, colonists included. Each fire goes out and flies into the palm: 1 heat per tile, 2 per person, nearest first. What the gauntlet has no room for is left burning. Cannot be used at a full gauntlet. Needs line of sight.</description>
+    <iconPath>RimArt/FlameGauntlet/IconDevour</iconPath>
+    <cooldownTicksRange>360</cooldownTicksRange>
+    <!-- Not hostile: it puts out burning colonists as well. -->
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>10.9</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>true</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_FlameDevour">
+        <radius>3</radius>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_FlameGauntletAbilityBase">
+    <defName>AG_FlameGauntlet_Release</defName>
+    <label>release</label>
+    <description>Spend the gauntlet's heat as a cone of fire toward a spot: 6 tiles long, 1 tile wide next to the wielder and 3 wide after, 16 tiles. The fire runs along the ground from the fist outward and sets every tile it reaches alight, and anyone standing there. Each tile costs 1 heat, nearest first, so with less heat the cone is shorter. Needs at least 5 heat. The wielder is immune to the fire. Walls stop it.</description>
+    <iconPath>RimArt/FlameGauntlet/IconRelease</iconPath>
+    <cooldownTicksRange>600</cooldownTicksRange>
+    <hostile>true</hostile>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>6.9</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>true</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_FlameRelease">
+        <length>6</length>
+        <width>3</width>
+        <fireSize>0.6</fireSize>
+        <pawnFireSize>0.5</pawnFireSize>
+        <fuelPuddle>true</fuelPuddle>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

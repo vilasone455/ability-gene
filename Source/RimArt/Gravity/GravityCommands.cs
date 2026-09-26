@@ -69,7 +69,7 @@ namespace RimArt
             if (cast != null && !cast.Field) button.Disable(cast.Active ? "Opening the well." : "Recovering from implosion.");
             else if (cast == null && remaining > 0) button.Disable($"Cooldown: {remaining / 60f:0.0}s");
             else if (cast == null && (!GravityAcquisition.HasEye(pawn) || pawn.InMentalState
-                || pawn.stances.stunner.Stunned || !GravityCastAnimation.CanAnimate(pawn)))
+                || pawn.stances.stunner.Stunned || !GravityCastAnimation.Clip.CanAnimate(pawn)))
                 button.Disable("Requires an attraction eye, a standing humanlike caster, and Melee Animation.");
             yield return button;
             if (cast?.Active == true)

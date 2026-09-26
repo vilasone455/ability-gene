@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Eye Pop's debuff. The length is the ability's debuffSeconds (AG_BubblePipe_EyePop), which
+       sets the Disappears comp when the soap lands; 300 ticks here is only its default.
+       ShootingAccuracyPawn is a per-tile hit chance that the game raises to the power of the
+       distance, so a 0.7 factor cuts the final hit chance by much more than 30% at range. -->
+  <HediffDef>
+    <defName>AG_SoapInTheEyes</defName>
+    <label>soap in the eyes</label>
+    <description>A soap bubble burst on this person's face. The eyes sting and water until the soap is blinked out.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.65, 0.85, 1)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>true</isBad>
+    <maxSeverity>1</maxSeverity>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>300</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <statFactors>
+          <ShootingAccuracyPawn>0.7</ShootingAccuracyPawn>
+          <MeleeHitChance>0.5</MeleeHitChance>
+          <MoveSpeed>0.7</MoveSpeed>
+        </statFactors>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

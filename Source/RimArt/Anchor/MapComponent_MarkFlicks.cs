@@ -33,6 +33,11 @@ namespace RimArt
         private const float Overdue = 0.25f;
 
         private readonly List<Flick> flicks = new List<Flick>();
+        /// <summary>
+        /// Carriers whose mark (placed or lifted) has landed in a cast job that has not ended yet (<see cref="Fired"/>).
+        /// Not saved: a game loaded during the hold ends that job, as before.
+        /// </summary>
+        private readonly HashSet<Pawn> fired = new HashSet<Pawn>();
 
         public MapComponent_MarkFlicks(Map map) : base(map) { }
 
@@ -58,6 +63,7 @@ namespace RimArt
                 flicks.Add(flick);
             }
             flick.landTick = Find.TickManager.TicksGame;
+            fired.Add(carrier);
         }
 
         /// <summary>The mark has been taken back; its card flies to the carrier's hand from where it was.</summary>
@@ -69,13 +75,18 @@ namespace RimArt
                 carrier = carrier, lifting = true, kind = ClapEnds.Kind(anchor), landTick = Find.TickManager.TicksGame,
                 markWas = F.MarkPoint(ClapEnds.Ground(anchor, true), ClapEnds.Kind(anchor)),
             });
+            fired.Add(carrier);
         }
 
         /// <summary>The carrier's cast job is over. A card that never landed has nothing left to show.</summary>
         public void Ended(Pawn carrier)
         {
             flicks.RemoveAll(f => f.carrier == carrier && f.landTick < 0);
+            fired.Remove(carrier);
         }
+
+        /// <summary>Whether the carrier's mark has landed in the cast job still running: the job holds from here (CastJobFail).</summary>
+        public bool Fired(Pawn carrier) => fired.Contains(carrier);
 
         public override void MapComponentUpdate()
         {

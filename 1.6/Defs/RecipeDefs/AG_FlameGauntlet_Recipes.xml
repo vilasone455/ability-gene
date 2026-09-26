@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Behind AG_FlameGauntlet, at the machining table. A RecipeDef rather than a recipeMaker, as the
+       chain sickle's and the water gun's are. Proposed cost: 70 steel for the plates and 2 components
+       for the burner and the vents. -->
+  <RecipeDef>
+    <defName>AG_MakeFlameGauntlet</defName>
+    <label>make flame gauntlet</label>
+    <description>Make a flame gauntlet from 70 steel and 2 components.</description>
+    <jobString>Making a flame gauntlet.</jobString>
+    <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+    <workSkill>Crafting</workSkill>
+    <effectWorking>Smith</effectWorking>
+    <soundWorking>Recipe_Machining</soundWorking>
+    <workAmount>12000</workAmount>
+    <researchPrerequisite>AG_FlameGauntlet</researchPrerequisite>
+    <recipeUsers>
+      <li>TableMachining</li>
+    </recipeUsers>
+    <ingredients>
+      <li>
+        <filter><thingDefs><li>Steel</li></thingDefs></filter>
+        <count>70</count>
+      </li>
+      <li>
+        <filter><thingDefs><li>ComponentIndustrial</li></thingDefs></filter>
+        <count>2</count>
+      </li>
+    </ingredients>
+    <fixedIngredientFilter>
+      <thingDefs>
+        <li>Steel</li>
+        <li>ComponentIndustrial</li>
+      </thingDefs>
+    </fixedIngredientFilter>
+    <products>
+      <AG_FlameGauntlet>1</AG_FlameGauntlet>
+    </products>
+    <skillRequirements>
+      <Crafting>6</Crafting>
+    </skillRequirements>
+  </RecipeDef>
+
+</Defs>

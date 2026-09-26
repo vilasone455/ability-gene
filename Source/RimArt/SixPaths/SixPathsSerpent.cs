@@ -1,4 +1,5 @@
 using UnityEngine;
+using static RimArt.VfxMath;
 
 namespace RimArt
 {
@@ -43,8 +44,6 @@ namespace RimArt
         public static float ReleaseAt => CatchAt + PreviewHold;
         public static float ReformAt => ReleaseAt + Return;
         public static float Duration => ReformAt + Settle;
-
-        private static float Smooth(float t) => SixPathsSlamTiming.Smooth(t);
 
         /// <summary>The ribbon fades in over the first 0.15 s and out over the settle.</summary>
         public static float Stage(float seconds) => Smooth(seconds / 0.15f) * (1f - Smooth((seconds - ReformAt) / Settle));

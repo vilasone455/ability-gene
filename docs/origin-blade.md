@@ -45,7 +45,7 @@ actually made. Psytrainers and psylink neuroformers reject use before consuming 
 ## Kit
 
 Origin: Blade grants Unlimited Blade Works through the trait ability extension, until the hero layer
-(docs/hero-sponsor.md) takes the Trace kit over. Rain, Loose and Grasp are no longer granted by it and
+(docs/hero-echo.md) takes the Trace kit over. Rain, Loose and Grasp are no longer granted by it and
 now have no source; their defs and code stay. A pawn awakened in an older save keeps the three it had
 (the sync only grants) and gains Unlimited Blade Works on load.
 

@@ -91,11 +91,8 @@ namespace RimArt
         public static float GoneAt => ExitAt + ExitSeconds;
         public static float Duration => GoneAt + MarksFade;
 
-        public static float Smooth(float t)
-        {
-            t = Mathf.Clamp01(t);
-            return t * t * (3f - 2f * t);
-        }
+        /// <summary>Kept for callers outside this branch's reach (UBW, Chain Sickle); new code calls VfxMath.Smooth.</summary>
+        public static float Smooth(float t) => VfxMath.Smooth(t);
 
         private static float Progress(float seconds, float start, float span) =>
             Mathf.Clamp01((seconds - start) / span);

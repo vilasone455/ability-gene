@@ -3,7 +3,6 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <RimWorldManaged Condition="'$(RimWorldManaged)' == ''">/mnt/c/Program Files (x86)/Steam/steamapps/common/RimWorld/RimWorldWin64_Data/Managed</RimWorldManaged>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ApiChecks.cs" />

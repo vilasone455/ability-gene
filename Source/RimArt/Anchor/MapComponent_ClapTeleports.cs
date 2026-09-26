@@ -32,6 +32,11 @@ namespace RimArt
         private const float Overdue = 0.25f;
 
         private readonly List<Cast> casts = new List<Cast>();
+        /// <summary>
+        /// Carriers whose clap has landed in a cast job that has not ended yet (<see cref="Fired"/>).
+        /// Not saved: a game loaded during the hold ends that job, as before.
+        /// </summary>
+        private readonly HashSet<Pawn> fired = new HashSet<Pawn>();
 
         public MapComponent_ClapTeleports(Map map) : base(map) { }
 
@@ -60,6 +65,7 @@ namespace RimArt
             }
             cast.warmup = warmup;
             cast.contactTick = now;
+            fired.Add(carrier);
             cast.end0 = end0;
             cast.end1 = end1;
             if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(T.Shake);
@@ -72,7 +78,11 @@ namespace RimArt
         public void Ended(Pawn carrier)
         {
             casts.RemoveAll(c => c.carrier == carrier && c.contactTick < 0);
+            fired.Remove(carrier);
         }
+
+        /// <summary>Whether the carrier's clap has landed in the cast job still running: the job holds from here (CastJobFail).</summary>
+        public bool Fired(Pawn carrier) => fired.Contains(carrier);
 
         /// <summary>
         /// Whether a clap against this mark is in its warmup, and how long its cards have been

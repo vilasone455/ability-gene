@@ -101,7 +101,7 @@ static Recording Record(MethodInfo method, string label, Kit kit)
         if (!running) break;
         if (loop.HasValue && seconds >= loop.Value) break;
 
-        if (recording.frames.Count == StillFrames + 1 && recording.frames.All(f => f.hash == recording.frames[0].hash))
+        if (!kit.StartsStill(label) && recording.frames.Count == StillFrames + 1 && recording.frames.All(f => f.hash == recording.frames[0].hash))
         {
             // Frozen previews draw the same frame forever: keep one.
             recording.frames.RemoveRange(1, recording.frames.Count - 1);

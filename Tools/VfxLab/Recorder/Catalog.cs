@@ -23,6 +23,11 @@ namespace RimArt.VfxLab
         public Func<string, Phase[]> Phases = _ => Array.Empty<Phase>();
         /// <summary>For previews that loop forever: stop after this many seconds on their own clock.</summary>
         public Func<string, float?> LoopSeconds = _ => null;
+        /// <summary>
+        /// Previews that draw the same frame for their first half second on purpose (the sketch's stand-in
+        /// walks up, and the port draws no stand-in): record them whole instead of as a still.
+        /// </summary>
+        public Func<string, bool> StartsStill = _ => false;
 
         public static readonly Kit[] All =
         {
@@ -58,6 +63,66 @@ namespace RimArt.VfxLab
             {
                 Name = "Paper Bomb", Prefix = "Paper Bomb:", Component = typeof(MapComponent_PaperBombPreview), Clock = "seconds",
                 Phases = label => label.Contains("tag line") ? TagLinePhases() : label.Contains("shroud") ? ShroudPhases() : TagThrowPhases(),
+            },
+            new Kit
+            {
+                Name = "Bank Shot", Prefix = "Bank Shot:", Component = typeof(MapComponent_BankShotPreview), Clock = "seconds",
+                Phases = label => BankShotPhases(label.Contains("corridor") ? BankShotPath.Scene.Corridor : label.Contains("room") ? BankShotPath.Scene.Room : BankShotPath.Scene.Corner),
+            },
+            new Kit
+            {
+                Name = "Bubble Pipe", Prefix = "Bubble Pipe:", Component = typeof(MapComponent_BubblePipePreview), Clock = "seconds",
+                Phases = label => label.Contains("eye pop") ? EyePopPhases() : DriftingBurstPhases(),
+            },
+            new Kit
+            {
+                Name = "Water Gun", Prefix = "Water Gun:", Component = typeof(MapComponent_WaterGunPreview), Clock = "seconds",
+                Phases = label => label.Contains("pump") ? PumpPhases() : StreamPhases(),
+            },
+            new Kit
+            {
+                Name = "Chain Sickle", Prefix = "Chain Sickle:", Component = typeof(MapComponent_ChainSicklePreview), Clock = "seconds",
+                Phases = label => label.Contains("refused") ? new[] { new Phase("Snagged (Stake refused: too heavy)", 0f) }
+                    : label.Contains("stake") ? StakePhases()
+                    : SnagPhases(label.Contains("raider") ? 1 : label.Contains("muffalo") ? 2 : label.Contains("thrumbo") ? 3 : 0),
+            },
+            new Kit
+            {
+                Name = "Flame Gauntlet", Prefix = "Flame Gauntlet:", Component = typeof(MapComponent_FlameGauntletPreview), Clock = "seconds",
+                Phases = label => label.Contains("release")
+                    ? ReleasePhases(label.Contains("too cold") ? 3f : label.Contains("8 heat") ? 8f : 20f)
+                    : DevourPhases(label.Contains("burning pawn") ? 1 : label.Contains("starting hot") ? 2 : 0, label.Contains("south") ? 270f : 0f),
+            },
+            new Kit
+            {
+                Name = "Vacuum", Prefix = "Vacuum:", Component = typeof(MapComponent_VacuumPreview), Clock = "seconds",
+                Phases = label => label.Contains("digest") ? DigestPhases()
+                    : label.Contains("spit") ? SpitPhases()
+                    : SuckPhases(label.Contains("loose") ? 2 : 3),
+            },
+            new Kit
+            {
+                Name = "Samehada", Prefix = "Samehada:", Component = typeof(MapComponent_SamehadaPreview), Clock = "seconds",
+                Phases = label => label.Contains("fusion") ? FusionPhases() : label.Contains("shark") ? SharkSkinPhases() : FeedPhases(),
+            },
+            new Kit
+            {
+                Name = "Nezuko's Box", Prefix = "Nezuko's Box:", Component = typeof(MapComponent_NezukoBoxPreview), Clock = "seconds",
+                Phases = label => label.Contains("go in") ? BoxGoInPhases()
+                    : label.Contains("strike") ? BoxStrikePhases()
+                    : label.Contains("come out") ? BoxCalmPhases(label.Contains("time up") ? NezukoExit.TimeUp : NezukoExit.Downed)
+                    : new[] { new Phase("Loop", 0f) },
+                StartsStill = label => label.Contains("go in"),
+            },
+            new Kit
+            {
+                Name = "Coil Gun", Prefix = "Coil Gun:", Component = typeof(MapComponent_CoilGunPreview), Clock = "seconds",
+                Phases = label => label.Contains("chain arc") ? ChainArcPhases() : label.Contains("recharge") ? new[] { new Phase("Charging", 0f) } : CoilShotPhases(),
+            },
+            new Kit
+            {
+                Name = "Frost Gun", Prefix = "Frost Gun:", Component = typeof(MapComponent_FrostGunPreview), Clock = "seconds",
+                Phases = label => label.Contains("shot") ? FrostShotPhases() : FlashFreezePhases(label.Contains("shatter")),
             },
             new Kit
             {
@@ -138,6 +203,15 @@ namespace RimArt.VfxLab
         };
 
         public static Kit For(string label) => All.FirstOrDefault(k => label.StartsWith(k.Prefix, StringComparison.Ordinal));
+
+        private static Phase[] BankShotPhases(BankShotPath.Scene scene)
+        {
+            BankShotShot t = BankShotTiming.Script(scene, default);
+            var phases = new List<Phase> { new Phase("Aim", 0f), new Phase("Charge", BankShotTiming.Lead), new Phase("Fire", t.FireAt) };
+            for (int i = 0; i < t.Path.Bounces.Count; i++) phases.Add(new Phase("Bounce " + t.Path.Bounces[i].N, t.BounceAt(i)));
+            phases.Add(new Phase(t.Path.End == BankShotEnd.Hit ? "Hit" : t.Path.End == BankShotEnd.Embed ? "Embed" : "Spent", t.EndAt));
+            return phases.ToArray();
+        }
 
         private static Phase[] ImitationPhases(ImitationEnd end)
         {
@@ -331,10 +405,225 @@ namespace RimArt.VfxLab
             phases.Add(new Phase("Throw", t.Release));
             phases.Add(new Phase("Grind", t.Hit));
             phases.Add(new Phase("Detonation", t.Dome));
-            phases.Add(new Phase("Dome lifts", t.Fade));
+            phases.Add(new Phase("Burst", t.Burst));
             phases.Add(new Phase("Aftermath", t.Gone));
             return phases.ToArray();
         }
+
+        private static Phase[] FrostShotPhases()
+        {
+            var phases = new List<Phase>();
+            for (int k = 0; k < FrostGunShotTiming.ScriptShots; k++)
+            {
+                phases.Add(new Phase("Shot " + (k + 1), FrostGunShotTiming.Fire(k)));
+                phases.Add(new Phase("Hit (" + (k + 1) + " chilled)", FrostGunShotTiming.Hit(k, FrostGunShotTiming.ScriptDistance)));
+            }
+            return phases.ToArray();
+        }
+
+        private static Phase[] FlashFreezePhases(bool shatter)
+        {
+            float hit = FrostGunFreezeTiming.Hit(FrostGunFreezeTiming.ScriptWarmup, FrostGunFreezeTiming.ScriptDistance - FrostGunGraphics.MuzzleAlong);
+            var phases = new List<Phase>
+            {
+                new Phase("Charge", 0f),
+                new Phase("Beam", FrostGunFreezeTiming.ScriptWarmup),
+                new Phase("Freeze", hit),
+                new Phase("Frozen", hit + FrostGunFreezeTiming.Grow),
+            };
+            if (shatter) phases.Add(new Phase("Shatter", hit + FrostGunFreezeTiming.Grow + FrostGunFreezeTiming.ScriptShatterAfter));
+            else
+            {
+                phases.Add(new Phase("Thaw", hit + FrostGunFreezeTiming.ScriptFreeze));
+                phases.Add(new Phase("Puddle", hit + FrostGunFreezeTiming.ScriptFreeze + FrostGunFreezeTiming.Thaw));
+            }
+            return phases.ToArray();
+        }
+
+        private static Phase[] StreamPhases()
+        {
+            float d = WaterGunStreamTiming.ScriptDistance, hold = WaterGunStreamTiming.ScriptHold;
+            return new[]
+            {
+                new Phase("Rest", 0f),
+                new Phase("Raise", WaterGunStreamTiming.Raise0),
+                new Phase("Fire", WaterGunStreamTiming.Fire),
+                new Phase("Hit", WaterGunStreamTiming.Hit(d)),
+                new Phase("Lower", WaterGunStreamTiming.Lower0(d, hold)),
+            };
+        }
+
+        private static Phase[] SuckPhases(int things) => new[]
+        {
+            new Phase("Wand", 0f),
+            new Phase("Rise", VacuumSuckTiming.Rise0),
+            new Phase("Pull", VacuumSuckTiming.Pull0),
+            new Phase("Swallow", VacuumSuckTiming.Swallow),
+            new Phase("Result", VacuumSuckTiming.Result(things)),
+            new Phase("Sink", VacuumSuckTiming.Sink0(things, VacuumSuckTiming.ScriptHold)),
+        };
+
+        private static Phase[] SpitPhases() => new[]
+        {
+            new Phase("Wand", 0f),
+            new Phase("Rise", VacuumSpitTiming.Rise0),
+            new Phase("Heave", VacuumSpitTiming.Heave),
+            new Phase("Launch", VacuumSpitTiming.Launch),
+            new Phase("Impact", VacuumSpitTiming.Impact),
+            new Phase("Sink", VacuumSpitTiming.Sink0(VacuumSpitTiming.ScriptHold)),
+        };
+
+        private static Phase[] DigestPhases()
+        {
+            var shot = new VacuumDigestShot();
+            return new[]
+            {
+                new Phase("Wand", 0f),
+                new Phase("Rise", VacuumDigestTiming.Rise0),
+                new Phase("Chew", VacuumDigestTiming.Chew0),
+                new Phase("Burp", VacuumDigestTiming.Done(shot)),
+                new Phase("Sink", VacuumDigestTiming.Sink0(shot)),
+            };
+        }
+
+        private static Phase[] ChainArcPhases()
+        {
+            float fire = CoilGunArcTiming.ScriptFire;
+            var phases = new List<Phase> { new Phase("Rest", 0f), new Phase("Charge", CoilGunArcTiming.Lead), new Phase("Fire", fire) };
+            for (int i = 0; i < CoilGunArcTiming.ScriptTargets.Length; i++)
+                phases.Add(new Phase("Hit " + (i + 1) + (i == CoilGunArcTiming.ScriptSoaked ? " (Soaked)" : ""), CoilGunArcTiming.Hit(fire, i)));
+            phases.Add(new Phase("Faded", CoilGunArcTiming.LastHit(fire, CoilGunArcTiming.ScriptTargets.Length) + CoilGunArcTiming.Lit + CoilGunArcTiming.Fade + CoilGunArcTiming.Strike));
+            return phases.ToArray();
+        }
+
+        private static Phase[] CoilShotPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Round 1", CoilGunShotTiming.Fired(0)),
+            new Phase("Round 2", CoilGunShotTiming.Fired(1)),
+            new Phase("Hit 1", CoilGunShotTiming.Impact(0)),
+            new Phase("Hit 2", CoilGunShotTiming.Impact(1)),
+        };
+
+        private static Phase[] FeedPhases()
+        {
+            var phases = new List<Phase> { new Phase("Rest", 0f) };
+            for (int i = 0; i < SamehadaFeedTiming.ScriptHits; i++)
+            {
+                phases.Add(new Phase("Hit " + (i + 1), SamehadaFeedTiming.HitStart(i)));
+                phases.Add(new Phase("Bite", SamehadaFeedTiming.Bite(i)));
+            }
+            phases.Add(new Phase("Result", SamehadaFeedTiming.Result));
+            return phases.ToArray();
+        }
+
+        private static Phase[] BoxGoInPhases() => new[]
+        {
+            new Phase("Approach", NezukoBoxGoInTiming.Approach0),
+            new Phase("Open", NezukoBoxGoInTiming.Open0),
+            new Phase("Enter", NezukoBoxGoInTiming.Enter0),
+            new Phase("Shut", NezukoBoxGoInTiming.Shut0),
+            new Phase("Asleep", NezukoBoxGoInTiming.Latch),
+        };
+
+        private static Phase[] BoxStrikePhases() => new[]
+        {
+            new Phase("Rumble", NezukoBoxComeOutTiming.Rumble0),
+            new Phase("Burst", NezukoBoxComeOutTiming.BurstAt),
+            new Phase("Leap", NezukoBoxComeOutTiming.Leap0),
+            new Phase("Land", NezukoBoxComeOutTiming.Land(NezukoBoxComeOutTiming.Flight)),
+            new Phase("Strike", NezukoBoxComeOutTiming.StrikeAt(NezukoBoxComeOutTiming.Flight)),
+            new Phase("Shut", NezukoBoxComeOutTiming.Shut0(NezukoExit.Strike, NezukoBoxComeOutTiming.Flight)),
+        };
+
+        private static Phase[] BoxCalmPhases(NezukoExit kind) => new[]
+        {
+            new Phase("Open", NezukoBoxComeOutTiming.Open0),
+            new Phase("Out", NezukoBoxComeOutTiming.Out0),
+            new Phase("Shut", NezukoBoxComeOutTiming.Shut0(kind, NezukoBoxComeOutTiming.Flight)),
+        };
+
+        private static Phase[] SharkSkinPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Tear", SamehadaSharkSkinTiming.Tear0),
+            new Phase("Flare", SamehadaSharkSkinTiming.Flare0),
+            new Phase("Sweep", SamehadaSharkSkinTiming.Sweep0),
+            new Phase("Result", SamehadaSharkSkinTiming.Result),
+        };
+
+        private static Phase[] FusionPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Merge", SamehadaFusionTiming.Merge0),
+            new Phase("Fused", SamehadaFusionTiming.Fused0),
+            new Phase("Revert", SamehadaFusionTiming.Revert0),
+            new Phase("Result", SamehadaFusionTiming.Done),
+        };
+
+        private static Phase[] SnagPhases(int target)
+        {
+            float reel = ChainSickleRule.Script(target).Reel;
+            return new[]
+            {
+                new Phase("Rest", 0f),
+                new Phase("Spin", ChainSickleSnagTiming.Spin0),
+                new Phase("Throw", ChainSickleSnagTiming.Throw0),
+                new Phase("Wrap", ChainSickleSnagTiming.Hit),
+                new Phase("Reel", ChainSickleSnagTiming.Reel0),
+                new Phase("Result", ChainSickleSnagTiming.ReelEnd(reel)),
+            };
+        }
+
+        private static Phase[] DevourPhases(int scenario, float aim)
+        {
+            FlameDevourShot shot = FlameGauntletDevourGraphics.Script(default, aim, scenario, scenario == 2 ? 14f : 0f);
+            var phases = new List<Phase> { new Phase("Rest", 0f), new Phase("Wind-up", FlameGauntletTiming.Lead), new Phase("Pull", FlameDevourTiming.Pull) };
+            if (shot.RefusedAt >= 0f) phases.Add(new Phase("Too hot", shot.RefusedAt));
+            phases.Add(new Phase("Result", shot.Result));
+            return phases.ToArray();
+        }
+
+        private static Phase[] ReleasePhases(float heat)
+        {
+            FlameReleaseShot shot = FlameGauntletReleaseGraphics.Script(default, 0f, heat, true);
+            if (shot.Lit == 0)
+                return new[] { new Phase("Rest", 0f), new Phase("Wind-up", FlameGauntletTiming.Lead), new Phase("Too cold", FlameReleaseTiming.Go), new Phase("Result", FlameReleaseTiming.Result(shot)) };
+            return new[]
+            {
+                new Phase("Rest", 0f),
+                new Phase("Wind-up", FlameGauntletTiming.Lead),
+                new Phase("Release", FlameReleaseTiming.Go),
+                new Phase("Wave", FlameReleaseTiming.Go + FlameReleaseTiming.JetLand),
+                new Phase("Stops", FlameReleaseTiming.Stop(shot)),
+                new Phase("Result", FlameReleaseTiming.Result(shot)),
+            };
+        }
+
+        private static Phase[] StakePhases()
+        {
+            float swing = ChainSickleStakeTiming.ScriptSwingAt;
+            return new[]
+            {
+                new Phase("Snagged", 0f),
+                new Phase("Yank", ChainSickleStakeTiming.Yank0),
+                new Phase("Staked", ChainSickleStakeTiming.Staked),
+                new Phase("Step in", ChainSickleStakeTiming.Step0(swing)),
+                new Phase("Cut", swing),
+                new Phase("Result", ChainSickleStakeTiming.Cut(swing)),
+            };
+        }
+
+        private static Phase[] PumpPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Raise", WaterGunPumpTiming.Raise0),
+            new Phase("Pump", WaterGunPumpTiming.Pump0),
+            new Phase("Blast", WaterGunPumpTiming.Blast),
+            new Phase("Spray ends", WaterGunPumpTiming.SprayEnd),
+            new Phase("Up", WaterGunPumpTiming.Up(WaterGunPumpTiming.ScriptDown)),
+            new Phase("Lower", WaterGunPumpTiming.Lower0(WaterGunPumpTiming.ScriptGunHold)),
+        };
 
         private static Phase[] TagThrowPhases() => new[]
         {
@@ -361,6 +650,27 @@ namespace RimArt.VfxLab
             new Phase("Held", PaperBombShroudTiming.FirstLand),
             new Phase("Hand seal", PaperBombShroudTiming.SealAt(PaperBombShroudTiming.ScriptHeld)),
             new Phase("Burst", PaperBombShroudTiming.BurstAt(PaperBombShroudTiming.ScriptHeld)),
+        };
+
+        private static Phase[] DriftingBurstPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Raise", BubblePipeGraphics.Lead),
+            new Phase("Blow", BubblePipeDriftingBurstTiming.BlowAt),
+            new Phase("Drift", BubblePipeDriftingBurstTiming.AllOutAt(BubblePipeDriftingBurstTiming.ScriptCount)),
+            new Phase("Expire", BubblePipeDriftingBurstTiming.ExpireAt(BubblePipeDriftingBurstTiming.ScriptLife)),
+            new Phase("Lower", BubblePipeDriftingBurstTiming.ScriptLowerAt(BubblePipeDriftingBurstTiming.ScriptLife)),
+        };
+
+        private static Phase[] EyePopPhases() => new[]
+        {
+            new Phase("Rest", 0f),
+            new Phase("Raise", BubblePipeGraphics.Lead),
+            new Phase("Blow", BubblePipeEyePopTiming.BlowAt),
+            new Phase("Fly", BubblePipeEyePopTiming.LaunchAt),
+            new Phase("Hit", BubblePipeEyePopTiming.ScriptHitAt),
+            new Phase("Clear", BubblePipeEyePopTiming.ScriptHitAt + BubblePipeEyePopTiming.ScriptDebuff),
+            new Phase("Lower", BubblePipeEyePopTiming.ScriptLowerAt),
         };
 
         private static Phase[] ThrustPhases() => new[]

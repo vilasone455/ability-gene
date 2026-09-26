@@ -123,11 +123,12 @@ namespace RimArt {
  public static class GravityAcquisition { public static bool HasEye(Verse.Pawn pawn)=>pawn.HasEye; }
  public static class GravityCommands { public static bool ValidTarget(Verse.Pawn pawn,Verse.IntVec3 cell)=>true; }
  public static class GravityDefOf { public static Verse.SoundDef AG_GravityHum=new(),AG_GravityImplode=new(); }
- public static class GravityCastAnimation {
+ public sealed class CastClips {
   public sealed class Handle { public bool Stopped; public void Stop(){Stopped=true;} public bool Seek(float time)=>!Stopped; }
-  public static bool TryStart(Verse.Pawn pawn,out Handle handle){handle=new();return true;}
-  public static bool TryRestore(Verse.Pawn pawn,out Handle handle)=>TryStart(pawn,out handle);
+  public bool TryStart(Verse.Pawn pawn,out Handle handle){handle=new();return true;}
+  public bool TryRestore(Verse.Pawn pawn,out Handle handle)=>TryStart(pawn,out handle);
  }
+ public static class GravityCastAnimation { public static readonly CastClips Clip=new(); }
  public static class GravityGraphics { public static Material TrailMaterial=new(); public static void Draw(Vector3 p,float time,float mass,float fade,bool implode,Verse.Map map){} }
  public static class MapComponent_RetrievalHooks {
   public static HashSet<Verse.Thing> Targets=new(); public static bool IsTargeted(Verse.Thing t)=>Targets.Contains(t);

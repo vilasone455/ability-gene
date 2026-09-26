@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Chilled, from the frost rifle's bolts. Severity is the stack count: each hit adds one, up to
+       the bolt's maxChilledStacks (3), and sets the time left back to its chilledSeconds (10 s;
+       HediffComp_Disappears.SetDuration), so disappearsAfterTicks here is only the fallback. What
+       each stack does is its stage: -10% move speed per stack. Three stacks let Flash Freeze take
+       the pawn. -->
+  <HediffDef>
+    <defName>AG_FrostGunChilled</defName>
+    <label>chilled</label>
+    <description>Hit by frost bolts. Cold stiffens the limbs: each hit slows this creature further, up to three times. It passes on its own.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.62, 0.84, 1.0)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>true</isBad>
+    <initialSeverity>1</initialSeverity>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>600</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <minSeverity>0</minSeverity>
+        <label>x1</label>
+        <statFactors>
+          <MoveSpeed>0.9</MoveSpeed>
+        </statFactors>
+      </li>
+      <li>
+        <minSeverity>1.5</minSeverity>
+        <label>x2</label>
+        <statFactors>
+          <MoveSpeed>0.8</MoveSpeed>
+        </statFactors>
+      </li>
+      <li>
+        <minSeverity>2.5</minSeverity>
+        <label>x3</label>
+        <statFactors>
+          <MoveSpeed>0.7</MoveSpeed>
+        </statFactors>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <!-- Frozen solid, from Flash Freeze. The freeze itself is a stun that MapComponent_FrostGun
+       applies and ends; this is its record (in the health tab, in saves, and for the rule that the
+       next damage shatters the ice). Its length is set to the freeze plus half a second
+       (SetDuration); disappearsAfterTicks is only the fallback. Not isBad: nothing treats it and it
+       ends in seconds. -->
+  <HediffDef>
+    <defName>AG_FrostGunFrozen</defName>
+    <label>frozen solid</label>
+    <description>Encased in ice. This creature cannot move or act until the ice thaws or something breaks it, and whatever breaks it hurts more for the shards.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.75, 0.92, 1.0)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>false</isBad>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>330</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+  </HediffDef>
+
+</Defs>

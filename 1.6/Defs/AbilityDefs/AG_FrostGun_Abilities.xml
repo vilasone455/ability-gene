@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Flash Freeze, granted while the frost rifle is equipped (CompFrostGun). Numbers are
+       placeholders; every balance number is a field here.
+
+       Target: one pawn in line of sight within 22 cells that is Soaked (the water gun's
+       AG_Soaked) or has requiredChilledStacks Chilled stacks. Anyone else is refused with the
+       reason on the mouse label. Cost: 10 coolant. The freeze uses up the Soaked and Chilled it
+       needed (consumeCondition).
+
+       The freeze is a stun (no mote, no turning) for freezeSeconds, with the AG_FrostGunFrozen
+       hediff as its record. The next damage the pawn takes shatters the ice: shatterDamage more of
+       shatterDamageDef, then it is free. Otherwise it thaws.
+
+       warmupTime 0.8 is the charge at the muzzle; the beam then crosses at 60 cells a second and
+       the freeze lands when it arrives (MapComponent_FrostGun). The cast job holds the caster, gun
+       aimed, until 0.15 s after the beam lands.
+
+       Sounds are vanilla placeholders: warmup Interact_ChargeLance, cast ChargeLance_Fire, freeze
+       EnergyShield_Reset, shatter GestatorGlassShattered; the thaw is silent. -->
+  <AbilityDef>
+    <defName>AG_FrostGun_FlashFreeze</defName>
+    <label>flash freeze</label>
+    <description>Charge the rifle and fire a freezing beam at one creature in sight that is soaked or chilled 3 times. It is frozen solid in ice for 5 seconds: it cannot move or act. The next hit it takes shatters the ice for 15 more damage; otherwise it thaws. Freezing uses up the soaking or the chill. Uses 10 coolant.</description>
+    <iconPath>RimArt/FrostGun/IconFlashFreeze</iconPath>
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastFrostGun</jobDef>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <aiCanUse>false</aiCanUse>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <cooldownTicksRange>1800</cooldownTicksRange>
+    <warmupStartSound>Interact_ChargeLance</warmupStartSound>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>22.9</range>
+      <warmupTime>0.8</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <soundCast>ChargeLance_Fire</soundCast>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_FlashFreeze">
+        <cost>10</cost>
+        <freezeSeconds>5</freezeSeconds>
+        <requiredChilledStacks>3</requiredChilledStacks>
+        <consumeCondition>true</consumeCondition>
+        <shatterDamage>15</shatterDamage>
+        <shatterDamageDef>Cut</shatterDamageDef>
+        <shatterArmorPenetration>0.2</shatterArmorPenetration>
+        <soundFreeze>EnergyShield_Reset</soundFreeze>
+        <soundShatter>GestatorGlassShattered</soundShatter>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

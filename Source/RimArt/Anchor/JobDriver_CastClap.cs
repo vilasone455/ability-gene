@@ -16,7 +16,9 @@ namespace RimArt
     ///
     /// The toils are restated rather than taken from the base class. The base fails the whole job
     /// once the ability can no longer be cast, which is true the moment it has been cast, and that
-    /// would end the hold on its first tick. Here that condition is on the cast toil alone.
+    /// would end the hold on its first tick. Here that condition stops once the clap has landed
+    /// (CastJobFail). On the cast toil alone it was not enough: the toil is still current on the
+    /// tick the ability fires, so the job ended there anyway.
     /// </summary>
     public class JobDriver_CastClap : JobDriver_CastAbility
     {
@@ -26,7 +28,7 @@ namespace RimArt
 
         protected override IEnumerable<Toil> MakeNewToils()
         {
-            this.FailOnDespawnedOrNull(TargetIndex.A);
+            this.FailBeforeFired(Fired);
             AddFinishAction(delegate
             {
                 if (job.ability != null && job.def.abilityCasting)
@@ -41,7 +43,6 @@ namespace RimArt
             yield return begin;
 
             Toil cast = Toils_Combat.CastVerb(TargetIndex.A, TargetIndex.B, canHitNonTargetPawns: false);
-            cast.FailOn(() => !job.ability.CanCast && !job.ability.Casting);
             cast.AddPreTickAction(() => { FirstClap(); Seek(); });
             yield return cast;
 
@@ -50,6 +51,8 @@ namespace RimArt
             hold.defaultCompleteMode = ToilCompleteMode.Never;
             yield return hold;
         }
+
+        private bool Fired() => pawn.Map?.GetComponent<MapComponent_ClapTeleports>()?.Fired(pawn) ?? false;
 
         private void Begin()
         {
