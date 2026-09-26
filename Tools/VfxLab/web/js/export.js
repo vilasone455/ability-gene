@@ -57,7 +57,7 @@ export function renderFrames({ renderer, scene, camera, source, cell, hidden }, 
 
   const shots = [];
   for (const t of times) {
-    const frame = source.frameAt(Math.min(t, source.duration || t), cell, scene);
+    const frame = source.frameAt(Math.min(t, source.duration || t), cell, scene, { ...centre, ppc, halfW: view, halfH: view });
     const calls = settings.transparent || source.ownMap
       ? frame.calls
       : scene.calls({ x: centre.cx, z: centre.cz }, view).concat(frame.calls);

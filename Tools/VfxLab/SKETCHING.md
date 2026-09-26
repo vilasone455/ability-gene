@@ -117,6 +117,11 @@ The game camera looks straight down at the map.
   cell of height (`Lift = 0.60` in the rods sketch). A shadow stays on the ground position.
 - `ctx.scene.shadowVector` is `{ x, z }`: where a shadow of something 1 cell tall ends, relative to
   its base. The Scene tab sets the sun. This is a lab setting, not something the game supplies.
+- `ctx.view` is the camera the frame is drawn for: `{ cx, cz, ppc, halfW, halfH }`, its centre in
+  cells, its zoom in pixels per cell and half the view's width and height in cells. In game it is
+  `Find.CameraDriver`'s position and size. Use it only for things drawn relative to the camera
+  (parallax, a haze across the screen); everything else stays on the map. It can be `null`: have a
+  fallback.
 
 ### Drawing: `Graphics.DrawMesh`
 

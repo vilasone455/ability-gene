@@ -249,10 +249,10 @@ function drawStage() {
     const rect = rects[i];
     if (!source || !rect) return;
     const t = Math.min(clock.t, source.duration);
-    const frame = source.frameAt(t, state.cell, scene);
     const shake = shakeAt(source.events, clock.t);
     const move = cameraMoveAt(source.events, clock.t), view = movedView(camera, move, state.cell);
     const cells = Math.max(rect[2], rect[3]) / view.ppc / 2;
+    const frame = source.frameAt(t, state.cell, scene, { cx: view.cx, cz: view.cz, ppc: view.ppc, halfW: rect[2] / view.ppc / 2, halfH: rect[3] / view.ppc / 2 });
     views.push({
       rect,
       camera: { cx: view.cx + shake.x, cz: view.cz + shake.z, ppc: view.ppc },

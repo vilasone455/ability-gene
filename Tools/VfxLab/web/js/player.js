@@ -79,9 +79,11 @@ export class SketchSource {
   get phases() { return this.module.phases(this.values); }
   get events() { return this.module.events?.(this.values) ?? []; }
 
-  frameAt(t, origin, scene) {
+  // view: the camera the frame is drawn for, { cx, cz, ppc, halfW, halfH } in cells (in game,
+  // Find.CameraDriver's position and size). Only sketches drawn relative to the camera read it.
+  frameAt(t, origin, scene, view = null) {
     Graphics.beginFrame();
-    this.module.draw(t, this.values, { origin: new Vector3(origin.x + 0.5, 0, origin.z + 0.5), scene });
+    this.module.draw(t, this.values, { origin: new Vector3(origin.x + 0.5, 0, origin.z + 0.5), scene, view });
     const frame = Graphics.endFrame();
     for (const c of frame.calls) c.group ??= groupOf(c.mat);
     return { calls: frame.calls, index: Math.floor(t * 60), clock: t, frames: Math.ceil(this.duration * 60) };
