@@ -51,7 +51,9 @@ static class ApiChecks
                 foreach (ParameterInfo param in patch.GetParameters())
                 {
                     string name = param.Name;
-                    if (name == "__instance" || name == "__result") continue;
+                    // Harmony's own injected parameters, which are not parameters of the original.
+                    if (name == "__instance" || name == "__result" || name == "__state"
+                        || name == "__runOriginal" || name == "__originalMethod" || name == "__exception") continue;
                     if (name.StartsWith("___"))
                     {
                         if (AccessTools.Field(original.DeclaringType, name.Substring(3)) == null)

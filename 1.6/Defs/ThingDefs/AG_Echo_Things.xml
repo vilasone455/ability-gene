@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The resonance device (docs/hero-echo.md). It holds the colony's one shared charge pool and
+       refills it while powered; research tiers raise the pool size, the refill and the hero cap.
+       Tier numbers are balance placeholders. -->
+  <ThingDef ParentName="BuildingBase">
+    <defName>AG_EchoDevice</defName>
+    <label>resonance device</label>
+    <description>A machine that tunes to heroes from other worlds. Tune it to one hero and one colonist: the colonist's trials are tracked, and when all are met the colonist can awaken as that hero's Host. The device holds the colony's charge, which every Host draws on while in hero form, and refills it while powered.</description>
+    <thingClass>Building</thingClass>
+    <graphicData>
+      <texPath>RimArt/Echo/Device</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(2,2)</drawSize>
+    </graphicData>
+    <size>(2,2)</size>
+    <altitudeLayer>Building</altitudeLayer>
+    <passability>PassThroughOnly</passability>
+    <pathCost>50</pathCost>
+    <fillPercent>0.5</fillPercent>
+    <castEdgeShadows>true</castEdgeShadows>
+    <rotatable>false</rotatable>
+    <canOverlapZones>false</canOverlapZones>
+    <statBases>
+      <MaxHitPoints>250</MaxHitPoints>
+      <WorkToBuild>6000</WorkToBuild>
+      <Flammability>0.5</Flammability>
+      <Mass>40</Mass>
+      <Beauty>5</Beauty>
+    </statBases>
+    <costList>
+      <Steel>150</Steel>
+      <Plasteel>40</Plasteel>
+      <ComponentIndustrial>6</ComponentIndustrial>
+    </costList>
+    <constructionSkillPrerequisite>6</constructionSkillPrerequisite>
+    <designationCategory>Misc</designationCategory>
+    <researchPrerequisites>
+      <li>AG_EchoResonance</li>
+    </researchPrerequisites>
+    <inspectorTabs>
+      <li>RimArt.ITab_EchoDevice</li>
+    </inspectorTabs>
+    <comps>
+      <li Class="CompProperties_Power">
+        <compClass>CompPowerTrader</compClass>
+        <basePowerConsumption>300</basePowerConsumption>
+      </li>
+      <li Class="CompProperties_Flickable" />
+      <li Class="CompProperties_Breakdownable" />
+      <li Class="RimArt.CompProperties_EchoDevice">
+        <tiers>
+          <li>
+            <maxCharge>100</maxCharge>
+            <refillPerHour>5</refillPerHour>
+            <heroCap>2</heroCap>
+          </li>
+          <li>
+            <research>AG_EchoTuning2</research>
+            <maxCharge>150</maxCharge>
+            <refillPerHour>8</refillPerHour>
+            <heroCap>4</heroCap>
+          </li>
+          <li>
+            <research>AG_EchoTuning3</research>
+            <maxCharge>200</maxCharge>
+            <refillPerHour>12</refillPerHour>
+            <heroCap>6</heroCap>
+          </li>
+        </tiers>
+      </li>
+    </comps>
+  </ThingDef>
+
+</Defs>

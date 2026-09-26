@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <!-- Device -->
+  <AG_EchoTab>Echoes</AG_EchoTab>
+  <AG_EchoDeviceInspect>Charge: {0} / {1} (refill +{2} per hour)\nHosts: {3} / {4}</AG_EchoDeviceInspect>
+  <AG_EchoCharge>Charge</AG_EchoCharge>
+  <AG_EchoRefill>Refill</AG_EchoRefill>
+  <AG_EchoNoPower>no working device</AG_EchoNoPower>
+  <AG_EchoDrainNow>Drain now</AG_EchoDrainNow>
+  <AG_EchoHeroes>Hosts</AG_EchoHeroes>
+  <AG_EchoNextUpgrade>Next upgrade</AG_EchoNextUpgrade>
+  <AG_EchoMaxTier>fully tuned</AG_EchoMaxTier>
+  <AG_EchoUpgradeLine>{0}: {1} Hosts, {2} charge, +{3}/h</AG_EchoUpgradeLine>
+  <AG_EchoNetPerHour>{0} per hour</AG_EchoNetPerHour>
+  <AG_EchoChargeTip>The colony's charge: {0} / {1}. Working resonance devices refill {2} per hour. Every manifested Host drains it: {3} per hour now. {4} costs {5} per hour in hero form, plus the cost of some abilities. When it reaches zero every manifested Host reverts and collapses.</AG_EchoChargeTip>
+  <AG_EchoUpkeepLine>Upkeep {0} per hour in hero form</AG_EchoUpkeepLine>
+
+  <!-- Card states and buttons -->
+  <AG_EchoStateUntuned>Not tuned</AG_EchoStateUntuned>
+  <AG_EchoStateTracking>Candidate: {0}\nTrials {1} / {2}</AG_EchoStateTracking>
+  <AG_EchoStateAwakened>Host: {0}</AG_EchoStateAwakened>
+  <AG_EchoStateManifested>Host: {0}\nManifested</AG_EchoStateManifested>
+  <AG_EchoStateClosed>Closed: its Host died</AG_EchoStateClosed>
+  <AG_EchoTune>Tune and pick candidate</AG_EchoTune>
+  <AG_EchoRetune>stops tuning to {0}</AG_EchoRetune>
+  <AG_EchoStopTuning>Stop tuning</AG_EchoStopTuning>
+  <AG_EchoNoColonists>No colonists</AG_EchoNoColonists>
+
+  <!-- Candidates -->
+  <AG_EchoNotColonist>not a colonist</AG_EchoNotColonist>
+  <AG_EchoNotHumanlike>not humanlike</AG_EchoNotHumanlike>
+  <AG_EchoNotAdult>not an adult</AG_EchoNotAdult>
+  <AG_EchoAlreadyHost>already a Host</AG_EchoAlreadyHost>
+  <AG_EchoTuned>The resonance device is tuned to {0}. {1}'s trials are being tracked.</AG_EchoTuned>
+  <AG_EchoCandidateLost>The resonance device lost its candidate for {0}: {1} can no longer be tracked.</AG_EchoCandidateLost>
+
+  <!-- Trials -->
+  <AG_EchoTrialYes>yes</AG_EchoTrialYes>
+  <AG_EchoTrialNo>no</AG_EchoTrialNo>
+  <AG_EchoTrialNot>Not {0}</AG_EchoTrialNot>
+  <AG_EchoTrialWealth>Colony wealth {0}</AG_EchoTrialWealth>
+  <AG_EchoTrialKillsWith>{0} kills with a {1}</AG_EchoTrialKillsWith>
+  <AG_EchoMeleeWeapon>melee weapon</AG_EchoMeleeWeapon>
+  <AG_EchoRangedWeapon>ranged weapon</AG_EchoRangedWeapon>
+  <AG_EchoTrialCleared>{0} cleared a trial for {1}: {2}.</AG_EchoTrialCleared>
+  <AG_EchoTrialsHeader>{0}: trials for {1}</AG_EchoTrialsHeader>
+  <AG_EchoTrialsGizmo>{0} trials {1}/{2}</AG_EchoTrialsGizmo>
+  <AG_EchoTrialsNotMet>Not every trial is met.</AG_EchoTrialsNotMet>
+
+  <!-- Costs -->
+  <AG_EchoCostHeader>Cost on awakening:</AG_EchoCostHeader>
+  <AG_EchoCostTrait>Gains {0}</AG_EchoCostTrait>
+  <AG_EchoCostTraitHas>{0}: already has it</AG_EchoCostTraitHas>
+  <AG_EchoCostTraitReplace>Gains {0} (replaces {1})</AG_EchoCostTraitReplace>
+
+  <!-- Awakening -->
+  <AG_EchoAwakenLabel>{0} can awaken</AG_EchoAwakenLabel>
+  <AG_EchoAwakenText>{0} has met every trial for {1}. They can awaken now and become {1}'s Host.\n\nThe cost is permanent. Declining costs nothing: {0}'s command becomes an awaken button.</AG_EchoAwakenText>
+  <AG_EchoAwakenAccept>Awaken</AG_EchoAwakenAccept>
+  <AG_EchoAwakenDefer>Not yet</AG_EchoAwakenDefer>
+  <AG_EchoAwakenGizmo>Awaken: {0}</AG_EchoAwakenGizmo>
+  <AG_EchoCapFull>The resonance device holds {0} of {1} Hosts. Research a tuning upgrade to add more.</AG_EchoCapFull>
+  <AG_EchoAwakenedLabel>{0} awakened</AG_EchoAwakenedLabel>
+  <AG_EchoAwakened>{0} is now {1}'s Host. They can manifest {1} at will; hero form draws on the colony's charge.</AG_EchoAwakened>
+  <AG_EchoClosedLabel>{0} lost</AG_EchoClosedLabel>
+  <AG_EchoClosed>{0}, {1}'s Host, has died. {1} cannot be taken again.</AG_EchoClosed>
+  <AG_EchoWealthPart>Host of {0}: +{1}</AG_EchoWealthPart>
+
+  <!-- Manifest -->
+  <AG_EchoManifestLabel>Manifest {0}</AG_EchoManifestLabel>
+  <AG_EchoManifestDesc>Switch to {0}'s hero form, or back. Hero form costs {1} charge per hour from the colony's shared pool, plus the cost of some abilities. It fights and moves but does no colony work. When the pool runs dry every manifested Host reverts and collapses.</AG_EchoManifestDesc>
+  <AG_EchoNoHost>no Host</AG_EchoNoHost>
+  <AG_EchoDowned>downed</AG_EchoDowned>
+  <AG_EchoCollapsed>recovering from echo collapse</AG_EchoCollapsed>
+  <AG_EchoNoCharge>the colony has no charge</AG_EchoNoCharge>
+  <AG_EchoCastNoCharge>Needs {0} charge; the colony has {1}.</AG_EchoCastNoCharge>
+  <AG_EchoPoolEmpty>The charge ran out. {0} reverted from {1} and collapsed.</AG_EchoPoolEmpty>
+</LanguageData>
