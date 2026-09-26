@@ -17,6 +17,11 @@ namespace RimArt
     /// game's own sun says nothing here. Every map has one of these (vanilla makes every MapComponent
     /// everywhere); it does nothing unless its map is a world (<see cref="world"/> is set by the GenStep) and
     /// is the map on screen.
+    ///
+    /// A world the ability made is <see cref="driven"/>: its clock is game time since everyone was taken
+    /// (<see cref="UbwClock"/>), so it stops when the game is paused and keeps step with the home map's ring,
+    /// the close is set by the cast (<see cref="CloseAt"/>), and the cast, not this, moves everyone home and
+    /// removes the map.
     /// </summary>
     public sealed class MapComponent_UnlimitedBladeWorks : MapComponent
     {
@@ -24,6 +29,10 @@ namespace RimArt
         /// <summary>The world v2: the plate ground with height and the sky, instead of the flat earth.</summary>
         public bool depth;
         public Map source;
+        /// <summary>Made by the ability: the cast runs the clock, the close and the removal.</summary>
+        public bool driven;
+        /// <summary>The tick everyone was taken in, or -1 before that.</summary>
+        private int takenTick = -1;
         /// <summary>The landing spots, in cells from the middle: no sword stands over one.</summary>
         private List<IntVec3> keep = new List<IntVec3>();
         private float seconds;
@@ -63,6 +72,24 @@ namespace RimArt
             bake = null;
         }
 
+        /// <summary>The ability: everyone has landed on these spots (cells from the middle) at this tick; the world's clock starts, and the field is baked again with no sword over them.</summary>
+        public void Landed(List<IntVec3> keepOffsets, int tick)
+        {
+            driven = true;
+            keep = keepOffsets ?? new List<IntVec3>();
+            takenTick = tick;
+            closeAt = -1f;
+            shaken = false;
+            bake = null;
+        }
+
+        /// <summary>The ability: the close begins at <paramref name="worldSeconds"/> on the world's clock, or when the fire has finished running out if that is later. Returns when it begins.</summary>
+        public float CloseAt(float worldSeconds)
+        {
+            if (closeAt < 0f) closeAt = Mathf.Max(worldSeconds, UbwWorldTiming.Swept);
+            return closeAt;
+        }
+
         /// <summary>Ends the world: the white closes in behind the wall of fire, then the map is removed.</summary>
         public void Close()
         {
@@ -75,7 +102,8 @@ namespace RimArt
         public override void MapComponentUpdate()
         {
             if (!world || Find.CurrentMap != map) return;
-            seconds += Time.unscaledDeltaTime;
+            if (driven) seconds = takenTick < 0 ? 0f : UbwClock.Since(takenTick);
+            else seconds += Time.unscaledDeltaTime;
             if (!shaken && seconds >= UbwWorldTiming.Start)
             {
                 Find.CameraDriver.shaker.DoShake(UbwWorldTiming.StartShake);
@@ -99,7 +127,7 @@ namespace RimArt
             float end = CloseAtOrNever + UbwWorldTiming.Close + 0.35f;
             if (seconds < end) return;
             Sprite(centre, Backstop, Backstop, UbwGraphics.WhiteHot, solid, Overhead + 0.06f);
-            if (closing) return;
+            if (closing || driven) return;
             closing = true;
             UnlimitedBladeWorksMap.CloseLater(map);
         }
@@ -110,6 +138,8 @@ namespace RimArt
             Scribe_Values.Look(ref world, "ubwWorld");
             Scribe_Values.Look(ref depth, "ubwDepth");
             Scribe_References.Look(ref source, "ubwSource");
+            Scribe_Values.Look(ref driven, "ubwDriven");
+            Scribe_Values.Look(ref takenTick, "ubwTakenTick", -1);
             Scribe_Collections.Look(ref keep, "ubwKeep", LookMode.Value);
             Scribe_Values.Look(ref seconds, "ubwSeconds");
             Scribe_Values.Look(ref closeAt, "ubwCloseAt", -1f);

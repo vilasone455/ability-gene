@@ -22,7 +22,7 @@ runtime, in the order they have actually bitten this project:
      which is the default when priorityMode is left out
   6d. TerrainDef tags that are not fields of the 1.6 TerrainDef (holdSnow vs holdSnowOrSand)
   7. Translate keys used in C# but not defined in Languages/
-  8. Concrete abilities with zero or multiple acquisition sources
+  8. Concrete abilities with zero or multiple acquisition sources (retired ones may have zero)
 
 Usage: python3 validate.py [path/to/RimWorld/Data]
 """
@@ -412,8 +412,14 @@ for f in my_files:
         for ability in refs:
             grants.setdefault(ability, set()).add(source)
 
+# Abilities no source grants any more, kept so a save whose pawns have them still loads. Origin: Blade
+# granted Rain, Loose and Grasp until 2026-09-25, when it took Unlimited Blade Works instead.
+RETIRED = {"AG_Panoply_Rain", "AG_Panoply_Loose", "AG_Panoply_Grasp"}
+
 for ability, f in sorted(ability_defs.items()):
     sources = grants.get(ability, set())
+    if ability in RETIRED and not sources:
+        continue
     if len(sources) != 1:
         fail("ability source count", f,
              ability + " has " + str(len(sources)) + " acquisition sources: "

@@ -12,9 +12,10 @@ namespace RimArt
     /// </summary>
     internal static class UbwCastTiming
     {
-        /// <summary>The world's radius released after verse 1, 2 or 3; a verse takes 2 s and its lines run out in 1.8 s.</summary>
+        /// <summary>The world's radius released after verse 1, 2 or 3; a verse takes 2 s and its lines run out in 1.8 s. The radius and the verse's length are the ability's (UbwRules, XML) once a cast begins: <see cref="Configure"/>.</summary>
         public static readonly float[] Radius = { 6f, 9f, 12f };
-        public const float VerseTime = 2f, LinesOut = 1.8f;
+        public static float VerseTime = 2f;
+        public const float LinesOut = 1.8f;
         public const int Lines = 10;
         public const float RingClose = 0.25f, FlashUp = 0.12f, FlashHold = 0.1f, FlashDown = 0.45f, Flare = 0.25f, After = 1.4f, FlameEvery = 0.22f;
         /// <summary>The sketch's sliders: the fire runs out in 1 s and back in 0.6 s; the world stands 3 s in the preview (20 to 30 s in game); flame height and the low ring's share of it; two branches off each line.</summary>
@@ -47,6 +48,13 @@ namespace RimArt
         }
 
         public static float Duration => For(Verse).End;
+
+        /// <summary>The ability's numbers for the pictures: the radius by verse (3 values) and a verse's length. The lines run out in LinesOut s whatever the verse's length, so a verse must be longer than that.</summary>
+        public static void Configure(System.Collections.Generic.IList<float> radius, float verseSeconds)
+        {
+            for (int i = 0; i < Radius.Length && radius != null && i < radius.Count; i++) Radius[i] = radius[i];
+            VerseTime = Mathf.Max(LinesOut + 0.1f, verseSeconds);
+        }
 
         /// <summary>The white of a flash that starts at <paramref name="at"/>: up, held, gone.</summary>
         public static float FlashAlpha(float s, float at)

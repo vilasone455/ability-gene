@@ -15,7 +15,7 @@ Every kit in the mod, how to get it, and what each ability does.
 | [Fold organ](#fold-organ) | Archite gene | Vent, Fold, Swallow, Post, Collapse | Biotech DLC |
 | [Combat presence](#combat-presence) | Trait | Provoke | - |
 | [Commanding voice](#commanding-voice) | Trait | Stop, Drop, Kneel, Come, Run | - |
-| [Origin: Blade](#origin-blade) | Trait | Rain, Loose, Grasp | - |
+| [Origin: Blade](#origin-blade) | Trait | Unlimited blade works | - |
 | [Pain debt](#pain-debt) | Trait | Wound debt | - |
 | [Attraction eye](#attraction-eye) | Implant | Gravity Well | - |
 | [Neural accelerator](#neural-accelerator) | Implant | Time alter: double accel, Time alter: square accel, Time alter: stagnate | - |
@@ -25,8 +25,10 @@ Every kit in the mod, how to get it, and what each ability does.
 | [Drone control rig](#drone-control-rig) | Wearable | Deploy toy car | - |
 | [Kunai belt](#kunai-belt) | Wearable | Throw kunai | - |
 | [Makibishi pouch](#makibishi-pouch) | Wearable | Scatter makibishi | - |
+| [Power Pole](#power-pole) | Wearable | Extend thrust, Sweep, Vault strike | - |
 | [Retrieval hook belt](#retrieval-hook-belt) | Wearable | Retrieval hook | - |
 | [Stasis belt](#stasis-belt) | Wearable | Stasis field | - |
+| [Tag scroll](#tag-scroll) | Wearable | Tag throw, Tag line, Paper shroud, Detonate tag line | - |
 | [Arcing](#arcing) | Weapon trait | Arc | Unique Melee Weapons, Melee Animation |
 | [Resonant](#resonant) | Weapon trait | Resonance | Unique Melee Weapons |
 | [Frost bomb](#frost-bomb) | Weapon | Throw frost bomb | - |
@@ -37,9 +39,9 @@ Every kit in the mod, how to get it, and what each ability does.
 
 ### Anchor organ
 
-Leave marks on people, animals or bare ground, then clap to change places with one - or clap twice and swap any two marks with each other. Neither distance nor line of sight matters.
+Clap to change places with anyone in sight nearby, or clap twice to make two others change places. Stones thrown onto the ground can be clapped with from anywhere on the map, without line of sight.
 
-The clap takes both hands, so this carrier never carries a weapon, and every mark has to be placed within arm's reach.
+Three claps at a time, growing back one every 10 seconds. The clap takes both hands, so this carrier never carries a weapon.
 
 **Needs:** Biotech DLC
 
@@ -50,27 +52,27 @@ The clap takes both hands, so this carrier never carries a weapon, and every mar
 
 #### Mark
 
-Leave a mark on a person, an animal or a patch of ground, and it stays with them wherever they go. The carrier holds three at once, and marking something already marked takes that mark back instead.
+Throw a stone onto a patch of ground. A clap can reach the stone from anywhere on the map, without line of sight. Up to three stones at once; throwing at one of your own stones takes it back.
 
-Marks fade after about a day, and placing one means walking close enough to touch.
+Stones fade after about a day. They lie on the ground forbidden, so nobody hauls them away.
 
 **Cooldown:** 10 seconds | **Range:** 9.9 cells | **Cast time:** 0.5 seconds
 
 #### Clap
 
-Clap once and change places with one of your marks, at any distance and without line of sight. A mark on someone is a straight swap; a mark on the ground simply moves the carrier there.
+Clap once and change places with a living person or animal in sight within 15 cells, or with one of your stones anywhere on the map. A stone lands where you stood, so a second clap brings you back. A hostile that is swapped loses track of where it is for a moment.
 
-The mark is spent, and both hands have to be empty.
+Uses one of three claps, which grow back one every 10 seconds. A stone more than 25 cells away needs all three and is used up. Both hands have to be empty.
 
-**Cooldown:** 30 seconds | **Range:** unlimited | **Cast time:** 0.5 seconds
+**Cooldown:** 0 seconds | **Range:** unlimited | **Cast time:** 0.3 seconds
 
 #### Double clap
 
-Clap twice and any two of your marks change places with each other. The carrier does not move and is not one of the ends - this is how a raider ends up in your killbox without anyone standing in it.
+Clap twice and two others change places: people or animals in sight within 15 cells, or your stones anywhere on the map. The carrier does not move - this is how a raider ends up in your killbox without anyone standing in it.
 
-Both marks are spent, at least one must be on something that can move, and both hands have to be empty.
+At least one end has to be a person or animal. Uses one of the three shared claps; a stone more than 25 cells away needs all three and is used up. Both hands have to be empty.
 
-**Cooldown:** 30 seconds | **Range:** unlimited | **Cast time:** 0.8 seconds
+**Cooldown:** 0 seconds | **Range:** unlimited | **Cast time:** 0.5 seconds
 
 
 ### Corrosive glands
@@ -277,7 +279,7 @@ Expensive for the same reason kneel is, and the best thing in the list to say to
 
 ### Origin: Blade
 
-This person's origin is the blade, earned through Melee 14, Crafting 12 and the study of five distinct blade types. It grants Rain, Loose and Grasp permanently, and cannot be rolled at random or lost to a later decline in skill.
+This person's origin is the blade, earned through Melee 14, Crafting 12 and the study of five distinct blade types. It grants Unlimited Blade Works permanently, and cannot be rolled at random or lost to a later decline in skill.
 
 Awakening removes every psycast and psylink level and forbids ranged weapons for life, though psychic sensitivity is unchanged.
 
@@ -289,29 +291,17 @@ Awakening removes every psycast and psylink level and forbids ranged weapons for
 - When all requirements are met a letter offers **Awaken** or **Not yet**. Declining is free; the Origin: Blade button can awaken the pawn later.
 - Awakening removes all psylink levels and psycasts, and the pawn can never use ranged weapons again.
 
-#### Rain
+#### Unlimited blade works
 
-Call a rain of blades over a chosen place. The first impact matters less than the field of planted blades left behind for Loose and Grasp.
+Chant up to three verses of 2 seconds. Press Release during a verse and the world opens when that verse ends; after the third verse it opens by itself.
 
-Maintaining the scattered arsenal burdens its origin until the blades are spent or reclaimed.
+Everyone standing within 6, 9 or 12 cells (by verses said), allies and enemies alike, is taken into a 40 x 40 world of swords for 20, 25 or 30 seconds. Downed pawns stay behind. Nobody can leave the world. It ends early if the caster is downed or leaves, or on Close.
 
-**Cooldown:** 12 hours (in-game) | **Range:** 26.9 cells | **Cast time:** 1.5 seconds
+Then everyone goes back to the cell they were taken from. Corpses and dropped items land round the cast point.
 
-#### Loose
+Stopping or breaking the chant before the release gives the cooldown back.
 
-Every blade standing near the chosen point lifts, turns to face it and goes. Each flies from the cell it happens to be in, so the volley keeps the shape the rain left - blades on the wrong side of a wall spend themselves on the wall.
-
-They do not come back; wherever each one stops is where it is standing now.
-
-**Cooldown:** 15 seconds | **Range:** 26.9 cells | **Cast time:** 0.5 seconds
-
-#### Grasp
-
-The nearest planted blade tears out of the ground and flies to an open hand - the origin's own, or anyone else's within sight. It becomes an ordinary steel longsword and remains in the world.
-
-The hand must be empty; the ability will not drop another weapon to make room.
-
-**Cooldown:** 10 seconds | **Range:** 24.9 cells | **Cast time:** 0.4 seconds
+**Cooldown:** 2 days (in-game) | **Range:** self | **Cast time:** 0.2 seconds
 
 
 ### Pain debt
@@ -342,7 +332,6 @@ An uncraftable artificial eye that supplies normal sight and lets its bearer cha
 
 - Cannot be crafted.
 - Can be given as a quest reward.
-- Can be bought from traders.
 - Install it by surgery in the eye. Needs Medicine skill 8. Uses the item and 2 medicine.
 - Can be removed by surgery and given to another colonist.
 
@@ -359,9 +348,8 @@ A brain implant that changes its user's internal rate of time. Acceleration leav
 
 **How to get it**
 
-- Craft it at a fabrication bench after researching **bionic replacements** (which needs fabrication). Needs Crafting skill 8. Costs plasteel ×20 and advanced component ×4.
+- Cannot be crafted.
 - Can be given as a quest reward.
-- Can be bought from traders.
 - Install it by surgery in the brain. Needs Medicine skill 6. Uses the item and 2 medicine.
 
 #### Time alter: double accel
@@ -397,7 +385,6 @@ An archotech brain implant that halves the distance an incoming thing has left t
 
 - Cannot be crafted.
 - Can be given as a quest reward.
-- Can be bought from traders.
 - Install it by surgery in the brain. Needs Medicine skill 8. Uses the item and 2 medicine.
 
 #### Phase guard
@@ -415,10 +402,9 @@ A spinal implant that reads and redirects momentum before its user can conscious
 
 **How to get it**
 
-- Craft it at a machining table after researching **prosthetics** (which needs machining). Needs Crafting skill 5. Costs steel ×35 and component ×6.
+- Cannot be crafted.
 - Can be given as a quest reward.
-- Can be bought from traders.
-- Install it by surgery in the spine. Needs Medicine skill 5. Uses the item and 2 medicine.
+- Install it by surgery in the spine. Uses the item and 2 medicine.
 
 #### Reflex surge
 
@@ -453,7 +439,6 @@ An uncraftable artificial eye that supplies normal sight and lets its bearer cha
 
 - Cannot be crafted.
 - Can be given as a quest reward.
-- Can be bought from traders.
 - Install it by surgery in the eye. Needs Medicine skill 8. Uses the item and 2 medicine.
 - Can be removed by surgery and given to another colonist.
 
@@ -474,7 +459,7 @@ Driving the car takes the operator's whole attention: while controlling it they 
 
 **How to get it**
 
-- Craft it at a machining table after researching **remote ordnance** (which needs machining and microelectronics). Needs Crafting skill 6. Costs steel ×40 and component ×3.
+- Craft it at a table machining after researching **remote ordnance** (which needs machining and microelectronics basics). Needs Crafting skill 6. Costs steel ×40 and component industrial ×3.
 - Can be bought from traders.
 - Wear it to use the ability. Taking it off removes the ability.
 
@@ -520,7 +505,7 @@ Range 9.9 tiles. Each throw uses one handful and spikes a 3x3 patch for 30 secon
 
 **How to get it**
 
-- Craft it at a hand tailor bench or electric tailor bench. Needs Crafting skill 3. Costs cloth ×30.
+- Craft it at a hand tailoring bench or electric tailoring bench. Needs Crafting skill 3. Costs cloth ×30.
 - Holds 3 charges and starts full. Reload with makibishi (1 per charge). Make 5 from 10 steel at a fueled smithy or electric smithy after researching **smithing**.
 - Wear it to use the ability. Taking it off removes the ability.
 
@@ -535,6 +520,48 @@ Each time anyone walks onto a spiked cell they have a 35% chance to step on a sp
 **Cooldown:** 2 seconds | **Range:** 9.9 cells | **Cast time:** 0.5 seconds
 
 
+### Power Pole
+
+A red staff a little over one tile long. On command it extends to many times its length in a fraction of a second and retracts just as fast. It does not bend, does not wear, and nobody knows how to make another.
+
+In melee it is an ordinary blunt weapon with a reach of 1 tile. While it is equipped, the wielder can use Extend Thrust, Sweep and Vault Strike. The long reach exists only in those three abilities. All three hit allies as well as enemies.
+
+It cannot be crafted. It turns up as a quest reward or with exotic goods traders.
+
+**How to get it**
+
+- Cannot be crafted.
+- Can be given as a quest reward.
+- Can be bought from traders.
+- Wear it to use the ability. Taking it off removes the ability.
+
+#### Extend thrust
+
+Extend the pole in a straight line toward a tile up to 12 tiles away. It stops at the first pawn on the line, ally or enemy: 22 blunt damage, 30% armor penetration. The pole keeps extending and pushes that pawn 3 tiles further, then retracts. The pawn is staggered. Large pawns are pushed less far.
+
+If a wall or other solid object stops the push early, the pawn takes 10 more blunt damage. Needs line of sight. Does nothing to buildings.
+
+**Cooldown:** 8 seconds | **Range:** 12.9 cells | **Cast time:** 0.3 seconds
+
+#### Sweep
+
+Extend the pole to 4 tiles and swing it through the half-circle in front of the wielder, from left to right. Every pawn in that area, ally or enemy, takes 12 blunt damage with 18% armor penetration and is staggered.
+
+The pole shortens to pass a wall and lengthens again after it. A pawn standing behind a wall is not hit.
+
+**Cooldown:** 20 seconds | **Range:** 4.9 cells | **Cast time:** 0.3 seconds
+
+#### Vault strike
+
+Plant the pole and let it push the wielder into the air, over walls and over other pawns, toward a pawn or tile up to 10 tiles away. No line of sight is needed. Just before landing, the wielder swings the extended pole down onto the target tile.
+
+A pawn on that tile takes 20 blunt damage with 30% armor penetration and is stunned for 1.5 seconds. Every other pawn within 1.5 tiles is staggered. The wielder lands next to the target. If the tile is empty, the strike only staggers.
+
+The wielder cannot be attacked in melee while in the air. There must be a free tile next to the target to land on.
+
+**Cooldown:** 18 seconds | **Range:** 10.9 cells | **Cast time:** 0.3 seconds
+
+
 ### Retrieval hook belt
 
 A belt-mounted launcher that fires a padded net on a tether and reels the target in.
@@ -545,7 +572,7 @@ Dragging an injured person worsens one of their wounds by up to 1 severity and r
 
 **How to get it**
 
-- Craft it at a machining table after researching **machining** (which needs electricity and smithing). Needs Crafting skill 5. Costs steel ×60, component ×2 and cloth ×20.
+- Craft it at a table machining after researching **machining**. Needs Crafting skill 5. Costs steel ×60, component industrial ×2 and cloth ×20.
 - Wear it to use the ability. Taking it off removes the ability.
 
 #### Retrieval hook
@@ -569,7 +596,7 @@ The lattice takes many days to wind back up, and the charge stays with the belt 
 
 **How to get it**
 
-- Craft it at a machining table after researching **stasis fields** (which needs shields). Needs Crafting skill 8. Costs advanced component ×2, plasteel ×60 and gold ×20.
+- Craft it at a table machining after researching **stasis fields** (which needs shield belt). Needs Crafting skill 8. Costs component spacer ×2, plasteel ×60 and gold ×20.
 - Can be given as a quest reward.
 - Wear it to use the ability. Taking it off removes the ability.
 
@@ -580,6 +607,50 @@ Collapse a sphere of stopped time around the carrier. Nothing inside moves, burn
 What you buy is time for everyone standing outside it.
 
 **Cooldown:** 5 days (in-game) | **Range:** self | **Cast time:** 1 second
+
+
+### Tag scroll
+
+A roll of up to 20 explosive tags wound on a wooden rod, held in one hand while the other takes tags off it.
+
+While it is equipped, the wielder can use Tag Throw, Tag Line and Paper Shroud, and Detonate while a tag line is laid. Every burst hurts allies as well as enemies. In melee the rod is a weak blunt weapon.
+
+Reload it with explosive tags: the wielder reloads on their own when the scroll is empty, or right-click tags to reload early. A new scroll comes with 20 tags. The toggle on the wielder sets whether a laid tag line waits for Detonate or goes off when a hostile steps on it.
+
+**How to get it**
+
+- Cannot be crafted.
+- Wear it to use the ability. Taking it off removes the ability.
+
+#### Tag throw
+
+Tear one tag off the scroll and throw it on a steel pin at a tile, a pawn or a wall up to 12 tiles away. It sticks where it hits, burns for 2 seconds, then bursts: 35 bomb damage in a 1.5 tile radius, allies included.
+
+Stuck in a pawn, the tag goes where the pawn goes and bursts there. Stuck in a wall or other solid building, that building takes 4 times the damage. Uses 1 tag.
+
+Hit chance uses the thrower's Melee skill, with distance, cover and weather counted like a gun. A miss still sticks near the target and bursts there. Needs line of sight.
+
+**Cooldown:** 4 seconds | **Range:** 12.9 cells | **Cast time:** 0.3 seconds
+
+#### Tag line
+
+Flick the scroll's strip out along the ground toward a tile up to 10 tiles away. It takes 2.5 seconds, standing still. The first 2.5 tiles are plain strip; after that there is one tag per tile, up to 8, and each uses 1 tag from the scroll. A wall on the line stops it short.
+
+The line lasts 1 day. Detonate lights it at the caster's end, or with the scroll's tripwire toggle on, the first hostile to step on a tag lights it there. The fuse reaches a new tag every 0.1 seconds and each tag bursts: 30 bomb damage in a 1.1 tile radius, allies included.
+
+**Cooldown:** 20 seconds | **Range:** 10.9 cells | **Cast time:** 0.3 seconds
+
+#### Paper shroud
+
+Send 6 tags at one pawn up to 6 tiles away. They stick all over it. From the first tag landing, 0.9 seconds after the cast, the target is stunned for 2 seconds. Then all six go off: 60 bomb damage to the target, and 20 to everything else within 0.9 tiles, allies included. Uses 6 tags. Needs line of sight.
+
+**Cooldown:** 1.1 hours (in-game) | **Range:** 6.9 cells | **Cast time:** 0.3 seconds
+
+#### Detonate tag line
+
+Make a hand seal and light every tag line this pawn has laid on the map, at the caster's end of each. Works at any distance and without line of sight. Uses no tags.
+
+**Cooldown:** 1 second | **Range:** self | **Cast time:** 0.3 seconds
 
 
 ## Weapon traits
@@ -634,7 +705,7 @@ It does not choose sides. Your own people freeze in it exactly as well as the pe
 
 **How to get it**
 
-- Craft it at a machining table after researching **cryogenic munitions** (which needs machining). Needs Crafting skill 5. Costs steel ×20, component ×2 and chemfuel ×40.
+- Craft it after researching **cryogenic munitions** (which needs machining). Needs Crafting skill 5. Costs steel ×20, component industrial ×2 and chemfuel ×40.
 - Can be bought from traders.
 - Equip it as a weapon; the throw is a button on the pawn.
 
@@ -653,8 +724,7 @@ Throwing leaves you unarmed. The same weapon lands on the ground with its qualit
 
 **How to get it**
 
-- Craft it at a electric smithy or fueled smithy after researching **smithing**. Needs Crafting skill 6. Costs steel ×80.
-- Can be bought from traders.
+- Craft it after researching **smithing**. Needs Crafting skill 6. Costs steel ×80.
 - Equip it as a melee weapon; the throw is a button on the pawn.
 
 **Details**
@@ -681,7 +751,7 @@ It is a projection, not a shield: the light stops nothing, and the projector fai
 
 **How to get it**
 
-- Craft it at a machining table after researching **holographic projection** (which needs machining and microelectronics). Needs Crafting skill 6. Costs steel ×40, component ×4 and gold ×10.
+- Craft it after researching **holographic projection** (which needs machining and microelectronics basics). Needs Crafting skill 6. Costs steel ×40, component industrial ×4 and gold ×10.
 - Can be bought from traders.
 - Equip it as a weapon; the throw is a button on the pawn.
 

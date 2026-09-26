@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Unlimited Blade Works, the Trace kit's ultimate. Granted by the Origin: Blade trait until the hero
+       layer exists. Casting it queues the chant (AG_UbwChant); UbwCast runs the rest. Every number is a
+       placeholder (proposed 2026-09-24, taken as placeholders 2026-09-25). The cooldown is 2 days and comes
+       back if the chant is stopped or broken before the release. -->
+  <AbilityDef>
+    <defName>AG_Trace_UnlimitedBladeWorks</defName>
+    <label>unlimited blade works</label>
+    <description>Chant up to three verses of 2 seconds. Press Release during a verse and the world opens when that verse ends; after the third verse it opens by itself.\n\nEveryone standing within 6, 9 or 12 cells (by verses said), allies and enemies alike, is taken into a 40 x 40 world of swords for 20, 25 or 30 seconds. Downed pawns stay behind. Nobody can leave the world. It ends early if the caster is downed or leaves, or on Close.\n\nThen everyone goes back to the cell they were taken from. Corpses and dropped items land round the cast point.\n\nStopping or breaking the chant before the release gives the cooldown back.</description>
+    <iconPath>RimArt/Trace/IconUnlimitedBladeWorks</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>120000</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.25</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityUnlimitedBladeWorks" />
+    </comps>
+    <modExtensions>
+      <li Class="RimArt.UbwRules">
+        <radiusByVerse>
+          <li>6</li>
+          <li>9</li>
+          <li>12</li>
+        </radiusByVerse>
+        <verseSeconds>2</verseSeconds>
+        <worldSecondsByVerse>
+          <li>20</li>
+          <li>25</li>
+          <li>30</li>
+        </worldSecondsByVerse>
+        <!-- v2: plates with height and the north sky with gears; false opens the flat v1. -->
+        <worldV2>true</worldV2>
+        <!-- For the commands (Full Open, Pin, Draw, Arm, Intercept), which are not built yet. -->
+        <swordCostSeconds>0.5</swordCostSeconds>
+      </li>
+    </modExtensions>
+  </AbilityDef>
+
+</Defs>

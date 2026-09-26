@@ -9,16 +9,14 @@
     <degreeDatas>
       <li>
         <label>Origin: Blade</label>
-        <description>This person's origin is the blade, earned through Melee 14, Crafting 12 and the study of five distinct blade types. It grants Rain, Loose and Grasp permanently, and cannot be rolled at random or lost to a later decline in skill.\n\nAwakening removes every psycast and psylink level and forbids ranged weapons for life, though psychic sensitivity is unchanged.</description>
+        <description>This person's origin is the blade, earned through Melee 14, Crafting 12 and the study of five distinct blade types. It grants Unlimited Blade Works permanently, and cannot be rolled at random or lost to a later decline in skill.\n\nAwakening removes every psycast and psylink level and forbids ranged weapons for life, though psychic sensitivity is unchanged.</description>
         <degree>0</degree>
       </li>
     </degreeDatas>
     <modExtensions>
       <li Class="RimArt.TraitAbilityExtension">
         <abilities>
-          <li>AG_Panoply_Rain</li>
-          <li>AG_Panoply_Loose</li>
-          <li>AG_Panoply_Grasp</li>
+          <li>AG_Trace_UnlimitedBladeWorks</li>
         </abilities>
       </li>
     </modExtensions>
