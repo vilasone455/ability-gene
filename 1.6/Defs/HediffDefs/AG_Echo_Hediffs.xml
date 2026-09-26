@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Hero form. Each Echo has its own child with its stat offsets in a stage; the work block
+       lives on the comp so it is written once here. Hero form fights and moves only. -->
+  <HediffDef Name="AG_EchoManifestBase" Abstract="True">
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>false</isBad>
+    <defaultLabelColor>(0.55, 0.8, 1)</defaultLabelColor>
+    <everCurableByItem>false</everCurableByItem>
+    <comps>
+      <li Class="RimArt.HediffCompProperties_EchoManifest">
+        <disabledWorkTags>ManualDumb, ManualSkilled, Caring, Social, Intellectual, Animals, Artistic, Crafting, Cooking, Firefighting, Cleaning, Hauling, PlantWork, Mining, Hunting, Constructing</disabledWorkTags>
+      </li>
+    </comps>
+  </HediffDef>
+
+  <HediffDef ParentName="AG_EchoManifestBase">
+    <defName>AG_EchoManifest_Accelerator</defName>
+    <label>hero form: Accelerator</label>
+    <description>This Host has manifested Accelerator. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <stages>
+      <li>
+        <statOffsets>
+          <MoveSpeed>0.6</MoveSpeed>
+        </statOffsets>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <HediffDef ParentName="AG_EchoManifestBase">
+    <defName>AG_EchoManifest_Pain</defName>
+    <label>hero form: Pain</label>
+    <description>This Host has manifested Pain. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <stages>
+      <li>
+        <painFactor>0.5</painFactor>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <HediffDef ParentName="AG_EchoManifestBase">
+    <defName>AG_EchoManifest_Inumaki</defName>
+    <label>hero form: Inumaki</label>
+    <description>This Host has manifested Inumaki. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <stages>
+      <li>
+        <statOffsets>
+          <MoveSpeed>0.3</MoveSpeed>
+        </statOffsets>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <HediffDef ParentName="AG_EchoManifestBase">
+    <defName>AG_EchoManifest_Vergil</defName>
+    <label>hero form: Vergil</label>
+    <description>This Host has manifested Vergil. The colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <stages>
+      <li>
+        <statOffsets>
+          <MoveSpeed>0.5</MoveSpeed>
+        </statOffsets>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <HediffDef ParentName="AG_EchoManifestBase">
+    <defName>AG_EchoManifest_Shirou</defName>
+    <label>hero form: Shirou</label>
+    <description>This Host has manifested Shirou. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <stages>
+      <li>
+        <statOffsets>
+          <MoveSpeed>0.4</MoveSpeed>
+        </statOffsets>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <!-- When the pool runs dry every manifested Host reverts and collapses for a while. -->
+  <HediffDef>
+    <defName>AG_EchoCollapse</defName>
+    <label>echo collapse</label>
+    <description>The Echo left this Host all at once when the colony's charge ran out. The body cannot stand until it recovers.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>true</isBad>
+    <defaultLabelColor>(0.9, 0.5, 0.4)</defaultLabelColor>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>2500</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <setMax>0.1</setMax>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

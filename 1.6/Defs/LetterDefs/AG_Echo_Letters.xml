@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Awaken or Not yet, like Origin: Blade's letter and vanilla's growth moments. -->
+  <LetterDef ParentName="CustomChoiceLetterBase">
+    <defName>AG_EchoAwakening</defName>
+    <letterClass>RimArt.ChoiceLetter_EchoAwakening</letterClass>
+  </LetterDef>
+
+</Defs>

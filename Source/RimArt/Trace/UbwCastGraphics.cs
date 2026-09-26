@@ -263,10 +263,10 @@ namespace RimArt
         public static void DrawPreview(Vector3 centre, float seconds, Map map) =>
             Draw(new Vector2(centre.x, centre.z + UbwWorldGraphics.SceneNorth), T.Verse, seconds, map);
 
-        /// <summary>The whole home-map side round <paramref name="o"/>, released after <paramref name="verse"/>, at <paramref name="s"/> seconds.</summary>
-        public static void Draw(Vector2 o, int verse, float s, Map map)
+        /// <summary>The whole home-map side round <paramref name="o"/>, released after <paramref name="verse"/>, at <paramref name="s"/> seconds; the world stands <paramref name="hold"/> s after the white has cleared (the ability passes a huge hold until it knows when the world ends). While the chant is still being said, pass the verse being said and s stays under its end.</summary>
+        public static void Draw(Vector2 o, int verse, float s, Map map, float hold = T.Hold)
         {
-            T.Plan t = T.For(verse);
+            T.Plan t = T.For(verse, T.Run, hold);
             if (s < 0f || s >= t.End || !Shown(o, map)) return;
             float R = t.R;
             FireLine[] net = Network(R, T.Branches);

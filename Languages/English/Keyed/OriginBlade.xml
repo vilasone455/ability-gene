@@ -2,7 +2,7 @@
 <LanguageData>
   <AG_OriginBladeProgress>Origin: Blade\n\nMelee: {0}/{1}\nCrafting: {2}/{3}\nBlades understood: {4}/{5}</AG_OriginBladeProgress>
   <AG_OriginBladeStudyHelp>Select an undrafted colonist and right-click a blade on the ground to study it. Each study takes one hour and leaves the weapon intact. Study five distinct melee weapon types with cutting or stabbing attacks; material and quality variants count only once. For example: knife, ikwa, spear, gladius, and longsword. Completed studies are permanent. Interrupted studies must be restarted. Once all three requirements are met you will be asked whether to awaken; the choice is yours and it is permanent. Declining is not final - this command becomes the awaken button, so the pawn can be taken through later. Awakening survives any later decline in skill.</AG_OriginBladeStudyHelp>
-  <AG_OriginBladeWarning>Awakening permanently removes all psycasts and psylink levels and prevents future psycast progression. The pawn can no longer equip ranged weapons (guns, bows, or launchers); any equipped ranged weapon will be unequipped. Rain, Loose, and Grasp remain usable. Psychic sensitivity is unchanged.</AG_OriginBladeWarning>
+  <AG_OriginBladeWarning>Awakening permanently removes all psycasts and psylink levels and prevents future psycast progression. The pawn can no longer equip ranged weapons (guns, bows, or launchers); any equipped ranged weapon will be unequipped. Psychic sensitivity is unchanged.</AG_OriginBladeWarning>
   <AG_OriginBladeStudy>Study blade: {0} ({1}/{2})</AG_OriginBladeStudy>
   <AG_OriginBladeStudyGizmo>Origin: Blade</AG_OriginBladeStudyGizmo>
   <AG_OriginBladeBeginStudy>Begin study</AG_OriginBladeBeginStudy>
@@ -11,12 +11,12 @@
   <AG_OriginBladeUnavailable>no safe path or weapon reserved</AG_OriginBladeUnavailable>
   <AG_OriginBladeStudied>{0} understood {1}. Blades understood: {2}/{3}.</AG_OriginBladeStudied>
   <AG_OriginBladeAwakenedLabel>Origin: Blade awakened</AG_OriginBladeAwakenedLabel>
-  <AG_OriginBladeAwakened>{0} has awakened Origin: Blade, gaining Rain, Loose, and Grasp permanently. All psycasts and psylink levels have been removed. Future psycasting and equipping ranged weapons are forbidden. Psychic sensitivity is unchanged.</AG_OriginBladeAwakened>
+  <AG_OriginBladeAwakened>{0} has awakened Origin: Blade, and can now awaken as Shirou at a resonance device. All psycasts and psylink levels have been removed. Future psycasting and equipping ranged weapons are forbidden. Psychic sensitivity is unchanged.</AG_OriginBladeAwakened>
   <AG_OriginBladeNoRanged>Origin: Blade forbids ranged weapons.</AG_OriginBladeNoRanged>
   <AG_OriginBladeNoPsycasts>Origin: Blade forbids psycasting and psylink progression.</AG_OriginBladeNoPsycasts>
   <AG_OriginBladeAwakenGizmo>Awaken: Blade</AG_OriginBladeAwakenGizmo>
   <AG_OriginBladeAwakenLabel>{0} can awaken</AG_OriginBladeAwakenLabel>
-  <AG_OriginBladeAwakenText>{0} has understood five blade types and has the hands and the eye to go with them. They can take Origin: Blade now, gaining Rain, Loose and Grasp permanently.\n\nThis choice cannot be undone. Declining costs nothing: the Origin: Blade command becomes an awaken button, and they can be taken through at any time.</AG_OriginBladeAwakenText>
+  <AG_OriginBladeAwakenText>{0} has understood five blade types and has the hands and the eye to go with them. They can take Origin: Blade now, which is what the Shirou Echo asks of its Host.\n\nThis choice cannot be undone. Declining costs nothing: the Origin: Blade command becomes an awaken button, and they can be taken through at any time.</AG_OriginBladeAwakenText>
   <AG_OriginBladeAwakenAccept>Awaken. Take the origin and everything it costs.</AG_OriginBladeAwakenAccept>
   <AG_OriginBladeAwakenDefer>Not yet.</AG_OriginBladeAwakenDefer>
 </LanguageData>

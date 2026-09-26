@@ -16,6 +16,8 @@ TerrainAtlas.png  1024 x 1024, the world v2's ground (lib/ubw-terrain.js lab/ubw
              crest, the solid foot, the crack floor, a hairline crack
 Sky.png      64 x 64, the world v2's sky gradient (lib/ubw-sky.js lab/ubw-sky): orange horizon at the
              bottom to dusk red at the top
+IconUnlimitedBladeWorks.png  128 x 128, the ability's icon: three swords standing in a ring of fire, drawn
+             at 4x and scaled down, dark outlines as the Panoply icons have
 
 The formulas are the ones the lab sketches were tuned with, and hash, noise and fbm below are
 Tools/VfxLab/web/js/standins.js's, integer overflow included, so the game draws the pixels the sketches
@@ -24,7 +26,7 @@ were judged on.
 from pathlib import Path
 import math
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 OUT = Path(__file__).resolve().parent / "Textures/RimArt/Trace"
 EARTH_DARK, EARTH_LIT = (.22, .12, .08), (.58, .38, .25)
@@ -172,6 +174,86 @@ def sky(u, v):
     return c + (1,)
 
 
+# ---- the ability's icon ----------------------------------------------------------------------------------
+OUTLINE, STEEL, STEEL_LIT, HILT, GUARD = (40, 26, 22, 255), (150, 160, 172, 255), (215, 222, 230, 255), (92, 52, 34, 255), (120, 96, 60, 255)
+FIRE_OUT, FIRE_IN = (232, 92, 30, 255), (255, 196, 90, 255)
+
+
+def icon():
+    k = 4
+    n = 128 * k
+    image = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    d = ImageDraw.Draw(image)
+    cx, cy, rx, ry = 64 * k, 84 * k, 54 * k, 22 * k
+
+    def ring(width, colour, grow=0):
+        d.ellipse([cx - rx - grow, cy - ry - grow, cx + rx + grow, cy + ry + grow], outline=colour, width=width)
+
+    def flames(back):
+        for i in range(18):
+            a = i / 18 * 2 * math.pi
+            front = math.sin(a) > 0
+            if front == back:
+                continue
+            x, y = cx + rx * math.cos(a), cy + ry * math.sin(a)
+            h = (13 + 9 * hash01(i, 3, 7)) * k
+            w = 5.5 * k
+            bend = (hash01(i, 5, 9) - .5) * 5 * k
+
+            def tongue(w, h, grow):
+                # A teardrop: round at the foot, narrowing to a tip bent a little sideways.
+                pts = []
+                for j in range(17):
+                    t = j / 16 * math.pi
+                    pts.append((x - (w + grow) * math.cos(t), y + grow + (w + grow) * .55 * math.sin(t)))
+                for j in range(1, 12):
+                    u = j / 12
+                    half = (w + grow) * (1 - u) ** .8
+                    pts.append((x + half + bend * u * u, y - (h + grow) * u))
+                pts.append((x + bend, y - h - grow * 1.5))
+                for j in range(11, 0, -1):
+                    u = j / 12
+                    half = (w + grow) * (1 - u) ** .8
+                    pts.append((x - half + bend * u * u, y - (h + grow) * u))
+                return pts
+
+            d.polygon(tongue(w, h, 2.5 * k), fill=OUTLINE)
+            d.polygon(tongue(w, h, 0), fill=FIRE_OUT)
+            d.polygon(tongue(w * .5, h * .55, 0), fill=FIRE_IN)
+
+    def sword(x, y, length, lean):
+        # Point in the ground at (x, y), pommel up, leaning by `lean` radians.
+        dx, dy = math.sin(lean), -math.cos(lean)
+        px, py = -dy, dx
+        def at(t, s):
+            return (x + dx * t + px * s, y + dy * t + py * s)
+        blade, half, o = length * .72, 5.5 * k, 3 * k
+        tip = 12 * k
+        shape = [at(0, 0), at(tip, half), at(blade, half), at(blade, -half), at(tip, -half)]
+        grow = [at(-o, 0), at(tip, half + o), at(blade + o, half + o), at(blade + o, -half - o), at(tip, -half - o)]
+        d.polygon(grow, fill=OUTLINE)
+        d.polygon(shape, fill=STEEL)
+        d.polygon([at(tip * .6, 0), at(tip, half * .45), at(blade, half * .45), at(blade, 0)], fill=STEEL_LIT)
+        g0, g1 = blade, blade + 5 * k
+        d.polygon([at(g0 - o, 15 * k + o), at(g1 + o, 15 * k + o), at(g1 + o, -15 * k - o), at(g0 - o, -15 * k - o)], fill=OUTLINE)
+        d.polygon([at(g0, 15 * k), at(g1, 15 * k), at(g1, -15 * k), at(g0, -15 * k)], fill=GUARD)
+        h0, h1 = g1, length
+        d.polygon([at(h0, 4 * k + o), at(h1 + o, 4 * k + o), at(h1 + o, -4 * k - o), at(h0, -4 * k - o)], fill=OUTLINE)
+        d.polygon([at(h0, 4 * k), at(h1, 4 * k), at(h1, -4 * k), at(h0, -4 * k)], fill=HILT)
+        cxp, cyp = at(length + 2 * k, 0)
+        d.ellipse([cxp - 6.5 * k, cyp - 6.5 * k, cxp + 6.5 * k, cyp + 6.5 * k], fill=OUTLINE)
+        d.ellipse([cxp - 4 * k, cyp - 4 * k, cxp + 4 * k, cyp + 4 * k], fill=GUARD)
+
+    ring(9 * k, OUTLINE)
+    ring(5 * k, FIRE_OUT)
+    flames(True)
+    sword(40 * k, 88 * k, 64 * k, -.32)
+    sword(88 * k, 90 * k, 60 * k, .28)
+    sword(64 * k, 94 * k, 82 * k, .03)
+    flames(False)
+    return image.resize((128, 128), Image.LANCZOS)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     pixels(128, flame).save(OUT / "Flame.png")
@@ -181,6 +263,7 @@ def main():
     Image.new("RGBA", (64, 64), flat).save(OUT / "Terrain.png")
     terrain_atlas().save(OUT / "TerrainAtlas.png")
     pixels(64, sky).save(OUT / "Sky.png")
+    icon().save(OUT / "IconUnlimitedBladeWorks.png")
     for f in sorted(OUT.glob("*.png")):
         print(f"{f.relative_to(OUT.parent.parent.parent)}  {f.stat().st_size} bytes")
 

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- Unlimited Blade Works' chant: the caster stands until the cast takes it into the world. A move order
+       ends the job and with it the chant (the cooldown comes back). -->
+  <JobDef>
+    <defName>AG_UbwChant</defName>
+    <driverClass>RimArt.JobDriver_UbwChant</driverClass>
+    <reportString>Chanting.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <suspendable>false</suspendable>
+  </JobDef>
+</Defs>

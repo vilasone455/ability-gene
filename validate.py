@@ -22,7 +22,7 @@ runtime, in the order they have actually bitten this project:
      which is the default when priorityMode is left out
   6d. TerrainDef tags that are not fields of the 1.6 TerrainDef (holdSnow vs holdSnowOrSand)
   7. Translate keys used in C# but not defined in Languages/
-  8. Concrete abilities with zero or multiple acquisition sources
+  8. Concrete abilities with zero or multiple acquisition sources (retired ones may have zero)
 
 Usage: python3 validate.py [path/to/RimWorld/Data]
 """
@@ -43,10 +43,12 @@ REF_TAGS = {
     "researchPrerequisite", "requiredResearchBuilding", "unfinishedThingDef", "addsHediff",
     # Reloadable apparel ammunition (the kunai belt). A wrong name leaves the belt unreloadable.
     "ammoDef", "soundReload", "soundInteract", "soundDrop",
+    # Echo defs: trials, costs, cast costs, the manifest hediff and the device tiers.
+    "manifestHediff", "skill", "record", "trait", "ability", "research", "bodyType",
 }
 LIST_TAGS = {"abilities", "descriptionHyperlinks", "exceptions",
              "recipeUsers", "thingDefs", "prerequisites", "thingCategories",
-             "categories", "appliedOnFixedBodyParts"}
+             "categories", "appliedOnFixedBodyParts", "weapons", "researchPrerequisites"}
 
 problems = []
 def fail(kind, where, detail):
@@ -434,11 +436,31 @@ for f in my_files:
             refs = [n.text.strip() for n in el.findall("./comps/li/abilities/li") if n.text]
         elif el.tag == "WeaponTraitDef":
             refs = [n.text.strip() for n in el.findall("./abilityProps/abilityDef") if n.text]
+        elif el.tag == "RimArt.EchoDef":
+            refs = [n.text.strip() for n in el.findall("./abilities/li") if n.text]
         for ability in refs:
             grants.setdefault(ability, set()).add(source)
 
+# Abilities no source grants any more, kept so a save whose pawns have them still loads. Origin: Blade
+# granted Rain, Loose and Grasp until 2026-09-25, when it took Unlimited Blade Works instead.
+RETIRED = {"AG_Panoply_Rain", "AG_Panoply_Loose", "AG_Panoply_Grasp"}
+
+# Hero abilities that still have their pre-hero source (an implant, a gene or a trait) while the
+# Echo that uses them is being built. Each is to lose one source once it is decided whether the
+# old item stays in the game; until then two sources are expected, and only these two.
+SHARED_WITH_ECHO = {
+    "AG_VectorReflection", "AG_VectorSurge", "AG_VectorShove", "AG_ShinraTensei",
+    "AG_Imperative_Stop", "AG_Imperative_Drop", "AG_Imperative_Kneel", "AG_Imperative_Come",
+    "AG_Imperative_Run",
+}
+
 for ability, f in sorted(ability_defs.items()):
     sources = grants.get(ability, set())
+    if ability in RETIRED and not sources:
+        continue
+    if ability in SHARED_WITH_ECHO and len(sources) == 2 \
+            and sum(1 for src in sources if src.startswith("RimArt.EchoDef:")) == 1:
+        continue
     if len(sources) != 1:
         fail("ability source count", f,
              ability + " has " + str(len(sources)) + " acquisition sources: "
