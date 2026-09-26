@@ -48,6 +48,20 @@ namespace RimArt
             return vacuum.ContentsLine() + ", fullness " + vacuum.Fullness.ToString("0.##") + ", hediff " + (load == null ? "none" : load.Severity.ToString("0.##") + " kg x" + load.MoveFactor.ToString("0.###"));
         }
 
+        /// <summary>
+        /// Injuries and missing parts the pawn has now that were not in <paramref name="before"/>. A hit that
+        /// takes off a limb leaves no injury: the missing part replaces the injuries on it.
+        /// </summary>
+        private static int NewWounds(Pawn pawn, HashSet<Hediff> before) =>
+            pawn.health.hediffSet.hediffs.Count(h => (h is Hediff_Injury || h is Hediff_MissingPart) && !before.Contains(h));
+
+        private static string Hediffs(Pawn pawn)
+        {
+            var list = pawn.health.hediffSet.hediffs;
+            if (list.Count == 0) return "none";
+            return string.Join(", ", list.Select(h => h.def.defName + (h.Part != null ? " on " + h.Part.Label : "") + " " + h.Severity.ToString("0.#")));
+        }
+
         /// <summary>Casts and traces until the cast job ends (at most <paramref name="most"/> ticks).</summary>
         private static IEnumerable<int> Cast(RimArtTestContext t, Pawn holder, CompVacuum vacuum, AbilityDef def, LocalTargetInfo target, Pawn other, string shot, int most = 300)
         {
@@ -227,11 +241,14 @@ namespace RimArt
             Thing steel = Feed(vacuum, "Steel", 75);
             IntVec3 at = t.center + new IntVec3(6, 0, 0);
             Pawn enemy = t.Enemy(at, armed: false);
+            // No apparel: with armour penetration 0, any worn armour can deflect the hit to 0 at random.
+            enemy.apparel?.DestroyAll();
             yield return 2;
-            int injuries = enemy.health.hediffSet.hediffs.Count(h => h is Hediff_Injury);
+            var before = new HashSet<Hediff>(enemy.health.hediffSet.hediffs);
             float kg = vacuum.MouthKg;
             var vacuums = t.map.GetComponent<MapComponent_Vacuum>();
             t.Log("mouth " + steel.LabelCap + " " + kg.ToString("0.##") + " kg -> " + (kg * 1.5f).ToString("0.#") + " before the cap");
+            t.Log("enemy hediffs before: " + Hediffs(enemy));
             bool stunned = false;
             Ability spit = holder.abilities.GetAbility(VacuumDefOf.AG_Vacuum_Spit);
             if (!t.Check(spit.CanCast, "Spit can be cast")) yield break;
@@ -247,9 +264,10 @@ namespace RimArt
             }
             yield return 5;
             t.Log("after: " + State(vacuum, holder) + "; hit " + vacuums.lastSpitVictim?.LabelShort + " for " + vacuums.lastSpitDamage);
+            t.Log("enemy hediffs after: " + Hediffs(enemy));
             t.Check(vacuums.lastSpitVictim == enemy, "the pawn on the cell was hit");
             t.Check(Mathf.Abs(vacuums.lastSpitDamage - 40f) < 0.01f, "the damage is capped at 40 (" + vacuums.lastSpitDamage + ")");
-            t.Check(enemy.Dead || enemy.health.hediffSet.hediffs.Count(h => h is Hediff_Injury) > injuries, "the pawn is injured");
+            t.Check(enemy.Dead || NewWounds(enemy, before) > 0, "the pawn is injured (" + (enemy.Dead ? "dead" : NewWounds(enemy, before) + " new injuries or lost parts") + ")");
             t.Check(stunned || enemy.Dead || enemy.Downed, "the pawn was dazed (stunned)");
             t.Check(steel.Spawned && steel.Position.DistanceTo(at) <= 2.5f, "the steel landed near the cell (" + (steel.Spawned ? steel.Position.ToString() : "not spawned") + ", " + steel.stackCount + ")");
             t.Check(vacuum.Mouth == null, "the mouth is empty");
