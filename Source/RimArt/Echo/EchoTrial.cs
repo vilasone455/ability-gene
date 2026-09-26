@@ -18,17 +18,27 @@ namespace RimArt
         public abstract float Target { get; }
         public virtual bool Met(Pawn pawn) => Current(pawn) >= Target;
 
-        /// <summary>A Trial the pawn meets by not having something. Drawn as a check, not a bar.</summary>
-        public virtual bool IsExclusion => false;
+        /// <summary>A Trial that is met or not, such as a trait the pawn has or lacks. Drawn as a check, not a bar.</summary>
+        public virtual bool IsCheck => false;
 
         protected abstract string DefaultLabel { get; }
         public string Label => label.NullOrEmpty() ? DefaultLabel : label;
 
         public virtual string ProgressText(Pawn pawn) =>
-            IsExclusion ? (Met(pawn) ? "AG_EchoTrialYes".Translate() : "AG_EchoTrialNo".Translate()).ToString()
+            IsCheck ? (Met(pawn) ? "AG_EchoTrialYes".Translate() : "AG_EchoTrialNo".Translate()).ToString()
                 : Current(pawn).ToString("0.##") + " / " + Target.ToString("0.##");
 
         public virtual IEnumerable<string> ConfigErrors() { yield break; }
+
+        /// <summary>A trait's name. Single-degree traits (Psychopath, Origin: Blade) have it on the degree data, not the trait.</summary>
+        protected static string TraitLabel(TraitDef trait, int degree, bool matchDegree) =>
+            matchDegree || trait.label.NullOrEmpty()
+                ? trait.DataAtDegree(matchDegree ? degree : trait.degreeDatas[0].degree).GetLabelCapFor(null)
+                : trait.LabelCap.ToString();
+
+        protected static bool HasTrait(Pawn pawn, TraitDef trait, int degree, bool matchDegree) =>
+            pawn?.story?.traits != null && (matchDegree
+                ? pawn.story.traits.HasTrait(trait, degree) : pawn.story.traits.HasTrait(trait));
     }
 
     public class Trial_Skill : EchoTrial
@@ -111,17 +121,32 @@ namespace RimArt
         public int degree;
         public bool matchDegree;
 
-        private bool Has(Pawn pawn) => pawn?.story?.traits != null && (matchDegree
-            ? pawn.story.traits.HasTrait(trait, degree) : pawn.story.traits.HasTrait(trait));
-
-        public override float Current(Pawn pawn) => Has(pawn) ? 0f : 1f;
+        public override float Current(Pawn pawn) => HasTrait(pawn, trait, degree, matchDegree) ? 0f : 1f;
         public override float Target => 1f;
-        public override bool IsExclusion => true;
+        public override bool IsCheck => true;
+        protected override string DefaultLabel => "AG_EchoTrialNot".Translate(TraitLabel(trait, degree, matchDegree));
 
-        // Single-degree traits (Psychopath) have their label on the degree data, not the trait.
-        protected override string DefaultLabel => "AG_EchoTrialNot".Translate(matchDegree || trait.label.NullOrEmpty()
-            ? trait.DataAtDegree(matchDegree ? degree : trait.degreeDatas[0].degree).GetLabelCapFor(null)
-            : trait.LabelCap.ToString());
+        public override IEnumerable<string> ConfigErrors()
+        {
+            if (trait == null) yield return "trait is null";
+        }
+    }
+
+    /// <summary>
+    /// Met while the pawn has a trait: a hero reached through a trait the pawn earned first, as Shirou
+    /// is through Origin: Blade.
+    /// </summary>
+    public class Trial_Trait : EchoTrial
+    {
+        public TraitDef trait;
+        /// <summary>With matchDegree, only this degree counts; otherwise any degree does.</summary>
+        public int degree;
+        public bool matchDegree;
+
+        public override float Current(Pawn pawn) => HasTrait(pawn, trait, degree, matchDegree) ? 1f : 0f;
+        public override float Target => 1f;
+        public override bool IsCheck => true;
+        protected override string DefaultLabel => TraitLabel(trait, degree, matchDegree);
 
         public override IEnumerable<string> ConfigErrors()
         {

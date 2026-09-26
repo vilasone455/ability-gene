@@ -17,9 +17,10 @@ namespace RimArt
 
     /// <summary>
     /// Unlimited Blade Works, the ability: casting it queues the chant (<see cref="JobDriver_UbwChant"/>);
-    /// everything after that is <see cref="UbwCast"/>'s. The ability's own cooldown starts at the cast and
-    /// comes back if the chant breaks before the release. Its buttons while it runs are added to the
-    /// ability's gizmo by <see cref="Patch_UbwCommands"/>.
+    /// everything after that is <see cref="UbwCast"/>'s. The ability comes from the Shirou Echo, which takes
+    /// its cast charge before this runs (EchoCastPayment). The cooldown and that charge come back if the
+    /// chant breaks before the release. Its buttons while it runs are added to the ability's gizmo by
+    /// <see cref="Patch_UbwCommands"/>.
     /// </summary>
     public class CompAbilityEffect_UnlimitedBladeWorks : CompAbilityEffect
     {
@@ -27,7 +28,8 @@ namespace RimArt
         {
             base.Apply(target, dest);
             Pawn pawn = parent.pawn;
-            GameComponent_UnlimitedBladeWorks.Instance?.Queue(pawn);
+            float paid = EchoUtility.ManifestedWith(pawn, parent.def)?.def.CastCost(parent.def) ?? 0f;
+            GameComponent_UnlimitedBladeWorks.Instance?.Queue(pawn, paid);
             pawn.jobs.jobQueue.EnqueueFirst(JobMaker.MakeJob(UbwDefOf.AG_UbwChant));
         }
 
@@ -88,7 +90,7 @@ namespace RimArt
                     yield return new Command_Action
                     {
                         defaultLabel = "Stop chanting",
-                        defaultDesc = "Stop the chant before the release. No cooldown is spent.",
+                        defaultDesc = "Stop the chant before the release. No cooldown or charge is spent.",
                         icon = TexCommand.ClearPrioritizedWork,
                         groupable = false,
                         action = () => cast.Break(null),

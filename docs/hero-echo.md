@@ -61,6 +61,7 @@ Device tiers (`CompProperties_EchoDevice.tiers`):
 | `Trial_Stat` | stat, min | a stat value |
 | `Trial_ColonyWealth` | wealth | richest home map |
 | `Trial_NotTrait` | trait, degree, matchDegree | exclusion: met while the pawn lacks the trait |
+| `Trial_Trait` | trait, degree, matchDegree | met while the pawn has the trait (Shirou: Origin: Blade) |
 | `Trial_KillsWith` | weapons, anyMelee, anyRanged, count, weaponLabel | kills by weapon, counted by this mod from load |
 
 ## Cost
@@ -98,6 +99,7 @@ The card and the letter show the cost as it applies to the candidate ("Gains Abr
 | Pain | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei | 15 | 20 |
 | Inumaki | Social 10, not Psychopath | Kind | the five imperatives | 8 | 5 each |
 | Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | none until his kit is ported | 10 | - |
+| Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40 |
 
 Accelerator, Pain and Inumaki reuse abilities that still come from their pre-hero item (reflex
 booster implant, repulsion eye, Commanding Voice trait). validate.py allows that second source only
@@ -115,7 +117,8 @@ for those abilities (`SHARED_WITH_ECHO`) until it is decided whether the old ite
 
 - Meteor incident that brings the device (the device is researched and built for now).
 - Body and head costume pieces, eye overlays, a transform effect per Echo, a marker for manifested Hosts.
-- Pocket spaces closing on `PoolEmptied`.
+- Pocket spaces closing on `PoolEmptied`, except Unlimited Blade Works: its world closes when the
+  caster loses the ability, which an empty pool causes by reverting every Host.
 - Echoes for the other heroes; their kits have no mechanics yet.
 - Death setting to reopen a closed Echo after a season; per-Echo settings multipliers.
 - Save/load has not been tested by a game test.

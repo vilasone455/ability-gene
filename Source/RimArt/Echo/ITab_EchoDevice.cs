@@ -177,7 +177,7 @@ namespace RimArt
             Text.Anchor = TextAnchor.UpperRight;
             Widgets.Label(new Rect(inner.x, y, inner.width, 16f), trial.ProgressText(pawn));
             Text.Anchor = TextAnchor.UpperLeft;
-            float share = trial.IsExclusion ? (met ? 1f : 0f) : trial.Target <= 0f ? 1f : Mathf.Clamp01(trial.Current(pawn) / trial.Target);
+            float share = trial.IsCheck ? (met ? 1f : 0f) : trial.Target <= 0f ? 1f : Mathf.Clamp01(trial.Current(pawn) / trial.Target);
             Widgets.FillableBar(new Rect(inner.x, y + 16f, inner.width, 6f), share, met ? EchoTex.TrialDone : EchoTex.TrialOpen);
             return y + 26f;
         }

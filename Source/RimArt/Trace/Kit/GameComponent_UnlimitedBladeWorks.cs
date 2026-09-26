@@ -24,11 +24,19 @@ namespace RimArt
             return null;
         }
 
-        /// <summary>The ability fired: the chant is queued and begins when its job starts.</summary>
-        public void Queue(Pawn caster)
+        /// <summary>The ability fired, <paramref name="paid"/> charge taken for it: the chant is queued and begins when its job starts.</summary>
+        public void Queue(Pawn caster, float paid)
         {
             if (For(caster) != null) return;
-            casts.Add(new UbwCast(caster, Find.TickManager.TicksGame));
+            casts.Add(new UbwCast(caster, Find.TickManager.TicksGame, paid));
+        }
+
+        /// <summary>For game tests: drops every cast and removes every world.</summary>
+        public void ResetForTests()
+        {
+            casts.Clear();
+            foreach (Map map in Find.Maps)
+                if (map.GetComponent<MapComponent_UnlimitedBladeWorks>()?.IsWorld == true) UnlimitedBladeWorksMap.CloseLater(map);
         }
 
         /// <summary>The chant job started. False if no cast was waiting for it: the job then ends.</summary>

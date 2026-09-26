@@ -2,7 +2,8 @@
 
 The Trace kit's ultimate, as a pocket map. The rules were proposed 2026-09-24 and taken as placeholders
 2026-09-25; every number is an XML field (`UbwRules` on `AG_Trace_UnlimitedBladeWorks`). Built: the
-pictures, the map, and the ability (chant, take, world timer, return). Not built: the commands.
+pictures, the map, and the ability (chant, take, world timer, return), granted by the Shirou Echo
+(docs/hero-echo.md). Not built: the commands.
 
 ## What exists (2026-09-25)
 
@@ -16,26 +17,30 @@ pictures, the map, and the ability (chant, take, world timer, return). Not built
 | The weapon atlas from the weapons' own textures (the lab's reference art never ships) | `Kit/UbwAtlasBuilder.cs` | written, not yet run |
 | The commands (Full Open, Pin, Draw, Arm, Intercept) | sketches only | not ported |
 | World v2 (plates with depth, tiers past the edge, the north sky with gears) | `UbwTerrain.cs`, `UbwTerrainGraphics.cs`; preview "world v2"; "world map: open (v2 depth)" | ported as a second world picture on the same field and timing; `Tests/Ubw` checks 1,327 plates against the sketch's ground; an experiment, not agreed |
-| The ability: the chant, who is taken, the world's time, the return, the cooldown | `Kit/UbwCast.cs`, `GameComponent_UnlimitedBladeWorks.cs`, `CompAbilityEffect_UnlimitedBladeWorks.cs` (with the chant job and the Release/Close buttons), `1.6/Defs/AbilityDefs/AG_Trace_Abilities.xml` | written 2026-09-25, compiles against the 1.6 reference assemblies, not yet run; granted by Origin: Blade |
+| The ability: the chant, who is taken, the world's time, the return, the cooldown | `Kit/UbwCast.cs`, `GameComponent_UnlimitedBladeWorks.cs`, `CompAbilityEffect_UnlimitedBladeWorks.cs` (with the chant job and the Release/Close buttons), `1.6/Defs/AbilityDefs/AG_Trace_Abilities.xml` | written 2026-09-25; granted by the Shirou Echo since 2026-09-26; 6 game tests pass (`Kit/Tests_Ubw.cs`); not played by hand |
 
 ## The ability
 
-Granted by the Origin: Blade trait (in place of Rain, Loose and Grasp) until the hero layer exists.
-Numbers from `UbwRules` on the ability def; cooldown 2 days (`cooldownTicksRange` 120000).
+Granted by the Shirou Echo (`AG_Echo_Shirou` in `AG_Echoes.xml`) while its Host is manifested. The
+Echo's one Trial is the Origin: Blade trait, so the way in is still the blade study; the trait itself
+grants nothing. Numbers from `UbwRules` on the ability def; cooldown 2 days (`cooldownTicksRange`
+120000); cast cost 40 charge from the shared pool (the Echo's `castCosts`), taken when the ability
+fires. Shirou's upkeep is 12 charge an hour while manifested.
 
 1. Cast (0.25 s warmup): the caster stands facing south and chants, 2 s a verse. Buttons: **Release**
    (the world opens when the verse being said ends) and **Stop chanting**. After verse 3 it opens by
-   itself. A move order, going down or a mental break breaks the chant. A stopped or broken chant gives
-   the cooldown back.
+   itself. A move order, going down, a mental break or the Host reverting breaks the chant. A stopped
+   or broken chant gives the cooldown and the 40 charge back.
 2. Released after verse V: the fire runs along the chant's lines, the ring closes, white. At full white
    everyone standing within 6 / 9 / 12 cells of the chant's cell is taken: allies, enemies, animals and
    the caster; downed pawns stay. Each lands at its offset from the caster, who lands in the middle of
-   the 40 x 40 world (v2 by default, `worldV2`). A caster downed between the release and the white
-   stops the world opening; the cooldown stays spent.
+   the 40 x 40 world (v2 by default, `worldV2`). A caster downed or reverted between the release and
+   the white stops the world opening; the cooldown and charge stay spent.
 3. Hostile pawns get an assault lord of their faction in the world (no fleeing: the map edge is the
    world's edge). The home map keeps the low ring of fire, which blocks nothing.
 4. The world stands 20 / 25 / 30 s of game time from the take. It ends early when the caster is downed,
-   dies or is no longer in it, or on the caster's **Close (N s)** button.
+   dies, is no longer in it or stops being Shirou (reverted by hand, or the pool ran dry and every Host
+   reverted), or on the caster's **Close (N s)** button.
 5. The close: the white comes in from the edge in 1.2 s. At full white everyone alive goes back to the
    cell they were taken from (nearest free cell), downed or not, drafted if they were; into their old
    lord if it still exists, else hostiles get a new assault lord and other non-player pawns that had a
@@ -48,9 +53,13 @@ map saves its own clock).
 
 ## In game
 
-To try the ability: RimArts debug window, Kits, **Origin: Blade** on a colonist (the grant awakens it),
-then use the ability from the colonist's buttons. Trace, **unlimited blade works: ready** clears its
-cooldown.
+To try the ability: RimArts debug window, Echo, **make Host (no trials)** with Shirou on a colonist,
+**fill charge**, then Manifest and use the ability from the colonist's buttons. Trace, **unlimited blade
+works: ready** clears its cooldown. The real way in: Kits, **Origin: Blade** on a colonist (the grant
+awakens it), build the resonance device and tune it to Shirou and that colonist.
+
+Game tests: `-quicktest -rimarttest=ubw`, 6 scenarios (the Trial, cast and return, Stop chanting and a
+move order refund, revert during the chant, revert in the world, empty pool in the world), about 30 s.
 
 RimArts debug window, Trace, pictures and the empty map:
 
@@ -78,14 +87,11 @@ monosword when Royalty is present.
 
 ## Still to check in game
 
-The ability, first run:
+The ability (the game tests cover the chant starting, the take and the return with lords and drafted
+state, the refunds, and the world's removal):
 
-- The cast starts the chant (a self-cast with `targetRequired` false and range -1) and the chant job
-  takes over after the warmup (it is queued first behind the cast job).
-- The take and the return: pawns, lords, drafted state, selection and camera; raiders fighting inside;
-  the world's removal after the return (a long event, as the debug close).
-- The world made inside a game tick at the release (as Involute's volume is): a hitch while it
-  generates, and whether the game minds.
+- By hand: selection and camera on the take and the return; raiders fighting inside for the full
+  20 to 30 s; the hitch while the world generates inside a game tick at the release.
 - A save and load while the world stands, and while chanting.
 
 - The atlas builder: whether `Graphics.Blit` and `ReadPixels` give the pictures the right way up, and

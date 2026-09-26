@@ -8,6 +8,10 @@ Every kit in the mod, how to get it, and what each ability does.
 
 | Kit | Type | Abilities | Needs |
 |---|---|---|---|
+| [Accelerator — One Who Turns All Vectors](#accelerator--one-who-turns-all-vectors) | Hero | Vector manipulation, Reflex surge, Vector shove | - |
+| [Inumaki — Voice That Must Not Speak](#inumaki--voice-that-must-not-speak) | Hero | Stop, Drop, Kneel, Come, Run | - |
+| [Pain — Judge of the Rippled Eye](#pain--judge-of-the-rippled-eye) | Hero | Shinra Tensei | - |
+| [Shirou — The Faker](#shirou--the-faker) | Hero | Unlimited blade works | - |
 | [Anchor organ](#anchor-organ) | Gene | Mark, Clap, Double clap | Biotech DLC |
 | [Corrosive glands](#corrosive-glands) | Gene | Disarm spit | Biotech DLC |
 | [Dispersal plexus](#dispersal-plexus) | Gene | Murder, Carrion | Biotech DLC |
@@ -15,7 +19,6 @@ Every kit in the mod, how to get it, and what each ability does.
 | [Fold organ](#fold-organ) | Archite gene | Vent, Fold, Swallow, Post, Collapse | Biotech DLC |
 | [Combat presence](#combat-presence) | Trait | Provoke | - |
 | [Commanding voice](#commanding-voice) | Trait | Stop, Drop, Kneel, Come, Run | - |
-| [Origin: Blade](#origin-blade) | Trait | Unlimited blade works | - |
 | [Pain debt](#pain-debt) | Trait | Wound debt | - |
 | [Attraction eye](#attraction-eye) | Implant | Gravity Well | - |
 | [Neural accelerator](#neural-accelerator) | Implant | Time alter: double accel, Time alter: square accel, Time alter: stagnate | - |
@@ -44,6 +47,154 @@ Every kit in the mod, how to get it, and what each ability does.
 | [Frost bomb](#frost-bomb) | Weapon | Throw frost bomb | - |
 | [Fūma Shuriken](#fūma-shuriken) | Weapon | Throw Fūma Shuriken | - |
 | [Mimic beacon](#mimic-beacon) | Weapon | Throw mimic beacon | - |
+
+## Heroes
+
+### Accelerator — One Who Turns All Vectors
+
+Nothing that touches him keeps its direction.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Accelerator and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Accelerator can have one Host.
+- Trial: intellectual 12.
+- Trial: damage taken 300.
+- Awakening gives the trait abrasive, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 12 of the colony's charge an hour.
+- Reflex surge costs 10 charge a cast.
+- Vector shove costs 8 charge a cast.
+
+#### Vector manipulation
+
+Stop the world and take hold of every round about to pass within twelve cells of the carrier, then sort them into as many as four groups and turn each group where you want it. An edited round starts again from where it was caught with twenty cells of travel multiplied by the force spent on it, and moves and lands at that same multiple. A round is caught a third of a second before it arrives however fast it is flying, so reflex surge is usually what buys the time to press this.
+
+The bill comes in brain strain when you apply an edit, steeply: one group is routine, four at once is most of what the carrier has. Filling the bar overloads the booster and puts them on the floor.
+
+**Cooldown:** 5 seconds | **Range:** self
+
+#### Reflex surge
+
+Drive the booster's own clock up until the world appears to crawl. For five seconds of game time everything outside the carrier's head runs at a quarter rate, which is about twenty seconds of yours - long enough to watch a burst cross the room and decide what to do about it.
+
+It buys time and nothing else: nobody moves further, nothing hits harder, and the carrier is slowed with everyone else. Ends early from the gizmo on the hediff, and costs a little brain strain to open.
+
+**Cooldown:** 30 seconds | **Range:** self
+
+#### Vector shove
+
+Take hold of one body's momentum and spend all of it throwing them away from the carrier. Damage scales with the distance travelled, and a great deal more if something solid stops them early.
+
+Heavier bodies move less; this is for breaking a melee grip and introducing people to walls, not for damage.
+
+**Cooldown:** 20 seconds | **Range:** 12.9 cells | **Cast time:** 0.5 seconds
+
+
+### Inumaki — Voice That Must Not Speak
+
+He speaks rarely, and the word is law.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Inumaki and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Inumaki can have one Host.
+- Trial: social 10.
+- Trial: does not have psychopath.
+- Awakening gives the trait kind, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 8 of the colony's charge an hour.
+- Stop costs 5 charge a cast.
+- Drop costs 5 charge a cast.
+- Kneel costs 5 charge a cast.
+- Come costs 5 charge a cast.
+- Run costs 5 charge a cast.
+
+#### Stop
+
+One word, and whoever hears it stands still for three seconds. They are not stunned and they are not yours - they keep their weapon, their target and their intentions, and pick all three back up the moment it wears off.
+
+Cheap to say, because it asks for nothing but a pause.
+
+**Cooldown:** 10 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
+
+#### Drop
+
+Whoever hears it stops, takes half a second, and opens their hand. The weapon lands at their feet rather than thrown clear, and they are free to pick it straight back up.
+
+What this buys is the half second, the stoop, and whatever your guns do in between - which, said to the one carrying the launcher, is enough.
+
+**Cooldown:** 20 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
+
+#### Kneel
+
+Whoever hears it goes to the ground and stays there for three seconds. Prone is not downed: they can still shoot, but anyone shooting at them is shooting at a smaller thing.
+
+Worth saying to somebody running, close to worthless said to somebody already in cover, and expensive either way.
+
+**Cooldown:** 30 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
+
+#### Come
+
+Whoever hears it walks to the speaker, once, and then remembers what they were doing.
+
+Calling an armed hostile to your own position is as bad an idea as it sounds; the version that is not is pulling one raider off a wall, out of cover, or away from the colonist they had chosen.
+
+**Cooldown:** 30 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
+
+#### Run
+
+Whoever hears it turns and runs from the speaker. They stop when they are far enough, work out that nothing is chasing them, and come back - what you bought is the walk back.
+
+Expensive for the same reason kneel is, and the best thing in the list to say to something about to reach a colonist.
+
+**Cooldown:** 30 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
+
+
+### Pain — Judge of the Rippled Eye
+
+He pulls and pushes the world at will.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Pain and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Pain can have one Host.
+- Trial: intellectual 10.
+- Trial: kills 25.
+- Awakening gives the trait iron-willed, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 15 of the colony's charge an hour.
+- Shinra tensei costs 20 charge a cast.
+
+#### Shinra Tensei
+
+Charge for up to three seconds of power, then release a four-cell repulsion wave. Pushes allies and enemies, deals blunt damage only on collision, and briefly redirects incoming direct fire. Release commits a twenty-second cooldown.
+
+**Range:** self
+
+
+### Shirou — The Faker
+
+Every blade he has seen, he can make again.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Shirou and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Shirou can have one Host.
+- Trial: has Origin: Blade.
+- (Origin: Blade) Cannot appear on generated pawns. It has to be earned.
+- (Origin: Blade) Reach Melee 14 and Crafting 12.
+- (Origin: Blade) Study five different bladed melee weapon types: select an undrafted colonist, right-click a blade on the ground and choose **Study blade** (one in-game hour each, the weapon is not used up). Material and quality variants of one weapon count once.
+- (Origin: Blade) When all requirements are met a letter offers **Awaken** or **Not yet**. Declining is free; the Origin: Blade button can awaken the pawn later.
+- (Origin: Blade) Awakening removes all psylink levels and psycasts, and the pawn can never use ranged weapons again.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 12 of the colony's charge an hour.
+- Unlimited blade works costs 40 charge a cast.
+
+#### Unlimited blade works
+
+Chant up to three verses of 2 seconds. Press Release during a verse and the world opens when that verse ends; after the third verse it opens by itself.
+
+Everyone standing within 6, 9 or 12 cells (by verses said), allies and enemies alike, is taken into a 40 x 40 world of swords for 20, 25 or 30 seconds. Downed pawns stay behind. Nobody can leave the world. It ends early on Close, or if the caster is downed, leaves it or stops being Shirou.
+
+Then everyone goes back to the cell they were taken from. Corpses and dropped items land round the cast point.
+
+Stopping or breaking the chant before the release gives the cooldown and the charge back.
+
+**Cooldown:** 2 days (in-game) | **Range:** self | **Cast time:** 0.2 seconds
+
 
 ## Genes
 
@@ -285,33 +436,6 @@ Whoever hears it turns and runs from the speaker. They stop when they are far en
 Expensive for the same reason kneel is, and the best thing in the list to say to something about to reach a colonist.
 
 **Cooldown:** 30 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
-
-
-### Origin: Blade
-
-This person's origin is the blade, earned through Melee 14, Crafting 12 and the study of five distinct blade types. It grants Unlimited Blade Works permanently, and cannot be rolled at random or lost to a later decline in skill.
-
-Awakening removes every psycast and psylink level and forbids ranged weapons for life, though psychic sensitivity is unchanged.
-
-**How to get it**
-
-- Cannot appear on generated pawns. It has to be earned.
-- Reach Melee 14 and Crafting 12.
-- Study five different bladed melee weapon types: select an undrafted colonist, right-click a blade on the ground and choose **Study blade** (one in-game hour each, the weapon is not used up). Material and quality variants of one weapon count once.
-- When all requirements are met a letter offers **Awaken** or **Not yet**. Declining is free; the Origin: Blade button can awaken the pawn later.
-- Awakening removes all psylink levels and psycasts, and the pawn can never use ranged weapons again.
-
-#### Unlimited blade works
-
-Chant up to three verses of 2 seconds. Press Release during a verse and the world opens when that verse ends; after the third verse it opens by itself.
-
-Everyone standing within 6, 9 or 12 cells (by verses said), allies and enemies alike, is taken into a 40 x 40 world of swords for 20, 25 or 30 seconds. Downed pawns stay behind. Nobody can leave the world. It ends early if the caster is downed or leaves, or on Close.
-
-Then everyone goes back to the cell they were taken from. Corpses and dropped items land round the cast point.
-
-Stopping or breaking the chant before the release gives the cooldown back.
-
-**Cooldown:** 2 days (in-game) | **Range:** self | **Cast time:** 0.2 seconds
 
 
 ### Pain debt

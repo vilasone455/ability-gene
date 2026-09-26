@@ -57,15 +57,18 @@ namespace RimArt
     ///
     /// - The caster stands and chants up to 3 verses (verseSeconds each). The player presses Release during a
     ///   verse and the world opens when that verse ends; after verse 3 it opens by itself. A chant that is
-    ///   broken or cancelled before the release gives the cooldown back.
+    ///   broken or cancelled before the release gives the cooldown and the Echo's cast charge back.
+    /// - The ability comes from the Shirou Echo and is taken away when the Host reverts (by hand or when
+    ///   the pool runs dry). Without it the chant breaks, a released world does not open, and a standing
+    ///   world closes, as if the caster were downed.
     /// - Released after verse V, everyone standing within radiusByVerse[V] of the cell the chant began on
     ///   (allies, enemies, animals; the caster always) is taken into a 40 x 40 pocket map, each at its offset
     ///   from the caster, who lands in the middle. Downed pawns stay. The moment is the full white of the
     ///   cast picture (<see cref="T.Plan.Taken"/>).
     /// - Hostile pawns taken are put in an assault lord of their faction inside the world; the map edge is
     ///   the world's edge, nobody can leave.
-    /// - The world stands worldSecondsByVerse[V] of game time, and ends early if the caster is downed, dies
-    ///   or leaves, or on Close.
+    /// - The world stands worldSecondsByVerse[V] of game time, and ends early if the caster is downed, dies,
+    ///   leaves or loses the ability, or on Close.
     /// - Then everyone alive goes back to the cell they were taken from (the nearest free cell), downed or
     ///   not, and back into the lord they had if it still exists (else hostiles get a new assault lord);
     ///   corpses and every item in the world drop round the cast point; the world is removed.
@@ -89,6 +92,8 @@ namespace RimArt
         /// <summary>When the close began on the world's clock (seconds since the take), or -1 while the world stands.</summary>
         public float closeAt = -1f;
         public bool closeOrdered, returned, broken, fizzled;
+        /// <summary>The charge the Echo took when the ability fired; given back if the chant breaks.</summary>
+        public float paid;
         public List<UbwTaken> taken = new List<UbwTaken>();
         private bool shookTaken, shookHome;
 
@@ -116,9 +121,10 @@ namespace RimArt
 
         public UbwCast() { }
 
-        public UbwCast(Pawn caster, int now)
+        public UbwCast(Pawn caster, int now, float paid)
         {
             this.caster = caster;
+            this.paid = paid;
             home = caster.Map;
             centre = caster.Position;
             queuedTick = now;
@@ -143,14 +149,20 @@ namespace RimArt
         }
 
         private bool ChantHeld() =>
-            caster != null && caster.Spawned && caster.Map == home && !caster.Dead && !caster.Downed && caster.CurJobDef == UbwDefOf.AG_UbwChant;
+            caster != null && caster.Spawned && caster.Map == home && !caster.Dead && !caster.Downed && caster.CurJobDef == UbwDefOf.AG_UbwChant
+            && Ability != null;
 
-        /// <summary>The chant stops before the release: nothing opens and the cooldown comes back.</summary>
+        /// <summary>The chant stops before the release: nothing opens, and the cooldown and the charge come back.</summary>
         public void Break(string why)
         {
             if (broken) return;
             broken = true;
-            Ability?.ResetCooldown();
+            Ability ability = Ability;
+            if (ability != null) ability.ResetCooldown();
+            // Reverted: the Echo took the ability and kept its cooldown for the next manifest.
+            else if (caster != null) GameComponent_Echoes.Get?.HostRecord(caster)?.grant.Forget(UbwDefOf.AG_Trace_UnlimitedBladeWorks);
+            GameComponent_Echoes.Get?.Refund(paid);
+            paid = 0f;
             if (caster != null && caster.Spawned && caster.CurJobDef == UbwDefOf.AG_UbwChant) caster.jobs.EndCurrentJob(JobCondition.InterruptForced);
             if (why != null && caster != null) Messages.Message(why, caster, MessageTypeDefOf.NeutralEvent, false);
         }
@@ -162,7 +174,7 @@ namespace RimArt
             if (world == null)
             {
                 verse = 0;
-                Break("Unlimited Blade Works: the world could not be made. No cooldown spent.");
+                Break("Unlimited Blade Works: the world could not be made. No cooldown or charge spent.");
                 return;
             }
             world.GetComponent<MapComponent_UnlimitedBladeWorks>().driven = true;
@@ -172,12 +184,12 @@ namespace RimArt
 
         private void Take(int now)
         {
-            // Released, then downed or gone before the white: the world never opens, the cooldown stays spent.
-            if (caster == null || caster.Dead || caster.Downed || !caster.Spawned || caster.Map != home)
+            // Released, then downed, gone or reverted before the white: the world never opens, the cooldown and charge stay spent.
+            if (caster == null || caster.Dead || caster.Downed || !caster.Spawned || caster.Map != home || Ability == null)
             {
                 fizzled = true;
                 if (world != null) UnlimitedBladeWorksMap.CloseLater(world);
-                if (caster != null) Messages.Message("Unlimited Blade Works: " + caster.LabelShortCap + " fell before the world opened.", MessageTypeDefOf.NegativeEvent, false);
+                if (caster != null) Messages.Message("Unlimited Blade Works: " + caster.LabelShortCap + " lost the world before it opened.", MessageTypeDefOf.NegativeEvent, false);
                 return;
             }
 
@@ -218,7 +230,7 @@ namespace RimArt
 
         // ---- the world stands, then closes -------------------------------------------------------------------------
 
-        private bool CasterHolds() => caster != null && !caster.Dead && !caster.Downed && caster.Spawned && caster.Map == world;
+        private bool CasterHolds() => caster != null && !caster.Dead && !caster.Downed && caster.Spawned && caster.Map == world && Ability != null;
 
         private void BeginClose(float w)
         {
@@ -334,7 +346,7 @@ namespace RimArt
             {
                 if (!ChantHeld())
                 {
-                    Break("Unlimited Blade Works: the chant broke. No cooldown spent.");
+                    Break("Unlimited Blade Works: the chant broke. No cooldown or charge spent.");
                     return false;
                 }
                 if (releaseAfter > 0 && s >= releaseAfter * T.VerseTime) Release(releaseAfter);
@@ -398,6 +410,7 @@ namespace RimArt
             Scribe_Values.Look(ref returned, "returned");
             Scribe_Values.Look(ref broken, "broken");
             Scribe_Values.Look(ref fizzled, "fizzled");
+            Scribe_Values.Look(ref paid, "paid");
             Scribe_Collections.Look(ref taken, "taken", LookMode.Deep);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {

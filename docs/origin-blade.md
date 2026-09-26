@@ -44,10 +44,11 @@ actually made. Psytrainers and psylink neuroformers reject use before consuming 
 
 ## Kit
 
-Origin: Blade grants Unlimited Blade Works through the trait ability extension, until the hero layer
-(docs/hero-echo.md) takes the Trace kit over. Rain, Loose and Grasp are no longer granted by it and
-now have no source; their defs and code stay. A pawn awakened in an older save keeps the three it had
-(the sync only grants) and gains Unlimited Blade Works on load.
+Origin: Blade grants no abilities. It is the one Trial of the Shirou Echo (`Trial_Trait`, see
+docs/hero-echo.md): a colonist with it can be tuned at the resonance device and awakened as Shirou,
+whose hero form grants Unlimited Blade Works (docs/unlimited-blade-works.md). Until 2026-09-25 the
+trait granted Rain, Loose and Grasp; those now have no source, and their defs and code stay. A pawn
+awakened in an older save keeps the three it had (the sync only grants).
 
 Royalty is optional; the restriction hooks reference base-game types without adding
 Royalty-only XML definitions. Vanilla Psycasts Expanded and other replacement psycast

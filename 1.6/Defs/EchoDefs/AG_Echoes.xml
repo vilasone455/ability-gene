@@ -2,8 +2,9 @@
 <Defs>
 
   <!-- Echoes: heroes a colonist can become (docs/hero-echo.md). Every number is a placeholder.
-       The four here are the ones whose abilities already work in game; Vergil has no abilities
-       until his kit is ported and is here to exercise the kill-with-weapon trial. -->
+       Accelerator, Pain and Inumaki reuse abilities that already work in game; Vergil has no
+       abilities until his kit is ported and is here to exercise the kill-with-weapon trial.
+       Shirou's one ability so far is Unlimited Blade Works, not yet played by hand. -->
   <RimArt.EchoDef Name="AG_EchoBase" Abstract="True">
     <bodyType>Thin</bodyType>
   </RimArt.EchoDef>
@@ -158,6 +159,35 @@
     <upkeepPerHour>10</upkeepPerHour>
     <wealth>6000</wealth>
     <hairColor>(0.85, 0.87, 0.9)</hairColor>
+  </RimArt.EchoDef>
+
+  <!-- Shirou: the way in is Origin: Blade (Melee 14, Crafting 12, five blades studied, then awakened),
+       so the Trial is the trait itself. No forced trait: awakening Origin: Blade already cost psycasts
+       and ranged weapons for life. Unlimited Blade Works also keeps its own 2-day cooldown. -->
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Shirou</defName>
+    <label>Shirou</label>
+    <subtitle>The Faker</subtitle>
+    <description>Every blade he has seen, he can make again.</description>
+    <order>50</order>
+    <trials>
+      <li Class="RimArt.Trial_Trait">
+        <trait>AG_OriginBlade</trait>
+      </li>
+    </trials>
+    <abilities>
+      <li>AG_Trace_UnlimitedBladeWorks</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Shirou</manifestHediff>
+    <upkeepPerHour>12</upkeepPerHour>
+    <castCosts>
+      <li>
+        <ability>AG_Trace_UnlimitedBladeWorks</ability>
+        <cost>40</cost>
+      </li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.72, 0.3, 0.16)</hairColor>
   </RimArt.EchoDef>
 
 </Defs>

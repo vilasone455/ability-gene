@@ -52,6 +52,9 @@ namespace RimArt
             }
         }
 
+        /// <summary>Forgets a kept cooldown, so the ability comes back ready: a cast refunded after the ability was taken.</summary>
+        public void Forget(AbilityDef def) => readyAtTick.Remove(def);
+
         public void ExposeData()
         {
             Scribe_Collections.Look(ref readyAtTick, "readyAtTick", LookMode.Def, LookMode.Value, ref scribeDefs, ref scribeTicks);
