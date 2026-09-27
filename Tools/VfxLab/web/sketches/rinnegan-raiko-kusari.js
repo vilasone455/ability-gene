@@ -2,7 +2,7 @@
 // draws this yet.
 //
 // What it is for (agreed 2026-09-23 in outline: pawns are caught, colonists too, Dark Chidori look;
-// every number is a placeholder). A Chidori runs through the weapons Amenoyodomi is holding and
+// whole rule agreed 2026-09-27; every number is a placeholder). A Chidori runs through the weapons Amenoyodomi is holding and
 // strings them into a net. No target: it needs 2 or more held weapons (kunai, or the Fūma) within
 // 12 cells.
 //   Links: in the order the weapons were thrown, one per pair thrown one after the other, up to 6
@@ -20,7 +20,7 @@
 //   Letting go: the net snaps off and frees everyone, and the weapons fly on charged. A kunai stuns
 //   whoever it hits for 2 s. The Fūma keeps its own throw (an exact line that cuts every pawn on it,
 //   range 12) and every pawn it cuts is stunned 2 s (proposed 2026-09-23, on the user's question).
-//   Cooldown 30 s. No eye strain: Chidori is not an eye technique.
+//   Cooldown 30 s, 8 Echo charge (agreed 2026-09-27).
 // Not a wall: "shocked and thrown back" was dropped because Black rods v2 (Six Paths) already stops
 // pawns and lets bullets through. Pairs with Amenotejikara (move a corner, or swap an enemy onto a
 // line) and Amaterasu (burning kunai can be corners).

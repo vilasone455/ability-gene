@@ -1,6 +1,9 @@
 # Flying Thunder God: how the kit is earned
 
-Proposal. Nothing here is in the game yet. Every number is a placeholder until the abilities are
+Abilities agreed 2026-09-27 (Minato's hero kit). The earning sections (unlock order, awakening,
+practice) predate the Echo framework and are replaced by his Echo entry in docs/hero-echo.md
+(agreed 2026-09-27: Melee 12, Intellectual 10, 30 thrown-kunai kills, Kind, upkeep 10). Nothing
+beyond *throw kunai* is in the game yet. Every number is a placeholder until the abilities are
 built and played. The pictures are the four sketches under **Kunai belt** in the VFX lab
 (`Tools/VfxLab/web/sketches/kunai-*.js`); each sketch header carries the same numbers as this page.
 
@@ -60,6 +63,11 @@ Range 14.9, line of sight, 0.3 s warmup, 1.5 s cooldown, 12 stab, 18% armor pene
 can leave the kunai stuck in the target. Every ability below reads those stuck kunai, and kunai
 lying on the ground.
 
+No kunai regeneration for Minato (decided 2026-09-27). His supply is the belt's 6, spare kunai
+carried for the reload job, the jump to a ground kunai (which returns it to the belt) and sealing
+touch. Ground kunai stay as jump targets, so how many he has decides how many anchors he can place.
+Sasuke's belt regenerates conjured kunai instead; see the Amenoyodomi sketch header.
+
 ### flying thunder god
 
 > Jump to one of your own kunai, up to 29.9 tiles away, with no line of sight needed. If the
@@ -84,8 +92,8 @@ picture: the seal glow the sketches already put on a stuck kunai is drawn on the
 > seconds. At each you appear behind them and attack for 100% melee damage. Needs at least 2
 > marked enemies. You stay at the last one.
 
-No target to pick. No warmup. Cooldown 60 s. "You stay at the last one" is one of two endings in
-the sketch; the other jumps back to the start. Pick one before building.
+No target to pick. No warmup. Cooldown 60 s. The caster stays at the last target (decided
+2026-09-27); the sketch's "jumps back to the start" option is not built.
 Sketch: *Flying Thunder God: Chain (sketch)*.
 
 ### guiding thunder
@@ -107,8 +115,8 @@ Sketch: *Guiding Thunder (sketch)*.
 > where you stand, then jump to them and strike.
 
 Target: a pawn. Range 1.9, or 29.9 to a marked pawn after the awakening. Warmup 0.6 s.
-Cooldown 30 s. After a jump the caster is behind the target, so the target is thrown back toward
-where the caster came from; landing in front instead is the open alternative.
+Cooldown 30 s. After a jump the caster lands behind the target, so the target is thrown back
+toward where the caster came from (decided 2026-09-27).
 Sketch: *Rasengan (sketch)*.
 
 **Practice.** A pawn with Melee 16 gets a *Practise rasengan* order on itself while undrafted.
@@ -130,8 +138,8 @@ still learn the touch-range form.
 
 ## Open decisions
 
-1. Chain ending: stay at the last target, or jump back to the start.
-2. Rasengan after a jump: land behind the target (throws it toward your side) or in front.
+1. ~~Chain ending~~: decided 2026-09-27, stay at the last target.
+2. ~~Rasengan after a jump~~: decided 2026-09-27, land behind the target.
 3. Whether the awakening cost should differ from Origin: Blade's. It is copied here so that the
    two earned kits follow one rule.
 4. The three thresholds (100 hits, 25 jumps, 60 jumps) and 20 practice sessions are guesses. With

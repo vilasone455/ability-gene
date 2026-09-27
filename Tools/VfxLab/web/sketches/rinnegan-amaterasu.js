@@ -1,12 +1,16 @@
 // Amaterasu — technique proposal for the Rinnegan eye kit, not the game. Nothing in Source/RimArt
 // draws this yet.
 //
-// What it is for (proposed, none of it agreed; every number is a placeholder). Black flames light
+// What it is for (from the user's 2026-09-22 draft, agreed 2026-09-27; every number is a
+// placeholder). Black flames light
 // where the caster looks. Target: one pawn, or the kunai and Fūma shuriken the caster is holding in
-// the air with Amenoyodomi. 12 cells, line of sight. 0.5 s warmup, 60 s cooldown.
+// the air with Amenoyodomi. 12 cells, line of sight. 0.5 s warmup, 60 s cooldown, 5 Echo charge
+// (2026-09-27: low because the Bleeding eye below is the main price).
 //   On a pawn: a black-flame hediff, 4 burn damage per second for 20 s (80 total). Rain, water,
-//   firefoam and beating do not put it out. It ends at 20 s or when the caster presses Release.
-//   It spreads to an adjacent pawn at 10% per second, carrying the time that is left.
+//   firefoam and beating do not put it out. It ends at 20 s or on Release: one gizmo on Sasuke that
+//   puts out all his black flames at once (agreed 2026-09-27).
+//   It spreads to an adjacent pawn at 10% per second, carrying the time that is left. Allies can
+//   catch it; Sasuke never does (agreed 2026-09-27).
 //   On held weapons: one cast lights every weapon Amenoyodomi is holding (up to 5), and they burn
 //   in the air until it lets them go. A burning kunai that hits a pawn sticks in it (the kunai kit's
 //   embedding) and the pawn gets the hediff above. One that misses burns on the cell it lands on for

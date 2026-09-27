@@ -5,7 +5,7 @@
 //   Target a cell within 18 cells with line of sight. Warm-up 0.6 s in a sheathed stance. A sphere of
 //   radius 1.9 opens on the cell. Every pawn inside, allies included, takes 5 hits of 7 Cut at 50 %
 //   armour penetration over 0.5 s. Nothing flies from the caster to the cell: the cut happens there.
-//   Cooldown 12 s.
+//   Cooldown 12 s. Costs 3 Echo charge (agreed 2026-09-27).
 //   It differs from Judgement Cut End: a small aimed area with many short-lived cuts inside a ball,
 //   no panes of glass, no vanish, no stun. Judgement Cut End keeps the long straight chords and the
 //   shatter.

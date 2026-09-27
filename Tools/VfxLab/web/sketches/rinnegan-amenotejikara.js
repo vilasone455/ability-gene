@@ -1,10 +1,12 @@
 // Amenotejikara — technique proposal for a Rinnegan eye kit, not the game. Nothing in Source/RimArt
 // draws this yet.
 //
-// What it is for (proposed, none of it agreed; every number is a placeholder). The caster picks two
-// targets and their places are exchanged at once. Targets: the caster, any pawn, an item on the
-// ground, or a projectile held by Amenoyodomi. Range 12 cells, line of sight to both, 0 s warmup,
-// 3 s cooldown (the eye-strain cost is still open). A pawn cannot be put on a cell it cannot stand
+// What it is for (from the user's 2026-09-22 draft, agreed 2026-09-27; every number is a
+// placeholder). Sasuke picks two targets and their places are exchanged at once. Targets: Sasuke,
+// any pawn up to body size 2, an item on the ground, or a projectile held by Amenoyodomi. One end
+// must be Sasuke, a ground item or a held projectile: swapping two other pawns is Todo's clap, not
+// this (agreed 2026-09-27). Range 12 cells, line of sight to both, 0 s warmup,
+// 3 s cooldown, 2 Echo charge, no eye strain (agreed 2026-09-27). A pawn cannot be put on a cell it cannot stand
 // on; the swap then fails. A projectile keeps its heading and speed, its destination is recomputed
 // from the new place. No hand signs, so nothing shows before the swap.
 // Differs from the Anchor clap (marks first, whole map, cards and a red puff, no line) and Flying

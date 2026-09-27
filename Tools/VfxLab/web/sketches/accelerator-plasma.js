@@ -1,7 +1,8 @@
 // Plasma — ability proposal for the Accelerator kit, not the game. Nothing in Source/RimArt draws
 // this yet. The kit's nuke: one large hit on one point, priced in brain strain.
 //
-// What it is for (proposed 2026-09-24, not agreed; every number is a placeholder).
+// What it is for (proposed 2026-09-24, agreed 2026-09-27; every number is a placeholder). Its
+// cost is the strain 0.45 below and 0 Echo charge: Accelerator keeps brain strain (2026-09-27).
 //   Target a direction. Accelerator channels 3 s standing still: the wind within 8 cells is turned
 //   toward one hand (dust, filth, leaves and light items slide in; pawns are not pulled) and the air
 //   there is compressed until it is plasma. Every round that enters the 8 cells while the channel
