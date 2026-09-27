@@ -46,7 +46,11 @@ const mixC = (a, b, t) => new Color(lerp(a.r, b.r, t), lerp(a.g, b.g, t), lerp(a
 
 // Screen cells per degree of the sky: across (azimuth) and up (elevation). The sky band is SkyCells tall.
 export const KA = .5, KE = .3;
-const SkyCells = 40, SunUp = 4.5, FarMax = 110, BladeFar = 10, HazeAt = 420;
+export const SkyCells = 40, SunUp = 4.5;
+const FarMax = 110, BladeFar = 10, HazeAt = 420;
+// For the 3D copy of this world (lib/ubw-reveal.js).
+export const SkyColours = { Glow, Horizon, Mid, High, Top, SunFace, SunWarm, Silhouette, Smog, RimLight, CloudDark, CloudWarm, CloudLit, FarEarth, RidgeEarth, HazeFar, Fog, Steel, Grip, Ash, Spark };
+export { mixC };
 // The ridges: d cells past the edge, h cells tall at most, amp of that is wobble, f its wave number.
 export const Ridges = [
   { d: 110, h: 110, amp: .6, f: .012, ph: 3, swords: false },
@@ -133,7 +137,7 @@ export const swordProjector = (edgeZ, sq, camX, foot) => {
   const d = foot.z - edgeZ, l = sq.L(d), fx = camX + (foot.x - camX) * l, fz = edgeZ + sq.s(d);
   return p => ({ x: fx + (p.x - foot.x) * l, z: fz + (p.z - foot.z) * l * l + p.y * Lift * l });
 };
-const hazeOf = d => Math.sqrt(clamp(d / HazeAt));
+export const hazeOf = d => Math.sqrt(clamp(d / HazeAt));
 
 // ---- buffers ---------------------------------------------------------------------------------------------
 const buffer = () => ({ xz: [], uv: [], tri: [] });
@@ -306,7 +310,7 @@ function farBake(T, c, north, sq, sun, camX, halfW, ridgeScale) {
 // A gear of radius 1 as rings and spokes (no holes needed): the toothed rim, and per type its spokes, inner
 // ring and hub. Kept per type and tooth count.
 const shapes = new Map();
-function gearShape(type, teeth) {
+export function gearShape(type, teeth) {
   const id = `${type} ${teeth}`;
   if (shapes.has(id)) return shapes.get(id);
   const xz = [], tri = [];
@@ -347,6 +351,34 @@ function gearMeshAt(key, type, teeth, turn, squash, along = 0, stretch = 1) {
   return m;
 }
 
+// ---- the sky's parts, in degrees ------------------------------------------------------------------------
+// The low sun's azimuth: where the scene's shadows point away from, kept within 70 degrees of north.
+export const sunAzimuth = sun => clamp(Math.atan2(-sun.x, -sun.z) / D2R, -70, 70);
+// The clouds' puffs at time s: azimuth a and elevation e of the centre, radius r (degrees), g how lit (0 to
+// 2, by how near the sun).
+export function cloudPuffs(s, sunA) {
+  const out = [];
+  for (let i = 0; i < 20; i++) {
+    const a = (hash(i, 1, 51) - .5) * 180 + s * (.35 + .7 * hash(i, 2, 51)), e = 9 + Math.pow(hash(i, 3, 51), .8) * 58;
+    const near = clamp(1 - Math.abs(a - sunA) / 80) * clamp(1 - (e - 8) / 50), g = Math.min(2, Math.floor(near * 3));
+    const n = 8 + Math.floor(hash(i, 4, 51) * 6);
+    for (let k = 0; k < n; k++) {
+      const da = (hash(i * 16 + k, 5, 51) - .5) * 18, de = (hash(i * 16 + k, 6, 51) - .35) * 5, r = 3.5 + hash(i * 16 + k, 7, 51) * 5.5;
+      out.push({ a: a + da, e: e + de, r, g });
+    }
+  }
+  return out;
+}
+// The smog's bands at time s: centre a, e and half sizes w across, h up (degrees).
+export function smogBands(s) {
+  const out = [];
+  for (let i = 0; i < 8; i++) {
+    const a = (hash(i, 1, 53) - .5) * 170 + s * (.8 + 1.4 * hash(i, 2, 53)), e = 3 + i * 2.4 + hash(i, 3, 53) * 2;
+    out.push({ a, e, w: 28 + 34 * hash(i, 4, 53), h: .8 + 1.2 * hash(i, 5, 53) });
+  }
+  return out;
+}
+
 // ---- drawing -------------------------------------------------------------------------------------------
 // The sky, the plain, the ridges and the far swords for the world round c (the caster) whose map ends
 // `north` cells north of it, at time s under the dusk sun, seen by `view` (ctx.view: the camera).
@@ -360,29 +392,19 @@ export function drawHorizon(T, c, north, ht, s, sun, view, tint, o = {}) {
   // in three groups by how near the sun they are), the sun, the smog.
   draw(MeshPool.plane10, camX, L(0), horizonZ + SkyCells + 200, width + 400, 400, 0, Top, solid);
   draw(MeshPool.plane10, camX, L(1), horizonZ + (SkyCells - 1) / 2, width, SkyCells + 1, 0, new Color(1, 1, 1, 1), skyMat);
-  const sunA = clamp(Math.atan2(-sun.x, -sun.z) / D2R, -70, 70), sunPos = { x: skyX(sunA, 0), z: skyZ(SunUp) };
+  const sunA = sunAzimuth(sun), sunPos = { x: skyX(sunA, 0), z: skyZ(SunUp) };
   draw(MeshPool.plane10, sunPos.x, L(2), sunPos.z, 30 * KE * 2, 30 * KE * 2, 0, SunWarm.withAlpha(.38), glow);
   const bodies = [[], [], []], lit = [[], [], []];
-  for (let i = 0; i < 20; i++) {
-    const a = (hash(i, 1, 51) - .5) * 180 + s * (.35 + .7 * hash(i, 2, 51)), e = 9 + Math.pow(hash(i, 3, 51), .8) * 58;
-    const near = clamp(1 - Math.abs(a - sunA) / 80) * clamp(1 - (e - 8) / 50), g = Math.min(2, Math.floor(near * 3));
-    const n = 8 + Math.floor(hash(i, 4, 51) * 6);
-    for (let k = 0; k < n; k++) {
-      const da = (hash(i * 16 + k, 5, 51) - .5) * 18, de = (hash(i * 16 + k, 6, 51) - .35) * 5, r = 3.5 + hash(i * 16 + k, 7, 51) * 5.5;
-      const x = skyX(a + da, .04), z = skyZ(e + de), w = r * KE * 2.6, h = r * KE * 2;
-      bodies[g].push({ x, z, w, h });
-      lit[g].push({ x, z: z - .9 * KE - h * .12, w: w * .8, h: h * .75 });
-    }
-  }
+  cloudPuffs(s, sunA).forEach(q => {
+    const x = skyX(q.a, .04), z = skyZ(q.e), w = q.r * KE * 2.6, h = q.r * KE * 2;
+    bodies[q.g].push({ x, z, w, h });
+    lit[q.g].push({ x, z: z - .9 * KE - h * .12, w: w * .8, h: h * .75 });
+  });
   bodies.forEach((list, g) => quads(`ubw horizon clouds ${g}`, list, mixC(CloudDark, CloudWarm, g / 2).withAlpha(.5), soft, L(3) + g * .00001));
   lit.forEach((list, g) => quads(`ubw horizon cloud light ${g}`, list, CloudLit.withAlpha(.12 + .19 * g), glow, L(4) + g * .00001));
   draw(MeshPool.plane10, sunPos.x, L(5), sunPos.z, 8 * KE * 2, 8 * KE * 2, 0, SunWarm.withAlpha(.6), glow);
   draw(MeshPool.plane10, sunPos.x, L(6), sunPos.z, 1.6 * KE * 2, 1.6 * KE * 2, 0, SunFace.withAlpha(.97), soft);
-  const smog = [];
-  for (let i = 0; i < 8; i++) {
-    const a = (hash(i, 1, 53) - .5) * 170 + s * (.8 + 1.4 * hash(i, 2, 53)), e = 3 + i * 2.4 + hash(i, 3, 53) * 2;
-    smog.push({ x: skyX(a, .06), z: skyZ(e), w: (28 + 34 * hash(i, 4, 53)) * KE * 2, h: (.8 + 1.2 * hash(i, 5, 53)) * KE * 2 });
-  }
+  const smog = smogBands(s).map(q => ({ x: skyX(q.a, .06), z: skyZ(q.e), w: q.w * KE * 2, h: q.h * KE * 2 }));
   quads('ubw horizon smog', smog, Smog.withAlpha(.34), soft, L(7));
 
   // The gears, the hazier (further) first: a warm rim toward the sun, then the body.

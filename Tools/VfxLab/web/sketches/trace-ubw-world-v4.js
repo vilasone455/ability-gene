@@ -37,14 +37,15 @@ import { gearShadows, depthHaze, foreground } from './lib/ubw-horizon.js';
 import { CrestFoot, CrestWobble, crestOf, drawCrest, drawBackdrop } from './lib/ubw-crest.js';
 
 const P = (label, value, min, max, step, group) => ({ label, value, min, max, step, group });
-const Caster = new Color(.55, .3, .24);
+export const Caster = new Color(.55, .3, .24);
 // Where the other three landed, in cells from the caster: the cast sketch's pawns at verse 1.
-const Landed = [{ x: -2.2, z: -1.6, colour: Ally }, { x: 2.8, z: 1.2, colour: EnemyColour }, { x: -1.5, z: 3.2, colour: EnemyColour }];
-const Keep = [{ x: 0, z: 0 }, ...Landed.map(q => ({ x: q.x, z: q.z }))];
+export const Landed = [{ x: -2.2, z: -1.6, colour: Ally }, { x: 2.8, z: 1.2, colour: EnemyColour }, { x: -1.5, z: 3.2, colour: EnemyColour }];
+export const Keep = [{ x: 0, z: 0 }, ...Landed.map(q => ({ x: q.x, z: q.z }))];
 // The white opens in Open s; the closing white and its fire wall start Past cells beyond the drawn field, as
 // v3. Plates past the east, west and south edges as v3; the map's sword clustering as v3's default; the
 // gears' shadows on the map as v3's default.
-const Open = .5, Past = 14, ClosePow = 1.6, WallHeight = 1.2, OuterPlate = 3.8, Cluster = 1, GearShadows = .06;
+export const Open = .5, OuterPlate = 3.8, Cluster = 1, GearShadows = .06;
+const Past = 14, ClosePow = 1.6, WallHeight = 1.2;
 
 function times(p) {
   const close = Open + p.hold, shut = close + p.close;
@@ -97,7 +98,7 @@ export default {
     hill(c, Look.hill, sun, 1, .5);
     const f = field({ density: p.density, hill: Look.hill, beyond: Look.beyond, size: Look.size, lean: Look.lean, north, cluster: Cluster }, c, sun, Keep, { ground: T });
     drawField(f, strength, tint);
-    depthHaze(c, north, k.meanTop - c.z - north, v, p.haze);
+    depthHaze(c, north, k.meanTop, v, p.haze);
     embers('ubwp v4 embers', c, s, 140, 1);
     foreground(c, s, v, 1);
 
