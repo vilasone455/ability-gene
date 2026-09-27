@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Susanoo's cast: tells the picture when the warm-up starts, so the figure grows out of
+       the floor over it (JobDriver_CastSusanoo). -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastSusanoo</defName>
+    <driverClass>RimArt.JobDriver_CastSusanoo</driverClass>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>

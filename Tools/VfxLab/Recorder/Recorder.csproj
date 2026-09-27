@@ -46,6 +46,11 @@
     <Compile Include="../../../Source/RimArt/FrostGun/*.cs" LinkBase="Linked/FrostGun" />
     <!-- Nezuko's Box: drawing, timing and previews only. The apparel, its abilities and the flyer are in NezukoBox/Kit, which is not linked here. -->
     <Compile Include="../../../Source/RimArt/NezukoBox/*.cs" LinkBase="Linked/NezukoBox" />
+    <!-- Itachi: the Susanoo picture only; the mechanic files need the game. -->
+    <Compile Include="../../../Source/RimArt/Itachi/SusanooDraw.cs" Link="Linked/Itachi/SusanooDraw.cs" />
+    <Compile Include="../../../Source/RimArt/Itachi/SusanooGraphics.cs" Link="Linked/Itachi/SusanooGraphics.cs" />
+    <Compile Include="../../../Source/RimArt/Itachi/SusanooPictures.cs" Link="Linked/Itachi/SusanooPictures.cs" />
+    <Compile Include="../../../Source/RimArt/Itachi/DebugActions_SusanooPreview.cs" Link="Linked/Itachi/DebugActions_SusanooPreview.cs" />
     <!-- Shadow Plexus: drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/ShadowPlexus/*.cs" LinkBase="Linked/ShadowPlexus" />
     <!-- Goku: drawing and previews only. -->
