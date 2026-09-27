@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Shikamaru's kit (docs/hero-echo.md, "Shikamaru port"). Five AbilityDefs; only his Echo grants
+       them. The kit's shared rule numbers (sky light share, dark level, smoke, who cuts a line) are
+       the ShadowPlexusExtension on AG_Echo_Shikamaru; each ability's own numbers are in its comp.
+
+       Reach is not the verb's range: it is the comp's reach times the light at the cell the ability
+       is cast from (the caster, or a standing Shadow double), checked by the comp, so the verb range
+       only has to cover the map. No line of sight either: a shadow line runs over the floor, and the
+       comp refuses a line over a wall, a closed door, a dark cell, smoke or a pawn. Every number is
+       a placeholder. -->
+  <AbilityDef Name="AG_ShadowPlexusBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <aiCanUse>false</aiCanUse>
+    <targetRequired>true</targetRequired>
+    <jobDef>AG_CastShadowPlexus</jobDef>
+    <showCastingProgressBar>true</showCastingProgressBar>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <iconPath>UI/Abilities/AnimalWarcall</iconPath>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_ShadowPlexusBase">
+    <defName>AG_ShadowImitation</defName>
+    <label>shadow imitation</label>
+    <description>The shadow runs out over the ground to one person, animal or mech and holds it. For 15 seconds it cannot act, and every cell Shikamaru steps drags it one cell the same way (a wall or another pawn stops that step).\n\nReach 19.9 cells times the light where he stands: half in daylight, full next to a lamp or a fire, nothing in the dark. The line breaks when a pawn crosses it, a cell under it goes dark, or smoke covers it. 1 second cast, 20 second cooldown.</description>
+    <hostile>true</hostile>
+    <cooldownTicksRange>1200</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>9999</range>
+      <warmupTime>1</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_ShadowImitation">
+        <reach>19.9</reach>
+        <holdSeconds>15</holdSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Two picks, the Skip psycast's shape: the first is checked by the verb's targetParams, the
+       second by the comp's own (pawns and items again). -->
+  <AbilityDef ParentName="AG_ShadowPlexusBase">
+    <defName>AG_ShadowSeam</defName>
+    <label>shadow seam</label>
+    <description>Sew two things together: any two pawns or loose items within reach, both standing in light. For 20 seconds they cannot get more than 4 cells apart. Whoever moves drags the other; when both pull, the larger body wins (an item never wins).\n\nReach 15.9 cells times the light where he stands. The seam runs between the two and breaks like every shadow line: a pawn crossing it, a dark cell under it, smoke over it. 0.8 second cast, 30 second cooldown.</description>
+    <hostile>false</hostile>
+    <cooldownTicksRange>1800</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>9999</range>
+      <warmupTime>0.8</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetItems>true</canTargetItems>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_ShadowSeam">
+        <destination>Selected</destination>
+        <range>0</range>
+        <requiresLineOfSight>false</requiresLineOfSight>
+        <reach>15.9</reach>
+        <holdSeconds>20</holdSeconds>
+        <maxApart>4</maxApart>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Two picks: a thing, then a cell. -->
+  <AbilityDef ParentName="AG_ShadowPlexusBase">
+    <defName>AG_ShadowGrasp</defName>
+    <label>shadow grasp</label>
+    <description>A hand of shadow slides a loose item, a weapon on the ground, a corpse or a downed body over the ground to a chosen cell: 12 cells a second for an item, 6 for a body. It is not teleported. A pawn standing on the path stops it in that pawn's cell; a wall or another item stops it before.\n\nBoth the thing and the cell must be within 24.9 cells times the light where he stands. A thrown grenade is in the air, not on the ground, and cannot be picked. 0.5 second cast, 15 second cooldown.</description>
+    <hostile>false</hostile>
+    <cooldownTicksRange>900</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>9999</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <onlyTargetIncapacitatedPawns>true</onlyTargetIncapacitatedPawns>
+        <canTargetItems>true</canTargetItems>
+        <canTargetCorpses>true</canTargetCorpses>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_ShadowGrasp">
+        <destination>Selected</destination>
+        <range>0</range>
+        <requiresLineOfSight>false</requiresLineOfSight>
+        <reach>24.9</reach>
+        <itemSpeed>12</itemSpeed>
+        <bodySpeed>6</bodySpeed>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <AbilityDef ParentName="AG_ShadowPlexusBase">
+    <defName>AG_ShadowDouble</defName>
+    <label>shadow double</label>
+    <description>His shadow goes to a lit cell within 24.9 cells and stands there for 20 seconds. While it stands, shadow imitation, seam and grasp are cast from its cell and use its light, so he can stay in the dark. It copies his steps one for one; a wall stops it. It is not a pawn and cannot be hit.\n\nIt ends early when its cell goes dark or when a pawn crosses the line between it and him. That one line may cross dark cells. 1 second cast, 60 second cooldown.</description>
+    <hostile>false</hostile>
+    <cooldownTicksRange>3600</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>9999</range>
+      <warmupTime>1</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>false</canTargetPawns>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_ShadowDouble">
+        <reach>24.9</reach>
+        <standSeconds>20</standSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- No warmup: the hands leave at once. Its own job def, so a move order can interrupt the channel. -->
+  <AbilityDef ParentName="AG_ShadowPlexusBase">
+    <defName>AG_ShadowNeckBind</defName>
+    <label>shadow neck bind</label>
+    <description>Only on a pawn he holds with shadow imitation or has sewn with shadow seam: two hands of shadow crawl along the line, climb the body (2.1 seconds) and close on the throat. He channels for up to 8 seconds standing still. Suffocation rises 12.5 % a second; at 100 % the target falls unconscious for 2 minutes, not dead. If the line breaks, he moves or is given another order, the hands fall off and the suffocation drains at 5 % a second.\n\nMechanoids have no throat. 45 second cooldown.</description>
+    <hostile>true</hostile>
+    <jobDef>AG_CastShadowNeckBind</jobDef>
+    <cooldownTicksRange>2700</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>9999</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>false</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_ShadowNeckBind">
+        <climbSeconds>1.5</climbSeconds>
+        <suffocationPerSecond>0.125</suffocationPerSecond>
+        <chokeSeconds>8</chokeSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

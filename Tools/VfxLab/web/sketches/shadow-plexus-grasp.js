@@ -1,4 +1,4 @@
-// Shadow grasp — Shadow plexus ability proposal, not the game. Nothing in Source/RimArt draws this yet.
+// Shadow grasp — Shadow plexus ability proposal, not the game. Ported: Source/RimArt/ShadowPlexus (drawing) and ShadowPlexus/Kit (the ability).
 //
 // What it is for (the user's draft, numbers are placeholders, none of it balanced yet). Target a
 // loose item, a weapon, a live grenade or a downed body, then a second cell; both within 24.9

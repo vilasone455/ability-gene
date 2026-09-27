@@ -812,6 +812,37 @@ ripple with a colour fringe (ep 19, "Blast away") and the crackle on the target 
 Tests: `-quicktest -rimarttest=inumaki` (11 scenarios; "vfx 1" saves four screenshots of a shout
 past a wall and an open door).
 
+### Shikamaru → *shadow imitation*, *shadow seam*, *shadow grasp*, *shadow double*, *shadow neck bind* (hero, Echo only)
+
+Only Shikamaru's Echo gives these, and only while he is manifested. Every shadow is a black line
+that crawls over the floor from his feet (the drawing is `Source/RimArt/ShadowPlexus`, from the lab
+sketches; the abilities are `ShadowPlexus/Kit`).
+
+Light is the limit. A cell's light is the higher of sky light at half (nothing under a roof) and lamp
+or fire light at full; under 30 % a cell is dark. Reach is the ability's full reach times the light
+where the shadow starts (his cell, or the shadow double's): half in daylight, full next to a lamp or
+a campfire, nothing in the dark, and the button is greyed out there. A shadow line cannot cross a
+wall or a closed door, and once it holds it breaks when a person-sized pawn stands on it, a cell
+under it goes dark, or smoke covers it.
+
+| Ability | Reach | Effect | Charge | Cooldown |
+|---|---|---|---|---|
+| Shadow imitation | 19.9 x light | 1 s cast. One pawn cannot act for 15 s; every cell he steps drags it one cell the same way (a wall or a pawn stops that step). | 3 | 20 s |
+| Shadow seam | 15.9 x light | 0.8 s cast, two picks: pawns or loose items, both in light. For 20 s they cannot get more than 4 cells apart; whoever moves drags the other, the larger body wins a pull, an item never wins. The seam runs between the two. | 3 | 30 s |
+| Shadow grasp | 24.9 x light | 0.5 s cast, two picks: a loose item, a weapon on the ground, a corpse or a downed pawn, then a cell. It slides there over the ground (12 cells/s, a body 6). A pawn on the path stops it in that pawn's cell; a wall or another item stops it before. | 1 | 15 s |
+| Shadow double | 24.9 (not scaled) | 1 s cast on a lit cell. For 20 s his shadow stands there; imitation, seam and grasp are cast from it and use its light, so he can stay in the dark. It copies his steps. Ends early when its cell goes dark or a pawn crosses the line to him (that line may cross dark cells). | 5 | 60 s |
+| Shadow neck bind | the line already there | Only on a pawn held by imitation or sewn by seam. He channels standing still: the hands take 2.1 s to reach the throat, then +12.5 % suffocation a second for up to 8 s. At 100 % the target is out cold for 2 minutes, not dead. A move order, the line breaking or him going down drops the hands and the meter drains 5 % a second. Mechanoids are immune. | 2 | 45 s |
+
+Hovering a button draws the reach ring round the cell the shadow starts from; the tooltip gives the
+reach and light now. The two-pick abilities cannot refuse a second pick with a message, so the mouse
+text says why a thing or a cell is refused. A thrown grenade is a projectile in the air, not an item
+on the ground, and cannot be grasped.
+
+Echo: Intellectual 14 and 5 people captured; gains Lazy; upkeep 10 an hour; black hair; +0.2 move
+speed in hero form; no forced weapon.
+
+Tests: `-quicktest -rimarttest=shadow` (10 scenarios plus a line check). Not played by hand yet.
+
 ### Arcing → *arc* (weapon trait; needs Melee Animation)
 
 One cast, up to three people, and none of the damage is this mod's.

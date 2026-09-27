@@ -4,8 +4,8 @@ using Verse;
 namespace RimArt
 {
     /// <summary>
-    /// Previews only. There is no gene, no ability and no def behind any of this: nobody is held, no
-    /// item moves and no pawn is drawn. Each entry plays one effect's drawing round the chosen cell,
+    /// Previews only: nobody is held, no item moves and no pawn is drawn. The abilities are in Kit/
+    /// (MapComponent_ShadowPlexus). Each entry plays one effect's drawing round the chosen cell,
     /// which is the cell the lab's sketch centres on, aimed east unless it says otherwise. The light
     /// levels are the sketches' scripted ones (daylight, or night with one campfire), not the map's.
     /// </summary>

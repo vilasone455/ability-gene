@@ -1,4 +1,4 @@
-// Shadow seam — Shadow plexus ability proposal, not the game. Nothing in Source/RimArt draws this yet.
+// Shadow seam — Shadow plexus ability proposal, not the game. Ported: Source/RimArt/ShadowPlexus (drawing) and ShadowPlexus/Kit (the ability).
 //
 // What it is for (the user's draft, numbers are placeholders, none of it balanced yet). Pick any
 // two targets (pawns or loose items) within 15.9 cells times the light level; both must stand in

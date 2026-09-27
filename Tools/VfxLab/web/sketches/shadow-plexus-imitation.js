@@ -1,4 +1,4 @@
-// Shadow imitation — Shadow plexus ability proposal, not the game. Nothing in Source/RimArt draws this yet.
+// Shadow imitation — Shadow plexus ability proposal, not the game. Ported: Source/RimArt/ShadowPlexus (drawing) and ShadowPlexus/Kit (the ability).
 //
 // What it is for (the user's draft, numbers are placeholders, none of it balanced yet). Target one
 // pawn, range up to 19.9 cells times the light level at the carrier's cell, 1 s cast, 20 s

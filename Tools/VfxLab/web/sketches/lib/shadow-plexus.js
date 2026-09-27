@@ -1,4 +1,4 @@
-// Shadow plexus: the drawing pieces shared by the four sketches (Imitation, Seam, Grasp, Double).
+// Shadow plexus: the drawing pieces shared by the five sketches (Imitation, Seam, Grasp, Double, Neck bind).
 // Not a sketch itself, so it is not listed in sketches/index.js.
 //
 // The kit's picture is a flat black shadow that crawls over the ground from the carrier's feet.
