@@ -70,6 +70,19 @@
   </HediffDef>
 
   <HediffDef ParentName="AG_EchoManifestBase">
+    <defName>AG_EchoManifest_Shikamaru</defName>
+    <label>hero form: Shikamaru</label>
+    <description>This Host has manifested Shikamaru. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <stages>
+      <li>
+        <statOffsets>
+          <MoveSpeed>0.2</MoveSpeed>
+        </statOffsets>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <HediffDef ParentName="AG_EchoManifestBase">
     <defName>AG_EchoManifest_Shirou</defName>
     <label>hero form: Shirou</label>
     <description>This Host has manifested Shirou. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>

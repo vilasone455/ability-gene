@@ -44,14 +44,17 @@ namespace RimArt
             // The target shudders harder as the suffocation fills.
             Vector2 target = shot.Target + toward * (since < 0f ? 0.025f * level * Mathf.Sin(s * 40f) : 0f);
 
-            // The Imitation line that is already there, and how it ends.
-            if (since < 0f) Line(carrier, target, 0f, 1f, s, shot.Sway, shot.Width);
-            else if (shot.Cut) BrokenLine(carrier, target, shot.CutAt, since, shot.Width, s, shot.Sway);
-            else Line(carrier, target, 0f, 1f - VfxMath.Smooth(since / T.LineBack), s, shot.Sway, shot.Width);
-            float held = 1f - VfxMath.Smooth(since / 0.25f);
-            Pool(carrier, (0.3f + 0.04f * Mathf.Sin(s * 5f)) * (1f - VfxMath.Smooth(since / T.LineBack)), 1f, s);
-            Pool(target, T.PoolRadius * held, 1f, s);
-            Grip(target, held, s, 4, 0.35f);
+            // The Imitation line that is already there, and how it ends. Not when something else draws it.
+            if (!shot.HideLine)
+            {
+                if (since < 0f) Line(carrier, target, 0f, 1f, s, shot.Sway, shot.Width);
+                else if (shot.Cut) BrokenLine(carrier, target, shot.CutAt, since, shot.Width, s, shot.Sway);
+                else Line(carrier, target, 0f, 1f - VfxMath.Smooth(since / T.LineBack), s, shot.Sway, shot.Width);
+                float held = 1f - VfxMath.Smooth(since / 0.25f);
+                Pool(carrier, (0.3f + 0.04f * Mathf.Sin(s * 5f)) * (1f - VfxMath.Smooth(since / T.LineBack)), 1f, s);
+                Pool(target, T.PoolRadius * held, 1f, s);
+                Grip(target, held, s, 4, 0.35f);
+            }
 
             // The two hands. k is -1 for the one on the left of the screen, 1 for the right.
             float gone = VfxMath.Smooth(since / 0.2f);

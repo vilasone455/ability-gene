@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Shikamaru's casts. The driver tells the picture the cast has begun when the warmup starts, so
+       the shadow line runs out during it. Imitation, Seam, Grasp and Double end at the fire; the hold
+       or the seam lives on in MapComponent_ShadowPlexus. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastShadowPlexus</defName>
+    <driverClass>RimArt.JobDriver_CastShadowPlexus</driverClass>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+  <!-- Neck bind: the same driver holds him for the channel, and the player can interrupt it; the
+       hands then fall off and the suffocation drains. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastShadowNeckBind</defName>
+    <driverClass>RimArt.JobDriver_CastShadowPlexus</driverClass>
+    <playerInterruptible>true</playerInterruptible>
+  </JobDef>
+
+</Defs>

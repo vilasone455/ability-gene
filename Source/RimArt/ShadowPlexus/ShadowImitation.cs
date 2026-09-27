@@ -25,7 +25,7 @@ namespace RimArt
     /// <summary>
     /// Timing of Shadow imitation: seconds in, numbers out, no drawing and no map. The port of
     /// Tools/VfxLab/web/sketches/shadow-plexus-imitation.js; the constants are that sketch's
-    /// defaults. There is no ability behind it yet. The rule (user's draft, placeholders): range
+    /// defaults. The ability is Kit/CompAbilityEffect_ShadowImitation; the rule's numbers are in its XML. The rule: range
     /// 19.9 cells times the light level, 1 s cast, the target cannot act for 15 s and is dragged one
     /// cell with every step the carrier takes.
     /// </summary>

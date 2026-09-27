@@ -46,7 +46,7 @@
     <Compile Include="../../../Source/RimArt/FrostGun/*.cs" LinkBase="Linked/FrostGun" />
     <!-- Nezuko's Box: drawing, timing and previews only. The apparel, its abilities and the flyer are in NezukoBox/Kit, which is not linked here. -->
     <Compile Include="../../../Source/RimArt/NezukoBox/*.cs" LinkBase="Linked/NezukoBox" />
-    <!-- Shadow Plexus: drawing and previews only. -->
+    <!-- Shadow Plexus: drawing and previews only. The ability code is in ShadowPlexus/Kit, which is not linked here. -->
     <Compile Include="../../../Source/RimArt/ShadowPlexus/*.cs" LinkBase="Linked/ShadowPlexus" />
     <!-- Goku: drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/Goku/*.cs" LinkBase="Linked/Goku" />
