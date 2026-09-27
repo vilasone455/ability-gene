@@ -1,24 +1,51 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- The entire cost of the gene is this one hediff's severity.
+  <!-- The entire cost of Inumaki's words is this one hediff's severity.
 
        It sheds at 0.12/day, which is deliberately slower than a raid and slower than a doctor
        can help with - the same rule temporal strain follows. A cost that clears before the next
-       fight is not a cost, it is a cooldown, and this gene already has cooldowns.
+       fight is not a cost, it is a cooldown, and the words already have cooldowns.
 
        Talking is what carries the penalty because RimWorld already keys social work, recruiting
-       and trading off it. Nothing in this mod has to know that a hoarse carrier is a worse
+       and trading off it. Nothing in this mod has to know that a hoarse Inumaki is a worse
        negotiator; the base game works it out. -->
   <HediffDef>
     <defName>AG_LarynxWear</defName>
     <label>strained larynx</label>
-    <description>This person has been forcing sound through a throat that was not built to survive it.\n\nIt heals, but slowly, and it does not care whether the next thing they need their voice for is an order or a trade.</description>
+    <description>Wear on the throat from forcing words on other people. Lowers Talking by stage; at 85 % there is no voice left and no word can be said.\n\nHeals 12 % a day. Drinking one herbal medicine as throat syrup removes 30 %.</description>
     <hediffClass>HediffWithComps</hediffClass>
     <defaultLabelColor>(0.85, 0.55, 0.5)</defaultLabelColor>
     <scenarioCanAdd>false</scenarioCanAdd>
     <isBad>true</isBad>
     <maxSeverity>1</maxSeverity>
+    <modExtensions>
+      <!-- The voice's shared numbers: reach and throat factor per volume, the listener factors,
+           the most wear a word may push to, and the throat syrup. -->
+      <li Class="RimArt.LarynxExtension">
+        <whisperReach>3</whisperReach>
+        <speakReach>8</speakReach>
+        <shoutReach>16</shoutReach>
+        <whisperFactor>0.5</whisperFactor>
+        <speakFactor>1</speakFactor>
+        <shoutFactor>2</shoutFactor>
+        <doorwayCost>3</doorwayCost>
+        <minHearing>0.15</minHearing>
+        <hostileFactor>2</hostileFactor>
+        <mentalStateFactor>2.5</mentalStateFactor>
+        <alreadyObeyingFactor>0.15</alreadyObeyingFactor>
+        <minConsciousnessFactor>0.2</minConsciousnessFactor>
+        <maxWear>1</maxWear>
+        <syrupThing>MedicineHerbal</syrupThing>
+        <syrupRelief>0.3</syrupRelief>
+        <syrupTicks>90</syrupTicks>
+        <!-- Core sound, so it plays without the DLCs. A placeholder: not chosen by listening. -->
+        <wordSound>PsychicShockLanceCast</wordSound>
+        <whisperSoundVolume>0.5</whisperSoundVolume>
+        <speakSoundVolume>1</speakSoundVolume>
+        <shoutSoundVolume>1.6</shoutSoundVolume>
+      </li>
+    </modExtensions>
     <comps>
       <li Class="HediffCompProperties_SeverityPerDay">
         <severityPerDay>-0.12</severityPerDay>

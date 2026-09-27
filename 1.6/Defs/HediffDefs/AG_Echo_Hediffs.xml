@@ -43,6 +43,10 @@
     <defName>AG_EchoManifest_Inumaki</defName>
     <label>hero form: Inumaki</label>
     <description>This Host has manifested Inumaki. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <comps>
+      <!-- Merged with the base's comps: adds the whisper / speak / shout toggle. -->
+      <li Class="RimArt.HediffCompProperties_WordVolume" />
+    </comps>
     <stages>
       <li>
         <statOffsets>

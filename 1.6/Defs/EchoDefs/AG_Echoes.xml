@@ -2,7 +2,8 @@
 <Defs>
 
   <!-- Echoes: heroes a colonist can become (docs/hero-echo.md). Every number is a placeholder.
-       Accelerator, Pain and Inumaki reuse abilities that already work in game; Vergil has no
+       Accelerator and Pain reuse abilities that already work in game; Inumaki's six words are his
+       ported kit and only this Echo grants them; Vergil has no
        abilities until his kit is ported and is here to exercise the kill-with-weapon trial.
        Shirou's one ability so far is Unlimited Blade Works, not yet played by hand. -->
   <RimArt.EchoDef Name="AG_EchoBase" Abstract="True">
@@ -111,19 +112,14 @@
     <abilities>
       <li>AG_Imperative_Stop</li>
       <li>AG_Imperative_Drop</li>
-      <li>AG_Imperative_Kneel</li>
+      <li>AG_Imperative_Crush</li>
       <li>AG_Imperative_Come</li>
       <li>AG_Imperative_Run</li>
+      <li>AG_Imperative_Explode</li>
     </abilities>
     <manifestHediff>AG_EchoManifest_Inumaki</manifestHediff>
     <upkeepPerHour>8</upkeepPerHour>
-    <castCosts>
-      <li><ability>AG_Imperative_Stop</ability><cost>5</cost></li>
-      <li><ability>AG_Imperative_Drop</ability><cost>5</cost></li>
-      <li><ability>AG_Imperative_Kneel</ability><cost>5</cost></li>
-      <li><ability>AG_Imperative_Come</ability><cost>5</cost></li>
-      <li><ability>AG_Imperative_Run</ability><cost>5</cost></li>
-    </castCosts>
+    <!-- No castCosts: every word costs 0 charge. The throat (AG_LarynxWear) is his cost. -->
     <wealth>3000</wealth>
     <hairColor>(0.92, 0.92, 0.95)</hairColor>
   </RimArt.EchoDef>

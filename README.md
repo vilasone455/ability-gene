@@ -12,7 +12,7 @@ piece of equipment, weapon trait, or earned origin.
 | Gene | **Dispersal plexus** | Acquire and implant the gene |
 | Trait | **Combat presence** | Appears naturally as a pawn trait |
 | Trait | **Pain debt** | Appears naturally as a pawn trait |
-| Trait | **Commanding voice** | Appears naturally as a pawn trait |
+| Hero | **Inumaki's words** | Awaken Inumaki's Echo at the resonance device, then manifest him |
 | Implant | **Neural accelerator** | Craft after Bionics research and install surgically |
 | Implant | **Reflex booster** | Craft after Prosthetics research and install surgically |
 | Implant | **Phase barrier** | Find through quests or deep-space trade and install surgically |
@@ -772,53 +772,45 @@ their own healing, in a room with no doctor, at four times the hunger.
 Swallow then collapse is an unconditional kill with no corpse. It costs the carrier the volume,
 everything stored in it, and every round the hole has ever taken.
 
-### Commanding voice → *stop*, *drop*, *kneel*, *come*, *run* (trait)
+### Inumaki → *stop*, *drop*, *crush*, *come*, *run*, *explode* (hero, Echo only)
 
-A force of personality that makes one-word commands difficult to disobey. Using it still
-strains an ordinary throat.
+Only Inumaki's Echo gives these words, and only while he is manifested. The Commanding voice trait
+that used to give them was removed on 2026-09-27.
 
-| Word | Effect | Cooldown |
-|---|---|---|
-| Stop | Stands still, 3s | 10s |
-| Drop | Stops, half a second, lets go of their weapon where they stand | 20s |
-| Kneel | Lies down, 3s | 30s |
-| Come | Walks to the speaker, once | 30s |
-| Run | Runs ~24 cells away | 30s |
+A word has no target. It spreads from Inumaki as a sound through open space and open doors; walls,
+rock and closed doors stop it, and entering an open door's cell costs 3 cells of reach. Everyone it
+reaches obeys: enemies, animals and colonists. Mechanoids and deaf pawns (Hearing 15 % or less, for
+example both ears missing) are immune. A pawn with low Hearing hears only within reach x Hearing.
 
-Range 16.9, no line of sight — a wall stops a lance and does not stop a voice.
+Volume is a toggle on the hero form: whisper 3 cells (throat x0.5), speak 8 (x1), shout 16 (x2).
 
-**Nothing here is mind control and nothing is a mental state.** Vanilla has both, and both take
-the person away. A target keeps their faction, their hostility, their memory and their think
-tree, and does one thing they did not choose on the way through — then picks up exactly where
-they were, still armed, still coming, and perfectly clear on who made them do it. What the trait
-sells is not control. It is seconds, and where people are standing when those seconds end.
+| Word | Effect | Throat per listener at speak | Cooldown |
+|---|---|---|---|
+| Stop | Stands still 3 s | 3 % | 10 s |
+| Drop | Drops the held weapon at their feet | 5.5 % (armed listeners only) | 20 s |
+| Crush | 15 blunt, 1 s stun | 9 % | 30 s |
+| Come | Walks to Inumaki | 7 % | 30 s |
+| Run | Runs up to 24 cells away | 9 % | 30 s |
+| Explode | 35 bomb damage in radius 1.5 on each listener; hits pawns next to them, not Inumaki | 35 % | 1 day |
 
-**The cost is the speaker's own throat, and it is priced by the target.** Every word accrues
-`AG_LarynxWear` on the neck, which sheds at 0.12/day — slower than the raid it came from, so it
-follows the carrier into the next week. What a word costs depends on how hard that particular
-head was going to be to talk to: telling someone to do what they were already doing is nearly
-free, a hostile costs double, and anyone in a mental state costs two and a half times on top of
-that, because nobody in a tantrum is listening. Shouting *run* at an ordinary raider is about
-0.18, so roughly five words across a fight. Shouting it at a berserk one is 0.45, and two of
-those take a colonist's voice for four days.
+No word costs Echo charge. The cost is throat wear (`AG_LarynxWear`, heals 12 % a day): the word's
+base x volume x the sum over listeners of hostile x2, mental state x2.5 (or x0.15 when the listener
+is already doing it), x consciousness (not below 0.2), x body size (at least 1). A word that would
+take the throat past 100 %, or that no one would hear, cannot be said. At 85 % he has no voice.
+Hovering a word shades the cells it reaches and rings each listener (red hostile, blue colony,
+yellow other); the tooltip gives the listener count and the throat cost.
 
-**The penalty is Talking, so this mod does not have to describe it.** RimWorld already runs
-recruiting, warden work and trading off that capacity. A hoarse carrier is quietly a worse
-negotiator and nothing announces it; at the top stage they cannot speak at all and the ability is
-simply gone until it heals. Your best talker being your best shouter is the tension the trait
-actually creates, and it costs no code to create it.
+Throat syrup: with a strained larynx, right-click herbal medicine to drink one (1.5 s): -30 % wear.
 
-**Kneel is the one that will define this kit, and vanilla designed it.** A prone pawn is hit at
-×0.5 from 4.5 cells or more and at ×7.5 from 3.9 or less. So the same word is an execution setup
-at melee range and an actively harmful mistake at rifle range — shouted across a killbox it
-protects the raider from your own firing line. It is one number that changes sign at about four
-cells, the player can read it in the shot tooltip as a *Target prone* line, and it punishes
-reflexive use. Nothing in this mod computes any of it.
+When he speaks: rings at his head, then a ripple band (magenta, lavender, cyan fringe) moves out
+at 30 cells/s over exactly the cells the word reaches. It stops at walls, comes out of an open
+doorway as a half-ring, and fades before the edge of reach. Each listener crackles purple-white
+for 0.7 s when the band reaches them. A sound plays at Inumaki (Core `PsychicShockLanceCast`, a
+placeholder), quieter for a whisper and louder and lower for a shout. From the anime: the mouth
+ripple with a colour fringe (ep 19, "Blast away") and the crackle on the target (ep 17).
 
-**Deafness is the counter and it needed no code.** A word is a sound, so anything below 0.15
-Hearing does not hear it and nothing happens — no effect, no cooldown spent, a message saying
-so. Mechs are excluded at the targeting params. No vanilla mechanic attacks or defends Hearing,
-which makes this a real answer a player can find rather than an immunity flag this mod invented.
+Tests: `-quicktest -rimarttest=inumaki` (11 scenarios; "vfx 1" saves four screenshots of a shout
+past a wall and an open door).
 
 ### Arcing → *arc* (weapon trait; needs Melee Animation)
 
@@ -1494,81 +1486,54 @@ and cheap against animals is a matchup, not a bug.
 
 None of this has been run in-game yet.
 
-## How Commanding Voice works
+## How Inumaki's words work
 
-**One job, inserted, then handed back — and no Harmony patch anywhere.**
-`Pawn_JobTracker.StartJob` already takes `resumeCurJobAfterwards`, so the interruption and the
-return are the game's own rather than an imitation of them. That is the whole mechanism. It also
-means this trait adds no contact surface with the other kits: nothing here prefixes
-`Thing.TakeDamage`, so it sits outside the ordering that Wound Debt, Phase Guard and the
-stasis field all have to agree about.
+**One job, inserted, then handed back.** Stop, drop, come and run call
+`Pawn_JobTracker.StartJob` with `resumeCurJobAfterwards`, so each listener does one job it did not
+choose and then goes back to what it was doing, with its faction, target and think tree unchanged.
+No mental state, no Harmony patch. Drop is vanilla `JobDefOf.DropEquipment` (the weapon lands at
+their feet, not thrown and not forbidden, unlike the corrosive glands). Crush is a `DamageInfo` plus
+`StunFor`; explode is `GenExplosion.DoExplosion` with Bomb damage at each listener's cell, with
+Inumaki in `ignoredThings` (Bomb damage is also what resets Satō, see docs/hero-echo.md).
 
-Provoke reaches into the same AI one layer shallower — it rewrites `enemyTarget` and
-interrupt once, leaving the target to decide what to do about it. This decides for them, once,
-and then stops deciding.
+**The sound.** `SoundSpread.Reach` is an any-angle (Theta*) flood from his cell: each cell takes
+the straight-line distance from the last point the sound could see it from (Inumaki, a wall corner
+it bent round, or a doorway it came through) plus the distance to that point, so open ground is a
+circle, not an octagon. Entering an open door's cell adds the doorway cost and makes the doorway
+the source of everything past it. A cell carries sound when `GenGrid.CanBeSeenOver` says so (not
+full-fill, or an open door); a diagonal step needs both side cells open. The flood is cached for
+one tick per speaker, cell and reach, because six gizmos, their tooltips and the preview ask for it
+several times a frame.
 
-**The cost model reads five things, and the honest limit is that it wanted to read a sixth.**
-What `WearFor` would like to know is how far the command sits from what the think tree actually
-wanted, and that number does not survive: a think tree does not keep the scores it rejected. So
-it reads what is still there — whether the target is already doing the thing, whether they are
-in a mental state, whether they are hostile, how conscious they are, and how big they are. Every
-term is a number the game holds for its own reasons, which is the point, but it is inference
-from observable state and not the ranking itself. `LarynxDefaults.BaseWearFor` is the only place
-with invented numbers in it and the only place worth tuning.
+**The picture.** `MapComponent_CursedSpeech` keeps each cell's source and draws the band as one
+additive mesh with a colour per vertex (3 x 3 quads per cell). Each vertex takes the smallest
+distance among the reached cells touching it, from their sources, so the rings stay round round
+every source and continuous where neighbouring cells use different sources. Not saved; picture
+only, the word has already acted when it starts.
 
-The bill is worked out *before* the order lands. Obeying changes `CurJobDef`, so measuring
-afterwards would make every word look like one the target was already following and price the
-whole kit at 15%.
+**The bill is worked out before the orders land.** Obeying changes `CurJobDef`, so measuring after
+would make every listener look like one already doing it and price everything at x0.15. For the
+same reason a pawn standing on a `Wait` job is "already obeying" Stop.
 
-### The two capacities
+**Where the numbers are.** Shared voice numbers (reach and factor per volume, doorway cost, listener
+factors, deaf threshold, max wear, syrup) are `LarynxExtension` on `AG_LarynxWear`. Each word's base
+throat cost, damage, stun and flee distance are on its `CompProperties_AbilityImperative`.
+`LarynxDefaults` keeps only the no-voice threshold and preview shapes. The volume lives on
+`HediffComp_WordVolume` on `AG_EchoManifest_Inumaki`, so it resets to speak on each manifest.
 
-`Talking` carries the cost and `Hearing` is the counter, and neither needed a custom stat. The
-wear lands on the neck because there is no `Throat` body part — `Neck` is as deep as vanilla
-goes — which puts it on the one part Resonance calls too damped to hold a note. The
-top hediff stage sets Talking to zero rather than offsetting it, so `CanSpeak` fails and every
-gizmo greys out. Making that permanent is a fifth stage with `severityPerDay` 0; it is left
-recoverable on purpose, because an ability that can permanently delete itself in one bad fight is a
-trap rather than a cost.
-
-### Two traps this design walks into
-
-**`JobDefOf.LayDown` is the rest job.** It has `CanSleep => true`, so a raider told to kneel
-would have gone to sleep on the doorstep. `LayDownAwake` subclasses the same driver and
-overrides `CanSleep` and `CanRest` to false. Posture is what the shot factors actually read, and
-posture comes from the job driver: `PawnUtility.GetPosture` returns `p.jobs.posture` for anyone
-not downed, which is why a job can produce a prone pawn without touching their health at all. A
-commanded pawn is at full health the entire time.
-
-**Drop looked like the one word that was not a job.** It is. `JobDefOf.DropEquipment` stops the
-pather dead, waits 30 ticks and drops at the pawn's own position — the word exactly, and for
-free. Writing it by hand would have grown a second copy of what the corrosive glands already do.
-
-### Why drop does not scatter and does not forbid
-
-The corrosive glands throw a weapon clear and forbid where it lands. This makes someone let go,
-and it lands at their feet, and they will pick it back up. That difference is deliberate: acid
-puts the weapon somewhere, a shout only ends someone's grip on it. Keeping the scatter and the
-forbid exclusive to the older gene is what stops a Met −2 gene quietly obsoleting a Met −1 one
-that exists to do this properly.
+**The two capacities.** `Talking` carries the cost (the hediff's stages; the top stage sets it to 0
+so `CanSpeak` fails) and `Hearing` is the counter. The wear sits on the neck because vanilla has no
+throat part.
 
 ### Known gaps
 
-All five gizmos share `UI/Abilities/AnimalWarcall` — the only voice-themed icon in Core or
-Biotech, with `Gene_VoiceRoar` already used by Provoke. Five identical buttons in
-a row is the one part of this kit that wants art.
-
-The tooltip quotes base cost only. The decision the trait offers is whether *this* target is
-worth the voice, so the real multiplied figure should be visible at targeting time —
-`ExtraTooltipPart()` has no target, so doing it properly means taking over the targeter draw the
-way the anchor organ took over `DrawHighlight`.
-
-`JobDriver_LayDownAwake` has `LookForOtherJobs => true`, so a hostile is permitted to abandon
-kneel early. The job is marked `playerForced`, which usually holds, but three seconds may turn
-out to be one.
-
-Confirmed in-game: all five words cast and resolve. The tuning has not been
-played against a real raid — the five-words-per-fight figure for *run* is an estimate, not a
-measurement.
+- All six words and the volume toggle use the placeholder icon `UI/Abilities/AnimalWarcall`.
+- The word sound is a Core placeholder picked by name, not by listening. The Snake Eyes and Fangs
+  seal at his mouth is not drawn (too small at map zoom).
+- The throat check is on the button: people who walk into reach during the 0.4 s warm-up are still
+  obeyed and billed, even past 100 % (the hediff caps at 100 %).
+- Satō's Black Ghost is to be deaf; it is not built yet.
+- Not played by hand; the 11 game tests are the only run.
 
 ## How Origin: Blade works
 

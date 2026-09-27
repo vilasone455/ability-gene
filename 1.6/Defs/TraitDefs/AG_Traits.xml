@@ -24,36 +24,6 @@
     </modExtensions>
   </TraitDef>
 
-  <!-- Commanding Voice is the sole source of all five imperative commands. -->
-  <TraitDef>
-    <defName>AG_CommandingVoice</defName>
-    <commonality>0.3</commonality>
-    <degreeDatas>
-      <li>
-        <label>commanding voice</label>
-        <description>This person has a voice that demands obedience. They can issue short, sharp commands that compel targets to act — stop, drop their weapon, kneel, come closer, or run.</description>
-        <degree>0</degree>
-      </li>
-    </degreeDatas>
-    <conflictingTraits>
-      <li>Wimp</li>
-    </conflictingTraits>
-    <requiredWorkTags>
-      <li>Violent</li>
-    </requiredWorkTags>
-    <modExtensions>
-      <li Class="RimArt.TraitAbilityExtension">
-        <abilities>
-          <li>AG_Imperative_Stop</li>
-          <li>AG_Imperative_Drop</li>
-          <li>AG_Imperative_Kneel</li>
-          <li>AG_Imperative_Come</li>
-          <li>AG_Imperative_Run</li>
-        </abilities>
-      </li>
-    </modExtensions>
-  </TraitDef>
-
   <!-- Pain Debt is the sole source of Wound Debt. -->
   <TraitDef>
     <defName>AG_PainDebt</defName>
