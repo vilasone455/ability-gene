@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Susanoo (docs/hero-echo.md, Itachi). The 12 s come from the ability's Ability_Duration through
+       the base's Disappears comp; every other number is on the comp. He walks at half speed while
+       it stands; the Yata Mirror (Patches_Susanoo.cs) and the Totsuka Blade (a command on this comp)
+       are its two halves. Ending it, by time or by reverting, leaves AG_SusanooDrained and blood loss. -->
+  <HediffDef ParentName="AG_AbilityHediffBase">
+    <defName>AG_Susanoo</defName>
+    <label>susanoo</label>
+    <description>The Susanoo stands round Itachi. The Yata Mirror turns every hit from outside; the Totsuka Blade stabs a target within 4 cells every 3 seconds and seals one target that is downed or at 30 % health or less. He walks at half speed while it stands, and it costs him afterwards.</description>
+    <defaultLabelColor>(1, 0.5, 0.2)</defaultLabelColor>
+    <isBad>false</isBad>
+    <comps>
+      <li Class="RimArt.HediffCompProperties_Susanoo">
+        <totsukaRange>4</totsukaRange>
+        <totsukaCooldownTicks>180</totsukaCooldownTicks>
+        <stabDamage>30</stabDamage>
+        <stabArmorPenetration>0.35</stabArmorPenetration>
+        <sealHealthPercent>0.30</sealHealthPercent>
+        <drainedHediff>AG_SusanooDrained</drainedHediff>
+        <drainedTicks>15000</drainedTicks>
+        <bloodLoss>0.10</bloodLoss>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <statFactors>
+          <MoveSpeed>0.5</MoveSpeed>
+        </statFactors>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <!-- His illness, for 6 hours after a Susanoo. The comp sets the ticks from drainedTicks. -->
+  <HediffDef>
+    <defName>AG_SusanooDrained</defName>
+    <label>susanoo strain</label>
+    <description>Holding the Susanoo has drained Itachi. His mind is dulled for a while, and he lost blood.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.9, 0.5, 0.4)</defaultLabelColor>
+    <scenarioCanAdd>false</scenarioCanAdd>
+    <isBad>true</isBad>
+    <initialSeverity>1</initialSeverity>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>15000</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <offset>-0.30</offset>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

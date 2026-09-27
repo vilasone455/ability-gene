@@ -72,6 +72,13 @@ namespace RimArt
                 return true;
             }
 
+            // The Susanoo anchors him: no flight while it stands.
+            if (carrier != null && SusanooRegistry.HolderFor(carrier) != null)
+            {
+                reason = "AG_ItachiSusanooHolds".Translate();
+                return true;
+            }
+
             return base.GizmoDisabled(out reason);
         }
 
@@ -95,6 +102,13 @@ namespace RimArt
                     Messages.Message("AG_DispersalEmpty".Translate(carrier.LabelShortCap),
                         carrier, MessageTypeDefOf.RejectInput, false);
                 }
+                return false;
+            }
+
+            if (SusanooRegistry.HolderFor(carrier) != null)
+            {
+                if (throwMessages)
+                    Messages.Message("AG_ItachiSusanooHolds".Translate(), carrier, MessageTypeDefOf.RejectInput, false);
                 return false;
             }
 

@@ -22,7 +22,7 @@ namespace RimArt
         private int charges = -1;
         private int rechargeProgress;
         private bool autoScatter = true;
-        private bool abilitiesChecked;
+        private bool staleAbilitiesChecked;
 
         public bool AutoScatter => autoScatter;
 
@@ -148,15 +148,21 @@ namespace RimArt
 
             DispersalRegistry.Report(this);
 
-            // Old saves store their ability list. Reconcile once after loading so an existing
-            // plexus gains newly added abilities without removing and re-adding the gene.
-            if (!abilitiesChecked && pawn.abilities != null)
+            // The gene granted Murder and Carrion itself until 2026-09-27; now Itachi's Echo does,
+            // while he is manifested. A save from before that still holds them on the pawn, so
+            // once after loading they are taken back unless something else grants them.
+            if (!staleAbilitiesChecked && pawn.abilities != null)
             {
-                if (def.abilities != null)
-                    foreach (AbilityDef ability in def.abilities)
-                        if (pawn.abilities.GetAbility(ability) == null)
-                            pawn.abilities.GainAbility(ability);
-                abilitiesChecked = true;
+                staleAbilitiesChecked = true;
+                if (!EchoUtility.GeneActive(pawn, def))
+                {
+                    foreach (AbilityDef ability in new[] { ItachiDefOf.AG_DispersalMurder, ItachiDefOf.AG_DispersalCarrion })
+                    {
+                        if (pawn.abilities.GetAbility(ability) == null) continue;
+                        if (TraitAbilityUtility.GrantedByOtherSource(pawn, ability, null, null)) continue;
+                        pawn.abilities.RemoveAbility(ability);
+                    }
+                }
             }
 
             int now = Find.TickManager.TicksGame;
@@ -200,6 +206,8 @@ namespace RimArt
             // gene gizmos and ability gizmos come out of the same enumerator on Pawn.GetGizmos,
             // that took every other command on the pawn down with it.
             if (pawn == null || !pawn.IsColonistPlayerControlled) yield break;
+            // Echo-only: the toggle, like Scatter itself, exists only in hero form.
+            if (!EchoUtility.GeneActive(pawn, def)) yield break;
 
             if (icon == null)
             {

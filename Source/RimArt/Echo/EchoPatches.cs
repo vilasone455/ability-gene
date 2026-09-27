@@ -143,6 +143,10 @@ namespace RimArt
             if (stat.parts == null) stat.parts = new List<StatPart>();
             stat.parts.Add(new StatPart_EchoHost { parentStat = stat });
 
+            foreach (EchoDef echo in DefDatabase<EchoDef>.AllDefsListForReading)
+                foreach (GeneDef gene in echo.awakenGenes)
+                    if (gene != null) EchoUtility.AwakenGenes.Add(gene);
+
             // The hero-form work block is written once on the manifest comp; vanilla reads disabled
             // work types from hediff stages, so it is copied into every stage of those hediffs.
             foreach (HediffDef hediff in DefDatabase<HediffDef>.AllDefsListForReading)
