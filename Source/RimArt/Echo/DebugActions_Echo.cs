@@ -75,6 +75,9 @@ namespace RimArt
                         deeds.killsByWeapon.TryGetValue(weapon, out int have);
                         deeds.killsByWeapon[weapon] = have + kills.count - (int)kills.Current(pawn);
                         break;
+                    case Trial_DownedRecovered down:
+                        GameComponent_Echoes.Get.DeedsFor(pawn, true).downedRecoveries += down.count - (int)down.Current(pawn);
+                        break;
                     case Trial_NotTrait not:
                         foreach (Trait trait in pawn.story.traits.allTraits.Where(t => t.def == not.trait).ToList())
                         {

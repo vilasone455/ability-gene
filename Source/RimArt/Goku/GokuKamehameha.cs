@@ -41,7 +41,8 @@ namespace RimArt
     /// is no ability behind it yet. The rule (user's draft, placeholders): a 2.5 s channel in four
     /// beats, then a beam 3 cells wide and 30 long (or to the first wall) that holds 1.2 s and pushes
     /// the pawns it hits 1.5 cells, then an end blast of radius 2.5. The warp variant channels
-    /// elsewhere and jumps to the firing cell at the end of the channel.
+    /// elsewhere and jumps to the firing cell 0.3 s before it fires. In the game the full charge is
+    /// held until the player fires (Plan's held); the ability is in Kit/KamehamehaCast.cs.
     /// </summary>
     public static class GokuKamehamehaTiming
     {
@@ -67,10 +68,11 @@ namespace RimArt
         // The preview's script: the sketch's sliders at their defaults.
         public const float ScriptLength = 30f, ScriptWidth = 3f, ScriptBlast = 2.5f, ScriptBallSize = 0.55f, ScriptChannel = 2.5f, ScriptHold = 1.2f;
 
-        public static KamehamehaPlan Plan(bool warp, float channel = ScriptChannel, float hold = ScriptHold)
+        /// <param name="held">How long the caster held the full charge before firing (the game's open-ended hold; 0 in the preview).</param>
+        public static KamehamehaPlan Plan(bool warp, float channel = ScriptChannel, float hold = ScriptHold, float held = 0f)
         {
             var plan = new KamehamehaPlan { Cast = Lead, Channel = channel, Hold = hold, Warp = warp };
-            plan.Fire = plan.Cast + channel;
+            plan.Fire = plan.Cast + channel + held;
             plan.Go = plan.Fire - Vanish * 2f - Gap;
             plan.Out = plan.Fire + HeadTime;
             plan.Release = plan.Fire + hold;

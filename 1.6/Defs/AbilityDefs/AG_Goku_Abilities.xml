@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Goku's four abilities (docs/heroes.md), granted by the Goku Echo while manifested
+       (AG_Echoes.xml, which holds their charge costs). Every balance number is a field here; the C#
+       in Source/RimArt/Goku/Kit holds only shape and logic. Warp Kamehameha is not a def: it is a
+       button during the Kamehameha hold (GokuPatches.cs) that spends Instant Transmission's cost and
+       cooldown as well. The icons are placeholders. -->
+
+  <AbilityDef Name="AG_GokuAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+  </AbilityDef>
+
+  <!-- Solar Flare: no target. The 0.25 s warmup is the hands going to the face; the flash is the
+       fire. The cast job (AG_CastGoku) starts the picture with the warmup. -->
+  <AbilityDef ParentName="AG_GokuAbilityBase">
+    <defName>AG_GokuSolarFlare</defName>
+    <label>solar flare</label>
+    <description>Goku raises his hands to his face and lets out a blinding flash. Every pawn within 6.9 cells that can see him, except his own faction, is stunned for 3.5 seconds and flash-blinded: sight -80% for 20 seconds. No damage. A pawn behind a wall is not affected.</description>
+    <iconPath>RimArt/Goku/IconSolarFlare</iconPath>
+    <jobDef>AG_CastGoku</jobDef>
+    <cooldownTicksRange>2700</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>true</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.25</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_SolarFlare">
+        <radius>6.9</radius>
+        <stunSeconds>3.5</stunSeconds>
+        <blindSeconds>20</blindSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Instant Transmission: two clicks. First a pawn next to Goku to take along (friend, enemy or
+       downed), or Goku himself to go alone; then the destination cell, anywhere on the map (the
+       destination comp's range 0 is no limit, and no line of sight is needed). The 0.5 s warmup is
+       the fingers at the forehead. -->
+  <AbilityDef ParentName="AG_GokuAbilityBase">
+    <defName>AG_GokuInstantTransmission</defName>
+    <label>instant transmission</label>
+    <description>Two fingers to the forehead, and Goku is somewhere else.\n\nFirst click a pawn next to Goku to take along (an ally, an enemy or someone downed), or Goku himself to go alone. Then click any standable cell on the map; no line of sight is needed. After 0.5 seconds Goku appears there and the passenger on the cell beside him, on the same side as before. A hostile passenger arrives stunned for 1.5 seconds.</description>
+    <iconPath>RimArt/Goku/IconInstantTransmission</iconPath>
+    <jobDef>AG_CastGoku</jobDef>
+    <cooldownTicksRange>3600</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>1.5</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetItems>false</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_InstantTransmission">
+        <destination>Selected</destination>
+        <range>0</range>
+        <requiresLineOfSight>false</requiresLineOfSight>
+        <hostileStunSeconds>1.5</hostileStunSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Kamehameha: the target cell gives the direction. No warmup: casting queues the channel job
+       (AG_GokuChannel) and KamehamehaCast counts the channel itself, so a stun during it spends the
+       charge and the cooldown as the rule says. range is how far the aim cell can be; the beam is
+       always length cells, or to the first wall. -->
+  <AbilityDef ParentName="AG_GokuAbilityBase">
+    <defName>AG_GokuKamehameha</defName>
+    <label>kamehameha</label>
+    <description>Target a direction. Goku channels for 2.5 seconds standing still, then holds the ball until you press Fire, or Warp.\n\nFire: a beam 3 cells wide runs 30 cells, or to the first wall. It lasts 1.2 seconds and hits 4 times for 20 burn each (50% armour penetration) on every pawn and building in the lane, friend or foe, pushing pawns 1.5 cells along it. Where the beam ends it explodes: radius 2.5, 40 damage to everything there; a wall that stopped it takes it first.\n\nWarp (while Instant Transmission is ready): pick a cell and a direction; Goku jumps there and fires at once. It spends Instant Transmission's charge and cooldown too.\n\nA stun or a downing cancels the channel and the charge and cooldown are spent. Cancel gives them back.</description>
+    <iconPath>RimArt/Goku/IconKamehameha</iconPath>
+    <cooldownTicksRange>7200</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>40.9</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>true</canTargetBuildings>
+        <canTargetItems>false</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_Kamehameha">
+        <channelSeconds>2.5</channelSeconds>
+        <beamSeconds>1.2</beamSeconds>
+        <length>30</length>
+        <width>3</width>
+        <hits>4</hits>
+        <damagePerHit>20</damagePerHit>
+        <damageDef>Burn</damageDef>
+        <armorPenetration>0.5</armorPenetration>
+        <pushCells>1.5</pushCells>
+        <blastRadius>2.5</blastRadius>
+        <blastDamage>40</blastDamage>
+        <blastDamageDef>Bomb</blastDamageDef>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Spirit Bomb: an area order up to 35 cells away. No warmup: casting queues the channel job and
+       SpiritBombCast counts the power, the lenders (AG_GokuLend) and the throw. -->
+  <AbilityDef ParentName="AG_GokuAbilityBase">
+    <defName>AG_GokuSpiritBomb</defName>
+    <label>spirit bomb</label>
+    <description>Target an area up to 35 cells away. Goku raises both hands and channels with no upper limit; press Throw when you want (after at least 3 seconds).\n\nThe bomb has a power number: +1 per second from Goku, and +1 per second from every colonist who presses Lend energy (they stand still with a hand up until you throw or they stop). Blast radius 2 + 0.25 x power. Damage 20 + 6 x power to every hostile pawn in the radius, nothing else: colonists, allies, animals, neutrals and buildings take nothing.\n\nThe bomb flies for 1.4 seconds and does not miss. A stun or a downing ends the channel with nothing and the charge and cooldown are spent. Cancel gives them back.</description>
+    <iconPath>RimArt/Goku/IconSpiritBomb</iconPath>
+    <cooldownTicksRange>60000</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>35.9</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>true</canTargetBuildings>
+        <canTargetItems>false</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_SpiritBomb">
+        <minChannelSeconds>3</minChannelSeconds>
+        <lendPerSecond>1</lendPerSecond>
+        <radiusBase>2</radiusBase>
+        <radiusPerPower>0.25</radiusPerPower>
+        <damageBase>20</damageBase>
+        <damagePerPower>6</damagePerPower>
+        <damageDef>Burn</damageDef>
+        <armorPenetration>0</armorPenetration>
+        <flySeconds>1.4</flySeconds>
+        <domeHoldSeconds>2</domeHoldSeconds>
+        <pace>0.6</pace>
+        <sizePerPower>0.12</sizePerPower>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

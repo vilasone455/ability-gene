@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The slide of a pawn the Kamehameha beam carries down the lane: 0.5 s, easing out as the
+       picture's carry does (GokuKamehamehaTiming.Enemy). No height. -->
+  <ThingDef ParentName="PawnFlyerBase">
+    <defName>AG_GokuPushed</defName>
+    <label>carried by the beam</label>
+    <thingClass>PawnFlyer</thingClass>
+    <pawnFlyer>
+      <flightDurationMin>0.5</flightDurationMin>
+      <flightSpeed>1000</flightSpeed>
+      <heightFactor>0</heightFactor>
+      <progressCurve>
+        <points>
+          <li>(0, 0)</li>
+          <li>(0.2, 0.104)</li>
+          <li>(0.4, 0.352)</li>
+          <li>(0.6, 0.648)</li>
+          <li>(0.8, 0.896)</li>
+          <li>(1, 1)</li>
+        </points>
+      </progressCurve>
+    </pawnFlyer>
+  </ThingDef>
+
+</Defs>

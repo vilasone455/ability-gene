@@ -41,8 +41,10 @@ namespace RimArt
         private static readonly Mesh orbit = VfxDraw.Ring(0.93f, "Spirit Bomb orbit");
         private static readonly Material puff = MaterialPool.MatFrom("RimArt/SixPaths/Puff", ShaderDatabase.Transparent);
         private static readonly Color Smoke = new Color(0.28f, 0.28f, 0.3f);
-        private static readonly Vector2[] lenders = new Vector2[6], spared = new Vector2[2], walls = new Vector2[3];
-        private static readonly int[] joined = new int[6];
+        /// <summary>The most lenders one Spirit Bomb draws; the game caps its lenders at this too.</summary>
+        public const int MostLenders = 16;
+        private static readonly Vector2[] lenders = new Vector2[MostLenders], spared = new Vector2[2], walls = new Vector2[3];
+        private static readonly int[] joined = new int[MostLenders];
         private static readonly SpiritBombPulse[] pulses = new SpiritBombPulse[T.MostPulses], beating = new SpiritBombPulse[T.MostPulses];
         private const float TAU = Mathf.PI * 2f;
 
@@ -74,6 +76,7 @@ namespace RimArt
             SpiritBombPlan plan = T.Plan(lenderCount);
             var o = new Vector2(centre.x, centre.z);
             Vector2 caster = o - toward * (T.ScriptDistance / 2f), target = o + toward * (T.ScriptDistance / 2f);
+            lenderCount = Mathf.Min(lenderCount, T.LenderAt.Length);
             for (int i = 0; i < lenderCount; i++) lenders[i] = G.Place(caster, toward, -T.LenderAt[i].x, T.LenderAt[i].y);
             spared[0] = target + T.FriendAt;
             spared[1] = target + T.BeastAt;
@@ -101,7 +104,7 @@ namespace RimArt
             int cracks = t.Count(T.CrackCount.x, T.CrackCount.y), pillars = t.Count(T.PillarCount.x, T.PillarCount.y);
             int rocks = t.Count(T.RockCount.x, T.RockCount.y), burns = t.Count(T.StreakCount.x, T.StreakCount.y);
             float grindTime = t.Dome - t.Hit, cool = t.Gone - t.Open + T.Tail * 0.8f, whiteFrame = t.By(T.WhiteTime.x, T.WhiteTime.y);
-            float power = t.PowerAt(s), chargeNow = Mathf.Clamp01(power / T.FullPower), r = T.StartSize + t.SizePer * power, blast = T.BaseRadius + t.BlastPer * power;
+            float power = t.PowerAt(s), chargeNow = Mathf.Clamp01(power / T.FullPower), r = T.StartSize + t.SizePer * power, blast = t.Base + t.BlastPer * power;
             bool channelling = s >= t.Cast && s < t.Release;
             float formed = Smooth((s - t.Cast) / 0.5f);
             // Where the ball is at w of the way through its flight: ground position and height.
@@ -268,7 +271,7 @@ namespace RimArt
             {
                 Vector2 at = shot.Lenders[i];
                 float lending = Lending(t, i, s);
-                if (s >= t.Joins(i) && s < t.Release + 0.3f) joined[joinedCount++] = i;
+                if (s >= t.Joins(i) && s < t.Leaves(i) + 0.3f && joinedCount < joined.Length) joined[joinedCount++] = i;
                 Sprite(new Vector2(at.x, at.y + 0.35f), 1.3f, 1.6f, Fade(KiSky, 0.4f * lending * (0.8f + 0.2f * Mathf.Sin(s * 11f))), glow, PawnLayer - 0.01f);
             }
 
@@ -553,7 +556,7 @@ namespace RimArt
         }
 
         /// <summary>How much lender <paramref name="i"/> gives now: up over 0.3 s from joining, down over 0.3 s from the throw.</summary>
-        private static float Lending(in SpiritBombPlan t, int i, float s) => Smooth((s - t.Joins(i)) / 0.3f) * (1f - Smooth((s - t.Release) / 0.3f));
+        private static float Lending(in SpiritBombPlan t, int i, float s) => Smooth((s - t.Joins(i)) / 0.3f) * (1f - Smooth((s - t.Leaves(i)) / 0.3f));
 
         /// <summary>The churn of the dome's outline at direction <paramref name="az"/>: two bulges travelling round it, 1% and 0.7% of the radius.</summary>
         private static float Churn(float az, float s) => 1f + 0.01f * Mathf.Sin(2f * az - s * 3f) + 0.007f * Mathf.Sin(3f * az + s * 4.3f);

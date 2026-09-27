@@ -155,6 +155,24 @@ namespace RimArt
     }
 
     /// <summary>
+    /// Times the pawn was downed and got back up. Vanilla records only the time spent downed, so
+    /// GameComponent_Echoes counts recoveries from the moment the mod is loaded (Goku's Trial).
+    /// </summary>
+    public class Trial_DownedRecovered : EchoTrial
+    {
+        public int count;
+
+        public override float Current(Pawn pawn) => GameComponent_Echoes.Get?.DeedsFor(pawn, false)?.downedRecoveries ?? 0;
+        public override float Target => count;
+        protected override string DefaultLabel => "AG_EchoTrialDownedRecovered".Translate(count);
+
+        public override IEnumerable<string> ConfigErrors()
+        {
+            if (count <= 0) yield return "count is not positive";
+        }
+    }
+
+    /// <summary>
     /// Kills made with a weapon of one of the named defs, or with any melee or any ranged weapon.
     /// Vanilla does not record the weapon behind a kill, so GameComponent_Echoes counts these from
     /// the moment the mod is loaded.

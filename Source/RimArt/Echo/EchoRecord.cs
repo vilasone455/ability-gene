@@ -63,6 +63,8 @@ namespace RimArt
     {
         public Pawn pawn;
         public Dictionary<ThingDef, int> killsByWeapon = new Dictionary<ThingDef, int>();
+        /// <summary>How many times the pawn got back up after being downed (counted while the mod is loaded).</summary>
+        public int downedRecoveries;
         private List<ThingDef> scribeDefs;
         private List<int> scribeCounts;
 
@@ -70,6 +72,7 @@ namespace RimArt
         {
             Scribe_References.Look(ref pawn, "pawn");
             Scribe_Collections.Look(ref killsByWeapon, "killsByWeapon", LookMode.Def, LookMode.Value, ref scribeDefs, ref scribeCounts);
+            Scribe_Values.Look(ref downedRecoveries, "downedRecoveries");
             if (Scribe.mode == LoadSaveMode.PostLoadInit && killsByWeapon == null)
                 killsByWeapon = new Dictionary<ThingDef, int>();
         }
