@@ -50,6 +50,17 @@ Device tiers (`CompProperties_EchoDevice.tiers`):
 | resonance tuning II | 150 | 8 | 4 |
 | resonance tuning III | 200 | 12 | 6 |
 
+Cost guideline for hero kits (agreed 2026-09-27; a default, not a hard rule: some heroes have their
+own cost, some do not):
+- Default: Echo charge per cast plus a cooldown.
+- Cheap, frequent abilities: the cooldown limits them; 0-2 charge.
+- Big abilities: 15-40 charge plus a long cooldown, so they cannot be chained.
+- A hero may have its own cost or meter when the kit is built around it: Vergil's Style (fills from
+  play, unlocks Judgement Cut End), Accelerator's brain strain (fills on use, downs him at 95 %),
+  Amaterasu's Bleeding eye (a one-off hediff). An ability that pays its own cost costs little or no
+  charge (Amaterasu 5; Accelerator's strain abilities 0).
+- Sasuke's eye strain was dropped: it was a new system that only taxed his kit.
+
 ## Trials
 
 `<li Class="RimArt.Trial_...">` in `EchoDef.trials`, read live from the pawn:
@@ -84,6 +95,30 @@ The card and the letter show the cost as it applies to the candidate ("Gains Abr
 - Removing the hediff any other way reverts the Echo.
 - `wealth` is added to the Host's market value.
 
+### Manifest weapon (decided 2026-09-27, not built)
+
+Some Echoes force what the Host holds while manifested. Proposed field `manifestWeapon` on the
+EchoDef (XML), with an empty-hands option.
+
+| Echo | Forced |
+|---|---|
+| Vergil | Yamato |
+| Nakime | biwa (weak blunt or none) |
+| Goku | empty hands |
+| Todo | empty hands |
+| everyone else, Sasuke included | nothing |
+
+Proposed handling (not yet confirmed rule by rule):
+- Manifest: the held weapon goes to inventory (dropped at the Host's feet if it cannot be carried);
+  the hero weapon appears in hand.
+- While manifested the Host cannot drop, swap or equip another weapon.
+- Revert: the hero weapon vanishes and the stored weapon is equipped again.
+- Not loot: fixed stats in XML, no quality or stuff roll, market value 0.
+- If it leaves the hand (downed, Chain Sickle Stake, Vacuum Suck, Disarm, an imperative) it vanishes
+  instead of dropping and returns to the hand after 10 s (placeholder) while still manifested.
+- Minato's kunai stay on the kunai belt the player equips; no forced apparel (recommended, not
+  answered).
+
 ## UI
 
 - Device tab "Echoes": charge bar, refill, drain now, Hosts / cap, next upgrade; one card per Echo
@@ -104,6 +139,140 @@ The card and the letter show the cost as it applies to the candidate ("Gains Abr
 Accelerator, Pain and Inumaki reuse abilities that still come from their pre-hero item (reflex
 booster implant, repulsion eye, Commanding Voice trait). validate.py allows that second source only
 for those abilities (`SHARED_WITH_ECHO`) until it is decided whether the old items stay.
+Decided 2026-09-27: the reflex booster implant becomes Echo-only, like Todo's anchor organ; the
+repulsion eye and Commanding Voice are still open. Accelerator keeps brain strain as his cost; his
+strain abilities (manipulation, surge, shove, Plasma) cost 0 charge, so `AG_Echo_Accelerator`'s
+castCosts (surge 10, shove 8) are to be removed at the port. Upkeep 12/h stays (his choker battery).
+Plasma is agreed; Uplift is dropped. Fifth ability, Vector Flick (agreed 2026-09-27, no sketch
+yet): he kicks a pebble off the ground at bullet speed; target a pawn within 24.9 cells with line of
+sight, warm-up 0.3 s, one projectile of 14 blunt at 30 % armour penetration, cooldown 2 s, no item
+used, no strain, 0 charge. Accelerator's v1 kit: vector manipulation, reflex surge, vector shove
+(the 2026-09-24 rework), Plasma, Vector Flick.
+
+Agreed, not built (no EchoDef yet; the abilities do not exist):
+
+| Echo | Trials | Cost | Abilities | Upkeep | Casts | Hero form |
+|---|---|---|---|---|---|---|
+| Sasuke ("Avenger of the Crimson Eye") | Melee 14, Intellectual 10, 15 kills with the Fūma Shuriken | Pessimist | Amenoyodomi, Amenotejikara, Raikō Kusari, Amaterasu | 12 | Amenoyodomi 0, Amenotejikara 2, Raikō Kusari 8, Amaterasu 5 | +0.4 move speed, black hair, wealth 6000, no forced weapon |
+| Itachi ("Crow of the Crimson Eye") | Melee 12, Intellectual 12, 30 kills | Sickly (Immunity -1) | Crow Dispersal (Murder + automatic Scatter, one ability), Carrion, False Face, Susanoo | 10 (proposed) | crow abilities 0 (they spend the gene's 3 charges, +1 per hour), False Face 3, Susanoo 20 | dispersal plexus gene Echo-only: added on awakening, abilities only while manifested |
+| Obito ("Watcher Behind the Spiral Mask") | Melee 12, Intellectual 10, has a missing or artificial body part (new Trial class; a prosthetic or bionic counts) | Depressive (Natural mood -2) | Kamui: Phase, Kamui: Warp, Kamui: Store, Wood Release | 12 | Phase 0 (its own 30 s pool), Warp 2, Store 1, Wood Release 2 | fold organ gene Echo-only: added on awakening (the dimension is generated then), abilities only while manifested |
+| Gojo ("Bearer of the Six Eyes") | Intellectual 14, 1 day spent downed in total (vanilla `TimeDowned` record; the Trial label shows hours), colony wealth 200,000 | The Strongest (new custom trait) | Infinity, Blue, Red, Unlimited Void (+ Hollow Purple combo) | 15 | Infinity 0 (its breath is the price), Blue 3, Red 3, Hollow Purple 20 (+ its own 1-day cooldown), Unlimited Void 30 | white hair; phase barrier implant Echo-only; no forced weapon |
+| Goku ("Heir of the Monkey King") | Melee 15, downed and recovered 3 times (new counter; vanilla only records total time downed) | Gourmand | Solar Flare, Instant Transmission, Kamehameha, Spirit Bomb (+ Warp Kamehameha) | 12 | Solar Flare 3, Instant Transmission 2, Kamehameha 15, Spirit Bomb 30; Warp Kamehameha pays Kamehameha + Instant Transmission | black hair; forced empty hands |
+| Minato ("Hero of the Yellow Flash") | Melee 12, Intellectual 10, 30 kills with thrown kunai (needs `PendingThrow` to pass the kunai as the weapon so the kill counter sees it) | Kind | flying thunder god, sealing touch (passive), chain, guiding thunder, rasengan; throw kunai stays on the belt | 10 | throw kunai 0 (belt charges), flying thunder god 2, chain 10, guiding thunder 5, rasengan 3 | blond hair (haori v1.1); no forced weapon; no kunai regeneration; replaces the earning rules in docs/flying-thunder-god-kit.md |
+| Shikamaru ("Strategist of the Binding Shadow") | Intellectual 14, 5 people captured (vanilla `PeopleCaptured`) | Lazy (Industriousness -1) | shadow imitation, shadow seam, shadow grasp, shadow double, shadow neck bind | 10 | imitation 3, seam 3, grasp 1, double 5, neck bind 2 | black hair; shadow plexus gene Echo-only; no forced weapon; Neck Bind's sketch rules agreed 2026-09-27 |
+| Nakime ("Player of the Endless Halls") | Artistic 12, Construction 10, 15 humanlike kills (vanilla `KillsHumanlikes`) | Night Owl | Infinity Castle (commands: shift, drop, seal/open, crush, summon, release; passives castle sight, void rule) | 12 | Infinity Castle 30, commands 0 (the 1.5 s strum rhythm and crush's own 10 s cooldown limit them) | black hair; forced biwa; castle gene Echo-only, added on awakening; sunlight burns her always (the gene's rule, 4 per second outdoors by day), not only while manifested |
+| Satō | Shooting 12, 30 kills, 500 damage taken | Ajin (new custom trait carrying the Reset passive) + Psychopath | Reset (passive), Black Ghost, The Game, Sever, Headshot Reset, Grenade Reset | 10 | Sever 0, Headshot Reset 0, Grenade Reset 5, Black Ghost 10, The Game 5 (a kill on the marked enemy refunds 15); every Reset while manifested costs by the piece he rises from (body or leg 20, arm 25, hand 40, finger 60) | half pain while manifested; on revert the Ghost dissolves and the mark ends |
+| Todo (no subtitle) | Melee 14, 20 humanlikes downed (`PawnsDownedHumanlikes`) | Brawler | stone, clap, double clap, Black Flash, provoke | 8 | stone 0, clap 0, double clap 0, Black Flash 1, provoke 5 | +0.5 move speed, black hair, wealth 6000 (placeholder), forced empty hands |
+
+Sasuke's Melee Trial follows the throw: kunai accuracy uses Melee (`KunaiAccuracy.cs`). The Fūma
+kills count because the Fūma throw passes the weapon to the kill counter; kunai kills were not
+checked. A "lost family" Trial was considered and dropped (2026-09-27).
+
+Itachi (agreed 2026-09-27; numbers are placeholders; False Face and Susanoo have no sketch or code):
+- Crow Dispersal: the built Murder and automatic Scatter, counted as one ability.
+- Carrion: built, unchanged.
+- False Face (genjutsu): one button, no target. Every enemy within 15 cells whose current target is
+  Itachi (`enemyTarget`, job target or aiming stance) attacks its nearest ally for up to 10 s,
+  believing it is Itachi. Each victim breaks free when it takes damage, when its false Itachi goes
+  down, or when Itachi goes down. Mechanoids are immune. Cooldown 45 s, 3 charge. Built as a short
+  mental state (as vanilla Berserk is), because the AI drops targets that are not hostile to it.
+  To check before building: whether the attacked ally fights back on its own.
+- Susanoo: self, warm-up 1 s, lasts 12 s, Itachi walks at half speed. Yata Mirror blocks every hit
+  from outside. Totsuka Blade: one stab within 4 cells seals the target (removed from the map,
+  counts as a kill, drops its gear, no corpse). Cooldown 1 day, 20 charge. After it ends: -30 %
+  consciousness and 10 % blood loss for 6 h (his illness). Look: his complete armoured form (never
+  Perfect), code meshes plus a swirl texture, always facing the camera, growing ribs -> skeleton ->
+  armour and face during the warm-up (growth is picture only, my recommendation). About 2 days.
+
+Obito (agreed 2026-09-27; numbers are placeholders; replaces the built fold organ kit; no code yet):
+- Kamui: Phase. Toggle intangibility from his own 30 s pool, refilling 1 s per 4 s solid. Every hit
+  on his whole body goes into the Kamui dimension (`InvoluteUtility.PassThrough` on the whole body
+  instead of one rolled part): rounds are relaunched inside, other damage lands on a random cell
+  there. While phased he cannot attack, carry or cast; turning solid takes 0.25 s.
+- Kamui: Warp. 1 s warm-up to go in; he comes out at any revealed cell of the map he left, with a
+  0.5 s warning mark; cooldown 15 s after the exit.
+- Kamui: Store (absorb and release, one ability). Absorb: touch range, a pawn up to body size 1.2 or
+  one item stack, warm-up 0.4 s, instant on an enemy whose attack passed through him in the last
+  5 s, cooldown 15 s; held enemies stay stunned inside (no capture). Release: pick a stored thing,
+  then a cell within 6 cells in sight; enemies come out stunned 2 s; cooldown 5 s.
+- Wood Release: Cutting Technique. Branches shoot from his right arm along a straight line up to 10
+  cells and skewer every pawn on it: 15 stab each, 30 % armour penetration. Warm-up 0.5 s, cooldown
+  10 s, 2 charge. No pin (pinning is Pain's Black Receiver).
+- Cut: Vent's rolled body part and hole, the aperture, Post, Collapse, Izanagi. On his death or loss
+  of the kit, the contents come out at his cell. The Kamui dimension map (PR #41) stays.
+
+Gojo (agreed 2026-09-27; numbers are placeholders):
+- Infinity: the built Phase Guard (`Membrane/`): everything moving toward him halves its remaining
+  distance and never arrives; it holds back air, so he stops breathing until he drops it (his own
+  cost). The phase barrier implant becomes Echo-only.
+- Blue: a lesser Gravity Well (Pain's). Range 15, pulls pawns and loose things within 4 cells for
+  3 s, bends no bullets, implodes for 10-25 blunt by the mass in its core, allies affected.
+  Cooldown 20 s, 3 charge. Reuses the Gravity code; its constants (`GravityRules.cs`) move to XML.
+- Red: a push projectile to a cell up to 20 away at 20 cells/s. The first pawn or loose thing it hits
+  is thrown 6 cells along Red's direction (1.5 blunt per cell, +10 into a wall); everything else
+  within 1.5 cells of the burst is pushed 2 cells outward (8 blunt). Cooldown 10 s, 3 charge.
+- Hollow Purple (a combo, not a counted ability): when Red passes within 1 cell of an active Blue's
+  centre and Purple is ready, both are used up and Purple forms at Blue's centre, travelling in Red's
+  direction: radius 1.5, 6 cells/s, 30 cells or the map edge. It erases what it touches: walls,
+  buildings, plants and items are destroyed with no drops; pawns take 60 erasure damage that ignores
+  armour; friend or foe. Its own cooldown 1 day plus 20 charge; if it is not ready or the pool cannot
+  pay, Red passes through Blue and pushes as normal.
+- Unlimited Void: the pocket map (pictures on main, PR #34). Everyone within 9 cells is taken in,
+  keeping positions relative to Gojo; 10 s or Release, then back to the matching cells. Anyone not
+  spared is overloaded (consciousness capped at 10 % for 60 s, then void-scarred 2 days). Cooldown
+  2 days. Rules: allies are taken too; Gojo spares an ally by touching it during the domain, and one
+  touch spares it for the whole domain; androids and mechanoids are immune but still taken in and can
+  act inside; overloading neutrals costs goodwill with their faction.
+- Forced trait, The Strongest (new custom trait): Gojo has +20 opinion of young colonists (children
+  and anyone under 30 % of the race's life expectancy, 24 for a human) and they have +10 of him; he
+  has -20 opinion of old colonists (past 70 %, 56 for a human) and they have -10 of him; -6 mood while
+  no other Host is awakened in the colony, +4 once another is. No psychic sensitivity anywhere in his
+  entry (the user's rule).
+
+Pain's Echo (agreed 2026-09-27): it grants all four abilities, Shinra Tensei, Gravity Well, Banshō
+Ten'in and Black Receiver (the last two once they are built; `AG_Echo_Pain` lists only Shinra today).
+The repulsion and attraction eyes become Echo-only. Cast costs (agreed 2026-09-27): Shinra Tensei 5
+(was 20, set before the cost guideline), Banshō Ten'in 3, Black Receiver 0 (its 3 rods are its own
+cost), Gravity Well 20. Upkeep 15 unchanged.
+
+Pain, Gravity Well rework "hungry well" (agreed 2026-09-27; replaces the fixed 8-cell, 6 s well in
+`GravityRules.cs`; numbers are placeholders and move to XML):
+- It opens small and grows with what it has eaten: pull radius 3 at the start, up to 10 (+25 % on the
+  old 8) at 200 eaten.
+- Eaten = everything that entered the 1.5-cell core, added up by weight, each thing once: bullet or
+  arrow 2, rocket / grenade / mortar shell 10, dropped item or chunk its RimWorld mass, corpse
+  60 x body size, living pawn 60 x body size (counted once, when it first reaches the core).
+- Items and corpses in the core are destroyed (eaten); pawns are held and take core damage as now.
+- Duration: 4 s at the start, +1 s per 10 eaten, at most 15 s. A ring that shrinks round the well and
+  the seconds left show how long it has.
+- Implosion: 15-45 blunt by total eaten; its radius grows from 2 to 3. Cooldown 40 s unchanged.
+- Drift (agreed 2026-09-27): it creeps toward the heaviest mass inside its pull radius at 0.5 cells/s,
+  never more than 5 cells from where Pain cast it; not random and not steerable. Allies' mass attracts
+  it too. The known FPS drop (tick logic, see the deferred Gravity Well note) is to be fixed before or
+  with the drift, since a moving centre makes pulled pawns re-path more often.
+- Gojo's Blue stays a fixed 4-cell lesser well.
+
+Satō (agreed 2026-09-27; numbers are placeholders; Reset, explosions, The Game, Black Ghost at
+anchors and Tear were agreed 2026-09-26):
+- Reset (passive, carried by the Ajin trait, so it works for life): he never truly dies. Manifested
+  and able to pay: after 20 s he rises at his biggest piece (body, or a severed limb as an anchor),
+  paying by that piece's size (body or leg 20, arm 25, hand 40, finger 60). Not manifested, or the
+  pool cannot pay: a slow reset where he fell, after 1 in-game day. Any damaging explosion resets him
+  at once and counts as the body destroyed, friendly fire included.
+- Actives, five separate: Sever (throw one of his own parts up to 6 cells as an anchor, at most 2,
+  they rot in 3 days, cd 10 s); Headshot Reset (kills himself for a clean Reset); Grenade Reset (his
+  own explosion, radius 3, hurts everyone near, cd 60 s); Black Ghost (summoned at any anchor within
+  30 cells, 45 s, takes 50 % damage, cd 120 s, lifetime by piece: leg 45 s, arm 35 s, hand 20 s,
+  finger 10 s; Tear order once per summon; the Relay order is still undecided); The Game (mark one
+  enemy 30 s, +30 % damage from his shots, cd 45 s).
+
+Todo (agreed 2026-09-27): stone, clap and double clap are the anchor organ's rework on main (PRs
+#44, #56) and count as two abilities; Black Flash is built on `feature/todo-black-flash` (0cb9387,
+not pushed); provoke is the existing `AG_Provoke` with its cooldown changed from 12 h to 90 s plus 5
+charge (20 s, 12.9 cells, +20 % sharp/blunt armour, x0.85 damage taken, unchanged). The Combat
+presence trait is to be retired from the loaded defs so provoke has one source. The old epithet
+"Conductor of the Marked Stage" is dropped. The anchor organ gene becomes Echo-only (decided
+2026-09-27): it leaves genepacks and generic content, and only Todo's Echo gives it.
 
 ## Debug and tests
 

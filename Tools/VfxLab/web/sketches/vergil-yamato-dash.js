@@ -3,7 +3,8 @@
 // 0.35 s, dash in 0.15 s, then sheathe over 0.4 s. Each hostile in the 1-cell-wide path is marked
 // as the carrier passes and takes nothing yet. Every mark resolves together when the blade clicks
 // home, 0.4 s after the carrier stops: 24 Cut at 40 % armour penetration, once each. Allies are
-// never marked. Cooldown 8 s; no resource cost proposed. This sketch is not implemented in the game.
+// never marked. Cooldown 8 s; costs 2 Echo charge (agreed 2026-09-27). This sketch is not
+// implemented in the game.
 //
 // The delayed click is the source's Rapid Slash, folded in here rather than made a second ability
 // (decided 2026-09-21): a separate dash down a line would have been the same picture twice. It is

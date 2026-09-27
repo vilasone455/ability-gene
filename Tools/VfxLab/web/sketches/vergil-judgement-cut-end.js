@@ -1,15 +1,30 @@
 // Judgement Cut End — ability proposal for the Vergil kit (a held katana), not the game. Nothing in
 // Source/RimArt draws this yet. The kit's ultimate.
 //
-// What it is for (proposed, none of it agreed; every number is a placeholder and will be an XML field).
-//   No target: centred on the caster. Warm-up 1.0 s (hand on the hilt). Every hostile pawn within
-//   10 cells that has line of sight to the caster is marked. The caster is gone for 1.5 s and cannot
-//   be targeted; marked pawns are stunned from that moment until the click. The caster comes back on
-//   the cell they left, kneeling, and sheathes for 0.8 s. When the guard meets the scabbard each
-//   marked pawn takes 4 hits of 10 Cut. Allies, pawns behind a wall and pawns that walk into the
-//   radius after the warm-up are not marked. Cooldown 1 day.
-//   Added since the first table: the stun. Without it the pawns keep walking for 2.3 s under cuts
-//   that are drawn standing still, and the picture and the rule disagree.
+// What it is for (shared cuts + space breaks + Style agreed 2026-09-27; every number is a
+// placeholder and will be an XML field).
+//   No target: centred on Vergil. Warm-up 1.0 s (hand on the hilt). Every hostile pawn within
+//   10 cells that has line of sight to him is marked. He is gone for 1.5 s and cannot be targeted;
+//   marked pawns are stunned from that moment until the click. He comes back on the cell he left,
+//   kneeling, and sheathes for 0.8 s. Allies, pawns behind a wall and pawns that walk into the
+//   radius after the warm-up are not marked.
+//   Style (DMC's style meter), replaces the 1-day cooldown: a meter 0-100 on Vergil while
+//   manifested, shown on its gizmo as a letter rank: D 0, C 15, B 30, A 45, S 60, SS 75, SSS 90.
+//   +4 per pawn hit by Judgement Cut, +3 per Yamato Dash mark resolved, +1 per Summoned Swords hit,
+//   +2 per Yamato melee hit; -20 when he takes damage; drains 5 per second after 10 s without
+//   landing a hit. Judgement Cut End needs rank S (60) and spends all of it. It costs no Echo
+//   charge (the user, 2026-09-27): Style is its only limit.
+//   Shared cuts: the attack has Style / 5 cuts (12 at S, 20 at a full SSS), each 10 Cut. At the click they are
+//   dealt one at a time round the marked pawns, nearest first, so 1 pawn takes them all (up to 200)
+//   and 10 pawns take 2 each. Every marked pawn is stunned, whether or not a cut is left for it.
+//   Space breaks: during the vanish every projectile inside the radius is destroyed (bullets,
+//   rockets, mortar shells), and at the click every hostile or unowned building inside the radius
+//   with line of sight to Vergil (sandbags, barricades, turrets) takes 60 damage. Buildings do not
+//   use up cuts from the shared pool.
+//   The stun exists because without it the pawns keep walking for 2.3 s under cuts that are drawn
+//   standing still, and the picture and the rule disagree.
+//   Not drawn yet: cuts per pawn following the shared pool (the sketch gives every raider 4),
+//   projectiles breaking, buildings taking the cuts, the Style gizmo.
 //
 // Order, with the default timings:
 //   0.00  6 raiders walk in; an ally stands inside the radius; 1 raider is outside it; with the wall
