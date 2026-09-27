@@ -77,4 +77,10 @@
   <AG_EchoNoCharge>the colony has no charge</AG_EchoNoCharge>
   <AG_EchoCastNoCharge>Needs {0} charge; the colony has {1}.</AG_EchoCastNoCharge>
   <AG_EchoPoolEmpty>The charge ran out. {0} reverted from {1} and collapsed.</AG_EchoPoolEmpty>
+
+  <!-- Manifest weapon -->
+  <AG_EchoManifestHandsEmpty>{0} fights with empty hands. The weapon in hand goes to the inventory and is equipped again on reverting.</AG_EchoManifestHandsEmpty>
+  <AG_EchoManifestHandsWeapon>{0} holds {1}. The weapon in hand goes to the inventory and is equipped again on reverting. {1} cannot be dropped or swapped; if it leaves the hand it vanishes and returns after {2} seconds.</AG_EchoManifestHandsWeapon>
+  <AG_EchoHandsEmpty>{0} fights with empty hands</AG_EchoHandsEmpty>
+  <AG_EchoHandsWeapon>{0} holds only {1}</AG_EchoHandsWeapon>
 </LanguageData>
