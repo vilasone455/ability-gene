@@ -311,8 +311,8 @@
 
   <!-- Goku (docs/heroes.md): the four abilities are his own (AG_Goku_Abilities.xml); Warp Kamehameha
        is a button during the Kamehameha hold that spends Instant Transmission's cost and cooldown too.
-       The downed-and-recovered Trial counts from the moment the mod is loaded. Every number is a
-       placeholder. -->
+       The downed-and-recovered Trial counts from the moment the mod is loaded. He fights with empty
+       hands in hero form. Every number is a placeholder. -->
   <RimArt.EchoDef ParentName="AG_EchoBase">
     <defName>AG_Echo_Goku</defName>
     <label>Goku</label>
@@ -340,6 +340,7 @@
       <li>AG_GokuSpiritBomb</li>
     </abilities>
     <manifestHediff>AG_EchoManifest_Goku</manifestHediff>
+    <emptyHands>true</emptyHands>
     <upkeepPerHour>12</upkeepPerHour>
     <castCosts>
       <li><ability>AG_GokuSolarFlare</ability><cost>3</cost></li>

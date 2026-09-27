@@ -106,27 +106,40 @@ plexus follow the same hook.
 - Removing the hediff any other way reverts the Echo.
 - `wealth` is added to the Host's market value.
 
-### Manifest weapon (decided 2026-09-27, not built)
+### Manifest weapon (decided and built 2026-09-27)
 
-Some Echoes force what the Host holds while manifested. Proposed field `manifestWeapon` on the
-EchoDef (XML), with an empty-hands option.
+Some Echoes force what the Host holds while manifested. EchoDef fields (XML): `manifestWeapon` (a
+ThingDef), `emptyHands` (bool), `weaponReturnTicks` (default 600 = 10 s, placeholder). Code:
+`Source/RimArt/Echo/EchoWeapon.cs`.
 
-| Echo | Forced |
-|---|---|
-| Vergil | Yamato |
-| Nakime | biwa (weak blunt or none) |
-| Goku | empty hands |
-| Todo | empty hands |
-| everyone else, Sasuke included | nothing |
+| Echo | Forced | In XML |
+|---|---|---|
+| Vergil | Yamato | not yet: no Yamato def (comes with the Vergil port) |
+| Nakime | biwa (weak blunt or none) | not yet: no Nakime Echo and no biwa def |
+| Goku | empty hands | `emptyHands` set |
+| Todo | empty hands | not yet: no Todo Echo |
+| everyone else, Sasuke included | nothing | |
 
-Proposed handling (not yet confirmed rule by rule):
-- Manifest: the held weapon goes to inventory (dropped at the Host's feet if it cannot be carried);
-  the hero weapon appears in hand.
-- While manifested the Host cannot drop, swap or equip another weapon.
-- Revert: the hero weapon vanishes and the stored weapon is equipped again.
-- Not loot: fixed stats in XML, no quality or stuff roll, market value 0.
-- If it leaves the hand (downed, Chain Sickle Stake, Vacuum Suck, Disarm, an imperative) it vanishes
-  instead of dropping and returns to the hand after 10 s (placeholder) while still manifested.
+Rules:
+- Manifest: the held weapon goes to the inventory (its mass already counts toward what the Host
+  carries); only a pawn without an inventory drops it at its feet. The hero weapon appears in hand.
+- While manifested the Host cannot equip another weapon (`EquipmentUtility.CanEquip` refuses, so the
+  right-click Equip option is greyed out with the reason). The gear tab's drop button and the
+  right-click Drop option refuse the hero weapon.
+- A weapon put in the hand by other code is moved to the inventory at the next pool interval (1 s).
+- Revert: the hero weapon is destroyed and the stored weapon is equipped again, if it is still in the
+  inventory and the Host is not downed.
+- Not loot: made with default stuff and normal quality (no roll); the def must set `MarketValue` 0
+  in `statBases` (a config error otherwise).
+- If it leaves the hand it is destroyed instead of dropping and returns after `weaponReturnTicks`
+  while still manifested and not downed. Every vanilla drop goes through the
+  `Pawn_EquipmentTracker.TryDropEquipment` patch: downing, death, Disarm, Chain Sickle Stake,
+  Inumaki's "drop". Vacuum Suck removes weapons its own way and has its own check. Any other path is
+  caught by the pool interval check.
+- Downing drops the whole inventory (vanilla), so the stored weapon lands on the ground, forbidden,
+  and revert does not pick it up.
+- Tests: `-rimarttest=echo`, "weapon 1" to "weapon 4" (the forced-weapon tests lend Vergil a
+  vanilla knife for the run).
 - Minato's kunai stay on the kunai belt the player equips; no forced apparel (recommended, not
   answered).
 
@@ -197,8 +210,8 @@ Agreed, not built (no EchoDef yet; the abilities do not exist):
 Goku (built 2026-09-27, `Source/RimArt/Goku/Kit`): Kamehameha and Spirit Bomb are channels that hold the
 caster in `AG_GokuChannel`; Cancel, a move order or a revert gives the charge and cooldown back, a
 stun, a downing or death spends them. Spirit Bomb's Lend energy is a job (`AG_GokuLend`) on every
-other colonist on the map; a lender can stop. Forced empty hands waits for the manifest weapon
-feature. No Melee Animation clips and no drawn arms: the caster stands.
+other colonist on the map; a lender can stop. Empty hands in hero form (`emptyHands`, built
+2026-09-27). No Melee Animation clips and no drawn arms: the caster stands.
 
 Sasuke's Melee Trial follows the throw: kunai accuracy uses Melee (`KunaiAccuracy.cs`). The Fūma
 kills count because the Fūma throw passes the weapon to the kill counter; kunai kills were not
