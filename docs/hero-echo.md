@@ -133,7 +133,7 @@ Proposed handling (not yet confirmed rule by rule):
 | Accelerator | Intellectual 12, Damage taken 300 | Abrasive | vector manipulation, reflex surge, vector shove | 12 | surge 10, shove 8 |
 | Pain | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei | 15 | 20 |
 | Inumaki | Social 10, not Psychopath | Kind | the five imperatives | 8 | 5 each |
-| Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | none until his kit is ported | 10 | - |
+| Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | Judgement Cut, Yamato Dash, Summoned Swords, Judgement Cut End (the def grants none until the kit is ported) | 10 | Judgement Cut 3, Yamato Dash 2, Summoned Swords 10, Judgement Cut End 0 (Style is its limit) |
 | Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40 |
 
 Accelerator, Pain and Inumaki reuse abilities that still come from their pre-hero item (reflex
@@ -148,6 +148,24 @@ yet): he kicks a pebble off the ground at bullet speed; target a pawn within 24.
 sight, warm-up 0.3 s, one projectile of 14 blunt at 30 % armour penetration, cooldown 2 s, no item
 used, no strain, 0 charge. Accelerator's v1 kit: vector manipulation, reflex surge, vector shove
 (the 2026-09-24 rework), Plasma, Vector Flick.
+
+Vergil (agreed 2026-09-27; numbers are placeholders; full rules in the four `vergil-*.js` sketch
+headers): forced Yamato on Manifest (its stats not set yet); +0.5 move speed.
+- Judgement Cut: a cell within 18, line of sight, warm-up 0.6 s; a sphere of radius 1.9, every pawn
+  inside (allies too) takes 5 x 7 Cut at 50 % armour penetration; cooldown 12 s.
+- Yamato Dash: a straight dash up to 8 cells; hostiles in the 1-cell path are marked and take 24 Cut
+  at 40 % when the blade clicks home 0.4 s after he stops; cooldown 8 s.
+- Summoned Swords: self, 20 s, a ring of 8 blades, cooldown 45 s. Fire mode: one blade every 1.0 s
+  at a hostile within 12 cells, 9 Stab at 30 %, -15 % move speed per stuck blade (up to -60 %).
+  Spin mode (toggle): hostiles within 1.6 cells take 5 Cut every 0.9 s at 20 %.
+- Judgement Cut End: warm-up 1 s, marks hostiles within 10 cells in sight, he is gone 1.5 s while
+  they are stunned, then sheathes and the cuts land. Limited by Style, not a cooldown: a meter
+  0-100 while manifested, ranks D 0 / C 15 / B 30 / A 45 / S 60 / SS 75 / SSS 90; +4 per pawn hit by
+  Judgement Cut, +3 per Dash mark, +1 per Summoned Swords hit, +2 per Yamato melee hit; -20 when he
+  takes damage; drains 5 per second after 10 s without a hit. Needs S and spends it all: Style / 5
+  cuts (12-20) of 10 Cut, dealt nearest first round the marked pawns (one pawn takes up to 200);
+  every marked pawn is stunned. During the vanish, projectiles in the radius are destroyed; at the
+  click, hostile or unowned buildings in range take 60, outside the cut pool.
 
 Agreed, not built (no EchoDef yet; the abilities do not exist):
 
