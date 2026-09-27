@@ -408,7 +408,15 @@ of the drawing already in `Source/RimArt/ShadowPlexus/`.
 - Not done: the caster's own drop shadow is not hidden while the double is out; the held pawn is not
   darkened; the double is the sketch's two-disc silhouette, not the Host's body; nothing mid-cast is
   saved (a game loaded mid-hold sees the stun run out on its own). Icons are the placeholder
-  `UI/Abilities/AnimalWarcall`. No sound.
+  `UI/Abilities/AnimalWarcall`.
+- Polish phase (agreed 2026-09-27, not built): **one cast clip** for all five abilities, the Nara hand
+  sign held at the chest in four facings, started by `JobDriver_CastShadowPlexus` over the warm-up.
+  It must hold the pose through Neck bind's channel (up to about 10 s), like the Gravity Well channel
+  clip, not play once. Melee Animation is optional, so without it he just stands. **Sound effects**,
+  none yet: the line running out and snapping, the hold landing, the seam's stitch and taut twang,
+  grasp's slide, the double rising and bursting, the choke. Played by `MapComponent_ShadowPlexus` at
+  the picture's times (the Power Pole pattern), in an `AG_ShadowPlexus_Sounds.xml`, with the SoundDefs
+  named in XML; Core sounds as placeholders until real ones are chosen.
 - Debug window, kit "Shadow Plexus": the fourteen picture previews, plus make Shikamaru (Host +
   manifest), light level at a cell, release every hold, a full-light override and its clear.
 
