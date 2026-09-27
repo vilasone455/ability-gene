@@ -110,7 +110,7 @@ export default {
     breakUp: P('Break apart', 1.0, .4, 2, .05, 'Timing (s)'),
     height: P('Height on screen (cells)', 3.5, 2.5, 4.5, .05, 'Shape'),
     width: P('Width (cells)', 3.2, 2.2, 4.2, .05, 'Shape'),
-    fill: P('Fill opacity', .5, .2, 1, .01, 'Shape'),
+    fill: P('Fill opacity', .6, .2, 1, .01, 'Shape'),
     line: P('Line brightness', 1.0, .3, 1.5, .01, 'Shape'),
     flameH: P('Flame tip height (cells)', .45, .1, 1, .01, 'Shape'),
     bladeLen: P('Blade length at idle (cells)', 2.2, 1.2, 3.2, .05, 'Shape'),
@@ -294,7 +294,7 @@ function seal(t, p, origin, F, look, sun, strength, pose) {
   if (t < T.pierce + .05) raider(pos, sun, strength, { weapon: 'rifle', aimDeg: deg(chest, origin) });
   else if (t < T.pullFrom) raider(pos, sun, strength, { weapon: 'none', lean: -Math.cos(a) * .5 });
   if (t >= T.pierce && t < T.pullFrom + .08) flameWrap('seal wrap', pos, t, Math.min(1, (t - T.pierce) / .08) * (1 - clamp((t - T.pullFrom) / .08)));
-  if (t >= T.pierce && t < T.pierce + .15) glint(chest, 1.2, 1 - (t - T.pierce) / .15, EyeHot);
+  if (t >= T.pierce && t < T.pierce + .15) glint(chest, .7, 1 - (t - T.pierce) / .15, EyeHot);
   if (t >= T.pullFrom && t < T.sealed) pulled('seal pulled', pulledAt, deg(chest, mouth), pullU, 1 - pullU * .4, t);
   if (t >= T.sealed) sealFlash(mouth, t - T.sealed);
   // Gear: the rifle drops as the raider is pierced; the helmet pops off as it is pulled away.

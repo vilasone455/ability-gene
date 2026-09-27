@@ -78,11 +78,31 @@ export const RestBladeDeg = 98;                  // the Totsuka's idle direction
 // Ribs: [centre v, half width, how far the front end drops toward the sternum].
 const RibSet = [[1.78, .46, .20], [1.58, .60, .24], [1.38, .70, .28], [1.17, .76, .32], [.96, .78, .34], [.75, .74, .34], [.55, .66, .32]];
 const RibB = .10, SternumTop = 1.60, SternumFoot = 1.06, NeckTop = 2.32, RibTop = 1.9;
-const TorsoEdge = [[0, .78], [.2, .74], [.45, .74], [.9, .88], [1.5, 1.0], [2.0, 1.1], [2.2, 1.0], [2.38, .78], [2.5, .52]];
-const CapeEdge = [[.15, 1.40], [.6, 1.50], [1.2, 1.46], [1.9, 1.36], [2.2, 1.22], [2.32, 1.0]];
-const ChestEdge = [[1.38, .62], [1.6, .80], [1.9, .90], [2.15, .86], [2.32, .66], [2.42, .48]];
-const CollarEdge = [[2.28, .64], [2.48, .68], [2.72, .60]];
-const HeadEdge = [[2.28, .30], [2.42, .42], [2.66, .47], [2.92, .47], [3.12, .39], [3.26, .24], [3.33, .06]];
+// Flame lines on the body, [u, v] for the right half (mirrored for the left): long S-curves rising
+// from the waist and curling in under the chest.
+const curl = (pts, n = 18) => { const e = smoothEdge(pts.map(([u, v]) => [v, u]), Math.ceil(n / (pts.length - 1))); return e.map(([v, u]) => [u, v]); };
+const FlameLines = [
+  curl([[.72, .55], [.62, 1.0], [.70, 1.45], [.52, 1.78], [.34, 1.74], [.40, 1.6]]),
+  curl([[.95, 1.25], [.86, 1.7], [.92, 2.05], [.72, 2.22], [.62, 2.08]]),
+];
+// Edges are given as a few [v, half width] points and smoothed into curves (Catmull-Rom), so the
+// body reads as a rounded mass and not a polygon.
+function smoothEdge(edge, per = 4) {
+  const out = [], n = edge.length, at = i => edge[Math.max(0, Math.min(n - 1, i))];
+  for (let i = 0; i < n - 1; i++) for (let k = 0; k < per; k++) {
+    const t = k / per, [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
+    const cr = j => .5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t * t + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t * t * t);
+    out.push([cr(0), cr(1)]);
+  }
+  out.push(edge[n - 1]);
+  return out;
+}
+// Torso: narrow waist, a broad chest, round shoulder humps closing into the neck.
+const TorsoEdge = smoothEdge([[0, .78], [.2, .74], [.45, .74], [.9, .88], [1.5, 1.02], [1.95, 1.12], [2.15, 1.1], [2.32, .96], [2.45, .72], [2.52, .5]]);
+const CapeEdge = smoothEdge([[.15, 1.40], [.6, 1.50], [1.2, 1.46], [1.9, 1.36], [2.2, 1.22], [2.32, 1.0]]);
+const ChestEdge = smoothEdge([[1.38, .62], [1.6, .80], [1.9, .90], [2.15, .86], [2.32, .66], [2.42, .48]]);
+const CollarEdge = smoothEdge([[2.28, .64], [2.48, .68], [2.72, .60]]);
+const HeadEdge = smoothEdge([[2.28, .30], [2.42, .42], [2.66, .48], [2.92, .48], [3.12, .41], [3.26, .27], [3.34, .12], [3.36, 0]]);
 const MaskEdge = [[2.64, .41], [2.80, .45], [2.98, .44], [3.10, .37]];
 const SlotEdge = [[2.57, .30], [2.62, .41], [2.76, .42], [2.82, .33]];   // dark band at eye level
 // The flame edge over the head and shoulders, left to right, so its left normal points out.
@@ -120,13 +140,13 @@ export function blob(pos, rx, rz, colour, layer = Y, rot = 0, material = flat) {
 // as red light over any ground instead of a painted shape.
 export function fillStrip(key, a, b, colour, alpha, layer) {
   if (alpha <= .002) return;
-  strip(key, a, b, colour.withAlpha(alpha * .55), flat, layer);
-  strip(key + ' glow', a, b, new Color(colour.r * .7, colour.g * .34, colour.b * .3, alpha * .7), add, layer + .0001);
+  strip(key, a, b, colour.withAlpha(Math.min(.95, alpha)), flat, layer);
+  strip(key + ' glow', a, b, new Color(colour.r * .7, colour.g * .3, colour.b * .26, alpha * .22), add, layer + .0001);
 }
 export function fillBlob(pos, rx, rz, colour, alpha, layer, rot = 0) {
   if (alpha <= .002) return;
-  draw(disc, pos.x, layer, pos.z, rx, rz, rot, colour.withAlpha(alpha * .55), flat);
-  draw(disc, pos.x, layer + .0001, pos.z, rx, rz, rot, new Color(colour.r * .7, colour.g * .34, colour.b * .3, alpha * .7), add);
+  draw(disc, pos.x, layer, pos.z, rx, rz, rot, colour.withAlpha(Math.min(.95, alpha)), flat);
+  draw(disc, pos.x, layer + .0001, pos.z, rx, rz, rot, new Color(colour.r * .7, colour.g * .3, colour.b * .26, alpha * .22), add);
 }
 // The part of an edge list ([v, half width]) between v0 and v1, ends interpolated.
 function edgeBetween(edge, v0, v1) {
@@ -303,7 +323,7 @@ export function embers(F, look, tb, D) {
       const pos = { x: F.x + p0.u * look.kx + sway, z: F.z + p0.v * look.kz + rise };
       // A fleck: a thin bright streak along its path (up and swaying), flickering, most of them
       // small; a faint glow round the bigger ones only.
-      const big = r(10) > .8, size = (big ? .06 : .026 + .024 * r(12)) * (1 - u * .5);
+      const big = r(10) > .8, size = (big ? .09 : .04 + .035 * r(12)) * (1 - u * .5);
       const flicker = .6 + .4 * Math.sin(age * (22 + 14 * r(13)) + i);
       const a = Math.sin(Math.min(1, u * 5) * Math.PI / 2) * (1 - u) * flicker;
       const vx = Math.cos(age * (3 + 3 * r(7)) + r(8) * 6) * .12 * (3 + 3 * r(7)) * age + (r(9) - .5) * .5, vz = (.7 + .8 * r(6)) + .7 * age;
@@ -411,7 +431,7 @@ export function susanoo(key, F, s, look, g, pose) {
   // with the skull. Each rib unrolls round from the spine once the spine top has passed it,
   // lowest first. Once the armour is on, the bones dim to what shows through the body.
   const spineTop = Math.max(RibTop * smooth(g.ribs), lerp(RibTop, NeckTop, smooth(g.skel)) * (g.skel > 0 ? 1 : 0));
-  const boneA = lerp(1, .34, aK * fd.body) * A;
+  const boneA = lerp(1, .15, aK * fd.body) * A;
   if (g.ribs > 0) {
     taperLine(`${key} spine`, [S(0, 0), S(0, spineTop + bob)], .10 * kx, .06 * kx, bone, .6 * boneA, { layer: Back + .003 });
     for (let k = 0; .12 + k * .15 < spineTop; k++) blob(S(0, .12 + k * .15 + bob), .065 * kx, .04 * kz, bone.withAlpha(.45 * boneA), Back + .004, 0, add);
@@ -431,10 +451,16 @@ export function susanoo(key, F, s, look, g, pose) {
     const torso = TorsoEdge.map(([v, h]) => [v, lerp(.55, h, aK)]);
     [[0, .22, .25], [.22, .5, .6], [.5, 2.5, 1]].forEach(([v0, v1, f], i) => {
       const [tl, tr] = pair(edgeBetween(torso, v0, v1), bob);
-      fillStrip(`${key} torso ${i}`, tl, tr, deepD, .72 * bodyFill * aK * f, Back + .006);
+      fillStrip(`${key} torso ${i}`, tl, tr, deepD, bodyFill * aK * f, Back + .006);
     });
     const [pl, pr] = pair(ChestEdge.map(([v, h]) => [v, lerp(.3, h, aK)]), bob);
-    fillStrip(`${key} chest`, pl, pr, litD, .5 * bodyFill * aK, Back + .007);
+    fillStrip(`${key} chest`, pl, pr, litD, .45 * bodyFill * aK, Back + .007);
+    // Darker blotches drifting slowly in the fill, the mottled flame look of the anime's fill.
+    for (let i = 0; i < 8; i++) {
+      const u0 = (rand(i + 360) - .5) * 1.3, rise = Mathf.Repeat(s * (.06 + .04 * rand(i + 370)) + rand(i + 380), 1);
+      const v = .5 + rise * 1.7, fade = Math.sin(rise * Math.PI) * (.7 + .3 * Math.sin(s * 1.7 + i * 2));
+      sprite(S(u0, v), (.45 + .3 * rand(i + 390)) * kx, (.35 + .25 * rand(i + 400)) * kz, C(.36, .05, .04).withAlpha(.28 * fade * aK * A * fd.body), soft, Back + .0071, rand(i + 410) * 180);
+    }
     // Moving light inside the fill: soft blobs drifting up, as the anime's fill churns.
     for (let i = 0; i < 9; i++) {
       const u0 = (rand(i + 300) - .5) * 1.5, rise = Mathf.Repeat(s * (.22 + .1 * rand(i + 310)) + rand(i + 320), 1);
@@ -478,13 +504,14 @@ export function susanoo(key, F, s, look, g, pose) {
   // Torso contour (from the waist up, so its foot has no line) and chest lines, drawn on.
   if (aK > 0) {
     const [tl, tr] = pair(edgeBetween(TorsoEdge, .45, 2.5), bob);
-    glowLine(`${key} torso l`, tl, .032 * kx, lineD, .8 * bodyLine, { layer: Front + .004, upTo: aK });
-    glowLine(`${key} torso r`, tr, .032 * kx, lineD, .8 * bodyLine, { layer: Front + .004, upTo: aK });
-    for (let i = 0; i < 2; i++) {
-      const v = 1.74 + i * .3 + bob, w = [.8, .84][i], pts = [];
-      for (let j = 0; j <= 12; j++) { const x = (j / 12 - .5) * 2; pts.push(S(x * w, v - .08 * (1 - x * x))); }
-      glowLine(`${key} chest line ${i}`, pts, .025 * kx, lineD, .5 * bodyLine, { layer: Front + .004, upTo: clamp(aK * 1.5 - .3 - i * .1) });
-    }
+    glowLine(`${key} torso l`, tl, .022 * kx, lineD, .8 * bodyLine, { layer: Front + .004, upTo: aK });
+    glowLine(`${key} torso r`, tr, .022 * kx, lineD, .8 * bodyLine, { layer: Front + .004, upTo: aK });
+    // Flowing flame lines up the body, curling in toward the chest, as the anime draws the fill.
+    FlameLines.forEach((pts, i) => {
+      for (const side of [-1, 1]) {
+        glowLine(`${key} flame line ${i} ${side}`, pts.map(([u, v]) => S(side * u, v + bob)), .02 * kx, lineD, .55 * bodyLine, { layer: Front + .004, upTo: clamp(aK * 1.5 - .3 - i * .1), taper: 1 });
+      }
+    });
     sprite(S(0, 1.95 + bob), .7 * kx, .55 * kz, lineD.withAlpha(.5 * bodyLine * clamp(aK * 2 - 1)), swirlMat, Front + .005, 0);
   }
 
@@ -494,7 +521,7 @@ export function susanoo(key, F, s, look, g, pose) {
     const c = S(side * 1.22, 2.08 + bob), sc = lerp(.5, 1, ap);
     fillBlob(S(side * 1.34, 1.78 + bob), .42 * kx * sc, .2 * kz * sc, litD, .5 * bodyFill * ap, Front + .006, side * 12);
     fillBlob(c, .5 * kx * sc, .36 * kz * sc, litD, .62 * bodyFill * ap, Front + .007, side * 10);
-    draw(ringMesh, c.x, Front + .0075, c.z, .5 * kx * sc, .36 * kz * sc, side * 10, lineD.withAlpha(.7 * bodyLine * ap), add);
+    draw(ringMesh, c.x, Front + .0075, c.z, .5 * kx * sc, .36 * kz * sc, side * 10, lineD.withAlpha(.5 * bodyLine * ap), add);
     sprite(c, .62 * kx * sc, .5 * kz * sc, lineD.withAlpha(.75 * bodyLine * ap), swirlMat, Front + .008, side > 0 ? 0 : 180);
   }
 
@@ -562,7 +589,7 @@ function head(key, S, s, g, c) {
   }
   // Head contour and chin line.
   const loop = [...hr, ...hl.slice().reverse(), hr[0]];
-  glowLine(`${key} head line`, loop, .03 * kx, line, .8 * lineA, { layer: Front + .0124, upTo: headK });
+  glowLine(`${key} head line`, loop, .024 * kx, line, .8 * lineA, { layer: Front + .0124, upTo: headK });
   glowLine(`${key} chin`, [S(-.28, 2.42 + bob), S(0, 2.34 + bob), S(.28, 2.42 + bob)], .022 * kx, line, .5 * lineA * headK, { layer: Front + .0124 });
   // Yellow eyes in the band.
   if (g.eyes > 0) {
@@ -580,9 +607,9 @@ function head(key, S, s, g, c) {
   }
   // The long nose: from the forehead down across the band, a little to the right of true so it
   // reads as sticking out; tip below the band.
-  const root = S(0, 3.02 + bob), tip = S(.11, 2.40 + bob), n = 10, spine = [];
+  const root = S(0, 3.04 + bob), tip = S(.14, 2.22 + bob), n = 10, spine = [];
   for (let j = 0; j <= n; j++) { const f = j / n; spine.push({ x: lerp(root.x, tip.x, f * f), z: lerp(root.z, tip.z, f) }); }
-  const wAt = j => lerp(.11, .065, j / n) * kx;
+  const wAt = j => lerp(.13, .07, j / n) * kx;
   const shadowL = spine.map((p, j) => ({ x: p.x - wAt(j) * .4 - .05 * kx, z: p.z - .05 * kz })), shadowR = spine.map((p, j) => ({ x: p.x + wAt(j) * .4 - .05 * kx, z: p.z - .05 * kz }));
   strip(`${key} nose shadow`, shadowL, shadowR, Mouth.withAlpha(.35 * A * headK), flat, Front + .0127);
   const nl = spine.map((p, j) => ({ x: p.x - wAt(j) / 2, z: p.z })), nr = spine.map((p, j) => ({ x: p.x + wAt(j) / 2, z: p.z }));
@@ -623,7 +650,7 @@ function arms(key, S, s, look, g, pose, c) {
   // Armoured arms: the right with the armour, the left with the mirror.
   const armArm = (tag, root, j, k, side, stopAt = null) => {
     if (k <= 0) return;
-    const e = j.elbow, h = j.hand, pts = [root, e, h], widths = [.52, .42, .34];
+    const e = j.elbow, h = j.hand;
     let reach = k;
     if (stopAt) {
       // The forearm goes behind the mirror: end it just inside the rim instead of drawing its
@@ -632,27 +659,34 @@ function arms(key, S, s, look, g, pose, c) {
       let f = 1; for (let i = 0; i <= 20; i++) { const t = i / 20; if (Math.hypot(lerp(e.u, h.u, t) - h.u, lerp(e.v, h.v, t) - h.v) < stopAt) { f = t; break; } }
       reach = Math.min(k, (L1 + L2 * f) / (L1 + L2));
     }
-    const along = cutPath(pts.map(P), reach), n = along.length;
+    // The arm as a tapered shape: upper arm .50 at the shoulder with a bulge, a round elbow,
+    // forearm .42 swelling a little then .30 at the wrist.
+    const N = 10, cl = [], widths = [];
+    for (let i = 0; i <= N; i++) { const t = i / N; cl.push({ u: lerp(root.u, e.u, t), v: lerp(root.v, e.v, t) }); widths.push(lerp(.5, .40, t) + .09 * Math.sin(t * Math.PI)); }
+    for (let i = 1; i <= N; i++) { const t = i / N; cl.push({ u: lerp(e.u, h.u, t), v: lerp(e.v, h.v, t) }); widths.push(lerp(.42, .30, t) + .05 * Math.sin(Math.min(1, t * 1.2) * Math.PI)); }
+    const keep = Math.max(1, Math.floor(reach * (cl.length - 1)));
+    const pts = cl.slice(0, keep + 1).map(P), n = pts.length;
     const a = [], b = [];
-    along.forEach((p, i) => {
-      const q0 = along[Math.max(0, i - 1)], q1 = along[Math.min(n - 1, i + 1)], dx = q1.x - q0.x, dz = q1.z - q0.z, Ln = Math.hypot(dx, dz) || 1;
-      const w = widths[Math.min(2, i)] / 2 * kx;
+    pts.forEach((p, i) => {
+      const q0 = pts[Math.max(0, i - 1)], q1 = pts[Math.min(n - 1, i + 1)], dx = q1.x - q0.x, dz = q1.z - q0.z, Ln = Math.hypot(dx, dz) || 1;
+      const w = widths[i] / 2 * kx;
       a.push({ x: p.x - dz / Ln * w, z: p.z + dx / Ln * w }); b.push({ x: p.x + dz / Ln * w, z: p.z - dx / Ln * w });
     });
     fillStrip(`${key} arm ${tag}`, a, b, lit, .8 * fillA * k, Front + .022);
-    glowLine(`${key} arm ${tag} a`, a, .028 * kx, line, .75 * lineA * k, { layer: Front + .023 });
-    glowLine(`${key} arm ${tag} b`, b, .028 * kx, line, .75 * lineA * k, { layer: Front + .023 });
+    if (keep > N) fillBlob(P(e), .21 * kx, .19 * kz, lit, .5 * fillA * k, Front + .0221);
+    glowLine(`${key} arm ${tag} a`, a, .02 * kx, line, .75 * lineA * k, { layer: Front + .023 });
+    glowLine(`${key} arm ${tag} b`, b, .02 * kx, line, .75 * lineA * k, { layer: Front + .023 });
     // Bracer lines across the forearm and a flame curl on the outside of each segment.
     if (k > .7) {
       const q = clamp((k - .7) / .3);
       for (let i = 1; i <= 2; i++) {
         const f = .35 + i * .22, c0 = { u: lerp(e.u, h.u, f), v: lerp(e.v, h.v, f) }, dx = h.u - e.u, dv = h.v - e.v, L0 = Math.hypot(dx, dv) || 1;
         const nx = -dv / L0 * .15, nv = dx / L0 * .15;
-        glowLine(`${key} bracer ${tag} ${i}`, [S(c0.u - nx, c0.v - nv), S(c0.u + nx, c0.v + nv)], .022 * kx, line, .6 * lineA * q, { layer: Front + .023 });
+        glowLine(`${key} bracer ${tag} ${i}`, [S(c0.u - nx, c0.v - nv), S(c0.u + nx, c0.v + nv)], .018 * kx, line, .5 * lineA * q, { layer: Front + .023 });
       }
       [[root, e], [e, h]].forEach(([p0, p1], i) => {
         const m = { u: (p0.u + p1.u) / 2, v: (p0.v + p1.v) / 2 }, ang = Math.atan2(p1.v - p0.v, p1.u - p0.u) * 180 / Math.PI;
-        sprite(S(m.u + side * .12, m.v), .34 * kx, .34 * kz, line.withAlpha(.6 * lineA * q), curlMat, Front + .0235, -ang + 90 + (side < 0 ? 180 : 0));
+        sprite(S(m.u + side * .12, m.v), .34 * kx, .34 * kz, line.withAlpha(.5 * lineA * q), curlMat, Front + .0235, -ang + 90 + (side < 0 ? 180 : 0));
       });
     }
   };
@@ -669,8 +703,13 @@ function arms(key, S, s, look, g, pose, c) {
     fillBlob(high, .13 * kx * gk, .12 * kz * gk, lit, .75 * fillA * gk + .15 * gA, Front + .0242);
     draw(ringMesh, low.x, Front + .0244, low.z, .2 * kx * gk, .19 * kz * gk, 0, line.withAlpha(.7 * lineA * gk), add);
     draw(ringMesh, high.x, Front + .0244, high.z, .13 * kx * gk, .12 * kz * gk, 0, line.withAlpha(.7 * lineA * gk), add);
-    // Fingers of the armoured hand wrapped round the gourd's waist.
-    fillBlob(S(h.u, h.v), .16 * kx * gk, .1 * kz * gk, lit, .85 * fillA * gk, Front + .0246, -bladeDeg);
+    // The armoured fist round the gourd's waist: a rounded block with three knuckle lines across it.
+    fillBlob(S(h.u, h.v), .2 * kx * gk, .15 * kz * gk, lit, .9 * fillA * gk, Front + .0246, -bladeDeg);
+    for (let i = 0; i < 3; i++) {
+      const along = (i - 1) * .07, cu = h.u + dir.u * along, cv = h.v + dir.v * along, pts = [];
+      for (let j = 0; j <= 6; j++) { const a0 = (j / 6 - .5) * 2.2; pts.push(S(cu - dir.v * Math.sin(a0) * .17 + dir.u * Math.cos(a0) * .04, cv + dir.u * Math.sin(a0) * .17 + dir.v * Math.cos(a0) * .04)); }
+      glowLine(`${key} knuckle ${i}`, pts, .016 * kx, line, .55 * lineA * gk, { layer: Front + .0247 });
+    }
   }
   const bk = g.blade;
   if (bk > 0) {
@@ -778,12 +817,14 @@ export function totsuka(key, mouth, tip, s, alpha, stab = 0) {
 // Itachi at the real pawn's size: the Akatsuki cloak (black, red clouds with pale edges, high
 // collar), dark hair, Sharingan when `eyes` > 0. hunch 0..1 bends him forward (the cough).
 export function itachi(pos, sun, strength, { alpha = 1, eyes = 0, hunch = 0 } = {}) {
-  const s = 1.3, o = -.33, L = pawnLayer, dz = -hunch * .11;
+  const s = 1.3, o = -.33, L = pawnLayer, dz = -hunch * .17;
   sprite({ x: pos.x + sun.x * .5, z: pos.z + o + .05 + sun.z * .5 }, .95, .42, C(.03, .03, .04).withAlpha(strength * alpha * 1.4), soft, shadowLayer);
-  blob({ x: pos.x, z: pos.z + o + .18 * s }, .22 * s, (.32 - .03 * hunch) * s, Cloak.withAlpha(alpha), L);
+  blob({ x: pos.x, z: pos.z + o + (.18 - .03 * hunch) * s }, .22 * s, (.32 - .06 * hunch) * s, Cloak.withAlpha(alpha), L);
+  // The cloud marks sit on the body and move down with it when he bows.
   [[-.1, .1, .07], [.09, .26, .06], [-.06, .36, .05]].forEach(([x, z, r], i) => {
-    blob({ x: pos.x + x * s, z: pos.z + o + z * s }, (r + .012) * s, (r * .62 + .012) * s, CloudEdge.withAlpha(alpha), L + .001 + i * .0003);
-    blob({ x: pos.x + x * s, z: pos.z + o + z * s }, r * s, r * .62 * s, Cloud.withAlpha(alpha), L + .0011 + i * .0003);
+    const cz = pos.z + o + z * (1 - .22 * hunch) * s;
+    blob({ x: pos.x + x * s, z: cz }, (r + .012) * s, (r * .62 + .012) * s, CloudEdge.withAlpha(alpha), L + .001 + i * .0003);
+    blob({ x: pos.x + x * s, z: cz }, r * s, r * .62 * s, Cloud.withAlpha(alpha), L + .0011 + i * .0003);
   });
   blob({ x: pos.x, z: pos.z + o + .47 * s + dz }, .2 * s, .07 * s, Cloak.withAlpha(alpha), L + .002);
   const head = { x: pos.x, z: pos.z + o + .58 * s + dz * 1.5 };
@@ -830,8 +871,9 @@ export function raider(pos, sun, strength, { alpha = 1, weapon = 'rifle', aimDeg
 // A round in flight: a short bright streak ending at `at`, pointing along `dir` (unit, world).
 export function round(key, at, dir, alpha = 1) {
   if (alpha <= .002) return;
-  stroke(key, [{ x: at.x - dir.x * .45, z: at.z - dir.z * .45 }, at], .05, C(1, .92, .62).withAlpha(alpha), { taper: .6, layer: Y + .05 });
-  sprite(at, .16, .16, C(1, .85, .5).withAlpha(.6 * alpha), glow, Y + .051);
+  stroke(key + ' glow', [{ x: at.x - dir.x * .7, z: at.z - dir.z * .7 }, at], .16, C(1, .7, .3).withAlpha(.35 * alpha), { taper: .6, layer: Y + .0495 });
+  stroke(key, [{ x: at.x - dir.x * .7, z: at.z - dir.z * .7 }, at], .06, C(1, .92, .62).withAlpha(alpha), { taper: .6, layer: Y + .05 });
+  sprite(at, .28, .28, C(1, .85, .5).withAlpha(.6 * alpha), glow, Y + .051);
 }
 
 // Sparks thrown off a blocked hit at `at`, back toward `from` (unit direction, world), age in s.
@@ -855,16 +897,15 @@ export function pulled(key, pos, dirDeg, stretch, alpha, s) {
   const rot = -dirDeg, shrink = 1 - .7 * stretch, len = (.26 + stretch * .5) * shrink + .06, thin = .3 * shrink * (1 - stretch * .35);
   const a = dirDeg * Mathf.Deg2Rad, fwd = { x: Math.cos(a), z: Math.sin(a) };
   sprite(pos, len * 3.2, thin * 3.6, FlameDeep.withAlpha(.55 * alpha), glow, Front + .027, rot);
-  draw(disc, pos.x, Front + .0271, pos.z, len + .05, thin + .05, rot, FlameMid.withAlpha(.9 * alpha), add);
   draw(disc, pos.x, Front + .0272, pos.z, len, thin, rot, C(.16, .05, .04).withAlpha(.92 * alpha), flat);
   // The head at the front of the shape, going in first.
   const head = { x: pos.x + fwd.x * len * .75, z: pos.z + fwd.z * len * .75 };
   draw(disc, head.x, Front + .0273, head.z, .12 * shrink + .02, .12 * shrink + .02, 0, C(.2, .06, .05).withAlpha(.92 * alpha), flat);
-  for (let i = 0; i < 7; i++) {
-    const f = Mathf.Repeat(s * 3.5 + i / 7, 1), off = (rand(i + 700) - .5) * thin * 1.8;
+  for (let i = 0; i < 11; i++) {
+    const f = Mathf.Repeat(s * 3.5 + i / 11, 1), off = (rand(i + 700) - .5) * thin * 2.2;
     const p0 = { x: pos.x - fwd.x * (len * .7 + f * .45) - fwd.z * off, z: pos.z - fwd.z * (len * .7 + f * .45) + fwd.x * off };
     const p1 = { x: p0.x - fwd.x * .3, z: p0.z - fwd.z * .3 };
-    stroke(`${key} lick ${i}`, [p0, p1], .08 * (1 - f) * shrink + .02, (i % 2 ? FlameMid : BladeCore).withAlpha(.8 * (1 - f) * alpha), { taper: 1, layer: Front + .0274 });
+    stroke(`${key} lick ${i}`, [p0, p1], .12 * (1 - f) * shrink + .03, (i % 3 ? FlameMid : BladeCore).withAlpha(.85 * (1 - f) * alpha), { taper: 1, layer: Front + .0274 });
   }
 }
 
@@ -872,7 +913,7 @@ export function pulled(key, pos, dirDeg, stretch, alpha, s) {
 // body, rising, over a red glow. amount 0..1.
 export function flameWrap(key, pos, s, amount) {
   if (amount <= .002) return;
-  sprite({ x: pos.x, z: pos.z + .1 }, 1.3, 1.5, FlameDeep.withAlpha(.5 * amount), glow, Front + .0266);
+  sprite({ x: pos.x, z: pos.z + .1 }, 1.1, 1.3, FlameDeep.withAlpha(.32 * amount), glow, Front + .0266);
   const ring = [];
   for (let j = 0; j <= 28; j++) { const a = -j / 28 * TAU; ring.push({ x: pos.x + Math.cos(a) * .34, z: pos.z + .1 + Math.sin(a) * .48 }); }
   flameEdge(key, ring, s, .5 * amount, 1.3 * amount, { count: 16, seed: 11, layer: Front + .0268, up: 1.4 });
