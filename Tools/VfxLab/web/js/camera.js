@@ -46,6 +46,51 @@ export function movedView(camera, move, cell) {
   return { cx: camera.cx + (fx - camera.cx) * move.pan, cz: camera.cz + (fz - camera.cz) * move.pan, ppc: camera.ppc * move.zoom };
 }
 
+// ---- a 3D camera, for sketches that export camera() (SKETCHING.md) ----------------------------------------
+// x east, y up, z north, in cells. pitch: degrees above the horizontal; yaw: degrees clockwise from north;
+// fov: the vertical field of view in degrees.
+
+/** The camera's right, up and forward directions. */
+export function basis(cam) {
+  const p = (cam.pitch ?? 0) * Math.PI / 180, y = (cam.yaw ?? 0) * Math.PI / 180;
+  const cp = Math.cos(p), sp = Math.sin(p), cy = Math.cos(y), sy = Math.sin(y);
+  return {
+    right: { x: cy, y: 0, z: -sy },
+    up: { x: -sy * sp, y: cp, z: -cy * sp },
+    forward: { x: sy * cp, y: sp, z: cy * cp },
+  };
+}
+
+/** Projection times view, column-major, for WebGL: a point ahead of the camera has w = its distance along forward. */
+export function viewProjection(cam, aspect) {
+  const { right: r, up: u, forward: f } = basis(cam), n = cam.near ?? .1, far = cam.far ?? 6000;
+  const k = 1 / Math.tan((cam.fov ?? 60) * Math.PI / 360), c = { x: cam.x, y: cam.y, z: cam.z };
+  const d = (a) => a.x * c.x + a.y * c.y + a.z * c.z;
+  const A = (far + n) / (far - n), B = -2 * far * n / (far - n);
+  const row = [
+    [r.x * k / aspect, r.y * k / aspect, r.z * k / aspect, -d(r) * k / aspect],
+    [u.x * k, u.y * k, u.z * k, -d(u) * k],
+    [f.x * A, f.y * A, f.z * A, -d(f) * A + B],
+    [f.x, f.y, f.z, -d(f)],
+  ];
+  const m = new Float32Array(16);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) m[j * 4 + i] = row[i][j];
+  return m;
+}
+
+/** A draw call's matrix as Unity builds it: translate, then Euler rotation (z, then x, then y), then scale. */
+export function modelMatrix(call) {
+  const R = (deg) => deg * Math.PI / 180, a = R(call.rot ?? 0), b = R(call.rx ?? 0), g = R(call.rz ?? 0);
+  const ca = Math.cos(a), sa = Math.sin(a), cb = Math.cos(b), sb = Math.sin(b), cg = Math.cos(g), sg = Math.sin(g);
+  const mul = (P, Q) => P.map((row) => [0, 1, 2].map((j) => row[0] * Q[0][j] + row[1] * Q[1][j] + row[2] * Q[2][j]));
+  const Ry = [[ca, 0, sa], [0, 1, 0], [-sa, 0, ca]], Rx = [[1, 0, 0], [0, cb, -sb], [0, sb, cb]], Rz = [[cg, -sg, 0], [sg, cg, 0], [0, 0, 1]];
+  const M = mul(mul(Ry, Rx), Rz), S = [call.sx ?? 1, call.sy ?? 1, call.sz ?? 1], T = [call.x, call.y, call.z];
+  const m = new Float32Array(16);
+  for (let i = 0; i < 3; i++) { for (let j = 0; j < 3; j++) m[j * 4 + i] = M[i][j] * S[j]; m[12 + i] = T[i]; }
+  m[15] = 1;
+  return m;
+}
+
 export class Camera {
   constructor() {
     this.cx = 60.5;
@@ -76,11 +121,14 @@ export class Camera {
 
 /**
  * Drag to pan, wheel to zoom about the cursor, click without dragging to pick a cell.
- * `rectAt(px, py)` returns the view rect under the pointer, since compare mode has two.
+ * `rectAt(px, py)` returns the view rect under the pointer, since compare mode has two, or null
+ * where the map camera is not what is shown (a sketch's own camera): nothing happens there.
  */
 export function bindCamera(element, camera, { rectAt, onCell, onChange }) {
   let drag = null;
   element.addEventListener('pointerdown', (e) => {
+    const box = element.getBoundingClientRect();
+    if (!rectAt(e.clientX - box.left, e.clientY - box.top)) return;
     drag = { x: e.clientX, y: e.clientY, cx: camera.cx, cz: camera.cz, moved: false };
     element.setPointerCapture(e.pointerId);
   });

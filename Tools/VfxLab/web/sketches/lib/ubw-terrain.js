@@ -267,6 +267,8 @@ export function makeTerrain(o, seed = 1) {
 }
 
 // ---- the bake ------------------------------------------------------------------------------------------
+// A buffer with an xyz array (a bake for a 3D camera, lib/ubw-reveal.js) also takes each point's 3D place,
+// w = [x, height, z]: the screen point is that place drawn with the height rule.
 function pushPoly(out, pts, uvs) {
   const area = area2(pts);
   if (Math.abs(area) < 1e-5) return;
@@ -274,23 +276,34 @@ function pushPoly(out, pts, uvs) {
   for (let i = 0; i < pts.length; i++) {
     const k = area > 0 ? pts.length - 1 - i : i;              // clockwise on screen, as plane10
     out.xz.push(pts[k].x, pts[k].z);
+    if (out.xyz) out.xyz.push(...pts[k].w);
     out.uv.push(uvs[k][0], uvs[k][1]);
     if (i >= 2) out.tri.push(base, base + i - 1, base + i);
   }
 }
-// A thin strip along a polyline, in one swatch.
-function pushLine(out, pts, width, sw) {
+// The screen point (x, z) of a 3D place at height y whose ground point is (x, wz).
+const S = (x, z, y, wz) => ({ x, z, w: [x, y, wz] });
+// A thin strip along a polyline, in one swatch; the line lies at height y.
+function pushLine(out, pts, width, sw, y = 0) {
+  const on = (x, z) => S(x, z, y, z - y * Lift);
   for (let i = 1; i < pts.length; i++) {
     const a = pts[i - 1], b = pts[i], dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1, nx = -dz / L * width / 2, nz = dx / L * width / 2;
-    pushPoly(out, [{ x: a.x + nx, z: a.z + nz }, { x: b.x + nx, z: b.z + nz }, { x: b.x - nx, z: b.z - nz }, { x: a.x - nx, z: a.z - nz }], [sw, sw, sw, sw]);
+    pushPoly(out, [on(a.x + nx, a.z + nz), on(b.x + nx, b.z + nz), on(b.x - nx, b.z - nz), on(a.x - nx, a.z - nz)], [sw, sw, sw, sw]);
   }
 }
-const bake = (name, b) => { const m = new Mesh(name); m.setFlat(b.xz, b.tri); m.uv = new Float32Array(b.uv); return m; };
+const bake = (name, b) => {
+  const m = new Mesh(name);
+  if (b.xyz) { m.setXYZ(b.xyz, b.tri); m.setGame(b.xz); } else m.setFlat(b.xz, b.tri);
+  m.uv = new Float32Array(b.uv);
+  return m;
+};
 
 // Every plate in painter's order (north first) into one mesh: faces, top, hairlines, lip; the shadows into
-// another.
-export function bakeTerrain(T, sun, key) {
-  const ground = { xz: [], uv: [], tri: [] }, shadows = { xz: [], uv: [], tri: [] }, flat = [[.5, .5], [.5, .5], [.5, .5], [.5, .5]];
+// another. three: also the 3D place of every vertex, for a 3D camera (Mesh.setXYZ, with the screen points
+// as its game positions): the same mesh, standing in 3D.
+export function bakeTerrain(T, sun, key, three = false) {
+  const buf = () => three ? { xz: [], uv: [], tri: [], xyz: [] } : { xz: [], uv: [], tri: [] };
+  const ground = buf(), shadows = buf(), flat = [[.5, .5], [.5, .5], [.5, .5], [.5, .5]];
   const order = T.plates.map((p, i) => p ? i : -1).filter(i => i >= 0).sort((a, b) => T.seeds[b].z - T.seeds[a].z);
   for (const i of order) {
     const p = T.plates[i], lift = p.h * Lift, faceScreen = (p.h - T.bottom) * Lift, G = Math.min(faceScreen, GradLen), n = p.poly.length;
@@ -300,10 +313,10 @@ export function bakeTerrain(T, sun, key) {
     });
     for (const e of edges) {
       if (e.oz < -.02) {
-        const za = e.a.z + lift, zb = e.b.z + lift;
-        pushPoly(ground, [{ x: e.a.x, z: za }, { x: e.b.x, z: zb }, { x: e.b.x, z: zb - G }, { x: e.a.x, z: za - G }],
+        const za = e.a.z + lift, zb = e.b.z + lift, yG = p.h - G / Lift;
+        pushPoly(ground, [S(e.a.x, za, p.h, e.a.z), S(e.b.x, zb, p.h, e.b.z), S(e.b.x, zb - G, yG, e.b.z), S(e.a.x, za - G, yG, e.a.z)],
           [[Grad.u, Grad.top], [Grad.u, Grad.top], [Grad.u, Grad.bot], [Grad.u, Grad.bot]]);
-        if (faceScreen > G) pushPoly(ground, [{ x: e.a.x, z: za - G }, { x: e.b.x, z: zb - G }, { x: e.b.x, z: zb - faceScreen }, { x: e.a.x, z: za - faceScreen }],
+        if (faceScreen > G) pushPoly(ground, [S(e.a.x, za - G, yG, e.a.z), S(e.b.x, zb - G, yG, e.b.z), S(e.b.x, zb - faceScreen, T.bottom, e.b.z), S(e.a.x, za - faceScreen, T.bottom, e.a.z)],
           [SwFoot, SwFoot, SwFoot, SwFoot]);
       }
       const nb = e.a.nb >= 0 ? T.plates[e.a.nb] : null;
@@ -311,15 +324,15 @@ export function bakeTerrain(T, sun, key) {
       const hd = p.h - nb.h;
       if (hd > .04 && e.ox * sun.x + e.oz * sun.z > 0) {
         const lz = nb.h * Lift;
-        pushPoly(shadows, [{ x: e.a.x, z: e.a.z + lz }, { x: e.b.x, z: e.b.z + lz },
-          { x: e.b.x + sun.x * hd, z: e.b.z + lz + sun.z * hd }, { x: e.a.x + sun.x * hd, z: e.a.z + lz + sun.z * hd }], flat);
+        pushPoly(shadows, [S(e.a.x, e.a.z + lz, nb.h, e.a.z), S(e.b.x, e.b.z + lz, nb.h, e.b.z),
+          S(e.b.x + sun.x * hd, e.b.z + lz + sun.z * hd, nb.h, e.b.z + sun.z * hd), S(e.a.x + sun.x * hd, e.a.z + lz + sun.z * hd, nb.h, e.a.z + sun.z * hd)], flat);
       }
     }
     // The top: a window of this plate's shade of the earth tile.
     const t = tileUV(p.shade), extent = Math.max(p.maxX - p.minX, p.maxZ - p.minZ), tile = Math.max(Tile, extent), span = extent / tile * t.span;
     const room = Math.max(0, t.span - span - .012);
     const u0 = t.u0 + .006 + hash(i, 5, T.seed) * room, v0 = t.v0 + .006 + hash(i, 6, T.seed) * room;
-    pushPoly(ground, p.poly.map(q => ({ x: q.x, z: q.z + lift })), p.poly.map(q => [u0 + (q.x - p.minX) / tile * t.span, v0 + (q.z - p.minZ) / tile * t.span]));
+    pushPoly(ground, p.poly.map(q => S(q.x, q.z + lift, p.h, q.z)), p.poly.map(q => [u0 + (q.x - p.minX) / tile * t.span, v0 + (q.z - p.minZ) / tile * t.span]));
     // Hairline cracks on the map's plates: short wandering lines from near the middle.
     if (p.tier === 0 && Math.max(Math.abs(T.seeds[i].x), Math.abs(T.seeds[i].z)) <= MapHalf + 3) {
       const cx = (p.minX + p.maxX) / 2, cz = (p.minZ + p.maxZ) / 2;
@@ -332,14 +345,14 @@ export function bakeTerrain(T, sun, key) {
           const step = .18 + hash(s0, 9 + j, T.seed) * .28, q = pts[j - 1];
           pts.push({ x: q.x + Math.cos(ang) * step, z: q.z + Math.sin(ang) * step });
         }
-        pushLine(ground, pts, HairW, SwHair);
+        pushLine(ground, pts, HairW, SwHair, p.h);
       }
     }
     for (const e of edges) {
       const nb = e.a.nb >= 0 ? T.plates[e.a.nb] : null;
       if (e.oz >= -.02 || !nb || p.h - nb.h < LipMin) continue;
       const w = LipW * (p.tier ? 1.5 : 1), ix = -e.ox * w, iz = -e.oz * w;
-      pushPoly(ground, [{ x: e.a.x, z: e.a.z + lift }, { x: e.b.x, z: e.b.z + lift }, { x: e.b.x + ix, z: e.b.z + lift + iz }, { x: e.a.x + ix, z: e.a.z + lift + iz }],
+      pushPoly(ground, [S(e.a.x, e.a.z + lift, p.h, e.a.z), S(e.b.x, e.b.z + lift, p.h, e.b.z), S(e.b.x + ix, e.b.z + lift + iz, p.h, e.b.z + iz), S(e.a.x + ix, e.a.z + lift + iz, p.h, e.a.z + iz)],
         [SwLip, SwLip, SwLip, SwLip]);
     }
   }
