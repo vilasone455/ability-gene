@@ -66,6 +66,10 @@
 //     after: the blood stays on the floor and Itachi stays bowed.
 //     The -30 % consciousness and 10 % blood loss are rules, not shown.
 //
+// Flame aura (all scenarios): a red haze round the figure rising a little above the head in
+// soft flame tongues (Outer flame slider, 0 = off) (the anime's ep 138 0:22 and Kabuto-fight look), and flame tongues along
+// the head, shoulders, cape and floor (Shinobi Striker's licks), both from SusanooFlame.png.
+//
 // Drawing: see lib/itachi.js. One view (always from the front); only the arms move toward a
 // target. The growth is picture only: in game the warm-up is a flat 1 s.
 import { Color, Mathf } from '../js/engine.js';
@@ -113,6 +117,7 @@ export default {
     fill: P('Fill opacity', .6, .2, 1, .01, 'Shape'),
     line: P('Line brightness', 1.0, .3, 1.5, .01, 'Shape'),
     flameH: P('Flame tip height (cells)', .45, .1, 1, .01, 'Shape'),
+    aura: P('Outer flame (aura)', 1, 0, 2, .05, 'Shape'),
     bladeLen: P('Blade length at idle (cells)', 2.2, 1.2, 3.2, .05, 'Shape'),
   },
 
@@ -151,7 +156,7 @@ export default {
 
   draw(seconds, p, { origin, scene }) {
     const sun = scene?.shadowVector ?? { x: -.45, z: -.32 }, strength = scene?.sun?.strength ?? .32;
-    const look = { kx: p.width / DesignW, kz: p.height / DesignH, fill: p.fill, line: p.line, flameH: p.flameH, bladeLen: p.bladeLen };
+    const look = { kx: p.width / DesignW, kz: p.height / DesignH, fill: p.fill, line: p.line, flameH: p.flameH, bladeLen: p.bladeLen, aura: p.aura };
     const F = { x: origin.x, z: origin.z + FeetZ };
     let g = Complete, eyes = 1, hunch = 0;
     if (p.scenario === 'raise') {

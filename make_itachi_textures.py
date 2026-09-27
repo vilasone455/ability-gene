@@ -13,6 +13,9 @@ SusanooMirror.png  256 px. The Yata Mirror's face: an outer ring, a large centra
                    comma curls round it, as the anime's round shield shows.
 SusanooCurl.png    128 px. A flame curl: a hook-shaped stroke rising and rolling over at the top,
                    for the arm, cape and armour edges.
+SusanooFlame.png   128 px. One flame tongue, pointing up: a round base narrowing to a pointed tip
+                   that curls a little to the right, its edge broken by noise, brightest at the
+                   base. Drawn stretched and swaying for the edge flames, the aura and the wisps.
 """
 from pathlib import Path
 import math
@@ -116,12 +119,62 @@ def curl(draw, S):
     stroke(draw, pts, widths, 255)
 
 
+def _hash(i, k, seed):
+    n = math.sin(i * 127.1 + k * 311.7 + seed * 74.7) * 43758.5453
+    return n - math.floor(n)
+
+
+def _noise(x, y, seed):
+    xi, yi = math.floor(x), math.floor(y)
+    fx, fy = x - xi, y - yi
+    sx, sy = fx * fx * (3 - 2 * fx), fy * fy * (3 - 2 * fy)
+    a, b = _hash(xi, yi, seed), _hash(xi + 1, yi, seed)
+    c, d = _hash(xi, yi + 1, seed), _hash(xi + 1, yi + 1, seed)
+    return (a + (b - a) * sx) + ((c + (d - c) * sx) - (a + (b - a) * sx)) * sy
+
+
+def _fbm(x, y, seed, octaves=3):
+    total, amp, norm = 0.0, 1.0, 0.0
+    for o in range(octaves):
+        total += _noise(x * 2 ** o, y * 2 ** o, seed + o) * amp
+        norm += amp
+        amp *= 0.5
+    return total / norm
+
+
+def flame(size=128):
+    """A flame tongue as alpha: v = 0 is the top row. b is height from the bottom."""
+    image = Image.new("RGBA", (size, size), (255, 255, 255, 0))
+    px = image.load()
+    for y in range(size):
+        for x in range(size):
+            u, v = (x + 0.5) / size, (y + 0.5) / size
+            b = (0.95 - v) / 0.9                      # 0 at the base, 1 at the tip
+            if b < 0 or b > 1:
+                continue
+            half = 0.36 * math.sin(math.pi * b ** 0.5) ** 0.8
+            centre = 0.5 + 0.07 * math.sin(b * math.pi * 1.3) * b
+            edge = half * (0.8 + 0.4 * _fbm(u * 5, v * 3, 17))
+            d = abs(u - centre) / max(edge, 1e-4)
+            inside = max(0.0, min(1.0, (1 - d) / 0.35))
+            base = min(1.0, b / 0.12)
+            body = inside * base * (1.0 - 0.45 * b) * (0.8 + 0.2 * _fbm(u * 7, v * 5 - 3, 23))
+            px[x, y] = (255, 255, 255, int(max(0.0, min(1.0, body)) * 255))
+    # Clear border so the quad's edge never shows.
+    for i in range(size):
+        for j in (0, size - 1):
+            px[i, j] = px[j, i] = (255, 255, 255, 0)
+    return image
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for name, size, paint in (("SusanooSwirl.png", 256, swirl), ("SusanooMirror.png", 256, mirror),
                               ("SusanooCurl.png", 128, curl)):
         line_art(size, paint).save(OUT / name)
         print("wrote", OUT / name)
+    flame().save(OUT / "SusanooFlame.png")
+    print("wrote", OUT / "SusanooFlame.png")
 
 
 if __name__ == "__main__":

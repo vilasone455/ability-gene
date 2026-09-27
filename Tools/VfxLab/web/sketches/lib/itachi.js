@@ -24,9 +24,12 @@
 //
 // Port notes: every fill is one strip mesh between a left and a right edge (fillPairs), every
 // line is a strip of constant width along a polyline (stroke, with upTo for drawing on), the
-// swirls and the mirror face are textured quads (make_itachi_textures.py). The flame edge is
-// the Spirit Bomb dome's ring opened into a path: 3 nested additive strips whose outer edge is
-// a row of pointed tips that rise and flicker on their own.
+// swirls and the mirror face are textured quads (make_itachi_textures.py). The flame edge is a
+// low glowing rim (3 nested additive strips) with flame tongues standing on it: SusanooFlame.png
+// quads, mostly upright, swaying, a pale core in each, every fifth a big lick that throws off a
+// small tongue. The aura behind the whole figure is 14 hull points each sending up soft red
+// tongues (Transparent haze + additive glow) on their own cycles, over a steady red haze; it
+// grows from half height with the figure and is flame-yellow while it forms.
 import { AltitudeLayer, Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../../js/engine.js';
 import { draw, mesh } from './six-paths-solid.js';
 import { Y, Floor, soft, glow, rand } from './six-paths-impact.js';
@@ -41,6 +44,8 @@ export const add = MaterialPool.MatFrom('white', ShaderDatabase.MoteGlow);
 const swirlMat = MaterialPool.MatFrom('RimArt/Itachi/SusanooSwirl', ShaderDatabase.MoteGlow);
 const mirrorMat = MaterialPool.MatFrom('RimArt/Itachi/SusanooMirror', ShaderDatabase.MoteGlow);
 const curlMat = MaterialPool.MatFrom('RimArt/Itachi/SusanooCurl', ShaderDatabase.MoteGlow);
+const flameMat = MaterialPool.MatFrom('RimArt/Itachi/SusanooFlame', ShaderDatabase.MoteGlow);
+const hazeMat = MaterialPool.MatFrom('RimArt/Itachi/SusanooFlame', ShaderDatabase.Transparent);
 export { Y, Floor, soft, glow, rand };
 
 export const shadowLayer = AltitudeLayer.Shadows.AltitudeFor(), pawnLayer = AltitudeLayer.Pawn.AltitudeFor();
@@ -59,6 +64,7 @@ export const BladeCore = C(.96, .81, .50), BladeBody = C(.90, .66, .42), BladeEd
 export const Eye = C(.95, .80, .40), EyeHot = C(1, .96, .76), EyeGlow = C(1, .72, .18);
 export const Mouth = C(.14, .02, .02), Fang = C(1, .90, .76);
 export const FlameDeep = C(1, .32, .10), FlameMid = C(1, .56, .24), FlamePale = C(1, .86, .62);
+export const AuraRed = C(.80, .10, .06), FlameBody = C(1, .46, .16);
 export const Cloak = C(.09, .08, .10), Cloud = C(.78, .12, .12), CloudEdge = C(.95, .90, .90), Hair = C(.05, .04, .06);
 export const Skin = C(.86, .73, .60), Sharingan = C(.95, .06, .05), Blood = C(.50, .03, .03);
 
@@ -129,6 +135,14 @@ export function strip(key, a, b, colour, material = flat, layer = Y) {
 export function sprite(pos, w, h, colour, material = glow, layer = Y, angle = 0) {
   if (colour.a <= .002) return;
   draw(MeshPool.plane10, pos.x, layer, pos.z, w, h, angle, colour, material);
+}
+
+// One flame tongue (SusanooFlame.png) standing on `base`, w wide and h tall, leaning `deg`
+// degrees (positive = the tip to the right, as a clockwise turn on screen).
+export function tongue(base, w, h, deg, colour, material = flameMat, layer = Y) {
+  if (colour.a <= .002 || h <= .005) return;
+  const a = deg * Mathf.Deg2Rad;
+  draw(MeshPool.plane10, base.x + Math.sin(a) * h / 2, layer, base.z + Math.cos(a) * h / 2, w, h, deg, colour, material);
 }
 
 export function blob(pos, rx, rz, colour, layer = Y, rot = 0, material = flat) {
@@ -238,16 +252,21 @@ export function flameEdge(key, pts, s, height, alpha, { count = 30, seed = 0, la
     const phase = s / (.26 + .14 * r(1)) + r(2), u = phase - Math.floor(phase);
     const flicker = .7 + .3 * Math.sin(s * (17 + 8 * r(3)) + k * 2.1);
     const t = (k + .5 + (r(4) - .5) * .8) / count, on = lit ? lit(t) : 1;
-    tips.push({ t, u, h: height * (.45 + .55 * r(5)) * flicker * (.75 + .5 * Math.sin(u * Math.PI)) * on });
+    // Every fifth tongue or so is a big lick, 2x taller.
+    const big = r(6) > .8 ? 2 : 1;
+    tips.push({ t, u, big, r, h: height * (.45 + .55 * r(5)) * flicker * (.75 + .5 * Math.sin(u * Math.PI)) * on });
   }
   const steps = count * 5, P = resample(pts, steps), half = .9 / count;
+  let total = 0; for (let i = 1; i < P.length; i++) total += Math.hypot(P[i].x - P[i - 1].x, P[i].z - P[i - 1].z);
+  const spacing = total / count;
   const reach = P.map(p => {
     let h = 0;
     tips.forEach(q => { const d = Math.abs(p.t - q.t) / half; if (d < 1) h = Math.max(h, q.h * Math.pow(1 - d, 1.8)); });
     return h;
   });
   const dirOf = p => { let dx = p.nx, dz = p.nz + up; const L = Math.hypot(dx, dz) || 1; return { x: dx / L, z: dz / L }; };
-  [[1, FlameDeep, .42], [.62, FlameMid, .5], [.3, FlamePale, .55]].forEach(([share, colour, a], j) => {
+  // The glowing rim the tongues stand on: three nested strips, low.
+  [[.55, FlameDeep, .38], [.34, FlameMid, .45], [.16, FlamePale, .5]].forEach(([share, colour, a], j) => {
     const inner = [], outer = [];
     P.forEach((p, i) => {
       const d = dirOf(p), h = .01 + reach[i] * share;
@@ -256,12 +275,56 @@ export function flameEdge(key, pts, s, height, alpha, { count = 30, seed = 0, la
     });
     strip(`${key} flame ${j}`, inner, outer, colour.withAlpha(a * alpha), add, layer + j * .0002);
   });
+  // Tongues: each rises from the rim, leans with the edge but mostly up (flames rise), sways,
+  // with a pale core; big licks on some. A small tongue breaks off the top of each surge.
   tips.forEach((q, k) => {
-    if (q.u <= .55 || q.h <= .02) return;
-    const v = (q.u - .55) / .45, p = P[Math.round(q.t * steps)], d = dirOf(p);
-    const x = p.x + d.x * q.h * (1 + v * .9), z = p.z + d.z * q.h * (1 + v * .9) + v * .15, size = .09 * (1 - .5 * v) + q.h * .15;
-    sprite({ x, z }, size, size * 1.3, FlameMid.withAlpha(.5 * (1 - v) * alpha), glow, layer + .0008);
+    if (q.h <= .01) return;
+    const p = P[Math.min(steps, Math.round(q.t * steps))], d = dirOf(p);
+    // Mostly upright: only 40 % of the edge's lean, so the crown does not fan out like a starburst.
+    const lean = Math.max(-25, Math.min(25, Math.atan2(d.x, d.z) * 180 / Math.PI * .4)) + 10 * Math.sin(s * (4 + 3 * q.r(7)) + k * 1.7);
+    const h = (q.h * 1.5 + .04) * (q.big > 1 ? 1.6 : 1), w = Math.min(.55, Math.max(.12, spacing * 2.4)) * (q.big > 1 ? 1.25 : 1) * (.8 + .4 * q.r(8));
+    const base = { x: p.x - d.x * .02, z: p.z - d.z * .02 };
+    tongue(base, w, h, lean, FlameBody.withAlpha(.55 * alpha), flameMat, layer + .0006);
+    tongue(base, w * .45, h * .55, lean * .8, FlamePale.withAlpha(.4 * alpha), flameMat, layer + .0007);
+    if (q.u > .55 && q.big > 1) {
+      const v = (q.u - .55) / .45, a = lean * Mathf.Deg2Rad, rise = h * (1 + .9 * v);
+      const at = { x: base.x + Math.sin(a) * rise + .08 * Math.sin(s * 6 + k), z: base.z + Math.cos(a) * rise + .25 * v };
+      tongue(at, w * .45 * (1 - .5 * v), h * .35 * (1 - .4 * v), lean, FlameMid.withAlpha(.55 * (1 - v) * alpha), flameMat, layer + .0008);
+    }
   });
+}
+
+// The aura: a red haze round the whole Susanoo, rising a little above the head in soft flame
+// tongues (Outer flame slider: 0 off, 1 = 70 % of the first version's height, 2 = 115 %), as the anime shows it standing inside a column of red chakra. Tongues stand on a
+// hull round the figure (design units), each rising and fading on its own cycle, taller at the
+// top; a steady haze sits behind the body. Drawn behind everything of the Susanoo. k 0..1.
+const AuraHull = [[-1.55, .1], [-1.75, .9], [-1.75, 1.7], [-1.55, 2.25], [-1.0, 2.5], [-.6, 2.85], [-.4, 3.25], [0, 3.42],
+  [.4, 3.25], [.6, 2.85], [1.0, 2.5], [1.55, 2.25], [1.95, 1.85], [2.05, 1.2], [1.85, .5], [1.55, .1]];
+export function aura(key, S, s, k, layer, grow = 1, warm = 0, size = 1) {
+  if (k <= .002 || size <= .002) return;
+  // grow 0..1 raises the hull from half height to full with the figure; warm tints it the
+  // flame-yellow the Susanoo forms from.
+  const red = Color.Lerp(AuraRed, C(.95, .45, .12), warm * .8), vs = lerp(.45, 1, grow);
+  // size scales the tongues: 1 = 70 % of their first height and 80 % of its strength, 2 = 115 %.
+  const hs = .25 + .45 * size, as = Math.min(1, .35 + .45 * size);
+  sprite(S(0, 1.5 * vs), 3.3, 3.1 * vs, red.withAlpha(.12 * k * as), soft, layer - .002);
+  sprite(S(0, 2.8 * vs), 1.6, 1.4, red.withAlpha(.1 * k * grow * as), soft, layer - .0019);
+  const P = resample(AuraHull.map(([u, v]) => S(u, v * vs)), 36);
+  const n = 14;
+  for (let i = 0; i < n; i++) {
+    const r = j => rand(i * 17 + j + 1200);
+    const t = (i + .5 + (r(1) - .5) * .6) / n, p = P[Math.round(t * 36)];
+    const top = 1 - Math.abs(2 * t - 1);
+    for (let c = 0; c < 2; c++) {
+      const period = .9 + .5 * r(2 + c), ph = s / period + r(3 + c) + c * .5, u = ph - Math.floor(ph);
+      const a = Math.sin(u * Math.PI) * k;
+      const h = (1.0 + 1.2 * top + .4 * r(5)) * (.7 + .3 * u) * hs, w = .8 + .4 * r(6);
+      const lean = Math.max(-40, Math.min(40, Math.atan2(p.nx, p.nz + 1.2) * 180 / Math.PI)) * .6 + 10 * Math.sin(s * 2 + i);
+      const base = { x: p.x - p.nx * .35 + p.nx * u * .2, z: p.z - p.nz * .35 + u * .3 };
+      tongue(base, w, h * lerp(.6, 1, grow), lean, red.withAlpha(.3 * a * as), hazeMat, layer + c * .0001);
+      tongue(base, w * .7, h * .8 * lerp(.6, 1, grow), lean, FlameDeep.withAlpha(.14 * a * as), flameMat, layer + .0002 + c * .0001);
+    }
+  }
 }
 
 // ---------------------------------------------------------------- the Susanoo
@@ -417,6 +480,7 @@ export function susanoo(key, F, s, look, g, pose) {
   sprite(S(0, 2.8), 2.2 * kx, 1.8 * kz, FlameDeep.withAlpha(halo * g.armour), glow, Back - .019);
 
   // ---- behind Itachi
+  aura(`${key} aura`, S, s, Math.max(g.ribs * .5, aK) * fd.body * (1 - .5 * dim) * A, Back - .03, smooth(g.ribs * .45 + g.skel * .25 + aK * .3), warmK, look.aura ?? 1);
   // Cape: grows out from the shoulders down.
   if (aK > 0) {
     const cape = CapeEdge.map(([v, h]) => [lerp(2.2, v, aK), lerp(.9, h, aK)]);
@@ -469,7 +533,7 @@ export function susanoo(key, F, s, look, g, pose) {
     }
   }
   // Base flames rising out of the floor along the front of the footprint.
-  const baseH = look.flameH * (.35 + .65 * Math.max(g.ribs * .5, aK));
+  const baseH = look.flameH * .7 * (.35 + .65 * Math.max(g.ribs * .5, aK));
   flameEdge(`${key} base`, BasePath.map(([u, v]) => S(u * lerp(.6, 1, aK), v)), s, baseH, A * Math.max(.6 * g.pool, aK) * fd.base, { count: 18, seed: 5, layer: Back + .008, up: 2 });
 
   // ---- in front of Itachi
