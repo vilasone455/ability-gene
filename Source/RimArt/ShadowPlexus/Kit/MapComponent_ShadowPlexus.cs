@@ -55,13 +55,33 @@ namespace RimArt
 
         private static Vector2 CellGround(IntVec3 cell) => new Vector2(cell.x + 0.5f, cell.z + 0.5f);
 
-        /// <summary>Where a thing's feet are drawn now, or its cell's centre when it is not on this map.</summary>
+        /// <summary>
+        /// How far below a standing humanlike's draw position (the sprite's centre) its feet are, in
+        /// cells; a downed one lies lower. The sketches anchor every pool and line at the feet, with
+        /// the body rising from that point, so the shadow lies on the ground and not on the body.
+        /// </summary>
+        public const float StandingFeet = 0.35f, DownedFeet = 0.12f;
+        /// <summary>From the feet up to the neck of a standing humanlike sprite, for the neck bind's hands.</summary>
+        public const float NeckAboveFeet = 0.55f;
+
+        /// <summary>Where a thing meets the ground now: a pawn's feet, an item's draw position, or its cell's centre when it is not on this map.</summary>
         private Vector2 Ground(Thing thing)
         {
             if (thing == null) return Vector2.zero;
-            if (thing is Pawn pawn) return ChainSickleCombat.Ground(pawn, map) ?? CellGround(pawn.Position);
+            if (thing is Pawn pawn)
+            {
+                Vector2 at = ChainSickleCombat.Ground(pawn, map) ?? CellGround(pawn.Position);
+                return new Vector2(at.x, at.y - Feet(pawn));
+            }
             if (thing.Spawned && thing.Map == map) return new Vector2(thing.DrawPos.x, thing.DrawPos.z);
             return CellGround(thing.Position);
+        }
+
+        /// <summary>How far below a pawn's draw position its feet are. Animals and mechs are drawn lying on the ground already.</summary>
+        public static float Feet(Pawn pawn)
+        {
+            if (pawn == null || !pawn.RaceProps.Humanlike) return 0f;
+            return pawn.Downed ? DownedFeet : StandingFeet;
         }
 
         private static float Size(Thing thing) => thing is Pawn pawn ? pawn.BodySize : 0f;
@@ -658,6 +678,7 @@ namespace RimArt
                 Carrier = carrier, Target = target, Aim = Degrees(target - carrier), Seconds = b.Seconds(now), Climb = b.props.climbSeconds,
                 Release = b.releaseTick < 0 ? float.PositiveInfinity : b.Seconds(b.releaseTick),
                 Choke = 1f / Mathf.Max(0.001f, b.props.suffocationPerSecond), Cut = b.cut, CutAt = b.cutShare, HideLine = b.hideLine,
+                NeckHeight = b.target != null && b.target.RaceProps.Humanlike ? NeckAboveFeet : 0f,
                 Width = ShadowNeckBindTiming.Width, Sway = ShadowNeckBindTiming.Sway,
             }, map);
         }

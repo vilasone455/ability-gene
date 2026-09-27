@@ -21,6 +21,8 @@ namespace RimArt
         /// hands travel along, or an Imitation hold whose line is still intact after the hands fell off).
         /// </summary>
         public bool HideLine;
+        /// <summary>How far above the feet the neck is; 0 uses the sketch's standing human (<see cref="ShadowNeckBindTiming.NeckHeight"/>).</summary>
+        public float NeckHeight;
         public float Width, Sway;
 
         public float Closed => ShadowNeckBindTiming.Crawl + Climb;
