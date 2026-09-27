@@ -2,8 +2,10 @@
 //
 // Mechanic: self cast, warm-up 1 s, lasts 12 s; Itachi walks at half speed inside it.
 //   Yata Mirror: every hit from outside the Susanoo is blocked.
-//   Totsuka Blade: one stab at a pawn within 4 cells seals it: it leaves the map (counts as a
-//   kill), leaves no corpse, and its gear drops where it stood.
+//   Totsuka Blade (changed 2026-09-27): a stab at a pawn within 4 cells, one every 3 s. It seals
+//   a target that is downed or at 30 % health or less: it leaves the map (counts as a kill),
+//   leaves no corpse, and its gear drops where it stood. Any other target takes a 30 stab damage
+//   hit. At most one seal per Susanoo; mechanoids cannot be sealed.
 //   When it ends: Itachi coughs blood (-30 % consciousness, 10 % blood loss, for 6 h).
 //   Cooldown 1 day, 20 charge.
 //
@@ -41,7 +43,9 @@
 //     2.70-3.00 the mirror goes back to rest. Itachi is not touched. With two attackers at the same moment in game, the second hit
 //     would stop at the outline; the sketch shows them one after the other.
 //   seal (built) — a floor ring at the 4-cell seal range; a raider (direction and distance
-//     sliders) aims at Itachi. Times with the default Swing and stab 0.45 s, Pull-in 0.6 s:
+//     sliders) aims at Itachi. "Seal target is weak" on: the raider is wounded (a blood pool at
+//     its feet from the start) and is sealed. Times with the default Swing and stab 0.45 s,
+//     Pull-in 0.6 s:
 //     0.50-0.66 the sword arm winds up (hand back and up, blade tilting back);
 //     0.66-0.80 it swings: the hand goes 1.42 from the shoulder toward the raider as seen on
 //       screen, the elbow straightens;
@@ -53,6 +57,12 @@
 //     1.70 a seal flash and a closing swirl at the gourd's mouth; 1.80-2.20 the arm goes back
 //       to rest and the blade pours out again to its idle length.
 //     The rifle and the helmet stay on the floor. No corpse.
+//     "Seal target is weak" off: the same wind-up, swing and stab to 0.95, then a hit, not a seal:
+//     0.95 pierce: a smaller glint and shake, blood sprays out of the raider's back and lands
+//       0.3-0.9 cells behind it; it is knocked back 0.25 cells, leans away, its rifle jerks up;
+//     1.10-1.35 the Totsuka pulls back out of it to half length; 1.35-1.75 the arm goes back to
+//       rest and the blade pours out to its idle length; 1.45-1.85 the raider aims again.
+//     The raider stays, keeps its rifle; the blood stays on the floor.
 //   end (built) — times with the default Break apart 1.0 s:
 //     0-0.50 idle (the last moment of the 12 s);
 //     0.50-0.80 it dims: fill and lines darker, flames drop to 45 %;
@@ -90,12 +100,18 @@ const Run = 1.2, RunTime = .8, MeleeFrom = 6, MeleeStop = 1.95, WindUp = .12, St
 const Blow = Run + RunTime + WindUp + Strike, Settle = [2.7, 3.0], BlockLength = 3.6;
 // Seal beats: the swing starts at SwingAt; Swing and stab and Pull-in come from the params.
 const SwingAt = .5, PierceHold = .15, ReturnTime = .4, RegrowTime = .4, SealRange = 4;
+// A hit (target not weak): the blade pulls back, the raider is knocked back and aims again.
+const RetractTime = .25, KnockBack = .25, Recoil = 40;
 // End beats: idle, dim, then the break-apart (its length is the Break apart param).
 const EndIdle = .5, DimTime = .3, BreakAt = EndIdle + DimTime, EndTail = 1.0;
 const endTimes = p => ({ hunch: BreakAt + .6 * p.breakUp, coughs: [BreakAt + .7 * p.breakUp, BreakAt + .95 * p.breakUp], end: BreakAt + p.breakUp + EndTail });
+// armFrom: when the sword arm starts back to rest. A hit has `retracted` instead of `sealed`.
 const sealTimes = p => {
-  const pierce = SwingAt + p.stab, pullFrom = pierce + PierceHold, sealed = pullFrom + p.pull;
-  return { windEnd: SwingAt + p.stab * .35, strikeEnd: SwingAt + p.stab * .65, pierce, pullFrom, sealed, end: sealed + 1.3 };
+  const pierce = SwingAt + p.stab, pullFrom = pierce + PierceHold;
+  const base = { windEnd: SwingAt + p.stab * .35, strikeEnd: SwingAt + p.stab * .65, pierce, pullFrom };
+  if (!p.weak) { const retracted = pullFrom + RetractTime; return { ...base, retracted, armFrom: retracted, end: retracted + ReturnTime + 1.2 }; }
+  const sealed = pullFrom + p.pull;
+  return { ...base, sealed, armFrom: sealed + .1, end: sealed + 1.3 };
 };
 const deg = (a, b) => Math.atan2(b.z - a.z, b.x - a.x) * 180 / Math.PI;
 const unit = (a, b) => { const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1; return { x: dx / L, z: dz / L }; };
@@ -107,6 +123,7 @@ export default {
     scenario: { label: 'Scenario', value: 'raise', options: Scenarios, group: 'Mechanic' },
     dir: P('Target / attacker direction (degrees, 0 = east)', 30, 0, 359, 1, 'Mechanic'),
     dist: P('Seal target distance (cells)', 3.5, 1.5, 4, .1, 'Mechanic'),
+    weak: { label: 'Seal target is weak (downed or ≤ 30 % health)', value: true, group: 'Mechanic' },
     rings: { label: 'Show rule rings', value: true, group: 'Mechanic' },
     warmUp: P('Warm-up', 1.0, .4, 2, .05, 'Timing (s)'),
     stab: P('Swing and stab', .45, .2, 1, .05, 'Timing (s)'),
@@ -124,16 +141,15 @@ export default {
   duration(p) { return { raise: Lead + p.warmUp + Idle, block: BlockLength, seal: sealTimes(p).end, end: endTimes(p).end }[p.scenario]; },
   events(p) {
     if (p.scenario === 'block') return [{ t: Blow, type: 'shake', value: .08 }];
-    if (p.scenario === 'seal') return [{ t: sealTimes(p).pierce, type: 'shake', value: .1 }];
+    if (p.scenario === 'seal') return [{ t: sealTimes(p).pierce, type: 'shake', value: p.weak ? .1 : .06 }];
     return [];
   },
   phases(p) {
     if (p.scenario === 'seal') {
       const T = sealTimes(p);
-      return [
-        { name: 'Susanoo up', t: 0 }, { name: 'Wind-up', t: SwingAt }, { name: 'Swing', t: T.windEnd }, { name: 'Blade shoots out', t: T.strikeEnd },
-        { name: 'Pierce', t: T.pierce }, { name: 'Pulled into the gourd', t: T.pullFrom }, { name: 'Sealed', t: T.sealed },
-      ];
+      const start = [{ name: 'Susanoo up', t: 0 }, { name: 'Wind-up', t: SwingAt }, { name: 'Swing', t: T.windEnd }, { name: 'Blade shoots out', t: T.strikeEnd }];
+      if (!p.weak) return [...start, { name: 'Pierce (30 damage)', t: T.pierce }, { name: 'Blade pulls back', t: T.pullFrom }, { name: 'Arm back, raider aims again', t: T.retracted }];
+      return [...start, { name: 'Pierce', t: T.pierce }, { name: 'Pulled into the gourd', t: T.pullFrom }, { name: 'Sealed', t: T.sealed }];
     }
     if (p.scenario === 'block') return [
       { name: 'Susanoo up', t: 0 }, { name: 'Shooter aims, mirror turns', t: Aim }, { name: 'Rounds', t: Shots[0] },
@@ -270,13 +286,13 @@ function seal(t, p, origin, F, look, sun, strength, pose) {
   if (t >= SwingAt && t < T.windEnd) {
     const f = k((t - SwingAt) / (T.windEnd - SwingAt));
     hand = { u: lerp(RestHand.u, away.u, f), v: lerp(RestHand.v, away.v, f) }; bladeDeg = lerp(RestBladeDeg, windDeg, f); elbowDown = 1 - f * .5;
-  } else if (t >= T.windEnd && t < T.sealed + .1) {
+  } else if (t >= T.windEnd && t < T.armFrom) {
     const f = k((t - T.windEnd) / (T.strikeEnd - T.windEnd));
     hand = { u: lerp(away.u, reachHand.u, f), v: lerp(away.v, reachHand.v, f) };
     const target = t < T.strikeEnd ? lerp(windDeg, strikeDeg, f) : strikeDeg;
     bladeDeg = target; elbowDown = .5 * (1 - f);
-  } else if (t >= T.sealed + .1) {
-    const f = k((t - T.sealed - .1) / ReturnTime);
+  } else if (t >= T.armFrom) {
+    const f = k((t - T.armFrom) / ReturnTime);
     hand = { u: lerp(reachHand.u, RestHand.u, f), v: lerp(reachHand.v, RestHand.v, f) }; bladeDeg = lerp(strikeDeg, RestBladeDeg, f); elbowDown = f;
   }
   Object.assign(pose, { hand, bladeDeg, elbowDown });
@@ -289,13 +305,15 @@ function seal(t, p, origin, F, look, sun, strength, pose) {
     const idleTip = { x: mouth.x + Math.cos(strikeDeg * Mathf.Deg2Rad) * look.bladeLen * .5, z: mouth.z + Math.sin(strikeDeg * Mathf.Deg2Rad) * look.bladeLen * .5 };
     pose.bladeTip = { x: lerp(idleTip.x, chest.x, f), z: lerp(idleTip.z, chest.z, f) }; pose.stab = f;
   }
+  if (!p.weak) { hit(t, p, origin, pos, chest, mouth, strikeDeg, look, sun, strength, pose, T); return; }
   const pullU = clamp((t - T.pullFrom) / p.pull), pullE = pullU * pullU;
   const pulledAt = { x: lerp(chest.x, mouth.x, pullE), z: lerp(chest.z, mouth.z, pullE) };
   if (t >= T.pullFrom && t < T.sealed) { pose.bladeTip = pulledAt; pose.stab = 1; }
   if (t >= T.sealed) pose.bladeLen = look.bladeLen * clamp((t - T.sealed - .2) / RegrowTime);
   if (t >= T.sealed && t < T.sealed + .2) pose.bladeLen = 0;
 
-  // The raider: aims until pierced, burns, then is pulled in.
+  // The raider: wounded from the start, aims until pierced, burns, then is pulled in.
+  woundPool(pos);
   if (t < T.pierce + .05) raider(pos, sun, strength, { weapon: 'rifle', aimDeg: deg(chest, origin) });
   else if (t < T.pullFrom) raider(pos, sun, strength, { weapon: 'none', lean: -Math.cos(a) * .5 });
   if (t >= T.pierce && t < T.pullFrom + .08) flameWrap('seal wrap', pos, t, Math.min(1, (t - T.pierce) / .08) * (1 - clamp((t - T.pullFrom) / .08)));
@@ -306,6 +324,52 @@ function seal(t, p, origin, F, look, sun, strength, pose) {
   const rifleDeg = deg(chest, origin) + 30;
   if (t >= T.pierce + .05) droppedRifle('seal rifle', { x: pos.x + .15, z: pos.z - .15 }, rifleDeg, clamp((t - T.pierce - .05) / .3));
   if (t >= T.pullFrom) droppedHelmet({ x: pos.x - .25, z: pos.z + .05 }, clamp((t - T.pullFrom) / .35));
+}
+
+// The stab on a target that is not weak: 30 damage, no seal. The blade pulls back out to half
+// length and pours out again; the raider is knocked back, bleeds out of its back and aims again.
+function hit(t, p, origin, pos, chest, mouth, strikeDeg, look, sun, strength, pose, T) {
+  const a = p.dir * Mathf.Deg2Rad, out = { x: Math.cos(a), z: Math.sin(a) }, sd = strikeDeg * Mathf.Deg2Rad;
+  const half = { x: mouth.x + Math.cos(sd) * look.bladeLen * .5 * look.kx, z: mouth.z + Math.sin(sd) * look.bladeLen * .5 * look.kz };
+  const knock = smooth((t - T.pierce) / .2) * KnockBack, at = { x: pos.x + out.x * knock, z: pos.z + out.z * knock };
+  const hitChest = { x: chest.x + out.x * knock, z: chest.z + out.z * knock };
+  if (t >= T.pullFrom && t < T.retracted) {
+    const f = smooth((t - T.pullFrom) / RetractTime);
+    pose.bladeTip = { x: lerp(hitChest.x, half.x, f), z: lerp(hitChest.z, half.z, f) }; pose.stab = 1 - f;
+  } else if (t >= T.pierce && t < T.pullFrom) pose.bladeTip = hitChest;
+  if (t >= T.retracted) pose.bladeLen = look.bladeLen * lerp(.5, 1, smooth((t - T.retracted) / RegrowTime));
+
+  // The raider: jerked back at the pierce (lean away, rifle up), then aims again.
+  const aim = deg(chest, origin), up = Math.cos(aim * Mathf.Deg2Rad) < 0 ? -1 : 1;
+  const jolt = smooth((t - T.pierce) / .08) * (1 - smooth((t - T.retracted - .1) / .4));
+  raider(at, sun, strength, { weapon: 'rifle', aimDeg: aim + up * Recoil * jolt, lean: Math.cos(a) * .6 * jolt });
+  if (t >= T.pierce && t < T.pierce + .12) glint(hitChest, .45, 1 - (t - T.pierce) / .12, EyeHot);
+  spurt('hit blood', t - T.pierce, hitChest, at, out, 11, 40);
+}
+
+// Blood already on the floor under a wounded pawn: the sealed target starts weak.
+function woundPool(pos) {
+  // South of the feet and wider than the body, so the pawn stand-in does not cover it.
+  for (let i = 0; i < 6; i++) {
+    const r = k => rand(i * 5 + k + 1300);
+    blob({ x: pos.x + (r(1) - .5) * .7, z: pos.z - .55 + (r(2) - .5) * .2 }, .06 + .07 * r(3), .04 + .045 * r(3), Blood.withAlpha(.85), Floor + .004 + i * .0001);
+  }
+}
+
+// Blood out of a pawn's back: n droplets leave `from` (the chest), arc and land 0.3-0.9 cells
+// out along `dir` (unit, world) from its feet; each leaves a spot that stays. age in s.
+function spurt(key, age, from, pos, dir, n, seed) {
+  if (age < 0) return;
+  const feet = { x: pos.x, z: pos.z - .33 };
+  for (let i = 0; i < n; i++) {
+    const r = k => rand(seed * 50 + i * 7 + k);
+    const d = .3 + .6 * r(1), side = (r(2) - .5) * .5;
+    const land = { x: feet.x + dir.x * d - dir.z * side, z: feet.z + dir.z * d * .8 + dir.x * side * .8 };
+    const fly = .16 + .14 * r(3), u = Math.min(1, age / fly), arc = .22 * Math.sin(u * Math.PI);
+    const size = .025 + .015 * r(4), grow = Math.min(1, (age - fly) / .1 + .5);
+    if (u < 1) blob({ x: lerp(from.x, land.x, u), z: lerp(from.z, land.z, u) + arc }, size, size, Blood, Y + .071);
+    else blob(land, (.035 + .035 * r(5)) * grow, (.025 + .025 * r(5)) * grow, Blood.withAlpha(.9), Floor + .004 + i * .0001);
+  }
 }
 
 // Blood from Itachi's coughs: droplets leave the mouth in an arc and land in front of him
