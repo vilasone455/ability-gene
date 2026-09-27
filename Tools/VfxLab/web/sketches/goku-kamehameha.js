@@ -3,7 +3,9 @@
 //
 // What it is for (from the user's draft; every number is a placeholder).
 //   Target a direction. Channel 2.5 s standing still; a stun or a downing cancels it and the
-//   cooldown is still spent. Then a beam 3 cells wide from the caster. It runs 30 cells, or to the
+//   cooldown is still spent. At full charge the caster holds the ball, with no time limit, until the
+//   player picks Fire or Warp (the user's rule, 2026-09-27); the hold cancels like the channel.
+//   Fire: a beam 3 cells wide from the caster. It runs 30 cells, or to the
 //   first wall if that is nearer. It lasts 1.2 s and hits 4 times, 20 damage each (80 total,
 //   heat-like, 50% armor penetration), on every pawn and building in the lane, friend or foe. It
 //   passes through pawns and low cover. Pawns that are hit are pushed 1.5 cells along the lane.
@@ -14,10 +16,11 @@
 //   The lane and the end circle are drawn on the floor from the start of the channel, at their true
 //   size, so the player sees who is in them. Enemy AI does not dodge, and melee that is running at
 //   the caster stays in the lane, which is what the channel time is balanced against.
-//   Warp Kamehameha (the draft's empty "Combo" line, filled in from the Cell fight): a second
-//   gizmo while Instant Transmission is off cooldown. Pick the firing cell and the direction. The
-//   caster channels where it stands, out of danger, jumps at the end of the channel and fires at
-//   once from the new cell. It spends both cooldowns.
+//   Warp Kamehameha (the user's rule, 2026-09-27; from the Cell fight): the Warp gizmo shows during
+//   the full-charge hold, and only while Instant Transmission is ready, because it counts as a use
+//   of Instant Transmission. Pick the firing cell and the direction. The caster has channelled
+//   where it stands, out of danger; it jumps and fires at once from the new cell. It spends both
+//   cooldowns.
 //
 // Order, with the default timings (stand and fire):
 //   0.00  stand; four enemies in the lane (one walking at the caster), one beside the lane's end

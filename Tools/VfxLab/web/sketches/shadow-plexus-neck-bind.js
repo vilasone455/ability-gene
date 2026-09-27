@@ -1,6 +1,6 @@
 // Shadow neck bind — Shadow plexus ability proposal, not the game. Nothing in Source/RimArt draws this yet.
 //
-// What it is for (proposed, none of it agreed, numbers are placeholders). The source is Kage
+// What it is for (agreed 2026-09-27, numbers are placeholders). The source is Kage
 // Kubishibari: shadow hands climb the held body to the throat. Target only a pawn the carrier
 // already holds with Shadow imitation or has sewn with Shadow seam; it has no range of its own
 // because it travels along the line that is already there. The carrier channels for up to 8 s and

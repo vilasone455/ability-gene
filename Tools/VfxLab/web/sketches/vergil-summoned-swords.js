@@ -3,21 +3,23 @@
 // carrier keeps fighting with the katana. The source's Spiral Swords ring, fired one blade at a time
 // the way its Blistering Swords are.
 //
-// What it is for (proposed, none of it agreed; every number is a placeholder and will be an XML field).
-//   Self cast, warm-up 0.5 s, lasts 20 s, cooldown 45 s. 8 blades of blue light stand in a level ring
+// What it is for (agreed 2026-09-27 with the recommended numbers: one shot per 1.0 s, spin 5 Cut per
+// 0.9 s, 10 Echo charge per cast; every number is a placeholder and will be an XML field). The
+// sketch and the C# preview still play the old 0.6 s and 0.5 s timings.
+//   Self cast, warm-up 0.5 s, lasts 20 s, cooldown 45 s, 10 charge. 8 blades of blue light stand in a level ring
 //   0.95 cells round the carrier at chest height and circle at 160 degrees per second,
 //   hilts toward the carrier and points straight outward, like spokes.
-//   Every 0.6 s one blade fires by itself at the nearest hostile within 12 cells with line of sight
+//   Every 1.0 s one blade fires by itself at the nearest hostile within 12 cells with line of sight
 //   that holds fewer than 4 blades: 9 Stab, 30 % armour penetration. It is not the pawn's attack: no
 //   stance, no warm-up, the pawn keeps walking or meleeing. Allies are never picked.
 //   The blade stays in the target for 3 s. Each blade in a pawn is -15 % move speed, up to 4 (-60 %).
-//   A fired slot is empty for 2.4 s, then a new blade grows in it, so about 4 blades circle at a time.
+//   A fired slot is empty for 2.4 s, then a new blade grows in it. About 20 shots in 20 s, 180 Stab.
 //   When it ends every blade breaks, the ones stuck in pawns too.
 //   Second mode, "spins and cuts" (asked for by the user 2026-09-20; the numbers are placeholders). The
 //   same 8 blades do not fire. In 0.3 s the ring widens from 0.95 to 1.2 cells and speeds up from 160
-//   to 420 degrees per second, so the blades pass through the 8 cells next to the carrier. Every 0.5 s
-//   each hostile within 1.6 cells takes 6 Cut at 20 % armour penetration. Allies are not cut. No slow,
-//   no blades left in pawns. Proposed as one ability with a toggle on its button: the mode can be
+//   to 420 degrees per second, so the blades pass through the 8 cells next to Vergil. Every 0.9 s
+//   each hostile within 1.6 cells takes 5 Cut at 20 % armour penetration (about 111 over 20 s).
+//   Allies are not cut. No slow, no blades left in pawns. One ability with a toggle on its button: the mode can be
 //   switched while it runs, 0.3 s for the ring to change, and both modes share the 20 s and the 45 s
 //   cooldown. The sketch shows one mode per run.
 //   It differs from Needle Halo (Six Paths): that is a weapon form, the pawn's own attack in bursts of

@@ -1,14 +1,20 @@
 // Amenoyodomi — technique proposal for the Rinnegan eye kit, not the game. Nothing in Source/RimArt
 // draws this yet.
 //
-// What it is for (agreed in outline 2026-09-24; every number is a placeholder). A toggle on the
-// Rinnegan with three states: off, hang (1 %), drift (10 %). No target, no cooldown, no cost while
-// the kit's cost system is undecided.
+// What it is for (agreed in outline 2026-09-24, whole rule 2026-09-27; every number is a
+// placeholder). A toggle on the
+// Rinnegan with three states: off, hang (1 %), drift (10 %). No target, no cooldown, 0 Echo charge
+// (agreed 2026-09-27).
 //   While it is on, throw kunai can target a cell (it cannot while it is off, so the Flying Thunder
 //   God kit's throw is unchanged). The kunai flies there at full speed (24 cells/s) and stops 0.55
 //   cells up over it. A throw at a pawn stays a normal throw. The Fūma cuts its whole line as usual
 //   (range 12) and stops at the end instead of dropping.
 //   Most held: 5. A 6th throw is a normal throw.
+//   Kunai supply (agreed 2026-09-27): while Sasuke is manifested, his worn kunai belt regains 1 kunai
+//   every 5 s, up to its 6. Without a belt there is nothing to refill. The Fūma is not refilled.
+//   A regained kunai is conjured: it vanishes when it comes to rest on the floor, when it is pulled
+//   out of a pawn, or when its Amaterasu fire goes out. It never becomes an item, so it cannot be
+//   farmed or sold. Real kunai from the colony's stock behave as normal. Minato gets no regeneration.
 //   While held it moves on along its heading at the hold share of its speed: hang 0.24 cells/s (the
 //   Fūma 0.14, turning 7.2 degrees/s), drift 2.4 cells/s (1.4, 72 degrees/s). Switching the state
 //   changes every held weapon at once. It touches nothing: no damage, and pawns walk under it.
