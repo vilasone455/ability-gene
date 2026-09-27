@@ -75,9 +75,17 @@
   <AG_AnchorCannotEquip>Needs both hands free to clap.</AG_AnchorCannotEquip>
 
 
-  <AG_LarynxNotHeard>{0} cannot hear it.</AG_LarynxNotHeard>
   <AG_LarynxNoVoice>{0} has no voice left to spend.</AG_LarynxNoVoice>
-  <AG_LarynxTooltip>Costs at least {0} larynx strain, multiplied by how hard the target was going to be to talk to. Deaf targets do not hear it at all.</AG_LarynxTooltip>
+  <AG_LarynxNoListeners>No one would hear it at {0} volume.</AG_LarynxNoListeners>
+  <AG_LarynxTooMuch>This would take the throat to {0}.</AG_LarynxTooMuch>
+  <AG_LarynxTooltipVolume>The word spreads from him through open space and open doors; walls and closed doors stop it. Everyone it reaches obeys, colonists included. Deaf pawns and mechanoids are immune.\n\nVolume: {0}, reach {1} cells, throat x{2}. Base throat cost {3} per listener.</AG_LarynxTooltipVolume>
+  <AG_LarynxTooltipNow>Heard now by {0} ({1} hostile, {2} other). Throat +{3}: {4} to {5}.</AG_LarynxTooltipNow>
+  <AG_LarynxVolume_Whisper>whisper</AG_LarynxVolume_Whisper>
+  <AG_LarynxVolume_Speak>speak</AG_LarynxVolume_Speak>
+  <AG_LarynxVolume_Shout>shout</AG_LarynxVolume_Shout>
+  <AG_LarynxVolumeGizmo>Volume: {0}</AG_LarynxVolumeGizmo>
+  <AG_LarynxVolumeGizmoDesc>How loud Inumaki says his words. Click to change.\n\nWhisper: reach {0} cells, throat x{1}.\nSpeak: reach {2} cells, throat x{3}.\nShout: reach {4} cells, throat x{5}.</AG_LarynxVolumeGizmoDesc>
+  <AG_LarynxSyrup>Drink as throat syrup (-{0} strained larynx)</AG_LarynxSyrup>
 
   <AG_InvoluteVented>{0} connected the hole in their {1}. Anything that finds it now goes through.</AG_InvoluteVented>
   <AG_InvoluteVentedTip>Connected for another {0} seconds.</AG_InvoluteVentedTip>

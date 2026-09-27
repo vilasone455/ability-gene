@@ -132,13 +132,14 @@ Proposed handling (not yet confirmed rule by rule):
 |---|---|---|---|---|---|
 | Accelerator | Intellectual 12, Damage taken 300 | Abrasive | vector manipulation, reflex surge, vector shove | 12 | surge 10, shove 8 |
 | Pain | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei | 15 | 20 |
-| Inumaki | Social 10, not Psychopath | Kind | the five imperatives | 8 | 5 each |
+| Inumaki | Social 10, not Psychopath | Kind | stop, drop, crush, come, run, explode | 8 | 0 each (the throat is his cost) |
 | Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | Judgement Cut, Yamato Dash, Summoned Swords, Judgement Cut End (the def grants none until the kit is ported) | 10 | Judgement Cut 3, Yamato Dash 2, Summoned Swords 10, Judgement Cut End 0 (Style is its limit) |
 | Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40 |
 
-Accelerator, Pain and Inumaki reuse abilities that still come from their pre-hero item (reflex
-booster implant, repulsion eye, Commanding Voice trait). validate.py allows that second source only
-for those abilities (`SHARED_WITH_ECHO`) until it is decided whether the old items stay.
+Accelerator and Pain reuse abilities that still come from their pre-hero item (reflex booster
+implant, repulsion eye). validate.py allows that second source only for those abilities
+(`SHARED_WITH_ECHO`) until the items are made Echo-only. Inumaki's words have one source, his Echo:
+the Commanding Voice trait was removed when his kit was ported.
 Decided 2026-09-27: the reflex booster implant becomes Echo-only, like Todo's anchor organ; the
 repulsion eye and Commanding Voice became Echo-only later the same day. Accelerator keeps brain strain as his cost; his
 strain abilities (manipulation, surge, shove, Plasma) cost 0 charge, so `AG_Echo_Accelerator`'s
@@ -324,6 +325,32 @@ Inumaki revisit (agreed 2026-09-27; numbers are placeholders; the built words ar
 - The Commanding Voice trait becomes Echo-only (agreed 2026-09-27): only Inumaki's Echo gives the
   words.
 - About 1.5-2 days of work on top of the built Larynx code.
+
+Inumaki port (built 2026-09-27 on `feature/inumaki-port`; `-rimarttest=inumaki` 11/11, Echo 10/10;
+not played by hand):
+- All of the above is built. The numbers are in XML: `LarynxExtension` on `AG_LarynxWear` (reach and
+  factor per volume, doorway cost 3 cells, listener factors, deaf at Hearing 15 % or less, max wear
+  100 %, syrup) and each word's `CompProperties_AbilityImperative` (base throat cost, damage, stun,
+  flee distance). Crush has 30 % armour penetration; explode uses Bomb's default.
+- Choices made in the port: a word is cast on Inumaki with no targeting step, so the preview shows
+  while its button is hovered (reached cells shaded, rings red hostile / blue colony / yellow other)
+  and the listener count and throat cost are in the tooltip. A word no one would hear is greyed out.
+  Explode does not hurt Inumaki. The throat check is on the button; people who walk into reach
+  during the 0.4 s warm-up are still obeyed and billed. Consciousness still scales each listener's
+  factor (not below 0.2), as built before. A listener the word can do nothing to (drop to someone
+  unarmed, stop / drop / come / run to someone downed) is not a listener and costs nothing. The
+  volume toggle is on the hero form hediff and starts at speak on each manifest. Throat syrup is a
+  right-click on herbal medicine, 1.5 s.
+- `AG_Imperative_Kneel` and the Commanding Voice trait are removed (an old save drops them with a
+  load error line). Icons are the placeholder `UI/Abilities/AnimalWarcall`.
+- Distances are any-angle (straight line from the speaker, a wall corner or the doorway the sound
+  came through), so a volume's reach is a circle on open ground.
+- VFX and sound (added the same day, straight in C#, no lab sketch): rings at his head, a ripple
+  band with a magenta / cyan fringe moving out at 30 cells/s over the reached cells (stops at walls,
+  half-ring out of a doorway, fades before the edge of reach), purple-white crackle on each listener
+  when the band reaches them. Looks from the anime: ep 19 "Blast away" (ripple with colour fringe
+  from the mouth), ep 17 (crackle on the target). Sound: Core `PsychicShockLanceCast`, volume and
+  pitch by whisper / speak / shout, a placeholder.
 
 Todo (agreed 2026-09-27): stone, clap and double clap are the anchor organ's rework on main (PRs
 #44, #56) and count as two abilities; Black Flash is built on `feature/todo-black-flash` (0cb9387,

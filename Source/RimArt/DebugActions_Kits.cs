@@ -130,7 +130,6 @@ namespace RimArt
 
                 Trait("Combat presence", "AG_CombatPresence"),
                 Trait("Pain debt", "AG_PainDebt"),
-                Trait("Commanding voice", "AG_CommandingVoice"),
 
                 Implant("Neural accelerator", "AG_NeuralAccelerator", "Brain", "Bionics"),
                 Implant("Reflex booster", "AG_ReflexBooster", "Spine", "Prosthetics"),
