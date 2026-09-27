@@ -21,6 +21,8 @@
         <drainedHediff>AG_SusanooDrained</drainedHediff>
         <drainedTicks>15000</drainedTicks>
         <bloodLoss>0.10</bloodLoss>
+        <!-- The stab lands 0.45 s after the click, when the picture's blade reaches the target. -->
+        <stabResolveTicks>27</stabResolveTicks>
       </li>
     </comps>
     <stages>

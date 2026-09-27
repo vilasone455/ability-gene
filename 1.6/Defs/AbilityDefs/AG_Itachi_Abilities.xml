@@ -51,6 +51,8 @@
     <iconPath>RimArt/Itachi/IconSusanoo</iconPath>
     <cooldownTicksRange>60000</cooldownTicksRange>
     <hostile>false</hostile>
+    <!-- Its own cast job: the picture grows out of the floor during the warm-up. -->
+    <jobDef>AG_CastSusanoo</jobDef>
     <statBases>
       <Ability_Duration>12</Ability_Duration>
     </statBases>

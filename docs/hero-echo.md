@@ -198,8 +198,10 @@ Sasuke's Melee Trial follows the throw: kunai accuracy uses Melee (`KunaiAccurac
 kills count because the Fūma throw passes the weapon to the kill counter; kunai kills were not
 checked. A "lost family" Trial was considered and dropped (2026-09-27).
 
-Itachi (agreed 2026-09-27; numbers are placeholders; the mechanics were built the same day, see
-"Echoes defined"; the Susanoo picture from `itachi-susanoo.js` is still to port):
+Itachi (agreed 2026-09-27; numbers are placeholders; the mechanics and the Susanoo picture were
+built the same day, see "Echoes defined"; the picture is `Source/RimArt/Itachi/Susanoo*.cs`, ported
+from `itachi-susanoo.js` and matched against it in the lab; previews "Susanoo: raise / block / seal
+/ hit / end"; the stab lands 0.45 s after the click, when the blade reaches the target):
 - Crow Dispersal: the built Murder and automatic Scatter, counted as one ability.
 - Carrion: built, unchanged.
 - False Face (genjutsu): one button, no target. Every enemy within 15 cells whose current target is

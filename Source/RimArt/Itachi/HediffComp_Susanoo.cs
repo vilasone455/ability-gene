@@ -22,6 +22,8 @@ namespace RimArt
         public int drainedTicks = 15000;
         /// <summary>Blood loss severity added when it ends.</summary>
         public float bloodLoss = 0.1f;
+        /// <summary>Ticks from the click to the stab landing: the picture's swing. The hit or seal resolves then.</summary>
+        public int stabResolveTicks = 27;
 
         public HediffCompProperties_Susanoo()
         {
@@ -48,6 +50,9 @@ namespace RimArt
         private bool sealedThisSusanoo;
         private int nextStabTick = -1;
         private bool ended;
+        /// <summary>The target of a stab whose blade is still on its way, and the tick it lands.</summary>
+        private Pawn pendingTarget;
+        private int resolveTick = -1;
         private static Texture2D icon;
 
         public HediffCompProperties_Susanoo Props => (HediffCompProperties_Susanoo)props;
@@ -60,12 +65,14 @@ namespace RimArt
         {
             base.CompPostPostAdd(dinfo);
             SusanooRegistry.Report(this);
+            MapComponent_Susanoo.For(Pawn)?.Raised(Pawn);
         }
 
         public override void CompPostTickInterval(ref float severityAdjustment, int delta)
         {
             base.CompPostTickInterval(ref severityAdjustment, delta);
             SusanooRegistry.Report(this);
+            if (pendingTarget != null && Find.TickManager.TicksGame >= resolveTick) Resolve();
             // Reverting takes the abilities and the manifest hediff; the Susanoo is part of the
             // form and goes with it.
             EchoRecord record = GameComponent_Echoes.Get?.HostRecord(Pawn);
@@ -76,6 +83,7 @@ namespace RimArt
         {
             base.CompPostPostRemoved();
             SusanooRegistry.Drop(this);
+            MapComponent_Susanoo.For(Pawn)?.End(Pawn);
             End();
         }
 
@@ -139,12 +147,28 @@ namespace RimArt
             return target.Downed || target.health.summaryHealth.SummaryHealthPercent <= Props.sealHealthPercent;
         }
 
-        /// <summary>One stab. Does nothing while the blade is still drawn back or the target is out of reach.</summary>
+        /// <summary>
+        /// One stab: the swing starts now and the blade lands after stabResolveTicks, when the seal
+        /// or the hit resolves on the target where it is then. Does nothing while the blade is still
+        /// drawn back or the target is out of reach.
+        /// </summary>
         public void Stab(Pawn target)
         {
             if (target == null || Pawn == null || !Pawn.Spawned || Pawn.Downed) return;
             if (StabTicksLeft > 0 || !ValidTarget(target)) return;
             nextStabTick = Find.TickManager.TicksGame + Props.totsukaCooldownTicks;
+            pendingTarget = target;
+            resolveTick = Find.TickManager.TicksGame + Props.stabResolveTicks;
+            MapComponent_Susanoo.For(Pawn)?.Stab(Pawn, target, WouldSeal(target));
+        }
+
+        /// <summary>The blade lands. A target that died, left or walked more than a cell and a half out of reach is missed.</summary>
+        private void Resolve()
+        {
+            Pawn target = pendingTarget;
+            pendingTarget = null;
+            if (target == null || target.Dead || !target.Spawned || Pawn == null || Pawn.Dead || !Pawn.Spawned || target.Map != Pawn.Map) return;
+            if (!target.Position.InHorDistOf(Pawn.Position, Props.totsukaRange + 1.5f)) return;
             if (WouldSeal(target)) Seal(target);
             else Hit(target);
         }
@@ -154,7 +178,6 @@ namespace RimArt
             float angle = (target.DrawPos - Pawn.DrawPos).AngleFlat();
             var dinfo = new DamageInfo(DamageDefOf.Stab, Props.stabDamage, Props.stabArmorPenetration, angle, Pawn);
             target.TakeDamage(dinfo);
-            SusanooFX.Stab(Pawn, target, sealedTarget: false);
         }
 
         /// <summary>
@@ -166,22 +189,19 @@ namespace RimArt
         private void Seal(Pawn target)
         {
             sealedThisSusanoo = true;
-            Map map = target.Map;
-            Vector3 at = target.DrawPos;
             string label = target.LabelShortCap;
             target.Strip(notifyFaction: false);
             target.Kill(new DamageInfo(DamageDefOf.Stab, 0f, 0f, -1f, Pawn));
             Corpse corpse = target.Corpse;
             if (corpse != null && !corpse.Destroyed) corpse.Destroy(DestroyMode.Vanish);
-            SusanooFX.Stab(Pawn, null, sealedTarget: true, at: at, map: map);
             if (PawnUtility.ShouldSendNotificationAbout(Pawn))
                 Messages.Message("AG_ItachiSealed".Translate(label), Pawn, MessageTypeDefOf.PositiveEvent, false);
         }
 
-        /// <summary>The Mirror took a hit. The picture (PR 2) turns to the attacker from here.</summary>
+        /// <summary>The Mirror took a hit: the picture turns it to the attacker and ripples the face.</summary>
         public void Blocked(DamageInfo dinfo)
         {
-            SusanooFX.Block(Pawn, dinfo);
+            MapComponent_Susanoo.For(Pawn)?.Blocked(Pawn, dinfo);
         }
 
         public override string CompTipStringExtra =>
@@ -193,6 +213,8 @@ namespace RimArt
             Scribe_Values.Look(ref sealedThisSusanoo, "sealedThisSusanoo", false);
             Scribe_Values.Look(ref nextStabTick, "nextStabTick", -1);
             Scribe_Values.Look(ref ended, "ended", false);
+            Scribe_References.Look(ref pendingTarget, "pendingTarget");
+            Scribe_Values.Look(ref resolveTick, "resolveTick", -1);
         }
     }
 }

@@ -353,20 +353,24 @@ namespace RimArt
 
             int hurts = Hurts(healthy);
             comp.Stab(healthy);
-            t.Check(Hurts(healthy) > hurts && !healthy.Dead, "a healthy target takes the stab (" + Hurts(healthy) + " injuries)");
+            t.Check(Hurts(healthy) == hurts, "nothing lands at the click: the blade is on its way");
+            yield return 30;
+            t.Check(Hurts(healthy) > hurts && !healthy.Dead, "a healthy target takes the stab 0.45 s later (" + Hurts(healthy) + " injuries)");
             t.Check(!comp.Sealed, "not sealed");
             hurts = Hurts(healthy);
             comp.Stab(healthy);
+            yield return 30;
             t.Check(Hurts(healthy) == hurts, "a second stab inside 3 s does nothing");
-            yield return 181;
+            yield return 121;
 
             if (mech != null)
             {
                 HealthUtility.DamageUntilDowned(mech, false);
                 comp.Stab(mech);
+                yield return 30;
                 t.Check(!comp.Sealed, "a downed mechanoid is not sealed");
                 t.Check(!mech.Dead || (mech.Corpse != null && !mech.Corpse.Destroyed), "the mechanoid is cut, not taken");
-                yield return 181;
+                yield return 151;
             }
             else t.Log("no mechanoid faction or kind on this world; mech check skipped");
 
@@ -388,8 +392,9 @@ namespace RimArt
             int goodwill = faction?.GoodwillWith(Faction.OfPlayer) ?? 0;
             float kills = itachi.records.GetValue(RecordDefOf.Kills);
             comp.Stab(weak);
-            yield return 2;
-            t.Check(comp.Sealed, "sealed");
+            t.Check(!comp.Sealed && !weak.Dead, "at the click the target still stands");
+            yield return 30;
+            t.Check(comp.Sealed, "sealed when the blade lands");
             t.Check(weak.Dead, "the target is dead");
             t.Check(!weak.Spawned && (weak.Corpse == null || weak.Corpse.Destroyed), "no corpse");
             t.Check(!GenRadial.RadialCellsAround(cell, 2f, true).Any(c => c.InBounds(t.map) && c.GetThingList(t.map).OfType<Corpse>().Any()),
@@ -399,12 +404,12 @@ namespace RimArt
             t.Check(dropped >= gear, "its gear is on the ground (" + dropped + " of " + gear + ")");
             t.Check(itachi.records.GetValue(RecordDefOf.Kills) == kills + 1f, "counted as Itachi's kill (" + kills + " -> " + itachi.records.GetValue(RecordDefOf.Kills) + ")");
             t.Check(faction == null || faction.GoodwillWith(Faction.OfPlayer) == goodwill, "goodwill unchanged by the strip");
-            yield return 181;
+            yield return 151;
 
             Pawn weak2 = Enemy(t, 0, -2);
             HealthUtility.DamageUntilDowned(weak2, false);
             comp.Stab(weak2);
-            yield return 2;
+            yield return 30;
             t.Check(!weak2.Dead || (weak2.Corpse != null && !weak2.Corpse.Destroyed), "a second weak target is only cut");
             TearDown();
         }
