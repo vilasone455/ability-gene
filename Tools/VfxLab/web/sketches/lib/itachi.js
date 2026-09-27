@@ -604,9 +604,15 @@ export function susanoo(key, F, s, look, g, pose) {
 }
 
 // The head. Skeletal stage: a skull with one lit eye (the Kabuto fight). Then the helmet fills
-// in over it: a tengu face whose yellow eyes glow in a dark band at eye level, heavy brows, a
-// long nose running from the forehead down across the band to below it (lit side, dark side and
-// a cast shadow on the face so it stands out), fangs at the band's corners, ears with rings.
+// in over it as the source draws it (ep 138 still, manga ch. 393): a hood wrapping a tengu mask
+// turned a little to screen left (the user's ep 138 front frame): a glowing orange crystal on the
+// forehead above the nose root, one small dark eye with a socket line, a long curved spike nose
+// pointing up and to the left out past the hood into the flames, an ear with a ring and a bead
+// on the right, and the mask's mouth as a dark trapezoid
+// slot holding the Susanoo's own yellow eyes, with red teeth outlined in pale line: a fang down
+// between the eyes, a tall tusk up at the right corner, block teeth along the bottom lip.
+const HoodEdge = smoothEdge([[2.2, .66], [2.45, .66], [2.75, .62], [3.0, .56], [3.22, .44], [3.4, .26], [3.5, .06]]);
+const FaceC = { u: -.05, v: 2.76 }, FaceR = { u: .36, v: .44 };
 function head(key, S, s, g, c) {
   const { line, bone, lit, deep, fillA, lineA, aK, bob, kx, kz, A } = c;
   const headK = smooth(clamp((aK - .2) / .8));
@@ -622,67 +628,91 @@ function head(key, S, s, g, c) {
     blob(e, .045 * kx, .03 * kz, EyeHot.withAlpha(skullA * g.oneEye), Front + .0098, 0, add);
   }
   if (headK <= 0) return;
-  const pair = (edge, dv = 0) => [edge.map(([v, h]) => S(-h, v + dv)), edge.map(([v, h]) => S(h, v + dv))];
-  const [cl, cr] = pair(CollarEdge, bob);
-  fillStrip(`${key} collar`, cl, cr, lit, .5 * fillA * headK, Front + .009);
-  const [hl, hr] = pair(HeadEdge.map(([v, h]) => [v, h * lerp(.7, 1, headK)]), bob);
-  fillStrip(`${key} head`, hl, hr, deep, .85 * fillA * headK, Front + .010);
-  // Ears with a ring in each, pointing up and out.
-  for (const side of [-1, 1]) {
-    const ear = [S(side * .44, 2.74 + bob), S(side * .66, 3.06 + bob), S(side * .47, 2.98 + bob)];
-    fillStrip(`${key} ear ${side}`, [ear[0], ear[1]], [ear[2], ear[1]], lit, .6 * fillA * headK, Front + .0102);
-    glowLine(`${key} ear line ${side}`, ear, .022 * kx, line, .7 * lineA * headK, { layer: Front + .0103 });
-    const ring = S(side * .5, 2.62 + bob);
-    draw(ringMesh, ring.x, Front + .0103, ring.z, .045 * kx, .045 * kz, 0, line.withAlpha(.8 * lineA * headK), add);
-  }
-  // Brow plate above the band.
-  const [ml, mr] = pair(MaskEdge.map(([v, h]) => [v + .12, h * .95]), bob);
-  fillStrip(`${key} brow plate`, ml, mr, lit, .6 * fillA * headK, Front + .011);
-  // The dark band with the eyes.
-  const [sl, sr] = pair(SlotEdge, bob);
-  strip(`${key} slot`, sl, sr, Mouth.withAlpha(.88 * A * headK), flat, Front + .012);
-  // Fangs: two down from the band's top corners, two up from its bottom corners.
-  [[-.36, 2.80, -1], [.36, 2.80, -1], [-.31, 2.585, 1], [.31, 2.585, 1]].forEach(([u, v, dir], i) => {
-    const m = mesh(`${key} fang ${i}`), a = S(u - .04, v + bob), b = S(u + .04, v + bob), t = S(u + (dir < 0 ? -.01 : .01) * Math.sign(u), v + bob + dir * .1);
-    m.setFlat([a.x, a.z, b.x, b.z, t.x, t.z], [0, 1, 2]);
-    draw(m, 0, Front + .0122, 0, 1, 1, 0, Fang.withAlpha(.9 * A * headK));
-  });
-  // Heavy brows angled down to the nose.
-  for (const side of [-1, 1]) {
-    glowLine(`${key} brow ${side}`, [S(side * .06, 2.86 + bob), S(side * .22, 2.93 + bob), S(side * .40, 3.0 + bob)], .045 * kx, line, .85 * lineA * headK, { layer: Front + .0124 });
-  }
-  // Head contour and chin line.
-  const loop = [...hr, ...hl.slice().reverse(), hr[0]];
-  glowLine(`${key} head line`, loop, .024 * kx, line, .8 * lineA, { layer: Front + .0124, upTo: headK });
-  glowLine(`${key} chin`, [S(-.28, 2.42 + bob), S(0, 2.34 + bob), S(.28, 2.42 + bob)], .022 * kx, line, .5 * lineA * headK, { layer: Front + .0124 });
-  // Yellow eyes in the band.
+  const P = (u, v) => S(u, v + bob), hA = A * headK;
+  const tri = (k, a, b, t, colour, layer) => { const m = mesh(k); m.setFlat([a.x, a.z, b.x, b.z, t.x, t.z], [0, 1, 2]); draw(m, 0, layer, 0, 1, 1, 0, colour); };
+  // Hood, from the shoulders up round the head, rising to a point into the flames.
+  const hood = HoodEdge.map(([v, h]) => [v, h * lerp(.75, 1, headK)]);
+  const hl = hood.map(([v, h]) => P(-h, v)), hr = hood.map(([v, h]) => P(h, v));
+  fillStrip(`${key} hood`, hl, hr, deep, .9 * fillA * headK, Front + .009);
+  glowLine(`${key} hood line`, [...hr, ...hl.slice().reverse()], .024 * kx, line, .8 * lineA, { layer: Front + .0092, upTo: headK });
+  for (const side of [-1, 1]) glowLine(`${key} hood fold ${side}`, [P(side * .56, 2.3), P(side * .52, 2.7), P(side * .44, 3.05), P(side * .3, 3.3)], .016 * kx, line, .4 * lineA * headK, { layer: Front + .0092, taper: 1 });
+  // The mask face inside the hood.
+  const ring = (cu, cv, ru, rv, n = 32) => { const pts = []; for (let j = 0; j <= n; j++) { const a = j / n * TAU; pts.push(P(cu + Math.cos(a) * ru, cv + Math.sin(a) * rv)); } return pts; };
+  fillBlob(P(FaceC.u, FaceC.v), FaceR.u * kx, FaceR.v * kz, lit, .85 * fillA * headK, Front + .0102);
+  glowLine(`${key} face line`, ring(FaceC.u, FaceC.v, FaceR.u, FaceR.v), .022 * kx, line, .75 * lineA, { layer: Front + .0103, upTo: headK });
+  // Ear on the far side (screen right) with a ring earring hanging from it.
+  fillBlob(P(.36, 2.86), .07 * kx, .12 * kz, lit, .85 * fillA * headK, Front + .0101);
+  glowLine(`${key} ear`, [P(.33, 2.76), P(.40, 2.8), P(.43, 2.9), P(.39, 2.97), P(.34, 2.93), P(.37, 2.86)], .018 * kx, line, .75 * lineA * headK, { layer: Front + .0104 });
+  const er = P(.4, 2.64), bead = P(.39, 2.74);
+  draw(ringMesh, er.x, Front + .0104, er.z, .07 * kx, .07 * kz, 0, line.withAlpha(.9 * lineA * headK), add);
+  draw(ringMesh, bead.x, Front + .0104, bead.z, .025 * kx, .025 * kz, 0, line.withAlpha(.8 * lineA * headK), add);
+  // Gem on the forehead, upper left: a glowing orange crystal with facet lines.
+  const gc = P(.0, 3.17);
+  sprite(gc, .55 * kx, .55 * kz, FlameMid.withAlpha(.6 * hA), glow, Front + .0104);
+  const gem = [];
+  for (let j = 0; j <= 6; j++) { const a = j / 6 * TAU + Math.PI / 6; gem.push(P(Math.cos(a) * .1, 3.17 + Math.sin(a) * .11)); }
+  const gm = mesh(`${key} gem`), gv = [gc.x, gc.z], gt = [];
+  gem.slice(0, 6).forEach((q, j) => { gv.push(q.x, q.z); gt.push(0, 1 + j, 1 + (j + 1) % 6); });
+  gm.setFlat(gv, gt);
+  draw(gm, 0, Front + .0105, 0, 1, 1, 0, C(1, .5, .14).withAlpha(.55 * hA), add);
+  sprite(gc, .12 * kx, .12 * kz, C(1, .85, .45).withAlpha(.7 * hA), glow, Front + .01052);
+  glowLine(`${key} gem line`, gem, .012 * kx, line, .5 * lineA * headK, { layer: Front + .0106 });
+  glowLine(`${key} gem facet`, [gem[1], gc, gem[4]], .009 * kx, line, .35 * lineA * headK, { layer: Front + .0106 });
+  // The mask's eye: one small dark oval right of the nose root, a socket line over it.
+  blob(P(.07, 2.95), .07 * kx, .05 * kz, Mouth.withAlpha(.95 * hA), Front + .0107);
+  glowLine(`${key} socket`, [P(-.04, 2.96), P(.02, 3.02), P(.12, 3.02), P(.19, 2.96)], .016 * kx, line, .65 * lineA * headK, { layer: Front + .0108 });
+  // Hood strands: lines sweeping round the head down to the jaw.
+  [[[-.34, 3.36], [-.5, 3.1], [-.58, 2.75], [-.5, 2.35]], [[-.12, 3.44], [-.36, 3.25], [-.46, 2.95], [-.44, 2.6]], [[.3, 3.38], [.46, 3.15], [.52, 2.9]], [[.52, 2.6], [.5, 2.38], [.38, 2.25]]].forEach((pts, i) =>
+    glowLine(`${key} strand ${i}`, pts.map(([u, v]) => P(u, v)), .015 * kx, line, .45 * lineA * headK, { layer: Front + .0103, taper: 1 }));
+  // The mouth: a dark slot, a trapezoid wider at the top, under a red upper lip. Inside, the
+  // Susanoo's own yellow eyes. Teeth are the body's red with pale outlines, as the anime draws
+  // them: one fang down from the top edge between the eyes, a tall tusk up from the bottom right
+  // corner past the top edge, a row of block teeth along the bottom lip.
+  const slotT = [P(-.38, 2.64), P(.32, 2.65)], slotB = [P(-.32, 2.43), P(.28, 2.43)];
+  fillStrip(`${key} upper lip`, [P(-.4, 2.64), P(.33, 2.64)], [P(-.38, 2.71), P(.3, 2.71)], lit, .9 * fillA * headK, Front + .0109);
+  strip(`${key} mouth`, slotT, slotB, Mouth.withAlpha(.95 * hA), flat, Front + .011);
+  glowLine(`${key} slot line`, [slotT[0], slotT[1], slotB[1], slotB[0], slotT[0]], .014 * kx, line, .45 * lineA * headK, { layer: Front + .0111 });
   if (g.eyes > 0) {
-    for (const side of [-1, 1]) {
-      const e = S(side * .19, 2.69 + bob), pulse = .85 + .15 * Math.sin(s * 5 + side);
-      sprite(e, .42 * kx, .24 * kz, EyeGlow.withAlpha(.7 * g.eyes * pulse * A), glow, Front + .0125);
-      blob(e, .1 * kx, .036 * kz, Eye.withAlpha(g.eyes * A), Front + .0126, side * -16, add);
-      blob(e, .045 * kx, .016 * kz, EyeHot.withAlpha(.8 * g.eyes * A), Front + .01265, side * -16, add);
-    }
-    if (g.flash > 0) for (const side of [-1, 1]) {
-      const e = S(side * .19, 2.69 + bob), f = g.flash;
-      sprite(e, 1.2 * f, .08, EyeHot.withAlpha(.9 * f * A), glow, Front + .0135);
-      sprite(e, .08, .9 * f, EyeHot.withAlpha(.7 * f * A), glow, Front + .0135);
-    }
+    [[-.19, 2.54, 10], [.1, 2.54, -10]].forEach(([u, v, rot], i) => {
+      const e = P(u, v), pulse = .85 + .15 * Math.sin(s * 5 + i);
+      sprite(e, .42 * kx, .24 * kz, EyeGlow.withAlpha(.7 * g.eyes * pulse * A), glow, Front + .0112);
+      blob(e, .11 * kx, .045 * kz, Eye.withAlpha(g.eyes * A), Front + .0113, rot, add);
+      blob(e, .05 * kx, .02 * kz, EyeHot.withAlpha(.8 * g.eyes * A), Front + .01135, rot, add);
+      if (g.flash > 0) { const f = g.flash; sprite(e, 1.1 * f, .07, EyeHot.withAlpha(.9 * f * A), glow, Front + .0135); sprite(e, .07, .8 * f, EyeHot.withAlpha(.7 * f * A), glow, Front + .0135); }
+    });
   }
-  // The long nose: from the forehead down across the band, a little to the right of true so it
-  // reads as sticking out; tip below the band.
-  const root = S(0, 3.04 + bob), tip = S(.14, 2.22 + bob), n = 10, spine = [];
-  for (let j = 0; j <= n; j++) { const f = j / n; spine.push({ x: lerp(root.x, tip.x, f * f), z: lerp(root.z, tip.z, f) }); }
-  const wAt = j => lerp(.13, .07, j / n) * kx;
-  const shadowL = spine.map((p, j) => ({ x: p.x - wAt(j) * .4 - .05 * kx, z: p.z - .05 * kz })), shadowR = spine.map((p, j) => ({ x: p.x + wAt(j) * .4 - .05 * kx, z: p.z - .05 * kz }));
-  strip(`${key} nose shadow`, shadowL, shadowR, Mouth.withAlpha(.35 * A * headK), flat, Front + .0127);
-  const nl = spine.map((p, j) => ({ x: p.x - wAt(j) / 2, z: p.z })), nr = spine.map((p, j) => ({ x: p.x + wAt(j) / 2, z: p.z }));
-  const mid = spine.map(p => ({ x: p.x + .012 * kx, z: p.z }));
-  strip(`${key} nose dark`, nl, mid, deep.withAlpha(.9 * A * headK), flat, Front + .0128);
-  strip(`${key} nose lit`, mid, nr, Color.Lerp(lit, Line, .35).withAlpha(.92 * A * headK), flat, Front + .0128);
-  blob(tip, .05 * kx, .045 * kz, Color.Lerp(lit, Line, .35).withAlpha(.95 * A * headK), Front + .0129);
-  glowLine(`${key} nose line l`, nl.slice(1), .018 * kx, line, .75 * lineA * headK, { layer: Front + .013 });
-  glowLine(`${key} nose line r`, nr.slice(1), .018 * kx, line, .75 * lineA * headK, { layer: Front + .013 });
+  const redTooth = (k, pts) => {
+    const m = mesh(k), v = [], t = [];
+    pts.forEach(q => v.push(q.x, q.z)); for (let j = 1; j + 1 < pts.length; j++) t.push(0, j, j + 1);
+    m.setFlat(v, t);
+    draw(m, 0, Front + .0114, 0, 1, 1, 0, lit.withAlpha(.95 * hA));
+    glowLine(k + ' line', [...pts, pts[0]], .012 * kx, line, .6 * lineA * headK, { layer: Front + .0115 });
+  };
+  redTooth(`${key} fang`, [P(-.1, 2.64), P(.01, 2.64), P(-.045, 2.48)]);
+  // Lower lip: a red band under the slot, split into teeth by short lines, its top edge slightly
+  // uneven where each tooth rises into the slot.
+  const lipTop = [], lipBot = [];
+  for (let j = 0; j <= 12; j++) { const f = j / 12, u = lerp(-.32, .28, f); lipTop.push(P(u, 2.43 + (j % 2 ? .025 : 0))); lipBot.push(P(u * .95, 2.33 - .02 * Math.sin(f * Math.PI))); }
+  fillStrip(`${key} lower lip`, lipTop, lipBot, lit, .95 * fillA * headK, Front + .01142);
+  glowLine(`${key} lower lip line`, lipBot, .014 * kx, line, .55 * lineA * headK, { layer: Front + .0115 });
+  for (let j = 1; j < 6; j++) { const u = lerp(-.32, .28, j / 6); glowLine(`${key} tooth split ${j}`, [P(u, 2.35), P(u, 2.45)], .01 * kx, line, .5 * lineA * headK, { layer: Front + .0115 }); }
+  redTooth(`${key} tusk`, [P(.17, 2.36), P(.28, 2.36), P(.25, 2.74)]);
+  // Jaw line under the mouth.
+  glowLine(`${key} jaw line`, [P(-.32, 2.36), P(-.05, 2.3), P(.26, 2.36)], .016 * kx, line, .5 * lineA * headK, { layer: Front + .0111, taper: 1 });
+  // The tengu nose: a long curved horn from just above the mouth, left of the eye, pointing up
+  // and to the left at about 45 degrees and ending past the hood's upper-left edge in the
+  // flames (1.4 cells, about twice the mouth's width), its base 0.36 wide over the upper-left
+  // of the face, its lower edge bowed out; a nostril mark at its base.
+  const root = { u: -.08, v: 2.8 }, tip = { u: -1.0, v: 3.85 }, n = 16, spine = [];
+  const dx = tip.u - root.u, dv = tip.v - root.v, L = Math.hypot(dx, dv), nx = dv / L, nv = -dx / L;   // normal toward lower left
+  for (let j = 0; j <= n; j++) { const f = j / n, bow = .07 * Math.sin(f * Math.PI); spine.push({ u: lerp(root.u, tip.u, f) - nx * bow, v: lerp(root.v, tip.v, f) - nv * bow }); }
+  // A horn: its base spreads over the upper-left of the face (about half the mouth's width).
+  const wAt = j => lerp(.36, .025, Math.pow(j / n, .7));
+  const lower = spine.map((q, j) => P(q.u - nx * wAt(j) / 2, q.v - nv * wAt(j) / 2)), upper = spine.map((q, j) => P(q.u + nx * wAt(j) / 2, q.v + nv * wAt(j) / 2));
+  fillStrip(`${key} nose`, lower, upper, lit, fillA * headK, Front + .0116);
+  glowLine(`${key} nose lower`, lower, .018 * kx, line, .85 * lineA * headK, { layer: Front + .0117 });
+  glowLine(`${key} nose upper`, upper, .018 * kx, line, .85 * lineA * headK, { layer: Front + .0117 });
+  glowLine(`${key} nostril`, [P(-.1, 2.76), P(-.05, 2.72), P(.01, 2.75)], .014 * kx, line, .65 * lineA * headK, { layer: Front + .0117 });
 }
 
 function arms(key, S, s, look, g, pose, c) {
