@@ -40,6 +40,7 @@
   <AG_EchoTrialNot>Not {0}</AG_EchoTrialNot>
   <AG_EchoTrialWealth>Colony wealth {0}</AG_EchoTrialWealth>
   <AG_EchoTrialKillsWith>{0} kills with a {1}</AG_EchoTrialKillsWith>
+  <AG_EchoTrialDownedRecovered>Downed and recovered {0} times</AG_EchoTrialDownedRecovered>
   <AG_EchoMeleeWeapon>melee weapon</AG_EchoMeleeWeapon>
   <AG_EchoRangedWeapon>ranged weapon</AG_EchoRangedWeapon>
   <AG_EchoTrialCleared>{0} cleared a trial for {1}: {2}.</AG_EchoTrialCleared>

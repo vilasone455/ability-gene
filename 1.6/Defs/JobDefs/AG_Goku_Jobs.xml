@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Solar Flare and Instant Transmission: JobDriver_CastAbility that tells the picture when the
+       warmup begins. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastGoku</defName>
+    <driverClass>RimArt.JobDriver_CastGoku</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+  <!-- Kamehameha and Spirit Bomb: the caster stands and channels until the cast lets it go. A move
+       order ends the job and with it the cast (the cooldown and charge come back). -->
+  <JobDef>
+    <defName>AG_GokuChannel</defName>
+    <driverClass>RimArt.JobDriver_GokuChannel</driverClass>
+    <reportString>Gathering ki.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <suspendable>false</suspendable>
+    <neverShowWeapon>true</neverShowWeapon>
+  </JobDef>
+
+  <!-- Lend energy: a colonist stands with a hand up while Goku channels a Spirit Bomb. -->
+  <JobDef>
+    <defName>AG_GokuLend</defName>
+    <driverClass>RimArt.JobDriver_GokuLend</driverClass>
+    <reportString>Lending energy.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <suspendable>false</suspendable>
+    <neverShowWeapon>true</neverShowWeapon>
+  </JobDef>
+
+</Defs>

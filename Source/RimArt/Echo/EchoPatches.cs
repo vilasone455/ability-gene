@@ -38,6 +38,23 @@ namespace RimArt
         }
     }
 
+    /// <summary>
+    /// Counts each time a colonist gets back up after being downed. MakeUndowned returns at once when
+    /// the pawn is not downed, so the prefix remembers whether it was.
+    /// </summary>
+    [HarmonyPatch(typeof(Pawn_HealthTracker), "MakeUndowned")]
+    static class Patch_MakeUndowned_EchoDeeds
+    {
+        static void Prefix(Pawn_HealthTracker __instance, out bool __state) => __state = __instance.Downed;
+
+        static void Postfix(Pawn_HealthTracker __instance, Pawn ___pawn, bool __state)
+        {
+            if (!__state || __instance.Downed || ___pawn == null || ___pawn.Dead || !___pawn.IsColonist) return;
+            PawnDeeds deeds = GameComponent_Echoes.Get?.DeedsFor(___pawn, true);
+            if (deeds != null) deeds.downedRecoveries++;
+        }
+    }
+
     /// <summary>An Echo ability with a cast cost is disabled while the pool cannot pay it.</summary>
     [HarmonyPatch(typeof(Ability), nameof(Ability.GizmoDisabled))]
     static class Patch_Ability_GizmoDisabled_Echo

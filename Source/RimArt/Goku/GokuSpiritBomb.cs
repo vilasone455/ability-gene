@@ -18,23 +18,36 @@ namespace RimArt
         public float Pace;
         public int Lenders;
         public float Lend, BlastPer, SizePer;
+        /// <summary>How long a full bomb's dome stands (the sketch's Dome stands slider).</summary>
+        public float Hold;
+        /// <summary>The blast radius at power 0.</summary>
+        public float Base;
+        /// <summary>
+        /// When each lender joins and stops, on this plan's clock: the game's live lenders. Null means
+        /// the sketch's schedule (joins <see cref="GokuSpiritBombTiming.FirstLender"/> after the cast
+        /// and every <see cref="GokuSpiritBombTiming.LenderEvery"/>, lends until the throw).
+        /// </summary>
+        public float[] JoinAt, LeaveAt;
 
         /// <summary>Between a small bomb's value and a full one's, by the charge.</summary>
         public float By(float small, float full) => Mathf.Lerp(small, full, Charge);
         public int Count(float small, float full) => G.Round(By(small, full));
 
         /// <summary>When lender <paramref name="i"/> joins.</summary>
-        public float Joins(int i) => Cast + GokuSpiritBombTiming.FirstLender + i * GokuSpiritBombTiming.LenderEvery;
+        public float Joins(int i) => JoinAt != null ? JoinAt[i] : Cast + GokuSpiritBombTiming.FirstLender + i * GokuSpiritBombTiming.LenderEvery;
 
-        /// <summary>Power at <paramref name="s"/>: 1 per second from the caster plus <see cref="Lend"/> per second from each lender since it joined.</summary>
+        /// <summary>When lender <paramref name="i"/> stops: when it left, or the throw.</summary>
+        public float Leaves(int i) => Mathf.Min(LeaveAt != null ? LeaveAt[i] : Release, Release);
+
+        /// <summary>Power at <paramref name="s"/>: 1 per second from the caster plus <see cref="Lend"/> per second from each lender while it lends.</summary>
         public float PowerAt(float s)
         {
             float now = Mathf.Min(s, Release), power = Mathf.Max(0f, now - Cast);
-            for (int i = 0; i < Lenders; i++) power += Mathf.Max(0f, now - Joins(i)) * Lend;
+            for (int i = 0; i < Lenders; i++) power += Mathf.Max(0f, Mathf.Min(now, Leaves(i)) - Joins(i)) * Lend;
             return power;
         }
 
-        public float BlastAt(float s) => GokuSpiritBombTiming.BaseRadius + BlastPer * PowerAt(s);
+        public float BlastAt(float s) => Base + BlastPer * PowerAt(s);
         public float RadiusAt(float s) => GokuSpiritBombTiming.StartSize + SizePer * PowerAt(s);
 
         /// <summary>
@@ -83,7 +96,8 @@ namespace RimArt
     /// Tools/VfxLab/web/sketches/goku-spirit-bomb.js; the constants are that sketch's defaults. There
     /// is no ability behind it yet. The rule (user's draft, placeholders): a channel with no upper
     /// limit (minimum 3 s); 1 power per second from the caster and 1 from each colonist that lends;
-    /// blast radius 2 + 0.25 x power; damage only to hostile pawns; the bomb flies 1.4 s.
+    /// blast radius 2 + 0.25 x power; damage only to hostile pawns; the bomb flies 1.4 s. The ability
+    /// is in Kit/SpiritBombCast.cs; it feeds the plan its live lenders and the throw time.
     /// </summary>
     public static class GokuSpiritBombTiming
     {
@@ -126,20 +140,34 @@ namespace RimArt
         public const float ScriptDistance = 16f, ScriptChannel = 6f, ScriptFly = 1.4f, ScriptHold = 2f, ScriptPace = 0.6f,
             ScriptLend = 1f, ScriptBlastPer = 0.25f, ScriptSizePer = 0.12f;
 
+        /// <summary>A throw that never comes: the plan of a channel still running.</summary>
+        public const float Never = 1e6f;
+
+        /// <param name="joinAt">The game's live lenders: when each joined and stopped, on the plan's clock (null: the sketch's schedule).</param>
         public static SpiritBombPlan Plan(int lenders, float channel = ScriptChannel, float fly = ScriptFly, float hold = ScriptHold, float pace = ScriptPace,
-            float lend = ScriptLend, float blastPer = ScriptBlastPer, float sizePer = ScriptSizePer)
+            float lend = ScriptLend, float blastPer = ScriptBlastPer, float sizePer = ScriptSizePer, float baseRadius = BaseRadius, float[] joinAt = null, float[] leaveAt = null)
         {
-            var plan = new SpiritBombPlan { Cast = Lead, Lenders = lenders, Lend = lend, BlastPer = blastPer, SizePer = sizePer, FlyTime = fly, Pace = pace };
-            plan.Release = plan.Cast + channel;
+            var plan = new SpiritBombPlan
+            {
+                Cast = Lead, Lenders = lenders, Lend = lend, BlastPer = blastPer, SizePer = sizePer, FlyTime = fly, Pace = pace, Hold = hold, Base = baseRadius,
+                JoinAt = joinAt, LeaveAt = leaveAt,
+            };
+            Release(ref plan, plan.Cast + channel);
+            return plan;
+        }
+
+        /// <summary>The throw at <paramref name="release"/> seconds: everything after it follows from the power then.</summary>
+        public static void Release(ref SpiritBombPlan plan, float release)
+        {
+            plan.Release = release;
             plan.Charge = Mathf.Clamp01(plan.PowerAt(plan.Release) / FullPower);
             plan.Fly = plan.Release + Swing;
-            plan.Hit = plan.Fly + fly;
+            plan.Hit = plan.Fly + plan.FlyTime;
             plan.Dome = plan.Hit + plan.By(GrindTime.x, GrindTime.y);
             plan.Open = plan.Dome + Open;
-            plan.Burst = plan.Open + plan.By(HoldShare * hold, hold);
+            plan.Burst = plan.Open + plan.By(HoldShare * plan.Hold, plan.Hold);
             plan.Gone = plan.Burst + Scatter;
             plan.End = plan.Gone + Tail;
-            return plan;
         }
 
         /// <summary>

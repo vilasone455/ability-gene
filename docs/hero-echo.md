@@ -135,6 +135,7 @@ Proposed handling (not yet confirmed rule by rule):
 | Inumaki | Social 10, not Psychopath | Kind | the five imperatives | 8 | 5 each |
 | Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | Judgement Cut, Yamato Dash, Summoned Swords, Judgement Cut End (the def grants none until the kit is ported) | 10 | Judgement Cut 3, Yamato Dash 2, Summoned Swords 10, Judgement Cut End 0 (Style is its limit) |
 | Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40 |
+| Goku | Melee 15, downed and recovered 3 times (`Trial_DownedRecovered`, counted from the moment the mod is loaded) | Gourmand | Solar Flare, Instant Transmission, Kamehameha, Spirit Bomb; Warp Kamehameha is a button during the Kamehameha hold, not a def | 12 | Solar Flare 3, Instant Transmission 2, Kamehameha 15, Spirit Bomb 30; Warp pays Instant Transmission's 2 and cooldown on top |
 
 Accelerator, Pain and Inumaki reuse abilities that still come from their pre-hero item (reflex
 booster implant, repulsion eye, Commanding Voice trait). validate.py allows that second source only
@@ -175,12 +176,17 @@ Agreed, not built (no EchoDef yet; the abilities do not exist):
 | Itachi ("Crow of the Crimson Eye") | Melee 12, Intellectual 12, 30 kills | Sickly (Immunity -1) | Crow Dispersal (Murder + automatic Scatter, one ability), Carrion, False Face, Susanoo | 10 (proposed) | crow abilities 0 (they spend the gene's 3 charges, +1 per hour), False Face 3, Susanoo 20 | dispersal plexus gene Echo-only: added on awakening, abilities only while manifested |
 | Obito ("Watcher Behind the Spiral Mask") | Melee 12, Intellectual 10, has a missing or artificial body part (new Trial class; a prosthetic or bionic counts) | Depressive (Natural mood -2) | Kamui: Phase, Kamui: Warp, Kamui: Store, Wood Release | 12 | Phase 0 (its own 30 s pool), Warp 2, Store 1, Wood Release 2 | fold organ gene Echo-only: added on awakening (the dimension is generated then), abilities only while manifested |
 | Gojo ("Bearer of the Six Eyes") | Intellectual 14, 1 day spent downed in total (vanilla `TimeDowned` record; the Trial label shows hours), colony wealth 200,000 | The Strongest (new custom trait) | Infinity, Blue, Red, Unlimited Void (+ Hollow Purple combo) | 15 | Infinity 0 (its breath is the price), Blue 3, Red 3, Hollow Purple 20 (+ its own 1-day cooldown), Unlimited Void 30 | white hair; phase barrier implant Echo-only; no forced weapon |
-| Goku ("Heir of the Monkey King") | Melee 15, downed and recovered 3 times (new counter; vanilla only records total time downed) | Gourmand | Solar Flare, Instant Transmission, Kamehameha, Spirit Bomb (+ Warp Kamehameha) | 12 | Solar Flare 3, Instant Transmission 2, Kamehameha 15, Spirit Bomb 30; Warp Kamehameha pays Kamehameha + Instant Transmission | black hair; forced empty hands |
 | Minato ("Hero of the Yellow Flash") | Melee 12, Intellectual 10, 30 kills with thrown kunai (needs `PendingThrow` to pass the kunai as the weapon so the kill counter sees it) | Kind | flying thunder god, sealing touch (passive), chain, guiding thunder, rasengan; throw kunai stays on the belt | 10 | throw kunai 0 (belt charges), flying thunder god 2, chain 10, guiding thunder 5, rasengan 3 | blond hair (haori v1.1); no forced weapon; no kunai regeneration; replaces the earning rules in docs/flying-thunder-god-kit.md |
 | Shikamaru ("Strategist of the Binding Shadow") | Intellectual 14, 5 people captured (vanilla `PeopleCaptured`) | Lazy (Industriousness -1) | shadow imitation, shadow seam, shadow grasp, shadow double, shadow neck bind | 10 | imitation 3, seam 3, grasp 1, double 5, neck bind 2 | black hair; shadow plexus gene Echo-only; no forced weapon; Neck Bind's sketch rules agreed 2026-09-27 |
 | Nakime ("Player of the Endless Halls") | Artistic 12, Construction 10, 15 humanlike kills (vanilla `KillsHumanlikes`) | Night Owl | Infinity Castle (commands: shift, drop, seal/open, crush, summon, release; passives castle sight, void rule) | 12 | Infinity Castle 30, commands 0 (the 1.5 s strum rhythm and crush's own 10 s cooldown limit them) | black hair; forced biwa; castle gene Echo-only, added on awakening; sunlight burns her always (the gene's rule, 4 per second outdoors by day), not only while manifested |
 | Satō | Shooting 12, 30 kills, 500 damage taken | Ajin (new custom trait carrying the Reset passive) + Psychopath | Reset (passive), Black Ghost, The Game, Sever, Headshot Reset, Grenade Reset | 10 | Sever 0, Headshot Reset 0, Grenade Reset 5, Black Ghost 10, The Game 5 (a kill on the marked enemy refunds 15); every Reset while manifested costs by the piece he rises from (body or leg 20, arm 25, hand 40, finger or ear 60) | half pain while manifested; on revert the Ghost dissolves and the mark ends |
 | Todo (no subtitle) | Melee 14, 20 humanlikes downed (`PawnsDownedHumanlikes`) | Brawler | stone, clap, double clap, Black Flash, provoke | 8 | stone 0, clap 0, double clap 0, Black Flash 1, provoke 5 | +0.5 move speed, black hair, wealth 6000 (placeholder), forced empty hands |
+
+Goku (built 2026-09-27, `Source/RimArt/Goku/Kit`): Kamehameha and Spirit Bomb are channels that hold the
+caster in `AG_GokuChannel`; Cancel, a move order or a revert gives the charge and cooldown back, a
+stun, a downing or death spends them. Spirit Bomb's Lend energy is a job (`AG_GokuLend`) on every
+other colonist on the map; a lender can stop. Forced empty hands waits for the manifest weapon
+feature. No Melee Animation clips and no drawn arms: the caster stands.
 
 Sasuke's Melee Trial follows the throw: kunai accuracy uses Melee (`KunaiAccuracy.cs`). The Fūma
 kills count because the Fūma throw passes the weapon to the kill counter; kunai kills were not
@@ -335,6 +341,9 @@ presence trait is to be retired from the loaded defs so provoke has one source. 
 - God mode gizmos: "DEV: Meet trials" on a candidate, "DEV: Fill charge" on a Host.
 - `-rimarttest=echo`: 10 scenarios (pool refill/drain, pool empty, manifest/revert, hediff removed,
   cast cost, awaken, cap, longsword kills, dev command, UI shots).
+- `-rimarttest=goku`: 8 scenarios (flare, transmission alone / hostile passenger / downed ally,
+  kamehameha lane / wall / blast, cancel refund and stun spent, warp, spirit bomb with a lender, the
+  downed-and-recovered Trial). Debug window kit "Goku": make Host, cancel casts, all lend, recovery +1.
 
 ## Not built
 

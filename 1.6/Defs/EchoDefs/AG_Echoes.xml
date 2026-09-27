@@ -190,4 +190,46 @@
     <hairColor>(0.72, 0.3, 0.16)</hairColor>
   </RimArt.EchoDef>
 
+  <!-- Goku (docs/heroes.md): the four abilities are his own (AG_Goku_Abilities.xml); Warp Kamehameha
+       is a button during the Kamehameha hold that spends Instant Transmission's cost and cooldown too.
+       The downed-and-recovered Trial counts from the moment the mod is loaded. Every number is a
+       placeholder. -->
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Goku</defName>
+    <label>Goku</label>
+    <subtitle>Heir of the Monkey King</subtitle>
+    <description>He gets back up, and hits harder each time.</description>
+    <order>60</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Melee</skill>
+        <level>15</level>
+      </li>
+      <li Class="RimArt.Trial_DownedRecovered">
+        <count>3</count>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>Gourmand</trait>
+      </li>
+    </forcedTraits>
+    <abilities>
+      <li>AG_GokuSolarFlare</li>
+      <li>AG_GokuInstantTransmission</li>
+      <li>AG_GokuKamehameha</li>
+      <li>AG_GokuSpiritBomb</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Goku</manifestHediff>
+    <upkeepPerHour>12</upkeepPerHour>
+    <castCosts>
+      <li><ability>AG_GokuSolarFlare</ability><cost>3</cost></li>
+      <li><ability>AG_GokuInstantTransmission</ability><cost>2</cost></li>
+      <li><ability>AG_GokuKamehameha</ability><cost>15</cost></li>
+      <li><ability>AG_GokuSpiritBomb</ability><cost>30</cost></li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.08, 0.08, 0.1)</hairColor>
+  </RimArt.EchoDef>
+
 </Defs>
