@@ -16,6 +16,13 @@ SusanooCurl.png    128 px. A flame curl: a hook-shaped stroke rising and rolling
 SusanooFlame.png   128 px. One flame tongue, pointing up: a round base narrowing to a pointed tip
                    that curls a little to the right, its edge broken by noise, brightest at the
                    base. Drawn stretched and swaying for the edge flames, the aura and the wisps.
+
+Kit icons and flecks (added with the mechanic port, 2026-09-27), also white in the alpha:
+IconFalseFace.png  128 px. A Sharingan: a ring with three tomoe round a pupil.
+IconSusanoo.png    128 px. The Yata Mirror's face over a raised blade.
+IconTotsuka.png    128 px. The Totsuka Blade upright, its gourd hilt at the bottom.
+Glint.png          64 px. A soft disc with a bright core, for the glints and the False Face mark.
+Flash.png          64 px. A wider soft disc, for the Mirror block and the seal.
 """
 from pathlib import Path
 import math
@@ -167,8 +174,77 @@ def flame(size=128):
     return image
 
 
+def icon_false_face(draw, S):
+    c = S * 0.5
+    r = S * 0.38
+    draw.ellipse([c - r, c - r, c + r, c + r], outline=255, width=int(S * 0.045))
+    p = S * 0.075
+    draw.ellipse([c - p, c - p, c + p, c + p], fill=255)
+    for k in range(3):
+        a0 = k * math.tau / 3 - math.pi / 2
+        head = (c + math.cos(a0) * S * 0.24, c + math.sin(a0) * S * 0.24)
+        rr = S * 0.062
+        draw.ellipse([head[0] - rr, head[1] - rr, head[0] + rr, head[1] + rr], fill=255)
+        tail = []
+        for i in range(22):
+            u = i / 21
+            a = a0 + u * 1.1
+            r2 = S * (0.24 - 0.02 * u)
+            tail.append((c + math.cos(a) * r2, c + math.sin(a) * r2))
+        stroke(draw, tail, [S * (0.06 - 0.05 * i / 21) for i in range(22)], 255)
+
+
+def icon_totsuka(draw, S):
+    # A straight blade rising from a round gourd, with a short guard.
+    w = int(S * 0.05)
+    draw.line([(S * 0.5, S * 0.10), (S * 0.5, S * 0.66)], fill=255, width=int(S * 0.075))
+    draw.polygon([(S * 0.46, S * 0.13), (S * 0.5, S * 0.05), (S * 0.54, S * 0.13)], fill=255)
+    draw.line([(S * 0.36, S * 0.66), (S * 0.64, S * 0.66)], fill=255, width=w)
+    r = S * 0.13
+    draw.ellipse([S * 0.5 - r, S * 0.88 - r, S * 0.5 + r, S * 0.88 + r], outline=255, width=w)
+    r2 = S * 0.08
+    draw.ellipse([S * 0.5 - r2, S * 0.72 - r2, S * 0.5 + r2, S * 0.72 + r2], outline=255, width=w)
+
+
+def icon_susanoo(draw, S):
+    # The mirror, smaller and to the left, with the blade rising behind it on the right.
+    c = (S * 0.40, S * 0.56)
+    r = S * 0.30
+    draw.ellipse([c[0] - r, c[1] - r, c[0] + r, c[1] + r], outline=255, width=int(S * 0.045))
+    pts, us = spiral_points(c[0], c[1], S * 0.19, 1.8, math.pi * 0.5, n=140)
+    stroke(draw, pts, [S * (0.04 - 0.025 * u) for u in us], 255)
+    draw.line([(S * 0.76, S * 0.12), (S * 0.76, S * 0.80)], fill=255, width=int(S * 0.07))
+    draw.polygon([(S * 0.72, S * 0.15), (S * 0.76, S * 0.06), (S * 0.80, S * 0.15)], fill=255)
+    draw.line([(S * 0.66, S * 0.80), (S * 0.86, S * 0.80)], fill=255, width=int(S * 0.045))
+
+
+def soft_disc(size, core, edge):
+    """A radial falloff: alpha 1 inside core (share of the radius), 0 at edge."""
+    image = Image.new("RGBA", (size, size), (255, 255, 255, 0))
+    px = image.load()
+    for y in range(size):
+        for x in range(size):
+            d = math.hypot((x + 0.5) / size - 0.5, (y + 0.5) / size - 0.5) / 0.5
+            if d >= edge:
+                a = 0.0
+            elif d <= core:
+                a = 1.0
+            else:
+                u = (d - core) / (edge - core)
+                a = 1 - u * u * (3 - 2 * u)
+            px[x, y] = (255, 255, 255, int(a * 255))
+    return image
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    for name, paint in (("IconFalseFace.png", icon_false_face), ("IconSusanoo.png", icon_susanoo),
+                        ("IconTotsuka.png", icon_totsuka)):
+        line_art(128, paint, glow=0.25).save(OUT / name)
+        print("wrote", OUT / name)
+    soft_disc(64, 0.12, 0.95).save(OUT / "Glint.png")
+    soft_disc(64, 0.05, 0.98).save(OUT / "Flash.png")
+    print("wrote Glint.png and Flash.png")
     for name, size, paint in (("SusanooSwirl.png", 256, swirl), ("SusanooMirror.png", 256, mirror),
                               ("SusanooCurl.png", 128, curl)):
         line_art(size, paint).save(OUT / name)

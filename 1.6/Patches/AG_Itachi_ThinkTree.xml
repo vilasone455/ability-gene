@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A think node for False Face's mental state, beside Berserk's in the subtree every humanlike,
+     animal and insect tree includes ahead of its lord duties. Without it the state would exist and
+     the victim would go on fighting whoever its duty says. This folder is read by the game because
+     loadFolders.xml lists 1.6; validate.py checks it for well-formedness. -->
+<Patch>
+  <Operation Class="PatchOperationAdd">
+    <xpath>/Defs/ThinkTreeDef[defName="MentalStateCritical"]/thinkRoot/subNodes</xpath>
+    <value>
+      <li Class="ThinkNode_ConditionalMentalState">
+        <state>AG_FalseFace</state>
+        <subNodes>
+          <li Class="RimArt.JobGiver_FalseFace" />
+        </subNodes>
+      </li>
+    </value>
+  </Operation>
+</Patch>

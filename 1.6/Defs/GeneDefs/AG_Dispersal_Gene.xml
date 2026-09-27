@@ -1,20 +1,22 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- Automatic Scatter can be toggled; Murder is targeted. Both use the same pool. -->
+  <!-- Itachi's organ (docs/hero-echo.md). Echo-only since 2026-09-27: his Echo gives it on
+       awakening (awakenGenes) and grants Murder and Carrion while he is manifested, so the gene
+       lists no abilities of its own. The charges live here and keep regrowing between manifests;
+       Scatter and the toggle ask EchoUtility.GeneActive and do nothing outside hero form. Kept
+       out of genepacks and random xenotypes; the def stays loadable for saves that hold it. -->
   <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_DispersalPlexus</defName>
     <label>dispersal plexus</label>
-    <description>A body that can come apart into crows. Automatic Scatter cancels an incoming hit of 6 or more damage and reforms the carrier a few cells away; Murder is deliberate flight to a chosen spot; Carrion sends the flock to strip a corpse and bring the recovery back.\n\nAll three share three charges, one regrowing each game hour, and every Scatter costs blood as well as a charge.</description>
+    <description>Itachi's body, which comes apart into crows. It works only in hero form. Automatic Scatter cancels an incoming hit of 6 or more damage and reforms him a few cells away; Crow Dispersal is deliberate flight to a chosen spot; Carrion sends the flock to strip a corpse and bring the recovery back.\n\nAll three share three charges, one regrowing each game hour whether or not he is manifested, and every Scatter costs blood as well as a charge.</description>
     <geneClass>RimArt.Gene_Dispersal</geneClass>
     <iconPath>RimArt/Dispersal/IconGene</iconPath>
     <displayCategory>Ability</displayCategory>
     <displayOrderInCategory>250</displayOrderInCategory>
     <marketValueFactor>1.9</marketValueFactor>
-    <abilities>
-      <li>AG_DispersalMurder</li>
-      <li>AG_DispersalCarrion</li>
-    </abilities>
+    <canGenerateInGeneSet>false</canGenerateInGeneSet>
+    <selectionWeight>0</selectionWeight>
     <descriptionHyperlinks>
       <AbilityDef>AG_DispersalMurder</AbilityDef>
       <AbilityDef>AG_DispersalCarrion</AbilityDef>

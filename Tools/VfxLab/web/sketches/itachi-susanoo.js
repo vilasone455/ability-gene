@@ -81,7 +81,10 @@
 // the head, shoulders, cape and floor (Shinobi Striker's licks), both from SusanooFlame.png.
 //
 // Drawing: see lib/itachi.js. One view (always from the front); only the arms move toward a
-// target. The growth is picture only: in game the warm-up is a flat 1 s.
+// target. The growth is picture only: in game the warm-up is a flat 1 s. "Show Itachi, raiders
+// and props" off hides the stand-ins, rounds and dropped gear, which the C# port does not draw
+// (the real pawns and items are there in game), for comparing with the recording.
+// Ported 2026-09-27: Source/RimArt/Itachi/Susanoo*.cs, previews "Susanoo: raise/block/seal/hit/end".
 import { Color, Mathf } from '../js/engine.js';
 import { P } from './lib/six-paths-impact.js';
 import {
@@ -125,6 +128,7 @@ export default {
     dist: P('Seal target distance (cells)', 3.5, 1.5, 4, .1, 'Mechanic'),
     weak: { label: 'Seal target is weak (downed or ≤ 30 % health)', value: true, group: 'Mechanic' },
     rings: { label: 'Show rule rings', value: true, group: 'Mechanic' },
+    actors: { label: 'Show Itachi, raiders and props', value: true, group: 'Mechanic' },
     warmUp: P('Warm-up', 1.0, .4, 2, .05, 'Timing (s)'),
     stab: P('Swing and stab', .45, .2, 1, .05, 'Timing (s)'),
     pull: P('Pull-in', .6, .2, 1.5, .05, 'Timing (s)'),
@@ -187,7 +191,7 @@ export default {
       hunch = smooth((seconds - T.hunch) / .2) * .8 + T.coughs.reduce((h, c) => h + (seconds >= c ? .35 * Math.exp(-(seconds - c) * 9) : 0), 0);
       if (tb >= 0) embers(F, look, tb, p.breakUp);
     }
-    const me = itachi(origin, sun, strength, { eyes, hunch });
+    const me = itachi(origin, sun, strength, { eyes, hunch, alpha: p.actors ? 1 : 0 });
     if (p.scenario === 'end') cough(seconds, p, origin, me);
     if (p.scenario === 'raise' && g.glint > 0) for (const side of [-1, 1]) glint({ x: me.head.x + side * .07, z: me.head.z - .01 }, .5, g.glint, Color.Lerp(Sharingan, EyeHot, .35));
     const pose = restPose();
@@ -224,12 +228,12 @@ function block(t, p, origin, F, look, sun, strength, pose) {
 
   // The shooter and its three rounds.
   const rifleAim = deg(shooterChest, mirrorWorld(F, look, t, { mirror: mirrorAt(gA) }));
-  const shooter = raider(shooterPos, sun, strength, { weapon: 'rifle', aimDeg: t < Aim ? rifleAim - 35 : rifleAim });
+  const shooter = raider(shooterPos, sun, strength, { weapon: 'rifle', aimDeg: t < Aim ? rifleAim - 35 : rifleAim, alpha: p.actors ? 1 : 0 });
   Shots.forEach((t0, k) => {
     const m = mirrorWorld(F, look, t0, { mirror: mirrorAt(gA) }), rim = rimToward(m, shooter.tip);
     const dist = Math.hypot(rim.x - shooter.tip.x, rim.z - shooter.tip.z), hitAt = t0 + dist / RoundSpeed, dir = unit(shooter.tip, rim);
-    if (t >= t0 && t < t0 + .06) glint(shooter.tip, .35, 1 - (t - t0) / .06, EyeHot);
-    if (t >= t0 && t < hitAt) { const f = (t - t0) / (hitAt - t0); round(`block round ${k}`, { x: lerp(shooter.tip.x, rim.x, f), z: lerp(shooter.tip.z, rim.z, f) }, dir); }
+    if (p.actors && t >= t0 && t < t0 + .06) glint(shooter.tip, .35, 1 - (t - t0) / .06, EyeHot);
+    if (p.actors && t >= t0 && t < hitAt) { const f = (t - t0) / (hitAt - t0); round(`block round ${k}`, { x: lerp(shooter.tip.x, rim.x, f), z: lerp(shooter.tip.z, rim.z, f) }, dir); }
     if (t >= hitAt) {
       const age = t - hitAt;
       pose.mirrorHit.push({ age, at: rim.at });
@@ -258,7 +262,7 @@ function block(t, p, origin, F, look, sun, strength, pose) {
     wDeg = lerp(bounce, aDeg + 60, smooth((t - Blow - .3) / .3));
     wLen = lerp(reach, .6, clamp((t - Blow) / .3));
   }
-  if (t >= Run - .2) raider(pos, sun, strength, { weapon: 'sword', weaponDeg: wDeg, weaponLen: wLen, alpha: clamp((t - Run + .2) / .2), lean: t >= Blow && t < Blow + .4 ? -Math.cos(a) : 0 });
+  if (p.actors && t >= Run - .2) raider(pos, sun, strength, { weapon: 'sword', weaponDeg: wDeg, weaponLen: wLen, alpha: clamp((t - Run + .2) / .2), lean: t >= Blow && t < Blow + .4 ? -Math.cos(a) : 0 });
   if (t >= Blow) {
     const age = t - Blow;
     pose.mirrorHit.push({ age, at: rimB.at });
@@ -313,8 +317,9 @@ function seal(t, p, origin, F, look, sun, strength, pose) {
   if (t >= T.sealed && t < T.sealed + .2) pose.bladeLen = 0;
 
   // The raider: wounded from the start, aims until pierced, burns, then is pulled in.
-  woundPool(pos);
-  if (t < T.pierce + .05) raider(pos, sun, strength, { weapon: 'rifle', aimDeg: deg(chest, origin) });
+  if (p.actors) woundPool(pos);
+  if (!p.actors) {}
+  else if (t < T.pierce + .05) raider(pos, sun, strength, { weapon: 'rifle', aimDeg: deg(chest, origin) });
   else if (t < T.pullFrom) raider(pos, sun, strength, { weapon: 'none', lean: -Math.cos(a) * .5 });
   if (t >= T.pierce && t < T.pullFrom + .08) flameWrap('seal wrap', pos, t, Math.min(1, (t - T.pierce) / .08) * (1 - clamp((t - T.pullFrom) / .08)));
   if (t >= T.pierce && t < T.pierce + .15) glint(chest, .7, 1 - (t - T.pierce) / .15, EyeHot);
@@ -322,8 +327,8 @@ function seal(t, p, origin, F, look, sun, strength, pose) {
   if (t >= T.sealed) sealFlash(mouth, t - T.sealed);
   // Gear: the rifle drops as the raider is pierced; the helmet pops off as it is pulled away.
   const rifleDeg = deg(chest, origin) + 30;
-  if (t >= T.pierce + .05) droppedRifle('seal rifle', { x: pos.x + .15, z: pos.z - .15 }, rifleDeg, clamp((t - T.pierce - .05) / .3));
-  if (t >= T.pullFrom) droppedHelmet({ x: pos.x - .25, z: pos.z + .05 }, clamp((t - T.pullFrom) / .35));
+  if (p.actors && t >= T.pierce + .05) droppedRifle('seal rifle', { x: pos.x + .15, z: pos.z - .15 }, rifleDeg, clamp((t - T.pierce - .05) / .3));
+  if (p.actors && t >= T.pullFrom) droppedHelmet({ x: pos.x - .25, z: pos.z + .05 }, clamp((t - T.pullFrom) / .35));
 }
 
 // The stab on a target that is not weak: 30 damage, no seal. The blade pulls back out to half
@@ -342,7 +347,7 @@ function hit(t, p, origin, pos, chest, mouth, strikeDeg, look, sun, strength, po
   // The raider: jerked back at the pierce (lean away, rifle up), then aims again.
   const aim = deg(chest, origin), up = Math.cos(aim * Mathf.Deg2Rad) < 0 ? -1 : 1;
   const jolt = smooth((t - T.pierce) / .08) * (1 - smooth((t - T.retracted - .1) / .4));
-  raider(at, sun, strength, { weapon: 'rifle', aimDeg: aim + up * Recoil * jolt, lean: Math.cos(a) * .6 * jolt });
+  if (p.actors) raider(at, sun, strength, { weapon: 'rifle', aimDeg: aim + up * Recoil * jolt, lean: Math.cos(a) * .6 * jolt });
   if (t >= T.pierce && t < T.pierce + .12) glint(hitChest, .45, 1 - (t - T.pierce) / .12, EyeHot);
   spurt('hit blood', t - T.pierce, hitChest, at, out, 11, 40);
 }

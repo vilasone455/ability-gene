@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <!-- Susanoo / Totsuka Blade -->
+  <AG_ItachiTotsuka>Totsuka Blade</AG_ItachiTotsuka>
+  <AG_ItachiTotsukaDesc>Stab a target within {0} cells, once every {1} seconds while the Susanoo stands. A target that is downed or at {3} % health or less is sealed: taken off the map as Itachi's kill, its gear left where it stood, no corpse. Anything else, and any mechanoid, takes {2} stab damage. One seal per Susanoo.</AG_ItachiTotsukaDesc>
+  <AG_ItachiTotsukaCooldown>The blade is drawn back for {0}.</AG_ItachiTotsukaCooldown>
+  <AG_ItachiTotsukaDowned>Itachi is down.</AG_ItachiTotsukaDowned>
+  <AG_ItachiTotsukaSealedTag>(sealed)</AG_ItachiTotsukaSealedTag>
+  <AG_ItachiTotsukaReady>The Totsuka Blade can still seal one target.</AG_ItachiTotsukaReady>
+  <AG_ItachiTotsukaUsed>The Totsuka Blade has sealed its one target; stabs only wound now.</AG_ItachiTotsukaUsed>
+  <AG_ItachiSealed>{0} was sealed in the Totsuka Blade.</AG_ItachiSealed>
+  <AG_ItachiSusanooHolds>The Susanoo holds him.</AG_ItachiSusanooHolds>
+
+  <!-- False Face -->
+  <AG_ItachiFalseFaceInspect>False face: sees {0} as Itachi</AG_ItachiFalseFaceInspect>
+  <AG_ItachiFalseFaceNoVictims>No enemy was looking at Itachi.</AG_ItachiFalseFaceNoVictims>
+</LanguageData>

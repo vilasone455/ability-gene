@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- Deliberate flight, sharing charges with the toggleable automatic Scatter.
+  <!-- Crow Dispersal: deliberate flight, sharing charges with the toggleable automatic Scatter.
+       The two are one ability of Itachi's kit (docs/hero-echo.md): this button is the flight, the
+       gene's gizmo is the Scatter toggle. Both are granted by his Echo, in hero form only.
 
        requireLineOfSight is false on purpose, and it is the whole reason this is not the anchor
        organ's clap or the Arcing weapon's dash wearing feathers. Those two cross a distance; this
@@ -14,8 +16,8 @@
        is not a way to drop a colonist into unexplored map. -->
   <AbilityDef>
     <defName>AG_DispersalMurder</defName>
-    <label>murder</label>
-    <description>Disperse into a flock of crows and fly up to 35 cells to a chosen spot, crossing walls, water, fire and enemies without line of sight. The destination must be revealed and able to hold a standing pawn.\n\nThe carrier lands ready to act, for one of the plexus's three shared charges.</description>
+    <label>crow dispersal</label>
+    <description>Disperse into a flock of crows and fly up to 35 cells to a chosen spot, crossing walls, water, fire and enemies without line of sight. The destination must be revealed and able to hold a standing pawn. Itachi lands ready to act, for one of the plexus's three shared charges.\n\nThe other half is automatic: while the Scatter toggle is on, a hit of 6 or more damage from a live attacker is cancelled and he re-forms 5 to 10 cells away, for a charge and a little blood. Neither works while the Susanoo stands.</description>
     <iconPath>RimArt/Dispersal/IconGene</iconPath>
     <cooldownTicksRange>600</cooldownTicksRange>
     <hostile>false</hostile>
@@ -23,7 +25,7 @@
     <displayOrder>250</displayOrder>
     <verbProperties>
       <verbClass>Verb_CastAbility</verbClass>
-      <label>murder</label>
+      <label>crow dispersal</label>
       <violent>false</violent>
       <forceNormalTimeSpeed>false</forceNormalTimeSpeed>
       <warmupTime>0.2</warmupTime>

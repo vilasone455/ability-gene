@@ -89,8 +89,9 @@ namespace RimArt
         /// Feathers thrown outward and left to drift down. Each one gets its own heading and
         /// its own spin, because a ring of identically-rotated feathers reads as a decal.
         /// </summary>
-        private static void Feathers(Vector3 position, Map map, int count, float speed)
+        internal static void Feathers(Vector3 position, Map map, int count, float speed)
         {
+            Resolve();
             if (feather == null || !position.ShouldSpawnMotesAt(map)) return;
 
             for (int i = 0; i < count; i++)

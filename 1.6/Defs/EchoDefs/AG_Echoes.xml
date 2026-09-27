@@ -254,4 +254,59 @@
     <hairColor>(0.72, 0.3, 0.16)</hairColor>
   </RimArt.EchoDef>
 
+  <!-- Itachi (docs/hero-echo.md, "Itachi"). The dispersal plexus is his Echo-only organ: given on
+       awakening, kept for life, but Scatter, Crow Dispersal and Carrion work only in hero form. The
+       crow abilities cost no charge (they spend the plexus's three charges); False Face and Susanoo
+       cost charge. Sickly is vanilla Immunity at degree -1: his illness. -->
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Itachi</defName>
+    <label>Itachi</label>
+    <subtitle>Crow of the Crimson Eye</subtitle>
+    <description>He is never where the blow lands, and what looks at him sees what he chooses.</description>
+    <order>60</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Melee</skill>
+        <level>12</level>
+      </li>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Intellectual</skill>
+        <level>12</level>
+      </li>
+      <li Class="RimArt.Trial_Record">
+        <record>Kills</record>
+        <count>30</count>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>Immunity</trait>
+        <degree>-1</degree>
+      </li>
+    </forcedTraits>
+    <awakenGenes>
+      <li MayRequire="Ludeon.RimWorld.Biotech">AG_DispersalPlexus</li>
+    </awakenGenes>
+    <abilities>
+      <li>AG_DispersalMurder</li>
+      <li>AG_DispersalCarrion</li>
+      <li>AG_ItachiFalseFace</li>
+      <li>AG_ItachiSusanoo</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Itachi</manifestHediff>
+    <upkeepPerHour>10</upkeepPerHour>
+    <castCosts>
+      <li>
+        <ability>AG_ItachiFalseFace</ability>
+        <cost>3</cost>
+      </li>
+      <li>
+        <ability>AG_ItachiSusanoo</ability>
+        <cost>20</cost>
+      </li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.08, 0.08, 0.1)</hairColor>
+  </RimArt.EchoDef>
+
 </Defs>

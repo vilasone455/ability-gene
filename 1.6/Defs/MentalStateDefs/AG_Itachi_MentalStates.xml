@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- False Face's genjutsu on one enemy (MentalState_FalseFace.cs). Started only by the ability,
+       forced, so there is no MentalBreakDef and it never happens on its own. Aggro so that the
+       false Itachi's own AI can find the victim (AttackTargetsCache lists aggro pawns for anyone
+       they are hostile to). Min and max recovery are equal, so nothing but the 10 s or the state's
+       own break rules ends it. The think node that acts on it is in 1.6/Patches. -->
+  <MentalStateDef>
+    <defName>AG_FalseFace</defName>
+    <label>false face</label>
+    <stateClass>RimArt.MentalState_FalseFace</stateClass>
+    <category>Aggro</category>
+    <minTicksBeforeRecovery>600</minTicksBeforeRecovery>
+    <maxTicksBeforeRecovery>600</maxTicksBeforeRecovery>
+    <recoverFromDowned>true</recoverFromDowned>
+    <recoverFromSleep>true</recoverFromSleep>
+    <stopsJobs>true</stopsJobs>
+    <blockNormalThoughts>true</blockNormalThoughts>
+    <blockRandomInteraction>true</blockRandomInteraction>
+    <allowBeatfire>false</allowBeatfire>
+    <nameColor>(0.85, 0.15, 0.2)</nameColor>
+    <baseInspectLine>Mental state: False face</baseInspectLine>
+  </MentalStateDef>
+
+</Defs>
