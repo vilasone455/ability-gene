@@ -140,7 +140,7 @@ Accelerator, Pain and Inumaki reuse abilities that still come from their pre-her
 booster implant, repulsion eye, Commanding Voice trait). validate.py allows that second source only
 for those abilities (`SHARED_WITH_ECHO`) until it is decided whether the old items stay.
 Decided 2026-09-27: the reflex booster implant becomes Echo-only, like Todo's anchor organ; the
-repulsion eye and Commanding Voice are still open. Accelerator keeps brain strain as his cost; his
+repulsion eye and Commanding Voice became Echo-only later the same day. Accelerator keeps brain strain as his cost; his
 strain abilities (manipulation, surge, shove, Plasma) cost 0 charge, so `AG_Echo_Accelerator`'s
 castCosts (surge 10, shove 8) are to be removed at the port. Upkeep 12/h stays (his choker battery).
 Plasma is agreed; Uplift is dropped. Fifth ability, Vector Flick (agreed 2026-09-27, no sketch
@@ -161,7 +161,7 @@ Agreed, not built (no EchoDef yet; the abilities do not exist):
 | Minato ("Hero of the Yellow Flash") | Melee 12, Intellectual 10, 30 kills with thrown kunai (needs `PendingThrow` to pass the kunai as the weapon so the kill counter sees it) | Kind | flying thunder god, sealing touch (passive), chain, guiding thunder, rasengan; throw kunai stays on the belt | 10 | throw kunai 0 (belt charges), flying thunder god 2, chain 10, guiding thunder 5, rasengan 3 | blond hair (haori v1.1); no forced weapon; no kunai regeneration; replaces the earning rules in docs/flying-thunder-god-kit.md |
 | Shikamaru ("Strategist of the Binding Shadow") | Intellectual 14, 5 people captured (vanilla `PeopleCaptured`) | Lazy (Industriousness -1) | shadow imitation, shadow seam, shadow grasp, shadow double, shadow neck bind | 10 | imitation 3, seam 3, grasp 1, double 5, neck bind 2 | black hair; shadow plexus gene Echo-only; no forced weapon; Neck Bind's sketch rules agreed 2026-09-27 |
 | Nakime ("Player of the Endless Halls") | Artistic 12, Construction 10, 15 humanlike kills (vanilla `KillsHumanlikes`) | Night Owl | Infinity Castle (commands: shift, drop, seal/open, crush, summon, release; passives castle sight, void rule) | 12 | Infinity Castle 30, commands 0 (the 1.5 s strum rhythm and crush's own 10 s cooldown limit them) | black hair; forced biwa; castle gene Echo-only, added on awakening; sunlight burns her always (the gene's rule, 4 per second outdoors by day), not only while manifested |
-| Satō | Shooting 12, 30 kills, 500 damage taken | Ajin (new custom trait carrying the Reset passive) + Psychopath | Reset (passive), Black Ghost, The Game, Sever, Headshot Reset, Grenade Reset | 10 | Sever 0, Headshot Reset 0, Grenade Reset 5, Black Ghost 10, The Game 5 (a kill on the marked enemy refunds 15); every Reset while manifested costs by the piece he rises from (body or leg 20, arm 25, hand 40, finger 60) | half pain while manifested; on revert the Ghost dissolves and the mark ends |
+| Satō | Shooting 12, 30 kills, 500 damage taken | Ajin (new custom trait carrying the Reset passive) + Psychopath | Reset (passive), Black Ghost, The Game, Sever, Headshot Reset, Grenade Reset | 10 | Sever 0, Headshot Reset 0, Grenade Reset 5, Black Ghost 10, The Game 5 (a kill on the marked enemy refunds 15); every Reset while manifested costs by the piece he rises from (body or leg 20, arm 25, hand 40, finger or ear 60) | half pain while manifested; on revert the Ghost dissolves and the mark ends |
 | Todo (no subtitle) | Melee 14, 20 humanlikes downed (`PawnsDownedHumanlikes`) | Brawler | stone, clap, double clap, Black Flash, provoke | 8 | stone 0, clap 0, double clap 0, Black Flash 1, provoke 5 | +0.5 move speed, black hair, wealth 6000 (placeholder), forced empty hands |
 
 Sasuke's Melee Trial follows the throw: kunai accuracy uses Melee (`KunaiAccuracy.cs`). The Fūma
@@ -256,15 +256,51 @@ Satō (agreed 2026-09-27; numbers are placeholders; Reset, explosions, The Game,
 anchors and Tear were agreed 2026-09-26):
 - Reset (passive, carried by the Ajin trait, so it works for life): he never truly dies. Manifested
   and able to pay: after 20 s he rises at his biggest piece (body, or a severed limb as an anchor),
-  paying by that piece's size (body or leg 20, arm 25, hand 40, finger 60). Not manifested, or the
+  paying by that piece's size (body or leg 20, arm 25, hand 40, finger or ear 60). Not manifested, or the
   pool cannot pay: a slow reset where he fell, after 1 in-game day. Any damaging explosion resets him
   at once and counts as the body destroyed, friendly fire included.
-- Actives, five separate: Sever (throw one of his own parts up to 6 cells as an anchor, at most 2,
-  they rot in 3 days, cd 10 s); Headshot Reset (kills himself for a clean Reset); Grenade Reset (his
+- Actives, five separate: Sever (throw one of his own parts, a leg, arm, hand, finger or ear, up to
+  6 cells as an anchor, at most 2, they rot in 3 days, cd 10 s; an ear is piece size 1 like a finger.
+  With both ears severed he is deaf, so Inumaki's words don't reach him, but both anchor slots are
+  used and he can't use the Explode reset; Reset regrows the ears; ears added 2026-09-27); Headshot Reset (kills himself for a clean Reset); Grenade Reset (his
   own explosion, radius 3, hurts everyone near, cd 60 s); Black Ghost (summoned at any anchor within
   30 cells, 45 s, takes 50 % damage, cd 120 s, lifetime by piece: leg 45 s, arm 35 s, hand 20 s,
   finger 10 s; Tear order once per summon; the Relay order is still undecided); The Game (mark one
   enemy 30 s, +30 % damage from his shots, cd 45 s).
+
+Inumaki revisit (agreed 2026-09-27; numbers are placeholders; the built words are in
+`Source/RimArt/Larynx`, `AG_Larynx_Abilities.xml`):
+- Words: stop, drop, come and run stay as built. Kneel is replaced by crush (15 blunt + 1 s stun,
+  throat 9 %). New word explode: a burst on the target, 35 damage in radius 1.5, throat 35 % (about
+  two uses reach "torn"), cooldown 1 day. Warm-up 0.4 s as built; reach and who is hit come from
+  the sound model below (the old single target at 16.9 cells goes).
+- The throat meter ("strained larynx") stays his only cost: every word costs 0 Echo charge (was 5).
+  Upkeep 8 unchanged.
+- Backlash by target strength (canon): the throat cost is multiplied by the target's body size,
+  at least 1 (a human x1, a thrumbo x4), on top of the existing factors (hostile x2, mental state
+  x2.5, already obeying x0.15).
+- Throat syrup: a short job drinking one herbal medicine removes 30 % throat wear (recovery is
+  otherwise 12 % per day).
+- Sound model (agreed 2026-09-27, for v1; replaces single targets): a word is a sound that spreads
+  from Inumaki through open space and open doors; walls and closed doors stop it, and passing a
+  doorway costs part of its reach. Everyone it reaches obeys: enemies, animals and colonists alike.
+  Mechanoids and deaf pawns are immune; low Hearing obeys only close in. No ear plugs: colonists are
+  protected by doors, distance and volume.
+- Volume toggle: whisper 3 cells (throat x0.5 per listener), speak 8 (x1), shout 16 (x2).
+- Throat cost = word base x volume x each listener's factors (hostile x2, mental state x2.5,
+  already obeying x0.15, body size), summed over listeners.
+- Preview while aiming: reached cells shaded, listeners marked (enemies red, allies blue), total
+  throat cost shown. A word that would push the throat past 100 % cannot be said.
+- Explode's burst also hurts pawns standing next to each listener, allies included, like a vanilla
+  explosion (agreed 2026-09-27). It uses Bomb damage, which is on Satō's explosion list: a Satō who
+  hears it resets at once and rises at his biggest anchor (the Explode + Reset combo). As an ally
+  listener he costs x1 throat, not x2.
+- Satō's Black Ghost is deaf: words never reach it (a summoned figure, like mechanoids).
+- Deaf pawns include anyone missing both ears, so Satō can sever his ears to stand in a shout (see
+  his Sever).
+- The Commanding Voice trait becomes Echo-only (agreed 2026-09-27): only Inumaki's Echo gives the
+  words.
+- About 1.5-2 days of work on top of the built Larynx code.
 
 Todo (agreed 2026-09-27): stone, clap and double clap are the anchor organ's rework on main (PRs
 #44, #56) and count as two abilities; Black Flash is built on `feature/todo-black-flash` (0cb9387,
