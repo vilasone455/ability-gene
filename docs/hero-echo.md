@@ -105,6 +105,17 @@ plexus follow the same hook.
   other races keep their body. Both restored on revert.
 - Removing the hediff any other way reverts the Echo.
 - `wealth` is added to the Host's market value.
+- Costume (built for Vergil 2026-09-28): a `renderNodeProperties` entry of class
+  `RimArt.PawnRenderNodeProperties_EchoCostume` on the manifest hediff, drawn by
+  `RimArt.PawnRenderNodeWorker_EchoCostume` under the `ApparelBody` node, one texture per body type
+  through `bodyTypeGraphicPaths`. It is a picture only: the Host keeps wearing its apparel and its
+  armour and insulation still count. `hideBodyApparel` stops worn clothes and armour (OnSkin, Middle,
+  Shell layers) from being drawn; belts, packs and other layers are still drawn. `hideHeadgear` stops
+  headgear from being drawn (a Harmony postfix on `HeadgearVisible`), so a helmet no longer hides the
+  hair. Vergil's coat sets both. Layer 29 (over belts and packs at 20 + one per piece, under the
+  post-apparel wounds at 30); 89 facing north, over the head as vanilla shells are. Textures from
+  `make_costume_textures.py`, fitted to the vanilla body outlines. Vergil: DMC3 blue coat, 256 px,
+  Thin/Male/Female/Fat/Hulk x south/east/north.
 
 ### Manifest weapon (decided and built 2026-09-27)
 
@@ -453,7 +464,10 @@ presence trait is to be retired from the loaded defs so provoke has one source. 
   Host (no trials), tune to pawn, meet candidate's trials.
 - God mode gizmos: "DEV: Meet trials" on a candidate, "DEV: Fill charge" on a Host.
 - `-rimarttest=echo`: 10 scenarios (pool refill/drain, pool empty, manifest/revert, hediff removed,
-  cast cost, awaken, cap, longsword kills, dev command, UI shots).
+  cast cost, awaken, cap, longsword kills, dev command, UI shots), plus the weapon tests and
+  "costume 1" (Vergil's coat in the render tree, all 15 textures load; shirt, marine armour and
+  helmet not drawn in hero form, smokepop pack still drawn, all drawn again after revert; 8
+  screenshots; `-rimarttest="Echo: costume"` runs it alone).
 - Debug window, kit "Itachi": make Host + manifest, false face (no cost, no cooldown), susanoo 12 s,
   weaken to 30 % health, totsuka stab the pawn under the mouse. Dispersal's "refill the plexus"
   and "shoot the carrier" still apply.
@@ -471,7 +485,8 @@ presence trait is to be retired from the loaded defs so provoke has one source. 
 ## Not built
 
 - Meteor incident that brings the device (the device is researched and built for now).
-- Body and head costume pieces, eye overlays, a transform effect per Echo, a marker for manifested Hosts.
+- Costumes for the other Echoes (Vergil's coat is built), head pieces, eye overlays, a transform
+  effect per Echo, a marker for manifested Hosts.
 - Pocket spaces closing on `PoolEmptied`, except Unlimited Blade Works: its world closes when the
   caster loses the ability, which an empty pool causes by reverting every Host.
 - Echoes for the other heroes; their kits have no mechanics yet.

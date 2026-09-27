@@ -442,5 +442,130 @@ namespace RimArt
             t.Check(OnMap(t, Knife) == 0, "still no knife on the map");
             Vergil.manifestWeapon = before;
         }
+
+        /// <summary>Every node of the pawn's render tree. Builds the tree first.</summary>
+        private static IEnumerable<PawnRenderNode> RenderNodes(Pawn pawn)
+        {
+            pawn.Drawer.renderer.EnsureGraphicsInitialized();
+            var queue = new Queue<PawnRenderNode>();
+            PawnRenderNode root = pawn.Drawer.renderer.renderTree.rootNode;
+            if (root != null) queue.Enqueue(root);
+            while (queue.Count > 0)
+            {
+                PawnRenderNode node = queue.Dequeue();
+                yield return node;
+                if (node.children != null)
+                    foreach (PawnRenderNode child in node.children) queue.Enqueue(child);
+            }
+        }
+
+        private static PawnRenderNode CostumeNode(Pawn pawn, HediffDef form) =>
+            RenderNodes(pawn).FirstOrDefault(node => node.hediff?.def == form);
+
+        /// <summary>Whether each worn piece's render node would draw for a standing pawn facing south.</summary>
+        private static Dictionary<string, bool> ApparelDrawn(Pawn pawn)
+        {
+            PawnDrawParms parms = PawnDrawParms.DefaultFor(pawn);
+            parms.facing = Rot4.South;
+            var drawn = new Dictionary<string, bool>();
+            foreach (PawnRenderNode node in RenderNodes(pawn))
+                if (node.apparel != null) drawn[node.apparel.def.defName] = node.Worker.CanDrawNow(node, parms);
+            return drawn;
+        }
+
+        private static void CheckDrawn(RimArtTestContext t, Pawn pawn, string when, params (string piece, bool drawn)[] expected)
+        {
+            Dictionary<string, bool> drawn = ApparelDrawn(pawn);
+            foreach ((string piece, bool want) in expected)
+                t.Check(drawn.TryGetValue(piece, out bool got) && got == want,
+                    when + ": " + piece + (want ? " is drawn" : " is hidden")
+                    + (drawn.ContainsKey(piece) ? "" : " (no render node)"));
+        }
+
+        private static void Wear(Pawn pawn, string defName)
+        {
+            ThingDef def = DefDatabase<ThingDef>.GetNamed(defName);
+            pawn.apparel.Wear((Apparel)ThingMaker.MakeThing(def, def.MadeFromStuff ? GenStuff.DefaultStuffFor(def) : null));
+        }
+
+        /// <summary>Turns the pawn and keeps it turned: undrafted, a wait job facing a cell 3 away.</summary>
+        private static void Face(Pawn pawn, Rot4 rot)
+        {
+            // Pawn_RotationTracker turns a drafted pawn that stands idle to face south.
+            pawn.drafter.Drafted = false;
+            Verse.AI.Job wait = JobMaker.MakeJob(JobDefOf.Wait_MaintainPosture, pawn.Position + rot.FacingCell * 3);
+            wait.expiryInterval = 600;
+            pawn.jobs.StartJob(wait, Verse.AI.JobCondition.InterruptForced);
+            pawn.Rotation = rot;
+        }
+
+        [RimArtTest("Echo", "costume 1 Vergil's coat is drawn in hero form, hides worn clothes, armour and headgear but not belts, and goes on revert (screenshots)")]
+        private static IEnumerable<int> VergilCoat(RimArtTestContext t)
+        {
+            GameComponent_Echoes echoes = Setup(t);
+            Pawn host = Colonist(t);
+            foreach (string piece in new[] { "Apparel_BasicShirt", "Apparel_Pants", "Apparel_SmokepopBelt" }) Wear(host, piece);
+            t.Equip(host, DefDatabase<ThingDef>.GetNamed("MeleeWeapon_LongSword"));
+            HediffDef form = Vergil.manifestHediff;
+            var props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().FirstOrDefault();
+            if (!t.Check(props?.bodyTypeGraphicPaths != null, "the hero form hediff has a costume node with body types")) yield break;
+            t.Check(props.hideBodyApparel && props.hideHeadgear, "Vergil's coat hides body apparel and headgear");
+            foreach (BodyTypeGraphicData body in props.bodyTypeGraphicPaths)
+                foreach (string facing in new[] { "south", "east", "north" })
+                    t.Check(ContentFinder<UnityEngine.Texture2D>.Get(body.texturePath + "_" + facing, false) != null,
+                        body.bodyType.defName + " " + facing + " texture loads");
+            t.Check(CostumeNode(host, form) == null, "no coat before manifest");
+            // Vanilla trousers have no worn picture and so no render node: only the shirt and belt are checked.
+            CheckDrawn(t, host, "before", ("Apparel_BasicShirt", true), ("Apparel_SmokepopBelt", true));
+            Face(host, Rot4.South);
+            yield return 20;
+            yield return t.ShotAs("coat-before-south");
+
+            EchoRecord record = EchoUtility.ForceHost(Vergil, host);
+            echoes.charge = 100f;
+            int worn = host.apparel.WornApparelCount;
+            t.Check(EchoUtility.Manifest(record), "manifested");
+            yield return 2;
+            PawnRenderNode coat = CostumeNode(host, form);
+            t.Check(coat != null, "the coat is in the render tree");
+            t.Check(coat?.parent?.Props.tagDef == PawnRenderNodeTagDefOf.ApparelBody,
+                "under the body apparel node (" + coat?.parent?.Props.tagDef?.defName + ")");
+            t.Check(coat?.PrimaryGraphic?.path == "RimArt/Echo/Costume/VergilCoat_" + host.story.bodyType.defName,
+                "the texture is the " + host.story.bodyType.defName + " coat (" + coat?.PrimaryGraphic?.path + ")");
+            t.Check(host.apparel.WornApparelCount == worn, "the Host still wears its " + worn + " pieces");
+            CheckDrawn(t, host, "hero form", ("Apparel_BasicShirt", false), ("Apparel_SmokepopBelt", true));
+            foreach (Rot4 rot in new[] { Rot4.South, Rot4.East, Rot4.North, Rot4.West })
+            {
+                Face(host, rot);
+                yield return 20;
+                yield return t.ShotAs("coat-" + rot.ToStringHuman().ToLowerInvariant());
+            }
+
+            // Marine armour and helmet: still worn and still counted, not drawn; the hair shows.
+            EchoUtility.Revert(record, collapse: false);
+            foreach (string piece in new[] { "Apparel_PowerArmor", "Apparel_PowerArmorHelmet" }) Wear(host, piece);
+            yield return 2;
+            CheckDrawn(t, host, "armour before manifest", ("Apparel_PowerArmor", true), ("Apparel_PowerArmorHelmet", true));
+            t.Check(EchoUtility.Manifest(record), "manifested again in marine armour");
+            yield return 2;
+            t.Check(host.apparel.WornApparel.Any(a => a.def.defName == "Apparel_PowerArmor"), "the marine armour is still worn under the coat");
+            CheckDrawn(t, host, "armour in hero form", ("Apparel_PowerArmor", false), ("Apparel_PowerArmorHelmet", false),
+                ("Apparel_SmokepopBelt", true));
+            t.Check(!PawnRenderNodeWorker_Apparel_Head.HeadgearVisible(PawnDrawParms.DefaultFor(host)),
+                "headgear counts as not visible, so the helmet no longer hides the hair");
+            foreach (Rot4 rot in new[] { Rot4.South, Rot4.East, Rot4.North })
+            {
+                Face(host, rot);
+                yield return 20;
+                yield return t.ShotAs("coat-armour-" + rot.ToStringHuman().ToLowerInvariant());
+            }
+
+            EchoUtility.Revert(record, collapse: false);
+            yield return 2;
+            t.Check(CostumeNode(host, form) == null, "the coat is gone after revert");
+            CheckDrawn(t, host, "after revert", ("Apparel_PowerArmor", true), ("Apparel_PowerArmorHelmet", true),
+                ("Apparel_SmokepopBelt", true));
+            t.Check(PawnRenderNodeWorker_Apparel_Head.HeadgearVisible(PawnDrawParms.DefaultFor(host)), "headgear visible again");
+        }
     }
 }
