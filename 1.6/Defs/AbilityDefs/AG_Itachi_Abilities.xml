@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Itachi's two non-crow abilities (docs/hero-echo.md, Itachi). Both are cast on himself with no
+       target, in the shape of Inumaki's words. Only his Echo grants them; the charge costs are on
+       the EchoDef. Every number is a placeholder. -->
+  <AbilityDef Name="AG_ItachiSelfCastBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <aiCanUse>false</aiCanUse>
+    <targetRequired>false</targetRequired>
+    <jobDef>CastAbilityOnThingWithoutWeapon</jobDef>
+    <showCastingProgressBar>true</showCastingProgressBar>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>0.9</range>
+      <requireLineOfSight>false</requireLineOfSight>
+      <drawAimPie>false</drawAimPie>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+  </AbilityDef>
+
+  <!-- False Face: a genjutsu on everyone looking at him. -->
+  <AbilityDef ParentName="AG_ItachiSelfCastBase">
+    <defName>AG_ItachiFalseFace</defName>
+    <label>false face</label>
+    <description>Every enemy within 15 cells whose attention is on Itachi sees its nearest ally as him and attacks it, for up to 10 seconds. The illusion breaks for a victim that takes damage, when its false Itachi goes down, or when Itachi goes down. Mechanoids and animals are not fooled.</description>
+    <iconPath>RimArt/Itachi/IconFalseFace</iconPath>
+    <cooldownTicksRange>2700</cooldownTicksRange>
+    <hostile>true</hostile>
+    <verbProperties>
+      <warmupTime>0.5</warmupTime>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityFalseFace">
+        <radius>15</radius>
+        <humanlikeOnly>true</humanlikeOnly>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Susanoo: the hediff carries everything; its length is Ability_Duration. -->
+  <AbilityDef ParentName="AG_ItachiSelfCastBase">
+    <defName>AG_ItachiSusanoo</defName>
+    <label>susanoo</label>
+    <description>Raise the Susanoo for 12 seconds. The Yata Mirror turns every hit from outside; the Totsuka Blade, a command while it stands, stabs a target within 4 cells every 3 seconds for 30 damage, and seals instead a target that is downed or at 30 % health or less: it is taken off the map as a kill, leaving its gear and no corpse. One seal per Susanoo; mechanoids are never sealed. Itachi walks at half speed and cannot use Crow Dispersal while it stands. When it ends his consciousness drops by 30 % for 6 hours and he loses blood.</description>
+    <iconPath>RimArt/Itachi/IconSusanoo</iconPath>
+    <cooldownTicksRange>60000</cooldownTicksRange>
+    <hostile>false</hostile>
+    <statBases>
+      <Ability_Duration>12</Ability_Duration>
+    </statBases>
+    <verbProperties>
+      <warmupTime>1</warmupTime>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityGiveHediff">
+        <compClass>CompAbilityEffect_GiveHediff</compClass>
+        <hediffDef>AG_Susanoo</hediffDef>
+        <onlyApplyToSelf>true</onlyApplyToSelf>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

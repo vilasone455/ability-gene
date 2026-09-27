@@ -84,6 +84,17 @@ own cost, some do not):
 
 The card and the letter show the cost as it applies to the candidate ("Gains Abrasive (replaces Kind)").
 
+### Echo-only genes (built 2026-09-27)
+
+An EchoDef may list `awakenGenes`. Each is added as a xenogene on awakening (the record scan adds
+it back if a xenogerm cleared it) and the Host keeps it for life; the awakening letter and the card
+list it under the cost. Such a gene lists no abilities of its own: they go in the EchoDef's
+`abilities`, so they come with the form and go on revert (validate.py's single-source rule holds).
+Its passive behaviour asks `EchoUtility.GeneActive(pawn, gene)`, true only while the Host is
+manifested. First use: Itachi's dispersal plexus (Scatter, its toggle and its charges; the charges
+keep regrowing between manifests). Obito's fold organ, Nakime's castle gene and Shikamaru's shadow
+plexus follow the same hook.
+
 ## Hero form
 
 - Per-Echo `manifestHediff` (child of `AG_EchoManifestBase`): stat offsets in its stage.
@@ -135,6 +146,7 @@ Proposed handling (not yet confirmed rule by rule):
 | Inumaki | Social 10, not Psychopath | Kind | stop, drop, crush, come, run, explode | 8 | 0 each (the throat is his cost) |
 | Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | Judgement Cut, Yamato Dash, Summoned Swords, Judgement Cut End (the def grants none until the kit is ported) | 10 | Judgement Cut 3, Yamato Dash 2, Summoned Swords 10, Judgement Cut End 0 (Style is its limit) |
 | Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40 |
+| Itachi ("Crow of the Crimson Eye") | Melee 12, Intellectual 12, Kills 30 | Sickly (Immunity -1) + the dispersal plexus gene (awakenGenes) | crow dispersal (Murder + automatic Scatter), carrion, false face, susanoo | 10 | crow abilities 0 (the plexus's 3 charges), false face 3, susanoo 20 |
 
 Accelerator and Pain reuse abilities that still come from their pre-hero item (reflex booster
 implant, repulsion eye). validate.py allows that second source only for those abilities
@@ -173,7 +185,6 @@ Agreed, not built (no EchoDef yet; the abilities do not exist):
 | Echo | Trials | Cost | Abilities | Upkeep | Casts | Hero form |
 |---|---|---|---|---|---|---|
 | Sasuke ("Avenger of the Crimson Eye") | Melee 14, Intellectual 10, 15 kills with the Fūma Shuriken | Pessimist | Amenoyodomi, Amenotejikara, Raikō Kusari, Amaterasu | 12 | Amenoyodomi 0, Amenotejikara 2, Raikō Kusari 8, Amaterasu 5 | +0.4 move speed, black hair, wealth 6000, no forced weapon |
-| Itachi ("Crow of the Crimson Eye") | Melee 12, Intellectual 12, 30 kills | Sickly (Immunity -1) | Crow Dispersal (Murder + automatic Scatter, one ability), Carrion, False Face, Susanoo | 10 (proposed) | crow abilities 0 (they spend the gene's 3 charges, +1 per hour), False Face 3, Susanoo 20 | dispersal plexus gene Echo-only: added on awakening, abilities only while manifested |
 | Obito ("Watcher Behind the Spiral Mask") | Melee 12, Intellectual 10, has a missing or artificial body part (new Trial class; a prosthetic or bionic counts) | Depressive (Natural mood -2) | Kamui: Phase, Kamui: Warp, Kamui: Store, Wood Release | 12 | Phase 0 (its own 30 s pool), Warp 2, Store 1, Wood Release 2 | fold organ gene Echo-only: added on awakening (the dimension is generated then), abilities only while manifested |
 | Gojo ("Bearer of the Six Eyes") | Intellectual 14, 1 day spent downed in total (vanilla `TimeDowned` record; the Trial label shows hours), colony wealth 200,000 | The Strongest (new custom trait) | Infinity, Blue, Red, Unlimited Void (+ Hollow Purple combo) | 15 | Infinity 0 (its breath is the price), Blue 3, Red 3, Hollow Purple 20 (+ its own 1-day cooldown), Unlimited Void 30 | white hair; phase barrier implant Echo-only; no forced weapon |
 | Goku ("Heir of the Monkey King") | Melee 15, downed and recovered 3 times (new counter; vanilla only records total time downed) | Gourmand | Solar Flare, Instant Transmission, Kamehameha, Spirit Bomb (+ Warp Kamehameha) | 12 | Solar Flare 3, Instant Transmission 2, Kamehameha 15, Spirit Bomb 30; Warp Kamehameha pays Kamehameha + Instant Transmission | black hair; forced empty hands |
@@ -187,8 +198,8 @@ Sasuke's Melee Trial follows the throw: kunai accuracy uses Melee (`KunaiAccurac
 kills count because the Fūma throw passes the weapon to the kill counter; kunai kills were not
 checked. A "lost family" Trial was considered and dropped (2026-09-27).
 
-Itachi (agreed 2026-09-27; numbers are placeholders; Susanoo has a lab sketch, `itachi-susanoo.js`;
-False Face has no sketch; neither has code):
+Itachi (agreed 2026-09-27; numbers are placeholders; the mechanics were built the same day, see
+"Echoes defined"; the Susanoo picture from `itachi-susanoo.js` is still to port):
 - Crow Dispersal: the built Murder and automatic Scatter, counted as one ability.
 - Carrion: built, unchanged.
 - False Face (genjutsu): one button, no target. Every enemy within 15 cells whose current target is
@@ -196,13 +207,21 @@ False Face has no sketch; neither has code):
   believing it is Itachi. Each victim breaks free when it takes damage, when its false Itachi goes
   down, or when Itachi goes down. Mechanoids are immune. Cooldown 45 s, 3 charge. Built as a short
   mental state (as vanilla Berserk is), because the AI drops targets that are not hostile to it.
-  To check before building: whether the attacked ally fights back on its own.
+  Built: `MentalState_FalseFace` (category Aggro, 600 ticks, its own break rules) with a
+  `JobGiver_FalseFace` node patched into MentalStateCritical; the state's `ForceHostileTo` makes the
+  false Itachi hostile both ways, so the ally fights back on its own (checked: `GenHostility`
+  asks both pawns' states). Only humanlike enemies are caught (a manhunter pack would be a free
+  win); the small effect is a red glint on Itachi, a red flash and crow feathers on each victim,
+  and a red mark over each while it lasts.
 - Susanoo: self, warm-up 1 s, lasts 12 s, Itachi walks at half speed. Yata Mirror blocks every hit
   from outside. Totsuka Blade (changed 2026-09-27, the one-stab seal of anything was too strong):
   while Susanoo is up, Itachi can stab a target within 4 cells every 3 s. The stab seals the target
   only if it is downed or at 30 % summary health or less (removed from the map, counts as a kill,
   drops its gear, no corpse); on any other target it is a hit of 30 stab damage. At most one seal
   per Susanoo; after it, stabs are hits only. Mechanoids cannot be sealed (they take the hit).
+  Built: the Totsuka Blade is a targeted command on the Susanoo hediff (chosen 2026-09-27 over an
+  automatic stab, so the one seal goes where the player wants); Crow Dispersal and Scatter are
+  disabled while it stands; the seal is Strip, Kill with Itachi as instigator, corpse vanished.
   Cooldown 1 day, 20 charge. After it ends: -30 %
   consciousness and 10 % blood loss for 6 h (his illness). Look: his complete armoured form (never
   Perfect), code meshes plus a swirl texture, always facing the camera, growing ribs -> skeleton ->
@@ -367,6 +386,13 @@ presence trait is to be retired from the loaded defs so provoke has one source. 
 - God mode gizmos: "DEV: Meet trials" on a candidate, "DEV: Fill charge" on a Host.
 - `-rimarttest=echo`: 10 scenarios (pool refill/drain, pool empty, manifest/revert, hediff removed,
   cast cost, awaken, cap, longsword kills, dev command, UI shots).
+- Debug window, kit "Itachi": make Host + manifest, false face (no cost, no cooldown), susanoo 12 s,
+  weaken to 30 % health, totsuka stab the pawn under the mouse. Dispersal's "refill the plexus"
+  and "shoot the carrier" still apply.
+- `-rimarttest=itachi`: 14 scenarios (gene on awakening and only in hero form, Scatter only
+  manifested, charges persist, stale abilities; False Face ranged victim, ally fights back, the
+  three breaks and the 10 s end, immunities; Susanoo cost/speed/Mirror, crows stand down, Totsuka
+  cut/seal/mech, drained and revert; defs and think tree; UI shot).
 
 ## Not built
 

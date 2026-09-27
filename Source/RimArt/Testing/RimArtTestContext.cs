@@ -101,7 +101,8 @@ namespace RimArt
         public void Equip(Pawn pawn, ThingDef weapon)
         {
             if (pawn.equipment.Primary != null) pawn.equipment.DestroyEquipment(pawn.equipment.Primary);
-            pawn.equipment.AddEquipment((ThingWithComps)ThingMaker.MakeThing(weapon));
+            pawn.equipment.AddEquipment((ThingWithComps)ThingMaker.MakeThing(weapon,
+                weapon.MadeFromStuff ? GenStuff.DefaultStuffFor(weapon) : null));
         }
 
         /// <summary>One line on a pawn: where it is, its job and toil, stance, stun, and whether it is inside a flyer.</summary>

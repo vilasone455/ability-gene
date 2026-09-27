@@ -146,6 +146,8 @@ namespace RimArt
         /// <summary>One line per cost as it would apply to this pawn, for the card and the letter.</summary>
         public static IEnumerable<string> CostLines(EchoDef def, Pawn pawn)
         {
+            foreach (GeneDef gene in def.awakenGenes)
+                yield return "AG_EchoCostGene".Translate(gene.LabelCap);
             foreach (EchoTraitCost cost in def.forcedTraits)
             {
                 if (pawn != null && pawn.story?.traits?.HasTrait(cost.trait, cost.degree) == true)
@@ -169,6 +171,33 @@ namespace RimArt
                 foreach (Trait trait in Replaced(cost, pawn).ToList()) pawn.story.traits.RemoveTrait(trait);
                 pawn.story.traits.GainTrait(new Trait(cost.trait, cost.degree, forced: true), suppressConflicts: true);
             }
+            EnsureAwakenGenes(def, pawn);
+        }
+
+        /// <summary>
+        /// Gives the Echo's genes as xenogenes: a xenogene is not passed to children and reads as
+        /// something given from outside. A xenogerm implant would clear them, so the record scan
+        /// calls this again every few seconds while the Host lives.
+        /// </summary>
+        public static void EnsureAwakenGenes(EchoDef def, Pawn pawn)
+        {
+            if (pawn?.genes == null || pawn.Dead) return;
+            foreach (GeneDef gene in def.awakenGenes)
+                if (gene != null && !pawn.genes.HasActiveGene(gene)) pawn.genes.AddGene(gene, xenogene: true);
+        }
+
+        /// <summary>Every gene some Echo gives on awakening. Filled once at startup.</summary>
+        internal static readonly HashSet<GeneDef> AwakenGenes = new HashSet<GeneDef>();
+
+        /// <summary>
+        /// Whether an Echo-only gene may act on this pawn now: only while its Host is manifested.
+        /// A gene no Echo owns is always active, so the old generic kits are unchanged.
+        /// </summary>
+        public static bool GeneActive(Pawn pawn, GeneDef gene)
+        {
+            if (gene == null || !AwakenGenes.Contains(gene)) return true;
+            EchoRecord record = GameComponent_Echoes.Get?.HostRecord(pawn);
+            return record != null && record.manifested && record.def.awakenGenes.Contains(gene);
         }
 
         // ---- awakening ----
