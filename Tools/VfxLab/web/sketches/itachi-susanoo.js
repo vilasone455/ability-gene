@@ -118,7 +118,7 @@ export default {
     line: P('Line brightness', 1.0, .3, 1.5, .01, 'Shape'),
     flameH: P('Flame tip height (cells)', .45, .1, 1, .01, 'Shape'),
     aura: P('Outer flame (aura)', 1, 0, 2, .05, 'Shape'),
-    bladeLen: P('Blade length at idle (cells)', 2.2, 1.2, 3.2, .05, 'Shape'),
+    bladeLen: P('Blade length at idle (cells)', 1.9, 1.2, 3.2, .05, 'Shape'),
   },
 
   duration(p) { return { raise: Lead + p.warmUp + Idle, block: BlockLength, seal: sealTimes(p).end, end: endTimes(p).end }[p.scenario]; },

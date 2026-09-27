@@ -73,14 +73,14 @@ export const DesignH = 3.5, DesignW = 3.2;
 export const FeetZ = -.33;              // the real-size stand-in's feet, from the cell centre
 export const ArmRoot = { u: 1.0, v: 2.02 };  // shoulder joints at (±u, v)
 export const Upper = .78, Fore = .72;
-export const RestHand = { u: -1.62, v: 1.22 };  // right hand (screen left), holding the gourd out to the side
+export const RestHand = { u: -1.63, v: 2.13 };  // right hand (screen left): elbow out at the side, forearm up, sword upright
 export const RestMirror = { u: 1.52, v: 1.26 }; // left hand (screen right) = the mirror's centre
 export const MirrorR = .70;
 // Guarding: the mirror goes to the point GuardR from GuardC toward the attacker (as seen on
 // screen), as far as the left arm reaches; the arm may stretch to 1.25 times its length, so a
 // hit from the far side is met in front of the chest.
 export const GuardC = { u: 0, v: 1.2 }, GuardR = 1.45, MaxStretch = 1.25;
-export const RestBladeDeg = 98;                  // the Totsuka's idle direction on screen (0 = east)
+export const RestBladeDeg = 100;                 // the Totsuka's idle direction on screen (0 = east)
 // Ribs: [centre v, half width, how far the front end drops toward the sternum].
 const RibSet = [[1.78, .46, .20], [1.58, .60, .24], [1.38, .70, .28], [1.17, .76, .32], [.96, .78, .34], [.75, .74, .34], [.55, .66, .32]];
 const RibB = .10, SternumTop = 1.60, SternumFoot = 1.06, NeckTop = 2.32, RibTop = 1.9;
@@ -439,7 +439,7 @@ export function gourdMouth(F, look, s, pose) {
   const b = bobAt(s), root = { u: -ArmRoot.u, v: ArmRoot.v + b };
   const { hand } = elbowFor(root, { u: pose.hand.u, v: pose.hand.v + b }, -1, pose.elbowDown ?? 0);
   const a = pose.bladeDeg * Mathf.Deg2Rad;
-  return toScreen(F, look, hand.u + Math.cos(a) * .24, hand.v + Math.sin(a) * .24);
+  return toScreen(F, look, hand.u + Math.cos(a) * .33, hand.v + Math.sin(a) * .33);
 }
 // The right hand's reach toward a world point: the hand goes `reach` design units from the
 // shoulder toward it (as seen on screen).
@@ -583,10 +583,12 @@ export function susanoo(key, F, s, look, g, pose) {
   const ap = smooth(clamp(aK * 1.3));
   for (const side of [-1, 1]) {
     const c = S(side * 1.22, 2.08 + bob), sc = lerp(.5, 1, ap);
-    fillBlob(S(side * 1.34, 1.78 + bob), .42 * kx * sc, .2 * kz * sc, litD, .5 * bodyFill * ap, Front + .006, side * 12);
-    fillBlob(c, .5 * kx * sc, .36 * kz * sc, litD, .62 * bodyFill * ap, Front + .007, side * 10);
-    draw(ringMesh, c.x, Front + .0075, c.z, .5 * kx * sc, .36 * kz * sc, side * 10, lineD.withAlpha(.5 * bodyLine * ap), add);
-    sprite(c, .62 * kx * sc, .5 * kz * sc, lineD.withAlpha(.75 * bodyLine * ap), swirlMat, Front + .008, side > 0 ? 0 : 180);
+    // Drawn over the upper arms (whose fills and lines sit at Front + .022-.0235) so the plate
+    // caps the shoulder; the fist (.0246) and the mirror (.03) still draw over it.
+    fillBlob(S(side * 1.34, 1.78 + bob), .42 * kx * sc, .2 * kz * sc, litD, .5 * bodyFill * ap, Front + .0236, side * 12);
+    fillBlob(c, .5 * kx * sc, .36 * kz * sc, litD, .62 * bodyFill * ap, Front + .0237, side * 10);
+    draw(ringMesh, c.x, Front + .0238, c.z, .5 * kx * sc, .36 * kz * sc, side * 10, lineD.withAlpha(.5 * bodyLine * ap), add);
+    sprite(c, .62 * kx * sc, .5 * kz * sc, lineD.withAlpha(.75 * bodyLine * ap), swirlMat, Front + .0239, side > 0 ? 0 : 180);
   }
 
   head(key, S, s, g, { line: lineD, bone, lit: litD, deep: deepD, fillA: fillA * fd.head, lineA: lineA * fd.head, aK, bob, kx, kz, A: A * fd.head });
@@ -756,8 +758,10 @@ function arms(key, S, s, look, g, pose, c) {
     // The arm as a tapered shape: upper arm .50 at the shoulder with a bulge, a round elbow,
     // forearm .42 swelling a little then .30 at the wrist.
     const N = 10, cl = [], widths = [];
-    for (let i = 0; i <= N; i++) { const t = i / N; cl.push({ u: lerp(root.u, e.u, t), v: lerp(root.v, e.v, t) }); widths.push(lerp(.5, .40, t) + .09 * Math.sin(t * Math.PI)); }
-    for (let i = 1; i <= N; i++) { const t = i / N; cl.push({ u: lerp(e.u, h.u, t), v: lerp(e.v, h.v, t) }); widths.push(lerp(.42, .30, t) + .05 * Math.sin(Math.min(1, t * 1.2) * Math.PI)); }
+    // Upper arm: .48 at the shoulder, a biceps bulge, .36 at the elbow. Forearm: swells to about
+    // .46 a third of the way down, then narrows to a .24 wrist.
+    for (let i = 0; i <= N; i++) { const t = i / N; cl.push({ u: lerp(root.u, e.u, t), v: lerp(root.v, e.v, t) }); widths.push(lerp(.48, .36, t) + .1 * Math.sin(Math.pow(t, .8) * Math.PI)); }
+    for (let i = 1; i <= N; i++) { const t = i / N; cl.push({ u: lerp(e.u, h.u, t), v: lerp(e.v, h.v, t) }); widths.push(lerp(.38, .24, t) + .1 * Math.sin(Math.min(1, t * 1.5) * Math.PI) * (1 - t * .5)); }
     const keep = Math.max(1, Math.floor(reach * (cl.length - 1)));
     const pts = cl.slice(0, keep + 1).map(P), n = pts.length;
     const a = [], b = [];
@@ -792,22 +796,31 @@ function arms(key, S, s, look, g, pose, c) {
   const gk = clamp(g.blade * 2.5);
   if (gk > 0) {
     const h = R.hand, gA = gk * A;
-    const low = S(h.u - dir.u * .14, h.v - dir.v * .14), high = S(h.u + dir.u * .11, h.v + dir.v * .11);
-    fillBlob(low, .2 * kx * gk, .19 * kz * gk, lit, .75 * fillA * gk + .15 * gA, Front + .024);
-    fillBlob(high, .13 * kx * gk, .12 * kz * gk, lit, .75 * fillA * gk + .15 * gA, Front + .0242);
-    draw(ringMesh, low.x, Front + .0244, low.z, .2 * kx * gk, .19 * kz * gk, 0, line.withAlpha(.7 * lineA * gk), add);
-    draw(ringMesh, high.x, Front + .0244, high.z, .13 * kx * gk, .12 * kz * gk, 0, line.withAlpha(.7 * lineA * gk), add);
-    // The armoured fist round the gourd's waist: a rounded block with three knuckle lines across it.
-    fillBlob(S(h.u, h.v), .2 * kx * gk, .15 * kz * gk, lit, .9 * fillA * gk, Front + .0246, -bladeDeg);
+    // The gourd as one shape along the blade's direction, held like a hilt: its big bulb in the
+    // fist (a rounded bottom shows below it), the waist, a small bulb and the neck above; one
+    // fill and one outline.
+    const G = (along, across) => S(h.u + dir.u * along - dir.v * across, h.v + dir.v * along + dir.u * across);
+    const prof = [[-.2, 0], [-.18, .08], [-.12, .13], [0, .14], [.08, .1], [.12, .07], [.17, .09], [.22, .09], [.27, .06], [.31, .045], [.34, .05]];
+    const gl = prof.map(([a, w]) => G(a, w * gk)), gr = prof.map(([a, w]) => G(a, -w * gk));
+    fillStrip(`${key} gourd`, gl, gr, lit, .8 * fillA * gk + .1 * gA, Front + .024);
+    glowLine(`${key} gourd line`, [...gl, ...gr.slice().reverse(), gl[0]], .016 * kx, line, .75 * lineA * gk, { layer: Front + .0244 });
+    glowLine(`${key} gourd cord`, [G(.12, .07), G(.02, .2), G(-.1, .24)], .012 * kx, line, .5 * lineA * gk, { layer: Front + .0248, taper: 1 });
+    // The armoured fist round the gourd's waist, wider than the wrist: a rounded block across the
+    // grip, four finger lines across the knuckles facing us, the thumb curled over the top.
+    const F = (along, across) => G(along, across);
+    const fist = [];
+    for (let j = 0; j <= 20; j++) { const a0 = j / 20 * TAU; fist.push(F(Math.sin(a0) * .12, Math.cos(a0) * .19)); }
+    fillBlob(S(h.u, h.v), .19 * kx * gk, .13 * kz * gk, lit, .95 * fillA * gk, Front + .0246, -(bladeDeg - 90));
+    glowLine(`${key} fist line`, fist, .016 * kx, line, .75 * lineA * gk, { layer: Front + .0247 });
     for (let i = 0; i < 3; i++) {
-      const along = (i - 1) * .07, cu = h.u + dir.u * along, cv = h.v + dir.v * along, pts = [];
-      for (let j = 0; j <= 6; j++) { const a0 = (j / 6 - .5) * 2.2; pts.push(S(cu - dir.v * Math.sin(a0) * .17 + dir.u * Math.cos(a0) * .04, cv + dir.u * Math.sin(a0) * .17 + dir.v * Math.cos(a0) * .04)); }
-      glowLine(`${key} knuckle ${i}`, pts, .016 * kx, line, .55 * lineA * gk, { layer: Front + .0247 });
+      const w0 = -.19 + (i + 1) * .095;
+      glowLine(`${key} finger ${i}`, [F(-.1, w0), F(.06, w0)], .012 * kx, line, .5 * lineA * gk, { layer: Front + .0247 });
     }
+    glowLine(`${key} thumb`, [F(.04, .17), F(.12, .1), F(.12, -.02), F(.07, -.08)], .016 * kx, line, .7 * lineA * gk, { layer: Front + .0247 });
   }
   const bk = g.blade;
   if (bk > 0) {
-    const h = R.hand, mouth = S(h.u + dir.u * .24, h.v + dir.v * .24);
+    const h = R.hand, mouth = S(h.u + dir.u * .33, h.v + dir.v * .33);
     let tip;
     if (pose.bladeTip) tip = pose.bladeTip;
     else { const L0 = (pose.bladeLen ?? look.bladeLen) * smooth(bk); tip = { x: mouth.x + dir.u * L0 * kx, z: mouth.z + dir.v * L0 * kz }; }
