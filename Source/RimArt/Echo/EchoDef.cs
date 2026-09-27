@@ -46,6 +46,19 @@ namespace RimArt
         /// </summary>
         public BodyTypeDef bodyType;
 
+        /// <summary>
+        /// The weapon the Host holds in hero form, made fresh on each manifest (see EchoWeapon). It is
+        /// not loot: it vanishes whenever it leaves the hand and comes back after
+        /// <see cref="weaponReturnTicks"/>. The weapon the Host held waits in their inventory.
+        /// </summary>
+        public ThingDef manifestWeapon;
+        /// <summary>The Host fights with empty hands in hero form; the held weapon waits in the inventory.</summary>
+        public bool emptyHands;
+        /// <summary>Ticks before a hero weapon that left the hand comes back, while still manifested.</summary>
+        public int weaponReturnTicks = 600;
+
+        public bool ForcesHands => emptyHands || manifestWeapon != null;
+
         public float CastCost(AbilityDef ability)
         {
             for (int i = 0; i < castCosts.Count; i++)
@@ -61,6 +74,17 @@ namespace RimArt
             if (manifestHediff == null) yield return "manifestHediff is null";
             if (trials.NullOrEmpty()) yield return "no trials";
             if (upkeepPerHour < 0f) yield return "upkeepPerHour is negative";
+            if (emptyHands && manifestWeapon != null) yield return "emptyHands and manifestWeapon are both set";
+            if (weaponReturnTicks < 0) yield return "weaponReturnTicks is negative";
+            if (manifestWeapon != null)
+            {
+                if (manifestWeapon.equipmentType != EquipmentType.Primary)
+                    yield return "manifestWeapon " + manifestWeapon.defName + " is not a primary weapon";
+                // Hero weapons are not loot: they must add nothing to colony wealth.
+                StatModifier value = manifestWeapon.statBases?.Find(s => s.stat?.defName == "MarketValue");
+                if (value == null || value.value != 0f)
+                    yield return "manifestWeapon " + manifestWeapon.defName + " must set MarketValue 0 in statBases";
+            }
             foreach (EchoCastCost cost in castCosts)
                 if (cost.ability == null || !abilities.Contains(cost.ability))
                     yield return "castCosts names " + cost.ability?.defName + ", which is not in abilities";

@@ -36,8 +36,17 @@ namespace RimArt
         /// <summary>Cooldowns of the Echo's abilities between manifests, so reverting does not reset them.</summary>
         public ItemAbilityGrant grant = new ItemAbilityGrant();
 
+        /// <summary>The weapon the Host held before a forced-hands manifest, waiting in their inventory.</summary>
+        public ThingWithComps storedWeapon;
+        /// <summary>The Echo's own weapon while it is in the Host's hand.</summary>
+        public ThingWithComps heroWeapon;
+        /// <summary>The hero weapon left the hand; it comes back at <see cref="weaponBackTick"/>.</summary>
+        public bool weaponGone;
+        public int weaponBackTick;
+
         public void ExposeData()
         {
+            if (Scribe.mode == LoadSaveMode.Saving) EchoWeapon.CleanForSave(this);
             Scribe_Defs.Look(ref def, "def");
             Scribe_Values.Look(ref state, "state");
             Scribe_References.Look(ref candidate, "candidate");
@@ -48,6 +57,10 @@ namespace RimArt
             Scribe_Values.Look(ref savedHairColor, "savedHairColor");
             Scribe_Defs.Look(ref savedBodyType, "savedBodyType");
             Scribe_Values.Look(ref hairChanged, "hairChanged");
+            Scribe_References.Look(ref storedWeapon, "storedWeapon");
+            Scribe_References.Look(ref heroWeapon, "heroWeapon");
+            Scribe_Values.Look(ref weaponGone, "weaponGone");
+            Scribe_Values.Look(ref weaponBackTick, "weaponBackTick");
             if (grant == null) grant = new ItemAbilityGrant();
             grant.ExposeData();
             if (Scribe.mode == LoadSaveMode.PostLoadInit)

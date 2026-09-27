@@ -303,6 +303,7 @@ namespace RimArt
             pawn.Notify_DisabledWorkTypesChanged();
             record.grant.Give(pawn, record.def.abilities);
             ApplyLook(record, pawn);
+            EchoWeapon.Manifest(record, pawn);
             // Hero form does no colony work: drop the job it was doing unless it is fighting.
             if (!pawn.Drafted && pawn.CurJob != null && pawn.jobs != null)
                 pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
@@ -321,6 +322,7 @@ namespace RimArt
             Hediff hediff = pawn.health?.hediffSet?.GetFirstHediffOfDef(record.def.manifestHediff);
             if (hediff != null) pawn.health.RemoveHediff(hediff);
             if (!pawn.Dead) pawn.Notify_DisabledWorkTypesChanged();
+            EchoWeapon.Revert(record, pawn);
             RestoreLook(record, pawn);
             if (collapse && !pawn.Dead) pawn.health.AddHediff(EchoDefOf.AG_EchoCollapse);
         }

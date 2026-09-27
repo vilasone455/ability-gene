@@ -13,7 +13,8 @@ namespace RimArt
             var toggle = new Command_Toggle
             {
                 defaultLabel = "AG_EchoManifestLabel".Translate(record.def.LabelCap),
-                defaultDesc = "AG_EchoManifestDesc".Translate(record.def.LabelCap, record.def.upkeepPerHour.ToString("0.#")),
+                defaultDesc = "AG_EchoManifestDesc".Translate(record.def.LabelCap, record.def.upkeepPerHour.ToString("0.#"))
+                    + HandsLine(record.def),
                 icon = EchoTex.Manifest,
                 isActive = () => record.manifested,
                 toggleAction = () =>
@@ -25,6 +26,14 @@ namespace RimArt
             };
             if (!record.manifested && !EchoUtility.CanManifest(record, out string reason)) toggle.Disable(reason);
             return toggle;
+        }
+
+        private static string HandsLine(EchoDef def)
+        {
+            if (def.emptyHands) return "\n\n" + "AG_EchoManifestHandsEmpty".Translate(def.LabelCap);
+            if (def.manifestWeapon == null) return "";
+            return "\n\n" + "AG_EchoManifestHandsWeapon".Translate(def.LabelCap, def.manifestWeapon.label,
+                (def.weaponReturnTicks / 60f).ToString("0.#"));
         }
 
         public static Command Trials(EchoRecord record)

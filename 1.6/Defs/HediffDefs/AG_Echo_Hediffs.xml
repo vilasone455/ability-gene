@@ -67,6 +67,36 @@
         </statOffsets>
       </li>
     </stages>
+    <renderNodeProperties>
+      <!-- Vergil's coat, a picture only: the Host's apparel stays worn and its armour still counts, but
+           its clothes, armour and headgear are not drawn while the coat is on (belts and packs still are).
+           Layer 29: over the belts and packs (20 + one per worn piece) and under the post-apparel wounds
+           (30); facing north it goes over the head as vanilla shells do (88), so the collar covers the
+           nape. Adult humans are Thin in hero form; the other body types fit races that keep their own.
+           Textures: make_costume_textures.py. -->
+      <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
+        <debugLabel>Vergil coat</debugLabel>
+        <hideBodyApparel>true</hideBodyApparel>
+        <hideHeadgear>true</hideHeadgear>
+        <workerClass>RimArt.PawnRenderNodeWorker_EchoCostume</workerClass>
+        <parentTagDef>ApparelBody</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <texPath>RimArt/Echo/Costume/VergilCoat_Thin</texPath>
+        <bodyTypeGraphicPaths>
+          <Thin>RimArt/Echo/Costume/VergilCoat_Thin</Thin>
+          <Male>RimArt/Echo/Costume/VergilCoat_Male</Male>
+          <Female>RimArt/Echo/Costume/VergilCoat_Female</Female>
+          <Fat>RimArt/Echo/Costume/VergilCoat_Fat</Fat>
+          <Hulk>RimArt/Echo/Costume/VergilCoat_Hulk</Hulk>
+        </bodyTypeGraphicPaths>
+        <baseLayer>29</baseLayer>
+        <drawData>
+          <dataNorth>
+            <layer>89</layer>
+          </dataNorth>
+        </drawData>
+      </li>
+    </renderNodeProperties>
   </HediffDef>
 
   <HediffDef ParentName="AG_EchoManifestBase">

@@ -110,6 +110,9 @@ namespace RimArt
                 charge = 0f;
                 if (anyManifested) EchoUtility.EmptyPool();
             }
+
+            for (int i = 0; i < records.Count; i++)
+                if (records[i].manifested && records[i].def.ForcesHands) EchoWeapon.Tick(records[i]);
         }
 
         private void TickRecords()
