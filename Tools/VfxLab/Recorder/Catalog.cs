@@ -107,6 +107,16 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Susanoo", Prefix = "Susanoo:", Component = typeof(MapComponent_SusanooPreview), Clock = "seconds",
+                Phases = label => label.Contains("raise") ? SusanooRaisePhases()
+                    : label.Contains("block") ? SusanooBlockPhases()
+                    : label.Contains("seal") ? SusanooSealPhases(true)
+                    : label.Contains("hit") ? SusanooSealPhases(false)
+                    : SusanooEndPhases(),
+                StartsStill = label => label.Contains("raise"),
+            },
+            new Kit
+            {
                 Name = "Nezuko's Box", Prefix = "Nezuko's Box:", Component = typeof(MapComponent_NezukoBoxPreview), Clock = "seconds",
                 Phases = label => label.Contains("go in") ? BoxGoInPhases()
                     : label.Contains("strike") ? BoxStrikePhases()
@@ -515,6 +525,48 @@ namespace RimArt.VfxLab
             }
             phases.Add(new Phase("Result", SamehadaFeedTiming.Result));
             return phases.ToArray();
+        }
+
+        private static Phase[] SusanooRaisePhases()
+        {
+            const float w = SusanooTiming.WarmUp, lead = SusanooTiming.Lead;
+            return new[]
+            {
+                new Phase("Itachi alone", 0f), new Phase("Sharingan", lead), new Phase("Ribs rise", lead + .10f * w),
+                new Phase("Skull + skeletal arm", lead + .35f * w), new Phase("Armour, cape, face", lead + .55f * w),
+                new Phase("Eyes light", lead + .93f * w), new Phase("Complete (idle)", lead + w),
+            };
+        }
+
+        private static Phase[] SusanooBlockPhases() => new[]
+        {
+            new Phase("Susanoo up", 0f), new Phase("Shooter aims, mirror turns", SusanooTiming.Aim), new Phase("Rounds", SusanooTiming.Shots[0]),
+            new Phase("Sword raider runs in", SusanooTiming.Run), new Phase("Mirror crosses", SusanooTiming.Cross0), new Phase("Blow blocked", SusanooTiming.Blow),
+        };
+
+        private static Phase[] SusanooSealPhases(bool weak)
+        {
+            SusanooTiming.Seal T = SusanooTiming.SealTimes(weak);
+            var start = new List<Phase>
+            {
+                new Phase("Susanoo up", 0f), new Phase("Wind-up", SusanooTiming.SwingAt), new Phase("Swing", T.windEnd), new Phase("Blade shoots out", T.strikeEnd),
+            };
+            if (!weak)
+                start.AddRange(new[] { new Phase("Pierce (30 damage)", T.pierce), new Phase("Blade pulls back", T.pullFrom), new Phase("Arm back", T.retracted) });
+            else
+                start.AddRange(new[] { new Phase("Pierce", T.pierce), new Phase("Pulled into the gourd", T.pullFrom), new Phase("Sealed", T.sealedAt) });
+            return start.ToArray();
+        }
+
+        private static Phase[] SusanooEndPhases()
+        {
+            SusanooTiming.End T = SusanooTiming.EndTimes();
+            const float b = SusanooTiming.BreakAt, D = SusanooTiming.BreakUp;
+            return new[]
+            {
+                new Phase("Last moment", 0f), new Phase("Dims", SusanooTiming.EndIdle), new Phase("Head breaks up", b), new Phase("Arms, mirror, blade", b + .15f * D),
+                new Phase("Body", b + .3f * D), new Phase("Bones sink", b + .55f * D), new Phase("Coughs blood", T.cough0), new Phase("Gone", b + D),
+            };
         }
 
         private static Phase[] BoxGoInPhases() => new[]
