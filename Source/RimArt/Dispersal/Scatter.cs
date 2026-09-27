@@ -35,6 +35,12 @@ namespace RimArt
             if (pawn == null || pawn.Dead || !pawn.Spawned || pawn.Downed) return false;
             if (pawn.Map == null) return false;
 
+            // Echo-only: the plexus works only while Itachi is manifested. And while the Susanoo
+            // stands, the Yata Mirror takes the hit instead; this prefix runs before
+            // Pawn.PreApplyDamage, so the Mirror has to be asked here, not there.
+            if (!EchoUtility.GeneActive(pawn, gene.def)) return false;
+            if (SusanooRegistry.HolderFor(pawn) != null) return false;
+
             // A clone is a trick played on somebody who is looking. Asleep, anaesthetised or
             // otherwise not present, the carrier takes the hit like anyone else - which is
             // also what stops this being a way to make a downed colonist unkillable.
@@ -103,8 +109,11 @@ namespace RimArt
         {
             if (pawn == null || pawn.health == null) return;
 
-            Hediff bloodLoss = pawn.health.GetOrAddHediff(HediffDefOf.BloodLoss);
-            if (bloodLoss != null) bloodLoss.Severity += severity;
+            // Not GetOrAddHediff + Severity: a hediff made fresh starts at the def's initial
+            // severity (0.5 for blood loss, which sets none), so the first bleed on an unhurt
+            // pawn would land at 0.54 instead of 0.04. AdjustSeverity is vanilla's own way to
+            // add blood loss and starts a new hediff at exactly the amount.
+            HealthUtility.AdjustSeverity(pawn, HediffDefOf.BloodLoss, severity);
         }
 
         /// <summary>

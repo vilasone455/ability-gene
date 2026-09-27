@@ -2,7 +2,7 @@
 // keeps nothing an effect needs; everything about an effect lives in its recording or sketch.
 
 import { Renderer } from './gl.js';
-import { Scene } from './scene.js';
+import { Scene, MapSize } from './scene.js';
 import { Camera, bindCamera, shakeAt, cameraMoveAt, movedView } from './camera.js';
 import { RecordedSource, SketchSource, Clock, RecordedCell } from './player.js';
 import { layerOf } from './engine.js';
@@ -250,16 +250,21 @@ function drawStage() {
     if (!source || !rect) return;
     const t = Math.min(clock.t, source.duration);
     const shake = shakeAt(source.events, clock.t);
-    const move = cameraMoveAt(source.events, clock.t), view = movedView(camera, move, state.cell);
+    // A sketch with camera(): its 3D camera, and the game view (its `game` framing, or the viewer's).
+    const cam3 = source.cameraAt?.(t, state.cell, scene) ?? null, three = cam3 && !cam3.flat ? cam3 : null;
+    const move = cameraMoveAt(source.events, clock.t);
+    const view = cam3?.game ? { cx: cam3.game.cx, cz: cam3.game.cz, ppc: rect[3] / cam3.game.cellsTall } : movedView(camera, move, state.cell);
     const cells = Math.max(rect[2], rect[3]) / view.ppc / 2;
-    const frame = source.frameAt(t, state.cell, scene, { cx: view.cx, cz: view.cz, ppc: view.ppc, halfW: rect[2] / view.ppc / 2, halfH: rect[3] / view.ppc / 2 });
+    const frame = source.frameAt(t, state.cell, scene, { cx: view.cx, cz: view.cz, ppc: view.ppc, halfW: rect[2] / view.ppc / 2, halfH: rect[3] / view.ppc / 2 }, cam3);
     views.push({
-      rect,
+      rect, three,
       camera: { cx: view.cx + shake.x, cz: view.cz + shake.z, ppc: view.ppc },
-      calls: (source.ownMap ? [] : scene.calls({ x: view.cx, z: view.cz }, cells)).concat(frame.calls),
+      calls: (source.ownMap || three ? [] : scene.calls({ x: view.cx, z: view.cz }, cells)).concat(frame.calls),
+      overlays: frame.overlays,
       hidden: state.hidden,
     });
-    frames.push({ source, frame, shake, move, view: Object.assign(new Camera(), view), t });
+    // fixed: the sketch's camera sets the framing, so dragging, zooming and picking a cell do nothing here
+    frames.push({ source, frame, shake, move, three, fixed: !!cam3?.game, view: Object.assign(new Camera(), view), t });
   });
   state.standIns = renderer.render(views);
   state.frames = frames;
@@ -321,9 +326,12 @@ function updateHud() {
     if (shake > 0) rows.push(['shake', fmt(shake)]);
     const move = state.frames.find((x) => x.move && (x.move.pan > 0.001 || Math.abs(x.move.zoom - 1) > 0.001))?.move;
     if (move) rows.push(['camera', `${fmt(move.zoom, 2)}x, ${Math.round(move.pan * 100)} % to the point`]);
+    const c3 = f.three;
+    if (c3) rows.push(['3D camera', `pitch ${fmt(c3.pitch, 1)}°, fov ${fmt(c3.fov, 1)}°, ${fmt(c3.y, 1)} up, blend ${Math.round((c3.blend ?? 0) * 100)} %`]);
   }
   rows.push(['zoom', `${fmt(camera.ppc, 1)} px/cell`]);
-  rows.push(['cell', `${state.cell.x}, ${state.cell.z}`]);
+  const off = [state.cell.x, state.cell.z].some((v) => v < 0 || v >= MapSize);
+  rows.push(['cell', `${state.cell.x}, ${state.cell.z}${off ? ' (off the map: no ground)' : ''}`]);
   const key = rows.map((r) => r.join('=')).join('|');
   if (key === state.hudKey) return;
   state.hudKey = key;
@@ -829,7 +837,10 @@ function centreCamera() {
 
 function bindChrome() {
   bindCamera($('stage'), camera, {
-    rectAt: (px) => viewRects().find((r) => px >= r[0] && px <= r[0] + r[2]),
+    rectAt: (px) => {
+      const rects = viewRects(), i = rects.findIndex((r) => px >= r[0] && px <= r[0] + r[2]);
+      return i >= 0 && !state.frames[i]?.fixed ? rects[i] : null;
+    },
     onCell: (x, z) => { state.cell = { x, z }; store.set('cell', state.cell); },
     onChange: () => { store.set('ppc', camera.ppc); renderViewLabels(); },
   });

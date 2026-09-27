@@ -53,15 +53,18 @@ export function renderFrames({ renderer, scene, camera, source, cell, hidden }, 
   // Centred on the effect's cell, pushed north because height is drawn as a northward offset:
   // the taller the effect, the further up the screen its top sits.
   const centre = { cx: cell.x + 0.5, cz: cell.z + 0.5 + settings.north };
-  const view = Math.max(px, 1) / ppc / 2;
 
   const shots = [];
   for (const t of times) {
-    const frame = source.frameAt(Math.min(t, source.duration || t), cell, scene, { ...centre, ppc, halfW: view, halfH: view });
-    const calls = settings.transparent || source.ownMap
+    const at = Math.min(t, source.duration || t);
+    // A sketch with camera(): its 3D camera (square here), and its game framing if it gives one.
+    const cam3 = source.cameraAt?.(at, cell, scene) ?? null, three = cam3 && !cam3.flat ? cam3 : null;
+    const c = cam3?.game ? { cx: cam3.game.cx, cz: cam3.game.cz } : centre, k = cam3?.game ? px / cam3.game.cellsTall : ppc, half = px / k / 2;
+    const frame = source.frameAt(at, cell, scene, { ...c, ppc: k, halfW: half, halfH: half }, cam3);
+    const calls = settings.transparent || source.ownMap || three
       ? frame.calls
-      : scene.calls({ x: centre.cx, z: centre.cz }, view).concat(frame.calls);
-    renderer.renderExport({ camera: { ...centre, ppc }, calls, hidden }, px, px,
+      : scene.calls({ x: c.cx, z: c.cz }, half).concat(frame.calls);
+    renderer.renderExport({ camera: { ...c, ppc: k }, three, calls, overlays: frame.overlays, hidden }, px, px,
       { transparent: settings.transparent });
     shots.push(renderer.canvas.toDataURL('image/png'));
   }

@@ -29,7 +29,7 @@ namespace RimArt
     /// <summary>
     /// Timing of Shadow grasp: seconds in, numbers out, no drawing and no map. The port of
     /// Tools/VfxLab/web/sketches/shadow-plexus-grasp.js; the constants are that sketch's defaults.
-    /// There is no ability behind it yet. The rule (user's draft, placeholders): a loose item, a
+    /// The ability is Kit/CompAbilityEffect_ShadowGrasp; the rule's numbers are in its XML. The rule: a loose item, a
     /// weapon, a live grenade or a downed body, and a second cell, both within 24.9 cells times the
     /// light level; the thing slides there at 12 cells a second, stopped by a pawn on the path.
     /// </summary>

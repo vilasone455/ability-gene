@@ -64,6 +64,7 @@ my_files = sorted(glob.glob("1.6/Defs/**/*.xml", recursive=True)
 # listing separately rather than skipping: a Patch_* folder is read by the game only when some
 # other mod is present, so a broken one is invisible here and loud for the player who has both.
 patch_files = sorted(f for f in glob.glob("Patch_*/**/Patches/**/*.xml", recursive=True)
+                     + glob.glob("1.6/Patches/**/*.xml", recursive=True)
                      if f not in my_files)
 
 # 1. well-formedness
@@ -133,11 +134,12 @@ if DATA is not None:
     stats = set()
     for f in my_files:
         root = ET.parse(f).getroot()
-        # <category> is an AbilityCategoryDef reference on an AbilityDef and a plain
-        # ThingCategory enum on a ThingDef. Only the first is a def name, so the enum ones
-        # are collected here and skipped below - checking them asks the game for a def that
-        # was never supposed to exist.
-        enum_categories = {el for d in root.findall("ThingDef") for el in d.findall("category")}
+        # <category> is an AbilityCategoryDef reference on an AbilityDef and a plain enum on a
+        # ThingDef (ThingCategory) or a MentalStateDef (MentalStateCategory). Only the first is
+        # a def name, so the enum ones are collected here and skipped below - checking them asks
+        # the game for a def that was never supposed to exist.
+        enum_categories = {el for tag in ("ThingDef", "MentalStateDef")
+                           for d in root.findall(tag) for el in d.findall("category")}
         for el in root.iter():
             vals = []
             if el in enum_categories:
@@ -194,7 +196,7 @@ if os.path.exists(dll):
     # and then throws when the game first needs the type - at spawn, at cast, at damage - so
     # both are checked against the built assembly here.
     ELEMENT_CLASS_TAGS = ("thingClass", "workerClass", "driverClass", "gizmoClass",
-                          "verbClass", "compClass", "hediffClass", "abilityClass")
+                          "verbClass", "compClass", "hediffClass", "abilityClass", "stateClass")
     element_pattern = re.compile(
         r'<(?:' + "|".join(ELEMENT_CLASS_TAGS) + r')>\s*' + NAMESPACE + r'\.([A-Za-z_0-9]+)\s*<')
 
@@ -450,8 +452,6 @@ RETIRED = {"AG_Panoply_Rain", "AG_Panoply_Loose", "AG_Panoply_Grasp"}
 # old item stays in the game; until then two sources are expected, and only these two.
 SHARED_WITH_ECHO = {
     "AG_VectorReflection", "AG_VectorSurge", "AG_VectorShove", "AG_ShinraTensei",
-    "AG_Imperative_Stop", "AG_Imperative_Drop", "AG_Imperative_Kneel", "AG_Imperative_Come",
-    "AG_Imperative_Run",
 }
 
 for ability, f in sorted(ability_defs.items()):

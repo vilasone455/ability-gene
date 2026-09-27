@@ -131,6 +131,8 @@ namespace RimArt
                     case EchoState.Awakened:
                         if (record.host == null || record.host.Dead || record.host.Destroyed)
                             EchoUtility.CloseSeat(record);
+                        else
+                            EchoUtility.EnsureAwakenGenes(record.def, record.host);
                         break;
                 }
             }

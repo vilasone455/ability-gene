@@ -2,7 +2,8 @@
 <Defs>
 
   <!-- Echoes: heroes a colonist can become (docs/hero-echo.md). Every number is a placeholder.
-       Accelerator, Pain and Inumaki reuse abilities that already work in game; Vergil has no
+       Accelerator and Pain reuse abilities that already work in game; Inumaki's six words and Shikamaru's
+       Shadow plexus are ported kits and only their Echoes grant them; Vergil has no
        abilities until his kit is ported and is here to exercise the kill-with-weapon trial.
        Shirou's one ability so far is Unlimited Blade Works, not yet played by hand. -->
   <RimArt.EchoDef Name="AG_EchoBase" Abstract="True">
@@ -111,19 +112,14 @@
     <abilities>
       <li>AG_Imperative_Stop</li>
       <li>AG_Imperative_Drop</li>
-      <li>AG_Imperative_Kneel</li>
+      <li>AG_Imperative_Crush</li>
       <li>AG_Imperative_Come</li>
       <li>AG_Imperative_Run</li>
+      <li>AG_Imperative_Explode</li>
     </abilities>
     <manifestHediff>AG_EchoManifest_Inumaki</manifestHediff>
     <upkeepPerHour>8</upkeepPerHour>
-    <castCosts>
-      <li><ability>AG_Imperative_Stop</ability><cost>5</cost></li>
-      <li><ability>AG_Imperative_Drop</ability><cost>5</cost></li>
-      <li><ability>AG_Imperative_Kneel</ability><cost>5</cost></li>
-      <li><ability>AG_Imperative_Come</ability><cost>5</cost></li>
-      <li><ability>AG_Imperative_Run</ability><cost>5</cost></li>
-    </castCosts>
+    <!-- No castCosts: every word costs 0 charge. The throat (AG_LarynxWear) is his cost. -->
     <wealth>3000</wealth>
     <hairColor>(0.92, 0.92, 0.95)</hairColor>
   </RimArt.EchoDef>
@@ -161,6 +157,74 @@
     <hairColor>(0.85, 0.87, 0.9)</hairColor>
   </RimArt.EchoDef>
 
+  <!-- Shikamaru: the kit is Shadow plexus (AG_ShadowPlexus_Abilities.xml), only this Echo grants it.
+       The modExtension holds the rule numbers every ability shares: the light rule and what cuts a
+       shadow line. -->
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Shikamaru</defName>
+    <label>Shikamaru</label>
+    <subtitle>Strategist of the Binding Shadow</subtitle>
+    <description>Where his shadow reaches, nothing moves but by his leave.</description>
+    <order>45</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Intellectual</skill>
+        <level>14</level>
+      </li>
+      <li Class="RimArt.Trial_Record">
+        <record>PeopleCaptured</record>
+        <count>5</count>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>Industriousness</trait>
+        <degree>-1</degree>
+      </li>
+    </forcedTraits>
+    <abilities>
+      <li>AG_ShadowImitation</li>
+      <li>AG_ShadowSeam</li>
+      <li>AG_ShadowGrasp</li>
+      <li>AG_ShadowDouble</li>
+      <li>AG_ShadowNeckBind</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Shikamaru</manifestHediff>
+    <upkeepPerHour>10</upkeepPerHour>
+    <castCosts>
+      <li>
+        <ability>AG_ShadowImitation</ability>
+        <cost>3</cost>
+      </li>
+      <li>
+        <ability>AG_ShadowSeam</ability>
+        <cost>3</cost>
+      </li>
+      <li>
+        <ability>AG_ShadowGrasp</ability>
+        <cost>1</cost>
+      </li>
+      <li>
+        <ability>AG_ShadowDouble</ability>
+        <cost>5</cost>
+      </li>
+      <li>
+        <ability>AG_ShadowNeckBind</ability>
+        <cost>2</cost>
+      </li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.08, 0.08, 0.1)</hairColor>
+    <modExtensions>
+      <li Class="RimArt.ShadowPlexusExtension">
+        <skyShare>0.5</skyShare>
+        <darkBelow>0.3</darkBelow>
+        <smokeDensity>0.15</smokeDensity>
+        <minCrossingBodySize>0.9</minCrossingBodySize>
+      </li>
+    </modExtensions>
+  </RimArt.EchoDef>
+
   <!-- Shirou: the way in is Origin: Blade (Melee 14, Crafting 12, five blades studied, then awakened),
        so the Trial is the trait itself. No forced trait: awakening Origin: Blade already cost psycasts
        and ranged weapons for life. Unlimited Blade Works also keeps its own 2-day cooldown. -->
@@ -190,6 +254,61 @@
     <hairColor>(0.72, 0.3, 0.16)</hairColor>
   </RimArt.EchoDef>
 
+  <!-- Itachi (docs/hero-echo.md, "Itachi"). The dispersal plexus is his Echo-only organ: given on
+       awakening, kept for life, but Scatter, Crow Dispersal and Carrion work only in hero form. The
+       crow abilities cost no charge (they spend the plexus's three charges); False Face and Susanoo
+       cost charge. Sickly is vanilla Immunity at degree -1: his illness. -->
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Itachi</defName>
+    <label>Itachi</label>
+    <subtitle>Crow of the Crimson Eye</subtitle>
+    <description>He is never where the blow lands, and what looks at him sees what he chooses.</description>
+    <order>60</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Melee</skill>
+        <level>12</level>
+      </li>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Intellectual</skill>
+        <level>12</level>
+      </li>
+      <li Class="RimArt.Trial_Record">
+        <record>Kills</record>
+        <count>30</count>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>Immunity</trait>
+        <degree>-1</degree>
+      </li>
+    </forcedTraits>
+    <awakenGenes>
+      <li MayRequire="Ludeon.RimWorld.Biotech">AG_DispersalPlexus</li>
+    </awakenGenes>
+    <abilities>
+      <li>AG_DispersalMurder</li>
+      <li>AG_DispersalCarrion</li>
+      <li>AG_ItachiFalseFace</li>
+      <li>AG_ItachiSusanoo</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Itachi</manifestHediff>
+    <upkeepPerHour>10</upkeepPerHour>
+    <castCosts>
+      <li>
+        <ability>AG_ItachiFalseFace</ability>
+        <cost>3</cost>
+      </li>
+      <li>
+        <ability>AG_ItachiSusanoo</ability>
+        <cost>20</cost>
+      </li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.08, 0.08, 0.1)</hairColor>
+  </RimArt.EchoDef>
+
   <!-- Goku (docs/heroes.md): the four abilities are his own (AG_Goku_Abilities.xml); Warp Kamehameha
        is a button during the Kamehameha hold that spends Instant Transmission's cost and cooldown too.
        The downed-and-recovered Trial counts from the moment the mod is loaded. Every number is a
@@ -199,7 +318,7 @@
     <label>Goku</label>
     <subtitle>Heir of the Monkey King</subtitle>
     <description>He gets back up, and hits harder each time.</description>
-    <order>60</order>
+    <order>70</order>
     <trials>
       <li Class="RimArt.Trial_Skill">
         <skill>Melee</skill>

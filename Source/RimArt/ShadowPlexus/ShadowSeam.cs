@@ -22,7 +22,7 @@ namespace RimArt
     /// <summary>
     /// Timing of Shadow seam: seconds in, numbers out, no drawing and no map. The port of
     /// Tools/VfxLab/web/sketches/shadow-plexus-seam.js; the constants are that sketch's defaults.
-    /// There is no ability behind it yet. The rule (user's draft, placeholders): two targets within
+    /// The ability is Kit/CompAbilityEffect_ShadowSeam; the rule's numbers are in its XML. The rule: two targets within
     /// 15.9 cells times the light level, 0.8 s cast, for 20 s they cannot be more than 4 cells apart.
     /// </summary>
     public static class ShadowSeamTiming

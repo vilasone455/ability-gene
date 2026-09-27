@@ -126,11 +126,9 @@ namespace RimArt
                 Gene("Hypermetabolic glands", "AG_HypermetabolicGlands"),
                 Gene("Anchor organ", "AG_AnchorOrgan"),
                 Gene("Fold organ", "AG_InvoluteOrgan"),
-                Gene("Dispersal plexus", "AG_DispersalPlexus"),
 
                 Trait("Combat presence", "AG_CombatPresence"),
                 Trait("Pain debt", "AG_PainDebt"),
-                Trait("Commanding voice", "AG_CommandingVoice"),
 
                 Implant("Neural accelerator", "AG_NeuralAccelerator", "Brain", "Bionics"),
                 Implant("Reflex booster", "AG_ReflexBooster", "Spine", "Prosthetics"),

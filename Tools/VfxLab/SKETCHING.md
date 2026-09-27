@@ -87,6 +87,7 @@ export default {
 | `draw(seconds, p, ctx)` | yes | Draws the frame at `seconds`. |
 | `compareWith` | no | Label of a recorded effect to show beside this one on the Compare tab. |
 | `scene` | no | `false` leaves out the lab's grass, trees and rocks, for an effect set on a map of its own (a pocket map) that draws its own ground. The Infinity Castle sketches use it. |
+| `camera(seconds, p, ctx)` | no | Draws the sketch through a perspective camera instead of the map camera, for a cutscene. See "A 3D camera" below. |
 
 ### Params
 
@@ -121,7 +122,7 @@ The game camera looks straight down at the map.
   cells, its zoom in pixels per cell and half the view's width and height in cells. In game it is
   `Find.CameraDriver`'s position and size. Use it only for things drawn relative to the camera
   (parallax, a haze across the screen); everything else stays on the map. It can be `null`: have a
-  fallback.
+  fallback. For a sketch with a 3D camera it is the game view the camera blends into.
 
 ### Drawing: `Graphics.DrawMesh`
 
@@ -247,6 +248,57 @@ if (seconds - lead >= clip.release) { /* the item has left the hand: start the p
 - In game the thrown projectile starts at the pawn's `DrawPos`, not at the hand
   (`PendingThrow.cs`), so `itemAtRelease` is for judging that gap, not the real launch point.
 
+### A 3D camera
+
+A sketch that exports `camera(seconds, p, ctx)` is drawn through a perspective camera: a cutscene that
+looks at a 3D copy of the map and can blend into the game view. The Unlimited Blade Works reveal and
+close shots (`trace-ubw-reveal.js`, `trace-ubw-close.js`, their 3D world in `lib/ubw-reveal.js`) are the
+worked examples. In game this is a second Unity camera, not the map camera, so it is a plan of its own
+and not a way round the rules below for an ordinary effect. Give such a sketch `scene: false`: the lab's
+ground is not drawn in 3D.
+
+`camera` returns, for that time:
+
+```js
+{ x, y, z,         // where the camera is, in cells: x east, y up (height, not altitude), z north
+  pitch, yaw, fov, // degrees: pitch above the horizontal, yaw clockwise from north, vertical field of view
+  near, far,       // clip distances in cells (default 0.1 and 6000)
+  blend,           // 0 to 1: how far each point has moved on the screen from where the camera sees it
+                   // to where the game view draws it (default 0)
+  game }           // the game view at blend 1: { cx, cz, cellsTall }; leave it out to use the viewer's
+```
+
+Return `{ flat: true, game }` (or `null`) for a frame drawn on the map camera as usual, at that framing:
+for a cutscene that hands over to the ordinary drawing. `draw` gets the same object as `ctx.camera`, and
+`ctx.view` is the game view.
+
+In a frame drawn through the 3D camera:
+
+- `Matrix4x4.TRS(position, Quaternion.Euler(x, y, z), scale)` is used whole, as Unity does: `position.y`
+  is the height, all three angles turn (z, then x, then y) and all three scales count. `MeshPool.plane10`
+  and the `Meshes` shapes lie flat on the ground; `Quaternion.Euler(-90, 0, 0)` stands one up, facing south.
+- `mesh.setXYZ([x, y, z, ...], triangles)` makes a mesh with height. `mesh.setGame([x, z, ...])` gives each
+  vertex its place in the game view (transformed by the call's position, Y angle and x, z scale); without it
+  a vertex's game place is the height rule on where it is, `(x, z + 0.6 y)`.
+- Calls draw in the order they are made, with a depth test. A normal-blended call (Transparent, Mote,
+  Cutout) also writes depth where it is at least half opaque, unless its material sets `_ZWrite` to 0;
+  MoteGlow and the invert shader never do. So draw far to near and see-through things last. A material with
+  `_ZTest` 8 (Unity's `CompareFunction.Always`) skips the test: for a mark lying on a surface, drawn just
+  after it. Set these on a material of your own (`new Material(shader, { mainTexture: new Texture2D(path) })`),
+  not on a pooled one other sketches share.
+- `Graphics.Flat(height, () => ...)`: whatever the 2D helpers draw inside lies flat at that height (their
+  altitudes ignored), drawn over what is there. For shadows, glows, rings and marks on the ground.
+- `Graphics.OnScreen(() => ...)`: whatever is drawn inside goes where the game view draws it, whatever the 3D
+  camera does, over what is there. For things tied to the game camera: a haze across the screen, embers in
+  front of it.
+- While blending, a vertex behind the camera is put far off the screen in its direction. Make big surfaces
+  grids of a few cells, so that no triangle joins a vertex on the screen to one behind the camera.
+- The distortion shader is not drawn.
+
+`Overlay.Fill(x, y, w, h, colour)` draws a box over the finished frame, in fractions of the view with y
+from the top (a fade, a cutscene's black bars); in game, `Widgets.DrawBoxSolid`. It works on the map camera
+too.
+
 ## 4. What a sketch cannot do
 
 The lab only offers what the game's drawing calls can do, so that a sketch can be ported. Anything
@@ -255,8 +307,8 @@ outside this list needs a different plan, not a workaround in JavaScript.
 | Cannot | Why, and what to do instead |
 |---|---|
 | Custom GLSL or shaders | The mod uses RimWorld's built-in shaders only. Use the four in the table above. |
-| True 3D, perspective, lighting | The game camera is flat and straight down. Fake height by moving things north; fake shading with darker and lighter shapes. |
-| Tilt a sprite on x or z | Only the Y angle is used. Draw the tilted shape as your own mesh. |
+| True 3D, perspective, lighting | The game camera is flat and straight down. Fake height by moving things north; fake shading with darker and lighter shapes. A cutscene can use a 3D camera (above); it still has no lighting. |
+| Tilt a sprite on x or z | Only the Y angle is used on the map camera. Draw the tilted shape as your own mesh. |
 | Per-corner colours or gradients inside a mesh | One colour per draw call. Use a texture with the gradient in its alpha, or stack several draws. |
 | Tiling or scrolling a texture | The lab clamps textures at their edges and has no texture offset. Use several draws, or move the mesh. |
 | `Math.random()`, stored state, timers | See "Random numbers". The frame must depend only on `seconds` and `p`. |

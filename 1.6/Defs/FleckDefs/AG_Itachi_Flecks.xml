@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Itachi's stand-in effects until the Susanoo picture is ported: a glint, a flash and the mark
+       over a False Face victim. All white in the texture and tinted from code. -->
+  <FleckDef ParentName="FleckBase">
+    <defName>AG_ItachiGlint</defName>
+    <graphicData>
+      <texPath>RimArt/Itachi/Glint</texPath>
+      <shaderType>MoteGlow</shaderType>
+    </graphicData>
+    <altitudeLayer>MoteOverhead</altitudeLayer>
+    <fadeInTime>0.04</fadeInTime>
+    <solidTime>0.12</solidTime>
+    <fadeOutTime>0.35</fadeOutTime>
+    <growthRate>1.5</growthRate>
+  </FleckDef>
+
+  <FleckDef ParentName="FleckBase">
+    <defName>AG_ItachiFlash</defName>
+    <graphicData>
+      <texPath>RimArt/Itachi/Flash</texPath>
+      <shaderType>MoteGlow</shaderType>
+    </graphicData>
+    <altitudeLayer>MoteOverhead</altitudeLayer>
+    <fadeInTime>0.03</fadeInTime>
+    <solidTime>0.08</solidTime>
+    <fadeOutTime>0.3</fadeOutTime>
+    <growthRate>2.5</growthRate>
+  </FleckDef>
+
+  <FleckDef ParentName="FleckBase">
+    <defName>AG_ItachiFalseFaceMark</defName>
+    <graphicData>
+      <texPath>RimArt/Itachi/Glint</texPath>
+      <shaderType>MoteGlow</shaderType>
+    </graphicData>
+    <altitudeLayer>MoteOverhead</altitudeLayer>
+    <fadeInTime>0.1</fadeInTime>
+    <solidTime>0.35</solidTime>
+    <fadeOutTime>0.15</fadeOutTime>
+  </FleckDef>
+
+</Defs>

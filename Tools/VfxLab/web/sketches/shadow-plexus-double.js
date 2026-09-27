@@ -1,4 +1,4 @@
-// Shadow double — Shadow plexus ability proposal, not the game. Nothing in Source/RimArt draws this yet.
+// Shadow double — Shadow plexus ability proposal, not the game. Ported: Source/RimArt/ShadowPlexus (drawing) and ShadowPlexus/Kit (the ability).
 //
 // What it is for (the user's draft, numbers are placeholders, none of it balanced yet). Target a
 // cell within 24.9 cells (fixed, not scaled by light) that is at least 30 % lit. 1 s cast, 60 s

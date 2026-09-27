@@ -16,6 +16,13 @@ namespace RimArt
         /// <summary>The line was cut, at <see cref="CutAt"/> of carrier to target; otherwise the target passed out.</summary>
         public bool Cut;
         public float CutAt;
+        /// <summary>
+        /// Draw only the hands: something else draws the line, the pools and the grip (a seam the
+        /// hands travel along, or an Imitation hold whose line is still intact after the hands fell off).
+        /// </summary>
+        public bool HideLine;
+        /// <summary>How far above the feet the neck is; 0 uses the sketch's standing human (<see cref="ShadowNeckBindTiming.NeckHeight"/>).</summary>
+        public float NeckHeight;
         public float Width, Sway;
 
         public float Closed => ShadowNeckBindTiming.Crawl + Climb;
@@ -35,10 +42,11 @@ namespace RimArt
     /// <summary>
     /// Timing of Shadow neck bind: seconds in, numbers out, no drawing and no map. The port of
     /// Tools/VfxLab/web/sketches/shadow-plexus-neck-bind.js; the constants are that sketch's defaults.
-    /// There is no ability behind it yet. The proposal (none of it agreed): cast on a pawn already
-    /// held by Imitation or sewn by Seam; two hands crawl along the line, climb the body and close on
-    /// the neck; suffocation 12.5 % a second, unconscious at 100 %; a broken line lets go and it
-    /// drains at 5 % a second.
+    /// The ability is Kit/CompAbilityEffect_ShadowNeckBind. The rule (agreed 2026-09-27, numbers are
+    /// placeholders in XML): cast on a pawn already held by Imitation or sewn by Seam; the caster
+    /// channels standing still for up to 8 s of choke; two hands crawl along the line, climb the body
+    /// and close on the neck; suffocation 12.5 % a second, unconscious (not dead) at 100 %; a broken
+    /// line lets go and it drains at 5 % a second; no effect on mechanoids; 45 s cooldown.
     /// </summary>
     public static class ShadowNeckBindTiming
     {

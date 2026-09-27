@@ -21,6 +21,13 @@ namespace RimArt
         public List<EchoTrial> trials = new List<EchoTrial>();
         /// <summary>Traits the Host gains on awakening. Conflicting traits are replaced.</summary>
         public List<EchoTraitCost> forcedTraits = new List<EchoTraitCost>();
+        /// <summary>
+        /// Genes the Host gains on awakening, as xenogenes, and keeps for life. Such a gene is
+        /// Echo-only: it lists no abilities of its own (they go in <see cref="abilities"/>, so they
+        /// come and go with the form) and its passive behaviour asks
+        /// <see cref="EchoUtility.GeneActive"/>, which is true only while the Host is manifested.
+        /// </summary>
+        public List<GeneDef> awakenGenes = new List<GeneDef>();
 
         /// <summary>Granted while manifested, taken back on revert.</summary>
         public List<AbilityDef> abilities = new List<AbilityDef>();
@@ -57,6 +64,10 @@ namespace RimArt
             foreach (EchoCastCost cost in castCosts)
                 if (cost.ability == null || !abilities.Contains(cost.ability))
                     yield return "castCosts names " + cost.ability?.defName + ", which is not in abilities";
+            foreach (GeneDef gene in awakenGenes)
+                if (gene == null) yield return "awakenGenes holds a null gene";
+                else if (!gene.abilities.NullOrEmpty())
+                    yield return "awakenGenes " + gene.defName + " lists abilities; an Echo-only gene's abilities go in the EchoDef's abilities";
             foreach (EchoTrial trial in trials)
                 foreach (string error in trial.ConfigErrors())
                     yield return trial.GetType().Name + ": " + error;

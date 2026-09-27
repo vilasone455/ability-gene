@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Neck bind's suffocation. Severity is the meter, fed by MapComponent_ShadowPlexus while the hands
+       are closed. At 100 % the "choked out" stage caps Consciousness, which downs the pawn (the game
+       downs below 30 %) without killing it, for chokedOutTicks; then it drains at drainPerSecond and
+       goes when empty. Numbers are placeholders. -->
+  <HediffDef>
+    <defName>AG_ShadowChoked</defName>
+    <label>shadow neck bind</label>
+    <description>Hands of shadow closed on the throat. At 100 % the body passes out for a while; it is not killed.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>true</isBad>
+    <initialSeverity>0.001</initialSeverity>
+    <maxSeverity>1</maxSeverity>
+    <defaultLabelColor>(0.55, 0.45, 0.8)</defaultLabelColor>
+    <comps>
+      <li Class="RimArt.HediffCompProperties_ShadowChoke">
+        <chokedOutTicks>7200</chokedOutTicks>
+        <drainPerSecond>0.05</drainPerSecond>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <label>choking</label>
+      </li>
+      <li>
+        <minSeverity>0.999</minSeverity>
+        <label>choked out</label>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <setMax>0.1</setMax>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

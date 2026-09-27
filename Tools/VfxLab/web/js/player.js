@@ -79,14 +79,22 @@ export class SketchSource {
   get phases() { return this.module.phases(this.values); }
   get events() { return this.module.events?.(this.values) ?? []; }
 
+  // A sketch that exports camera() is drawn through a 3D camera (SKETCHING.md): what it returns for
+  // time t, or null (drawn on the map as usual).
+  cameraAt(t, origin, scene) {
+    if (!this.module.camera) return null;
+    return this.module.camera(t, this.values, { origin: new Vector3(origin.x + 0.5, 0, origin.z + 0.5), scene }) ?? null;
+  }
+
   // view: the camera the frame is drawn for, { cx, cz, ppc, halfW, halfH } in cells (in game,
   // Find.CameraDriver's position and size). Only sketches drawn relative to the camera read it.
-  frameAt(t, origin, scene, view = null) {
+  // camera: what cameraAt returned for this time, if anything.
+  frameAt(t, origin, scene, view = null, camera = null) {
     Graphics.beginFrame();
-    this.module.draw(t, this.values, { origin: new Vector3(origin.x + 0.5, 0, origin.z + 0.5), scene, view });
+    this.module.draw(t, this.values, { origin: new Vector3(origin.x + 0.5, 0, origin.z + 0.5), scene, view, camera });
     const frame = Graphics.endFrame();
     for (const c of frame.calls) c.group ??= groupOf(c.mat);
-    return { calls: frame.calls, index: Math.floor(t * 60), clock: t, frames: Math.ceil(this.duration * 60) };
+    return { calls: frame.calls, overlays: frame.overlays, index: Math.floor(t * 60), clock: t, frames: Math.ceil(this.duration * 60) };
   }
 }
 

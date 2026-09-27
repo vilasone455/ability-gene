@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Walk to herbal medicine and drink one as throat syrup: -30 % strained larynx (the numbers are
+       in LarynxExtension on AG_LarynxWear). Ordered from the float menu
+       (FloatMenuOptionProvider_ThroatSyrup). -->
+  <JobDef>
+    <defName>AG_DrinkThroatSyrup</defName>
+    <driverClass>RimArt.JobDriver_DrinkThroatSyrup</driverClass>
+    <reportString>drinking TargetA as throat syrup.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <playerInterruptible>true</playerInterruptible>
+    <suspendable>false</suspendable>
+  </JobDef>
+
+</Defs>

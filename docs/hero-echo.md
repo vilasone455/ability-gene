@@ -84,6 +84,17 @@ own cost, some do not):
 
 The card and the letter show the cost as it applies to the candidate ("Gains Abrasive (replaces Kind)").
 
+### Echo-only genes (built 2026-09-27)
+
+An EchoDef may list `awakenGenes`. Each is added as a xenogene on awakening (the record scan adds
+it back if a xenogerm cleared it) and the Host keeps it for life; the awakening letter and the card
+list it under the cost. Such a gene lists no abilities of its own: they go in the EchoDef's
+`abilities`, so they come with the form and go on revert (validate.py's single-source rule holds).
+Its passive behaviour asks `EchoUtility.GeneActive(pawn, gene)`, true only while the Host is
+manifested. First use: Itachi's dispersal plexus (Scatter, its toggle and its charges; the charges
+keep regrowing between manifests). Obito's fold organ, Nakime's castle gene and Shikamaru's shadow
+plexus follow the same hook.
+
 ## Hero form
 
 - Per-Echo `manifestHediff` (child of `AG_EchoManifestBase`): stat offsets in its stage.
@@ -132,14 +143,17 @@ Proposed handling (not yet confirmed rule by rule):
 |---|---|---|---|---|---|
 | Accelerator | Intellectual 12, Damage taken 300 | Abrasive | vector manipulation, reflex surge, vector shove | 12 | surge 10, shove 8 |
 | Pain | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei | 15 | 20 |
-| Inumaki | Social 10, not Psychopath | Kind | the five imperatives | 8 | 5 each |
+| Inumaki | Social 10, not Psychopath | Kind | stop, drop, crush, come, run, explode | 8 | 0 each (the throat is his cost) |
 | Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | Judgement Cut, Yamato Dash, Summoned Swords, Judgement Cut End (the def grants none until the kit is ported) | 10 | Judgement Cut 3, Yamato Dash 2, Summoned Swords 10, Judgement Cut End 0 (Style is its limit) |
 | Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40 |
+| Itachi ("Crow of the Crimson Eye") | Melee 12, Intellectual 12, Kills 30 | Sickly (Immunity -1) + the dispersal plexus gene (awakenGenes) | crow dispersal (Murder + automatic Scatter), carrion, false face, susanoo | 10 | crow abilities 0 (the plexus's 3 charges), false face 3, susanoo 20 |
+| Shikamaru | Intellectual 14, 5 people captured | Lazy | shadow imitation, shadow seam, shadow grasp, shadow double, shadow neck bind | 10 | imitation 3, seam 3, grasp 1, double 5, neck bind 2 |
 | Goku | Melee 15, downed and recovered 3 times (`Trial_DownedRecovered`, counted from the moment the mod is loaded) | Gourmand | Solar Flare, Instant Transmission, Kamehameha, Spirit Bomb; Warp Kamehameha is a button during the Kamehameha hold, not a def | 12 | Solar Flare 3, Instant Transmission 2, Kamehameha 15, Spirit Bomb 30; Warp pays Instant Transmission's 2 and cooldown on top |
 
-Accelerator, Pain and Inumaki reuse abilities that still come from their pre-hero item (reflex
-booster implant, repulsion eye, Commanding Voice trait). validate.py allows that second source only
-for those abilities (`SHARED_WITH_ECHO`) until it is decided whether the old items stay.
+Accelerator and Pain reuse abilities that still come from their pre-hero item (reflex booster
+implant, repulsion eye). validate.py allows that second source only for those abilities
+(`SHARED_WITH_ECHO`) until the items are made Echo-only. Inumaki's words have one source, his Echo:
+the Commanding Voice trait was removed when his kit was ported.
 Decided 2026-09-27: the reflex booster implant becomes Echo-only, like Todo's anchor organ; the
 repulsion eye and Commanding Voice became Echo-only later the same day. Accelerator keeps brain strain as his cost; his
 strain abilities (manipulation, surge, shove, Plasma) cost 0 charge, so `AG_Echo_Accelerator`'s
@@ -173,11 +187,9 @@ Agreed, not built (no EchoDef yet; the abilities do not exist):
 | Echo | Trials | Cost | Abilities | Upkeep | Casts | Hero form |
 |---|---|---|---|---|---|---|
 | Sasuke ("Avenger of the Crimson Eye") | Melee 14, Intellectual 10, 15 kills with the Fūma Shuriken | Pessimist | Amenoyodomi, Amenotejikara, Raikō Kusari, Amaterasu | 12 | Amenoyodomi 0, Amenotejikara 2, Raikō Kusari 8, Amaterasu 5 | +0.4 move speed, black hair, wealth 6000, no forced weapon |
-| Itachi ("Crow of the Crimson Eye") | Melee 12, Intellectual 12, 30 kills | Sickly (Immunity -1) | Crow Dispersal (Murder + automatic Scatter, one ability), Carrion, False Face, Susanoo | 10 (proposed) | crow abilities 0 (they spend the gene's 3 charges, +1 per hour), False Face 3, Susanoo 20 | dispersal plexus gene Echo-only: added on awakening, abilities only while manifested |
 | Obito ("Watcher Behind the Spiral Mask") | Melee 12, Intellectual 10, has a missing or artificial body part (new Trial class; a prosthetic or bionic counts) | Depressive (Natural mood -2) | Kamui: Phase, Kamui: Warp, Kamui: Store, Wood Release | 12 | Phase 0 (its own 30 s pool), Warp 2, Store 1, Wood Release 2 | fold organ gene Echo-only: added on awakening (the dimension is generated then), abilities only while manifested |
 | Gojo ("Bearer of the Six Eyes") | Intellectual 14, 1 day spent downed in total (vanilla `TimeDowned` record; the Trial label shows hours), colony wealth 200,000 | The Strongest (new custom trait) | Infinity, Blue, Red, Unlimited Void (+ Hollow Purple combo) | 15 | Infinity 0 (its breath is the price), Blue 3, Red 3, Hollow Purple 20 (+ its own 1-day cooldown), Unlimited Void 30 | white hair; phase barrier implant Echo-only; no forced weapon |
 | Minato ("Hero of the Yellow Flash") | Melee 12, Intellectual 10, 30 kills with thrown kunai (needs `PendingThrow` to pass the kunai as the weapon so the kill counter sees it) | Kind | flying thunder god, sealing touch (passive), chain, guiding thunder, rasengan; throw kunai stays on the belt | 10 | throw kunai 0 (belt charges), flying thunder god 2, chain 10, guiding thunder 5, rasengan 3 | blond hair (haori v1.1); no forced weapon; no kunai regeneration; replaces the earning rules in docs/flying-thunder-god-kit.md |
-| Shikamaru ("Strategist of the Binding Shadow") | Intellectual 14, 5 people captured (vanilla `PeopleCaptured`) | Lazy (Industriousness -1) | shadow imitation, shadow seam, shadow grasp, shadow double, shadow neck bind | 10 | imitation 3, seam 3, grasp 1, double 5, neck bind 2 | black hair; shadow plexus gene Echo-only; no forced weapon; Neck Bind's sketch rules agreed 2026-09-27 |
 | Nakime ("Player of the Endless Halls") | Artistic 12, Construction 10, 15 humanlike kills (vanilla `KillsHumanlikes`) | Night Owl | Infinity Castle (commands: shift, drop, seal/open, crush, summon, release; passives castle sight, void rule) | 12 | Infinity Castle 30, commands 0 (the 1.5 s strum rhythm and crush's own 10 s cooldown limit them) | black hair; forced biwa; castle gene Echo-only, added on awakening; sunlight burns her always (the gene's rule, 4 per second outdoors by day), not only while manifested |
 | Satō | Shooting 12, 30 kills, 500 damage taken | Ajin (new custom trait carrying the Reset passive) + Psychopath | Reset (passive), Black Ghost, The Game, Sever, Headshot Reset, Grenade Reset | 10 | Sever 0, Headshot Reset 0, Grenade Reset 5, Black Ghost 10, The Game 5 (a kill on the marked enemy refunds 15); every Reset while manifested costs by the piece he rises from (body or leg 20, arm 25, hand 40, finger or ear 60) | half pain while manifested; on revert the Ghost dissolves and the mark ends |
 | Todo (no subtitle) | Melee 14, 20 humanlikes downed (`PawnsDownedHumanlikes`) | Brawler | stone, clap, double clap, Black Flash, provoke | 8 | stone 0, clap 0, double clap 0, Black Flash 1, provoke 5 | +0.5 move speed, black hair, wealth 6000 (placeholder), forced empty hands |
@@ -192,7 +204,10 @@ Sasuke's Melee Trial follows the throw: kunai accuracy uses Melee (`KunaiAccurac
 kills count because the Fūma throw passes the weapon to the kill counter; kunai kills were not
 checked. A "lost family" Trial was considered and dropped (2026-09-27).
 
-Itachi (agreed 2026-09-27; numbers are placeholders; False Face and Susanoo have no sketch or code):
+Itachi (agreed 2026-09-27; numbers are placeholders; the mechanics and the Susanoo picture were
+built the same day, see "Echoes defined"; the picture is `Source/RimArt/Itachi/Susanoo*.cs`, ported
+from `itachi-susanoo.js` and matched against it in the lab; previews "Susanoo: raise / block / seal
+/ hit / end"; the stab lands 0.45 s after the click, when the blade reaches the target):
 - Crow Dispersal: the built Murder and automatic Scatter, counted as one ability.
 - Carrion: built, unchanged.
 - False Face (genjutsu): one button, no target. Every enemy within 15 cells whose current target is
@@ -200,10 +215,22 @@ Itachi (agreed 2026-09-27; numbers are placeholders; False Face and Susanoo have
   believing it is Itachi. Each victim breaks free when it takes damage, when its false Itachi goes
   down, or when Itachi goes down. Mechanoids are immune. Cooldown 45 s, 3 charge. Built as a short
   mental state (as vanilla Berserk is), because the AI drops targets that are not hostile to it.
-  To check before building: whether the attacked ally fights back on its own.
+  Built: `MentalState_FalseFace` (category Aggro, 600 ticks, its own break rules) with a
+  `JobGiver_FalseFace` node patched into MentalStateCritical; the state's `ForceHostileTo` makes the
+  false Itachi hostile both ways, so the ally fights back on its own (checked: `GenHostility`
+  asks both pawns' states). Only humanlike enemies are caught (a manhunter pack would be a free
+  win); the small effect is a red glint on Itachi, a red flash and crow feathers on each victim,
+  and a red mark over each while it lasts.
 - Susanoo: self, warm-up 1 s, lasts 12 s, Itachi walks at half speed. Yata Mirror blocks every hit
-  from outside. Totsuka Blade: one stab within 4 cells seals the target (removed from the map,
-  counts as a kill, drops its gear, no corpse). Cooldown 1 day, 20 charge. After it ends: -30 %
+  from outside. Totsuka Blade (changed 2026-09-27, the one-stab seal of anything was too strong):
+  while Susanoo is up, Itachi can stab a target within 4 cells every 3 s. The stab seals the target
+  only if it is downed or at 30 % summary health or less (removed from the map, counts as a kill,
+  drops its gear, no corpse); on any other target it is a hit of 30 stab damage. At most one seal
+  per Susanoo; after it, stabs are hits only. Mechanoids cannot be sealed (they take the hit).
+  Built: the Totsuka Blade is a targeted command on the Susanoo hediff (chosen 2026-09-27 over an
+  automatic stab, so the one seal goes where the player wants); Crow Dispersal and Scatter are
+  disabled while it stands; the seal is Strip, Kill with Itachi as instigator, corpse vanished.
+  Cooldown 1 day, 20 charge. After it ends: -30 %
   consciousness and 10 % blood loss for 6 h (his illness). Look: his complete armoured form (never
   Perfect), code meshes plus a swirl texture, always facing the camera, growing ribs -> skeleton ->
   armour and face during the warm-up (growth is picture only, my recommendation). About 2 days.
@@ -326,6 +353,79 @@ Inumaki revisit (agreed 2026-09-27; numbers are placeholders; the built words ar
   words.
 - About 1.5-2 days of work on top of the built Larynx code.
 
+Inumaki port (built 2026-09-27 on `feature/inumaki-port`; `-rimarttest=inumaki` 11/11, Echo 10/10;
+not played by hand):
+- All of the above is built. The numbers are in XML: `LarynxExtension` on `AG_LarynxWear` (reach and
+  factor per volume, doorway cost 3 cells, listener factors, deaf at Hearing 15 % or less, max wear
+  100 %, syrup) and each word's `CompProperties_AbilityImperative` (base throat cost, damage, stun,
+  flee distance). Crush has 30 % armour penetration; explode uses Bomb's default.
+- Choices made in the port: a word is cast on Inumaki with no targeting step, so the preview shows
+  while its button is hovered (reached cells shaded, rings red hostile / blue colony / yellow other)
+  and the listener count and throat cost are in the tooltip. A word no one would hear is greyed out.
+  Explode does not hurt Inumaki. The throat check is on the button; people who walk into reach
+  during the 0.4 s warm-up are still obeyed and billed. Consciousness still scales each listener's
+  factor (not below 0.2), as built before. A listener the word can do nothing to (drop to someone
+  unarmed, stop / drop / come / run to someone downed) is not a listener and costs nothing. The
+  volume toggle is on the hero form hediff and starts at speak on each manifest. Throat syrup is a
+  right-click on herbal medicine, 1.5 s.
+- `AG_Imperative_Kneel` and the Commanding Voice trait are removed (an old save drops them with a
+  load error line). Icons are the placeholder `UI/Abilities/AnimalWarcall`.
+- Distances are any-angle (straight line from the speaker, a wall corner or the doorway the sound
+  came through), so a volume's reach is a circle on open ground.
+- VFX and sound (added the same day, straight in C#, no lab sketch): rings at his head, a ripple
+  band with a magenta / cyan fringe moving out at 30 cells/s over the reached cells (stops at walls,
+  half-ring out of a doorway, fades before the edge of reach), purple-white crackle on each listener
+  when the band reaches them. Looks from the anime: ep 19 "Blast away" (ripple with colour fringe
+  from the mouth), ep 17 (crackle on the target). Sound: Core `PsychicShockLanceCast`, volume and
+  pitch by whisper / speak / shout, a placeholder.
+
+Shikamaru port (built 2026-09-27 on `feature/shadow-plexus-port`; `-rimarttest=shadow` 11/11, Echo
+10/10; not played by hand). The kit's design is in the sketch headers
+(`Tools/VfxLab/web/sketches/shadow-plexus-*.js`); the port is `Source/RimArt/ShadowPlexus/Kit/` on top
+of the drawing already in `Source/RimArt/ShadowPlexus/`.
+- No gene (decided 2026-09-27): the Echo `AG_Echo_Shikamaru` is the only source of the five abilities,
+  like Inumaki's words. "Shadow plexus gene Echo-only" in older notes means this. Subtitle "Strategist
+  of the Binding Shadow", black hair, no forced weapon, +0.2 move speed in hero form.
+- Numbers in XML: the shared rule (sky light x0.5, dark under 30 %, smoke density 15 %, a pawn of body
+  size 0.9 or more cuts a line) is the `ShadowPlexusExtension` on the EchoDef; each ability's own
+  numbers are its comp (`AG_ShadowPlexus_Abilities.xml`): imitation reach 19.9 / hold 15 s / cd 20 s,
+  seam reach 15.9 / 20 s / 4 cells apart / cd 30 s, grasp reach 24.9 / 12 cells per s item, 6 body /
+  cd 15 s, double 24.9 (not scaled by light) / 20 s / cd 60 s, neck bind climb 1.5 s / +12.5 % per s /
+  8 s of choke / cd 45 s; the choke hediff `AG_ShadowChoked` holds the target out for 120 s at 100 %
+  and drains 5 % per s otherwise.
+- Light on a real map: the game's glow grid gives lamp and fire light as 0.5 at most unless the cell is
+  saturated (1), so daylight is half reach and a cell next to a lamp or a campfire is full reach, which
+  is the rule as agreed. Reach is measured from the cell the ability is cast from (the standing
+  double, else the caster) and the button is greyed out when that cell is dark; the ring on hover shows
+  the reach now. A shadow line also cannot cross a wall or a closed door.
+- Choices made in the port: Seam and Grasp are two picks (the Skip psycast's shape); the second pick
+  cannot show a refusal, so the mouse text says why. Grasp slides loose items, weapons on the ground,
+  corpses and downed pawns; a thrown grenade is a projectile in the air, not an item, so it cannot be
+  picked. A slid thing stops in the cell of the first pawn on the path and before a wall or another
+  item. Imitation holds by stun (as Chain Sickle pins), one hold per caster; the drag moves the target
+  one cell per caster step and a wall or a pawn stops that step. The Seam pulls the one that did not
+  move one cell at a time after the mover, the smaller body when both moved (an item counts as 0), and
+  undoes the mover's step when the pull is blocked. The Double copies steps into open cells only; when
+  it ends mid-hold the held line snaps back to the caster and is judged again next tick. Neck bind's 8 s
+  is the choke after the 2.1 s the hands take to arrive (8 x 12.5 % = 100 %); when the target passes
+  out the Imitation hold lets go with the hands, a Seam stays. A move order, the caster going down or
+  the line breaking drops the hands and the meter drains; a pawn choked out wakes after the hold and
+  drains from there. Mechanoids can be held and sewn but not choked.
+- Not done: the caster's own drop shadow is not hidden while the double is out; the held pawn is not
+  darkened; the double is the sketch's two-disc silhouette, not the Host's body; nothing mid-cast is
+  saved (a game loaded mid-hold sees the stun run out on its own). Icons are the placeholder
+  `UI/Abilities/AnimalWarcall`.
+- Polish phase (agreed 2026-09-27, not built): **one cast clip** for all five abilities, the Nara hand
+  sign held at the chest in four facings, started by `JobDriver_CastShadowPlexus` over the warm-up.
+  It must hold the pose through Neck bind's channel (up to about 10 s), like the Gravity Well channel
+  clip, not play once. Melee Animation is optional, so without it he just stands. **Sound effects**,
+  none yet: the line running out and snapping, the hold landing, the seam's stitch and taut twang,
+  grasp's slide, the double rising and bursting, the choke. Played by `MapComponent_ShadowPlexus` at
+  the picture's times (the Power Pole pattern), in an `AG_ShadowPlexus_Sounds.xml`, with the SoundDefs
+  named in XML; Core sounds as placeholders until real ones are chosen.
+- Debug window, kit "Shadow Plexus": the fourteen picture previews, plus make Shikamaru (Host +
+  manifest), light level at a cell, release every hold, a full-light override and its clear.
+
 Todo (agreed 2026-09-27): stone, clap and double clap are the anchor organ's rework on main (PRs
 #44, #56) and count as two abilities; Black Flash is built on `feature/todo-black-flash` (0cb9387,
 not pushed); provoke is the existing `AG_Provoke` with its cooldown changed from 12 h to 90 s plus 5
@@ -341,6 +441,16 @@ presence trait is to be retired from the loaded defs so provoke has one source. 
 - God mode gizmos: "DEV: Meet trials" on a candidate, "DEV: Fill charge" on a Host.
 - `-rimarttest=echo`: 10 scenarios (pool refill/drain, pool empty, manifest/revert, hediff removed,
   cast cost, awaken, cap, longsword kills, dev command, UI shots).
+- Debug window, kit "Itachi": make Host + manifest, false face (no cost, no cooldown), susanoo 12 s,
+  weaken to 30 % health, totsuka stab the pawn under the mouse. Dispersal's "refill the plexus"
+  and "shoot the carrier" still apply.
+- `-rimarttest=itachi`: 14 scenarios (gene on awakening and only in hero form, Scatter only
+  manifested, charges persist, stale abilities; False Face ranged victim, ally fights back, the
+  three breaks and the 10 s end, immunities; Susanoo cost/speed/Mirror, crows stand down, Totsuka
+  cut/seal/mech, drained and revert; defs and think tree; UI shot).
+- `-rimarttest=shadow`: 11 scenarios (the line check; imitation hold, drag and release; line cut by a pawn and by a
+  dark cell; the dark; the seam's leash; grasp's slide, block and body drag; the double as origin and
+  its ends; neck bind's knockout and wake; its cut, refusals and move order; the cast cost).
 - `-rimarttest=goku`: 8 scenarios (flare, transmission alone / hostile passenger / downed ally,
   kamehameha lane / wall / blast, cancel refund and stun spent, warp, spirit bomb with a lender, the
   downed-and-recovered Trial). Debug window kit "Goku": make Host, cancel casts, all lend, recovery +1.

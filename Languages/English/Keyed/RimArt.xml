@@ -75,9 +75,17 @@
   <AG_AnchorCannotEquip>Needs both hands free to clap.</AG_AnchorCannotEquip>
 
 
-  <AG_LarynxNotHeard>{0} cannot hear it.</AG_LarynxNotHeard>
   <AG_LarynxNoVoice>{0} has no voice left to spend.</AG_LarynxNoVoice>
-  <AG_LarynxTooltip>Costs at least {0} larynx strain, multiplied by how hard the target was going to be to talk to. Deaf targets do not hear it at all.</AG_LarynxTooltip>
+  <AG_LarynxNoListeners>No one would hear it at {0} volume.</AG_LarynxNoListeners>
+  <AG_LarynxTooMuch>This would take the throat to {0}.</AG_LarynxTooMuch>
+  <AG_LarynxTooltipVolume>The word spreads from him through open space and open doors; walls and closed doors stop it. Everyone it reaches obeys, colonists included. Deaf pawns and mechanoids are immune.\n\nVolume: {0}, reach {1} cells, throat x{2}. Base throat cost {3} per listener.</AG_LarynxTooltipVolume>
+  <AG_LarynxTooltipNow>Heard now by {0} ({1} hostile, {2} other). Throat +{3}: {4} to {5}.</AG_LarynxTooltipNow>
+  <AG_LarynxVolume_Whisper>whisper</AG_LarynxVolume_Whisper>
+  <AG_LarynxVolume_Speak>speak</AG_LarynxVolume_Speak>
+  <AG_LarynxVolume_Shout>shout</AG_LarynxVolume_Shout>
+  <AG_LarynxVolumeGizmo>Volume: {0}</AG_LarynxVolumeGizmo>
+  <AG_LarynxVolumeGizmoDesc>How loud Inumaki says his words. Click to change.\n\nWhisper: reach {0} cells, throat x{1}.\nSpeak: reach {2} cells, throat x{3}.\nShout: reach {4} cells, throat x{5}.</AG_LarynxVolumeGizmoDesc>
+  <AG_LarynxSyrup>Drink as throat syrup (-{0} strained larynx)</AG_LarynxSyrup>
 
   <AG_InvoluteVented>{0} connected the hole in their {1}. Anything that finds it now goes through.</AG_InvoluteVented>
   <AG_InvoluteVentedTip>Connected for another {0} seconds.</AG_InvoluteVentedTip>
@@ -134,4 +142,33 @@
   <AG_PowerPoleNoLanding>No free tile next to the target to land on.</AG_PowerPoleNoLanding>
 
   <AG_InfinityCastleClosing>Closing the castle</AG_InfinityCastleClosing>
+
+  <!-- Shadow plexus (Shikamaru) -->
+  <AG_ShadowNoLight>Too dark: the cell he casts from is under 30 % light.</AG_ShadowNoLight>
+  <AG_ShadowOutOfReach>Out of reach: {0} cells away, the shadow reaches {1} in this light.</AG_ShadowOutOfReach>
+  <AG_ShadowLineBlocked>The shadow cannot get there: {0}.</AG_ShadowLineBlocked>
+  <AG_ShadowBreakCrossed>{0} is standing on the line</AG_ShadowBreakCrossed>
+  <AG_ShadowBreakSmoke>smoke covers the line</AG_ShadowBreakSmoke>
+  <AG_ShadowBreakDark>a cell under the line is dark</AG_ShadowBreakDark>
+  <AG_ShadowBreakWall>a wall is in the way</AG_ShadowBreakWall>
+  <AG_ShadowReleased>Shadow plexus: {0}.</AG_ShadowReleased>
+  <AG_ShadowLetGo>{0} let go</AG_ShadowLetGo>
+  <AG_ShadowDoubleDark>the double's cell went dark</AG_ShadowDoubleDark>
+  <AG_ShadowNeedsPawn>Must target a person, animal or mech.</AG_ShadowNeedsPawn>
+  <AG_ShadowNotSelf>Cannot target himself.</AG_ShadowNotSelf>
+  <AG_ShadowTargetDark>That cell is dark.</AG_ShadowTargetDark>
+  <AG_ShadowNotHeld>Only on a pawn held by shadow imitation or sewn by shadow seam.</AG_ShadowNotHeld>
+  <AG_ShadowMechImmune>Mechanoids have no throat.</AG_ShadowMechImmune>
+  <AG_ShadowSeamNeedsThing>Must be a person, animal, mech or a loose item.</AG_ShadowSeamNeedsThing>
+  <AG_ShadowSeamSameThing>Pick two different things.</AG_ShadowSeamSameThing>
+  <AG_ShadowGraspNeedsThing>Must be a loose item, a corpse or a downed pawn.</AG_ShadowGraspNeedsThing>
+  <AG_ShadowGraspNeedsDowned>Only a downed pawn can be dragged.</AG_ShadowGraspNeedsDowned>
+  <AG_ShadowGraspSameCell>It is already there.</AG_ShadowGraspSameCell>
+  <AG_ShadowDoubleNoFloor>No floor there.</AG_ShadowDoubleNoFloor>
+  <AG_ShadowReachTip>Reach now {0} cells (light {1} %), cast from {2}.</AG_ShadowReachTip>
+  <AG_ShadowFromSelf>where he stands</AG_ShadowFromSelf>
+  <AG_ShadowFromDouble>the shadow double</AG_ShadowFromDouble>
+  <AG_ShadowDoubleTip>Any lit cell within {0} cells of him; stands {1} seconds.</AG_ShadowDoubleTip>
+  <AG_ShadowNeckBindTip>Hands close after {0} seconds, then +{1} % suffocation a second for up to {2} seconds.</AG_ShadowNeckBindTip>
+  <AG_ShadowChokedOut>out cold</AG_ShadowChokedOut>
 </LanguageData>

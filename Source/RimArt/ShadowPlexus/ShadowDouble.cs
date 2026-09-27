@@ -26,7 +26,7 @@ namespace RimArt
     /// <summary>
     /// Timing of Shadow double: seconds in, numbers out, no drawing and no map. The port of
     /// Tools/VfxLab/web/sketches/shadow-plexus-double.js; the constants are that sketch's defaults.
-    /// There is no ability behind it yet. The rule (user's draft, placeholders): a cell within 24.9
+    /// The ability is Kit/CompAbilityEffect_ShadowDouble; the rule's numbers are in its XML. The rule: a cell within 24.9
     /// cells that is at least 30 % lit, 1 s cast, 20 s; the carrier's shadow stands there, every other
     /// ability is cast from it and uses its light, and it copies the carrier's steps.
     /// </summary>
