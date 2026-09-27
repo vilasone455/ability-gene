@@ -57,13 +57,15 @@ export const Mathf = {
   Smooth: (t) => { t = t < 0 ? 0 : t > 1 ? 1 : t; return t * t * (3 - 2 * t); },
 };
 
+// Only the Y angle is used on the map (the top-down camera). A sketch with a 3D camera (see camera() in
+// SKETCHING.md) uses all three, as Unity does: z degrees about z, then x about x, then y about y.
 export const Quaternion = {
-  Euler: (x, y, z) => ({ eulerY: y }),
-  identity: { eulerY: 0 },
+  Euler: (x, y, z) => ({ eulerX: x, eulerY: y, eulerZ: z }),
+  identity: { eulerX: 0, eulerY: 0, eulerZ: 0 },
 };
 
 export const Matrix4x4 = {
-  TRS: (pos, q, scale) => ({ pos, rot: q.eulerY, scale }),
+  TRS: (pos, q, scale) => ({ pos, rot: q.eulerY, rotX: q.eulerX ?? 0, rotZ: q.eulerZ ?? 0, scale }),
 };
 
 const LayerNames = [
@@ -141,7 +143,7 @@ let nextMesh = 1;
  * `version`, which is what tells the renderer to re-upload.
  */
 export class Mesh {
-  constructor(name = 'mesh') { this.id = `sketch-mesh-${nextMesh++}`; this.name = name; this.version = 0; this.v = new Float32Array(0); this.uv = null; this.tri = new Uint32Array(0); }
+  constructor(name = 'mesh') { this.id = `sketch-mesh-${nextMesh++}`; this.name = name; this.version = 0; this.v = new Float32Array(0); this.v3 = null; this.game = null; this.uv = null; this.tri = new Uint32Array(0); }
   set vertices(list) {
     const v = new Float32Array(list.length * 2);
     list.forEach((p, i) => { v[i * 2] = p.x; v[i * 2 + 1] = p.z; });
@@ -154,7 +156,25 @@ export class Mesh {
   }
   set triangles(list) { this.tri = Uint32Array.from(list); this.version++; }
   /** Flat [x, z, x, z...] without allocating Vector3s, for meshes rebuilt every frame. */
-  setFlat(xz, tri) { this.v = Float32Array.from(xz); if (tri) this.tri = Uint32Array.from(tri); this.version++; }
+  setFlat(xz, tri) { this.v = Float32Array.from(xz); this.v3 = null; this.game = null; if (tri) this.tri = Uint32Array.from(tri); this.version++; }
+  /**
+   * [x, y, z, ...] with y up, for a sketch with a 3D camera: y is height in cells, not altitude. The map
+   * camera still draws the mesh from above (its x, z).
+   */
+  setXYZ(xyz, tri) {
+    this.v3 = Float32Array.from(xyz);
+    const v = new Float32Array(this.v3.length / 3 * 2);
+    for (let i = 0, j = 0; i < this.v3.length; i += 3, j += 2) { v[j] = this.v3[i]; v[j + 1] = this.v3[i + 2]; }
+    this.v = v; this.game = null;
+    if (tri) this.tri = Uint32Array.from(tri);
+    this.version++;
+  }
+  /**
+   * [x, z, ...], one pair per vertex: where the vertex is drawn in the game view, in map cells with the
+   * height rule (and anything else the game drawing does) applied. A 3D camera's blend moves each vertex
+   * from its 3D projection to this. Without it the game position is (x, z + 0.6 y) of the vertex.
+   */
+  setGame(xz) { this.game = Float32Array.from(xz); this.version++; }
 }
 
 export const MeshPool = (() => {
@@ -164,21 +184,50 @@ export const MeshPool = (() => {
   return { plane10: plane };
 })();
 
-/** Frame buffer shared by Graphics and Find.CameraDriver while a sketch draws. */
-const frame = { calls: [], events: [] };
+/** Frame buffer shared by Graphics, Overlay and Find.CameraDriver while a sketch draws. */
+const frame = { calls: [], events: [], overlays: [] };
+let flatAt = null, onScreen = false;
 
 export const Graphics = {
   DrawMesh(mesh, matrix, material, layer = 0, camera = null, submesh = 0, props = null) {
     const c = props?.colour ?? material.color;
     frame.calls.push({
       mesh, mat: material.data,
-      x: matrix.pos.x, y: matrix.pos.y, z: matrix.pos.z, rot: matrix.rot,
-      sx: matrix.scale.x, sz: matrix.scale.z,
-      r: c.r, g: c.g, b: c.b, a: c.a, age: props?.age ?? 0,
+      x: matrix.pos.x, y: matrix.pos.y, z: matrix.pos.z, rot: matrix.rot, rx: matrix.rotX ?? 0, rz: matrix.rotZ ?? 0,
+      sx: matrix.scale.x, sy: matrix.scale.y, sz: matrix.scale.z,
+      r: c.r, g: c.g, b: c.b, a: c.a, age: props?.age ?? 0, flat: flatAt, screen: onScreen,
     });
   },
-  beginFrame() { frame.calls = []; frame.events = []; },
-  endFrame() { return { calls: frame.calls, events: frame.events }; },
+  /**
+   * For a sketch with a 3D camera: what fn draws with the map's own calls (y an altitude, only the Y angle)
+   * lies flat on the ground at `height` instead, drawn in call order over what is there without a depth
+   * test: glows, shadows, rings and marks made by the 2D helpers. On the map camera it draws as usual.
+   */
+  Flat(height, fn) {
+    const was = flatAt;
+    flatAt = height;
+    try { fn(); } finally { flatAt = was; }
+  },
+  /**
+   * For a sketch with a 3D camera: what fn draws with the map's own calls is drawn where the game view
+   * would draw it, whatever the 3D camera does, over what is there: things tied to the game camera (a haze
+   * across the screen, embers in front of it). On the map camera it draws as usual.
+   */
+  OnScreen(fn) {
+    const was = onScreen;
+    onScreen = true;
+    try { fn(); } finally { onScreen = was; }
+  },
+  beginFrame() { frame.calls = []; frame.events = []; frame.overlays = []; },
+  endFrame() { return { calls: frame.calls, events: frame.events, overlays: frame.overlays }; },
+};
+
+/**
+ * Drawn on the screen after everything else, not on the map: a cutscene's fade or its black bars. x, y,
+ * w, h are fractions of the view, y from the top. In game: Widgets.DrawBoxSolid over the UI in OnGUI.
+ */
+export const Overlay = {
+  Fill(x, y, w, h, colour) { if (colour.a > 0) frame.overlays.push({ x, y, w, h, r: colour.r, g: colour.g, b: colour.b, a: colour.a }); },
 };
 
 export const Find = {

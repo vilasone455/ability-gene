@@ -386,16 +386,20 @@ export function skyGears(key, c, s, sun, opacity) {
 }
 const wrap = (v, span) => ((v + span / 2) % span + span) % span - span / 2;
 // Embers drifting up (north) and with the wind (east) over the whole view, looping, three brightnesses.
-export function embers(key, c, s, count, alpha) {
-  if (alpha <= 0) return;
+export function emberLists(c, s, count) {
   const lists = [[], [], []], span = { x: 48, z: 34 };
   for (let i = 0; i < count; i++) {
     const x = wrap((rand(i * 3 + 2) - .5) * span.x + s * (.25 + .3 * rand(i * 11)) + Math.sin(s * 1.3 + i) * .15, span.x);
     const z = wrap((rand(i * 5 + 4) - .5) * span.z + s * (.35 + .5 * rand(i * 7 + 1)), span.z);
     const f = .5 + .5 * Math.sin(s * (3 + rand(i) * 4) + i * 1.7), size = .05 + rand(i * 13) * .06;
-    lists[Math.min(2, Math.floor(f * 3))].push({ x: c.x + x, z: c.z + z, w: size, h: size });
+    lists[Math.min(2, Math.floor(f * 3))].push({ x: c.x + x, z: c.z + z, w: size, h: size, i });
   }
-  lists.forEach((list, k) => quads(`${key} ${k}`, list, Ember.withAlpha((.3 + .3 * k) * alpha), glow, Y + .03));
+  return lists;
+}
+export const EmberAlpha = k => .3 + .3 * k;
+export function embers(key, c, s, count, alpha) {
+  if (alpha <= 0) return;
+  emberLists(c, s, count).forEach((list, k) => quads(`${key} ${k}`, list, Ember.withAlpha(EmberAlpha(k) * alpha), glow, Y + .03));
 }
 
 // ---- the standing field ------------------------------------------------------------------------------------
@@ -413,16 +417,18 @@ function cell(col, row) {
 const swatch = col => { const r = cell(col, 6); return { u: r.u0 + r.du / 2, v: r.v0 + r.dv / 2 }; };
 const buffer = () => ({ xz: [], uv: [], tri: [] });
 
-// lib/trace.js texPoly into a buffer: part of blade b's picture, a polygon in its own uv, from cell r.
+// lib/trace.js texPoly into a buffer: part of blade b's picture, a polygon in its own uv, from cell r. A buffer
+// with an xyz array also gets each corner's 3D point (for a 3D camera, lib/ubw-reveal.js).
 function polyInto(out, poly, b, project, r, shift = null) {
   if (poly.length < 3) return;
-  const pts = poly.map(q => project(shift ? plus(at3(b, q), shift) : at3(b, q)));
+  const at = poly.map(q => shift ? plus(at3(b, q), shift) : at3(b, q)), pts = at.map(project);
   let area = 0;
   for (let i = 0; i < pts.length; i++) { const p = pts[i], n = pts[(i + 1) % pts.length]; area += p.x * n.z - n.x * p.z; }
   const base = out.xz.length / 2;
   for (let i = 0; i < poly.length; i++) {
     const k = area > 0 ? poly.length - 1 - i : i;
     out.xz.push(pts[k].x, pts[k].z);
+    if (out.xyz) out.xyz.push(at[k].x, at[k].y, at[k].z);
     out.uv.push(r.u0 + poly[k].u * r.du, r.v0 + poly[k].v * r.dv);
     if (i >= 2) out.tri.push(base, base + i - 1, base + i);
   }
@@ -471,7 +477,7 @@ export function bladeInto(shadows, blades, b, sun, row, project = onScreen) {
   polyInto(blades, clip(above, lowerThan(b, .08)), b, project, cell(LowerBand, row));
 }
 // plant() of lib/trace.js on the floor: the contact shadow, cracks, the slit.
-function marksInto(marks, cut, seed, cracks) {
+export function marksInto(marks, cut, seed, cracks) {
   const { D, F, half } = cut, rot = -Math.atan2(D.z, D.x) / D2R;
   const pt = (along, out) => ({ x: cut.x + D.x * along + F.x * out, z: cut.z + D.z * along + F.z * out });
   spriteInto(marks, pt(0, .015), half * 2 + .35, .2, rot, cell(SwContact, 6));
@@ -490,7 +496,7 @@ function marksInto(marks, cut, seed, cracks) {
 }
 // plant()'s lip of earth either side of the slit (side 1 faces the camera), into the blades' buffer so
 // the back lip goes under its own blade and the front lip over its foot.
-function lipInto(blades, cut, side, reach, seed, sun) {
+export function lipInto(blades, cut, side, reach, seed, sun) {
   const { D, half } = cut, F = { x: cut.F.x * side, z: cut.F.z * side }, n = 9, inner = [], crest = [], outer = [];
   for (let i = 0; i < n; i++) {
     const t = i / (n - 1), along = -half - .045 + (half * 2 + .09) * t, bulge = Math.pow(Math.sin(t * Math.PI), .6);

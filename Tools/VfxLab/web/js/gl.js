@@ -8,8 +8,13 @@
 //   Cutout              alpha tested at 0.5
 //   Invert              1 - what is under it, by alpha (Hidden/Internal-Colored, see engine.js)
 //   MoteLargeDistortionWave   screen warp, approximated (the real shader is a vanilla asset)
+//
+// A view can instead be drawn through a perspective camera (view.three, from a sketch's camera()): calls
+// in the order they were made, with a depth test, each vertex placed by the camera and moved by `blend`
+// toward where the game view draws it. See draw3d.
 
 import { standIn } from './standins.js';
+import { viewProjection, modelMatrix } from './camera.js';
 
 const BASIC_VS = `#version 300 es
 in vec2 a_pos; in vec2 a_uv;
@@ -57,6 +62,47 @@ void main() {
   o = vec4(mix(warped, mask.rgb, strength * 0.6), 1.0);
 }`;
 
+// The perspective camera's program. Each vertex is projected by the camera and, by u_blend (0 to 1), moved
+// in screen space toward its game-view position: a_game through the call's map transform when the mesh has
+// one (Mesh.setGame), otherwise the height rule on its world position, (x, z + lift * y). Depth stays the
+// perspective camera's; w is blended with the position so textures stay perspective-correct at blend 0.
+// Once blending, a vertex behind the camera (or far off the screen) is put 3 screen half-widths out in its
+// direction, so a mesh that runs behind the camera does not streak: big surfaces should be grids of a few
+// cells, so that no triangle joins a vertex on the screen to one behind the camera.
+const THREE_VS = `#version 300 es
+in vec3 a_pos; in vec2 a_uv; in vec2 a_game;
+uniform mat4 u_model, u_viewProj;
+uniform vec2 u_translate, u_scale, u_cam, u_ndc;
+uniform float u_rot, u_blend, u_lift, u_hasGame;
+out vec2 v_uv;
+void main() {
+  vec4 world = u_model * vec4(a_pos, 1.0);
+  vec4 clip = u_viewProj * world;
+  v_uv = a_uv;
+  if (u_blend <= 0.0) { gl_Position = clip; return; }
+  vec2 g;
+  if (u_hasGame > 0.5) {
+    vec2 s = a_game * u_scale;
+    float c = cos(u_rot), n = sin(u_rot);
+    g = vec2(s.x * c + s.y * n, -s.x * n + s.y * c) + u_translate;
+  } else {
+    g = vec2(world.x, world.z + u_lift * world.y);
+  }
+  vec2 ndcG = (g - u_cam) * u_ndc, ndcP;
+  float w = clip.w, depth;
+  if (w < 0.05) {
+    ndcP = normalize(clip.xy + vec2(0.0, 1e-4)) * 3.0;
+    depth = 1.0;
+  } else {
+    ndcP = clip.xy / w;
+    float l = length(ndcP);
+    if (l > 3.0) ndcP *= 3.0 / l;
+    depth = clamp(clip.z / w, -1.0, 1.0);
+  }
+  float wm = mix(max(w, 0.05), 1.0, u_blend);
+  gl_Position = vec4(mix(ndcP, ndcG, u_blend) * wm, depth * wm, wm);
+}`;
+
 function compile(gl, vs, fs) {
   const program = gl.createProgram();
   for (const [type, src] of [[gl.VERTEX_SHADER, vs], [gl.FRAGMENT_SHADER, fs]]) {
@@ -68,6 +114,7 @@ function compile(gl, vs, fs) {
   }
   gl.bindAttribLocation(program, 0, 'a_pos');
   gl.bindAttribLocation(program, 1, 'a_uv');
+  gl.bindAttribLocation(program, 2, 'a_game');
   gl.linkProgram(program);
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
   const uniforms = {};
@@ -92,7 +139,9 @@ export class Renderer {
     this.gl = gl;
     this.basic = compile(gl, BASIC_VS, BASIC_FS);
     this.warp = compile(gl, BASIC_VS, WARP_FS);
+    this.three = compile(gl, THREE_VS, BASIC_FS);
     this.meshes = new WeakMap();
+    this.meshes3 = new WeakMap();
     this.textures = new Map();
     this.onTexture = onTexture;
     this.standIns = new Set();
@@ -187,6 +236,42 @@ export class Renderer {
     return entry;
   }
 
+  /** The same mesh for the perspective program: x, y, z (y 0 for a flat mesh), uv, and its game positions. */
+  mesh3(data) {
+    const gl = this.gl;
+    let entry = this.meshes3.get(data);
+    if (entry && entry.version === (data.version ?? 0)) return entry;
+    if (!entry) {
+      entry = { vao: gl.createVertexArray(), pos: gl.createBuffer(), uv: gl.createBuffer(), game: gl.createBuffer(), index: gl.createBuffer() };
+      this.meshes3.set(data, entry);
+    }
+    const n = data.v.length / 2;
+    let xyz = data.v3;
+    if (!xyz || xyz.length !== n * 3) {
+      xyz = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) { xyz[i * 3] = data.v[i * 2]; xyz[i * 3 + 2] = data.v[i * 2 + 1]; }
+    }
+    entry.hasGame = !!(data.game && data.game.length === n * 2);
+    gl.bindVertexArray(entry.vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, entry.pos);
+    gl.bufferData(gl.ARRAY_BUFFER, xyz, gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, entry.uv);
+    gl.bufferData(gl.ARRAY_BUFFER, data.uv && data.uv.length === n * 2 ? data.uv : new Float32Array(n * 2), gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, entry.game);
+    gl.bufferData(gl.ARRAY_BUFFER, entry.hasGame ? data.game : new Float32Array(n * 2), gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, entry.index);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, data.tri instanceof Uint32Array ? data.tri : Uint32Array.from(data.tri), gl.DYNAMIC_DRAW);
+    entry.count = data.tri.length;
+    entry.version = data.version ?? 0;
+    return entry;
+  }
+
   resize() {
     const dpr = window.devicePixelRatio || 1;
     this.allocate(Math.max(1, Math.round(this.canvas.clientWidth * dpr)),
@@ -207,9 +292,14 @@ export class Renderer {
     const color = gl.createRenderbuffer();
     gl.bindRenderbuffer(gl.RENDERBUFFER, color);
     gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, gl.RGBA8, w, h);
+    // Depth, for views drawn through a 3D camera; the map views never test it.
+    const depth = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, depth);
+    gl.renderbufferStorageMultisample(gl.RENDERBUFFER, samples, gl.DEPTH_COMPONENT24, w, h);
     this.msFbo = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.msFbo);
     gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, color);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth);
     this.copyTex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, this.copyTex);
     gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, w, h);
@@ -259,6 +349,7 @@ export class Renderer {
       gl.viewport(vx, vy, w, h);
       gl.enable(gl.SCISSOR_TEST);
       gl.scissor(vx, vy, w, h);
+      if (view.three) { this.draw3d(view, w, h, dpr, used); this.drawOverlays(view.overlays); continue; }
       const ppc = view.camera.ppc * dpr;
       const ndc = [(2 * ppc) / w, (2 * ppc) / h];
       const order = view.calls.map((c, i) => [c.y, i]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
@@ -316,6 +407,7 @@ export class Renderer {
         gl.drawElements(gl.TRIANGLES, mesh.count, gl.UNSIGNED_INT, 0);
         gl.activeTexture(gl.TEXTURE0);
       }
+      this.drawOverlays(view.overlays);
     }
 
     gl.disable(gl.SCISSOR_TEST);
@@ -323,5 +415,102 @@ export class Renderer {
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
     gl.blitFramebuffer(0, 0, W, H, 0, 0, W, H, gl.COLOR_BUFFER_BIT, gl.NEAREST);
     return used;
+  }
+
+  setBlend(shader) {
+    const gl = this.gl;
+    gl.enable(gl.BLEND);
+    if (shader === 'MoteGlow') gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE, gl.ZERO, gl.ONE);
+    else if (shader === 'Invert') gl.blendFuncSeparate(gl.ONE_MINUS_DST_COLOR, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+    else gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+  }
+
+  /**
+   * A view through a sketch's 3D camera (view.three = what camera() returned). Calls draw in the order
+   * they were made, depth tested. A normal-blended call (Transparent, Mote, Cutout) also writes depth where
+   * its alpha is 0.5 or more, unless its material sets _ZWrite to 0; MoteGlow and Invert never do. So a
+   * sketch draws far to near and see-through things last, and the depth test sorts what painter's order
+   * cannot (a ground mesh under many swords). A material with _ZTest 8 (Unity's CompareFunction.Always)
+   * skips the test: for marks lying on a surface, drawn just after it; so does a call made inside
+   * Graphics.Flat, which also lies at the given height, or inside Graphics.OnScreen, which is drawn where
+   * the game view draws it. The distortion shader is not drawn.
+   * view.camera is the game view the blend moves toward: { cx, cz, ppc }.
+   */
+  draw3d(view, w, h, dpr, used) {
+    const gl = this.gl, cam = view.three, prog = this.three, u = prog.uniforms;
+    const blend = Math.min(1, Math.max(0, cam.blend ?? 0)), ppc = view.camera.ppc * dpr;
+    gl.clearDepth(1);
+    gl.depthMask(true);
+    gl.clear(gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    gl.useProgram(prog.program);
+    gl.uniformMatrix4fv(u.u_viewProj, false, viewProjection(cam, w / h));
+    gl.uniform2f(u.u_cam, view.camera.cx, view.camera.cz);
+    gl.uniform2f(u.u_ndc, (2 * ppc) / w, (2 * ppc) / h);
+    gl.uniform1f(u.u_blend, blend);
+    gl.uniform1f(u.u_lift, cam.lift ?? .6);
+    gl.uniform1i(u.u_tex, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    for (const call of view.calls) {
+      if (call.a <= 0 || view.hidden?.has(call.group)) continue;
+      const mat = call.mat;
+      if (mat.shader === 'MoteLargeDistortionWave') { used.add('MoteLargeDistortionWave (not drawn by a 3D camera)'); continue; }
+      const tex = this.texture(mat.tex);
+      if (tex.standIn) used.add(mat.tex);
+      if (!tex.ready) continue;
+      const mesh = this.mesh3(call.mesh), flat = call.flat != null || call.screen;
+      gl.uniformMatrix4fv(u.u_model, false, modelMatrix(flat ? { ...call, y: call.screen ? 0 : call.flat, rx: 0, rz: 0 } : call));
+      gl.uniform1f(u.u_blend, call.screen ? 1 : blend);
+      gl.uniform2f(u.u_translate, call.x, call.z);
+      gl.uniform2f(u.u_scale, call.sx, call.sz);
+      gl.uniform1f(u.u_rot, call.rot * Math.PI / 180);
+      gl.uniform1f(u.u_hasGame, mesh.hasGame ? 1 : 0);
+      gl.uniform4f(u.u_color, call.r, call.g, call.b, call.a);
+      gl.bindTexture(gl.TEXTURE_2D, tex.tex);
+      gl.bindVertexArray(mesh.vao);
+      const cutout = mat.shader === 'Cutout', normal = mat.shader !== 'MoteGlow' && mat.shader !== 'Invert';
+      const writes = normal && !flat && (mat.floats?._ZWrite ?? 1) !== 0;
+      gl.depthFunc(flat || mat.floats?._ZTest === 8 ? gl.ALWAYS : gl.LEQUAL);
+      // the colour, blended, tested against what is nearer
+      gl.depthMask(false);
+      gl.uniform1f(u.u_cutoff, cutout ? .5 : .002);
+      this.setBlend(mat.shader);
+      gl.drawElements(gl.TRIANGLES, mesh.count, gl.UNSIGNED_INT, 0);
+      if (!writes) continue;
+      // then its depth where it is at least half opaque
+      gl.colorMask(false, false, false, false);
+      gl.depthMask(true);
+      gl.uniform1f(u.u_cutoff, .5);
+      gl.drawElements(gl.TRIANGLES, mesh.count, gl.UNSIGNED_INT, 0);
+      gl.colorMask(true, true, true, true);
+    }
+    gl.depthMask(true);
+    gl.disable(gl.DEPTH_TEST);
+  }
+
+  /** Overlay.Fill boxes over the view: x, y, w, h are fractions of it, y from the top. */
+  drawOverlays(overlays) {
+    if (!overlays?.length) return;
+    const gl = this.gl, prog = this.basic, u = prog.uniforms, white = this.texture('white'), quad = this.mesh(this.overlayQuad ??= {
+      v: new Float32Array([-.5, -.5, -.5, .5, .5, .5, .5, -.5]), uv: new Float32Array([0, 0, 0, 1, 1, 1, 1, 0]), tri: new Uint32Array([0, 1, 2, 0, 2, 3]), version: 0,
+    });
+    if (!white.ready) return;
+    gl.useProgram(prog.program);
+    gl.uniform2f(u.u_cam, .5, .5);
+    gl.uniform2f(u.u_ndc, 2, 2);
+    gl.uniform1f(u.u_rot, 0);
+    gl.uniform1f(u.u_cutoff, .002);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, white.tex);
+    gl.uniform1i(u.u_tex, 0);
+    this.setBlend('Transparent');
+    gl.bindVertexArray(quad.vao);
+    for (const o of overlays) {
+      gl.uniform2f(u.u_translate, o.x + o.w / 2, 1 - o.y - o.h / 2);
+      gl.uniform2f(u.u_scale, o.w, o.h);
+      gl.uniform4f(u.u_color, o.r, o.g, o.b, o.a);
+      gl.drawElements(gl.TRIANGLES, quad.count, gl.UNSIGNED_INT, 0);
+    }
   }
 }

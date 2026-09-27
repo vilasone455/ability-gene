@@ -187,7 +187,8 @@ Sasuke's Melee Trial follows the throw: kunai accuracy uses Melee (`KunaiAccurac
 kills count because the Fūma throw passes the weapon to the kill counter; kunai kills were not
 checked. A "lost family" Trial was considered and dropped (2026-09-27).
 
-Itachi (agreed 2026-09-27; numbers are placeholders; False Face and Susanoo have no sketch or code):
+Itachi (agreed 2026-09-27; numbers are placeholders; Susanoo has a lab sketch, `itachi-susanoo.js`;
+False Face has no sketch; neither has code):
 - Crow Dispersal: the built Murder and automatic Scatter, counted as one ability.
 - Carrion: built, unchanged.
 - False Face (genjutsu): one button, no target. Every enemy within 15 cells whose current target is
@@ -197,8 +198,12 @@ Itachi (agreed 2026-09-27; numbers are placeholders; False Face and Susanoo have
   mental state (as vanilla Berserk is), because the AI drops targets that are not hostile to it.
   To check before building: whether the attacked ally fights back on its own.
 - Susanoo: self, warm-up 1 s, lasts 12 s, Itachi walks at half speed. Yata Mirror blocks every hit
-  from outside. Totsuka Blade: one stab within 4 cells seals the target (removed from the map,
-  counts as a kill, drops its gear, no corpse). Cooldown 1 day, 20 charge. After it ends: -30 %
+  from outside. Totsuka Blade (changed 2026-09-27, the one-stab seal of anything was too strong):
+  while Susanoo is up, Itachi can stab a target within 4 cells every 3 s. The stab seals the target
+  only if it is downed or at 30 % summary health or less (removed from the map, counts as a kill,
+  drops its gear, no corpse); on any other target it is a hit of 30 stab damage. At most one seal
+  per Susanoo; after it, stabs are hits only. Mechanoids cannot be sealed (they take the hit).
+  Cooldown 1 day, 20 charge. After it ends: -30 %
   consciousness and 10 % blood loss for 6 h (his illness). Look: his complete armoured form (never
   Perfect), code meshes plus a swirl texture, always facing the camera, growing ribs -> skeleton ->
   armour and face during the warm-up (growth is picture only, my recommendation). About 2 days.
