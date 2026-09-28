@@ -6,7 +6,7 @@
     <defName>AG_AttractionEye</defName>
     <label>attraction eye</label>
     <labelNoun>a attraction eye</labelNoun>
-    <description>An artificial eye supplying normal sight. Gravity Well comes from Pain's Echo since the hero port; the eye no longer grants it.</description>
+    <description>An artificial eye supplying normal sight. It grants no ability: Pain's abilities come from his Echo since the hero port.</description>
     <spawnThingOnRemoved>AG_AttractionEye</spawnThingOnRemoved>
     <addedPartProps><solid>true</solid><partEfficiency>1</partEfficiency></addedPartProps>
   </HediffDef>

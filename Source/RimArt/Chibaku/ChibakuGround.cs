@@ -16,7 +16,7 @@ namespace RimArt
         public Vector2[] outline;
         /// <summary>Distance of the centre from the middle, as a share of the radius (0 middle, 1 rim).</summary>
         public float along;
-        /// <summary>Stays in the ground: a covered cell has a building on it (a wall, a conduit, a frame), a built floor, or a roof over it.</summary>
+        /// <summary>Stays in the ground: a covered cell has a building on it (a wall, a conduit, a frame), a built floor, a roof over it, or Pain or a pinned pawn stood on it when the ground was captured.</summary>
         public bool anchored;
         public readonly List<IntVec3> cells = new List<IntVec3>();
         internal Mesh face, edge, hole;
@@ -76,12 +76,16 @@ namespace RimArt
             z0 = middle.z - span / 2f;
         }
 
-        /// <summary>The ground round <paramref name="cell"/> captured and cut into plates.</summary>
-        public static ChibakuGround Capture(Map map, IntVec3 cell, float radius, float plateSize = 1f, int seed = 0)
+        /// <summary>
+        /// The ground round <paramref name="cell"/> captured and cut into plates. A plate covering one of
+        /// <paramref name="keep"/> stays like one under a building (the cells of Pain and of pawns pinned by Black
+        /// Receiver).
+        /// </summary>
+        public static ChibakuGround Capture(Map map, IntVec3 cell, float radius, float plateSize = 1f, int seed = 0, ICollection<IntVec3> keep = null)
         {
             var ground = new ChibakuGround(map, cell, radius);
             ground.Photograph();
-            ground.Cut(plateSize, seed);
+            ground.Cut(plateSize, seed, keep);
             return ground;
         }
 
@@ -176,7 +180,7 @@ namespace RimArt
             foreach (var q in quads.OrderByDescending(q => q.z)) commands.DrawMesh(MeshPool.plane10, q.at, q.material);
         }
 
-        private void Cut(float plateSize, int seed)
+        private void Cut(float plateSize, int seed, ICollection<IntVec3> keep)
         {
             Vector3 middle = cell.ToVector3Shifted();
             var centre0 = new Vector2(middle.x, middle.z);
@@ -189,7 +193,8 @@ namespace RimArt
                 for (int x = Mathf.FloorToInt(minX); x <= Mathf.FloorToInt(maxX); x++)
                     for (int z = Mathf.FloorToInt(minZ); z <= Mathf.FloorToInt(maxZ); z++)
                         if (ChibakuCut.Contains(plate.outline, new Vector2(x + .5f, z + .5f))) plate.cells.Add(new IntVec3(x, 0, z));
-                plate.anchored = plate.cells.Any(c => !c.InBounds(map) || c.Roofed(map) || c.GetTerrain(map).IsFloor || c.GetThingList(map).Any(t => t.def.category == ThingCategory.Building));
+                plate.anchored = plate.cells.Any(c => !c.InBounds(map) || c.Roofed(map) || c.GetTerrain(map).IsFloor || (keep != null && keep.Contains(c))
+                    || c.GetThingList(map).Any(t => t.def.category == ThingCategory.Building));
                 plate.face = Fan(plate, 0f, true);
                 plate.edge = Fan(plate, .022f, false);
                 plate.hole = Fan(plate, -.045f, false);

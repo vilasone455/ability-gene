@@ -3,6 +3,11 @@
 Written 2026-09-28 at the end of the preview work; updated the same day after PR #96 was merged. The next
 conversation turns the preview into Pain's ultimate, replacing Gravity Well in Pain's Echo.
 
+**Status, later on 2026-09-28: the ability is built** on branch `feature/pain-chibaku-ability` (work list
+items 1-8 below; 9, icon and sounds, is not done). The open rules were answered as built: everyone is
+caught, the crush may kill, a roof protects, big bodies are caught. The rules now live in
+`docs/hero-echo.md` (Pain, Chibaku Tensei). The polish list at the end still stands.
+
 ## Where things are
 
 - **main a8ae401 has everything**: the Pain kit

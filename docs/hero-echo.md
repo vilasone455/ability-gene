@@ -194,7 +194,7 @@ Rules:
 | Echo | Trials | Cost | Abilities | Upkeep | Casts |
 |---|---|---|---|---|---|
 | Accelerator | Intellectual 12, Damage taken 300 | Abrasive | vector manipulation, reflex surge, vector shove | 12 | surge 10, shove 8 |
-| Pain (`AG_Echo_Pain.xml`) | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei, Banshō Ten'in, Black Receiver, Gravity Well | 15 | Shinra 5 (paid at release), Banshō 3, Black Receiver 0 (its three charges), Gravity Well 20 |
+| Pain (`AG_Echo_Pain.xml`) | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei, Banshō Ten'in, Black Receiver, Chibaku Tensei (replaced Gravity Well 2026-09-28) | 15 | Shinra 5 (paid at release), Banshō 3, Black Receiver 0 (its three charges), Chibaku Tensei 30 |
 | Inumaki | Social 10, not Psychopath | Kind | stop, drop, crush, come, run, explode | 8 | 0 each (the throat is his cost) |
 | Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | Judgement Cut, Yamato Dash, Summoned Swords, Judgement Cut End (the def grants none until the kit is ported) | 10 | Judgement Cut 3, Yamato Dash 2, Summoned Swords 10, Judgement Cut End 0 (Style is its limit) |
 | Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40 |
@@ -207,7 +207,8 @@ Rules:
 
 Accelerator reuses abilities that still come from his pre-hero item (the reflex booster implant).
 validate.py allows that second source only for those abilities (`SHARED_WITH_ECHO`) until the
-implant is made Echo-only. Pain's four come only from his Echo since his port (2026-09-28): the
+implant is made Echo-only. Pain's four come only from his Echo since his port (2026-09-28; Chibaku
+Tensei took Gravity Well's place the same day): the
 repulsion and attraction eyes grant nothing and are no longer quest rewards; their defs stay so saves
 that hold one still load. Inumaki's words have one source, his Echo:
 the Commanding Voice trait was removed when his kit was ported.
@@ -458,6 +459,26 @@ Gravity Well, built 2026-09-28 with Pain's port (numbers are XML fields on
   1.8-1.9 ms after. Owner and clear lines cached per tick, items commit their cell every 15 ticks,
   dragged pawns re-path only when off their path (at most every 20 ticks), no per-tick allocations,
   and the patches return at once on maps with no well.
+
+Pain, Chibaku Tensei replaces Gravity Well as his ultimate (2026-09-28; the user found Gravity Well
+"not look like pain kit and not epic enough to be ultimate"). Gravity Well's def is retired (no source;
+validate.py `RETIRED`) and its code stays for Gojo's Blue. Sketch `pain-chibaku-tensei.js`; the ball
+preview is `Source/RimArt/Chibaku`, the cast `Source/RimArt/Pain/Kit/ChibakuCast.cs`; numbers are XML
+fields on `CompProperties_ChibakuTensei`; tests `-rimarttest=chibaku`. Rules:
+- Target a cell up to 25 cells away in sight. Warm-up 0.8 s (hand up, core over the palm), then the core
+  flies at 14 cells/s to 5 cells over the cell. Pain stands with his hand up until the ball has formed
+  (about 4-6 s from the click), then is free.
+- Pull 3 s, radius 6: every pawn on the torn ground is taken (any faction, colonists and big animals
+  too), with items and corpses; plants and filth are destroyed, trees torn out. The ground under a roof,
+  a building or a built floor stays, with what is on it. Pain and pawns pinned by Black Receiver are
+  never taken, and the plates they stood on stay.
+- The ball holds 12 s: 2 blunt per second, then the burst: 8 blunt for the fall, in hits of up to 8,
+  from Pain (kills count for him), stunned 2.5 s. It may kill (agreed 2026-09-28).
+- Pulled soil becomes stony soil; 6-10 real rock chunks land (one per 16 plates pulled).
+- While the ball holds, Shinra Tensei and Banshō Ten'in are locked; Black Receiver is not. If Pain is
+  downed, killed, leaves the map or hero form, the ball bursts at once (after it has formed if it is
+  still forming). Lost before the core arrives, the core fades and nothing happens.
+- One ball per map. Cooldown 1 day, Echo charge 30.
 - The command works for any ability with this comp, so Gojo's Blue can reuse it with its own XML
   (min radius = max radius for a fixed well, no growth, no drift).
 

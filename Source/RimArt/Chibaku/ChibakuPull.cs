@@ -48,12 +48,15 @@ namespace RimArt
     }
 
     /// <summary>
-    /// The rules of Chibaku Tensei's pull on what stands on the ground (proposed, placeholders; 2026-09-28):
+    /// The rules of Chibaku Tensei's pull on what stands on the ground (agreed 2026-09-28: everyone is caught,
+    /// it may kill, a roof protects, big bodies are caught; the numbers are the ability's XML fields):
     ///
     /// - From the start of the pull until the ball can still take them in, any pawn standing on a plate that
     ///   is pulled (not under a building or a roof) is caught: stunned where it stands, then lifted just
     ///   before its plate tears free and pulled into the core. Colonists are caught too. A pawn that walks
-    ///   onto the circle during the pull is caught as well.
+    ///   onto the circle during the pull is caught as well. Pain (the caster) and a pawn Black Receiver pins
+    ///   (<see cref="PainKit.Unmovable"/>) are never caught, and the plates they stood on when the ground was
+    ///   captured stay.
     /// - When a plate tears free, what lies on it goes with it: items (corpses, weapons, stacks, chunks) are
     ///   pulled into the ball; small plants are gone (they are printed on the plate's picture and on the
     ///   ball); a tree is torn out and flies in as its own piece, gone for good (no wood); filth is gone.
@@ -61,25 +64,29 @@ namespace RimArt
     ///   counts it on the map); a pawn keeps ticking (bleeding, needs), cannot act or be targeted, and leaves
     ///   its raid group.
     /// - At the burst everything inside falls out round the spot under the ball (pawns within about 1 cell,
-    ///   items within about 2) and lands when it reaches the ground (0.89 s from the default height of 5 cells). A pawn takes 2 blunt for each second it was held plus 8
-    ///   for the fall, in hits of up to 8, is stunned 2.5 s and goes back to its raid group (a hostile whose
-    ///   group has ended gets a new assault group). Items land unhurt, stacks as they were.
+    ///   items within about 2) and lands when it reaches the ground (0.89 s from the default height of 5 cells). A
+    ///   pawn takes crushPerSecond blunt for each second it was held plus fallDamage, in hits of up to hitSize, from
+    ///   Pain, is stunned stunSeconds and goes back to its raid group (a hostile whose group has ended gets a new
+    ///   assault group). Items land unhurt, stacks as they were.
     /// - When the ball is formed, the natural soil of the pulled plates becomes stony soil (only a soil more fertile
     ///   than stony soil changes; built floors keep their plate). At the burst the biggest thrown rocks land as real
-    ///   chunks of the map's rock, one for every 16 plates pulled (6 to 10); the other rocks leave rock rubble.
+    ///   chunks of the map's rock, one for every platesPerChunk plates pulled (minChunks to maxChunks); the other
+    ///   rocks leave rock rubble.
     ///
-    /// Pinned pawns (Black Receiver) are not on this branch yet; there is no caster in the preview.
+    /// The debug previews have no caster.
     /// </summary>
     public sealed class ChibakuPull
     {
-        public const float CrushPerSecond = 2f, FallDamage = 8f, HitSize = 8f, LeadOfPlate = .12f, FlySeconds = .75f;
+        public const float LeadOfPlate = .12f, FlySeconds = .75f;
         public const float PawnSpread = 2.2f, ItemSpread = 4.4f;
-        public const int StunTicks = 150;
 
         private readonly MapComponent_ChibakuPlates owner;
         private readonly Map map;
         private readonly ChibakuBall ball;
         private readonly IntVec3 centre;
+        /// <summary>Pain, or null in a debug preview: never caught, and the damage is his.</summary>
+        private readonly Pawn caster;
+        private readonly CompProperties_ChibakuTensei props;
         public readonly List<ChibakuHeld> pawns = new List<ChibakuHeld>();
         private readonly HashSet<ChibakuPlate> cleared = new HashSet<ChibakuPlate>();
         private readonly HashSet<int> rocksLanded = new HashSet<int>();
@@ -90,12 +97,14 @@ namespace RimArt
         public int SoilChanged { get; private set; }
         public readonly List<Thing> chunks = new List<Thing>();
 
-        public ChibakuPull(MapComponent_ChibakuPlates owner, ChibakuBall ball, IntVec3 centre)
+        public ChibakuPull(MapComponent_ChibakuPlates owner, ChibakuBall ball, IntVec3 centre, Pawn caster, CompProperties_ChibakuTensei props)
         {
             this.owner = owner;
             map = owner.map;
             this.ball = ball;
             this.centre = centre;
+            this.caster = caster;
+            this.props = props;
         }
 
         /// <summary>The last moment a pawn can be lifted and still reach the ball before it is formed.</summary>
@@ -114,7 +123,7 @@ namespace RimArt
                 }
                 else if (h.state == ChibakuHeld.Flying && s >= h.liftAt + FlySeconds) h.state = ChibakuHeld.Held;
             }
-            if (!burst && s >= ChibakuBall.Burst)
+            if (!burst && s >= ball.Burst)
             {
                 burst = true;
                 if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(1.2f);
@@ -126,12 +135,12 @@ namespace RimArt
                     h.state = ChibakuHeld.Falling;
                     h.drop = new Vector2((float)ChibakuCut.Rand(k * 9 + 401) - .5f, (float)ChibakuCut.Rand(k * 9 + 402) - .5f) * (h.pawn != null ? PawnSpread : ItemSpread);
                     k++;
-                    h.landAt = ChibakuBall.Burst + ball.FallTime;
+                    h.landAt = ball.Burst + ball.FallTime;
                     h.landCell = Standable(new IntVec3(Mathf.RoundToInt(centre.x + h.drop.x), 0, Mathf.RoundToInt(centre.z + h.drop.y)));
                 }
             }
             if (!soilChanged && s >= ChibakuBall.Formed) ChangeSoil();
-            if (s >= ChibakuBall.Burst) LandRocks(s - ChibakuBall.Burst);
+            if (s >= ball.Burst) LandRocks(s - ball.Burst);
             var landed = new List<ChibakuHeld>();
             foreach (ChibakuHeld h in pawns)
                 if (h.state == ChibakuHeld.Falling && s >= h.landAt) landed.Add(h);
@@ -143,7 +152,7 @@ namespace RimArt
         {
             foreach (Pawn p in map.mapPawns.AllPawnsSpawned)
             {
-                if (pawns.Any(h => h.pawn == p) || !ball.TryLiftOf(p.Position, out float plateLift)) continue;
+                if (p == caster || PainKit.Unmovable(p) || pawns.Any(h => h.pawn == p) || !ball.TryLiftOf(p.Position, out float plateLift)) continue;
                 var h = new ChibakuHeld { pawn = p, state = ChibakuHeld.Waiting, liftAt = Mathf.Max(s, plateLift - LeadOfPlate) };
                 pawns.Add(h);
                 int ticks = Mathf.CeilToInt((h.liftAt - s) * 60f) + 5;
@@ -303,11 +312,12 @@ namespace RimArt
                 owner.Inner.Remove(p);
                 GenSpawn.Spawn(p, at, map);
                 if (!hurt) { Rejoin(h, assault); continue; }
-                float held = Mathf.Max(0f, ChibakuBall.Burst - (h.liftAt + FlySeconds));
-                for (float left = CrushPerSecond * held + FallDamage; left > 0f && !p.Dead; left -= HitSize)
-                    p.TakeDamage(new DamageInfo(DamageDefOf.Blunt, Mathf.Min(HitSize, left)));
+                float held = Mathf.Max(0f, ball.Burst - (h.liftAt + FlySeconds));
+                float hit = Mathf.Max(1f, props.hitSize);
+                for (float left = props.crushPerSecond * held + props.fallDamage; left > 0f && !p.Dead; left -= hit)
+                    p.TakeDamage(new DamageInfo(DamageDefOf.Blunt, Mathf.Min(hit, left), 0f, -1f, caster));
                 if (p.Dead) continue;
-                p.stances?.stunner?.StunFor(StunTicks, null, false);
+                p.stances?.stunner?.StunFor(Mathf.RoundToInt(props.stunSeconds * 60f), caster, false);
                 Rejoin(h, assault);
             }
             foreach (IGrouping<Faction, Pawn> group in assault.GroupBy(p => p.Faction))

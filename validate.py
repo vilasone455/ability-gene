@@ -444,8 +444,9 @@ for f in my_files:
             grants.setdefault(ability, set()).add(source)
 
 # Abilities no source grants any more, kept so a save whose pawns have them still loads. Origin: Blade
-# granted Rain, Loose and Grasp until 2026-09-25, when it took Unlimited Blade Works instead.
-RETIRED = {"AG_Panoply_Rain", "AG_Panoply_Loose", "AG_Panoply_Grasp"}
+# granted Rain, Loose and Grasp until 2026-09-25, when it took Unlimited Blade Works instead. Pain's Echo
+# granted Gravity Well until 2026-09-28, when Chibaku Tensei took its place (its code stays for Gojo's Blue).
+RETIRED = {"AG_Panoply_Rain", "AG_Panoply_Loose", "AG_Panoply_Grasp", "AG_GravityWell"}
 
 # Hero abilities that still have their pre-hero source (an implant, a gene or a trait) while the
 # Echo that uses them is being built. Each is to lose one source once it is decided whether the

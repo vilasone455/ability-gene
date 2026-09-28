@@ -10,9 +10,9 @@ namespace RimArt
         public static EchoDef AG_Echo_Pain;
 
         public static AbilityDef AG_ShinraTensei;
-        public static AbilityDef AG_GravityWell;
         public static AbilityDef AG_PainBanshoTenin;
         public static AbilityDef AG_PainBlackReceiver;
+        public static AbilityDef AG_PainChibakuTensei;
 
         /// <summary>Black Receiver's rods in a pawn (<see cref="Hediff_PainRods"/>).</summary>
         public static HediffDef AG_PainRods;
@@ -31,6 +31,7 @@ namespace RimArt
     {
         public static CompProperties_BanshoTenin BanshoProps => VergilKit.Props<CompProperties_BanshoTenin>(PainDefOf.AG_PainBanshoTenin);
         public static CompProperties_BlackReceiver ReceiverProps => VergilKit.Props<CompProperties_BlackReceiver>(PainDefOf.AG_PainBlackReceiver);
+        public static CompProperties_ChibakuTensei ChibakuProps => VergilKit.Props<CompProperties_ChibakuTensei>(PainDefOf.AG_PainChibakuTensei);
 
         /// <summary>The sketches stand their pawns with the feet on the point they are given (VergilKit.Ground).</summary>
         public static Vector2 Ground(Vector3 drawPos) => VergilKit.Ground(drawPos);
@@ -40,8 +41,8 @@ namespace RimArt
         public static bool Has(Pawn pawn, AbilityDef def) => pawn?.abilities?.GetAbility(def) != null;
 
         /// <summary>
-        /// Pinned by Black Receiver, or carried by a Banshō pull right now: Shinra Tensei, Banshō Ten'in and Gravity
-        /// Well do not move it.
+        /// Pinned by Black Receiver, or carried by a Banshō pull right now: Shinra Tensei, Banshō Ten'in, Chibaku Tensei
+        /// and Gravity Well (Gojo's Blue) do not move it.
         /// </summary>
         public static bool Unmovable(Pawn pawn) => PainRods.Pinned(pawn) || (GameComponent_Pain.Instance?.InPull(pawn) ?? false);
 
@@ -80,6 +81,28 @@ namespace RimArt
         {
             int until = GameComponent_Pain.Instance?.DevaUntil(pawn) ?? 0;
             return Mathf.Max(0, until - Find.TickManager.TicksGame) / 60f;
+        }
+
+        /// <summary>
+        /// Seconds until the Chibaku Tensei ball <paramref name="pawn"/> cast bursts, or 0. While it holds, Shinra Tensei
+        /// and Banshō Ten'in wait (the Deva Path is holding it); Black Receiver does not.
+        /// </summary>
+        public static float ChibakuLeft(Pawn pawn)
+        {
+            if (pawn == null) return 0f;
+            foreach (Map map in Find.Maps)
+            {
+                float left = MapComponent_ChibakuPlates.Of(map)?.HoldLeft(pawn) ?? 0f;
+                if (left > 0f) return left;
+            }
+            return 0f;
+        }
+
+        /// <summary>Why Shinra Tensei and Banshō Ten'in wait for Chibaku Tensei now, or null.</summary>
+        public static string ChibakuLock(Pawn pawn)
+        {
+            float left = ChibakuLeft(pawn);
+            return left > 0f ? "Pain is holding Chibaku Tensei: " + left.ToString("0.0") + " s left." : null;
         }
 
         public static void StartDevaGap(Pawn pawn)

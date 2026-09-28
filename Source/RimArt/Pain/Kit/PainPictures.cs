@@ -50,6 +50,55 @@ namespace RimArt
             BanshoGraphics.Draw(in view, s, cast.home);
         }
 
+        /// <summary>
+        /// Chibaku Tensei's cast (the sketch pain-chibaku-tensei.js): Pain's arm comes up at the cell during the warmup
+        /// with the core growing over the palm, the core flies to its place over the cell with a dark trail, and the arm
+        /// stays up until the ball is formed, then comes down. From the core's arrival the ball is drawn by
+        /// <see cref="ChibakuBall"/>. A cast that lost Pain before the arrival fades its core out where it is.
+        /// </summary>
+        public static void Chibaku(ChibakuCast cast, float s)
+        {
+            Pawn caster = cast.caster;
+            float top = AltitudeLayer.MoteOverhead.AltitudeFor() + .1f;
+            float fade = cast.aborted ? 1f - Mathf.Clamp01(UbwClock.Since(cast.abortTick) / ChibakuCast.FadeSeconds) : 1f;
+            if (fade <= 0f) return;
+            if (cast.Fired && !cast.handed && s >= cast.LaunchAt)
+                ChibakuFlight(cast, Mathf.Clamp01((s - cast.LaunchAt) / Mathf.Max(.01f, cast.Arrive - cast.LaunchAt)), fade, top);
+            if (caster == null || !caster.Spawned || cast.aborted) return;
+            Vector2 me = PainKit.Ground(caster.DrawPos);
+            Vector2 aim = cast.Fired ? cast.aim : ChibakuCast.AimFrom(caster, cast.cell);
+            float warm = ChibakuCast.Warmup, since = s - ChibakuCast.LeadTime;
+            float armUp = Smooth01(since / (warm * .6f)), armDown = cast.Fired ? Smooth01((s - cast.Formed - ChibakuCast.ArmDownAfter) / ChibakuCast.ArmDownTime) : 0f;
+            float reach = PainGraphics.Reach * armUp * (1f - armDown);
+            float handH = Mathf.Lerp(Mathf.Lerp(PainGraphics.HandH, ChibakuCast.RaisedH, armUp), PainGraphics.HandH * .7f, armDown);
+            if (armUp > 0f && armDown < 1f)
+                PainGraphics.Arm(PainGraphics.Place(me, aim, .05f, -.1f, PainGraphics.ShoulderH), PainGraphics.Place(me, aim, .12f + reach, -.1f, handH), aim, 0f);
+            if (since >= 0f && (!cast.Fired || s < cast.LaunchAt))
+            {
+                float warmU = Mathf.Clamp01(since / warm);
+                ChibakuBall.BlackCore(PainGraphics.Place(me, aim, .12f + reach + ChibakuCast.PalmGap, -.1f, handH + .12f),
+                    ChibakuCast.PalmR * Smooth01(warmU * 1.25f), Smooth01(warmU * 1.4f), top);
+            }
+        }
+
+        private static void ChibakuFlight(ChibakuCast cast, float u, float fade, float top)
+        {
+            if (fade < 1f)
+            {
+                // Lost on the way: the core stops where it was and shrinks away.
+                Vector3 at = Vector3.Lerp(cast.from, cast.to, u);
+                ChibakuBall.BlackCore(new Vector2(at.x, at.z + at.y * Lift), ChibakuCast.PalmR * 1.1f * fade, fade, top);
+                return;
+            }
+            ChibakuBall.FlyingCore(cast.from, cast.to, u, ChibakuCast.PalmR * 1.1f, top);
+        }
+
+        private static float Smooth01(float x)
+        {
+            x = Mathf.Clamp01(x);
+            return x * x * (3f - 2f * x);
+        }
+
         /// <summary>A cell-space point (cell centres) as the sketches' ground point: the feet, 0.3 south of the centre.</summary>
         public static Vector2 Ground(Vector3 centre) => new Vector2(centre.x, centre.z - VergilKit.FeetBelowDrawPos);
 

@@ -84,7 +84,7 @@ namespace RimArt
         public void Begin(Pawn pawn, CastClips.Handle animation)
         {
             var s = For(pawn);
-            if (s.active || s.cooldownUntil > Find.TickManager.TicksGame || PainKit.DevaGapLeft(pawn) > 0f)
+            if (s.active || s.cooldownUntil > Find.TickManager.TicksGame || PainKit.DevaGapLeft(pawn) > 0f || PainKit.ChibakuLeft(pawn) > 0f)
             { animation.Stop(); return; }
             s.map = pawn.Map;
             s.centre = pawn.Position.ToVector3Shifted();

@@ -17,7 +17,7 @@ namespace RimArt
     {
         private static EchoDef Pain => PainDefOf.AG_Echo_Pain;
 
-        private static GameComponent_Echoes Setup(RimArtTestContext t)
+        internal static GameComponent_Echoes Setup(RimArtTestContext t)
         {
             startHealth.Clear();
             GameComponent_Pain.Instance.ResetForTests();
@@ -29,7 +29,7 @@ namespace RimArt
         }
 
         /// <summary>A colonist made Pain's Host and manifested, with a full pool, unarmed, drafted with fire at will off.</summary>
-        private static Pawn Host(RimArtTestContext t, GameComponent_Echoes echoes, IntVec3 at, out EchoRecord record)
+        internal static Pawn Host(RimArtTestContext t, GameComponent_Echoes echoes, IntVec3 at, out EchoRecord record)
         {
             Pawn host = t.Colonist(at);
             record = EchoUtility.ForceHost(Pain, host);
@@ -52,7 +52,7 @@ namespace RimArt
         }
 
         /// <summary>A hostile that stands still: unarmed, no apparel (armour would turn a hit to nothing), stunned.</summary>
-        private static Pawn Target(RimArtTestContext t, IntVec3 at, int stunTicks = 900)
+        internal static Pawn Target(RimArtTestContext t, IntVec3 at, int stunTicks = 900)
         {
             Pawn pawn = t.Enemy(at, armed: false);
             pawn.apparel?.DestroyAll();
@@ -63,23 +63,23 @@ namespace RimArt
         }
 
         private static float Start(Pawn pawn) => startHealth.TryGetValue(pawn, out float h) ? h : 1f;
-        private static bool Hurt(Pawn pawn) => pawn.Dead || pawn.Downed || pawn.health.summaryHealth.SummaryHealthPercent < Start(pawn) - 0.001f;
-        private static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned == true;
+        internal static bool Hurt(Pawn pawn) => pawn.Dead || pawn.Downed || pawn.health.summaryHealth.SummaryHealthPercent < Start(pawn) - 0.001f;
+        internal static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned == true;
 
-        private static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 1)
+        internal static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 1)
         {
             for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
         }
 
-        private static T Cast<T>(Pawn host) where T : PainCast => GameComponent_Pain.Instance?.Latest<T>(host);
+        internal static T Cast<T>(Pawn host) where T : PainCast => GameComponent_Pain.Instance?.Latest<T>(host);
 
-        private static void Finish(EchoRecord record)
+        internal static void Finish(EchoRecord record)
         {
             if (record != null && record.manifested) EchoUtility.Revert(record, collapse: false);
             EchoDevice.workingForTests = null;
         }
 
-        private static Ability Ready(RimArtTestContext t, Pawn host, AbilityDef def)
+        internal static Ability Ready(RimArtTestContext t, Pawn host, AbilityDef def)
         {
             Ability ability = host.abilities.GetAbility(def);
             t.Check(ability != null && ability.CanCast, "Pain can cast " + def.label + " (" + ability?.CanCast.Reason + ")");
@@ -90,16 +90,16 @@ namespace RimArt
 
         // ---- the Echo ----------------------------------------------------------------------------------------------
 
-        [RimArtTest("Pain", "echo 1 Manifest gives the four abilities with costs 5 / 3 / 0 / 20; the eyes grant nothing; revert takes them back")]
+        [RimArtTest("Pain", "echo 1 Manifest gives the four abilities with costs 5 / 3 / 0 / 30; the eyes grant nothing; revert takes them back")]
         private static IEnumerable<int> Echo(RimArtTestContext t)
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            AbilityDef[] four = { PainDefOf.AG_ShinraTensei, PainDefOf.AG_PainBanshoTenin, PainDefOf.AG_PainBlackReceiver, PainDefOf.AG_GravityWell };
+            AbilityDef[] four = { PainDefOf.AG_ShinraTensei, PainDefOf.AG_PainBanshoTenin, PainDefOf.AG_PainBlackReceiver, PainDefOf.AG_PainChibakuTensei };
             t.Check(four.All(def => Pain.abilities.Contains(def)), "the Echo lists the four abilities");
             t.Check(Pain.CastCost(PainDefOf.AG_ShinraTensei) == 5f && Pain.CastCost(PainDefOf.AG_PainBanshoTenin) == 3f
-                && Pain.CastCost(PainDefOf.AG_PainBlackReceiver) == 0f && Pain.CastCost(PainDefOf.AG_GravityWell) == 20f,
-                "cast costs 5 / 3 / 0 / 20");
+                && Pain.CastCost(PainDefOf.AG_PainBlackReceiver) == 0f && Pain.CastCost(PainDefOf.AG_PainChibakuTensei) == 30f,
+                "cast costs 5 / 3 / 0 / 30");
             t.Check(Pain.upkeepPerHour == 15f, "upkeep 15 per hour");
             HediffDef repulsion = DefDatabase<HediffDef>.GetNamed("AG_RepulsionEye"), attraction = DefDatabase<HediffDef>.GetNamed("AG_AttractionEye");
             t.Check(repulsion.abilities.NullOrEmpty() && attraction.abilities.NullOrEmpty(), "the repulsion and attraction eyes grant no ability");

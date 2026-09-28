@@ -5,7 +5,7 @@
        code; each rod breaks 8 s after it landed (the ability's rodSeconds). While any rod is in, the
        pawn cannot use abilities or psycasts (Patches_PainRods.cs). At pinRods (3) it is pinned: held
        by a stun renewed every tick, drawn lying on its back, and not moved by Shinra Tensei, Banshō
-       Ten'in or Gravity Well. The stages hold the capacity factors: x0.75 per rod. -->
+       Ten'in or Chibaku Tensei. The stages hold the capacity factors: x0.75 per rod. -->
   <HediffDef>
     <defName>AG_PainRods</defName>
     <label>chakra rods</label>

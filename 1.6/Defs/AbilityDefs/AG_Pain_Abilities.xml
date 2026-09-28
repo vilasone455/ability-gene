@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- Pain's two new abilities (docs/hero-echo.md; full rules in the Tools/VfxLab/web/sketches/pain-*.js
+  <!-- Pain's three new abilities (docs/hero-echo.md; full rules in the Tools/VfxLab/web/sketches/pain-*.js
        headers), granted by the Pain Echo while manifested (AG_Echo_Pain.xml holds their charge costs).
-       His other two, Shinra Tensei and Gravity Well, keep their own files. Every balance number is a
+       His fourth, Shinra Tensei, keeps its own file. Every balance number is a
        field here; the C# in Source/RimArt/Pain/Kit holds only shape and logic. The icons are
        placeholders. -->
 
@@ -26,7 +26,7 @@
   <AbilityDef ParentName="AG_PainAbilityBase">
     <defName>AG_PainBanshoTenin</defName>
     <label>Banshō Ten'in</label>
-    <description>Pain pulls one hostile pawn or animal up to 12 cells away (line of sight) to the cell in front of him. The target slides toward him, is lifted and flies at 20 cells per second over low cover. On arrival he pushes it face-down: 15 blunt, stunned 2 seconds.\n\nA standing pawn in the line stops it: both take 8 blunt and are stunned 1 second, and the target drops where it stopped.\n\nBody size over 2: dragged along the floor half the distance at 35% of the speed, with no slam and no stun.\n\nNot downed pawns, and not a pawn pinned by Black Receiver. Shinra Tensei and Banshō Ten'in share a 5 second gap: after either one, the other waits 5 seconds.</description>
+    <description>Pain pulls one hostile pawn or animal up to 12 cells away (line of sight) to the cell in front of him. The target slides toward him, is lifted and flies at 20 cells per second over low cover. On arrival he pushes it face-down: 15 blunt, stunned 2 seconds.\n\nA standing pawn in the line stops it: both take 8 blunt and are stunned 1 second, and the target drops where it stopped.\n\nBody size over 2: dragged along the floor half the distance at 35% of the speed, with no slam and no stun.\n\nNot downed pawns, and not a pawn pinned by Black Receiver. Shinra Tensei and Banshō Ten'in share a 5 second gap: after either one, the other waits 5 seconds. Both wait while a Chibaku Tensei ball holds.</description>
     <iconPath>UI/Icons/Genes/Gene_Darkvision</iconPath>
     <cooldownTicksRange>900</cooldownTicksRange>
     <verbProperties>
@@ -67,7 +67,7 @@
   <AbilityDef ParentName="AG_PainAbilityBase">
     <defName>AG_PainBlackReceiver</defName>
     <label>Black Receiver</label>
-    <description>Pain throws a chakra rod at one hostile pawn or animal up to 12 cells away (line of sight). The rod flies at 30 cells per second and the first pawn in the line takes it. At 1.5 cells or less he stabs instead, with the same effect. A berserk colonist counts as hostile.\n\nEach rod in a pawn: 5 sharp; it cannot use abilities or psycasts; moving and manipulation x0.75 per rod. Three rods: pinned. It cannot move, shoot or melee, and Shinra Tensei, Banshō Ten'in and Gravity Well do not move it.\n\nEach rod lasts 8 seconds. At most 3 in one pawn; a 4th replaces the oldest. Every rod breaks when Pain is downed, killed or leaves hero form.\n\nThree charges, one back every 10 seconds.</description>
+    <description>Pain throws a chakra rod at one hostile pawn or animal up to 12 cells away (line of sight). The rod flies at 30 cells per second and the first pawn in the line takes it. At 1.5 cells or less he stabs instead, with the same effect. A berserk colonist counts as hostile.\n\nEach rod in a pawn: 5 sharp; it cannot use abilities or psycasts; moving and manipulation x0.75 per rod. Three rods: pinned. It cannot move, shoot or melee, and Shinra Tensei, Banshō Ten'in and Chibaku Tensei do not move it.\n\nEach rod lasts 8 seconds. At most 3 in one pawn; a 4th replaces the oldest. Every rod breaks when Pain is downed, killed or leaves hero form.\n\nThree charges, one back every 10 seconds.</description>
     <iconPath>UI/Icons/Genes/Gene_Darkvision</iconPath>
     <cooldownTicksRange>600</cooldownTicksRange>
     <charges>3</charges>
@@ -97,6 +97,47 @@
         <rodSeconds>8</rodSeconds>
         <maxRods>3</maxRods>
         <pinRods>3</pinRods>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Chibaku Tensei: Pain's ultimate, in place of Gravity Well since 2026-09-28 (Gravity Well's code stays for
+       Gojo's Blue). The warmup is the raised hand and the core growing over the palm (0.8 s); the fire tick is
+       the launch. The core's flight runs on the cast's clock (ChibakuCast.cs), then the ball on the map's
+       (MapComponent_ChibakuPlates.cs, rules in ChibakuPull.cs). The pull's 3 s, the ball's 2-cell radius and
+       its height of 5 cells are drawing constants in ChibakuBall.cs. -->
+  <AbilityDef ParentName="AG_PainAbilityBase">
+    <defName>AG_PainChibakuTensei</defName>
+    <label>Chibaku Tensei</label>
+    <description>Pain sends a black core to a cell up to 25 cells away (line of sight). It flies at 14 cells per second and stops 5 cells above the cell.\n\nFor 3 seconds it tears up the ground within 6 cells and pulls in every pawn standing on it, of any faction, colonists and animals included, with the items and corpses on it. Plants and filth on the torn ground are destroyed; trees are torn out and gone. It forms a ball of rock that holds 12 seconds: pawns inside cannot act or be targeted and take 2 blunt per second. Then the ball bursts: every pawn falls out, takes 8 blunt and is stunned 2.5 seconds. Damage comes in hits of up to 8 and can kill. Items land unhurt.\n\nGround under a roof, a building or a built floor stays, and so do the pawns and items on it. Pain and pawns pinned by Black Receiver are never pulled. Pulled soil becomes stony soil, and 6 to 10 rock chunks of the map's stone land round the crater.\n\nPain stands with his hand raised until the ball has formed (about 4 to 6 seconds). While the ball holds, Shinra Tensei and Banshō Ten'in cannot be used. If Pain is downed, killed, leaves the map or leaves hero form, the ball bursts at once (or as soon as it has formed). One ball per map. Cooldown 1 day.</description>
+    <iconPath>UI/Icons/Genes/Gene_Darkvision</iconPath>
+    <cooldownTicksRange>60000</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>25</range>
+      <warmupTime>0.8</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetPawns>false</canTargetPawns>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetItems>false</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_ChibakuTensei">
+        <radius>6</radius>
+        <coreSpeed>14</coreSpeed>
+        <holdSeconds>12</holdSeconds>
+        <crushPerSecond>2</crushPerSecond>
+        <fallDamage>8</fallDamage>
+        <hitSize>8</hitSize>
+        <stunSeconds>2.5</stunSeconds>
+        <platesPerChunk>16</platesPerChunk>
+        <minChunks>6</minChunks>
+        <maxChunks>10</maxChunks>
       </li>
     </comps>
   </AbilityDef>
