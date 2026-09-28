@@ -21,6 +21,12 @@ namespace RimArt
     /// </summary>
     public class Projectile_Kunai : Bullet
     {
+        /// <summary>
+        /// Sasuke's conjured kunai (<see cref="Projectile_KunaiConjured"/>): it never becomes an item. Passed to the
+        /// stick, plant and drop of this kunai only, never to other kunai that come out of a pawn it kills.
+        /// </summary>
+        protected virtual bool Conjured => false;
+
         protected override void Impact(Thing hitThing, bool blockedByShield = false)
         {
             Map map = Map;
@@ -40,12 +46,12 @@ namespace RimArt
 
             if (map == null || !cell.InBounds(map)) return;
             if (hitThing != null && !blockedByShield && Rand.Chance(KunaiDefaults.BreakChanceOnHit)) return;
-            if (!blockedByShield && KunaiEmbedding.TryEmbed(pawn, before, sealedByMinato)) return;
-            if (hitThing == null && !blockedByShield && KunaiEmbedding.PlantKunai(landed, angle, map, sealedByMinato)) return;
+            if (!blockedByShield && KunaiEmbedding.TryEmbed(pawn, before, sealedByMinato, Conjured)) return;
+            if (hitThing == null && !blockedByShield && KunaiEmbedding.PlantKunai(landed, angle, map, sealedByMinato, Conjured)) return;
 
             // Near rather than Direct: a kunai that hit a wall stopped in the wall's cell, and one
             // that killed its target drops beside the body.
-            KunaiEmbedding.DropKunai(pawn != null && pawn.Dead ? pawn.PositionHeld : cell, map, sealedByMinato);
+            KunaiEmbedding.DropKunai(pawn != null && pawn.Dead ? pawn.PositionHeld : cell, map, sealedByMinato, Conjured);
         }
     }
 }

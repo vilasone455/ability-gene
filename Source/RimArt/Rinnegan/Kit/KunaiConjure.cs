@@ -18,12 +18,6 @@ namespace RimArt
         private static readonly AccessTools.FieldRef<CompApparelVerbOwner_Charged, int> Charges =
             AccessTools.FieldRefAccess<CompApparelVerbOwner_Charged, int>("remainingCharges");
 
-        /// <summary>
-        /// True while a conjured kunai's impact runs (<see cref="Projectile_KunaiConjured"/>): KunaiEmbedding makes no
-        /// item then, and a kunai it sticks into a pawn is marked conjured.
-        /// </summary>
-        public static bool Impacting { get; internal set; }
-
         /// <summary>One conjured kunai onto this belt.</summary>
         public static void AddOne(CompApparelReloadable belt)
         {
@@ -59,21 +53,12 @@ namespace RimArt
         }
     }
 
-    /// <summary>A kunai the Rinnegan conjured: everything an ordinary kunai does, except that it never becomes an item.</summary>
+    /// <summary>
+    /// A kunai the Rinnegan conjured: everything an ordinary kunai does, except that it never becomes an item. Only this
+    /// kunai vanishes: real kunai already stuck in a pawn it kills still drop.
+    /// </summary>
     public class Projectile_KunaiConjured : Projectile_Kunai
     {
-        protected override void Impact(Thing hitThing, bool blockedByShield = false)
-        {
-            bool was = KunaiConjure.Impacting;
-            KunaiConjure.Impacting = true;
-            try
-            {
-                base.Impact(hitThing, blockedByShield);
-            }
-            finally
-            {
-                KunaiConjure.Impacting = was;
-            }
-        }
+        protected override bool Conjured => true;
     }
 }

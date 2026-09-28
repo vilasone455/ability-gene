@@ -305,6 +305,63 @@ namespace RimArt
             t.Check(belt.RemainingCharges == charges - conjured, "revert: the belt lost its " + conjured + " conjured kunai (" + belt.LabelRemaining + ")");
         }
 
+        private static readonly System.Reflection.MethodInfo ProjectileImpact = HarmonyLib.AccessTools.Method(typeof(Projectile), "Impact");
+
+        [RimArtTest("Sasuke", "supply 2 a conjured kunai that kills a pawn vanishes, but a real kunai and one of Minato's already stuck in that pawn drop as items")]
+        private static IEnumerable<int> ConjuredKill(RimArtTestContext t)
+        {
+            Setup(t);
+            yield return 5;
+            Pawn raider = Target(t, t.center);
+            t.Check(Stick(raider, false) && Stick(raider, true), "a real kunai and one of Minato's are stuck in the raider");
+            NearlyDead(raider);
+            if (!t.Check(!raider.Dead, "alive before the conjured kunai")) yield break;
+            var earlier = new HashSet<Thing>(KunaiItems(t));
+            // A thrower for the battle log; only conjured kunai hit him, straight into Impact (no roll, no flight),
+            // until one kills him.
+            Pawn thrower = t.Colonist(t.center + new IntVec3(-5, 0, 0));
+            RimArtTestContext.Hold(thrower);
+            int hits = 0;
+            while (!raider.Dead && hits < 10)
+            {
+                hits++;
+                var shot = (Projectile)GenSpawn.Spawn(ThingMaker.MakeThing(SasukeDefOf.AG_KunaiProjectileConjured), raider.Position, t.map);
+                shot.Launch(thrower, raider.DrawPos, raider, raider, ProjectileHitFlags.IntendedTarget);
+                ProjectileImpact.Invoke(shot, new object[] { raider, false });
+            }
+            yield return 2;
+            List<KunaiItem> dropped = KunaiItems(t).Where(k => !earlier.Contains(k)).OfType<KunaiItem>().ToList();
+            t.Log(hits + " conjured hits; dropped: " + string.Join(", ", dropped.Select(k => k.LabelCap + " x" + k.stackCount)));
+            t.Check(raider.Dead, "a conjured kunai killed him");
+            t.Check(dropped.Sum(k => k.stackCount) == 2, "two kunai items by the body, none of them conjured (" + dropped.Sum(k => k.stackCount) + ")");
+            t.Check(dropped.Any(k => k.sealedByMinato) && dropped.Any(k => !k.sealedByMinato), "the real one and Minato's sealed one");
+        }
+
+        /// <summary>A kunai stuck in the pawn's torso, as a hit leaves it.</summary>
+        private static bool Stick(Pawn pawn, bool sealedByMinato)
+        {
+            var before = new HashSet<Hediff>(pawn.health.hediffSet.hediffs);
+            pawn.TakeDamage(new DamageInfo(DamageDefOf.Stab, 2f, 1f, -1f, null, pawn.RaceProps.body.corePart));
+            return KunaiEmbedding.TryEmbed(pawn, before, sealedByMinato);
+        }
+
+        /// <summary>Cuts on parts that are not vital, up to just short of the injury total that kills, none taking a part off.</summary>
+        private static void NearlyDead(Pawn pawn)
+        {
+            float room = pawn.health.LethalDamageThreshold - 3f - pawn.health.hediffSet.hediffs.OfType<Hediff_Injury>().Sum(h => h.Severity);
+            foreach (BodyPartRecord part in pawn.health.hediffSet.GetNotMissingParts().ToList())
+            {
+                if (room <= 0f) break;
+                if (part == pawn.RaceProps.body.corePart || part.def.tags.Any(tag => tag.vital)) continue;
+                float severity = Mathf.Min(room, pawn.health.hediffSet.GetPartHealth(part) - 1f);
+                if (severity < 1f) continue;
+                var cut = (Hediff_Injury)HediffMaker.MakeHediff(HediffDefOf.Cut, pawn, part);
+                cut.Severity = severity;
+                pawn.health.AddHediff(cut, part);
+                room -= severity;
+            }
+        }
+
         [RimArtTest("Sasuke", "fuma 1 with Amenoyodomi on the Fūma cuts its line and hangs at the end; Let go flies it 12 more, cutting again, and it lands (screenshot)")]
         private static IEnumerable<int> Fuma(RimArtTestContext t)
         {

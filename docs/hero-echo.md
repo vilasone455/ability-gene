@@ -261,7 +261,8 @@ the four `rinnegan-*.js` sketch headers; numbers are placeholders in `AG_Sasuke_
   weapons drop after 60 s, at a wall or the map edge, when it is turned off, or when Sasuke is downed,
   asleep, dead, off the map or reverts. Kunai supply: while manifested his worn belt regains 1 conjured
   kunai every 5 s; conjured kunai are thrown first and never become items (they vanish where they land,
-  when pulled out, and leave the belt on revert).
+  when pulled out, and leave the belt on revert). Only the conjured kunai itself vanishes: real kunai
+  stuck in a pawn it kills still drop (the projectile passes `Conjured`; there is no global flag).
 - Amenotejikara: two picks (the game's destination step), both within 12 cells in sight; ends are
   Sasuke, a pawn up to body size 2, an item, or a held weapon; one end must be Sasuke, an item or a held
   weapon. The picture includes the full-screen negative flash (0.12 s + 0.1 s back).
@@ -547,8 +548,9 @@ puff and the vanilla punch.
   stones and claps kept over a revert; cast costs, provoke 90 s, Combat presence grants nothing), and
   the three pictures in game with 10 screenshots). Debug window kit "Todo": make Host, open the
   Black Flash window, refill claps, and the picture previews.
-- `-rimarttest=Sasuke`: 11 scenarios (the Echo; hold, drift, drops at a wall, 60 s, toggle off, downed and
-  revert, the 6th throw; conjured kunai refill, never items, gone on revert; the held Fūma; Amenotejikara
+- `-rimarttest=Sasuke`: 12 scenarios (the Echo; hold, drift, drops at a wall, 60 s, toggle off, downed and
+  revert, the 6th throw; conjured kunai refill, never items, gone on revert; a conjured kill leaves the real
+  kunai stuck in the body; the held Fūma; Amenotejikara
   ends and refusals; Raikō Kusari catch, shield, burn, mech EMP, let go; Amaterasu burn, spread, never
   Sasuke, bleeding eye then blind, Release; lit held kunai and Fūma; all four through the real cast jobs
   and the buttons), with screenshots of every picture. Debug window kit "Sasuke": make Host (manifested,

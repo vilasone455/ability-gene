@@ -42,9 +42,10 @@ namespace RimArt
         /// <summary>
         /// Sticks a kunai into <paramref name="pawn"/> after a hit. <paramref name="before"/> is the
         /// pawn's hediffs from just before the damage; the kunai goes into the part of the first new
-        /// injury. Returns false if nothing was stuck, and the caller drops the kunai.
+        /// injury. Returns false if nothing was stuck, and the caller drops the kunai. A conjured one (Sasuke's)
+        /// gives nothing back when it comes out.
         /// </summary>
-        public static bool TryEmbed(Pawn pawn, HashSet<Hediff> before, bool sealedByMinato = false)
+        public static bool TryEmbed(Pawn pawn, HashSet<Hediff> before, bool sealedByMinato = false, bool conjured = false)
         {
             if (pawn == null || pawn.Dead || !pawn.Spawned || before == null) return false;
             if (CountOn(pawn) >= KunaiDefaults.MaxEmbeddedPerPawn) return false;
@@ -64,7 +65,7 @@ namespace RimArt
             var kunai = (Hediff_EmbeddedKunai)HediffMaker.MakeHediff(KunaiDefOf.AG_EmbeddedKunai, pawn, wound.Part);
             kunai.wound = wound;
             kunai.sealedByMinato = sealedByMinato;
-            kunai.conjured = KunaiConjure.Impacting;
+            kunai.conjured = conjured;
             pawn.health.AddHediff(kunai, wound.Part);
             return true;
         }
@@ -157,7 +158,7 @@ namespace RimArt
         public static void DropKunai(IntVec3 cell, Map map, bool sealedByMinato = false, bool conjured = false)
         {
             if (map == null || !cell.InBounds(map)) return;
-            if (conjured || KunaiConjure.Impacting)
+            if (conjured)
             {
                 KunaiConjure.Vanish(cell.ToVector3Shifted(), map);
                 return;
@@ -170,13 +171,13 @@ namespace RimArt
         /// pointing <paramref name="angle"/> degrees clockwise from north, the way it flew. Returns false
         /// where it cannot go into the ground - water, or a cell no one can stand on - and the caller drops
         /// it flat instead. If the cell already holds something, it goes into the nearest free cell,
-        /// in that cell's middle. It starts forbidden.
+        /// in that cell's middle. It starts forbidden. A conjured one vanishes where it would stand.
         /// </summary>
-        public static bool PlantKunai(Vector3 at, float angle, Map map, bool sealedByMinato = false)
+        public static bool PlantKunai(Vector3 at, float angle, Map map, bool sealedByMinato = false, bool conjured = false)
         {
             IntVec3 cell = at.ToIntVec3();
             if (map == null || !cell.InBounds(map) || !cell.Standable(map) || cell.GetTerrain(map).IsWater) return false;
-            if (KunaiConjure.Impacting)
+            if (conjured)
             {
                 KunaiConjure.Vanish(at, map);
                 return true;
