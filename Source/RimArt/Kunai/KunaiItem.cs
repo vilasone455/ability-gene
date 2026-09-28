@@ -14,6 +14,9 @@ namespace RimArt
     /// God anchor) until the player allows it. Whatever takes it off the map (a haul, a reload, a
     /// pick-up) pulls it out and allows it again, so a carried or dropped kunai lies flat. A planted kunai never stacks: two misses into one cell stay two kunai, the second
     /// in the next cell. It shows no stack count.
+    ///
+    /// A kunai Minato threw carries his seal (<see cref="KunaiSeal"/>): it is drawn as his three-pronged
+    /// kunai, flat or planted, is labelled as his, and stacks only with his.
     /// </summary>
     public class KunaiItem : ThingWithComps
     {
@@ -25,10 +28,29 @@ namespace RimArt
         /// <summary>Where in its cell it went in, from the cell's centre (x, z).</summary>
         public Vector2 plantOffset;
 
-        private static Material plantedMat;
+        /// <summary>Minato's kunai, thrown in his hero form (<see cref="KunaiSeal"/>).</summary>
+        public bool sealedByMinato;
 
-        private static Material PlantedMat => plantedMat ??= GraphicDatabase.Get<Graphic_Single>(
-            KunaiDefaults.PlantedTexture, ShaderDatabase.Cutout, Vector2.one * KunaiDefaults.PlantedDrawSize, Color.white).MatSingle;
+        private static Material plantedMat, minatoPlantedMat;
+        private static Graphic minatoGraphic;
+
+        private Material PlantedMat => sealedByMinato
+            ? minatoPlantedMat ??= PlantedMaterial(KunaiDefaults.MinatoPlantedTexture)
+            : plantedMat ??= PlantedMaterial(KunaiDefaults.PlantedTexture);
+
+        private static Material PlantedMaterial(string path) => GraphicDatabase.Get<Graphic_Single>(
+            path, ShaderDatabase.Cutout, Vector2.one * KunaiDefaults.PlantedDrawSize, Color.white).MatSingle;
+
+        public override Graphic Graphic => sealedByMinato
+            ? minatoGraphic ??= GraphicDatabase.Get<Graphic_Single>(KunaiDefaults.MinatoTexture, ShaderDatabase.Cutout,
+                def.graphicData.drawSize, Color.white)
+            : base.Graphic;
+
+        public override string LabelNoCount => sealedByMinato ? "Minato's kunai" : base.LabelNoCount;
+
+        public override string DescriptionFlavor => sealedByMinato
+            ? base.DescriptionFlavor + "\n\nThis one is Minato's: three-pronged, with his Flying Thunder God formula written down the handle. It keeps the seal until it is loaded into a belt."
+            : base.DescriptionFlavor;
 
         public override void Print(SectionLayer layer)
         {
@@ -48,7 +70,8 @@ namespace RimArt
         }
 
         public override bool CanStackWith(Thing other) =>
-            !planted && !(other is KunaiItem kunai && kunai.planted) && base.CanStackWith(other);
+            !planted && other is KunaiItem kunai && !kunai.planted && kunai.sealedByMinato == sealedByMinato
+            && base.CanStackWith(other);
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
         {
@@ -65,6 +88,7 @@ namespace RimArt
             Scribe_Values.Look(ref planted, "planted");
             Scribe_Values.Look(ref plantAngle, "plantAngle");
             Scribe_Values.Look(ref plantOffset, "plantOffset");
+            Scribe_Values.Look(ref sealedByMinato, "sealedByMinato");
         }
     }
 }

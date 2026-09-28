@@ -14,6 +14,9 @@ namespace RimArt
 
         public static ThingDef AG_KunaiProjectile;
 
+        /// <summary>A kunai thrown in Minato's hero form: his three-pronged kunai, sealed (<see cref="KunaiSeal"/>).</summary>
+        public static ThingDef AG_KunaiProjectileMinato;
+
         public static AbilityDef AG_ThrowKunai;
 
         /// <summary>A kunai stuck in a body part. Holds the kunai until it is pulled or dropped.</summary>
