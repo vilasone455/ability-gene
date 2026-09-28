@@ -4,7 +4,7 @@ using Verse;
 namespace RimArt
 {
     /// <summary>
-    /// Previews only. There is no ability, no hediff and no def behind any of this: nobody jumps,
+    /// Previews only (the abilities are in Kit/, with their own entries under "Minato"): nobody jumps,
     /// nobody is hit and no pawn or kunai is drawn. Each entry plays one effect's drawing round the
     /// chosen cell, which is the middle of the scene as it is in the lab's sketch. The drawing is the
     /// same code for every direction, so most entries run east and one runs on a diagonal.

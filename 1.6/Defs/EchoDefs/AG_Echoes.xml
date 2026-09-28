@@ -446,4 +446,54 @@
     <hairColor>(0.08, 0.08, 0.1)</hairColor>
   </RimArt.EchoDef>
 
+  <!-- Minato (docs/hero-echo.md, docs/flying-thunder-god-kit.md). Throw kunai stays on the kunai belt the
+       player equips (nothing is forced into his hands); every kunai he throws in hero form is his sealed
+       kunai (KunaiSeal). Sealing touch is passive, on AG_MinatoSeal. The kill Trial counts thrown kunai
+       (Projectile_Kunai names AG_Kunai as the weapon). No kunai regeneration. Every number is a placeholder. -->
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Minato</defName>
+    <label>Minato</label>
+    <subtitle>Hero of the Yellow Flash</subtitle>
+    <description>Wherever his kunai lands, he is already there.</description>
+    <order>90</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Melee</skill>
+        <level>12</level>
+      </li>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Intellectual</skill>
+        <level>10</level>
+      </li>
+      <li Class="RimArt.Trial_KillsWith">
+        <weapons>
+          <li>AG_Kunai</li>
+        </weapons>
+        <weaponLabel>thrown kunai</weaponLabel>
+        <count>30</count>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>Kind</trait>
+      </li>
+    </forcedTraits>
+    <abilities>
+      <li>AG_ThunderGodJump</li>
+      <li>AG_ThunderGodChain</li>
+      <li>AG_GuidingThunder</li>
+      <li>AG_Rasengan</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Minato</manifestHediff>
+    <upkeepPerHour>10</upkeepPerHour>
+    <castCosts>
+      <li><ability>AG_ThunderGodJump</ability><cost>2</cost></li>
+      <li><ability>AG_ThunderGodChain</ability><cost>10</cost></li>
+      <li><ability>AG_GuidingThunder</ability><cost>5</cost></li>
+      <li><ability>AG_Rasengan</ability><cost>3</cost></li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.96, 0.83, 0.36)</hairColor>
+  </RimArt.EchoDef>
+
 </Defs>

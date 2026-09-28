@@ -20,46 +20,59 @@ namespace RimArt
         private static readonly float[] flashDegrees = new float[T.MostShots], flashAges = new float[T.MostShots];
         private static readonly Color Dust = new Color(0.52f, 0.45f, 0.37f);
 
-        /// <summary><paramref name="toward"/> is the unit direction from the caster to the shooters.</summary>
+        /// <summary>The preview: <paramref name="toward"/> is the unit direction from the caster to the shooters.</summary>
         public static void Draw(Vector3 centre, Vector2 toward, bool inEnemy, float seconds, Map map)
         {
-            if (seconds < 0f || seconds >= T.Duration) return;
             var middle = new Vector2(centre.x, centre.z);
             Vector2 caster = T.Caster(middle, toward), exit = inEnemy ? T.Shooter(middle, toward, 1) : T.GroundKunai(middle, toward);
-            if (!Shown(caster, map) || !Shown(exit, map)) return;
-            Begin(middle);
-            float aim = ThunderGodTiming.Degrees(toward);
             int count = T.Shots(middle, toward, inEnemy, shots);
+            // In the preview's script the marked shooter goes down at its 4th hit and its kunai's seal goes out with it.
+            bool down = inEnemy && count >= T.DownAfter && seconds >= shots[T.DownAfter - 1].leftAt;
+            Draw(caster, exit, ThunderGodTiming.Degrees(toward), inEnemy, !down, shots, count, T.Radius, T.OverAt, seconds, map);
+        }
 
-            float written = (seconds - T.CastAt) / T.Write, burn = (seconds - T.OverAt) / T.Fade;
+        /// <summary>
+        /// A real barrier. Ground points: <paramref name="caster"/> the feet it stands round, <paramref name="exit"/>
+        /// the kunai the shots come out at. <paramref name="aim"/> turns the exit's brackets. <paramref name="sealShown"/>
+        /// is false once the exit has lost its kunai. <paramref name="taken"/> holds the <paramref name="count"/> shots
+        /// taken so far, on this clock; <paramref name="radius"/> is the barrier's (the ability's XML value in game);
+        /// <paramref name="overAt"/> is when it starts to burn away.
+        /// </summary>
+        public static void Draw(Vector2 caster, Vector2 exit, float aim, bool inEnemy, bool sealShown, GuidedShot[] taken, int count,
+            float radius, float overAt, float seconds, Map map)
+        {
+            if (seconds < 0f || seconds >= overAt + T.Fade + T.Tail) return;
+            if (!Shown(caster, map) || !Shown(exit, map)) return;
+            Begin(caster);
+
+            float written = (seconds - T.CastAt) / T.Write, burn = (seconds - overAt) / T.Fade;
             float live = Mathf.Clamp01(written) * (1f - Mathf.Clamp01(burn));
+            int flashes = Mathf.Min(count, flashDegrees.Length);
             if (written > 0f && burn < 1f)
             {
-                for (int i = 0; i < count; i++)
+                for (int i = 0; i < flashes; i++)
                 {
-                    flashDegrees[i] = shots[i].degrees;
-                    flashAges[i] = seconds - shots[i].reached;
+                    flashDegrees[i] = taken[i].degrees;
+                    flashAges[i] = seconds - taken[i].reached;
                 }
-                Sprite(caster, T.Radius * 2.8f, T.Radius * 2.8f, Fade(Gold, 0.13f * live), glow, Floor + 0.005f);
-                Circle(caster, T.Radius + T.RingFrame, 0.55f * live, Floor + 0.02f, Gold);
-                Circle(caster, T.Radius - T.RingFrame, 0.4f * live, Floor + 0.0202f, Gold);
-                ScriptRing(caster, T.Radius, T.RingGlyphs, seconds, T.CastAt, T.Write, burn, T.Spin * seconds, flashDegrees, flashAges, count);
+                Sprite(caster, radius * 2.8f, radius * 2.8f, Fade(Gold, 0.13f * live), glow, Floor + 0.005f);
+                Circle(caster, radius + T.RingFrame, 0.55f * live, Floor + 0.02f, Gold);
+                Circle(caster, radius - T.RingFrame, 0.4f * live, Floor + 0.0202f, Gold);
+                ScriptRing(caster, radius, T.RingGlyphs(radius), seconds, T.CastAt, T.Write, burn, T.Spin * seconds, flashDegrees, flashAges, flashes);
             }
 
             // Where the shots will come out.
             float seal = Smooth(written) * (1f - Smooth(burn));
             Brackets(exit, aim, Mathf.Clamp01((written - 0.6f) / 0.4f) * (1f - Mathf.Clamp01(burn)));
-            // In the preview's script the marked shooter goes down at its 4th hit and its kunai's seal goes out with it.
-            bool down = inEnemy && count >= T.DownAfter && seconds >= shots[T.DownAfter - 1].leftAt;
             if (!inEnemy) SealOnGround(exit, seal);
-            else if (!down) SealOnPawn(exit, aim, seal);
+            else if (sealShown) SealOnPawn(exit, aim, seal);
             // The caster holds the barrier: a steady light at the chest.
             Sprite(new Vector2(caster.x, caster.y + ThunderGodTiming.Chest), 0.7f, 0.7f, Fade(Gold, 0.35f * live), glow, Overhead + 0.01f);
 
             var leaves = new Vector2(exit.x, exit.y + (inEnemy ? ThunderGodTiming.Chest : 0f));
             for (int i = 0; i < count; i++)
             {
-                GuidedShot shot = shots[i];
+                GuidedShot shot = taken[i];
                 Star(shot.entry, seconds - shot.reached, T.GlintTime, T.Glint);
                 float link = (seconds - shot.reached) / T.LinkTime;
                 if (link >= 0f && link < 1f)

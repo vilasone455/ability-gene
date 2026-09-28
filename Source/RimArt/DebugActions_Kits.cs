@@ -124,7 +124,6 @@ namespace RimArt
             {
                 Gene("Corrosive glands", "AG_CorrosiveGlands"),
                 Gene("Hypermetabolic glands", "AG_HypermetabolicGlands"),
-                Gene("Fold organ", "AG_InvoluteOrgan"),
 
                 Trait("Pain debt", "AG_PainDebt"),
 

@@ -34,7 +34,7 @@ namespace RimArt
         public static float OverAt => UpAt + Hold;
         public static float GoneAt => OverAt + Fade;
         public static float Duration => GoneAt + Tail;
-        public static int RingGlyphs => Mathf.RoundToInt(2f * Mathf.PI * Radius / RingPitch);
+        public static int RingGlyphs(float radius) => Mathf.RoundToInt(2f * Mathf.PI * radius / RingPitch);
 
         private static Vector2 At(Vector2 centre, Vector2 toward, float along, float across) =>
             centre + toward * along + new Vector2(-toward.y, toward.x) * across;

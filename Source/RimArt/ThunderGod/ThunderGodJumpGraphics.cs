@@ -16,17 +16,31 @@ namespace RimArt
     public static class ThunderGodJumpGraphics
     {
         /// <summary>
-        /// <paramref name="centre"/> is halfway between the caster and the kunai and
+        /// The preview: <paramref name="centre"/> is halfway between the caster and the kunai and
         /// <paramref name="toward"/> is the unit direction from the caster to the kunai.
         /// </summary>
         public static void Draw(Vector3 centre, Vector2 toward, bool inEnemy, float seconds, Map map)
         {
-            if (seconds < 0f || seconds >= T.Duration) return;
             var middle = new Vector2(centre.x, centre.z);
-            Vector2 kunai = T.Kunai(middle, toward), home = T.Home(middle, toward), landing = T.Landing(middle, toward, inEnemy);
+            Draw(T.Home(middle, toward), T.Kunai(middle, toward), T.Landing(middle, toward, inEnemy), inEnemy, seconds, map);
+        }
+
+        /// <summary>
+        /// A real jump. Ground points (the feet): <paramref name="home"/> where the caster left from,
+        /// <paramref name="kunai"/> the kunai (the pawn it is stuck in), <paramref name="landing"/> the
+        /// cell the caster lands on. In an enemy the strip runs from the kunai into the landing cell,
+        /// whichever side of the pawn that is.
+        /// </summary>
+        public static void Draw(Vector2 home, Vector2 kunai, Vector2 landing, bool inEnemy, float seconds, Map map)
+        {
+            if (seconds < 0f || seconds >= T.Duration) return;
             if (!Shown(home, map) || !Shown(landing, map)) return;
-            Begin(middle);
-            float aim = ThunderGodTiming.Degrees(toward);
+            Begin((home + landing) / 2f);
+            Vector2 behind = landing - kunai, travel = kunai - home;
+            float reach = behind.magnitude;
+            Vector2 strip = inEnemy && reach > 0.01f ? behind / reach : travel.sqrMagnitude > 1e-4f ? travel.normalized : Vector2.right;
+            float aim = ThunderGodTiming.Degrees(strip), thrown = ThunderGodTiming.Degrees(travel.sqrMagnitude > 1e-4f ? travel : strip);
+            int glyphs = Mathf.Max(ThunderGodTiming.StripGlyphs, Mathf.RoundToInt((reach + ThunderGodTiming.StripBack) / ThunderGodTiming.GlyphPitch));
 
             // No ring: a ring reads as an area of effect and this has none. The strip says where the caster lands.
             float written = (seconds - T.CastAt) / T.Seal, burn = (seconds - T.SettleAt) / T.Linger;
@@ -36,9 +50,9 @@ namespace RimArt
                 float lit = Mathf.Clamp01(written) * (1f - Smooth(burn)) * beat;
                 if (inEnemy)
                 {
-                    Sprite(kunai + toward * ((ThunderGodTiming.Behind - ThunderGodTiming.StripBack) / 2f), 1.8f, 0.5f,
+                    Sprite(kunai + strip * ((reach - ThunderGodTiming.StripBack) / 2f), reach + 0.8f, 0.5f,
                         Fade(Gold, 0.3f * lit), glow, Floor + 0.005f, -aim);
-                    Script(kunai, aim, -ThunderGodTiming.StripBack, ThunderGodTiming.StripGlyphs, seconds, T.CastAt, T.Seal, burn);
+                    Script(kunai, aim, -ThunderGodTiming.StripBack, glyphs, seconds, T.CastAt, T.Seal, burn);
                 }
                 else
                 {
@@ -49,7 +63,7 @@ namespace RimArt
             }
 
             float seal = Smooth(written) * (1f - 0.7f * Smooth((seconds - T.ArriveAt) / T.Flash)) * (1f - Smooth(burn));
-            if (inEnemy) SealOnPawn(kunai, aim, seal);
+            if (inEnemy) SealOnPawn(kunai, thrown, seal);
             else if (seconds < T.ArriveAt) SealOnGround(kunai, seal);
             else
             {

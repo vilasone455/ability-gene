@@ -203,6 +203,7 @@ Rules:
 | Sasuke ("Avenger of the Crimson Eye") | Melee 14, Intellectual 10, 15 kills with the Fūma Shuriken | Pessimist | Amenoyodomi, Amenotejikara, Raikō Kusari, Amaterasu | 12 | Amenoyodomi 0, Amenotejikara 2, Raikō Kusari 8, Amaterasu 5 (+ Bleeding eye); +0.4 move speed, black hair, wealth 6000, no forced weapon, Fourth War outfit |
 | Goku | Melee 15, downed and recovered 3 times (`Trial_DownedRecovered`, counted from the moment the mod is loaded) | Gourmand | Solar Flare, Instant Transmission, Kamehameha, Spirit Bomb; Warp Kamehameha is a button during the Kamehameha hold, not a def | 12 | Solar Flare 3, Instant Transmission 2, Kamehameha 15, Spirit Bomb 30; Warp pays Instant Transmission's 2 and cooldown on top |
 | Todo (no subtitle) | Melee 14, 20 humanlikes downed (`PawnsDownedHumanlikes`) | Brawler + the anchor organ gene (awakenGenes) | stone, clap, double clap, Black Flash, provoke | 8 | stone 0, clap 0, double clap 0 (the organ's three claps are their limit), Black Flash 1, provoke 5; +0.5 move speed, black hair, wealth 6000, forced empty hands |
+| Minato ("Hero of the Yellow Flash") | Melee 12, Intellectual 10, 30 kills with a thrown kunai (`Trial_KillsWith` on AG_Kunai; `Projectile_Kunai` names the kunai as its weapon) | Kind | flying thunder god, flying thunder god: chain, guiding thunder, rasengan; sealing touch passive (AG_MinatoSeal); throw kunai stays on the belt | 10 | throw kunai 0 (belt charges), flying thunder god 2, chain 10, guiding thunder 5, rasengan 3; blond hair, the Hokage haori and forehead protector, no forced weapon, no kunai regeneration |
 
 Accelerator and Pain reuse abilities that still come from their pre-hero item (reflex booster
 implant, repulsion eye). validate.py allows that second source only for those abilities
@@ -240,9 +241,8 @@ Agreed, not built (no EchoDef yet; the abilities do not exist):
 
 | Echo | Trials | Cost | Abilities | Upkeep | Casts | Hero form |
 |---|---|---|---|---|---|---|
-| Obito ("Watcher Behind the Spiral Mask") | Melee 12, Intellectual 10, has a missing or artificial body part (new Trial class; a prosthetic or bionic counts) | Depressive (Natural mood -2) | Kamui: Phase, Kamui: Warp, Kamui: Store, Wood Release | 12 | Phase 0 (its own 30 s pool), Warp 2, Store 1, Wood Release 2 | fold organ gene Echo-only: added on awakening (the dimension is generated then), abilities only while manifested |
+| Obito ("Watcher Behind the Spiral Mask"; built 2026-09-28, see "Obito" below) | Melee 12, Intellectual 10, has a missing or artificial body part (`Trial_ArtificialPart`: any missing part or added part) | Depressive (Natural mood -2) | Kamui: Phase, Kamui: Warp, Kamui: Store, Wood Release | 12 | Phase 0 (its own 30 s pool), Warp 2, Store 1, Wood Release 2 | fold organ gene Echo-only: added on awakening (the dimension is generated then), abilities only while manifested |
 | Gojo ("Bearer of the Six Eyes") | Intellectual 14, 1 day spent downed in total (vanilla `TimeDowned` record; the Trial label shows hours), colony wealth 200,000 | The Strongest (new custom trait) | Infinity, Blue, Red, Unlimited Void (+ Hollow Purple combo) | 15 | Infinity 0 (its breath is the price), Blue 3, Red 3, Hollow Purple 20 (+ its own 1-day cooldown), Unlimited Void 30 | white hair; phase barrier implant Echo-only; no forced weapon |
-| Minato ("Hero of the Yellow Flash") | Melee 12, Intellectual 10, 30 kills with thrown kunai (needs `PendingThrow` to pass the kunai as the weapon so the kill counter sees it) | Kind | flying thunder god, sealing touch (passive), chain, guiding thunder, rasengan; throw kunai stays on the belt | 10 | throw kunai 0 (belt charges), flying thunder god 2, chain 10, guiding thunder 5, rasengan 3 | blond hair; costume on AG_EchoManifest_Minato: Hokage haori (flames, 四代目火影 on the back) over the jōnin vest, and the forehead protector; no forced weapon; no kunai regeneration; replaces the earning rules in docs/flying-thunder-god-kit.md |
 | Nakime ("Player of the Endless Halls") | Artistic 12, Construction 10, 15 humanlike kills (vanilla `KillsHumanlikes`) | Night Owl | Infinity Castle (commands: shift, drop, seal/open, crush, summon, release; passives castle sight, void rule) | 12 | Infinity Castle 30, commands 0 (the 1.5 s strum rhythm and crush's own 10 s cooldown limit them) | black hair; forced biwa; castle gene Echo-only, added on awakening; sunlight burns her always (the gene's rule, 4 per second outdoors by day), not only while manifested |
 | Satō | Shooting 12, 30 kills, 500 damage taken | Ajin (new custom trait carrying the Reset passive) + Psychopath | Reset (passive), Black Ghost, The Game, Sever, Headshot Reset, Grenade Reset | 10 | Sever 0, Headshot Reset 0, Grenade Reset 5, Black Ghost 10, The Game 5 (a kill on the marked enemy refunds 15); every Reset while manifested costs by the piece he rises from (body or leg 20, arm 25, hand 40, finger or ear 60) | half pain while manifested; on revert the Ghost dissolves and the mark ends |
 
@@ -274,6 +274,16 @@ the four `rinnegan-*.js` sketch headers; numbers are placeholders in `AG_Sasuke_
   that misses burns on its cell 20 s; a lit Fūma lands burning and cannot be picked up). Release puts
   out all his black flames. Price: Bleeding eye 60 s (sight -50 %); casting again while it bleeds
   blinds him 10 s.
+
+Minato (built 2026-09-28, `Source/RimArt/ThunderGod/Kit`; rules in docs/flying-thunder-god-kit.md): a
+mark is one of his sealed kunai in a pawn or on the ground, or a pawn with his seal. The jump and the
+chain land in the free cell most behind the pawn, seen from where he stood, and cut with his own melee
+attack at x1.5 / x1.0, a sure hit that also seals; an ally is landed behind, not cut. Guiding Thunder
+holds him in the cast job (`AG_CastMinato`) and takes vanilla projectiles in a `Projectile.TickInterval`
+prefix: a shot whose roll hit him, or an explosive coming down inside the 1.3-cell ring. The
+Rasengan's verb range is the marked range; an unmarked pawn is walked up to first. The four pictures
+take live positions; Minato narrows into a sliver and back through the render tree's root matrix
+(`MinatoLook`, Vergil's hooks). No clips (the caster stands) and no sounds.
 
 Sasuke's Melee Trial follows the throw: kunai accuracy uses Melee (`KunaiAccuracy.cs`). The Fūma
 kills count because the Fūma throw passes the weapon to the kill counter; kunai kills were not
@@ -310,7 +320,8 @@ from `itachi-susanoo.js` and matched against it in the lab; previews "Susanoo: r
   Perfect), code meshes plus a swirl texture, always facing the camera, growing ribs -> skeleton ->
   armour and face during the warm-up (growth is picture only, my recommendation). About 2 days.
 
-Obito (agreed 2026-09-27; numbers are placeholders; replaces the built fold organ kit; no code yet):
+Obito (agreed 2026-09-27; numbers are placeholders; replaces the built fold organ kit; built 2026-09-28,
+see "Obito as built" after this list):
 - Kamui: Phase. Toggle intangibility from his own 30 s pool, refilling 1 s per 4 s solid. Every hit
   on his whole body goes into the Kamui dimension (`InvoluteUtility.PassThrough` on the whole body
   instead of one rolled part): rounds are relaunched inside, other damage lands on a random cell
@@ -326,6 +337,27 @@ Obito (agreed 2026-09-27; numbers are placeholders; replaces the built fold orga
   10 s, 2 charge. No pin (pinning is Pain's Black Receiver).
 - Cut: Vent's rolled body part and hole, the aperture, Post, Collapse, Izanagi. On his death or loss
   of the kit, the contents come out at his cell. The Kamui dimension map (PR #41) stays.
+
+Obito as built (2026-09-28; EchoDef in `AG_Echo_Obito.xml`, abilities in `AG_Obito_Abilities.xml`, code in
+`Source/RimArt/Obito/` and `Source/RimArt/Involute/`):
+- The fold organ gene (`AG_InvoluteOrgan`, now labelled Kamui) is Echo-only: no abilities, not in genepacks.
+  It holds the dimension (built on awakening), the Phase pool, the Warp state and the stored list. The
+  old Vent, Fold, Swallow, Post and Collapse code and defs, the hole hediffs and the aperture are deleted.
+- Readings that were open and are now code (each an XML field or easy to change): Wood Release hits
+  allies (`hitAllies`) and stops at the first wall (`stopAtWalls`); the counter's tell is a small swirl
+  over the enemy for the 5 s window; release costs no charge; a revert while he is inside the dimension
+  puts him back where he went in; the Phase button is an instant toggle (no job, nothing he does stops);
+  while phased his weapon and belts are not drawn (the sketch draws his body alone).
+- Death and loss of the gene: everything in the dimension comes out where he is (or lies), then the
+  dimension closes. Off every map (a caravan) or dead inside it, it comes out where he went in, else at
+  the middle of a home map; with no map at all nothing is destroyed and the dimension stays. The close
+  after a death runs in `GameComponent_ObitoReset`'s tick, after the maps tick.
+- Pictures: his real body is drawn bent (the game's pawn-cache camera renders him into a texture each
+  frame, drawn on a 27 × 27 grid moved by the sketch's twist and vortex): see-through while phased, a
+  twist from the right eye as Phase turns on and off, a twist and a swirl at every hit that goes through
+  him, the vortex into and out of the eye for Warp. Store streams the target's picture into his eye and
+  unwinds a released thing out of a swirl; Wood Release is the sketch's strands, twigs, spikes and
+  crumble, with splinters lying 8 s.
 
 Gojo (agreed 2026-09-27; numbers are placeholders):
 - Infinity: the built Phase Guard (`Membrane/`): everything moving toward him halves its remaining
@@ -559,6 +591,12 @@ puff and the vanilla punch.
 - `-rimarttest=goku`: 8 scenarios (flare, transmission alone / hostile passenger / downed ally,
   kamehameha lane / wall / blast, cancel refund and stun spent, warp, spirit bomb with a lender, the
   downed-and-recovered Trial). Debug window kit "Goku": make Host, cancel casts, all lend, recovery +1.
+- `-rimarttest=minato`: 9 scenarios (the Echo, sealed throws and the kunai kill Trial; jump to a ground
+  kunai and into a marked pawn, an ally not cut; sealing touch and its limit of 3; the chain refused with
+  one mark and run on three; Guiding Thunder with a bullet into the marked pawn and a grenade out at a
+  ground kunai; the Rasengan walked up to, into a wall, and from range; the walk called off by a move
+  order; 15 screenshots). Debug window kit
+  "Minato": make Host with a kunai belt, stick his kunai in a pawn, seal a pawn, plant his kunai.
 
 ## Not built
 

@@ -27,7 +27,9 @@ namespace RimArt
         public static float HitAt(bool teleports) => ThrustAt(teleports) + Reach;
         public static float ReleaseAt(bool teleports) => HitAt(teleports) + Press;
         public static float Thrown(bool wall) => wall ? ThrowDistance - 1f : ThrowDistance;
-        public static float LandAt(bool teleports, bool wall) => ReleaseAt(teleports) + Fly * Thrown(wall) / ThrowDistance;
+        public static float LandAt(bool teleports, bool wall) => LandAt(teleports, Thrown(wall));
+        /// <summary>A throw of <paramref name="thrown"/> cells takes its share of <see cref="Fly"/>.</summary>
+        public static float LandAt(bool teleports, float thrown) => ReleaseAt(teleports) + Fly * thrown / ThrowDistance;
         public static float Duration(bool teleports, bool wall) => LandAt(teleports, wall) + Tail;
 
         /// <summary>The thrust and the throw go back along the aim after a teleport, because the caster landed behind the target.</summary>
@@ -43,21 +45,25 @@ namespace RimArt
             teleports ? Enemy(centre, toward, teleports) + toward * ThunderGodTiming.Behind : Home(centre, toward, teleports);
 
         /// <summary>0 to 1 through the throw, not clamped.</summary>
-        public static float Flight(float seconds, bool teleports, bool wall) =>
-            (seconds - ReleaseAt(teleports)) / (LandAt(teleports, wall) - ReleaseAt(teleports));
+        public static float Flight(float seconds, bool teleports, bool wall) => Flight(seconds, teleports, Thrown(wall));
+        public static float Flight(float seconds, bool teleports, float thrown) =>
+            (seconds - ReleaseAt(teleports)) / Mathf.Max(0.001f, LandAt(teleports, thrown) - ReleaseAt(teleports));
 
         /// <summary>Cells the thrown pawn has gone. It slows to a stop in the open and meets a wall at full speed.</summary>
-        public static float Gone(float seconds, bool teleports, bool wall)
+        public static float Gone(float seconds, bool teleports, bool wall) => Gone(seconds, teleports, Thrown(wall), wall);
+        public static float Gone(float seconds, bool teleports, float thrown, bool wall)
         {
-            float u = Mathf.Clamp01(Flight(seconds, teleports, wall));
-            return Thrown(wall) * (wall ? u : 1f - (1f - u) * (1f - u));
+            float u = Mathf.Clamp01(Flight(seconds, teleports, thrown));
+            return thrown * (wall ? u : 1f - (1f - u) * (1f - u));
         }
 
         /// <summary>When the thrown pawn passes <paramref name="where"/> cells along its path.</summary>
-        public static float Passes(float where, bool teleports, bool wall)
+        public static float Passes(float where, bool teleports, bool wall) => Passes(where, teleports, Thrown(wall), wall);
+        public static float Passes(float where, bool teleports, float thrown, bool wall)
         {
-            float share = where / Thrown(wall);
-            return ReleaseAt(teleports) + (LandAt(teleports, wall) - ReleaseAt(teleports))
+            if (thrown <= 0f) return ReleaseAt(teleports);
+            float share = where / thrown;
+            return ReleaseAt(teleports) + (LandAt(teleports, thrown) - ReleaseAt(teleports))
                 * (wall ? share : 1f - Mathf.Sqrt(Mathf.Max(0f, 1f - share)));
         }
     }
