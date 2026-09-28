@@ -120,8 +120,11 @@ namespace RimArt
             Pawn shooter = t.Enemy(t.center + new IntVec3(7, 0, 0), armed: true);
             Noted(shooter);
             t.Equip(shooter, DefDatabase<ThingDef>.GetNamed("Gun_AssaultRifle"));
+            // A sure shot, so the rounds find him instead of flying past: only rounds that hit go through him.
+            SkillRecord shooting = shooter.skills?.GetSkill(SkillDefOf.Shooting);
+            if (shooting != null) shooting.Level = 20;
             shooter.jobs.StartJob(JobMaker.MakeJob(JobDefOf.AttackStatic, host), JobCondition.InterruptForced);
-            foreach (int step in WaitFor(() => ObitoFX.Hits.TryGetValue(host, out var h) && h.Count > 0, 400)) yield return step;
+            foreach (int step in WaitFor(() => ObitoFX.Hits.TryGetValue(host, out var h) && h.Count > 0, 900)) yield return step;
             t.Check(gene.PassedThroughRecently(shooter), "the shooter is marked as an attacker that went through him");
             yield return 4;
             yield return t.ShotAs("phase-hit", host.Position, 3f);
