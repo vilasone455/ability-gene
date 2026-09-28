@@ -16,8 +16,8 @@ namespace RimArt
     /// the dimension existed has no seed and keeps its old look.
     ///
     /// It also keeps the dimension's rules that need a clock: every enemy held here stays stunned (no
-    /// capture; they can still be shot), and once its owner is dead or has lost the gene everything in it
-    /// comes out (<see cref="Gene_Involute.EmptyOutAfterDeath"/>).
+    /// capture; they can still be shot). Once its owner is dead, everything in it comes out and the
+    /// dimension closes (<see cref="Gene_Involute.EmptyAndCloseAfterDeath"/>, run by <see cref="GameComponent_ObitoReset"/>).
     /// </summary>
     public sealed class MapComponent_KamuiDimension : MapComponent
     {
@@ -94,15 +94,20 @@ namespace RimArt
             return IntVec3.Invalid;
         }
 
+        /// <summary>
+        /// Its owner died: the Kamui gene empties it and closes it (<see cref="Gene_Involute.EmptyAndCloseAfterDeath"/>).
+        /// Asked by <see cref="GameComponent_ObitoReset"/>, which runs after the maps' ticks, since closing removes this map.
+        /// </summary>
+        internal Gene_Involute OwnerDeadGene()
+        {
+            if (owner == null || !owner.Dead) return null;
+            Gene_Involute gene = owner.genes?.GetFirstGeneOfType<Gene_Involute>();
+            return gene != null && gene.Volume == map ? gene : null;
+        }
+
         public override void MapComponentTick()
         {
-            if (owner == null || Find.TickManager.TicksGame % HoldCheckTicks != 0) return;
-            Gene_Involute gene = owner.genes?.GetFirstGeneOfType<Gene_Involute>();
-            if (owner.Dead && gene != null && gene.Volume == map && gene.HoldsAnything)
-            {
-                gene.EmptyOutAfterDeath();
-                return;
-            }
+            if (owner == null || owner.Dead || Find.TickManager.TicksGame % HoldCheckTicks != 0) return;
             var pawns = map.mapPawns.AllPawnsSpawned;
             for (int i = 0; i < pawns.Count; i++)
             {

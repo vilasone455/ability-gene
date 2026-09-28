@@ -323,14 +323,31 @@ namespace RimArt
 
     /// <summary>
     /// Clears the kit's static tables when a game is made or loaded (vanilla makes every GameComponent then,
-    /// before the maps load and the genes register themselves again).
+    /// before the maps load and the genes register themselves again). Its tick closes the dimension of a dead
+    /// Obito: game components tick after the maps, so a map can be removed here.
     /// </summary>
     public class GameComponent_ObitoReset : GameComponent
     {
+        private const int DeathCheckTicks = 30;
+        private static readonly List<Gene_Involute> dead = new List<Gene_Involute>();
+
         public GameComponent_ObitoReset(Game game)
         {
             ObitoFX.Reset();
             KamuiPhaseRegistry.Clear();
+        }
+
+        public override void GameComponentTick()
+        {
+            if (Find.TickManager.TicksGame % DeathCheckTicks != 0) return;
+            List<Map> maps = Find.Maps;
+            for (int i = 0; i < maps.Count; i++)
+            {
+                Gene_Involute gene = maps[i].GetComponent<MapComponent_KamuiDimension>()?.OwnerDeadGene();
+                if (gene != null) dead.Add(gene);
+            }
+            for (int i = 0; i < dead.Count; i++) dead[i].EmptyAndCloseAfterDeath();
+            dead.Clear();
         }
     }
 

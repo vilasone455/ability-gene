@@ -399,10 +399,6 @@ namespace RimArt
             fromCell = IntVec3.Invalid;
         }
 
-        /// <summary>Anything left in the dimension that is not his: pawns and items, for his death and the loss of the kit.</summary>
-        public bool HoldsAnything => volume != null && volume.listerThings.AllThings.Any(t => t.Spawned && t != pawn
-            && (t is Pawn || t.def.category == ThingCategory.Item));
-
         // =============================================================================== ticking
 
         public override void Tick()
@@ -472,21 +468,17 @@ namespace RimArt
         }
 
         /// <summary>
-        /// Where his dimension's contents go now that he is dead: where he lies, or, if he died inside, where
-        /// he went in (his corpse goes out too).
+        /// He is dead: everything in the dimension comes out where he lies (his corpse too, if he died inside), then
+        /// the dimension closes. Called by <see cref="GameComponent_ObitoReset"/>, outside the maps' ticks, because
+        /// closing removes a map. False when there is no map to put anything on; the dimension then stays as it is.
         /// </summary>
-        public void EmptyOutAfterDeath()
+        public bool EmptyAndCloseAfterDeath()
         {
-            if (volume == null) return;
+            if (volume == null) return true;
             Thing body = (Thing)pawn.Corpse ?? pawn;
-            if (body.MapHeld == volume)
-            {
-                Map map = OutsideMap;
-                if (map == null) return;
-                EmptyOut(map, map == fromMap && fromCell.IsValid ? fromCell : map.Center);
-                return;
-            }
-            if (body.MapHeld != null) EmptyOut(body.MapHeld, body.PositionHeld);
+            if (!EmptyOutWhere(body.MapHeld, body.PositionHeld)) return false;
+            CloseVolume();
+            return true;
         }
 
         public override void PostRemove()
@@ -495,12 +487,35 @@ namespace RimArt
             ForceSolid();
             ObitoFX.Forget(pawn);
             if (volume == null) return;
-            // The kit is gone: the dimension's contents come out where he is, then the dimension closes.
+            // The kit is gone: he comes out, the dimension's contents come out where he is, then the dimension closes.
             if (Inside) ExitToWhereHeLeft();
-            if (pawn?.MapHeld != null && pawn.MapHeld != volume) EmptyOut(pawn.MapHeld, pawn.PositionHeld);
+            // With no map to come out on, nothing is destroyed: the dimension stays, and whatever is in it.
+            if (Inside || !EmptyOutWhere(pawn?.MapHeld, pawn?.PositionHeld ?? IntVec3.Invalid)) return;
+            CloseVolume();
+        }
+
+        /// <summary>
+        /// Everything in the dimension out at <paramref name="cell"/> of <paramref name="map"/>. When that is no map
+        /// or the dimension itself (he is in a caravan, or died inside), it comes out where he went in, or on a home
+        /// map. False, and nothing moved, when there is no map at all.
+        /// </summary>
+        private bool EmptyOutWhere(Map map, IntVec3 cell)
+        {
+            if (map == null || map == volume)
+            {
+                map = OutsideMap;
+                if (map == null) return false;
+                cell = map == fromMap && fromCell.IsValid ? fromCell : map.Center;
+            }
+            EmptyOut(map, cell);
+            return true;
+        }
+
+        private void CloseVolume()
+        {
             Map doomed = volume;
             volume = null;
-            PocketMapUtility.DestroyPocketMap(doomed);
+            if (doomed != null && Find.Maps.Contains(doomed)) PocketMapUtility.DestroyPocketMap(doomed);
         }
 
         public override void ExposeData()

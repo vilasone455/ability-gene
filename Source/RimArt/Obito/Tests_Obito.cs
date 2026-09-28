@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
+using RimWorld.Planet;
 using Verse;
 using Verse.AI;
 
@@ -383,7 +384,7 @@ namespace RimArt
 
         // ---- the dimension's contents ----------------------------------------------------------------------------
 
-        [RimArtTest("Obito", "contents 1 on his death what he stored comes out where he lies; the loss of the gene empties and closes the dimension")]
+        [RimArtTest("Obito", "contents 1 on his death what he stored comes out where he lies and the dimension closes; the loss of the gene empties and closes it too")]
         private static IEnumerable<int> Contents(RimArtTestContext t)
         {
             GameComponent_Echoes echoes = Setup(t);
@@ -392,11 +393,13 @@ namespace RimArt
             if (gene == null) yield break;
             Pawn raider = Target(t, t.center + new IntVec3(1, 0, 0));
             gene.Absorb(raider);
-            t.Check(raider.MapHeld == gene.Volume, "stored");
+            Map hostVolume = gene.Volume;
+            t.Check(raider.MapHeld == hostVolume, "stored");
             EchoUtility.Revert(record, collapse: false);
             host.Kill(null);
-            foreach (int step in WaitFor(() => raider.MapHeld == t.map, 120)) yield return step;
+            foreach (int step in WaitFor(() => raider.MapHeld == t.map && !Find.Maps.Contains(hostVolume), 120)) yield return step;
             t.Check(raider.MapHeld == t.map && raider.Position.DistanceTo(t.center) < 4f, "after his death the raider is back beside his body (" + RimArtTestContext.Describe(raider) + ")");
+            t.Check(!Find.Maps.Contains(hostVolume) && gene.Volume == null, "and his dimension closed");
             raider.Destroy();
 
             Pawn second = t.Colonist(t.center + new IntVec3(-3, 0, 0));
@@ -411,6 +414,50 @@ namespace RimArt
             t.Check(steel.MapHeld == t.map, "the gene's loss put the steel out (" + steel.MapHeld + ")");
             t.Check(volume != null && !Find.Maps.Contains(volume), "and closed the dimension");
             Finish(host, null);
+        }
+
+        [RimArtTest("Obito", "contents 2 off any map (a caravan) nothing stored is destroyed: the gene's loss, and his death, put it out on a home map and close the dimension")]
+        private static IEnumerable<int> ContentsOffMap(RimArtTestContext t)
+        {
+            Setup(t);
+            yield return 5;
+            Map home = Find.AnyPlayerHomeMap;
+
+            // The gene is lost while he is away.
+            Pawn away = t.Colonist(t.center + new IntVec3(-3, 0, 0));
+            away.genes.AddGene(ObitoDefOf.AG_InvoluteOrgan, xenogene: true);
+            Gene_Involute gene = InvoluteUtility.GeneOf(away);
+            Map volume = gene?.EnsureVolume();
+            Pawn raider = Target(t, away.Position + new IntVec3(1, 0, 0));
+            gene?.Absorb(raider);
+            if (!t.Check(volume != null && raider.MapHeld == volume, "a raider is stored")) yield break;
+            away.DeSpawn();
+            Find.WorldPawns.PassToWorld(away, PawnDiscardDecideMode.KeepForever);
+            t.Check(away.MapHeld == null, "he is off every map");
+            away.genes.RemoveGene(gene);
+            yield return 2;
+            t.Log("after the loss: " + RimArtTestContext.Describe(raider));
+            t.Check(!raider.Destroyed && raider.MapHeld == home, "the raider is not destroyed: he is out on the home map");
+            t.Check(!Find.Maps.Contains(volume), "the dimension closed");
+            raider.Destroy();
+            Find.WorldPawns.RemoveAndDiscardPawnViaGC(away);
+
+            // He dies while away.
+            Pawn dies = t.Colonist(t.center + new IntVec3(3, 0, 0));
+            dies.genes.AddGene(ObitoDefOf.AG_InvoluteOrgan, xenogene: true);
+            gene = InvoluteUtility.GeneOf(dies);
+            volume = gene?.EnsureVolume();
+            Thing steel = GenSpawn.Spawn(ThingMaker.MakeThing(ThingDefOf.Steel), dies.Position + new IntVec3(0, 0, 1), t.map);
+            gene?.Absorb(steel);
+            if (!t.Check(volume != null && steel.MapHeld == volume, "steel is stored")) yield break;
+            dies.DeSpawn();
+            Find.WorldPawns.PassToWorld(dies, PawnDiscardDecideMode.KeepForever);
+            dies.Kill(null);
+            foreach (int step in WaitFor(() => !Find.Maps.Contains(volume), 120)) yield return step;
+            t.Check(!steel.Destroyed && steel.MapHeld == home, "after his death away the steel is out on the home map (" + steel.MapHeld + ")");
+            t.Check(!Find.Maps.Contains(volume) && gene.Volume == null, "and the dimension closed");
+            steel.Destroy();
+            Find.WorldPawns.RemoveAndDiscardPawnViaGC(dies);
         }
     }
 }

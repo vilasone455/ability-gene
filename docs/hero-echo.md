@@ -315,6 +315,10 @@ Obito as built (2026-09-28; EchoDef in `AG_Echo_Obito.xml`, abilities in `AG_Obi
   over the enemy for the 5 s window; release costs no charge; a revert while he is inside the dimension
   puts him back where he went in; the Phase button is an instant toggle (no job, nothing he does stops);
   while phased his weapon and belts are not drawn (the sketch draws his body alone).
+- Death and loss of the gene: everything in the dimension comes out where he is (or lies), then the
+  dimension closes. Off every map (a caravan) or dead inside it, it comes out where he went in, else at
+  the middle of a home map; with no map at all nothing is destroyed and the dimension stays. The close
+  after a death runs in `GameComponent_ObitoReset`'s tick, after the maps tick.
 - Pictures: his real body is drawn bent (the game's pawn-cache camera renders him into a texture each
   frame, drawn on a 27 × 27 grid moved by the sketch's twist and vortex): see-through while phased, a
   twist from the right eye as Phase turns on and off, a twist and a swirl at every hit that goes through
