@@ -21,6 +21,34 @@ Echo/Costume/VergilCoatKneel_Thin.png
     standing Thin torso moved down KNEEL_DROP units; the game hides the body and moves the head down by
     the same amount (Source/RimArt/Vergil/Kit/Patches_VergilPose.cs), so the head keeps its shape.
 
+Echo/Costume/AkatsukiCloak_<Body>_<facing>.png
+    256 px, the same 5 body types x 3 facings. The Akatsuki cloak, shared by every Echo who wears it
+    (the AG_EchoManifest_Akatsuki parent in AG_Echo_Hediffs.xml): a long black cloak, red clouds with a
+    pale outline and pale curls, the red lining showing as a thin line down the front opening, a
+    short slit at the front hem.
+
+Echo/Costume/AkatsukiCollar_<facing>.png
+    256 px, south, east, north: the cloak's high collar, drawn on the head (parent node Head, over the
+    hair and beard), so it stays on the head when the pawn crawls or swims. It covers the chin; its
+    red lining shows along the top rim and down the front. One set for every body type: it is fitted
+    to the vanilla heads (chin at 87-92 on the 128 px head sheet, widest jaw 42-85), not the body.
+
+Echo/Costume/ObitoMask_<facing>.png
+    256 px, south, east, west, north: Obito's orange spiral mask, on the head over the hair (layer 63),
+    under the Akatsuki collar. One spiral groove winds out from the eye hole on his right eye (the
+    viewer's left facing south) and is fitted to the mask's outline, so its turns bunch up on the
+    near side, as in the official art. The face-on drawing is projected onto the profiles: east shows
+    his right side with the hole, west (its own picture, not east mirrored) his left side with only
+    the outer turns; it is stored facing right, as the game mirrors every west picture. North is
+    empty: the head hides the mask.
+
+Echo/Costume/PainPiercings_<facing>.png
+    256 px, south, east, north (west is east mirrored: the piercings are the same on both sides):
+    Pain's piercings from the official art, on the head under the hair (layer 61). Six dark studs
+    down the bridge of the nose in two columns, two short studs under the lower lip (just above the
+    collar), and silver studs along each ear, at the head's sides face-on and in an arc along the
+    ear's rim in profile.
+
 The costume is fitted to the vanilla body outlines in BODIES, measured from the game's
 Naked_<Body>_<facing> textures (outer edge of the black outline, every 2 rows, on the 128 px
 sheet). Every length below is in those 128 px units; the picture is drawn 8x larger and reduced.
@@ -317,9 +345,12 @@ def serpent(path, width=0.75, curl_every=6.0, curl_side=1, curl_size=1.5):
     return mask
 
 
-def finish(image, silhouette, name):
-    """Ink outline round the silhouette, under everything, then reduce and save."""
+def finish(image, silhouette, name, outline_within=None):
+    """Ink outline round the silhouette, under everything, then reduce and save. With outline_within,
+    the outline is drawn only inside that mask (for an edge that joins another piece)."""
     outline = grow(silhouette, 1.7)
+    if outline_within is not None:
+        outline = union(inter(outline, outline_within), silhouette)
     out = Image.new("RGBA", image.size, (0, 0, 0, 0))
     out.paste(INK + (255,), mask=outline)
     out.alpha_composite(image)
@@ -808,6 +839,514 @@ def vergil_kneel_front(body, name):
     finish(image, silhouette, name)
 
 
+# ---- the Akatsuki cloak ----
+
+AK_CLOTH, AK_CLOTH_LIT, AK_CLOTH_DARK = (34, 33, 42), (74, 72, 90), (12, 12, 17)
+AK_LINING = (186, 32, 42)
+AK_CLOUD, AK_CLOUD_DARK = (184, 36, 46), (126, 22, 30)
+AK_CLOUD_EDGE = (236, 232, 226)
+AK_LEGS = (24, 25, 31)
+AK_FLARE = 4.2  # how far the hem stands out past the body on each side, front and back: a bell, not a tube
+
+# The cloud, traced from an anime frame of the Akatsuki symbol (385 px wide, centred on (282.5, 410)):
+# a pointed wisp to the left, round lobes to the right, pale curls inside four of them.
+CLOUD_W, CLOUD_CX, CLOUD_CY = 385.0, 282.5, 410.0
+CLOUD_LOBES = [(250, 332, 57, 57), (345, 322, 57, 57), (418, 392, 55, 55), (388, 468, 62, 62),
+               (282, 490, 62, 62), (200, 445, 70, 85)]
+CLOUD_CORE = [(200, 380), (250, 332), (345, 322), (418, 392), (388, 468), (282, 490), (200, 445)]
+CLOUD_TAIL = [(90, 300), (120, 300), (160, 306), (200, 322), (222, 352), (175, 425), (150, 382),
+              (134, 346), (112, 318)]
+# Curls: centre, start and end angle in degrees (y down, so a rising angle turns clockwise), start and
+# end radius.
+CLOUD_CURLS = [(250, 336, 150, 470, 46, 15), (345, 326, 160, 470, 46, 15), (388, 468, 330, 70, 50, 17),
+               (268, 508, 150, 290, 34, 24)]
+
+
+def cloud(cx, cy, width, mirror=False):
+    """The cloud's fill and its curls as masks, `width` units wide and centred on (cx, cy); mirror
+    turns the wisp to the right."""
+    s = width / CLOUD_W
+    sx = -1 if mirror else 1
+
+    def at(x, y):
+        return cx + sx * (x - CLOUD_CX) * s, cy + (y - CLOUD_CY) * s
+    fill = union(polygon([at(x, y) for x, y in CLOUD_CORE]), polygon([at(x, y) for x, y in CLOUD_TAIL]),
+                 *[ellipse(*at(x, y), rx * s, ry * s) for x, y, rx, ry in CLOUD_LOBES])
+    curls = []
+    for x, y, a0, a1, r0, r1 in CLOUD_CURLS:
+        points = []
+        for t in steps(0, 1, 0.04):
+            a = math.radians(a0 + (a1 - a0) * t)
+            r = r0 + (r1 - r0) * t
+            points.append(at(x + r * math.cos(a), y + r * math.sin(a)))
+        curls.append(stroke(points, max(0.4, 0.04 * width)))
+    return fill, union(*curls)
+
+
+def paint_cloud(image, cx, cy, width, within, mirror=False):
+    """A red cloud with its pale outline and curls, cut to `within` (the panel it is printed on)."""
+    fill, curls = cloud(cx, cy, width, mirror)
+    edge = max(0.5, 0.05 * width)
+    paint(image, inter(grow(fill, edge), within), AK_CLOUD_EDGE)
+    shade(image, inter(fill, within), AK_CLOUD_DARK, AK_CLOUD, AK_CLOUD, reach=0.8)
+    paint(image, inter(inter(curls, shrink(fill, edge * 0.3)), within), AK_CLOUD_EDGE)
+
+
+def cloud_width(body):
+    """The clouds are large, as in the anime: about 45 % of a Thin front, a little less on wide bodies."""
+    return 0.34 * body.width + 5.0
+
+
+def half_of(line, top, bottom, s):
+    """Everything on side s (-1 the viewer's left) of the line x = line(y)."""
+    ys = steps(top, bottom)
+    outer = 0 if s < 0 else 128
+    return polygon([(line(y), y) for y in ys] + [(outer, bottom), (outer, top)])
+
+
+def cloak_outline(side, top, hem):
+    ys = steps(top, hem)
+    return polygon([(side(y)[0], y) for y in ys] + [(side(y)[1], y) for y in reversed(ys)])
+
+
+def sleeve_seams(image, body, side, within):
+    """A seam from each shoulder down to the cuff, and the cuff's hem across the sleeve."""
+    w, top = body.width, body.top
+    cuff_y = top + 0.64 * body.height
+    for s in (-1, 1):
+        def sleeve_x(y, s=s):
+            left, right = side(y)
+            return (right if s > 0 else left) - s * min(4.2, 0.2 * w)
+        paint(image, inter(stroke([(sleeve_x(y), y) for y in steps(top + 8, cuff_y)], 0.5), within), AK_CLOTH_DARK)
+        outer = side(cuff_y + 0.8)[1 if s > 0 else 0]
+        paint(image, inter(stroke([(sleeve_x(cuff_y), cuff_y), (outer, cuff_y + 0.8)], 0.55), within),
+              AK_CLOTH_DARK)
+
+
+def akatsuki_front(body, name):
+    """South: the cloak closed down the front, the red lining showing along the closing line, a short
+    slit at the hem, four clouds (two cut by the cloak's edge)."""
+    w, c, top, h = body.width, body.centre, body.top, body.height
+    hem = min(body.bottom + 6, LAST_ROW)
+    side = coat_sides(body, hem, AK_FLARE, AK_FLARE)
+    cloak = cloak_outline(side, top - 0.5, hem)
+
+    slit_top = hem - 0.1 * h
+    slit = inter(polygon([(c(slit_top), slit_top), (c(hem) + 1.4, hem + 1), (c(hem) - 1.4, hem + 1)]), cloak)
+    panels = minus(cloak, slit)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    # Lit from the viewer's left, as the vanilla bodies are.
+    light = inter(ramp(c(top) - w * 0.7, c(top) + w * 0.4, 150, 0), ellipse(c(top) - w * 0.3, top + 20, w * 0.45, 26)
+                  .filter(ImageFilter.GaussianBlur(6 * U)))
+    shade(image, panels, AK_CLOTH_DARK, AK_CLOTH, AK_CLOTH_LIT, light)
+    paint(image, slit, AK_LEGS)
+    # Long folds from the waist to the hem.
+    for k in (-0.3, 0.26):
+        x0 = c(body.waist) + k * w
+        paint(image, inter(stroke([(x0, body.waist + 5), (x0 + k * 5, hem - 0.5)], 0.45), shrink(panels, 0.6)),
+              AK_CLOTH_DARK)
+    sleeve_seams(image, body, side, panels)
+
+    left, right = (inter(panels, half_of(c, top - 12, hem + 4, s)) for s in (-1, 1))
+    cw = cloud_width(body)
+    paint_cloud(image, c(top) - 0.2 * w, top + 0.42 * h, cw, left)
+    paint_cloud(image, side(top + 0.6 * h)[1] - 0.04 * w, top + 0.6 * h, cw, right)
+    paint_cloud(image, c(top) + 0.22 * w, hem - 0.13 * h, cw, right, mirror=True)
+    paint_cloud(image, side(hem)[0] + 0.04 * w, hem - 0.02 * h, cw, left, mirror=True)
+
+    # The red lining along the closing line, and along both edges of the slit.
+    paint(image, inter(stroke([(c(y), y) for y in steps(top - 0.5, slit_top)], 0.7), cloak), AK_LINING)
+    for s in (-1, 1):
+        paint(image, inter(stroke([(c(slit_top), slit_top), (c(hem) + s * 1.4, hem + 1)], 0.6), cloak), AK_LINING)
+
+    finish(image, cloak, name)
+
+
+def akatsuki_back(body, name):
+    """North: the plain back with four clouds, the top under the collar and the head."""
+    w, c, top, h = body.width, body.centre, body.top, body.height
+    hem = min(body.bottom + 6, LAST_ROW)
+    side = coat_sides(body, hem, AK_FLARE, AK_FLARE)
+    cloak = cloak_outline(side, top - 0.5, hem)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = ellipse(c(top) - w * 0.15, top + 22, w * 0.42, 22).filter(ImageFilter.GaussianBlur(7 * U))
+    shade(image, cloak, AK_CLOTH_DARK, AK_CLOTH, AK_CLOTH_LIT, light, reach=3.4)
+    for k in (-0.3, 0.04, 0.3):
+        x0 = c(body.waist) + k * w
+        paint(image, inter(stroke([(x0, body.waist + 4), (x0 + k * 5, hem - 0.5)], 0.45), shrink(cloak, 0.6)),
+              AK_CLOTH_DARK)
+    sleeve_seams(image, body, side, cloak)
+
+    cw = cloud_width(body)
+    paint_cloud(image, c(top) + 0.14 * w, top + 0.42 * h, cw, cloak)
+    paint_cloud(image, side(top + 0.46 * h)[0] + 0.02 * w, top + 0.46 * h, cw, cloak, mirror=True)
+    paint_cloud(image, c(top) - 0.24 * w, top + 0.74 * h, cw, cloak, mirror=True)
+    paint_cloud(image, c(top) + 0.26 * w, hem - 0.06 * h, cw, cloak)
+
+    finish(image, cloak, name)
+
+
+def akatsuki_side(body, name):
+    """East (facing right): the cloak hanging a little behind the body, the red lining along the front
+    edge, the wide sleeve down the side, a cloud on the sleeve and one on the skirt."""
+    w, top, h = body.width, body.top, body.height
+    hem = min(body.bottom + 5, LAST_ROW - 1.5)
+
+    def front(y):
+        return body.edges(y)[1] + PAD + 1.6 * smooth(body.waist, hem, y)
+
+    def back(y):
+        return body.edges(y)[0] - PAD - 4.6 * smooth(body.waist, hem, y) ** 1.2
+
+    # The hem runs from the front down to the back, which hangs a little lower.
+    hem_curve = [(front(hem) + (back(hem) - front(hem)) * t, hem + 1.5 * t + 0.7 * math.sin(math.pi * t))
+                 for t in steps(0, 1, 0.04)]
+    cloak = polygon([(front(y), y) for y in steps(top + 1, hem)] + hem_curve +
+                    [(back(y), y) for y in reversed(steps(top + 1, hem + 1.5))])
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = ramp(body.edges(top + 20)[0], body.edges(top + 20)[1] + 3, 0, 140)
+    shade(image, cloak, AK_CLOTH_DARK, AK_CLOTH, AK_CLOTH_LIT, light, reach=3.0)
+    for x0, x1 in ((back(body.waist + 6) + 3, back(hem) + 2), (body.centre(body.waist + 8) + 2, body.centre(hem) + 3)):
+        paint(image, inter(stroke([(x0, body.waist + 6), (x1, hem)], 0.45), shrink(cloak, 0.6)), AK_CLOTH_DARK)
+
+    # The sleeve down the side, widening to the cuff.
+    cuff_y = top + 0.64 * h
+    sleeve = lambda y: body.centre(y) - 1.2 - 0.9 * smooth(top, cuff_y, y)
+    spread = lambda y: 3.2 + 0.9 * smooth(top + 12, cuff_y, y)
+    sl = [(sleeve(y) - spread(y) + 1.2 * smooth(top + 10, top + 16, y), y) for y in steps(top + 10, cuff_y)]
+    sr = [(sleeve(y) + spread(y), y) for y in steps(top + 10, cuff_y)]
+    arm = polygon(sl + list(reversed(sr)))
+    paint(image, inter(stroke(sl, 0.5), cloak), AK_CLOTH_DARK)
+    paint(image, inter(stroke(sr, 0.5), cloak), AK_CLOTH_DARK)
+    paint(image, inter(stroke([sl[-1], sr[-1]], 0.55), cloak), AK_CLOTH_DARK)
+
+    cw = cloud_width(body)
+    paint_cloud(image, sleeve(top + 0.47 * h), top + 0.47 * h, cw * 0.85, inter(grow(arm, 0.2), cloak))
+    paint_cloud(image, body.centre(hem - 0.1 * h) - 0.15 * w, hem - 0.1 * h, cw, minus(cloak, grow(arm, 0.4)),
+                mirror=True)
+
+    # The red lining along the front edge, where the cloak closes.
+    paint(image, inter(stroke([(front(y) - 0.7, y) for y in steps(top + 7, hem)], 0.7), cloak), AK_LINING)
+
+    finish(image, cloak, name)
+
+
+# The collar is drawn in head space: the vanilla head sheet, 128 units, the head's middle at x 63.5,
+# the chin at 87-92, the widest jaw (HeavyJaw) 42-85 at y 80-86. Its lower edge (96) is on the body
+# cloak's shoulders for every body type (the Thin cloak is 49-79 there), so it is not outlined.
+HEAD_CX = 63.5
+COLLAR_BOTTOM = 96.0
+
+
+def collar_straight(name, rim_side, rim_mid, front):
+    """South (front=True) or north: the collar flaring out beside the jaw, its red lining along the top
+    rim. From the front, the red lining also runs down the middle, and the two sides part in a small V
+    at the top."""
+    cx, bottom = HEAD_CX, COLLAR_BOTTOM
+    # Just wider than the jaw at the rim, narrowing straight to the Thin cloak's shoulders (half 14.7).
+    half_top, half_bottom = 23.5, 14.5
+
+    def rim(x):
+        k = (x - cx) / half_top
+        return rim_side + (rim_mid - rim_side) * max(0.0, 1 - k * k)
+
+    def half(y):
+        return half_top + (half_bottom - half_top) * (y - rim_side) / (bottom - rim_side)
+
+    ys = steps(rim_side, bottom)
+    shape = polygon([(x, rim(x)) for x in steps(cx - half_top, cx + half_top, 0.4)] +
+                    [(cx + half(y), y) for y in ys] + [(cx - half(y), y) for y in reversed(ys)])
+    notch = polygon([(cx - 1.4, rim(cx) - 1), (cx + 1.4, rim(cx) - 1), (cx, rim(cx) + 2.4)]) if front else blank()
+    collar = minus(shape, notch)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = ramp(cx - half_top, cx + half_top * 0.6, 170, 0)
+    shade(image, collar, AK_CLOTH_DARK, AK_CLOTH, AK_CLOTH_LIT, light, reach=2.2)
+    # Folds round the neck.
+    for s in (-1, 1):
+        x0 = cx + s * 0.55 * half_top
+        paint(image, inter(stroke([(x0, rim(x0) + 2.2), (cx + s * 0.6 * half_bottom, bottom - 1)], 0.45),
+                           shrink(collar, 0.5)), AK_CLOTH_DARK)
+    # The red lining turned over along the top rim.
+    band = polygon([(x, rim(x) - 0.2) for x in steps(cx - half_top - 1, cx + half_top + 1, 0.4)] +
+                   [(x, rim(x) + 1.0) for x in reversed(steps(cx - half_top - 1, cx + half_top + 1, 0.4))])
+    paint(image, inter(band, collar), AK_LINING)
+    if front:
+        paint(image, inter(stroke([(cx, rim(cx)), (cx, bottom + 2)], 0.7), collar), AK_LINING)
+        for s in (-1, 1):
+            paint(image, inter(stroke([(cx + s * 1.4, rim(cx) - 1), (cx, rim(cx) + 2.4)], 0.6), grow(collar, 0.1)),
+                  AK_LINING)
+
+    top_part = polygon([(0, 0), (128, 0), (128, bottom - 2.5), (0, bottom - 2.5)])
+    finish(image, collar, name, outline_within=top_part)
+
+
+def collar_side(name):
+    """East (facing right): the collar round the chin and the nape, sloping back from the chin to the
+    chest, the red lining along the top rim and down the front edge where it closes."""
+    back_x, front_x, rim_back, rim_front, sag = 45.5, 87.5, 78.0, 79.0, 1.2
+    bottom = COLLAR_BOTTOM
+
+    def rim(x):
+        t = (x - back_x) / (front_x - back_x)
+        return rim_back + (rim_front - rim_back) * t + sag * math.sin(math.pi * t)
+
+    # Round the chin (the HeavyJaw chin reaches 86-88 at y 79-85), then back to the chest; the back
+    # edge stays inside the Thin cloak (its back is at 41.6 here).
+    front_edge = [(front_x, rim_front), (88.8, 82.0), (87.8, 86.0), (84.5, 89.5), (78.5, 92.5), (72.0, 95.0),
+                  (68.5, bottom + 0.5)]
+    back_edge = [(44.0, bottom + 0.5), (44.5, 88.0), (45.5, 80.0)]
+    collar = polygon([(x, rim(x)) for x in steps(back_x, front_x, 0.4)] + front_edge[1:] + back_edge)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = ramp(back_x, front_x, 0, 150)
+    shade(image, collar, AK_CLOTH_DARK, AK_CLOTH, AK_CLOTH_LIT, light, reach=2.2)
+    paint(image, inter(stroke([(64, rim(64) + 2.2), (60, bottom - 1)], 0.45), shrink(collar, 0.5)), AK_CLOTH_DARK)
+    band = polygon([(x, rim(x) - 0.2) for x in steps(back_x - 1, front_x + 1, 0.4)] +
+                   [(x, rim(x) + 1.0) for x in reversed(steps(back_x - 1, front_x + 1, 0.4))])
+    paint(image, inter(band, collar), AK_LINING)
+    paint(image, inter(stroke([(x - 0.8, y) for x, y in front_edge], 0.7), collar), AK_LINING)
+
+    top_part = polygon([(0, 0), (128, 0), (128, bottom - 2.5), (0, bottom - 2.5)])
+    finish(image, collar, name, outline_within=top_part)
+
+
+# ---- Obito's spiral mask ----
+
+MASK_ORANGE, MASK_LIT, MASK_DARK = (228, 132, 52), (248, 178, 100), (168, 82, 30)
+MASK_GROOVE = (48, 24, 12)
+MASK_HOLE_DARK = (14, 10, 10)
+SHARINGAN = (206, 26, 32)
+
+# Face-on, in head space: an egg, widest in its upper third, from the hairline to the chin (the
+# collar covers its bottom). The vanilla eyes are at x 52-59, y 67-72 on every head type; the hole is
+# on Obito's right eye, the viewer's left.
+MASK_CX, MASK_TOP, MASK_BOTTOM, MASK_HALF = 63.5, 46.0, 90.0, 18.0
+MASK_EYE, MASK_HOLE_R = (55.5, 69.5), 2.3
+SPIRAL_TURNS, SPIRAL_START = 5.5, -60.0  # turns out to the rim; the groove leaves the hole up and right
+# The average head's face front facing east (Male_Average_Normal_east), (y, x); the mask stands 1.3 off it.
+FACE_FRONT_EAST = [(43, 77), (46, 81), (49, 84), (52, 85), (55, 87), (58, 87.5), (61, 88), (64, 87.5),
+                   (67, 87), (70, 87), (73, 86), (76, 86), (79, 85), (82, 84), (85, 81), (88, 77), (91, 73)]
+# In profile the hole is drawn over the vanilla eye (x 74-81 average, 70-77 female): x 75.5.
+MASK_EYE_EAST_X = 75.5
+MASK_SIDE_CURVE = 0.65  # how the face-on width folds into the profile: s ** this, s 0 at the middle, 1 at the rim
+
+
+def mask_half(y):
+    """Half the mask's width at height y, face-on (0 above and below it)."""
+    mid, half_h = (MASK_TOP + MASK_BOTTOM) / 2, (MASK_BOTTOM - MASK_TOP) / 2
+    t = (y - mid) / half_h
+    if abs(t) >= 1:
+        return 0.0
+    return MASK_HALF * math.sqrt(1 - t * t) * (1 - 0.12 * t)
+
+
+def mask_outline():
+    ys = steps(MASK_TOP, MASK_BOTTOM, 0.25)
+    return [(MASK_CX - mask_half(y), y) for y in ys] + [(MASK_CX + mask_half(y), y) for y in reversed(ys)]
+
+
+def mask_edge(x0, y0, theta):
+    """Where a ray from (x0, y0) at angle theta leaves the mask."""
+    dx, dy = math.cos(theta), math.sin(theta)
+    lo, hi = 0.0, 60.0
+    for _ in range(40):
+        mid = (lo + hi) / 2
+        x, y = x0 + dx * mid, y0 + dy * mid
+        if abs(x - MASK_CX) < mask_half(y):
+            lo = mid
+        else:
+            hi = mid
+    return x0 + dx * lo, y0 + dy * lo
+
+
+def mask_spiral():
+    """The groove, face-on: from the hole's rim out to the mask's rim in SPIRAL_TURNS turns, clockwise on
+    screen, each point the same fraction of the way from the hole to the rim along its direction."""
+    hx, hy = MASK_EYE
+    total = SPIRAL_TURNS * 2 * math.pi
+    points = []
+    n = int(SPIRAL_TURNS * 240)
+    for i in range(n + 1):
+        phi = total * i / n
+        theta = math.radians(SPIRAL_START) + phi
+        ex, ey = mask_edge(hx, hy, theta)
+        reach = math.hypot(ex - hx, ey - hy)
+        start = min(0.95, (MASK_HOLE_R + 0.2) / max(reach, 0.01))
+        f = start + (1 - start) * phi / total
+        points.append((hx + (ex - hx) * f, hy + (ey - hy) * f))
+    return points
+
+
+def mask_hole_ring(r):
+    hx, hy = MASK_EYE
+    return [(hx + r * math.cos(a), hy + r * math.sin(a)) for a in steps(0, 2 * math.pi, 0.1)]
+
+
+def face_front_east(y):
+    rows = [(yy, xx, xx) for yy, xx in FACE_FRONT_EAST]
+    return interp(rows, y)[0] + 1.3
+
+
+def side_depth(y):
+    """How far back from the front the mask's rim is in profile at height y: enough at eye level to put
+    the hole over the vanilla eye, rounding off to 0 at the top and bottom."""
+    hx, hy = MASK_EYE
+    s = (MASK_CX - hx) / mask_half(hy)
+    full = (face_front_east(hy) - MASK_EYE_EAST_X) / s ** MASK_SIDE_CURVE
+    return full * (mask_half(y) / MASK_HALF) ** 0.5
+
+
+def to_side(x, y, west):
+    """A face-on point on the visible half (x left of the middle for east, right of it for west) in
+    profile, face to the right. The west picture is stored this way too: the render tree always draws
+    west with a mirrored mesh, even when a _west texture exists, so it comes out facing left."""
+    half = mask_half(y)
+    s = min(1.0, abs(x - MASK_CX) / half) if half > 0 else 0.0
+    return face_front_east(y) - side_depth(y) * s ** MASK_SIDE_CURVE, y
+
+
+def visible_runs(points, west):
+    """The parts of a face-on polyline on the half a profile shows, each cut where it crosses the middle."""
+    runs, run = [], []
+    shown = (lambda x: x >= MASK_CX) if west else (lambda x: x <= MASK_CX)
+    for a, b in zip(points, points[1:]):
+        if shown(a[0]):
+            run.append(a)
+            if not shown(b[0]):
+                k = (MASK_CX - a[0]) / (b[0] - a[0])
+                run.append((MASK_CX, a[1] + (b[1] - a[1]) * k))
+                runs.append(run)
+                run = []
+        elif shown(b[0]):
+            k = (MASK_CX - a[0]) / (b[0] - a[0])
+            run = [(MASK_CX, a[1] + (b[1] - a[1]) * k)]
+    if shown(points[-1][0]):
+        run.append(points[-1])
+    if len(run) > 1:
+        runs.append(run)
+    return runs
+
+
+def mask_front(name):
+    """South: the whole mask face-on, the hole with the Sharingan in it."""
+    mask = polygon(mask_outline())
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = ellipse(MASK_CX - 6, MASK_TOP + 12, 12, 13).filter(ImageFilter.GaussianBlur(4 * U))
+    shade(image, mask, MASK_DARK, MASK_ORANGE, MASK_LIT, light, reach=2.4)
+    paint(image, inter(stroke(mask_spiral(), 0.5), shrink(mask, 0.3)), MASK_GROOVE)
+    hx, hy = MASK_EYE
+    paint(image, ellipse(hx, hy, MASK_HOLE_R + 0.5, MASK_HOLE_R + 0.5), MASK_GROOVE)
+    paint(image, ellipse(hx, hy, MASK_HOLE_R, MASK_HOLE_R), MASK_HOLE_DARK)
+    paint(image, ellipse(hx + 0.2, hy + 0.1, 1.15, 1.15), SHARINGAN)
+    paint(image, ellipse(hx + 0.2, hy + 0.1, 0.42, 0.42), MASK_HOLE_DARK)
+    finish(image, mask, name)
+
+
+def mask_side(name, west):
+    """East or west: the face-on mask folded onto the profile. East shows the hole; west only the outer
+    turns of the groove, which wind round to the hole on the far side."""
+    ys = steps(MASK_TOP, MASK_BOTTOM, 0.25)
+    front = [to_side(MASK_CX, y, west) for y in ys]
+    rim = [to_side(MASK_CX + (1 if west else -1) * mask_half(y), y, west) for y in reversed(ys)]
+    mask = polygon(front + rim)
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    fx = to_side(MASK_CX, 66, west)[0]
+    light = ellipse(fx - 4, MASK_TOP + 13, 8, 12).filter(ImageFilter.GaussianBlur(4 * U))
+    shade(image, mask, MASK_DARK, MASK_ORANGE, MASK_LIT, light, reach=2.0)
+    for run in visible_runs(mask_spiral(), west):
+        paint(image, inter(stroke([to_side(x, y, west) for x, y in run], 0.5), shrink(mask, 0.3)), MASK_GROOVE)
+    if not west:
+        hx, hy = MASK_EYE
+        ring = lambda r: polygon([to_side(x, y, False) for x, y in mask_hole_ring(r)])
+        paint(image, ring(MASK_HOLE_R + 0.5), MASK_GROOVE)
+        paint(image, ring(MASK_HOLE_R), MASK_HOLE_DARK)
+        ix, iy = to_side(hx + 0.2, hy + 0.1, False)
+        paint(image, ellipse(ix, iy, 0.9, 1.15), SHARINGAN)
+        paint(image, ellipse(ix, iy, 0.33, 0.42), MASK_HOLE_DARK)
+    finish(image, mask, name)
+
+
+def mask_back(name):
+    """North: nothing. Graphic_Multi would put the south picture on the back of the head if this were
+    missing."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0)).save(OUT / name)
+    print("wrote", OUT / name)
+
+
+# ---- Pain's piercings ----
+
+STUD, STUD_LIT = (40, 40, 48), (150, 154, 168)
+EAR_STUD, EAR_STUD_LIT, EAR_STUD_DARK = (178, 182, 194), (236, 238, 244), (86, 90, 102)
+# Placed to suit both the vanilla heads and Facial Animation's (a popular face mod, in the user's
+# game), whose heads are narrower and draw ears. Face-on: the nose studs sit between the eyes (x 52-59
+# and 68-75, y 67-72 on both), two columns of three from eye level down; the ear studs on the rim of
+# Facial Animation's ears (its head is 44-83 at y 68), 2 units inside the vanilla outline (42-85). A
+# little larger than life so they read at the game's zoom.
+NOSE_COLUMNS, NOSE_ROWS = (62.05, 64.95), (70.2, 72.8, 75.4)
+LIP_STUDS, LIP_TOP, LIP_BOTTOM = (61.5, 65.5), 79.4, 81.3
+EAR_X, EAR_ROWS = (44.0, 83.0), (66.4, 68.6, 70.8, 73.0)
+# Profile: along the rim of Facial Animation's ear (a C round (58.8, 69) opening to the face), top to
+# bottom round the back; the nose studs on its face front (x 82-83 at y 68-76), which is 3-4 units
+# inside the vanilla face front (86-87), in front of the vanilla eye (74-81).
+EAR_SIDE_CENTRE, EAR_SIDE_R, EAR_SIDE_ANGLES = (58.8, 69.0), 4.3, (290, 250, 210, 170, 130)
+NOSE_SIDE = [(83.3, 70.2), (82.9, 72.8), (82.8, 75.4)]
+
+
+def paint_stud(image, x, y, rx, ry, base, lit, dark=None):
+    """A stud: a small dome, darker at its rim when `dark` is given, a glint at its upper left."""
+    if dark is not None:
+        paint(image, ellipse(x, y, rx + 0.25, ry + 0.25), dark)
+    paint(image, ellipse(x, y, rx, ry), base)
+    paint(image, ellipse(x - rx * 0.35, y - ry * 0.35, rx * 0.38, ry * 0.38), lit)
+
+
+def piercings_front(name):
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    for x in NOSE_COLUMNS:
+        for y in NOSE_ROWS:
+            paint_stud(image, x, y, 0.95, 0.62, STUD, STUD_LIT)
+    for x in LIP_STUDS:
+        paint(image, polygon([(x - 0.5, LIP_TOP), (x + 0.5, LIP_TOP), (x, LIP_BOTTOM)]), STUD)
+        paint(image, ellipse(x, LIP_TOP + 0.05, 0.55, 0.3), STUD_LIT)
+    for x in EAR_X:
+        for y in EAR_ROWS:
+            paint_stud(image, x, y, 0.72, 0.72, EAR_STUD, EAR_STUD_LIT, EAR_STUD_DARK)
+    save_piece(image, name)
+
+
+def piercings_side(name):
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    cx, cy = EAR_SIDE_CENTRE
+    for a in EAR_SIDE_ANGLES:
+        x = cx + EAR_SIDE_R * math.cos(math.radians(a))
+        y = cy + EAR_SIDE_R * math.sin(math.radians(a))
+        paint_stud(image, x, y, 0.72, 0.72, EAR_STUD, EAR_STUD_LIT, EAR_STUD_DARK)
+    for x, y in NOSE_SIDE:
+        paint_stud(image, x, y, 0.62, 0.58, STUD, STUD_LIT)
+    save_piece(image, name)
+
+
+def piercings_back(name):
+    """North: only the ear studs on the head's outline; the hair covers them when it hangs that low."""
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    for x in EAR_X:
+        for y in EAR_ROWS[:3]:
+            paint_stud(image, x, y + 0.5, 0.72, 0.72, EAR_STUD, EAR_STUD_LIT, EAR_STUD_DARK)
+    save_piece(image, name)
+
+
+def save_piece(image, name):
+    """Reduce and save a piece that brings its own edges (no ink outline round it)."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    image.resize((SIZE, SIZE), Image.LANCZOS).save(OUT / name)
+    print("wrote", OUT / name)
+
+
 def main():
     for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
         vergil_front(Body(BODIES[(body, "south")]), f"VergilCoat_{body}_south.png")
@@ -815,6 +1354,21 @@ def main():
         vergil_back(Body(BODIES[(body, "north")]), f"VergilCoat_{body}_north.png")
     # Hero form makes adult human Hosts Thin, so only the Thin kneel is made; other bodies keep the squash.
     vergil_kneel_front(Body(BODIES[("Thin", "south")]), "VergilCoatKneel_Thin.png")
+    for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
+        akatsuki_front(Body(BODIES[(body, "south")]), f"AkatsukiCloak_{body}_south.png")
+        akatsuki_side(Body(BODIES[(body, "east")]), f"AkatsukiCloak_{body}_east.png")
+        akatsuki_back(Body(BODIES[(body, "north")]), f"AkatsukiCloak_{body}_north.png")
+    collar_straight("AkatsukiCollar_south.png", 77.5, 82.0, front=True)
+    collar_side("AkatsukiCollar_east.png")
+    # From behind, the rim's near side is the back of the collar, over the nape.
+    collar_straight("AkatsukiCollar_north.png", 76.5, 79.5, front=False)
+    mask_front("ObitoMask_south.png")
+    mask_side("ObitoMask_east.png", west=False)
+    mask_side("ObitoMask_west.png", west=True)
+    mask_back("ObitoMask_north.png")
+    piercings_front("PainPiercings_south.png")
+    piercings_side("PainPiercings_east.png")
+    piercings_back("PainPiercings_north.png")
 
 
 if __name__ == "__main__":
