@@ -2,9 +2,10 @@
 
 Abilities agreed 2026-09-27 (Minato's hero kit). The earning sections (unlock order, awakening,
 practice) predate the Echo framework and are replaced by his Echo entry in docs/hero-echo.md
-(agreed 2026-09-27: Melee 12, Intellectual 10, 30 thrown-kunai kills, Kind, upkeep 10). Nothing
-beyond *throw kunai* is in the game yet. Every number is a placeholder until the abilities are
-built and played. The pictures are the four sketches under **Kunai belt** in the VFX lab
+(agreed 2026-09-27: Melee 12, Intellectual 10, 30 thrown-kunai kills, Kind, upkeep 10). All five
+abilities were built on 2026-09-28 and are granted by the Echo while manifested (see "Built" at the
+end for the rules the port had to decide). Every number is a placeholder, in XML, until they are
+played. The pictures are the four sketches under **Kunai belt** in the VFX lab
 (`Tools/VfxLab/web/sketches/kunai-*.js`); each sketch header carries the same numbers as this page.
 
 The kit is earned, like Origin: Blade, and sits on top of the kunai belt. The belt stays what it
@@ -145,3 +146,43 @@ still learn the touch-range form.
 4. The three thresholds (100 hits, 25 jumps, 60 jumps) and 20 practice sessions are guesses. With
    a 6-kunai belt that has to be refilled, about 10 counted hits per raid seems likely, which
    makes 100 hits about 10 raids. That rate is an estimate, not measured.
+
+## Built (2026-09-28)
+
+Code in `Source/RimArt/ThunderGod/Kit`, defs in `AG_Minato_Abilities.xml`, `AG_Minato_Hediffs.xml`,
+`AG_Minato_Jobs.xml` and `AG_Echo_Minato`. Tests: `-rimarttest=minato`. Rules the doc left open, as built:
+
+- **Marks.** A mark is one of his sealed kunai stuck in a pawn, a pawn with his seal, or a sealed kunai
+  on the ground (flat or planted). Clicking the pawn, the kunai item or the cell all work. His kunai
+  are sealed only while he is manifested; any Minato Host can use any sealed kunai.
+- **Landing.** In a pawn: the free cell next to it that is most behind it, seen from where he stood
+  (straight behind first, then the diagonals, then the sides; front cells last). Decided again on
+  arrival, so a pawn that moved is still landed behind. No free cell: the jump is refused.
+  On the ground: the kunai's cell, or its nearest free neighbour if someone stands on it.
+- **The cut.** His own melee attack (weapon or fists), applied without the hit roll: it cannot miss.
+  x1.5 for the jump, x1.0 per chain link; armour penetration as the attack makes it. It is a landed
+  melee hit, so it also seals. A non-hostile pawn is landed behind and not cut.
+- **Ground kunai picked up.** Into the belt as far as it has room (the seal goes, as when loading);
+  the rest of the stack into his inventory, still sealed. No belt needed for any Minato ability.
+- **Sealing touch.** Every landed melee hit in hero form. A hit on a sealed pawn renews its day. The
+  limit of 3 counts every seal on every map; the 4th replaces the oldest. Drawn as a small turning
+  ring of script round the feet and a gold glow at the chest.
+- **Chain.** Marked hostiles that are standing (not downed), within 29.9 cells. "Nearest first" is
+  greedy: nearest to him, then nearest to that one. A pawn that died, went down or has no free cell
+  when its turn comes is skipped; the next jump keeps its time.
+- **Guiding Thunder.** Active from the click (no gap while the ring is written). A projectile is taken
+  when it reaches the ring if its hit roll hit him, or if it is an explosive or a mortar shell coming
+  down inside the ring; a shot that missed him flies on. It comes out at the mark already hitting:
+  the pawn (whoever fired it), or the kunai's cell and whoever stands there. If the marked pawn dies
+  the shots land where it fell; if the ground kunai is picked up, the barrier ends. The cast job holds
+  him (no move orders) for the 6 s. Combat Extended projectiles are not taken.
+- **Rasengan.** One ability, verb range 29.9. A marked pawn not next to him: the ball forms where he
+  stands, then he jumps behind it. Any other pawn: he walks up to it first; if it has left touch range
+  (1.9) when the ball is formed, the ball is lost (cooldown and charge spent). The damage lands on the
+  release (0.3 s after the ball reaches the body); the grind stuns it from the first contact. The
+  throw goes one cell at a time away from him and stops before a cell it cannot stand in or see
+  (walls, buildings, the map edge; pawns do not stop it); stopped short adds the 10. Its cell changes
+  once, on landing. A pawn killed by the hit is not thrown. Body size does not change the distance.
+- **Not built.** Melee Animation clips (RimArt_RasenganForm / Thrust exist but are not played: the
+  caster stands and the ball is at chest height), sounds, AI use. Not played by hand; save/load in the
+  middle of a cast is untested.

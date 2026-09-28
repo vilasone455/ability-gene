@@ -781,7 +781,7 @@ namespace RimArt
             }
         }
 
-        // Minato has no EchoDef until his kit is ported, so the hero form hediff is added directly.
+        // The hero form hediff is added directly: this checks the costume alone, without the Echo.
         [RimArtTest("Echo", "costume 5 Minato's hero form draws the haori on the body and the forehead protector on the head over the hair, hides worn clothes and hats but not belts, narrower on a narrow head (screenshots)")]
         private static IEnumerable<int> MinatoHaori(RimArtTestContext t)
         {

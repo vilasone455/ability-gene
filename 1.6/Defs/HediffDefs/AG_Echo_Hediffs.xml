@@ -212,8 +212,8 @@
     </renderNodeProperties>
   </HediffDef>
 
-  <!-- Minato's hero form. No Echo points here yet: his EchoDef (docs/hero-echo.md, "Minato") comes with
-       his kit's port and names this as its manifestHediff. The haori is drawn like Vergil's coat: the
+  <!-- Minato's hero form (AG_Echo_Minato). While it is on, his thrown kunai are sealed (KunaiSeal) and his
+       melee hits leave sealing touch (SealingTouch.cs). The haori is drawn like Vergil's coat: the
        Host's clothes, armour and headgear are hidden but still worn and counted, belts and packs still
        drawn, and facing north it goes over the head so its collar covers the nape. The forehead
        protector is on the head over the hair (62); the same on both sides, so west is east mirrored.
@@ -221,7 +221,7 @@
   <HediffDef ParentName="AG_EchoManifestBase">
     <defName>AG_EchoManifest_Minato</defName>
     <label>hero form: Minato</label>
-    <description>This Host has manifested Minato. The colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <description>This Host has manifested Minato. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.\n\nEvery kunai he throws carries his Flying Thunder God seal. Sealing touch: each of his melee hits that lands seals the pawn it struck for one day; he keeps 3 seals at a time and a new one replaces the oldest.</description>
     <renderNodeProperties>
       <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
         <debugLabel>Minato haori</debugLabel>

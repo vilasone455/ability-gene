@@ -7,6 +7,8 @@ namespace RimArt
     {
         public Vector2 from, to, target, along;
         public bool hasTarget;
+        /// <summary>In game: this jump did not happen (its pawn died or went down first). Nothing is drawn for it, and it keeps its place in the timing.</summary>
+        public bool skipped;
         /// <summary>Direction of the jump, and the direction the kunai was thrown from the start, in degrees.</summary>
         public float degrees, thrown;
     }

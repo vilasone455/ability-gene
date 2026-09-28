@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The cast job of Minato's four abilities: JobDriver_CastAbility that starts the picture when the
+       warmup begins and holds Minato after the fire tick for as long as his cast says (the jump until
+       the cut, the chain until the last cut, Guiding Thunder while the barrier stands, the Rasengan
+       through the release). A Rasengan on a pawn with no mark walks up to it first. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastMinato</defName>
+    <driverClass>RimArt.JobDriver_CastMinato</driverClass>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>
