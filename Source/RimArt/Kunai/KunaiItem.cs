@@ -1,3 +1,4 @@
+using RimWorld;
 using UnityEngine;
 using Verse;
 
@@ -9,8 +10,9 @@ namespace RimArt
     /// instead of lying flat (<see cref="KunaiEmbedding.PlantKunai"/>). Otherwise it is the ordinary
     /// item: hauled, loaded into the belt, a Flying Thunder God anchor on the ground.
     ///
-    /// Whatever takes it off the map (a haul, a reload, a pick-up) pulls it out, so a carried or dropped
-    /// kunai lies flat. A planted kunai never stacks: two misses into one cell stay two kunai, the second
+    /// A planted kunai starts forbidden, so colonists leave it standing where it fell (a Flying Thunder
+    /// God anchor) until the player allows it. Whatever takes it off the map (a haul, a reload, a
+    /// pick-up) pulls it out and allows it again, so a carried or dropped kunai lies flat. A planted kunai never stacks: two misses into one cell stay two kunai, the second
     /// in the next cell. It shows no stack count.
     /// </summary>
     public class KunaiItem : ThingWithComps
@@ -50,6 +52,8 @@ namespace RimArt
 
         public override void DeSpawn(DestroyMode mode = DestroyMode.Vanish)
         {
+            // It was forbidden only because it stood in the ground; out of it, it is an ordinary kunai.
+            if (planted) this.SetForbidden(false, warnOnFail: false);
             planted = false;
             plantOffset = Vector2.zero;
             base.DeSpawn(mode);

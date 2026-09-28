@@ -42,7 +42,7 @@ namespace RimArt
             yield return t.ShotAs("kunai-look");
         }
 
-        [RimArtTest("Kunai", "plant 1 a miss onto open ground stands in it the way it flew and never stacks; into water or off a wall it lies flat; picked up it lies flat (screenshot)")]
+        [RimArtTest("Kunai", "plant 1 a miss onto open ground stands in it the way it flew, starts forbidden and never stacks; into water or off a wall it lies flat; picked up it lies flat (screenshot)")]
         private static IEnumerable<int> Plant(RimArtTestContext t)
         {
             t.Clear();
@@ -64,6 +64,7 @@ namespace RimArt
                 KunaiItem kunai = KunaiNear(t, aim, 0f).FirstOrDefault();
                 t.Check(kunai != null && kunai.planted && kunai.Position == aim,
                     "the throw toward " + (aim - c) + " planted in its cell (" + Describe(kunai) + ")");
+                t.Check(kunai != null && kunai.IsForbidden(Faction.OfPlayer), "  it starts forbidden");
                 if (kunai != null)
                     t.Check(Mathf.Abs(Mathf.DeltaAngle(kunai.plantAngle, want)) < 6f,
                         "  pointing " + kunai.plantAngle.ToString("0") + " degrees, thrown toward " + want.ToString("0"));
@@ -99,6 +100,7 @@ namespace RimArt
                 if (bounced == null) t.Log("throw " + n + " at the wall broke the kunai");
             }
             t.Check(bounced != null && !bounced.planted, "a kunai off the wall lies flat (" + Describe(bounced) + ")");
+            t.Check(bounced != null && !bounced.IsForbidden(Faction.OfPlayer), "  and is not forbidden");
 
             yield return t.ShotAs("kunai-plant");
 
@@ -109,6 +111,7 @@ namespace RimArt
                 // As a pick-up or haul does: SplitOff takes a whole stack off the map, then it goes in.
                 t.Check(thrower.inventory.innerContainer.TryAddOrTransfer(first.SplitOff(first.stackCount)), "the thrower picked up the kunai");
                 t.Check(!first.planted, "a picked-up kunai is no longer planted");
+                t.Check(!first.IsForbidden(Faction.OfPlayer), "  nor forbidden");
                 thrower.inventory.innerContainer.TryDrop(first, c + new IntVec3(1, 0, 1), t.map, ThingPlaceMode.Near, out Thing dropped);
                 t.Check(dropped is KunaiItem k && !k.planted, "dropped again it lies flat (" + Describe(dropped as KunaiItem) + ")");
             }

@@ -152,7 +152,7 @@ namespace RimArt
         /// pointing <paramref name="angle"/> degrees clockwise from north, the way it flew. Returns false
         /// where it cannot go into the ground - water, or a cell no one can stand on - and the caller drops
         /// it flat instead. If the cell already holds something, it goes into the nearest free cell,
-        /// in that cell's middle.
+        /// in that cell's middle. It starts forbidden.
         /// </summary>
         public static bool PlantKunai(Vector3 at, float angle, Map map)
         {
@@ -166,6 +166,9 @@ namespace RimArt
             kunai.plantAngle = angle;
             kunai.plantOffset = new Vector2(Mathf.Clamp(offset.x, -max, max), Mathf.Clamp(offset.z, -max, max));
             if (!GenPlace.TryPlaceThing(kunai, cell, map, ThingPlaceMode.Near, out Thing placed)) return false;
+            // Forbidden, so colonists leave it standing where it fell (a Flying Thunder God anchor)
+            // until the player allows it.
+            placed.SetForbidden(true, warnOnFail: false);
             if (placed == kunai && placed.Position != cell)
             {
                 kunai.plantOffset = Vector2.zero;
