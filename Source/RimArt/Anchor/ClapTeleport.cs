@@ -7,7 +7,9 @@ namespace RimArt
 
     /// <summary>
     /// One end of a clap: a cell something leaves, arrives at, or both. <see cref="ring"/> false is
-    /// the cell a tile-move leaves, which gets the puff and one falling card and no ring.
+    /// the cell a tile-move leaves, which gets the puff and one falling card and no ring (the
+    /// magician's picture). <see cref="was"/> and <see cref="now"/> are what stood there before and
+    /// after the swap (Todo's Boogie Woogie picture).
     /// </summary>
     public struct ClapEnd
     {
@@ -15,6 +17,7 @@ namespace RimArt
         public int suit;
         public bool ring;
         public ClapMark mark;
+        public BoogieEnd was, now;
     }
 
     /// <summary>

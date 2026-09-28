@@ -8,9 +8,9 @@ namespace RimArt
 {
     /// <summary>
     /// The cast job of Mark. It is JobDriver_CastAbility with the additions JobDriver_CastClap
-    /// makes, for the same reasons: the clip starts with the warmup, so the card leaves the hand
-    /// before the warmup ends and lands as the mark is placed; the flying card is told the cast has
-    /// begun; and the job holds until the clip is done, because Melee Animation cancels a clip the
+    /// makes, for the same reasons: the clip starts with the warmup, so the stone leaves the hand
+    /// before the warmup ends and lands as it is placed; the stone throw picture is told the cast has
+    /// begun, so the stone glows in the hand (or flares in its cell, to be taken back); and the job holds until the clip is done, because Melee Animation cancels a clip the
     /// moment its pawn is in any other job.
     ///
     /// Placing plays the card flick, lifting plays the catch. Both are throw clip sets, so they go
@@ -54,10 +54,10 @@ namespace RimArt
             pawn.pather.StopDead();
             if (startTick >= 0) return;
             startTick = Find.TickManager.TicksGame;
-            lifting = AnchorUtility.GeneOf(pawn)?.IsMarked(job.targetA) ?? false;
+            Anchor taken = AnchorUtility.GeneOf(pawn)?.AnchorFor(job.targetA);
+            lifting = taken != null;
             ThrowAnimation.TryThrow(pawn, job.targetA.Cell, null, lifting ? ThrowAnimation.MarkCatch : ThrowAnimation.MarkFlick, out _, job.def);
-            if (!lifting)
-                pawn.Map.GetComponent<MapComponent_MarkFlicks>().Begin(pawn, job.targetA, job.ability.def.verbProperties.warmupTime);
+            pawn.Map.GetComponent<MapComponent_MarkFlicks>().Begin(pawn, job.targetA.Cell, job.ability.def.verbProperties.warmupTime, taken);
         }
 
         /// <summary>Moves the clip to now. False once the clip is over, or when there is none.</summary>

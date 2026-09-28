@@ -1,6 +1,9 @@
-// Boogie Woogie — new picture for Todo's Clap and Double Clap, not the game yet. It replaces the
-// stage-magician picture (anchor-clap-teleport.js: card ring, red silk puff, gold star), which is
-// kept for a future magician hero. The game still draws the cards (ClapTeleportGraphics.cs).
+// Boogie Woogie — the picture for Todo's Clap and Double Clap. Ported to C# 2026-09-28
+// (Source/RimArt/Todo/BoogieWoogie*.cs, previews "Todo: boogie woogie: ..."), drawn in game by
+// MapComponent_ClapTeleports. It replaced the stage-magician picture (anchor-clap-teleport.js:
+// card ring, red silk puff, gold star), which is kept for a future magician hero. In game the
+// white cover is 1.6 x 2.3 cells, three deep, so it hides a real pawn; the sketch's stand-in needs
+// less.
 //
 // Mechanic (agreed 2026-09-27, built; numbers are XML): Clap, warmup 0.3 s: Todo changes places
 // with a living pawn in sight within 15 cells, or with one of his stones anywhere; a stone lands

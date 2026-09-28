@@ -1,6 +1,8 @@
-// Stone throw — new picture for Todo's Mark, not the game yet. It replaces the stage-magician card
-// flick (anchor-mark-flick.js, kept for a future magician hero). The game still flies a card
-// (MarkFlick.cs, ClapTeleportGraphics.FlyingCard) and drops the stone at the end.
+// Stone throw — the picture for Todo's Mark ("stone" in game). Ported to C# 2026-09-28
+// (Source/RimArt/Todo/StoneThrow*.cs, previews "Todo: stone throw: ..."), drawn in game by
+// MapComponent_MarkFlicks (throw, skid, take back) and MapComponent_Anchors (the stone at rest);
+// the item is hidden while it skids. The hand follows tables read off the two clips. It replaced
+// the stage-magician card flick (anchor-mark-flick.js, kept for a future magician hero).
 //
 // Mechanic (agreed 2026-09-27, built; numbers are XML): Mark throws a stone onto a standable cell
 // within 9.9 cells, warmup 0.5 s, cooldown 10 s. Up to 3 stones at once; they lie forbidden and

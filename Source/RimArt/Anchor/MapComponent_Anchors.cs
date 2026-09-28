@@ -6,7 +6,7 @@ using Verse;
 namespace RimArt
 {
     /// <summary>
-    /// Draws the carrier's marks and tells them when one fades.
+    /// Draws the carrier's stones and tells them when one fades.
     ///
     /// Only the player's own colonists are scanned. A hostile carrier's marks are deliberately
     /// invisible: the mark is the thing the ability is planned around, and being able to read
@@ -52,7 +52,8 @@ namespace RimArt
             List<Pawn> colonists = map.mapPawns.FreeColonistsSpawned;
             if (colonists.Count == 0) return;
 
-            var teleports = map.GetComponent<MapComponent_ClapTeleports>();
+            var flicks = map.GetComponent<MapComponent_MarkFlicks>();
+            float seconds = Time.realtimeSinceStartup;
             for (int i = 0; i < colonists.Count; i++)
             {
                 Gene_Anchors gene = AnchorUtility.GeneOf(colonists[i]);
@@ -61,30 +62,25 @@ namespace RimArt
                 List<Anchor> anchors = gene.AnchorsRaw;
                 for (int j = 0; j < anchors.Count; j++)
                 {
-                    // A carried stone has no card; it is back when the stone is on the ground.
+                    // A carried stone has no glow; it is back when the stone is on the ground.
                     if (!gene.Holds(anchors[j]) || !anchors[j].Usable) continue;
-                    DrawMark(anchors[j], teleports);
+                    DrawStone(anchors[j], flicks, seconds);
                 }
             }
         }
 
         /// <summary>
-        /// The mark as a playing card: over the head of a marked pawn, flat on a marked tile inside
-        /// a gold outline. While a clap against it is in its warmup the card flips with the rising
-        /// ring, and the ring's drawing has the tile's outline.
+        /// The charged stone at rest (StoneThrowGraphics.Resting): a teal glow that breathes and a glint
+        /// now and then; the item draws the stone itself. It flares while a cast is taking it back. A
+        /// stone still skidding in and settling is the throw's to draw.
         /// </summary>
-        private void DrawMark(Anchor anchor, MapComponent_ClapTeleports teleports)
+        private void DrawStone(Anchor anchor, MapComponent_MarkFlicks flicks, float seconds)
         {
             IntVec3 cell = anchor.CurrentCell;
             if (!cell.InBounds(map) || cell.Fogged(map)) return;
-
-            float rising = -1f;
-            bool clapping = teleports != null && teleports.Rising(anchor, out rising);
-            Vector2 ground = ClapEnds.Ground(anchor, true);
-            int suit = Mathf.Clamp(anchor.suit, 0, 2);
-            float placed = (Find.TickManager.TicksGame - anchor.placedTick) / 60f;
-            ClapTeleportGraphics.Mark(ground, ClapEnds.Kind(anchor), suit, suit, Time.realtimeSinceStartup, rising, placed);
-            if (!anchor.IsOnPawn && !clapping) ClapTeleportGraphics.TileOutline(ground, 0.5f * VfxMath.Smooth(placed / MarkFlick.Settle));
+            if (flicks != null && flicks.Landing(anchor)) return;
+            StoneThrowGraphics.Resting(ClapEnds.Ground(anchor, true), seconds, 1f, flicks?.Flare(anchor) ?? 0f,
+                anchor.stone.thingIDNumber % 997, false);
         }
     }
 }

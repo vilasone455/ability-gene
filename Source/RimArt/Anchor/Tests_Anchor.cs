@@ -184,7 +184,9 @@ namespace RimArt
             var hit = new PunchResult();
             foreach (int step in Punch(t, carrier, enemy, hit)) yield return step;
             t.Check(hit.damage > 0f, "the punch hurt (" + hit.damage.ToString("F1") + ")");
-            t.Check(hit.stunTicks <= 12, "no Black Flash stun (" + hit.stunTicks + " ticks left)");
+            // Vanilla blunt damage has its own chance to stun (bluntStunDuration, 2 s), so the stun alone
+            // does not tell a plain punch from a Black Flash; the zone does.
+            t.Log("target stun after the punch: " + hit.stunTicks + " ticks");
             t.Check(!hit.zone, "the carrier is not in the zone");
 
             Gene_Anchors gene = AnchorUtility.GeneOf(carrier);
@@ -301,6 +303,71 @@ namespace RimArt
             other.story.traits.GainTrait(new Trait(TraitDef.Named("AG_CombatPresence")));
             yield return 5;
             t.Check(!Has(other, Provoke), "Combat presence no longer grants Provoke");
+            EchoDevice.workingForTests = null;
+        }
+
+        /// <summary>
+        /// The three pictures in the game, for the eye: a stone thrown 4 cells north (in the hand, in
+        /// flight, skidding, at rest), a clap with an enemy two cells east (ink frame, arrival), then
+        /// Black Flash on it inside the window (negative, burst, bolts, stun and zone). Frames are
+        /// drawn while it runs, so a drawing that throws fails the test.
+        /// </summary>
+        [RimArtTest("Todo", "pictures 9 stone, clap and Black Flash in game with screenshots")]
+        private static IEnumerable<int> Pictures(RimArtTestContext t)
+        {
+            t.Clear();
+            Pawn todo = Carrier(t);
+            // Two cells off: an adjacent enemy fights the undrafted Todo, whose melee cooldown then holds the clap back.
+            Pawn enemy = Target(t, t.center + new IntVec3(2, 0, 0));
+            IntVec3 cell = t.center + new IntVec3(0, 0, 4);
+            yield return 2;
+
+            Ability mark = todo.abilities.GetAbility(Mark);
+            mark.QueueCastingJob(new LocalTargetInfo(cell), LocalTargetInfo.Invalid);
+            var flicks = t.map.GetComponent<MapComponent_MarkFlicks>();
+            yield return 18;
+            yield return t.ShotAs("stone-in-hand", todo.Position, 4f);
+            yield return 7;
+            yield return t.ShotAs("stone-flying", todo.Position + new IntVec3(0, 0, 2), 4f);
+            for (int i = 0; i < 40 && !flicks.Fired(todo); i++) yield return 1;
+            if (!t.Check(flicks.Fired(todo), "the stone landed")) yield break;
+            yield return 5;
+            yield return t.ShotAs("stone-skid", cell, 3f);
+            yield return 40;
+            yield return t.ShotAs("stone-resting", cell, 3f);
+
+            RimArtTestContext.Hold(todo);
+            yield return 2;
+            AbilityDef clap = DefDatabase<AbilityDef>.GetNamed("AG_AnchorClap");
+            var claps = t.map.GetComponent<MapComponent_ClapTeleports>();
+            Ability clapAbility = todo.abilities.GetAbility(clap);
+            t.Log("clap CanCast " + (bool)clapAbility.CanCast + " " + clapAbility.CanCast.Reason + ", on the enemy " + clapAbility.CanApplyOn(new LocalTargetInfo(enemy))
+                + " | " + RimArtTestContext.Describe(todo) + " | " + RimArtTestContext.Describe(enemy));
+            clapAbility.QueueCastingJob(enemy, LocalTargetInfo.Invalid);
+            t.Log("after the order: job " + todo.CurJobDef?.defName);
+            for (int i = 0; i < 60 && !claps.Fired(todo); i++)
+            {
+                if (i % 10 == 0) t.Log(i + " | " + RimArtTestContext.Describe(todo));
+                yield return 1;
+            }
+            if (!t.Check(claps.Fired(todo), "the clap landed")) yield break;
+            yield return t.ShotAs("clap-ink", t.center + new IntVec3(1, 0, 0), 4f);
+            yield return 9;
+            yield return t.ShotAs("clap-arrival", t.center + new IntVec3(1, 0, 0), 4f);
+
+            Ability flash = todo.abilities.GetAbility(BlackFlash);
+            flash.QueueCastingJob(enemy, LocalTargetInfo.Invalid);
+            int cast = t.Now;
+            for (int i = 0; i < 120 && flash.lastCastTick < cast; i++) yield return 1;
+            if (!t.Check(flash.lastCastTick >= cast, "the punch landed")) yield break;
+            t.Check(todo.health.hediffSet.HasHediff(Zone), "it was a Black Flash");
+            yield return t.ShotAs("flash-negative", enemy.Position, 4f);
+            yield return 5;
+            yield return t.ShotAs("flash-burst", enemy.Position, 4f);
+            yield return 8;
+            yield return t.ShotAs("flash-bolts", enemy.Position, 4f);
+            yield return 30;
+            yield return t.ShotAs("flash-stun-zone", enemy.Position, 4f);
             EchoDevice.workingForTests = null;
         }
     }

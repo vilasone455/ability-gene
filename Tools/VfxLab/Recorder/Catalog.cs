@@ -181,6 +181,14 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Todo", Prefix = "Todo:", Component = typeof(MapComponent_TodoPreview), Clock = "seconds",
+                Phases = label => label.Contains("boogie woogie") ? BoogiePhases(label.Contains("double"))
+                    : label.Contains("take back") ? TakeBackPhases()
+                    : label.Contains("stone throw") ? StoneThrowPhases()
+                    : BlackFlashPhases(label.Contains("ordinary")),
+            },
+            new Kit
+            {
                 Name = "Anchor", Prefix = "Clap teleport:", Component = typeof(MapComponent_ClapPreview), Clock = "seconds",
                 Phases = label => ClapPhases(label.Contains("double")),
             },
@@ -833,6 +841,42 @@ namespace RimArt.VfxLab
             new Phase("Folds", SixPathsUmbrellaTiming.CloseAt),
             new Phase("Held again", SixPathsUmbrellaTiming.ClosedAt),
         };
+
+        private static Phase[] BoogiePhases(bool twice)
+        {
+            float warmup = twice ? BoogieWoogie.DoubleWarmup : BoogieWoogie.ClapWarmup;
+            var phases = new List<Phase> { new Phase("Wind-up", 0f) };
+            if (twice) phases.Add(new Phase("First clap", BoogieWoogie.FirstContactAt(warmup)));
+            phases.Add(new Phase("Contact: swap, ink frames", warmup));
+            phases.Add(new Phase("Colour back", warmup + BoogieWoogie.Ink));
+            phases.Add(new Phase("Burst gone", warmup + BoogieWoogie.Life));
+            phases.Add(new Phase("Flecks gone", warmup + BoogieWoogie.FleckFrom + BoogieWoogie.Fleck));
+            return phases.ToArray();
+        }
+
+        private static Phase[] StoneThrowPhases() => new[]
+        {
+            new Phase("Charge", StoneThrow.Charge), new Phase("Release blade", StoneThrow.Release),
+            new Phase("Touches down, skids", StoneThrow.Place), new Phase("Resting", StoneThrow.Place + StoneThrow.SkidTime),
+        };
+
+        private static Phase[] TakeBackPhases() => new[]
+        {
+            new Phase("Reach out", 0f), new Phase("Stone flares", StoneThrow.Place - StoneThrow.FlareLead),
+            new Phase("Stone leaves the cell", StoneThrow.Place), new Phase("Caught", StoneThrow.CatchTime(StoneThrow.Place)),
+        };
+
+        private static Phase[] BlackFlashPhases(bool plain)
+        {
+            float hit = BlackFlash.Warmup, burst = hit + BlackFlash.SparkTime;
+            if (plain) return new[] { new Phase("Wind-up", 0f), new Phase("Hit", hit) };
+            return new[]
+            {
+                new Phase("Wind-up", 0f), new Phase("Hit: dark + spark", hit), new Phase("Burst", burst),
+                new Phase("Bolts thin out", burst + BlackFlash.Life * 0.45f), new Phase("In the zone", burst + BlackFlash.Life),
+                new Phase("Stun ends", hit + BlackFlash.StunTime),
+            };
+        }
 
         private static Phase[] ClapPhases(bool twice)
         {

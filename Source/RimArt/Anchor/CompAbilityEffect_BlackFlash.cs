@@ -69,7 +69,6 @@ namespace RimArt
             Gene_Anchors gene = AnchorUtility.GeneOf(caster);
             bool flash = InWindow(gene);
             Map map = caster.Map;
-            Vector3 at = victim.DrawPos;
 
             float amount = Props.damage * caster.GetStatValue(StatDefOf.MeleeDamageFactor);
             if (flash) amount *= Props.flashFactor;
@@ -77,11 +76,10 @@ namespace RimArt
             victim.TakeDamage(new DamageInfo(Props.damageDef ?? DamageDefOf.Blunt, amount, Props.armorPenetration, angle, caster,
                 null, null, DamageInfo.SourceCategory.ThingOrUnknown, victim));
 
-            if (!flash)
-            {
-                SoundDefOf.Pawn_Melee_Punch_HitPawn.PlayOneShot(new TargetInfo(victim.Position, map));
-                return;
-            }
+            // Sound is a placeholder: the vanilla punch for both, until the kit's sounds are made.
+            SoundDefOf.Pawn_Melee_Punch_HitPawn.PlayOneShot(new TargetInfo(victim.Position, map));
+            map.GetComponent<MapComponent_BlackFlashes>()?.Hit(caster, victim, flash, parent.def.verbProperties.warmupTime, Props.zoneHediff);
+            if (!flash) return;
 
             gene.SpendSwap();
             if (victim is Pawn pawn && pawn.Spawned && !pawn.Dead) pawn.stances?.stunner?.StunFor(Props.stunTicks, caster, false, true);
@@ -91,12 +89,6 @@ namespace RimArt
                 if (old != null) caster.health.RemoveHediff(old);
                 caster.health.AddHediff(Props.zoneHediff);
             }
-
-            // Placeholder picture and sound until the Black Flash sketch is made.
-            SoundDefOf.Pawn_Melee_Punch_HitPawn.PlayOneShot(new TargetInfo(victim.Position, map));
-            FleckMaker.Static(at, map, FleckDefOf.ExplosionFlash, 3f);
-            for (int i = 0; i < 4; i++) FleckMaker.ThrowMicroSparks(at, map);
-            MoteMaker.ThrowText(at, map, "AG_BlackFlashText".Translate(), new Color(0.9f, 0.1f, 0.15f), 2f);
         }
     }
 }

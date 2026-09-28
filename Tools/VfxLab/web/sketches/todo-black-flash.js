@@ -1,6 +1,7 @@
-// Black Flash — picture for Todo's Black Flash (AG_AnchorBlackFlash), not the game yet. The game
-// plays a placeholder: vanilla ExplosionFlash, 4 micro sparks, the punch sound and red text
-// (CompAbilityEffect_BlackFlash.cs, branch feature/todo-black-flash, 0cb9387).
+// Black Flash — the picture for Todo's Black Flash (AG_AnchorBlackFlash). Ported to C# 2026-09-28
+// (Source/RimArt/Todo/BlackFlash*.cs, previews "Todo: black flash: ..."), drawn in game by
+// MapComponent_BlackFlashes: the fist crackle from Todo's warmup stance, the rest from the hit.
+// The sound is still the vanilla punch.
 //
 // Mechanic (agreed 2026-09-27, built on the branch; the numbers are XML): a walk-up bare-hand
 // punch, warmup 0.2 s, cooldown 6 s, 9 blunt x the melee damage factor. Within 3 s (180 ticks) of
