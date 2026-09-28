@@ -780,5 +780,89 @@ namespace RimArt
                     t.Check(brow.Worker.CanDrawNow(brow, south), pawn.story.headType.defName + ": " + brow.Props.debugLabel + " is drawn again");
             }
         }
+
+        // Minato has no EchoDef until his kit is ported, so the hero form hediff is added directly.
+        [RimArtTest("Echo", "costume 5 Minato's hero form draws the haori on the body and the forehead protector on the head over the hair, hides worn clothes and hats but not belts, narrower on a narrow head (screenshots)")]
+        private static IEnumerable<int> MinatoHaori(RimArtTestContext t)
+        {
+            Setup(t);
+            HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Minato");
+            var props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
+            t.Check(props?.Count == 2, "the hero form has the haori and the forehead protector (" + (props?.Count ?? 0) + " costume nodes)");
+            var haoriProps = props?.FirstOrDefault(p => p.parentTagDef == PawnRenderNodeTagDefOf.ApparelBody);
+            var bandProps = props?.FirstOrDefault(p => p.parentTagDef == PawnRenderNodeTagDefOf.Head);
+            if (!t.Check(haoriProps?.bodyTypeGraphicPaths != null && bandProps != null,
+                "one node on the body apparel with body types, one on the head")) yield break;
+            t.Check(haoriProps.hideBodyApparel && haoriProps.hideHeadgear, "the haori hides body apparel and headgear");
+            foreach (string facing in new[] { "south", "east", "north" })
+            {
+                foreach (BodyTypeGraphicData body in haoriProps.bodyTypeGraphicPaths)
+                    t.Check(ContentFinder<UnityEngine.Texture2D>.Get(body.texturePath + "_" + facing, false) != null,
+                        "haori " + body.bodyType.defName + " " + facing + " texture loads");
+                t.Check(ContentFinder<UnityEngine.Texture2D>.Get(bandProps.texPath + "_" + facing, false) != null,
+                    "forehead protector " + facing + " texture loads");
+            }
+
+            // Only the first wears a pack, so the second shows the writing on the haori's back.
+            Pawn a = Colonist(t, -2), b = Colonist(t, 2);
+            foreach ((Pawn pawn, string head) in new[] { (a, "Male_AverageNormal"), (b, "Male_NarrowNormal") })
+            {
+                pawn.story.headType = DefDatabase<HeadTypeDef>.GetNamed(head);
+                pawn.story.bodyType = BodyTypeDefOf.Thin;
+                pawn.story.HairColor = new UnityEngine.Color(0.98f, 0.84f, 0.36f);
+                foreach (string piece in new[] { "Apparel_BasicShirt", "Apparel_Pants", "Apparel_CowboyHat" })
+                    Wear(pawn, piece);
+                if (pawn == a) Wear(pawn, "Apparel_SmokepopBelt");
+                pawn.health.AddHediff(form);
+                pawn.Drawer.renderer.SetAllGraphicsDirty();
+            }
+            yield return 2;
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                string who = pawn.story.headType.defName;
+                List<PawnRenderNode> nodes = CostumeNodes(pawn, form).ToList();
+                t.Check(nodes.Count == 2, who + ": the haori and the forehead protector are in the render tree (" + nodes.Count + ")");
+                PawnRenderNode haori = nodes.FirstOrDefault(n => n.Props == haoriProps);
+                PawnRenderNode headband = nodes.FirstOrDefault(n => n.Props == bandProps);
+                t.Check(haori?.PrimaryGraphic?.path == "RimArt/Echo/Costume/MinatoHaori_Thin",
+                    who + ": the haori is the Thin one (" + haori?.PrimaryGraphic?.path + ")");
+                PawnRenderNode hair = RenderNodes(pawn).FirstOrDefault(n => n.Props.debugLabel == "Hair");
+                t.Check(headband?.parent?.Props.tagDef == PawnRenderNodeTagDefOf.Head, who + ": the forehead protector hangs on the head");
+                t.Check(headband != null && hair != null && headband.Props.baseLayer > hair.Props.baseLayer,
+                    who + ": the forehead protector is drawn over the hair (" + headband?.Props.baseLayer + " over " + hair?.Props.baseLayer + ")");
+                bool narrow = pawn.story.headType.narrow;
+                foreach ((Rot4 rot, float want) in new[] { (Rot4.South, narrow ? 0.84f : 1f), (Rot4.East, narrow ? 0.7f : 1f) })
+                {
+                    PawnDrawParms parms = PawnDrawParms.DefaultFor(pawn);
+                    parms.facing = rot;
+                    float got = headband == null ? 0f : headband.Worker.ScaleFor(headband, parms).x;
+                    t.Check(System.Math.Abs(got - want) < 0.001f,
+                        who + " facing " + rot.ToStringHuman() + ": forehead protector width x" + got.ToString("0.###") + " (want " + want + ")");
+                }
+                CheckDrawn(t, pawn, who, ("Apparel_BasicShirt", false), ("Apparel_CowboyHat", false));
+                if (pawn == a) CheckDrawn(t, pawn, who, ("Apparel_SmokepopBelt", true));
+                t.Check(!EchoCostume.CoversFace(pawn), who + ": the face is not covered (Facial Animation keeps its eyebrows)");
+            }
+            foreach (Rot4 rot in new[] { Rot4.South, Rot4.East, Rot4.North, Rot4.West })
+            {
+                Face(a, rot);
+                Face(b, rot);
+                yield return 20;
+                yield return t.ShotAs("minato-" + rot.ToStringHuman().ToLowerInvariant());
+            }
+
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                pawn.health.RemoveHediff(pawn.health.hediffSet.GetFirstHediffOfDef(form));
+                pawn.Drawer.renderer.SetAllGraphicsDirty();
+            }
+            yield return 2;
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                string who = pawn.story.headType.defName;
+                t.Check(!CostumeNodes(pawn, form).Any(), who + ": nothing of Minato is drawn after the form is removed");
+                CheckDrawn(t, pawn, who + " after", ("Apparel_BasicShirt", true), ("Apparel_CowboyHat", true));
+            }
+        }
     }
 }

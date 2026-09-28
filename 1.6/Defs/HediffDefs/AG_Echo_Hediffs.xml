@@ -212,6 +212,51 @@
     </renderNodeProperties>
   </HediffDef>
 
+  <!-- Minato's hero form. No Echo points here yet: his EchoDef (docs/hero-echo.md, "Minato") comes with
+       his kit's port and names this as its manifestHediff. The haori is drawn like Vergil's coat: the
+       Host's clothes, armour and headgear are hidden but still worn and counted, belts and packs still
+       drawn, and facing north it goes over the head so its collar covers the nape. The forehead
+       protector is on the head over the hair (62); the same on both sides, so west is east mirrored.
+       Textures: make_costume_textures.py. -->
+  <HediffDef ParentName="AG_EchoManifestBase">
+    <defName>AG_EchoManifest_Minato</defName>
+    <label>hero form: Minato</label>
+    <description>This Host has manifested Minato. The colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <renderNodeProperties>
+      <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
+        <debugLabel>Minato haori</debugLabel>
+        <hideBodyApparel>true</hideBodyApparel>
+        <hideHeadgear>true</hideHeadgear>
+        <workerClass>RimArt.PawnRenderNodeWorker_EchoCostume</workerClass>
+        <parentTagDef>ApparelBody</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <texPath>RimArt/Echo/Costume/MinatoHaori_Thin</texPath>
+        <bodyTypeGraphicPaths>
+          <Thin>RimArt/Echo/Costume/MinatoHaori_Thin</Thin>
+          <Male>RimArt/Echo/Costume/MinatoHaori_Male</Male>
+          <Female>RimArt/Echo/Costume/MinatoHaori_Female</Female>
+          <Fat>RimArt/Echo/Costume/MinatoHaori_Fat</Fat>
+          <Hulk>RimArt/Echo/Costume/MinatoHaori_Hulk</Hulk>
+        </bodyTypeGraphicPaths>
+        <baseLayer>29</baseLayer>
+        <drawData>
+          <dataNorth>
+            <layer>89</layer>
+          </dataNorth>
+        </drawData>
+      </li>
+      <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
+        <debugLabel>Minato forehead protector</debugLabel>
+        <workerClass>RimArt.PawnRenderNodeWorker_EchoCostume</workerClass>
+        <parentTagDef>Head</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <texPath>RimArt/Echo/Costume/MinatoHeadband</texPath>
+        <narrowHeadScale>(0.84, 0.7)</narrowHeadScale>
+        <baseLayer>63</baseLayer>
+      </li>
+    </renderNodeProperties>
+  </HediffDef>
+
   <HediffDef ParentName="AG_EchoManifestBase">
     <defName>AG_EchoManifest_Goku</defName>
     <label>hero form: Goku</label>
