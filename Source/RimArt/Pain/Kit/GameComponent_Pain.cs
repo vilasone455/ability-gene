@@ -7,7 +7,7 @@ using Verse.AI;
 namespace RimArt
 {
     /// <summary>
-    /// One cast of Banshō Ten'in or Black Receiver, from the warmup to the end of its picture (the pattern of
+    /// One cast of Banshō Ten'in, Black Receiver or Chibaku Tensei, from the warmup to the end of its picture (the pattern of
     /// MinatoCast). The cast job makes it when the warmup begins; the ability's comp tells it when it fires. From
     /// then it counts its own ticks: the rules land on whole ticks, the picture reads the same clock smoothed
     /// between them. The clock reads <see cref="Lead"/> at the start of the warmup, so the sketches' phase times are
@@ -256,9 +256,9 @@ namespace RimArt
     }
 
     /// <summary>
-    /// The cast job of Banshō Ten'in and Black Receiver: JobDriver_CastAbility that starts the cast (its picture) when
-    /// the warmup begins and, after the fire, holds Pain for as long as the cast says: Banshō until the slam, Black
-    /// Receiver until the rod lands. A cast called off before it fired costs nothing and starts no cooldown; one
+    /// The cast job of Banshō Ten'in, Black Receiver and Chibaku Tensei: JobDriver_CastAbility that starts the cast (its
+    /// picture) when the warmup begins and, after the fire, holds Pain for as long as the cast says: Banshō until the
+    /// slam, Black Receiver until the rod lands, Chibaku Tensei until the ball is formed and his hand is down. A cast called off before it fired costs nothing and starts no cooldown; one
     /// that fired had its cooldown (and charge) taken by Ability.Activate.
     /// </summary>
     public class JobDriver_CastPain : JobDriver_CastAbility
@@ -320,6 +320,7 @@ namespace RimArt
             PainCast cast;
             if (def == PainDefOf.AG_PainBanshoTenin) cast = new BanshoCast { target = target.Pawn };
             else if (def == PainDefOf.AG_PainBlackReceiver) cast = new BlackReceiverCast { target = target.Pawn };
+            else if (def == PainDefOf.AG_PainChibakuTensei) cast = new ChibakuCast { cell = target.Cell };
             else return null;
             cast.caster = caster;
             cast.home = caster.Map;
@@ -344,7 +345,7 @@ namespace RimArt
         }
     }
 
-    /// <summary>Both of Pain's cast abilities are disabled while another of his casts still holds him.</summary>
+    /// <summary>Pain's cast abilities are disabled while another of his casts still holds him.</summary>
     public abstract class CompAbilityEffect_Pain : CompAbilityEffect
     {
         public override bool GizmoDisabled(out string reason)

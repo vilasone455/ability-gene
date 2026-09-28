@@ -27,6 +27,8 @@ namespace RimArt
             { reason = "The caster must be a standing humanlike pawn, outside another animation."; return true; }
             if (parent.pawn.Map.GetComponent<MapComponent_ShinraCasts>().Running(parent.pawn))
             { reason = "Shinra Tensei is still playing."; return true; }
+            if (PainKit.ChibakuLock(parent.pawn) is string held)
+            { reason = held; return true; }
             return base.GizmoDisabled(out reason);
         }
 
@@ -36,7 +38,7 @@ namespace RimArt
             Pawn pawn = parent.pawn;
             if (pawn?.Map == null) return;
             MapComponent_ShinraCasts component = pawn.Map.GetComponent<MapComponent_ShinraCasts>();
-            if (component.Running(pawn) || !GameComponent_Shinra.HasEye(pawn) || PainKit.DevaGapLeft(pawn) > 0f
+            if (component.Running(pawn) || !GameComponent_Shinra.HasEye(pawn) || PainKit.DevaGapLeft(pawn) > 0f || PainKit.ChibakuLeft(pawn) > 0f
                 || GameComponent_Shinra.Instance.For(pawn).cooldownUntil > Find.TickManager.TicksGame) return;
             if (ShinraCastAnimation.Clip.TryStart(pawn, out CastClips.Handle animation))
                 component.Begin(pawn, animation);

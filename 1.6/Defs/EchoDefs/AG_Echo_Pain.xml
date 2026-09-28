@@ -4,7 +4,8 @@
   <!-- Pain (docs/hero-echo.md). In its own file rather than AG_Echoes.xml so parallel hero ports do
        not edit the same file. His four abilities come only from here: the repulsion and attraction
        eyes grant nothing since the port. Shinra Tensei and Banshō Ten'in share a 5 s gap (canon);
-       Black Receiver pays with its own three rods, so it costs no charge. -->
+       Black Receiver pays with its own three rods, so it costs no charge. Chibaku Tensei replaced
+       Gravity Well as his ultimate on 2026-09-28 (Gravity Well's code stays for Gojo's Blue). -->
   <RimArt.EchoDef ParentName="AG_EchoBase">
     <defName>AG_Echo_Pain</defName>
     <label>Pain</label>
@@ -31,7 +32,7 @@
       <li>AG_ShinraTensei</li>
       <li>AG_PainBanshoTenin</li>
       <li>AG_PainBlackReceiver</li>
-      <li>AG_GravityWell</li>
+      <li>AG_PainChibakuTensei</li>
     </abilities>
     <manifestHediff>AG_EchoManifest_Pain</manifestHediff>
     <upkeepPerHour>15</upkeepPerHour>
@@ -49,8 +50,8 @@
         <cost>0</cost>
       </li>
       <li>
-        <ability>AG_GravityWell</ability>
-        <cost>20</cost>
+        <ability>AG_PainChibakuTensei</ability>
+        <cost>30</cost>
       </li>
     </castCosts>
     <wealth>6000</wealth>

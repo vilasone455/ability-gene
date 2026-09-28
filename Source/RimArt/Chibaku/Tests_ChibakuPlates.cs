@@ -19,7 +19,7 @@ namespace RimArt
         private static readonly IntVec3 WallAt = new IntVec3(3, 0, -4);
 
         /// <summary>The cleared arena with the circle painted in four terrains, a concrete patch and a wall; returns the wall's cell.</summary>
-        private static IntVec3 Arena(RimArtTestContext t)
+        internal static IntVec3 Arena(RimArtTestContext t)
         {
             t.Clear();
             TerrainDef sand = TerrainDefOf.Sand, rich = TerrainDefOf.SoilRich, gravel = TerrainDefOf.Gravel, soil = TerrainDefOf.Soil, concrete = TerrainDefOf.Concrete;
@@ -105,7 +105,7 @@ namespace RimArt
             yield return 5;
             ChibakuBall ball = component.BeginBall(t.center, Radius, .9f);
             if (!t.Check(ball != null, "the ball was made from the captured ground")) yield break;
-            t.Log($"{ball.Caught} plates pulled, {ball.Slots} on the ball's surface, last arrives at {ball.LastArrival:0.00} s, formed at {ChibakuBall.Formed:0.00} s, bursts at {ChibakuBall.Burst:0.00} s");
+            t.Log($"{ball.Caught} plates pulled, {ball.Slots} on the ball's surface, last arrives at {ball.LastArrival:0.00} s, formed at {ChibakuBall.Formed:0.00} s, bursts at {ball.Burst:0.00} s");
             t.Check(ball.LastArrival <= ChibakuBall.Formed, "every plate reaches the ball before it is formed");
             t.Check(ball.FilledSlots(ChibakuBall.Formed) == ball.Slots, "the ball's surface is full when it is formed");
             t.Check(Mathf.Abs(ball.BallRadiusAt(ChibakuBall.Pull) - .3f * ChibakuBall.Radius) < .001f && Mathf.Abs(ball.BallRadiusAt(ChibakuBall.Formed) - ChibakuBall.Radius) < .001f,
@@ -119,8 +119,8 @@ namespace RimArt
             watch.Stop();
             t.Log($"one mid-pull frame's draw calls take {watch.Elapsed.TotalMilliseconds / 20:0.00} ms on the CPU");
 
-            foreach (var (at, name) in new[] { (.9f, "1-cracks"), (1.9f, "2-pull"), (3.0f, "3-forming"), (ChibakuBall.Formed + 1.25f, "4-held"), (ChibakuBall.Crack + .2f, "6-seams"), (ChibakuBall.Burst + .2f, "7-burst"),
-                (ChibakuBall.Burst + .75f, "8-rocks-falling"), (ChibakuBall.End - .45f, "9-result") })
+            foreach (var (at, name) in new[] { (.9f, "1-cracks"), (1.9f, "2-pull"), (3.0f, "3-forming"), (ChibakuBall.Formed + 1.25f, "4-held"), (ball.Crack + .2f, "6-seams"), (ball.Burst + .2f, "7-burst"),
+                (ball.Burst + .75f, "8-rocks-falling"), (ball.End - .45f, "9-result") })
             {
                 component.Freeze(at);
                 yield return t.ShotAs("chibaku-ball-" + name);
@@ -171,9 +171,9 @@ namespace RimArt
             yield return Until(ChibakuBall.Formed + 1f);
             yield return t.ShotAs("chibaku-pawns-3-held-in-the-ball");
 
-            yield return Until(ChibakuBall.Burst + .3f);
+            yield return Until(ball.Burst + .3f);
             yield return t.ShotAs("chibaku-pawns-4-falling-out");
-            yield return Until(ChibakuBall.Burst + ball.FallTime + .1f);
+            yield return Until(ball.Burst + ball.FallTime + .1f);
             foreach (Pawn p in caught)
             {
                 if (p.Dead) { t.Log($"{p.LabelShort} died of the crush and the fall"); continue; }
@@ -187,7 +187,7 @@ namespace RimArt
             t.Check(colonist.Dead || colonist.GetLord() == null, "the colonist is in no group");
             yield return t.ShotAs("chibaku-pawns-5-landed");
 
-            yield return Until(ChibakuBall.End + .2f);
+            yield return Until(ball.End + .2f);
             t.Check(component.Ball == null && component.Inner.Count == 0, "the preview ended by itself with nothing left inside");
         }
 
@@ -247,15 +247,15 @@ namespace RimArt
             yield return Until(ChibakuBall.Formed + 1f);
             yield return t.ShotAs("chibaku-items-2-held");
 
-            yield return Until(ChibakuBall.Burst + .25f);
+            yield return Until(ball.Burst + .25f);
             yield return t.ShotAs("chibaku-items-3-falling-out");
-            yield return Until(ChibakuBall.Burst + ball.FallTime + .1f);
+            yield return Until(ball.Burst + ball.FallTime + .1f);
             foreach (Thing thing in taken)
                 t.Check(thing.Spawned && (thing.Position - c).LengthHorizontal <= 4.5f, $"{thing.LabelShort} landed in the crater, {(thing.Position - c).LengthHorizontal:0.0} cells from the middle");
             t.Check(steel.stackCount == 75, $"the steel stack is whole ({steel.stackCount})");
             t.Check(component.Inner.Count == 0, "nothing is left inside");
             yield return t.ShotAs("chibaku-items-4-landed");
-            yield return Until(ChibakuBall.End + .2f);
+            yield return Until(ball.End + .2f);
         }
 
         [RimArtTest("Chibaku", "ground 1 the pulled soil becomes stony soil and the biggest rocks land as chunks of the map's rock", 2400)]
@@ -286,7 +286,7 @@ namespace RimArt
             t.Check(roofedCell.GetTerrain(t.map) == TerrainDefOf.SoilRich && outside.GetTerrain(t.map) == TerrainDefOf.Soil, "the roofed cell and the ground outside the circle keep their soil");
             t.Check((c + new IntVec3(-3, 0, -3)).GetTerrain(t.map) == TerrainDefOf.Concrete, "the concrete floor stays");
 
-            yield return Until(ChibakuBall.Burst + ball.LastChunkLands() + .1f);
+            yield return Until(ball.Burst + ball.LastChunkLands() + .1f);
             int chunks = ChunksNear() - chunksBefore, rubble = GenRadial.RadialCellsAround(c, Radius + 3f, true).Count(cell => cell.GetFirstThing(t.map, ThingDefOf.Filth_RubbleRock) != null);
             var rockDefs = Find.World.NaturalRockTypesIn(t.map.Tile).Select(r => r.building?.mineableThing).Where(d => d != null).ToList();
             t.Log($"{chunks} chunks landed ({string.Join(", ", component.Pull.chunks.Select(x => x.def.defName).Distinct())}; the map's rock: {string.Join(", ", rockDefs.Select(d => d.defName))}), rubble on {rubble} cells");
@@ -294,7 +294,7 @@ namespace RimArt
             t.Check(component.Pull.chunks.All(x => x.Spawned && rockDefs.Contains(x.def) && (x.Position - c).LengthHorizontal <= Radius + 1f), "they are the map's rock and lie in the crater");
             t.Check(rubble > 0, "the smaller rocks left rubble");
             yield return t.ShotAs("chibaku-ground-1-landed");
-            yield return Until(ChibakuBall.End + .3f);
+            yield return Until(ball.End + .3f);
             t.Check(component.Ball == null, "the preview ended");
             yield return t.ShotAs("chibaku-ground-2-after");
         }

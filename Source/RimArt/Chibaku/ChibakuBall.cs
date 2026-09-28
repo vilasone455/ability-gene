@@ -6,13 +6,13 @@ using Verse;
 namespace RimArt
 {
     /// <summary>
-    /// Chibaku Tensei's ball, drawn from a <see cref="ChibakuGround"/> capture (test stage: the picture only, no
-    /// pawns and no rules; ported from Tools/VfxLab/web/sketches/pain-chibaku-tensei.js with its defaults).
+    /// Chibaku Tensei's ball, drawn from a <see cref="ChibakuGround"/> capture (the picture; the rules are
+    /// <see cref="ChibakuPull"/>; ported from Tools/VfxLab/web/sketches/pain-chibaku-tensei.js with its defaults).
     ///
     /// Order: the core appears 5 cells over the cell with a soft flash and a dark circle spreads to the true
     /// radius; for 3 s cracks run out, plates heave, tear free (inner first) and tumble into the core, leaving a
     /// crater; the ball grows from what arrives (radius 0.3 to 1 times 2 cells, by the cube root of the share
-    /// arrived); it holds, turning 14 degrees a second and squeezing once a second; seams run round it for
+    /// arrived); it holds (the ability's holdSeconds, cut short by <see cref="BreakAt"/>), turning 14 degrees a second and squeezing once a second; seams run round it for
     /// 0.4 s; it bursts into rocks that land and stay with the crater.
     ///
     /// Drawing: the ball is a sphere under the kit's height rule (screen z = z + 0.6 h), so its outline is an
@@ -26,9 +26,9 @@ namespace RimArt
     [StaticConstructorOnStartup]
     public sealed class ChibakuBall : IDisposable
     {
-        public const float Radius = 2f, DefaultHeight = 5f, PullSeconds = 3f, HoldSeconds = 12f, Gravity = 12f;
+        public const float Radius = 2f, DefaultHeight = 5f, PullSeconds = 3f, Gravity = 12f;
         public const float Pulse = .25f, CrackRun = .45f, CrackTime = .4f, Tail = 3f;
-        public const float Pull = Pulse, Formed = Pull + PullSeconds, Crack = Formed + HoldSeconds, Burst = Crack + CrackTime, End = Burst + Tail;
+        public const float Pull = Pulse, Formed = Pull + PullSeconds;
         private const float Spin = 14f * Mathf.Deg2Rad, HeaveH = .18f, CoreR = .34f, PatchR = .45f;
         private const float Lift = SixPathsHeight.Lift;
         private const int MaxSlots = 84;
@@ -86,13 +86,22 @@ namespace RimArt
         /// <summary>The ball's centre above the ground, in cells (drawn 0.6 cells north per cell up).</summary>
         public readonly float height;
 
+        /// <summary>Seconds the formed ball holds before its seams open (the ability's holdSeconds); shorter once it breaks early.</summary>
+        public float Hold { get; private set; }
+        public float Crack => Formed + Hold;
+        public float Burst => Crack + CrackTime;
+        public float End => Burst + Tail;
+        /// <summary>It broke before its time (<see cref="BreakAt"/>).</summary>
+        public bool Broken { get; private set; }
+
         /// <summary>Seconds a pawn or item takes to fall out of the ball to the ground.</summary>
         public float FallTime => Mathf.Sqrt(2f * (height - .3f) / Gravity);
 
-        public ChibakuBall(ChibakuGround ground, float height = DefaultHeight)
+        public ChibakuBall(ChibakuGround ground, CompProperties_ChibakuTensei props, float height = DefaultHeight)
         {
             this.ground = ground;
             this.height = Mathf.Max(height, Radius + .4f);
+            Hold = Mathf.Max(0f, props.holdSeconds);
             Vector3 mid = ground.cell.ToVector3Shifted();
             core = new Vector3(mid.x, this.height, mid.z);
             middle = new Vector2(mid.x, mid.z);
@@ -139,8 +148,9 @@ namespace RimArt
                     slotFilledAt[m] = caught[k].arriveAt;
                 }
             }
-            // The biggest of the thrown rocks become real chunks where they land: one for every 16 plates pulled, 6 to 10.
-            int real = Mathf.Clamp(Mathf.RoundToInt(caught.Count / 16f), 6, 10);
+            // The biggest of the thrown rocks become real chunks where they land: one for every platesPerChunk plates
+            // pulled, minChunks to maxChunks.
+            int real = Mathf.Clamp(Mathf.RoundToInt(caught.Count / (float)Mathf.Max(1, props.platesPerChunk)), props.minChunks, props.maxChunks);
             var bySize = new List<int>();
             for (int m = 0; m < slots; m += 2) bySize.Add(m);
             bySize.Sort((a, b) => ChunkSize(b).CompareTo(ChunkSize(a)));
@@ -197,7 +207,18 @@ namespace RimArt
             return Radius * (.3f + .7f * Mathf.Pow(frac, 1f / 3f));
         }
 
-        private static float Squeeze(float s) => s >= Formed && s < Crack ? Bump(((s - Formed) % 1f) / .18f) : 0f;
+        private float Squeeze(float s) => s >= Formed && s < Crack ? Bump(((s - Formed) % 1f) / .18f) : 0f;
+
+        /// <summary>
+        /// The ball breaks at <paramref name="s"/> (Pain went down): its seams open now, or as soon as it is formed if it
+        /// is still forming, so every plate and pawn already on its way arrives first.
+        /// </summary>
+        public void BreakAt(float s)
+        {
+            if (s >= Crack) return;
+            Hold = Mathf.Max(0f, s - Formed);
+            Broken = true;
+        }
 
         /// <summary>The thrown rocks: slot, where it lands (x, z), seconds after the burst, and whether it becomes a real chunk item.</summary>
         public IEnumerable<(int m, Vector2 land, float after, bool real)> ThrownRocks
@@ -263,11 +284,8 @@ namespace RimArt
             // The core and the ball growing round it.
             if (s < Formed + .2f)
             {
-                float grown = Mathf.Lerp(.65f, 1f, Smooth(s / Pulse)), glowA = 1f - Smooth(frac);
-                Sprite(C, CoreR * grown * 5.6f, CoreR * grown * 5.6f, Fade(PaleBlue, .35f * glowA), glow, top + .04f);
-                Sprite(C, CoreR * grown * 3.4f, CoreR * grown * 3.4f, Fade(PaleBlue, .8f * glowA), glow, top + .0403f);
-                Sprite(C, CoreR * grown * 2.5f, CoreR * grown * 2.5f, Fade(PaleBlue, .9f * glowA), glow, top + .0406f);
-                Solid(disc, C, top + .041f, CoreR * grown, CoreR * grown, 0f, Core);
+                float grown = Mathf.Lerp(.65f, 1f, Smooth(s / Pulse));
+                BlackCore(C, CoreR * grown, 1f, top + .04f, 1f - Smooth(frac));
                 if (s < .2f)
                 {
                     float u = s / .2f, size = Mathf.Lerp(1f, 3.2f, EaseOut(u));
@@ -295,6 +313,31 @@ namespace RimArt
             }
             if (s >= Pull && s < Formed) Inflow(s, C, Mathf.Clamp01((s - Pull) / .2f) * (1f - Smooth((frac - .7f) / .3f)), top + .11f);
             if (s >= Burst) DrawBurst(s - Burst, C, top, floor, pawns != null);
+        }
+
+        /// <summary>
+        /// The black core (the Banshō palm core): a black disc in a soft pale glow. <paramref name="glowA"/> scales the
+        /// glow alone, so the ball can cover the core without a halo round it.
+        /// </summary>
+        public static void BlackCore(Vector2 c, float r, float alpha, float altitude, float glowA = 1f)
+        {
+            if (r <= .005f || alpha <= 0f) return;
+            Sprite(c, r * 5.6f, r * 5.6f, Fade(PaleBlue, .35f * alpha * glowA), glow, altitude);
+            Sprite(c, r * 3.4f, r * 3.4f, Fade(PaleBlue, .8f * alpha * glowA), glow, altitude + .0003f);
+            Sprite(c, r * 2.5f, r * 2.5f, Fade(PaleBlue, .9f * alpha * glowA), glow, altitude + .0006f);
+            Solid(disc, c, altitude + .001f, r, r, 0f, Fade(Core, alpha));
+        }
+
+        /// <summary>
+        /// The core in flight from Pain's palm (<paramref name="from"/>) to its place over the cell (<paramref name="to"/>),
+        /// <paramref name="u"/> of the way, with a dark trail behind it. Points are (x, height, z) in cells.
+        /// </summary>
+        public static void FlyingCore(Vector3 from, Vector3 to, float u, float r, float altitude)
+        {
+            Vector2[] trail = GokuGraphics.Points(7);
+            for (int k = 0; k < trail.Length; k++) trail[k] = Screen(Vector3.Lerp(from, to, Mathf.Max(0f, u - k * .045f)));
+            GokuGraphics.Line(trail, .2f, Fade(Core, .35f), solid, altitude - .002f, GokuGraphics.Taper.End);
+            BlackCore(trail[0], r, 1f, altitude);
         }
 
         /// <summary>

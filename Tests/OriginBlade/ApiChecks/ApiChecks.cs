@@ -1167,7 +1167,7 @@ static class ApiChecks
             || (float)eye.Element("addedPartProps").Element("partEfficiency") != 1f
             || (string)eye.Element("spawnThingOnRemoved") != "AG_AttractionEye"
             || eye.Element("abilities") != null)
-            throw new Exception("Attraction eye must supply normal sight and surgical recovery, and no ability (Gravity Well comes from Pain's Echo)");
+            throw new Exception("Attraction eye must supply normal sight and surgical recovery, and no ability (Pain's abilities come from his Echo)");
 
         var recipe = XDocument.Load("1.6/Defs/RecipeDefs/AG_Gravity_Recipes.xml").Root.Element("RecipeDef");
         var siblingRecipe = XDocument.Load("1.6/Defs/RecipeDefs/AG_Shinra_Recipes.xml").Root.Element("RecipeDef");

@@ -45,6 +45,11 @@ namespace RimArt
                 reason = "Shinra Tensei is charging.";
                 return true;
             }
+            if (PainKit.ChibakuLock(parent.pawn) is string held)
+            {
+                reason = held;
+                return true;
+            }
             return base.GizmoDisabled(out reason);
         }
 

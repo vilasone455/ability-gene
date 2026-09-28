@@ -24,15 +24,20 @@ namespace RimArt
     }
 
     /// <summary>
-    /// Plays the Chibaku previews on a map: the ground round a cell is captured and cut, then either the plates
-    /// lift 1 cell and land again (<see cref="ChibakuGround.End"/> seconds of real time, also while paused) or
-    /// the ball forms, holds and bursts (<see cref="ChibakuBall.End"/> seconds of game time), or either is held
-    /// at one moment when frozen. The ground is not changed.
+    /// Plays Chibaku Tensei on a map, one ball at a time: Pain's cast (<see cref="ChibakuCast"/>) hands its core
+    /// over here when it arrives over the cell, and the debug previews start here directly. The ground round the
+    /// cell is captured and cut, then either the plates lift 1 cell and land again (<see cref="ChibakuGround.End"/>
+    /// seconds of real time, also while paused) or the ball forms, holds and bursts (<see cref="ChibakuBall.End"/>
+    /// seconds of game time), or either is held at one moment when frozen (previews only; the ground is not changed).
     ///
     /// The live ball takes pawns and items (<see cref="ChibakuPull"/>): it holds them in this component, which the
     /// map counts among its thing holders, so they stay on the map while off it. A save made while they are held
     /// keeps them; the picture is not saved, so on load they are put down at once, unhurt, where the ball was.
     /// Stopping the preview early does the same.
+    ///
+    /// Pain's ball bursts early when Pain can no longer hold it (downed, dead, off the map, out of hero form): the
+    /// seams open at once, or as soon as it is formed (<see cref="ChibakuBall.BreakAt"/>). While it holds, his
+    /// Shinra Tensei and Banshō Ten'in wait (<see cref="HoldLeft"/>).
     ///
     /// Polish, after the ability itself is built: the crater's drawing (holes, ribs, drawn rocks) ends with the
     /// preview; it should fade out over about a day, leaving the stony soil, chunks and rubble.
@@ -42,6 +47,8 @@ namespace RimArt
         private ChibakuGround ground;
         private ChibakuBall ball;
         private ChibakuPull pull;
+        /// <summary>Pain, for the live ball he cast; null for a preview.</summary>
+        private Pawn caster;
         private float seconds;
         private float? frozenAt;
         private int startTick = -1;
@@ -61,6 +68,9 @@ namespace RimArt
         public ChibakuGround Ground => ground;
         public ChibakuBall Ball => ball;
         public ChibakuPull Pull => pull;
+        public Pawn Caster => caster;
+        /// <summary>A live ball (taking pawns, on game time) is up.</summary>
+        public bool Live => pull != null && !frozenAt.HasValue;
         public ThingOwner<Thing> Inner => inner;
         /// <summary>Seconds on the live ball's timeline (game time since it began).</summary>
         public float LiveSeconds => startTick < 0 ? 0f : (Find.TickManager.TicksGame - startTick) / 60f;
@@ -69,28 +79,44 @@ namespace RimArt
         public ThingOwner GetDirectlyHeldThings() => inner;
         public void GetChildHolders(List<IThingHolder> outChildren) => ThingOwnerUtility.AppendThingHoldersFromThings(outChildren, GetDirectlyHeldThings());
 
-        public ChibakuGround Begin(IntVec3 cell, float radius, float? frozen = null)
+        public ChibakuGround Begin(IntVec3 cell, float radius, float? frozen = null, ICollection<IntVec3> keep = null)
         {
             Stop();
             if (!cell.InBounds(map)) return null;
-            ground = ChibakuGround.Capture(map, cell, radius);
+            ground = ChibakuGround.Capture(map, cell, radius, keep: keep);
             seconds = frozen ?? 0f;
             frozenAt = frozen;
             return ground;
         }
 
-        /// <summary>The ball; live (taking pawns, on game time) unless <paramref name="frozen"/> holds it at one moment.</summary>
-        public ChibakuBall BeginBall(IntVec3 cell, float radius, float? frozen = null, float height = ChibakuBall.DefaultHeight)
+        /// <summary>
+        /// The ball; live (taking pawns, on game time) unless <paramref name="frozen"/> holds it at one moment.
+        /// <paramref name="caster"/> is Pain for his cast: he is not caught, and the plates under him and under every
+        /// pinned pawn in the circle stay. The numbers are Chibaku Tensei's XML fields (the previews use them too).
+        /// </summary>
+        public ChibakuBall BeginBall(IntVec3 cell, float radius, float? frozen = null, float height = ChibakuBall.DefaultHeight, Pawn caster = null)
         {
-            if (Begin(cell, radius, frozen) == null) return null;
-            ball = new ChibakuBall(ground, height);
+            var keep = new HashSet<IntVec3>();
+            if (caster != null && caster.Spawned && caster.Map == map) keep.Add(caster.Position);
+            foreach (Pawn p in map.mapPawns.AllPawnsSpawned)
+                if (PainKit.Unmovable(p) && p.Position.InHorDistOf(cell, radius + 1.5f)) keep.Add(p.Position);
+            if (Begin(cell, radius, frozen, keep) == null) return null;
+            CompProperties_ChibakuTensei props = PainKit.ChibakuProps ?? new CompProperties_ChibakuTensei();
+            ball = new ChibakuBall(ground, props, height);
             if (!frozen.HasValue)
             {
                 startTick = Find.TickManager.TicksGame;
-                pull = new ChibakuPull(this, ball, cell);
+                this.caster = caster;
+                pull = new ChibakuPull(this, ball, cell, caster, props);
             }
             return ball;
         }
+
+        /// <summary>Seconds until the live ball <paramref name="pawn"/> cast bursts, or 0.</summary>
+        public float HoldLeft(Pawn pawn) => pawn != null && caster == pawn && Live ? Mathf.Max(0f, ball.Burst - LiveSeconds) : 0f;
+
+        /// <summary>Pain can still hold his ball: on this map, standing, and in hero form.</summary>
+        private bool CasterHolds() => caster.Spawned && caster.Map == map && !caster.Dead && !caster.Downed && PainKit.Has(caster, PainDefOf.AG_PainChibakuTensei);
 
         /// <summary>Holds the preview at <paramref name="at"/> seconds of the timeline (a frozen ball takes no pawns).</summary>
         public void Freeze(float at) => frozenAt = seconds = at;
@@ -99,6 +125,7 @@ namespace RimArt
         {
             pull?.ReleaseAll();
             pull = null;
+            caster = null;
             startTick = -1;
             ball?.Dispose();
             ball = null;
@@ -112,8 +139,9 @@ namespace RimArt
             if (inner.Count > 0) inner.DoTick();
             if (pull == null || frozenAt.HasValue) return;
             float s = LiveSeconds;
+            if (caster != null && s < ball.Crack && !CasterHolds()) ball.BreakAt(s);
             pull.Tick(s);
-            if (s > ChibakuBall.End) Stop();
+            if (s > ball.End) Stop();
         }
 
         public override void MapComponentUpdate()
@@ -124,7 +152,7 @@ namespace RimArt
             else
             {
                 seconds += Time.unscaledDeltaTime;
-                if (seconds > (ball != null ? ChibakuBall.End : ChibakuGround.End))
+                if (seconds > (ball != null ? ball.End : ChibakuGround.End))
                 {
                     Stop();
                     return;
@@ -176,6 +204,7 @@ namespace RimArt
         public override void MapRemoved()
         {
             pull = null;
+            caster = null;
             ball?.Dispose();
             ball = null;
             ground?.Dispose();
