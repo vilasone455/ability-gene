@@ -323,11 +323,18 @@ namespace RimArt
             foreach (int step in WaitFor(() => !host.stances.FullBodyBusy, 120)) yield return step;
             t.Check(gene.PassedThroughRecently(raider), "still inside the counter window");
             Ability store = host.abilities.GetAbility(ObitoDefOf.AG_KamuiStore);
-            int start = t.Now;
+            // Solid beside an enemy, his wait job punches it (vanilla melee auto-attack: a stunned enemy is still a
+            // threat), and the order waits out that melee cooldown. So the check is that Store never warms up, not
+            // how soon the absorb lands.
             store.QueueCastingJob(raider, LocalTargetInfo.Invalid);
-            foreach (int step in WaitFor(() => raider.MapHeld == gene.Volume, 60)) yield return step;
+            bool warmedUp = false;
+            for (int waited = 0; waited < 240 && raider.MapHeld != gene.Volume; waited++)
+            {
+                if (ObitoFX.WarmingUp(host, ObitoDefOf.AG_KamuiStore, out _, out _)) warmedUp = true;
+                yield return 1;
+            }
             t.Check(raider.MapHeld == gene.Volume, "absorbed (" + RimArtTestContext.Describe(host) + ")");
-            t.Check(t.Now - start < 16, "with no warm-up (" + (t.Now - start) + " ticks; a normal absorb waits 24)");
+            t.Check(!warmedUp, "with no warm-up (a normal absorb warms up 0.4 s)");
             Finish(host, record);
         }
 
