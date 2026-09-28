@@ -15,16 +15,26 @@ namespace RimArt
     /// </summary>
     public static class ThunderGodChainGraphics
     {
-        private static readonly ChainHop[] hops = new ChainHop[T.MostTargets + 1];
+        private static readonly ChainHop[] preview = new ChainHop[T.MostTargets + 1];
 
-        /// <summary><paramref name="toward"/> is the unit direction from the caster to the first target.</summary>
+        /// <summary>The preview: <paramref name="toward"/> is the unit direction from the caster to the first target.</summary>
         public static void Draw(Vector3 centre, Vector2 toward, int targets, bool returns, float seconds, Map map)
         {
-            if (seconds < 0f || seconds >= T.Duration(targets, returns)) return;
             var middle = new Vector2(centre.x, centre.z);
-            int count = T.Route(middle, toward, targets, returns, hops);
-            for (int k = 0; k < count; k++) if (!Shown(hops[k].from, map) || !Shown(hops[k].to, map)) return;
-            Begin(middle);
+            int count = T.Route(middle, toward, targets, returns, preview);
+            Draw(preview, count, T.Duration(targets, returns), seconds, map);
+        }
+
+        /// <summary>
+        /// A real chain: <paramref name="hops"/> holds <paramref name="count"/> jumps in order, as
+        /// <see cref="ThunderGodChainTiming.Route"/> fills them for the preview; <paramref name="duration"/> is
+        /// when the last strip has burnt away.
+        /// </summary>
+        public static void Draw(ChainHop[] hops, int count, float duration, float seconds, Map map)
+        {
+            if (seconds < 0f || seconds >= duration || count <= 0) return;
+            for (int k = 0; k < count; k++) if (!hops[k].skipped && (!Shown(hops[k].from, map) || !Shown(hops[k].to, map))) return;
+            Begin(hops[0].from);
             float written = (seconds - T.CastAt) / T.Seal;
 
             if (written > 0f)
@@ -32,14 +42,18 @@ namespace RimArt
                 {
                     ChainHop h = hops[k];
                     float landed = seconds - T.ArriveAt(k), burn = (landed - T.Flash) / T.Linger;
-                    if (burn >= 1f) continue;
+                    if (burn >= 1f || h.skipped) continue;
                     float beat = landed < 0f ? 1f : 0.75f + 0.25f * Mathf.Sin(landed * 9f);
                     float lit = Mathf.Clamp01(written) * (1f - Smooth(burn)) * beat;
                     if (h.hasTarget)
                     {
-                        Sprite(h.target + h.along * ((ThunderGodTiming.Behind - ThunderGodTiming.StripBack) / 2f), 1.8f, 0.5f,
-                            Fade(Gold, 0.3f * lit), glow, Floor + 0.005f + k * 0.0002f, -h.degrees);
-                        Script(h.target, h.degrees, -ThunderGodTiming.StripBack, ThunderGodTiming.StripGlyphs, seconds, T.CastAt, T.Seal, burn, k * 4);
+                        // The strip runs from the target into the landing cell: 1 cell straight behind, 1.4 on a diagonal.
+                        float reach = Vector2.Distance(h.target, h.to);
+                        int glyphs = Mathf.Max(ThunderGodTiming.StripGlyphs, Mathf.RoundToInt((reach + ThunderGodTiming.StripBack) / ThunderGodTiming.GlyphPitch));
+                        float strip = reach > 0.01f ? ThunderGodTiming.Degrees(h.to - h.target) : h.degrees;
+                        Sprite(h.target + Turn(strip) * ((reach - ThunderGodTiming.StripBack) / 2f), reach + 0.8f, 0.5f,
+                            Fade(Gold, 0.3f * lit), glow, Floor + 0.005f + k * 0.0002f, -strip);
+                        Script(h.target, strip, -ThunderGodTiming.StripBack, glyphs, seconds, T.CastAt, T.Seal, burn, k * 4);
                         SealOnPawn(h.target, h.thrown, Smooth(written) * (1f - 0.7f * Smooth(landed / T.Flash)) * (1f - Smooth(burn)));
                     }
                     else
@@ -61,6 +75,7 @@ namespace RimArt
             for (int k = 0; k < count; k++)
             {
                 ChainHop h = hops[k];
+                if (h.skipped) continue;
                 float gone = seconds - T.GoAt(k), here = seconds - T.ArriveAt(k);
                 Leave(h.from, gone, T.Squeeze, T.FlashRadius, k == 0);
                 JumpLine(h.from, h.to, gone / T.Line, T.LineWidth);
@@ -71,7 +86,7 @@ namespace RimArt
                 Star(new Vector2(h.to.x, h.to.y + ThunderGodTiming.Chest), here, T.Flash, T.FlashRadius);
                 Sparks(h.to, here, 8);
                 if (!h.hasTarget) continue;
-                Slash(h.to, h.degrees + 180f, seconds - T.StrikeAt(k));
+                Slash(h.to, ThunderGodTiming.Degrees(h.target - h.to), seconds - T.StrikeAt(k));
                 HitSpark(h.target, seconds - T.HitAt(k));
             }
         }

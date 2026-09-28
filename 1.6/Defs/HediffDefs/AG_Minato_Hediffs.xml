@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Sealing touch (Minato, passive): the Flying Thunder God seal his landed melee hits leave while he
+       is manifested (SealingTouch.cs). A sealed pawn counts as holding one of his kunai for the jump,
+       the chain, Guiding Thunder and the Rasengan. It lasts one day; a hit on a sealed pawn starts the
+       day again. He keeps maxSeals at once and one more replaces the oldest. It goes when the pawn
+       leaves the map. Drawn as a gold glow at the chest (GameComponent_Minato). -->
+  <HediffDef>
+    <defName>AG_MinatoSeal</defName>
+    <label>Flying Thunder God seal</label>
+    <description>Minato's touch left his seal on this creature. He can jump to it as if it carried one of his kunai.</description>
+    <hediffClass>RimArt.Hediff_MinatoSeal</hediffClass>
+    <isBad>true</isBad>
+    <defaultLabelColor>(1, 0.78, 0.18)</defaultLabelColor>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>60000</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+      <li Class="HediffCompProperties_DisappearsOnDeath"/>
+    </comps>
+    <modExtensions>
+      <li Class="RimArt.MinatoSealExtension">
+        <maxSeals>3</maxSeals>
+      </li>
+    </modExtensions>
+  </HediffDef>
+
+</Defs>
