@@ -1,28 +1,26 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
+  <!-- Obito's Echo-only gene (docs/hero-echo.md "Obito"): the Obito Echo gives it on awakening and it stays
+       for life. It holds the Kamui dimension (built on awakening) and what he stored there; his four abilities
+       come from the Echo (AG_Obito_Abilities.xml) and work only in hero form. Not in genepacks or generated
+       xenotypes. -->
   <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_InvoluteOrgan</defName>
-    <label>fold organ</label>
-    <description>One part of the carrier's body - rolled when the gene lands, named on their health tab - is not entirely there, and they are permanently worse at whatever that part did. Connected, anything striking that part arrives inside a room that is not anywhere instead of landing on them.\n\nThey can step through it, put people through it, store things in it, and end the whole volume with everything still inside.</description>
+    <label>Kamui</label>
+    <description>Obito's right eye and the dimension behind it: a field of stone blocks in a void that only he can reach. It works only in hero form.\n\nWhile phased, every hit on him goes through him into the dimension. He can step into it and out anywhere on the map he left, absorb a person or an item stack by touch, and put what he stored back out. What he stored stays inside between manifests; on his death or the loss of this gene everything inside comes out.</description>
     <geneClass>RimArt.Gene_Involute</geneClass>
     <iconPath>UI/Icons/Genes/Gene_ExtremePsychicAbility</iconPath>
     <displayCategory>Ability</displayCategory>
     <displayOrderInCategory>200</displayOrderInCategory>
     <marketValueFactor>3.0</marketValueFactor>
-    <abilities>
-      <li>AG_InvoluteVent</li>
-      <li>AG_InvoluteFold</li>
-      <li>AG_InvoluteSwallow</li>
-      <li>AG_InvolutePost</li>
-      <li>AG_InvoluteCollapse</li>
-    </abilities>
+    <canGenerateInGeneSet>false</canGenerateInGeneSet>
+    <selectionWeight>0</selectionWeight>
     <descriptionHyperlinks>
-      <AbilityDef>AG_InvoluteVent</AbilityDef>
-      <AbilityDef>AG_InvoluteFold</AbilityDef>
-      <AbilityDef>AG_InvoluteSwallow</AbilityDef>
-      <AbilityDef>AG_InvolutePost</AbilityDef>
-      <AbilityDef>AG_InvoluteCollapse</AbilityDef>
+      <AbilityDef>AG_KamuiPhase</AbilityDef>
+      <AbilityDef>AG_KamuiWarp</AbilityDef>
+      <AbilityDef>AG_KamuiStore</AbilityDef>
+      <AbilityDef>AG_WoodRelease</AbilityDef>
     </descriptionHyperlinks>
     <biostatMet>-4</biostatMet>
     <biostatCpx>7</biostatCpx>
@@ -32,16 +30,6 @@
         <volumeSizeX>48</volumeSizeX>
         <volumeSizeZ>48</volumeSizeZ>
         <volumeGenerator>AG_InvoluteVolume</volumeGenerator>
-
-        <!-- The roll can reach the torso and the head, not just limbs. Rare - one candidate in
-             about fifteen - and a trade rather than a prize: a torso hole stops roughly 40% of
-             incoming fire, and puts the hole's efficiency penalty on the part everything else
-             hangs off. That carrier is hard to kill and barely able to work. -->
-        <allowAnyPart>true</allowAnyPart>
-        <minHoleCoverage>0.02</minHoleCoverage>
-        <maxHoleCoverage>1.0</maxHoleCoverage>
-        <holeEfficiencyOffset>-0.5</holeEfficiencyOffset>
-        <maxSwallowBodySize>1.2</maxSwallowBodySize>
       </li>
     </modExtensions>
     <symbolPack>

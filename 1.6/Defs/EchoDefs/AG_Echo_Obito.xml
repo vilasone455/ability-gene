@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Obito (docs/hero-echo.md "Obito"). In a file of its own so it merges cleanly next to the other heroes'
+       ports. His Kamui gene (AG_InvoluteOrgan) is his Echo-only organ: given on awakening and kept for life,
+       because the Kamui dimension and what he stored in it live on it; Phase, Warp, Store and Wood Release work
+       only in hero form. Phase costs no charge (its own pool is its cost). Depressive is vanilla NaturalMood at
+       degree -2. Every number is a placeholder. -->
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Obito</defName>
+    <label>Obito</label>
+    <subtitle>Watcher Behind the Spiral Mask</subtitle>
+    <description>What strikes him passes into another world, and so does whoever he touches.</description>
+    <order>90</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Melee</skill>
+        <level>12</level>
+      </li>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Intellectual</skill>
+        <level>10</level>
+      </li>
+      <li Class="RimArt.Trial_ArtificialPart" />
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>NaturalMood</trait>
+        <degree>-2</degree>
+      </li>
+    </forcedTraits>
+    <awakenGenes>
+      <li MayRequire="Ludeon.RimWorld.Biotech">AG_InvoluteOrgan</li>
+    </awakenGenes>
+    <abilities>
+      <li>AG_KamuiPhase</li>
+      <li>AG_KamuiWarp</li>
+      <li>AG_KamuiStore</li>
+      <li>AG_WoodRelease</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Obito</manifestHediff>
+    <upkeepPerHour>12</upkeepPerHour>
+    <castCosts>
+      <li><ability>AG_KamuiWarp</ability><cost>2</cost></li>
+      <li><ability>AG_KamuiStore</ability><cost>1</cost></li>
+      <li><ability>AG_WoodRelease</ability><cost>2</cost></li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.08, 0.08, 0.1)</hairColor>
+  </RimArt.EchoDef>
+
+</Defs>

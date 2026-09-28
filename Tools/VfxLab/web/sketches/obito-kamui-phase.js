@@ -1,4 +1,5 @@
-// Obito — Kamui: Phase. A picture for the agreed mechanic; nothing in Source/RimArt draws it yet.
+// Obito — Kamui: Phase. A picture for the agreed mechanic, ported to
+// Source/RimArt/Obito/ObitoFX.cs, the bent body (2026-09-28).
 //
 // Mechanic (agreed 2026-09-27, numbers are XML placeholders): a toggle. While it is on, Obito is
 // intangible and spends his own pool: 30 s, refilling 1 s per 4 s solid (a gizmo bar, not drawn

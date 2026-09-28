@@ -189,15 +189,14 @@
     <description>This Host has manifested Itachi. The Echo's abilities are available, the dispersal plexus is awake and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
   </HediffDef>
 
-  <!-- Obito's hero form. No Echo points here yet: his EchoDef (docs/hero-echo.md, "Obito") comes with
-       his kit's port and names this as its manifestHediff. The Akatsuki cloak comes from the parent;
+  <!-- Obito's hero form (AG_Echo_Obito.xml). The Akatsuki cloak comes from the parent;
        the spiral mask is added on the head over the hair (62) and under the collar (64), with its own
        west picture because the eye hole is only on his right side. coversFace keeps Facial Animation's
        eyebrows (layer 100 by default) off the mask. -->
   <HediffDef ParentName="AG_EchoManifest_Akatsuki">
     <defName>AG_EchoManifest_Obito</defName>
     <label>hero form: Obito</label>
-    <description>This Host has manifested Obito. The colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <description>This Host has manifested Obito. The Echo's abilities are available, the Kamui is awake and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
     <renderNodeProperties>
       <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
         <debugLabel>Obito mask</debugLabel>

@@ -1,5 +1,5 @@
-// Obito — Kamui: Store (absorb and release are one ability). A picture for the agreed mechanic;
-// nothing in Source/RimArt draws it yet.
+// Obito — Kamui: Store (absorb and release are one ability). A picture for the agreed mechanic,
+// ported to Source/RimArt/Obito/ObitoFX.cs (2026-09-28).
 //
 // Mechanic (agreed 2026-09-27, numbers are XML placeholders):
 //   Absorb: touch range, a pawn up to body size 1.2 or one item stack, warm-up 0.4 s. Instant (no

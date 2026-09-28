@@ -206,4 +206,24 @@ namespace RimArt
             if (!anyMelee && !anyRanged && weapons.NullOrEmpty()) yield return "no weapons named";
         }
     }
+
+    /// <summary>
+    /// Met while the pawn is missing a body part or has one replaced by an artificial part (a prosthetic,
+    /// bionic or archotech limb, eye or organ). Obito's Trial: half his body was rebuilt.
+    /// </summary>
+    public class Trial_ArtificialPart : EchoTrial
+    {
+        public override float Current(Pawn pawn)
+        {
+            List<Hediff> hediffs = pawn?.health?.hediffSet?.hediffs;
+            if (hediffs == null) return 0f;
+            for (int i = 0; i < hediffs.Count; i++)
+                if (hediffs[i] is Hediff_MissingPart || hediffs[i] is Hediff_AddedPart) return 1f;
+            return 0f;
+        }
+
+        public override float Target => 1f;
+        public override bool IsCheck => true;
+        protected override string DefaultLabel => "AG_EchoTrialArtificialPart".Translate();
+    }
 }

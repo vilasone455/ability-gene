@@ -1,4 +1,5 @@
-// Obito — Kamui: Warp. A picture for the agreed mechanic; nothing in Source/RimArt draws it yet.
+// Obito — Kamui: Warp. A picture for the agreed mechanic, ported to
+// Source/RimArt/Obito/ObitoFX.cs (2026-09-28).
 //
 // Mechanic (agreed 2026-09-27, numbers are XML placeholders): 1 s warm-up, then Obito is inside
 // the Kamui dimension (the pocket map, kamui-dimension.js). From inside he picks any revealed cell

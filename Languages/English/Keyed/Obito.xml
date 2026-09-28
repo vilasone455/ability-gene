@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <!-- Kamui, the gene -->
+  <AG_KamuiNoGene>{0} has no Kamui.</AG_KamuiNoGene>
+  <AG_KamuiNotManifested>{0} is not in hero form.</AG_KamuiNotManifested>
+  <AG_KamuiPhasedCannot>{0} is phased and cannot touch anything.</AG_KamuiPhasedCannot>
+
+  <!-- Kamui: Phase -->
+  <AG_KamuiPhaseOffLabel>Kamui: solid</AG_KamuiPhaseOffLabel>
+  <AG_KamuiPhasePoolLow>{0} has only {1} seconds of phase left.</AG_KamuiPhasePoolLow>
+  <AG_KamuiPhaseSpent>{0}'s phase is spent; turning solid.</AG_KamuiPhaseSpent>
+  <AG_KamuiTurningSolid>Turning solid.</AG_KamuiTurningSolid>
+
+  <!-- Kamui: Warp -->
+  <AG_KamuiWarpOutLabel>Kamui: warp out</AG_KamuiWarpOutLabel>
+  <AG_KamuiWarpOutDesc>Pick any revealed spot on the map {0} left. A swirl marks it for half a second, then {0} comes out there. The cooldown starts then.</AG_KamuiWarpOutDesc>
+  <AG_KamuiWarpExiting>{0} is already coming out.</AG_KamuiWarpExiting>
+  <AG_KamuiWarpNoWayOut>There is no map to come out on.</AG_KamuiWarpNoWayOut>
+
+  <!-- Kamui: Store -->
+  <AG_KamuiStoreNeedsTarget>Must target a person, an animal, a mechanoid or an item stack.</AG_KamuiStoreNeedsTarget>
+  <AG_KamuiStoreInside>{0} is inside the Kamui dimension.</AG_KamuiStoreInside>
+  <AG_KamuiStoreTooBig>{0} is too big to absorb.</AG_KamuiStoreTooBig>
+  <AG_KamuiReleaseLabel>Kamui: release ({0})</AG_KamuiReleaseLabel>
+  <AG_KamuiReleaseDesc>Put something stored in the Kamui dimension back out, on any spot within {0} cells in sight. An enemy comes out stunned for {1} seconds.</AG_KamuiReleaseDesc>
+  <AG_KamuiReleaseHostile>{0} (enemy)</AG_KamuiReleaseHostile>
+  <AG_KamuiReleasing>Already releasing.</AG_KamuiReleasing>
+
+  <!-- Echo -->
+  <AG_EchoTrialArtificialPart>A missing or artificial body part</AG_EchoTrialArtificialPart>
+</LanguageData>
