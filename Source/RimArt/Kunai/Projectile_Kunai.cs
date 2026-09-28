@@ -21,6 +21,19 @@ namespace RimArt
     /// </summary>
     public class Projectile_Kunai : Bullet
     {
+        /// <summary>
+        /// A thrown kunai has no weapon Thing behind it, so the kunai item is named as the weapon: the damage and
+        /// the battle log say "kunai", and a kill counts toward Minato's Trial (30 kills with a thrown kunai,
+        /// Trial_KillsWith on AG_Kunai).
+        /// </summary>
+        public override void Launch(Thing launcher, Vector3 origin, LocalTargetInfo usedTarget, LocalTargetInfo intendedTarget,
+                                    ProjectileHitFlags hitFlags, bool preventFriendlyFire = false, Thing equipment = null,
+                                    ThingDef targetCoverDef = null)
+        {
+            base.Launch(launcher, origin, usedTarget, intendedTarget, hitFlags, preventFriendlyFire, equipment, targetCoverDef);
+            if (equipmentDef == null) equipmentDef = KunaiDefOf.AG_Kunai;
+        }
+
         protected override void Impact(Thing hitThing, bool blockedByShield = false)
         {
             Map map = Map;

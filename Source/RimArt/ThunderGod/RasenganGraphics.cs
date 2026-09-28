@@ -16,8 +16,8 @@ namespace RimArt
     /// per-facing method. Blue-white, not the kit's gold.
     ///
     /// Neither pawn is drawn. The ball sits where the sketch's stand-in caster holds it, at chest
-    /// height; a real cast plays RimArt_RasenganForm and RimArt_RasenganThrust and would put the
-    /// ball on the clip's hand.
+    /// height, in game as well (RasenganCast): the RimArt_RasenganForm and RimArt_RasenganThrust
+    /// clips, which would put it on the clip's hand, are not played yet.
     /// </summary>
     [StaticConstructorOnStartup]
     public static class RasenganGraphics
@@ -34,56 +34,74 @@ namespace RimArt
         private static readonly float[] ArcShare = { 0.62f, 0.44f, 0.27f }, ArcSpeed = { 1f, -1.4f, 1.9f }, ArcSpan = { 150f, 170f, 200f };
 
         /// <summary>
-        /// <paramref name="centre"/> is the middle of what happens and <paramref name="toward"/> is the
+        /// The preview: <paramref name="centre"/> is the middle of what happens and <paramref name="toward"/> is the
         /// unit direction from where the caster starts to the enemy.
         /// </summary>
         public static void Draw(Vector3 centre, Vector2 toward, bool teleports, bool wall, float seconds, Map map)
         {
-            if (seconds < 0f || seconds >= T.Duration(teleports, wall)) return;
             var middle = new Vector2(centre.x, centre.z);
-            Vector2 enemy = T.Enemy(middle, toward, teleports), home = T.Home(middle, toward, teleports), spot = T.Spot(middle, toward, teleports);
-            float direction = T.Direction(teleports);
-            if (!Shown(home, map) || !Shown(enemy + toward * (direction * T.ThrowDistance), map)) return;
-            Begin(middle);
-            float aim = ThunderGodTiming.Degrees(toward), chest = ThunderGodTiming.Chest;
-            float arriveAt = T.ArriveAt(teleports), thrustAt = T.ThrustAt(teleports), hitAt = T.HitAt(teleports),
-                releaseAt = T.ReleaseAt(teleports), landAt = T.LandAt(teleports, wall), thrown = T.Thrown(wall);
-            var across = new Vector2(-toward.y, toward.x);
+            Draw(T.Home(middle, toward, teleports), T.Spot(middle, toward, teleports), T.Enemy(middle, toward, teleports),
+                toward * T.Direction(teleports), T.Thrown(wall), teleports, wall, seconds, map);
+        }
 
-            // The jump's floor script, written while the ball forms.
+        /// <summary>
+        /// A real Rasengan. Ground points (the feet): <paramref name="home"/> where the ball was formed,
+        /// <paramref name="spot"/> where the caster thrusts from (the landing cell after a jump, else home),
+        /// <paramref name="enemy"/> the target when it is hit. <paramref name="away"/> is the unit direction it is
+        /// thrown and <paramref name="thrown"/> how many cells it goes; <paramref name="wall"/> when something solid
+        /// stopped it short.
+        /// </summary>
+        public static void Draw(Vector2 home, Vector2 spot, Vector2 enemy, Vector2 away, float thrown, bool teleports, bool wall,
+            float seconds, Map map)
+        {
+            float arriveAt = T.ArriveAt(teleports), thrustAt = T.ThrustAt(teleports), hitAt = T.HitAt(teleports),
+                releaseAt = T.ReleaseAt(teleports), landAt = T.LandAt(teleports, thrown);
+            if (seconds < 0f || seconds >= landAt + T.Tail) return;
+            if (!Shown(home, map) || !Shown(enemy + away * thrown, map)) return;
+            Begin((home + enemy) / 2f);
+            // The way the caster first faced, from where the ball was formed to the enemy.
+            Vector2 toward = enemy - home;
+            toward = toward.sqrMagnitude > 1e-4f ? toward.normalized : away;
+            Vector2 across = new Vector2(-toward.y, toward.x), strip = spot - enemy;
+            float aim = ThunderGodTiming.Degrees(away), chest = ThunderGodTiming.Chest, reach = strip.magnitude;
+            strip = reach > 0.01f ? strip / reach : -away;
+            float stripAim = ThunderGodTiming.Degrees(strip);
+
+            // The jump's floor script, written while the ball forms: from the enemy into the cell the caster lands on.
             if (teleports)
             {
                 float write = T.Form * 0.4f, written = (seconds - T.CastAt) / write, burn = seconds - arriveAt - T.FlashTime;
                 if (written > 0f && burn < 1f)
                 {
-                    Sprite(enemy + toward * ((ThunderGodTiming.Behind - ThunderGodTiming.StripBack) / 2f), 1.8f, 0.5f,
-                        Fade(Gold, 0.3f * Mathf.Clamp01(written) * (1f - Smooth(burn))), glow, Floor + 0.005f, -aim);
-                    Script(enemy, aim, -ThunderGodTiming.StripBack, ThunderGodTiming.StripGlyphs, seconds, T.CastAt, write, burn);
-                    Brackets(spot, aim, Mathf.Clamp01((written - 0.8f) / 0.2f) * (1f - Mathf.Clamp01((burn - 0.85f) / 0.15f)));
+                    int glyphs = Mathf.Max(ThunderGodTiming.StripGlyphs, Mathf.RoundToInt((reach + ThunderGodTiming.StripBack) / ThunderGodTiming.GlyphPitch));
+                    Sprite(enemy + strip * ((reach - ThunderGodTiming.StripBack) / 2f), reach + 0.8f, 0.5f,
+                        Fade(Gold, 0.3f * Mathf.Clamp01(written) * (1f - Smooth(burn))), glow, Floor + 0.005f, -stripAim);
+                    Script(enemy, stripAim, -ThunderGodTiming.StripBack, glyphs, seconds, T.CastAt, write, burn);
+                    Brackets(spot, stripAim, Mathf.Clamp01((written - 0.8f) / 0.2f) * (1f - Mathf.Clamp01((burn - 0.85f) / 0.15f)));
                 }
-                if (seconds < releaseAt) SealOnPawn(enemy, aim, Smooth((seconds - T.CastAt) / write));
+                if (seconds < releaseAt) SealOnPawn(enemy, ThunderGodTiming.Degrees(toward), Smooth((seconds - T.CastAt) / write));
             }
 
             // The groove the thrown pawn leaves, and the scorch it ends on.
-            float flight = T.Flight(seconds, teleports, wall), gone = T.Gone(seconds, teleports, wall);
+            float flight = T.Flight(seconds, teleports, thrown), gone = T.Gone(seconds, teleports, thrown, wall);
             if (flight > 0f)
             {
                 float settle = 1f - 0.4f * Smooth((seconds - landAt) / T.Tail);
-                Sprite(enemy + toward * (direction * gone / 2f), gone + 0.5f, 0.42f, Fade(Ink, 0.3f * settle), soft, Floor + 0.01f, -aim);
+                Sprite(enemy + away * (gone / 2f), gone + 0.5f, 0.42f, Fade(Ink, 0.3f * settle), soft, Floor + 0.01f, -aim);
                 for (int i = 0; i < T.GrooveDust; i++)
                 {
                     float where = (i + 0.5f) / T.GrooveDust * thrown;
                     if (where > gone) continue;
-                    float age = seconds - T.Passes(where, teleports, wall), life = 0.5f + Rand(i) * 0.3f;
+                    float age = seconds - T.Passes(where, teleports, thrown, wall), life = 0.5f + Rand(i) * 0.3f;
                     if (age < 0f || age > life) continue;
                     float v = age / life;
-                    Vector2 at = enemy + toward * (direction * where) + across * ((Rand(i + 5) - 0.5f) * 0.4f);
+                    Vector2 at = enemy + away * where + across * ((Rand(i + 5) - 0.5f) * 0.4f);
                     Sprite(new Vector2(at.x, at.y + v * 0.35f), 0.4f + v * 0.5f, 0.32f + v * 0.4f,
                         Fade(Dust, 0.5f * Mathf.Max(0f, Mathf.Sin(v * Mathf.PI))), soft, Overhead + 0.005f + i * 0.0002f);
                 }
             }
             if (seconds >= landAt)
-                Sprite(enemy + toward * (direction * gone), 1.3f, 0.8f, Fade(Ink, 0.34f * (1f - 0.4f * Smooth((seconds - landAt) / T.Tail))),
+                Sprite(enemy + away * gone, 1.3f, 0.8f, Fade(Ink, 0.34f * (1f - 0.4f * Smooth((seconds - landAt) / T.Tail))),
                     soft, Floor + 0.012f, -aim);
 
             // Where the caster is, and the sliver of the teleport.
@@ -92,8 +110,8 @@ namespace RimArt
             float lunge = Smooth((seconds - thrustAt) / T.Reach) * (1f - Smooth((seconds - releaseAt) / 0.3f));
             float thinOut = teleports ? Smooth((seconds - T.FormedAt) / T.Squeeze) : 0f,
                 thinIn = teleports ? 1f - Smooth((seconds - arriveAt) / T.Squeeze) : 0f;
-            float face = landed ? direction : 1f, thin = landed ? thinIn : thinOut;
-            Vector2 stand = landed ? spot : home, caster = stand + toward * (face * T.Lean * (landed ? lunge : 0f));
+            float thin = landed ? thinIn : thinOut;
+            Vector2 facing = landed ? away : toward, stand = landed ? spot : home, caster = stand + facing * (T.Lean * (landed ? lunge : 0f));
             Sliver(caster, thin);
 
             if (teleports)
@@ -105,22 +123,22 @@ namespace RimArt
             }
 
             if (seconds >= T.CastAt && seconds < releaseAt)
-                DrawHeld(caster, toward * face, landed ? lunge : 0f, 1f - thin, pressed, grinding, seconds, hitAt);
+                DrawHeld(caster, facing, landed ? lunge : 0f, 1f - thin, pressed, grinding, seconds, hitAt);
             DrawRelease(new Vector2(enemy.x, enemy.y + chest), seconds - releaseAt);
-            DrawVortex(enemy, toward, across, direction, aim, flight, gone, seconds, teleports, wall);
+            DrawVortex(enemy, away, across, aim, flight, gone, thrown, seconds, teleports, wall);
 
             // Where it stops: dust, and a second flash if a wall stopped it.
             float stopped = seconds - landAt;
             if (stopped >= 0f && stopped < 0.6f)
             {
                 float v = stopped / 0.6f;
-                Vector2 at = enemy + toward * (direction * (thrown + (wall ? 0.45f : 0f)));
+                Vector2 at = enemy + away * (thrown + (wall ? 0.45f : 0f));
                 if (wall && stopped < 0.12f)
                     Sprite(new Vector2(at.x, at.y + chest), 1.5f, 1.5f, Fade(White, 0.9f * (1f - stopped / 0.12f)), glow, Overhead + 0.1f);
                 for (int i = 0; i < T.StopDust; i++)
                 {
-                    float angle = i * 0.63f + Rand(i), reach = 0.25f + v * (0.6f + Rand(i + 4) * 0.7f);
-                    Sprite(new Vector2(at.x + Mathf.Cos(angle) * reach, at.y + Mathf.Sin(angle) * reach * 0.7f + v * 0.3f), 0.45f + v * 0.6f, 0.36f + v * 0.45f,
+                    float angle = i * 0.63f + Rand(i), spread = 0.25f + v * (0.6f + Rand(i + 4) * 0.7f);
+                    Sprite(new Vector2(at.x + Mathf.Cos(angle) * spread, at.y + Mathf.Sin(angle) * spread * 0.7f + v * 0.3f), 0.45f + v * 0.6f, 0.36f + v * 0.45f,
                         Fade(Dust, 0.55f * Mathf.Max(0f, Mathf.Sin(v * Mathf.PI))), soft, Overhead + 0.006f + i * 0.0002f);
                 }
             }
@@ -259,11 +277,11 @@ namespace RimArt
         }
 
         /// <summary>The vortex behind the thrown pawn: a double helix, and rings that open across the path as it passes.</summary>
-        private static void DrawVortex(Vector2 enemy, Vector2 toward, Vector2 across, float direction, float aim, float flight, float gone,
+        private static void DrawVortex(Vector2 enemy, Vector2 away, Vector2 across, float aim, float flight, float gone, float thrown,
             float seconds, bool teleports, bool wall)
         {
             if (flight <= 0f) return;
-            float landAt = T.LandAt(teleports, wall), since = seconds - T.ReleaseAt(teleports), chest = ThunderGodTiming.Chest;
+            float landAt = T.LandAt(teleports, thrown), since = seconds - T.ReleaseAt(teleports), chest = ThunderGodTiming.Chest;
             if (seconds < landAt + 0.25f)
             {
                 const int steps = 18;
@@ -278,7 +296,7 @@ namespace RimArt
                         {
                             float w = i / (float)steps, d = tail + (gone - tail) * w;
                             float wave = side * Mathf.Sin(d * 7f - since * 30f) * T.TrailWave * (0.3f + 0.7f * w), half = 0.04f * Mathf.Max(0f, Mathf.Sin(w * Mathf.PI)) + 0.003f;
-                            Vector2 c = enemy + toward * (direction * d) + across * wave + new Vector2(0f, chest);
+                            Vector2 c = enemy + away * d + across * wave + new Vector2(0f, chest);
                             left[i] = c + across * half;
                             right[i] = c - across * half;
                         }
@@ -289,10 +307,10 @@ namespace RimArt
             }
             for (int n = 0; n < T.VortexRings; n++)
             {
-                float where = (n + 0.5f) / T.VortexRings * T.Thrown(wall), age = seconds - T.Passes(where, teleports, wall);
+                float where = (n + 0.5f) / T.VortexRings * thrown, age = seconds - T.Passes(where, teleports, thrown, wall);
                 if (age < 0f || age >= T.VortexTime) continue;
                 float v = age / T.VortexTime;
-                Vector2 c = enemy + toward * (direction * where) + new Vector2(0f, chest);
+                Vector2 c = enemy + away * where + new Vector2(0f, chest);
                 DrawMesh(orbit, c, Overhead + 0.06f + n * 0.0002f, 0.07f + 0.07f * v, 0.28f + 0.4f * v, -aim, Fade(Ice, 0.85f * (1f - v)), solid);
                 DrawMesh(orbit, c, Overhead + 0.059f + n * 0.0002f, 0.11f + 0.09f * v, 0.34f + 0.44f * v, -aim, Fade(Blue, 0.6f * (1f - v)), whiteGlow);
             }

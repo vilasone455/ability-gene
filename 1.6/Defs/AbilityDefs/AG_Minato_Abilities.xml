@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Minato's four abilities (docs/flying-thunder-god-kit.md, docs/hero-echo.md; the pictures are the
+       four kunai-*.js sketches), granted by the Minato Echo while manifested (AG_Echoes.xml, which holds
+       their charge costs). Throw kunai stays on the kunai belt; sealing touch is passive (AG_MinatoSeal).
+       A mark is one of his sealed kunai in a pawn or on the ground, or a pawn with his seal
+       (ThunderGodMarks.cs). Every balance number is a field here; the C# in
+       Source/RimArt/ThunderGod/Kit holds only shape and logic. The icons are placeholders
+       (make_minato_textures.py). -->
+
+  <AbilityDef Name="AG_MinatoAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <jobDef>AG_CastMinato</jobDef>
+  </AbilityDef>
+
+  <!-- Flying Thunder God: no warmup. The fire tick writes the seal; he arrives 0.21 s later and cuts
+       0.1 s after that (ThunderGodJumpTiming). -->
+  <AbilityDef ParentName="AG_MinatoAbilityBase">
+    <defName>AG_ThunderGodJump</defName>
+    <label>flying thunder god</label>
+    <description>Minato jumps to one of his marks up to 29.9 tiles away. No line of sight is needed. A mark is his kunai stuck in a pawn, a pawn carrying his seal (sealing touch), or his kunai lying on the ground.\n\nPawn: he appears in the free cell behind it and cuts at once with his melee attack at 150% damage. The cut cannot miss. The kunai stays in. An ally is not cut.\n\nKunai on the ground: he appears on it and picks it up. It goes into his kunai belt (and loses its seal there); what the belt has no room for goes into his inventory.</description>
+    <iconPath>RimArt/ThunderGod/IconThunderGodJump</iconPath>
+    <cooldownTicksRange>1200</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>29.9</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetItems>true</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_ThunderGodJump">
+        <damageFactor>1.5</damageFactor>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Flying Thunder God: Chain. No target; no warmup. One jump every 0.24 s from the fire tick
+       (ThunderGodChainTiming). He stays at the last target. -->
+  <AbilityDef ParentName="AG_MinatoAbilityBase">
+    <defName>AG_ThunderGodChain</defName>
+    <label>flying thunder god: chain</label>
+    <description>Minato jumps to every marked enemy within 29.9 tiles, nearest first, up to 5, one jump every 0.24 seconds. At each he appears in the free cell behind the enemy and cuts once with his melee attack at 100% damage. The cuts cannot miss. He stays at the last one.\n\nNeeds at least 2 marked enemies that are standing. A marked enemy carries his kunai or his seal. One that dies or goes down before its turn is skipped.</description>
+    <iconPath>RimArt/ThunderGod/IconThunderGodChain</iconPath>
+    <cooldownTicksRange>3600</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_ThunderGodChain">
+        <range>29.9</range>
+        <maxTargets>5</maxTargets>
+        <minTargets>2</minTargets>
+        <damageFactor>1</damageFactor>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Guiding Thunder: no warmup. The barrier stands from the fire tick; the job holds Minato while it
+       does. The projectile patch is in GuidingThunderCast.cs. -->
+  <AbilityDef ParentName="AG_MinatoAbilityBase">
+    <defName>AG_GuidingThunder</defName>
+    <label>guiding thunder</label>
+    <description>Choose one of Minato's marks up to 29.9 tiles away. For 6 seconds a barrier stands 1.3 tiles round him, and every shot that would hit him comes out at that mark instead.\n\nMark in a pawn: the shot hits that pawn with its own damage, even a shot the pawn fired itself. If the pawn dies, the shots land where it fell.\nKunai on the ground: the shot lands on that tile and hits whoever stands there.\nGrenades and shells that come down inside the barrier go off at the mark.\n\nMinato cannot move or attack while it holds. It ends early after 12 shots, or when the kunai on the ground is picked up. It does not stop melee.</description>
+    <iconPath>RimArt/ThunderGod/IconGuidingThunder</iconPath>
+    <cooldownTicksRange>2700</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>29.9</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetItems>true</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_GuidingThunder">
+        <seconds>6</seconds>
+        <radius>1.3</radius>
+        <maxShots>12</maxShots>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Rasengan: the warmup is the ball forming. The verb's range is the marked range; a pawn with no
+       mark is walked up to first (JobDriver_CastMinato). -->
+  <AbilityDef ParentName="AG_MinatoAbilityBase">
+    <defName>AG_Rasengan</defName>
+    <label>rasengan</label>
+    <description>Minato forms a ball of spinning chakra over 0.6 seconds, then drives it into the target: 30 blunt damage, 40% armor penetration. The target is thrown 3 tiles away from him and stunned for 2 seconds. If something solid stops it sooner it takes 10 more damage.\n\nA target carrying his kunai or his seal can be up to 29.9 tiles away: he forms the ball where he stands, jumps behind the target and strikes, so it is thrown back toward where he came from. Any other target he walks up to first; if it steps away while the ball forms, the ball is lost.</description>
+    <iconPath>RimArt/ThunderGod/IconRasengan</iconPath>
+    <cooldownTicksRange>1800</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>29.9</range>
+      <warmupTime>0.6</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetItems>false</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_Rasengan">
+        <damage>30</damage>
+        <damageDef>Blunt</damageDef>
+        <armorPenetration>0.4</armorPenetration>
+        <throwCells>3</throwCells>
+        <slamDamage>10</slamDamage>
+        <stunTicks>120</stunTicks>
+        <touchRange>1.9</touchRange>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>
