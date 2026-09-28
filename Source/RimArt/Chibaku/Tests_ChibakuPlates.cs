@@ -3,6 +3,7 @@ using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Verse.AI.Group;
 
 namespace RimArt
 {
@@ -116,7 +117,8 @@ namespace RimArt
             watch.Stop();
             t.Log($"one mid-pull frame's draw calls take {watch.Elapsed.TotalMilliseconds / 20:0.00} ms on the CPU");
 
-            foreach (var (at, name) in new[] { (.9f, "1-cracks"), (1.9f, "2-pull"), (3.0f, "3-forming"), (4.5f, "4-held"), (7.45f, "6-seams"), (7.85f, "7-burst"), (8.4f, "8-rocks-falling"), (10.2f, "9-result") })
+            foreach (var (at, name) in new[] { (.9f, "1-cracks"), (1.9f, "2-pull"), (3.0f, "3-forming"), (ChibakuBall.Formed + 1.25f, "4-held"), (ChibakuBall.Crack + .2f, "6-seams"), (ChibakuBall.Burst + .2f, "7-burst"),
+                (ChibakuBall.Burst + .75f, "8-rocks-falling"), (ChibakuBall.End - .45f, "9-result") })
             {
                 component.Freeze(at);
                 yield return t.ShotAs("chibaku-ball-" + name);
@@ -126,6 +128,70 @@ namespace RimArt
             t.Check(component.Ball == null && component.Ground == null, "stopping frees the ball and the picture");
             yield return 2;
         }
+
+        [RimArtTest("Chibaku", "pawns 1 pawns on the circle go into the ball and fall out hurt and stunned; roofed and outside ones stay", 2400)]
+        private static IEnumerable<int> Pawns(RimArtTestContext t)
+        {
+            Arena(t);
+            IntVec3 c = t.center;
+            List<Pawn> raiders = new[] { new IntVec3(2, 0, 2), new IntVec3(-2, 0, 3), new IntVec3(1, 0, -2) }.Select(d => t.Enemy(c + d, armed: false)).ToList();
+            Lord group = LordMaker.MakeNewLord(raiders[0].Faction, new LordJob_AssaultColony(raiders[0].Faction, false, false, false, false, false), t.map, raiders);
+            Pawn colonist = t.Colonist(c + new IntVec3(-4, 0, -1));
+            Pawn outside = t.Enemy(c + new IntVec3(0, 0, -9), armed: false);
+            IntVec3 roofedCell = c + new IntVec3(-3, 0, 1);
+            t.map.roofGrid.SetRoof(roofedCell, RoofDefOf.RoofConstructed);
+            Pawn underRoof = t.Enemy(roofedCell, armed: false);
+            foreach (Pawn p in new[] { colonist, outside, underRoof }) RimArtTestContext.Hold(p);
+            var caught = raiders.Concat(new[] { colonist }).ToList();
+            var injuries = caught.ToDictionary(p => p, Injuries);
+            MapComponent_ChibakuPlates component = MapComponent_ChibakuPlates.Of(t.map);
+            component.Stop();
+            Find.CameraDriver.SetRootPosAndSize(c.ToVector3Shifted(), 10f);
+            yield return 2;
+
+            ChibakuBall ball = component.BeginBall(c, Radius);
+            if (!t.Check(ball != null && component.Pull != null, "the live ball began")) yield break;
+            int start = t.Now;
+            int Until(float seconds) => Mathf.Max(0, start + Mathf.CeilToInt(seconds * 60f) - t.Now);
+
+            yield return Until(ChibakuBall.Pull + .1f);
+            foreach (Pawn p in caught) t.Check(p.stances.stunner.Stunned, $"{p.LabelShort} on the circle is held by the pull");
+            t.Check(!outside.stances.stunner.Stunned && !underRoof.stances.stunner.Stunned, "the raider outside the circle and the one under the roof are not");
+            yield return t.ShotAs("chibaku-pawns-1-held-by-the-pull");
+            yield return Until(ChibakuBall.Pull + 1.1f);
+            yield return t.ShotAs("chibaku-pawns-2-pulled-in");
+
+            yield return Until(ChibakuPull.LastCatch + ChibakuPull.FlySeconds);
+            foreach (Pawn p in caught)
+                t.Check(!p.Spawned && p.ParentHolder == component && p.MapHeld == t.map, $"{p.LabelShort} is inside the ball (off the map, still counted on it)");
+            t.Check(outside.Spawned && underRoof.Spawned && underRoof.Position == roofedCell, "the outside and roofed raiders are still standing where they were");
+            t.Log($"{component.Pull.pawns.Count} pawns caught; the raid group {(t.map.lordManager.lords.Contains(group) ? "still exists" : "ended when its pawns were taken")}");
+            yield return Until(ChibakuBall.Formed + 1f);
+            yield return t.ShotAs("chibaku-pawns-3-held-in-the-ball");
+
+            yield return Until(ChibakuBall.Burst + .3f);
+            yield return t.ShotAs("chibaku-pawns-4-falling-out");
+            yield return Until(ChibakuBall.Burst + ChibakuPull.FallTime + .1f);
+            foreach (Pawn p in caught)
+            {
+                if (p.Dead) { t.Log($"{p.LabelShort} died of the crush and the fall"); continue; }
+                t.Log($"{p.LabelShort}: {Describe(p)}, {Injuries(p) - injuries[p]} new injuries, {(p.Position - c).LengthHorizontal:0.0} cells from the middle");
+                t.Check(p.Spawned && (p.Position - c).LengthHorizontal <= 3.5f, $"{p.LabelShort} landed under the ball");
+                t.Check(Injuries(p) > injuries[p], $"{p.LabelShort} was hurt by the crush and the fall");
+                t.Check(p.stances.stunner.Stunned || p.Downed, $"{p.LabelShort} is stunned (or down)");
+            }
+            foreach (Pawn p in raiders.Where(p => !p.Dead))
+                t.Check(p.GetLord()?.LordJob is LordJob_AssaultColony, $"{p.LabelShort} is back in an assault group");
+            t.Check(colonist.Dead || colonist.GetLord() == null, "the colonist is in no group");
+            yield return t.ShotAs("chibaku-pawns-5-landed");
+
+            yield return Until(ChibakuBall.End + .2f);
+            t.Check(component.Ball == null && component.Inner.Count == 0, "the preview ended by itself with nothing left inside");
+        }
+
+        private static int Injuries(Pawn p) => p.health.hediffSet.hediffs.Count(h => h is Hediff_Injury || h is Hediff_MissingPart);
+
+        private static string Describe(Pawn p) => p.Downed ? "down" : p.stances.stunner.Stunned ? "stunned" : "up";
 
         /// <summary>A texture's average colour (drawn small into a render texture and read back) times the material's colour.</summary>
         private static Color AverageColour(Material material)

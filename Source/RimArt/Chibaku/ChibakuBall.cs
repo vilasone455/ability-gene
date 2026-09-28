@@ -26,10 +26,10 @@ namespace RimArt
     [StaticConstructorOnStartup]
     public sealed class ChibakuBall : IDisposable
     {
-        public const float Radius = 2f, Height = 2.8f, PullSeconds = 3f, HoldSeconds = 4f;
+        public const float Radius = 2f, Height = 2.8f, PullSeconds = 3f, HoldSeconds = 12f, Gravity = 12f;
         public const float Pulse = .25f, CrackRun = .45f, CrackTime = .4f, Tail = 3f;
         public const float Pull = Pulse, Formed = Pull + PullSeconds, Crack = Formed + HoldSeconds, Burst = Crack + CrackTime, End = Burst + Tail;
-        private const float Spin = 14f * Mathf.Deg2Rad, HeaveH = .18f, Gravity = 12f, CoreR = .34f, PatchR = .45f;
+        private const float Spin = 14f * Mathf.Deg2Rad, HeaveH = .18f, CoreR = .34f, PatchR = .45f;
         private const float Lift = SixPathsHeight.Lift;
         private const int MaxSlots = 84;
 
@@ -62,14 +62,16 @@ namespace RimArt
         private struct Airborne
         {
             public Flight flight;
+            public ChibakuHeld pawn;
             public Vector3 pos;
-            public float nd, age, u;
+            public float nd, age, u, angle;
         }
 
         private readonly ChibakuGround ground;
         private readonly Vector3 core;
         private readonly Vector2 middle;
         private readonly List<Flight> caught = new List<Flight>(), kept = new List<Flight>();
+        private readonly Dictionary<IntVec3, Flight> flightAt = new Dictionary<IntVec3, Flight>();
         private readonly Vector3[] slotDir;
         private readonly ChibakuPlate[] slotPlate;
         private readonly float[] slotFilledAt;
@@ -102,6 +104,7 @@ namespace RimArt
                 f.stone = R(i * 11 + 2) < .25f;
                 f.crack = OutlineBand(p, .05f);
                 (p.anchored ? kept : caught).Add(f);
+                if (!p.anchored) foreach (IntVec3 c in p.cells) flightAt[c] = f;
             }
             caught.Sort((a, b) => a.arriveAt.CompareTo(b.arriveAt));
 
@@ -147,6 +150,15 @@ namespace RimArt
             return n;
         }
 
+        /// <summary>Whether <paramref name="cell"/> is on a plate that is pulled, and when that plate tears free.</summary>
+        public bool TryLiftOf(IntVec3 cell, out float liftAt)
+        {
+            liftAt = 0f;
+            if (!flightAt.TryGetValue(cell, out Flight f)) return false;
+            liftAt = f.liftAt;
+            return true;
+        }
+
         public int Caught => caught.Count;
         public int Slots => slots;
         public float LastArrival => caught.Count > 0 ? caught[caught.Count - 1].arriveAt : 0f;
@@ -176,7 +188,7 @@ namespace RimArt
 
         // ---- drawing --------------------------------------------------------------------------------------
 
-        public void Draw(float s)
+        public void Draw(float s, List<ChibakuHeld> pawns = null)
         {
             if (s < 0f || s >= End || ground.texture == null) return;
             float top = AltitudeLayer.MoteOverhead.AltitudeFor(), floor = AltitudeLayer.Filth.AltitudeFor();
@@ -199,13 +211,15 @@ namespace RimArt
                 pos.y += .2f * Smooth(age / (.25f * f.fly)) * (1f - u);
                 air.Add(new Airborne { flight = f, pos = pos, nd = Vector3.Dot(pos - core, View), age = age, u = u });
             }
+            if (pawns != null) AddPawns(pawns, s, r);
             air.Sort((a, b) => a.nd.CompareTo(b.nd));
             int behind = 0;
             for (int k = 0; k < air.Count; k++)
             {
                 Airborne a = air[k];
                 if (a.nd >= 0f) continue;
-                Slab(a.flight, a.pos, a.age * a.flight.spinRate, .3f + a.age * a.flight.tumbleRate, Mathf.Lerp(1f, .6f, a.u), top + .005f + behind++ * .0002f);
+                if (a.pawn != null) PawnPicture(a, top + .005f + behind++ * .0002f);
+                else Slab(a.flight, a.pos, a.age * a.flight.spinRate, .3f + a.age * a.flight.tumbleRate, Mathf.Lerp(1f, .6f, a.u), top + .005f + behind++ * .0002f);
             }
 
             // The core and the ball growing round it.
@@ -238,10 +252,62 @@ namespace RimArt
             {
                 Airborne a = air[k];
                 if (a.nd < 0f) continue;
-                Slab(a.flight, a.pos, a.age * a.flight.spinRate, .3f + a.age * a.flight.tumbleRate, Mathf.Lerp(1f, .6f, a.u), top + .075f + ahead++ * .0002f);
+                if (a.pawn != null) PawnPicture(a, top + .075f + ahead++ * .0002f);
+                else Slab(a.flight, a.pos, a.age * a.flight.spinRate, .3f + a.age * a.flight.tumbleRate, Mathf.Lerp(1f, .6f, a.u), top + .075f + ahead++ * .0002f);
             }
             if (s >= Pull && s < Formed) Inflow(s, C, Mathf.Clamp01((s - Pull) / .2f) * (1f - Smooth((frac - .7f) / .3f)), top + .11f);
             if (s >= Burst) DrawBurst(s - Burst, C, top, floor);
+        }
+
+        /// <summary>
+        /// The pawns in the air: pulled in (their picture turning as it flies to the ball and shrinking to 60 %) or
+        /// falling out after the burst. A pawn still waiting to be lifted kicks up dust at its feet.
+        /// </summary>
+        private void AddPawns(List<ChibakuHeld> pawns, float s, float r)
+        {
+            foreach (ChibakuHeld h in pawns)
+            {
+                if (h.state == ChibakuHeld.Waiting && h.pawn != null && h.pawn.Spawned && s >= Pull)
+                {
+                    Vector3 feet = h.pawn.DrawPos;
+                    for (int i = 0; i < 3; i++)
+                    {
+                        float u = (s * 1.6f + R(h.pawn.thingIDNumber + i * 7)) % 1f;
+                        Sprite(new Vector2(feet.x + (R(h.pawn.thingIDNumber + i * 7 + 1) - .5f) * .5f, feet.z - .3f + u * .3f), .25f + u * .3f, .2f + u * .25f,
+                            Fade(Dust, .5f * Mathf.Sin(u * Mathf.PI)), puff, AltitudeLayer.MoteOverhead.AltitudeFor() + .001f);
+                    }
+                    continue;
+                }
+                if (h.material == null) continue;
+                float seed = R(h.pawn?.thingIDNumber ?? 0) * 360f;
+                if ((h.state == ChibakuHeld.Flying || h.state == ChibakuHeld.Held) && s >= h.liftAt && s < h.liftAt + ChibakuPull.FlySeconds)
+                {
+                    float age = s - h.liftAt, u = Mathf.Pow(Mathf.Clamp01(age / ChibakuPull.FlySeconds), 1.6f);
+                    var start = new Vector3(h.from.x, 0f, h.from.z);
+                    Vector3 target = core + (start - core).normalized * (r * 1.05f), pos = Vector3.Lerp(start, target, u);
+                    pos.y += .25f * Smooth(age / (.2f * ChibakuPull.FlySeconds)) * (1f - u);
+                    air.Add(new Airborne { pawn = h, pos = pos, nd = Vector3.Dot(pos - core, View), u = u, angle = seed + age * 330f });
+                }
+                else if (h.state == ChibakuHeld.Falling && s < h.landAt)
+                {
+                    float age = Mathf.Max(0f, s - Burst), k = Mathf.Clamp01(age / Mathf.Max(.01f, h.landAt - Burst));
+                    var start = core + new Vector3(h.drop.x * .4f, -.3f, h.drop.y * .4f);
+                    Vector3 land = h.landCell.ToVector3Shifted();
+                    var pos = new Vector3(Mathf.Lerp(start.x, land.x, k), Mathf.Max(0f, start.y - .5f * Gravity * age * age), Mathf.Lerp(start.z, land.z, k));
+                    air.Add(new Airborne { pawn = h, pos = pos, nd = 1f, u = 0f, angle = seed + age * 360f });
+                }
+            }
+        }
+
+        /// <summary>A pawn's picture (the pawn as the game draws it) turned and shrunk, with a soft shadow on the ground.</summary>
+        private static void PawnPicture(Airborne a, float altitude)
+        {
+            float scale = Mathf.Lerp(1f, .6f, a.u), size = KamuiBend.PawnCells * scale;
+            Sprite(new Vector2(a.pos.x + ShadowPerCell.x * a.pos.y, a.pos.z + ShadowPerCell.y * a.pos.y), .8f * scale, .4f * scale, Fade(Color.black, .35f / (1f + a.pos.y)), soft,
+                AltitudeLayer.Shadows.AltitudeFor());
+            properties.SetColor(ShaderPropertyIDs.Color, Color.white);
+            Graphics.DrawMesh(MeshPool.plane10, Matrix4x4.TRS(new Vector3(a.pos.x, altitude, a.pos.z + a.pos.y * Lift), Quaternion.Euler(0f, a.angle, 0f), new Vector3(size, 1f, size)),
+                a.pawn.material, 0, null, 0, properties);
         }
 
         /// <summary>The area circle, cracks, holes, the crater's dark middle, rim cracks and rocks, heaving plates and their dust.</summary>

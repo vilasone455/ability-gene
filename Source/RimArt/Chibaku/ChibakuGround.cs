@@ -16,7 +16,7 @@ namespace RimArt
         public Vector2[] outline;
         /// <summary>Distance of the centre from the middle, as a share of the radius (0 middle, 1 rim).</summary>
         public float along;
-        /// <summary>Stays in the ground: a covered cell has a building on it.</summary>
+        /// <summary>Stays in the ground: a covered cell has a building or a roof over it.</summary>
         public bool anchored;
         public readonly List<IntVec3> cells = new List<IntVec3>();
         internal Mesh face, edge, hole;
@@ -146,7 +146,7 @@ namespace RimArt
                 for (int x = Mathf.FloorToInt(minX); x <= Mathf.FloorToInt(maxX); x++)
                     for (int z = Mathf.FloorToInt(minZ); z <= Mathf.FloorToInt(maxZ); z++)
                         if (ChibakuCut.Contains(plate.outline, new Vector2(x + .5f, z + .5f))) plate.cells.Add(new IntVec3(x, 0, z));
-                plate.anchored = plate.cells.Any(c => !c.InBounds(map) || c.GetEdifice(map) != null);
+                plate.anchored = plate.cells.Any(c => !c.InBounds(map) || c.GetEdifice(map) != null || c.Roofed(map));
                 plate.face = Fan(plate, 0f, true);
                 plate.edge = Fan(plate, .022f, false);
                 plate.hole = Fan(plate, -.045f, false);
