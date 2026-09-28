@@ -208,7 +208,7 @@ namespace RimArt
             YamatoDashCast cast = null;
             foreach (int w in WaitFor(() => (cast = Cast<YamatoDashCast>(host)) != null && cast.Fired, 60)) yield return w;
             if (!t.Check(cast != null && cast.Fired, "the dash fired")) { Finish(record); yield break; }
-            int fired = cast.fireTick;
+            int fired = cast.fireTick, ghostsBefore = VergilGhost.Drawn;
             t.Log("fire tick seen " + (t.Now - fired) + " ticks late");
             if (t.Now < fired + 4) yield return fired + 4 - t.Now;
             if (t.Now <= fired + 6)
@@ -217,6 +217,7 @@ namespace RimArt
                 t.Check(host.Position == from, "mid-dash his cell has not changed yet");
             }
             yield return t.ShotAs("dash-mid", t.center, 5f);
+            t.Check(VergilGhost.Drawn > ghostsBefore, "his afterimages were drawn along the path (" + (VergilGhost.Drawn - ghostsBefore) + " draws)");
             foreach (int w in WaitFor(() => host.Position == dest, 20)) yield return w;
             t.Log("arrived by fire + " + (t.Now - fired) + " ticks: " + RimArtTestContext.Describe(host));
             t.Check(host.Position == dest, "he arrived at " + dest);
@@ -336,7 +337,7 @@ namespace RimArt
             JudgementCutEndCast cast = null;
             foreach (int w in WaitFor(() => (cast = Cast<JudgementCutEndCast>(host)) != null && cast.Fired, 60)) yield return w;
             if (!t.Check(cast != null && cast.Fired, "he vanished")) { Finish(record); yield break; }
-            int fired = t.Now;
+            int fired = t.Now, ghostsBefore = VergilGhost.Drawn;
             yield return 2;
             t.Check(host.health.hediffSet.HasHediff(VergilDefOf.AG_VergilGone) && host.IsPsychologicallyInvisible(), "he is gone: invisible to others");
             t.Check(Stunned(near) && Stunned(mid), "the two enemies in sight are marked and stunned");
@@ -358,6 +359,7 @@ namespace RimArt
             }
             yield return 25;
             yield return t.ShotAs("end-gone", t.center, 10f);
+            t.Check(VergilGhost.Drawn > ghostsBefore, "his afterimages were drawn at the cut ends while he is gone (" + (VergilGhost.Drawn - ghostsBefore) + " draws)");
 
             // The camera eases toward a new zoom over several frames; aim it close now so the kneel shot is a real close-up.
             Find.CameraDriver.SetRootPosAndSize(host.Position.ToVector3Shifted(), 3f);

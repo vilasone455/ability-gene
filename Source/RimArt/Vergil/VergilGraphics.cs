@@ -140,8 +140,10 @@ namespace RimArt
         /// Vergil seen for a moment behind a dash, or at the end of a Judgement Cut End chord: a blue silhouette
         /// of the stand-in's ellipses with one thin line of light tapering back toward <paramref name="from"/>. It
         /// is light, not a solid: no shadow and no weapon. The lib's afterimage; <paramref name="pos"/> is the feet.
+        /// Without <paramref name="body"/> only the line of light is drawn: in game the body is Vergil's own,
+        /// drawn by Kit/VergilGhost.cs.
         /// </summary>
-        internal static void Afterimage(Vector2 pos, Vector2 from, float age, float life = 0.22f)
+        internal static void Afterimage(Vector2 pos, Vector2 from, float age, float life = 0.22f, bool body = true)
         {
             if (age < 0f || age >= life) return;
             float f = 1f - age / life;
@@ -152,6 +154,7 @@ namespace RimArt
             trail[0] = new Vector2(pos.x, pos.y + 0.3f);
             trail[1] = trail[0] - back * 0.95f;
             GokuGraphics.Line(trail, 0.18f, Fade(Blue, 0.55f * f * f), whiteGlow, Overhead + 0.02f, GokuGraphics.Taper.End);
+            if (!body) return;
             for (int k = 0; k < GhostParts.Length / 4; k++)
             {
                 Color colour = Color.Lerp(k == 1 ? Blue : k == 3 ? Ice : Deep, Ice, 0.3f);

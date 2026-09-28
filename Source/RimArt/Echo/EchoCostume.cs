@@ -42,7 +42,7 @@ namespace RimArt
         /// </summary>
         protected override Graphic GetGraphic(PawnRenderNode node, PawnDrawParms parms)
         {
-            if (parms.facing == Rot4.South && VergilLooks.TryGet(parms.pawn, out VergilLook look) && look.kneelPicture != null)
+            if (parms.facing == Rot4.South && VergilGhost.Drawing != parms.pawn && VergilLooks.TryGet(parms.pawn, out VergilLook look) && look.kneelPicture != null)
                 return look.kneelPicture;
             return base.GetGraphic(node, parms);
         }

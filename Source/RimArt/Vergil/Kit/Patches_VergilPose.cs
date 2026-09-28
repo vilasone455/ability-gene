@@ -20,8 +20,17 @@ namespace RimArt
     {
         static void Postfix(Pawn ___pawn, ref PawnDrawParms __result)
         {
-            if (!VergilLooks.TryGet(___pawn, out VergilLook look)) return;
             if ((__result.flags & (PawnRenderFlags.Portrait | PawnRenderFlags.Cache)) != 0) return;
+            if (VergilGhost.Drawing == ___pawn)
+            {
+                // An afterimage: the plain standing body in blue-white light. The invisible flag drops the shadow;
+                // Patch_GhostMaterial_Vergil puts every part on the glow shader. The tint is set, not multiplied:
+                // while he is gone his own tint carries the invisibility fade.
+                __result.tint = VergilGhost.Tint;
+                __result.flags |= PawnRenderFlags.Invisible;
+                return;
+            }
+            if (!VergilLooks.TryGet(___pawn, out VergilLook look)) return;
             if (look.tintAmount > 0f)
             {
                 Color was = __result.tint, to = Color.Lerp(was, look.tint, look.tintAmount);
@@ -45,6 +54,7 @@ namespace RimArt
     {
         static void Postfix(PawnDrawParms parms, ref Vector3 __result)
         {
+            if (VergilGhost.Drawing == parms.pawn) return;
             if (VergilLooks.TryGet(parms.pawn, out VergilLook look) && look.kneelPicture != null && parms.facing == Rot4.South)
                 __result.z -= VergilLook.KneelDrop;
         }
@@ -55,6 +65,7 @@ namespace RimArt
     {
         static void Postfix(PawnRenderNode node, PawnDrawParms parms, ref Vector3 __result)
         {
+            if (VergilGhost.Drawing == parms.pawn) return;
             if (!VergilLooks.TryGet(parms.pawn, out VergilLook look) || node.Props.tagDef != PawnRenderNodeTagDefOf.Head) return;
             float squash = look.Squash;
             if (squash >= 0.999f) return;
@@ -72,10 +83,27 @@ namespace RimArt
     {
         static bool Prefix(PawnRenderNode node, PawnDrawParms parms, ref Material __result)
         {
-            if (node.Props.tagDef != PawnRenderNodeTagDefOf.Body || parms.facing != Rot4.South) return true;
+            if (node.Props.tagDef != PawnRenderNodeTagDefOf.Body || parms.facing != Rot4.South || VergilGhost.Drawing == parms.pawn) return true;
             if (!VergilLooks.TryGet(parms.pawn, out VergilLook look) || look.kneelPicture == null) return true;
             __result = BaseContent.ClearMat;
             return false;
+        }
+    }
+
+    /// <summary>
+    /// An afterimage is drawn in light: every part's own texture on the additive glow shader, coloured by the
+    /// afterimage's tint, so it reads as a blue-white copy of him over the dark and the ground alike. The game's
+    /// see-through shader was tried first and showed the ground through him in its own colour.
+    /// </summary>
+    [HarmonyPatch(typeof(PawnRenderNodeWorker), nameof(PawnRenderNodeWorker.GetFinalizedMaterial))]
+    static class Patch_GhostMaterial_Vergil
+    {
+        static void Postfix(PawnDrawParms parms, ref Material __result)
+        {
+            if (VergilGhost.Drawing != parms.pawn || __result == null) return;
+            Texture texture = __result.mainTexture;
+            if (texture == null) return;
+            __result = MaterialPool.MatFrom(new MaterialRequest(texture, ShaderDatabase.MoteGlow, Color.white));
         }
     }
 
@@ -89,7 +117,14 @@ namespace RimArt
     {
         static void Postfix(PawnRenderNode node, PawnDrawParms parms, ref bool __result)
         {
-            if (!__result || parms.facing != Rot4.South) return;
+            if (!__result) return;
+            if (VergilGhost.Drawing == parms.pawn)
+            {
+                // The afterimage is his light, not his body: no wounds or firefoam on it.
+                if (node.Props.Worker is PawnRenderNodeWorker_Overlay) __result = false;
+                return;
+            }
+            if (parms.facing != Rot4.South) return;
             if (!VergilLooks.TryGet(parms.pawn, out VergilLook look) || look.kneelPicture == null) return;
             PawnRenderNodeTagDef tag = node.Props.tagDef;
             if (tag == PawnRenderNodeTagDefOf.Body || tag == PawnRenderNodeTagDefOf.ApparelBody || node.Props is PawnRenderNodeProperties_EchoCostume) return;
@@ -111,7 +146,7 @@ namespace RimArt
     {
         static void Prefix(Pawn ___pawn, ref bool disableCache)
         {
-            if (VergilLooks.TryGet(___pawn, out VergilLook look) && look.ChangesBody) disableCache = true;
+            if (VergilGhost.Drawing == ___pawn || VergilLooks.TryGet(___pawn, out VergilLook look) && look.ChangesBody) disableCache = true;
         }
     }
 
@@ -119,7 +154,8 @@ namespace RimArt
     [HarmonyPatch(typeof(PawnRenderer), nameof(PawnRenderer.RenderPawnAt))]
     static class Patch_PawnRenderer_VergilGone
     {
-        static bool Prefix(Pawn ___pawn) => !(VergilLooks.TryGet(___pawn, out VergilLook look) && look.gone);
+        static bool Prefix(Pawn ___pawn) =>
+            VergilGhost.Drawing == ___pawn || !(VergilLooks.TryGet(___pawn, out VergilLook look) && look.gone);
     }
 
     /// <summary>While he is gone, his name and health bar are not drawn over the empty cell either.</summary>
@@ -160,7 +196,7 @@ namespace RimArt
     {
         static void Postfix(Pawn pawn, Vector3 drawPos, Rot4 facing, PawnRenderFlags flags)
         {
-            if (!VergilKit.Wields(pawn)) return;
+            if (!VergilKit.Wields(pawn) || VergilGhost.Drawing == pawn) return;
             if ((flags & (PawnRenderFlags.Portrait | PawnRenderFlags.Cache)) != 0) return;
             if (!pawn.Spawned || pawn.Dead || pawn.GetPosture() != PawnPosture.Standing) return;
             VergilLooks.TryGet(pawn, out VergilLook look);

@@ -76,6 +76,9 @@ namespace RimArt
         private List<CutEndCut> layout;
         private readonly List<(Pawn pawn, float at, float deg)> hits = new List<(Pawn, float, float)>();
 
+        /// <summary>How opaque an afterimage is when it appears; it fades to nothing over its life.</summary>
+        private const float GhostAlpha = 0.85f;
+
         private CompProperties_JudgementCutEnd Props => VergilKit.Props<CompProperties_JudgementCutEnd>(VergilDefOf.AG_VergilJudgementCutEnd) ?? new CompProperties_JudgementCutEnd();
         private CutEndTimes Times
         {
@@ -300,6 +303,11 @@ namespace RimArt
             List<CutEndCut> lines = Fired ? Layout : T.Layout(Props.radius, 1, markedAt);
             JudgementCutEndGraphics.Draw(o, Props.radius, lines, Mathf.Min(marked.Count, lines.Count), "cast " + startTick, mouth, times,
                 Fired || s < times.VanishAt ? s : times.VanishAt - 0.001f, home);
+            // His afterimage at the far end of each cut, his own body (the graphics draw only the line of light).
+            if (Fired && caster.Spawned && caster.Map == home)
+                for (int k = 0; k < lines.Count; k++)
+                    if (T.Ghost(lines[k], lines.Count, times, s, out Vector2 at, out Vector2 along, out float fade))
+                        VergilGhost.Draw(caster, o + at, VergilGhost.Facing(along), GhostAlpha * fade);
             for (int i = 0; i < hits.Count; i++)
             {
                 (Pawn pawn, float at, float deg) = hits[i];

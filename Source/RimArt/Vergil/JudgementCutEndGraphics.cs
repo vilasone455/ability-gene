@@ -42,16 +42,18 @@ namespace RimArt
         public static void DrawPreview(Vector3 centre, float seconds, Map map)
         {
             var o = new Vector2(centre.x, centre.z);
-            Draw(o, T.Radius, T.Layout(T.Radius, T.Cuts), T.PreviewVictims(T.Radius), "preview", o + Mouth, T.Preview, seconds, map);
+            Draw(o, T.Radius, T.Layout(T.Radius, T.Cuts), T.PreviewVictims(T.Radius), "preview", o + Mouth, T.Preview, seconds, map, standIns: true);
         }
 
         /// <summary>
         /// <paramref name="o"/> is the caster's ground point, <paramref name="cuts"/> the chords (relative to it),
         /// the first <paramref name="victims"/> of which pass through a marked pawn's chest, <paramref name="layoutKey"/> names that layout so the pane meshes are built once for it, and
         /// <paramref name="mouth"/> is where the click glints: the stand-in's scabbard mouth in the preview, the
-        /// real kneeling pawn's in game.
+        /// real kneeling pawn's in game. <paramref name="standIns"/> draws the lab's ellipse body in each afterimage;
+        /// in game the body is Vergil's own (Kit/VergilGhost.cs) and only the line of light is drawn here.
         /// </summary>
-        public static void Draw(Vector2 o, float radius, List<CutEndCut> cuts, int victims, string layoutKey, Vector2 mouth, CutEndTimes times, float s, Map map)
+        public static void Draw(Vector2 o, float radius, List<CutEndCut> cuts, int victims, string layoutKey, Vector2 mouth, CutEndTimes times, float s, Map map,
+            bool standIns = false)
         {
             if (s < 0f || s >= times.Duration) return;
             if (!Shown(o, map)) return;
@@ -132,8 +134,9 @@ namespace RimArt
                     float alpha = sinceClick >= 0f ? 1f - sinceClick / T.CutsGone : 1f, grown = Mathf.Clamp01(age / T.Sweep);
                     Cut(o + c.A, o + c.B, grown, alpha, 0.05f, hot, 0.85f + 0.15f * Mathf.Sin(s * 40f + k * 1.7f));
                     if (age < T.Sweep) Glint(o + c.A + (c.B - c.A) * grown, 0.35f, 1f, Ice, 45f);
-                    // The caster seen for a moment at the far end of each cut.
-                    Afterimage(o + c.B, o + c.A, age - T.Sweep);
+                    // The caster seen for a moment at the far end of each cut, a little inside the rim.
+                    if (T.Ghost(cuts[k], cuts.Count, times, s, out Vector2 ghost, out _, out _))
+                        Afterimage(o + ghost, o + c.A, age - T.Sweep, T.GhostLife, standIns);
                     // A cut through a marked pawn leaves a glint on its chest until the click.
                     float marked = age - T.Sweep * 0.5f;
                     if (k < victims && marked >= 0f && sinceClick < 0f)

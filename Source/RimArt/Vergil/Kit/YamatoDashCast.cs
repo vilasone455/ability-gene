@@ -78,6 +78,9 @@ namespace RimArt
         private List<float> along = new List<float>();
         private bool arrived, clicked, aborted;
 
+        /// <summary>How opaque an afterimage is when it appears; it fades to nothing over its life.</summary>
+        private const float GhostAlpha = 0.85f;
+
         private CompProperties_YamatoDash Props => VergilKit.Props<CompProperties_YamatoDash>(VergilDefOf.AG_VergilYamatoDash) ?? new CompProperties_YamatoDash();
         private DashTimes Times
         {
@@ -216,6 +219,14 @@ namespace RimArt
                 return;
             }
             YamatoDashGraphics.Draw(start, end, hilt, times, s, home);
+            // His afterimages where he passed, his own body (the graphics draw only the line of light behind each).
+            if (caster.Spawned && caster.Map == home)
+                for (int i = 0; i < T.Ghosts.Length; i++)
+                {
+                    float age = s - (times.LaunchAt + T.Ghosts[i] * times.Dash);
+                    if (age >= 0f && age < T.GhostLife)
+                        VergilGhost.Draw(caster, Vector2.Lerp(start, end, T.Ghosts[i]), VergilGhost.Facing(end - start), GhostAlpha * (1f - age / T.GhostLife));
+                }
 
             // A mark keeps a quiet dark seam across its chest; on the click it opens into a hot cut.
             for (int i = 0; i < marks.Count; i++)

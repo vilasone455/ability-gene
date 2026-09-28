@@ -27,10 +27,6 @@ namespace RimArt
     {
         /// <summary>The hilt of the stand-in's scabbard on the left hip, from its feet, for the preview.</summary>
         private static readonly Vector2 Hilt = new Vector2(-0.02f, 0.46f);
-        /// <summary>Where along the path the three afterimages stand, and how long each shows.</summary>
-        private static readonly float[] Ghosts = { 0.2f, 0.5f, 0.78f };
-        private const float GhostLife = 0.34f;
-
         /// <summary>The preview. <paramref name="centre"/> is the chosen cell, the middle of the path.</summary>
         public static void DrawPreview(Vector3 centre, float aimDegrees, float seconds, Map map)
         {
@@ -38,14 +34,15 @@ namespace RimArt
             Vector2 half = Turn(aimDegrees) * (T.Distance / 2f);
             DashTimes times = T.Preview;
             Vector2 hilt = mid - half + (half * 2f) * times.Travel(seconds) + Hilt;
-            Draw(mid - half, mid + half, hilt, times, seconds, map);
+            Draw(mid - half, mid + half, hilt, times, seconds, map, standIns: true);
         }
 
         /// <summary>
         /// <paramref name="start"/> and <paramref name="end"/> are the carrier's ground points before and after
-        /// the dash; <paramref name="hilt"/> is where the prepare and the click glint.
+        /// the dash; <paramref name="hilt"/> is where the prepare and the click glint. <paramref name="standIns"/>
+        /// draws the lab's ellipse body in each afterimage; in game the body is Vergil's own (Kit/VergilGhost.cs).
         /// </summary>
-        public static void Draw(Vector2 start, Vector2 end, Vector2 hilt, DashTimes times, float s, Map map)
+        public static void Draw(Vector2 start, Vector2 end, Vector2 hilt, DashTimes times, float s, Map map, bool standIns = false)
         {
             if (s < 0f || s >= times.Duration) return;
             Vector2 centre = (start + end) / 2f, along = end - start;
@@ -84,8 +81,8 @@ namespace RimArt
                 }
 
                 // The carrier seen for a moment where it passed.
-                for (int i = 0; i < Ghosts.Length; i++)
-                    Afterimage(T.At(centre, d, distance, distance * Ghosts[i]), start, s - (times.LaunchAt + Ghosts[i] * times.Dash), GhostLife);
+                for (int i = 0; i < T.Ghosts.Length; i++)
+                    Afterimage(T.At(centre, d, distance, distance * T.Ghosts[i]), start, s - (times.LaunchAt + T.Ghosts[i] * times.Dash), T.GhostLife, standIns);
 
                 // Small dust at the departure and at the braking foot, and under each footfall along the path.
                 for (int e = 0; e < 2; e++)

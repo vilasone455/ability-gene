@@ -48,6 +48,9 @@ namespace RimArt
         public const float ClickGlint = 0.16f, EndDust = 0.3f, PathDust = 0.45f;
         /// <summary>A pawn's chest is drawn this far north of its feet.</summary>
         public const float Chest = 0.3f;
+        /// <summary>Where along the path the three afterimages stand (share of the dash), and how long each shows.</summary>
+        public static readonly float[] Ghosts = { 0.2f, 0.5f, 0.78f };
+        public const float GhostLife = 0.34f;
 
         /// <summary>The sketch's panel defaults, the ones the preview plays.</summary>
         public const float Aim = 0f, Distance = 6f, Warm = 0.35f, Dash = 0.15f, Sheathe = 0.4f;

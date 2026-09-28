@@ -61,6 +61,12 @@ namespace RimArt
         public const int Motes = 40;
         /// <summary>A pawn's chest is drawn this far north of its feet.</summary>
         public const float Chest = 0.3f;
+        /// <summary>
+        /// The afterimage at the far end of each cut: how long it shows (the lib's 0.22 s, raised to 0.3 s in game
+        /// so it can be seen, 2026-09-28) and how far inside the rim it stands, so it is on the dark area and not
+        /// half on the lit ground.
+        /// </summary>
+        public const float GhostLife = 0.3f, GhostInside = 0.5f;
 
         /// <summary>The sketch's panel defaults, the ones the preview plays.</summary>
         public const float Radius = 10f, Push = 0.3f, Warm = 1f, Gone = 1.5f, Sheathe = 0.8f, Fade = 0.6f;
@@ -81,6 +87,20 @@ namespace RimArt
         public static float BackAt => Preview.BackAt;
         public static float ClickAt => Preview.ClickAt;
         public static float Duration => Preview.Duration;
+
+        /// <summary>
+        /// Cut <paramref name="c"/>'s afterimage at <paramref name="s"/>: where its feet are relative to the caster,
+        /// which way it came (from the cut's start to its end), and 1 to 0 as it fades. False while it does not show.
+        /// </summary>
+        public static bool Ghost(CutEndCut c, int count, CutEndTimes times, float s, out Vector2 at, out Vector2 along, out float fade)
+        {
+            Vector2 line = c.Line.B - c.Line.A;
+            along = line.sqrMagnitude > 1e-6f ? line.normalized : Vector2.right;
+            at = c.Line.B - along * GhostInside;
+            float age = s - times.StartOf(c.Order, count) - Sweep;
+            fade = 1f - age / GhostLife;
+            return age >= 0f && age < GhostLife;
+        }
 
         /// <summary>How many of the sketch's raiders stand inside <paramref name="radius"/>: the preview's first cuts pass through them.</summary>
         public static int PreviewVictims(float radius)
