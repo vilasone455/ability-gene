@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Black Receiver's rods in one pawn (Hediff_PainRods). Severity = rods in it (1-3), set by the
+       code; each rod breaks 8 s after it landed (the ability's rodSeconds). While any rod is in, the
+       pawn cannot use abilities or psycasts (Patches_PainRods.cs). At pinRods (3) it is pinned: held
+       by a stun renewed every tick, drawn lying on its back, and not moved by Shinra Tensei, Banshō
+       Ten'in or Gravity Well. The stages hold the capacity factors: x0.75 per rod. -->
+  <HediffDef>
+    <defName>AG_PainRods</defName>
+    <label>chakra rods</label>
+    <description>Black Receiver rods stuck in the body. They disrupt chakra: no abilities or psycasts, and moving and manipulation are slowed. Three rods pin the body in place. Each rod breaks after a few seconds, and all of them break when their maker goes down or leaves hero form.</description>
+    <hediffClass>RimArt.Hediff_PainRods</hediffClass>
+    <defaultLabelColor>(0.55, 0.55, 0.7)</defaultLabelColor>
+    <isBad>true</isBad>
+    <maxSeverity>3</maxSeverity>
+    <initialSeverity>1</initialSeverity>
+    <everCurableByItem>false</everCurableByItem>
+    <stages>
+      <li>
+        <minSeverity>0</minSeverity>
+        <label>1 rod</label>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <postFactor>0.75</postFactor>
+          </li>
+          <li>
+            <capacity>Manipulation</capacity>
+            <postFactor>0.75</postFactor>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <minSeverity>2</minSeverity>
+        <label>2 rods</label>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <postFactor>0.5</postFactor>
+          </li>
+          <li>
+            <capacity>Manipulation</capacity>
+            <postFactor>0.5</postFactor>
+          </li>
+        </capMods>
+      </li>
+      <li>
+        <minSeverity>3</minSeverity>
+        <label>pinned</label>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <postFactor>0.5</postFactor>
+          </li>
+          <li>
+            <capacity>Manipulation</capacity>
+            <postFactor>0.5</postFactor>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

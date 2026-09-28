@@ -36,7 +36,7 @@ namespace RimArt
             Pawn pawn = parent.pawn;
             if (pawn?.Map == null) return;
             MapComponent_ShinraCasts component = pawn.Map.GetComponent<MapComponent_ShinraCasts>();
-            if (component.Running(pawn) || !GameComponent_Shinra.HasEye(pawn)
+            if (component.Running(pawn) || !GameComponent_Shinra.HasEye(pawn) || PainKit.DevaGapLeft(pawn) > 0f
                 || GameComponent_Shinra.Instance.For(pawn).cooldownUntil > Find.TickManager.TicksGame) return;
             if (ShinraCastAnimation.Clip.TryStart(pawn, out CastClips.Handle animation))
                 component.Begin(pawn, animation);

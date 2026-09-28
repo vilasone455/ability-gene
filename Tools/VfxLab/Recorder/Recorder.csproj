@@ -76,6 +76,8 @@
     <Compile Include="../../../Source/RimArt/Gravity/GravityGraphics.cs" Link="Linked/Gravity/GravityGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Gravity/GravityRules.cs" Link="Linked/Gravity/GravityRules.cs" />
     <Compile Include="../../../Source/RimArt/Gravity/DebugActions_Gravity.cs" Link="Linked/Gravity/DebugActions_Gravity.cs" />
+    <!-- Pain: the kit's shared drawing and the Banshō Ten'in and Black Receiver pictures: timing, drawing, previews (not Pain/Kit, which is game code). -->
+    <Compile Include="../../../Source/RimArt/Pain/*.cs" LinkBase="Linked/Pain" />
     <!-- Shinra Tensei -->
     <Compile Include="../../../Source/RimArt/Shinra/ShinraVfxGraphics.cs" Link="Linked/Shinra/ShinraVfxGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Shinra/ShinraVfxTiming.cs" Link="Linked/Shinra/ShinraVfxTiming.cs" />

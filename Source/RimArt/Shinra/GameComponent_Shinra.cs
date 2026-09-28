@@ -41,6 +41,14 @@ namespace RimArt
         public void Release()
         {
             if (!active || charge.releasing) return;
+            // The Echo's cast cost is taken when the wave is let go, not when the charge starts: a charge that is
+            // cancelled costs nothing (the Echo rule). The button never calls Ability.Activate, so it is paid here.
+            if (!PainKit.Pay(pawn, PainDefOf.AG_ShinraTensei))
+            {
+                Messages.Message(PainKit.CannotPay(pawn, PainDefOf.AG_ShinraTensei) ?? "No charge.", pawn, MessageTypeDefOf.RejectInput, false);
+                Cancel();
+                return;
+            }
             charge.releasing = true;
             cooldownUntil = Find.TickManager.TicksGame + ShinraCharge.CooldownTicks;
         }
@@ -68,12 +76,16 @@ namespace RimArt
             if (state == null) { state = new ShinraPawnState { pawn = pawn }; states.Add(state); }
             return state;
         }
-        public static bool HasEye(Pawn pawn) => pawn?.health?.hediffSet.hediffs.Any(h =>
-            h.def.defName == "AG_RepulsionEye" || h.def.defName == "AG_ShinraTenseiKit") == true;
+        /// <summary>
+        /// Pawn has Shinra Tensei: since the Pain port only his Echo grants it (the repulsion eye grants nothing).
+        /// The name is kept from when the eye was the source.
+        /// </summary>
+        public static bool HasEye(Pawn pawn) => PainKit.Has(pawn, PainDefOf.AG_ShinraTensei);
         public void Begin(Pawn pawn, CastClips.Handle animation)
         {
             var s = For(pawn);
-            if (s.active || s.cooldownUntil > Find.TickManager.TicksGame) { animation.Stop(); return; }
+            if (s.active || s.cooldownUntil > Find.TickManager.TicksGame || PainKit.DevaGapLeft(pawn) > 0f)
+            { animation.Stop(); return; }
             s.map = pawn.Map;
             s.centre = pawn.Position.ToVector3Shifted();
             s.charge = new ShinraCharge();
@@ -132,6 +144,7 @@ namespace RimArt
                 if (burst)
                 {
                     s.defenseUntil = Find.TickManager.TicksGame + ShinraCharge.DefenseTicks;
+                    PainKit.StartDevaGap(s.pawn);
                     ShinraCombat.Push(s);
                     ShinraSound.Release(s.map, s.centre.ToIntVec3());
                 }

@@ -25,7 +25,7 @@ namespace RimArt
             {
                 groupable = false,
                 defaultLabel = s.active ? "Release" : "Charge Shinra Tensei",
-                defaultDesc = "Hold a repulsion charge for up to 3 seconds of power. Release commits a 20-second cooldown. Allies can be hit.",
+                defaultDesc = "Hold a repulsion charge for up to 3 seconds of power. Release commits a 20-second cooldown and takes the Echo's charge. Allies can be hit. Shinra Tensei and Banshō Ten'in share a 5-second gap.",
                 icon = ContentFinder<Texture2D>.Get("RimArt/Shinra/IconPush"),
                 action = () =>
                 {
@@ -37,8 +37,14 @@ namespace RimArt
             if (s.active && s.charge.releasing) action.Disable("Recovering from release.");
             else if (!s.active && s.cooldownUntil > Find.TickManager.TicksGame)
                 action.Disable($"Cooldown: {(s.cooldownUntil - Find.TickManager.TicksGame) / 60f:0.0}s");
+            else if (!s.active && PainKit.DevaGapLeft(pawn) > 0f)
+                action.Disable($"Shinra Tensei and Banshō Ten'in share a gap: {PainKit.DevaGapLeft(pawn):0.0} s left.");
+            else if (!s.active && GameComponent_Pain.Instance?.Holding(pawn, Find.TickManager.TicksGame) != null)
+                action.Disable("Pain is in the middle of a technique.");
+            else if (!s.active && PainKit.CannotPay(pawn, PainDefOf.AG_ShinraTensei) is string noCharge)
+                action.Disable(noCharge);
             else if (!s.active && (!GameComponent_Shinra.HasEye(pawn) || !ShinraCastAnimation.Clip.CanAnimate(pawn)))
-                action.Disable("Requires a repulsion eye, a standing humanlike caster, and Melee Animation.");
+                action.Disable("Requires Pain's hero form, a standing humanlike caster, and Melee Animation.");
             yield return action;
             if (s.active && !s.charge.releasing)
                 yield return new Command_Action { groupable = false, defaultLabel = $"Cancel ({s.charge.Power:P0})",

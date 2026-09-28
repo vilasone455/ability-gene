@@ -451,7 +451,7 @@ RETIRED = {"AG_Panoply_Rain", "AG_Panoply_Loose", "AG_Panoply_Grasp"}
 # Echo that uses them is being built. Each is to lose one source once it is decided whether the
 # old item stays in the game; until then two sources are expected, and only these two.
 SHARED_WITH_ECHO = {
-    "AG_VectorReflection", "AG_VectorSurge", "AG_VectorShove", "AG_ShinraTensei",
+    "AG_VectorReflection", "AG_VectorSurge", "AG_VectorShove",
 }
 
 for ability, f in sorted(ability_defs.items()):

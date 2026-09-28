@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The cast job of Banshō Ten'in and Black Receiver: JobDriver_CastAbility that starts the picture
+       when the warmup begins and holds Pain after the fire tick for as long as his cast says (Banshō
+       until the slam, Black Receiver until the rod lands). -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastPain</defName>
+    <driverClass>RimArt.JobDriver_CastPain</driverClass>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>

@@ -158,14 +158,14 @@ static class ApiChecks
             .Single(e => (string)e.Element("defName") == "AG_RepulsionEye");
         if ((string)item.Attribute("ParentName") != "BodyPartArchotechBase"
             || (float)item.Element("statBases").Element("MarketValue") != 3200f
-            || (string)item.Element("thingSetMakerTags").Element("li") != "RewardStandardCore"
+            || item.Element("thingSetMakerTags") != null
             || item.Element("recipeMaker") != null || item.Element("costList") != null)
-            throw new Exception("Repulsion eye must be an uncraftable 3200-silver archotech trade/reward item");
+            throw new Exception("Repulsion eye must be an uncraftable 3200-silver archotech item that is no longer a reward (Echo-only since the Pain port)");
         if ((string)eye.Attribute("ParentName") != "AddedBodyPartBase"
             || (float)eye.Element("addedPartProps").Element("partEfficiency") != 1f
             || (string)eye.Element("spawnThingOnRemoved") != "AG_RepulsionEye"
-            || (string)eye.Element("abilities").Element("li") != "AG_ShinraTensei")
-            throw new Exception("Repulsion eye must supply normal sight, recovery and the existing ability ID");
+            || eye.Element("abilities") != null)
+            throw new Exception("Repulsion eye must supply normal sight and recovery, and no ability (Shinra Tensei comes from Pain's Echo)");
         var ingredients = recipe.Element("ingredients");
         if ((string)recipe.Attribute("ParentName") != "SurgeryInstallBodyPartArtificialBase"
             || (int)recipe.Element("skillRequirements").Element("Medicine") != 8
@@ -1157,18 +1157,17 @@ static class ApiChecks
         if ((string)item.Attribute("ParentName") != (string)sibling.Attribute("ParentName")
             || (float)item.Element("statBases").Element("MarketValue")
                != (float)sibling.Element("statBases").Element("MarketValue")
-            || (string)item.Element("thingSetMakerTags").Element("li")
-               != (string)sibling.Element("thingSetMakerTags").Element("li")
+            || item.Element("thingSetMakerTags") != null || sibling.Element("thingSetMakerTags") != null
             || item.Element("recipeMaker") != null || item.Element("costList") != null)
-            throw new Exception("Attraction eye must be uncraftable and trade and reward on the repulsion eye's terms and price");
+            throw new Exception("Attraction eye must be uncraftable, no longer a reward (Echo-only), on the repulsion eye's terms and price");
 
         var eye = XDocument.Load("1.6/Defs/HediffDefs/AG_Gravity_Kit.xml").Root.Elements("HediffDef")
             .Single(e => (string)e.Element("defName") == "AG_AttractionEye");
         if ((string)eye.Attribute("ParentName") != "AddedBodyPartBase"
             || (float)eye.Element("addedPartProps").Element("partEfficiency") != 1f
             || (string)eye.Element("spawnThingOnRemoved") != "AG_AttractionEye"
-            || (string)eye.Element("abilities").Element("li") != "AG_GravityWell")
-            throw new Exception("Attraction eye must supply normal sight, surgical recovery and the Gravity Well ability");
+            || eye.Element("abilities") != null)
+            throw new Exception("Attraction eye must supply normal sight and surgical recovery, and no ability (Gravity Well comes from Pain's Echo)");
 
         var recipe = XDocument.Load("1.6/Defs/RecipeDefs/AG_Gravity_Recipes.xml").Root.Element("RecipeDef");
         var siblingRecipe = XDocument.Load("1.6/Defs/RecipeDefs/AG_Shinra_Recipes.xml").Root.Element("RecipeDef");
@@ -1197,22 +1196,36 @@ static class ApiChecks
             || (bool)ability.Element("aiCanUse") || (bool)verb.Element("requireLineOfSight")
             || (bool)verb.Element("drawAimPie") || (float)verb.Element("warmupTime") != 0f)
             throw new Exception("Gravity Well must carry its own targeting: no verb range, warmup, aim pie, line of sight or AI use");
+        // The balance numbers are XML fields on the comp; read them the way the game does (the class
+        // defaults, then the def's elements) and compare with the description the player reads.
+        var compElement = ability.Element("comps").Elements("li")
+            .Single(e => (string)e.Attribute("Class") == "RimArt.CompProperties_AbilityGravityWell");
+        var props = new CompProperties_AbilityGravityWell();
+        foreach (var field in compElement.Elements())
+        {
+            FieldInfo info = typeof(CompProperties_AbilityGravityWell).GetField(field.Name.LocalName)
+                ?? throw new Exception($"Gravity Well's comp has no field '{field.Name.LocalName}'");
+            info.SetValue(props, float.Parse(field.Value, System.Globalization.CultureInfo.InvariantCulture));
+        }
         var quoted = System.Text.RegularExpressions.Regex.Match((string)ability.Element("description"),
-            @"(\d+)\D+(\d+) blunt damage");
-        if (!quoted.Success || float.Parse(quoted.Groups[1].Value) != GravityRules.Damage(0f)
-            || float.Parse(quoted.Groups[2].Value) != GravityRules.Damage(GravityRules.FullMass))
+            @"(\d+)[–-](\d+) blunt damage");
+        if (!quoted.Success || float.Parse(quoted.Groups[1].Value) != props.Damage(0f)
+            || float.Parse(quoted.Groups[2].Value) != props.Damage(props.fullMass))
             throw new Exception($"Gravity Well quotes a damage range the rules no longer produce: "
-                + $"{GravityRules.Damage(0f)}-{GravityRules.Damage(GravityRules.FullMass)}");
+                + $"{props.Damage(0f)}-{props.Damage(props.fullMass)}");
 
         // The playtest defaults, stated once so a tuning pass is a deliberate edit here too.
-        if (GravityRules.Range != 20f || GravityRules.Radius != 8f || GravityRules.BulletRadius != 5f
-            || GravityRules.Core != 1.5f || GravityRules.BurstRadius != 2f || GravityRules.OpeningTicks != 30
-            || GravityRules.DurationTicks != 360 || GravityRules.CooldownTicks != 2400
-            || GravityRules.FullMass != 200f || GravityRules.BodyMass != 60f || GravityRules.CoreDamage != 4f
-            || GravityRules.Pull(GravityRules.Radius, 1f) != 0f || GravityRules.Pull(GravityRules.Core, 1f) != 6f
-            || GravityRules.BendDegrees(GravityRules.Core, 1f) != 20f)
-            throw new Exception("Gravity Well: expected 20 cells, 0.5 s opening, 6 s hold, 8/5/1.5/2 radii, "
-                + "4 damage per second, 40 s cooldown, 200 kg full, 60 kg bodies, 6 cells per second and 20 degrees at the core");
+        if (props.range != 20f || props.minRadius != 3f || props.maxRadius != 10f || props.fullMass != 200f
+            || props.coreRadius != 1.5f || props.maxBulletRadius != 5f || props.DurationTicks(0f) != 240
+            || props.DurationTicks(100f) != 840 || props.DurationTicks(1000f) != 900 || props.CooldownTicks != 2400
+            || props.BurstRadius(0f) != 2f || props.BurstRadius(200f) != 3f || props.coreDamage != 4f
+            || props.roundMass != 2f || props.explosiveMass != 10f || props.bodyMass != 60f
+            || props.driftSpeed != 0.5f || props.leash != 5f || GravityRules.OpeningTicks != 30
+            || props.Pull(props.PullRadius(0f), 1f, props.PullRadius(0f)) != 0f || props.Pull(props.coreRadius, 1f, 10f) != 6f
+            || props.Bend(props.coreRadius, 1f, 5f) != 20f)
+            throw new Exception("Gravity Well: expected 20 cells, 0.5 s opening, radius 3 to 10 at 200 eaten, 1.5 core, "
+                + "4 s + 1 s per 10 eaten up to 15 s, 2 to 3 cell implosion, 4 damage per second, 40 s cooldown, "
+                + "eaten 2 / 10 / 60, drift 0.5 cells per second within 5, 6 cells per second and 20 degrees at the core");
 
         // A DefOf field naming no def is a red error at startup for everyone, not at the cast.
         var declared = new[] { "1.6/Defs/SoundDefs/AG_Gravity_Sounds.xml", "1.6/Defs/HediffDefs/AG_Gravity_Kit.xml" }

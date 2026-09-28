@@ -18,7 +18,11 @@ namespace RimArt
 
     public static class GravityAcquisition
     {
+        // The well is gated on the ability itself (the Echo's grant, or the old eye's hediff grant).
+        public static bool HasAbility(Pawn pawn, AbilityDef def) =>
+            def != null && pawn?.abilities?.GetAbility(def, includeTemporary: true) != null;
         public static bool HasEye(Pawn pawn) => pawn?.health?.hediffSet.HasHediff(GravityDefOf.AG_AttractionEye) == true;
+        // For the old debug kit entry: installs the attraction eye, which carries the ability.
         public static string Grant(Pawn pawn)
         {
             if (pawn?.health == null || !pawn.RaceProps.Humanlike) return "requires a humanlike pawn";
@@ -36,25 +40,28 @@ namespace RimArt
     [HarmonyPatch(typeof(Ability), nameof(Ability.GetGizmos))]
     public static class GravityCommands
     {
-        public static bool Busy(Pawn pawn) => MapComponent_Gravity.On(pawn)?.For(pawn) != null;
-        public static bool ValidTarget(Pawn pawn, IntVec3 cell) => pawn?.Map != null && cell.InBounds(pawn.Map)
-            && !cell.Fogged(pawn.Map) && cell.DistanceTo(pawn.Position) <= GravityRules.Range
+        public static bool Busy(Pawn pawn) => MapComponent_Gravity.Live(pawn)?.For(pawn) != null;
+        public static bool ValidTarget(Pawn pawn, IntVec3 cell, float range) => pawn?.Map != null && cell.InBounds(pawn.Map)
+            && !cell.Fogged(pawn.Map) && cell.DistanceTo(pawn.Position) <= range
             && GravityMovement.Clear(pawn.Map, pawn.Position, cell);
         public static void Postfix(Ability __instance, ref IEnumerable<Command> __result)
         {
-            if (__instance.def.defName == "AG_GravityWell") __result = Commands(__instance);
+            if (__instance.def.comps?.Any(c => c is CompProperties_AbilityGravityWell) == true) __result = Commands(__instance);
         }
         private static IEnumerable<Command> Commands(Ability ability)
         {
             Pawn pawn = ability.pawn;
             if (pawn.abilities.AllAbilitiesForReading.FirstOrDefault(a => a.def == ability.def) != ability) yield break;
+            var props = CompProperties_AbilityGravityWell.For(ability.def);
             var cast = MapComponent_Gravity.On(pawn)?.For(pawn);
             int remaining = GameComponent_Gravity.Instance.Remaining(pawn);
             var button = new Command_Action
             {
                 groupable = false,
-                defaultLabel = cast == null ? "Gravity Well" : cast.Field ? "Implode" : "Gravity Well",
-                defaultDesc = "Channel a gravity well for up to six seconds. Pulls allies and enemies, bends ordinary bullets, and gathers loose objects. Implosion deals 15–45 blunt damage based on the mass inside the core. Moving cancels it. Requires Melee Animation.",
+                defaultLabel = cast?.Field == true ? "Implode" : ability.def.LabelCap.ToString(),
+                defaultDesc = cast?.Field == true
+                    ? $"Implode now: {props.Damage(cast.eaten):0.#} blunt damage within {props.BurstRadius(cast.eaten):0.#} cells."
+                    : ability.def.description,
                 icon = GravityGraphics.Icon,
                 action = () =>
                 {
@@ -62,26 +69,24 @@ namespace RimArt
                     Find.Targeter.BeginTargeting(new TargetingParameters
                     {
                         canTargetLocations = true, canTargetPawns = false, canTargetBuildings = false,
-                        canTargetItems = false, validator = target => ValidTarget(pawn, target.Cell)
-                    }, target => MapComponent_Gravity.On(pawn)?.Begin(pawn, target.Cell));
+                        canTargetItems = false, validator = target => ValidTarget(pawn, target.Cell, props.range)
+                    }, target => MapComponent_Gravity.On(pawn)?.Begin(pawn, target.Cell, ability.def));
                 }
             };
             if (cast != null && !cast.Field) button.Disable(cast.Active ? "Opening the well." : "Recovering from implosion.");
             else if (cast == null && remaining > 0) button.Disable($"Cooldown: {remaining / 60f:0.0}s");
-            else if (cast == null && (!GravityAcquisition.HasEye(pawn) || pawn.InMentalState
-                || pawn.stances.stunner.Stunned || !GravityCastAnimation.Clip.CanAnimate(pawn)))
-                button.Disable("Requires an attraction eye, a standing humanlike caster, and Melee Animation.");
+            else if (cast == null && (pawn.InMentalState || pawn.stances.stunner.Stunned || !GravityCastAnimation.Clip.CanAnimate(pawn)))
+                button.Disable("Requires a standing humanlike caster and Melee Animation.");
+            else if (cast == null && !MapComponent_Gravity.CanPay(pawn, ability.def, out float cost))
+                button.Disable("AG_EchoCastNoCharge".Translate(cost.ToString("0"), GameComponent_Echoes.Get.charge.ToString("0")));
             yield return button;
             if (cast?.Active == true)
                 yield return new Command_Action { groupable = false, defaultLabel = "Cancel",
-                    defaultDesc = "Dissipate without an implosion. An activated well still incurs cooldown.", action = () => cast.Finish(false) };
+                    defaultDesc = "Close the well without an implosion. A well that has opened still starts its cooldown.",
+                    action = () => cast.Finish(false) };
         }
     }
 
-    public class CompProperties_AbilityGravityWell : CompProperties_AbilityEffect
-    {
-        public CompProperties_AbilityGravityWell() { compClass = typeof(CompAbilityEffect_GravityWell); }
-    }
     public class CompAbilityEffect_GravityWell : CompAbilityEffect
     {
         public override IEnumerable<Gizmo> CompGetGizmosExtra()
@@ -100,10 +105,10 @@ namespace RimArt
         {
             var rect = new Rect(topLeft.x, topLeft.y, GetWidth(maxWidth), 75f);
             Widgets.DrawWindowBackground(rect);
-            float mass = cast.Field ? cast.map.GetComponent<MapComponent_Gravity>().CoreMass(cast) : 0f;
-            Widgets.Label(rect.ContractedBy(6f), $"Gathered mass: {mass:0} kg\nImplosion: {GravityRules.Damage(mass):0.#} damage");
-            float seconds = cast.Field ? (GravityRules.DurationTicks - cast.clock.ticks) / 60f : 6f;
-            Widgets.Label(new Rect(rect.x + 6f, rect.y + 49f, rect.width - 12f, 22f), $"{seconds:0.0}s remaining");
+            var props = cast.Props;
+            Widgets.Label(rect.ContractedBy(6f), $"Eaten: {cast.eaten:0} (pull {cast.Radius:0.0} cells)\n"
+                + $"Implosion: {props.Damage(cast.eaten):0.#} blunt, {props.BurstRadius(cast.eaten):0.#} cells");
+            Widgets.Label(new Rect(rect.x + 6f, rect.y + 49f, rect.width - 12f, 22f), $"{cast.TicksLeft / 60f:0.0} s left");
             return new GizmoResult(GizmoState.Clear);
         }
     }

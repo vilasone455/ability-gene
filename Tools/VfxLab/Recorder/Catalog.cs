@@ -211,6 +211,17 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Pain", Prefix = "Pain: bansho", Component = typeof(MapComponent_BanshoPreview), Clock = "seconds",
+                Phases = label => BanshoPhases(label.Contains("thrumbo") ? BanshoScenario.Thrumbo
+                    : label.Contains("blocked") ? BanshoScenario.Blocked : BanshoScenario.Sandbags),
+            },
+            new Kit
+            {
+                Name = "Pain", Prefix = "Pain: black receiver", Component = typeof(MapComponent_BlackReceiverPreview), Clock = "seconds",
+                Phases = BlackReceiverPhases,
+            },
+            new Kit
+            {
                 Name = "Anchor", Prefix = "Clap teleport:", Component = typeof(MapComponent_ClapPreview), Clock = "seconds",
                 Phases = label => ClapPhases(label.Contains("double")),
             },
@@ -267,6 +278,46 @@ namespace RimArt.VfxLab
             }
             phases.Add(new Phase("Release", AmaterasuTiming.Release));
             return phases.Where(p => p.Seconds < AmaterasuTiming.Duration).OrderBy(p => p.Seconds).ToArray();
+        }
+
+        // The sketch's phases(): Rest, Warm-up, Pull, Lift (not a dragged one), Catch / Hit / Stop, Result.
+        private static Phase[] BanshoPhases(BanshoScenario scenario)
+        {
+            BanshoTimes t = MapComponent_BanshoPreview.TimesFor(scenario);
+            var phases = new List<Phase> { new Phase("Rest", 0f), new Phase("Warm-up", t.cast), new Phase("Pull", t.grip) };
+            if (!t.heavy) phases.Add(new Phase("Lift", t.lift));
+            phases.Add(new Phase(t.heavy ? "Stop" : t.blocked ? "Hit" : "Catch", t.arrive));
+            phases.Add(new Phase("Result", t.down));
+            return phases.ToArray();
+        }
+
+        // The sketch's markers per scenario, off BlackReceiverTiming and the three throws' script (BlackReceiverThrows).
+        private static Phase[] BlackReceiverPhases(string label)
+        {
+            if (label.Contains("pushes"))
+                return new[]
+                {
+                    new Phase("Pinned", 0f), new Phase("Raiders walk up", 0.2f), new Phase("Push", BlackReceiverTiming.PushAt),
+                    new Phase("Result", BlackReceiverTiming.PushAt + BlackReceiverTiming.PushFly),
+                };
+            if (label.Contains("stabbed"))
+                return new[]
+                {
+                    new Phase("Face-down", 0f), new Phase("Stab 1", BlackReceiverTiming.StabStart(0)), new Phase("Stab 2", BlackReceiverTiming.StabStart(1)),
+                    new Phase("Stab 3", BlackReceiverTiming.StabStart(2)), new Phase("Pinned", BlackReceiverTiming.StabStart(2) + BlackReceiverTiming.StabIn),
+                };
+            if (label.Contains("goes down"))
+                return new[]
+                {
+                    new Phase("Pinned", 0f), new Phase("Shots", BlackReceiverTiming.ShotsAt), new Phase("Pain down, rods break", BlackReceiverTiming.DownAt),
+                    new Phase("Free", BlackReceiverTiming.DownAt + BlackReceiverTiming.FreeDelay + BlackReceiverTiming.GetUp),
+                };
+            var t = new BlackReceiverThrows();
+            return new[]
+            {
+                new Phase("Rest", 0f), new Phase("Throw 1", t.starts[0]), new Phase("Hit 1", t.hits[0]), new Phase("Hit 2", t.hits[1]),
+                new Phase("Hit 3: pinned", t.hits[2]), new Phase("Rod 1 breaks", t.breaks[0]), new Phase("All broken", t.breaks[2]),
+            };
         }
 
         // The sketch's marks for the scenario, off the preview's script (RaikoKusariScene, timed by RaikoKusariTiming).
