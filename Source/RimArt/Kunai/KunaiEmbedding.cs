@@ -146,5 +146,50 @@ namespace RimArt
             if (map == null || !cell.InBounds(map)) return;
             GenPlace.TryPlaceThing(ThingMaker.MakeThing(KunaiDefOf.AG_Kunai), cell, map, ThingPlaceMode.Near);
         }
+
+        /// <summary>
+        /// Plants one kunai where a missed throw came down (<paramref name="at"/>), standing in the ground
+        /// pointing <paramref name="angle"/> degrees clockwise from north, the way it flew. Returns false
+        /// where it cannot go into the ground - water, or a cell no one can stand on - and the caller drops
+        /// it flat instead. If the cell already holds something, it goes into the nearest free cell,
+        /// in that cell's middle. It starts forbidden.
+        /// </summary>
+        public static bool PlantKunai(Vector3 at, float angle, Map map)
+        {
+            IntVec3 cell = at.ToIntVec3();
+            if (map == null || !cell.InBounds(map) || !cell.Standable(map) || cell.GetTerrain(map).IsWater) return false;
+
+            if (!(ThingMaker.MakeThing(KunaiDefOf.AG_Kunai) is KunaiItem kunai)) return false;
+            Vector3 offset = at - cell.ToVector3Shifted();
+            float max = KunaiDefaults.PlantedMaxOffset;
+            kunai.planted = true;
+            kunai.plantAngle = angle;
+            kunai.plantOffset = new Vector2(Mathf.Clamp(offset.x, -max, max), Mathf.Clamp(offset.z, -max, max));
+            if (!GenPlace.TryPlaceThing(kunai, cell, map, ThingPlaceMode.Near, out Thing placed)) return false;
+            // Forbidden, so colonists leave it standing where it fell (a Flying Thunder God anchor)
+            // until the player allows it.
+            placed.SetForbidden(true, warnOnFail: false);
+            if (placed == kunai && placed.Position != cell)
+            {
+                kunai.plantOffset = Vector2.zero;
+                kunai.DirtyMapMesh(map);
+            }
+            KickUpDirt(placed.Position.ToVector3Shifted() + new Vector3(kunai.plantOffset.x, 0f, kunai.plantOffset.y), angle, map);
+            return true;
+        }
+
+        /// <summary>Dust thrown up where a kunai goes into the ground, mostly ahead of it, the way it flew.</summary>
+        private static void KickUpDirt(Vector3 at, float angle, Map map)
+        {
+            if (!at.ShouldSpawnMotesAt(map)) return;
+            for (int i = 0; i < 3; i++)
+            {
+                FleckCreationData dust = FleckMaker.GetDataStatic(at, map, FleckDefOf.DustPuff, Rand.Range(0.7f, 1.1f));
+                dust.rotationRate = Rand.Range(-60, 60);
+                dust.velocityAngle = angle + Rand.Range(-35f, 35f);
+                dust.velocitySpeed = Rand.Range(0.5f, 1f);
+                map.flecks.CreateFleck(dust);
+            }
+        }
     }
 }

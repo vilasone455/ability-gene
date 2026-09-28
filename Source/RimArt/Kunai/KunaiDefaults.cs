@@ -12,6 +12,18 @@ namespace RimArt
         /// <summary>Drawn in the pawn's hand during the throw animation.</summary>
         public const string HandTexture = "RimArt/Kunai/Kunai";
 
+        /// <summary>
+        /// A kunai standing in the ground after a miss (<see cref="KunaiItem"/>): the point it went in is
+        /// the texture's centre, the handle and ring lean back toward the thrower (down the texture).
+        /// </summary>
+        public const string PlantedTexture = "RimArt/Kunai/Planted";
+
+        /// <summary>Cells across the planted kunai's texture: what stands out of the ground is then about 0.6 cells long, near the flat item's 0.7.</summary>
+        public const float PlantedDrawSize = 1.4f;
+
+        /// <summary>Furthest a planted kunai stands from its cell's centre, so it never looks as if it is in the next cell.</summary>
+        public const float PlantedMaxOffset = 0.35f;
+
         /// <summary>Most kunai stuck in one pawn at once. A hit beyond this drops the kunai instead.</summary>
         public const int MaxEmbeddedPerPawn = 3;
 

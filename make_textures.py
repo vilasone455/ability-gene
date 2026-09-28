@@ -22,7 +22,9 @@ does not anti-alias a polygon fill.
 
 Run:  python3 make_textures.py
 """
-from PIL import Image, ImageDraw, ImageFilter
+import math
+
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 SS = 4                    # supersample factor
 SIZE = 128                # final texture size
@@ -1036,48 +1038,74 @@ def make_retrieval_reel_icon():
 # the projectile in flight (the game rotates projectile textures so up is the direction of
 # travel) and the thing in the pawn's hand during the throw animation.
 
-KUNAI_WRAP     = (34, 36, 44)
-KUNAI_WRAP_LIT = (70, 74, 88)
+KUNAI_WRAP     = (58, 61, 70)
+KUNAI_WRAP_LIT = (104, 108, 120)
+KUNAI_WRAP_DARK = (30, 32, 38)
+# Blade facets, lit from the upper left as in the anime: the upper-left face brightest, the
+# lower-right darkest.
+# Blue-grey steel, a little cooler than neutral: the game's warm light turns neutral grey beige.
+KUNAI_FACE_LIT  = (226, 234, 248)
+KUNAI_FACE      = (154, 166, 188)
+KUNAI_FACE_LOW  = (100, 110, 132)
+KUNAI_FACE_DARK = (54, 60, 76)
+# Proportions of the total length, from the anime (Narutopedia "Kunai.png"): the blade is the longer
+# part and widest 70% of the way down it, the handle is short, the ring is large and thick.
+KUNAI_BLADE, KUNAI_WIDEST, KUNAI_RING = 0.58, 0.7, 0.17
 
 
 def draw_kunai(d, cx, tip_y, length):
     """
-    A kunai of the given total length, point at tip_y. Proportions: blade 55%, handle 33%,
-    ring 12%. The blade is a leaf shape widest a third of the way down; the handle is cord
-    wrap drawn as bands; the ring is an open circle.
+    A kunai of the given total length, point at tip_y, ring bottom at tip_y + length. The blade is
+    a flat diamond: straight edges out to its widest point, then a short steep taper to the neck,
+    a ridge down the middle, so it shows four faces. The handle is wrapped in cord, crossing
+    diagonally; the ring is thick steel with a highlight on its upper left.
     """
-    blade = length * 0.55
-    handle = length * 0.33
-    ring_d = length * 0.12
-    half = length * 0.085
-    widest = tip_y + blade * 0.62
+    blade = length * KUNAI_BLADE
+    ring_r = length * KUNAI_RING / 2
+    half = length * 0.105
+    neck = half * 0.26
+    widest = tip_y + blade * KUNAI_WIDEST
     base = tip_y + blade
+    ring_y = tip_y + length - ring_r
+    bottom = ring_y - ring_r * 0.55
+    o = px(1.4)  # outline
 
-    d.polygon([(cx, tip_y), (cx + half, widest), (cx + half * 0.35, base),
-               (cx - half * 0.35, base), (cx - half, widest)], fill=EDGE)
-    inset = px(2)
-    d.polygon([(cx, tip_y + inset * 2), (cx + half - inset, widest), (cx + half * 0.35 - inset * 0.5, base - inset),
-               (cx - half * 0.35 + inset * 0.5, base - inset), (cx - half + inset, widest)], fill=STEEL)
-    # Lit left half and a ridge down the middle.
-    d.polygon([(cx, tip_y + inset * 2), (cx, base - inset), (cx - half * 0.35 + inset * 0.5, base - inset),
-               (cx - half + inset, widest)], fill=STEEL_LIGHT)
-    d.line([(cx, tip_y + inset * 3), (cx, base - inset)], fill=STEEL_DARK, width=max(1, px(1)))
+    # Outline, then the four faces either side of the ridge and the widest line.
+    d.polygon([(cx, tip_y - o * 1.6), (cx + half + o, widest), (cx + neck + o, base + o),
+               (cx - neck - o, base + o), (cx - half - o, widest)], fill=EDGE)
+    left, right = (cx - half, widest), (cx + half, widest)
+    mid, tip = (cx, widest - blade * 0.02), (cx, tip_y)
+    d.polygon([tip, mid, left], fill=KUNAI_FACE_LIT)
+    d.polygon([tip, right, mid], fill=KUNAI_FACE)
+    d.polygon([left, mid, (cx, base), (cx - neck, base)], fill=KUNAI_FACE_LOW)
+    d.polygon([mid, right, (cx + neck, base), (cx, base)], fill=KUNAI_FACE_DARK)
+    # The sharpened edge catches the light along the upper left.
+    d.line([(cx - half * 0.12, tip_y + blade * 0.09), (cx - half + o * 0.4, widest - o * 0.3)],
+           fill=(250, 252, 255), width=max(1, px(0.8)))
 
-    hw = half * 0.38
-    top = base
-    bottom = base + handle
-    d.rectangle([cx - hw, top, cx + hw, bottom], fill=KUNAI_WRAP)
-    bands = 6
-    for i in range(bands):
-        y0 = top + (bottom - top) * (i + 0.2) / bands
-        y1 = top + (bottom - top) * (i + 0.7) / bands
-        d.rectangle([cx - hw + inset * 0.5, y0, cx + hw - inset * 0.5, y1], fill=KUNAI_WRAP_LIT)
+    # Handle: a steel collar under the blade, the cord wrap, a collar above the ring.
+    hw = half * 0.3
+    d.rectangle([cx - hw - o, base - o * 0.5, cx + hw + o, bottom + o], fill=EDGE)
+    d.rectangle([cx - hw, base, cx + hw, bottom], fill=KUNAI_WRAP)
+    wraps = 5
+    span = (bottom - base) / wraps
+    for i in range(wraps):
+        y = base + span * (i + 0.5)
+        d.polygon([(cx - hw, y - span * 0.05), (cx + hw, y - span * 0.45), (cx + hw, y - span * 0.05),
+                   (cx - hw, y + span * 0.35)], fill=KUNAI_WRAP_LIT)
+        d.line([(cx - hw, y + span * 0.4), (cx + hw, y)], fill=KUNAI_WRAP_DARK, width=max(1, px(0.6)))
+    for y in (base, bottom - span * 0.35):
+        d.rectangle([cx - hw - px(0.3), y, cx + hw + px(0.3), y + span * 0.35], fill=STEEL_DARK)
 
-    r = ring_d / 2
-    ry = bottom + r
-    d.ellipse([cx - r, ry - r, cx + r, ry + r], outline=EDGE, width=px(4))
-    d.ellipse([cx - r + inset * 0.5, ry - r + inset * 0.5, cx + r - inset * 0.5, ry + r - inset * 0.5],
-              outline=STEEL_DARK, width=px(2))
+    # Ring: thick, steel, lit on its upper left.
+    t = ring_r * 0.34
+    d.ellipse([cx - ring_r - o, ring_y - ring_r - o, cx + ring_r + o, ring_y + ring_r + o], fill=EDGE)
+    d.ellipse([cx - ring_r, ring_y - ring_r, cx + ring_r, ring_y + ring_r], fill=STEEL_DARK)
+    d.arc([cx - ring_r + t * 0.25, ring_y - ring_r + t * 0.25, cx + ring_r - t * 0.25, ring_y + ring_r - t * 0.25],
+          150, 290, fill=STEEL_LIGHT, width=max(1, int(t * 0.45)))
+    hole = ring_r - t
+    d.ellipse([cx - hole - o, ring_y - hole - o, cx + hole + o, ring_y + hole + o], fill=EDGE)
+    d.ellipse([cx - hole, ring_y - hole, cx + hole, ring_y + hole], fill=(0, 0, 0, 0))
 
 
 def make_kunai():
@@ -1117,7 +1145,7 @@ def make_kunai_icon():
     d.ellipse([c - px(58), c - px(58), c + px(58), c + px(58)], fill=(30, 32, 36, 210))
 
     # Motion lines parallel to the kunai, either side of its handle.
-    for sx, sy in ((px(58), px(96)), (px(30), px(68))):
+    for sx, sy in ((px(63), px(101)), (px(27), px(65))):
         d.line([(sx - px(22), sy + px(22)), (sx, sy)], fill=STEEL_DARK, width=px(4))
 
     layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
@@ -1127,6 +1155,107 @@ def make_kunai_icon():
 
     finish(img, "Textures/RimArt/Kunai/IconKunai.png")
 
+
+# Soil for the planted kunai's ground mark: dark enough to read on grass, soil and sand alike.
+SOIL_HOLE  = (22, 16, 11)
+SOIL_DARK  = (44, 32, 22)
+SOIL       = (98, 77, 55)
+SOIL_LIGHT = (184, 156, 118)
+
+
+def soil_lump(d, x, y, r):
+    """A lump of turned-up soil at (x, y) in final pixels from the centre: a dark underside, a lit top."""
+    c = S // 2
+    d.ellipse([c + px(x - r), c + px(y - r * 0.55), c + px(x + r), c + px(y + r * 0.85)], fill=SOIL_DARK + (235,))
+    d.ellipse([c + px(x - r * 0.9), c + px(y - r * 0.75), c + px(x + r * 0.8), c + px(y + r * 0.35)], fill=SOIL + (240,))
+    d.ellipse([c + px(x - r * 0.65), c + px(y - r * 0.7), c + px(x + r * 0.25), c + px(y - r * 0.1)], fill=SOIL_LIGHT + (240,))
+
+
+def make_kunai_planted():
+    """
+    A kunai standing in the ground after a miss (KunaiItem), drawn 1.4 cells wide. It flew up the texture;
+    the game turns it to the way it flew. Half the blade is buried at the texture centre and the rest
+    leans back toward the thrower (down the texture), foreshortened; what stands out of the ground is
+    about 0.6 cells long, near the flat item's 0.7.
+
+    The ground shows it went in: a small crater, a rim of soil round a dark hole wider than the
+    blade, and the blade darkening as it goes down into the hole, so it does not end in a straight
+    cut; a dark scuff, cracks and clods thrown ahead round it. A shadow falls to the lower right.
+    """
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    c = S // 2
+    length = px(90)
+    buried = length * KUNAI_BLADE * 0.5
+    lean = 0.85  # the visible part's length seen from above, as a share of its real length
+
+    # Drawn on a tall layer: the whole kunai does not fit below the centre until it is foreshortened.
+    layer = Image.new("RGBA", (S, 2 * S), (0, 0, 0, 0))
+    draw_kunai(ImageDraw.Draw(layer), c, c - buried, length)
+    below = layer.crop((0, c, S, 2 * S))
+    below = below.resize((S, max(1, int(below.height * lean))), Image.LANCZOS)
+    kunai = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    kunai.alpha_composite(below, (0, c))
+    # The blade darkens as it goes down into the hole.
+    fade = Image.new("L", (1, S), 0)
+    for y in range(S):
+        fade.putpixel((0, y), int(200 * max(0.0, 1 - (y - c) / px(5))) if y >= c else 0)
+    fade = ImageChops.multiply(fade.resize((S, S)), kunai.split()[3])
+    kunai.alpha_composite(Image.merge("RGBA", (*Image.new("RGB", (S, S), SOIL_HOLE).split(), fade)))
+
+    def at(x, y):
+        return c + px(x), c + px(y)
+
+    def arc(rx, ry, a0, a1, cy=0.0, wobble=0.0, step=6):
+        """Points on an ellipse round the hole, angles in degrees from straight ahead, clockwise; the
+        radius wobbles a little so the soil's edge is not a clean curve."""
+        pts = []
+        n = max(2, int(abs(a1 - a0) / step))
+        for i in range(n + 1):
+            a = math.radians(a0 + (a1 - a0) * i / n)
+            k = 1 + wobble * math.sin(a * 5.3 + 0.7) * math.cos(a * 2.1)
+            pts.append(at(math.sin(a) * rx * k, cy - math.cos(a) * ry * k))
+        return pts
+
+    # Scuffed, darker ground round the hole, reaching further ahead than behind.
+    scuff = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    ImageDraw.Draw(scuff).ellipse([c - px(18), c - px(18), c + px(18), c + px(8)], fill=SOIL_DARK + (140,))
+    img.alpha_composite(scuff.filter(ImageFilter.GaussianBlur(px(2.5))))
+
+    d = ImageDraw.Draw(img)
+    # Cracks running out past the crater: (direction in degrees from ahead, clockwise; from; to; bend).
+    for a, r0, r1, bend in ((-80, 14, 22, 1.4), (-45, 12, 22, -1.2), (-12, 9, 17, 1.0), (22, 10, 19, -1.3),
+                            (55, 13, 21, 1.2), (100, 14, 20, -1.0), (-112, 14, 20, 0.9)):
+        t = math.radians(a)
+        dx, dy = math.sin(t), -math.cos(t)
+        mid = (r0 + r1) / 2
+        d.line([at(dx * r0, dy * r0 * 0.75), at(dx * mid - dy * bend, (dy * mid + dx * bend) * 0.75),
+                at(dx * r1, dy * r1 * 0.75)], fill=SOIL_DARK + (235,), width=px(0.9), joint="curve")
+
+    # A small crater: a rim of soil pushed up round the hole, lit on its upper left.
+    rx, ry = 13.0, 6.8
+    d.ellipse([c - px(rx + 0.9), c - px(ry + 0.9), c + px(rx + 0.9), c + px(ry + 0.9)], fill=SOIL_DARK + (240,))
+    d.ellipse([c - px(rx), c - px(ry), c + px(rx), c + px(ry)], fill=SOIL + (250,))
+    d.arc([c - px(rx - 0.6), c - px(ry - 0.6), c + px(rx - 0.6), c + px(ry - 0.6)], 170, 300,
+          fill=SOIL_LIGHT + (250,), width=px(1.3))
+    # The hole, a little wider than the blade.
+    hx, hy = rx - 2.6, ry - 2.1
+    d.ellipse([c - px(hx), c - px(hy), c + px(hx), c + px(hy)], fill=SOIL_HOLE + (250,))
+    # Clods thrown ahead.
+    for x, y, r in ((-7, -13, 1.8), (4.5, -15.5, 1.6), (12.5, -10, 1.4), (-14, -8, 1.3), (16.5, -4, 1.1),
+                    (-1.5, -20, 1.1)):
+        soil_lump(d, x, y, r)
+
+    # Shadow: the kunai's outline, slid further right the higher it stands off the ground.
+    alpha = kunai.split()[3].point(lambda v: 95 if v > 40 else 0)
+    shear = 0.35
+    alpha = alpha.transform((S, S), Image.AFFINE, (1, -shear, shear * c, 0, 1, 0), resample=Image.BILINEAR)
+    shadow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    shadow.putalpha(alpha.filter(ImageFilter.GaussianBlur(px(0.8))))
+    img.alpha_composite(shadow, (px(1), px(1)))
+
+    img.alpha_composite(kunai)
+    # 256 px: the game draws it 1.4 cells wide (KunaiDefaults.PlantedDrawSize).
+    finish_at(img, "Textures/RimArt/Kunai/Planted.png", 256)
 
 
 def make_kunai_embedded():
@@ -1139,7 +1268,7 @@ def make_kunai_embedded():
     img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     length = px(90)
     tip = px(8)
-    cut = tip + int(length * 0.55 * 0.62)
+    cut = tip + int(length * KUNAI_BLADE * KUNAI_WIDEST)
     layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     draw_kunai(ImageDraw.Draw(layer), S // 2, tip, length)
     # Everything above the cut is inside the body.
@@ -1339,6 +1468,7 @@ if __name__ == "__main__":
     make_kunai()
     make_kunai_belt()
     make_kunai_icon()
+    make_kunai_planted()
     make_kunai_embedded()
     make_makibishi()
     make_makibishi_handful()
