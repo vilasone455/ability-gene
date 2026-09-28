@@ -182,6 +182,87 @@ namespace RimArt
             t.Check(pulled != null && pulled.sealedByMinato, "the pulled kunai is still Minato's (" + Describe(pulled) + ")");
         }
 
+        [RimArtTest("Kunai", "throw 1 the throw clip frame by frame: colonists throw east, south, north and diagonally through the belt's ability (screenshots)")]
+        private static IEnumerable<int> ThrowFrames(RimArtTestContext t)
+        {
+            List<Pawn> pawns = Throwers(t);
+            yield return 5;
+            // Normal speed: Melee Animation advances a clip by frame time times the game speed, not by
+            // ticks. Each screenshot pauses the game for a frame or more, so after the first one the
+            // picture can be a couple of ticks off the tick number (throw 2 checks the timing unpaused).
+            Find.TickManager.CurTimeSpeed = TimeSpeed.Normal;
+            CastAll(t, pawns);
+            int at = 0;
+            foreach (int tick in new[] { 3, 8, 12, 15, 17, 19, 22 })
+            {
+                yield return tick - at;
+                at = tick;
+                yield return t.ShotAs("throw-t" + tick.ToString("00"));
+            }
+        }
+
+        [RimArtTest("Kunai", "throw 2 the kunai leaves the hand when the clip opens it, from where the hand is (log, one screenshot)")]
+        private static IEnumerable<int> ThrowRelease(RimArtTestContext t)
+        {
+            List<Pawn> pawns = Throwers(t);
+            yield return 5;
+            Find.TickManager.CurTimeSpeed = TimeSpeed.Normal;
+            CastAll(t, pawns);
+            // Clip time against ticks, before any screenshot pauses the game.
+            System.Type rendererType = HarmonyLib.AccessTools.TypeByName("AM.AnimRenderer");
+            if (rendererType == null)
+            {
+                t.Log("Melee Animation is not loaded: no clip, the kunai launches from the middle of the pawn");
+                yield break;
+            }
+            var tryGet = HarmonyLib.AccessTools.Method(rendererType, "TryGetAnimator", new[] { typeof(Pawn) });
+            var timeField = HarmonyLib.AccessTools.Field(rendererType, "time");
+            float clipAtLaunch = -1f;
+            for (int tick = 1; tick <= 30 && clipAtLaunch < 0f; tick++)
+            {
+                yield return 1;
+                object renderer = tryGet.Invoke(null, new object[] { pawns[0] });
+                float clip = renderer == null ? -1f : (float)timeField.GetValue(renderer);
+                int flying = t.map.listerThings.ThingsOfDef(KunaiDefOf.AG_KunaiProjectile).Count;
+                t.Log("tick " + tick + ": clip " + clip.ToString("0.000") + " s, kunai in the air " + flying);
+                if (flying > 0) clipAtLaunch = clip;
+            }
+            float release = KunaiReleaseSeconds;
+            t.Check(clipAtLaunch >= release - 0.001f && clipAtLaunch <= release + 0.05f,
+                "the kunai launched when the clip was at " + clipAtLaunch.ToString("0.000") + " s; it opens the hand at " + release + " s");
+            yield return t.ShotAs("throw-release");
+        }
+
+        /// <summary>The kunai clip's release: ThrowAnimation.Kunai's fraction of its 0.6 s.</summary>
+        private const float KunaiReleaseSeconds = 0.3f;
+
+        // East, south, north and east-north-east (the east clip turned 34 degrees), far enough apart to crop one by one.
+        private static readonly (IntVec3 from, IntVec3 to)[] ThrowLanes =
+        {
+            (new IntVec3(-4, 0, 3), new IntVec3(4, 0, 3)), (new IntVec3(-4, 0, -2), new IntVec3(-4, 0, -9)),
+            (new IntVec3(3, 0, -4), new IntVec3(3, 0, 5)), (new IntVec3(-1, 0, -7), new IntVec3(5, 0, -3)),
+        };
+
+        private static List<Pawn> Throwers(RimArtTestContext t)
+        {
+            t.Clear();
+            var pawns = new List<Pawn>();
+            foreach ((IntVec3 from, IntVec3 _) in ThrowLanes)
+            {
+                Pawn pawn = t.Colonist(t.center + from);
+                pawn.apparel.Wear((Apparel)ThingMaker.MakeThing(KunaiDefOf.AG_KunaiBelt));
+                RimArtTestContext.Hold(pawn);
+                pawns.Add(pawn);
+            }
+            return pawns;
+        }
+
+        private static void CastAll(RimArtTestContext t, List<Pawn> pawns)
+        {
+            for (int i = 0; i < pawns.Count; i++)
+                t.Check(Cast(pawns[i], t.center + ThrowLanes[i].to), pawns[i].LabelShort + " threw toward " + ThrowLanes[i].to);
+        }
+
         private static bool Cast(Pawn pawn, IntVec3 at)
         {
             Ability ability = pawn.abilities?.GetAbility(KunaiDefOf.AG_ThrowKunai);

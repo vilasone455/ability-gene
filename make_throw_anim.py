@@ -241,13 +241,18 @@ GRENADE = {
 
 # ---------------------------------------------------------------- kunai
 
-# A knife throw, not a lob. Half the length of the grenade clip. The hand comes up and cocks
-# beside the ear with the blade pointing up and back, holds for 4 frames, then whips forward
-# at shoulder height. The kunai leaves the hand in the middle of the whip, with the blade pointing
-# at the target and the hand at its top speed (about 11 cells/s, 0.15 cells in front of the body);
-# the empty hand then carries on to full extension and slows there. A hand that has already slowed
-# when it lets go reads as setting the knife down. The hand barely drops through the release: the
-# grenade swings over the crown and finishes low, this one moves in a flat line. Small body lean.
+# A side-arm knife throw, not a lob. Half the length of the grenade clip. The hand dips to the belt and
+# comes out with the kunai, swings back and out behind the throwing shoulder at chest height, holds
+# for 4 frames, then sweeps forward round the body in a flat arc and lets go at the widest point of
+# the arc, where the hand moves straight at the target (about 8 cells/s), and carries on across the
+# front of the body. The off hand reaches toward the target while the throwing arm is back and pulls
+# in as it comes through. Low, wide stance; the body leans back, then into the throw.
+#
+# Why side-arm: the first version cocked the kunai beside the ear and whipped it forward at head
+# height, which from above is a hand moving up and down behind the head - the head hid the hand and
+# the kunai for most of the throw. An arc flat to the ground is the one motion a top-down camera shows
+# whole, in every facing. It is also how Minato throws in the anime (Naruto Shippuden 248, against
+# Obito): wide stance, arm swept out to the side.
 KUNAI_LENGTH = 0.6
 KUNAI_RELEASE = 0.3
 
@@ -257,44 +262,65 @@ KUNAI = {
     "release": KUNAI_RELEASE,
     "poses": [
         (0.00,  0.12, -0.23,  0.00),  # ready at the hip, same as the grenade clip
-        (0.10,  0.00, -0.24,  0.30),  # hand comes up
-        (0.18, -0.20, -0.22,  0.46),  # cocked beside the ear
-        (0.24, -0.23, -0.21,  0.47),  # hold
-        (0.27, -0.15, -0.20,  0.46),  # the whip starts
-        (KUNAI_RELEASE, 0.15, -0.17, 0.43),  # let go mid-whip, at the hand's top speed
-        (0.33,  0.44, -0.15,  0.38),  # the empty hand carries on to full extension
-        (0.38,  0.50, -0.13,  0.28),  # and slows there, forward and a little down
-        (0.48,  0.28, -0.18,  0.08),
+        (0.07,  0.02, -0.25, -0.06),  # hand at the belt: draws a kunai
+        # Back and out wide enough (0.4 to the side) to stay clear of the head facing south, where
+        # a hand behind the shoulder is drawn behind the head.
+        (0.14, -0.16, -0.38,  0.14),  # swings back and out at chest height
+        (0.20, -0.25, -0.41,  0.18),  # loaded, behind the throwing shoulder
+        (0.24, -0.26, -0.41,  0.18),  # hold
+        (0.27, -0.11, -0.45,  0.20),  # the sweep starts, swinging out wide
+        (KUNAI_RELEASE, 0.07, -0.45, 0.21),  # let go at the widest point, moving straight at the target
+        (0.33,  0.34, -0.35,  0.18),  # the empty hand carries on round the front
+        (0.37,  0.48, -0.14,  0.12),
+        (0.44,  0.36,  0.00,  0.06),  # in front of the chest, slowing; low, so it passes under the face
+        (0.52,  0.22, -0.10,  0.03),
         (KUNAI_LENGTH, 0.12, -0.23, 0.00),
     ],
     "body_rot": [
         (0.00, 0.0),
-        (0.20, -6.0),
-        (KUNAI_RELEASE, 7.0),
-        (0.38, 10.0),
+        (0.07, -2.0),
+        (0.20, -10.0),
+        (0.24, -11.0),
+        (KUNAI_RELEASE, 6.0),
+        (0.37, 12.0),
+        (0.48, 4.0),
         (KUNAI_LENGTH, 0.0),
     ],
     "body_x": [
         (0.00, 0.0),
-        (0.20, -0.05),
-        (KUNAI_RELEASE, 0.07),
-        (0.40, 0.09),
+        (0.20, -0.06),
+        (0.24, -0.06),
+        (KUNAI_RELEASE, 0.05),
+        (0.38, 0.09),
         (KUNAI_LENGTH, 0.0),
     ],
-    "body_lift": [(0.00, 0.0), (0.20, 0.02), (0.40, -0.02), (KUNAI_LENGTH, 0.0)],
-    # Blade direction in the clip's frame: 0 is up the screen, -90 is back, +90 is at the
-    # target. Up and back while cocked, snapped round to point at the target on release.
-    "wrist": [(0.0, 20.0), (0.18, -30.0), (0.24, -35.0), (KUNAI_RELEASE, 90.0),
-              (0.40, 110.0), (KUNAI_LENGTH, 20.0)],
-    "behind": (0.36, 0.50),
+    # The low stance: knees bend into the draw and stay bent through the throw.
+    "body_lift": [(0.00, 0.0), (0.07, -0.02), (0.22, -0.04), (0.34, -0.05), (0.48, -0.02), (KUNAI_LENGTH, 0.0)],
+    # Blade direction in the clip's frame: 0 is up the screen, -90 is back, +90 is at the target.
+    # Down and back as it comes off the belt, pointing back while loaded, snapped round to point at
+    # the target on release.
+    "wrist": [(0.0, 20.0), (0.07, -150.0), (0.14, -100.0), (0.24, -105.0), (0.27, -30.0),
+              (KUNAI_RELEASE, 90.0), (0.40, 130.0), (KUNAI_LENGTH, 20.0)],
+    # Behind the body while on its far side from the camera, per Rot4: north, once the hand is in
+    # front of the body; south, while it is back. Facing east it stays on the near side.
+    "hidden": {0: (0.31, 0.56), 2: (0.11, 0.28)},
     "texture": "RimArt/Kunai/Kunai",
     # No tumble: a thrown knife that spins in the hand is one nobody is holding.
     "spin": [(0.00, 0.0), (KUNAI_RELEASE, 0.0)],
-    # The texture's centre is the base of the blade. Shifted along the blade so the handle, not
-    # the blade, sits in the hand, and drawn just behind the hand so the fingers cover the grip.
-    "item_pos": {"x": 0.0, "z": 0.08},
+    # Drawn from the belt: not in the hand until the hand has been down to it.
+    "item_from": 0.07,
+    # The texture's centre is on the blade. Shifted along the blade so the handle, not the blade,
+    # sits in the hand, and drawn just behind the hand so the fingers cover the grip.
+    "item_pos": {"x": 0.0, "z": 0.09},
     "item_y": 0.04,
-    "item_scale": 0.40,
+    "item_scale": 0.50,
+    # The off hand: (seconds, forward, off-side offset, screen-space lift), in the body's frame.
+    # Chest height: facing east the far-side hand already sits higher on screen by its side offset.
+    # The projectile starts from the hand at release, not from the middle of the pawn: the hand is
+    # 0.45 cells out to the side then.
+    "launch_from_hand": True,
+    "off_hand": [(0.00, 0.13, 0.17, 0.00), (0.14, 0.32, 0.12, 0.04), (0.24, 0.35, 0.11, 0.05),
+                 (KUNAI_RELEASE, 0.18, 0.17, 0.03), (0.40, 0.05, 0.20, 0.0), (KUNAI_LENGTH, 0.13, 0.17, 0.00)],
 }
 
 # ---------------------------------------------------------------- makibishi scatter
@@ -463,10 +489,12 @@ def item_active(style):
     """
     The thrown thing is drawn until the hand opens, then it is the projectile's problem. Held
     flat so the value does not ramp down across the release frame and leave a half-faded item.
+    With "item_from" it appears only then (drawn from a belt).
     """
     release, length = style["release"], style["length"]
-    return [
-        (0.00, 1.0),
+    start = style.get("item_from")
+    head = [(0.00, 1.0)] if start is None else [(0.00, 0.0), (round(start - 1.0 / 60.0, 7), 0.0), (start, 1.0)]
+    return head + [
         (round(release - 1.0 / 60.0, 7), 1.0),
         (release, 0.0),
         (length, 0.0),
@@ -485,10 +513,11 @@ def build(style, name, direction, turn):
     }
     # Keep the raised hand visible beside the head. Only the north-facing follow-through
     # moves behind the torso.
-    behind_from, behind_to = style["behind"]
-    holding_y = [(0.0, 0.02), (style["release"], 0.02),
-                 (behind_from, -0.12 if direction == 0 else 0.02),
-                 (behind_to, -0.12 if direction == 0 else 0.02), (style["length"], 0.02)]
+    if "behind" in style:
+        behind_from, behind_to = style["behind"]
+        holding_y = [(0.0, 0.02), (style["release"], 0.02),
+                     (behind_from, -0.12 if direction == 0 else 0.02),
+                     (behind_to, -0.12 if direction == 0 else 0.02), (style["length"], 0.02)]
     if "hidden" in style:
         holding_y = [(0.0, 0.02), (style["length"], 0.02)]
         if direction in style["hidden"]:
@@ -557,17 +586,24 @@ def build(style, name, direction, turn):
     #
     # Parentage is free to change: Melee Animation finds both hands by name, in GetPart, and
     # never looks at where they sit in the hierarchy.
-    hand_b = part(
-        1005, "BodyA/HandB", "HandB", parent_id=1001,
-        default_overrides={
-            "Transform.m_LocalPosition.x": 0.13 * facing_x - 0.17 * facing_z,
-            "Transform.m_LocalPosition.y": -0.07 if direction == 0 else HAND_Y - 0.01,
-            "Transform.m_LocalPosition.z": 0.13 * facing_z + 0.17 * facing_x,
-            "Transform.m_LocalScale.x": HAND_SCALE,
-            "Transform.m_LocalScale.y": HAND_SCALE,
-            "Transform.m_LocalScale.z": HAND_SCALE,
-        },
-    )
+    hand_b_defaults = {
+        "Transform.m_LocalPosition.x": 0.13 * facing_x - 0.17 * facing_z,
+        "Transform.m_LocalPosition.y": -0.07 if direction == 0 else HAND_Y - 0.01,
+        "Transform.m_LocalPosition.z": 0.13 * facing_z + 0.17 * facing_x,
+        "Transform.m_LocalScale.x": HAND_SCALE,
+        "Transform.m_LocalScale.y": HAND_SCALE,
+        "Transform.m_LocalScale.z": HAND_SCALE,
+    }
+    hand_b_curves = None
+    if "off_hand" in style:
+        # A moving off hand, in the body's frame like the braced one, rotated into the facing.
+        off = style["off_hand"]
+        hand_b_curves = transform_curves(pos={
+            "x": [(t, f * facing_x - s * facing_z) for t, f, s, _ in off],
+            "z": [(t, f * facing_z + s * facing_x + lift) for t, f, s, lift in off],
+        })
+    hand_b = part(1005, "BodyA/HandB", "HandB", parent_id=1001, curves=hand_b_curves,
+                  default_overrides=hand_b_defaults)
 
     # Deliberately not called ItemA. Their AddPawn looks up a part by that name and, finding
     # one, overwrites its texture with whatever melee weapon the pawn is carrying - which for a
@@ -654,6 +690,14 @@ def main():
         print(f"    length          {length}s ({round(length * 60)} ticks)")
         print(f"    release         {release}s ({round(release * 60)} ticks)")
         print(f"    ReleaseFraction {release / length:.4f}  <- must match ThrowAnimation")
+        if style.get("launch_from_hand"):
+            # Where the hand is when it opens: the aim pivot (PawnALift) and the hand's offset from it
+            # (PawnAHolding), per facing. The C# launches the projectile from there.
+            for suffix, direction, turn in FACINGS:
+                (lx, lz), (hx, hz, _) = sample_arc(style, turn)
+                at = lambda points: next(v for t, v in points if abs(t - release) < 1e-6)
+                print(f"    ReleaseHand {suffix or 'East':5} pivot ({at(lx):.4f}, {at(lz):.4f}) hand ({at(hx):.4f}, {at(hz):.4f})"
+                      "  <- must match ThrowAnimation")
 
 
 if __name__ == "__main__":
