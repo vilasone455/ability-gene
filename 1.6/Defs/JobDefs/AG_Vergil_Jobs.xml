@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The cast job of Vergil's four abilities: JobDriver_CastAbility that tells the picture and the
+       pose when the warmup begins, and holds Vergil after the fire tick for as long as his cast says
+       (the dash and the sheathe, the vanish and the kneel). neverShowWeapon: the pose draws Yamato
+       itself. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastVergil</defName>
+    <driverClass>RimArt.JobDriver_CastVergil</driverClass>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>

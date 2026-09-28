@@ -14,6 +14,31 @@ namespace RimArt
     /// the carrier passes and every mark resolves on the click: 24 Cut at 40 % armour penetration, once
     /// each. Allies are never marked. Cooldown 8 s.
     /// </summary>
+    /// <summary>
+    /// One dash's three timings (the prepare, the dash, the sheathe) and the phase times they give on the
+    /// sketch's clock. The preview plays the sketch's defaults; the ability passes its XML values, so the
+    /// picture and the rules keep the same beats.
+    /// </summary>
+    public readonly struct DashTimes
+    {
+        public readonly float Warm, Dash, Sheathe;
+
+        public DashTimes(float warm, float dash, float sheathe)
+        {
+            Warm = warm;
+            Dash = dash;
+            Sheathe = sheathe;
+        }
+
+        public float LaunchAt => YamatoDashTiming.Lead + Warm;
+        public float ArriveAt => LaunchAt + Dash;
+        public float ClickAt => ArriveAt + Sheathe;
+        public float Duration => ClickAt + YamatoDashTiming.Tail;
+
+        /// <summary>How far along the dash the carrier is at <paramref name="s"/>, 0 to 1.</summary>
+        public float Travel(float s) => Mathf.Clamp01((s - LaunchAt) / Mathf.Max(0.01f, Dash));
+    }
+
     public static class YamatoDashTiming
     {
         /// <summary>Decided values, the sketch's constants.</summary>
@@ -23,18 +48,24 @@ namespace RimArt
         public const float ClickGlint = 0.16f, EndDust = 0.3f, PathDust = 0.45f;
         /// <summary>A pawn's chest is drawn this far north of its feet.</summary>
         public const float Chest = 0.3f;
+        /// <summary>Where along the path the three afterimages stand (share of the dash), and how long each shows.</summary>
+        public static readonly float[] Ghosts = { 0.2f, 0.5f, 0.78f };
+        public const float GhostLife = 0.34f;
 
         /// <summary>The sketch's panel defaults, the ones the preview plays.</summary>
         public const float Aim = 0f, Distance = 6f, Warm = 0.35f, Dash = 0.15f, Sheathe = 0.4f;
 
-        public static float CastAt => Lead;
-        public static float LaunchAt => Lead + Warm;
-        public static float ArriveAt => LaunchAt + Dash;
-        public static float ClickAt => ArriveAt + Sheathe;
-        public static float Duration => ClickAt + Tail;
+        /// <summary>The preview's timings, the sketch's defaults.</summary>
+        public static readonly DashTimes Preview = new DashTimes(Warm, Dash, Sheathe);
 
-        /// <summary>How far along the dash the carrier is at <paramref name="s"/>, 0 to 1.</summary>
-        public static float Travel(float s) => Mathf.Clamp01((s - LaunchAt) / Dash);
+        public static float CastAt => Lead;
+        public static float LaunchAt => Preview.LaunchAt;
+        public static float ArriveAt => Preview.ArriveAt;
+        public static float ClickAt => Preview.ClickAt;
+        public static float Duration => Preview.Duration;
+
+        /// <summary>How far along the dash the carrier is at <paramref name="s"/>, 0 to 1, with the preview's timings.</summary>
+        public static float Travel(float s) => Preview.Travel(s);
 
         /// <summary>
         /// A point <paramref name="along"/> cells down the path, <paramref name="across"/> cells to its

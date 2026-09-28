@@ -1,5 +1,5 @@
-// Judgement Cut — ability proposal for the Vergil kit (a held katana), not the game. Nothing in
-// Source/RimArt draws this yet. The kit's everyday ranged attack.
+// Judgement Cut — the Vergil kit's everyday ranged attack. In game since 2026-09-28: the picture is
+// Source/RimArt/Vergil/JudgementCutGraphics.cs, the ability and the pose Source/RimArt/Vergil/Kit.
 //
 // What it is for (agreed as a direction 2026-09-20; every number is a placeholder and will be an XML field).
 //   Target a cell within 18 cells with line of sight. Warm-up 0.6 s in a sheathed stance. A sphere of

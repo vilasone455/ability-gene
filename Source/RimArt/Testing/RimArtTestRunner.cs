@@ -152,7 +152,9 @@ namespace RimArt
                     context.shotName = null;
                     speed = Find.TickManager.CurTimeSpeed;
                     Find.TickManager.CurTimeSpeed = TimeSpeed.Paused;
-                    Find.CameraDriver.SetRootPosAndSize(context.center.ToVector3Shifted(), 10f);
+                    Find.CameraDriver.SetRootPosAndSize((context.shotAt ?? context.center).ToVector3Shifted(), context.shotSize);
+                    context.shotAt = null;
+                    context.shotSize = 10f;
                     shotFrames = 0;
                 }
                 else waitUntil = now + Math.Max(0, steps.Current);

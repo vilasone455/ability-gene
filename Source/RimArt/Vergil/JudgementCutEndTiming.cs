@@ -12,6 +12,32 @@ namespace RimArt
     }
 
     /// <summary>
+    /// One Judgement Cut End's three timings (the warm-up, the vanish, the sheathe) and the phase times they
+    /// give on the sketch's clock. The preview plays the sketch's defaults; the ability passes its XML values.
+    /// </summary>
+    public readonly struct CutEndTimes
+    {
+        public readonly float Warm, Gone, Sheathe;
+
+        public CutEndTimes(float warm, float gone, float sheathe)
+        {
+            Warm = warm;
+            Gone = gone;
+            Sheathe = sheathe;
+        }
+
+        public float VanishAt => JudgementCutEndTiming.Lead + Warm;
+        public float BackAt => VanishAt + Gone;
+        public float ClickAt => BackAt + Sheathe;
+        public float Duration => ClickAt + JudgementCutEndTiming.Tail;
+
+        /// <summary>When cut <paramref name="order"/> of <paramref name="count"/> starts to be drawn.</summary>
+        public float StartOf(int order, int count) =>
+            VanishAt + JudgementCutEndTiming.FirstCut + order / (float)Mathf.Max(1, count - 1)
+            * Mathf.Max(0.05f, Gone - JudgementCutEndTiming.FirstCut - JudgementCutEndTiming.LastCut - JudgementCutEndTiming.Sweep);
+    }
+
+    /// <summary>
     /// Judgement Cut End's timing and geometry: when each phase runs, where each cut crosses the ring
     /// and in which order, and the pieces the ring breaks into along them. Seconds in, geometry out, no
     /// drawing and no map. The port of Tools/VfxLab/web/sketches/vergil-judgement-cut-end.js; the
@@ -35,6 +61,12 @@ namespace RimArt
         public const int Motes = 40;
         /// <summary>A pawn's chest is drawn this far north of its feet.</summary>
         public const float Chest = 0.3f;
+        /// <summary>
+        /// The afterimage at the far end of each cut: how long it shows (the lib's 0.22 s, raised to 0.3 s in game
+        /// so it can be seen, 2026-09-28) and how far inside the rim it stands, so it is on the dark area and not
+        /// half on the lit ground.
+        /// </summary>
+        public const float GhostLife = 0.3f, GhostInside = 0.5f;
 
         /// <summary>The sketch's panel defaults, the ones the preview plays.</summary>
         public const float Radius = 10f, Push = 0.3f, Warm = 1f, Gone = 1.5f, Sheathe = 0.8f, Fade = 0.6f;
@@ -47,18 +79,42 @@ namespace RimArt
             new Vector2(140f, 4.3f), new Vector2(-110f, 7.4f), new Vector2(172f, 8.4f),
         };
 
+        /// <summary>The preview's timings, the sketch's defaults.</summary>
+        public static readonly CutEndTimes Preview = new CutEndTimes(Warm, Gone, Sheathe);
+
         public static float CastAt => Lead;
-        public static float VanishAt => Lead + Warm;
-        public static float BackAt => VanishAt + Gone;
-        public static float ClickAt => BackAt + Sheathe;
-        public static float Duration => ClickAt + Tail;
+        public static float VanishAt => Preview.VanishAt;
+        public static float BackAt => Preview.BackAt;
+        public static float ClickAt => Preview.ClickAt;
+        public static float Duration => Preview.Duration;
+
+        /// <summary>
+        /// Cut <paramref name="c"/>'s afterimage at <paramref name="s"/>: where its feet are relative to the caster,
+        /// which way it came (from the cut's start to its end), and 1 to 0 as it fades. False while it does not show.
+        /// </summary>
+        public static bool Ghost(CutEndCut c, int count, CutEndTimes times, float s, out Vector2 at, out Vector2 along, out float fade)
+        {
+            Vector2 line = c.Line.B - c.Line.A;
+            along = line.sqrMagnitude > 1e-6f ? line.normalized : Vector2.right;
+            at = c.Line.B - along * GhostInside;
+            float age = s - times.StartOf(c.Order, count) - Sweep;
+            fade = 1f - age / GhostLife;
+            return age >= 0f && age < GhostLife;
+        }
+
+        /// <summary>How many of the sketch's raiders stand inside <paramref name="radius"/>: the preview's first cuts pass through them.</summary>
+        public static int PreviewVictims(float radius)
+        {
+            int n = 0;
+            foreach (Vector2 r in Raiders) if (r.y <= radius) n++;
+            return n;
+        }
 
         public static Vector2 Polar(float degrees, float cells) =>
             new Vector2(Mathf.Cos(degrees * Mathf.Deg2Rad) * cells, Mathf.Sin(degrees * Mathf.Deg2Rad) * cells);
 
-        /// <summary>When cut <paramref name="order"/> of <paramref name="count"/> starts to be drawn.</summary>
-        public static float StartOf(int order, int count) =>
-            VanishAt + FirstCut + order / (float)Mathf.Max(1, count - 1) * (Gone - FirstCut - LastCut - Sweep);
+        /// <summary>When cut <paramref name="order"/> of <paramref name="count"/> starts to be drawn, with the preview's timings.</summary>
+        public static float StartOf(int order, int count) => Preview.StartOf(order, count);
 
         private static string laidFor = string.Empty;
         private static List<CutEndCut> laid = new List<CutEndCut>();
@@ -73,7 +129,18 @@ namespace RimArt
             if (laidFor == key) return laid;
             var marked = new List<Vector2>();
             foreach (Vector2 r in Raiders) if (r.y <= radius) marked.Add(Polar(r.x, r.y));
+            laid = Layout(radius, count, marked);
+            laidFor = key;
+            return laid;
+        }
 
+        /// <summary>
+        /// The cuts round the real marked pawns, whose feet are <paramref name="marked"/> (relative to the caster):
+        /// the first ones pass through their chests, nearest first, the rest cross the ring anywhere. Not cached;
+        /// the ability keeps the list it was given.
+        /// </summary>
+        public static List<CutEndCut> Layout(float radius, int count, IList<Vector2> marked)
+        {
             var cuts = new List<CutEndCut>(count);
             var sort = new List<(float key, int k)>(count);
             for (int k = 0; k < count; k++)
@@ -95,16 +162,16 @@ namespace RimArt
                 c.Order = i;
                 cuts[sort[i].k] = c;
             }
-            laid = cuts;
-            laidFor = key;
-            return laid;
+            return cuts;
         }
 
         /// <summary>The pieces the ring breaks into along every cut.</summary>
-        public static List<VergilPiece> Pieces(float radius, int count)
+        public static List<VergilPiece> Pieces(float radius, int count) => Pieces(radius, Layout(radius, count));
+
+        public static List<VergilPiece> Pieces(float radius, List<CutEndCut> cuts)
         {
-            var lines = new List<VergilChord>(count);
-            foreach (CutEndCut c in Layout(radius, count)) lines.Add(c.Line);
+            var lines = new List<VergilChord>(cuts.Count);
+            foreach (CutEndCut c in cuts) lines.Add(c.Line);
             return VergilTiming.Shatter(radius, lines);
         }
     }

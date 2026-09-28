@@ -162,7 +162,7 @@ namespace RimArt
         /// halo, a blue-white body and a white core that taper to the point, a cross guard and a hilt.
         /// <paramref name="shown"/> 0 to 1 grows it from the guard to the tip.
         /// </summary>
-        private static void Blade(Vector2 mid, float deg, float alpha, float layer, float hot = 0f, float length = T.BladeLength, float shown = 1f)
+        internal static void Blade(Vector2 mid, float deg, float alpha, float layer, float hot = 0f, float length = T.BladeLength, float shown = 1f)
         {
             if (alpha <= 0f || shown <= 0f) return;
             Vector2 d = Turn(deg), root = mid - d * (length * 0.4f), side = new Vector2(d.y, -d.x) * 0.14f;
@@ -177,7 +177,7 @@ namespace RimArt
         }
 
         /// <summary>A blade's shadow on the floor: from under it, along the sun.</summary>
-        private static void BladeShadow(Vector2 drawn, float height, float deg, Vector2 sun, float alpha)
+        internal static void BladeShadow(Vector2 drawn, float height, float deg, Vector2 sun, float alpha)
         {
             if (alpha <= 0f) return;
             var ground = new Vector2(drawn.x + sun.x * height, drawn.y - height * SixPathsHeight.Lift + sun.y * height);
@@ -185,7 +185,7 @@ namespace RimArt
         }
 
         /// <summary>A blade breaking like glass: short shards that fly out from along its length and drop, and a glint.</summary>
-        private static void Shatter(int seed, Vector2 mid, float deg, float age)
+        internal static void Shatter(int seed, Vector2 mid, float deg, float age)
         {
             if (age < 0f || age >= T.Break) return;
             float u = age / T.Break;

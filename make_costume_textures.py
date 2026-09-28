@@ -15,6 +15,12 @@ Echo/Costume/VergilCoat_<Body>_<facing>.png
     Hosts are Thin in hero form, so the Thin set is the one normally seen; the other four fit Hosts
     of other races that keep their own body.
 
+Echo/Costume/VergilCoatKneel_Thin.png
+    256 px, facing south only: Vergil kneeling for Judgement Cut End's sheathe, facing the camera, his
+    left knee up and his right knee on the ground, the coat skirt spread on the floor. The torso is the
+    standing Thin torso moved down KNEEL_DROP units; the game hides the body and moves the head down by
+    the same amount (Source/RimArt/Vergil/Kit/Patches_VergilPose.cs), so the head keeps its shape.
+
 The costume is fitted to the vanilla body outlines in BODIES, measured from the game's
 Naked_<Body>_<facing> textures (outer edge of the black outline, every 2 rows, on the 128 px
 sheet). Every length below is in those 128 px units; the picture is drawn 8x larger and reduced.
@@ -632,11 +638,183 @@ def vergil_side(body, name):
     finish(image, silhouette, name)
 
 
+# ---- Vergil kneeling (Judgement Cut End) ----
+
+# How far the kneeling torso and head sit below the standing ones, in 128 px units (1.5 cells a sheet):
+# 14 units is 0.164 cells. Patches_VergilPose.cs moves the head down by the same amount.
+KNEEL_DROP = 14
+BOOT, BOOT_LIT = (22, 22, 28), (70, 74, 88)
+
+
+def vergil_kneel_front(body, name):
+    """South, kneeling: the standing torso moved down, the skirt spread on the floor, the wearer's left
+    knee up (the viewer's right) with the shin and boot below it, the right knee on the ground."""
+    w, D = body.width, KNEEL_DROP
+    top, waist = body.top + D, body.waist + D
+
+    def c(y):
+        return body.centre(min(y - D, body.waist))
+
+    def torso(y):
+        left, right = body.edges(min(y - D, body.waist))
+        return left - PAD, right + PAD
+
+    cx = c(waist)
+    hem_left, hem_right, hem_mid = 113.0, 112.0, 115.0
+    far_left, far_right = cx - 0.95 * w, cx + 1.05 * w
+
+    def side(y):
+        left, right = torso(y)
+        if y <= waist:
+            return left, right
+        k = smooth(waist, hem_left, y) ** 0.8
+        return left + (far_left - left) * k, right + (far_right - right) * k
+
+    ys = steps(top - 0.5, hem_left)
+    bottom = []
+    for x in steps(far_left, far_right, 0.5):
+        k = (x - far_left) / (far_right - far_left)
+        bottom.append((x, hem_left + (hem_right - hem_left) * k + (hem_mid - max(hem_left, hem_right)) * math.sin(math.pi * k)))
+    outer = [(side(y)[0], y) for y in ys] + bottom + [(side(y)[1], y) for y in reversed(steps(top - 0.5, hem_right))]
+    full = polygon(outer)
+
+    collars = []
+    for s_ in (-1, 1):
+        edge = side(top + 9)[0 if s_ < 0 else 1]
+        collars.append(polygon([(c(top) + s_ * 0.2 * w, top + 12), (edge, top + 14),
+                                (edge + s_ * 7.0, top + 7.5), (edge + s_ * 5.6, top + 3.5),
+                                (c(top) + s_ * 0.34 * w, top + 1)]))
+    collar = union(*collars)
+
+    lapel_end = top + 0.4 * body.height
+
+    def opening_edge(y, s_):
+        """The front opening's edge on side s_ (-1 the viewer's left): the standing lapels down to the
+        waist, then parting round the legs, the viewer's right panel pushed out by the raised knee."""
+        if y < lapel_end:
+            half = 0.13 * w + 0.17 * w * (1 - smooth(top, lapel_end, y))
+            return c(y) + s_ * half
+        if y <= waist:
+            return c(y) + s_ * 0.13 * w
+        k = smooth(waist, hem_left, y) ** 0.9
+        return cx + s_ * 0.13 * w + (s_ * (0.19 if s_ < 0 else 0.49)) * w * k
+
+    oys = steps(top - 9, hem_mid + 3)
+    opening = polygon([(opening_edge(y, -1), y) for y in oys] + [(opening_edge(y, 1), y) for y in reversed(oys)])
+
+    # The legs, in the opening. Raised knee: a rounded knee toward the viewer, the shin under it, a boot.
+    knee_x, knee_y = cx + 0.28 * w, waist + 8.5
+    raised = union(polygon([(cx + 0.04 * w, waist + 1.5), (cx + 0.46 * w, waist + 2.5),
+                            (knee_x + 0.26 * w, knee_y), (knee_x - 0.26 * w, knee_y)]),
+                   ellipse(knee_x, knee_y, 0.26 * w, 4.4),
+                   polygon([(knee_x - 0.13 * w, knee_y), (knee_x + 0.14 * w, knee_y),
+                            (knee_x + 0.13 * w, 108), (knee_x - 0.11 * w, 108)]))
+    boot = union(polygon([(knee_x - 0.15 * w, 105.5), (knee_x + 0.16 * w, 105.5),
+                          (knee_x + 0.19 * w, 110.5), (knee_x - 0.17 * w, 110.5)]),
+                 ellipse(knee_x + 0.01 * w, 110.6, 0.19 * w, 1.6))
+    ground_x = cx - 0.26 * w
+    grounded = union(polygon([(cx - 0.36 * w, waist + 1.5), (cx - 0.02 * w, waist + 1.5),
+                              (ground_x + 0.17 * w, 108.5), (ground_x - 0.2 * w, 108.5)]),
+                     ellipse(ground_x, 108.8, 0.21 * w, 3.1))
+    legs = union(raised, grounded)
+
+    torso_rows = [(y + D, l, r) for y, l, r in body.rows if y <= body.waist + 2]
+    bys = steps(top, waist + 2)
+    chest = polygon([(interp(torso_rows, y)[0] - PAD * 0.6, y) for y in bys] +
+                    [(interp(torso_rows, y)[1] + PAD * 0.6, y) for y in reversed(bys)])
+    lower = union(legs, boot, polygon([(cx - 0.36 * w, waist - 1), (cx + 0.46 * w, waist - 1),
+                                       (cx + 0.46 * w, waist + 3), (cx - 0.36 * w, waist + 3)]))
+    inner = inter(opening, union(chest, lower))
+    panels = union(minus(full, opening), minus(collar, opening))
+    # The raised knee pushes forward over the edge of the viewer's right panel.
+    knee_front = minus(inter(ellipse(knee_x, knee_y, 0.26 * w, 4.4), full), inner)
+    inner = union(inner, knee_front)
+    panels = minus(panels, knee_front)
+    silhouette = union(panels, inner)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+
+    vest = inter(inner, polygon([(0, 0), (128, 0), (128, waist - 1.2), (0, waist - 1.2)]))
+    below = inter(inner, polygon([(0, waist + 1.2), (128, waist + 1.2), (128, 128), (0, 128)]))
+    belt = minus(minus(inner, vest), below)
+    shade(image, vest, INK, VEST, VEST, reach=1.5)
+    for k in range(6):
+        y = top + 12 + k * 2.6
+        ribs = stroke([(c(y) - 4, y - 1.4), (c(y), y + 0.4), (c(y) + 4, y - 1.4)], 0.45)
+        paint(image, inter(ribs, shrink(vest, 0.4)), VEST_RIB)
+    trousers = minus(below, boot)
+    # Light on the top of both knees, from the viewer's left as on the coat.
+    knee_light = union(ellipse(knee_x - 0.06 * w, knee_y - 1.6, 0.15 * w, 2.2),
+                       ellipse(ground_x - 0.04 * w, 107.8, 0.11 * w, 1.4)).filter(ImageFilter.GaussianBlur(1.0 * U))
+    shade(image, trousers, TROUSERS_SEAM, TROUSERS, (92, 108, 100), knee_light, reach=1.2)
+    # The fold where the raised thigh meets the grounded one, and the shin's front crease.
+    paint(image, inter(stroke([(cx + 0.02 * w, waist + 2), (cx + 0.04 * w, 106)], 0.5), trousers), TROUSERS_SEAM)
+    paint(image, inter(stroke([(knee_x, knee_y + 3.5), (knee_x + 0.01 * w, 105)], 0.4), trousers), TROUSERS_SEAM)
+    shade(image, inter(boot, inner), INK, BOOT, BOOT_LIT,
+          ellipse(knee_x - 0.06 * w, 108.5, 0.1 * w, 1.6).filter(ImageFilter.GaussianBlur(0.8 * U)), reach=0.8)
+    paint(image, belt, BELT)
+    paint(image, polygon([(cx - 1.4, waist - 1.5), (cx + 1.4, waist - 1.5), (cx + 1.4, waist + 1.5),
+                          (cx - 1.4, waist + 1.5)]), BUCKLE)
+    paint(image, polygon([(cx - 0.6, waist - 0.7), (cx + 0.6, waist - 0.7), (cx + 0.6, waist + 0.7),
+                          (cx - 0.6, waist + 0.7)]), BELT)
+
+    light = inter(ramp(c(top) - w * 0.7, c(top) + w * 0.4, 150, 0), ellipse(c(top) - w * 0.3, top + 20, w * 0.45, 26)
+                  .filter(ImageFilter.GaussianBlur(6 * U)))
+    shade(image, panels, COAT_DARK, COAT, COAT_LIT, light)
+
+    # Where the viewer's right panel folds over the raised knee, its gold lining shows.
+    lining = inter(polygon([(opening_edge(104, 1) - 0.5, 102), (opening_edge(104, 1) + 0.16 * w, 101),
+                            (opening_edge(112, 1) + 0.2 * w, 112.5), (opening_edge(112, 1) - 0.5, 113)]), panels)
+    shade(image, lining, LINING_DARK, LINING, LINING, reach=0.8)
+    # Folds where the skirt lies on the floor.
+    for x0, x1 in ((cx - 0.55 * w, cx - 0.72 * w), (cx + 0.78 * w, cx + 0.9 * w)):
+        paint(image, inter(stroke([(x0, waist + 7), (x1, 111.5)], 0.5), panels), COAT_DARK)
+
+    for s_ in (-1, 1):
+        lys = steps(top - 2, lapel_end)
+        band = polygon([(opening_edge(y, s_), y) for y in lys] +
+                       [(opening_edge(y, s_) + s_ * (0.16 * w * (1 - smooth(top, lapel_end, y)) + 0.6), y)
+                        for y in reversed(lys)])
+        paint(image, inter(band, panels), COAT_LIT)
+
+    cuff_y = top + 0.64 * body.height
+    for s_ in (-1, 1):
+        def sleeve_x(y, s_=s_):
+            left, right = torso(y)
+            return (right if s_ > 0 else left) - s_ * min(4.2, 0.2 * w)
+        paint(image, inter(stroke([(sleeve_x(y), y) for y in steps(top + 8, cuff_y)], 0.5), panels), COAT_DARK)
+
+    for s_, end, curl in ((-1, hem_left - 3, -1), (1, waist - 1, 1)):
+        path = [(opening_edge(y, s_) + s_ * (2.2 + 0.16 * w * (1 - smooth(top, lapel_end, y))), y)
+                for y in steps(top + 2, end, 3)]
+        paint(image, inter(serpent(path, 0.7, 6.5, curl, 1.3), shrink(panels, 0.6)), SERPENT)
+    for s_ in (-1, 1):
+        edge = side(top + 9)[0 if s_ < 0 else 1]
+        paint(image, inter(serpent([(edge + s_ * 5.6, top + 5.5), (edge + s_ * 0.8, top + 11.5)], 0.6, 99), collar),
+              SERPENT)
+
+    trims = [stroke([(opening_edge(y, s_) + s_ * 0.55, y) for y in steps(top - 8, hem_mid + 1)], 1.0) for s_ in (-1, 1)]
+    hem_line = stroke([(x, y - 0.6) for x, y in bottom], 1.0)
+    trim = inter(union(*trims, hem_line), panels)
+    paint(image, trim, TRIM)
+    paint(image, inter(trim, ellipse(c(top) - w * 0.35, top + 22, w * 0.3, 20)), TRIM_LIT)
+    for s_ in (-1, 1):
+        paint(image, inter(stroke([(opening_edge(y, s_), y) for y in steps(top - 8, hem_mid + 1)], 0.55),
+                           grow(inner, 0.4)), INK)
+    paint(image, inter(minus(collar, shrink(collar, 0.8)), grow(panels, 0.1)), TRIM)
+    # The knee's outline over the panel it covers.
+    paint(image, inter(minus(grow(knee_front, 0.45), knee_front), panels), INK)
+
+    finish(image, silhouette, name)
+
+
 def main():
     for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
         vergil_front(Body(BODIES[(body, "south")]), f"VergilCoat_{body}_south.png")
         vergil_side(Body(BODIES[(body, "east")]), f"VergilCoat_{body}_east.png")
         vergil_back(Body(BODIES[(body, "north")]), f"VergilCoat_{body}_north.png")
+    # Hero form makes adult human Hosts Thin, so only the Thin kneel is made; other bodies keep the squash.
+    vergil_kneel_front(Body(BODIES[("Thin", "south")]), "VergilCoatKneel_Thin.png")
 
 
 if __name__ == "__main__":

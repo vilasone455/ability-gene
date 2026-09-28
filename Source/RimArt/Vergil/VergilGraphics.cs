@@ -14,8 +14,8 @@ namespace RimArt
     /// Thunder God yellow or Anchor blue. Everything here is a level circle or a flat line lying at
     /// one height, so it turns freely with the aim and there is no per-facing method.
     ///
-    /// The lib's stand-ins are not ported: the carrier, the held katana, the afterimage and the
-    /// cut across a pawn's chest all draw pawns, which the pipeline leaves in the lab.
+    /// The afterimage and the cut across a pawn's chest are here too: they are light drawn where a pawn
+    /// is, not pawns. The carrier and the held katana are the real pawn in game (Kit/YamatoDraw.cs).
     /// </summary>
     [StaticConstructorOnStartup]
     public static class VergilGraphics
@@ -111,6 +111,56 @@ namespace RimArt
                 b[i] = at - side;
             }
             Strip(a, b, colour, material, altitude);
+        }
+
+        /// <summary>
+        /// A short cut across a pawn's chest when a hit lands: light, 0.14 s, and a spark. The lib's hitCut.
+        /// <paramref name="victim"/> is the pawn's ground point (its feet), as in the sketches.
+        /// </summary>
+        internal static void HitCut(Vector2 victim, float deg, float age, float life = 0.14f)
+        {
+            if (age < 0f || age >= life) return;
+            float u = age / life;
+            var mid = new Vector2(victim.x, victim.y + 0.32f);
+            Vector2 half = Turn(deg) * 0.62f;
+            Cut(mid - half, mid + half, Mathf.Clamp01(u * 3f), 1f - u * u, 0.025f, 0.5f * (1f - u));
+            Sprite(mid, 0.5f * (1f - u) + 0.25f, 0.5f * (1f - u) + 0.25f, Fade(Ice, 0.5f * (1f - u)), glow, Overhead + 0.04f);
+        }
+
+        /// <summary>The ellipses of the lab's stand-in body: (east, north, half width, half height) from the feet.</summary>
+        private static readonly float[] GhostParts =
+        {
+            0f, 0.18f, 0.22f, 0.32f,
+            0.03f, 0.22f, 0.08f, 0.24f,
+            0f, 0.58f, 0.16f, 0.17f,
+            0f, 0.69f, 0.19f, 0.1f,
+        };
+
+        /// <summary>
+        /// Vergil seen for a moment behind a dash, or at the end of a Judgement Cut End chord: a blue silhouette
+        /// of the stand-in's ellipses with one thin line of light tapering back toward <paramref name="from"/>. It
+        /// is light, not a solid: no shadow and no weapon. The lib's afterimage; <paramref name="pos"/> is the feet.
+        /// Without <paramref name="body"/> only the line of light is drawn: in game the body is Vergil's own,
+        /// drawn by Kit/VergilGhost.cs.
+        /// </summary>
+        internal static void Afterimage(Vector2 pos, Vector2 from, float age, float life = 0.22f, bool body = true)
+        {
+            if (age < 0f || age >= life) return;
+            float f = 1f - age / life;
+            Vector2 away = pos - from;
+            float d = away.magnitude;
+            Vector2 back = d > 1e-4f ? away / d : Vector2.up;
+            Vector2[] trail = GokuGraphics.Points(2);
+            trail[0] = new Vector2(pos.x, pos.y + 0.3f);
+            trail[1] = trail[0] - back * 0.95f;
+            GokuGraphics.Line(trail, 0.18f, Fade(Blue, 0.55f * f * f), whiteGlow, Overhead + 0.02f, GokuGraphics.Taper.End);
+            if (!body) return;
+            for (int k = 0; k < GhostParts.Length / 4; k++)
+            {
+                Color colour = Color.Lerp(k == 1 ? Blue : k == 3 ? Ice : Deep, Ice, 0.3f);
+                DrawMesh(disc, new Vector2(pos.x + GhostParts[k * 4], pos.y + GhostParts[k * 4 + 1]), Overhead + 0.021f + k * 0.001f,
+                    GhostParts[k * 4 + 2], GhostParts[k * 4 + 3], 0f, Fade(colour, 0.62f * f * f), solid);
+            }
         }
 
         /// <summary>A four-point glint: a soft core and two crossed rays. The lib's, and the Goku kit's.</summary>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Summoned Swords: blades of light stuck in a pawn. The severity is the number of blades in it
+       (Source/RimArt/Vergil/Kit/SummonedSwordsCast.cs sets it as blades stick and break); each is
+       -15 % move speed, up to 4. -->
+  <HediffDef>
+    <defName>AG_VergilSwordPinned</defName>
+    <label>pinned by summoned swords</label>
+    <description>Blades of blue light are stuck in this creature. Each one slows it.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>true</isBad>
+    <defaultLabelColor>(0.55, 0.75, 1)</defaultLabelColor>
+    <initialSeverity>1</initialSeverity>
+    <maxSeverity>4</maxSeverity>
+    <stages>
+      <li>
+        <minSeverity>0</minSeverity>
+        <label>1 blade</label>
+        <statFactors>
+          <MoveSpeed>0.85</MoveSpeed>
+        </statFactors>
+      </li>
+      <li>
+        <minSeverity>1.5</minSeverity>
+        <label>2 blades</label>
+        <statFactors>
+          <MoveSpeed>0.7</MoveSpeed>
+        </statFactors>
+      </li>
+      <li>
+        <minSeverity>2.5</minSeverity>
+        <label>3 blades</label>
+        <statFactors>
+          <MoveSpeed>0.55</MoveSpeed>
+        </statFactors>
+      </li>
+      <li>
+        <minSeverity>3.5</minSeverity>
+        <label>4 blades</label>
+        <statFactors>
+          <MoveSpeed>0.4</MoveSpeed>
+        </statFactors>
+      </li>
+    </stages>
+    <comps>
+      <!-- A safety net: the cast removes it when its blades break; this clears one left by a load. -->
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>1500</disappearsAfterTicks>
+      </li>
+    </comps>
+  </HediffDef>
+
+  <!-- Judgement Cut End: Vergil is gone for the vanish. Other pawns cannot see him to target him
+       (the vanilla invisibility comp, which PsychicInvisibility uses too); the pose code does not draw
+       him at all. The cast removes it when he comes back. -->
+  <HediffDef>
+    <defName>AG_VergilGone</defName>
+    <label>gone</label>
+    <description>Vergil has stepped out of sight. Nobody can target him until he comes back.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>false</isBad>
+    <comps>
+      <li Class="HediffCompProperties_Invisibility">
+        <visibleToPlayer>true</visibleToPlayer>
+      </li>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>600</disappearsAfterTicks>
+      </li>
+      <li Class="HediffCompProperties_DisappearsOnDeath"/>
+    </comps>
+  </HediffDef>
+
+</Defs>

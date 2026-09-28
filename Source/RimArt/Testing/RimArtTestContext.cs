@@ -22,6 +22,9 @@ namespace RimArt
         public readonly IntVec3 center;
         public readonly List<string> failures = new List<string>();
         internal string shotName;
+        /// <summary>The next screenshot's camera, when <see cref="ShotAs(string, IntVec3, float)"/> set one.</summary>
+        internal IntVec3? shotAt;
+        internal float shotSize = 10f;
         internal readonly RimArtTestRunner runner;
 
         /// <summary>Half the side of the square <see cref="Clear"/> clears.</summary>
@@ -49,6 +52,18 @@ namespace RimArt
         public int ShotAs(string name)
         {
             shotName = name;
+            return Shot;
+        }
+
+        /// <summary>
+        /// Names the next screenshot and takes it close up: the camera on <paramref name="at"/> at root size
+        /// <paramref name="size"/> (the default shot is the arena centre at 10).
+        /// </summary>
+        public int ShotAs(string name, IntVec3 at, float size)
+        {
+            shotName = name;
+            shotAt = at;
+            shotSize = size;
             return Shot;
         }
 
