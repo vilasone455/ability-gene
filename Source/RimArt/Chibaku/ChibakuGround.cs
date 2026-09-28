@@ -61,6 +61,8 @@ namespace RimArt
         /// <summary>North first.</summary>
         public readonly List<ChibakuPlate> plates = new List<ChibakuPlate>();
         private Material faceMaterial;
+        /// <summary>The captured picture as a solid (cutout) material, for anything that shows the ground.</summary>
+        public Material FaceMaterial => faceMaterial;
         private Texture2D readBack;
 
         private ChibakuGround(Map map, IntVec3 cell, float radius)

@@ -17,8 +17,8 @@ namespace RimArt
         private const float Radius = DebugActions_ChibakuPlates.Radius;
         private static readonly IntVec3 WallAt = new IntVec3(3, 0, -4);
 
-        [RimArtTest("Chibaku", "ground plates 1 the captured ground matches the terrain; plates lift 1 cell and land", 1200)]
-        private static IEnumerable<int> GroundPlates(RimArtTestContext t)
+        /// <summary>The cleared arena with the circle painted in four terrains, a concrete patch and a wall; returns the wall's cell.</summary>
+        private static IntVec3 Arena(RimArtTestContext t)
         {
             t.Clear();
             TerrainDef sand = TerrainDefOf.Sand, rich = TerrainDefOf.SoilRich, gravel = TerrainDefOf.Gravel, soil = TerrainDefOf.Soil, concrete = TerrainDefOf.Concrete;
@@ -31,6 +31,16 @@ namespace RimArt
             }
             IntVec3 wall = t.center + WallAt;
             GenSpawn.Spawn(ThingMaker.MakeThing(ThingDefOf.Wall, ThingDefOf.WoodLog), wall, t.map);
+            // The debug log opens by itself on other mods' startup warnings and would cover the screenshots.
+            Find.WindowStack.TryRemove(typeof(LudeonTK.EditWindow_Log), false);
+            return wall;
+        }
+
+        [RimArtTest("Chibaku", "ground plates 1 the captured ground matches the terrain; plates lift 1 cell and land", 1200)]
+        private static IEnumerable<int> GroundPlates(RimArtTestContext t)
+        {
+            TerrainDef sand = TerrainDefOf.Sand, rich = TerrainDefOf.SoilRich, gravel = TerrainDefOf.Gravel, soil = TerrainDefOf.Soil, concrete = TerrainDefOf.Concrete;
+            IntVec3 wall = Arena(t);
             MapComponent_ChibakuPlates component = MapComponent_ChibakuPlates.Of(t.map);
             component.Stop();
             Find.CameraDriver.SetRootPosAndSize(t.center.ToVector3Shifted(), 10f);
@@ -79,6 +89,41 @@ namespace RimArt
             t.Check(ground.plates.All(p => ChibakuGround.TestHeight(p, ChibakuGround.End) == 0f), "at the end every plate is back on the ground");
             component.Stop();
             t.Check(component.Ground == null && ground.texture == null, "stopping frees the picture");
+            yield return 2;
+        }
+
+        [RimArtTest("Chibaku", "ball 1 the plates fly into a ball of the captured ground, it holds, bursts and the rocks land", 1200)]
+        private static IEnumerable<int> Ball(RimArtTestContext t)
+        {
+            Arena(t);
+            MapComponent_ChibakuPlates component = MapComponent_ChibakuPlates.Of(t.map);
+            component.Stop();
+            Find.CameraDriver.SetRootPosAndSize(t.center.ToVector3Shifted(), 10f);
+            yield return 5;
+            ChibakuBall ball = component.BeginBall(t.center, Radius, .9f);
+            if (!t.Check(ball != null, "the ball was made from the captured ground")) yield break;
+            t.Log($"{ball.Caught} plates pulled, {ball.Slots} on the ball's surface, last arrives at {ball.LastArrival:0.00} s, formed at {ChibakuBall.Formed:0.00} s, bursts at {ChibakuBall.Burst:0.00} s");
+            t.Check(ball.LastArrival <= ChibakuBall.Formed, "every plate reaches the ball before it is formed");
+            t.Check(ball.FilledSlots(ChibakuBall.Formed) == ball.Slots, "the ball's surface is full when it is formed");
+            t.Check(Mathf.Abs(ball.BallRadiusAt(ChibakuBall.Pull) - .3f * ChibakuBall.Radius) < .001f && Mathf.Abs(ball.BallRadiusAt(ChibakuBall.Formed) - ChibakuBall.Radius) < .001f,
+                "the ball grows from 0.3 to 1 times its radius");
+            float lands = ball.LastChunkLands();
+            t.Check(lands < ChibakuBall.Tail, $"every rock has landed {lands:0.00} s after the burst, before the preview ends");
+
+            // The cost of drawing one frame mid-pull (the calls only; the GPU work is not in it).
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            for (int i = 0; i < 20; i++) ball.Draw(ChibakuBall.Pull + 1.5f);
+            watch.Stop();
+            t.Log($"one mid-pull frame's draw calls take {watch.Elapsed.TotalMilliseconds / 20:0.00} ms on the CPU");
+
+            foreach (var (at, name) in new[] { (.9f, "1-cracks"), (1.9f, "2-pull"), (3.0f, "3-forming"), (4.5f, "4-held"), (7.45f, "6-seams"), (7.85f, "7-burst"), (8.4f, "8-rocks-falling"), (10.2f, "9-result") })
+            {
+                component.Freeze(at);
+                yield return t.ShotAs("chibaku-ball-" + name);
+                if (name == "4-held") yield return t.ShotAs("chibaku-ball-5-held-close", t.center + new IntVec3(0, 0, 2), 5f);
+            }
+            component.Stop();
+            t.Check(component.Ball == null && component.Ground == null, "stopping frees the ball and the picture");
             yield return 2;
         }
 
