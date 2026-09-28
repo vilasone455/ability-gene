@@ -189,6 +189,73 @@ namespace RimArt
             t.Check(component.Ball == null && component.Inner.Count == 0, "the preview ended by itself with nothing left inside");
         }
 
+        [RimArtTest("Chibaku", "items 1 items and a corpse go into the ball and land again; plants, a tree and filth are gone; roofed and outside items stay", 2400)]
+        private static IEnumerable<int> Items(RimArtTestContext t)
+        {
+            Arena(t);
+            IntVec3 c = t.center;
+            Thing Put(ThingDef def, IntVec3 at, int count = 1, ThingDef stuff = null)
+            {
+                Thing thing = ThingMaker.MakeThing(def, stuff);
+                thing.stackCount = count;
+                return GenSpawn.Spawn(thing, at, t.map);
+            }
+            Thing steel = Put(ThingDefOf.Steel, c + new IntVec3(1, 0, 1), 75);
+            Thing rifle = Put(DefDatabase<ThingDef>.GetNamed("Gun_BoltActionRifle"), c + new IntVec3(3, 0, 2));
+            Thing chunk = Put(DefDatabase<ThingDef>.GetNamed("ChunkGranite"), c + new IntVec3(-2, 0, -4));
+            Pawn dead = t.Enemy(c + new IntVec3(2, 0, -2), armed: false);
+            dead.Kill(null);
+            Corpse corpse = dead.Corpse;
+            IntVec3 roofedCell = c + new IntVec3(-3, 0, 1);
+            t.map.roofGrid.SetRoof(roofedCell, RoofDefOf.RoofConstructed);
+            Thing roofedSteel = Put(ThingDefOf.Steel, roofedCell, 10);
+            Thing outsideSteel = Put(ThingDefOf.Steel, c + new IntVec3(0, 0, -9), 10);
+            var plants = new List<Plant>();
+            foreach (IntVec3 d in new[] { new IntVec3(-5, 0, -2), new IntVec3(-5, 0, -3), new IntVec3(-4, 0, -4), new IntVec3(-1, 0, -3), new IntVec3(-2, 0, 2), new IntVec3(-4, 0, 3) })
+                plants.Add((Plant)Put(ThingDefOf.Plant_Grass, c + d));
+            ThingDef bushDef = DefDatabase<ThingDef>.GetNamedSilentFail("Plant_Bush");
+            if (bushDef != null) foreach (IntVec3 d in new[] { new IntVec3(-5, 0, -1), new IntVec3(0, 0, -4) }) plants.Add((Plant)Put(bushDef, c + d));
+            Plant tree = (Plant)Put(ThingDefOf.Plant_TreeOak, c + new IntVec3(1, 0, 4));
+            foreach (Plant plant in plants.Append(tree)) plant.Growth = 1f;
+            FilthMaker.TryMakeFilth(c + new IntVec3(2, 0, 0), t.map, ThingDefOf.Filth_Dirt, 3);
+            Filth dirt = (c + new IntVec3(2, 0, 0)).GetFirstThing<Filth>(t.map);
+            var taken = new List<Thing> { steel, rifle, chunk, corpse };
+            MapComponent_ChibakuPlates component = MapComponent_ChibakuPlates.Of(t.map);
+            component.Stop();
+            Find.CameraDriver.SetRootPosAndSize(c.ToVector3Shifted(), 10f);
+            yield return 5;
+            yield return t.ShotAs("chibaku-items-0-before");
+
+            ChibakuBall ball = component.BeginBall(c, Radius);
+            if (!t.Check(ball != null, "the live ball began")) yield break;
+            // The grass is printed into the captured ground: a grassy cell reads greener than the bare soil beside it.
+            Color grassy = component.Ground.SampleCell(c + new IntVec3(-5, 0, -3)), bare = component.Ground.SampleCell(c + new IntVec3(-3, 0, -5));
+            t.Check(grassy.g - grassy.r > bare.g - bare.r + .02f, $"the grass is printed on its plate: grassy {grassy.g - grassy.r:0.000} vs bare {bare.g - bare.r:0.000} (green minus red)");
+            int start = t.Now;
+            int Until(float seconds) => Mathf.Max(0, start + Mathf.CeilToInt(seconds * 60f) - t.Now);
+
+            yield return Until(ChibakuBall.Pull + 1.0f);
+            yield return t.ShotAs("chibaku-items-1-pulled-in");
+            yield return Until(ChibakuBall.Formed);
+            foreach (Thing thing in taken) t.Check(!thing.Spawned && thing.ParentHolder == component, $"{thing.LabelShort} is inside the ball");
+            t.Check(plants.All(p => p.Destroyed) && tree.Destroyed, $"the {plants.Count} small plants and the tree are gone");
+            t.Check(dirt == null || dirt.Destroyed, "the dirt is gone with its plate");
+            t.Check(roofedSteel.Spawned && roofedSteel.Position == roofedCell && outsideSteel.Spawned, "the steel under the roof and the steel outside the circle stay");
+            t.Log($"{component.Pull.pawns.Count(h => h.item != null)} items and {component.Pull.pawns.Count(h => h.tree)} tree taken; {component.Inner.Count} things inside the ball");
+            yield return Until(ChibakuBall.Formed + 1f);
+            yield return t.ShotAs("chibaku-items-2-held");
+
+            yield return Until(ChibakuBall.Burst + .25f);
+            yield return t.ShotAs("chibaku-items-3-falling-out");
+            yield return Until(ChibakuBall.Burst + ChibakuPull.FallTime + .1f);
+            foreach (Thing thing in taken)
+                t.Check(thing.Spawned && (thing.Position - c).LengthHorizontal <= 4.5f, $"{thing.LabelShort} landed in the crater, {(thing.Position - c).LengthHorizontal:0.0} cells from the middle");
+            t.Check(steel.stackCount == 75, $"the steel stack is whole ({steel.stackCount})");
+            t.Check(component.Inner.Count == 0, "nothing is left inside");
+            yield return t.ShotAs("chibaku-items-4-landed");
+            yield return Until(ChibakuBall.End + .2f);
+        }
+
         private static int Injuries(Pawn p) => p.health.hediffSet.hediffs.Count(h => h is Hediff_Injury || h is Hediff_MissingPart);
 
         private static string Describe(Pawn p) => p.Downed ? "down" : p.stances.stunner.Stunned ? "stunned" : "up";

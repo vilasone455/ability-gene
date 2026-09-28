@@ -29,8 +29,8 @@ namespace RimArt
     /// the ball forms, holds and bursts (<see cref="ChibakuBall.End"/> seconds of game time), or either is held
     /// at one moment when frozen. The ground is not changed.
     ///
-    /// The live ball takes pawns (<see cref="ChibakuPull"/>): it holds them in this component, which the map
-    /// counts among its thing holders, so they stay on the map while off it. A save made while pawns are held
+    /// The live ball takes pawns and items (<see cref="ChibakuPull"/>): it holds them in this component, which the
+    /// map counts among its thing holders, so they stay on the map while off it. A save made while they are held
     /// keeps them; the picture is not saved, so on load they are put down at once, unhurt, where the ball was.
     /// Stopping the preview early does the same.
     /// </summary>
@@ -135,7 +135,7 @@ namespace RimArt
         {
             if (Scribe.mode == LoadSaveMode.Saving)
             {
-                savedPawns = pull?.pawns.Where(h => h.state != ChibakuHeld.Landed && h.state != ChibakuHeld.Waiting).ToList();
+                savedPawns = pull?.pawns.Where(h => h.Thing != null && inner.Contains(h.Thing)).ToList();
                 savedCell = ground?.cell ?? IntVec3.Invalid;
             }
             Scribe_Deep.Look(ref inner, "chibakuInner", this);
@@ -158,7 +158,8 @@ namespace RimArt
             {
                 Thing thing = inner[i];
                 inner.Remove(thing);
-                GenSpawn.Spawn(thing, CompNezukoBox.StandableNear(cell, map, null), map);
+                if (thing is Pawn) GenSpawn.Spawn(thing, CompNezukoBox.StandableNear(cell, map, null), map);
+                else GenPlace.TryPlaceThing(thing, cell, map, ThingPlaceMode.Near);
                 if (!(thing is Pawn p) || p.Dead) continue;
                 Lord lord = savedPawns?.FirstOrDefault(h => h.pawn == p)?.lord;
                 if (lord != null && map.lordManager.lords.Contains(lord)) lord.AddPawn(p);

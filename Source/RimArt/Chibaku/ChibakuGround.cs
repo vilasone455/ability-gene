@@ -16,7 +16,7 @@ namespace RimArt
         public Vector2[] outline;
         /// <summary>Distance of the centre from the middle, as a share of the radius (0 middle, 1 rim).</summary>
         public float along;
-        /// <summary>Stays in the ground: a covered cell has a building or a roof over it.</summary>
+        /// <summary>Stays in the ground: a covered cell has a building on it (a wall, a conduit, a frame) or a roof over it.</summary>
         public bool anchored;
         public readonly List<IntVec3> cells = new List<IntVec3>();
         internal Mesh face, edge, hole;
@@ -126,11 +126,54 @@ namespace RimArt
             commands.SetViewProjectionMatrices(view, projection);
             foreach (var d in draws.OrderBy(d => d.queue).ThenBy(d => d.layer))
                 commands.DrawMesh(d.sub.mesh, Matrix4x4.identity, d.sub.material);
+            PrintPlants(commands, square);
             Graphics.ExecuteCommandBuffer(commands);
             commands.Release();
 
             // Cutout keeps the face solid: the clear is opaque, so every pixel ends well above the cut.
             faceMaterial = new Material(ShaderDatabase.Cutout) { mainTexture = texture, name = "RimArt Chibaku ground" };
+        }
+
+        /// <summary>
+        /// Small plants inside the circle printed over the ground, the way <c>Plant.Print</c> lays them out (one
+        /// quad per mesh the plant's growth shows, a single-mesh plant's foot on its cell's south edge), north
+        /// first so nearer ones overlap. They go up printed on their plates and show on the ball; the plants
+        /// themselves are removed when their plate tears free. Trees are left out: they fly as their own piece.
+        /// </summary>
+        private void PrintPlants(CommandBuffer commands, CellRect square)
+        {
+            Vector3 middle = cell.ToVector3Shifted();
+            var quads = new List<(float z, Matrix4x4 at, Material material)>();
+            foreach (IntVec3 c in square)
+            {
+                if ((c.ToVector3Shifted() - middle).MagnitudeHorizontal() > radius + 1f) continue;
+                foreach (Thing thing in c.GetThingList(map))
+                {
+                    if (!(thing is Plant plant) || plant.def.plant.IsTree || plant.def.graphicData == null) continue;
+                    Material material = plant.Graphic?.MatSingleFor(plant);
+                    if (material == null) continue;
+                    float visual = plant.def.plant.visualSizeRange.LerpThroughRange(plant.Growth), size = plant.def.graphicData.drawSize.x * visual;
+                    int max = Mathf.Max(1, plant.def.plant.maxMeshCount), side = Mathf.Max(1, Mathf.RoundToInt(Mathf.Sqrt(max)));
+                    int meshes = Mathf.Clamp(Mathf.CeilToInt(plant.Growth * max), 1, max);
+                    for (int k = 0; k < meshes; k++)
+                    {
+                        float jx = (float)ChibakuCut.Rand(plant.thingIDNumber * 31 + k * 2) - .5f, jz = (float)ChibakuCut.Rand(plant.thingIDNumber * 31 + k * 2 + 1) - .5f;
+                        Vector3 at;
+                        if (max == 1)
+                        {
+                            at = c.ToVector3Shifted() + new Vector3(jx, 0f, jz) * .1f;
+                            at.z = Mathf.Max(at.z, c.z + visual / 2f);
+                        }
+                        else
+                        {
+                            float step = 1f / side;
+                            at = new Vector3(c.x + step * (k / side + .5f), 0f, c.z + step * (k % side + .5f)) + new Vector3(jx, 0f, jz) * step * .6f;
+                        }
+                        quads.Add((at.z, Matrix4x4.TRS(new Vector3(at.x, 5f, at.z), Quaternion.identity, new Vector3(size, 1f, size)), material));
+                    }
+                }
+            }
+            foreach (var q in quads.OrderByDescending(q => q.z)) commands.DrawMesh(MeshPool.plane10, q.at, q.material);
         }
 
         private void Cut(float plateSize, int seed)
@@ -146,7 +189,7 @@ namespace RimArt
                 for (int x = Mathf.FloorToInt(minX); x <= Mathf.FloorToInt(maxX); x++)
                     for (int z = Mathf.FloorToInt(minZ); z <= Mathf.FloorToInt(maxZ); z++)
                         if (ChibakuCut.Contains(plate.outline, new Vector2(x + .5f, z + .5f))) plate.cells.Add(new IntVec3(x, 0, z));
-                plate.anchored = plate.cells.Any(c => !c.InBounds(map) || c.GetEdifice(map) != null || c.Roofed(map));
+                plate.anchored = plate.cells.Any(c => !c.InBounds(map) || c.Roofed(map) || c.GetThingList(map).Any(t => t.def.category == ThingCategory.Building));
                 plate.face = Fan(plate, 0f, true);
                 plate.edge = Fan(plate, .022f, false);
                 plate.hole = Fan(plate, -.045f, false);

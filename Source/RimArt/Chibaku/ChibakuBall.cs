@@ -159,6 +159,12 @@ namespace RimArt
             return true;
         }
 
+        /// <summary>The plates that are pulled, with the moment each tears free.</summary>
+        public IEnumerable<(ChibakuPlate plate, float liftAt)> PulledPlates
+        {
+            get { foreach (Flight f in caught) yield return (f.plate, f.liftAt); }
+        }
+
         public int Caught => caught.Count;
         public int Slots => slots;
         public float LastArrival => caught.Count > 0 ? caught[caught.Count - 1].arriveAt : 0f;
@@ -260,8 +266,8 @@ namespace RimArt
         }
 
         /// <summary>
-        /// The pawns in the air: pulled in (their picture turning as it flies to the ball and shrinking to 60 %) or
-        /// falling out after the burst. A pawn still waiting to be lifted kicks up dust at its feet.
+        /// Pawns, items and trees in the air: pulled in (their picture turning as it flies to the ball and shrinking
+        /// to 60 %) or falling out after the burst. A pawn still waiting to be lifted kicks up dust at its feet.
         /// </summary>
         private void AddPawns(List<ChibakuHeld> pawns, float s, float r)
         {
@@ -279,7 +285,7 @@ namespace RimArt
                     continue;
                 }
                 if (h.material == null) continue;
-                float seed = R(h.pawn?.thingIDNumber ?? 0) * 360f;
+                float seed = R(h.Thing?.thingIDNumber ?? Mathf.RoundToInt(h.from.x * 131f + h.from.z * 17f)) * 360f;
                 if ((h.state == ChibakuHeld.Flying || h.state == ChibakuHeld.Held) && s >= h.liftAt && s < h.liftAt + ChibakuPull.FlySeconds)
                 {
                     float age = s - h.liftAt, u = Mathf.Pow(Mathf.Clamp01(age / ChibakuPull.FlySeconds), 1.6f);
@@ -299,14 +305,15 @@ namespace RimArt
             }
         }
 
-        /// <summary>A pawn's picture (the pawn as the game draws it) turned and shrunk, with a soft shadow on the ground.</summary>
+        /// <summary>A taken thing's picture (a pawn as the game draws it, an item's or a tree's graphic) turned and shrunk, with a soft shadow.</summary>
         private static void PawnPicture(Airborne a, float altitude)
         {
-            float scale = Mathf.Lerp(1f, .6f, a.u), size = KamuiBend.PawnCells * scale;
+            float scale = Mathf.Lerp(1f, .6f, a.u);
+            Vector2 size = a.pawn.size * scale;
             Sprite(new Vector2(a.pos.x + ShadowPerCell.x * a.pos.y, a.pos.z + ShadowPerCell.y * a.pos.y), .8f * scale, .4f * scale, Fade(Color.black, .35f / (1f + a.pos.y)), soft,
                 AltitudeLayer.Shadows.AltitudeFor());
             properties.SetColor(ShaderPropertyIDs.Color, Color.white);
-            Graphics.DrawMesh(MeshPool.plane10, Matrix4x4.TRS(new Vector3(a.pos.x, altitude, a.pos.z + a.pos.y * Lift), Quaternion.Euler(0f, a.angle, 0f), new Vector3(size, 1f, size)),
+            Graphics.DrawMesh(MeshPool.plane10, Matrix4x4.TRS(new Vector3(a.pos.x, altitude, a.pos.z + a.pos.y * Lift), Quaternion.Euler(0f, a.angle, 0f), new Vector3(size.x, 1f, size.y)),
                 a.pawn.material, 0, null, 0, properties);
         }
 
