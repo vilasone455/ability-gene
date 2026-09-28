@@ -1,5 +1,5 @@
-// Obito — Wood Release: Cutting Technique. A picture for the agreed mechanic; nothing in
-// Source/RimArt draws it yet.
+// Obito — Wood Release: Cutting Technique. A picture for the agreed mechanic, ported to
+// Source/RimArt/Obito/WoodReleaseGraphics.cs (2026-09-28).
 //
 // Mechanic (agreed 2026-09-27, numbers are XML placeholders): branches shoot from his right arm
 // along a straight line up to 10 cells and skewer every pawn on it, allies included: 15 Stab each,

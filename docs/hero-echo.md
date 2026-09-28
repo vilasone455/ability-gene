@@ -240,7 +240,7 @@ Agreed, not built (no EchoDef yet; the abilities do not exist):
 | Echo | Trials | Cost | Abilities | Upkeep | Casts | Hero form |
 |---|---|---|---|---|---|---|
 | Sasuke ("Avenger of the Crimson Eye") | Melee 14, Intellectual 10, 15 kills with the Fūma Shuriken | Pessimist | Amenoyodomi, Amenotejikara, Raikō Kusari, Amaterasu | 12 | Amenoyodomi 0, Amenotejikara 2, Raikō Kusari 8, Amaterasu 5 | +0.4 move speed, black hair, wealth 6000, no forced weapon |
-| Obito ("Watcher Behind the Spiral Mask") | Melee 12, Intellectual 10, has a missing or artificial body part (new Trial class; a prosthetic or bionic counts) | Depressive (Natural mood -2) | Kamui: Phase, Kamui: Warp, Kamui: Store, Wood Release | 12 | Phase 0 (its own 30 s pool), Warp 2, Store 1, Wood Release 2 | fold organ gene Echo-only: added on awakening (the dimension is generated then), abilities only while manifested |
+| Obito ("Watcher Behind the Spiral Mask"; built 2026-09-28, see "Obito" below) | Melee 12, Intellectual 10, has a missing or artificial body part (`Trial_ArtificialPart`: any missing part or added part) | Depressive (Natural mood -2) | Kamui: Phase, Kamui: Warp, Kamui: Store, Wood Release | 12 | Phase 0 (its own 30 s pool), Warp 2, Store 1, Wood Release 2 | fold organ gene Echo-only: added on awakening (the dimension is generated then), abilities only while manifested |
 | Gojo ("Bearer of the Six Eyes") | Intellectual 14, 1 day spent downed in total (vanilla `TimeDowned` record; the Trial label shows hours), colony wealth 200,000 | The Strongest (new custom trait) | Infinity, Blue, Red, Unlimited Void (+ Hollow Purple combo) | 15 | Infinity 0 (its breath is the price), Blue 3, Red 3, Hollow Purple 20 (+ its own 1-day cooldown), Unlimited Void 30 | white hair; phase barrier implant Echo-only; no forced weapon |
 | Minato ("Hero of the Yellow Flash") | Melee 12, Intellectual 10, 30 kills with thrown kunai (needs `PendingThrow` to pass the kunai as the weapon so the kill counter sees it) | Kind | flying thunder god, sealing touch (passive), chain, guiding thunder, rasengan; throw kunai stays on the belt | 10 | throw kunai 0 (belt charges), flying thunder god 2, chain 10, guiding thunder 5, rasengan 3 | blond hair; costume on AG_EchoManifest_Minato: Hokage haori (flames, 四代目火影 on the back) over the jōnin vest, and the forehead protector; no forced weapon; no kunai regeneration; replaces the earning rules in docs/flying-thunder-god-kit.md |
 | Nakime ("Player of the Endless Halls") | Artistic 12, Construction 10, 15 humanlike kills (vanilla `KillsHumanlikes`) | Night Owl | Infinity Castle (commands: shift, drop, seal/open, crush, summon, release; passives castle sight, void rule) | 12 | Infinity Castle 30, commands 0 (the 1.5 s strum rhythm and crush's own 10 s cooldown limit them) | black hair; forced biwa; castle gene Echo-only, added on awakening; sunlight burns her always (the gene's rule, 4 per second outdoors by day), not only while manifested |
@@ -287,7 +287,8 @@ from `itachi-susanoo.js` and matched against it in the lab; previews "Susanoo: r
   Perfect), code meshes plus a swirl texture, always facing the camera, growing ribs -> skeleton ->
   armour and face during the warm-up (growth is picture only, my recommendation). About 2 days.
 
-Obito (agreed 2026-09-27; numbers are placeholders; replaces the built fold organ kit; no code yet):
+Obito (agreed 2026-09-27; numbers are placeholders; replaces the built fold organ kit; built 2026-09-28,
+see "Obito as built" after this list):
 - Kamui: Phase. Toggle intangibility from his own 30 s pool, refilling 1 s per 4 s solid. Every hit
   on his whole body goes into the Kamui dimension (`InvoluteUtility.PassThrough` on the whole body
   instead of one rolled part): rounds are relaunched inside, other damage lands on a random cell
@@ -303,6 +304,23 @@ Obito (agreed 2026-09-27; numbers are placeholders; replaces the built fold orga
   10 s, 2 charge. No pin (pinning is Pain's Black Receiver).
 - Cut: Vent's rolled body part and hole, the aperture, Post, Collapse, Izanagi. On his death or loss
   of the kit, the contents come out at his cell. The Kamui dimension map (PR #41) stays.
+
+Obito as built (2026-09-28; EchoDef in `AG_Echo_Obito.xml`, abilities in `AG_Obito_Abilities.xml`, code in
+`Source/RimArt/Obito/` and `Source/RimArt/Involute/`):
+- The fold organ gene (`AG_InvoluteOrgan`, now labelled Kamui) is Echo-only: no abilities, not in genepacks.
+  It holds the dimension (built on awakening), the Phase pool, the Warp state and the stored list. The
+  old Vent, Fold, Swallow, Post and Collapse code and defs, the hole hediffs and the aperture are deleted.
+- Readings that were open and are now code (each an XML field or easy to change): Wood Release hits
+  allies (`hitAllies`) and stops at the first wall (`stopAtWalls`); the counter's tell is a small swirl
+  over the enemy for the 5 s window; release costs no charge; a revert while he is inside the dimension
+  puts him back where he went in; the Phase button is an instant toggle (no job, nothing he does stops);
+  while phased his weapon and belts are not drawn (the sketch draws his body alone).
+- Pictures: his real body is drawn bent (the game's pawn-cache camera renders him into a texture each
+  frame, drawn on a 27 × 27 grid moved by the sketch's twist and vortex): see-through while phased, a
+  twist from the right eye as Phase turns on and off, a twist and a swirl at every hit that goes through
+  him, the vortex into and out of the eye for Warp. Store streams the target's picture into his eye and
+  unwinds a released thing out of a swirl; Wood Release is the sketch's strands, twigs, spikes and
+  crumble, with splinters lying 8 s.
 
 Gojo (agreed 2026-09-27; numbers are placeholders):
 - Infinity: the built Phase Guard (`Membrane/`): everything moving toward him halves its remaining

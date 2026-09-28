@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Obito's four abilities (docs/hero-echo.md "Obito"; the pictures follow the four
+       Tools/VfxLab/web/sketches/obito-*.js sketches), granted by the Obito Echo while manifested
+       (AG_Echo_Obito.xml holds their charge costs). They need his Kamui gene (AG_InvoluteOrgan), which the
+       Echo gives on awakening. Every balance number is a field here; the C# in Source/RimArt/Obito holds only
+       shape and logic. The icons are placeholders. -->
+
+  <AbilityDef Name="AG_ObitoAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+  </AbilityDef>
+
+  <!-- A toggle, not a cast: the button turns him intangible or solid on the spot, without stopping what he
+       is doing (Command_KamuiPhase). Its pool is its cost. -->
+  <AbilityDef ParentName="AG_ObitoAbilityBase">
+    <defName>AG_KamuiPhase</defName>
+    <label>Kamui: phase</label>
+    <description>Obito becomes intangible. Every hit on him goes through him into his Kamui dimension: rounds fly on inside it, anything else lands on a random spot there. While phased he cannot attack, carry or use his other abilities.\n\nPhase spends his own pool of 30 seconds, which refills 1 second for every 4 seconds he is solid. Turning solid again takes 0.25 seconds. Costs no charge.</description>
+    <iconPath>RimArt/Obito/IconPhase</iconPath>
+    <gizmoClass>RimArt.Command_KamuiPhase</gizmoClass>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <writeCombatLog>false</writeCombatLog>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0</warmupTime>
+      <nonInterruptingSelfCast>true</nonInterruptingSelfCast>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityKamuiPhase">
+        <poolSeconds>30</poolSeconds>
+        <refillPerSolidSecond>0.25</refillPerSolidSecond>
+        <solidSeconds>0.25</solidSeconds>
+        <minStartSeconds>1</minStartSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- In after the warm-up; from inside the same button (Ability_KamuiWarp) picks the cell he comes out at.
+       The cooldown runs from the exit: cooldownAfterExitSeconds on the comp. -->
+  <AbilityDef ParentName="AG_ObitoAbilityBase">
+    <defName>AG_KamuiWarp</defName>
+    <label>Kamui: warp</label>
+    <description>Obito winds himself into his right eye and is inside his Kamui dimension after 1 second.\n\nFrom inside, use it again to pick any revealed spot on the map he left. A swirl marks the spot for half a second, then he comes out of it. The 15-second cooldown starts when he comes out; going in costs 2 charge, coming out is free.</description>
+    <iconPath>RimArt/Obito/IconWarp</iconPath>
+    <abilityClass>RimArt.Ability_KamuiWarp</abilityClass>
+    <cooldownTicksRange>900</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>1</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityKamuiWarp">
+        <exitMarkSeconds>0.5</exitMarkSeconds>
+        <cooldownAfterExitSeconds>15</cooldownAfterExitSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Absorb is the touch cast (Verb_KamuiStore: no warm-up on an enemy whose attack went through him in the
+       last counterSeconds); release is the second button Ability_KamuiStore shows while anything is stored.
+       The absorbed target is held still for the warm-up. -->
+  <AbilityDef ParentName="AG_ObitoAbilityBase">
+    <defName>AG_KamuiStore</defName>
+    <label>Kamui: store</label>
+    <description>Absorb: Obito touches a person or animal no larger than a megaspider, or one item stack, and it winds into his right eye and into his Kamui dimension. It takes 0.4 seconds, or none on an enemy whose attack went through him in the last 5 seconds. Enemies held inside stay stunned; allies stay awake.\n\nRelease: put a stored thing back out on any spot within 6 cells in sight. An enemy comes out stunned for 2 seconds.\n\nAbsorb costs 1 charge and has a 15-second cooldown; release is free, with a 5-second cooldown.</description>
+    <iconPath>RimArt/Obito/IconStore</iconPath>
+    <abilityClass>RimArt.Ability_KamuiStore</abilityClass>
+    <jobDef>CastAbilityOnThingMelee</jobDef>
+    <stunTargetWhileCasting>true</stunTargetWhileCasting>
+    <cooldownTicksRange>900</cooldownTicksRange>
+    <hostile>false</hostile>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <verbProperties>
+      <verbClass>RimArt.Verb_KamuiStore</verbClass>
+      <drawAimPie>false</drawAimPie>
+      <range>-1</range>
+      <warmupTime>0.4</warmupTime>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetItems>true</canTargetItems>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetLocations>false</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityKamuiStore">
+        <maxBodySize>1.2</maxBodySize>
+        <counterSeconds>5</counterSeconds>
+        <releaseRange>6</releaseRange>
+        <releaseStunSeconds>2</releaseStunSeconds>
+        <releaseCooldownSeconds>5</releaseCooldownSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- The target only gives the direction: the line always runs length cells from the next cell out, and
+       stops at the first wall (stopAtWalls). Allies on it are hit too (hitAllies). Two charges, each back
+       10 seconds after it is spent. -->
+  <AbilityDef ParentName="AG_ObitoAbilityBase">
+    <defName>AG_WoodRelease</defName>
+    <label>Wood Release: cutting technique</label>
+    <description>Branches burst from Obito's right arm and race out in a straight line for 10 cells, skewering every pawn on it, allies included: 15 stab damage each, 30% armour penetration. The line stops at a wall. The branches crumble at once and pin no one.\n\nWarm-up 0.5 seconds. Two charges, each back 10 seconds after use. Costs 2 charge.</description>
+    <iconPath>RimArt/Obito/IconWood</iconPath>
+    <cooldownTicksRange>600</cooldownTicksRange>
+    <charges>2</charges>
+    <cooldownPerCharge>true</cooldownPerCharge>
+    <hostile>true</hostile>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>10.9</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetLocations>true</canTargetLocations>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityWoodRelease">
+        <length>10</length>
+        <damage>15</damage>
+        <armorPenetration>0.3</armorPenetration>
+        <damageDef>Stab</damageDef>
+        <hitAllies>true</hitAllies>
+        <stopAtWalls>true</stopAtWalls>
+        <speed>40</speed>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

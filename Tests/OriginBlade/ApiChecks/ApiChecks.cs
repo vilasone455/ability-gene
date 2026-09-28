@@ -282,6 +282,12 @@ static class ApiChecks
         if (invisibilityPrefix?.ReturnType != typeof(bool))
             throw new Exception("Shinra targeting exception requires Melee Animation's invisibility prefix");
 
+        // Obito's Kamui: Phase adds a predicate to each of these (Obito/KamuiMeleeAnimation.cs).
+        Type actionController = Need("AM.Controller.ActionController");
+        foreach (string list in new[] { "CanBeExecutedPredicates", "CanBeGrappledPredicates", "CanExecutePredicates" })
+            if (actionController.GetField(list, Any)?.FieldType != typeof(System.Collections.Generic.List<Predicate<Verse.Pawn>>))
+                throw new Exception($"Kamui: Phase needs Melee Animation's ActionController.{list} (List<Predicate<Pawn>>)");
+
         Type animDef = Need("AM.AnimDef");
         Type renderer = Need("AM.AnimRenderer");
         Type startParams = Need("AM.AnimationStartParameters");

@@ -6,24 +6,22 @@ using Verse;
 namespace RimArt
 {
     /// <summary>
-    /// The three questions the organ has to answer: where the hole goes, what the volume is,
-    /// and what happens to something that arrives at the boundary.
+    /// Obito's dimension: building it, where things arrive in it, and what happens to a hit that went through
+    /// him while he was intangible.
     /// </summary>
     public static class InvoluteUtility
     {
         /// <summary>
-        /// Guards against a passed-through instance passing through again. The carrier can be
-        /// standing in their own volume while their aperture is being fired into, which is
-        /// intended - what is not intended is one round bouncing between the two forever.
+        /// Guards against a passed-through instance passing through again: Obito can stand intangible in his
+        /// own dimension while a relaunched round crosses it, and that round must not go round forever.
         /// </summary>
         private static bool passing;
 
         private static FleckDef entryFleck;
         private static bool entryFleckResolved;
 
-        private static FleckDef[] openFlecks;
-        private static FleckDef[] closeFlecks;
-        private static bool doorFlecksResolved;
+        /// <summary>Rounds put back in flight inside a dimension since the game started, for the tests.</summary>
+        public static int Relaunched { get; private set; }
 
         public static Gene_Involute GeneOf(Pawn pawn)
         {
@@ -37,96 +35,7 @@ namespace RimArt
             return null;
         }
 
-        /// <summary>
-        /// Where the hole goes.
-        ///
-        /// The candidate set is <see cref="ResonanceUtility.CanRing"/> - outside depth, has a
-        /// parent, not conceptual, not the core part, nothing vital hanging off it. That is the
-        /// same question Resonance asks and it is already answered off the game's own
-        /// body data, so this holds for animals, mechs and modded races without a patch.
-        ///
-        /// The coverage band on top is the balance. RimWorld picks hit parts by coverage weight,
-        /// so the share of incoming fire the hole eats is exactly the part's coverage - a torso
-        /// would be near-immunity and a finger would be nothing. Hand-sized is the band where
-        /// the pass-through is a real effect and not the only one the carrier has.
-        /// </summary>
-        public static BodyPartRecord RollHolePart(Pawn pawn, InvoluteGeneExtension ext)
-        {
-            if (pawn == null || pawn.RaceProps == null || pawn.RaceProps.body == null) return null;
-
-            // Named part wins outright, filter and all - see forceHolePart.
-            if (ext != null && ext.forceHolePart != null)
-            {
-                BodyPartRecord named = FindPart(pawn, ext.forceHolePart);
-                if (named != null) return named;
-
-                Log.WarningOnce("[RimArt] Involute organ: forceHolePart " + ext.forceHolePart.defName
-                    + " is not on this body. Rolling instead.", 0x1CF01F);
-            }
-
-            float min = ext != null ? ext.minHoleCoverage : 0.02f;
-            float max = ext != null ? ext.maxHoleCoverage : 0.10f;
-
-            List<BodyPartRecord> banded = new List<BodyPartRecord>();
-            List<BodyPartRecord> any = new List<BodyPartRecord>();
-
-            List<BodyPartRecord> parts = pawn.RaceProps.body.AllParts;
-            for (int i = 0; i < parts.Count; i++)
-            {
-                BodyPartRecord part = parts[i];
-                if (!CanHoldHole(pawn, part, ext != null && ext.allowAnyPart)) continue;
-
-                any.Add(part);
-                float coverage = part.coverageAbsWithChildren;
-                if (coverage >= min && coverage <= max) banded.Add(part);
-            }
-
-            if (banded.Count > 0) return banded.RandomElement();
-            if (any.Count > 0) return any.RandomElement();
-            return null;
-        }
-
-        /// <summary>
-        /// Whether a hole can be in this part.
-        ///
-        /// The strict answer is ResonanceUtility.CanRing, which is Resonance's rule:
-        /// the parts a note can live in are the parts a hole can. It throws out the body's core
-        /// part and anything with a vital organ hanging off it, so it can never pick a torso.
-        ///
-        /// allowAnyPart drops those two exclusions and keeps the rest. Skin-depth and non-
-        /// conceptual still hold, so this never lands on a liver - an internal organ is not
-        /// something a bullet aimed at the body picks in the first place, and a hole in one
-        /// would simply never fire. What it does let in is the torso and the head, which is the
-        /// whole point of the flag.
-        /// </summary>
-        private static bool CanHoldHole(Pawn pawn, BodyPartRecord part, bool allowAnyPart)
-        {
-            if (!allowAnyPart) return ResonanceUtility.CanRing(pawn, part);
-
-            if (part.depth != BodyPartDepth.Outside) return false;
-            if (part.def == null || part.def.conceptual) return false;
-            return pawn.health == null || !pawn.health.hediffSet.PartIsMissing(part);
-        }
-
-        /// <summary>The first present, non-missing part of this def on this body.</summary>
-        public static BodyPartRecord FindPart(Pawn pawn, BodyPartDef def)
-        {
-            if (pawn == null || def == null || pawn.RaceProps == null || pawn.RaceProps.body == null) return null;
-
-            List<BodyPartRecord> parts = pawn.RaceProps.body.AllParts;
-            for (int i = 0; i < parts.Count; i++)
-            {
-                if (parts[i].def != def) continue;
-                if (pawn.health != null && pawn.health.hediffSet.PartIsMissing(parts[i])) continue;
-                return parts[i];
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Builds the volume. Lazily, on first connection - see the note on
-        /// <see cref="Gene_Involute.EnsureVolume"/>.
-        /// </summary>
+        /// <summary>Builds the volume: see <see cref="Gene_Involute.EnsureVolume"/> for when.</summary>
         public static Map GenerateVolume(Gene_Involute gene)
         {
             if (gene == null) return null;
@@ -147,10 +56,8 @@ namespace RimArt
         }
 
         /// <summary>
-        /// The mouth. Everything that goes in on purpose - the carrier, a posted item, a
-        /// swallowed pawn - arrives here, because the volume has one opening and this is the
-        /// inside of it. Only things that arrive by accident land anywhere else. In Kamui's
-        /// dimension it is the middle of the main top.
+        /// The mouth: Obito, absorbed allies and absorbed items arrive here. Only held enemies (on islands) and
+        /// hits that went through him land anywhere else. In Kamui's dimension it is the middle of the main top.
         /// </summary>
         public static IntVec3 MouthCell(Map volume)
         {
@@ -175,7 +82,7 @@ namespace RimArt
         }
 
         /// <summary>
-        /// Where a swallowed pawn arrives. In Kamui's dimension a pawn hostile to the one who put it
+        /// Where an absorbed pawn arrives. In Kamui's dimension a pawn hostile to the one who put it
         /// there lands on an island of its own, away from the main top, where nobody can walk to or
         /// from it; everyone else arrives at the mouth. A volume with no islands, or none with room,
         /// takes everyone at the mouth.
@@ -194,17 +101,15 @@ namespace RimArt
         }
 
         /// <summary>
-        /// Something arrived at the boundary. It is not stopped, reduced or cancelled - the
-        /// boundary is a door, and what arrives at a door goes through it.
+        /// A hit went through Obito while he was intangible. It is not stopped, reduced or cancelled: it arrives
+        /// in the dimension (a round is relaunched there, anything else lands on a random cell).
         /// </summary>
-        public static void PassThrough(Gene_Involute gene, DamageInfo dinfo, Thing at)
+        public static void PassThrough(Gene_Involute gene, DamageInfo dinfo)
         {
             if (gene == null || passing) return;
 
             Map volume = gene.EnsureVolume();
             if (volume == null) return;
-
-            Flash(at);
 
             passing = true;
             try
@@ -217,87 +122,18 @@ namespace RimArt
             }
         }
 
-        /// <summary>
-        /// The player has to be able to see the hole work. Without this they watch a raider
-        /// shoot, see no damage, and learn nothing about the gene they are carrying.
-        /// </summary>
-        public static void FlashAt(Thing at)
+        /// <summary>The nearest cell to <paramref name="want"/> a pawn can stand on with no other pawn on it.</summary>
+        public static IntVec3 FreeCellNear(Map map, IntVec3 want)
         {
-            Flash(at);
-        }
-
-        /// <summary>
-        /// The hole opening on the ground, and closing again when the carrier steps back out.
-        ///
-        /// Both need saying out loud. The aperture vanishing on a fold-out is correct - there is
-        /// one hole and it has gone back to riding on a body - but a thing that silently stops
-        /// existing reads as a bug no matter how right it is. Vanilla already draws both halves
-        /// of a skip, so this costs nothing.
-        /// </summary>
-        public static void OpenFlash(IntVec3 cell, Map map)
-        {
-            DoorFlash(cell, map, true);
-        }
-
-        public static void CloseFlash(IntVec3 cell, Map map)
-        {
-            DoorFlash(cell, map, false);
-        }
-
-        private static void DoorFlash(IntVec3 cell, Map map, bool opening)
-        {
-            if (map == null || !cell.IsValid || !cell.InBounds(map)) return;
-
-            if (!doorFlecksResolved)
+            if (map == null) return want;
+            want = new IntVec3(Mathf.Clamp(want.x, 0, map.Size.x - 1), 0, Mathf.Clamp(want.z, 0, map.Size.z - 1));
+            int cells = GenRadial.NumCellsInRadius(8f);
+            for (int i = 0; i < cells; i++)
             {
-                openFlecks = new[]
-                {
-                    DefDatabase<FleckDef>.GetNamedSilentFail("PsycastSkipInnerEntry"),
-                    DefDatabase<FleckDef>.GetNamedSilentFail("PsycastSkipFlashEntry")
-                };
-                closeFlecks = new[]
-                {
-                    DefDatabase<FleckDef>.GetNamedSilentFail("PsycastSkipInnerExit"),
-                    DefDatabase<FleckDef>.GetNamedSilentFail("PsycastSkipFlashExit")
-                };
-                doorFlecksResolved = true;
+                IntVec3 c = want + GenRadial.RadialPattern[i];
+                if (c.InBounds(map) && c.Standable(map) && c.GetFirstPawn(map) == null) return c;
             }
-
-            FleckDef[] flecks = opening ? openFlecks : closeFlecks;
-            for (int i = 0; i < flecks.Length; i++)
-            {
-                if (flecks[i] != null) FleckMaker.Static(cell, map, flecks[i], 1.4f);
-            }
-        }
-
-        /// <summary>
-        /// Whether the hole leads anywhere right now. Either it is connected on the carrier's
-        /// body, or they went through it and it is standing on the ground where they left it.
-        /// One hole, two places it can be.
-        /// </summary>
-        public static bool IsOpen(Gene_Involute gene)
-        {
-            if (gene == null) return false;
-            if (gene.pawn != null && InvoluteRegistry.IsVented(gene.pawn)) return true;
-
-            Building_Aperture aperture = gene.Aperture;
-            return aperture != null && !aperture.Destroyed && aperture.Spawned;
-        }
-
-        private static void Flash(Thing at)
-        {
-            // Resolved before the null check, not after: Deliver draws its own fleck on the far
-            // side and would otherwise find this still unresolved on the very first pass.
-            if (!entryFleckResolved)
-            {
-                entryFleck = DefDatabase<FleckDef>.GetNamedSilentFail("PsycastSkipFlashEntry");
-                entryFleckResolved = true;
-            }
-
-            if (entryFleck == null) return;
-            if (at == null || !at.Spawned || at.Map == null) return;
-
-            FleckMaker.Static(at.DrawPos, at.Map, entryFleck, 0.7f);
+            return CellFinder.StandableCellNear(want, map, 20f);
         }
 
         /// <summary>
@@ -305,7 +141,7 @@ namespace RimArt
         ///
         /// A round is put back in flight rather than set down. Teleporting it to a cell would
         /// make the whole mechanic cosmetic: a pawn occupies one cell out of a thousand, so a
-        /// burst emptied into the aperture would touch them about three times in a hundred.
+        /// burst emptied into Obito would touch them about three times in a hundred.
         /// A round that crosses the room can hit anything standing in the way of it, which is
         /// two orders of magnitude more often and is the entire reason this is dangerous.
         ///
@@ -321,6 +157,11 @@ namespace RimArt
             IntVec3 cell = InteriorCell(volume);
             if (!cell.IsValid) return;
 
+            if (!entryFleckResolved)
+            {
+                entryFleck = DefDatabase<FleckDef>.GetNamedSilentFail("PsycastSkipFlashEntry");
+                entryFleckResolved = true;
+            }
             if (entryFleck != null) FleckMaker.Static(cell, volume, entryFleck, 0.9f);
 
             Thing hit = cell.GetFirstPawn(volume);
@@ -359,6 +200,7 @@ namespace RimArt
             if (round != null)
             {
                 round.Launch(null, from.ToVector3Shifted(), to, to, ProjectileHitFlags.All, false, null, null);
+                Relaunched++;
                 return true;
             }
 
@@ -374,6 +216,7 @@ namespace RimArt
             int ticks = Mathf.Max(1, Mathf.CeilToInt(travel.magnitude / Rounds.BaseSpeedPerTick(spawned)));
 
             backend.Redirect(spawned, origin, endpoint, ticks, 1f, null);
+            Relaunched++;
             return true;
         }
 

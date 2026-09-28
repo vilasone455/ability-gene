@@ -1,3 +1,4 @@
+using RimWorld;
 using UnityEngine;
 using Verse;
 using static RimArt.VfxDraw;
@@ -11,8 +12,12 @@ namespace RimArt
     /// an island of their own.
     ///
     /// Every map has one of these (vanilla makes every MapComponent everywhere); it does nothing unless
-    /// its map is a dimension (a seed is set by <see cref="GenStep_InvoluteVolume"/>) and is the map on
-    /// screen. A volume made before the dimension existed has no seed and keeps its old look.
+    /// its map is a dimension (a seed is set by <see cref="GenStep_InvoluteVolume"/>). A volume made before
+    /// the dimension existed has no seed and keeps its old look.
+    ///
+    /// It also keeps the dimension's rules that need a clock: every enemy held here stays stunned (no
+    /// capture; they can still be shot), and once its owner is dead or has lost the gene everything in it
+    /// comes out (<see cref="Gene_Involute.EmptyOutAfterDeath"/>).
     /// </summary>
     public sealed class MapComponent_KamuiDimension : MapComponent
     {
@@ -24,7 +29,18 @@ namespace RimArt
         /// <summary>Under everything, for the far corners at full zoom-out (the generator def turns the grey map-edge frame off).</summary>
         private const float Backstop = 700f;
 
+        /// <summary>Obito, whose dimension this is. Null on maps that are not a dimension.</summary>
+        private Pawn owner;
+
+        /// <summary>A held enemy's stun, renewed every <see cref="HoldCheckTicks"/> so it never runs out.</summary>
+        public const int HoldStunTicks = 90;
+        private const int HoldCheckTicks = 30;
+
         public MapComponent_KamuiDimension(Map map) : base(map) { }
+
+        public Pawn Owner => owner;
+
+        public void SetOwner(Pawn pawn) => owner = pawn;
 
         public bool IsKamui => seed > 0;
 
@@ -78,6 +94,24 @@ namespace RimArt
             return IntVec3.Invalid;
         }
 
+        public override void MapComponentTick()
+        {
+            if (owner == null || Find.TickManager.TicksGame % HoldCheckTicks != 0) return;
+            Gene_Involute gene = owner.genes?.GetFirstGeneOfType<Gene_Involute>();
+            if (owner.Dead && gene != null && gene.Volume == map && gene.HoldsAnything)
+            {
+                gene.EmptyOutAfterDeath();
+                return;
+            }
+            var pawns = map.mapPawns.AllPawnsSpawned;
+            for (int i = 0; i < pawns.Count; i++)
+            {
+                Pawn held = pawns[i];
+                if (held == owner || held.Dead || held.Downed || !held.HostileTo(Faction.OfPlayer)) continue;
+                held.stances?.stunner.StunFor(HoldStunTicks, owner, false, false);
+            }
+        }
+
         public override void MapComponentUpdate()
         {
             if (!IsKamui || Find.CurrentMap != map) return;
@@ -94,6 +128,7 @@ namespace RimArt
             Scribe_Values.Look(ref cover, "kamuiCover", KamuiLayout.DefaultCover);
             Scribe_Values.Look(ref islands, "kamuiIslands", KamuiLayout.DefaultIslands);
             Scribe_Values.Look(ref palette, "kamuiPalette", KamuiGraphics.Fight);
+            Scribe_References.Look(ref owner, "kamuiOwner");
         }
     }
 }
