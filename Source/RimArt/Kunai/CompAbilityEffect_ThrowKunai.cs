@@ -72,7 +72,11 @@ namespace RimArt
             KunaiAccuracy.Learn(caster, parent, target);
 
             LocalTargetInfo flyTo = Aim(caster, target, out ProjectileHitFlags flags);
-            MapComponent_Throws.Begin(caster, flyTo, KunaiDefOf.AG_KunaiProjectile, KunaiDefaults.HandTexture,
+            // In Minato's hero form the kunai is his: three-pronged and sealed.
+            bool sealedByMinato = KunaiSeal.ThrowsSealed(caster);
+            MapComponent_Throws.Begin(caster, flyTo,
+                                      sealedByMinato ? KunaiDefOf.AG_KunaiProjectileMinato : KunaiDefOf.AG_KunaiProjectile,
+                                      sealedByMinato ? KunaiDefaults.MinatoTexture : KunaiDefaults.HandTexture,
                                       target, flags, ThrowAnimation.Kunai);
         }
 

@@ -21,6 +21,9 @@ namespace RimArt
         /// <summary>Degrees the drawn kunai leans, rolled once so several stuck kunai do not line up.</summary>
         public float drawAngle;
 
+        /// <summary>Minato's kunai (<see cref="KunaiSeal"/>): drawn three-pronged, and comes out sealed.</summary>
+        public bool sealedByMinato;
+
         private bool spent;
 
         /// <summary>Still holding its kunai, on a living pawn.</summary>
@@ -53,7 +56,7 @@ namespace RimArt
             base.Notify_PawnCorpseSpawned();
             if (spent) return;
             spent = true;
-            KunaiEmbedding.DropKunai(pawn.PositionHeld, pawn.MapHeld);
+            KunaiEmbedding.DropKunai(pawn.PositionHeld, pawn.MapHeld, sealedByMinato);
             pawn.Drawer?.renderer?.SetAllGraphicsDirty();
         }
 
@@ -62,7 +65,7 @@ namespace RimArt
             base.PostRemoved();
             if (spent) return;
             spent = true;
-            KunaiEmbedding.DropKunai(pawn.PositionHeld, pawn.MapHeld);
+            KunaiEmbedding.DropKunai(pawn.PositionHeld, pawn.MapHeld, sealedByMinato);
         }
 
         public override void ExposeData()
@@ -76,6 +79,7 @@ namespace RimArt
             Scribe_References.Look(ref wound, "wound");
             Scribe_Values.Look(ref drawAngle, "drawAngle", 0f);
             Scribe_Values.Look(ref spent, "spent", false);
+            Scribe_Values.Look(ref sealedByMinato, "sealedByMinato", false);
         }
     }
 }

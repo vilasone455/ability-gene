@@ -1108,6 +1108,114 @@ def draw_kunai(d, cx, tip_y, length):
     d.ellipse([cx - hole, ring_y - hole, cx + hole, ring_y + hole], fill=(0, 0, 0, 0))
 
 
+# Minato's Flying Thunder God kunai, from the anime (Narutopedia "Minato's_Kunai.png" and
+# "Minato_Kunai.png"): a long narrow central blade, a crescent of two curved side prongs at its
+# base with their points toward the tip, a long pale handle with the seal formula written down it in
+# black, a large ring. Shares of the total length:
+MK_BLADE, MK_COLLAR, MK_HANDLE, MK_RING = 0.44, 0.035, 0.32, 0.16
+MK_SPAN = 0.17  # each prong's tip, out from the middle
+MK_WRAP, MK_WRAP_LIT, MK_WRAP_DARK = (206, 188, 146), (234, 220, 184), (146, 128, 92)
+MK_INK = (24, 20, 18)
+# The seal formula: four glyphs down the handle, strokes on a 10 x 10 grid (y down). Brush marks in the
+# formula's style, not real characters: the game shows them 5-7 px tall.
+MK_FORMULA = [
+    [[(2, 1), (8, 1.5)], [(5, 1), (4, 5), (1.5, 8)], [(5, 4), (8.5, 7.5)], [(2.5, 9), (8, 8.5)]],
+    [[(1.5, 2), (5, 0.8), (8.5, 2.5)], [(3, 3.5), (3, 8.5)], [(3, 5.5), (7.5, 5), (7, 9)], [(1, 9.5), (9, 9.2)]],
+    [[(5, 0.5), (5, 9.5)], [(1, 3), (9, 3.2)], [(1.5, 6.5), (4, 5), (5, 6.5)], [(5, 6.5), (7, 5), (9, 7)]],
+    [[(1.5, 1), (8.5, 1)], [(8.5, 1), (6, 5), (8.5, 9)], [(1.5, 3), (4.5, 5.5), (1.5, 9)], [(3, 5.5), (6.5, 5.5)]],
+]
+
+
+def quad(p0, p1, p2, n=12):
+    """Points along a quadratic curve from p0 to p2, pulled toward p1."""
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        pts.append(((1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t * t * p2[0],
+                    (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t * t * p2[1]))
+    return pts
+
+
+def draw_minato_kunai(d, cx, tip_y, length):
+    """
+    Minato's kunai, point at tip_y, ring bottom at tip_y + length, drawn with ImageDraw `d` like
+    draw_kunai. The central blade and the prongs have the same faces and steel as the ordinary kunai
+    (lit on the upper left); the handle is pale cloth with the formula in black.
+    """
+    L = length
+    o = px(1.4)
+    base = tip_y + L * MK_BLADE  # where the blade meets the collar
+    half = L * 0.042
+    widest = tip_y + L * MK_BLADE * 0.86
+
+    # The crescent of side prongs: one piece under the central blade, thickest in the middle, each
+    # end curving out and round to a point toward the tip. The left half lit, the right half in
+    # shade, the inner edge catching the light.
+    tip_l, tip_r = (cx - L * MK_SPAN, base - L * 0.17), (cx + L * MK_SPAN, base - L * 0.17)
+    bottom_mid, top_mid = (cx, base + L * 0.065), (cx, base + L * 0.004)
+    outer = quad(tip_l, (cx - L * 0.2, base + L * 0.075), bottom_mid) + \
+        quad(bottom_mid, (cx + L * 0.2, base + L * 0.075), tip_r)[1:]
+    inner = quad(tip_r, (cx + L * 0.095, base + L * 0.004), top_mid) + \
+        quad(top_mid, (cx - L * 0.095, base + L * 0.004), tip_l)[1:]
+    d.polygon([(x, y + o * 0.8) for x, y in outer] + [(x, y - o * 0.5) for x, y in inner], fill=EDGE)
+    d.polygon(outer + inner, fill=KUNAI_FACE_DARK)
+    n = len(outer) // 2
+    d.polygon(outer[:n + 1] + [top_mid] + inner[n:], fill=KUNAI_FACE_LOW)
+    # A lit face along the inner edge, wider on the left.
+    band = [((ax + bx) / 2, (ay + by) / 2) for (ax, ay), (bx, by) in zip(outer, reversed(inner))]
+    d.polygon(band[:n + 1] + [top_mid] + inner[n:], fill=KUNAI_FACE_LIT)
+    d.polygon(band[n:] + inner[:n + 1], fill=KUNAI_FACE)
+    d.line(inner, fill=(250, 252, 255), width=max(1, px(0.6)))
+
+    # The central blade: a long flat diamond, widest near its base.
+    d.polygon([(cx, tip_y - o * 1.6), (cx + half + o, widest), (cx + half * 0.6 + o, base + o),
+               (cx - half * 0.6 - o, base + o), (cx - half - o, widest)], fill=EDGE)
+    left, right, mid, tip = (cx - half, widest), (cx + half, widest), (cx, widest), (cx, tip_y)
+    d.polygon([tip, mid, left], fill=KUNAI_FACE_LIT)
+    d.polygon([tip, right, mid], fill=KUNAI_FACE)
+    d.polygon([left, mid, (cx, base), (cx - half * 0.6, base)], fill=KUNAI_FACE_LOW)
+    d.polygon([mid, right, (cx + half * 0.6, base), (cx, base)], fill=KUNAI_FACE_DARK)
+    d.line([(cx - half * 0.1, tip_y + L * 0.03), (cx - half + o * 0.4, widest - o * 0.3)],
+           fill=(250, 252, 255), width=max(1, px(0.7)))
+
+    # Collars either end of the handle, the handle with its formula, the ring.
+    hw = L * 0.036
+    top = base + L * MK_COLLAR
+    bottom = top + L * MK_HANDLE
+    ring_r = L * MK_RING / 2
+    ring_y = tip_y + L - ring_r
+    for y0, y1, w in ((base - L * 0.005, top, hw * 1.35), (bottom, ring_y - ring_r * 0.75, hw * 1.2)):
+        d.rectangle([cx - w - o, y0 - o * 0.5, cx + w + o, y1 + o * 0.5], fill=EDGE)
+        d.rectangle([cx - w, y0, cx + w, y1], fill=STEEL_DARK)
+        d.rectangle([cx - w, y0, cx - w * 0.3, y1], fill=STEEL)
+    d.rectangle([cx - hw - o, top, cx + hw + o, bottom], fill=EDGE)
+    d.rectangle([cx - hw, top, cx + hw, bottom], fill=MK_WRAP)
+    d.rectangle([cx - hw, top, cx - hw * 0.35, bottom], fill=MK_WRAP_LIT)
+    d.rectangle([cx + hw * 0.55, top, cx + hw, bottom], fill=MK_WRAP_DARK)
+    g = (bottom - top) / len(MK_FORMULA)
+    size = min(g * 0.8, hw * 1.7)
+    for i, glyph in enumerate(MK_FORMULA):
+        gx, gy = cx - size / 2, top + g * i + (g - size) / 2
+        for stroke_pts in glyph:
+            d.line([(gx + x * size / 10, gy + y * size / 10) for x, y in stroke_pts], fill=MK_INK,
+                   width=max(1, px(0.75)), joint="curve")
+    t = ring_r * 0.32
+    d.ellipse([cx - ring_r - o, ring_y - ring_r - o, cx + ring_r + o, ring_y + ring_r + o], fill=EDGE)
+    d.ellipse([cx - ring_r, ring_y - ring_r, cx + ring_r, ring_y + ring_r], fill=STEEL_DARK)
+    d.arc([cx - ring_r + t * 0.25, ring_y - ring_r + t * 0.25, cx + ring_r - t * 0.25, ring_y + ring_r - t * 0.25],
+          150, 290, fill=STEEL_LIGHT, width=max(1, int(t * 0.45)))
+    hole = ring_r - t
+    d.ellipse([cx - hole - o, ring_y - hole - o, cx + hole + o, ring_y + hole + o], fill=EDGE)
+    d.ellipse([cx - hole, ring_y - hole, cx + hole, ring_y + hole], fill=(0, 0, 0, 0))
+
+
+def make_minato_kunai():
+    """Minato's kunai: item, projectile and hand texture, framed like Kunai.png."""
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    draw_minato_kunai(ImageDraw.Draw(img), S // 2, px(8), px(112))
+    finish(img, "Textures/RimArt/Kunai/Minato.png")
+
+
 def make_kunai():
     """Item, projectile and hand texture."""
     img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
@@ -1171,9 +1279,11 @@ def soil_lump(d, x, y, r):
     d.ellipse([c + px(x - r * 0.65), c + px(y - r * 0.7), c + px(x + r * 0.25), c + px(y - r * 0.1)], fill=SOIL_LIGHT + (240,))
 
 
-def make_kunai_planted():
+def make_kunai_planted(draw=None, buried_frac=None, path="Textures/RimArt/Kunai/Planted.png"):
     """
-    A kunai standing in the ground after a miss (KunaiItem), drawn 1.4 cells wide. It flew up the texture;
+    A kunai standing in the ground after a miss (KunaiItem), drawn 1.4 cells wide. `draw` draws the
+    kunai (draw_kunai, or draw_minato_kunai for his), `buried_frac` is how much of its length is in
+    the ground. It flew up the texture;
     the game turns it to the way it flew. Half the blade is buried at the texture centre and the rest
     leans back toward the thrower (down the texture), foreshortened; what stands out of the ground is
     about 0.6 cells long, near the flat item's 0.7.
@@ -1185,12 +1295,13 @@ def make_kunai_planted():
     img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     c = S // 2
     length = px(90)
-    buried = length * KUNAI_BLADE * 0.5
+    draw = draw or draw_kunai
+    buried = length * (KUNAI_BLADE * 0.5 if buried_frac is None else buried_frac)
     lean = 0.85  # the visible part's length seen from above, as a share of its real length
 
     # Drawn on a tall layer: the whole kunai does not fit below the centre until it is foreshortened.
     layer = Image.new("RGBA", (S, 2 * S), (0, 0, 0, 0))
-    draw_kunai(ImageDraw.Draw(layer), c, c - buried, length)
+    draw(ImageDraw.Draw(layer), c, c - buried, length)
     below = layer.crop((0, c, S, 2 * S))
     below = below.resize((S, max(1, int(below.height * lean))), Image.LANCZOS)
     kunai = Image.new("RGBA", (S, S), (0, 0, 0, 0))
@@ -1255,22 +1366,23 @@ def make_kunai_planted():
 
     img.alpha_composite(kunai)
     # 256 px: the game draws it 1.4 cells wide (KunaiDefaults.PlantedDrawSize).
-    finish_at(img, "Textures/RimArt/Kunai/Planted.png", 256)
+    finish_at(img, path, 256)
 
 
-def make_kunai_embedded():
+def make_kunai_embedded(draw=None, cut_frac=None, name="Embedded"):
     """
     A kunai stuck in a body, drawn on the pawn over the wound: the ring, the handle and the first
     part of the blade, which ends in a dark cut where it goes in. Point up like the item. The cut
     is at the texture centre, which is the point the render node places on the wound anchor and
-    rotates around.
+    rotates around. `draw` and `cut_frac` (the share of the length inside the body) as for
+    make_kunai_planted.
     """
     img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     length = px(90)
     tip = px(8)
-    cut = tip + int(length * KUNAI_BLADE * KUNAI_WIDEST)
+    cut = tip + int(length * (KUNAI_BLADE * KUNAI_WIDEST if cut_frac is None else cut_frac))
     layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    draw_kunai(ImageDraw.Draw(layer), S // 2, tip, length)
+    (draw or draw_kunai)(ImageDraw.Draw(layer), S // 2, tip, length)
     # Everything above the cut is inside the body.
     layer.paste((0, 0, 0, 0), (0, 0, S, cut))
     shifted = Image.new("RGBA", (S, S), (0, 0, 0, 0))
@@ -1282,7 +1394,7 @@ def make_kunai_embedded():
     # The render node loads Graphic_Multi, which wants one texture per facing (west mirrors
     # east). The kunai looks the same from every side.
     for facing in ("north", "east", "south"):
-        finish(img, f"Textures/RimArt/Kunai/Embedded_{facing}.png")
+        finish(img, f"Textures/RimArt/Kunai/{name}_{facing}.png")
 
 
 # Makibishi. Iron caltrops seen from above: three points lying on the ground 120 degrees apart
@@ -1469,6 +1581,11 @@ if __name__ == "__main__":
     make_kunai_belt()
     make_kunai_icon()
     make_kunai_planted()
+    make_minato_kunai()
+    # The central blade goes in; the prongs' points stand just above the ground, as in the anime.
+    make_kunai_planted(draw_minato_kunai, MK_BLADE * 0.45, "Textures/RimArt/Kunai/MinatoPlanted.png")
+    # In a body only the central blade's point and the prongs' points go in, so the ring stays on the texture.
+    make_kunai_embedded(draw_minato_kunai, 0.32, "MinatoEmbedded")
     make_kunai_embedded()
     make_makibishi()
     make_makibishi_handful()

@@ -33,7 +33,7 @@
 
   <!-- A kunai in flight. Bullet damage, so armour, body part and battle log are vanilla. The
        texture points up, which the game draws along the direction of travel. -->
-  <ThingDef ParentName="BaseBullet">
+  <ThingDef Name="AG_KunaiProjectileBase" ParentName="BaseBullet">
     <defName>AG_KunaiProjectile</defName>
     <label>kunai</label>
     <thingClass>RimArt.Projectile_Kunai</thingClass>
@@ -49,6 +49,16 @@
       <stoppingPower>0.5</stoppingPower>
       <speed>40</speed>
     </projectile>
+  </ThingDef>
+
+  <!-- A kunai thrown in Minato's hero form (KunaiSeal): his three-pronged kunai, sealed. The same
+       numbers as the ordinary kunai; it lands, sticks or drops as a sealed kunai. -->
+  <ThingDef ParentName="AG_KunaiProjectileBase">
+    <defName>AG_KunaiProjectileMinato</defName>
+    <label>Minato's kunai</label>
+    <graphicData>
+      <texPath>RimArt/Kunai/Minato</texPath>
+    </graphicData>
   </ThingDef>
 
   <!-- The kunai belt, and the only source of the throw kunai ability.

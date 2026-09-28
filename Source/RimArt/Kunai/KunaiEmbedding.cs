@@ -44,7 +44,7 @@ namespace RimArt
         /// pawn's hediffs from just before the damage; the kunai goes into the part of the first new
         /// injury. Returns false if nothing was stuck, and the caller drops the kunai.
         /// </summary>
-        public static bool TryEmbed(Pawn pawn, HashSet<Hediff> before)
+        public static bool TryEmbed(Pawn pawn, HashSet<Hediff> before, bool sealedByMinato = false)
         {
             if (pawn == null || pawn.Dead || !pawn.Spawned || before == null) return false;
             if (CountOn(pawn) >= KunaiDefaults.MaxEmbeddedPerPawn) return false;
@@ -63,6 +63,7 @@ namespace RimArt
 
             var kunai = (Hediff_EmbeddedKunai)HediffMaker.MakeHediff(KunaiDefOf.AG_EmbeddedKunai, pawn, wound.Part);
             kunai.wound = wound;
+            kunai.sealedByMinato = sealedByMinato;
             pawn.health.AddHediff(kunai, wound.Part);
             return true;
         }
@@ -106,7 +107,7 @@ namespace RimArt
             BodyPartRecord part = kunai.Part;
             kunai.MarkPulled();
             target.health.RemoveHediff(kunai);
-            GiveKunai(puller);
+            GiveKunai(puller, kunai.sealedByMinato);
 
             // The cut. Ignores armour (the blade is already inside) and does not spread to other
             // parts. Kept below the part's remaining health so the pull itself never removes a
@@ -129,22 +130,30 @@ namespace RimArt
 
         /// <summary>
         /// Gives one pulled kunai to <paramref name="puller"/>: into their kunai belt if it has room,
-        /// otherwise onto the ground next to them.
+        /// otherwise onto the ground next to them (still sealed if it was Minato's).
         /// </summary>
-        private static void GiveKunai(Pawn puller)
+        private static void GiveKunai(Pawn puller, bool sealedByMinato)
         {
-            Thing item = ThingMaker.MakeThing(KunaiDefOf.AG_Kunai);
+            Thing item = MakeKunai(sealedByMinato);
             CompApparelReloadable belt = KunaiBelt.WornBy(puller);
             if (belt != null && belt.NeedsReload(true)) belt.ReloadFrom(item);
             if (!item.Destroyed && item.stackCount > 0 && puller.Spawned)
                 GenPlace.TryPlaceThing(item, puller.Position, puller.Map, ThingPlaceMode.Near);
         }
 
-        /// <summary>Places one kunai item near <paramref name="cell"/>.</summary>
-        public static void DropKunai(IntVec3 cell, Map map)
+        /// <summary>One kunai item, sealed if it is Minato's.</summary>
+        public static Thing MakeKunai(bool sealedByMinato)
+        {
+            Thing item = ThingMaker.MakeThing(KunaiDefOf.AG_Kunai);
+            if (item is KunaiItem kunai) kunai.sealedByMinato = sealedByMinato;
+            return item;
+        }
+
+        /// <summary>Places one kunai item near <paramref name="cell"/>, sealed if it is Minato's.</summary>
+        public static void DropKunai(IntVec3 cell, Map map, bool sealedByMinato = false)
         {
             if (map == null || !cell.InBounds(map)) return;
-            GenPlace.TryPlaceThing(ThingMaker.MakeThing(KunaiDefOf.AG_Kunai), cell, map, ThingPlaceMode.Near);
+            GenPlace.TryPlaceThing(MakeKunai(sealedByMinato), cell, map, ThingPlaceMode.Near);
         }
 
         /// <summary>
@@ -154,12 +163,12 @@ namespace RimArt
         /// it flat instead. If the cell already holds something, it goes into the nearest free cell,
         /// in that cell's middle. It starts forbidden.
         /// </summary>
-        public static bool PlantKunai(Vector3 at, float angle, Map map)
+        public static bool PlantKunai(Vector3 at, float angle, Map map, bool sealedByMinato = false)
         {
             IntVec3 cell = at.ToIntVec3();
             if (map == null || !cell.InBounds(map) || !cell.Standable(map) || cell.GetTerrain(map).IsWater) return false;
 
-            if (!(ThingMaker.MakeThing(KunaiDefOf.AG_Kunai) is KunaiItem kunai)) return false;
+            if (!(MakeKunai(sealedByMinato) is KunaiItem kunai)) return false;
             Vector3 offset = at - cell.ToVector3Shifted();
             float max = KunaiDefaults.PlantedMaxOffset;
             kunai.planted = true;

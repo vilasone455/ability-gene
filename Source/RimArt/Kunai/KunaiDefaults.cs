@@ -24,6 +24,14 @@ namespace RimArt
         /// <summary>Furthest a planted kunai stands from its cell's centre, so it never looks as if it is in the next cell.</summary>
         public const float PlantedMaxOffset = 0.35f;
 
+        /// <summary>
+        /// Minato's three-pronged kunai (<see cref="KunaiSeal"/>): the item, in flight and in the hand; standing
+        /// in the ground; stuck in a body. Drawn like the ordinary kunai's three.
+        /// </summary>
+        public const string MinatoTexture = "RimArt/Kunai/Minato";
+        public const string MinatoPlantedTexture = "RimArt/Kunai/MinatoPlanted";
+        public const string MinatoEmbeddedTexture = "RimArt/Kunai/MinatoEmbedded";
+
         /// <summary>Most kunai stuck in one pawn at once. A hit beyond this drops the kunai instead.</summary>
         public const int MaxEmbeddedPerPawn = 3;
 

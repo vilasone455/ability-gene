@@ -31,6 +31,7 @@
     <renderNodeProperties>
       <li>
         <debugLabel>Embedded kunai (body)</debugLabel>
+        <nodeClass>RimArt.PawnRenderNode_EmbeddedKunai</nodeClass>
         <workerClass>RimArt.PawnRenderNodeWorker_EmbeddedKunai</workerClass>
         <texPath>RimArt/Kunai/Embedded</texPath>
         <parentTagDef>Body</parentTagDef>
@@ -43,6 +44,7 @@
       </li>
       <li>
         <debugLabel>Embedded kunai (head)</debugLabel>
+        <nodeClass>RimArt.PawnRenderNode_EmbeddedKunai</nodeClass>
         <workerClass>RimArt.PawnRenderNodeWorker_EmbeddedKunai</workerClass>
         <texPath>RimArt/Kunai/Embedded</texPath>
         <parentTagDef>Head</parentTagDef>

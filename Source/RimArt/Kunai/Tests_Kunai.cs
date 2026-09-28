@@ -117,6 +117,94 @@ namespace RimArt
             }
         }
 
+        [RimArtTest("Kunai", "minato 1 in Minato's hero form a throw is his sealed three-pronged kunai and stays his when planted, stuck and pulled; an ordinary colonist's is not (screenshot)")]
+        private static IEnumerable<int> Minato(RimArtTestContext t)
+        {
+            t.Clear();
+            IntVec3 c = t.center;
+            HediffDef form = DefDatabase<HediffDef>.GetNamedSilentFail(KunaiSeal.MinatoForm);
+            if (!t.Check(form != null, "Minato's hero form exists")) yield break;
+            Pawn minato = t.Colonist(c + new IntVec3(-4, 0, 4));
+            Pawn other = t.Colonist(c + new IntVec3(-4, 0, -4));
+            foreach (Pawn pawn in new[] { minato, other })
+            {
+                RimArtTestContext.Hold(pawn);
+                pawn.apparel.Wear((Apparel)ThingMaker.MakeThing(KunaiDefOf.AG_KunaiBelt));
+            }
+            minato.health.AddHediff(form);
+            t.Check(KunaiSeal.ThrowsSealed(minato) && !KunaiSeal.ThrowsSealed(other), "only Minato throws sealed kunai");
+
+            // Both throw through the belt's ability at an empty cell (a wild miss may land a few cells off).
+            IntVec3 aimM = c + new IntVec3(2, 0, 4), aimO = c + new IntVec3(2, 0, -4);
+            var before = new HashSet<Thing>(t.map.listerThings.ThingsOfDef(KunaiDefOf.AG_Kunai));
+            t.Check(Cast(minato, aimM) && Cast(other, aimO), "both threw");
+            bool sawHis = false, sawPlain = false;
+            for (int i = 0; i < 180 && NewKunai(t, before).Count() < 2; i++)
+            {
+                sawHis |= t.map.listerThings.ThingsOfDef(KunaiDefOf.AG_KunaiProjectileMinato).Any();
+                sawPlain |= t.map.listerThings.ThingsOfDef(KunaiDefOf.AG_KunaiProjectile).Any();
+                yield return 1;
+            }
+            t.Check(sawHis && sawPlain, "Minato's kunai flew as his projectile, the other's as the ordinary one");
+            KunaiItem his = NewKunai(t, before).FirstOrDefault(k => k.Position.DistanceTo(aimM) < 5);
+            KunaiItem plain = NewKunai(t, before).FirstOrDefault(k => k.Position.DistanceTo(aimO) < 5);
+            t.Check(his != null && his.sealedByMinato, "Minato's landed sealed (" + Describe(his) + ")");
+            t.Check(plain != null && !plain.sealedByMinato, "the other colonist's did not (" + Describe(plain) + ")");
+            t.Check(his?.LabelNoCount == "Minato's kunai", "Minato's is labelled \"" + his?.LabelNoCount + "\"");
+
+            // Flat: drawn three-pronged, and stacks only with his own.
+            KunaiItem sealedA = (KunaiItem)GenSpawn.Spawn(KunaiEmbedding.MakeKunai(true), c + new IntVec3(0, 0, 1), t.map);
+            Thing sealedB = KunaiEmbedding.MakeKunai(true), ordinary = KunaiEmbedding.MakeKunai(false);
+            GenSpawn.Spawn(ordinary, c + new IntVec3(0, 0, -1), t.map);
+            t.Check(sealedA.Graphic?.path == KunaiDefaults.MinatoTexture, "a flat sealed kunai uses " + sealedA.Graphic?.path);
+            t.Check(ordinary.Graphic?.path == "RimArt/Kunai/Kunai", "an ordinary one uses " + ordinary.Graphic?.path);
+            t.Check(sealedA.CanStackWith(sealedB) && !sealedA.CanStackWith(ordinary), "sealed kunai stack with each other, not with ordinary ones");
+
+            // Stuck in a pawn: drawn three-pronged; pulled out it comes out sealed. The target is a
+            // colonist, so the pull needs no roll; the puller wears no belt, so the kunai goes to the ground
+            // (into a belt it would become a charge and lose the seal).
+            Pawn target = t.Colonist(c + new IntVec3(4, 0, 0));
+            RimArtTestContext.Hold(target);
+            var hediffs = new HashSet<Hediff>(target.health.hediffSet.hediffs);
+            target.TakeDamage(new DamageInfo(DamageDefOf.Stab, 3f, 1f, -1f, null, target.RaceProps.body.corePart));
+            t.Check(KunaiEmbedding.TryEmbed(target, hediffs, sealedByMinato: true), "Minato's kunai is stuck in the target");
+            yield return 60;  // past the red flash a hit gives the target
+            PawnRenderNode node = Nodes(target).FirstOrDefault(n => n.hediff is Hediff_EmbeddedKunai);
+            t.Check(node?.PrimaryGraphic?.path == KunaiDefaults.MinatoEmbeddedTexture,
+                "the stuck kunai is drawn with " + node?.PrimaryGraphic?.path);
+            yield return t.ShotAs("kunai-minato");
+
+            var beforePull = new HashSet<Thing>(t.map.listerThings.ThingsOfDef(KunaiDefOf.AG_Kunai));
+            Pawn puller = t.Colonist(c + new IntVec3(5, 0, 1));
+            RimArtTestContext.Hold(puller);
+            t.Check(KunaiEmbedding.TryPull(puller, target), "pulled out");
+            KunaiItem pulled = NewKunai(t, beforePull).FirstOrDefault();
+            t.Check(pulled != null && pulled.sealedByMinato, "the pulled kunai is still Minato's (" + Describe(pulled) + ")");
+        }
+
+        private static bool Cast(Pawn pawn, IntVec3 at)
+        {
+            Ability ability = pawn.abilities?.GetAbility(KunaiDefOf.AG_ThrowKunai);
+            return ability != null && ability.Activate(new LocalTargetInfo(at), new LocalTargetInfo(at));
+        }
+
+        private static IEnumerable<KunaiItem> NewKunai(RimArtTestContext t, HashSet<Thing> before) =>
+            t.map.listerThings.ThingsOfDef(KunaiDefOf.AG_Kunai).OfType<KunaiItem>().Where(k => k.Spawned && !before.Contains(k));
+
+        private static IEnumerable<PawnRenderNode> Nodes(Pawn pawn)
+        {
+            pawn.Drawer.renderer.EnsureGraphicsInitialized();
+            var queue = new Queue<PawnRenderNode>();
+            if (pawn.Drawer.renderer.renderTree.rootNode != null) queue.Enqueue(pawn.Drawer.renderer.renderTree.rootNode);
+            while (queue.Count > 0)
+            {
+                PawnRenderNode node = queue.Dequeue();
+                yield return node;
+                if (node.children != null)
+                    foreach (PawnRenderNode child in node.children) queue.Enqueue(child);
+            }
+        }
+
         private static Projectile Throw(RimArtTestContext t, Pawn thrower, LocalTargetInfo target,
             ProjectileHitFlags flags = ProjectileHitFlags.None)
         {
@@ -130,6 +218,7 @@ namespace RimArt
                 .Where(k => k.Spawned && k.Position.DistanceTo(cell) <= radius);
 
         private static string Describe(KunaiItem kunai) => kunai == null ? "none"
-            : "at " + kunai.Position + (kunai.planted ? " planted " + kunai.plantAngle.ToString("0") + " deg" : " flat") + " x" + kunai.stackCount;
+            : "at " + kunai.Position + (kunai.planted ? " planted " + kunai.plantAngle.ToString("0") + " deg" : " flat")
+              + (kunai.sealedByMinato ? " sealed" : "") + " x" + kunai.stackCount;
     }
 }
