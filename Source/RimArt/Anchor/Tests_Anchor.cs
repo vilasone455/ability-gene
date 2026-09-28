@@ -331,6 +331,7 @@ namespace RimArt
             yield return t.ShotAs("stone-flying", todo.Position + new IntVec3(0, 0, 2), 4f);
             for (int i = 0; i < 40 && !flicks.Fired(todo); i++) yield return 1;
             if (!t.Check(flicks.Fired(todo), "the stone landed")) yield break;
+            RimArtTestContext.Hold(todo);
             yield return 5;
             yield return t.ShotAs("stone-skid", cell, 3f);
             yield return 40;
@@ -355,12 +356,28 @@ namespace RimArt
             yield return 9;
             yield return t.ShotAs("clap-arrival", t.center + new IntVec3(1, 0, 0), 4f);
 
+            // Normal speed for the punch: the runner plays Superfast, many ticks a frame, and the lunge
+            // fades 0.018 cells a tick, so it would be mostly gone before the check and the shots.
+            TimeSpeed fast = Find.TickManager.CurTimeSpeed;
+            Find.TickManager.CurTimeSpeed = TimeSpeed.Normal;
             Ability flash = todo.abilities.GetAbility(BlackFlash);
             flash.QueueCastingJob(enemy, LocalTargetInfo.Invalid);
             int cast = t.Now;
-            for (int i = 0; i < 120 && flash.lastCastTick < cast; i++) yield return 1;
-            if (!t.Check(flash.lastCastTick >= cast, "the punch landed")) yield break;
+            for (int i = 0; i < 300 && flash.lastCastTick < cast; i++)
+            {
+                if (i % 20 == 0) t.Log((t.Now - cast) + " | " + RimArtTestContext.Describe(todo) + " | " + RimArtTestContext.Describe(enemy));
+                yield return 1;
+            }
+            if (!t.Check(flash.lastCastTick >= cast, "the punch landed")) { Find.TickManager.CurTimeSpeed = fast; yield break; }
             t.Check(todo.health.hediffSet.HasHediff(Zone), "it was a Black Flash");
+            // The vanilla melee lunge: the jitter offset leans Todo toward the target (at most 0.35 cells),
+            // then eases back 0.018 a tick. Read on its own: the drawn position also has the walk's tween lag.
+            var jitter = (JitterHandler)HarmonyLib.AccessTools.Field(typeof(Pawn_DrawTracker), "jitterer").GetValue(todo.Drawer);
+            Vector3 lean = jitter.CurrentOffset;
+            Vector3 toward = (enemy.Position - todo.Position).ToVector3().normalized;
+            float into = lean.x * toward.x + lean.z * toward.z;
+            t.Log("lunge at the hit: " + into.ToString("0.00") + " cells toward the target (" + lean + ")");
+            t.Check(into > 0.2f, "Todo lunges toward the target on the hit (" + into.ToString("0.00") + " cells)");
             yield return t.ShotAs("flash-negative", enemy.Position, 4f);
             yield return 5;
             yield return t.ShotAs("flash-burst", enemy.Position, 4f);
@@ -368,6 +385,7 @@ namespace RimArt
             yield return t.ShotAs("flash-bolts", enemy.Position, 4f);
             yield return 30;
             yield return t.ShotAs("flash-stun-zone", enemy.Position, 4f);
+            Find.TickManager.CurTimeSpeed = fast;
             EchoDevice.workingForTests = null;
         }
     }

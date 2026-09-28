@@ -70,6 +70,10 @@ namespace RimArt
             bool flash = InWindow(gene);
             Map map = caster.Map;
 
+            // The lunge an ordinary melee hit gets (0.5 cells toward the target, easing back); vanilla
+            // does not give it to ability casts. A punch clip comes later with the other clips.
+            caster.Drawer?.Notify_MeleeAttackOn(victim);
+
             float amount = Props.damage * caster.GetStatValue(StatDefOf.MeleeDamageFactor);
             if (flash) amount *= Props.flashFactor;
             float angle = (victim.Position - caster.Position).AngleFlat;
