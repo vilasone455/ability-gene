@@ -20,34 +20,56 @@
 //   0.70  touch: the arm comes out, the hand on the raider, a flash at the contact point; the
 //         chosen line is drawn on the floor from the raider to where the throw ends
 //   0.82  throw: the raider flies at 20 cells/s with black speed lines behind, dust at the start
-//   1.05  slam on the wall: a white burst, a black-edged ring, a dark scuff that stays; because the
-//         window was still open, a second larger burst with six cracks: the mace hit returned
-//   1.05  to 3.05 the raider lies at the wall, stunned
+//   1.04  slam on the wall (physical, not his light; reworked 2026-09-28): the raider squashes
+//         flat on the wall face for 0.1 s and slides down to lie at its foot; the wall cells shake
+//         0.05 cells for 0.15 s; a dark dent stays on the face; grey dust bursts out along the face
+//         about 1.2 cells each way; 6 stone chips fly back in low arcs, land 0.6-1.5 cells from the
+//         wall and stay. Because the window was still open (the mace hit returned): 5 dark cracks
+//         on the wall face, 0.4-0.7 cells, that stay; 12 chips; more dust; a harder camera shake.
+//   1.04  to 3.04 the raider lies at the wall, stunned
 //   "raider through his line": no wall; two of his friends stand in the path at 3 and 5.5 cells.
-//         The thrown raider knocks each 1 cell sideways as he passes (a flash and a ring on each,
-//         the first also gets the returned-force burst) and lands 8 cells out.
+//         The thrown raider knocks each 1 cell sideways as he passes (4 short black impact lines
+//         and a puff of dust on each; 8 longer lines on the first when force is returned) and
+//         lands 8 cells out.
 //   "chunk at a shooter": a stone chunk beside Accelerator, a shooter 10 cells out. The chunk flies
-//         in a low arc, hits the shooter (burst, he goes down) and lies beside him as a chunk.
-//   Slide "Touch after the hit" past 1 s and the window has closed: no returned-force burst.
+//         in a low arc and hits the shooter (4 impact lines, dust, 4 chips that stay; he goes down)
+//         and lies beside him as a chunk.
+//   Slide "Touch after the hit" past 1 s and the window has closed: no cracks, 6 chips.
 //
-// Palette: monochrome, see lib/accelerator.js. White light with a black edge; no hue.
+// Palette: monochrome, see lib/accelerator.js. White light with a black edge only on his part (the
+// mace-hit flash, the window ring, the touch, the line, the speed lines). The impacts are plain
+// physics: dust, stone chips, a dent, cracks, black impact lines; no glow, no rings.
 // Drawing: flat shapes and level circles, so it turns with the aim. Pawns, mace, wall and chunk are
-// stand-ins. The chunk's arc is height drawn as a shift north with a ground shadow.
-import { Color, Mathf, MeshPool } from '../js/engine.js';
+// stand-ins. The chunk's arc and the chips' arcs are height drawn as a shift north with a ground
+// shadow. The squash is the stand-in pawn's two ellipses, narrowed along the throw.
+import { Color, Mathf, Meshes, MeshPool } from '../js/engine.js';
 import { draw } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
-import { pawn, rock, ringAt, line, streak, whiteGlow, wallCell, stunStars, EnemyColour, Ink, White, Dust, Lift, Chest, Skin, pawnLayer, clamp, smooth } from './lib/goku.js';
+import { pawn, rock, ringAt, line, streak, whiteGlow, wallCell, stunStars, EnemyColour, Ink, White, Dust, Lift, Chest, Skin, pawnLayer, shadowLayer, buildingLayer, clamp, smooth } from './lib/goku.js';
 import { accelerator, arm, Edge } from './lib/accelerator.js';
 
-const TAU = Math.PI * 2;
+const TAU = Math.PI * 2, D2R = Mathf.Deg2Rad, ChestUp = Chest / Lift;
+const disc = Meshes.disc(32, 'shove disc');
 // Decided values. The panel keeps only what is still being tuned.
-const Lead = .3, Touch = .12, Window = 1, Tail = 2, KnockTime = .2, Speed = 20, Knock = 1, Cracks = 6;
-const Mace = new Color(.22, .2, .19), Steel = new Color(.5, .5, .52);
+const Lead = .3, Touch = .12, Window = 1, Tail = 2, KnockTime = .2, Speed = 20, Knock = 1, Cracks = 5;
+const Chips = 6, BonusChips = 12, Squash = .1, Drop = .15, WallShake = .05;
+const Mace = new Color(.22, .2, .19), Steel = new Color(.5, .5, .52), WallDust = new Color(.74, .72, .69);
 // Pawns in the path for the line scenario: [cells from the raider's start, across, knocked to side].
 const Liners = [[3, .2, 1], [5.5, -.25, -1]], ShooterAt = 10;
 
 const wall = p => p.scenario === 'raider into a wall', lineUp = p => p.scenario === 'raider through his line', chunk = p => p.scenario === 'chunk at a shooter';
-const stopAt = p => chunk(p) ? Math.min(p.chunkCells, ShooterAt - .6) : wall(p) ? Math.min(p.cells, p.wallAt - .5) : p.cells;
+const stopAt = p => chunk(p) ? Math.min(p.chunkCells, ShooterAt - .6) : wall(p) ? Math.min(p.cells, p.wallAt - .65) : p.cells;
+// The throw reaches the wall: the body stops with its back 0.15 cells short of the face.
+const hitsWall = p => wall(p) && p.cells >= p.wallAt - .65;
+
+// The stand-in pawn squashed against a wall: both ellipses narrowed along the throw by k (0..1).
+function squashed(pos, colour, k, deg, sun, strength) {
+  const c = Math.abs(Math.cos(deg * D2R)), n = Math.abs(Math.sin(deg * D2R));
+  const fx = (1 - .45 * k * c) * (1 + .15 * k * n), fz = (1 - .45 * k * n) * (1 + .15 * k * c);
+  sprite({ x: pos.x + sun.x * .45, z: pos.z + sun.z * .45 }, .85, .4, Ink.withAlpha(strength), soft, shadowLayer);
+  draw(disc, pos.x, pawnLayer, pos.z + .18, .22 * fx, .32 * fz, 0, colour);
+  draw(disc, pos.x, pawnLayer + .002, pos.z + .18 + .4 * fz, .16 * fx, .17 * fz, 0, Skin);
+}
 function times(p) {
   const hit = Lead, touch = hit + (chunk(p) ? .2 : p.react), fly = touch + Touch, arrive = fly + stopAt(p) / Speed;
   return { hit, touch, fly, arrive, end: arrive + Tail };
@@ -67,7 +89,7 @@ export default {
   phases(p) { const t = times(p); return chunk(p)
     ? [{ name: 'Stand', t: 0 }, { name: 'Touch', t: t.touch }, { name: 'Throw', t: t.fly }, { name: 'Hit', t: t.arrive }]
     : [{ name: 'Stand', t: 0 }, { name: 'Mace hits', t: t.hit }, { name: 'Touch', t: t.touch }, { name: 'Throw', t: t.fly }, { name: wall(p) ? 'Slam' : 'Lands', t: t.arrive }]; },
-  events(p) { const t = times(p); return [{ t: t.hit, type: 'shake', value: chunk(p) ? 0 : .03 }, { t: t.fly, type: 'shake', value: .03 }, { t: t.arrive, type: 'shake', value: wall(p) ? .1 : .06 }]; },
+  events(p) { const t = times(p), bonus = !chunk(p) && p.react <= Window; return [{ t: t.hit, type: 'shake', value: chunk(p) ? 0 : .03 }, { t: t.fly, type: 'shake', value: .03 }, { t: t.arrive, type: 'shake', value: hitsWall(p) ? (bonus ? .14 : .1) : .06 }]; },
 
   draw(s, p, { origin: o, scene }) {
     const t = times(p);
@@ -87,9 +109,22 @@ export default {
       line('shove line', [place(.3), tip], .05, White.withAlpha(.9 * show), undefined, Floor + .021, 'none');
       [1, -1].forEach(side => streak(`shove arrow ${side}`, place(stop - .45, side * .35), tip, .06, White.withAlpha(.9 * show), undefined, Floor + .021, 2));
     }
-    const wallCentre = place(p.wallAt);
-    if (wall(p)) for (let k = -1; k <= 1; k++) wallCell(place(p.wallAt, k), p.aim);
-    if (arrived && wall(p)) { sprite(place(p.wallAt - .35), .9, 1.1, Ink.withAlpha(.55 * smooth(since / .2)), soft, Y + .001, -p.aim); }
+    // The wall: it shakes on the slam, a dent stays on its face, and cracks when the force is returned.
+    const slamAge = hitsWall(p) && arrived ? since : -1, face = p.wallAt - .5;
+    if (wall(p)) {
+      const shake = slamAge >= 0 && slamAge < .15 ? WallShake * Math.sin(slamAge * 95) * (1 - slamAge / .15) : 0;
+      for (let k = -1; k <= 1; k++) wallCell(place(p.wallAt + shake, k), p.aim);
+      if (slamAge >= 0) {
+        const grow = smooth(slamAge / .06), D = place(face + .14, 0, ChestUp);   // where the chest struck, drawn at its height
+        sprite(D, .34, .55, Ink.withAlpha(.5 * grow), soft, buildingLayer + .004, -p.aim);
+        sprite(D, .16, .28, Ink.withAlpha(.6 * grow), soft, buildingLayer + .0045, -p.aim);
+        if (bonus) for (let i = 0; i < Cracks; i++) {
+          const th = (-75 + i * 37.5 + (rand(i + 3) - .5) * 20) * D2R, len = (.4 + .3 * rand(i + 8)) * smooth(slamAge / .08), pts = [];
+          for (let k = 0; k <= 7; k++) { const d = len * k / 7, off = k ? (rand(i * 11 + k) - .5) * .14 : 0; pts.push(place(face + .02 + Math.cos(th) * d - Math.sin(th) * off, Math.sin(th) * d + Math.cos(th) * off, ChestUp)); }
+          line(`shove crack ${i}`, pts, .04, Edge.withAlpha(.75), undefined, buildingLayer + .005);
+        }
+      }
+    }
     if (arrived && !wall(p) && !chunk(p)) sprite(place(stop), 1.2, .8, Ink.withAlpha(.35 * smooth(since / .3)), soft, Floor + .01);
 
     // --- the pawns, north first ------------------------------------------------------------------------------------
@@ -99,7 +134,7 @@ export default {
     const armOut = s >= t.touch - .1 && s < t.fly + .3 ? .5 * smooth((s - t.touch + .1) / .1) * (1 - smooth((s - t.fly - .1) / .2)) : 0;
     figures.push({ pos: A, kind: 'accelerator' });
     if (chunk(p)) {
-      figures.push({ pos: place(ShooterAt), kind: 'shooter', down: arrived && since >= .15, lit: arrived && since < .15 });
+      figures.push({ pos: place(ShooterAt), kind: 'shooter', down: arrived && since >= .15, lit: arrived && since < .12 });
     } else {
       // The raider: adjacent until the throw, then flying, then lying.
       const flying = s >= t.fly && !arrived, lying = arrived;
@@ -115,14 +150,20 @@ export default {
         accelerator(g.pos, sun, strength, { tint: White, tintAmount: .9 * struck, outline: struck });
         return;
       }
-      if (g.kind === 'shooter') { pawn(g.pos, EnemyColour, sun, strength, { lie: g.down, tint: White, tintAmount: g.lit ? .9 : 0 }); return; }
+      if (g.kind === 'shooter') { pawn(g.pos, EnemyColour, sun, strength, { lie: g.down, tint: White, tintAmount: g.lit ? .5 : 0 }); return; }
       if (g.kind === 'liner') {
-        const flash = g.passed ? 1 - clamp((s - g.hitAt) / .35) : 0;
-        pawn(g.pos, EnemyColour, sun, strength, { tint: White, tintAmount: .9 * flash });                 // knocked aside, stunned 30 ticks, still on his feet
+        const flash = g.passed ? 1 - clamp((s - g.hitAt) / .12) : 0;
+        pawn(g.pos, EnemyColour, sun, strength, { tint: White, tintAmount: .5 * flash });                 // knocked aside, stunned 30 ticks, still on his feet
         if (g.passed && s - g.hitAt > .2) stunStars(`shove liner ${g.i}`, g.pos, s, .8 * (1 - smooth((s - g.hitAt - .3) / .5)), White);
         return;
       }
-      // The raider.
+      // The raider. At a wall: squashed flat on the face, then slid down to lie at its foot.
+      if (g.lying && hitsWall(p)) {
+        if (since < Squash) squashed(place(stop + .06 * smooth(since / .05)), EnemyColour, smooth(since / .05), p.aim, sun, strength);
+        else { const u = smooth((since - Squash) / Drop); pawn(place(stop - .25 * u, 0, .3 * (1 - u)), EnemyColour, sun, strength, { lie: true }); }
+        if (since > Squash + Drop) stunStars('shove raider', place(stop - .25), s, .9 * (1 - smooth((since - .3) / Tail)), White);
+        return;
+      }
       if (g.lying) {
         pawn(g.pos, EnemyColour, sun, strength, { lie: true });
         stunStars('shove raider', g.pos, s, .9 * (1 - smooth((since - .3) / Tail)), White);
@@ -174,27 +215,58 @@ export default {
       rock(at, .8, s < t.fly ? 20 : arrived ? 140 : 20 + flown * 90, 1, 2, arrived ? Floor + .06 : Y + .01);
     }
 
-    // --- the strike: the base burst, and the returned-force burst on the first thing struck --------------------------
-    const burst = (key, at, age, big) => {
-      if (age < 0 || age > .6) return;
-      const u = age / .6, size = big ? 1.4 : .9;
-      sprite(at, size * (1 - u * .6) + .3, size * (1 - u * .6) + .3, White.withAlpha(.9 * (1 - u)), glow, Y + .2);
-      ringAt(at, .2 + smooth(u) * size * 1.1, Edge.withAlpha(.85 * (1 - u)), Y + .19);
-      ringAt(at, .16 + smooth(u) * size * 1.1, White.withAlpha(.9 * (1 - u)), Y + .191);
-      if (big) for (let i = 0; i < Cracks; i++) {
-        const ang = i * TAU / Cracks + rand(i + 3) * .5, reach = size * (.7 + .5 * rand(i + 8)) * smooth(Math.min(1, u * 2)), pts = [];
-        for (let k = 0; k <= 5; k++) { const d = reach * k / 5, off = k ? (rand(i * 11 + k) - .5) * .3 : 0; pts.push({ x: at.x + Math.cos(ang) * d - Math.sin(ang) * off, z: at.z + Math.sin(ang) * d + Math.cos(ang) * off }); }
-        line(`shove crack ${i}`, pts, .1, Edge.withAlpha(.9 * (1 - u * .7)), undefined, Y + .02);      // above the wall cells
-        line(`shove crack lit ${i}`, pts, .04, White.withAlpha(.9 * (1 - u)), whiteGlow, Y + .021);
+    // --- the strikes: plain physics, not his light ------------------------------------------------------------------
+    // Short black impact lines round a contact point, gone in 0.22 s.
+    const impactLines = (key, at, age, count, big) => {
+      if (age < 0 || age > .22) return;
+      const u = age / .22;
+      for (let i = 0; i < count; i++) {
+        const ang = i * TAU / count + (rand(i + 5) - .5) * .5, inner = .2 + u * .25, outer = inner + (.25 + .2 * rand(i + 15)) * (big ? 1.5 : 1) * (1 - u * .5);
+        streak(`${key} ${i}`, { x: at.x + Math.cos(ang) * inner, z: at.z + Math.sin(ang) * inner }, { x: at.x + Math.cos(ang) * outer, z: at.z + Math.sin(ang) * outer }, big ? .075 : .055, Edge.withAlpha(.9 * (1 - u)), undefined, Y + .2, 3);
       }
     };
-    if (chunk(p)) burst('shove chunk hit', place(ShooterAt, 0, Chest / Lift), since, false);
-    else if (wall(p)) { burst('shove slam', place(p.wallAt - .5, 0, Chest / Lift), since, false); if (bonus) burst('shove returned', place(p.wallAt - .5, 0, Chest / Lift), since - .08, true); }
-    else if (lineUp(p)) Liners.forEach(([d, across], i) => {
-      const at = t.fly + d / Speed, age = s - at;
+    // Dust thrown up round a point on the floor.
+    const puff = (at, age, count, reach) => {
+      if (age < 0 || age > .6) return;
+      for (let i = 0; i < count; i++) {
+        const u = clamp((age - rand(i + 7) * .05) / .55), ang = i * TAU / count + rand(i + 3), d = .1 + u * reach;
+        sprite({ x: at.x + Math.cos(ang) * d, z: at.z + Math.sin(ang) * d * .7 + u * .1 }, .25 + u * .35, .2 + u * .28, Dust.withAlpha(.45 * Math.sin(u * Math.PI)), soft, Floor + .04);
+      }
+    };
+    // Stone chips from chest height at (along0, across0) to where they land; they stay.
+    const chips = (key, count, age, along0, across0, land) => {
+      if (age < 0) return;
+      for (let i = 0; i < count; i++) {
+        const T = .3 + .15 * rand(i + 60), u = clamp(age / T), [la, lx] = land(i);
+        const along = along0 + (la - along0) * u, across = across0 * (1 - u) + lx * u, h = ChestUp * (1 - u) + .35 * Math.sin(u * Math.PI), ground = place(along, across);
+        if (u < 1) sprite({ x: ground.x + sun.x * h, z: ground.z + sun.z * h }, .14, .09, Ink.withAlpha(.35), soft, Floor + .05);
+        rock(place(along, across, h), .12 + .07 * rand(i + 100), rand(i + 110) * 360 + age * 700 * (1 - u), 1, 2 * (i % 3), u < 1 ? Y + .05 : Floor + .06);
+      }
+    };
+
+    // The wall slam: grey dust out along the face both ways, chips back toward Accelerator.
+    if (slamAge >= 0) {
+      const dusts = bonus ? 16 : 10, spread = bonus ? 1.5 : 1.2, big = bonus ? 1.3 : 1;
+      for (let i = 0; i < dusts; i++) {
+        const side = i % 2 ? 1 : -1, u = clamp((slamAge - rand(i + 30) * .06) / .6);
+        if (u <= 0 || u >= 1) continue;
+        const across = side * (.15 + spread * rand(i + 40) * smooth(u)), along = face - .25 - .35 * rand(i + 50) - .15 * u, size = (.3 + .55 * u) * big;
+        sprite(place(along, across, .15 * u), size, size * .8, WallDust.withAlpha(.55 * Math.sin(u * Math.PI)), soft, Y + .01);
+      }
+      chips('shove wall chip', bonus ? BonusChips : Chips, slamAge, face - .1, 0, i => [face - .6 - .9 * rand(i + 80), (rand(i + 90) - .5) * 1.8]);
+    }
+    // Bodies bowled aside: impact lines and dust on each, more lines on the first when force is returned.
+    if (lineUp(p)) Liners.forEach(([d, across], i) => {
       if (s < t.fly || flown < d) return;
-      burst(`shove liner hit ${i}`, place(d, across, Chest / Lift), age, false);
-      if (i === 0 && bonus) burst('shove returned', place(d, across, Chest / Lift), age - .08, true);
+      const age = s - (t.fly + d / Speed), big = i === 0 && bonus;
+      impactLines(`shove liner ${i}`, place(d, across, ChestUp), age, big ? 8 : 4, big);
+      puff(place(d, across), age, big ? 7 : 5, big ? .6 : .4);
     });
+    // The chunk on the shooter: impact lines, dust, chips thrown on past him.
+    if (chunk(p) && arrived) {
+      impactLines('shove chunk', place(ShooterAt, 0, ChestUp), since, 4, false);
+      puff(place(ShooterAt), since, 6, .5);
+      chips('shove chunk chip', 4, since, ShooterAt, 0, i => [ShooterAt + .4 + .7 * rand(i + 120), (rand(i + 130) - .5) * 1.4]);
+    }
   },
 };
