@@ -189,6 +189,28 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Sasuke", Prefix = "Sasuke: raiko kusari", Component = typeof(MapComponent_RaikoKusariPreview), Clock = "seconds",
+                Phases = label => RaikoKusariPhases(label.Contains("ring") ? RaikoScenario.Ring
+                    : label.Contains("drifting") ? RaikoScenario.DriftingNet
+                    : label.Contains("let go") ? RaikoScenario.LetGo
+                    : label.Contains("fuma") ? RaikoScenario.FumaCorner : RaikoScenario.Fence),
+            },
+            new Kit
+            {
+                Name = "Sasuke", Prefix = "Sasuke: amaterasu", Component = typeof(MapComponent_AmaterasuPreview), Clock = "seconds",
+                Phases = AmaterasuPhases,
+            },
+            new Kit
+            {
+                Name = "Sasuke", Prefix = "Sasuke: amenotejikara", Component = typeof(MapComponent_AmenotejikaraPreview), Clock = "seconds",
+                Phases = _ => new[]
+                {
+                    new Phase("Before", 0f), new Phase("Swap + flash", MapComponent_AmenotejikaraPreview.Lead),
+                    new Phase("Pattern fades", MapComponent_AmenotejikaraPreview.Lead + AmenotejikaraTiming.Ripple),
+                },
+            },
+            new Kit
+            {
                 Name = "Anchor", Prefix = "Clap teleport:", Component = typeof(MapComponent_ClapPreview), Clock = "seconds",
                 Phases = label => ClapPhases(label.Contains("double")),
             },
@@ -221,6 +243,35 @@ namespace RimArt.VfxLab
         };
 
         public static Kit For(string label) => All.FirstOrDefault(k => label.StartsWith(k.Prefix, StringComparison.Ordinal));
+
+        // The sketch's markers: Gaze, Ignite, then per scene Spreads, Let go, Hits / Steps in or Cuts / Lands, Release.
+        private static Phase[] AmaterasuPhases(string label)
+        {
+            var phases = new List<Phase> { new Phase("Gaze", 0f), new Phase("Ignite", AmaterasuTiming.Ignite) };
+            if (label.Contains("spreads")) phases.Add(new Phase("Spreads", AmaterasuTiming.Spreads));
+            bool kunai = label.Contains("kunai"), fuma = label.Contains("Fūma");
+            if (kunai || fuma)
+            {
+                AmaterasuHeldScene s = AmaterasuHeldScene.Build(UnityEngine.Vector2.zero, fuma);
+                phases.Add(new Phase("Let go", AmaterasuTiming.LetGo));
+                if (kunai)
+                {
+                    phases.Add(new Phase("Hits", Math.Min(s.kunai[0].stopAt, s.kunai[1].stopAt)));
+                    phases.Add(new Phase("Steps in", s.step));
+                }
+                else
+                {
+                    phases.Add(new Phase("Cuts", s.cuts[0]));
+                    phases.Add(new Phase("Lands", s.landedAt));
+                }
+            }
+            phases.Add(new Phase("Release", AmaterasuTiming.Release));
+            return phases.Where(p => p.Seconds < AmaterasuTiming.Duration).OrderBy(p => p.Seconds).ToArray();
+        }
+
+        // The sketch's marks for the scenario, off the preview's script (RaikoKusariScene, timed by RaikoKusariTiming).
+        private static Phase[] RaikoKusariPhases(RaikoScenario scenario) =>
+            RaikoKusariScene.Build(scenario, default).Phases().Select(m => new Phase(m.Key, m.Value)).ToArray();
 
         private static Phase[] BankShotPhases(BankShotPath.Scene scene)
         {

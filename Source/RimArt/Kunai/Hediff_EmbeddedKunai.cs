@@ -24,6 +24,9 @@ namespace RimArt
         /// <summary>Minato's kunai (<see cref="KunaiSeal"/>): drawn three-pronged, and comes out sealed.</summary>
         public bool sealedByMinato;
 
+        /// <summary>Sasuke's conjured kunai (<see cref="KunaiConjure"/>): nothing is given back when it comes out.</summary>
+        public bool conjured;
+
         private bool spent;
 
         /// <summary>Still holding its kunai, on a living pawn.</summary>
@@ -56,7 +59,7 @@ namespace RimArt
             base.Notify_PawnCorpseSpawned();
             if (spent) return;
             spent = true;
-            KunaiEmbedding.DropKunai(pawn.PositionHeld, pawn.MapHeld, sealedByMinato);
+            KunaiEmbedding.DropKunai(pawn.PositionHeld, pawn.MapHeld, sealedByMinato, conjured);
             pawn.Drawer?.renderer?.SetAllGraphicsDirty();
         }
 
@@ -65,7 +68,7 @@ namespace RimArt
             base.PostRemoved();
             if (spent) return;
             spent = true;
-            KunaiEmbedding.DropKunai(pawn.PositionHeld, pawn.MapHeld, sealedByMinato);
+            KunaiEmbedding.DropKunai(pawn.PositionHeld, pawn.MapHeld, sealedByMinato, conjured);
         }
 
         public override void ExposeData()
@@ -80,6 +83,7 @@ namespace RimArt
             Scribe_Values.Look(ref drawAngle, "drawAngle", 0f);
             Scribe_Values.Look(ref spent, "spent", false);
             Scribe_Values.Look(ref sealedByMinato, "sealedByMinato", false);
+            Scribe_Values.Look(ref conjured, "conjured", false);
         }
     }
 }

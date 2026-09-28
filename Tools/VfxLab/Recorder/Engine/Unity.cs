@@ -98,6 +98,8 @@ namespace UnityEngine
         public static float Max(float a, float b) => Math.Max(a, b);
         public static int Min(int a, int b) => Math.Min(a, b);
         public static int Max(int a, int b) => Math.Max(a, b);
+        public static float Min(params float[] values) { float m = values.Length > 0 ? values[0] : 0f; foreach (float v in values) m = Math.Min(m, v); return m; }
+        public static float Max(params float[] values) { float m = values.Length > 0 ? values[0] : 0f; foreach (float v in values) m = Math.Max(m, v); return m; }
         public static float Clamp(float v, float lo, float hi) => v < lo ? lo : v > hi ? hi : v;
         public static float Clamp01(float v) => v < 0f ? 0f : v > 1f ? 1f : v;
         public static float Lerp(float a, float b, float t) => a + (b - a) * Clamp01(t);
@@ -232,4 +234,5 @@ namespace UnityEngine.Rendering
 {
     public enum BlendMode { Zero = 0, One = 1, DstColor = 2, SrcColor = 3, OneMinusDstColor = 4, SrcAlpha = 5, OneMinusSrcColor = 6, DstAlpha = 7, OneMinusDstAlpha = 8, SrcAlphaSaturate = 9, OneMinusSrcAlpha = 10 }
     public enum CullMode { Off = 0, Front = 1, Back = 2 }
+    public enum CompareFunction { Disabled = 0, Never = 1, Less = 2, Equal = 3, LessEqual = 4, Greater = 5, NotEqual = 6, GreaterEqual = 7, Always = 8 }
 }

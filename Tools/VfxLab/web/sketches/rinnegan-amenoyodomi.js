@@ -1,5 +1,8 @@
-// Amenoyodomi — technique proposal for the Rinnegan eye kit, not the game. Nothing in Source/RimArt
-// draws this yet.
+// Amenoyodomi — Sasuke's hold. The held weapon's look (lib/amenoyodomi.js drawWeapon, eyeStar) was
+// ported to C# 2026-09-28 (Source/RimArt/Rinnegan/AmenoyodomiGraphics.cs) and is drawn in game by
+// RinneganPictures; the rule is Source/RimArt/Rinnegan/Kit. This file's scenarios have no C# preview:
+// in game the throw and the let-go flight are the engine's projectiles, drawn at the chest height of a
+// pawn in their cell, so a held weapon's ground point is Hold x Lift south of the projectile.
 //
 // What it is for (agreed in outline 2026-09-24, whole rule 2026-09-27; every number is a
 // placeholder). A toggle on the

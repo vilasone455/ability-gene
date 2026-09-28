@@ -55,8 +55,10 @@ namespace RimArt
         protected override void TickInterval(int delta)
         {
             if (dropping) { Destroy(); return; }
-            // This override bypasses Projectile.TickInterval's Harmony prefix.
+            // This override bypasses Projectile.TickInterval's Harmony prefixes.
             if (RecursionRegistry.TryGetCapture(this, out _)) return;
+            // Held in the air by Sasuke's Amenoyodomi (Rinnegan/Kit).
+            if (GameComponent_Rinnegan.HeldCount > 0 && GameComponent_Rinnegan.Instance?.IsHeld(this) == true) return;
             float from = DistanceCoveredFraction;
             ticksToImpact -= delta;
             lifetime -= delta;
@@ -86,9 +88,21 @@ namespace RimArt
                         !(launcher is Pawn firingPawn) || !firingPawn.Drafted);
                     damage.SetWeaponQuality(equipmentQuality);
                     pawn.TakeDamage(damage).AssociateWithLog(entry);
+                    // A let-go Fūma may carry Raikō Kusari's charge or Amaterasu's fire.
+                    if (GameComponent_Rinnegan.FlyingCount > 0) GameComponent_Rinnegan.Instance?.FumaCut(this, pawn);
                 }
             }
-            if (ticksToImpact <= 0) Destroy();
+            // With Amenoyodomi on, the Fūma stops at the end of its line instead of dropping.
+            if (ticksToImpact <= 0 && GameComponent_Rinnegan.Instance?.TryCatchFuma(this) != true) Destroy();
+        }
+
+        /// <summary>
+        /// Amenoyodomi moved the held Fūma into <paramref name="cell"/>: it drops here if it falls.
+        /// </summary>
+        public void HeldAt(IntVec3 cell)
+        {
+            lastSafeCell = cell;
+            if (Position != cell) Position = cell;
         }
 
         protected override void Impact(Thing hitThing, bool blockedByShield = false) => Destroy();
@@ -107,6 +121,8 @@ namespace RimArt
                 ticksToImpact = 0;
                 if (!inner.TryDrop(HeldWeapon, cell, map, ThingPlaceMode.Near, out ThingWithComps dropped)) return;
                 dropped.SetForbidden(false, false);
+                // A lit Fūma lies burning (Amaterasu).
+                GameComponent_Rinnegan.Instance?.FumaLanded(this, dropped);
             }
             base.Destroy(mode);
         }

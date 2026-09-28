@@ -50,6 +50,8 @@ namespace RimArt
         public override string ExtraLabelMouseAttachment(LocalTargetInfo target)
         {
             if (!target.IsValid || parent.pawn.Map == null) return null;
+            // A cell is only offered while Sasuke's Amenoyodomi is on (Patch_Verb_TargetParams_Amenoyodomi).
+            if (!target.HasThing) return Ability_Amenoyodomi.CellLabel(parent.pawn);
             ShotReport report = KunaiAccuracy.For(parent.pawn, parent.verb, target);
             return "Hit chance: " + report.TotalEstimatedHitChance.ToStringPercent("F0");
         }
@@ -68,14 +70,19 @@ namespace RimArt
             CompApparelReloadable belt = Belt;
             if (caster?.Map == null || belt == null || belt.RemainingCharges <= 0 || !target.IsValid) return;
 
+            // A kunai conjured onto Sasuke's belt is thrown first and never becomes an item (KunaiConjure).
+            bool conjured = KunaiConjure.TakeOne(belt);
             belt.UsedOnce();
             KunaiAccuracy.Learn(caster, parent, target);
 
-            LocalTargetInfo flyTo = Aim(caster, target, out ProjectileHitFlags flags);
+            // A throw at a cell (only while Amenoyodomi is on) has no hit roll: it flies to the cell, where
+            // Amenoyodomi catches it.
+            ProjectileHitFlags flags = ProjectileHitFlags.NonTargetWorld;
+            LocalTargetInfo flyTo = target.HasThing ? Aim(caster, target, out flags) : target;
             // In Minato's hero form the kunai is his: three-pronged and sealed.
             bool sealedByMinato = KunaiSeal.ThrowsSealed(caster);
             MapComponent_Throws.Begin(caster, flyTo,
-                                      sealedByMinato ? KunaiDefOf.AG_KunaiProjectileMinato : KunaiDefOf.AG_KunaiProjectile,
+                                      sealedByMinato ? KunaiDefOf.AG_KunaiProjectileMinato : KunaiConjure.Projectile(KunaiDefOf.AG_KunaiProjectile, conjured),
                                       sealedByMinato ? KunaiDefaults.MinatoTexture : KunaiDefaults.HandTexture,
                                       target, flags, ThrowAnimation.Kunai);
         }

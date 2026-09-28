@@ -1,5 +1,7 @@
-// Raikō Kusari — technique proposal for the Rinnegan eye kit, not the game. Nothing in Source/RimArt
-// draws this yet.
+// Raikō Kusari — the picture for Sasuke's net. Ported to C# 2026-09-28
+// (Source/RimArt/Rinnegan/RaikoKusari*.cs, previews "Sasuke: raiko kusari: ..."), drawn in game by
+// RaikoNetPictures. In game a line catches when the run has lit it (0.1 s after the leap for the first),
+// as here; caught pawns are not shaken, and the shield pop and the bullets are the game's own.
 //
 // What it is for (agreed 2026-09-23 in outline: pawns are caught, colonists too, Dark Chidori look;
 // whole rule agreed 2026-09-27; every number is a placeholder). A Chidori runs through the weapons Amenoyodomi is holding and

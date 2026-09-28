@@ -64,6 +64,7 @@ namespace RimArt
             var kunai = (Hediff_EmbeddedKunai)HediffMaker.MakeHediff(KunaiDefOf.AG_EmbeddedKunai, pawn, wound.Part);
             kunai.wound = wound;
             kunai.sealedByMinato = sealedByMinato;
+            kunai.conjured = KunaiConjure.Impacting;
             pawn.health.AddHediff(kunai, wound.Part);
             return true;
         }
@@ -107,7 +108,7 @@ namespace RimArt
             BodyPartRecord part = kunai.Part;
             kunai.MarkPulled();
             target.health.RemoveHediff(kunai);
-            GiveKunai(puller, kunai.sealedByMinato);
+            if (!kunai.conjured) GiveKunai(puller, kunai.sealedByMinato);
 
             // The cut. Ignores armour (the blade is already inside) and does not spread to other
             // parts. Kept below the part's remaining health so the pull itself never removes a
@@ -149,10 +150,18 @@ namespace RimArt
             return item;
         }
 
-        /// <summary>Places one kunai item near <paramref name="cell"/>, sealed if it is Minato's.</summary>
-        public static void DropKunai(IntVec3 cell, Map map, bool sealedByMinato = false)
+        /// <summary>
+        /// Places one kunai item near <paramref name="cell"/>, sealed if it is Minato's. A conjured kunai (Sasuke's,
+        /// <see cref="KunaiConjure"/>) vanishes instead.
+        /// </summary>
+        public static void DropKunai(IntVec3 cell, Map map, bool sealedByMinato = false, bool conjured = false)
         {
             if (map == null || !cell.InBounds(map)) return;
+            if (conjured || KunaiConjure.Impacting)
+            {
+                KunaiConjure.Vanish(cell.ToVector3Shifted(), map);
+                return;
+            }
             GenPlace.TryPlaceThing(MakeKunai(sealedByMinato), cell, map, ThingPlaceMode.Near);
         }
 
@@ -167,6 +176,11 @@ namespace RimArt
         {
             IntVec3 cell = at.ToIntVec3();
             if (map == null || !cell.InBounds(map) || !cell.Standable(map) || cell.GetTerrain(map).IsWater) return false;
+            if (KunaiConjure.Impacting)
+            {
+                KunaiConjure.Vanish(at, map);
+                return true;
+            }
 
             if (!(MakeKunai(sealedByMinato) is KunaiItem kunai)) return false;
             Vector3 offset = at - cell.ToVector3Shifted();

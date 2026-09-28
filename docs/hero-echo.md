@@ -200,6 +200,7 @@ Rules:
 | Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40 |
 | Itachi ("Crow of the Crimson Eye") | Melee 12, Intellectual 12, Kills 30 | Sickly (Immunity -1) + the dispersal plexus gene (awakenGenes) | crow dispersal (Murder + automatic Scatter), carrion, false face, susanoo | 10 | crow abilities 0 (the plexus's 3 charges), false face 3, susanoo 20 |
 | Shikamaru | Intellectual 14, 5 people captured | Lazy | shadow imitation, shadow seam, shadow grasp, shadow double, shadow neck bind | 10 | imitation 3, seam 3, grasp 1, double 5, neck bind 2 |
+| Sasuke ("Avenger of the Crimson Eye") | Melee 14, Intellectual 10, 15 kills with the Fūma Shuriken | Pessimist | Amenoyodomi, Amenotejikara, Raikō Kusari, Amaterasu | 12 | Amenoyodomi 0, Amenotejikara 2, Raikō Kusari 8, Amaterasu 5 (+ Bleeding eye); +0.4 move speed, black hair, wealth 6000, no forced weapon, Fourth War outfit |
 | Goku | Melee 15, downed and recovered 3 times (`Trial_DownedRecovered`, counted from the moment the mod is loaded) | Gourmand | Solar Flare, Instant Transmission, Kamehameha, Spirit Bomb; Warp Kamehameha is a button during the Kamehameha hold, not a def | 12 | Solar Flare 3, Instant Transmission 2, Kamehameha 15, Spirit Bomb 30; Warp pays Instant Transmission's 2 and cooldown on top |
 | Todo (no subtitle) | Melee 14, 20 humanlikes downed (`PawnsDownedHumanlikes`) | Brawler + the anchor organ gene (awakenGenes) | stone, clap, double clap, Black Flash, provoke | 8 | stone 0, clap 0, double clap 0 (the organ's three claps are their limit), Black Flash 1, provoke 5; +0.5 move speed, black hair, wealth 6000, forced empty hands |
 
@@ -239,7 +240,6 @@ Agreed, not built (no EchoDef yet; the abilities do not exist):
 
 | Echo | Trials | Cost | Abilities | Upkeep | Casts | Hero form |
 |---|---|---|---|---|---|---|
-| Sasuke ("Avenger of the Crimson Eye") | Melee 14, Intellectual 10, 15 kills with the Fūma Shuriken | Pessimist | Amenoyodomi, Amenotejikara, Raikō Kusari, Amaterasu | 12 | Amenoyodomi 0, Amenotejikara 2, Raikō Kusari 8, Amaterasu 5 | +0.4 move speed, black hair, wealth 6000, no forced weapon; costume on AG_EchoManifest_Sasuke: the Fourth War outfit (grey top with the Uchiha crest on the back, blue waist cloth, purple rope knotted in front) |
 | Obito ("Watcher Behind the Spiral Mask") | Melee 12, Intellectual 10, has a missing or artificial body part (new Trial class; a prosthetic or bionic counts) | Depressive (Natural mood -2) | Kamui: Phase, Kamui: Warp, Kamui: Store, Wood Release | 12 | Phase 0 (its own 30 s pool), Warp 2, Store 1, Wood Release 2 | fold organ gene Echo-only: added on awakening (the dimension is generated then), abilities only while manifested |
 | Gojo ("Bearer of the Six Eyes") | Intellectual 14, 1 day spent downed in total (vanilla `TimeDowned` record; the Trial label shows hours), colony wealth 200,000 | The Strongest (new custom trait) | Infinity, Blue, Red, Unlimited Void (+ Hollow Purple combo) | 15 | Infinity 0 (its breath is the price), Blue 3, Red 3, Hollow Purple 20 (+ its own 1-day cooldown), Unlimited Void 30 | white hair; phase barrier implant Echo-only; no forced weapon |
 | Minato ("Hero of the Yellow Flash") | Melee 12, Intellectual 10, 30 kills with thrown kunai (needs `PendingThrow` to pass the kunai as the weapon so the kill counter sees it) | Kind | flying thunder god, sealing touch (passive), chain, guiding thunder, rasengan; throw kunai stays on the belt | 10 | throw kunai 0 (belt charges), flying thunder god 2, chain 10, guiding thunder 5, rasengan 3 | blond hair; costume on AG_EchoManifest_Minato: Hokage haori (flames, 四代目火影 on the back) over the jōnin vest, and the forehead protector; no forced weapon; no kunai regeneration; replaces the earning rules in docs/flying-thunder-god-kit.md |
@@ -251,6 +251,28 @@ caster in `AG_GokuChannel`; Cancel, a move order or a revert gives the charge an
 stun, a downing or death spends them. Spirit Bomb's Lend energy is a job (`AG_GokuLend`) on every
 other colonist on the map; a lender can stop. Empty hands in hero form (`emptyHands`, built
 2026-09-27). No Melee Animation clips and no drawn arms: the caster stands.
+
+Sasuke (built 2026-09-28, `Source/RimArt/Rinnegan/Kit`, EchoDef in `AG_Echo_Sasuke.xml`; full rules in
+the four `rinnegan-*.js` sketch headers; numbers are placeholders in `AG_Sasuke_Abilities.xml`):
+- Amenoyodomi: a toggle (off / hang / drift), not a cast, so it never stops him. While on, throw kunai
+  can target a cell; the kunai (or a thrown Fūma, at the end of its line) is held there, at most 5,
+  creeping on at 1 % (drift 10 %) of its flight speed. Let go: each flies on up to its range from where
+  it hung; a kunai flies at the first standing pawn on its line (allies too, never Sasuke). Held
+  weapons drop after 60 s, at a wall or the map edge, when it is turned off, or when Sasuke is downed,
+  asleep, dead, off the map or reverts. Kunai supply: while manifested his worn belt regains 1 conjured
+  kunai every 5 s; conjured kunai are thrown first and never become items (they vanish where they land,
+  when pulled out, and leave the belt on revert).
+- Amenotejikara: two picks (the game's destination step), both within 12 cells in sight; ends are
+  Sasuke, a pawn up to body size 2, an item, or a held weapon; one end must be Sasuke, an item or a held
+  weapon. The picture includes the full-screen negative flash (0.12 s + 0.1 s back).
+- Raikō Kusari: needs 2+ held weapons within 12; links in throw order up to 6 cells, a ring with 3+;
+  8 s; pawns on a line's cells are stunned until it ends and burn 3 per second; mechs stay stunned 3 s
+  after; shield belts break; Let go ends it and the weapons fly on charged (2 s stun on what they hit).
+- Amaterasu: a pawn (4 burn per second for 20 s, jumps to adjacent pawns at 10 % per second carrying
+  the time left, never to Sasuke) or every held weapon (lit weapons light what they hit; a lit kunai
+  that misses burns on its cell 20 s; a lit Fūma lands burning and cannot be picked up). Release puts
+  out all his black flames. Price: Bleeding eye 60 s (sight -50 %); casting again while it bleeds
+  blinds him 10 s.
 
 Sasuke's Melee Trial follows the throw: kunai accuracy uses Melee (`KunaiAccuracy.cs`). The Fūma
 kills count because the Fūma throw passes the weapon to the kill counter; kunai kills were not
@@ -525,6 +547,13 @@ puff and the vanilla punch.
   stones and claps kept over a revert; cast costs, provoke 90 s, Combat presence grants nothing), and
   the three pictures in game with 10 screenshots). Debug window kit "Todo": make Host, open the
   Black Flash window, refill claps, and the picture previews.
+- `-rimarttest=Sasuke`: 11 scenarios (the Echo; hold, drift, drops at a wall, 60 s, toggle off, downed and
+  revert, the 6th throw; conjured kunai refill, never items, gone on revert; the held Fūma; Amenotejikara
+  ends and refusals; Raikō Kusari catch, shield, burn, mech EMP, let go; Amaterasu burn, spread, never
+  Sasuke, bleeding eye then blind, Release; lit held kunai and Fūma; all four through the real cast jobs
+  and the buttons), with screenshots of every picture. Debug window kit "Sasuke": make Host (manifested,
+  belt, Fūma), refill kunai belt, hold 3 kunai round here, and the picture previews ("amenotejikara: ...",
+  "raiko kusari: ...", "amaterasu: ...").
 - `-rimarttest=goku`: 8 scenarios (flare, transmission alone / hostile passenger / downed ally,
   kamehameha lane / wall / blast, cancel refund and stun spent, warp, spirit bomb with a lender, the
   downed-and-recovered Trial). Debug window kit "Goku": make Host, cancel casts, all lend, recovery +1.
