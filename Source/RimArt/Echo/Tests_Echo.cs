@@ -572,5 +572,158 @@ namespace RimArt
                 ("Apparel_SmokepopBelt", true));
             t.Check(PawnRenderNodeWorker_Apparel_Head.HeadgearVisible(PawnDrawParms.DefaultFor(host)), "headgear visible again");
         }
+
+        private static IEnumerable<PawnRenderNode> CostumeNodes(Pawn pawn, HediffDef form) =>
+            RenderNodes(pawn).Where(node => node.hediff?.def == form);
+
+        [RimArtTest("Echo", "costume 2 the Akatsuki cloak is shared: Pain's and Itachi's hero forms draw the cloak on the body and the collar on the head, hide worn clothes and hats, and go on revert (screenshots)")]
+        private static IEnumerable<int> AkatsukiCloak(RimArtTestContext t)
+        {
+            GameComponent_Echoes echoes = Setup(t);
+            EchoDef pain = DefDatabase<EchoDef>.GetNamed("AG_Echo_Pain");
+            EchoDef itachi = DefDatabase<EchoDef>.GetNamed("AG_Echo_Itachi");
+            foreach (EchoDef echo in new[] { pain, itachi })
+            {
+                int count = echo.manifestHediff.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().Count() ?? 0;
+                t.Check(count == 2, echo.defName + "'s hero form has the cloak and the collar from the shared parent (" + count + " costume nodes)");
+            }
+            var props = pain.manifestHediff.RenderNodeProperties.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
+            var cloakProps = props.FirstOrDefault(p => p.parentTagDef == PawnRenderNodeTagDefOf.ApparelBody);
+            var collarProps = props.FirstOrDefault(p => p.parentTagDef == PawnRenderNodeTagDefOf.Head);
+            if (!t.Check(cloakProps?.bodyTypeGraphicPaths != null && collarProps != null, "one node on the body apparel, one on the head")) yield break;
+            t.Check(cloakProps.hideBodyApparel && cloakProps.hideHeadgear, "the cloak hides body apparel and headgear");
+            foreach (string facing in new[] { "south", "east", "north" })
+            {
+                foreach (BodyTypeGraphicData body in cloakProps.bodyTypeGraphicPaths)
+                    t.Check(ContentFinder<UnityEngine.Texture2D>.Get(body.texturePath + "_" + facing, false) != null,
+                        "cloak " + body.bodyType.defName + " " + facing + " texture loads");
+                t.Check(ContentFinder<UnityEngine.Texture2D>.Get(collarProps.texPath + "_" + facing, false) != null,
+                    "collar " + facing + " texture loads");
+            }
+
+            Pawn a = Colonist(t, -2), b = Colonist(t, 2);
+            foreach (Pawn pawn in new[] { a, b })
+                foreach (string piece in new[] { "Apparel_BasicShirt", "Apparel_Pants", "Apparel_SmokepopBelt", "Apparel_CowboyHat" })
+                    Wear(pawn, piece);
+            EchoRecord ra = EchoUtility.ForceHost(pain, a), rb = EchoUtility.ForceHost(itachi, b);
+            echoes.charge = 100f;
+            t.Check(EchoUtility.Manifest(ra) && EchoUtility.Manifest(rb), "Pain and Itachi manifested");
+            yield return 2;
+            foreach ((Pawn pawn, EchoDef echo) in new[] { (a, pain), (b, itachi) })
+            {
+                List<PawnRenderNode> nodes = CostumeNodes(pawn, echo.manifestHediff).ToList();
+                PawnRenderNode cloak = nodes.FirstOrDefault(n => n.parent?.Props.tagDef == PawnRenderNodeTagDefOf.ApparelBody);
+                PawnRenderNode collar = nodes.FirstOrDefault(n => n.parent?.Props.tagDef == PawnRenderNodeTagDefOf.Head);
+                t.Check(cloak?.PrimaryGraphic?.path == "RimArt/Echo/Costume/AkatsukiCloak_" + pawn.story.bodyType.defName,
+                    echo.label + ": the cloak is the " + pawn.story.bodyType.defName + " one (" + cloak?.PrimaryGraphic?.path + ")");
+                t.Check(collar?.PrimaryGraphic?.path == "RimArt/Echo/Costume/AkatsukiCollar",
+                    echo.label + ": the collar is on the head (" + collar?.PrimaryGraphic?.path + ")");
+                PawnRenderNode hair = RenderNodes(pawn).FirstOrDefault(n => n.Props.debugLabel == "Hair");
+                t.Check(collar != null && hair != null && collar.Props.baseLayer > hair.Props.baseLayer,
+                    echo.label + ": the collar is drawn over the hair (" + collar?.Props.baseLayer + " over " + hair?.Props.baseLayer + ")");
+                PawnDrawParms parms = PawnDrawParms.DefaultFor(pawn);
+                parms.facing = Rot4.South;
+                t.Check(collar != null && collar.Worker.CanDrawNow(collar, parms), echo.label + ": the collar draws");
+                CheckDrawn(t, pawn, echo.label, ("Apparel_BasicShirt", false), ("Apparel_CowboyHat", false), ("Apparel_SmokepopBelt", true));
+            }
+            foreach (Rot4 rot in new[] { Rot4.South, Rot4.East, Rot4.North, Rot4.West })
+            {
+                Face(a, rot);
+                Face(b, rot);
+                yield return 20;
+                yield return t.ShotAs("akatsuki-" + rot.ToStringHuman().ToLowerInvariant());
+            }
+
+            EchoUtility.Revert(ra, collapse: false);
+            EchoUtility.Revert(rb, collapse: false);
+            yield return 2;
+            foreach ((Pawn pawn, EchoDef echo) in new[] { (a, pain), (b, itachi) })
+            {
+                t.Check(!CostumeNodes(pawn, echo.manifestHediff).Any(), echo.label + ": cloak and collar are gone after revert");
+                CheckDrawn(t, pawn, echo.label + " after revert", ("Apparel_BasicShirt", true), ("Apparel_CowboyHat", true));
+            }
+        }
+
+        // Obito has no EchoDef until his kit is ported, so the hero form hediff is added directly.
+        [RimArtTest("Echo", "costume 3 Obito's hero form draws the cloak, the collar and the spiral mask, the mask on the head between the hair and the collar and narrower on a narrow head (screenshots)")]
+        private static IEnumerable<int> ObitoMask(RimArtTestContext t)
+        {
+            Setup(t);
+            HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Obito");
+            var props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
+            t.Check(props?.Count == 3, "the hero form has the cloak, the collar and the mask (" + (props?.Count ?? 0) + " costume nodes)");
+            var maskProps = props?.FirstOrDefault(p => p.texPath == "RimArt/Echo/Costume/ObitoMask");
+            if (!t.Check(maskProps?.parentTagDef == PawnRenderNodeTagDefOf.Head, "the mask is a head node")) yield break;
+            foreach (string facing in new[] { "south", "east", "west", "north" })
+                t.Check(ContentFinder<UnityEngine.Texture2D>.Get(maskProps.texPath + "_" + facing, false) != null,
+                    "mask " + facing + " texture loads");
+
+            Pawn a = Colonist(t, -2), b = Colonist(t, 2);
+            foreach ((Pawn pawn, string head) in new[] { (a, "Male_AverageNormal"), (b, "Male_NarrowNormal") })
+            {
+                pawn.story.headType = DefDatabase<HeadTypeDef>.GetNamed(head);
+                pawn.story.bodyType = BodyTypeDefOf.Thin;
+                pawn.story.HairColor = new UnityEngine.Color(0.08f, 0.08f, 0.1f);
+                Wear(pawn, "Apparel_CowboyHat");
+                pawn.health.AddHediff(form);
+                pawn.Drawer.renderer.SetAllGraphicsDirty();
+            }
+            yield return 2;
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                string who = pawn.story.headType.defName;
+                List<PawnRenderNode> nodes = CostumeNodes(pawn, form).ToList();
+                t.Check(nodes.Count == 3, who + ": cloak, collar and mask are in the render tree (" + nodes.Count + ")");
+                PawnRenderNode mask = nodes.FirstOrDefault(n => n.Props == maskProps);
+                PawnRenderNode collar = nodes.FirstOrDefault(n => n.Props.texPath == "RimArt/Echo/Costume/AkatsukiCollar");
+                PawnRenderNode hair = RenderNodes(pawn).FirstOrDefault(n => n.Props.debugLabel == "Hair");
+                t.Check(mask?.parent?.Props.tagDef == PawnRenderNodeTagDefOf.Head, who + ": the mask hangs on the head");
+                t.Check(mask != null && collar != null && hair != null
+                    && hair.Props.baseLayer < mask.Props.baseLayer && mask.Props.baseLayer < collar.Props.baseLayer,
+                    who + ": hair " + hair?.Props.baseLayer + " under mask " + mask?.Props.baseLayer + " under collar " + collar?.Props.baseLayer);
+                bool narrow = pawn.story.headType.narrow;
+                foreach ((Rot4 rot, float want) in new[] { (Rot4.South, narrow ? 0.84f : 1f), (Rot4.East, narrow ? 0.7f : 1f) })
+                {
+                    PawnDrawParms parms = PawnDrawParms.DefaultFor(pawn);
+                    parms.facing = rot;
+                    float got = mask == null ? 0f : mask.Worker.ScaleFor(mask, parms).x;
+                    t.Check(System.Math.Abs(got - want) < 0.001f,
+                        who + " facing " + rot.ToStringHuman() + ": mask width x" + got.ToString("0.###") + " (want " + want + ")");
+                }
+                CheckDrawn(t, pawn, who, ("Apparel_CowboyHat", false));
+                t.Check(EchoCostume.CoversFace(pawn), who + ": the mask counts as covering the face");
+                // Facial Animation (when loaded) draws eyebrows at layer 100, over the mask, unless hidden.
+                PawnDrawParms south = PawnDrawParms.DefaultFor(pawn);
+                south.facing = Rot4.South;
+                List<PawnRenderNode> brows = RenderNodes(pawn)
+                    .Where(n => n.Props.debugLabel?.StartsWith(Patch_CanDrawNow_FaceCovered.BrowLabel) == true).ToList();
+                if (brows.Count == 0) t.Log(who + ": no Facial Animation eyebrow node (the mod is not loaded); eyebrow check skipped");
+                foreach (PawnRenderNode brow in brows)
+                    t.Check(!brow.Worker.CanDrawNow(brow, south), who + ": " + brow.Props.debugLabel + " (layer " + brow.Props.baseLayer + ") is not drawn over the mask");
+            }
+            foreach (Rot4 rot in new[] { Rot4.South, Rot4.East, Rot4.North, Rot4.West })
+            {
+                Face(a, rot);
+                Face(b, rot);
+                yield return 20;
+                yield return t.ShotAs("obito-" + rot.ToStringHuman().ToLowerInvariant());
+            }
+
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                pawn.health.RemoveHediff(pawn.health.hediffSet.GetFirstHediffOfDef(form));
+                pawn.Drawer.renderer.SetAllGraphicsDirty();
+            }
+            yield return 2;
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                t.Check(!CostumeNodes(pawn, form).Any(), pawn.story.headType.defName + ": nothing of Obito is drawn after the form is removed");
+                CheckDrawn(t, pawn, pawn.story.headType.defName + " after", ("Apparel_CowboyHat", true));
+                PawnDrawParms south = PawnDrawParms.DefaultFor(pawn);
+                south.facing = Rot4.South;
+                foreach (PawnRenderNode brow in RenderNodes(pawn).Where(n => n.Props.debugLabel?.StartsWith(Patch_CanDrawNow_FaceCovered.BrowLabel) == true))
+                    t.Check(brow.Worker.CanDrawNow(brow, south), pawn.story.headType.defName + ": " + brow.Props.debugLabel + " is drawn again");
+            }
+        }
     }
 }

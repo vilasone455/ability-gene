@@ -28,7 +28,48 @@
     </stages>
   </HediffDef>
 
-  <HediffDef ParentName="AG_EchoManifestBase">
+  <!-- The Akatsuki cloak, shared: every Echo who wears it takes this as its parent, and its own
+       hero form adds only its label, description and stages. A picture only, like Vergil's coat: the
+       Host's apparel stays worn and its armour still counts, but its clothes, armour and headgear are
+       not drawn (belts and packs still are). Two nodes:
+       - the cloak on the body (layer 29, north 29 too: the collar covers the nape instead), one
+         texture per body type;
+       - the high collar on the head, over the hair (62) and beard (60), under the head wounds (65),
+         so it covers the chin and follows the head when the pawn crawls or swims. One texture set,
+         fitted to the average vanilla heads and narrowed on narrow ones (narrowHeadScale).
+       Textures: make_costume_textures.py. -->
+  <HediffDef Name="AG_EchoManifest_Akatsuki" ParentName="AG_EchoManifestBase" Abstract="True">
+    <renderNodeProperties>
+      <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
+        <debugLabel>Akatsuki cloak</debugLabel>
+        <hideBodyApparel>true</hideBodyApparel>
+        <hideHeadgear>true</hideHeadgear>
+        <workerClass>RimArt.PawnRenderNodeWorker_EchoCostume</workerClass>
+        <parentTagDef>ApparelBody</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <texPath>RimArt/Echo/Costume/AkatsukiCloak_Thin</texPath>
+        <bodyTypeGraphicPaths>
+          <Thin>RimArt/Echo/Costume/AkatsukiCloak_Thin</Thin>
+          <Male>RimArt/Echo/Costume/AkatsukiCloak_Male</Male>
+          <Female>RimArt/Echo/Costume/AkatsukiCloak_Female</Female>
+          <Fat>RimArt/Echo/Costume/AkatsukiCloak_Fat</Fat>
+          <Hulk>RimArt/Echo/Costume/AkatsukiCloak_Hulk</Hulk>
+        </bodyTypeGraphicPaths>
+        <baseLayer>29</baseLayer>
+      </li>
+      <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
+        <debugLabel>Akatsuki collar</debugLabel>
+        <workerClass>RimArt.PawnRenderNodeWorker_EchoCostume</workerClass>
+        <parentTagDef>Head</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <texPath>RimArt/Echo/Costume/AkatsukiCollar</texPath>
+        <narrowHeadScale>(0.84, 0.7)</narrowHeadScale>
+        <baseLayer>64</baseLayer>
+      </li>
+    </renderNodeProperties>
+  </HediffDef>
+
+  <HediffDef ParentName="AG_EchoManifest_Akatsuki">
     <defName>AG_EchoManifest_Pain</defName>
     <label>hero form: Pain</label>
     <description>This Host has manifested Pain. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
@@ -128,10 +169,33 @@
     </stages>
   </HediffDef>
 
-  <HediffDef ParentName="AG_EchoManifestBase">
+  <HediffDef ParentName="AG_EchoManifest_Akatsuki">
     <defName>AG_EchoManifest_Itachi</defName>
     <label>hero form: Itachi</label>
     <description>This Host has manifested Itachi. The Echo's abilities are available, the dispersal plexus is awake and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+  </HediffDef>
+
+  <!-- Obito's hero form. No Echo points here yet: his EchoDef (docs/hero-echo.md, "Obito") comes with
+       his kit's port and names this as its manifestHediff. The Akatsuki cloak comes from the parent;
+       the spiral mask is added on the head over the hair (62) and under the collar (64), with its own
+       west picture because the eye hole is only on his right side. coversFace keeps Facial Animation's
+       eyebrows (layer 100 by default) off the mask. -->
+  <HediffDef ParentName="AG_EchoManifest_Akatsuki">
+    <defName>AG_EchoManifest_Obito</defName>
+    <label>hero form: Obito</label>
+    <description>This Host has manifested Obito. The colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <renderNodeProperties>
+      <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
+        <debugLabel>Obito mask</debugLabel>
+        <workerClass>RimArt.PawnRenderNodeWorker_EchoCostume</workerClass>
+        <parentTagDef>Head</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <texPath>RimArt/Echo/Costume/ObitoMask</texPath>
+        <coversFace>true</coversFace>
+        <narrowHeadScale>(0.84, 0.7)</narrowHeadScale>
+        <baseLayer>63</baseLayer>
+      </li>
+    </renderNodeProperties>
   </HediffDef>
 
   <HediffDef ParentName="AG_EchoManifestBase">

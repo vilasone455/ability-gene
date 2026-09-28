@@ -19,6 +19,19 @@ namespace RimArt
         public bool hideHeadgear;
 
         /// <summary>
+        /// A mask over the whole face: face parts another mod draws over headgear are not drawn
+        /// (Facial Animation's eyebrows, see Patch_CanDrawNow_FaceCovered).
+        /// </summary>
+        public bool coversFace;
+
+        /// <summary>
+        /// For a piece on the head, fitted to the average heads: its width on a narrow head, as a factor
+        /// of the picture, x facing south or north and y facing east or west. The vanilla narrow heads are
+        /// about 0.84 as wide from the front and 0.7 as deep in profile. (1, 1) draws it as it is.
+        /// </summary>
+        public UnityEngine.Vector2 narrowHeadScale = UnityEngine.Vector2.one;
+
+        /// <summary>
         /// A kneeling picture, facing south, for a kit that kneels its hero (Vergil's Judgement Cut End):
         /// the texture path without the body type, which is added as _Thin and so on. A body type without
         /// its texture has no kneel picture. Null for none.
@@ -36,6 +49,15 @@ namespace RimArt
         public override bool CanDrawNow(PawnRenderNode node, PawnDrawParms parms) =>
             base.CanDrawNow(node, parms) && parms.flags.FlagSet(PawnRenderFlags.Clothes);
 
+        /// <summary>A head piece is narrowed on a narrow head (narrowHeadScale), about the head's middle.</summary>
+        public override UnityEngine.Vector3 ScaleFor(PawnRenderNode node, PawnDrawParms parms)
+        {
+            UnityEngine.Vector3 scale = base.ScaleFor(node, parms);
+            if (node.Props is PawnRenderNodeProperties_EchoCostume costume && parms.pawn.story?.headType?.narrow == true)
+                scale.x *= parms.facing.IsHorizontal ? costume.narrowHeadScale.y : costume.narrowHeadScale.x;
+            return scale;
+        }
+
         /// <summary>
         /// The kneel picture while the kit says the hero kneels in it (for Vergil, VergilLooks; worked out on
         /// the main thread, so this only reads).
@@ -50,13 +72,15 @@ namespace RimArt
 
     public static class EchoCostume
     {
-        public static bool HidesBodyApparel(Pawn pawn) => Hides(pawn, head: false);
+        public static bool HidesBodyApparel(Pawn pawn) => Any(pawn, c => c.hideBodyApparel);
 
-        public static bool HidesHeadgear(Pawn pawn) => Hides(pawn, head: true);
+        public static bool HidesHeadgear(Pawn pawn) => Any(pawn, c => c.hideHeadgear);
+
+        public static bool CoversFace(Pawn pawn) => Any(pawn, c => c.coversFace);
 
         // Asked while the render tree works out what to draw, which may run off the main thread, so
         // this only reads: a few hediffs, each with a short list of node properties.
-        private static bool Hides(Pawn pawn, bool head)
+        private static bool Any(Pawn pawn, System.Predicate<PawnRenderNodeProperties_EchoCostume> test)
         {
             List<Hediff> hediffs = pawn?.health?.hediffSet?.hediffs;
             if (hediffs == null) return false;
@@ -65,8 +89,7 @@ namespace RimArt
                 HediffDef def = hediffs[i].def;
                 if (!def.HasDefinedGraphicProperties) continue;
                 foreach (PawnRenderNodeProperties props in def.RenderNodeProperties)
-                    if (props is PawnRenderNodeProperties_EchoCostume costume
-                        && (head ? costume.hideHeadgear : costume.hideBodyApparel))
+                    if (props is PawnRenderNodeProperties_EchoCostume costume && test(costume))
                         return true;
             }
             return false;
@@ -136,6 +159,27 @@ namespace RimArt
         static void Postfix(PawnDrawParms parms, ref bool __result)
         {
             if (__result && EchoCostume.HidesHeadgear(parms.pawn)) __result = false;
+        }
+    }
+
+    /// <summary>
+    /// Facial Animation draws its eyebrows at layer 100 when its "draw the eyebrows above the hat" setting
+    /// is on (the default), which puts them over a mask. Its face part nodes keep the base CanDrawNow, so
+    /// this postfix hides the eyebrow nodes (debug label "BrowControllerComp_...") under a costume that
+    /// covers the face. Its other face parts are at layers 50-60, under the mask already. Nothing here
+    /// needs the mod: without it no node has that label.
+    /// </summary>
+    [HarmonyPatch(typeof(PawnRenderNodeWorker), nameof(PawnRenderNodeWorker.CanDrawNow))]
+    static class Patch_CanDrawNow_FaceCovered
+    {
+        public const string BrowLabel = "BrowControllerComp";
+
+        static void Postfix(PawnRenderNode node, PawnDrawParms parms, ref bool __result)
+        {
+            if (__result && node.Props.debugLabel != null
+                && node.Props.debugLabel.StartsWith(BrowLabel, System.StringComparison.Ordinal)
+                && EchoCostume.CoversFace(parms.pawn))
+                __result = false;
         }
     }
 }

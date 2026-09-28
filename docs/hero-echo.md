@@ -116,6 +116,28 @@ plexus follow the same hook.
   post-apparel wounds at 30); 89 facing north, over the head as vanilla shells are. Textures from
   `make_costume_textures.py`, fitted to the vanilla body outlines. Vergil: DMC3 blue coat, 256 px,
   Thin/Male/Female/Fat/Hulk x south/east/north.
+- Shared costume (built 2026-09-28): the Akatsuki cloak lives on the abstract hediff
+  `AG_EchoManifest_Akatsuki`; Pain's and Itachi's hero forms take it as their parent, and another
+  member (Obito once his Echo exists) needs only `ParentName="AG_EchoManifest_Akatsuki"`. Two nodes:
+  the cloak under `ApparelBody` (layer 29 in every facing, 15 textures), and the high collar under
+  `Head` (layer 64: over the beard at 60 and the hair at 62, under the head wounds at 65; 3 textures,
+  one set for every body type, fitted to the vanilla heads). On the head it covers the chin and
+  follows the head when the pawn crawls or swims. The cloak sets `hideBodyApparel` and
+  `hideHeadgear`. Black cloak, red clouds with a pale outline and pale curls (the cloud traced from
+  the anime symbol: a pointed wisp to one side, round lobes, curls in four lobes), red lining along
+  the collar rim and down the front.
+- Head pieces are fitted to the average vanilla heads; `narrowHeadScale` (x facing south/north, y
+  facing east/west) narrows them on narrow heads, which are about 0.84 as wide face-on and 0.7 as
+  deep in profile. The collar and Obito's mask use (0.84, 0.7).
+- Obito's spiral mask (built 2026-09-28): on `AG_EchoManifest_Obito` (parent
+  `AG_EchoManifest_Akatsuki`, so he also wears the cloak), a head node at layer 63, over the hair and
+  under the collar. Orange egg from the hairline to the chin, one black spiral groove from the eye
+  hole on his right eye (vanilla eyes are at x 52-59, y 67-72 on every head) to the rim, a red
+  Sharingan in the hole. The face-on drawing is projected onto the profiles; west is its own picture
+  (no hole on his left side), stored facing right because the render tree mirrors every west
+  picture; north is empty. `coversFace` hides Facial Animation's eyebrows, which it draws at layer
+  100 (over hats and masks) by default; its other face parts are at 50-60, under the mask. No
+  EchoDef names this hediff yet: it comes with his kit's port.
 
 ### Manifest weapon (decided and built 2026-09-27)
 
@@ -467,7 +489,13 @@ presence trait is to be retired from the loaded defs so provoke has one source. 
   cast cost, awaken, cap, longsword kills, dev command, UI shots), plus the weapon tests and
   "costume 1" (Vergil's coat in the render tree, all 15 textures load; shirt, marine armour and
   helmet not drawn in hero form, smokepop pack still drawn, all drawn again after revert; 8
-  screenshots; `-rimarttest="Echo: costume"` runs it alone).
+  screenshots) and "costume 2" (Pain and Itachi both get the cloak and collar from the shared
+  parent, 18 textures load, collar on the head over the hair, shirt and cowboy hat not drawn, pack
+  drawn, all gone after revert; 4 screenshots) and "costume 3" (Obito's hero form hediff added
+  directly on an average and a narrow head: cloak, collar and mask in the tree, hair < mask <
+  collar, mask width x0.84 / x0.7 on the narrow head and x1 on the average one, hat hidden, Facial
+  Animation's eyebrows not drawn when that mod is loaded, all back when the hediff is removed; 4
+  screenshots). `-rimarttest="Echo: costume"` runs all three.
 - Debug window, kit "Itachi": make Host + manifest, false face (no cost, no cooldown), susanoo 12 s,
   weaken to 30 % health, totsuka stab the pawn under the mouse. Dispersal's "refill the plexus"
   and "shoot the carrier" still apply.
@@ -485,8 +513,9 @@ presence trait is to be retired from the loaded defs so provoke has one source. 
 ## Not built
 
 - Meteor incident that brings the device (the device is researched and built for now).
-- Costumes for the other Echoes (Vergil's coat is built), head pieces, eye overlays, a transform
-  effect per Echo, a marker for manifested Hosts.
+- Costumes for the other Echoes (Vergil's coat, the Akatsuki cloak for Pain, Itachi and Obito, and
+  Obito's mask are built), the other head pieces, eye overlays, a transform effect per Echo, a marker
+  for manifested Hosts.
 - Pocket spaces closing on `PoolEmptied`, except Unlimited Blade Works: its world closes when the
   caster loses the ability, which an empty pool causes by reverting every Host.
 - Echoes for the other heroes; their kits have no mechanics yet.
