@@ -20,10 +20,11 @@ namespace RimArt
     /// polygons about one point, and no aim, so no part needs a per-facing method. A pane has a lit edge
     /// toward the sun and a dark edge away from it, so its meshes are rebuilt when the sun moves.
     ///
-    /// The sketch's stand-ins are not ported: the caster (its hand, the line it thins to, the ghost at the
-    /// end of each cut, the kneel), the raiders, the ally and the wall, and with them the glint on each
-    /// marked chest, the stun tint and the four hits on the click. Those are pawn drawings or the
-    /// ability's. The blue glow under the kneeling caster is light and is drawn.
+    /// The light the sketch draws round its stand-ins is drawn here: the line the caster thins to as it
+    /// vanishes, the afterimage at the far end of each cut, the glint on each marked chest and the blue glow
+    /// under the kneeling caster. The pawns are not: the kneel, the hand and the upright scabbard are the
+    /// real pawn in game (Kit/YamatoDraw.cs), and the stun tint and the hits on the click are the ability's
+    /// (Kit/JudgementCutEndCast.cs).
     /// </summary>
     [StaticConstructorOnStartup]
     public static class JudgementCutEndGraphics
@@ -38,26 +39,34 @@ namespace RimArt
         private static Mesh[] faces = new Mesh[0], lit = new Mesh[0], dim = new Mesh[0];
 
         /// <summary>The preview. <paramref name="centre"/> is the chosen cell, where the caster stands.</summary>
-        public static void DrawPreview(Vector3 centre, float seconds, Map map) =>
-            Draw(new Vector2(centre.x, centre.z), T.Radius, T.Cuts, seconds, map);
-
-        public static void Draw(Vector2 o, float radius, int count, float s, Map map)
+        public static void DrawPreview(Vector3 centre, float seconds, Map map)
         {
-            if (s < 0f || s >= T.Duration) return;
+            var o = new Vector2(centre.x, centre.z);
+            Draw(o, T.Radius, T.Layout(T.Radius, T.Cuts), T.PreviewVictims(T.Radius), "preview", o + Mouth, T.Preview, seconds, map);
+        }
+
+        /// <summary>
+        /// <paramref name="o"/> is the caster's ground point, <paramref name="cuts"/> the chords (relative to it),
+        /// the first <paramref name="victims"/> of which pass through a marked pawn's chest, <paramref name="layoutKey"/> names that layout so the pane meshes are built once for it, and
+        /// <paramref name="mouth"/> is where the click glints: the stand-in's scabbard mouth in the preview, the
+        /// real kneeling pawn's in game.
+        /// </summary>
+        public static void Draw(Vector2 o, float radius, List<CutEndCut> cuts, int victims, string layoutKey, Vector2 mouth, CutEndTimes times, float s, Map map)
+        {
+            if (s < 0f || s >= times.Duration) return;
             if (!Shown(o, map)) return;
             Begin(o);
             PowerPoleGraphics.Sun(map, out Vector2 sun, out _);
 
-            List<CutEndCut> cuts = T.Layout(radius, count);
-            Build(radius, count, sun);
-            float sinceClick = s - T.ClickAt;
-            float dark = Smooth((s - T.VanishAt) / 0.12f) * (1f - Smooth(sinceClick / 0.4f));
-            float w = Mathf.Clamp01((s - T.CastAt) / T.Warm);
+            Build(radius, cuts, layoutKey, sun);
+            float sinceClick = s - times.ClickAt;
+            float dark = Smooth((s - times.VanishAt) / 0.12f) * (1f - Smooth(sinceClick / 0.4f));
+            float w = Mathf.Clamp01((s - T.CastAt) / times.Warm);
 
             // --- the floor: the true radius, scars left along the cuts ------------------------------------
             if (s >= T.CastAt)
             {
-                float grown = Smooth((s - T.CastAt) / (T.Warm * 0.8f)), left = 1f - Smooth((sinceClick - 0.3f) / 0.6f);
+                float grown = Smooth((s - T.CastAt) / (times.Warm * 0.8f)), left = 1f - Smooth((sinceClick - 0.3f) / 0.6f);
                 PaperBombGraphics.RingAt(o, radius * grown, Fade(Blue, 0.6f * left), Floor + 0.02f);
             }
             if (sinceClick >= 0f)
@@ -65,7 +74,7 @@ namespace RimArt
                     Streak(o + c.Line.A, o + c.Line.B, 0.05f, Fade(Void, 0.5f - 0.25f * Smooth(sinceClick / T.Tail)), solid, Floor + 0.01f, 4);
 
             // --- the warm-up: an aura at the caster, lights rising out of the floor inside the ring --------
-            if (s >= T.CastAt && s < T.VanishAt)
+            if (s >= T.CastAt && s < times.VanishAt)
             {
                 GokuGraphics.Aura(o, s, w, Blue);
                 for (int i = 0; i < T.Motes; i++)
@@ -77,16 +86,24 @@ namespace RimArt
                 }
             }
 
+            // --- the vanish: the caster thins to a line of light going up ---------------------------------
+            float away = s - times.VanishAt;
+            if (away >= 0f && away < 0.2f)
+            {
+                float gone = Mathf.Clamp01(away / 0.08f), f = 1f - away / 0.2f;
+                Streak(new Vector2(o.x, o.y - 0.2f), new Vector2(o.x, o.y + 1.4f + gone), 0.22f * f, Fade(Snow, f), whiteGlow, Overhead + 0.05f, 6);
+            }
+
             // --- the blue glow where the caster kneels ----------------------------------------------------
-            if (s >= T.BackAt) Sprite(new Vector2(o.x, o.y + 0.3f), 1.8f, 1.8f, Fade(Blue, 0.35f * dark), glow, Overhead - 0.04f);
+            if (s >= times.BackAt) Sprite(new Vector2(o.x, o.y + 0.3f), 1.8f, 1.8f, Fade(Blue, 0.35f * dark), glow, Overhead - 0.04f);
 
             // --- the dark inside the ring, over the pawns and under the cuts --------------------------------
             DrawMesh(disc, o, Overhead - 0.05f, radius, radius, 0f, Fade(Void, T.Dark * dark), solid);
 
             // --- the panes: ajar while the blade goes home, breaking on the click ---------------------------
-            if (s >= T.BackAt && sinceClick < T.Fade)
+            if (s >= times.BackAt && sinceClick < T.Fade)
             {
-                float u = Mathf.Clamp01(sinceClick / T.Fade), show = Smooth((s - T.BackAt) / (T.Sheathe * 0.6f));
+                float u = Mathf.Clamp01(sinceClick / T.Fade), show = Smooth((s - times.BackAt) / (times.Sheathe * 0.6f));
                 float spread = Smooth(Mathf.Clamp01(u * 1.6f)), gone = Mathf.Pow(1f - u, 1.5f), size = 1f - (1f - T.FallTo) * spread;
                 bool before = sinceClick < 0f;
                 for (int i = 0; i < pieces.Count; i++)
@@ -105,23 +122,29 @@ namespace RimArt
             }
 
             // --- the cuts: drawn end to end one after another, white on the click, then gone ---------------
-            if (s >= T.VanishAt && sinceClick < T.CutsGone)
+            if (s >= times.VanishAt && sinceClick < T.CutsGone)
                 for (int k = 0; k < cuts.Count; k++)
                 {
                     VergilChord c = cuts[k].Line;
-                    float age = s - T.StartOf(cuts[k].Order, cuts.Count);
+                    float age = s - times.StartOf(cuts[k].Order, cuts.Count);
                     if (age < 0f) continue;
                     float hot = sinceClick >= 0f ? 1f : Mathf.Clamp01(1f - age / 0.18f) * 0.8f;
                     float alpha = sinceClick >= 0f ? 1f - sinceClick / T.CutsGone : 1f, grown = Mathf.Clamp01(age / T.Sweep);
                     Cut(o + c.A, o + c.B, grown, alpha, 0.05f, hot, 0.85f + 0.15f * Mathf.Sin(s * 40f + k * 1.7f));
                     if (age < T.Sweep) Glint(o + c.A + (c.B - c.A) * grown, 0.35f, 1f, Ice, 45f);
+                    // The caster seen for a moment at the far end of each cut.
+                    Afterimage(o + c.B, o + c.A, age - T.Sweep);
+                    // A cut through a marked pawn leaves a glint on its chest until the click.
+                    float marked = age - T.Sweep * 0.5f;
+                    if (k < victims && marked >= 0f && sinceClick < 0f)
+                        Glint(o + c.Q, 0.16f + 0.3f * Mathf.Clamp01(1f - marked / 0.15f), 0.9f, Snow, 45f + k * 20f);
                 }
 
             // --- the click: a glint at the scabbard mouth, a ring front, one flash over the ring --------------
             if (sinceClick >= 0f)
             {
                 float f = Mathf.Clamp01(sinceClick / 0.3f);
-                Glint(o + Mouth, 0.2f + 0.5f * (1f - f), 1f - f, Snow, 0f);
+                Glint(mouth, 0.2f + 0.5f * (1f - f), 1f - f, Snow, 0f);
                 if (sinceClick < T.Front * 2f)
                     PaperBombGraphics.RingAt(o, radius * Smooth(sinceClick / T.Front), Fade(Ice, 0.45f * (1f - sinceClick / (T.Front * 2f))), Overhead + 0.06f, true, whiteGlow);
                 Sprite(o, radius * 2.4f, radius * 2.4f, Fade(Ice, 0.3f * (1f - Mathf.Clamp01(sinceClick / 0.2f))), glow, Overhead + 0.055f);
@@ -133,11 +156,11 @@ namespace RimArt
         /// an outline side that faces the light (lit) or away from it (dim). Sides nearly along the light
         /// get neither. Triangles are wound clockwise in map coordinates, as the shipped disc is.
         /// </summary>
-        private static void Build(float radius, int count, Vector2 sun)
+        private static void Build(float radius, List<CutEndCut> cuts, string layoutKey, Vector2 sun)
         {
             float length = sun.magnitude;
             Vector2 light = length > 0f ? -sun / length : new Vector2(-1f, 0f);
-            string key = radius + "|" + count + "|" + light.x.ToString("F2") + "|" + light.y.ToString("F2");
+            string key = layoutKey + "|" + radius + "|" + cuts.Count + "|" + light.x.ToString("F2") + "|" + light.y.ToString("F2");
             if (key == builtKey) return;
             builtKey = key;
 
@@ -145,7 +168,7 @@ namespace RimArt
             foreach (Mesh m in lit) if (m != null) Object.Destroy(m);
             foreach (Mesh m in dim) if (m != null) Object.Destroy(m);
 
-            pieces = T.Pieces(radius, count);
+            pieces = T.Pieces(radius, cuts);
             faces = new Mesh[pieces.Count];
             lit = new Mesh[pieces.Count];
             dim = new Mesh[pieces.Count];

@@ -33,14 +33,19 @@ namespace RimArt
         private static Mesh[] pieceMeshes = new Mesh[0];
 
         /// <summary>The preview. <paramref name="centre"/> is the chosen cell, which is where the caster stands in the lab's sketch.</summary>
-        public static void DrawPreview(Vector3 centre, float aimDegrees, float seconds, Map map) =>
-            Draw(new Vector2(centre.x, centre.z), aimDegrees, T.Distance, T.Radius, T.Cuts, T.Warm, T.Burst, seconds, map);
+        public static void DrawPreview(Vector3 centre, float aimDegrees, float seconds, Map map)
+        {
+            var caster = new Vector2(centre.x, centre.z);
+            Draw(caster, Hilt(caster), aimDegrees, T.Distance, T.Radius, T.Cuts, T.Warm, T.Burst, seconds, map);
+        }
 
         /// <summary>
         /// <paramref name="caster"/> is the caster's ground point and <paramref name="aimDegrees"/> the
         /// direction to the target, which lies <paramref name="distance"/> cells along it.
+        /// <paramref name="hilt"/> is where the draw and the sheathe glint: the stand-in's hilt in the preview,
+        /// the real pawn's guard in game.
         /// </summary>
-        public static void Draw(Vector2 caster, float aimDegrees, float distance, float radius, int count, float warm, float burst,
+        public static void Draw(Vector2 caster, Vector2 hilt, float aimDegrees, float distance, float radius, int count, float warm, float burst,
             float seconds, Map map)
         {
             float castAt = T.CastAt, openAt = T.OpenAt(warm), closeAt = T.CloseAt(warm, burst);
@@ -105,7 +110,7 @@ namespace RimArt
                     arc[j] = new Vector2(caster.x + Mathf.Cos(a) * T.ArcRadius, caster.y + T.Chest + Mathf.Sin(a) * T.ArcRadius);
                 }
                 ArcCut(arc, Mathf.Clamp01(u * 2.5f), 1f - u * u, 0.05f, hot: 1f);   // hot: light only, no dark slit
-                Glint(Hilt(caster), 0.35f * (1f - u) + 0.1f, 1f - u, Snow, 20f);
+                Glint(hilt, 0.35f * (1f - u) + 0.1f, 1f - u, Snow, 20f);
             }
 
             // --- the ball ----------------------------------------------------------------------------------
@@ -147,7 +152,7 @@ namespace RimArt
                 if (sinceClose >= T.Close)
                     PaperBombGraphics.RingAt(ballCentre, radius * (0.2f + 1.1f * Smooth((sinceClose - T.Close) / 0.2f)), Fade(Ice, 0.6f * (1f - u)), Overhead + 0.03f, false, whiteGlow);
                 float home = Mathf.Clamp01(sinceClose / 0.15f);
-                Glint(Hilt(caster), 0.3f * (1f - home), 1f - home, Snow, 20f);
+                Glint(hilt, 0.3f * (1f - home), 1f - home, Snow, 20f);
             }
 
             // --- dust off the floor round the true radius as it closes -------------------------------------
@@ -163,7 +168,7 @@ namespace RimArt
                 }
         }
 
-        /// <summary>Where the caster's scabbard hilt sits: the draw and the sheathe both glint here.</summary>
+        /// <summary>Where the stand-in's scabbard hilt sits in the preview: the draw and the sheathe both glint here.</summary>
         private static Vector2 Hilt(Vector2 caster) => new Vector2(caster.x - 0.02f, caster.y + 0.46f);
 
         /// <summary>One triangle-fan mesh per piece, rebuilt only when the piece list itself changes.</summary>

@@ -1,5 +1,5 @@
-// Summoned Swords — ability proposal for the Vergil kit (a held katana), not the game. Nothing in
-// Source/RimArt draws this yet. The kit's ranged support: blades that shoot on their own while the
+// Summoned Swords — in game since 2026-09-28 (Source/RimArt/Vergil/Kit/SummonedSwordsCast.cs draws the
+// live ring from SummonedSwordsGraphics' blade pieces). The kit's ranged support: blades that shoot on their own while the
 // carrier keeps fighting with the katana. The source's Spiral Swords ring, fired one blade at a time
 // the way its Blistering Swords are.
 //

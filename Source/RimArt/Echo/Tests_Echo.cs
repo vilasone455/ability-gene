@@ -315,13 +315,18 @@ namespace RimArt
         private static ThingDef Knife => Def("MeleeWeapon_Knife");
         private static ThingDef Longsword => Def("MeleeWeapon_LongSword");
         private static int OnMap(RimArtTestContext t, ThingDef def) => t.map.listerThings.ThingsOfDef(def).Count;
+        /// <summary>Knives on the map when the forced-weapon Host was made.</summary>
+        private static int knivesBefore;
 
         /// <summary>
-        /// A Host holding a longsword, manifested as Vergil with a knife as his forced weapon: there is
-        /// no Yamato def yet, so the test lends him one. The caller puts <paramref name="before"/> back.
+        /// A Host holding a longsword, manifested as Vergil with a knife as his forced weapon: the tests
+        /// use a plain vanilla weapon in place of Yamato. The caller puts <paramref name="before"/> back.
         /// </summary>
         private static EchoRecord ForcedWeaponHost(RimArtTestContext t, GameComponent_Echoes echoes, out Pawn host, out ThingDef before)
         {
+            // A quicktest map is random and may already have a knife lying somewhere: the checks count from here.
+            knivesBefore = OnMap(t, Knife);
+            t.Log("knives on the map before: " + knivesBefore);
             before = Vergil.manifestWeapon;
             Vergil.manifestWeapon = Knife;
             host = Colonist(t);
@@ -381,7 +386,7 @@ namespace RimArt
             yield return 2;
             t.Check(hero.Destroyed, "the hero weapon is destroyed on revert");
             t.Check(host.equipment.Primary == sword, "the longsword is back in hand");
-            t.Check(OnMap(t, Knife) == 0, "no knife lies on the map");
+            t.Check(OnMap(t, Knife) == knivesBefore, "no knife lies on the map");
             Vergil.manifestWeapon = before;
         }
 
@@ -395,7 +400,7 @@ namespace RimArt
             ThingWithComps hero = host.equipment.Primary;
             bool dropped = host.equipment.TryDropEquipment(hero, out ThingWithComps landed, host.Position, false);
             t.Check(dropped && landed == null && hero.Destroyed, "a drop destroys the hero weapon instead of landing it");
-            t.Check(OnMap(t, Knife) == 0, "no knife lies on the map");
+            t.Check(OnMap(t, Knife) == knivesBefore, "no knife lies on the map");
             t.Check(record.weaponGone, "the record waits to give it back");
             t.Log("return time " + Vergil.weaponReturnTicks + " ticks; the test moves the mark to 2 pool intervals");
             record.weaponBackTick = Find.TickManager.TicksGame + GameComponent_Echoes.PoolInterval * 2;
@@ -409,7 +414,7 @@ namespace RimArt
             yield return 2;
             if (!t.Check(host.Downed, "anesthetic downed the Host")) { Vergil.manifestWeapon = before; yield break; }
             t.Check(back != null && back.Destroyed && host.equipment.Primary == null, "downing destroyed the hero weapon");
-            t.Check(OnMap(t, Knife) == 0, "no knife lies on the map");
+            t.Check(OnMap(t, Knife) == knivesBefore, "no knife lies on the map");
             t.Log("longsword after downing: " + (sword == null ? "missing" : sword.Spawned ? "on the ground (vanilla drops a downed pawn's inventory)"
                 : host.inventory.innerContainer.Contains(sword) ? "in the inventory" : "elsewhere"));
             record.weaponBackTick = Find.TickManager.TicksGame;
@@ -435,11 +440,11 @@ namespace RimArt
             ThingWithComps hero = host.equipment.Primary;
             host.Kill(null);
             yield return 2;
-            t.Check(OnMap(t, Knife) == 0, "no knife lies on the map after the death");
+            t.Check(OnMap(t, Knife) == knivesBefore, "no knife lies on the map after the death");
             yield return 251;
             t.Check(record.state == EchoState.Closed, "the Echo closed");
             t.Check(hero == null || hero.Destroyed, "the hero weapon is destroyed");
-            t.Check(OnMap(t, Knife) == 0, "still no knife on the map");
+            t.Check(OnMap(t, Knife) == knivesBefore, "still no knife on the map");
             Vergil.manifestWeapon = before;
         }
 

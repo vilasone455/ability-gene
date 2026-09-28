@@ -151,10 +151,57 @@
         <trait>Bloodlust</trait>
       </li>
     </forcedTraits>
+    <abilities>
+      <li>AG_VergilJudgementCut</li>
+      <li>AG_VergilYamatoDash</li>
+      <li>AG_VergilSummonedSwords</li>
+      <li>AG_VergilJudgementCutEnd</li>
+    </abilities>
     <manifestHediff>AG_EchoManifest_Vergil</manifestHediff>
+    <manifestWeapon>AG_Yamato</manifestWeapon>
     <upkeepPerHour>10</upkeepPerHour>
+    <castCosts>
+      <li>
+        <ability>AG_VergilJudgementCut</ability>
+        <cost>3</cost>
+      </li>
+      <li>
+        <ability>AG_VergilYamatoDash</ability>
+        <cost>2</cost>
+      </li>
+      <li>
+        <ability>AG_VergilSummonedSwords</ability>
+        <cost>10</cost>
+      </li>
+      <li>
+        <ability>AG_VergilJudgementCutEnd</ability>
+        <cost>0</cost>
+      </li>
+    </castCosts>
     <wealth>6000</wealth>
     <hairColor>(0.85, 0.87, 0.9)</hairColor>
+    <!-- Style, DMC's style meter: 0-100 while manifested, shown on its gizmo as a letter rank.
+         Judgement Cut End needs rank S and spends all of it. Only hits on hostile pawns count.
+         Source/RimArt/Vergil/Kit/VergilStyle.cs. -->
+    <modExtensions>
+      <li Class="RimArt.VergilStyleExtension">
+        <max>100</max>
+        <ranks>
+          <li><label>D</label><from>0</from></li>
+          <li><label>C</label><from>15</from></li>
+          <li><label>B</label><from>30</from></li>
+          <li><label>A</label><from>45</from></li>
+          <li><label>S</label><from>60</from></li>
+          <li><label>SS</label><from>75</from></li>
+          <li><label>SSS</label><from>90</from></li>
+        </ranks>
+        <cutEndNeeds>60</cutEndNeeds>
+        <meleeHit>2</meleeHit>
+        <damageTaken>20</damageTaken>
+        <drainPerSecond>5</drainPerSecond>
+        <drainAfterSeconds>10</drainAfterSeconds>
+      </li>
+    </modExtensions>
   </RimArt.EchoDef>
 
   <!-- Shikamaru: the kit is Shadow plexus (AG_ShadowPlexus_Abilities.xml), only this Echo grants it.

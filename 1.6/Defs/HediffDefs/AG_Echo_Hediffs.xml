@@ -78,6 +78,9 @@
         <debugLabel>Vergil coat</debugLabel>
         <hideBodyApparel>true</hideBodyApparel>
         <hideHeadgear>true</hideHeadgear>
+        <!-- Judgement Cut End kneels facing south in this (VergilCoatKneel_Thin); other body types
+             have no kneel picture and are squashed instead. -->
+        <kneelTexPath>RimArt/Echo/Costume/VergilCoatKneel</kneelTexPath>
         <workerClass>RimArt.PawnRenderNodeWorker_EchoCostume</workerClass>
         <parentTagDef>ApparelBody</parentTagDef>
         <pawnType>HumanlikeOnly</pawnType>

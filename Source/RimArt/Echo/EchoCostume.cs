@@ -17,6 +17,13 @@ namespace RimArt
 
         /// <summary>Worn headgear is not drawn, and so no longer hides the hair.</summary>
         public bool hideHeadgear;
+
+        /// <summary>
+        /// A kneeling picture, facing south, for a kit that kneels its hero (Vergil's Judgement Cut End):
+        /// the texture path without the body type, which is added as _Thin and so on. A body type without
+        /// its texture has no kneel picture. Null for none.
+        /// </summary>
+        public string kneelTexPath;
     }
 
     /// <summary>
@@ -28,6 +35,17 @@ namespace RimArt
     {
         public override bool CanDrawNow(PawnRenderNode node, PawnDrawParms parms) =>
             base.CanDrawNow(node, parms) && parms.flags.FlagSet(PawnRenderFlags.Clothes);
+
+        /// <summary>
+        /// The kneel picture while the kit says the hero kneels in it (for Vergil, VergilLooks; worked out on
+        /// the main thread, so this only reads).
+        /// </summary>
+        protected override Graphic GetGraphic(PawnRenderNode node, PawnDrawParms parms)
+        {
+            if (parms.facing == Rot4.South && VergilLooks.TryGet(parms.pawn, out VergilLook look) && look.kneelPicture != null)
+                return look.kneelPicture;
+            return base.GetGraphic(node, parms);
+        }
     }
 
     public static class EchoCostume
@@ -52,6 +70,37 @@ namespace RimArt
                         return true;
             }
             return false;
+        }
+
+        private static readonly Dictionary<string, Graphic> kneelPictures = new Dictionary<string, Graphic>();
+
+        /// <summary>
+        /// This pawn's costume kneel picture for its body type, or null when its costume has none or the texture
+        /// for that body type does not exist. Main thread only: it may load the graphic.
+        /// </summary>
+        public static Graphic KneelPicture(Pawn pawn)
+        {
+            List<Hediff> hediffs = pawn?.health?.hediffSet?.hediffs;
+            string body = pawn?.story?.bodyType?.defName;
+            if (hediffs == null || body == null) return null;
+            for (int i = 0; i < hediffs.Count; i++)
+            {
+                HediffDef def = hediffs[i].def;
+                if (!def.HasDefinedGraphicProperties) continue;
+                foreach (PawnRenderNodeProperties props in def.RenderNodeProperties)
+                {
+                    if (!(props is PawnRenderNodeProperties_EchoCostume costume) || costume.kneelTexPath.NullOrEmpty()) continue;
+                    string path = costume.kneelTexPath + "_" + body;
+                    if (!kneelPictures.TryGetValue(path, out Graphic graphic))
+                    {
+                        graphic = ContentFinder<UnityEngine.Texture2D>.Get(path, false) == null ? null
+                            : GraphicDatabase.Get<Graphic_Single>(path, costume.shaderTypeDef?.Shader ?? ShaderDatabase.Cutout, UnityEngine.Vector2.one, UnityEngine.Color.white);
+                        kneelPictures[path] = graphic;
+                    }
+                    return graphic;
+                }
+            }
+            return null;
         }
 
         /// <summary>Clothes and armour: apparel on the skin, middle or shell layer that is not drawn as a pack.</summary>

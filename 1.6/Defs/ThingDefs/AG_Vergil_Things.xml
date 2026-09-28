@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Yamato, Vergil's katana. Only the Vergil Echo makes one: it is put in the Host's hand on
+       Manifest and destroyed on revert (EchoDef manifestWeapon, docs/hero-echo.md). Not loot:
+       MarketValue 0, no stuff, no recipe, no weaponTags (raiders never carry it).
+
+       The game never draws it in the hand. Patches_VergilPose.cs skips the vanilla weapon draw and
+       YamatoDraw.cs draws it the way the lab sketches do (lib/vergil.js carrier and heldKatana):
+       sheathed at the left hip with the hilt forward, the hand going to the hilt, the blade out
+       along the aim during a dash, and the upright scabbard in the Judgement Cut End kneel. The
+       texture below is the gear tab and inspect icon, and what Melee Animation holds if it animates
+       a swing.
+
+       Stats are placeholders (the kit left them open): a longsword is 23 cut every 2.6 s; Yamato
+       is a little lighter and much faster. -->
+  <ThingDef ParentName="BaseWeapon">
+    <defName>AG_Yamato</defName>
+    <label>Yamato</label>
+    <description>A katana in a black lacquered scabbard. It is said to cut through space itself.\n\nOnly Vergil wields it. It appears in his hand when he manifests and vanishes when he leaves.</description>
+    <graphicData>
+      <texPath>RimArt/Vergil/Yamato</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.2</drawSize>
+    </graphicData>
+    <equippedAngleOffset>-45</equippedAngleOffset>
+    <techLevel>Medieval</techLevel>
+    <smeltable>false</smeltable>
+    <relicChance>0</relicChance>
+    <stackLimit>1</stackLimit>
+    <tradeability>None</tradeability>
+    <thingCategories>
+      <li>WeaponsMelee</li>
+    </thingCategories>
+    <weaponClasses>
+      <li>Melee</li>
+      <li>MeleePiercer</li>
+    </weaponClasses>
+    <statBases>
+      <MarketValue>0</MarketValue>
+      <Mass>1.2</Mass>
+      <MaxHitPoints>300</MaxHitPoints>
+      <Flammability>0</Flammability>
+      <DeteriorationRate>0</DeteriorationRate>
+      <Beauty>0</Beauty>
+    </statBases>
+    <tools>
+      <li>
+        <label>edge</label>
+        <capacities><li>Cut</li></capacities>
+        <power>22</power>
+        <cooldownTime>1.8</cooldownTime>
+        <armorPenetration>0.45</armorPenetration>
+      </li>
+      <li>
+        <label>point</label>
+        <capacities><li>Stab</li></capacities>
+        <power>18</power>
+        <cooldownTime>1.8</cooldownTime>
+        <armorPenetration>0.4</armorPenetration>
+      </li>
+      <li>
+        <label>handle</label>
+        <capacities><li>Blunt</li></capacities>
+        <power>9</power>
+        <cooldownTime>1.6</cooldownTime>
+        <chanceFactor>0.2</chanceFactor>
+      </li>
+    </tools>
+  </ThingDef>
+
+</Defs>

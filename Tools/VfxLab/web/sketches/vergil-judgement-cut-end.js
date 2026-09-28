@@ -1,5 +1,5 @@
-// Judgement Cut End — ability proposal for the Vergil kit (a held katana), not the game. Nothing in
-// Source/RimArt draws this yet. The kit's ultimate.
+// Judgement Cut End — the Vergil kit's ultimate. In game since 2026-09-28: the picture is
+// Source/RimArt/Vergil/JudgementCutEndGraphics.cs, the ability, Style and the kneel Source/RimArt/Vergil/Kit.
 //
 // What it is for (shared cuts + space breaks + Style agreed 2026-09-27; every number is a
 // placeholder and will be an XML field).
@@ -36,7 +36,8 @@
 //         a straight chord across the whole ring drawn end to end in 0.07 s, with the caster seen
 //         for 0.22 s at the far end of each. The first 6 each pass through one marked raider and
 //         leave a glint on it. The cuts stay in the air.
-//   3.00  back: the caster is on their own cell, kneeling, back turned, and slides the blade into the
+//   3.00  back: the caster is on their own cell, kneeling, back turned (in game he faces the camera,
+//         decided 2026-09-28, so the hands and the guard show; this sketch still draws the back), and slides the blade into the
 //         upright scabbard. The pieces between the cuts show as panes of glass: a faint blue face, a bright
 //         edge toward the sun, a dark edge away from it, each pane 0.03 to 0.08 cells off its place.
 //   3.80  the click: a glint at the scabbard mouth and a ring front that runs out to the true radius

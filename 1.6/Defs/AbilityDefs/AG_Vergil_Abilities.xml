@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Vergil's four abilities (docs/hero-echo.md; full rules in the four
+       Tools/VfxLab/web/sketches/vergil-*.js headers), granted by the Vergil Echo while manifested
+       (AG_Echoes.xml, which holds their charge costs and the Style numbers). Every balance number is
+       a field here; the C# in Source/RimArt/Vergil/Kit holds only shape and logic. All four need
+       Yamato in hand, which the Echo puts there. The icons are placeholders
+       (make_vergil_textures.py). -->
+
+  <AbilityDef Name="AG_VergilAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <jobDef>AG_CastVergil</jobDef>
+  </AbilityDef>
+
+  <!-- Judgement Cut: the warmup is the sheathed stance with the hand on the hilt; the fire tick is
+       the draw, and the ball opens on the target then. Damage ticks follow on the Vergil game
+       component. -->
+  <AbilityDef ParentName="AG_VergilAbilityBase">
+    <defName>AG_VergilJudgementCut</defName>
+    <label>judgement cut</label>
+    <description>Vergil draws and sheathes faster than the eye, and space splits where he looks.\n\nTarget a cell within 18 cells in sight. After 0.6 seconds a sphere of cuts opens there, radius 1.9. Every pawn inside, allies included, takes 5 hits of 7 cut damage (50% armour penetration) over half a second.\n\nStyle: +4 for each hostile pawn it hits.</description>
+    <iconPath>RimArt/Vergil/IconJudgementCut</iconPath>
+    <cooldownTicksRange>720</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>18.9</range>
+      <warmupTime>0.6</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>true</canTargetBuildings>
+        <canTargetItems>false</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_JudgementCut">
+        <radius>1.9</radius>
+        <hits>5</hits>
+        <damagePerHit>7</damagePerHit>
+        <damageDef>Cut</damageDef>
+        <armorPenetration>0.5</armorPenetration>
+        <burstSeconds>0.5</burstSeconds>
+        <cuts>24</cuts>
+        <styleGainPerPawn>4</styleGainPerPawn>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Yamato Dash: the warmup is the prepare (crouch, hand to the hilt). The fire tick launches the
+       dash; the job then holds Vergil for the dash and the sheathe, and every mark resolves on the
+       click. -->
+  <AbilityDef ParentName="AG_VergilAbilityBase">
+    <defName>AG_VergilYamatoDash</defName>
+    <label>yamato dash</label>
+    <description>Vergil crosses the ground in an instant, blade out, and the cuts land only when he sheathes.\n\nTarget a standable cell up to 8 cells away along a straight, open path. After 0.35 seconds he dashes there in 0.15 seconds. Every hostile within the 1-cell-wide path is marked as he passes. 0.4 seconds after he stops, the blade clicks home and every mark takes 24 cut damage (40% armour penetration). Allies are never marked.\n\nStyle: +3 for each mark.</description>
+    <iconPath>RimArt/Vergil/IconYamatoDash</iconPath>
+    <cooldownTicksRange>480</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>8.9</range>
+      <warmupTime>0.35</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>false</canTargetPawns>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetItems>false</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_YamatoDash">
+        <dashSeconds>0.15</dashSeconds>
+        <sheatheSeconds>0.4</sheatheSeconds>
+        <pathWidth>1</pathWidth>
+        <damage>24</damage>
+        <damageDef>Cut</damageDef>
+        <armorPenetration>0.4</armorPenetration>
+        <styleGainPerMark>3</styleGainPerMark>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Summoned Swords: self cast. The warmup is the blades rising; the fire tick starts the 20 s.
+       The mode button (fire / spin) shows on Vergil while the swords are out. -->
+  <AbilityDef ParentName="AG_VergilAbilityBase">
+    <defName>AG_VergilSummonedSwords</defName>
+    <label>summoned swords</label>
+    <description>Eight blades of blue light circle Vergil for 20 seconds while he fights on.\n\nFire (the default): every second one blade flies at the nearest hostile within 12 cells in sight that holds fewer than 4 blades: 9 stab damage (30% armour penetration). The blade stays in the target for 3 seconds, and each blade in a pawn slows it by 15%, up to 60%. A fired slot fills again after 2.4 seconds.\n\nSpin: the ring widens and speeds up. Every 0.9 seconds each hostile within 1.6 cells takes 5 cut damage (20% armour penetration). No blades are thrown.\n\nThe mode can be switched while the swords are out. When the time is up every blade breaks, the ones stuck in pawns too.\n\nStyle: +1 for each hit.</description>
+    <iconPath>RimArt/Vergil/IconSummonedSwords</iconPath>
+    <cooldownTicksRange>2700</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_SummonedSwords">
+        <seconds>20</seconds>
+        <blades>8</blades>
+        <fireEverySeconds>1</fireEverySeconds>
+        <range>12</range>
+        <damage>9</damage>
+        <damageDef>Stab</damageDef>
+        <armorPenetration>0.3</armorPenetration>
+        <maxPins>4</maxPins>
+        <stuckSeconds>3</stuckSeconds>
+        <regrowSeconds>2.4</regrowSeconds>
+        <pinHediff>AG_VergilSwordPinned</pinHediff>
+        <spinRadius>1.6</spinRadius>
+        <spinEverySeconds>0.9</spinEverySeconds>
+        <spinDamage>5</spinDamage>
+        <spinDamageDef>Cut</spinDamageDef>
+        <spinArmorPenetration>0.2</spinArmorPenetration>
+        <styleGainPerHit>1</styleGainPerHit>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Judgement Cut End: self cast, limited by Style instead of a cooldown (the Echo's modExtension
+       holds the Style numbers). The warmup is the hand on the hilt; the fire tick is the vanish, and
+       the job holds Vergil through the vanish, the kneel, the click and the stand. -->
+  <AbilityDef ParentName="AG_VergilAbilityBase">
+    <defName>AG_VergilJudgementCutEnd</defName>
+    <label>judgement cut end</label>
+    <description>Vergil vanishes, and everything around him is cut at once.\n\nNeeds Style rank S and spends all of it. After a 1 second warmup every hostile within 10 cells that he can see is marked and stunned, and he is gone for 1.5 seconds: he cannot be targeted, and every projectile within 10 cells is destroyed. He comes back kneeling on the same cell and sheathes over 0.8 seconds. On the click the cuts land: Style / 5 cuts (12 at rank S, 20 at a full meter) of 10 cut damage each, dealt one at a time round the marked pawns, nearest first, so one pawn can take all of them. Hostile or unowned buildings within 10 cells in sight take 60 damage each; they do not use up cuts.\n\nIt costs no Echo charge.</description>
+    <iconPath>RimArt/Vergil/IconJudgementCutEnd</iconPath>
+    <cooldownTicksRange>60</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>true</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>1</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_JudgementCutEnd">
+        <radius>10</radius>
+        <goneSeconds>1.5</goneSeconds>
+        <sheatheSeconds>0.8</sheatheSeconds>
+        <standUpSeconds>0.7</standUpSeconds>
+        <stylePerCut>5</stylePerCut>
+        <cutDamage>10</cutDamage>
+        <damageDef>Cut</damageDef>
+        <armorPenetration>0.5</armorPenetration>
+        <buildingDamage>60</buildingDamage>
+        <stunAfterClickSeconds>0.5</stunAfterClickSeconds>
+        <goneHediff>AG_VergilGone</goneHediff>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>
