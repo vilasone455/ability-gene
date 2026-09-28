@@ -49,6 +49,20 @@ Echo/Costume/PainPiercings_<facing>.png
     collar), and silver studs along each ear, at the head's sides face-on and in an arc along the
     ear's rim in profile.
 
+Echo/Costume/MinatoHaori_<Body>_<facing>.png
+    256 px, the same 5 body types x 3 facings. Minato's Hokage haori from the official art: white,
+    short sleeves, open down the front, knee length, a tall collar with a lavender-grey inside, red
+    flames round the hem with white curls cut into them, and 四代目火影 ("Fourth Hokage") in red down
+    the back. Under it the green jōnin vest (zip, chest pouches) tied across by a red cord, blue
+    trousers, grey forearm guards below the sleeves, white tape and a kunai holster on his right
+    thigh, and below the hem the shins in white wraps and dark sandals.
+
+Echo/Costume/MinatoHeadband_<facing>.png
+    256 px, south, east, north (west is east mirrored: the knot is at the back): the forehead
+    protector, on the head over the hair (layer 63). A blue band just above the brows, the steel
+    plate with a rivet in each corner and the Leaf symbol engraved on it; the knot and two loose ends
+    at the back.
+
 The costume is fitted to the vanilla body outlines in BODIES, measured from the game's
 Naked_<Body>_<facing> textures (outer edge of the black outline, every 2 rows, on the 128 px
 sheet). Every length below is in those 128 px units; the picture is drawn 8x larger and reduced.
@@ -345,10 +359,10 @@ def serpent(path, width=0.75, curl_every=6.0, curl_side=1, curl_size=1.5):
     return mask
 
 
-def finish(image, silhouette, name, outline_within=None):
+def finish(image, silhouette, name, outline_within=None, outline_width=1.7):
     """Ink outline round the silhouette, under everything, then reduce and save. With outline_within,
     the outline is drawn only inside that mask (for an edge that joins another piece)."""
-    outline = grow(silhouette, 1.7)
+    outline = grow(silhouette, outline_width)
     if outline_within is not None:
         outline = union(inter(outline, outline_within), silhouette)
     out = Image.new("RGBA", image.size, (0, 0, 0, 0))
@@ -1347,6 +1361,540 @@ def save_piece(image, name):
     print("wrote", OUT / name)
 
 
+# ---- Minato's Hokage haori ----
+
+MN_WHITE, MN_WHITE_LIT, MN_WHITE_DARK = (226, 224, 222), (248, 247, 244), (150, 146, 168)
+MN_INNER = (118, 112, 148)  # the haori's inside and the collar's inner face, in shade
+MN_FLAME, MN_FLAME_DARK = (204, 64, 50), (146, 38, 32)
+MN_VEST, MN_VEST_LIT, MN_VEST_DARK = (120, 146, 100), (152, 176, 128), (74, 94, 60)
+MN_BLUE, MN_BLUE_LIT, MN_BLUE_DARK = (42, 72, 146), (68, 102, 178), (22, 38, 86)
+MN_GUARD, MN_GUARD_LIT, MN_GUARD_DARK = (88, 88, 108), (132, 132, 150), (52, 52, 68)
+MN_TAPE, MN_TAPE_LINE = (234, 232, 224), (160, 158, 156)
+MN_SANDAL = (36, 38, 56)
+MN_HOLSTER = (32, 34, 44)
+MN_CORD = (178, 58, 42)
+MN_KANJI = (190, 36, 32)
+MN_FLARE = 1.6  # the haori hangs nearly straight: a little wider at the hem than at the waist
+# Flame heights along a hem, as fractions of the band's height, repeated.
+FLAME_HEIGHTS = (1.0, 0.62, 0.86, 0.5, 0.94, 0.7, 0.8, 0.56)
+
+# 四代目火影 ("Fourth Hokage"), written down the back: each character as strokes on a 10 x 10 grid, y down.
+KANJI = [
+    # 四
+    [[(1, 1.4), (1, 9)], [(1, 1.4), (9, 1.4), (9, 9)], [(1, 8.6), (9, 8.6)],
+     [(4, 1.4), (4, 4.4), (2.8, 6.8)], [(6, 1.4), (6, 5.8), (7.6, 5.8)]],
+    # 代
+    [[(3, 0.3), (0.6, 4.2)], [(2, 3), (2, 9.8)], [(3.8, 3.4), (9.4, 2.6)],
+     [(6, 0.3), (6.6, 4.6), (8, 7.8), (9.6, 9.4), (9.8, 7.6)], [(7.8, 0.6), (8.8, 1.6)]],
+    # 目
+    [[(2.4, 0.4), (2.4, 9.6)], [(2.4, 0.4), (7.6, 0.4), (7.6, 9.6)], [(2.4, 3.5), (7.6, 3.5)],
+     [(2.4, 6.5), (7.6, 6.5)], [(2.4, 9.4), (7.6, 9.4)]],
+    # 火
+    [[(1.6, 3), (2.6, 5.6)], [(8.6, 2.6), (7.2, 5.2)], [(5, 0.3), (5, 4.8), (3.4, 8), (0.6, 9.8)],
+     [(5.2, 5.2), (7.2, 8.2), (9.6, 9.8)]],
+    # 影: 日 over 京 on the left, 彡 on the right
+    [[(0.8, 0.4), (0.8, 3.4)], [(0.8, 0.4), (5.2, 0.4), (5.2, 3.4)], [(0.8, 1.9), (5.2, 1.9)],
+     [(0.8, 3.4), (5.2, 3.4)], [(0.2, 4.7), (5.8, 4.7)], [(1.2, 5.8), (1.2, 7.4)],
+     [(1.2, 5.8), (4.8, 5.8), (4.8, 7.4)], [(1.2, 7.4), (4.8, 7.4)], [(3, 7.4), (3, 9.8)],
+     [(1.6, 8.4), (0.6, 9.6)], [(4.4, 8.4), (5.4, 9.4)],
+     [(9.4, 0.8), (6.8, 3)], [(9.4, 3.8), (6.6, 6.4)], [(9.8, 6.4), (6.2, 9.8)]],
+]
+
+
+class Haori:
+    """Heights the three facings share, from the official art: the haori ends at the knee, so the
+    trousers, the shin wraps and the sandals show below it."""
+
+    def __init__(self, body):
+        top, h = body.top, body.height
+        self.elbow = top + 0.34 * h  # the short sleeve's edge
+        self.wrist = top + 0.55 * h  # the forearm guard's end, just above the flames
+        self.hem = body.bottom - 0.15 * h
+        self.flames = 0.26 * h  # the flame band's height at its tallest tongue
+        self.wraps = body.bottom - 0.09 * h  # shin wraps from here to the sandal
+        self.sandal = body.bottom - 0.035 * h
+
+
+def band(y0, y1):
+    return polygon([(0, y0), (128, y0), (128, y1), (0, y1)])
+
+
+def body_outline(body, pad=PAD * 0.6):
+    """The vanilla body's own outline, rounded bottom and all, a little outside it."""
+    ys = steps(body.top, body.bottom)
+    return polygon([(interp(body.rows, y)[0] - pad, y) for y in ys] +
+                   [(interp(body.rows, y)[1] + pad, y) for y in reversed(ys)])
+
+
+def leg_gap(body):
+    """A narrow notch up from the bottom, so the two legs read apart below the haori."""
+    c, b = body.centre, body.bottom
+    return polygon([(c(b) - 0.9, b + 2), (c(b) + 0.9, b + 2), (c(b), b - 0.05 * body.height)])
+
+
+def paint_legs(image, body, lay, within, light=None, tape_side=0):
+    """Trousers, shin wraps and sandals, cut to `within`. tape_side -1 or 1 wraps the white tape and the
+    kunai holster round that leg's thigh (-1 the viewer's left)."""
+    c, w = body.centre, body.width
+    shade(image, within, MN_BLUE_DARK, MN_BLUE, MN_BLUE_LIT, light, reach=1.6)
+    crotch = body.waist + 0.3 * (body.bottom - body.waist)
+    paint(image, inter(stroke([(c(crotch), crotch), (c(body.bottom), body.bottom)], 0.5), within), MN_BLUE_DARK)
+    if tape_side:
+        s = tape_side
+        y = body.waist + 0.28 * (body.bottom - body.waist)
+        leg = inter(within, half_of(c, body.waist, body.bottom, s))
+        holster = polygon([(c(y) + s * 0.17 * w, y - 1.2), (c(y) + s * 0.29 * w, y - 1.2),
+                           (c(y) + s * 0.29 * w, y + 5.2), (c(y) + s * 0.17 * w, y + 5.6)])
+        paint(image, inter(grow(holster, 0.35), leg), INK)
+        paint(image, inter(holster, leg), MN_HOLSTER)
+        for k in (0, 1):
+            ty = y + k * 1.9
+            paint(image, inter(minus(band(ty - 0.55, ty + 0.55), holster), leg), MN_TAPE)
+    wraps = inter(within, band(lay.wraps, lay.sandal))
+    paint(image, wraps, MN_TAPE)
+    for k in range(3):
+        y = lay.wraps + (k + 0.6) * (lay.sandal - lay.wraps) / 3
+        paint(image, inter(stroke([(0, y + 0.3), (128, y - 0.3)], 0.3), wraps), MN_TAPE_LINE)
+    paint(image, inter(within, band(lay.sandal, 128)), MN_SANDAL)
+
+
+def flames(x0, x1, hem_at, height, phase=0):
+    """The flame band along a hem from x0 to x1 (hem_at(x) its height there): a red strip at the hem,
+    pointed tongues rising from it and leaning each way in turn, and between the tongues white tongues
+    that reach down into the red and end in a curl, as on the Hokage haori. Returns the red and the
+    white masks."""
+    lo, hi = min(x0, x1), max(x0, x1)
+    n = max(2, round((hi - lo) / 4.2))
+    sp = (hi - lo) / n
+    tongues = []
+    for i in range(n):
+        xi = lo + (i + 0.5) * sp
+        tall = height * FLAME_HEIGHTS[(i + phase) % len(FLAME_HEIGHTS)]
+        turn = 1 if (i + phase) % 2 else -1
+        base, tip = hem_at(xi) - 0.25 * height, hem_at(xi) - tall
+        bw = 0.56 * sp
+        left, right = [], []
+        for t in steps(0, 1, 0.04):
+            y = base + (tip - base) * t
+            # The tongue sways one way and flicks back at the tip; its sides ripple a little.
+            x = xi + turn * 0.3 * sp * math.sin(0.9 * math.pi * t)
+            half = bw * (1 - t) ** 0.9 * (1 + 0.12 * math.sin(2.5 * math.pi * t))
+            left.append((x - half, y))
+            right.append((x + half, y))
+        tongues.append(polygon(left + list(reversed(right))))
+    xs = steps(lo - 1, hi + 1, 0.4)
+    strip = polygon([(x, hem_at(x) - 0.3 * height) for x in xs] + [(hi + 1, 128), (lo - 1, 128)])
+    red = union(strip, *tongues)
+
+    whites = []
+    for i in range(1, n):
+        xv = lo + i * sp
+        turn = 1 if (i + phase) % 2 else -1
+        top_y = hem_at(xv) - 0.75 * height
+        end_y = hem_at(xv) - (0.24 + 0.06 * ((i + phase) % 3)) * height
+        left, right = [], []
+        for t in steps(0, 1, 0.04):
+            y = top_y + (end_y - top_y) * t
+            x = xv + turn * 0.16 * sp * math.sin(math.pi * t)
+            half = 0.1 * sp * (1 - t) + 0.06 * sp
+            left.append((x - half, y))
+            right.append((x + half, y))
+        whites.append(polygon(left + list(reversed(right))))
+        # The curl: on round from the tongue's end, under and up the other side, tightening.
+        r = 0.17 * sp
+        cx = xv + turn * r
+        curl = []
+        for t in steps(0, 1, 0.03):
+            a = math.radians(180 - 300 * t) if turn > 0 else math.radians(300 * t)
+            rr = r * (1 - 0.4 * t)
+            curl.append((cx + rr * math.cos(a), end_y + rr * math.sin(a)))
+        whites.append(stroke(curl, 0.11 * sp + 0.1))
+    return red, union(*whites)
+
+
+def paint_flames(image, x0, x1, hem_at, height, within, phase=0):
+    red, white = flames(x0, x1, hem_at, height, phase)
+    shade(image, inter(red, within), MN_FLAME_DARK, MN_FLAME, MN_FLAME, reach=1.0)
+    paint(image, inter(inter(white, red), within), MN_WHITE)
+
+
+def kanji(cx, top, size):
+    """四代目火影 down a column centred on cx, from `top`, each character `size` units square."""
+    gap = 0.12 * size
+    masks = []
+    for i, strokes in enumerate(KANJI):
+        y0 = top + i * (size + gap)
+        for points in strokes:
+            masks.append(stroke([(cx - size / 2 + x * size / 10, y0 + y * size / 10) for x, y in points],
+                                max(0.5, 0.1 * size)))
+    return union(*masks)
+
+
+def kanji_size(body, lay, top):
+    """As large as the back allows: about a fifth of its width, and all five above the flames."""
+    room = (lay.hem - lay.flames - 1.5) - top
+    return max(4.0, min(6.5, 0.21 * body.width, room / (5 + 4 * 0.12)))
+
+
+def haori_arms(image, body, lay, side, within):
+    """South and north: a seam from each shoulder down the short sleeve to its edge at the elbow,
+    the haori's shaded inside just under that edge, and the grey forearm guard from there to the
+    wrist, a pale band at its end."""
+    top, w = body.top, body.width
+    fw = min(4.2, 0.16 * w + 0.6)
+    for s in (-1, 1):
+        def outer(y, s=s):
+            return side(y)[1 if s > 0 else 0] - s * 0.5
+
+        def inner(y, s=s):
+            return outer(y) - s * fw
+        paint(image, inter(stroke([(inner(y), y) for y in steps(top + 7, lay.elbow)], 0.45), within), MN_WHITE_DARK)
+        ys = steps(lay.elbow, lay.wrist)
+        guard = polygon([(inner(y) + s * 0.3 * smooth(lay.wrist - 2, lay.wrist, y), y) for y in ys] +
+                        [(outer(lay.wrist) - s * 0.5 * fw, lay.wrist + 1.0)] +
+                        [(outer(y), y) for y in reversed(ys)])
+        guard = inter(guard, within)
+        paint(image, inter(grow(guard, 0.35), within), MN_GUARD_DARK)
+        light = ramp(outer(lay.elbow) if s < 0 else inner(lay.elbow), inner(lay.elbow) if s < 0 else outer(lay.elbow),
+                     120 if s < 0 else 0, 0 if s < 0 else 60)
+        shade(image, guard, MN_GUARD_DARK, MN_GUARD, MN_GUARD_LIT, light, reach=1.2)
+        paint(image, inter(band(lay.wrist - 2.0, lay.wrist - 1.1), guard), MN_GUARD_LIT)
+        # The sleeve's edge, and its shaded inside showing just under it.
+        cuff = [(inner(lay.elbow) - s * 0.4, lay.elbow - 0.3), (outer(lay.elbow) + s * 0.4, lay.elbow + 0.5)]
+        paint(image, inter(stroke([(x, y + 0.7) for x, y in cuff], 0.9), within), MN_INNER)
+        paint(image, inter(stroke(cuff, 0.5), within), MN_WHITE_DARK)
+
+
+def minato_front(body, name):
+    """South: the haori open down the front over the green vest and blue trousers, short sleeves over
+    grey forearm guards, the flame band at the hem; below it the legs in trousers, shin wraps and
+    sandals, the tape and kunai holster on his right thigh (the viewer's left)."""
+    w, c, top, h = body.width, body.centre, body.top, body.height
+    lay = Haori(body)
+    side = coat_sides(body, lay.hem, MN_FLARE, MN_FLARE)
+    haori = cloak_outline(side, top - 0.5, lay.hem)
+
+    def opening_half(y):
+        return 0.2 * w + 0.07 * w * smooth(top, lay.hem, y)
+    oys = steps(top - 12, lay.hem + 3)
+    opening = polygon([(c(y) - opening_half(y), y) for y in oys] + [(c(y) + opening_half(y), y) for y in reversed(oys)])
+    panels = minus(haori, opening)
+
+    # The collar stands up round the neck, open at the front; the head covers all but its outer edges
+    # beside the jaw. Sized to the neck, not the body: the same on every body type.
+    collars, faces = [], []
+    for s in (-1, 1):
+        one = polygon([(c(top) + s * 9, top + 12), (c(top) + s * 17, top + 13), (c(top) + s * 21.5, top + 5),
+                       (c(top) + s * 20.5, top - 3), (c(top) + s * 11, top - 1)])
+        collars.append(one)
+        faces.append(inter(one, half_of(lambda y: c(top) + s * 16, top - 12, top + 14, -s)))
+    collar = minus(union(*collars), opening)
+
+    under = body_outline(body)
+    gap = leg_gap(body)
+    silhouette = minus(union(panels, collar, under), gap)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    # The vest down to the waist: a zip down the middle, two scroll pouches each side on the chest,
+    # a darker band at its hem.
+    vest_end = body.waist - 0.8
+    vest = inter(under, band(0, vest_end))
+    shade(image, vest, MN_VEST_DARK, MN_VEST, MN_VEST_LIT, ellipse(c(top) - 0.2 * w, top + 12, 0.35 * w, 14)
+          .filter(ImageFilter.GaussianBlur(4 * U)), reach=1.5)
+    paint(image, inter(band(vest_end - 1.6, vest_end), vest), MN_VEST_DARK)
+    paint(image, inter(stroke([(c(y), y) for y in steps(top, vest_end)], 0.45), vest), MN_VEST_DARK)
+    pw = min(2.6, 0.085 * w)
+    py0, py1 = top + 0.2 * h, top + 0.35 * h
+    for s in (-1, 1):
+        for k in (0, 1):
+            x0 = c(py0) + s * (0.8 + k * (pw + 0.4))
+            pouch = polygon([(x0, py0), (x0 + s * pw, py0), (x0 + s * pw, py1), (x0, py1)])
+            paint(image, inter(grow(pouch, 0.3), vest), MN_VEST_DARK)
+            paint(image, inter(pouch, vest), MN_VEST_LIT)
+            paint(image, inter(stroke([(x0, py0 + 1.0), (x0 + s * pw, py0 + 1.0)], 0.35), vest), MN_VEST_DARK)
+    legs = minus(inter(under, band(vest_end, 128)), gap)
+    paint_legs(image, body, lay, legs, tape_side=-1)
+
+    # The haori, lit from the viewer's left as the vanilla bodies are.
+    light = inter(ramp(c(top) - w * 0.7, c(top) + w * 0.4, 150, 0), ellipse(c(top) - w * 0.3, top + 20, w * 0.45, 26)
+                  .filter(ImageFilter.GaussianBlur(6 * U)))
+    shade(image, union(panels, collar), MN_WHITE_DARK, MN_WHITE, MN_WHITE_LIT, light, reach=2.4)
+    paint(image, inter(union(*faces), collar), MN_INNER)
+    haori_arms(image, body, lay, side, panels)
+
+    # The flames, one run on each front panel from its outer edge to the opening.
+    for s in (-1, 1):
+        outer = side(lay.hem)[0 if s < 0 else 1]
+        paint_flames(image, outer, c(lay.hem) + s * opening_half(lay.hem), lambda x: lay.hem, lay.flames,
+                     inter(panels, half_of(c, top, 128, s)), phase=0 if s < 0 else 3)
+
+    # The front edges, and the red cord tying the two fronts across the chest.
+    for s in (-1, 1):
+        paint(image, inter(stroke([(c(y) + s * opening_half(y), y) for y in steps(top - 8, lay.hem + 1)], 0.55),
+                           grow(under, 0.4)), INK)
+    cy = top + 0.24 * h
+    paint(image, inter(stroke([(c(cy) - opening_half(cy) - 0.4, cy), (c(cy) + opening_half(cy) + 0.4, cy + 0.2)], 0.5),
+                       grow(vest, 0.5)), MN_CORD)
+    for s in (-1, 1):
+        paint(image, ellipse(c(cy) + s * (opening_half(cy) + 0.4), cy + 0.1, 0.75, 0.75), MN_CORD)
+
+    finish(image, silhouette, name)
+
+
+def minato_back(body, name):
+    """North: the stand collar over the nape, 四代目火影 in red down the back, flames right round the
+    hem; below it the shins in their wraps. Drawn over the head facing north, as vanilla shells are."""
+    w, c, top, h = body.width, body.centre, body.top, body.height
+    lay = Haori(body)
+    side = coat_sides(body, lay.hem, MN_FLARE, MN_FLARE)
+    left, right = side(lay.hem)
+
+    def hem_at(x):
+        return lay.hem + 0.9 * math.sin(math.pi * min(1.0, max(0.0, (x - left) / (right - left))))
+    ys = steps(top + 3, lay.hem)
+    bottom = [(x, hem_at(x)) for x in steps(left, right, 0.4)]
+    back = polygon([(side(y)[0], y) for y in ys] + bottom + [(side(y)[1], y) for y in reversed(ys)])
+
+    # The stand collar, sized to the neck, not the body: the same on every body type. Its rim is highest
+    # at the middle of the back and it flares out a little at the top.
+    cw = 16.0
+    cys = steps(0, 1, 0.05)
+    rim = [(c(top) - 0.9 * cw * math.cos(math.pi * t), top - 1.4 - 2.8 * math.sin(math.pi * t)) for t in cys]
+    collar = polygon([(c(top) - cw - 0.6, top + 8), (c(top) - 0.9 * cw - 0.4, top + 1)] + rim +
+                     [(c(top) + 0.9 * cw + 0.4, top + 1), (c(top) + cw + 0.6, top + 8),
+                      (side(top + 10)[1], top + 10), (side(top + 10)[0], top + 10)])
+    shoulders = polygon([(c(top) - cw - 0.6, top + 6), (side(top + 13)[0], top + 13),
+                         (side(top + 13)[1], top + 13), (c(top) + cw + 0.6, top + 6)])
+    haori = union(back, collar, shoulders)
+    gap = leg_gap(body)
+    legs = minus(inter(body_outline(body), band(lay.hem - 1, 128)), gap)
+    silhouette = minus(union(haori, legs), gap)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    paint_legs(image, body, lay, legs)
+    light = ellipse(c(top) - w * 0.15, top + 22, w * 0.42, 22).filter(ImageFilter.GaussianBlur(7 * U))
+    shade(image, haori, MN_WHITE_DARK, MN_WHITE, MN_WHITE_LIT, light, reach=3.0)
+    # The collar's inner face along its rim, and the seam where it meets the shoulders.
+    inner_rim = polygon([(x, y) for x, y in rim] + [(x, y + 2.4) for x, y in reversed(rim)])
+    paint(image, inter(inner_rim, haori), MN_INNER)
+    seam = [(c(top) - cw * math.cos(math.pi * t), top + 6.5 - 2.0 * math.sin(math.pi * t)) for t in cys]
+    paint(image, inter(stroke(seam, 0.5), haori), MN_WHITE_DARK)
+    haori_arms(image, body, lay, side, haori)
+
+    ktop = top + 8
+    paint(image, inter(kanji(c(ktop), ktop, kanji_size(body, lay, ktop)), shrink(haori, 0.8)), MN_KANJI)
+    paint_flames(image, left, right, hem_at, lay.flames, haori, phase=1)
+
+    finish(image, silhouette, name)
+
+
+def minato_side(body, name):
+    """East (facing right): the collar behind the neck, the open front showing a strip of vest and
+    trousers, the short sleeve and the grey forearm guard down the side, the flames along the hem;
+    below it the shins in their wraps."""
+    w, top, h = body.width, body.top, body.height
+    lay = Haori(body)
+    hem = lay.hem
+
+    def front(y):
+        return body.edges(y)[1] + PAD + 0.8 * smooth(body.waist, hem, y)
+
+    def back(y):
+        return body.edges(y)[0] - PAD - 2.8 * smooth(body.waist, hem, y) ** 1.2
+
+    x_front, x_back = front(hem), back(hem)
+
+    def hem_at(x):
+        t = min(1.0, max(0.0, (x - x_front) / (x_back - x_front)))
+        return hem + 1.0 * t + 0.5 * math.sin(math.pi * t)
+    hem_curve = [(x, hem_at(x)) for x in steps(x_front, x_back, 0.4)]
+    back_hem = hem_at(x_back)
+    outer = polygon([(front(y), y) for y in steps(top + 1, hem)] + hem_curve +
+                    [(back(y), y) for y in reversed(steps(top + 1, back_hem))])
+
+    # The collar standing up behind the neck, turned out at the top; on wide bodies it stays by the neck
+    # rather than at the back's edge.
+    cb = max(body.edges(top + 6)[0] - PAD - 2.5, body.centre(top) - 15.5)
+    collar_points = [(cb + 1.2, top + 9), (cb - 1.8, top - 3.5), (cb + 0.2, top - 6.5), (cb + 3.6, top - 6.1),
+                     (cb + 7.5, top - 2.5), (cb + 10.5, top + 4), (cb + 7, top + 10)]
+    collar = polygon(collar_points)
+    full = union(outer, collar)
+
+    # The open front: a strip of vest and trousers between the haori's front edge and the chest.
+    def open_x(y):
+        return front(y) - (3.2 if y < body.waist else 2.4 + 0.8 * smooth(body.waist, hem, y))
+    oys = steps(top + 7, hem + 1)
+    strip = polygon([(open_x(y), y) for y in oys] + [(front(y) + 1, y) for y in reversed(oys)])
+    torso = body_outline(body)
+    inner = inter(inter(strip, torso), full)
+    haori = minus(full, inner)
+    legs = inter(torso, band(hem - 1, 128))
+    silhouette = union(full, legs)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    vest_end = body.waist - 0.8
+    paint(image, inter(inner, band(0, vest_end)), MN_VEST)
+    paint(image, inter(inner, band(vest_end - 1.6, vest_end)), MN_VEST_DARK)
+    paint_legs(image, body, lay, union(inter(inner, band(vest_end, 128)), legs))
+
+    light = ramp(body.edges(top + 20)[0], body.edges(top + 20)[1] + 3, 0, 140)
+    shade(image, haori, MN_WHITE_DARK, MN_WHITE, MN_WHITE_LIT, light, reach=2.4)
+    # Collar: its inner face at the top.
+    face = inter(polygon([(cb - 1.8, top - 3.5), (cb + 0.2, top - 6.5), (cb + 3.6, top - 6.1), (cb + 7.5, top - 2.5),
+                          (cb + 10.5, top + 4), (cb + 7.2, top + 3), (cb + 4.5, top - 1.5), (cb + 0.6, top - 1.8)]),
+                 haori)
+    paint(image, face, MN_INNER)
+
+    # The arm down the side: the short sleeve to the elbow, the guard below it to the wrist.
+    def arm(y):
+        return body.centre(y) - 1.2 - 0.9 * smooth(top, lay.wrist, y)
+
+    def spread(y):
+        return 3.2 + 0.8 * smooth(top + 12, lay.elbow, y)
+    sl = [(arm(y) - spread(y) + 1.2 * smooth(top + 10, top + 16, y), y) for y in steps(top + 10, lay.elbow)]
+    sr = [(arm(y) + spread(y), y) for y in steps(top + 10, lay.elbow)]
+    for line in (sl, sr):
+        paint(image, inter(stroke(line, 0.45), haori), MN_WHITE_DARK)
+    gys = steps(lay.elbow, lay.wrist)
+    guard = polygon([(arm(y) - 2.3, y) for y in gys] + [(arm(lay.wrist), lay.wrist + 1.2)] +
+                    [(arm(y) + 2.3, y) for y in reversed(gys)])
+    guard = inter(guard, haori)
+    paint(image, inter(grow(guard, 0.35), haori), MN_GUARD_DARK)
+    shade(image, guard, MN_GUARD_DARK, MN_GUARD, MN_GUARD_LIT, ramp(arm(lay.wrist) - 2, arm(lay.wrist) + 2.5, 0, 90),
+          reach=1.2)
+    paint(image, inter(band(lay.wrist - 2.0, lay.wrist - 1.1), guard), MN_GUARD_LIT)
+    cuff = [sl[-1], sr[-1]]
+    paint(image, inter(stroke([(x, y + 0.7) for x, y in cuff], 0.9), haori), MN_INNER)
+    paint(image, inter(stroke(cuff, 0.5), haori), MN_WHITE_DARK)
+
+    paint_flames(image, x_back, x_front, hem_at, lay.flames, haori, phase=2)
+    paint(image, inter(stroke([(open_x(y), y) for y in steps(top + 7, hem + 1)], 0.55), grow(inner, 0.4)), INK)
+
+    finish(image, silhouette, name)
+
+
+# ---- Minato's forehead protector ----
+
+MN_BAND, MN_BAND_LIT, MN_BAND_DARK = (40, 56, 112), (72, 94, 152), (20, 28, 62)
+MN_PLATE, MN_PLATE_LIT, MN_PLATE_DARK = (184, 192, 204), (238, 242, 248), (110, 118, 132)
+MN_ENGRAVE = (58, 64, 78)
+# In head space. Face-on: the band round the forehead just above the brows (the eyes are at y 67-72 on
+# every head type), its ends 1 unit inside the vanilla outline (41-87 at y 56-64) so it also sits on
+# Facial Animation's narrower heads; the plate over the middle of the forehead. The band's ends sit
+# BAND_SAG lower than its middle, as a band round a head does seen from a little above.
+BAND_TOP, BAND_BOTTOM, BAND_HALF, BAND_SAG = 57.4, 61.6, 21.5, 1.0
+PLATE_TOP, PLATE_BOTTOM, PLATE_HALF = 54.6, 62.4, 10.5
+
+
+def band_sag(x):
+    return BAND_SAG * ((x - HEAD_CX) / BAND_HALF) ** 2
+
+
+def leaf_symbol(cx, cy, size, width):
+    """The Leaf village symbol, `size` wide: an arc from a short tick at the upper right over the top
+    to a point at the lower left, and from that point a spiral round the bottom winding in to the
+    middle."""
+    k = size
+    ox, oy = cx + 0.1 * k, cy
+    r = 0.38 * k
+
+    def at(a, rr):
+        return ox + rr * math.cos(math.radians(a)), oy + rr * math.sin(math.radians(a))
+    tip = (ox - r - 0.2 * k, oy + 0.34 * k)
+    tick = [(at(-40, r)[0] + 0.12 * k, at(-40, r)[1] - 0.12 * k)]
+    arc = [at(a, r) for a in steps(-40, -180, 4)]
+    outer = tick + arc + [(ox - r - 0.06 * k, oy + 0.18 * k), tip]
+    spiral = [tip] + [at(a, 0.34 * k - (0.3 * k) * (135 - a) / 555) for a in steps(135, -420, 5)]
+    return union(stroke(outer, width), stroke(spiral, width))
+
+
+def headband_front(name):
+    """South: the blue band across the forehead, the steel plate on it with a rivet in each corner and
+    the Leaf symbol engraved in the middle."""
+    cx = HEAD_CX
+    xs = steps(cx - BAND_HALF, cx + BAND_HALF, 0.4)
+    cloth = polygon([(x, BAND_TOP + band_sag(x)) for x in xs] + [(x, BAND_BOTTOM + band_sag(x)) for x in reversed(xs)])
+    pxs = steps(cx - PLATE_HALF, cx + PLATE_HALF, 0.4)
+    plate = grow(shrink(polygon([(x, PLATE_TOP + band_sag(x)) for x in pxs] +
+                                [(x, PLATE_BOTTOM + band_sag(x)) for x in reversed(pxs)]), 0.8), 0.8)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    shade(image, cloth, MN_BAND_DARK, MN_BAND, MN_BAND_LIT, ramp(cx - BAND_HALF, cx + BAND_HALF * 0.3, 140, 0), reach=1.2)
+    light = inter(ramp(cx - PLATE_HALF, cx + PLATE_HALF * 0.5, 200, 0), band(0, PLATE_TOP + 3.5))
+    shade(image, plate, MN_PLATE_DARK, MN_PLATE, MN_PLATE_LIT, light, reach=1.2)
+    for sx in (-1, 1):
+        for y in (PLATE_TOP + 1.5, PLATE_BOTTOM - 1.5):
+            x = cx + sx * (PLATE_HALF - 1.5)
+            paint(image, ellipse(x, y + band_sag(x), 0.5, 0.5), MN_PLATE_DARK)
+    paint(image, leaf_symbol(cx, (PLATE_TOP + PLATE_BOTTOM) / 2 - 0.2, 5.4, 0.5), MN_ENGRAVE)
+    finish(image, union(cloth, plate), name, outline_width=0.8)
+
+
+def headband_tails(knot, ends, width):
+    """The two loose ends hanging from the knot, cut square at the bottom."""
+    tails = []
+    kx, ky = knot
+    for ex, ey in ends:
+        dx, dy = ex - kx, ey - ky
+        n = math.hypot(dx, dy)
+        nx, ny = -dy / n * width / 2, dx / n * width / 2
+        tails.append(polygon([(kx - nx * 0.8, ky - ny * 0.8), (kx + nx * 0.8, ky + ny * 0.8),
+                              (ex + nx, ey + ny), (ex - nx, ey - ny)]))
+    return tails
+
+
+def headband_side(name):
+    """East: the band round the head from the knot at the back to the plate on the forehead, the plate
+    seen edge-on standing just off the face, the two loose ends hanging from the knot. West is this
+    mirrored by the game: the knot is at the back of the head, so both sides look alike."""
+    back_x, front_x, drop = 40.2, 88.0, 1.2  # the band is a little lower at the back
+
+    def top_at(x):
+        return BAND_TOP + drop * (front_x - x) / (front_x - back_x)
+    xs = steps(back_x, front_x, 0.4)
+    cloth = polygon([(x, top_at(x)) for x in xs] + [(x, top_at(x) + BAND_BOTTOM - BAND_TOP) for x in reversed(xs)])
+    # The plate's side: from where it bends round the forehead to its front edge, bowed forward.
+    pys = steps(PLATE_TOP, PLATE_BOTTOM, 0.4)
+    mid = (PLATE_TOP + PLATE_BOTTOM) / 2
+    plate = polygon([(82.0, PLATE_TOP + 0.3)] +
+                    [(88.6 + 0.4 * (1 - ((y - mid) / (mid - PLATE_TOP)) ** 2), y) for y in pys] +
+                    [(82.0, PLATE_BOTTOM - 0.1)])
+    knot_at = (back_x - 0.6, top_at(back_x) + 2.4)
+    knot = ellipse(*knot_at, 1.7, 1.9)
+    tails = headband_tails(knot_at, [(33.8, 72.5), (36.8, 74.5)], 2.3)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    for tail in tails:
+        shade(image, tail, MN_BAND_DARK, MN_BAND, MN_BAND, reach=0.8)
+    paint(image, inter(stroke([(knot_at[0] - 0.4, knot_at[1] + 1), (35.4, 72.0)], 0.3), tails[0]), MN_BAND_DARK)
+    shade(image, cloth, MN_BAND_DARK, MN_BAND, MN_BAND_LIT, ramp(back_x, front_x, 0, 120), reach=1.2)
+    shade(image, knot, MN_BAND_DARK, MN_BAND, MN_BAND_LIT, reach=0.8)
+    shade(image, plate, MN_PLATE_DARK, MN_PLATE, MN_PLATE_LIT, ramp(82, 89, 0, 190), reach=1.0)
+    for y in (PLATE_TOP + 1.5, PLATE_BOTTOM - 1.5):
+        paint(image, ellipse(83.8, y, 0.5, 0.5), MN_PLATE_DARK)
+    finish(image, union(cloth, plate, knot, *tails), name, outline_width=0.8)
+
+
+def headband_back(name):
+    """North: the band across the back of the head, the knot in the middle, the two loose ends hanging
+    from it (the haori's collar covers their tips)."""
+    cx = HEAD_CX
+    xs = steps(cx - BAND_HALF, cx + BAND_HALF, 0.4)
+    cloth = polygon([(x, BAND_TOP + band_sag(x)) for x in xs] + [(x, BAND_BOTTOM + band_sag(x)) for x in reversed(xs)])
+    knot_at = (cx + 0.4, (BAND_TOP + BAND_BOTTOM) / 2 + 0.3)
+    knot = ellipse(*knot_at, 2.0, 1.9)
+    tails = headband_tails(knot_at, [(cx - 3.2, 74.5), (cx + 2.8, 76.0)], 2.4)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    for tail in tails:
+        shade(image, tail, MN_BAND_DARK, MN_BAND, MN_BAND, reach=0.8)
+    shade(image, cloth, MN_BAND_DARK, MN_BAND, MN_BAND_LIT, ramp(cx - BAND_HALF, cx + BAND_HALF * 0.3, 120, 0), reach=1.2)
+    shade(image, knot, MN_BAND_DARK, MN_BAND, MN_BAND_LIT, reach=0.8)
+    paint(image, inter(stroke([(knot_at[0] - 1.2, knot_at[1] - 0.8), (knot_at[0] + 1.0, knot_at[1] + 0.9)], 0.3), knot),
+          MN_BAND_DARK)
+    finish(image, union(cloth, knot, *tails), name, outline_width=0.8)
+
+
 def main():
     for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
         vergil_front(Body(BODIES[(body, "south")]), f"VergilCoat_{body}_south.png")
@@ -1369,6 +1917,13 @@ def main():
     piercings_front("PainPiercings_south.png")
     piercings_side("PainPiercings_east.png")
     piercings_back("PainPiercings_north.png")
+    for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
+        minato_front(Body(BODIES[(body, "south")]), f"MinatoHaori_{body}_south.png")
+        minato_side(Body(BODIES[(body, "east")]), f"MinatoHaori_{body}_east.png")
+        minato_back(Body(BODIES[(body, "north")]), f"MinatoHaori_{body}_north.png")
+    headband_front("MinatoHeadband_south.png")
+    headband_side("MinatoHeadband_east.png")
+    headband_back("MinatoHeadband_north.png")
 
 
 if __name__ == "__main__":
