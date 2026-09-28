@@ -63,6 +63,18 @@ Echo/Costume/MinatoHeadband_<facing>.png
     plate with a rivet in each corner and the Leaf symbol engraved on it; the knot and two loose ends
     at the back.
 
+Echo/Costume/SasukeOutfit_<Body>_<facing>.png
+    256 px, the same 5 body types x 4 facings: Sasuke's outfit from the end of the Fourth War, from
+    the official art. A lavender-grey top zipped up to a high collar, short sleeves, the Uchiha crest
+    (traced from the wiki's Uchiha_Symbol.svg) on the back under the collar. The arms are not drawn,
+    as on the other costumes: the top covers the body, with a seam to the elbow for the short sleeve.
+    A blue cloth from the waist to the knee, folded over at the top, with the thick purple rope wound
+    round it twice and knotted a little to his right of the middle: two frayed ends hang down his
+    right thigh and a big loop down his left. Below the knee the dark trousers bloused over grey shin
+    wraps, and sandals. West is its own picture (his left side shows the loop, the right side the
+    ends), stored facing right because the game mirrors every west picture. The art's colours are
+    pushed toward blue so they do not read beige and pink in the game's warm light.
+
 The costume is fitted to the vanilla body outlines in BODIES, measured from the game's
 Naked_<Body>_<facing> textures (outer edge of the black outline, every 2 rows, on the 128 px
 sheet). Every length below is in those 128 px units; the picture is drawn 8x larger and reduced.
@@ -1895,6 +1907,427 @@ def headband_back(name):
     finish(image, union(cloth, knot, *tails), name, outline_width=0.8)
 
 
+# ---- Sasuke's Fourth War outfit ----
+
+# The game's light is warm: the art's lavender-grey, blue and purple are pushed toward blue so they
+# do not read beige and pink in it (as Vergil's coat blue was).
+SK_SHIRT, SK_SHIRT_LIT, SK_SHIRT_DARK = (156, 160, 198), (192, 196, 228), (100, 104, 140)
+SK_ZIP = (228, 228, 240)
+SK_CLOTH, SK_CLOTH_LIT, SK_CLOTH_DARK = (78, 92, 158), (112, 128, 194), (42, 48, 92)
+SK_ROPE, SK_ROPE_LIT, SK_ROPE_DARK = (124, 108, 176), (162, 148, 212), (70, 58, 116)
+SK_NAVY, SK_NAVY_LIT, SK_NAVY_DARK = (49, 52, 78), (74, 80, 114), (27, 29, 46)  # trousers
+SK_WRAP, SK_WRAP_LIT, SK_WRAP_DARK = (92, 92, 102), (124, 124, 134), (56, 56, 66)
+SK_SANDAL = (34, 34, 42)
+SK_CREST_RED, SK_CREST_RED_DARK, SK_CREST_WHITE = (214, 30, 34), (150, 18, 24), (244, 242, 238)
+SK_FLARE = 1.0  # the waist cloth hangs nearly straight
+
+# The Uchiha crest, from the wiki's Uchiha_Symbol.svg (150 x 200, y down): a red dome whose lower edge
+# arches up, a gap, a white bowl under a parallel arch, and the handle, all outlined in black. Cubic
+# Béziers (start, control, control, end); a straight edge has its controls on its ends.
+CREST_RED = [((75.0, 2.86), (35.18, 2.86), (2.86, 34.40), (2.86, 73.26)),
+             ((2.86, 73.26), (2.86, 79.38), (3.66, 85.31), (5.16, 90.98)),
+             ((5.16, 90.98), (21.63, 75.02), (46.80, 64.81), (75.0, 64.81)),
+             ((75.0, 64.81), (103.20, 64.81), (128.37, 75.02), (144.83, 90.98)),
+             ((144.83, 90.98), (146.34, 85.31), (147.14, 79.38), (147.14, 73.26)),
+             ((147.14, 73.26), (147.14, 34.40), (114.82, 2.86), (75.0, 2.86))]
+CREST_WHITE = [((75.0, 77.38), (47.79, 77.38), (24.03, 88.96), (11.25, 106.16)),
+               ((11.25, 106.16), (21.86, 125.69), (41.59, 139.76), (64.91, 142.95)),
+               ((64.91, 142.95), (64.91, 142.95), (64.91, 197.14), (64.91, 197.14)),
+               ((64.91, 197.14), (64.91, 197.14), (85.09, 197.14), (85.09, 197.14)),
+               ((85.09, 197.14), (85.09, 197.14), (85.09, 142.95), (85.09, 142.95)),
+               ((85.09, 142.95), (108.41, 139.76), (128.14, 125.69), (138.75, 106.16)),
+               ((138.75, 106.16), (125.97, 88.96), (102.21, 77.38), (75.0, 77.38))]
+CREST_W, CREST_H, CREST_LINE = 150.0, 200.0, 5.72
+
+
+def bezier(segments, at):
+    points = []
+    for p0, p1, p2, p3 in segments:
+        for t in steps(0, 1, 0.05):
+            u = 1 - t
+            points.append(at(u ** 3 * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t ** 3 * p3[0],
+                             u ** 3 * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t ** 3 * p3[1]))
+    return points
+
+
+def paint_crest(image, cx, top, width):
+    """The Uchiha crest `width` units wide with its top at `top`, outlined as in the symbol."""
+    s = width / CREST_W
+
+    def at(x, y):
+        return cx + (x - CREST_W / 2) * s, top + y * s
+    red, white = bezier(CREST_RED, at), bezier(CREST_WHITE, at)
+    shade(image, polygon(red), SK_CREST_RED_DARK, SK_CREST_RED, SK_CREST_RED, reach=0.8)
+    paint(image, polygon(white), SK_CREST_WHITE)
+    line = max(0.3, CREST_LINE * s)
+    paint(image, union(stroke(red, line), stroke(white, line)), INK)
+
+
+def along(path, pitch):
+    """Points every `pitch` units along a polyline, each with its unit tangent."""
+    out, carry = [], pitch / 2
+    for (x0, y0), (x1, y1) in zip(path, path[1:]):
+        seg = math.hypot(x1 - x0, y1 - y0)
+        if seg == 0:
+            continue
+        tx, ty = (x1 - x0) / seg, (y1 - y0) / seg
+        d = carry
+        while d < seg:
+            out.append((x0 + tx * d, y0 + ty * d, tx, ty))
+            d += pitch
+        carry = d - seg
+    return out
+
+
+def lines(segments, width):
+    """Many short strokes in one mask."""
+    mask = blank()
+    draw = ImageDraw.Draw(mask)
+    for (x0, y0), (x1, y1) in segments:
+        draw.line([(x0 * U, y0 * U), (x1 * U, y1 * U)], fill=255, width=max(1, round(width * U)))
+    return mask
+
+
+def paint_rope(image, path, width, within=None):
+    """The thick purple rope along `path`: twisted strands, shaded round, lit along its top, with a
+    slanting groove between the strands every 0.62 x its width. Returns its mask."""
+    mask = stroke(path, width)
+    if within is not None:
+        mask = inter(mask, within)
+    light = stroke([(x, y - 0.22 * width) for x, y in path], 0.3 * width).filter(ImageFilter.GaussianBlur(0.1 * width * U))
+    shade(image, mask, SK_ROPE_DARK, SK_ROPE, SK_ROPE_LIT, light, reach=0.7 * width)
+    half = 0.5 * width
+    # Each groove crosses the rope, leaning along it by 0.45 of the half width.
+    grooves = [((x + ty * half - tx * 0.45 * half, y - tx * half - ty * 0.45 * half),
+                (x - ty * half + tx * 0.45 * half, y + tx * half + ty * 0.45 * half))
+               for x, y, tx, ty in along(path, 0.62 * width)]
+    paint(image, inter(lines(grooves, 0.16 * width + 0.12), shrink(mask, 0.12)), SK_ROPE_DARK)
+    return mask
+
+
+def loop_path(top, length, width, lean):
+    """A loop of rope hanging from the knot at `top`: an oval `length` long, narrow where it leaves the
+    knot, its bottom moved `lean` sideways."""
+    x0, y0 = top
+    points = []
+    for t in steps(0, 1, 0.02):
+        a = 2 * math.pi * t
+        u = (1 - math.cos(a)) / 2  # 0 at the knot, 1 at the bottom
+        points.append((x0 + lean * u + math.sin(a) * width / 2 * min(1.0, 0.3 + 1.4 * u), y0 + length * u))
+    return points
+
+
+def paint_end(image, top, length, lean, width):
+    """A loose end hanging from the knot `length` down, swinging `lean` sideways, bound near its tip
+    and frayed below into a tassel as long as the rope is thick. Returns its mask."""
+    tassel = 1.2 * width
+    path = [(top[0] + lean * math.sin(0.5 * math.pi * t), top[1] + (length - tassel) * t) for t in steps(0, 1, 0.05)]
+    rope = paint_rope(image, path, width)
+    x1, y1 = path[-1]
+    y2 = y1 + tassel
+    half0, half1 = 0.45 * width, 0.6 * width
+    fringe = [(x1 + half1 - 2 * half1 * i / 6, y2 - (0.3 * width if i % 2 else 0)) for i in range(7)]
+    tip = polygon([(x1 - half0, y1 - 0.3), (x1 + half0, y1 - 0.3)] + fringe)
+    shade(image, tip, SK_ROPE_DARK, SK_ROPE, SK_ROPE_LIT, ramp(x1 - half1, x1 + half1, 160, 0), reach=0.35 * width)
+    strands = [((x1 + (k - 0.5) * 1.5 * half0, y1 + 0.3 * width), (x1 + (k - 0.5) * 2 * half1, y2 - 0.35 * width))
+               for k in (0.2, 0.4, 0.6, 0.8)]
+    paint(image, inter(lines(strands, 0.1 * width + 0.1), tip), SK_ROPE_DARK)
+    paint(image, inter(band(y1 - 0.25 * width, y1 + 0.1 * width), grow(tip, 0.2)), SK_ROPE_DARK)
+    return union(rope, tip)
+
+
+def bowed(a, b, bend):
+    """A curve from a to b bowed `bend` units to the left of the line from a to b."""
+    (ax, ay), (bx, by) = a, b
+    n = math.hypot(bx - ax, by - ay)
+    cx, cy = (ax + bx) / 2 + (by - ay) / n * bend, (ay + by) / 2 - (bx - ax) / n * bend
+    return [((1 - t) ** 2 * ax + 2 * (1 - t) * t * cx + t * t * bx, (1 - t) ** 2 * ay + 2 * (1 - t) * t * cy + t * t * by)
+            for t in steps(0, 1, 0.05)]
+
+
+def paint_knot(image, kx, ky, rw, squeeze=1.0):
+    """The knot, a wad of rope about 2.4 x its thickness across (squeeze narrows it, for a profile),
+    two twisted turns crossing over it. Returns its mask."""
+    rx, ry = 1.2 * rw * squeeze, 1.25 * rw
+    base = ellipse(kx, ky, rx, ry)
+    shade(image, base, SK_ROPE_DARK, SK_ROPE, SK_ROPE_LIT,
+          ellipse(kx - 0.3 * rx, ky - 0.4 * ry, 0.6 * rx, 0.5 * ry).filter(ImageFilter.GaussianBlur(0.3 * rw * U)),
+          reach=0.5 * rw)
+    turns = [paint_rope(image, bowed((kx + ax * rx, ky + ay * ry), (kx + bx * rx, ky + by * ry), bend * ry), 0.8 * rw,
+                        within=grow(base, 0.3))
+             for (ax, ay), (bx, by), bend in (((-0.95, -0.5), (0.9, 0.4), 0.3), ((-0.75, 0.7), (0.8, -0.55), -0.25))]
+    return union(base, *turns)
+
+
+def paint_rope_turns(image, x_left, x_right, top, width, sag, tilt=0.0):
+    """The two turns of rope round the waist from x_left to x_right, the lower under the upper, sagging
+    `sag` in the middle (a band round the body seen from a little above) and dropping `tilt` toward
+    x_right. Returns the mask."""
+    masks = []
+    mid, half = (x_left + x_right) / 2, (x_right - x_left) / 2
+    for k in (1, 0):
+        y0 = top + width * (0.5 + 0.9 * k)
+        path = [(x, y0 + sag * (1 - ((x - mid) / half) ** 2) + tilt * (x - x_left) / (x_right - x_left))
+                for x in steps(x_left, x_right, 0.4)]
+        masks.append(paint_rope(image, path, width))
+    return union(*masks)
+
+
+def paint_fold(image, lay, fold, light=None):
+    """The top of the waist cloth, folded over above the rope: the cloth with a lit rim along its top."""
+    shade(image, fold, SK_CLOTH_DARK, SK_CLOTH, SK_CLOTH_LIT, light, reach=0.8)
+    paint(image, inter(band(lay.fold, lay.fold + 0.7), fold), SK_CLOTH_LIT)
+
+
+def sasuke_legs(image, lay, legs, light=None):
+    """Below the waist cloth: the trousers bloused over the top of the shin wraps, the grey wraps and
+    the dark sandals, cut to `legs`. Returns the mask they cover (the blouse stands out a little)."""
+    blouse = inter(grow(inter(legs, band(lay.wraps - 2.4, lay.wraps + 0.6)), 0.7), band(lay.wraps - 3.0, lay.wraps + 1.3))
+    wraps = inter(legs, band(lay.wraps, lay.sandal))
+    shade(image, wraps, SK_WRAP_DARK, SK_WRAP, SK_WRAP_LIT, light, reach=1.2)
+    for k in range(3):
+        y = lay.wraps + 1.2 + k * (lay.sandal - lay.wraps - 1.2) / 3
+        paint(image, inter(stroke([(0, y + 0.4), (128, y - 0.4)], 0.3), wraps), SK_WRAP_DARK)
+    paint(image, inter(legs, band(lay.sandal, 128)), SK_SANDAL)
+    trousers = union(inter(legs, band(0, lay.wraps)), blouse)
+    shade(image, trousers, SK_NAVY_DARK, SK_NAVY, SK_NAVY_LIT, light, reach=1.4)
+    paint(image, inter(stroke([(0, lay.wraps + 0.9), (128, lay.wraps + 0.9)], 0.45), blouse), SK_NAVY_DARK)
+    return union(legs, blouse)
+
+
+class Outfit:
+    """What the three facings share, from the official art: the waist cloth folded over at the top,
+    the rope round it twice (each turn 14 % of the waist's width), the cloth to the knee, then the
+    bloused trousers, shin wraps and sandals (the heights of Minato's haori, which also ends at the
+    knee). The arms are not drawn, as on the other costumes: the top covers the body, and a seam from
+    each shoulder to the elbow marks the short sleeve."""
+
+    def __init__(self, body):
+        lay = Haori(body)
+        self.elbow, self.hem, self.wraps, self.sandal = lay.elbow, lay.hem, lay.wraps, lay.sandal
+        self.rope_w = min(4.6, 0.14 * body.width)
+        self.fold = body.waist - 2.8  # the top of the waist cloth, folded over above the rope
+        self.rope = body.waist - 0.6  # the top of the rope
+        self.knot = self.rope + 0.95 * self.rope_w  # the knot's middle, between the two turns
+        self.skirt = self.rope + 2 * self.rope_w  # below the rope: the cloth's folds start here
+        self.fall = self.hem - self.knot  # from the knot to the knee: the ends and the loop hang down it
+
+
+def sleeve_seams_to_elbow(image, body, lay, side, within, top_y):
+    """South and north: a seam from each shoulder down to the elbow, where the short sleeve ends."""
+    w = body.width
+    for s in (-1, 1):
+        x = lambda y, s=s: side(y)[1 if s > 0 else 0] - s * min(4.2, 0.2 * w)
+        paint(image, inter(stroke([(x(y), y) for y in steps(top_y, lay.elbow)], 0.45), within), SK_SHIRT_DARK)
+
+
+def sasuke_front(body, name):
+    """South: the grey top zipped to its high collar; the blue cloth from the waist to the knee, folded
+    over at the top and open over the trousers just right of the middle; the purple rope round it
+    twice, knotted a little to his right of the middle, two frayed ends hanging from the knot down his
+    right thigh (the viewer's left) and a big loop down his left; below, the bloused trousers, shin
+    wraps and sandals."""
+    w, c, top, h = body.width, body.centre, body.top, body.height
+    lay = Outfit(body)
+    rw = lay.rope_w
+    side = coat_sides(body, lay.hem, SK_FLARE, SK_FLARE)
+
+    shirt = cloak_outline(side, top - 0.5, lay.fold + 0.5)
+    # The high collar stands up round the neck, open at the throat; the head covers all but its outer
+    # edges beside the jaw. Sized to the neck, as Minato's: the same on every body type.
+    collars, faces = [], []
+    for s in (-1, 1):
+        one = polygon([(c(top) + s * 9, top + 12), (c(top) + s * 17, top + 13), (c(top) + s * 21.5, top + 5),
+                       (c(top) + s * 20.5, top - 3), (c(top) + s * 11, top - 1)])
+        collars.append(one)
+        faces.append(inter(one, half_of(lambda y: c(top) + s * 16, top - 12, top + 14, -s)))
+    collar = union(*collars)
+
+    fold = cloak_outline(side, lay.fold, lay.rope + rw)
+    cloth = cloak_outline(side, lay.rope + rw, lay.hem)
+    gap = leg_gap(body)
+    legs = minus(inter(body_outline(body), band(lay.hem - 1, 128)), gap)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    legs = sasuke_legs(image, lay, legs)
+
+    light = inter(ramp(c(top) - w * 0.7, c(top) + w * 0.4, 150, 0), ellipse(c(top) - w * 0.3, top + 20, w * 0.45, 26)
+                  .filter(ImageFilter.GaussianBlur(6 * U)))
+    shade(image, union(shirt, collar), SK_SHIRT_DARK, SK_SHIRT, SK_SHIRT_LIT, light, reach=2.4)
+    paint(image, inter(union(*faces), collar), SK_SHIRT_DARK)
+    # The zip from the collar to the waist.
+    zip_line = [(c(y), y) for y in steps(top + 2, lay.fold)]
+    paint(image, inter(stroke(zip_line, 0.8), shirt), SK_SHIRT_DARK)
+    paint(image, inter(stroke(zip_line, 0.32), shirt), SK_ZIP)
+    sleeve_seams_to_elbow(image, body, lay, side, shirt, top + 7)
+
+    # The cloth: two panels meeting under the knot, the trousers showing between them lower down; the
+    # panel on the viewer's right shows its paler lining along its edge.
+    shade(image, cloth, SK_CLOTH_DARK, SK_CLOTH, SK_CLOTH_LIT,
+          inter(ramp(c(lay.hem) - w * 0.7, c(lay.hem) + w * 0.5, 120, 0), cloth), reach=2.0)
+    apex = (c(lay.knot) + 0.03 * w, lay.knot + 1.2 * rw)
+    left, right = (c(lay.hem) - 0.05 * w, lay.hem + 2), (c(lay.hem) + 0.2 * w, lay.hem + 2)
+    opening = inter(polygon([apex, right, left]), cloth)
+    shade(image, opening, SK_NAVY_DARK, SK_NAVY, SK_NAVY, reach=1.0)
+    paint(image, inter(stroke([apex, left], 0.45), cloth), SK_CLOTH_DARK)
+    paint(image, inter(stroke([(x + 0.6, y) for x, y in (apex, right)], 0.55), cloth), SK_CLOTH_LIT)
+    paint(image, inter(stroke([apex, right], 0.5), cloth), INK)
+    for x0, x1 in ((c(lay.skirt) + 0.36 * w, c(lay.hem) + 0.4 * w), (c(lay.skirt) - 0.24 * w, c(lay.hem) - 0.28 * w),
+                   (c(lay.skirt) - 0.42 * w, c(lay.hem) - 0.46 * w)):
+        paint(image, inter(stroke([(x0, lay.skirt + 1), (x1, lay.hem - 0.5)], 0.4), minus(shrink(cloth, 0.6), opening)),
+              SK_CLOTH_DARK)
+    paint_fold(image, lay, fold)
+
+    rope = paint_rope_turns(image, side(lay.rope)[0] + 0.4, side(lay.rope)[1] - 0.4, lay.rope, rw, 0.7)
+    kx = c(lay.knot) - 0.06 * w
+    tie = union(paint_rope(image, loop_path((kx + 0.55 * rw, lay.knot + 0.35 * rw), 0.62 * lay.fall, 2.4 * rw, 0.12 * w),
+                           0.85 * rw),
+                paint_end(image, (kx - 0.5 * rw, lay.knot + 0.7 * rw), lay.hem + 0.8 - lay.knot - 0.7 * rw, -0.16 * w, 0.95 * rw),
+                paint_end(image, (kx, lay.knot + 0.8 * rw), lay.hem - 0.6 - lay.knot - 0.8 * rw, -0.02 * w, 0.9 * rw),
+                paint_knot(image, kx, lay.knot, rw))
+
+    finish(image, union(shirt, collar, fold, cloth, legs, rope, tie), name)
+
+
+def sasuke_back(body, name):
+    """North: the high collar over the nape, the Uchiha crest just under it, the plain back of the top,
+    the cloth folded over at the waist, the rope round it twice (the knot is in front), the closed
+    cloth to the knee and the legs below. Drawn over the head facing north, as Minato's."""
+    w, c, top, h = body.width, body.centre, body.top, body.height
+    lay = Outfit(body)
+    rw = lay.rope_w
+    side = coat_sides(body, lay.hem, SK_FLARE, SK_FLARE)
+
+    ys = steps(top + 3, lay.fold + 0.5)
+    back = polygon([(side(y)[0], y) for y in ys] + [(side(y)[1], y) for y in reversed(ys)])
+    # The high collar and the shoulders, as on Minato's haori: sized to the neck, its rim highest at
+    # the middle of the back.
+    cw = 16.0
+    cys = steps(0, 1, 0.05)
+    rim = [(c(top) - 0.9 * cw * math.cos(math.pi * t), top - 1.4 - 2.8 * math.sin(math.pi * t)) for t in cys]
+    collar = polygon([(c(top) - cw - 0.6, top + 8), (c(top) - 0.9 * cw - 0.4, top + 1)] + rim +
+                     [(c(top) + 0.9 * cw + 0.4, top + 1), (c(top) + cw + 0.6, top + 8),
+                      (side(top + 10)[1], top + 10), (side(top + 10)[0], top + 10)])
+    shoulders = polygon([(c(top) - cw - 0.6, top + 6), (side(top + 13)[0], top + 13),
+                         (side(top + 13)[1], top + 13), (c(top) + cw + 0.6, top + 6)])
+    shirt = union(back, collar, shoulders)
+
+    fold = cloak_outline(side, lay.fold, lay.rope + rw)
+    cloth = cloak_outline(side, lay.rope + rw, lay.hem)
+    gap = leg_gap(body)
+    legs = minus(inter(body_outline(body), band(lay.hem - 1, 128)), gap)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    legs = sasuke_legs(image, lay, legs)
+
+    light = ellipse(c(top) - w * 0.15, top + 22, w * 0.42, 22).filter(ImageFilter.GaussianBlur(7 * U))
+    shade(image, shirt, SK_SHIRT_DARK, SK_SHIRT, SK_SHIRT_LIT, light, reach=3.0)
+    inner_rim = polygon([(x, y) for x, y in rim] + [(x, y + 2.4) for x, y in reversed(rim)])
+    paint(image, inter(inner_rim, shirt), SK_SHIRT_DARK)
+    seam = [(c(top) - cw * math.cos(math.pi * t), top + 6.5 - 2.0 * math.sin(math.pi * t)) for t in cys]
+    paint(image, inter(stroke(seam, 0.5), shirt), SK_SHIRT_DARK)
+    sleeve_seams_to_elbow(image, body, lay, side, shirt, top + 9)
+    # The crest just under the collar, as large as the back allows above the folded cloth.
+    crest_w = min(0.3 * w + 1.5, (lay.fold - top - 11) * CREST_W / CREST_H)
+    paint_crest(image, c(top + 12), top + 9.5, crest_w)
+
+    shade(image, cloth, SK_CLOTH_DARK, SK_CLOTH, SK_CLOTH_LIT,
+          inter(ramp(c(lay.hem) - w * 0.6, c(lay.hem) + w * 0.4, 110, 0), cloth), reach=2.0)
+    for k in (-0.3, 0.02, 0.32):
+        x0 = c(lay.skirt) + k * w
+        paint(image, inter(stroke([(x0, lay.skirt + 1), (x0 + k * 3, lay.hem - 0.5)], 0.4), shrink(cloth, 0.6)),
+              SK_CLOTH_DARK)
+    paint_fold(image, lay, fold)
+    rope = paint_rope_turns(image, side(lay.rope)[0] + 0.4, side(lay.rope)[1] - 0.4, lay.rope, rw, 0.7)
+
+    finish(image, union(shirt, fold, cloth, legs, rope), name)
+
+
+def sasuke_side(body, name, west):
+    """East (facing right): his right side, the collar standing up behind the neck, the short sleeve
+    down the side to the elbow, the cloth folded over at the waist and the rope round it, the knot
+    standing out in front and its two frayed ends hanging down the front of his right thigh. West
+    shows his left side: the knot in front and the big loop hanging down the front of his left thigh,
+    seen edge-on. West is its own picture but stored facing right, as the game mirrors every west
+    picture."""
+    top = body.top
+    lay = Outfit(body)
+    rw = lay.rope_w
+    hem = lay.hem
+
+    def shirt_front(y):
+        return body.edges(y)[1] + PAD * 0.8
+
+    def shirt_back(y):
+        return body.edges(y)[0] - PAD * 0.8
+
+    def front(y):
+        return body.edges(y)[1] + PAD + 0.6 * smooth(body.waist, hem, y)
+
+    def back(y):
+        return body.edges(y)[0] - PAD - 2.2 * smooth(body.waist, hem, y) ** 1.2
+
+    ys = steps(top + 1, lay.fold + 0.5)
+    shirt = polygon([(shirt_front(y), y) for y in ys] + [(shirt_back(y), y) for y in reversed(ys)])
+    # The collar standing up behind the neck, turned out a little at the top, as Minato's.
+    cb = max(body.edges(top + 6)[0] - PAD - 2.5, body.centre(top) - 15.5)
+    collar = polygon([(cb + 1.2, top + 9), (cb - 1.8, top - 3.5), (cb + 0.2, top - 6.5), (cb + 3.6, top - 6.1),
+                      (cb + 7.5, top - 2.5), (cb + 10.5, top + 4), (cb + 7, top + 10)])
+
+    x_front, x_back = front(hem), back(hem)
+
+    def hem_at(x):
+        k = min(1.0, max(0.0, (x - x_front) / (x_back - x_front)))
+        return hem + 1.0 * k + 0.5 * math.sin(math.pi * k)
+    ys = steps(lay.fold, hem)
+    skirt = polygon([(front(y), y) for y in ys] + [(x, hem_at(x)) for x in steps(x_front, x_back, 0.4)] +
+                    [(back(y), y) for y in reversed(steps(lay.fold, hem_at(x_back)))])
+    fold = inter(skirt, band(0, lay.rope + rw))
+    cloth = minus(skirt, fold)
+    legs = inter(body_outline(body), band(hem - 1, 128))
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    legs = sasuke_legs(image, lay, legs)
+    light = ramp(body.edges(top + 20)[0], body.edges(top + 20)[1] + 3, 0, 140)
+    shade(image, union(shirt, collar), SK_SHIRT_DARK, SK_SHIRT, SK_SHIRT_LIT, light, reach=2.4)
+    # The short sleeve down the side, as the Akatsuki cloak's: its two edges and its hem at the elbow.
+    arm = lambda y: body.centre(y) - 1.2 - 0.9 * smooth(top, lay.elbow, y)
+    spread = lambda y: 3.2 + 0.8 * smooth(top + 12, lay.elbow, y)
+    sl = [(arm(y) - spread(y) + 1.2 * smooth(top + 10, top + 16, y), y) for y in steps(top + 10, lay.elbow)]
+    sr = [(arm(y) + spread(y), y) for y in steps(top + 10, lay.elbow)]
+    for line in (sl, sr, [sl[-1], sr[-1]]):
+        paint(image, inter(stroke(line, 0.45), shirt), SK_SHIRT_DARK)
+
+    shade(image, cloth, SK_CLOTH_DARK, SK_CLOTH, SK_CLOTH_LIT, inter(light, cloth), reach=2.0)
+    for x0, x1 in ((back(lay.skirt) + 3, back(hem) + 2), (body.centre(lay.skirt) + 1, body.centre(hem) + 2)):
+        paint(image, inter(stroke([(x0, lay.skirt + 1), (x1, hem)], 0.4), shrink(cloth, 0.6)), SK_CLOTH_DARK)
+    paint_fold(image, lay, fold, inter(light, fold))
+    rope = paint_rope_turns(image, back(lay.rope) - 0.3, front(lay.rope) + 0.3, lay.rope, rw, 0.0, tilt=0.5)
+
+    # The knot stands out in front of the belly; below it, his right side shows the two ends, his left
+    # the loop edge-on.
+    kx = front(lay.knot) - 0.4 * rw
+    if west:
+        tie = paint_rope(image, loop_path((kx + 0.1 * rw, lay.knot + 0.4 * rw), 0.62 * lay.fall, 1.1 * rw, 0.25 * rw),
+                         0.85 * rw)
+    else:
+        tie = union(paint_end(image, (kx - 0.7 * rw, lay.knot + 0.7 * rw), hem - 0.6 - lay.knot - 0.7 * rw, -0.25 * rw,
+                              0.9 * rw),
+                    paint_end(image, (kx - 0.1 * rw, lay.knot + 0.8 * rw), hem + 0.8 - lay.knot - 0.8 * rw, 0.15 * rw,
+                              0.95 * rw))
+    tie = union(tie, paint_knot(image, kx, lay.knot, rw, squeeze=0.8))
+
+    finish(image, union(shirt, collar, fold, cloth, legs, rope, tie), name)
+
+
+def sasuke_outfit():
+    for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
+        sasuke_front(Body(BODIES[(body, "south")]), f"SasukeOutfit_{body}_south.png")
+        sasuke_side(Body(BODIES[(body, "east")]), f"SasukeOutfit_{body}_east.png", west=False)
+        sasuke_side(Body(BODIES[(body, "east")]), f"SasukeOutfit_{body}_west.png", west=True)
+        sasuke_back(Body(BODIES[(body, "north")]), f"SasukeOutfit_{body}_north.png")
+
+
 def main():
     for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
         vergil_front(Body(BODIES[(body, "south")]), f"VergilCoat_{body}_south.png")
@@ -1924,6 +2357,7 @@ def main():
     headband_front("MinatoHeadband_south.png")
     headband_side("MinatoHeadband_east.png")
     headband_back("MinatoHeadband_north.png")
+    sasuke_outfit()
 
 
 if __name__ == "__main__":
