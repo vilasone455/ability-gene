@@ -194,7 +194,7 @@ Rules:
 | Echo | Trials | Cost | Abilities | Upkeep | Casts |
 |---|---|---|---|---|---|
 | Accelerator | Intellectual 12, Damage taken 300 | Abrasive | vector manipulation, reflex surge, vector shove | 12 | surge 10, shove 8 |
-| Pain | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei | 15 | 20 |
+| Pain (`AG_Echo_Pain.xml`) | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei, Banshō Ten'in, Black Receiver, Gravity Well | 15 | Shinra 5 (paid at release), Banshō 3, Black Receiver 0 (its three charges), Gravity Well 20 |
 | Inumaki | Social 10, not Psychopath | Kind | stop, drop, crush, come, run, explode | 8 | 0 each (the throat is his cost) |
 | Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | Judgement Cut, Yamato Dash, Summoned Swords, Judgement Cut End (the def grants none until the kit is ported) | 10 | Judgement Cut 3, Yamato Dash 2, Summoned Swords 10, Judgement Cut End 0 (Style is its limit) |
 | Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40 |
@@ -205,9 +205,11 @@ Rules:
 | Todo (no subtitle) | Melee 14, 20 humanlikes downed (`PawnsDownedHumanlikes`) | Brawler + the anchor organ gene (awakenGenes) | stone, clap, double clap, Black Flash, provoke | 8 | stone 0, clap 0, double clap 0 (the organ's three claps are their limit), Black Flash 1, provoke 5; +0.5 move speed, black hair, wealth 6000, forced empty hands |
 | Minato ("Hero of the Yellow Flash") | Melee 12, Intellectual 10, 30 kills with a thrown kunai (`Trial_KillsWith` on AG_Kunai; `Projectile_Kunai` names the kunai as its weapon) | Kind | flying thunder god, flying thunder god: chain, guiding thunder, rasengan; sealing touch passive (AG_MinatoSeal); throw kunai stays on the belt | 10 | throw kunai 0 (belt charges), flying thunder god 2, chain 10, guiding thunder 5, rasengan 3; blond hair, the Hokage haori and forehead protector, no forced weapon, no kunai regeneration |
 
-Accelerator and Pain reuse abilities that still come from their pre-hero item (reflex booster
-implant, repulsion eye). validate.py allows that second source only for those abilities
-(`SHARED_WITH_ECHO`) until the items are made Echo-only. Inumaki's words have one source, his Echo:
+Accelerator reuses abilities that still come from his pre-hero item (the reflex booster implant).
+validate.py allows that second source only for those abilities (`SHARED_WITH_ECHO`) until the
+implant is made Echo-only. Pain's four come only from his Echo since his port (2026-09-28): the
+repulsion and attraction eyes grant nothing and are no longer quest rewards; their defs stay so saves
+that hold one still load. Inumaki's words have one source, his Echo:
 the Commanding Voice trait was removed when his kit was ported.
 Decided 2026-09-27: the reflex booster implant becomes Echo-only, like Todo's anchor organ; the
 repulsion eye and Commanding Voice became Echo-only later the same day. Accelerator keeps brain strain as his cost; his
@@ -393,6 +395,31 @@ The repulsion and attraction eyes become Echo-only. Cast costs (agreed 2026-09-2
 (was 20, set before the cost guideline), Banshō Ten'in 3, Black Receiver 0 (its 3 rods are its own
 cost), Gravity Well 20. Upkeep 15 unchanged.
 
+Pain, built 2026-09-28 (the port; code in `Source/RimArt/Pain/Kit`, abilities in
+`AG_Pain_Abilities.xml`, tests `-rimarttest=pain`). Choices made in the port, beyond the sketch
+headers:
+- Shinra Tensei and Gravity Well check that Pain has the ability (his Echo grants it while
+  manifested), not the eye. Shinra's button never calls Ability.Activate, so it pays its 5 when the
+  wave is released; a cancelled charge costs nothing, and a release the pool cannot pay cancels the
+  charge.
+- The Shinra / Banshō gap (5 s, XML `devaGapSeconds` on Banshō) starts at Shinra's burst and at
+  Banshō's grip. Banshō is also disabled while Shinra charges, and Shinra while a Banshō or Black
+  Receiver cast holds Pain.
+- A Banshō or Black Receiver cast called off before it fires costs nothing and starts no cooldown.
+- Banshō: the target's cell follows it as it crosses cells; its draw point follows the pull. A wall
+  or closed door that got into the line stops it like a pawn (the target takes the block damage and
+  stun). If Pain goes down mid-pull the target stays where it has got to, with no damage. A dragged
+  body is stopped by a standing pawn too. Face-down (drawn) while the slam's stun lasts.
+- Black Receiver: the rod turns each tick toward where the target is now, so a walking target is
+  still hit; the first standing pawn it crosses takes it, whoever that is. It breaks on a wall and
+  falls past range + 2 cells. Only hostile pawns can be targeted (no pinning allies on purpose), and
+  a big body takes the same three rods. The pin is a stun renewed every tick (never StopStun, which
+  would end other stuns); the pinned pawn is drawn lying on its back 0.35 cells further from Pain
+  and gets up in 0.3 s. Rods block every Ability, psycasts included. Every rod breaks when the Pain
+  who threw it is downed, dies or no longer has the ability (revert).
+- "Cannot be moved": a pinned pawn and a pawn in a Banshō pull are skipped by Shinra Tensei's push,
+  refused by Banshō, and skipped by Gravity Well.
+
 Pain, Gravity Well rework "hungry well" (agreed 2026-09-27; replaces the fixed 8-cell, 6 s well in
 `GravityRules.cs`; numbers are placeholders and move to XML):
 - It opens small and grows with what it has eaten: pull radius 3 at the start, up to 10 (+25 % on the
@@ -409,6 +436,30 @@ Pain, Gravity Well rework "hungry well" (agreed 2026-09-27; replaces the fixed 8
   it too. The known FPS drop (tick logic, see the deferred Gravity Well note) is to be fixed before or
   with the drift, since a moving centre makes pulled pawns re-path more often.
 - Gojo's Blue stays a fixed 4-cell lesser well.
+
+Gravity Well, built 2026-09-28 with Pain's port (numbers are XML fields on
+`CompProperties_AbilityGravityWell`; `GravityRules.cs` keeps only shape and logic; tests
+`-rimarttest="Gravity Well"`). Choices made in the build:
+- Bullets bend inside the current pull radius, at most 5 cells (`maxBulletRadius`), so never outside
+  the drawn ring. Explosive and arcing rounds are still not bent, but one whose path this tick crosses
+  a core is eaten (a mortar shell flying over it too).
+- A pawn is counted once by its id; its corpse later reaching the core is destroyed but not counted
+  again. Items are destroyed in the core only if they can be destroyed.
+- The drift picks the heaviest thing the well owns (pawns except Pain, corpses, items in the pull
+  radius with a clear line; ties: nearer the centre, then the lower id), again every 15 ticks. The
+  centre does not step into a cell it cannot cross into or that Pain has no clear line to.
+- The Echo's 20 is taken when the well opens. Cancelled during its 0.5 s opening, it is refunded and
+  no cooldown starts; once open there is no refund.
+- The timer is a thin ring that shrinks from the pull edge to the core, a faint ring on the pull edge,
+  and "N.N s" under the well; the button shows eaten, radius, implosion and seconds left.
+- The core pulse and the implosion used armour penetration -1, which the armour roll reads as +1
+  armour on every pawn; fixed to 0.
+- Frame time (same load, 64 stacks and 20 pawns, 8-cell well): a whole game tick 7.3-8.3 ms before,
+  1.8-1.9 ms after. Owner and clear lines cached per tick, items commit their cell every 15 ticks,
+  dragged pawns re-path only when off their path (at most every 20 ticks), no per-tick allocations,
+  and the patches return at once on maps with no well.
+- The command works for any ability with this comp, so Gojo's Blue can reuse it with its own XML
+  (min radius = max radius for a fixed well, no growth, no drift).
 
 Satō (agreed 2026-09-27; numbers are placeholders; Reset, explosions, The Game, Black Ghost at
 anchors and Tear were agreed 2026-09-26):

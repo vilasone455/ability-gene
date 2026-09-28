@@ -8,13 +8,14 @@
     <description>A legacy developer grant, converted to a repulsion eye when the game loads.</description>
     <isBad>false</isBad>
   </HediffDef>
+  <!-- Echo-only since the Pain port (docs/hero-echo.md): the eye grants no ability and is no longer a
+       quest reward. The def stays loadable for saves and pawns that hold one. -->
   <HediffDef ParentName="AddedBodyPartBase">
     <defName>AG_RepulsionEye</defName>
     <label>repulsion eye</label>
     <labelNoun>a repulsion eye</labelNoun>
-    <description>An artificial eye supplying normal sight and the charged Shinra Tensei repulsion ability. Additional eyes do not increase its power.</description>
+    <description>An artificial eye supplying normal sight. Shinra Tensei comes from Pain's Echo since the hero port; the eye no longer grants it.</description>
     <spawnThingOnRemoved>AG_RepulsionEye</spawnThingOnRemoved>
     <addedPartProps><solid>true</solid><partEfficiency>1</partEfficiency></addedPartProps>
-    <abilities><li>AG_ShinraTensei</li></abilities>
   </HediffDef>
 </Defs>

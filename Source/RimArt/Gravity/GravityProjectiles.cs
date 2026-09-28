@@ -95,8 +95,7 @@ namespace RimArt
             foreach (var cast in component.Casts)
             {
                 if (!cast.Field || !cast.Valid || !Rounds.SegmentEntersCircle(from, to, cast.Centre,
-                    GravityRules.BulletRadius, out var entry)
-                    || !GravityMovement.Clear(cast.map, cast.cell, entry.ToIntVec3())) continue;
+                    cast.BulletRadius, out var entry) || !cast.ClearTo(entry.ToIntVec3())) continue;
                 float distance = (entry - from).Yto0().sqrMagnitude;
                 if (distance < nearest || (distance == nearest && (selected == null || cast.id < selected.id)))
                 { selected = cast; nearest = distance; }
@@ -109,16 +108,18 @@ namespace RimArt
             if (!round.Spawned || round.Destroyed) return true;
             var registry = GameComponent_GravityFlights.Instance;
             var backend = Rounds.For(round);
-            if (backend == null || !backend.DirectFlight(round) || round.def.projectile.explosionRadius > 0f) return true;
+            if (backend == null) return true;
+            if (!backend.DirectFlight(round) || round.def.projectile.explosionRadius > 0f) return Unbent(round, backend, delta);
             if (RecursionRegistry.TryGetCapture(round, out _)) { registry.Remove(round); return true; }
-            var component = MapComponent_Gravity.On(round);
+            var component = MapComponent_Gravity.Live(round);
+            if (component == null && registry.Get(round) == null) return true;
             var flight = registry.Get(round);
             // An external redirect takes ownership; do not overwrite its new destination.
             if (flight != null && (backend.Destination(round) - flight.expectedDestination).Yto0().sqrMagnitude > 0.001f)
             { registry.Remove(round); flight = null; }
             if (flight == null)
             {
-                if (!component.AnyField || backend.TicksToImpact(round) <= 0) return true;
+                if (component == null || !component.AnyField || backend.TicksToImpact(round) <= 0) return true;
                 Vector3 from = backend.Position(round), heading = backend.Heading(round);
                 float speed = backend.CurrentSpeedPerTick(round);
                 float remaining = (backend.Destination(round) - from).Yto0().magnitude;
@@ -136,24 +137,24 @@ namespace RimArt
             {
                 float travel = Mathf.Min(0.2f, budget);
                 Vector3 from = flight.position;
-                GravityCast cast = Field(component, from, from + flight.heading * travel);
+                GravityCast cast = component == null ? null : Field(component, from, from + flight.heading * travel);
                 if (cast != null)
                 {
                     Vector3 inward = (cast.Centre - from).Yto0();
                     if (inward.sqrMagnitude > 0.00001f)
                         flight.heading = Vector3.RotateTowards(flight.heading, inward.normalized,
-                            GravityRules.BendDegrees(inward.magnitude, travel) * Mathf.Deg2Rad, 0f).normalized;
+                            cast.Props.Bend(inward.magnitude, travel, cast.BulletRadius) * Mathf.Deg2Rad, 0f).normalized;
                 }
                 Vector3 to = from + flight.heading * travel;
                 Vector3 core = default;
-                bool absorb = cast != null && Rounds.SegmentEntersCircle(from, to, cast.Centre, GravityRules.Core, out core);
+                bool absorb = cast != null && Rounds.SegmentEntersCircle(from, to, cast.Centre, cast.Props.coreRadius, out core);
                 if (absorb) to = core.WithY(from.y);
                 if (!to.ToIntVec3().InBounds(round.Map)) { round.Destroy(); break; }
 
                 flight.position = to;
                 if (Sweep(round, backend, flight, from, to)) { registry.Remove(round); return false; }
                 AddTrail(round.Map, from, to);
-                if (absorb) { round.Destroy(); break; }
+                if (absorb) { cast.Eat(round); break; }
                 flight.remaining = Mathf.Max(0f, flight.remaining - travel);
                 budget -= travel;
                 if (flight.remaining <= 0.00001f)
@@ -170,6 +171,26 @@ namespace RimArt
             flight.expectedDestination = backend.Destination(round);
             backend.MaintainSound(round);
             return false;
+        }
+
+        // Rounds the well does not bend (arcing, overhead or explosive) are still eaten when this
+        // tick's ground path enters a core with a clear line to its centre.
+        private static bool Unbent(Thing round, RoundBackend backend, int delta)
+        {
+            var component = MapComponent_Gravity.Live(round);
+            if (component == null || !component.AnyField || backend.TicksToImpact(round) <= 0
+                || RecursionRegistry.TryGetCapture(round, out _)) return true;
+            Vector3 from = backend.Position(round);
+            float remaining = (backend.Destination(round) - from).Yto0().magnitude;
+            Vector3 to = from + backend.Heading(round) * Mathf.Min(remaining, backend.CurrentSpeedPerTick(round) * delta);
+            foreach (var cast in component.Casts)
+            {
+                if (!cast.Field || !cast.Valid || !Rounds.SegmentEntersCircle(from, to, cast.Centre, cast.Props.coreRadius, out var entry)
+                    || !cast.ClearTo(entry.ToIntVec3())) continue;
+                cast.Eat(round);
+                return false;
+            }
+            return true;
         }
 
         private static bool Sweep(Thing round, RoundBackend backend, GravityFlight flight, Vector3 from, Vector3 to)
@@ -233,7 +254,7 @@ namespace RimArt
         public static void Postfix(Projectile __instance, ref int __result)
         {
             if (GameComponent_GravityFlights.Instance?.Get(__instance) != null
-                || MapComponent_Gravity.On(__instance)?.AnyField == true) __result = 1;
+                || MapComponent_Gravity.Live(__instance)?.AnyField == true) __result = 1;
         }
     }
 }

@@ -3,7 +3,7 @@
   <AbilityDef>
     <defName>AG_GravityWell</defName>
     <label>Gravity Well</label>
-    <description>Channel a fixed gravity well that pulls pawns and loose objects and bends ordinary bullets. Implode for 15–45 blunt damage based on mass currently in its core. Allies are affected. Requires Melee Animation.</description>
+    <description>Opens a gravity well up to 20 cells away. It pulls pawns, allies included, and loose items and corpses toward its core, and bends bullets. It opens with a 3-cell pull and grows to 10 cells as it eats. Everything that reaches the 1.5-cell core counts once by weight: a bullet or arrow 2, a rocket, grenade or shell 10, an item its mass, a pawn or corpse 60 per body size. Items and corpses in the core are destroyed; pawns are held there and take 4 blunt damage per second. It lasts 4 s, +1 s per 10 eaten, at most 15 s, and creeps toward the heaviest thing it pulls at 0.5 cells per second, at most 5 cells from where it was cast. At the end, or when ordered, it implodes for 15–45 blunt damage within 2–3 cells, by what it ate. Cooldown 40 s. Requires Melee Animation.</description>
     <iconPath>UI/Icons/Genes/Gene_Darkvision</iconPath>
     <category>AG_Genetic</category>
     <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
@@ -20,6 +20,32 @@
       <requireLineOfSight>false</requireLineOfSight>
       <targetParams><canTargetSelf>true</canTargetSelf></targetParams>
     </verbProperties>
-    <comps><li Class="RimArt.CompProperties_AbilityGravityWell" /></comps>
+    <comps>
+      <!-- Pain's hungry well. Radius, implosion and duration grow with eaten (see CompProperties_AbilityGravityWell). -->
+      <li Class="RimArt.CompProperties_AbilityGravityWell">
+        <range>20</range>
+        <minRadius>3</minRadius>
+        <maxRadius>10</maxRadius>
+        <fullMass>200</fullMass>
+        <coreRadius>1.5</coreRadius>
+        <pullSpeed>6</pullSpeed>
+        <maxBulletRadius>5</maxBulletRadius>
+        <bendDegrees>20</bendDegrees>
+        <baseSeconds>4</baseSeconds>
+        <secondsPerEaten>0.1</secondsPerEaten>
+        <maxSeconds>15</maxSeconds>
+        <minDamage>15</minDamage>
+        <maxDamage>45</maxDamage>
+        <minBurstRadius>2</minBurstRadius>
+        <maxBurstRadius>3</maxBurstRadius>
+        <coreDamage>4</coreDamage>
+        <cooldownSeconds>40</cooldownSeconds>
+        <roundMass>2</roundMass>
+        <explosiveMass>10</explosiveMass>
+        <bodyMass>60</bodyMass>
+        <driftSpeed>0.5</driftSpeed>
+        <leash>5</leash>
+      </li>
+    </comps>
   </AbilityDef>
 </Defs>

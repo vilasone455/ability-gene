@@ -2,17 +2,20 @@ using System;
 
 namespace RimArt
 {
-    // Pure tuning and state transitions, shared by gameplay and executable tests.
+    // Shape and logic constants. Balance numbers are XML fields on CompProperties_AbilityGravityWell.
     public static class GravityRules
     {
-        public const float Range = 20f, Radius = 8f, BulletRadius = 5f, Core = 1.5f, BurstRadius = 2f;
-        public const int OpeningTicks = 30, DurationTicks = 360, CooldownTicks = 2400;
-        public const float FullMass = 200f, BodyMass = 60f, CoreDamage = 4f;
-        public static float Damage(float mass) => 15f + 30f * Clamp(mass / FullMass);
-        public static float Pull(float distance, float resistance) =>
-            6f * Clamp((Radius - distance) / (Radius - Core)) / Math.Max(1f, resistance);
-        public static float BendDegrees(float distance, float travel) =>
-            20f * travel * Clamp((BulletRadius - distance) / (BulletRadius - Core));
+        // The opening matches the gather clip's first 0.5 s (GravityCast seeks ticks / 60).
+        public const int OpeningTicks = 30;
+        // An item in a well commits its map cell at most every 15 ticks and is drawn at its exact
+        // position in between. Each commit re-prints the Things layer of its map section.
+        public const int ItemCommitTicks = 15;
+        // A dragged pawn that is off its path asks for a new path at most every 20 ticks.
+        public const int RepathTicks = 20;
+        // Clear-line answers per cell are kept for 30 ticks: a door or wall change shows within 0.5 s.
+        public const int ClearRefreshTicks = 30;
+        // The drift target is chosen again every 15 ticks.
+        public const int DriftPickTicks = 15;
         public static float Clamp(float value) => Math.Max(0f, Math.Min(1f, value));
     }
 
@@ -23,13 +26,14 @@ namespace RimArt
         public GravityPhase phase;
         public int ticks;
         public bool activated, imploded;
-        public bool Tick()
+        // True once the channel has run durationTicks.
+        public bool Tick(int durationTicks)
         {
             if (phase == GravityPhase.Finished) return false;
             ticks++;
             if (phase == GravityPhase.Opening && ticks >= GravityRules.OpeningTicks)
             { phase = GravityPhase.Channel; ticks = 0; activated = true; }
-            return phase == GravityPhase.Channel && ticks >= GravityRules.DurationTicks;
+            return phase == GravityPhase.Channel && ticks >= durationTicks;
         }
         public bool Finish(bool implode)
         {

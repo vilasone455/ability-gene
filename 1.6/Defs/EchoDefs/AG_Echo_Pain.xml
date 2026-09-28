@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Pain (docs/hero-echo.md). In its own file rather than AG_Echoes.xml so parallel hero ports do
+       not edit the same file. His four abilities come only from here: the repulsion and attraction
+       eyes grant nothing since the port. Shinra Tensei and Banshō Ten'in share a 5 s gap (canon);
+       Black Receiver pays with its own three rods, so it costs no charge. -->
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Pain</defName>
+    <label>Pain</label>
+    <subtitle>Judge of the Rippled Eye</subtitle>
+    <description>He pulls and pushes the world at will.</description>
+    <order>20</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Intellectual</skill>
+        <level>10</level>
+      </li>
+      <li Class="RimArt.Trial_Record">
+        <record>Kills</record>
+        <count>25</count>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>Nerves</trait>
+        <degree>2</degree>
+      </li>
+    </forcedTraits>
+    <abilities>
+      <li>AG_ShinraTensei</li>
+      <li>AG_PainBanshoTenin</li>
+      <li>AG_PainBlackReceiver</li>
+      <li>AG_GravityWell</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Pain</manifestHediff>
+    <upkeepPerHour>15</upkeepPerHour>
+    <castCosts>
+      <li>
+        <ability>AG_ShinraTensei</ability>
+        <cost>5</cost>
+      </li>
+      <li>
+        <ability>AG_PainBanshoTenin</ability>
+        <cost>3</cost>
+      </li>
+      <li>
+        <ability>AG_PainBlackReceiver</ability>
+        <cost>0</cost>
+      </li>
+      <li>
+        <ability>AG_GravityWell</ability>
+        <cost>20</cost>
+      </li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.95, 0.45, 0.1)</hairColor>
+  </RimArt.EchoDef>
+
+</Defs>

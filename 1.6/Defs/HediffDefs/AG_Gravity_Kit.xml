@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
+  <!-- Echo-only since the Pain port (docs/hero-echo.md): the eye grants no ability and is no longer a
+       quest reward. The def stays loadable for saves and pawns that hold one. -->
   <HediffDef ParentName="AddedBodyPartBase">
     <defName>AG_AttractionEye</defName>
     <label>attraction eye</label>
     <labelNoun>a attraction eye</labelNoun>
-    <description>An artificial eye supplying normal sight and the channeled Gravity Well ability. Additional eyes do not increase its power.</description>
+    <description>An artificial eye supplying normal sight. Gravity Well comes from Pain's Echo since the hero port; the eye no longer grants it.</description>
     <spawnThingOnRemoved>AG_AttractionEye</spawnThingOnRemoved>
     <addedPartProps><solid>true</solid><partEfficiency>1</partEfficiency></addedPartProps>
-    <abilities><li>AG_GravityWell</li></abilities>
   </HediffDef>
 </Defs>

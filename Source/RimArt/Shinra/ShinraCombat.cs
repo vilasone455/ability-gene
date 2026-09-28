@@ -13,6 +13,12 @@ namespace RimArt
             foreach (Pawn pawn in s.map.mapPawns.AllPawnsSpawned.ToArray())
             {
                 if (pawn == s.pawn || pawn.Dead) continue;
+                // A pawn pinned by Black Receiver or carried by Banshō Ten'in is not moved; a pinned one's rods flare.
+                if (PainKit.Unmovable(pawn))
+                {
+                    if ((pawn.Position.ToVector3Shifted() - s.centre).Yto0().magnitude <= ShinraCharge.Radius) PainRods.Of(pawn)?.Flared();
+                    continue;
+                }
                 Vector3 start = pawn.Position.ToVector3Shifted();
                 Vector3 direction = start - s.centre;
                 direction.y = 0f;

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Pain's two new abilities (docs/hero-echo.md; full rules in the Tools/VfxLab/web/sketches/pain-*.js
+       headers), granted by the Pain Echo while manifested (AG_Echo_Pain.xml holds their charge costs).
+       His other two, Shinra Tensei and Gravity Well, keep their own files. Every balance number is a
+       field here; the C# in Source/RimArt/Pain/Kit holds only shape and logic. The icons are
+       placeholders. -->
+
+  <AbilityDef Name="AG_PainAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <jobDef>AG_CastPain</jobDef>
+    <hostile>true</hostile>
+    <targetRequired>true</targetRequired>
+  </AbilityDef>
+
+  <!-- Banshō Ten'in: the warmup is the raised palm (0.4 s); the fire tick is the grip. The pull, the
+       flight and the slam run on the cast's own clock (BanshoCast.cs), and the cast job holds Pain until
+       the slam. -->
+  <AbilityDef ParentName="AG_PainAbilityBase">
+    <defName>AG_PainBanshoTenin</defName>
+    <label>Banshō Ten'in</label>
+    <description>Pain pulls one hostile pawn or animal up to 12 cells away (line of sight) to the cell in front of him. The target slides toward him, is lifted and flies at 20 cells per second over low cover. On arrival he pushes it face-down: 15 blunt, stunned 2 seconds.\n\nA standing pawn in the line stops it: both take 8 blunt and are stunned 1 second, and the target drops where it stopped.\n\nBody size over 2: dragged along the floor half the distance at 35% of the speed, with no slam and no stun.\n\nNot downed pawns, and not a pawn pinned by Black Receiver. Shinra Tensei and Banshō Ten'in share a 5 second gap: after either one, the other waits 5 seconds.</description>
+    <iconPath>UI/Icons/Genes/Gene_Darkvision</iconPath>
+    <cooldownTicksRange>900</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>12</range>
+      <warmupTime>0.4</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetItems>false</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_BanshoTenin">
+        <tugSeconds>0.15</tugSeconds>
+        <tugSlide>0.25</tugSlide>
+        <speed>20</speed>
+        <slamDamage>15</slamDamage>
+        <slamStunSeconds>2</slamStunSeconds>
+        <blockDamage>8</blockDamage>
+        <blockStunSeconds>1</blockStunSeconds>
+        <heavyBodySize>2</heavyBodySize>
+        <heavyShare>0.5</heavyShare>
+        <heavySpeedFactor>0.35</heavySpeedFactor>
+        <devaGapSeconds>5</devaGapSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Black Receiver: the warmup is the rod growing in the palm (0.3 s). Three charges, one back every
+       10 s (cooldownPerCharge). Not a Deva Path technique, so it ignores the Shinra / Banshō gap. -->
+  <AbilityDef ParentName="AG_PainAbilityBase">
+    <defName>AG_PainBlackReceiver</defName>
+    <label>Black Receiver</label>
+    <description>Pain throws a chakra rod at one hostile pawn or animal up to 12 cells away (line of sight). The rod flies at 30 cells per second and the first pawn in the line takes it. At 1.5 cells or less he stabs instead, with the same effect. A berserk colonist counts as hostile.\n\nEach rod in a pawn: 5 sharp; it cannot use abilities or psycasts; moving and manipulation x0.75 per rod. Three rods: pinned. It cannot move, shoot or melee, and Shinra Tensei, Banshō Ten'in and Gravity Well do not move it.\n\nEach rod lasts 8 seconds. At most 3 in one pawn; a 4th replaces the oldest. Every rod breaks when Pain is downed, killed or leaves hero form.\n\nThree charges, one back every 10 seconds.</description>
+    <iconPath>UI/Icons/Genes/Gene_Darkvision</iconPath>
+    <cooldownTicksRange>600</cooldownTicksRange>
+    <charges>3</charges>
+    <cooldownPerCharge>true</cooldownPerCharge>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>12</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetItems>false</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_BlackReceiver">
+        <speed>30</speed>
+        <stabRange>1.5</stabRange>
+        <damage>5</damage>
+        <armorPenetration>0.2</armorPenetration>
+        <rodSeconds>8</rodSeconds>
+        <maxRods>3</maxRods>
+        <pinRods>3</pinRods>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

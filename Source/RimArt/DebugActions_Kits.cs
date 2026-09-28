@@ -148,8 +148,6 @@ namespace RimArt
                 new Kit { Label = "Samehada", Grant = GrantSamehada },
                 new Kit { Label = "Coil gun", Grant = GrantCoilGun },
                 new Kit { Label = "Frost rifle", Grant = GrantFrostGun },
-                new Kit { Label = "Shinra Tensei (repulsion eye)", Grant = GrantShinraTensei },
-                new Kit { Label = "Gravity Well (attraction eye)", Grant = GravityAcquisition.Grant },
 
                 WeaponTrait("Resonant weapon", "AG_WeaponResonance"),
                 WeaponTrait("Arcing weapon", "AG_WeaponArc"),
@@ -159,12 +157,6 @@ namespace RimArt
         }
 
         // ----------------------------------------------------------------- genes
-
-        private static string GrantShinraTensei(Pawn pawn)
-        {
-            if (!pawn.RaceProps.Humanlike || pawn.health == null) return "requires a humanlike pawn";
-            return ShinraAcquisition.Grant(pawn);
-        }
 
         private static Kit Gene(string label, string geneDefName)
         {

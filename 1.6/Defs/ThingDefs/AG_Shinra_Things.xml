@@ -3,9 +3,8 @@
   <ThingDef ParentName="BodyPartArchotechBase">
     <defName>AG_RepulsionEye</defName>
     <label>repulsion eye</label>
-    <description>An uncraftable artificial eye that supplies normal sight and lets its bearer charge an outward repulsion wave. It can be recovered surgically and transferred.</description>
+    <description>An uncraftable artificial eye that supplies normal sight. Its repulsion power now belongs to Pain's Echo, so it grants no ability. It can be recovered surgically and transferred.</description>
     <descriptionHyperlinks><RecipeDef>AG_InstallRepulsionEye</RecipeDef></descriptionHyperlinks>
     <statBases><MarketValue>3200</MarketValue><Mass>0.3</Mass></statBases>
-    <thingSetMakerTags><li>RewardStandardCore</li></thingSetMakerTags>
   </ThingDef>
 </Defs>

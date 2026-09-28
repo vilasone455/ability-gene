@@ -30,8 +30,12 @@ namespace RimArt
             if (!active || Find.CurrentMap != map || cell.Fogged(map)) return;
             if (!frozen) seconds += Time.unscaledDeltaTime;
             if (seconds > 6.5f) { active = false; return; }
-            GravityGraphics.Draw(cell.ToVector3Shifted(), seconds, frozen ? 200f : seconds / 6f * 200f,
-                seconds <= 6f ? 1f : (6.5f - seconds) * 2f, seconds > 6f, map);
+            // The preview's own numbers, Pain's XML defaults: growth climbs from nothing eaten to full
+            // over the 6 s, pull radius 3 to 10 cells, core 1.5, implosion radius 2 to 3.
+            float growth = frozen ? 1f : Mathf.Min(seconds, 6f) / 6f;
+            GravityGraphics.Draw(cell.ToVector3Shifted(), seconds, growth, Mathf.Lerp(3f, 10f, growth), 1.5f,
+                seconds <= 6f ? 1f - seconds / 6.5f : -1f, seconds <= 6f ? 1f : (6.5f - seconds) * 2f, seconds > 6f,
+                Mathf.Lerp(2f, 3f, growth), map);
         }
     }
 }
