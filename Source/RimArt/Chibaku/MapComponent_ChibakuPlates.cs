@@ -80,10 +80,10 @@ namespace RimArt
         }
 
         /// <summary>The ball; live (taking pawns, on game time) unless <paramref name="frozen"/> holds it at one moment.</summary>
-        public ChibakuBall BeginBall(IntVec3 cell, float radius, float? frozen = null)
+        public ChibakuBall BeginBall(IntVec3 cell, float radius, float? frozen = null, float height = ChibakuBall.DefaultHeight)
         {
             if (Begin(cell, radius, frozen) == null) return null;
-            ball = new ChibakuBall(ground);
+            ball = new ChibakuBall(ground, height);
             if (!frozen.HasValue)
             {
                 startTick = Find.TickManager.TicksGame;

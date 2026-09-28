@@ -10,8 +10,8 @@
 //
 // Proposed mechanic (placeholders):
 //   Target a cell up to 25 cells away, line of sight. Warm-up 0.8 s: Pain raises his open hand and a
-//   black core forms over the palm. The core flies at 14 cells/s to the cell and stops 2.8 cells
-//   above it.
+//   black core forms over the palm. The core flies at 14 cells/s to the cell and stops 5 cells
+//   above it (the ball's centre; its bottom is 3 cells up).
 //   Pull, 3 s, radius 6: every pawn in the radius (any faction, colonists too; not Pain, not a pawn
 //   pinned by 3 Black Receiver rods), and every item, corpse and chunk, is lifted and pulled into the
 //   core. Cover does not help: raiders behind sandbags are pulled over them. Buildings are not moved,
@@ -19,7 +19,7 @@
 //   Ball: radius 2, holds 12 s. Pawns inside cannot move, act or be targeted, and take 2 blunt per
 //   second (24 in total). While it holds, Shinra Tensei and Banshō Ten'in are locked (the Deva Path
 //   is holding it); Black Receiver still works. If Pain is downed the ball breaks at once.
-//   Release: the ball bursts. The pawns inside fall 2.8 cells: 8 blunt, stunned 2.5 s. Chunks of
+//   Release: the ball bursts. The pawns inside fall about 4.7 cells: 8 blunt, stunned 2.5 s. Chunks of
 //   stone land in the crater and stay (real chunk items, 6-10). The natural ground in the radius
 //   becomes gravel; floors are left alone.
 //   Cooldown 1 day. Echo charge 30 (Gravity Well's slot was 20). Heroes are never cast by the AI.
@@ -31,7 +31,7 @@
 //   0.00  rest
 //   0.20  warm-up 0.8 s: Rinnegan glint; Pain's arm comes up toward the cell, hand open; a black core
 //         in a soft pale glow grows over the palm (the Banshō palm core)
-//   1.00  launch: the core flies to the cell and climbs to 2.8 cells, a dark trail behind it
+//   1.00  launch: the core flies to the cell and climbs to 5 cells, a dark trail behind it
 //   ~1.7  arrival: soft flash, a small shake, a dark see-through circle spreads to the true radius
 //   ~1.9  pull, 3 s: cracks run out from the centre to the rim (0.45 s); plates of ground heave and
 //         tear free, the inner ones first, and fly up into the core, turning over (grass on top, earth
@@ -369,7 +369,7 @@ export default {
     hold: P(`Hold shown (${HoldSeconds} s in the game)`, 2.5, 1, 6, .25, 'Timing (s)'),
     radius: P('Pull radius (cells)', 6, 4, 8, .5, 'Shape'),
     ballR: P('Ball radius (cells)', 2, 1.2, 3, .1, 'Shape'),
-    ballH: P('Ball centre height (cells)', 2.8, 2, 5, .1, 'Shape'),
+    ballH: P('Ball centre height (cells)', 5, 2, 7, .1, 'Shape'),
     plate: P('Ground plate size (cells)', 1, .7, 1.4, .05, 'Shape'),
   },
   duration(p) { return times(p).end; },

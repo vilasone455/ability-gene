@@ -9,7 +9,7 @@ namespace RimArt
     /// Chibaku Tensei's ball, drawn from a <see cref="ChibakuGround"/> capture (test stage: the picture only, no
     /// pawns and no rules; ported from Tools/VfxLab/web/sketches/pain-chibaku-tensei.js with its defaults).
     ///
-    /// Order: the core appears 2.8 cells over the cell with a soft flash and a dark circle spreads to the true
+    /// Order: the core appears 5 cells over the cell with a soft flash and a dark circle spreads to the true
     /// radius; for 3 s cracks run out, plates heave, tear free (inner first) and tumble into the core, leaving a
     /// crater; the ball grows from what arrives (radius 0.3 to 1 times 2 cells, by the cube root of the share
     /// arrived); it holds, turning 14 degrees a second and squeezing once a second; seams run round it for
@@ -26,7 +26,7 @@ namespace RimArt
     [StaticConstructorOnStartup]
     public sealed class ChibakuBall : IDisposable
     {
-        public const float Radius = 2f, Height = 2.8f, PullSeconds = 3f, HoldSeconds = 12f, Gravity = 12f;
+        public const float Radius = 2f, DefaultHeight = 5f, PullSeconds = 3f, HoldSeconds = 12f, Gravity = 12f;
         public const float Pulse = .25f, CrackRun = .45f, CrackTime = .4f, Tail = 3f;
         public const float Pull = Pulse, Formed = Pull + PullSeconds, Crack = Formed + HoldSeconds, Burst = Crack + CrackTime, End = Burst + Tail;
         private const float Spin = 14f * Mathf.Deg2Rad, HeaveH = .18f, CoreR = .34f, PatchR = .45f;
@@ -83,11 +83,18 @@ namespace RimArt
         private readonly List<int> front = new List<int>(), back = new List<int>();
         private readonly Vector3[] faceVerts = new Vector3[7], edgeVerts = new Vector3[7];
 
-        public ChibakuBall(ChibakuGround ground)
+        /// <summary>The ball's centre above the ground, in cells (drawn 0.6 cells north per cell up).</summary>
+        public readonly float height;
+
+        /// <summary>Seconds a pawn or item takes to fall out of the ball to the ground.</summary>
+        public float FallTime => Mathf.Sqrt(2f * (height - .3f) / Gravity);
+
+        public ChibakuBall(ChibakuGround ground, float height = DefaultHeight)
         {
             this.ground = ground;
+            this.height = Mathf.Max(height, Radius + .4f);
             Vector3 mid = ground.cell.ToVector3Shifted();
-            core = new Vector3(mid.x, Height, mid.z);
+            core = new Vector3(mid.x, this.height, mid.z);
             middle = new Vector2(mid.x, mid.z);
             foreach (ChibakuPlate p in ground.plates)
             {

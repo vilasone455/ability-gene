@@ -61,7 +61,7 @@ namespace RimArt
     ///   counts it on the map); a pawn keeps ticking (bleeding, needs), cannot act or be targeted, and leaves
     ///   its raid group.
     /// - At the burst everything inside falls out round the spot under the ball (pawns within about 1 cell,
-    ///   items within about 2) and lands 0.6 s later. A pawn takes 2 blunt for each second it was held plus 8
+    ///   items within about 2) and lands when it reaches the ground (0.89 s from the default height of 5 cells). A pawn takes 2 blunt for each second it was held plus 8
     ///   for the fall, in hits of up to 8, is stunned 2.5 s and goes back to its raid group (a hostile whose
     ///   group has ended gets a new assault group). Items land unhurt, stacks as they were.
     /// - When the ball is formed, the natural soil of the pulled plates becomes stony soil (only a soil more fertile
@@ -75,7 +75,6 @@ namespace RimArt
         public const float CrushPerSecond = 2f, FallDamage = 8f, HitSize = 8f, LeadOfPlate = .12f, FlySeconds = .75f;
         public const float PawnSpread = 2.2f, ItemSpread = 4.4f;
         public const int StunTicks = 150;
-        public static readonly float FallTime = Mathf.Sqrt(2f * (ChibakuBall.Height - .3f) / ChibakuBall.Gravity);
 
         private readonly MapComponent_ChibakuPlates owner;
         private readonly Map map;
@@ -127,7 +126,7 @@ namespace RimArt
                     h.state = ChibakuHeld.Falling;
                     h.drop = new Vector2((float)ChibakuCut.Rand(k * 9 + 401) - .5f, (float)ChibakuCut.Rand(k * 9 + 402) - .5f) * (h.pawn != null ? PawnSpread : ItemSpread);
                     k++;
-                    h.landAt = ChibakuBall.Burst + FallTime;
+                    h.landAt = ChibakuBall.Burst + ball.FallTime;
                     h.landCell = Standable(new IntVec3(Mathf.RoundToInt(centre.x + h.drop.x), 0, Mathf.RoundToInt(centre.z + h.drop.y)));
                 }
             }

@@ -173,7 +173,7 @@ namespace RimArt
 
             yield return Until(ChibakuBall.Burst + .3f);
             yield return t.ShotAs("chibaku-pawns-4-falling-out");
-            yield return Until(ChibakuBall.Burst + ChibakuPull.FallTime + .1f);
+            yield return Until(ChibakuBall.Burst + ball.FallTime + .1f);
             foreach (Pawn p in caught)
             {
                 if (p.Dead) { t.Log($"{p.LabelShort} died of the crush and the fall"); continue; }
@@ -249,7 +249,7 @@ namespace RimArt
 
             yield return Until(ChibakuBall.Burst + .25f);
             yield return t.ShotAs("chibaku-items-3-falling-out");
-            yield return Until(ChibakuBall.Burst + ChibakuPull.FallTime + .1f);
+            yield return Until(ChibakuBall.Burst + ball.FallTime + .1f);
             foreach (Thing thing in taken)
                 t.Check(thing.Spawned && (thing.Position - c).LengthHorizontal <= 4.5f, $"{thing.LabelShort} landed in the crater, {(thing.Position - c).LengthHorizontal:0.0} cells from the middle");
             t.Check(steel.stackCount == 75, $"the steel stack is whole ({steel.stackCount})");
