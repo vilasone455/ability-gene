@@ -42,6 +42,13 @@ Echo/Costume/ObitoMask_<facing>.png
     the outer turns; it is stored facing right, as the game mirrors every west picture. North is
     empty: the head hides the mask.
 
+Echo/Costume/PainPiercings_<facing>.png
+    256 px, south, east, north (west is east mirrored: the piercings are the same on both sides):
+    Pain's piercings from the official art, on the head under the hair (layer 61). Six dark studs
+    down the bridge of the nose in two columns, two short studs under the lower lip (just above the
+    collar), and silver studs along each ear, at the head's sides face-on and in an arc along the
+    ear's rim in profile.
+
 The costume is fitted to the vanilla body outlines in BODIES, measured from the game's
 Naked_<Body>_<facing> textures (outer edge of the black outline, every 2 rows, on the 128 px
 sheet). Every length below is in those 128 px units; the picture is drawn 8x larger and reduced.
@@ -1271,6 +1278,75 @@ def mask_back(name):
     print("wrote", OUT / name)
 
 
+# ---- Pain's piercings ----
+
+STUD, STUD_LIT = (40, 40, 48), (150, 154, 168)
+EAR_STUD, EAR_STUD_LIT, EAR_STUD_DARK = (178, 182, 194), (236, 238, 244), (86, 90, 102)
+# Placed to suit both the vanilla heads and Facial Animation's (a popular face mod, in the user's
+# game), whose heads are narrower and draw ears. Face-on: the nose studs sit between the eyes (x 52-59
+# and 68-75, y 67-72 on both), two columns of three from eye level down; the ear studs on the rim of
+# Facial Animation's ears (its head is 44-83 at y 68), 2 units inside the vanilla outline (42-85). A
+# little larger than life so they read at the game's zoom.
+NOSE_COLUMNS, NOSE_ROWS = (62.05, 64.95), (70.2, 72.8, 75.4)
+LIP_STUDS, LIP_TOP, LIP_BOTTOM = (61.5, 65.5), 79.4, 81.3
+EAR_X, EAR_ROWS = (44.0, 83.0), (66.4, 68.6, 70.8, 73.0)
+# Profile: along the rim of Facial Animation's ear (a C round (58.8, 69) opening to the face), top to
+# bottom round the back; the nose studs on its face front (x 82-83 at y 68-76), which is 3-4 units
+# inside the vanilla face front (86-87), in front of the vanilla eye (74-81).
+EAR_SIDE_CENTRE, EAR_SIDE_R, EAR_SIDE_ANGLES = (58.8, 69.0), 4.3, (290, 250, 210, 170, 130)
+NOSE_SIDE = [(83.3, 70.2), (82.9, 72.8), (82.8, 75.4)]
+
+
+def paint_stud(image, x, y, rx, ry, base, lit, dark=None):
+    """A stud: a small dome, darker at its rim when `dark` is given, a glint at its upper left."""
+    if dark is not None:
+        paint(image, ellipse(x, y, rx + 0.25, ry + 0.25), dark)
+    paint(image, ellipse(x, y, rx, ry), base)
+    paint(image, ellipse(x - rx * 0.35, y - ry * 0.35, rx * 0.38, ry * 0.38), lit)
+
+
+def piercings_front(name):
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    for x in NOSE_COLUMNS:
+        for y in NOSE_ROWS:
+            paint_stud(image, x, y, 0.95, 0.62, STUD, STUD_LIT)
+    for x in LIP_STUDS:
+        paint(image, polygon([(x - 0.5, LIP_TOP), (x + 0.5, LIP_TOP), (x, LIP_BOTTOM)]), STUD)
+        paint(image, ellipse(x, LIP_TOP + 0.05, 0.55, 0.3), STUD_LIT)
+    for x in EAR_X:
+        for y in EAR_ROWS:
+            paint_stud(image, x, y, 0.72, 0.72, EAR_STUD, EAR_STUD_LIT, EAR_STUD_DARK)
+    save_piece(image, name)
+
+
+def piercings_side(name):
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    cx, cy = EAR_SIDE_CENTRE
+    for a in EAR_SIDE_ANGLES:
+        x = cx + EAR_SIDE_R * math.cos(math.radians(a))
+        y = cy + EAR_SIDE_R * math.sin(math.radians(a))
+        paint_stud(image, x, y, 0.72, 0.72, EAR_STUD, EAR_STUD_LIT, EAR_STUD_DARK)
+    for x, y in NOSE_SIDE:
+        paint_stud(image, x, y, 0.62, 0.58, STUD, STUD_LIT)
+    save_piece(image, name)
+
+
+def piercings_back(name):
+    """North: only the ear studs on the head's outline; the hair covers them when it hangs that low."""
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    for x in EAR_X:
+        for y in EAR_ROWS[:3]:
+            paint_stud(image, x, y + 0.5, 0.72, 0.72, EAR_STUD, EAR_STUD_LIT, EAR_STUD_DARK)
+    save_piece(image, name)
+
+
+def save_piece(image, name):
+    """Reduce and save a piece that brings its own edges (no ink outline round it)."""
+    OUT.mkdir(parents=True, exist_ok=True)
+    image.resize((SIZE, SIZE), Image.LANCZOS).save(OUT / name)
+    print("wrote", OUT / name)
+
+
 def main():
     for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
         vergil_front(Body(BODIES[(body, "south")]), f"VergilCoat_{body}_south.png")
@@ -1290,6 +1366,9 @@ def main():
     mask_side("ObitoMask_east.png", west=False)
     mask_side("ObitoMask_west.png", west=True)
     mask_back("ObitoMask_north.png")
+    piercings_front("PainPiercings_south.png")
+    piercings_side("PainPiercings_east.png")
+    piercings_back("PainPiercings_north.png")
 
 
 if __name__ == "__main__":

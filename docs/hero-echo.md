@@ -138,6 +138,12 @@ plexus follow the same hook.
   picture; north is empty. `coversFace` hides Facial Animation's eyebrows, which it draws at layer
   100 (over hats and masks) by default; its other face parts are at 50-60, under the mask. No
   EchoDef names this hediff yet: it comes with his kit's port.
+- Pain's piercings (built 2026-09-28): a head node on `AG_EchoManifest_Pain` (besides the parent's
+  cloak and collar) at layer 61: over the beard and Facial Animation's face parts, under the hair,
+  so hair over the ears hides the ear studs. Six dark studs down the nose bridge in two columns,
+  two short studs under the lower lip (just above the collar), silver studs along each ear. Placed
+  to suit both the vanilla heads and Facial Animation's narrower heads with ears. The same on both
+  sides, so west is east mirrored.
 
 ### Manifest weapon (decided and built 2026-09-27)
 
@@ -495,7 +501,9 @@ presence trait is to be retired from the loaded defs so provoke has one source. 
   directly on an average and a narrow head: cloak, collar and mask in the tree, hair < mask <
   collar, mask width x0.84 / x0.7 on the narrow head and x1 on the average one, hat hidden, Facial
   Animation's eyebrows not drawn when that mod is loaded, all back when the hediff is removed; 4
-  screenshots). `-rimarttest="Echo: costume"` runs all three.
+  screenshots) and "costume 4" (Pain's piercings on an average and a narrow head: head node, beard
+  < piercings < hair, x0.84 / x0.7 on the narrow head, face not covered, gone on revert; 3
+  close-up screenshots). `-rimarttest="Echo: costume"` runs all four.
 - Debug window, kit "Itachi": make Host + manifest, false face (no cost, no cooldown), susanoo 12 s,
   weaken to 30 % health, totsuka stab the pawn under the mouse. Dispersal's "refill the plexus"
   and "shoot the carrier" still apply.
@@ -513,8 +521,8 @@ presence trait is to be retired from the loaded defs so provoke has one source. 
 ## Not built
 
 - Meteor incident that brings the device (the device is researched and built for now).
-- Costumes for the other Echoes (Vergil's coat, the Akatsuki cloak for Pain, Itachi and Obito, and
-  Obito's mask are built), the other head pieces, eye overlays, a transform effect per Echo, a marker
+- Costumes for the other Echoes (Vergil's coat, the Akatsuki cloak for Pain, Itachi and Obito,
+  Obito's mask and Pain's piercings are built), the other head pieces, eye overlays, a transform effect per Echo, a marker
   for manifested Hosts.
 - Pocket spaces closing on `PoolEmptied`, except Unlimited Blade Works: its world closes when the
   caster loses the ability, which an empty pool causes by reverting every Host.

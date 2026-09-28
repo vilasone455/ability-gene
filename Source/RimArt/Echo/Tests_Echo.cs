@@ -584,8 +584,9 @@ namespace RimArt
             EchoDef itachi = DefDatabase<EchoDef>.GetNamed("AG_Echo_Itachi");
             foreach (EchoDef echo in new[] { pain, itachi })
             {
-                int count = echo.manifestHediff.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().Count() ?? 0;
-                t.Check(count == 2, echo.defName + "'s hero form has the cloak and the collar from the shared parent (" + count + " costume nodes)");
+                var paths = echo.manifestHediff.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().Select(p => p.texPath).ToList();
+                t.Check(paths != null && paths.Contains("RimArt/Echo/Costume/AkatsukiCloak_Thin") && paths.Contains("RimArt/Echo/Costume/AkatsukiCollar"),
+                    echo.defName + "'s hero form has the cloak and the collar from the shared parent (" + (paths == null ? "none" : string.Join(", ", paths)) + ")");
             }
             var props = pain.manifestHediff.RenderNodeProperties.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
             var cloakProps = props.FirstOrDefault(p => p.parentTagDef == PawnRenderNodeTagDefOf.ApparelBody);
@@ -642,6 +643,60 @@ namespace RimArt
                 t.Check(!CostumeNodes(pawn, echo.manifestHediff).Any(), echo.label + ": cloak and collar are gone after revert");
                 CheckDrawn(t, pawn, echo.label + " after revert", ("Apparel_BasicShirt", true), ("Apparel_CowboyHat", true));
             }
+        }
+
+        [RimArtTest("Echo", "costume 4 Pain's piercings are on the head over the beard and face parts and under the hair, narrower on a narrow head (close-up screenshots)")]
+        private static IEnumerable<int> PainPiercings(RimArtTestContext t)
+        {
+            GameComponent_Echoes echoes = Setup(t);
+            EchoDef pain = DefDatabase<EchoDef>.GetNamed("AG_Echo_Pain");
+            HediffDef form = pain.manifestHediff;
+            var props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
+            t.Check(props?.Count == 3, "Pain's hero form has the cloak, the collar and the piercings (" + (props?.Count ?? 0) + " costume nodes)");
+            var studProps = props?.FirstOrDefault(p => p.texPath == "RimArt/Echo/Costume/PainPiercings");
+            if (!t.Check(studProps?.parentTagDef == PawnRenderNodeTagDefOf.Head, "the piercings are a head node")) yield break;
+            foreach (string facing in new[] { "south", "east", "north" })
+                t.Check(ContentFinder<UnityEngine.Texture2D>.Get(studProps.texPath + "_" + facing, false) != null,
+                    "piercings " + facing + " texture loads");
+
+            // An Echo has one Host at a time, so one Host is checked with an average head, then a narrow one.
+            Pawn host = Colonist(t);
+            host.story.headType = DefDatabase<HeadTypeDef>.GetNamed("Male_AverageNormal");
+            EchoRecord record = EchoUtility.ForceHost(pain, host);
+            echoes.charge = 100f;
+            t.Check(EchoUtility.Manifest(record), "the Host manifested Pain");
+            foreach (string head in new[] { "Male_AverageNormal", "Male_NarrowNormal" })
+            {
+                host.story.headType = DefDatabase<HeadTypeDef>.GetNamed(head);
+                host.Drawer.renderer.SetAllGraphicsDirty();
+                yield return 2;
+                PawnRenderNode studs = CostumeNodes(host, form).FirstOrDefault(n => n.Props == studProps);
+                PawnRenderNode hair = RenderNodes(host).FirstOrDefault(n => n.Props.debugLabel == "Hair");
+                PawnRenderNode beard = RenderNodes(host).FirstOrDefault(n => n.Props.debugLabel == "Beard");
+                t.Check(studs?.parent?.Props.tagDef == PawnRenderNodeTagDefOf.Head, head + ": the piercings hang on the head");
+                t.Check(studs != null && hair != null && beard != null
+                    && beard.Props.baseLayer < studs.Props.baseLayer && studs.Props.baseLayer < hair.Props.baseLayer,
+                    head + ": beard " + beard?.Props.baseLayer + " under piercings " + studs?.Props.baseLayer + " under hair " + hair?.Props.baseLayer);
+                bool narrow = host.story.headType.narrow;
+                foreach ((Rot4 rot, float want) in new[] { (Rot4.South, narrow ? 0.84f : 1f), (Rot4.East, narrow ? 0.7f : 1f) })
+                {
+                    PawnDrawParms parms = PawnDrawParms.DefaultFor(host);
+                    parms.facing = rot;
+                    float got = studs == null ? 0f : studs.Worker.ScaleFor(studs, parms).x;
+                    t.Check(System.Math.Abs(got - want) < 0.001f,
+                        head + " facing " + rot.ToStringHuman() + ": width x" + got.ToString("0.###") + " (want " + want + ")");
+                }
+                t.Check(!EchoCostume.CoversFace(host), head + ": Pain's face is not covered (Facial Animation keeps its eyebrows)");
+                foreach (Rot4 rot in new[] { Rot4.South, Rot4.East, Rot4.West })
+                {
+                    Face(host, rot);
+                    yield return 20;
+                    yield return t.ShotAs("pain-" + (narrow ? "narrow" : "average") + "-" + rot.ToStringHuman().ToLowerInvariant(), host.Position, 1.6f);
+                }
+            }
+            EchoUtility.Revert(record, collapse: false);
+            yield return 2;
+            t.Check(!CostumeNodes(host, form).Any(), "no piercings after revert");
         }
 
         // Obito has no EchoDef until his kit is ported, so the hero form hediff is added directly.

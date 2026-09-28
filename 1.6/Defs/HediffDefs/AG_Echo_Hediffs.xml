@@ -78,6 +78,20 @@
         <painFactor>0.5</painFactor>
       </li>
     </stages>
+    <renderNodeProperties>
+      <!-- His piercings, added to the parent's cloak and collar: on the head over the beard and Facial
+           Animation's face parts (60 and below), under the hair (62), so hair that hangs over the ears
+           hides the ear studs. The same on both sides, so west is east mirrored. -->
+      <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
+        <debugLabel>Pain piercings</debugLabel>
+        <workerClass>RimArt.PawnRenderNodeWorker_EchoCostume</workerClass>
+        <parentTagDef>Head</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <texPath>RimArt/Echo/Costume/PainPiercings</texPath>
+        <narrowHeadScale>(0.84, 0.7)</narrowHeadScale>
+        <baseLayer>61</baseLayer>
+      </li>
+    </renderNodeProperties>
   </HediffDef>
 
   <HediffDef ParentName="AG_EchoManifestBase">
