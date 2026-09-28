@@ -1,20 +1,34 @@
 using System.Collections.Generic;
+using System.Linq;
 using RimWorld;
+using UnityEngine;
 using Verse;
 using Verse.AI;
 
 namespace RimArt
 {
-    /// <summary>Game tests for Todo's anchor kit, Mark and Clap (run with -quicktest -rimarttest=anchor).</summary>
+    /// <summary>Game tests for Todo's kit: stone, clap, Black Flash and his Echo (run with -quicktest -rimarttest=todo).</summary>
     public static class Tests_Anchor
     {
         private static AbilityDef Mark => DefDatabase<AbilityDef>.GetNamed("AG_AnchorMark");
 
+        /// <summary>Todo: an undrafted colonist at the centre, awakened and manifested with a full pool, so the Echo grants the kit.</summary>
         private static Pawn Carrier(RimArtTestContext t)
         {
             Pawn carrier = CastHoldTest.Caster(t);
-            carrier.genes.AddGene(DefDatabase<GeneDef>.GetNamed("AG_AnchorOrgan"), true);
+            Host(carrier, manifest: true);
             return carrier;
+        }
+
+        private static EchoRecord Host(Pawn pawn, bool manifest)
+        {
+            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
+            echoes.ResetForTests();
+            EchoDevice.workingForTests = false;
+            EchoRecord record = EchoUtility.ForceHost(DebugActions_Todo.Echo, pawn);
+            echoes.charge = 100f;
+            if (manifest) EchoUtility.Manifest(record);
+            return record;
         }
 
         private static IEnumerable<int> MarkHold(RimArtTestContext t, Pawn carrier, IntVec3 cell, float length)
@@ -23,7 +37,7 @@ namespace RimArt
             foreach (int step in CastHoldTest.Run(t, carrier, Mark, cell, () => flicks.Fired(carrier), CastHoldTest.For(length))) yield return step;
         }
 
-        [RimArtTest("Anchor", "hold 1 mark placing holds an undrafted carrier until the flick clip is done")]
+        [RimArtTest("Todo", "hold 1 mark placing holds an undrafted carrier until the flick clip is done")]
         private static IEnumerable<int> Place(RimArtTestContext t)
         {
             t.Clear();
@@ -31,7 +45,7 @@ namespace RimArt
             foreach (int step in MarkHold(t, carrier, t.center + new IntVec3(5, 0, 0), MarkFlick.FlickLength)) yield return step;
         }
 
-        [RimArtTest("Anchor", "hold 2 mark lifting holds an undrafted carrier until the catch clip is done")]
+        [RimArtTest("Todo", "hold 2 mark lifting holds an undrafted carrier until the catch clip is done")]
         private static IEnumerable<int> Lift(RimArtTestContext t)
         {
             t.Clear();
@@ -50,7 +64,7 @@ namespace RimArt
         /// The clap has no cooldown; the last charge is what makes the ability uncastable when it fires.
         /// It swaps with a stone; test 4 is the direct swap with a pawn.
         /// </summary>
-        [RimArtTest("Anchor", "hold 3 clap on the last charge holds an undrafted carrier until the clip is done")]
+        [RimArtTest("Todo", "hold 3 clap on the last charge holds an undrafted carrier until the clip is done")]
         private static IEnumerable<int> Clap(RimArtTestContext t)
         {
             t.Clear();
@@ -76,7 +90,7 @@ namespace RimArt
         /// The runner fails the test on that logged error. Frames are drawn while the test runs, so
         /// the picture is exercised through the warmup and the swap.
         /// </summary>
-        [RimArtTest("Anchor", "clap 4 direct swap with an enemy 6 cells away draws and swaps")]
+        [RimArtTest("Todo", "clap 4 direct swap with an enemy 6 cells away draws and swaps")]
         private static IEnumerable<int> DirectSwap(RimArtTestContext t)
         {
             t.Clear();
@@ -161,7 +175,7 @@ namespace RimArt
         }
 
         /// <summary>No clap before it: an ordinary punch, no stun past the warmup's, no zone. Then a swap left 3.2 s has no window.</summary>
-        [RimArtTest("Anchor", "black flash 5 without a clap is a plain punch")]
+        [RimArtTest("Todo", "black flash 5 without a clap is a plain punch")]
         private static IEnumerable<int> PlainPunch(RimArtTestContext t)
         {
             t.Clear();
@@ -186,7 +200,7 @@ namespace RimArt
         /// cells and the hit must land inside the 3 s window, stun, put the carrier in the zone and spend
         /// the window.
         /// </summary>
-        [RimArtTest("Anchor", "black flash 6 after a clap flashes, stuns and spends the window")]
+        [RimArtTest("Todo", "black flash 6 after a clap flashes, stuns and spends the window")]
         private static IEnumerable<int> FlashAfterClap(RimArtTestContext t)
         {
             t.Clear();
@@ -209,6 +223,85 @@ namespace RimArt
             t.Check(hit.stunTicks > 12, "the Black Flash stunned the target (" + hit.stunTicks + " ticks left)");
             t.Check(hit.zone, "the carrier is in the zone");
             t.Check(gene.TicksSinceSwap < 0, "the window was spent");
+        }
+
+        // ---- the Echo ----
+
+        private static GeneDef Organ => DefDatabase<GeneDef>.GetNamed("AG_AnchorOrgan");
+        private static AbilityDef Provoke => DefDatabase<AbilityDef>.GetNamed("AG_Provoke");
+        private static bool Has(Pawn pawn, AbilityDef def) => pawn.abilities?.GetAbility(def) != null;
+
+        /// <summary>
+        /// Awakening gives the organ for life; the kit comes and goes with the form. A stone thrown
+        /// before a revert stays on the map through it (its rare tick checks the gene), and the claps
+        /// keep growing back outside hero form.
+        /// </summary>
+        [RimArtTest("Todo", "echo 7 organ on awakening, kit only in hero form, stones and claps kept over a revert")]
+        private static IEnumerable<int> EchoForm(RimArtTestContext t)
+        {
+            t.Clear();
+            Pawn todo = CastHoldTest.Caster(t, DefDatabase<ThingDef>.GetNamed("MeleeWeapon_Knife"));
+            EchoRecord record = Host(todo, manifest: false);
+            yield return 1;
+            t.Check(todo.genes.Xenogenes.Any(g => g.def == Organ), "the anchor organ is a xenogene after awakening");
+            t.Check(todo.story.traits.HasTrait(TraitDef.Named("Brawler")), "Brawler is forced");
+            t.Check(!Has(todo, Mark) && !Has(todo, BlackFlash) && !Has(todo, Provoke), "no kit before manifesting");
+            t.Check(todo.equipment.Primary != null, "he holds the knife outside hero form");
+
+            EchoUtility.Manifest(record);
+            yield return 2;
+            AbilityDef clap = DefDatabase<AbilityDef>.GetNamed("AG_AnchorClap"), twice = DefDatabase<AbilityDef>.GetNamed("AG_AnchorDoubleClap");
+            t.Check(Has(todo, Mark) && Has(todo, clap) && Has(todo, twice) && Has(todo, BlackFlash) && Has(todo, Provoke), "the five abilities in hero form");
+            t.Check(todo.equipment.Primary == null, "empty hands in hero form (" + todo.equipment.Primary?.LabelShort + ")");
+
+            Gene_Anchors gene = AnchorUtility.GeneOf(todo);
+            Thing stone = ThingMaker.MakeThing(gene.StoneDef);
+            if (stone is ClapStone owned) owned.owner = todo;
+            GenSpawn.Spawn(stone, t.center + new IntVec3(4, 0, 0), t.map);
+            gene.Add(new Anchor(stone, t.Now));
+            gene.Spend(1);
+            float next = gene.SecondsToNext;
+
+            EchoUtility.Revert(record, collapse: false);
+            yield return 2;
+            t.Check(!Has(todo, Mark) && !Has(todo, clap) && !Has(todo, BlackFlash) && !Has(todo, Provoke), "the kit is taken back on revert");
+            t.Check(todo.genes.HasActiveGene(Organ), "the organ stays");
+            // Past a rare tick (250), when a stone nobody holds destroys itself.
+            yield return 260;
+            t.Check(!stone.Destroyed && gene.LiveCount == 1, "the stone is still on the map (" + gene.LiveCount + " held)");
+            t.Check(gene.SecondsToNext < next - 3f, "the clap grows back outside hero form (" + next.ToString("F1") + " -> " + gene.SecondsToNext.ToString("F1") + " s)");
+            EchoDevice.workingForTests = null;
+        }
+
+        /// <summary>Black Flash pays 1 charge and Provoke 5; the claps pay none. Combat presence no longer grants Provoke.</summary>
+        [RimArtTest("Todo", "echo 8 cast costs, provoke 90 s, combat presence grants nothing")]
+        private static IEnumerable<int> EchoCosts(RimArtTestContext t)
+        {
+            t.Clear();
+            Pawn todo = Carrier(t);
+            Pawn enemy = Target(t, t.center + new IntVec3(1, 0, 0));
+            yield return 2;
+            EchoDef echo = DebugActions_Todo.Echo;
+            t.Check(echo.CastCost(Mark) == 0f && echo.CastCost(DefDatabase<AbilityDef>.GetNamed("AG_AnchorClap")) == 0f
+                && echo.CastCost(DefDatabase<AbilityDef>.GetNamed("AG_AnchorDoubleClap")) == 0f, "stone and claps cost no charge");
+            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
+
+            float before = echoes.charge;
+            todo.abilities.GetAbility(BlackFlash).Activate(new LocalTargetInfo(enemy), LocalTargetInfo.Invalid);
+            t.Check(Mathf.Abs(before - echoes.charge - 1f) < 0.05f, "Black Flash paid 1 (" + before.ToString("F2") + " -> " + echoes.charge.ToString("F2") + ")");
+
+            before = echoes.charge;
+            Ability provoke = todo.abilities.GetAbility(Provoke);
+            provoke.Activate(new LocalTargetInfo(todo), LocalTargetInfo.Invalid);
+            t.Check(Mathf.Abs(before - echoes.charge - 5f) < 0.05f, "Provoke paid 5 (" + before.ToString("F2") + " -> " + echoes.charge.ToString("F2") + ")");
+            t.Check(Provoke.cooldownTicksRange.max == 5400, "Provoke's cooldown is 90 s (" + Provoke.cooldownTicksRange + ")");
+            t.Check(todo.health.hediffSet.HasHediff(HediffDef.Named("AG_Provoking")), "Todo is provoking");
+
+            Pawn other = t.Colonist(t.center + new IntVec3(-3, 0, 0));
+            other.story.traits.GainTrait(new Trait(TraitDef.Named("AG_CombatPresence")));
+            yield return 5;
+            t.Check(!Has(other, Provoke), "Combat presence no longer grants Provoke");
+            EchoDevice.workingForTests = null;
         }
     }
 }

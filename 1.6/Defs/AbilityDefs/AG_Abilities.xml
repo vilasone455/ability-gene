@@ -87,13 +87,14 @@
     </comps>
   </AbilityDef>
 
+  <!-- Todo's (AG_Echo_Todo grants it). The Combat presence trait granted it until 2026-09-28. -->
   <AbilityDef>
     <defName>AG_Provoke</defName>
     <label>provoke</label>
-    <description>Command the attention of every hostile within range, making them drop what they were doing and come for the speaker.\n\nThe speaker braces for the response, gaining protection while the challenge holds.</description>
+    <description>Todo calls out every hostile within range, making them drop what they were doing and come for him.\n\nHe braces for the response, gaining protection while the challenge holds.</description>
     <iconPath>UI/Icons/Genes/Gene_VoiceRoar</iconPath>
     <category>AG_Genetic</category>
-    <cooldownTicksRange>30000</cooldownTicksRange>
+    <cooldownTicksRange>5400</cooldownTicksRange>
     <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
     <targetRequired>false</targetRequired>
     <aiCanUse>false</aiCanUse>
