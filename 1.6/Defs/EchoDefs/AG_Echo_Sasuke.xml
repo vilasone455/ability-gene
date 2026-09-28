@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Sasuke (docs/hero-echo.md). In its own file rather than AG_Echoes.xml so parallel hero ports do
+       not edit the same file. The Melee Trial follows the throw: kunai accuracy uses Melee
+       (KunaiAccuracy.cs). Fūma kills count because the Fūma throw passes the weapon to the kill
+       counter. No forced weapon: he throws the kunai on his belt and the Fūma he equips. -->
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Sasuke</defName>
+    <label>Sasuke</label>
+    <subtitle>Avenger of the Crimson Eye</subtitle>
+    <description>His Rinnegan holds his thrown weapons in the air, trades places with anything it sees, runs lightning between them and sets black flames that nothing puts out.</description>
+    <order>100</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Melee</skill>
+        <level>14</level>
+      </li>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Intellectual</skill>
+        <level>10</level>
+      </li>
+      <li Class="RimArt.Trial_KillsWith">
+        <weapons>
+          <li>AG_FumaShuriken</li>
+        </weapons>
+        <weaponLabel>Fūma Shuriken</weaponLabel>
+        <count>15</count>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>NaturalMood</trait>
+        <degree>-1</degree>
+      </li>
+    </forcedTraits>
+    <abilities>
+      <li>AG_SasukeAmenoyodomi</li>
+      <li>AG_SasukeAmenotejikara</li>
+      <li>AG_SasukeRaikoKusari</li>
+      <li>AG_SasukeAmaterasu</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Sasuke</manifestHediff>
+    <upkeepPerHour>12</upkeepPerHour>
+    <castCosts>
+      <li>
+        <ability>AG_SasukeAmenoyodomi</ability>
+        <cost>0</cost>
+      </li>
+      <li>
+        <ability>AG_SasukeAmenotejikara</ability>
+        <cost>2</cost>
+      </li>
+      <li>
+        <ability>AG_SasukeRaikoKusari</ability>
+        <cost>8</cost>
+      </li>
+      <li>
+        <ability>AG_SasukeAmaterasu</ability>
+        <cost>5</cost>
+      </li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.16, 0.2, 0.25)</hairColor>
+  </RimArt.EchoDef>
+
+</Defs>

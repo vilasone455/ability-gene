@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- A kunai the Rinnegan conjured onto Sasuke's belt (Amenoyodomi's kunai supply). The same numbers
+       as the ordinary kunai, but it never becomes an item: it vanishes where an ordinary kunai would
+       land or drop, and when it is pulled out of a pawn (KunaiConjure.cs). -->
+  <ThingDef ParentName="AG_KunaiProjectileBase">
+    <defName>AG_KunaiProjectileConjured</defName>
+    <label>conjured kunai</label>
+    <thingClass>RimArt.Projectile_KunaiConjured</thingClass>
+  </ThingDef>
+
+</Defs>

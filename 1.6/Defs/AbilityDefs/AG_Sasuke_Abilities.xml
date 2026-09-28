@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Sasuke's four Rinnegan abilities (docs/hero-echo.md; full rules in the four
+       Tools/VfxLab/web/sketches/rinnegan-*.js headers), granted by the Sasuke Echo while manifested
+       (AG_Echo_Sasuke.xml holds their charge costs). Every balance number is a field here; the C# in
+       Source/RimArt/Rinnegan/Kit holds only shape and logic. The icons are placeholders
+       (make_sasuke_textures.py).
+
+       Held weapons: Amenoyodomi holds the kunai and the Fūma Shuriken Sasuke throws at a cell. The
+       other three use them: Amenotejikara swaps with one, Raikō Kusari strings them into a net,
+       Amaterasu lights them. -->
+
+  <AbilityDef Name="AG_SasukeAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+  </AbilityDef>
+
+  <!-- Amenoyodomi: a toggle, not a cast. The button cycles off / hang / drift and never starts a job;
+       a second button, Let go, shows while anything is held. The kunai belt refill lives here too,
+       because it runs while Sasuke has this ability (while manifested). -->
+  <AbilityDef ParentName="AG_SasukeAbilityBase">
+    <defName>AG_SasukeAmenoyodomi</defName>
+    <label>Amenoyodomi</label>
+    <description>A toggle with three states: off, hang and drift. Click to go to the next state.\n\nWhile it is on, throw kunai can target a ground cell. The kunai flies there and stops in the air over the cell. A throw at a pawn is a normal throw. A Fūma Shuriken throw cuts its whole line as usual and stops at the end instead of dropping. At most 5 weapons are held; a 6th throw is a normal throw.\n\nHang: held weapons move on along their heading at 1% of their flight speed (a kunai 0.24 cells per second). Drift: 10%. Held weapons touch nothing.\n\nLet go: every held weapon flies on at full speed along its heading, up to its range from where it hung (kunai 14.9 cells, Fūma 12). A kunai hits the first pawn on its line, allies included. The Fūma cuts every pawn on its line.\n\nA held weapon drops to the floor after 60 seconds, at a wall or the map edge, when Amenoyodomi is turned off, or when Sasuke is downed, asleep, dead or leaves the map.\n\nKunai supply: while Sasuke is manifested, his worn kunai belt regains 1 kunai every 5 seconds up to its 6. A regained kunai is conjured: it vanishes when it comes to rest on the floor or is pulled out of a pawn. The Fūma is not refilled.</description>
+    <iconPath>RimArt/Rinnegan/IconAmenoyodomi</iconPath>
+    <abilityClass>RimArt.Ability_Amenoyodomi</abilityClass>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_Amenoyodomi">
+        <maxHeld>5</maxHeld>
+        <hangShare>0.01</hangShare>
+        <driftShare>0.1</driftShare>
+        <holdTicks>3600</holdTicks>
+        <kunaiRange>14.9</kunaiRange>
+        <fumaRange>12</fumaRange>
+        <kunaiRefillTicks>300</kunaiRefillTicks>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Amenotejikara: two picks, the way the Skip psycast picks a thing and then a place. No warmup. -->
+  <AbilityDef ParentName="AG_SasukeAbilityBase">
+    <defName>AG_SasukeAmenotejikara</defName>
+    <label>Amenotejikara</label>
+    <description>Pick two targets; they change places at once.\n\nTargets: Sasuke, any pawn up to body size 2, an item on the ground, or a weapon held by Amenoyodomi (click where it hangs). One of the two must be Sasuke, an item or a held weapon: two other pawns cannot be swapped. Both within 12 cells, in sight.\n\nA pawn cannot be put on a cell it cannot stand on; the swap then fails. A held weapon keeps its heading.</description>
+    <iconPath>RimArt/Rinnegan/IconAmenotejikara</iconPath>
+    <cooldownTicksRange>180</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>12.9</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetItems>true</canTargetItems>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_Amenotejikara">
+        <maxBodySize>2</maxBodySize>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Raikō Kusari: the warmup is the Chidori charging in the hand; the net forms on the fire tick. -->
+  <AbilityDef ParentName="AG_SasukeAbilityBase">
+    <defName>AG_SasukeRaikoKusari</defName>
+    <label>Raikō Kusari</label>
+    <description>A Chidori runs through the weapons Amenoyodomi is holding and strings them into a net. Needs 2 or more held weapons within 12 cells.\n\nThe weapons are linked in the order they were thrown, one link per pair thrown one after the other, up to 6 cells each. With 3 or more, if the last is within 6 cells of the first, the chain closes into a ring. A link that stretches past 6 cells snaps; the net ends when its last link is gone.\n\nAfter 0.6 seconds of charge the net lasts 8 seconds, or until Amenoyodomi lets the weapons go. A pawn on a line when it forms, or that walks into one, is paralysed until the net ends and takes 3 burn damage per second. Sasuke is immune; colonists are caught too. Mechanoids stay stunned 3 seconds after it ends. A shield belt that touches a line breaks. Bullets pass through.\n\nLetting go ends the net and the weapons fly on charged: a kunai stuns whoever it hits for 2 seconds, and the Fūma stuns every pawn it cuts for 2 seconds.</description>
+    <iconPath>RimArt/Rinnegan/IconRaikoKusari</iconPath>
+    <cooldownTicksRange>1800</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>true</hostile>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.6</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_RaikoKusari">
+        <minWeapons>2</minWeapons>
+        <reach>12</reach>
+        <maxLink>6</maxLink>
+        <durationTicks>480</durationTicks>
+        <burnDamage>3</burnDamage>
+        <burnIntervalTicks>60</burnIntervalTicks>
+        <damageDef>Burn</damageDef>
+        <mechStunTicks>180</mechStunTicks>
+        <letGoStunTicks>120</letGoStunTicks>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Amaterasu: the warmup is the gaze. The black flame on a pawn is the AG_AmaterasuFlame hediff
+       (AG_Sasuke_Hediffs.xml holds its burn and spread numbers). Release is a second button on this
+       ability, shown while any of Sasuke's black flames burn. -->
+  <AbilityDef ParentName="AG_SasukeAbilityBase">
+    <defName>AG_SasukeAmaterasu</defName>
+    <label>Amaterasu</label>
+    <description>Black flames light where Sasuke looks. Target one pawn, or the weapons Amenoyodomi is holding (click where one hangs). 12 cells, in sight.\n\nOn a pawn: 4 burn damage per second for 20 seconds. Rain, water and firefoam do not put it out. It spreads to an adjacent pawn at 10% per second, carrying the time that is left; allies can catch it, Sasuke never does.\n\nOn held weapons: every weapon Amenoyodomi holds is lit and burns in the air until it is let go. A burning kunai that hits a pawn sets it alight; one that misses burns on the cell it lands on for 20 seconds, and a pawn that steps there catches. The Fūma sets every pawn it cuts alight, lands burning and cannot be picked up until the fire is out.\n\nThe flames never spread to the floor or to buildings. Release (a second button) puts out all of Sasuke's black flames at once.\n\nCost: Bleeding eye for 60 seconds (sight -50%). Casting again while it is on blinds Sasuke for 10 seconds.</description>
+    <iconPath>RimArt/Rinnegan/IconAmaterasu</iconPath>
+    <abilityClass>RimArt.Ability_Amaterasu</abilityClass>
+    <cooldownTicksRange>3600</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>12.9</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetItems>false</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_Amaterasu">
+        <durationTicks>1200</durationTicks>
+        <groundBurnTicks>1200</groundBurnTicks>
+        <bleedingEye>AG_BleedingEye</bleedingEye>
+        <blindness>AG_AmaterasuBlind</blindness>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

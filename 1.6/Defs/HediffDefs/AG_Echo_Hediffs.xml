@@ -256,16 +256,22 @@
     </renderNodeProperties>
   </HediffDef>
 
-  <!-- Sasuke's hero form. No Echo points here yet: his EchoDef (docs/hero-echo.md, "Sasuke") comes with
-       his kit's port and names this as its manifestHediff. His Fourth War outfit is drawn like Minato's
-       haori: the Host's clothes, armour and headgear are hidden but still worn and counted, belts and
-       packs still drawn, and facing north it goes over the head so its collar covers the nape. West is
-       its own picture: the rope's two ends hang on his right side, its loop on his left.
+  <!-- Sasuke's hero form (AG_Echo_Sasuke, in AG_Echo_Sasuke.xml). His Fourth War outfit is drawn like
+       Minato's haori: the Host's clothes, armour and headgear are hidden but still worn and counted,
+       belts and packs still drawn, and facing north it goes over the head so its collar covers the
+       nape. West is its own picture: the rope's two ends hang on his right side, its loop on his left.
        Textures: make_costume_textures.py. -->
   <HediffDef ParentName="AG_EchoManifestBase">
     <defName>AG_EchoManifest_Sasuke</defName>
     <label>hero form: Sasuke</label>
-    <description>This Host has manifested Sasuke. The colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <description>This Host has manifested Sasuke. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.\n\nWhile manifested, a worn kunai belt regains 1 conjured kunai every 5 seconds.</description>
+    <stages>
+      <li>
+        <statOffsets>
+          <MoveSpeed>0.4</MoveSpeed>
+        </statOffsets>
+      </li>
+    </stages>
     <renderNodeProperties>
       <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
         <debugLabel>Sasuke outfit</debugLabel>

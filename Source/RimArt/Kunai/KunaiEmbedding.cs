@@ -42,9 +42,10 @@ namespace RimArt
         /// <summary>
         /// Sticks a kunai into <paramref name="pawn"/> after a hit. <paramref name="before"/> is the
         /// pawn's hediffs from just before the damage; the kunai goes into the part of the first new
-        /// injury. Returns false if nothing was stuck, and the caller drops the kunai.
+        /// injury. Returns false if nothing was stuck, and the caller drops the kunai. A conjured one (Sasuke's)
+        /// gives nothing back when it comes out.
         /// </summary>
-        public static bool TryEmbed(Pawn pawn, HashSet<Hediff> before, bool sealedByMinato = false)
+        public static bool TryEmbed(Pawn pawn, HashSet<Hediff> before, bool sealedByMinato = false, bool conjured = false)
         {
             if (pawn == null || pawn.Dead || !pawn.Spawned || before == null) return false;
             if (CountOn(pawn) >= KunaiDefaults.MaxEmbeddedPerPawn) return false;
@@ -64,6 +65,7 @@ namespace RimArt
             var kunai = (Hediff_EmbeddedKunai)HediffMaker.MakeHediff(KunaiDefOf.AG_EmbeddedKunai, pawn, wound.Part);
             kunai.wound = wound;
             kunai.sealedByMinato = sealedByMinato;
+            kunai.conjured = conjured;
             pawn.health.AddHediff(kunai, wound.Part);
             return true;
         }
@@ -107,7 +109,7 @@ namespace RimArt
             BodyPartRecord part = kunai.Part;
             kunai.MarkPulled();
             target.health.RemoveHediff(kunai);
-            GiveKunai(puller, kunai.sealedByMinato);
+            if (!kunai.conjured) GiveKunai(puller, kunai.sealedByMinato);
 
             // The cut. Ignores armour (the blade is already inside) and does not spread to other
             // parts. Kept below the part's remaining health so the pull itself never removes a
@@ -149,10 +151,18 @@ namespace RimArt
             return item;
         }
 
-        /// <summary>Places one kunai item near <paramref name="cell"/>, sealed if it is Minato's.</summary>
-        public static void DropKunai(IntVec3 cell, Map map, bool sealedByMinato = false)
+        /// <summary>
+        /// Places one kunai item near <paramref name="cell"/>, sealed if it is Minato's. A conjured kunai (Sasuke's,
+        /// <see cref="KunaiConjure"/>) vanishes instead.
+        /// </summary>
+        public static void DropKunai(IntVec3 cell, Map map, bool sealedByMinato = false, bool conjured = false)
         {
             if (map == null || !cell.InBounds(map)) return;
+            if (conjured)
+            {
+                KunaiConjure.Vanish(cell.ToVector3Shifted(), map);
+                return;
+            }
             GenPlace.TryPlaceThing(MakeKunai(sealedByMinato), cell, map, ThingPlaceMode.Near);
         }
 
@@ -161,12 +171,17 @@ namespace RimArt
         /// pointing <paramref name="angle"/> degrees clockwise from north, the way it flew. Returns false
         /// where it cannot go into the ground - water, or a cell no one can stand on - and the caller drops
         /// it flat instead. If the cell already holds something, it goes into the nearest free cell,
-        /// in that cell's middle. It starts forbidden.
+        /// in that cell's middle. It starts forbidden. A conjured one vanishes where it would stand.
         /// </summary>
-        public static bool PlantKunai(Vector3 at, float angle, Map map, bool sealedByMinato = false)
+        public static bool PlantKunai(Vector3 at, float angle, Map map, bool sealedByMinato = false, bool conjured = false)
         {
             IntVec3 cell = at.ToIntVec3();
             if (map == null || !cell.InBounds(map) || !cell.Standable(map) || cell.GetTerrain(map).IsWater) return false;
+            if (conjured)
+            {
+                KunaiConjure.Vanish(at, map);
+                return true;
+            }
 
             if (!(MakeKunai(sealedByMinato) is KunaiItem kunai)) return false;
             Vector3 offset = at - cell.ToVector3Shifted();

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Amaterasu's black flame on a pawn. Not vanilla fire: it is a hediff, so rain, water, firefoam and
+       beating never touch it, and it never lights the floor or a building. It ends when its time is up
+       or on Sasuke's Release (Source/RimArt/Rinnegan/Kit/Amaterasu.cs). The time left is on the comp,
+       which a spread copies to the pawn it jumps to. -->
+  <HediffDef>
+    <defName>AG_AmaterasuFlame</defName>
+    <label>black flames</label>
+    <description>Amaterasu's black flames. They burn until their time is up or Sasuke puts them out, and water does not touch them. They can jump to anyone standing next to this creature.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>true</isBad>
+    <everCurableByItem>false</everCurableByItem>
+    <defaultLabelColor>(0.62, 0.52, 0.9)</defaultLabelColor>
+    <comps>
+      <li Class="RimArt.HediffCompProperties_Amaterasu">
+        <burnDamage>4</burnDamage>
+        <burnIntervalTicks>60</burnIntervalTicks>
+        <damageDef>Burn</damageDef>
+        <spreadChancePerSecond>0.1</spreadChancePerSecond>
+      </li>
+    </comps>
+  </HediffDef>
+
+  <!-- Amaterasu's price: the casting eye bleeds. -->
+  <HediffDef>
+    <defName>AG_BleedingEye</defName>
+    <label>bleeding eye</label>
+    <description>The eye that cast Amaterasu is bleeding. Sight is halved until it stops. Casting Amaterasu again before then blinds Sasuke for a while.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>true</isBad>
+    <defaultLabelColor>(0.9, 0.3, 0.3)</defaultLabelColor>
+    <stages>
+      <li>
+        <capMods>
+          <li>
+            <capacity>Sight</capacity>
+            <offset>-0.5</offset>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>3600</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+  </HediffDef>
+
+  <!-- Casting Amaterasu while the eye still bleeds. -->
+  <HediffDef>
+    <defName>AG_AmaterasuBlind</defName>
+    <label>blinded by Amaterasu</label>
+    <description>Casting Amaterasu with a bleeding eye has left Sasuke unable to see for a while.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>true</isBad>
+    <defaultLabelColor>(0.9, 0.3, 0.3)</defaultLabelColor>
+    <stages>
+      <li>
+        <capMods>
+          <li>
+            <capacity>Sight</capacity>
+            <setMax>0</setMax>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>600</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+  </HediffDef>
+
+</Defs>

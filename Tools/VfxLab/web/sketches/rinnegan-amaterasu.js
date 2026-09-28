@@ -1,5 +1,8 @@
-// Amaterasu — technique proposal for the Rinnegan eye kit, not the game. Nothing in Source/RimArt
-// draws this yet.
+// Amaterasu — the picture for Sasuke's black flames. Ported to C# 2026-09-28
+// (Source/RimArt/Rinnegan/Amaterasu*.cs, textures BlackBlot/BlackShred from make_sasuke_textures.py,
+// previews "Sasuke: amaterasu: ..."), drawn in game by AmaterasuPictures. In game the dim is drawn just
+// above MoteOverhead (MetaOverlays vanished at close zoom), the stain holds 15 s after the fire and fades
+// over 5 s, and a spread's jump starts when the pawn catches (its fire shows 0.22 s later).
 //
 // What it is for (from the user's 2026-09-22 draft, agreed 2026-09-27; every number is a
 // placeholder). Black flames light

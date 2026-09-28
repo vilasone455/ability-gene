@@ -65,6 +65,8 @@
     <!-- Trace: Unlimited Blade Works' drawing, timing, field layout and previews. The pocket map (GenStep, map component, the atlas built from the weapons' textures, defs) is in Trace/Kit, not linked here. -->
     <Compile Include="../../../Source/RimArt/Trace/*.cs" LinkBase="Linked/Trace" />
     <Compile Include="../../../Source/RimArt/Todo/*.cs" LinkBase="Linked/Todo" />
+    <!-- Sasuke's Rinnegan pictures (not Rinnegan/Kit, which is game code). -->
+    <Compile Include="../../../Source/RimArt/Rinnegan/*.cs" LinkBase="Linked/Rinnegan" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleport.cs" Link="Linked/Anchor/ClapTeleport.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleportGraphics.cs" Link="Linked/Anchor/ClapTeleportGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/DebugActions_ClapTeleport.cs" Link="Linked/Anchor/DebugActions_ClapTeleport.cs" />

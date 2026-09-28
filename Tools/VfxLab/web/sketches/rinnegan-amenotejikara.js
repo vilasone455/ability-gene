@@ -1,5 +1,7 @@
-// Amenotejikara — technique proposal for a Rinnegan eye kit, not the game. Nothing in Source/RimArt
-// draws this yet.
+// Amenotejikara — the picture for Sasuke's swap. Ported to C# 2026-09-28
+// (Source/RimArt/Rinnegan/AmenotejikaraGraphics.cs, previews "Sasuke: amenotejikara: ..."), drawn in
+// game by RinneganPictures.Swapped. In game the negative flash is drawn just above MoteOverhead: on
+// MetaOverlays it vanished at close zoom.
 //
 // What it is for (from the user's 2026-09-22 draft, agreed 2026-09-27; every number is a
 // placeholder). Sasuke picks two targets and their places are exchanged at once. Targets: Sasuke,
