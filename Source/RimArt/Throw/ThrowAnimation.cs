@@ -64,18 +64,23 @@ namespace RimArt
             /// </summary>
             public readonly float ReleaseFraction;
 
+            /// <summary>Where the hand is when it opens, so the projectile starts there; null starts it
+            /// from the middle of the pawn.</summary>
+            public readonly ReleaseHand Hand;
+
             internal Def eastDef;
             internal Def northDef;
             internal Def southDef;
             internal bool looked;
 
             /// <summary>Names the three clips as prefix, prefix + "North", prefix + "South".</summary>
-            public Clips(string prefix, float releaseFraction)
+            public Clips(string prefix, float releaseFraction, ReleaseHand hand = null)
             {
                 East = prefix;
                 North = prefix + "North";
                 South = prefix + "South";
                 ReleaseFraction = releaseFraction;
+                Hand = hand;
             }
 
             public IEnumerable<string> All => new[] { East, North, South };
@@ -86,8 +91,14 @@ namespace RimArt
         /// <summary>Overhand lob, 72 ticks, release at tick 35. Frost bomb and mimic beacon.</summary>
         public static readonly Clips Grenade = new Clips("AG_ThrowGrenade", 0.4833f);
 
-        /// <summary>Flat knife throw from beside the ear, 36 ticks, release at tick 18.</summary>
-        public static readonly Clips Kunai = new Clips("AG_ThrowKunai", 0.5f);
+        /// <summary>
+        /// Side-arm knife throw at chest height, 36 ticks, release at tick 18, from the hand: it is 0.45
+        /// cells out to the side when it opens.
+        /// </summary>
+        public static readonly Clips Kunai = new Clips("AG_ThrowKunai", 0.5f, new ReleaseHand(
+            eastPivot: new Vector2(0.05f, 0.1602f), eastHand: new Vector2(0.07f, -0.45f),
+            northPivot: new Vector2(0f, 0.2102f), northHand: new Vector2(0.45f, 0.07f),
+            southPivot: new Vector2(0f, 0.1102f), southHand: new Vector2(-0.45f, -0.07f)));
 
         /// <summary>Underhand toss of a handful at the ground, 42 ticks, release at tick 18. Makibishi.</summary>
         public static readonly Clips Scatter = new Clips("AG_ThrowScatter", 0.4286f);
@@ -100,6 +111,47 @@ namespace RimArt
         /// </summary>
         public static readonly Clips MarkFlick = new Clips("AG_MarkFlick", 0.475f);
         public static readonly Clips MarkCatch = new Clips("AG_MarkCatch", 0.6526f);
+
+        /// <summary>
+        /// Where the hand is when it opens, in the clip's own space (cells from the pawn, x right, z up
+        /// the screen), for the east, north and south clips: the aim pivot (PawnALift) and the hand's
+        /// offset from it (PawnAHolding), which ThrowAimWorker turns toward the target. Single-sourced
+        /// like <see cref="Clips.ReleaseFraction"/>: make_throw_anim.py prints these and ApiChecks
+        /// compares them with the json.
+        /// </summary>
+        public sealed class ReleaseHand
+        {
+            public readonly Vector2 EastPivot, EastHand, NorthPivot, NorthHand, SouthPivot, SouthHand;
+
+            public ReleaseHand(Vector2 eastPivot, Vector2 eastHand, Vector2 northPivot, Vector2 northHand,
+                               Vector2 southPivot, Vector2 southHand)
+            {
+                EastPivot = eastPivot;
+                EastHand = eastHand;
+                NorthPivot = northPivot;
+                NorthHand = northHand;
+                SouthPivot = southPivot;
+                SouthHand = southHand;
+            }
+
+            /// <summary>
+            /// The hand's offset from the pawn on the map (x, z) for a throw played as
+            /// <paramref name="facing"/>: mirrored for a westward throw, then the hand turned about the
+            /// pivot by the aim, counter-clockwise, as the aim worker draws it.
+            /// </summary>
+            public Vector3 Offset(Facing facing, bool flipX, float offsetDegrees)
+            {
+                Vector2 pivot = facing == Facing.North ? NorthPivot : facing == Facing.South ? SouthPivot : EastPivot;
+                Vector2 hand = facing == Facing.North ? NorthHand : facing == Facing.South ? SouthHand : EastHand;
+                if (flipX)
+                {
+                    pivot.x = -pivot.x;
+                    hand.x = -hand.x;
+                }
+                float r = offsetDegrees * Mathf.Deg2Rad, cos = Mathf.Cos(r), sin = Mathf.Sin(r);
+                return new Vector3(pivot.x + hand.x * cos - hand.y * sin, 0f, pivot.y + hand.x * sin + hand.y * cos);
+            }
+        }
 
         /// <summary>Which of the three clips a throw uses.</summary>
         public enum Facing
@@ -182,10 +234,14 @@ namespace RimArt
             /// <summary>Ticks from the start of the clip until the grenade leaves the hand.</summary>
             public readonly int ReleaseTick;
 
-            public Throw(int durationTicks, float releaseFraction)
+            /// <summary>Where the hand is then, from the pawn's draw position; zero for the pawn's middle.</summary>
+            public readonly Vector3 ReleaseOffset;
+
+            public Throw(int durationTicks, float releaseFraction, Vector3 releaseOffset = default)
             {
                 DurationTicks = durationTicks;
                 ReleaseTick = Mathf.RoundToInt(durationTicks * releaseFraction);
+                ReleaseOffset = releaseOffset;
             }
 
             public bool Started => DurationTicks > 0;
@@ -260,7 +316,8 @@ namespace RimArt
                 int duration = (int)durationTicksProperty.GetValue(renderer);
                 if (duration <= 0) return false;
 
-                thrown = new Throw(duration, clips.ReleaseFraction);
+                thrown = new Throw(duration, clips.ReleaseFraction,
+                                   clips.Hand?.Offset(facing, flipX, offsetDegrees) ?? Vector3.zero);
                 return true;
             }
             catch (Exception e)

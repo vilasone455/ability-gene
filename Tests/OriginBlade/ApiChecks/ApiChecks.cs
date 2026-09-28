@@ -432,11 +432,34 @@ static class ApiChecks
             var held = doc.RootElement.GetProperty("Parts").EnumerateArray()
                 .Single(p => p.GetProperty("CustomName").ValueKind == System.Text.Json.JsonValueKind.String
                              && p.GetProperty("CustomName").GetString() == "Grenade");
-            float release = held.GetProperty("Curves").GetProperty("GameObject.m_IsActive").GetProperty("Keyframes")
-                .EnumerateArray().First(k => k.GetProperty("value").GetSingle() == 0f).GetProperty("time").GetSingle();
+            // The release is where the held part turns off after being on: a clip may also hide it at the
+            // start (the kunai is drawn from the belt first). The exporter leaves out a zero time.
+            var keys = held.GetProperty("Curves").GetProperty("GameObject.m_IsActive").GetProperty("Keyframes")
+                .EnumerateArray().Select(k => (time: k.TryGetProperty("time", out var tk) ? tk.GetSingle() : 0f,
+                                              value: k.GetProperty("value").GetSingle())).ToList();
+            float release = keys.Where((k, i) => k.value == 0f && keys.Take(i).Any(e => e.value == 1f)).First().time;
             if (Math.Abs(release / length - style.ReleaseFraction) > 0.001f)
                 throw new Exception($"{file}: release at {release}s of {length}s is {release / length:0.0000}, "
                     + $"but ThrowAnimation says {style.ReleaseFraction}");
+            // A style that launches from the hand: the C#'s hand position at release must be the clip's,
+            // for the aim pivot (PawnALift) and the hand's offset from it (PawnAHolding).
+            if (style.Hand != null)
+            {
+                bool north = clip == style.North, south = clip == style.South;
+                var want = new[] {
+                    ("PawnALift", north ? style.Hand.NorthPivot : south ? style.Hand.SouthPivot : style.Hand.EastPivot),
+                    ("PawnALift/PawnAHolding", north ? style.Hand.NorthHand : south ? style.Hand.SouthHand : style.Hand.EastHand) };
+                foreach ((string path, UnityEngine.Vector2 v) in want)
+                {
+                    var partCurves = doc.RootElement.GetProperty("Parts").EnumerateArray()
+                        .Single(p => p.GetProperty("Path").GetString() == path).GetProperty("Curves");
+                    float At(string axis) => partCurves.GetProperty("Transform.m_LocalPosition." + axis).GetProperty("Keyframes")
+                        .EnumerateArray().Single(k => k.TryGetProperty("time", out var tk) && Math.Abs(tk.GetSingle() - release) < 0.0001f)
+                        .GetProperty("value").GetSingle();
+                    if (Math.Abs(At("x") - v.x) > 0.0005f || Math.Abs(At("z") - v.y) > 0.0005f)
+                        throw new Exception($"{file}: {path} at release is ({At("x")}, {At("z")}) but ThrowAnimation says {v} - run make_throw_anim.py or fix the ReleaseHand");
+                }
+            }
             var patchDefs = XDocument.Load(style == ThrowAnimation.Fuma
                 ? "Patch_MeleeAnimation/1.6/Defs/AG_Fuma_Anims.xml"
                 : "Patch_MeleeAnimation/1.6/Defs/AG_Throw_Anims.xml").Root.Elements()

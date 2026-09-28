@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 using Verse;
 
 namespace RimArt
@@ -52,12 +53,16 @@ namespace RimArt
             if (component == null) return;
 
             int delay = 0;
+            Vector3 fromHand = Vector3.zero;
             if (ThrowAnimation.TryThrow(thrower, target.Cell, handTexture, clips, out ThrowAnimation.Throw thrown))
+            {
                 delay = thrown.ReleaseTick;
+                fromHand = thrown.ReleaseOffset;
+            }
 
             component.pending.Add(new PendingThrow(thrower, target, projectile,
                                                    Find.TickManager.TicksGame + delay,
-                                                   intendedTarget, hitFlags));
+                                                   intendedTarget, hitFlags, fromHand));
         }
 
         public override void MapComponentTick()

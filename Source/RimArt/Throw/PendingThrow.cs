@@ -1,4 +1,5 @@
 using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace RimArt
@@ -27,6 +28,10 @@ namespace RimArt
         private LocalTargetInfo intendedTarget = LocalTargetInfo.Invalid;
         private ProjectileHitFlags hitFlags = ProjectileHitFlags.IntendedTarget;
 
+        // Where the thrower's hand is when it opens, from the thrower's draw position, when the throw
+        // animation knows (ThrowAnimation.ReleaseHand); zero launches from the middle of the pawn.
+        private Vector3 fromHand;
+
         /// <summary>Required by Scribe. Every field is written back by ExposeData.</summary>
         public PendingThrow() { }
 
@@ -39,11 +44,12 @@ namespace RimArt
         }
 
         public PendingThrow(Pawn thrower, LocalTargetInfo target, ThingDef projectile, int releaseTick,
-                            LocalTargetInfo intendedTarget, ProjectileHitFlags hitFlags)
+                            LocalTargetInfo intendedTarget, ProjectileHitFlags hitFlags, Vector3 fromHand = default)
             : this(thrower, target, projectile, releaseTick)
         {
             this.intendedTarget = intendedTarget;
             this.hitFlags = hitFlags;
+            this.fromHand = fromHand;
         }
 
         /// <summary>Ticks the throw. Returns false once it has been launched or given up on.</summary>
@@ -75,7 +81,7 @@ namespace RimArt
 
             GenSpawn.Spawn(shot, thrower.Position, map);
             LocalTargetInfo intended = intendedTarget.IsValid ? intendedTarget : target;
-            shot.Launch(thrower, thrower.DrawPos, target, intended, hitFlags);
+            shot.Launch(thrower, thrower.DrawPos + fromHand, target, intended, hitFlags);
         }
 
         public void ExposeData()
@@ -86,6 +92,7 @@ namespace RimArt
             Scribe_Values.Look(ref releaseTick, "releaseTick", 0);
             Scribe_TargetInfo.Look(ref intendedTarget, "intendedTarget");
             Scribe_Values.Look(ref hitFlags, "hitFlags", ProjectileHitFlags.IntendedTarget);
+            Scribe_Values.Look(ref fromHand, "fromHand");
         }
     }
 }
