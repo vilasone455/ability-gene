@@ -146,5 +146,30 @@ namespace RimArt
             if (map == null || !cell.InBounds(map)) return;
             GenPlace.TryPlaceThing(ThingMaker.MakeThing(KunaiDefOf.AG_Kunai), cell, map, ThingPlaceMode.Near);
         }
+
+        /// <summary>
+        /// Plants one kunai where a missed throw came down (<paramref name="at"/>), standing in the ground
+        /// pointing <paramref name="angle"/> degrees clockwise from north, the way it flew. Returns false
+        /// where it cannot go into the ground - water, or a cell no one can stand on - and the caller drops
+        /// it flat instead. If the cell already holds something, it goes into the nearest free cell,
+        /// in that cell's middle.
+        /// </summary>
+        public static bool PlantKunai(Vector3 at, float angle, Map map)
+        {
+            IntVec3 cell = at.ToIntVec3();
+            if (map == null || !cell.InBounds(map) || !cell.Standable(map) || cell.GetTerrain(map).IsWater) return false;
+
+            if (!(ThingMaker.MakeThing(KunaiDefOf.AG_Kunai) is KunaiItem kunai)) return false;
+            Vector3 offset = at - cell.ToVector3Shifted();
+            float max = KunaiDefaults.PlantedMaxOffset;
+            kunai.planted = true;
+            kunai.plantAngle = angle;
+            kunai.plantOffset = new Vector2(Mathf.Clamp(offset.x, -max, max), Mathf.Clamp(offset.z, -max, max));
+            if (!GenPlace.TryPlaceThing(kunai, cell, map, ThingPlaceMode.Near, out Thing placed)) return false;
+            if (placed != kunai || placed.Position == cell) return true;
+            kunai.plantOffset = Vector2.zero;
+            kunai.DirtyMapMesh(map);
+            return true;
+        }
     }
 }

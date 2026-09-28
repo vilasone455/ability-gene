@@ -2,10 +2,12 @@
 <Defs>
 
   <!-- The kunai item. Belt ammunition, one per charge, and what a thrown kunai drops as after it
-       lands (Projectile_Kunai). Made in batches of 5 by AG_MakeKunai. -->
+       lands (Projectile_Kunai). Made in batches of 5 by AG_MakeKunai. KunaiItem draws one that missed
+       onto open ground standing in it (RimArt/Kunai/Planted), until something picks it up. -->
   <ThingDef ParentName="ResourceBase">
     <defName>AG_Kunai</defName>
     <label>kunai</label>
+    <thingClass>RimArt.KunaiItem</thingClass>
     <description>A steel throwing knife. Loaded into a kunai belt, one kunai per throw.\n\nA thrown kunai that misses drops on the ground. One that hits has a 20% chance to break; otherwise it sticks in the target until pulled out, which makes the wound bleed more. Picked-up and pulled kunai reload the belt.</description>
     <graphicData>
       <texPath>RimArt/Kunai/Kunai</texPath>
