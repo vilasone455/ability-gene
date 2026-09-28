@@ -864,5 +864,68 @@ namespace RimArt
                 CheckDrawn(t, pawn, who + " after", ("Apparel_BasicShirt", true), ("Apparel_CowboyHat", true));
             }
         }
+
+        // Sasuke has no EchoDef until his kit is ported, so the hero form hediff is added directly.
+        [RimArtTest("Echo", "costume 6 Sasuke's hero form draws the war outfit with its own west picture, hides worn clothes and hats but not belts (screenshots)")]
+        private static IEnumerable<int> SasukeOutfit(RimArtTestContext t)
+        {
+            Setup(t);
+            HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Sasuke");
+            var props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
+            t.Check(props?.Count == 1, "the hero form has one costume node (" + (props?.Count ?? 0) + ")");
+            PawnRenderNodeProperties_EchoCostume outfitProps = props?.FirstOrDefault();
+            if (!t.Check(outfitProps?.bodyTypeGraphicPaths != null && outfitProps.parentTagDef == PawnRenderNodeTagDefOf.ApparelBody,
+                "the outfit is on the body apparel with body types")) yield break;
+            t.Check(outfitProps.hideBodyApparel && outfitProps.hideHeadgear, "the outfit hides body apparel and headgear");
+            foreach (string facing in new[] { "south", "east", "west", "north" })
+                foreach (BodyTypeGraphicData body in outfitProps.bodyTypeGraphicPaths)
+                    t.Check(ContentFinder<UnityEngine.Texture2D>.Get(body.texturePath + "_" + facing, false) != null,
+                        "outfit " + body.bodyType.defName + " " + facing + " texture loads");
+
+            // The first wears a pack, which covers the crest facing north; the third has the Female body.
+            Pawn a = Colonist(t, -3), b = Colonist(t, 0), c = Colonist(t, 3);
+            foreach (Pawn pawn in new[] { a, b, c })
+            {
+                pawn.story.bodyType = pawn == c ? BodyTypeDefOf.Female : BodyTypeDefOf.Thin;
+                pawn.story.HairColor = new UnityEngine.Color(0.16f, 0.2f, 0.26f);
+                foreach (string piece in new[] { "Apparel_BasicShirt", "Apparel_Pants", "Apparel_CowboyHat" })
+                    Wear(pawn, piece);
+                if (pawn == a) Wear(pawn, "Apparel_SmokepopBelt");
+                pawn.health.AddHediff(form);
+                pawn.Drawer.renderer.SetAllGraphicsDirty();
+            }
+            yield return 2;
+            foreach (Pawn pawn in new[] { a, b, c })
+            {
+                string who = pawn.LabelShort + " (" + pawn.story.bodyType.defName + ")";
+                PawnRenderNode outfit = CostumeNode(pawn, form);
+                string want = "RimArt/Echo/Costume/SasukeOutfit_" + pawn.story.bodyType.defName;
+                t.Check(outfit?.PrimaryGraphic?.path == want, who + ": the outfit for the body type is drawn (" + outfit?.PrimaryGraphic?.path + ")");
+                var multi = outfit?.PrimaryGraphic as Graphic_Multi;
+                t.Check(multi != null && !multi.WestFlipped && multi.MatWest.mainTexture != multi.MatEast.mainTexture,
+                    who + ": west is its own picture, not east mirrored");
+                CheckDrawn(t, pawn, who, ("Apparel_BasicShirt", false), ("Apparel_CowboyHat", false));
+                if (pawn == a) CheckDrawn(t, pawn, who, ("Apparel_SmokepopBelt", true));
+            }
+            foreach (Rot4 rot in new[] { Rot4.South, Rot4.East, Rot4.North, Rot4.West })
+            {
+                foreach (Pawn pawn in new[] { a, b, c })
+                    Face(pawn, rot);
+                yield return 20;
+                yield return t.ShotAs("sasuke-" + rot.ToStringHuman().ToLowerInvariant());
+            }
+
+            foreach (Pawn pawn in new[] { a, b, c })
+            {
+                pawn.health.RemoveHediff(pawn.health.hediffSet.GetFirstHediffOfDef(form));
+                pawn.Drawer.renderer.SetAllGraphicsDirty();
+            }
+            yield return 2;
+            foreach (Pawn pawn in new[] { a, b, c })
+            {
+                t.Check(CostumeNode(pawn, form) == null, pawn.LabelShort + ": nothing of Sasuke is drawn after the form is removed");
+                CheckDrawn(t, pawn, pawn.LabelShort + " after", ("Apparel_BasicShirt", true), ("Apparel_CowboyHat", true));
+            }
+        }
     }
 }
