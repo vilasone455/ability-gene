@@ -124,10 +124,8 @@ namespace RimArt
             {
                 Gene("Corrosive glands", "AG_CorrosiveGlands"),
                 Gene("Hypermetabolic glands", "AG_HypermetabolicGlands"),
-                Gene("Anchor organ", "AG_AnchorOrgan"),
                 Gene("Fold organ", "AG_InvoluteOrgan"),
 
-                Trait("Combat presence", "AG_CombatPresence"),
                 Trait("Pain debt", "AG_PainDebt"),
 
                 Implant("Neural accelerator", "AG_NeuralAccelerator", "Brain", "Bionics"),

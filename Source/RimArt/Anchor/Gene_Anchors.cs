@@ -22,6 +22,9 @@ namespace RimArt
         private int charges = -1;
         private int rechargeProgress;
 
+        /// <summary>Game tick of the carrier's last clap that moved anyone; Black Flash reads it. -1 when spent or never.</summary>
+        private int lastSwapTick = -1;
+
         /// <summary>Guards the recharge against a carrier running accelerated ticks; see Gene_Dispersal.</summary>
         private int lastGameTickProcessed = -1;
 
@@ -63,6 +66,21 @@ namespace RimArt
         public void Spend(int count)
         {
             charges = Mathf.Max(0, Charges - count);
+        }
+
+        /// <summary>A clap (single or double) moved someone. Opens Black Flash's window.</summary>
+        public void NoteSwap()
+        {
+            lastSwapTick = Find.TickManager.TicksGame;
+        }
+
+        /// <summary>Ticks since the last swap, or -1 when there is none or the window was already used.</summary>
+        public int TicksSinceSwap => lastSwapTick < 0 ? -1 : Find.TickManager.TicksGame - lastSwapTick;
+
+        /// <summary>A Black Flash landed: one per swap.</summary>
+        public void SpendSwap()
+        {
+            lastSwapTick = -1;
         }
 
         /// <summary>Back to full. Only the debug window calls this.</summary>
@@ -226,6 +244,7 @@ namespace RimArt
             Scribe_Collections.Look(ref anchors, "anchors", LookMode.Deep);
             Scribe_Values.Look(ref charges, "clapCharges", -1);
             Scribe_Values.Look(ref rechargeProgress, "clapRechargeProgress", 0);
+            Scribe_Values.Look(ref lastSwapTick, "lastSwapTick", -1);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 if (anchors == null) anchors = new List<Anchor>();

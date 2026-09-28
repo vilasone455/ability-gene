@@ -201,6 +201,7 @@ Rules:
 | Itachi ("Crow of the Crimson Eye") | Melee 12, Intellectual 12, Kills 30 | Sickly (Immunity -1) + the dispersal plexus gene (awakenGenes) | crow dispersal (Murder + automatic Scatter), carrion, false face, susanoo | 10 | crow abilities 0 (the plexus's 3 charges), false face 3, susanoo 20 |
 | Shikamaru | Intellectual 14, 5 people captured | Lazy | shadow imitation, shadow seam, shadow grasp, shadow double, shadow neck bind | 10 | imitation 3, seam 3, grasp 1, double 5, neck bind 2 |
 | Goku | Melee 15, downed and recovered 3 times (`Trial_DownedRecovered`, counted from the moment the mod is loaded) | Gourmand | Solar Flare, Instant Transmission, Kamehameha, Spirit Bomb; Warp Kamehameha is a button during the Kamehameha hold, not a def | 12 | Solar Flare 3, Instant Transmission 2, Kamehameha 15, Spirit Bomb 30; Warp pays Instant Transmission's 2 and cooldown on top |
+| Todo (no subtitle) | Melee 14, 20 humanlikes downed (`PawnsDownedHumanlikes`) | Brawler + the anchor organ gene (awakenGenes) | stone, clap, double clap, Black Flash, provoke | 8 | stone 0, clap 0, double clap 0 (the organ's three claps are their limit), Black Flash 1, provoke 5; +0.5 move speed, black hair, wealth 6000, forced empty hands |
 
 Accelerator and Pain reuse abilities that still come from their pre-hero item (reflex booster
 implant, repulsion eye). validate.py allows that second source only for those abilities
@@ -244,7 +245,6 @@ Agreed, not built (no EchoDef yet; the abilities do not exist):
 | Minato ("Hero of the Yellow Flash") | Melee 12, Intellectual 10, 30 kills with thrown kunai (needs `PendingThrow` to pass the kunai as the weapon so the kill counter sees it) | Kind | flying thunder god, sealing touch (passive), chain, guiding thunder, rasengan; throw kunai stays on the belt | 10 | throw kunai 0 (belt charges), flying thunder god 2, chain 10, guiding thunder 5, rasengan 3 | blond hair (haori v1.1); no forced weapon; no kunai regeneration; replaces the earning rules in docs/flying-thunder-god-kit.md |
 | Nakime ("Player of the Endless Halls") | Artistic 12, Construction 10, 15 humanlike kills (vanilla `KillsHumanlikes`) | Night Owl | Infinity Castle (commands: shift, drop, seal/open, crush, summon, release; passives castle sight, void rule) | 12 | Infinity Castle 30, commands 0 (the 1.5 s strum rhythm and crush's own 10 s cooldown limit them) | black hair; forced biwa; castle gene Echo-only, added on awakening; sunlight burns her always (the gene's rule, 4 per second outdoors by day), not only while manifested |
 | Satō | Shooting 12, 30 kills, 500 damage taken | Ajin (new custom trait carrying the Reset passive) + Psychopath | Reset (passive), Black Ghost, The Game, Sever, Headshot Reset, Grenade Reset | 10 | Sever 0, Headshot Reset 0, Grenade Reset 5, Black Ghost 10, The Game 5 (a kill on the marked enemy refunds 15); every Reset while manifested costs by the piece he rises from (body or leg 20, arm 25, hand 40, finger or ear 60) | half pain while manifested; on revert the Ghost dissolves and the mark ends |
-| Todo (no subtitle) | Melee 14, 20 humanlikes downed (`PawnsDownedHumanlikes`) | Brawler | stone, clap, double clap, Black Flash, provoke | 8 | stone 0, clap 0, double clap 0, Black Flash 1, provoke 5 | +0.5 move speed, black hair, wealth 6000 (placeholder), forced empty hands |
 
 Goku (built 2026-09-27, `Source/RimArt/Goku/Kit`): Kamehameha and Spirit Bomb are channels that hold the
 caster in `AG_GokuChannel`; Cancel, a move order or a revert gives the charge and cooldown back, a
@@ -478,13 +478,19 @@ of the drawing already in `Source/RimArt/ShadowPlexus/`.
 - Debug window, kit "Shadow Plexus": the fourteen picture previews, plus make Shikamaru (Host +
   manifest), light level at a cell, release every hold, a full-light override and its clear.
 
-Todo (agreed 2026-09-27): stone, clap and double clap are the anchor organ's rework on main (PRs
-#44, #56) and count as two abilities; Black Flash is built on `feature/todo-black-flash` (0cb9387,
-not pushed); provoke is the existing `AG_Provoke` with its cooldown changed from 12 h to 90 s plus 5
-charge (20 s, 12.9 cells, +20 % sharp/blunt armour, x0.85 damage taken, unchanged). The Combat
-presence trait is to be retired from the loaded defs so provoke has one source. The old epithet
-"Conductor of the Marked Stage" is dropped. The anchor organ gene becomes Echo-only (decided
-2026-09-27): it leaves genepacks and generic content, and only Todo's Echo gives it.
+Todo (agreed 2026-09-27, built 2026-09-28 on `feature/todo-port`): stone, clap and double clap are
+the anchor organ's rework (PRs #44, #56) and count as two abilities; Black Flash (from
+`feature/todo-black-flash`, 0cb9387) is the third; provoke is the existing `AG_Provoke` with its
+cooldown changed from 12 h to 90 s plus 5 charge (20 s, 12.9 cells, +20 % sharp/blunt armour, x0.85
+damage taken, unchanged). The Combat presence trait no longer grants provoke: commonality 0, kept
+loadable for saves. The old epithet "Conductor of the Marked Stage" is dropped. The anchor organ
+gene is Echo-only: `AG_Echo_Todo` gives it on awakening (`awakenGenes`) and it stays for life,
+because the stones and the three claps live on it; the gene lists no abilities, the Echo grants
+them in hero form, stones stay on the map and claps grow back between manifests. Hero form's
+empty hands replaces the gene's old weapon ban. The pictures are the three Todo sketches ported to
+C# (`Source/RimArt/Todo/`): Boogie Woogie for the claps, the stone throw for the stone, Black Flash
+for the punch. The magician's cards stay in the code for a later hero. Sounds are the old clap and
+puff and the vanilla punch.
 
 ## Debug and tests
 
@@ -514,6 +520,11 @@ presence trait is to be retired from the loaded defs so provoke has one source. 
 - `-rimarttest=shadow`: 11 scenarios (the line check; imitation hold, drag and release; line cut by a pawn and by a
   dark cell; the dark; the seam's leash; grasp's slide, block and body drag; the double as origin and
   its ends; neck bind's knockout and wake; its cut, refusals and move order; the cast cost).
+- `-rimarttest=todo`: 9 scenarios (stone place and take back, clap on the last charge and a direct
+  swap, Black Flash plain and after a clap, the Echo (organ on awakening, kit only in hero form,
+  stones and claps kept over a revert; cast costs, provoke 90 s, Combat presence grants nothing), and
+  the three pictures in game with 10 screenshots). Debug window kit "Todo": make Host, open the
+  Black Flash window, refill claps, and the picture previews.
 - `-rimarttest=goku`: 8 scenarios (flare, transmission alone / hostile passenger / downed ally,
   kamehameha lane / wall / blast, cancel refund and stun spent, warp, spirit bomb with a lender, the
   downed-and-recovered Trial). Debug window kit "Goku": make Host, cancel casts, all lend, recovery +1.

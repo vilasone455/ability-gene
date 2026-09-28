@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- Combat Presence is the sole source of Provoke. -->
+  <!-- Retired 2026-09-28: Provoke is Todo's now (AG_Echo_Todo). The def stays so a save whose pawns
+       have the trait still loads; commonality 0 keeps it off new pawns and it grants nothing. -->
   <TraitDef>
     <defName>AG_CombatPresence</defName>
-    <commonality>0.5</commonality>
+    <commonality>0</commonality>
     <degreeDatas>
       <li>
         <label>combat presence</label>
@@ -15,13 +16,6 @@
     <conflictingTraits>
       <li>Wimp</li>
     </conflictingTraits>
-    <modExtensions>
-      <li Class="RimArt.TraitAbilityExtension">
-        <abilities>
-          <li>AG_Provoke</li>
-        </abilities>
-      </li>
-    </modExtensions>
   </TraitDef>
 
   <!-- Pain Debt is the sole source of Wound Debt. -->

@@ -135,6 +135,8 @@ namespace UnityEngine
     public class Shader : Object
     {
         public Shader(string name) { this.name = name; }
+        /// <summary>The game's built-in Hidden/Internal-Colored is what the mod's negatives blend with; the lab calls it Invert.</summary>
+        public static Shader Find(string name) => new Shader(name == "Hidden/Internal-Colored" ? "Invert" : name);
     }
 
     public enum TextureFormat { RGBA32, ARGB32 }
@@ -165,6 +167,8 @@ namespace UnityEngine
         public void SetTexture(string property, Texture texture) =>
             textures[property] = (texture as Texture2D)?.path ?? "generated";
         public void SetFloat(string property, float value) => floats[property] = value;
+        public void SetInt(string property, int value) => floats[property] = value;
+        public int renderQueue { get; set; }
         public void SetColor(string property, Color value) { if (property == "_Color") color = value; }
     }
 
@@ -188,6 +192,8 @@ namespace UnityEngine
         public Vector3[] vertices { get => vertexData; set => vertexData = (Vector3[])value.Clone(); }
         public Vector2[] uv { get => uvData; set => uvData = (Vector2[])value.Clone(); }
         public int[] triangles { get => triangleData; set => triangleData = (int[])value.Clone(); }
+        /// <summary>Vertex colours; the lab draws with the material colour only.</summary>
+        public Color[] colors { get; set; }
         public void RecalculateNormals() { }
         public void RecalculateBounds() { }
         public void Clear(bool keepVertexLayout = true)
@@ -220,4 +226,10 @@ namespace UnityEngine
         public static float realtimeSinceStartup;
         public static int frameCount;
     }
+}
+
+namespace UnityEngine.Rendering
+{
+    public enum BlendMode { Zero = 0, One = 1, DstColor = 2, SrcColor = 3, OneMinusDstColor = 4, SrcAlpha = 5, OneMinusSrcColor = 6, DstAlpha = 7, OneMinusDstAlpha = 8, SrcAlphaSaturate = 9, OneMinusSrcAlpha = 10 }
+    public enum CullMode { Off = 0, Front = 1, Back = 2 }
 }

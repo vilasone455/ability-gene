@@ -51,6 +51,7 @@ namespace RimArt
                 return;
             }
             ClapTargets.Pay(gene, cost, end, null);
+            gene.NoteSwap();
             ClapTargets.Stun(caster, gene, end);
             teleports.Land(caster, from, to, parent.def.verbProperties.warmupTime, false);
             ClapCastAnimation.MoveTo(caster, caster.CurJobDef);
