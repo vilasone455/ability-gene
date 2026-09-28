@@ -443,5 +443,40 @@ namespace RimArt
             yield return t.ShotAs("rasengan-range-thrown", t.center, 9f);
             Finish(record);
         }
+
+        [RimArtTest("Minato", "rasengan 3 the walk up to an unmarked pawn can be called off: a move order ends it with no cooldown and no charge; once the warmup starts the job holds")]
+        private static IEnumerable<int> RasenganCallOff(RimArtTestContext t)
+        {
+            GameComponent_Echoes echoes = Setup(t);
+            yield return 5;
+            Pawn host = Host(t, echoes, t.center + new IntVec3(-8, 0, 0), out EchoRecord record);
+            Pawn far = Target(t, t.center + new IntVec3(8, 0, 0));
+            yield return 2;
+            Ability rasengan = Ready(t, host, MinatoDefOf.AG_Rasengan);
+            if (rasengan == null) { Finish(record); yield break; }
+            float pool = echoes.charge;
+            rasengan.QueueCastingJob(far, LocalTargetInfo.Invalid);
+            yield return 20;
+            t.Log("walking: " + RimArtTestContext.Describe(host));
+            t.Check(host.CurJobDef == MinatoDefOf.AG_CastMinato && host.pather.Moving, "he walks toward it");
+            t.Check(host.jobs.IsCurrentJobPlayerInterruptible(), "the walk can be called off");
+            host.jobs.TryTakeOrderedJob(JobMaker.MakeJob(JobDefOf.Goto, host.Position + new IntVec3(0, 0, 3)), JobTag.DraftedOrder);
+            yield return 5;
+            t.Log("after the move order: " + RimArtTestContext.Describe(host));
+            t.Check(host.CurJobDef != MinatoDefOf.AG_CastMinato, "the move order ended it");
+            t.Check(!rasengan.OnCooldown, "no cooldown (" + rasengan.CooldownTicksRemaining + " ticks)");
+            t.Check(pool - echoes.charge < 1f, "no charge paid (" + (pool - echoes.charge).ToString("0.##") + ")");
+
+            // An enemy one cell past the walk: once he stands next to it the warmup begins and the job holds.
+            foreach (int w in WaitFor(() => !host.pather.Moving, 120)) yield return w;
+            Pawn near = Target(t, host.Position + new IntVec3(2, 0, 0));
+            yield return 2;
+            rasengan.QueueCastingJob(near, LocalTargetInfo.Invalid);
+            foreach (int w in WaitFor(() => host.stances.curStance is Stance_Warmup, 90)) yield return w;
+            t.Log("warmup: " + RimArtTestContext.Describe(host));
+            t.Check(host.stances.curStance is Stance_Warmup, "the warmup began");
+            t.Check(!host.jobs.IsCurrentJobPlayerInterruptible(), "from the warmup the job holds");
+            Finish(record);
+        }
     }
 }

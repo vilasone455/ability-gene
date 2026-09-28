@@ -177,7 +177,8 @@ Code in `Source/RimArt/ThunderGod/Kit`, defs in `AG_Minato_Abilities.xml`, `AG_M
   the shots land where it fell; if the ground kunai is picked up, the barrier ends. The cast job holds
   him (no move orders) for the 6 s. Combat Extended projectiles are not taken.
 - **Rasengan.** One ability, verb range 29.9. A marked pawn not next to him: the ball forms where he
-  stands, then he jumps behind it. Any other pawn: he walks up to it first; if it has left touch range
+  stands, then he jumps behind it. Any other pawn: he walks up to it first (the player can call the walk
+  off with any order: no cooldown, no charge; from the warmup on the job holds); if it has left touch range
   (1.9) when the ball is formed, the ball is lost (cooldown and charge spent). The damage lands on the
   release (0.3 s after the ball reaches the body); the grind stuns it from the first contact. The
   throw goes one cell at a time away from him and stops before a cell it cannot stand in or see

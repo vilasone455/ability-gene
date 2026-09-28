@@ -538,10 +538,11 @@ puff and the vanilla punch.
 - `-rimarttest=goku`: 8 scenarios (flare, transmission alone / hostile passenger / downed ally,
   kamehameha lane / wall / blast, cancel refund and stun spent, warp, spirit bomb with a lender, the
   downed-and-recovered Trial). Debug window kit "Goku": make Host, cancel casts, all lend, recovery +1.
-- `-rimarttest=minato`: 8 scenarios (the Echo, sealed throws and the kunai kill Trial; jump to a ground
+- `-rimarttest=minato`: 9 scenarios (the Echo, sealed throws and the kunai kill Trial; jump to a ground
   kunai and into a marked pawn, an ally not cut; sealing touch and its limit of 3; the chain refused with
   one mark and run on three; Guiding Thunder with a bullet into the marked pawn and a grenade out at a
-  ground kunai; the Rasengan walked up to, into a wall, and from range; 15 screenshots). Debug window kit
+  ground kunai; the Rasengan walked up to, into a wall, and from range; the walk called off by a move
+  order; 15 screenshots). Debug window kit
   "Minato": make Host with a kunai belt, stick his kunai in a pawn, seal a pawn, plant his kunai.
 
 ## Not built

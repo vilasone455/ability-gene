@@ -222,12 +222,19 @@ namespace RimArt
     {
         private int pictureTick = -1;
 
+        /// <summary>
+        /// The player can call him off while he is still walking up to a Rasengan's target (the job def allows
+        /// it); from the start of the warmup the cast holds him.
+        /// </summary>
+        public override bool PlayerInterruptable => pictureTick < 0;
+
         protected override IEnumerable<Toil> MakeNewToils()
         {
             this.FailBeforeFired(Fired);
             AddFinishAction(delegate
             {
-                if (job.ability != null && job.def.abilityCasting)
+                // A walk called off before the warmup began cast nothing: no cooldown.
+                if (job.ability != null && job.def.abilityCasting && pictureTick >= 0)
                     job.ability.StartCooldown(job.ability.def.cooldownTicksRange.RandomInRange);
                 GameComponent_Minato.Instance?.JobEnded(pawn);
             });
@@ -240,7 +247,10 @@ namespace RimArt
             {
                 yield return Toils_Jump.JumpIf(begin, () => RasenganCast.FromRange(pawn, job.targetA.Thing as Pawn)
                     || pawn.CanReachImmediate(job.targetA, PathEndMode.Touch));
-                yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
+                Toil walk = Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
+                // The target is no longer one the Rasengan takes (dead, gone, or Minato himself).
+                walk.FailOn(() => job.ability?.CompOfType<CompAbilityEffect_Rasengan>()?.Valid(job.targetA) == false);
+                yield return walk;
             }
             yield return begin;
 
