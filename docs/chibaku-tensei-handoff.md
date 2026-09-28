@@ -1,13 +1,15 @@
 # Chibaku Tensei: handoff for building the real ability
 
-Written 2026-09-28 at the end of the preview work. The next conversation turns the preview into Pain's
-ultimate, replacing Gravity Well in Pain's Echo.
+Written 2026-09-28 at the end of the preview work; updated the same day after PR #96 was merged. The next
+conversation turns the preview into Pain's ultimate, replacing Gravity Well in Pain's Echo.
 
 ## Where things are
 
-- Worktree `../ability-gene-pain-chibaku`, branch `feature/pain-chibaku-sketch`, made from
-  `origin/main` 1051f6d. Not pushed, no PR.
-- Commits on the branch, oldest first:
+- **main a8ae401 has everything**: the Pain kit
+  ([PR #96](https://github.com/vilasone455/ability-gene/pull/96), merged as a8ae401) and the Chibaku preview
+  ([PR #97](https://github.com/vilasone455/ability-gene/pull/97), merged as d72a888). Start the real ability
+  on a new branch from main.
+- The preview's commits (branch `feature/pain-chibaku-sketch`, kept), oldest first:
 
 | Commit | What |
 |---|---|
@@ -18,15 +20,17 @@ ultimate, replacing Gravity Well in Pain's Echo.
 | b915de3 | Items, corpses, plants, trees, filth go with their plate |
 | 1228807 | Pulled soil becomes stony soil; biggest rocks land as real chunks |
 | 5caca5d | Ball hangs 5 cells up (user's choice) |
+| 4145b5b | This handoff |
 
-- Pain's own kit is **not on this branch**. It is on `feature/pain-port` (worktree
-  `../ability-gene-painkit`, commit 44a4c01, [PR #96](https://github.com/vilasone455/ability-gene/pull/96),
-  open, not merged). That branch has `PainCast`, `GameComponent_Pain`, `JobDriver_CastPain`,
-  `PainCasts.Make`, `PainKit.Unmovable` (Black Receiver pin), the Deva gap (`PainKit.DevaGapLeft` /
-  `StartDevaGap`), `PainGraphics` (the Banshō palm core), and `1.6/Defs/EchoDefs/AG_Echo_Pain.xml`, which
-  lists `AG_GravityWell` with cast cost 20.
-- First decision in the next conversation: merge PR #96 to main and then bring this branch up to date, or
-  build the ability on top of `feature/pain-port`. Either way the Chibaku code needs the Pain kit.
+- The Pain kit pieces the ability hooks into, all on main: `Source/RimArt/Pain/Kit/GameComponent_Pain.cs`
+  (`PainCast` base class, `GameComponent_Pain`, `JobDriver_CastPain`, `PainCasts.Make` / `For`),
+  `PainDefOf.cs` (`PainKit.Unmovable` for the Black Receiver pin, the Deva gap `PainKit.DevaGapLeft` /
+  `StartDevaGap`), `PainLook.cs` / `PainPictures.cs` (Pain's pose and the drawn arm),
+  `Source/RimArt/Pain/PainGraphics.cs` (the Banshō palm core), `BanshoCast.cs` and `BlackReceiverCast.cs` as
+  worked examples of a `PainCast`, and `1.6/Defs/EchoDefs/AG_Echo_Pain.xml`, which still lists
+  `AG_GravityWell` with cast cost 20.
+- Before merging #96, main was merged into `feature/pain-port` (17d4949) and tested: pain 8/8, Gravity Well
+  10/10, echo 20/20, chibaku 5/5.
 
 ## What the code does now (preview only)
 
@@ -87,7 +91,7 @@ the cell.
 
 ## Work list for the real ability
 
-1. Decide the branch base (see above).
+1. Start a branch from main (the Pain kit and the preview are both there).
 2. AbilityDef + XML fields for the balance numbers (radius, pull, hold, crush per second, fall damage, hit
    size, stun, range, cooldown, chunk rate). Balance numbers go in XML, shape and logic stay C# constants.
 3. Replace `AG_GravityWell` with the new ability in `AG_Echo_Pain.xml` (cast cost 30 proposed); update
@@ -115,6 +119,11 @@ the cell.
 - For about 0.2 s while a plate heaves, an item on it is still drawn by the game at ground level.
 - Burst rocks are the kit's generic rocks, not pieces of the captured ground.
 - Only stills were looked at, never the motion in game.
+- One test launch on the merged build crashed natively while the quicktest map was generated, before any
+  test ran: a segfault in `PawnRenderer.ParallelGetPreRenderResults`, which 7 Harmony patches hook (RimArt's
+  Mimic, Vergil pose, Minato look and Pain look among them). The rerun passed. If it happens again, suspect
+  a race in one of those render patches; PainLook is the newest. macOS kept the report in
+  `~/Library/Logs/DiagnosticReports/` (RimWorld by Ludeon Studios-2026-09-28-220438).
 - Not tested: snow, mossy ground or ice sheet soils, forbidden items, stacks merging on landing, a circle
   partly off-screen, chunks landing on walls.
 
@@ -127,7 +136,7 @@ the cell.
 ## How to build and test (Mac)
 
 ```bash
-cd ../ability-gene-pain-chibaku
+cd <worktree on your branch from main>
 dotnet build Source/RimArt/RimArt.csproj -c Release
 dotnet build Source/RimArt.MeleeAnimation/RimArt.MeleeAnimation.csproj -c Release
 python3 validate.py
