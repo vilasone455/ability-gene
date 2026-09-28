@@ -1,29 +1,29 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Verse;
-using T = RimArt.ClapTeleport;
 
 namespace RimArt
 {
     /// <summary>
-    /// Plays the clap teleport picture for real casts. A cast is known from the moment its warmup
-    /// starts (<see cref="Begin"/>, from JobDriver_CastClap), so the cards can rise at both ends
-    /// before the palms meet; <see cref="Land"/> is the swap itself and fixes the two ends to the
-    /// cells the exchange used. A cast that lands without having been begun - a caster whose job
-    /// is not the clap job - still gets everything from the contact on.
+    /// Plays Todo's Boogie Woogie picture for real casts (BoogieWoogieGraphics). A cast is known from
+    /// the moment its warmup starts (<see cref="Begin"/>, from JobDriver_CastClap), so a Double Clap's
+    /// first clap can burst before the swap; <see cref="Land"/> is the swap itself and fixes the two
+    /// ends to the cells the exchange used. A cast that lands without having been begun - a caster
+    /// whose job is not the clap job - still gets everything from the swap on.
     ///
-    /// The clock is game ticks, so the picture pauses and speeds up with the game. Nothing is
-    /// saved: a game loaded in the middle of a clap has lost two seconds of cards and nothing else.
+    /// The stage magician's cards (ClapTeleportGraphics) are not drawn for Todo; they stay for a
+    /// later hero. The clock is game ticks, so the picture pauses and speeds up with the game.
+    /// Nothing is saved: a game loaded in the middle of a clap has lost a second of picture.
     /// </summary>
     public class MapComponent_ClapTeleports : MapComponent
     {
         private sealed class Cast
         {
             public Pawn carrier;
-            public Anchor first, second;
             public int startTick, contactTick = -1;
             public float warmup;
-            public bool twice, animated;
+            public bool twice, begun;
+            /// <summary>Where Todo stood when he clapped: the burst is drawn there.</summary>
             public Vector2 palms;
             public ClapEnd end0, end1;
         }
@@ -40,16 +40,15 @@ namespace RimArt
 
         public MapComponent_ClapTeleports(Map map) : base(map) { }
 
-        /// <summary><paramref name="second"/> is null for a clap, where the other end is the carrier.</summary>
-        public void Begin(Pawn carrier, Anchor first, Anchor second, float warmup, bool twice, bool animated)
+        public void Begin(Pawn carrier, float warmup, bool twice)
         {
             Ended(carrier);
-            if (carrier == null || first == null) return;
+            if (carrier == null) return;
             Vector3 stands = carrier.DrawPos;
             casts.Add(new Cast
             {
-                carrier = carrier, first = first, second = second, warmup = warmup, twice = twice, animated = animated,
-                startTick = Find.TickManager.TicksGame, palms = new Vector2(stands.x, stands.z + T.PalmsNorth),
+                carrier = carrier, warmup = warmup, twice = twice, begun = true,
+                startTick = Find.TickManager.TicksGame, palms = new Vector2(stands.x, stands.z),
             });
         }
 
@@ -60,7 +59,14 @@ namespace RimArt
             int now = Find.TickManager.TicksGame;
             if (cast == null)
             {
-                cast = new Cast { carrier = carrier, twice = twice, startTick = now - Mathf.RoundToInt(warmup * 60f) };
+                // Not begun: a clap is made where Todo stood, which is the first end; a double clap's
+                // Todo does not move.
+                Vector3 stands = carrier.DrawPos;
+                cast = new Cast
+                {
+                    carrier = carrier, twice = twice, startTick = now - Mathf.RoundToInt(warmup * 60f),
+                    palms = twice ? new Vector2(stands.x, stands.z) : end0.ground,
+                };
                 casts.Add(cast);
             }
             cast.warmup = warmup;
@@ -68,7 +74,7 @@ namespace RimArt
             fired.Add(carrier);
             cast.end0 = end0;
             cast.end1 = end1;
-            if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(T.Shake);
+            if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(BoogieWoogie.Shake);
             AnchorSound.Clap(carrier);
             AnchorSound.Puff(map, end0.ground);
             AnchorSound.Puff(map, end1.ground);
@@ -84,23 +90,6 @@ namespace RimArt
         /// <summary>Whether the carrier's clap has landed in the cast job still running: the job holds from here (CastJobFail).</summary>
         public bool Fired(Pawn carrier) => fired.Contains(carrier);
 
-        /// <summary>
-        /// Whether a clap against this mark is in its warmup, and how long its cards have been
-        /// rising (negative before they start). MapComponent_Anchors draws the mark card with it.
-        /// </summary>
-        public bool Rising(Anchor anchor, out float rising)
-        {
-            for (int i = 0; i < casts.Count; i++)
-            {
-                Cast cast = casts[i];
-                if (cast.contactTick >= 0 || (cast.first != anchor && cast.second != anchor)) continue;
-                rising = Seconds(cast) - (cast.warmup - T.Rise);
-                return true;
-            }
-            rising = -1f;
-            return false;
-        }
-
         public override void MapComponentUpdate()
         {
             if (casts.Count == 0 || Find.CurrentMap != map) return;
@@ -109,20 +98,14 @@ namespace RimArt
                 Cast cast = casts[i];
                 float seconds = Seconds(cast);
                 bool landed = cast.contactTick >= 0;
-                if (landed ? seconds >= T.Duration(cast.warmup) : seconds > cast.warmup + Overdue || !Holds(cast))
+                if (landed ? seconds >= BoogieWoogie.Duration(cast.warmup) : seconds > cast.warmup + Overdue || !Holds(cast))
                 {
                     casts.RemoveAt(i);
                     continue;
                 }
-
-                if (!landed) ClapEnds.For(cast.carrier, cast.first, cast.second, true, out cast.end0, out cast.end1);
-                // The mark cards are MapComponent_Anchors' to draw, before and after.
-                ClapTeleportGraphics.DrawEnd(cast.end0, 0, seconds, cast.warmup, false, map);
-                ClapTeleportGraphics.DrawEnd(cast.end1, 1, seconds, cast.warmup, false, map);
-                if (!cast.animated) continue;
-                // The clip's palms meet at its own times, which for the last one is the warmup's end.
-                ClapTeleportGraphics.PalmStar(cast.palms, seconds - (cast.twice ? T.FirstContactAt(cast.warmup) : cast.warmup), 0);
-                if (cast.twice) ClapTeleportGraphics.PalmStar(cast.palms, seconds - cast.warmup, 1);
+                // Before the swap only a Double Clap's first clap shows; the ends are drawn from it.
+                BoogieWoogieGraphics.Draw(cast.palms, seconds, cast.warmup, cast.twice,
+                    cast.end0.ground, cast.end0.was, cast.end0.now, cast.end1.ground, cast.end1.was, cast.end1.now, map);
             }
         }
 
@@ -132,13 +115,7 @@ namespace RimArt
             return cast.contactTick >= 0 ? cast.warmup + (now - cast.contactTick) / 60f : (now - cast.startTick) / 60f;
         }
 
-        private bool Holds(Cast cast)
-        {
-            if (cast.carrier == null || !cast.carrier.Spawned || cast.carrier.Map != map) return false;
-            return Stands(cast.first) && (cast.second == null || Stands(cast.second));
-        }
-
-        private bool Stands(Anchor anchor) => !anchor.IsOnPawn || (anchor.pawn.Spawned && anchor.pawn.Map == map);
+        private bool Holds(Cast cast) => cast.carrier != null && cast.carrier.Spawned && cast.carrier.Map == map;
     }
 
     /// <summary>The two ends of a clap, from who is marked and who moves.</summary>
@@ -155,15 +132,18 @@ namespace RimArt
         {
             if (second == null)
             {
-                end0 = new ClapEnd { ground = Ground(carrier, carrier.Position, drawn), suit = first.suit, ring = first.IsOnPawn, mark = ClapMark.None };
-                end1 = new ClapEnd { ground = Ground(first, drawn), suit = first.suit, ring = true, mark = Kind(first) };
+                end0 = new ClapEnd { ground = Ground(carrier, carrier.Position, drawn), suit = first.suit, ring = first.IsOnPawn, mark = ClapMark.None,
+                    was = BoogieEnd.Pawn, now = Who(first) };
+                end1 = new ClapEnd { ground = Ground(first, drawn), suit = first.suit, ring = true, mark = Kind(first), was = Who(first), now = BoogieEnd.Pawn };
                 return;
             }
-            end0 = new ClapEnd { ground = Ground(first, drawn), suit = first.suit, ring = second.IsOnPawn, mark = Kind(first) };
-            end1 = new ClapEnd { ground = Ground(second, drawn), suit = second.suit, ring = first.IsOnPawn, mark = Kind(second) };
+            end0 = new ClapEnd { ground = Ground(first, drawn), suit = first.suit, ring = second.IsOnPawn, mark = Kind(first), was = Who(first), now = Who(second) };
+            end1 = new ClapEnd { ground = Ground(second, drawn), suit = second.suit, ring = first.IsOnPawn, mark = Kind(second), was = Who(second), now = Who(first) };
         }
 
         public static ClapMark Kind(Anchor anchor) => anchor.IsOnPawn ? ClapMark.Pawn : ClapMark.Tile;
+
+        public static BoogieEnd Who(Anchor anchor) => anchor.IsOnPawn ? BoogieEnd.Pawn : BoogieEnd.Stone;
 
         public static Vector2 Ground(Anchor anchor, bool drawn) => Ground(anchor.pawn, anchor.CurrentCell, drawn);
 

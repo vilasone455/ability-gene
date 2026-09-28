@@ -10,8 +10,8 @@ namespace RimArt
     /// <summary>
     /// The cast job of the clap and the double clap. It is JobDriver_CastAbility with three
     /// additions: the clap clip starts with the warmup, so the palms meet as the warmup ends and
-    /// the swap happens under them; the teleport picture is told the cast has begun, so the cards
-    /// can rise before the contact; and the job holds until the clip's open-hands pose is done,
+    /// the swap happens under them; the Boogie Woogie picture is told the cast has begun, so a
+    /// double clap's first clap bursts before the swap; and the job holds until the clip's open-hands pose is done,
     /// because Melee Animation cancels a clip the moment its pawn is in any other job.
     ///
     /// The toils are restated rather than taken from the base class. The base fails the whole job
@@ -59,14 +59,8 @@ namespace RimArt
             pawn.pather.StopDead();
             if (clapStartTick >= 0) return;
             clapStartTick = Find.TickManager.TicksGame;
-            bool animated = ClapCastAnimation.TryStart(pawn, Twice, job.def);
-
-            Gene_Anchors gene = AnchorUtility.GeneOf(pawn);
-            Anchor first = ClapTargets.EndFor(pawn, gene, job.targetA, out _);
-            Anchor second = Twice ? ClapTargets.EndFor(pawn, gene, job.targetB, out _) : null;
-            if (first == null || (Twice && second == null)) return;
-            pawn.Map.GetComponent<MapComponent_ClapTeleports>()
-                .Begin(pawn, first, second, job.ability.def.verbProperties.warmupTime, Twice, animated);
+            ClapCastAnimation.TryStart(pawn, Twice, job.def);
+            pawn.Map.GetComponent<MapComponent_ClapTeleports>().Begin(pawn, job.ability.def.verbProperties.warmupTime, Twice);
         }
 
         /// <summary>

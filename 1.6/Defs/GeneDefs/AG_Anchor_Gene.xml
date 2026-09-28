@@ -1,24 +1,28 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
+  <!-- Todo's organ (docs/hero-echo.md). Echo-only since 2026-09-27: his Echo gives it on awakening
+       (awakenGenes) and grants Stone, Clap, Double Clap and Black Flash while he is manifested, so the
+       gene lists no abilities of its own. It holds his stones and his three claps, so it stays for
+       life: the stones stay on the map and the claps grow back between manifests. Hero form's empty
+       hands (the Echo's emptyHands) replaces the old weapon ban. Kept out of genepacks and random
+       xenotypes; the def stays loadable for saves that hold it. -->
   <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
     <defName>AG_AnchorOrgan</defName>
     <label>anchor organ</label>
-    <description>Clap to change places with anyone in sight nearby, or clap twice to make two others change places. Stones thrown onto the ground can be clapped with from anywhere on the map, without line of sight.\n\nThree claps at a time, growing back one every 10 seconds. The clap takes both hands, so this carrier never carries a weapon.</description>
+    <description>Todo's Boogie Woogie. It works only in hero form. A clap swaps Todo with anyone in sight nearby, a double clap makes two others swap, and stones thrown onto the ground can be clapped with from anywhere on the map, without line of sight. A punch thrown within 3 seconds of a clap is a Black Flash.\n\nThree claps at a time, growing back one every 10 seconds whether or not Todo is manifested. His stones stay where they lie until they fade after about a day.</description>
     <geneClass>RimArt.Gene_Anchors</geneClass>
     <iconPath>UI/Icons/Genes/Gene_ElongatedFingers</iconPath>
     <displayCategory>Ability</displayCategory>
     <displayOrderInCategory>170</displayOrderInCategory>
     <marketValueFactor>2.0</marketValueFactor>
-    <abilities>
-      <li>AG_AnchorMark</li>
-      <li>AG_AnchorClap</li>
-      <li>AG_AnchorDoubleClap</li>
-    </abilities>
+    <canGenerateInGeneSet>false</canGenerateInGeneSet>
+    <selectionWeight>0</selectionWeight>
     <descriptionHyperlinks>
       <AbilityDef>AG_AnchorMark</AbilityDef>
       <AbilityDef>AG_AnchorClap</AbilityDef>
       <AbilityDef>AG_AnchorDoubleClap</AbilityDef>
+      <AbilityDef>AG_AnchorBlackFlash</AbilityDef>
     </descriptionHyperlinks>
     <biostatMet>-2</biostatMet>
     <biostatCpx>4</biostatCpx>
@@ -26,7 +30,7 @@
       <li Class="RimArt.AnchorGeneExtension">
         <maxAnchors>3</maxAnchors>
         <markDurationTicks>60000</markDurationTicks>
-        <banWeapons>true</banWeapons>
+        <banWeapons>false</banWeapons>
         <stoneDef>AG_ClapStone</stoneDef>
         <directSwapRange>15</directSwapRange>
         <longSwapRange>25</longSwapRange>

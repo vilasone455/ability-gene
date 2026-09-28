@@ -37,7 +37,7 @@ namespace RimArt
             Anchor existing = gene.AnchorFor(target);
             if (existing != null)
             {
-                flicks?.Lifted(caster, existing);
+                flicks?.Lifted(caster, existing, parent.def.verbProperties.warmupTime);
                 gene.Remove(existing);
                 Messages.Message("AG_AnchorLifted".Translate(caster.LabelShort, existing.Label),
                     caster, MessageTypeDefOf.NeutralEvent, false);
@@ -57,7 +57,7 @@ namespace RimArt
 
             Anchor anchor = new Anchor(stone, Find.TickManager.TicksGame);
             gene.Add(anchor);
-            flicks?.Placed(caster, anchor);
+            flicks?.Placed(caster, anchor, parent.def.verbProperties.warmupTime);
         }
 
         private static bool CanHoldStone(Map map, IntVec3 cell) =>

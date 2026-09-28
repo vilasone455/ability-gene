@@ -147,6 +147,19 @@
     </stages>
   </HediffDef>
 
+  <HediffDef ParentName="AG_EchoManifestBase">
+    <defName>AG_EchoManifest_Todo</defName>
+    <label>hero form: Todo</label>
+    <description>This Host has manifested Todo. The Echo's abilities are available, the anchor organ is awake and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <stages>
+      <li>
+        <statOffsets>
+          <MoveSpeed>0.5</MoveSpeed>
+        </statOffsets>
+      </li>
+    </stages>
+  </HediffDef>
+
   <!-- When the pool runs dry every manifested Host reverts and collapses for a while. -->
   <HediffDef>
     <defName>AG_EchoCollapse</defName>

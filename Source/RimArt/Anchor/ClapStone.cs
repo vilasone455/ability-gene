@@ -1,3 +1,4 @@
+using UnityEngine;
 using Verse;
 
 namespace RimArt
@@ -20,6 +21,13 @@ namespace RimArt
 
             Gene_Anchors gene = AnchorUtility.GeneOf(owner);
             if (gene == null || !gene.HoldsStone(this)) Destroy(DestroyMode.Vanish);
+        }
+
+        /// <summary>While it skids into its cell the throw's picture draws it (MapComponent_MarkFlicks), sliding and spinning.</summary>
+        protected override void DrawAt(Vector3 drawLoc, bool flip = false)
+        {
+            if (Spawned && Map.GetComponent<MapComponent_MarkFlicks>()?.Sliding(this) == true) return;
+            base.DrawAt(drawLoc, flip);
         }
 
         public override void ExposeData()

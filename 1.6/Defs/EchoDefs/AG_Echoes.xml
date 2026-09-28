@@ -399,4 +399,51 @@
     <hairColor>(0.08, 0.08, 0.1)</hairColor>
   </RimArt.EchoDef>
 
+  <!-- Todo (docs/hero-echo.md). The anchor organ is his Echo-only gene: given on awakening and kept for
+       life, because his stones and his three claps live on it (a stone vanishes when no gene holds
+       it). Stone, Clap, Double Clap and Black Flash work only in hero form; the stones stay on the
+       map and the claps keep growing back between manifests. Provoke came from the Combat presence
+       trait, which no longer grants it. Brawler is his cost; no subtitle. Every number is a placeholder. -->
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Todo</defName>
+    <label>Todo</label>
+    <description>He claps, and whoever he chose is standing somewhere else.</description>
+    <order>80</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Melee</skill>
+        <level>14</level>
+      </li>
+      <li Class="RimArt.Trial_Record">
+        <record>PawnsDownedHumanlikes</record>
+        <count>20</count>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>Brawler</trait>
+      </li>
+    </forcedTraits>
+    <awakenGenes>
+      <li MayRequire="Ludeon.RimWorld.Biotech">AG_AnchorOrgan</li>
+    </awakenGenes>
+    <abilities>
+      <li>AG_AnchorMark</li>
+      <li>AG_AnchorClap</li>
+      <li>AG_AnchorDoubleClap</li>
+      <li>AG_AnchorBlackFlash</li>
+      <li>AG_Provoke</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Todo</manifestHediff>
+    <emptyHands>true</emptyHands>
+    <upkeepPerHour>8</upkeepPerHour>
+    <!-- Stone, Clap and Double Clap cost no charge: the three claps on the gene are their limit. -->
+    <castCosts>
+      <li><ability>AG_AnchorBlackFlash</ability><cost>1</cost></li>
+      <li><ability>AG_Provoke</ability><cost>5</cost></li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.08, 0.08, 0.1)</hairColor>
+  </RimArt.EchoDef>
+
 </Defs>
