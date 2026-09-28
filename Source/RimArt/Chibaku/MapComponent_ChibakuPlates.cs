@@ -33,6 +33,9 @@ namespace RimArt
     /// map counts among its thing holders, so they stay on the map while off it. A save made while they are held
     /// keeps them; the picture is not saved, so on load they are put down at once, unhurt, where the ball was.
     /// Stopping the preview early does the same.
+    ///
+    /// Polish, after the ability itself is built: the crater's drawing (holes, ribs, drawn rocks) ends with the
+    /// preview; it should fade out over about a day, leaving the stony soil, chunks and rubble.
     /// </summary>
     public sealed class MapComponent_ChibakuPlates : MapComponent, IThingHolder
     {

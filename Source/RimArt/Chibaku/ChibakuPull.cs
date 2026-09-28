@@ -64,6 +64,9 @@ namespace RimArt
     ///   items within about 2) and lands 0.6 s later. A pawn takes 2 blunt for each second it was held plus 8
     ///   for the fall, in hits of up to 8, is stunned 2.5 s and goes back to its raid group (a hostile whose
     ///   group has ended gets a new assault group). Items land unhurt, stacks as they were.
+    /// - When the ball is formed, the natural soil of the pulled plates becomes stony soil (only a soil more fertile
+    ///   than stony soil changes; built floors keep their plate). At the burst the biggest thrown rocks land as real
+    ///   chunks of the map's rock, one for every 16 plates pulled (6 to 10); the other rocks leave rock rubble.
     ///
     /// Pinned pawns (Black Receiver) are not on this branch yet; there is no caster in the preview.
     /// </summary>
@@ -80,7 +83,13 @@ namespace RimArt
         private readonly IntVec3 centre;
         public readonly List<ChibakuHeld> pawns = new List<ChibakuHeld>();
         private readonly HashSet<ChibakuPlate> cleared = new HashSet<ChibakuPlate>();
-        private bool burst;
+        private readonly HashSet<int> rocksLanded = new HashSet<int>();
+        private bool burst, soilChanged;
+        private List<ThingDef> chunkDefs;
+
+        /// <summary>Cells turned to stony soil, and real chunks put down (for tests).</summary>
+        public int SoilChanged { get; private set; }
+        public readonly List<Thing> chunks = new List<Thing>();
 
         public ChibakuPull(MapComponent_ChibakuPlates owner, ChibakuBall ball, IntVec3 centre)
         {
@@ -122,6 +131,8 @@ namespace RimArt
                     h.landCell = Standable(new IntVec3(Mathf.RoundToInt(centre.x + h.drop.x), 0, Mathf.RoundToInt(centre.z + h.drop.y)));
                 }
             }
+            if (!soilChanged && s >= ChibakuBall.Formed) ChangeSoil();
+            if (s >= ChibakuBall.Burst) LandRocks(s - ChibakuBall.Burst);
             var landed = new List<ChibakuHeld>();
             foreach (ChibakuHeld h in pawns)
                 if (h.state == ChibakuHeld.Falling && s >= h.landAt) landed.Add(h);
@@ -162,6 +173,50 @@ namespace RimArt
                         else if (thing.def.category == ThingCategory.Item) TakeItem(thing, s);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Once, when the ball is formed (under the crater's drawing): the natural soil of every pulled plate that is
+        /// more fertile than stony soil becomes stony soil (vanilla Gravel). Sand, marsh, stone and floors are left.
+        /// </summary>
+        private void ChangeSoil()
+        {
+            soilChanged = true;
+            TerrainDef stony = TerrainDefOf.Gravel;
+            foreach (var (plate, _) in ball.PulledPlates)
+                foreach (IntVec3 c in plate.cells)
+                {
+                    if (!c.InBounds(map)) continue;
+                    TerrainDef terrain = c.GetTerrain(map);
+                    if (terrain == stony || !terrain.IsSoil || terrain.IsFloor || terrain.fertility <= stony.fertility) continue;
+                    map.terrainGrid.SetTerrain(c, stony);
+                    SoilChanged++;
+                }
+        }
+
+        /// <summary>
+        /// Each thrown rock as it lands: the biggest become real chunks of the map's own rock (one of its natural rock
+        /// types, in turn), the rest leave rock rubble.
+        /// </summary>
+        private void LandRocks(float age)
+        {
+            if (chunkDefs == null)
+            {
+                chunkDefs = Find.World.NaturalRockTypesIn(map.Tile).Select(r => r.building?.mineableThing).Where(d => d != null).ToList();
+                if (chunkDefs.Count == 0) chunkDefs.Add(DefDatabase<ThingDef>.GetNamed("ChunkGranite"));
+            }
+            foreach (var (m, land, after, real) in ball.ThrownRocks)
+            {
+                if (age < after || !rocksLanded.Add(m)) continue;
+                var cell = new IntVec3(Mathf.FloorToInt(land.x), 0, Mathf.FloorToInt(land.y));
+                if (!cell.InBounds(map)) continue;
+                if (real)
+                {
+                    Thing chunk = ThingMaker.MakeThing(chunkDefs[chunks.Count % chunkDefs.Count]);
+                    if (GenPlace.TryPlaceThing(chunk, cell, map, ThingPlaceMode.Near, out Thing placed)) chunks.Add(placed);
+                }
+                else FilthMaker.TryMakeFilth(cell, map, ThingDefOf.Filth_RubbleRock);
             }
         }
 

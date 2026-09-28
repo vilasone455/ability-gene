@@ -72,6 +72,7 @@ namespace RimArt
         private readonly Vector2 middle;
         private readonly List<Flight> caught = new List<Flight>(), kept = new List<Flight>();
         private readonly Dictionary<IntVec3, Flight> flightAt = new Dictionary<IntVec3, Flight>();
+        private readonly HashSet<int> realChunks = new HashSet<int>();
         private readonly Vector3[] slotDir;
         private readonly ChibakuPlate[] slotPlate;
         private readonly float[] slotFilledAt;
@@ -131,6 +132,13 @@ namespace RimArt
                     slotFilledAt[m] = caught[k].arriveAt;
                 }
             }
+            // The biggest of the thrown rocks become real chunks where they land: one for every 16 plates pulled, 6 to 10.
+            int real = Mathf.Clamp(Mathf.RoundToInt(caught.Count / 16f), 6, 10);
+            var bySize = new List<int>();
+            for (int m = 0; m < slots; m += 2) bySize.Add(m);
+            bySize.Sort((a, b) => ChunkSize(b).CompareTo(ChunkSize(a)));
+            for (int k = 0; k < Mathf.Min(real, bySize.Count); k++) realChunks.Add(bySize[k]);
+
             slotFace = new Mesh[slots];
             slotEdge = new Mesh[slots];
             for (int m = 0; m < slots; m++)
@@ -183,6 +191,23 @@ namespace RimArt
         }
 
         private static float Squeeze(float s) => s >= Formed && s < Crack ? Bump(((s - Formed) % 1f) / .18f) : 0f;
+
+        /// <summary>The thrown rocks: slot, where it lands (x, z), seconds after the burst, and whether it becomes a real chunk item.</summary>
+        public IEnumerable<(int m, Vector2 land, float after, bool real)> ThrownRocks
+        {
+            get
+            {
+                for (int m = 0; m < slots; m += 2)
+                {
+                    Vector3 land = Chunk(m, out _, out _, out _);
+                    yield return (m, new Vector2(land.x, land.y), land.z, realChunks.Contains(m));
+                }
+            }
+        }
+
+        public int RealChunkCount => realChunks.Count;
+
+        private static float ChunkSize(int m) => .6f + .45f * R(m * 13 + 2);
 
         /// <summary>Seconds after the burst at which the latest chunk lands.</summary>
         public float LastChunkLands()
@@ -262,7 +287,7 @@ namespace RimArt
                 else Slab(a.flight, a.pos, a.age * a.flight.spinRate, .3f + a.age * a.flight.tumbleRate, Mathf.Lerp(1f, .6f, a.u), top + .075f + ahead++ * .0002f);
             }
             if (s >= Pull && s < Formed) Inflow(s, C, Mathf.Clamp01((s - Pull) / .2f) * (1f - Smooth((frac - .7f) / .3f)), top + .11f);
-            if (s >= Burst) DrawBurst(s - Burst, C, top, floor);
+            if (s >= Burst) DrawBurst(s - Burst, C, top, floor, pawns != null);
         }
 
         /// <summary>
@@ -457,7 +482,7 @@ namespace RimArt
         }
 
         /// <summary>The burst: rocks thrown out from every other surface slot, landing and staying; dust; a flash.</summary>
-        private void DrawBurst(float age, Vector2 C, float top, float floor)
+        private void DrawBurst(float age, Vector2 C, float top, float floor, bool live)
         {
             for (int m = 0; m < slots; m += 2)
             {
@@ -472,7 +497,8 @@ namespace RimArt
                 else
                 {
                     var at = new Vector2(land.x, land.y);
-                    PaperBombGraphics.Rock(at, size, turn + tl * 300f * dir, 1f, m, floor + .03f + (m % 7) * .0006f);
+                    // In the live ball the biggest rocks are real chunk items once they land; the game draws those.
+                    if (!(live && realChunks.Contains(m))) PaperBombGraphics.Rock(at, size, turn + tl * 300f * dir, 1f, m, floor + .03f + (m % 7) * .0006f);
                     float la = age - tl;
                     if (m % 3 == 0 && la < .5f) Sprite(new Vector2(at.x, at.y + la * .3f), .35f + la, .3f + la * .8f, Fade(Dust, .45f * (1f - la / .5f)), puff, top + .006f);
                 }
@@ -503,7 +529,7 @@ namespace RimArt
             float sp = 1.6f + 1.8f * R(m * 13 + 1);
             p0 = core + n * Radius;
             v = new Vector3(n.x * sp, n.y * sp + 1.4f, n.z * sp);
-            size = .6f + .45f * R(m * 13 + 2);
+            size = ChunkSize(m);
             float tl = (v.y + Mathf.Sqrt(v.y * v.y + 2f * Gravity * p0.y)) / Gravity;
             return new Vector3(p0.x + v.x * tl, p0.z + v.z * tl, tl);
         }

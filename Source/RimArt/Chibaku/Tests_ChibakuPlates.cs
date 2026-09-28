@@ -62,7 +62,9 @@ namespace RimArt
             t.Check(wrong == 0, $"each cell in the circle is under exactly one plate ({wrong} are not)");
             List<ChibakuPlate> onWall = ground.plates.Where(p => p.cells.Contains(wall)).ToList();
             t.Check(onWall.Count == 1 && onWall[0].anchored, "the plate under the wall stays in the ground");
-            t.Check(ground.plates.Count(p => p.anchored) == onWall.Count, "no other plate stays");
+            var stay = ground.plates.Where(p => p.cells.Any(cell => cell == wall || cell.GetTerrain(t.map) == TerrainDefOf.Concrete)).ToList();
+            t.Check(ground.plates.Where(p => p.anchored).OrderBy(p => p.index).SequenceEqual(stay.OrderBy(p => p.index)),
+                $"only the plates under the wall and the concrete floor stay ({stay.Count})");
 
             // The captured colour over sample cells, read through the plates' UVs, is nearest the colour of the
             // cell's own terrain texture. A flipped or mirrored picture puts another quarter's terrain there.
@@ -254,6 +256,47 @@ namespace RimArt
             t.Check(component.Inner.Count == 0, "nothing is left inside");
             yield return t.ShotAs("chibaku-items-4-landed");
             yield return Until(ChibakuBall.End + .2f);
+        }
+
+        [RimArtTest("Chibaku", "ground 1 the pulled soil becomes stony soil and the biggest rocks land as chunks of the map's rock", 2400)]
+        private static IEnumerable<int> Ground(RimArtTestContext t)
+        {
+            IntVec3 wall = Arena(t);
+            IntVec3 c = t.center, roofedCell = c + new IntVec3(-3, 0, 1), outside = c + new IntVec3(0, 0, -9);
+            t.map.roofGrid.SetRoof(roofedCell, RoofDefOf.RoofConstructed);
+            int ChunksNear() => GenRadial.RadialCellsAround(c, Radius + 2f, true).Sum(cell => cell.GetThingList(t.map).Count(x => x.def.IsWithinCategory(ThingCategoryDefOf.StoneChunks)));
+            int chunksBefore = ChunksNear();
+            MapComponent_ChibakuPlates component = MapComponent_ChibakuPlates.Of(t.map);
+            component.Stop();
+            Find.CameraDriver.SetRootPosAndSize(c.ToVector3Shifted(), 10f);
+            yield return 5;
+            ChibakuBall ball = component.BeginBall(c, Radius);
+            if (!t.Check(ball != null, "the live ball began")) yield break;
+            var pulledCells = new HashSet<IntVec3>(ball.PulledPlates.SelectMany(p => p.plate.cells));
+            var soilBefore = pulledCells.Where(cell => cell.GetTerrain(t.map).IsSoil && cell.GetTerrain(t.map).fertility > TerrainDefOf.Gravel.fertility).ToList();
+            var sandBefore = pulledCells.Where(cell => cell.GetTerrain(t.map) == TerrainDefOf.Sand).ToList();
+            int start = t.Now;
+            int Until(float seconds) => Mathf.Max(0, start + Mathf.CeilToInt(seconds * 60f) - t.Now);
+
+            yield return Until(ChibakuBall.Formed + .1f);
+            t.Log($"{pulledCells.Count} cells pulled: {soilBefore.Count} soil or rich soil, {sandBefore.Count} sand; {component.Pull.SoilChanged} turned to stony soil");
+            t.Check(soilBefore.Count > 0 && soilBefore.All(cell => cell.GetTerrain(t.map) == TerrainDefOf.Gravel), "every pulled soil cell is stony soil now");
+            t.Check(component.Pull.SoilChanged == soilBefore.Count, "nothing else changed");
+            t.Check(sandBefore.All(cell => cell.GetTerrain(t.map) == TerrainDefOf.Sand), "the sand stays sand");
+            t.Check(roofedCell.GetTerrain(t.map) == TerrainDefOf.SoilRich && outside.GetTerrain(t.map) == TerrainDefOf.Soil, "the roofed cell and the ground outside the circle keep their soil");
+            t.Check((c + new IntVec3(-3, 0, -3)).GetTerrain(t.map) == TerrainDefOf.Concrete, "the concrete floor stays");
+
+            yield return Until(ChibakuBall.Burst + ball.LastChunkLands() + .1f);
+            int chunks = ChunksNear() - chunksBefore, rubble = GenRadial.RadialCellsAround(c, Radius + 3f, true).Count(cell => cell.GetFirstThing(t.map, ThingDefOf.Filth_RubbleRock) != null);
+            var rockDefs = Find.World.NaturalRockTypesIn(t.map.Tile).Select(r => r.building?.mineableThing).Where(d => d != null).ToList();
+            t.Log($"{chunks} chunks landed ({string.Join(", ", component.Pull.chunks.Select(x => x.def.defName).Distinct())}; the map's rock: {string.Join(", ", rockDefs.Select(d => d.defName))}), rubble on {rubble} cells");
+            t.Check(chunks == ball.RealChunkCount && component.Pull.chunks.Count == ball.RealChunkCount, $"{ball.RealChunkCount} chunks landed (one for every 16 plates pulled, 6 to 10)");
+            t.Check(component.Pull.chunks.All(x => x.Spawned && rockDefs.Contains(x.def) && (x.Position - c).LengthHorizontal <= Radius + 1f), "they are the map's rock and lie in the crater");
+            t.Check(rubble > 0, "the smaller rocks left rubble");
+            yield return t.ShotAs("chibaku-ground-1-landed");
+            yield return Until(ChibakuBall.End + .3f);
+            t.Check(component.Ball == null, "the preview ended");
+            yield return t.ShotAs("chibaku-ground-2-after");
         }
 
         private static int Injuries(Pawn p) => p.health.hediffSet.hediffs.Count(h => h is Hediff_Injury || h is Hediff_MissingPart);
