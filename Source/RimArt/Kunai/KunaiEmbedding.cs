@@ -166,10 +166,27 @@ namespace RimArt
             kunai.plantAngle = angle;
             kunai.plantOffset = new Vector2(Mathf.Clamp(offset.x, -max, max), Mathf.Clamp(offset.z, -max, max));
             if (!GenPlace.TryPlaceThing(kunai, cell, map, ThingPlaceMode.Near, out Thing placed)) return false;
-            if (placed != kunai || placed.Position == cell) return true;
-            kunai.plantOffset = Vector2.zero;
-            kunai.DirtyMapMesh(map);
+            if (placed == kunai && placed.Position != cell)
+            {
+                kunai.plantOffset = Vector2.zero;
+                kunai.DirtyMapMesh(map);
+            }
+            KickUpDirt(placed.Position.ToVector3Shifted() + new Vector3(kunai.plantOffset.x, 0f, kunai.plantOffset.y), angle, map);
             return true;
+        }
+
+        /// <summary>Dust thrown up where a kunai goes into the ground, mostly ahead of it, the way it flew.</summary>
+        private static void KickUpDirt(Vector3 at, float angle, Map map)
+        {
+            if (!at.ShouldSpawnMotesAt(map)) return;
+            for (int i = 0; i < 3; i++)
+            {
+                FleckCreationData dust = FleckMaker.GetDataStatic(at, map, FleckDefOf.DustPuff, Rand.Range(0.7f, 1.1f));
+                dust.rotationRate = Rand.Range(-60, 60);
+                dust.velocityAngle = angle + Rand.Range(-35f, 35f);
+                dust.velocitySpeed = Rand.Range(0.5f, 1f);
+                map.flecks.CreateFleck(dust);
+            }
         }
     }
 }

@@ -11,7 +11,7 @@ namespace RimArt
     ///
     /// Whatever takes it off the map (a haul, a reload, a pick-up) pulls it out, so a carried or dropped
     /// kunai lies flat. A planted kunai never stacks: two misses into one cell stay two kunai, the second
-    /// in the next cell.
+    /// in the next cell. It shows no stack count.
     /// </summary>
     public class KunaiItem : ThingWithComps
     {
@@ -37,6 +37,12 @@ namespace RimArt
             }
             Vector3 at = DrawPos + new Vector3(plantOffset.x, 0f, plantOffset.y);
             Printer_Plane.PrintPlane(layer, at, Vector2.one * KunaiDefaults.PlantedDrawSize, PlantedMat, plantAngle);
+        }
+
+        /// <summary>No stack count under a planted kunai: it is always one, and the label hides the ground round it.</summary>
+        public override void DrawGUIOverlay()
+        {
+            if (!planted) base.DrawGUIOverlay();
         }
 
         public override bool CanStackWith(Thing other) =>

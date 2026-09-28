@@ -22,7 +22,9 @@ does not anti-alias a polygon fill.
 
 Run:  python3 make_textures.py
 """
-from PIL import Image, ImageDraw, ImageFilter
+import math
+
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 SS = 4                    # supersample factor
 SIZE = 128                # final texture size
@@ -1154,19 +1156,37 @@ def make_kunai_icon():
     finish(img, "Textures/RimArt/Kunai/IconKunai.png")
 
 
+# Soil for the planted kunai's ground mark: dark enough to read on grass, soil and sand alike.
+SOIL_HOLE  = (22, 16, 11)
+SOIL_DARK  = (44, 32, 22)
+SOIL       = (98, 77, 55)
+SOIL_LIGHT = (184, 156, 118)
+
+
+def soil_lump(d, x, y, r):
+    """A lump of turned-up soil at (x, y) in final pixels from the centre: a dark underside, a lit top."""
+    c = S // 2
+    d.ellipse([c + px(x - r), c + px(y - r * 0.55), c + px(x + r), c + px(y + r * 0.85)], fill=SOIL_DARK + (235,))
+    d.ellipse([c + px(x - r * 0.9), c + px(y - r * 0.75), c + px(x + r * 0.8), c + px(y + r * 0.35)], fill=SOIL + (240,))
+    d.ellipse([c + px(x - r * 0.65), c + px(y - r * 0.7), c + px(x + r * 0.25), c + px(y - r * 0.1)], fill=SOIL_LIGHT + (240,))
+
+
 def make_kunai_planted():
     """
-    A kunai standing in the ground after a miss (KunaiItem), drawn at 1 cell: the blade is buried
-    nearly to its widest point at the texture centre and the rest leans back toward the thrower (down the
-    texture), so it is foreshortened. It flew up the texture; the game turns it to the way it flew.
-    The kunai is the item's length (0.7 cells). Under it a shadow falling to the lower right, a low
-    mound of dirt round the cut and a few clods thrown ahead of it.
+    A kunai standing in the ground after a miss (KunaiItem), drawn 1.4 cells wide. It flew up the texture;
+    the game turns it to the way it flew. Half the blade is buried at the texture centre and the rest
+    leans back toward the thrower (down the texture), foreshortened; what stands out of the ground is
+    about 0.6 cells long, near the flat item's 0.7.
+
+    The ground shows it went in: a small crater, a rim of soil round a dark hole wider than the
+    blade, and the blade darkening as it goes down into the hole, so it does not end in a straight
+    cut; a dark scuff, cracks and clods thrown ahead round it. A shadow falls to the lower right.
     """
     img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     c = S // 2
     length = px(90)
-    buried = length * KUNAI_BLADE * 0.6
-    lean = 0.72  # the visible part's length seen from above, as a share of its real length
+    buried = length * KUNAI_BLADE * 0.5
+    lean = 0.85  # the visible part's length seen from above, as a share of its real length
 
     # Drawn on a tall layer: the whole kunai does not fit below the centre until it is foreshortened.
     layer = Image.new("RGBA", (S, 2 * S), (0, 0, 0, 0))
@@ -1175,29 +1195,67 @@ def make_kunai_planted():
     below = below.resize((S, max(1, int(below.height * lean))), Image.LANCZOS)
     kunai = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     kunai.alpha_composite(below, (0, c))
+    # The blade darkens as it goes down into the hole.
+    fade = Image.new("L", (1, S), 0)
+    for y in range(S):
+        fade.putpixel((0, y), int(200 * max(0.0, 1 - (y - c) / px(5))) if y >= c else 0)
+    fade = ImageChops.multiply(fade.resize((S, S)), kunai.split()[3])
+    kunai.alpha_composite(Image.merge("RGBA", (*Image.new("RGB", (S, S), SOIL_HOLE).split(), fade)))
+
+    def at(x, y):
+        return c + px(x), c + px(y)
+
+    def arc(rx, ry, a0, a1, cy=0.0, wobble=0.0, step=6):
+        """Points on an ellipse round the hole, angles in degrees from straight ahead, clockwise; the
+        radius wobbles a little so the soil's edge is not a clean curve."""
+        pts = []
+        n = max(2, int(abs(a1 - a0) / step))
+        for i in range(n + 1):
+            a = math.radians(a0 + (a1 - a0) * i / n)
+            k = 1 + wobble * math.sin(a * 5.3 + 0.7) * math.cos(a * 2.1)
+            pts.append(at(math.sin(a) * rx * k, cy - math.cos(a) * ry * k))
+        return pts
+
+    # Scuffed, darker ground round the hole, reaching further ahead than behind.
+    scuff = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    ImageDraw.Draw(scuff).ellipse([c - px(18), c - px(18), c + px(18), c + px(8)], fill=SOIL_DARK + (140,))
+    img.alpha_composite(scuff.filter(ImageFilter.GaussianBlur(px(2.5))))
+
+    d = ImageDraw.Draw(img)
+    # Cracks running out past the crater: (direction in degrees from ahead, clockwise; from; to; bend).
+    for a, r0, r1, bend in ((-80, 14, 22, 1.4), (-45, 12, 22, -1.2), (-12, 9, 17, 1.0), (22, 10, 19, -1.3),
+                            (55, 13, 21, 1.2), (100, 14, 20, -1.0), (-112, 14, 20, 0.9)):
+        t = math.radians(a)
+        dx, dy = math.sin(t), -math.cos(t)
+        mid = (r0 + r1) / 2
+        d.line([at(dx * r0, dy * r0 * 0.75), at(dx * mid - dy * bend, (dy * mid + dx * bend) * 0.75),
+                at(dx * r1, dy * r1 * 0.75)], fill=SOIL_DARK + (235,), width=px(0.9), joint="curve")
+
+    # A small crater: a rim of soil pushed up round the hole, lit on its upper left.
+    rx, ry = 13.0, 6.8
+    d.ellipse([c - px(rx + 0.9), c - px(ry + 0.9), c + px(rx + 0.9), c + px(ry + 0.9)], fill=SOIL_DARK + (240,))
+    d.ellipse([c - px(rx), c - px(ry), c + px(rx), c + px(ry)], fill=SOIL + (250,))
+    d.arc([c - px(rx - 0.6), c - px(ry - 0.6), c + px(rx - 0.6), c + px(ry - 0.6)], 170, 300,
+          fill=SOIL_LIGHT + (250,), width=px(1.3))
+    # The hole, a little wider than the blade.
+    hx, hy = rx - 2.6, ry - 2.1
+    d.ellipse([c - px(hx), c - px(hy), c + px(hx), c + px(hy)], fill=SOIL_HOLE + (250,))
+    # Clods thrown ahead.
+    for x, y, r in ((-7, -13, 1.8), (4.5, -15.5, 1.6), (12.5, -10, 1.4), (-14, -8, 1.3), (16.5, -4, 1.1),
+                    (-1.5, -20, 1.1)):
+        soil_lump(d, x, y, r)
 
     # Shadow: the kunai's outline, slid further right the higher it stands off the ground.
-    alpha = kunai.split()[3].point(lambda v: 90 if v > 40 else 0)
+    alpha = kunai.split()[3].point(lambda v: 95 if v > 40 else 0)
     shear = 0.35
     alpha = alpha.transform((S, S), Image.AFFINE, (1, -shear, shear * c, 0, 1, 0), resample=Image.BILINEAR)
     shadow = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     shadow.putalpha(alpha.filter(ImageFilter.GaussianBlur(px(0.8))))
     img.alpha_composite(shadow, (px(1), px(1)))
 
-    # Dirt pushed up round the cut, the cut itself, and clods thrown ahead.
-    d = ImageDraw.Draw(img)
-    d.ellipse([c - px(8.5), c - px(3.6), c + px(8.5), c + px(3.4)], fill=DIRT + (200,))
-    d.ellipse([c - px(7.5), c - px(3.4), c + px(7), c + px(0.6)], fill=DIRT_LIGHT + (190,))
-    d.ellipse([c - px(4.6), c - px(1.2), c + px(4.6), c + px(1.4)], fill=(30, 22, 16, 235))
-    for x, y, r in ((-3.5, -8.5, 1.5), (2.5, -10.5, 1.2), (5.5, -6.5, 1.0), (-6.5, -5.0, 0.9), (0.5, -14.0, 0.8)):
-        d.ellipse([c + px(x - r), c + px(y - r), c + px(x + r), c + px(y + r * 0.8)], fill=DIRT + (220,))
-        d.ellipse([c + px(x - r * 0.6), c + px(y - r * 0.7), c + px(x + r * 0.3), c + px(y)], fill=DIRT_LIGHT + (220,))
     img.alpha_composite(kunai)
-    # A lip of dirt over the blade where it comes out of the ground.
-    d = ImageDraw.Draw(img)
-    d.chord([c - px(5.2), c - px(1.6), c + px(5.2), c + px(2.2)], 0, 180, fill=DIRT + (230,))
-
-    finish(img, "Textures/RimArt/Kunai/Planted.png")
+    # 256 px: the game draws it 1.4 cells wide (KunaiDefaults.PlantedDrawSize).
+    finish_at(img, "Textures/RimArt/Kunai/Planted.png", 256)
 
 
 def make_kunai_embedded():

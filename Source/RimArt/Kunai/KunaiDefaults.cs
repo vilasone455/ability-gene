@@ -18,8 +18,8 @@ namespace RimArt
         /// </summary>
         public const string PlantedTexture = "RimArt/Kunai/Planted";
 
-        /// <summary>Cells across the planted kunai's texture; its kunai is drawn the same length as the item's.</summary>
-        public const float PlantedDrawSize = 1f;
+        /// <summary>Cells across the planted kunai's texture: what stands out of the ground is then about 0.6 cells long, near the flat item's 0.7.</summary>
+        public const float PlantedDrawSize = 1.4f;
 
         /// <summary>Furthest a planted kunai stands from its cell's centre, so it never looks as if it is in the next cell.</summary>
         public const float PlantedMaxOffset = 0.35f;
