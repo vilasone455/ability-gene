@@ -12,13 +12,6 @@ namespace RimArt
 
     public class CompAbilityEffect_ShinraTensei : CompAbilityEffect
     {
-        public override IEnumerable<Gizmo> CompGetGizmosExtra()
-        {
-            if (parent.pawn.abilities.AllAbilitiesForReading.FirstOrDefault(a => a.def == parent.def) != parent) yield break;
-            var s = GameComponent_Shinra.Instance.For(parent.pawn);
-            if (s.active) yield return new Gizmo_ShinraCharge(s);
-        }
-
         public override bool GizmoDisabled(out string reason)
         {
             if (!ShinraCastAnimation.Clip.Present)
@@ -32,16 +25,13 @@ namespace RimArt
             return base.GizmoDisabled(out reason);
         }
 
+        /// <summary>Anything that casts the ability itself (the button does not) gets the quick version.</summary>
         public override void Apply(LocalTargetInfo target, LocalTargetInfo dest)
         {
             base.Apply(target, dest);
             Pawn pawn = parent.pawn;
             if (pawn?.Map == null) return;
-            MapComponent_ShinraCasts component = pawn.Map.GetComponent<MapComponent_ShinraCasts>();
-            if (component.Running(pawn) || !GameComponent_Shinra.HasEye(pawn) || PainKit.DevaGapLeft(pawn) > 0f || PainKit.ChibakuLeft(pawn) > 0f
-                || GameComponent_Shinra.Instance.For(pawn).cooldownUntil > Find.TickManager.TicksGame) return;
-            if (ShinraCastAnimation.Clip.TryStart(pawn, out CastClips.Handle animation))
-                component.Begin(pawn, animation);
+            GameComponent_Shinra.Instance.Start(pawn, true);
         }
     }
 }

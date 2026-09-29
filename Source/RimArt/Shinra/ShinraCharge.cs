@@ -2,29 +2,69 @@ using System;
 
 namespace RimArt
 {
-    // Both clocks advance only from game ticks. Release freezes power, not clip position.
+    /// <summary>
+    /// One Shinra Tensei on its clip. Both clocks advance only from game ticks; release freezes the charge, not the
+    /// clip. A tap plays RimArt_ShinraTap from the start. A hold plays RimArt_ShinraCharge: it opens, then its charge
+    /// segment is sought by power (the arms step up at a third and two thirds), and the release jumps to the segment
+    /// for the size reached. Clip times are make_shinra_anim.py's; the rule's numbers are <see cref="ShinraTuning"/>.
+    /// </summary>
     public sealed class ShinraCharge
     {
-        public const float Hold = 0.27f, Burst = 0.38f, End = 1.35f;
-        public const int FullTicks = 180, CooldownTicks = 1200, DefenseTicks = 45;
-        public const float Radius = 4f;
+        public const float TapBurst = 0.22f, TapEnd = 0.70f;
+        public const float Open = 0.27f, Span = 1.00f;
+        /// <summary>Release segments: the quick version from a hold (arms down and out), then one per size.</summary>
+        public static readonly float[] ReleaseAt = { 1.29f, 2.39f, 3.49f };
+        public const float ReleaseBurst = 0.11f, ReleaseLength = 1.08f;
+
+        /// <summary>Started as a tap: the quick version on its own clip.</summary>
+        public bool tap;
+        /// <summary>Game ticks charged (a hold only), up to the full charge.</summary>
         public int ticks;
+        /// <summary>Clip seconds.</summary>
         public float time;
         public bool releasing, burst;
-        public float Power => Math.Min(1f, ticks / (float)FullTicks);
-        public bool Held => !releasing && time >= Hold;
+        /// <summary>Set at release: -1 the quick version, else an index into <see cref="ShinraTuning.sizes"/>.</summary>
+        public int size = -1;
+
+        public static ShinraCharge Tap() => new ShinraCharge { tap = true, releasing = true };
+        public static ShinraCharge Hold() => new ShinraCharge();
+
+        public float Seconds => ticks / 60f;
+        public float Power => Math.Min(1f, ticks / (float)ShinraTuning.Get.FullChargeTicks);
+        public bool Quick => size < 0;
+        /// <summary>The size a release now would give.</summary>
+        public int SizeNow => tap ? -1 : ShinraTuning.Get.SizeAfter(Seconds);
+        public bool Held => !releasing && time >= Open;
+
+        public float BurstAt => tap ? TapBurst : Segment + ReleaseBurst;
+        public float End => tap ? TapEnd : Segment + ReleaseLength;
+        private float Segment => ReleaseAt[Math.Min(ReleaseAt.Length - 1, size + 1)];
+
+        public void Release()
+        {
+            if (releasing) return;
+            size = SizeNow;
+            releasing = true;
+            time = Segment;
+        }
+
+        /// <summary>One game tick. True on the tick the wave bursts.</summary>
         public bool Advance(float speed)
         {
-            if (!releasing) ticks = Math.Min(FullTicks, ticks + 1);
-            time += Math.Max(0f, speed) / 60f;
-            if (!releasing) time = Math.Min(Hold, time);
-            if (!releasing || burst || time + 0.000001f < Burst) return false;
+            float step = Math.Max(0f, speed) / 60f;
+            if (!releasing)
+            {
+                ticks = Math.Min(ShinraTuning.Get.FullChargeTicks, ticks + 1);
+                time = time < Open ? Math.Min(Open, time + step) : Open + Power * Span;
+                return false;
+            }
+            time += step;
+            if (burst || time + 0.000001f < BurstAt) return false;
             burst = true;
             return true;
         }
-        public float SecondsToBurst(float speed) => Math.Max(0f, Burst - time) / Math.Max(0.001f, speed);
-        public float Push => 3f + 4f * Power;
-        public float CollisionDamage => 8f + 12f * Power;
-        public float ProjectileLimit => 12f + 48f * Power;
+
+        public float SecondsToBurst(float speed) =>
+            (releasing ? Math.Max(0f, BurstAt - time) : ReleaseBurst) / Math.Max(0.001f, speed);
     }
 }

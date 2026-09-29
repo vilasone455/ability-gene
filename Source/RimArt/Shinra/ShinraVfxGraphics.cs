@@ -93,8 +93,14 @@ namespace RimArt
 
         /// <summary>The wave is centred on the caster and radial in every direction, so nothing
         /// here reads the caster's facing.</summary>
-        public static void Draw(Vector3 centre, float time, Map map)
+        /// <summary>
+        /// The dome at picture seconds <paramref name="time"/> (burst at ShinraVfxTiming.ChargeEnd), <paramref name="domeRadius"/>
+        /// cells from its centre to its floor's edge. The lab's preview draws the 4-cell one. The v2 dome (the lab's pain-shinra-tensei.js)
+        /// replaces this picture later in the port.
+        /// </summary>
+        public static void Draw(Vector3 centre, float time, Map map, float domeRadius = 4f)
         {
+            ShinraVfxTiming.Radius = domeRadius;
             EnsureMaterials();
             float radius = ShinraVfxTiming.ShellRadius(time);
             float alpha = ShinraVfxTiming.ShellAlpha(time);

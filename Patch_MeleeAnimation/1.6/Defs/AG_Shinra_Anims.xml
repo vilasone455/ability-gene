@@ -14,4 +14,32 @@
     <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
     <canEditProbability>false</canEditProbability>
   </AM.AnimDef>
+
+  <!-- The tap/hold button's two clips (make_shinra_anim.py). AG_ShinraPush above is no longer started;
+       it stays so a save made during one still loads. -->
+  <AM.AnimDef>
+    <defName>AG_ShinraTap</defName>
+    <label>Shinra Tensei: one-hand push</label>
+    <description>The quick version: one hand sweeps out and pushes.</description>
+    <jobString>Casting Shinra Tensei.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ShinraTap.json</data>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
+
+  <AM.AnimDef>
+    <defName>AG_ShinraCharge</defName>
+    <label>Shinra Tensei: charged push</label>
+    <description>The charged version: the arms open and rise with the charge, then push.</description>
+    <jobString>Charging Shinra Tensei.</jobString>
+    <type>Other</type>
+    <pawnCount>1</pawnCount>
+    <data>RimArt_ShinraCharge.json</data>
+    <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
+    <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
+    <canEditProbability>false</canEditProbability>
+  </AM.AnimDef>
 </Defs>

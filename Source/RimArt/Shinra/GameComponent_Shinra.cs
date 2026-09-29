@@ -18,8 +18,35 @@ namespace RimArt
         public List<Thing> redirected = new List<Thing>();
         public CastClips.Handle animation;
         public bool restore;
-        public float tail = -1f;
+        /// <summary>The picture after the clip has ended: its own clock (picture seconds, -1 none) and size.</summary>
+        public float tail = -1f, tailRadius;
+        /// <summary>False in a save made before the tap/hold button; such a cast is dropped on load.</summary>
+        internal bool tapHold = true;
         public bool Protected => defenseUntil > Find.TickManager.TicksGame;
+
+        // The rule for this cast: the quick version, or the size reached and the power charged.
+        private static ShinraTuning T => ShinraTuning.Get;
+        private ShinraSize Size => charge.size >= 0 ? T.sizes[charge.size] : null;
+        public float Radius => Size?.radius ?? T.tapRadius;
+        public float PushCells => charge.Quick ? T.tapPush : Mathf.Lerp(T.pushLow, T.pushHigh, charge.Power);
+        public float WallDamage => charge.Quick ? T.tapWallDamage : Mathf.Lerp(T.wallDamageLow, T.wallDamageHigh, charge.Power);
+        public float ShotLimit => charge.Quick ? T.tapShotLimit : Mathf.Lerp(T.shotLimitLow, T.shotLimitHigh, charge.Power);
+        /// <summary>Explosive shots are turned only by a full charge.</summary>
+        public bool TurnsExplosives => !charge.Quick && charge.Power >= 1f;
+        public int DeflectTicks => Mathf.RoundToInt((charge.Quick ? T.tapDeflectSeconds : T.deflectSeconds) * 60f);
+        public int CooldownTicks => Mathf.RoundToInt((Size?.cooldownSeconds ?? T.tapCooldownSeconds) * 60f);
+        /// <summary>What the release pays: the Echo's cast cost for a charged one, the tuning's for the quick one; nothing without an Echo.</summary>
+        public float Cost
+        {
+            get
+            {
+                float echo = PainKit.Cost(pawn, PainDefOf.AG_ShinraTensei);
+                return echo <= 0f ? 0f : charge.Quick ? T.tapEchoCost : echo;
+            }
+        }
+        /// <summary>Seconds on the picture's clock (ShinraVfxTiming), whose burst is at ChargeEnd.</summary>
+        public float PictureTime => charge.time - charge.BurstAt + ShinraVfxTiming.ChargeEnd;
+
         public void ExposeData()
         {
             Scribe_References.Look(ref pawn, "pawn");
@@ -30,28 +57,42 @@ namespace RimArt
             Scribe_Values.Look(ref cooldownUntil, "cooldownUntil");
             Scribe_Values.Look(ref defenseUntil, "defenseUntil");
             Scribe_Values.Look(ref tail, "tail", -1f);
+            Scribe_Values.Look(ref tailRadius, "tailRadius");
+            Scribe_Values.Look(ref charge.tap, "tap");
+            Scribe_Values.Look(ref charge.size, "size", -1);
             Scribe_Values.Look(ref charge.ticks, "chargeTicks");
             Scribe_Values.Look(ref charge.time, "clipTime");
             Scribe_Values.Look(ref charge.releasing, "releasing");
             Scribe_Values.Look(ref charge.burst, "burst");
+            Scribe_Values.Look(ref tapHold, "tapHold", false);
             Scribe_Collections.Look(ref redirected, "redirected", LookMode.Reference);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             { redirected ??= new List<Thing>(); restore = active; }
         }
+
+        /// <summary>
+        /// Lets go of a hold: the size is the one reached (short of the first, the quick version) and its cost and
+        /// cooldown are taken now. A release the Echo cannot pay is called off and costs nothing. A tap was released
+        /// when it started.
+        /// </summary>
         public void Release()
         {
             if (!active || charge.releasing) return;
-            // The Echo's cast cost is taken when the wave is let go, not when the charge starts: a charge that is
-            // cancelled costs nothing (the Echo rule). The button never calls Ability.Activate, so it is paid here.
-            if (!PainKit.Pay(pawn, PainDefOf.AG_ShinraTensei))
-            {
-                Messages.Message(PainKit.CannotPay(pawn, PainDefOf.AG_ShinraTensei) ?? "No charge.", pawn, MessageTypeDefOf.RejectInput, false);
-                Cancel();
-                return;
-            }
-            charge.releasing = true;
-            cooldownUntil = Find.TickManager.TicksGame + ShinraCharge.CooldownTicks;
+            charge.Release();
+            if (!PayOrCancel()) return;
+            cooldownUntil = Find.TickManager.TicksGame + CooldownTicks;
         }
+
+        internal bool PayOrCancel()
+        {
+            float cost = Cost;
+            if (cost <= 0f || GameComponent_Echoes.Get?.TrySpend(cost) == true) return true;
+            float left = GameComponent_Echoes.Get?.charge ?? 0f;
+            Messages.Message("AG_EchoCastNoCharge".Translate(cost.ToString("0"), left.ToString("0")), pawn, MessageTypeDefOf.RejectInput, false);
+            Cancel();
+            return false;
+        }
+
         public void Cancel()
         {
             animation?.Stop();
@@ -59,7 +100,23 @@ namespace RimArt
             active = false;
             if (pawn?.CurJobDef?.defName == "AM_InAnimation")
                 pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
-            if (charge.burst && tail < 0f) tail = charge.time;
+            if (charge.burst && tail < 0f) { tail = PictureTime; tailRadius = Radius; }
+        }
+
+        /// <summary>Why a new Shinra Tensei cannot start now, or null.</summary>
+        public string CannotStart()
+        {
+            int now = Find.TickManager.TicksGame;
+            if (active) return charge.releasing ? "Recovering from release." : null;
+            if (cooldownUntil > now) return $"Cooldown: {(cooldownUntil - now) / 60f:0.0}s";
+            if (PainKit.DevaGapLeft(pawn) > 0f) return $"Shinra Tensei and Banshō Ten'in share a gap: {PainKit.DevaGapLeft(pawn):0.0} s left.";
+            if (PainKit.ChibakuLock(pawn) is string held) return held;
+            if (GameComponent_Pain.Instance?.Holding(pawn, now) != null) return "Pain is in the middle of a technique.";
+            float echo = PainKit.Cost(pawn, PainDefOf.AG_ShinraTensei), pool = GameComponent_Echoes.Get?.charge ?? 0f;
+            if (echo > 0f && pool < T.tapEchoCost) return "AG_EchoCastNoCharge".Translate(T.tapEchoCost.ToString("0"), pool.ToString("0"));
+            if (!GameComponent_Shinra.HasEye(pawn) || !ShinraCastAnimation.Clip.CanAnimate(pawn))
+                return "Requires Pain's hero form, a standing humanlike caster, and Melee Animation.";
+            return null;
         }
     }
 
@@ -81,21 +138,35 @@ namespace RimArt
         /// The name is kept from when the eye was the source.
         /// </summary>
         public static bool HasEye(Pawn pawn) => PainKit.Has(pawn, PainDefOf.AG_ShinraTensei);
-        public void Begin(Pawn pawn, CastClips.Handle animation)
+
+        /// <summary>
+        /// Starts the quick version (<paramref name="tap"/>, paid now) or a hold. False when it cannot start now
+        /// (<see cref="ShinraPawnState.CannotStart"/>) or the clip does not play.
+        /// </summary>
+        public bool Start(Pawn pawn, bool tap)
         {
             var s = For(pawn);
-            if (s.active || s.cooldownUntil > Find.TickManager.TicksGame || PainKit.DevaGapLeft(pawn) > 0f || PainKit.ChibakuLeft(pawn) > 0f)
-            { animation.Stop(); return; }
+            if (s.active || s.CannotStart() != null) return false;
+            if (!ShinraCastAnimation.Clip.TryStart(pawn, tap ? ShinraCastAnimation.Tap : ShinraCastAnimation.Charge, out CastClips.Handle animation))
+                return false;
             s.map = pawn.Map;
             s.centre = pawn.Position.ToVector3Shifted();
-            s.charge = new ShinraCharge();
+            s.charge = tap ? ShinraCharge.Tap() : ShinraCharge.Hold();
             s.animation = animation;
             s.active = true;
             s.restore = false;
             s.tail = -1f;
+            s.tapHold = true;
             s.redirected.Clear();
-            ShinraSound.Charge(s.map, pawn.Position);
+            if (tap)
+            {
+                if (!s.PayOrCancel()) return false;
+                s.cooldownUntil = Find.TickManager.TicksGame + s.CooldownTicks;
+            }
+            else ShinraSound.Charge(s.map, pawn.Position);
+            return true;
         }
+
         public override void ExposeData()
         {
             Scribe_Collections.Look(ref states, "shinraPawns", LookMode.Deep);
@@ -125,10 +196,11 @@ namespace RimArt
                 if (s.restore)
                 {
                     s.restore = false;
-                    bool restored = ShinraCastAnimation.Clip.TryRestore(s.pawn, out s.animation);
+                    int clip = s.charge.tap ? ShinraCastAnimation.Tap : ShinraCastAnimation.Charge;
+                    // A cast from before the tap/hold button played the old clip on other times: drop it.
+                    bool restored = s.tapHold && ShinraCastAnimation.Clip.TryRestore(s.pawn, out s.animation, clip);
                     // A release interrupted by loading keeps its cooldown and any committed effects.
                     if (s.charge.releasing || !restored) { s.Cancel(); continue; }
-                    if (s.charge.Held) s.charge.time = ShinraCharge.Hold;
                     s.animation.Seek(s.charge.time);
                 }
                 if (s.pawn.CurJobDef?.defName != "AM_InAnimation"
@@ -137,19 +209,19 @@ namespace RimArt
                 float speed = ShinraCastAnimation.Clip.Speed;
                 if (s.autoRelease && !s.charge.releasing && s.charge.Power >= 1f
                     && ShinraCombat.Threatened(s, s.charge.SecondsToBurst(speed) + 0.15f)) s.Release();
+                if (!s.active) continue;
                 bool burst = s.charge.Advance(speed);
                 // Validate the renderer before committing effects, regardless of visibility.
-                if (!s.animation.Seek(Mathf.Min(s.charge.time, ShinraCharge.End)))
+                if (!s.animation.Seek(Mathf.Min(s.charge.time, s.charge.End)))
                 { s.Cancel(); continue; }
                 if (burst)
                 {
-                    s.defenseUntil = Find.TickManager.TicksGame + ShinraCharge.DefenseTicks;
+                    s.defenseUntil = Find.TickManager.TicksGame + s.DeflectTicks;
                     PainKit.StartDevaGap(s.pawn);
                     ShinraCombat.Push(s);
                     ShinraSound.Release(s.map, s.centre.ToIntVec3());
                 }
-                if (s.charge.time >= ShinraCharge.End)
-                { s.tail = s.charge.time; s.Cancel(); }
+                if (s.charge.time >= s.charge.End) s.Cancel();
             }
         }
     }
