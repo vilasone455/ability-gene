@@ -210,8 +210,8 @@ namespace RimArt
         private float Squeeze(float s) => s >= Formed && s < Crack ? Bump(((s - Formed) % 1f) / .18f) : 0f;
 
         /// <summary>
-        /// The ball breaks at <paramref name="s"/> (Pain went down): its seams open now, or as soon as it is formed if it
-        /// is still forming, so every plate and pawn already on its way arrives first.
+        /// The ball breaks at <paramref name="s"/> (Pain went down, or let it go): its seams open now, or as soon as it is
+        /// formed if it is still forming, so every plate and pawn already on its way arrives first.
         /// </summary>
         public void BreakAt(float s)
         {
