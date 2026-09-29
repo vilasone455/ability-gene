@@ -257,6 +257,9 @@ namespace RimArt
             foreach (int step in HeightShots.Cast(t, holder, FlameGauntletDefOf.AG_FlameGauntlet_Release, t.center + new IntVec3(6, 0, 0), camera,
                 "flame release", enemy, 1, 10, 22)) yield return step;
             yield return 120;
+            // Devour cannot start while the holder is in the cooldown of its own melee hits on the burning enemy.
+            if (enemy.Spawned) enemy.Destroy();
+            for (int i = 0; i < 240 && !(holder.stances.curStance is Stance_Mobile); i++) yield return 1;
             Pawn ally = t.Colonist(t.center + new IntVec3(0, 0, -4));
             ally.drafter.Drafted = false;
             HeightShots.Plain(ally, Rot4.South);

@@ -437,9 +437,12 @@ namespace RimArt
                 yield return hit + at - t.Now;
                 yield return HeightShots.Shoot(t, "samehada feed " + at, camera, holder, enemy);
             }
+            // Fusion cannot start while the holder is in the cooldown of its own melee hits on the enemy beside it.
+            enemy.Destroy();
+            for (int i = 0; i < 240 && !(holder.stances.curStance is Stance_Mobile); i++) yield return 1;
             blade.SetCharges(5);
             yield return 2;
-            foreach (int step in HeightShots.Cast(t, holder, SamehadaDefOf.AG_Samehada_Fusion, holder, camera, "samehada fusion", enemy, 24, 33)) yield return step;
+            foreach (int step in HeightShots.Cast(t, holder, SamehadaDefOf.AG_Samehada_Fusion, holder, camera, "samehada fusion", null, 24, 33)) yield return step;
             yield return 60;
         }
     }
