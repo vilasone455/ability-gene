@@ -5,6 +5,29 @@ using Verse;
 
 static void Check(bool b, string message) { if (!b) throw new Exception(message); }
 static bool Near(float a, float b) => Math.Abs(a-b)<0.001f;
+// AG_ShinraTensei's sizes (1.6/Defs/AbilityDefs/AG_Shinra_Abilities.xml); ShinraTuning's defaults match the rest of it.
+PainDefOf.AG_ShinraTensei.modExtensions.Add(new ShinraTuning { sizes = {
+    new ShinraSize { chargeSeconds=1, radius=3, cooldownSeconds=16 },
+    new ShinraSize { chargeSeconds=2, radius=4, cooldownSeconds=20 } } });
+// A tap, or a hold let go after this many ticks of charge.
+static ShinraCharge Cast(bool tap, int ticks=0)
+{
+    var c = tap ? ShinraCharge.Tap() : ShinraCharge.Hold();
+    c.ticks = ticks;
+    c.Release();
+    return c;
+}
+var tapCast = Cast(true);
+var casts = new[]{ tapCast, Cast(false,30), Cast(false,60), Cast(false,120), Cast(false,180) };
+// radius, push, wall damage, shot limit, explosives: a tap and a hold under 1 s are the quick version; then power = s / 3.
+var rule = new (float radius, float push, float wall, float shots, bool explosives)[]{
+    (2.5f,4,10,20,false), (2.5f,4,10,20,false), (3,3+4/3f,12,28,false), (4,3+8/3f,16,44,false), (4,7,20,60,true) };
+for (int i=0; i<casts.Length; i++)
+{
+    var c=casts[i]; var r=rule[i];
+    Check(c.Quick==(i<2) && Near(c.Radius,r.radius) && Near(c.PushCells,r.push) && Near(c.WallDamage,r.wall)
+        && Near(c.ShotLimit,r.shots) && c.TurnsExplosives==r.explosives, $"Rule for cast {i}: tap, 0.5 s, 1 s, 2 s, 3 s");
+}
 var map = new Map();
 var caster = new Pawn { Map=map, Position=new IntVec3(50,0,50) };
 var state = new ShinraPawnState { pawn=caster, map=map, centre=caster.Position.ToVector3Shifted() };
@@ -16,10 +39,11 @@ Projectile Shot(float x, float z, float endX, float endZ, int damage=12, float s
     p.StubLaunch(new Vector3(x,0,z), new Vector3(endX,0,endZ), 30);
     return p;
 }
-foreach (int ticks in new[]{0,90,180})
+foreach (var cast in casts)
 {
-    state.charge.ticks=ticks;
-    var p=Shot(40,50.5f,60,50.5f,(int)state.charge.ProjectileLimit);
+    state.charge=cast;
+    int limit=(int)Math.Floor(state.ShotLimit);
+    var p=Shot(40,50.5f,60,50.5f,limit);
     float speed=Rounds.Vanilla.CurrentSpeedPerTick(p), damage=p.DamageAmount;
     Check(!ShinraCombat.BeforeProjectileTick(p,1), "Threshold round crossing whole field must be intercepted before impact");
     Check(p.StubOrigin.x<state.centre.x && p.StubDestination.x<p.StubOrigin.x, "Radial outward redirection");
@@ -28,11 +52,11 @@ foreach (int ticks in new[]{0,90,180})
     Check(p.StubLauncher==caster && !p.StubPreventFriendlyFire, "Caster owns friendly-fire-capable reflection");
     p.StubLaunch(new Vector3(40,0,50.5f),new Vector3(60,0,50.5f),30);
     Check(ShinraCombat.BeforeProjectileTick(p,1), "Same burst cannot reflect a projectile twice");
-    var stronger=Shot(40,50.5f,60,50.5f,(int)state.charge.ProjectileLimit+1);
+    var stronger=Shot(40,50.5f,60,50.5f,limit+1);
     Check(ShinraCombat.BeforeProjectileTick(stronger,1), "Overpowered rounds pass");
     var rocket=Shot(40,50.5f,60,50.5f);
     rocket.def.projectile.explosionRadius=2;
-    Check(ShinraCombat.BeforeProjectileTick(rocket,1)==(ticks<180), "Rockets require full charge");
+    Check(ShinraCombat.BeforeProjectileTick(rocket,1)==(cast!=casts[^1]), "Rockets require full charge");
     Check(rocket.def.projectile.explosionRadius==2, "Keep explosive behavior");
 }
 foreach (string type in new[]{"outgoing","overhead","grenade","expired"})
@@ -45,7 +69,8 @@ foreach (string type in new[]{"outgoing","overhead","grenade","expired"})
     Check(ShinraCombat.BeforeProjectileTick(p,1), "Pass unchanged: "+type);
     state.Protected=true;
 }
-var second=new ShinraPawnState { pawn=new Pawn(),map=map,centre=new Vector3(55,0,50.5f),charge=new ShinraCharge{ticks=180} };
+var fullCast=casts[^1];
+var second=new ShinraPawnState { pawn=new Pawn(),map=map,centre=new Vector3(55,0,50.5f),charge=Cast(false,180) };
 GameComponent_Shinra.Instance.States.Insert(0,second);
 var overlap=Shot(40,50.5f,65,50.5f);
 Check(!ShinraCombat.BeforeProjectileTick(overlap,1) && overlap.StubLauncher==caster, "Nearest field wins regardless of list order");
@@ -66,8 +91,10 @@ foreach(float size in new[]{0.5f,1f,2f,4f})
     var target=new Pawn{Map=map,Position=new IntVec3(52,0,50),BodySize=size};
     map.mapPawns.AllPawnsSpawned.Add(caster);
     map.mapPawns.AllPawnsSpawned.Add(target);
-    ShinraCombat.Push(state);
+    var flights=ShinraCombat.Push(state);
     Check(Math.Abs(target.Position.x-(52+7/Math.Max(1,size)))<=0.51f, "Heavy body scaling with cell rounding");
+    Check(flights.Count==1 && flights[0].pawn==target && Near(flights[0].start.x,52.5f) && flights[0].landing==target.Position
+        && Near(flights[0].distanceFromPain,2) && Near(flights[0].radius,4) && !flights[0].hit, "Flight from where it stood to where it landed");
     Check(target.Damage==0 && target.stances.stagger.Ticks==30, "Free push staggers without damage");
     Check(caster.Position.x==50, "Never push caster");
 }
@@ -75,12 +102,12 @@ map.mapPawns.AllPawnsSpawned.Clear();
 var victim=new Pawn{Map=map,Position=new IntVec3(52,0,50)};
 map.mapPawns.AllPawnsSpawned.Add(victim);
 map.Blocked.Add((55,50));
-ShinraCombat.Push(state);
+var wallFlights=ShinraCombat.Push(state);
 Check(victim.Position.x==54 && victim.Damage==20, "Solid obstacle stops push and causes collision damage");
+Check(wallFlights.Count==1 && wallFlights[0].hit, "Flight ends on the wall");
 Check(map.Blocked.Contains((55,50)), "Obstacle stays intact");
 victim.Position=new IntVec3(56,0,50); victim.Damage=0;
-ShinraCombat.Push(state);
-Check(victim.Position.x==56 && victim.Damage==0, "Outside radius unchanged");
+Check(ShinraCombat.Push(state).Count==0 && victim.Position.x==56 && victim.Damage==0, "Outside radius unchanged, no flight");
 victim.Position=new IntVec3(53,0,50);map.Blocked.Add((52,50));
 ShinraCombat.Push(state);
 Check(victim.Position.x==53 && victim.Damage==0, "Wall blocks caster-to-target push");
@@ -88,7 +115,29 @@ map.Blocked.Clear();
 map.Size=new IntVec3(56,1,56);victim.Position=new IntVec3(53,0,50);
 ShinraCombat.Push(state);
 Check(victim.Position.x==55 && victim.Damage==0, "Map boundary stops travel without damage");
-Console.WriteLine("Shinra combat: scaling, collisions, thresholds, explosives, fast segments, overlapping fields and threat prediction passed.");
+map.Size=new IntVec3(250,1,250);
+
+state.charge=tapCast;
+victim.Position=new IntVec3(52,0,50); victim.Damage=0;
+ShinraCombat.Push(state);
+Check(victim.Position.x==56 && victim.Damage==0, "Tap pushes 4 cells without damage");
+victim.Position=new IntVec3(53,0,50);
+Check(ShinraCombat.Push(state).Count==0 && victim.Position.x==53, "Tap reaches 2.5 cells, not 3");
+victim.Position=new IntVec3(52,0,50); map.Blocked.Add((55,50));
+ShinraCombat.Push(state);
+Check(victim.Position.x==54 && victim.Damage==10, "Tap wall hit does 10");
+map.Blocked.Clear(); victim.Damage=0;
+
+state.charge=fullCast;
+var pinned=new Pawn{Map=map,Position=new IntVec3(52,0,50)};
+var pinnedFar=new Pawn{Map=map,Position=new IntVec3(56,0,50)};
+map.mapPawns.AllPawnsSpawned.Clear();
+map.mapPawns.AllPawnsSpawned.Add(pinned); map.mapPawns.AllPawnsSpawned.Add(pinnedFar);
+foreach (var p in new[]{pinned,pinnedFar}) { PainKit.Pinned.Add(p); PainRods.Rods[p]=new Hediff_PainRods(); }
+Check(ShinraCombat.Push(state).Count==0 && pinned.Position.x==52 && pinned.stances.stagger.Ticks==0, "Pinned pawn is not moved or staggered");
+Check(PainRods.Rods[pinned].flares==1 && PainRods.Rods[pinnedFar].flares==0, "Rods flare only in reach");
+PainKit.Pinned.Clear();
+Console.WriteLine("Shinra combat: rule per cast, scaling, collisions, flights, pinned pawns, thresholds, explosives, fast segments, overlapping fields and threat prediction passed.");
 
 CombatExtendedRounds.Install(new HarmonyLib.Harmony("RimArt.ShinraTests"));
 var ce = new CombatExtended.ProjectileCE {

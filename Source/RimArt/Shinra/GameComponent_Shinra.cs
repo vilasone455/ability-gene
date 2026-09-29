@@ -22,17 +22,15 @@ namespace RimArt
         internal bool tapHold = true;
         public bool Protected => defenseUntil > Find.TickManager.TicksGame;
 
-        // The rule for this cast: the quick version, or the size reached and the power charged.
+        // The rule for this cast is on the charge (ShinraCharge), where the ShinraCombat console test reaches it.
         private static ShinraTuning T => ShinraTuning.Get;
-        private ShinraSize Size => charge.size >= 0 ? T.sizes[charge.size] : null;
-        public float Radius => Size?.radius ?? T.tapRadius;
-        public float PushCells => charge.Quick ? T.tapPush : Mathf.Lerp(T.pushLow, T.pushHigh, charge.Power);
-        public float WallDamage => charge.Quick ? T.tapWallDamage : Mathf.Lerp(T.wallDamageLow, T.wallDamageHigh, charge.Power);
-        public float ShotLimit => charge.Quick ? T.tapShotLimit : Mathf.Lerp(T.shotLimitLow, T.shotLimitHigh, charge.Power);
-        /// <summary>Explosive shots are turned only by a full charge.</summary>
-        public bool TurnsExplosives => !charge.Quick && charge.Power >= 1f;
+        public float Radius => charge.Radius;
+        public float PushCells => charge.PushCells;
+        public float WallDamage => charge.WallDamage;
+        public float ShotLimit => charge.ShotLimit;
+        public bool TurnsExplosives => charge.TurnsExplosives;
         public int DeflectTicks => Mathf.RoundToInt((charge.Quick ? T.tapDeflectSeconds : T.deflectSeconds) * 60f);
-        public int CooldownTicks => Mathf.RoundToInt((Size?.cooldownSeconds ?? T.tapCooldownSeconds) * 60f);
+        public int CooldownTicks => Mathf.RoundToInt((charge.Size?.cooldownSeconds ?? T.tapCooldownSeconds) * 60f);
         /// <summary>What the release pays: the Echo's cast cost for a charged one, the tuning's for the quick one; nothing without an Echo.</summary>
         public float Cost
         {

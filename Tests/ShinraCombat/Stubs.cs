@@ -3,6 +3,7 @@
 // them through Harmony field refs by name, exactly as it does against the real engine.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UnityEngine {
  public struct Color {
@@ -80,6 +81,10 @@ namespace Verse {
   public bool InBounds(Map map) => x>=0 && z>=0 && x<map.Size.x && z<map.Size.z;
   public bool Walkable(Map map) => !map.Blocked.Contains((x,z));
   public int x,y,z; public IntVec3(int x,int y,int z){this.x=x;this.y=y;this.z=z;}
+  public static bool operator ==(IntVec3 a,IntVec3 b)=>a.x==b.x && a.y==b.y && a.z==b.z;
+  public static bool operator !=(IntVec3 a,IntVec3 b)=>!(a==b);
+  public override bool Equals(object o)=>o is IntVec3 c && c==this;
+  public override int GetHashCode()=>HashCode.Combine(x,y,z);
   public override string ToString()=>$"({x}, {y}, {z})";
  }
  public static class VectorStubExtensions {
@@ -102,10 +107,16 @@ namespace Verse {
  public class ProjectileProperties{public bool flyOverhead; public float arcHeightFactor, explosionRadius; public float speed=30f; public float SpeedTilesPerTick=>speed/60f;}
  public class ThingCategoryDef { public string defName; }
  public class ThingDef{public ProjectileProperties projectile=new(); public List<ThingCategoryDef> thingCategories = new();}
+ public class DefModExtension { public virtual IEnumerable<string> ConfigErrors() { yield break; } }
+ public class Def {
+  public List<DefModExtension> modExtensions = new();
+  public T GetModExtension<T>() where T : DefModExtension => modExtensions.OfType<T>().FirstOrDefault();
+ }
  // def lives on Thing in the engine, and Rounds reads it there.
  public class Thing{public bool Destroyed,Spawned=true; public Map Map; public ThingDef def=new();}
  public class Pawn:Thing {
   public bool Dead; public float BodySize = 1f; public IntVec3 Position;
+  public Vector3 DrawPos => Position.ToVector3Shifted();
   public Pather pather = new(); public Stances stances = new(); public float Damage;
   public void Notify_Teleported() {}
   public void TakeDamage(DamageInfo info) { Damage += info.amount; }
@@ -153,10 +164,35 @@ namespace Verse {
 
 namespace RimWorld { public static class DamageDefOf { public static object Blunt = new(); } }
 namespace RimArt {
+ // The rule properties forward to the charge exactly as the real state's do.
  public class ShinraPawnState {
   public Verse.Pawn pawn; public Verse.Map map; public UnityEngine.Vector3 centre;
   public ShinraCharge charge = new(); public bool Protected = true, active;
   public System.Collections.Generic.List<Verse.Thing> redirected = new();
+  public float Radius => charge.Radius;
+  public float PushCells => charge.PushCells;
+  public float WallDamage => charge.WallDamage;
+  public float ShotLimit => charge.ShotLimit;
+  public bool TurnsExplosives => charge.TurnsExplosives;
+ }
+ // Holds the tuning the test hands it, as AG_ShinraTensei holds the XML's.
+ public static class PainDefOf { public static Verse.Def AG_ShinraTensei = new(); }
+ // A pawn pinned by Black Receiver or carried by Bansho Ten'in; the test marks them by hand.
+ public static class PainKit {
+  public static System.Collections.Generic.HashSet<Verse.Pawn> Pinned = new();
+  public static bool Unmovable(Verse.Pawn pawn) => Pinned.Contains(pawn);
+ }
+ public class Hediff_PainRods { public int flares; public void Flared() => flares++; }
+ public static class PainRods {
+  public static System.Collections.Generic.Dictionary<Verse.Pawn,Hediff_PainRods> Rods = new();
+  public static Hediff_PainRods Of(Verse.Pawn pawn) => Rods.TryGetValue(pawn, out var rods) ? rods : null;
+ }
+ // The picture of a pushed pawn; the test reads what Push hands it.
+ public sealed class ShinraFlight {
+  public Verse.Pawn pawn; public UnityEngine.Vector3 start; public Verse.IntVec3 landing; public float distanceFromPain, radius; public bool hit;
+  public ShinraFlight(Verse.Pawn pawn, UnityEngine.Vector3 start, Verse.IntVec3 landing, float distanceFromPain, float radius, bool hit) {
+   this.pawn=pawn; this.start=start; this.landing=landing; this.distanceFromPain=distanceFromPain; this.radius=radius; this.hit=hit;
+  }
  }
  public class GameComponent_Shinra {
   public static GameComponent_Shinra Instance = new();
