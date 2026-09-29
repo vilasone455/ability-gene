@@ -22,5 +22,30 @@ namespace RimArt
 
         [RimArtTest("Water Gun", "hold 2 stream shot holds an undrafted caster until the gun is down")]
         private static IEnumerable<int> StreamShot(RimArtTestContext t) => Hold(t, "AG_WaterGun_StreamShot", 6);
+
+        /// <summary>
+        /// Close shots for the pawn height fit: the bag on a standing holder, Stream Shot 6 cells east
+        /// (gun up and the jet out, the splash on the target, drips), then Hydro Pump on a pawn 3 cells
+        /// east (gun up, the burst on it).
+        /// </summary>
+        [RimArtTest("Water Gun", "height 1 bag, gun, jet and splash on real pawns (screenshots)", 1500)]
+        private static IEnumerable<int> Height(RimArtTestContext t)
+        {
+            t.Clear();
+            Pawn caster = HeightShots.Stay(CastHoldTest.Caster(t, WaterGunDefOf.AG_WaterGun));
+            Pawn enemy = HeightShots.Target(t, t.center + new IntVec3(6, 0, 0));
+            IntVec3 camera = t.center + new IntVec3(3, 0, 0);
+            yield return 10;
+            yield return HeightShots.Shoot(t, "water idle", camera, caster, enemy);
+            foreach (int step in HeightShots.Cast(t, caster, DefDatabase<AbilityDef>.GetNamed("AG_WaterGun_StreamShot"), enemy, camera,
+                "water stream", enemy, 22, 33, 70)) yield return step;
+            yield return 200;
+            enemy.Destroy();
+            Pawn victim = HeightShots.Target(t, t.center + new IntVec3(3, 0, 0));
+            yield return 10;
+            foreach (int step in HeightShots.Cast(t, caster, DefDatabase<AbilityDef>.GetNamed("AG_WaterGun_HydroPump"), victim, camera,
+                "water pump", victim, 30, 46)) yield return step;
+            yield return 300;
+        }
     }
 }

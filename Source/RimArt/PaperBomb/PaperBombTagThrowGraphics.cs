@@ -91,8 +91,11 @@ namespace RimArt
         /// <summary>The pin's drawn point <paramref name="u"/> of the way through its flight, its height, and the ground point under it.</summary>
         private static Vector2 Flight(Vector2 feet, Vector2 toward, float reach, float endHeight, float u, out float height, out Vector2 ground)
         {
-            ground = feet + toward * Mathf.Lerp(T.HandOut, reach, u);
-            height = Mathf.Lerp(T.HandHeight, endHeight, u) + T.Arc * Mathf.Max(0f, Mathf.Sin(Mathf.PI * u));
+            // In game the pin leaves the clip's real hand (PaperBombGraphics.ClipHand); in the lab the sketch's.
+            Vector2 hand = PawnFit.On ? ClipHand(toward, T.ClipReach, T.ClipSide) : toward * T.HandOut;
+            float h0 = PawnFit.On ? T.ClipLift / SixPathsHeight.Lift : T.HandHeight;
+            ground = feet + Vector2.Lerp(hand, toward * reach, u);
+            height = Mathf.Lerp(h0, endHeight, u) + T.Arc * Mathf.Max(0f, Mathf.Sin(Mathf.PI * u));
             return Up(ground, height);
         }
 

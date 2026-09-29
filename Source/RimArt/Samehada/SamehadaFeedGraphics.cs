@@ -56,7 +56,7 @@ namespace RimArt
             // The target rocks back at the bite.
             float rock = hitAge >= 0f && hitAge < 0.35f ? T.Rock * CS.Bump(hitAge / 0.35f) : 0f;
             Vector2 target = Ground(target0, aim, rock, 0f);
-            var chest = new Vector2(target.x, target.y + ChestH * Lift);
+            var chest = new Vector2(target.x, target.y + PawnFit.H(ChestH) * Lift);
 
             // Floor first.
             Tally(caster, st.Charges, aim);
@@ -101,7 +101,7 @@ namespace RimArt
         {
             if (age < 0f || age >= T.BiteLife || !Shown(hit.Target, map)) return;
             Begin(hit.Target);
-            var chest = new Vector2(hit.Target.x, hit.Target.y + ChestH * Lift);
+            var chest = new Vector2(hit.Target.x, hit.Target.y + PawnFit.H(ChestH) * Lift);
             Bite(chest, hit.Aim, age, 1f, hit.TargetAltitude);
             // The holder heals on every fed hit, full or not.
             Healing(hit.Holder, age - 0.1f, T.Drain);

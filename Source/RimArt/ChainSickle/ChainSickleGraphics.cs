@@ -23,6 +23,17 @@ namespace RimArt
 
         public Vector2 Ground(Vector2 at, float along, float across) =>
             new Vector2(at.x + along * ca - across * sa, at.y + along * sa + across * ca);
+
+        /// <summary>
+        /// A hand held at the pawn's side, as a ground point. In the lab it is <see cref="Ground"/>. On a real pawn
+        /// (<see cref="PawnFit"/>) the north-south part of the sideways offset is depth, which a flat pawn sprite
+        /// does not show: a hand on the left of a pawn aiming east stays at hand height instead of rising 0.18.
+        /// </summary>
+        public Vector2 Hand(Vector2 at, float along, float across)
+        {
+            Vector2 p = Ground(at, along, across);
+            return PawnFit.On ? new Vector2(p.x, p.y - across * ca) : p;
+        }
     }
 
     /// <summary>
@@ -374,10 +385,10 @@ namespace RimArt
             Vector2 run = target - holder;
             float aim = run.sqrMagnitude < 0.0001f ? 0f : Mathf.Atan2(run.y, run.x) * Mathf.Rad2Deg;
             var f = new ChainSickleFrame(aim, sun);
-            Vector2 hand = f.Ground(holder, 0.20f, 0.18f);
+            Vector2 hand = f.Hand(holder, 0.20f, 0.18f);
             float big = Mathf.Sqrt(size);
-            int coil = CoilPath(LinkCoil, target, CoilTurns, CoilR * big, (ChestH + 0.1f) * big, 0.25f * big, aim + 180f);
-            int path = ChainPath(LinkPath, At(hand, HandH), LinkCoil[0], 0.05f);
+            int coil = CoilPath(LinkCoil, target, CoilTurns, CoilR * big * PawnFit.Body, PawnFit.H((ChestH + 0.1f) * big), PawnFit.H(0.25f * big), aim + 180f);
+            int path = ChainPath(LinkPath, At(hand, PawnFit.H(HandH)), LinkCoil[0], 0.05f);
             Chain(LinkPath, path, sun, strength, Y + 0.02f);
             Coil(LinkCoil, coil, target.y + 0.02f, sun, strength);
             Weight(LinkCoil[coil - 1], sun, strength, Y + 0.03f);

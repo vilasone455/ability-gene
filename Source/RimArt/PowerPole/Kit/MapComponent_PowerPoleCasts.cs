@@ -354,6 +354,20 @@ namespace RimArt
         public override void MapComponentUpdate()
         {
             if (casts.Count == 0 || Find.CurrentMap != map) return;
+            // Drawn on real pawns: the hands' height is fitted to them (see PawnFit).
+            PawnFit.Begin();
+            try
+            {
+                Draw();
+            }
+            finally
+            {
+                PawnFit.End();
+            }
+        }
+
+        private void Draw()
+        {
             int now = Find.TickManager.TicksGame;
             for (int i = 0; i < casts.Count; i++)
             {

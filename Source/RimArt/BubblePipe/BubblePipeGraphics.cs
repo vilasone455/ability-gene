@@ -179,10 +179,10 @@ namespace RimArt
         /// </summary>
         internal static void DrawJar(Vector2 feet, BubbleFrame f, float blows, float cap, float shadow)
         {
-            Vector2 j = f.Place(feet, JarAlong, JarAcross, JarBase);
-            bool behind = j.y > feet.y + 0.06f;
+            Vector2 j = OnBody(feet, f, JarAlong, JarAcross, JarBase, out float depth);
+            bool behind = PawnFit.On ? depth > 0.05f : j.y > feet.y + 0.06f;
             float jl = behind ? PawnAltitude - 0.03f : Overhead + 0.001f;
-            Sprite(f.Cast(feet, JarAlong, JarAcross, JarBase + JarH * 0.5f), JarR * 2.6f, JarR * 1.5f, Fade(Body, shadow * 0.5f), soft, Shadows);
+            Sprite(f.Cast(feet, JarAlong, JarAcross, (JarBase + JarH * 0.5f) * PawnFit.Body), JarR * 2.6f, JarR * 1.5f, Fade(Body, shadow * 0.5f), soft, Shadows);
 
             float level = Mathf.Clamp01(cap > 0f ? blows / cap : 0f) * JarH;
             Side(j, JarR, 0f, JarH, 14, 0f, JarDark, jl);
@@ -192,7 +192,21 @@ namespace RimArt
             Disc(disc, top, jl + 0.004f, JarR, JarR, Jar);
             Circle(top, JarR, 0.9f, jl + 0.005f, JarLit);
             Disc(disc, new Vector2(top.x, top.y + 0.01f), jl + 0.006f, JarR * 0.5f, JarR * 0.5f, Cork);
-            Tube(f.Place(feet, JarAlong, JarAcross, JarBase + JarH), f.Place(feet, 0.02f, -0.18f, 0.42f), 0.02f, BambooDark, jl + 0.007f);
+            Tube(top, OnBody(feet, f, 0.02f, -0.18f, 0.42f, out _), 0.02f, BambooDark, jl + 0.007f);
+        }
+
+        /// <summary>
+        /// A point on the holder's body <paramref name="along"/>, <paramref name="across"/> and <paramref name="h"/>
+        /// up from its feet. In the lab it is <see cref="BubbleFrame.Place"/>. On a real pawn (<see cref="PawnFit"/>)
+        /// the height is fitted, and the north-south part of the offset is depth, which a flat pawn sprite does
+        /// not show: it is left out of the point and returned in <paramref name="depth"/> (north is +), so the
+        /// jar at the hip of a pawn facing east or west stays at the hip instead of sliding to its knees or neck.
+        /// </summary>
+        private static Vector2 OnBody(Vector2 feet, BubbleFrame f, float along, float across, float h, out float depth)
+        {
+            Vector2 p = f.Place(feet, along, across, PawnFit.H(h));
+            depth = PawnFit.On ? (f.Along * along + f.Across * across).y : 0f;
+            return new Vector2(p.x, p.y - depth);
         }
 
         /// <summary>The jar alone on a pawn standing at <paramref name="feet"/> facing <paramref name="toward"/>, while the pipe is held and not in use.</summary>
@@ -226,11 +240,14 @@ namespace RimArt
         {
             DrawJar(feet, f, blows, cap, shadow);
 
+            // At rest the pipe hangs at the side, fitted to a real pawn in game (PawnFit); raised, its mouth end
+            // is at MouthH, which is at a real pawn's mouth already, so that end is not fitted.
             float lift = Smooth(raise);
-            float a0 = Mathf.Lerp(0.05f, 0.08f, lift), a1 = Mathf.Lerp(0.24f, 0.03f, lift), a2 = Mathf.Lerp(0.45f, MouthH, lift);
-            float b0 = Mathf.Lerp(0.55f, TipAlong, lift), b1 = Mathf.Lerp(0.36f, TipAcross, lift), b2 = Mathf.Lerp(0.05f, TipH, lift);
+            float a0 = Mathf.Lerp(0.05f, 0.08f, lift), a1 = Mathf.Lerp(0.24f, 0.03f, lift), a2 = Mathf.Lerp(PawnFit.H(0.45f), MouthH, lift);
+            float b0 = Mathf.Lerp(0.55f, TipAlong, lift), b1 = Mathf.Lerp(0.36f, TipAcross, lift), b2 = Mathf.Lerp(PawnFit.H(0.05f), TipH, lift);
+            float sh = Mathf.Lerp(PawnFit.Body, 1f, lift);
             Vector2 pa = f.Place(feet, a0, a1, a2), pb = f.Place(feet, b0, b1, b2);
-            Vector2 sa = f.Cast(feet, a0, a1, a2), sb = f.Cast(feet, b0, b1, b2);
+            Vector2 sa = f.Cast(feet, a0, a1, Mathf.Lerp(0.45f, MouthH, lift) * sh), sb = f.Cast(feet, b0, b1, Mathf.Lerp(0.05f, TipH, lift) * sh);
             float pl = Overhead + 0.014f;
             Tube(sa, sb, PipeW * 1.2f, Fade(Body, shadow * 0.6f), Shadows);
             Tube(pa, pb, PipeW + 0.02f, BambooDark, pl);

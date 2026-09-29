@@ -61,7 +61,7 @@ namespace RimArt
             if (s < 0f || s >= t.End || !Shown(o, map)) return;
             Begin(o);
             float age = s - t.Flash, f = Mathf.Clamp01(age / shot.Fade), bright = age >= 0f ? (1f - f) * (1f - f) : 0f;
-            var head = new Vector2(o.x, o.y + 0.6f);
+            var head = new Vector2(o.x, o.y + PawnFit.Y(0.6f));
 
             // --- the floor: the true radius, the fill, and the shadows the flash throws ---
             if (s >= t.Cast)

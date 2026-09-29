@@ -59,7 +59,7 @@ namespace RimArt
             for (int i = 0; i < shot.WaitingCount; i++)
             {
                 Vector2 p = shot.Waiting[i];
-                Sprite(new Vector2(p.x, p.y + 0.3f), 1.1f, 1.3f, Fade(KiSky, 0.3f * sensing * (0.7f + 0.3f * Mathf.Sin(s * 14f + i))), glow, Overhead + 0.01f);
+                Sprite(new Vector2(p.x, p.y + PawnFit.Y(0.3f)), 1.1f * PawnFit.Body, 1.3f * PawnFit.Body, Fade(KiSky, 0.3f * sensing * (0.7f + 0.3f * Mathf.Sin(s * 14f + i))), glow, Overhead + 0.01f);
             }
 
             // --- the caster and the passenger slicing away and closing up ---
@@ -79,16 +79,16 @@ namespace RimArt
             if (s >= t.Cast && s < t.Go)
             {
                 float w = (s - t.Cast) / t.Warm, touch = shot.Carries ? Smooth((s - t.Cast) / 0.2f) : 0f;
-                Glint(new Vector2(home.x + 0.07f, home.y + 0.62f), 0.1f + 0.06f * Mathf.Sin(s * 30f), 0.9f * sensing, White, s * 90f);
+                Glint(PawnFit.At(home, 0.07f, 0.62f), 0.1f + 0.06f * Mathf.Sin(s * 30f), 0.9f * sensing, White, s * 90f);
                 for (int n = 0; n < 2; n++)
                 {
                     float v = (w * 2.5f + n / 2f) % 1f;
-                    PaperBombGraphics.RingAt(new Vector2(home.x, home.y + 0.6f), 0.7f * (1f - v) + 0.08f, Fade(KiIce, 0.7f * v * sensing), Overhead + 0.03f);
+                    PaperBombGraphics.RingAt(new Vector2(home.x, home.y + PawnFit.Y(0.6f)), 0.7f * (1f - v) + 0.08f, Fade(KiIce, 0.7f * v * sensing), Overhead + 0.03f);
                 }
                 if (touch > 0f)
                 {
                     Vector2 hand = G.Place(home, shot.Toward, 0f, T.Side * 0.62f * touch);
-                    Sprite(new Vector2(hand.x, hand.y + 0.36f), 0.45f, 0.45f, Fade(KiIce, 0.7f * touch * (0.7f + 0.3f * Mathf.Sin(s * 25f))), glow, Overhead + 0.02f);
+                    Sprite(new Vector2(hand.x, hand.y + PawnFit.Y(0.36f)), 0.45f, 0.45f, Fade(KiIce, 0.7f * touch * (0.7f + 0.3f * Mathf.Sin(s * 25f))), glow, Overhead + 0.02f);
                 }
             }
 

@@ -73,7 +73,7 @@ namespace RimArt
             if (age < 0f || age >= B.Ink + B.InkFade) return;
             Begin(pos);
             float white = age < B.Ink ? 1f : 1f - Smooth((age - B.Ink) / B.InkFade);
-            var c = new Vector2(pos.x, pos.y + 0.3f);
+            var c = new Vector2(pos.x, pos.y + PawnFit.Y(0.3f));
             Sprite(c, 3.2f, 3.2f, Fade(White, 0.5f * white), glow, Overhead + 0.079f);
             Sprite(c, 2.6f, 2.6f, Fade(White, 0.9f * white), soft, Overhead + 0.08f);
             Sprite(c, 1.5f, 1.5f, Fade(White, white), soft, Overhead + 0.081f);
@@ -97,18 +97,20 @@ namespace RimArt
                 return;
             }
             // The body as tall jagged strokes, tallest in the middle where the head is; shards flare off it.
+            // In game the figure is a real pawn's size and height (PawnFit).
+            float k1 = PawnFit.Body;
             for (int i = 0; i < B.InkStrokes; i++)
             {
-                float v = i / (float)(B.InkStrokes - 1) - 0.5f, x = pos.x + v * 0.5f + (Rand(seed + i) - 0.5f) * 0.05f;
-                float top = pos.y + 0.8f - Mathf.Abs(v) * 0.6f + (Rand(seed + i + 20) - 0.5f) * 0.1f, bottom = pos.y - 0.08f - Rand(seed + i + 40) * 0.1f;
-                Jag(seed, i, new Vector2(x, bottom), new Vector2(x + (Rand(seed + i + 50) - 0.5f) * 0.06f, top), 0.06f + 0.05f * Rand(seed + i + 60));
+                float v = i / (float)(B.InkStrokes - 1) - 0.5f, x = pos.x + (v * 0.5f + (Rand(seed + i) - 0.5f) * 0.05f) * k1;
+                float top = pos.y + PawnFit.Y(0.8f - Mathf.Abs(v) * 0.6f + (Rand(seed + i + 20) - 0.5f) * 0.1f), bottom = pos.y + PawnFit.Y(-0.08f - Rand(seed + i + 40) * 0.1f);
+                Jag(seed, i, new Vector2(x, bottom), new Vector2(x + (Rand(seed + i + 50) - 0.5f) * 0.06f * k1, top), (0.06f + 0.05f * Rand(seed + i + 60)) * k1);
             }
             for (int i = 0; i < B.InkShards; i++)
             {
                 float side = i % 2 == 1 ? 1f : -1f, h = 0.1f + 0.5f * Rand(seed + i + 70);
-                var from = new Vector2(pos.x + side * 0.18f, pos.y + h);
+                Vector2 from = PawnFit.At(pos, side * 0.18f, h);
                 Jag(seed, B.InkStrokes + i, from,
-                    new Vector2(from.x + side * (0.15f + 0.18f * Rand(seed + i + 80)), from.y + 0.08f + 0.2f * Rand(seed + i + 90)), 0.05f);
+                    new Vector2(from.x + side * (0.15f + 0.18f * Rand(seed + i + 80)) * k1, from.y + (0.08f + 0.2f * Rand(seed + i + 90)) * k1), 0.05f);
             }
         }
 
@@ -128,12 +130,13 @@ namespace RimArt
         /// </summary>
         internal static void Arrival(Vector2 pos, float age)
         {
-            var c = new Vector2(pos.x, pos.y + 0.35f);
+            // Round a real pawn in game: centred on its body and sized to it (PawnFit).
+            var c = new Vector2(pos.x, pos.y + PawnFit.Y(0.35f));
             Begin(c);
             float sw = age - B.SwooshFrom;
             if (sw >= 0f && sw < B.SwooshLife)
             {
-                float u = sw / B.SwooshLife, f = 1f - Smooth((u - 0.5f) / 0.5f), r = 0.3f + 0.35f * Smooth(u), span = 1.9f * (1f - 0.4f * u);
+                float u = sw / B.SwooshLife, f = 1f - Smooth((u - 0.5f) / 0.5f), r = (0.3f + 0.35f * Smooth(u)) * PawnFit.Body, span = 1.9f * (1f - 0.4f * u);
                 for (int k = 0; k < 3; k++)
                 {
                     float start = k * 2.094f + Rand(k + 80) * 0.6f + u * 5.5f;
@@ -151,7 +154,7 @@ namespace RimArt
             float fu = fa / B.Fleck, fly = 1f - Mathf.Pow(1f - Mathf.Clamp01(fu / 0.35f), 3f), ff = 1f - Smooth((fu - 0.5f) / 0.5f);
             for (int i = 0; i < B.Flecks; i++)
             {
-                float ang = (i + Rand(i + 60) * 0.7f) / B.Flecks * Mathf.PI * 2f, r = Mathf.Lerp(0.35f, 0.7f + 0.5f * Rand(i + 61), fly) + 0.1f * fu;
+                float ang = (i + Rand(i + 60) * 0.7f) / B.Flecks * Mathf.PI * 2f, r = (Mathf.Lerp(0.35f, 0.7f + 0.5f * Rand(i + 61), fly) + 0.1f * fu) * PawnFit.Body;
                 float rot = ang + (Rand(i + 63) - 0.5f) * 2f + fu * 3f * (i % 2 == 1 ? 1f : -1f), size = (0.08f + 0.08f * Rand(i + 64)) * (1f - 0.4f * fu);
                 var q = new Vector2(c.x + Mathf.Cos(ang) * r, c.y + Mathf.Sin(ang) * r * 0.8f + 0.12f * fu);
                 var half = new Vector2(Mathf.Cos(rot) * size / 2f, Mathf.Sin(rot) * size / 2f);

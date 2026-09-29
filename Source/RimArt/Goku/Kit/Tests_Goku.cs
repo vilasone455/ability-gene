@@ -427,5 +427,98 @@ namespace RimArt
             t.Check(pawn.abilities.GetAbility(GokuDefOf.AG_GokuKamehameha) != null, "manifested Goku has Kamehameha");
             Finish(record);
         }
+
+        // ---- Pawn height ------------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// Close shots for the pawn height fit: Solar Flare with an enemy 3 cells east (the light at the
+        /// head, the stun stars), then Instant Transmission with a stunned hostile passenger to a cell 6
+        /// east (the brow glint, the touch glow, the slices at home and on arrival, the passenger's stars).
+        /// </summary>
+        [RimArtTest("Goku", "height 1 flare and transmission on real pawns (screenshots)", 2400)]
+        private static IEnumerable<int> HeightFlareTransmission(RimArtTestContext t)
+        {
+            GameComponent_Echoes echoes = Setup(t);
+            yield return 5;
+            Pawn host = HeightShots.Plain(Host(t, echoes, t.center, out EchoRecord record), strip: false);
+            Pawn near = HeightShots.Target(t, t.center + new IntVec3(3, 0, 0));
+            IntVec3 camera = t.center + new IntVec3(2, 0, 0);
+            yield return 2;
+            foreach (int step in HeightShots.Cast(t, host, GokuDefOf.AG_GokuSolarFlare, host, camera, "goku flare", near, 12, 45)) yield return step;
+            yield return 30;
+            near.Destroy();
+
+            host.drafter.Drafted = false;
+            RimArtTestContext.Hold(host);
+            Pawn enemy = HeightShots.Target(t, host.Position + new IntVec3(1, 0, 0));
+            enemy.stances.stunner.StunFor(60, null, false);
+            IntVec3 dest = t.center + new IntVec3(6, 0, 0);
+            camera = t.center + new IntVec3(3, 0, 0);
+            yield return 2;
+            foreach (int step in HeightShots.Cast(t, host, GokuDefOf.AG_GokuInstantTransmission, enemy, dest, camera, "goku transmission", enemy, 20, 33, 44, 80))
+                yield return step;
+            yield return 30;
+            Finish(record);
+        }
+
+        /// <summary>
+        /// Close shots for the pawn height fit: Kamehameha 5 cells from an enemy (the aura and the ki ball
+        /// held at full charge, the beam and the hit burst), then Spirit Bomb with a lender beside Goku and
+        /// an ally under the dome (the lender's glow and ribbon, the ally's shell).
+        /// </summary>
+        [RimArtTest("Goku", "height 2 kamehameha and spirit bomb on real pawns (screenshots)", 4000)]
+        private static IEnumerable<int> HeightBeamBomb(RimArtTestContext t)
+        {
+            GameComponent_Echoes echoes = Setup(t);
+            yield return 5;
+            IntVec3 from = t.center + new IntVec3(-3, 0, 0);
+            Pawn host = HeightShots.Plain(Host(t, echoes, from, out EchoRecord record), strip: false);
+            Pawn e5 = HeightShots.Target(t, from + new IntVec3(5, 0, 0));
+            IntVec3 camera = from + new IntVec3(3, 0, 0);
+            yield return 2;
+            Ability kame = host.abilities.GetAbility(GokuDefOf.AG_GokuKamehameha);
+            kame.QueueCastingJob(from + new IntVec3(12, 0, 0), LocalTargetInfo.Invalid);
+            KamehamehaCast beam = null;
+            foreach (int w in WaitFor(() => (beam = CastOf(host) as KamehamehaCast) != null && beam.Channelling, 180, 1)) yield return w;
+            if (!t.Check(beam != null && beam.Channelling, "the channel started")) { Finish(record); yield break; }
+            yield return 60;
+            yield return HeightShots.Shoot(t, "goku kame charging", camera, host, e5);
+            yield return 120;
+            yield return HeightShots.Shoot(t, "goku kame full", camera, host, e5);
+            beam.fireOrdered = true;
+            foreach (int w in WaitFor(() => beam.Firing, 300, 1)) yield return w;
+            yield return 4;
+            yield return HeightShots.Shoot(t, "goku kame fire", camera, host, e5);
+            yield return 5;
+            yield return HeightShots.Shoot(t, "goku kame hit", camera, host, e5);
+            foreach (int w in WaitFor(() => CastOf(host) == null, 300)) yield return w;
+            if (e5.Spawned) e5.Destroy();
+            yield return 10;
+
+            Pawn lender = HeightShots.Plain(Ally(t, from + new IntVec3(-2, 0, 0)));
+            IntVec3 target = from + new IntVec3(8, 0, 0);
+            Pawn spared = HeightShots.Plain(Ally(t, target + new IntVec3(-1, 0, -1)), Rot4.South);
+            Ability bomb = host.abilities.GetAbility(GokuDefOf.AG_GokuSpiritBomb);
+            bomb.QueueCastingJob(target, LocalTargetInfo.Invalid);
+            SpiritBombCast cast = null;
+            foreach (int w in WaitFor(() => (cast = CastOf(host) as SpiritBombCast) != null && cast.Channelling, 180, 1)) yield return w;
+            if (!t.Check(cast != null && cast.Channelling, "the Spirit Bomb channel started")) { Finish(record); yield break; }
+            Job lend = JobMaker.MakeJob(GokuDefOf.AG_GokuLend, host);
+            lend.playerForced = true;
+            lender.jobs.TryTakeOrderedJob(lend, JobTag.Misc);
+            yield return 60;
+            yield return HeightShots.Shoot(t, "goku bomb lending", from, host, lender);
+            foreach (int w in WaitFor(() => cast.CanThrow(t.Now), 300, 1)) yield return w;
+            cast.throwOrdered = true;
+            // The shells show while the dome is up, about 3.5 to 4 s after the throw for this little power.
+            int thrown = t.Now;
+            foreach (int at in new[] { 150, 190, 226 })
+            {
+                yield return thrown + at - t.Now;
+                yield return HeightShots.Shoot(t, "goku bomb shell " + at, target, spared);
+            }
+            yield return 100;
+            Finish(record);
+        }
     }
 }

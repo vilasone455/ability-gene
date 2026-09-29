@@ -220,10 +220,19 @@ namespace RimArt
         {
             Map map = Find.CurrentMap;
             if (map == null) return;
-            for (int i = 0; i < casts.Count; i++)
-                if (casts[i].home == map) casts[i].Draw();
-            for (int i = 0; i < pictures.Count; i++)
-                if (pictures[i].home == map) pictures[i].Draw();
+            // Drawn on real pawns: heights on the body are fitted to them (see PawnFit).
+            PawnFit.Begin();
+            try
+            {
+                for (int i = 0; i < casts.Count; i++)
+                    if (casts[i].home == map) casts[i].Draw();
+                for (int i = 0; i < pictures.Count; i++)
+                    if (pictures[i].home == map) pictures[i].Draw();
+            }
+            finally
+            {
+                PawnFit.End();
+            }
         }
 
         public override void ExposeData()

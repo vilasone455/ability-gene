@@ -168,7 +168,7 @@ namespace RimArt
             {
                 float grown = (beat + Smooth(inBeat / 0.25f)) / T.Beats, flare = last ? 1f + T.FinalFlare * Smooth(inBeat / 0.3f) : 1f;
                 float size = shot.BallSize * grown * flare * (1f + 0.05f * Mathf.Sin(s * 47f));
-                var hands = new Vector2(stand.x - ca * 0.24f + sa * 0.13f, stand.y - sa * 0.24f - ca * 0.13f + Chest - 0.06f);
+                var hands = new Vector2(stand.x - ca * 0.24f + sa * 0.13f, stand.y - sa * 0.24f - ca * 0.13f + PawnFit.Y(Chest - 0.06f));
                 // The lit floor steps out one cell a beat, and a ring flashes on it as it does.
                 float lit = beat + Smooth(inBeat / 0.2f);
                 Sprite(stand, lit * 2.6f + 1f, (lit * 2.6f + 1f) * 0.85f, Fade(Ki, (0.22f + 0.06f * beat) * seen * (0.85f + 0.15f * Mathf.Sin(s * 31f))), glow, Floor + 0.007f);
@@ -205,7 +205,7 @@ namespace RimArt
             }
 
             // --- HA: the muzzle burst, the ring along the floor, the dust blown out behind ---
-            Vector2 muzzle = Place(0.45f - slide, 0f, Chest);
+            Vector2 muzzle = Place(0.45f - slide, 0f, ChestOn);
             if (fired >= 0f && fired < 0.16f)
             {
                 float v = fired / 0.16f, f = 1f - v;
@@ -248,8 +248,8 @@ namespace RimArt
                     for (int i = 0; i <= count; i++)
                     {
                         float d = start + (reach - start) * i / count, h = Half(d, share);
-                        left[i] = Place(d, h, Chest);
-                        right[i] = Place(d, -h, Chest);
+                        left[i] = Place(d, h, ChestOn);
+                        right[i] = Place(d, -h, ChestOn);
                     }
                     Strip(left, right, colour, whiteGlow, altitude);
                 }
@@ -259,24 +259,24 @@ namespace RimArt
                 Layer(1f, Fade(Ki, 0.26f), Overhead + 0.101f);
                 Layer(0.74f, Fade(KiSky, 0.3f), Overhead + 0.1015f);
                 for (float d = start + 1f; d < reach - 0.5f; d += 2f)
-                    Sprite(Place(d, 0f, Chest), 3.6f, W * 2f * (Half(d, 1f) / (W / 2f)), Fade(Ki, 0.14f), glow, Overhead + 0.0995f, -aimDegrees);
+                    Sprite(Place(d, 0f, ChestOn), 3.6f, W * 2f * (Half(d, 1f) / (W / 2f)), Fade(Ki, 0.14f), glow, Overhead + 0.0995f, -aimDegrees);
                 Layer(0.46f, Fade(KiSky, 0.45f), Overhead + 0.103f);
                 Layer(0.24f, Fade(White, 0.85f), Overhead + 0.104f);
                 for (int i = 0; i < T.FlowLines; i++)
                 {
                     float d = start + 1f + (Rand(i) * reach + fired * 46f) % Mathf.Max(1f, reach - start - 2f), across = (Rand(i + 15) - 0.5f) * W * 0.75f, l = 1.2f + Rand(i + 33) * 1.8f;
                     if (d + 0.2f >= reach) continue;
-                    Streak(Place(d, across, Chest), Place(Mathf.Min(reach, d + l), across, Chest), 0.08f, Fade(Mathf.Abs(across) < W * 0.17f ? KiSky : White, 0.6f), whiteGlow, Overhead + 0.105f, 3);
+                    Streak(Place(d, across, ChestOn), Place(Mathf.Min(reach, d + l), across, ChestOn), 0.08f, Fade(Mathf.Abs(across) < W * 0.17f ? KiSky : White, 0.6f), whiteGlow, Overhead + 0.105f, 3);
                 }
                 for (int n = 0; n < T.BeamRings; n++)
                 {
                     float d = 1.5f + (fired * 24f + n * stop / T.BeamRings) % Mathf.Max(1f, stop - 2f);
                     if (d > reach - 1f || d < start + 0.5f) continue;
-                    DrawMesh(beamRing, Place(d, 0f, Chest), Overhead + 0.106f, 0.1f, W * 0.62f * (1f + 0.25f * Mathf.Sin(d)), -aimDegrees, Fade(KiIce, 0.55f), whiteGlow);
+                    DrawMesh(beamRing, Place(d, 0f, ChestOn), Overhead + 0.106f, 0.1f, W * 0.62f * (1f + 0.25f * Mathf.Sin(d)), -aimDegrees, Fade(KiIce, 0.55f), whiteGlow);
                 }
                 // The head: a bright soft bulb with a bow arc in front. Where the lane ends it presses instead: a pulsing light
                 // and sparks thrown back.
-                Vector2 tip = Place(reach, 0f, Chest);
+                Vector2 tip = Place(reach, 0f, ChestOn);
                 float bulb = W / 2f * (arrived ? 1.1f + 0.15f * Mathf.Sin(s * 52f) : 1.25f);
                 Sprite(tip, bulb * 4.6f, bulb * 4.6f, Fade(Ki, 0.6f), glow, Overhead + 0.107f);
                 Sprite(tip, bulb * 2.8f, bulb * 2.8f, Fade(KiIce, 0.8f), glow, Overhead + 0.108f);
@@ -300,7 +300,7 @@ namespace RimArt
                     }
                 if (!leaving)
                 {
-                    Vector2 source = Place(start, 0f, Chest);
+                    Vector2 source = Place(start, 0f, ChestOn);
                     float pulse = 2.8f + 0.3f * Mathf.Sin(s * 44f);
                     Sprite(source, pulse, pulse, Fade(KiIce, 0.75f), glow, Overhead + 0.112f);
                     Sprite(source, 1.1f, 1.1f, Fade(White, 0.95f), glow, Overhead + 0.113f);
@@ -313,7 +313,7 @@ namespace RimArt
                 float since = s - shot.StruckAt[p];
                 if (since < 0f || since >= 0.22f) continue;
                 float v = since / 0.22f;
-                var c = new Vector2(shot.Struck[p].x, shot.Struck[p].y + Chest);
+                var c = new Vector2(shot.Struck[p].x, shot.Struck[p].y + ChestOn);
                 Sprite(c, 1.2f + v * 1.4f, 1.2f + v * 1.4f, Fade(White, 1f - v), glow, Overhead + 0.114f);
                 PaperBombGraphics.RingAt(c, 0.3f + v * 1.1f, Fade(White, 0.9f * (1f - v)), Overhead + 0.115f, true, whiteGlow);
                 for (int k = 0; k < T.HitSparks; k++)

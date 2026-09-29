@@ -328,6 +328,20 @@ namespace RimArt
         public override void MapComponentUpdate()
         {
             if (Find.CurrentMap != map || (thrown.Count == 0 && lines.Count == 0 && shrouds.Count == 0)) return;
+            // Drawn on real pawns: heights on the body are fitted to them (see PawnFit).
+            PawnFit.Begin();
+            try
+            {
+                Draw();
+            }
+            finally
+            {
+                PawnFit.End();
+            }
+        }
+
+        private void Draw()
+        {
             int now = Find.TickManager.TicksGame;
             for (int i = 0; i < thrown.Count; i++)
             {

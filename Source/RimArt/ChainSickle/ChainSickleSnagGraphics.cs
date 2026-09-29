@@ -53,8 +53,8 @@ namespace RimArt
             float lean = reeling ? T.Lean * Mathf.Sqrt(Mathf.Max(0f, Mathf.Sin(Mathf.Min(1f, (s - T.Reel0) / reel) * Mathf.PI))) : 0f;
             Vector2 holder = shot.CasterAt ?? f.Ground(shot.Caster0, shot.Back * reelU, 0f);
             Vector2 caster = f.Ground(holder, shot.Dragged ? 0f : -lean, 0f);
-            Vector2 hand = f.Ground(caster, 0.20f, 0.18f);
-            Vector3 hip = At(f.Ground(caster, -0.08f, 0.30f), 0.32f);
+            Vector2 hand = f.Hand(caster, 0.20f, 0.18f);
+            Vector3 hip = At(f.Ground(caster, -0.08f, 0.30f), PawnFit.H(0.32f));
 
             // Floor first: the scuffs behind whoever is dragged, the range ring at the throw, a pale
             // ring round the target at the hit.
@@ -64,7 +64,7 @@ namespace RimArt
             if (s >= T.Hit) Circle(o, 0.45f, 0.35f * (1f - Clamp01((s - T.Hit) / 1.2f)), Floor + 0.012f, Cream);
 
             // The coil: a level spiral from the chest down to the waist, scaled with the body.
-            float big = Mathf.Sqrt(Mathf.Max(0.1f, shot.Size)), cr = CoilR * big, ch0 = (ChestH + 0.1f) * big, ch1 = 0.25f * big;
+            float big = Mathf.Sqrt(Mathf.Max(0.1f, shot.Size)), cr = CoilR * big * PawnFit.Body, ch0 = PawnFit.H((ChestH + 0.1f) * big), ch1 = PawnFit.H(0.25f * big);
             float wrapU = s < T.Hit ? 0f : Smooth((s - T.Hit) / T.Wrap);
             int coil = wrapU > 0f
                 ? CoilPath(CoilPts, o, CoilTurns * wrapU, cr, ch0, ch1, shot.Aim + 180f, Mathf.Max(4, Round(36f * wrapU)))
@@ -76,14 +76,14 @@ namespace RimArt
             if (s < T.Spin0)
             {
                 w = hip;
-                path = ChainPath(PathPts, At(hand, HandH), w, 0.12f);
+                path = ChainPath(PathPts, At(hand, PawnFit.H(HandH)), w, 0.12f);
             }
             else if (s < T.Throw0)
             {
                 float u = (s - T.Spin0) / T.Spin, ang = f.radians + (u * u * 0.5f + u * 0.5f - 1f) * T.Turns * Mathf.PI * 2f;
                 float up = Smooth(u * 3f);
-                w = new Vector3(caster.x + Mathf.Cos(ang) * T.SpinR, T.SpinH * up + 0.32f * (1f - up), caster.y + Mathf.Sin(ang) * T.SpinR);
-                path = ChainPath(PathPts, At(hand, HandH), w, 0.03f);
+                w = new Vector3(caster.x + Mathf.Cos(ang) * T.SpinR, PawnFit.H(T.SpinH * up + 0.32f * (1f - up)), caster.y + Mathf.Sin(ang) * T.SpinR);
+                path = ChainPath(PathPts, At(hand, PawnFit.H(HandH)), w, 0.03f);
                 // Motion blur: a faint arc behind the weight.
                 float blur = up * 0.7f;
                 for (int i = 1; i <= 9; i++)
@@ -96,17 +96,17 @@ namespace RimArt
             else if (s < T.Hit || coil == 0)
             {
                 float u = Clamp01((s - T.Throw0) / T.Flight), arc = Mathf.Max(0f, Mathf.Sin(u * Mathf.PI));
-                var from = new Vector3(caster.x + f.ca * T.SpinR, T.SpinH, caster.y + f.sa * T.SpinR);
-                var to = new Vector3(o.x, ChestH * big, o.y);
+                var from = new Vector3(caster.x + f.ca * T.SpinR, PawnFit.H(T.SpinH), caster.y + f.sa * T.SpinR);
+                var to = new Vector3(o.x, PawnFit.H(ChestH * big), o.y);
                 w = new Vector3(Mathf.Lerp(from.x, to.x, u), Mathf.Lerp(from.y, to.y, u) + 0.15f * arc, Mathf.Lerp(from.z, to.z, u));
-                path = ChainPath(PathPts, At(hand, HandH), w, 0.08f * arc + 0.02f);
+                path = ChainPath(PathPts, At(hand, PawnFit.H(HandH)), w, 0.08f * arc + 0.02f);
             }
             else
             {
                 // Wrapped: the chain runs hand -> first coil point, the weight rides the coil's end.
                 w = CoilPts[coil - 1];
                 float sag = reeling ? 0.01f : s < T.Reel0 ? Mathf.Lerp(0.02f, 0.06f, Smooth((s - T.Wrapped) / T.Settle)) : 0.05f;
-                path = ChainPath(PathPts, At(hand, HandH), CoilPts[0], sag, 24, reeling ? 0.012f : 0f, s);
+                path = ChainPath(PathPts, At(hand, PawnFit.H(HandH)), CoilPts[0], sag, 24, reeling ? 0.012f : 0f, s);
             }
 
             // Dust at the feet of whoever is dragged.
@@ -115,7 +115,7 @@ namespace RimArt
 
             // The chain sits on MoteOverhead; the coil's far half under the pawn, so the pawn stands
             // between the two halves.
-            if (weapon) Sickle(hand, HandH, shot.Aim, sun, strength, Y + 0.05f);
+            if (weapon) Sickle(hand, PawnFit.H(HandH), shot.Aim, sun, strength, Y + 0.05f);
             Chain(PathPts, path, sun, strength, Y + 0.02f);
             if (coil > 0) Coil(CoilPts, coil, o.y + 0.02f, sun, strength);
             Weight(w, sun, strength, Y + 0.03f);
@@ -123,7 +123,7 @@ namespace RimArt
             // Wrap hit: a short pale flash at the chest.
             float hitAge = s - T.Hit;
             if (hitAge >= 0f && hitAge < 0.15f)
-                Sprite(new Vector2(o.x, o.y + ChestH * big * Lift), 0.6f, 0.5f, Fade(Cream, (1f - hitAge / 0.15f) * 0.7f), soft, Y + 0.06f);
+                Sprite(new Vector2(o.x, o.y + PawnFit.H(ChestH * big) * Lift), 0.6f, 0.5f, Fade(Cream, (1f - hitAge / 0.15f) * 0.7f), soft, Y + 0.06f);
         }
     }
 }

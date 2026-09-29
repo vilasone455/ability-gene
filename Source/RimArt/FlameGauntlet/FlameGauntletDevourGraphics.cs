@@ -97,7 +97,7 @@ namespace RimArt
             float closing = Smooth((s - shot.Result) / T.Close);
             float snap = shot.RefusedAt >= 0f ? Smooth((s - shot.RefusedAt) / 0.1f) : 0f;
             float open = raise * (1f - closing) * (1f - snap), fwd = raise * (1f - closing);
-            Vector2 hand = f.Ground(caster, Mathf.Lerp(0.12f, 0.30f, fwd), Mathf.Lerp(0.18f, 0.12f, fwd));
+            Vector2 hand = f.Hand(caster, Mathf.Lerp(0.12f, 0.30f, fwd), Mathf.Lerp(0.18f, 0.12f, fwd));
 
             float heat = T.HeatAt(shot, s);
             float over = heat >= shot.OverheatAt ? 1f : 0f;
@@ -122,7 +122,7 @@ namespace RimArt
                         {
                             float u = Clamp01((age - k * 0.15f) / 1f);
                             if (u <= 0f || u >= 1f) continue;
-                            Sprite(new Vector2(it.At.x + (k - 1) * 0.1f + Mathf.Sin(u * 6f + k) * 0.06f, it.At.y + 0.3f + u * 0.8f * Lift),
+                            Sprite(new Vector2(it.At.x + (k - 1) * 0.1f + Mathf.Sin(u * 6f + k) * 0.06f, it.At.y + PawnFit.Y(0.3f) + u * 0.8f * Lift),
                                 0.2f + u * 0.3f, 0.18f + u * 0.25f, Fade(Smoke, 0.45f * (1f - u)), PowerPoleGraphics.puff, Y + 0.16f);
                         }
                     }
@@ -137,7 +137,7 @@ namespace RimArt
 
             FlameGauntletPose g = weapon
                 ? Gauntlet(hand, shot.Aim, heat, shot.MaxHeat, shot.OverheatAt, s, sun, strength, open)
-                : Pose(Raised(hand, HandH), shot.Aim);
+                : Pose(Raised(hand, Hand), shot.Aim);
 
             // The fires in flight, and the flash where each one goes in.
             for (int i = 0; i < shot.Meals.Count; i++)
@@ -146,7 +146,7 @@ namespace RimArt
                 if (!it.Eaten) continue;
                 float u = (s - it.Depart) / T.Travel;
                 if (u < 0f || u > 1f) continue;
-                var from = new Vector2(it.At.x, it.At.y + (it.Pawn ? 0.45f : 0.3f) * Lift);
+                var from = new Vector2(it.At.x, it.At.y + (it.Pawn ? PawnFit.H(0.45f) : 0.3f) * Lift);
                 float e = Clamp01(u);
                 Parcel(from, g.Palm, 1f - (1f - e) * (1f - e), it.Pawn ? 1.4f : 1f);
                 float near = Clamp01((u - 0.7f) / 0.3f);

@@ -70,7 +70,7 @@ namespace RimArt
                 float age = seconds - shot.HitTime[e];
                 if (age < 0f) continue;
                 Vector2 at = caster + shot.HitPlace[e] + shot.HitShove[e] * (T.Shove * EaseOut(age / 0.2f));
-                Sprite(Raised(at, HandHeight), 1.3f, 0.9f, Fade(Cream, Mathf.Max(0f, 1f - age / 0.12f) * 0.85f), glow, Overhead + 0.02f + e * 0.0002f);
+                Sprite(Raised(at, Hand), 1.3f, 0.9f, Fade(Cream, Mathf.Max(0f, 1f - age / 0.12f) * 0.85f), glow, Overhead + 0.02f + e * 0.0002f);
             }
 
             // The swept fan behind the pole: three nested slices, so the newest part is the brightest.
@@ -83,8 +83,8 @@ namespace RimArt
                     for (int i = 0; i <= T.FanSteps; i++)
                     {
                         float phi = Mathf.Lerp(to, from, i / (float)T.FanSteps);
-                        inner[i] = Polar(0.7f, phi, HandHeight);
-                        outer[i] = Polar(shot.LengthAt(phi), phi, HandHeight);
+                        inner[i] = Polar(0.7f, phi, Hand);
+                        outer[i] = Polar(shot.LengthAt(phi), phi, Hand);
                     }
                     Strip(inner, outer, Fade(Cream, 0.13f * fade), solid, Overhead - 0.01f + k * 0.0002f);
                 }
@@ -102,7 +102,7 @@ namespace RimArt
             float now = T.AngleAt(seconds, shot), tip = T.TipLength(seconds, shot);
             Vector2 a = caster + Turn(aim + now) * RestBack, b = caster + Turn(aim + now) * tip;
             if (keepPole || seconds < T.HomeAt)
-                Pole(Raised(a, HandHeight), Raised(b, HandHeight), a + sun * HandHeight, b + sun * HandHeight, tip - RestBack, Width, shadow, Overhead);
+                Pole(Raised(a, Hand), Raised(b, Hand), a + sun * HandShadow, b + sun * HandShadow, tip - RestBack, Width, shadow, Overhead);
         }
     }
 }

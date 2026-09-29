@@ -64,7 +64,7 @@ namespace RimArt
                 Vector2 pos = q.LiveAt ?? f.Place(feet, q.Along + slide, q.Across);
                 Puddle(f.Place(feet, q.Along + q.Pushed, q.Across, -0.3f), hitAge - T.Slide, 1.1f, 0.5f);
                 if (q.Burning) SteamPuffs(pos, hitAge, 1f, i * 7);
-                ShotImpact(f.Place(feet, q.Along, q.Across), hitAge, f, strength);
+                ShotImpact(f.Place(feet, q.Along, q.Across), hitAge, f, strength, PawnFit.H(0.38f / SixPathsHeight.Lift));
                 Drips(pos, hitAge, 1f - Smooth((s - up) / 0.5f), i * 13);
             }
 

@@ -110,7 +110,8 @@ namespace RimArt
         public Vector2 OriginGround(Pawn caster)
         {
             ShadowDoubleRecord d = DoubleOf(caster);
-            return d != null && d.Stands(Now) ? CellGround(d.cell) : Ground(caster);
+            // A standing double's lines start at its feet, fitted to a real pawn as ShadowDoubleGraphics draws it (PawnFit).
+            return d != null && d.Stands(Now) ? CellGround(d.cell) + new Vector2(0f, PawnFit.FitY(0f)) : Ground(caster);
         }
 
         public ShadowHold HoldOf(Pawn caster, Pawn target) => holds.Find(h => h.caster == caster && h.target == target && h.Holding);
@@ -606,7 +607,16 @@ namespace RimArt
         {
             if (Find.CurrentMap != map) return;
             int now = Now;
-            for (int i = 0; i < doubles.Count; i++) DrawDouble(doubles[i], now);
+            // The double is drawn on a real pawn's scale (see PawnFit).
+            PawnFit.Begin();
+            try
+            {
+                for (int i = 0; i < doubles.Count; i++) DrawDouble(doubles[i], now);
+            }
+            finally
+            {
+                PawnFit.End();
+            }
             for (int i = 0; i < holds.Count; i++) DrawHold(holds[i], now);
             for (int i = 0; i < seams.Count; i++) DrawSeam(seams[i], now);
             for (int i = 0; i < slides.Count; i++) DrawSlide(slides[i], now);

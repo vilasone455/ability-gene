@@ -48,6 +48,9 @@ namespace RimArt
             Begin(shot.Spot);
             bool sinks = shot.End == DoubleEnd.TimeRunsOut;
             Vector2 carrier = shot.Carrier, spot = shot.Spot;
+            // The double stands for a pawn drawn from its cell's centre. On a real pawn (PawnFit) its feet, where the
+            // pool and the lines are, are 0.33 below that point; in the lab they are at it.
+            var feet = new Vector2(spot.x, spot.y + PawnFit.Y(0f));
 
             // Where the shadow is: sliding out, standing, or (time runs out) sliding home.
             float homeward = sinks ? VfxMath.Smooth((after - T.Rise) / T.Home) : 0f, outward = s < shot.Cast ? VfxMath.Smooth(s / shot.Cast) : 1f - homeward;
@@ -56,21 +59,21 @@ namespace RimArt
 
             // The thin line back to the carrier. It is the only line allowed over dark cells.
             float tie = !sinks && after > T.Burst ? 1f - VfxMath.Smooth((after - T.Burst) / T.LineBack) : outward;
-            if (away) Line(carrier, spot, 0f, tie, s, 0.06f, T.TieWidth, flare: false, point: false);
-            FlatFigure(Vector2.Lerp(carrier, spot, outward), shot.Aim, 1f - up, away ? seen : 0f);
-            Pool(spot, T.PoolRadius * up * seen, 1f, s);
+            if (away) Line(carrier, feet, 0f, tie, s, 0.06f, T.TieWidth, flare: false, point: false);
+            FlatFigure(Vector2.Lerp(carrier, feet, outward), shot.Aim, 1f - up, away ? seen : 0f);
+            Pool(feet, T.PoolRadius * up * seen, 1f, s);
 
             // Imitation cast from the double.
             float since = s - shot.Release, grab = VfxMath.Smooth((s - shot.HeldAt) / 0.25f) * (1f - VfxMath.Smooth(since / 0.25f));
             if (s >= shot.CastStart && since < T.LineBack)
-                Line(spot, shot.Enemy, 0f, since < 0f ? P.EaseOut((s - shot.CastStart) / T.LineOut) : 1f - VfxMath.Smooth(since / T.LineBack), s, 0.1f, T.LineWidth);
-            if (shot.Range > 0f) RangeRing(spot, shot.Range, VfxMath.Smooth((s - shot.CastStart + 0.2f) / 0.2f) * (1f - VfxMath.Smooth(since / 0.4f)));
+                Line(feet, shot.Enemy, 0f, since < 0f ? P.EaseOut((s - shot.CastStart) / T.LineOut) : 1f - VfxMath.Smooth(since / T.LineBack), s, 0.1f, T.LineWidth);
+            if (shot.Range > 0f) RangeRing(feet, shot.Range, VfxMath.Smooth((s - shot.CastStart + 0.2f) / 0.2f) * (1f - VfxMath.Smooth(since / 0.4f)));
             Pool(shot.Enemy, T.PoolRadius * grab, 1f, s);
             Grip(shot.Enemy, grab, s, 4, 0.35f);
             Shreds(shot.Enemy, since, 7);
 
             Silhouette(spot, up, seen, s);
-            if (!sinks) Shreds(new Vector2(spot.x, spot.y + 0.3f), after, 16, 0.55f, 1.1f);
+            if (!sinks) Shreds(new Vector2(spot.x, spot.y + PawnFit.Y(0.3f)), after, 16, 0.55f, 1.1f);
         }
 
         /// <summary>The flat shadow that slides over the floor: a body strip and a head, pointing along <paramref name="degrees"/>.</summary>
@@ -91,25 +94,29 @@ namespace RimArt
             DrawMesh(disc, at + u * (1.02f * scale), LineLayer + 0.006f, 0.16f * scale, 0.16f * scale, 0f, colour, solid);
         }
 
-        /// <summary>The standing double. <paramref name="up"/> 0 to 1 is how far it has risen out of the floor.</summary>
+        /// <summary>
+        /// The standing double. <paramref name="up"/> 0 to 1 is how far it has risen out of the floor. In game it is
+        /// a real pawn's size and height (PawnFit): 1.3x the stand-in, rising from the real feet.
+        /// </summary>
         private static void Silhouette(Vector2 at, float up, float alpha, float seconds)
         {
             if (up <= 0f || alpha <= 0f) return;
+            float k = PawnFit.Body;
             for (int pass = 0; pass < 2; pass++)
             {
                 float grow = pass == 0 ? 0.03f : 0f, layer = PawnLayer + (pass == 0 ? 0f : 0.002f);
                 Color colour = Fade(pass == 0 ? Fringe : Shade, 0.95f * alpha);
-                DrawMesh(disc, new Vector2(at.x, at.y + 0.18f * up), layer, 0.22f + grow, (0.32f + grow) * up, 0f, colour, solid);
-                DrawMesh(disc, new Vector2(at.x, at.y + 0.58f * up), layer + 0.001f, (0.16f + grow) * Mathf.Lerp(0.6f, 1f, up), (0.17f + grow) * up, 0f, colour, solid);
+                DrawMesh(disc, new Vector2(at.x, at.y + PawnFit.Y(0.18f * up)), layer, 0.22f * k + grow, (0.32f * k + grow) * up, 0f, colour, solid);
+                DrawMesh(disc, new Vector2(at.x, at.y + PawnFit.Y(0.58f * up)), layer + 0.001f, (0.16f * k + grow) * Mathf.Lerp(0.6f, 1f, up), (0.17f * k + grow) * up, 0f, colour, solid);
             }
             // Wisps: they leave the shoulders, lift 0.5 cells and thin out.
             float lift = SixPathsHeight.Lift;
             for (int i = 0; i < 4; i++)
             {
-                float u = (seconds * 0.7f + i / 4f) % 1f, x = at.x + (i % 2 == 1 ? 0.2f : -0.2f) + Mathf.Sin(u * 5f + i) * 0.08f, h = (0.55f + u * 0.5f) * up;
-                wisp[0] = new Vector2(x, at.y + h * lift);
-                wisp[1] = new Vector2(x + 0.04f, at.y + (h + 0.12f) * lift);
-                wisp[2] = new Vector2(x - 0.02f, at.y + (h + 0.26f) * lift);
+                float u = (seconds * 0.7f + i / 4f) % 1f, x = at.x + ((i % 2 == 1 ? 0.2f : -0.2f) + Mathf.Sin(u * 5f + i) * 0.08f) * k, h = (0.55f + u * 0.5f) * up;
+                wisp[0] = new Vector2(x, at.y + PawnFit.Y(h * lift));
+                wisp[1] = new Vector2(x + 0.04f, at.y + PawnFit.Y((h + 0.12f) * lift));
+                wisp[2] = new Vector2(x - 0.02f, at.y + PawnFit.Y((h + 0.26f) * lift));
                 PowerPoleGraphics.Tapered(wisp, 0.07f * (1f - u), Fade(Shade, 0.8f * (1f - u) * alpha * up), Overhead + 0.01f);
             }
         }
