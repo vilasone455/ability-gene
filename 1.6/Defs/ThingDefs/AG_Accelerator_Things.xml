@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- A pawn thrown by vector shove (Source/RimArt/Accelerator/Kit/ShoveThrow.cs). flightSpeed is cells per
-       second; the shove's cellsPerSecond is written over it per throw, so this is only the default. Straight
-       along the ground at an even speed, no height: the bowling and the wall slam are timed by distance. -->
+  <!-- A pawn thrown or knocked aside by vector shove (Source/RimArt/Accelerator/Kit/ShoveThrow.cs). The
+       flight time comes from the shove's cellsPerSecond (PawnFlyer_VectorThrown), not from flightSpeed here.
+       Straight along the ground at an even speed, no height: the bowling and the wall slam are timed by
+       distance. -->
   <ThingDef ParentName="PawnFlyerBase">
     <defName>AG_VectorThrown</defName>
     <label>thrown</label>
-    <thingClass>PawnFlyer</thingClass>
+    <thingClass>RimArt.PawnFlyer_VectorThrown</thingClass>
     <pawnFlyer>
       <flightDurationMin>0.05</flightDurationMin>
       <flightSpeed>20</flightSpeed>

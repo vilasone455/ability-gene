@@ -6,8 +6,8 @@ namespace RimArt
 {
     /// <summary>
     /// Vector manipulation's balance numbers on its AbilityDef, so a rebalance is an XML edit. The ability
-    /// has no effect of its own to apply (Command_VectorEdit and VectorEditSession do the work), so the comp
-    /// class is the plain one and does nothing.
+    /// has no effect of its own to apply (Command_VectorEdit and VectorEditSession do the work), so its comp
+    /// does nothing.
     /// </summary>
     public class CompProperties_VectorManipulation : CompProperties_AbilityEffect
     {
@@ -16,7 +16,12 @@ namespace RimArt
 
         public CompProperties_VectorManipulation()
         {
-            compClass = typeof(CompAbilityEffect);
+            compClass = typeof(CompAbilityEffect_VectorManipulation);
         }
+    }
+
+    /// <summary>Carries <see cref="CompProperties_VectorManipulation"/>; the base class is abstract, so it needs a concrete one.</summary>
+    public class CompAbilityEffect_VectorManipulation : CompAbilityEffect
+    {
     }
 }

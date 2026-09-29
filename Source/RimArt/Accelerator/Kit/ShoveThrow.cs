@@ -311,10 +311,15 @@ namespace RimArt
         public static void Throw(Pawn pawn, IntVec3 to, float cellsPerSecond)
         {
             if (pawn == null || !pawn.Spawned || to == pawn.Position) return;
+            // MakeFlyer takes the pawn off the map, so a def of the wrong class must be refused before it.
+            if (!typeof(PawnFlyer_VectorThrown).IsAssignableFrom(AcceleratorDefOf.AG_VectorThrown.thingClass))
+            {
+                Log.ErrorOnce("AG_VectorThrown's thingClass must be RimArt.PawnFlyer_VectorThrown.", 0x5a17c0);
+                return;
+            }
             Map map = pawn.Map;
             float distance = (to - pawn.Position).LengthHorizontal;
             var flyer = (PawnFlyer_VectorThrown)MakeFlyer(AcceleratorDefOf.AG_VectorThrown, pawn, to, null, null);
-            if (flyer == null) return;
             flyer.cellsPerSecond = cellsPerSecond;
             flyer.distance = distance;
             GenSpawn.Spawn(flyer, to, map);

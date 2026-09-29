@@ -191,7 +191,7 @@ namespace RimArt
             t.Check(memory != null && memory.attacker == target && Math.Abs(memory.damage - 6f) < 0.01f, "the hit is remembered (" + (memory == null ? "no comp" : memory.damage + " from " + memory.attacker?.LabelShort) + ")");
             host.abilities.GetAbility(AcceleratorDefOf.AG_VectorShove).QueueCastingJob(target, new LocalTargetInfo(t.center + new IntVec3(12, 0, 0)));
             yield return 1;
-            ShovePlan plan = Shoves(t).Throws.LastOrDefault();
+            ShovePlan plan = Shoves(t).Throws.LastOrDefault(p => p.thrown == target);
             t.Check(plan != null && plan.returned && Math.Abs(plan.bonus - 6f) < 0.01f, "the throw carries 6 returned (" + (plan?.bonus ?? -1f) + ")");
             foreach (int w in WaitFor(() => plan != null && plan.arrived, 90)) yield return w;
             ShovePlan.Liner struck = plan?.liners.FirstOrDefault();
@@ -206,12 +206,14 @@ namespace RimArt
             Pawn late = Target(t, t.center + new IntVec3(1, 0, 0));
             Pawn host2 = Host(t, echoes, t.center, out EchoRecord record2);
             host2.TakeDamage(new DamageInfo(DamageDefOf.Blunt, 6f, 0f, -1f, late));
-            late.stances.stunner.StunFor(90, host2, false, false);
-            yield return 75;
+            // The hit is moved 75 ticks into the past rather than waited out: a drafted Host next to a hostile
+            // punches it by itself, and the melee cooldown would end the queued cast.
+            HediffComp_ForceReturn memory2 = CompAbilityEffect_VectorShove.ForceReturnOf(host2);
+            if (memory2 != null) memory2.tick -= 75;
             host2.abilities.GetAbility(AcceleratorDefOf.AG_VectorShove).QueueCastingJob(late, new LocalTargetInfo(t.center + new IntVec3(12, 0, 0)));
             yield return 1;
-            ShovePlan plan2 = Shoves(t).Throws.LastOrDefault();
-            t.Check(plan2 != null && !plan2.returned, "a hit 1.25 s old is not returned");
+            ShovePlan plan2 = Shoves(t).Throws.LastOrDefault(p => p.thrown == late);
+            t.Check(plan2 != null && !plan2.returned, "a hit 1.25 s old is not returned (" + (plan2 == null ? "no throw" : "returned " + plan2.bonus) + ")");
             Finish(record2);
         }
 
