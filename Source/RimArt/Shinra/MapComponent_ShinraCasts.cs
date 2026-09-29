@@ -15,6 +15,7 @@ namespace RimArt
             foreach (var s in GameComponent_Shinra.Instance.States)
             {
                 if (s.map != map || s.centre.ToIntVec3().Fogged(map)) continue;
+                if (s.active) ShinraSleeves.Draw(s.animation);
                 float time = s.tail >= 0f ? s.tail : s.active ? s.charge.time : -1f;
                 if (time >= ShinraCharge.Burst) ShinraVfxGraphics.Draw(s.centre, time, map);
             }
