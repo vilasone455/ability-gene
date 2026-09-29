@@ -209,3 +209,14 @@ Left open: Bank Shot's muzzle is 0.35 short of the real pistol's muzzle along th
 is shortened (Trigger-happy) releases Paper Bomb's tag before the fixed-length clip does. The small list
 (Pain, Rinnegan) and the preview-only list were not touched.
 
+Pain, afterwards (branch fix/pain-height): Shinra Tensei's pushed pawns draw their drag mark, landing dust
+and wall flash from the pawn's ground point (`PainKit.Ground`, the 0.3 shift) in `ShinraFlight.Draw`, 0.3
+lower than from the cell centres; the dust still starts about 0.2 above the feet, the shift's usual
+leftover. Banshō's landed target uses `LyingGround` while it lies face-down, so its stars sit over the
+lying head (0.22 higher). The blocker's stars go 0.22 higher (`PainPictures.StarsUp`, passed as
+`BanshoView.blockStarsUp`, 0 in the lab), from +0.54 inside the head to +0.76. Close shots:
+`-rimarttest="Pain: shinra 3,Pain: bansho 1,Pain: bansho 2"`, files named "pain height ...". Still left:
+the Rinnegan eye glint (0.1 low) and the drawn arm (0.15 low). Also seen: when Banshō is blocked, the
+target is not drawn face-down in game (`LiesFaceDown` excludes blocked), but its stars still use the
+lying-head spot, so they sit at chest height between the two pawns.
+

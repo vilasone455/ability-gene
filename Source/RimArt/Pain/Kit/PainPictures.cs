@@ -34,8 +34,9 @@ namespace RimArt
                     view.target = Ground(cast.CentreAt(cast.AlongAt(s)));
                     view.height = cast.HeightAt(s);
                 }
-                else view.target = PainKit.Ground(target.DrawPos);
+                else view.target = cast.LiesFaceDown(Find.TickManager.TicksGame) ? LyingGround(target.DrawPos) : PainKit.Ground(target.DrawPos);
                 if (cast.blocker != null && cast.blocker.Spawned) view.block = PainKit.Ground(cast.blocker.DrawPos);
+                view.blockStarsUp = StarsUp;
             }
             else
             {
@@ -120,6 +121,13 @@ namespace RimArt
         /// </summary>
         public static Vector2 LyingGround(Vector3 drawPos) => new Vector2(drawPos.x, drawPos.z - LyingBodyZ);
         public const float LyingBodyZ = 0.08f;
+
+        /// <summary>
+        /// Stun stars over a standing real pawn go this much higher than the sketch puts them. The sketch draws them 0.84
+        /// above the ground point, which the 0.3 feet shift puts at +0.54 from the DrawPos, inside a real head (top
+        /// +0.63); fitted to a real pawn (<see cref="PawnFit.FitY"/>) they belong at 1.3 x 0.84 - 0.33 = +0.76.
+        /// </summary>
+        public const float StarsUp = 0.22f;
 
         /// <summary>A camera shake from the sketch, only when it happens on the map on screen.</summary>
         public static void Shake(Map map, float size)
