@@ -115,7 +115,7 @@ namespace RimArt
 
         // ---- Shinra Tensei -----------------------------------------------------------------------------------------
 
-        [RimArtTest("Pain", "shinra 1 release takes the Echo's 5 charge and starts the 5 s gap that holds Banshō; with no charge it cancels")]
+        [RimArtTest("Pain", "shinra 1 a charged release takes the Echo's 5, a quick one 3; the 5 s gap holds Banshō; with no charge it cancels")]
         private static IEnumerable<int> Shinra(RimArtTestContext t)
         {
             GameComponent_Echoes echoes = Setup(t);
@@ -125,21 +125,30 @@ namespace RimArt
             s.active = true;
             s.map = t.map;
             s.centre = host.Position.ToVector3Shifted();
-            s.charge = new ShinraCharge();
+            s.charge = ShinraCharge.Hold();
+            s.charge.ticks = 60;
             s.Release();
-            t.Check(s.charge.releasing && Mathf.Abs(echoes.charge - 95f) < 0.01f, "release took 5 charge (" + echoes.charge.ToString("0.#") + ")");
+            t.Check(s.charge.releasing && s.charge.size == 0 && Mathf.Abs(echoes.charge - 95f) < 0.01f,
+                "a 1 s charge releases 3 cells and takes 5 charge (" + echoes.charge.ToString("0.#") + ")");
             s.Cancel();
             PainKit.StartDevaGap(host);
             Ability bansho = host.abilities.GetAbility(PainDefOf.AG_PainBanshoTenin);
             t.Check(bansho.GizmoDisabled(out string why), "Banshō waits in the gap: " + why);
             t.Check(Mathf.Abs(PainKit.DevaGapLeft(host) - 5f) < 0.1f, "gap 5 s (" + PainKit.DevaGapLeft(host).ToString("0.00") + ")");
 
-            GameComponent_Shinra.Instance.For(host).cooldownUntil = 0;
+            s.active = true;
+            s.charge = ShinraCharge.Hold();
+            s.charge.ticks = 30;
+            s.Release();
+            t.Check(s.charge.Quick && Mathf.Abs(echoes.charge - 92f) < 0.01f, "a 0.5 s charge is the quick version and takes 3 (" + echoes.charge.ToString("0.#") + ")");
+            s.Cancel();
+
             echoes.charge = 2f;
             s.active = true;
-            s.charge = new ShinraCharge();
+            s.charge = ShinraCharge.Hold();
+            s.charge.ticks = 60;
             s.Release();
-            t.Check(!s.active && !s.charge.releasing && Mathf.Abs(echoes.charge - 2f) < 0.01f, "with 2 charge the release cancels and takes nothing");
+            t.Check(!s.active && Mathf.Abs(echoes.charge - 2f) < 0.01f, "with 2 charge the release cancels and takes nothing");
             Finish(record);
         }
 
@@ -150,28 +159,98 @@ namespace RimArt
             yield return 5;
             Pawn host = Host(t, echoes, t.center, out EchoRecord record);
             yield return 5;
-            if (!t.Check(ShinraCastAnimation.Clip.TryStart(host, out CastClips.Handle clip), "the Shinra clip starts ("
-                    + (ShinraCastAnimation.Clip.Missing ?? "Melee Animation present") + ")"))
+            if (!t.Check(GameComponent_Shinra.Instance.Start(host, false), "a hold starts ("
+                    + (ShinraCastAnimation.Clip.Missing ?? GameComponent_Shinra.Instance.For(host).CannotStart() ?? "clip playing") + ")"))
             { Finish(record); yield break; }
-            GameComponent_Shinra.Instance.Begin(host, clip);
             ShinraPawnState s = GameComponent_Shinra.Instance.For(host);
+            CastClips.Handle clip = s.animation;
             yield return 40;
-            t.Check(s.active && s.charge.Held, "holding at " + s.charge.time.ToString("0.00") + " s");
+            t.Check(s.active && s.charge.Held, "holding at clip " + s.charge.time.ToString("0.00") + " s");
             bool body = clip.TryPart("BodyA", out Vector3 b), a = clip.TryPart("HandA", out Vector3 ha), c = clip.TryPart("HandB", out Vector3 hb);
             t.Check(body && a && c, "BodyA, HandA, HandB read: body " + b.ToString("F3") + ", hands " + ha.ToString("F3") + " " + hb.ToString("F3"));
             t.Check((ha.x - b.x) * (hb.x - b.x) < 0f, "one hand each side of the body");
             t.Check(ha.y > b.y + 0.04f && hb.y > b.y + 0.04f, "the hands are drawn over the pawn's layers, so the sleeves fit between");
             yield return t.ShotAs("shinra sleeves hold", host.Position, 4f);
             s.Release();
-            for (int i = 0; i < 120 && s.active && s.charge.time < ShinraCharge.Burst + 0.1f; i++) yield return 1;
+            foreach (int wait in WaitFor(() => !s.active || s.charge.time >= s.charge.BurstAt + 0.1f, 120)) yield return wait;
             clip.TryPart("BodyA", out b);
             clip.TryPart("HandA", out ha);
             clip.TryPart("HandB", out hb);
-            t.Check(Mathf.Abs(ha.x - b.x) > 0.3f && Mathf.Abs(hb.x - b.x) > 0.3f, "at " + s.charge.time.ToString("0.00")
+            t.Check(Mathf.Abs(ha.x - b.x) > 0.3f && Mathf.Abs(hb.x - b.x) > 0.3f, "at clip " + s.charge.time.ToString("0.00")
                 + " s the hands are out " + Mathf.Abs(ha.x - b.x).ToString("0.00") + " / " + Mathf.Abs(hb.x - b.x).ToString("0.00"));
             yield return t.ShotAs("shinra sleeves burst", host.Position, 4f);
             s.Cancel();
             Finish(record);
+        }
+
+        [RimArtTest("Pain", "shinra 3 one button: tap 2.5 cells (3 charge, 8 s); a hold let go early is the tap; 1 s 3 cells (5, 16 s); 2 s 4 cells (20 s); cancel costs nothing", 3000)]
+        private static IEnumerable<int> Button(RimArtTestContext t)
+        {
+            GameComponent_Echoes echoes = Setup(t);
+            yield return 5;
+            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            ShinraPawnState s = GameComponent_Shinra.Instance.For(host);
+            GameComponent_TapHold.testDriven = true;
+            try
+            {
+                // Each case: press, hold for `held` real seconds while the game runs, let go. A raider stands just
+                // inside the size expected and one just outside it; only the inside one is pushed.
+                var cases = new[]
+                {
+                    (name: "tap", held: 0.1f, ticks: 0, radius: 2.5f, cost: 3f, cooldown: 8f, inside: new IntVec3(2, 0, 0), outside: new IntVec3(0, 0, 3)),
+                    (name: "0.5 s hold", held: 1f, ticks: 30, radius: 2.5f, cost: 3f, cooldown: 8f, inside: new IntVec3(2, 0, 0), outside: new IntVec3(0, 0, 3)),
+                    (name: "1.2 s hold", held: 1f, ticks: 72, radius: 3f, cost: 5f, cooldown: 16f, inside: new IntVec3(2, 0, 2), outside: new IntVec3(3, 0, 2)),
+                    (name: "2.2 s hold", held: 1f, ticks: 132, radius: 4f, cost: 5f, cooldown: 20f, inside: new IntVec3(3, 0, 2), outside: new IntVec3(3, 0, 3)),
+                };
+                foreach (var k in cases)
+                {
+                    GameComponent_Pain.Instance.ResetForTests();
+                    s.cooldownUntil = 0;
+                    echoes.charge = 100f;
+                    Pawn near = Target(t, host.Position + k.inside), far = Target(t, host.Position + k.outside);
+                    IntVec3 nearAt = near.Position, farAt = far.Position;
+                    yield return 5;
+                    var button = new Command_ShinraTensei(s);
+                    t.Check(!button.Disabled, k.name + ": the button is ready (" + button.disabledReason + ")");
+                    GameComponent_TapHold.Press(button, KeyCode.None, 0f);
+                    if (k.ticks > 0)
+                    {
+                        GameComponent_TapHold.Step(true, k.held);
+                        t.Check(s.active && !s.charge.tap, k.name + ": holding past " + Command_TapHold.TapSeconds + " s starts the charge");
+                        yield return k.ticks;
+                    }
+                    GameComponent_TapHold.Step(false, k.held + 0.01f);
+                    t.Check(s.active && s.charge.releasing, k.name + ": letting go fires");
+                    t.Check(Mathf.Abs(s.Radius - k.radius) < 0.01f, k.name + ": " + s.Radius.ToString("0.#") + " cells");
+                    t.Check(Mathf.Abs(echoes.charge - (100f - k.cost)) < 0.01f, k.name + ": took " + (100f - echoes.charge).ToString("0.#") + " charge");
+                    float cooldown = (s.cooldownUntil - Find.TickManager.TicksGame) / 60f;
+                    t.Check(Mathf.Abs(cooldown - k.cooldown) < 0.1f, k.name + ": cooldown " + cooldown.ToString("0.0") + " s");
+                    foreach (int wait in WaitFor(() => !s.active, 150)) yield return wait;
+                    t.Check(near.Position != nearAt, k.name + ": the raider " + k.inside.LengthHorizontal.ToString("0.0") + " cells away was pushed (" + nearAt + " -> " + At(near) + ")");
+                    t.Check(far.Position == farAt, k.name + ": the raider " + k.outside.LengthHorizontal.ToString("0.0") + " cells away was not");
+                    near.Destroy();
+                    far.Destroy();
+                }
+
+                GameComponent_Pain.Instance.ResetForTests();
+                s.cooldownUntil = 0;
+                echoes.charge = 100f;
+                var again = new Command_ShinraTensei(s);
+                GameComponent_TapHold.Press(again, KeyCode.None, 0f);
+                GameComponent_TapHold.Step(true, 1f);
+                yield return 30;
+                GameComponent_TapHold.Cancel();
+                t.Check(!s.active && Mathf.Abs(echoes.charge - 100f) < 0.01f && s.cooldownUntil <= Find.TickManager.TicksGame,
+                    "cancel while holding: stopped, no charge taken, no cooldown");
+                yield return 5;
+                t.Check(!new Command_ShinraTensei(s).Disabled, "and the button is ready again");
+            }
+            finally
+            {
+                GameComponent_TapHold.Cancel();
+                GameComponent_TapHold.testDriven = false;
+                Finish(record);
+            }
         }
 
         // ---- Banshō Ten'in -----------------------------------------------------------------------------------------
@@ -314,7 +393,7 @@ namespace RimArt
             t.Check(BanshoProblem(host, raider) != null, "Banshō refuses the pinned pawn: " + BanshoProblem(host, raider));
 
             IntVec3 pinnedAt = raider.Position, otherAt = other.Position;
-            var push = new ShinraPawnState { pawn = host, map = t.map, centre = host.Position.ToVector3Shifted(), charge = new ShinraCharge { ticks = ShinraCharge.FullTicks } };
+            var push = new ShinraPawnState { pawn = host, map = t.map, centre = host.Position.ToVector3Shifted(), charge = new ShinraCharge { ticks = ShinraTuning.Get.FullChargeTicks, size = ShinraTuning.Get.sizes.Count - 1 } };
             ShinraCombat.Push(push);
             t.Check(raider.Position == pinnedAt, "a Shinra push does not move the pinned raider (" + At(raider) + ")");
             t.Check(other.Position != otherAt, "it does move the other one (" + otherAt + " -> " + At(other) + ")");

@@ -194,7 +194,7 @@ Rules:
 | Echo | Trials | Cost | Abilities | Upkeep | Casts |
 |---|---|---|---|---|---|
 | Accelerator | Intellectual 12, Damage taken 300 | Abrasive | vector manipulation, reflex surge, vector shove | 12 | surge 10, shove 8 |
-| Pain (`AG_Echo_Pain.xml`) | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei, Banshō Ten'in, Black Receiver, Chibaku Tensei (replaced Gravity Well 2026-09-28) | 15 | Shinra 5 (paid at release), Banshō 3, Black Receiver 0 (its three charges), Chibaku Tensei 30 |
+| Pain (`AG_Echo_Pain.xml`) | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei, Banshō Ten'in, Black Receiver, Chibaku Tensei (replaced Gravity Well 2026-09-28) | 15 | Shinra 5 charged / 3 quick (tap/hold button, 2026-09-29), Banshō 3, Black Receiver 0 (its three charges), Chibaku Tensei 30 |
 | Inumaki | Social 10, not Psychopath | Kind | stop, drop, crush, come, run, explode | 8 | 0 each (the throat is his cost) |
 | Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | Judgement Cut, Yamato Dash, Summoned Swords, Judgement Cut End (the def grants none until the kit is ported) | 10 | Judgement Cut 3, Yamato Dash 2, Summoned Swords 10, Judgement Cut End 0 (Style is its limit) |
 | Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40 |
@@ -402,7 +402,10 @@ headers:
 - Shinra Tensei and Gravity Well check that Pain has the ability (his Echo grants it while
   manifested), not the eye. Shinra's button never calls Ability.Activate, so it pays its 5 when the
   wave is released; a cancelled charge costs nothing, and a release the pool cannot pay cancels the
-  charge.
+  charge. Since 2026-09-29 the button is one tap/hold button (`Command_TapHold`): a tap is the
+  quick version (2.5 cells, 3 charge, paid when it starts, 8 s cooldown); a hold let go before 1 s
+  is the quick version too; 1 s gives 3 cells (16 s), 2 s gives 4 cells (20 s), both paying 5.
+  Numbers in `ShinraTuning` on AG_ShinraTensei.
 - The Shinra / Banshō gap (5 s, XML `devaGapSeconds` on Banshō) starts at Shinra's burst and at
   Banshō's grip. Banshō is also disabled while Shinra charges, and Shinra while a Banshō or Black
   Receiver cast holds Pain.

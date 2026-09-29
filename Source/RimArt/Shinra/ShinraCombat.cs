@@ -16,17 +16,17 @@ namespace RimArt
                 // A pawn pinned by Black Receiver or carried by Banshō Ten'in is not moved; a pinned one's rods flare.
                 if (PainKit.Unmovable(pawn))
                 {
-                    if ((pawn.Position.ToVector3Shifted() - s.centre).Yto0().magnitude <= ShinraCharge.Radius) PainRods.Of(pawn)?.Flared();
+                    if ((pawn.Position.ToVector3Shifted() - s.centre).Yto0().magnitude <= s.Radius) PainRods.Of(pawn)?.Flared();
                     continue;
                 }
                 Vector3 start = pawn.Position.ToVector3Shifted();
                 Vector3 direction = start - s.centre;
                 direction.y = 0f;
-                if (direction.magnitude > ShinraCharge.Radius
+                if (direction.magnitude > s.Radius
                     || !GenSight.LineOfSight(s.centre.ToIntVec3(), pawn.Position, s.map)) continue;
                 if (direction.sqrMagnitude < 0.001f) direction = Vector3.forward;
                 direction.Normalize();
-                float distance = s.charge.Push / Mathf.Max(1f, pawn.BodySize);
+                float distance = s.PushCells / Mathf.Max(1f, pawn.BodySize);
                 IntVec3 last = pawn.Position;
                 bool collision = false;
                 // Sub-cell steps visit every crossed cell, including diagonal corner blockers.
@@ -43,15 +43,15 @@ namespace RimArt
                 pawn.pather?.StopDead();
                 pawn.Position = last;
                 pawn.Notify_Teleported();
-                pawn.stances.stagger.StaggerFor(30);
-                if (collision) pawn.TakeDamage(new DamageInfo(DamageDefOf.Blunt, s.charge.CollisionDamage,
+                pawn.stances.stagger.StaggerFor(Mathf.RoundToInt(ShinraTuning.Get.staggerSeconds * 60f));
+                if (collision) pawn.TakeDamage(new DamageInfo(DamageDefOf.Blunt, s.WallDamage,
                     0f, -1f, s.pawn));
             }
         }
 
         private static bool Reflectable(Thing round, RoundBackend backend, ShinraPawnState s) =>
-            backend.DirectFlight(round) && backend.DirectDamage(round) <= s.charge.ProjectileLimit
-            && (round.def.projectile.explosionRadius <= 0f || s.charge.Power >= 1f);
+            backend.DirectFlight(round) && backend.DirectDamage(round) <= s.ShotLimit
+            && (round.def.projectile.explosionRadius <= 0f || s.TurnsExplosives);
 
         public static bool Threatened(ShinraPawnState s, float seconds)
         {
@@ -94,7 +94,7 @@ namespace RimArt
                     || !Reflectable(round, backend, s)) continue;
                 Vector3 offset = from - s.centre;
                 if (Vector3.Dot(offset, heading) >= 0f) continue; // Outgoing fire passes.
-                if (!Rounds.SegmentEntersCircle(from, to, s.centre, ShinraCharge.Radius, out var entry)
+                if (!Rounds.SegmentEntersCircle(from, to, s.centre, s.Radius, out var entry)
                     || !GenSight.LineOfSight(s.centre.ToIntVec3(), entry.ToIntVec3(), s.map)) continue;
                 float distance = (entry - from).sqrMagnitude;
                 if (distance < nearest) { chosen = s; hit = entry; nearest = distance; }

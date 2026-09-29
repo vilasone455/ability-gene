@@ -366,10 +366,10 @@ static class ApiChecks
 
         int curves = 0, clips = 0;
         // The throw is directional and needs one clip per facing; Shinra Tensei and Gravity Well
-        // are centred and have exactly one each, so a second clip for either reappearing here is
-        // a mistake worth catching.
+        // are centred and face south only (Shinra's tap and charge clips, and the old push kept
+        // for saves), so a per-facing clip for either reappearing here is a mistake worth catching.
         foreach (string clip in ThrowAnimation.Grenade.All.Concat(ThrowAnimation.Kunai.All).Concat(ThrowAnimation.Scatter.All).Concat(ThrowAnimation.Fuma.All)
-                     .Select(name => name.Replace("AG_", "RimArt_")).Append("RimArt_ShinraPush").Append("RimArt_GravityChannel")
+                     .Select(name => name.Replace("AG_", "RimArt_")).Append("RimArt_ShinraPush").Append("RimArt_ShinraTap").Append("RimArt_ShinraCharge").Append("RimArt_GravityChannel")
                      .Append("RimArt_Clap").Append("RimArt_ClapTwice")
                      .Concat(ThrowAnimation.MarkFlick.All.Concat(ThrowAnimation.MarkCatch.All).Select(name => name.Replace("AG_", "RimArt_"))))
         {
@@ -619,7 +619,7 @@ static class ApiChecks
         // lookup is guarded by the main hand's null check and would throw inside their code.
         // Shinra Tensei, Gravity Well and the two claps are empty-handed gestures; every other
         // clip here throws something and must carry the held part the C# releases.
-        bool centred = clip.StartsWith("RimArt_ShinraPush") || clip == "RimArt_GravityChannel" || clip.StartsWith("RimArt_Clap");
+        bool centred = clip.StartsWith("RimArt_Shinra") || clip == "RimArt_GravityChannel" || clip.StartsWith("RimArt_Clap");
         foreach (string required in centred ? new[] { "BodyA", "HeadA", "HandA", "HandB" }
                                             : new[] { "BodyA", "HandA", "HandB", "Grenade" })
         {

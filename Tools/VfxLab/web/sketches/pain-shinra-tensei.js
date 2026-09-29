@@ -35,6 +35,10 @@
 //   is 2 cells after up to 1 s of charge, 3 cells after 1-2 s, 4 cells after 2-3 s (full keeps
 //   today's 4). Cooldown 12 / 16 / 20 s by the size reached (the user, 2026-09-29: "use 12/16/20
 //   cooldowns"; follows Mobile; placeholders for XML, not drawn). The one click's 8 s stays.
+//   Replaced the same day by one tap/hold button (the user agreed): a hold let go before 1 s gives the
+//   one-click version (2.5 cells, 8 s), 1 s gives 3 cells (16 s), 2 s gives 4 cells (20 s); the 2-cell
+//   size is gone. In game since then (ShinraTuning, Command_TapHold); this sketch still draws 2 cells
+//   for a charge under 1 s.
 //   Pain floats 0.45 cells up inside the dome and lands after it (picture only).
 //
 // Order, with the default sliders (full charge, "pawns round Pain"):

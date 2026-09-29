@@ -104,14 +104,16 @@ namespace RimArt
 
         // ---- Free clips ----
 
-        public bool TryStart(Pawn pawn, out Handle handle)
+        public bool TryStart(Pawn pawn, out Handle handle) => TryStart(pawn, 0, out handle);
+
+        public bool TryStart(Pawn pawn, int clip, out Handle handle)
         {
-            handle = TryStart(pawn, 0, null, out object renderer) ? new Handle(this, renderer) : null;
+            handle = TryStart(pawn, clip, null, out object renderer) ? new Handle(this, renderer) : null;
             return handle != null;
         }
 
-        /// <summary>After a load: takes back the pawn's running clip if it is one of ours, or starts a new one.</summary>
-        public bool TryRestore(Pawn pawn, out Handle handle)
+        /// <summary>After a load: takes back the pawn's running clip if it is one of ours, or starts clip number <paramref name="clip"/>.</summary>
+        public bool TryRestore(Pawn pawn, out Handle handle, int clip = 0)
         {
             Resolve();
             handle = null;
@@ -127,7 +129,7 @@ namespace RimArt
                 Api.timeScale.SetValue(existing, 0f);
                 return true;
             }
-            return TryStart(pawn, out handle);
+            return TryStart(pawn, clip, out handle);
         }
 
         public sealed class Handle

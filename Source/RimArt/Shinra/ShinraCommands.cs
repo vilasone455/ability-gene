@@ -20,55 +20,64 @@ namespace RimArt
             Pawn pawn = ability.pawn;
             // Hediff abilities are separate instances. Only the first source supplies controls.
             if (pawn.abilities.AllAbilitiesForReading.FirstOrDefault(a => a.def == ability.def) != ability) yield break;
-            var s = GameComponent_Shinra.Instance.For(pawn);
-            var action = new Command_Action
-            {
-                groupable = false,
-                defaultLabel = s.active ? "Release" : "Charge Shinra Tensei",
-                defaultDesc = "Hold a repulsion charge for up to 3 seconds of power. Release commits a 20-second cooldown and takes the Echo's charge. Allies can be hit. Shinra Tensei and Banshō Ten'in share a 5-second gap, and both wait while a Chibaku Tensei ball holds.",
-                icon = ContentFinder<Texture2D>.Get("RimArt/Shinra/IconPush"),
-                action = () =>
-                {
-                    if (s.active) s.Release();
-                    else if (GameComponent_Shinra.HasEye(pawn) && ShinraCastAnimation.Clip.TryStart(pawn, out var animation))
-                        GameComponent_Shinra.Instance.Begin(pawn, animation);
-                }
-            };
-            if (s.active && s.charge.releasing) action.Disable("Recovering from release.");
-            else if (!s.active && s.cooldownUntil > Find.TickManager.TicksGame)
-                action.Disable($"Cooldown: {(s.cooldownUntil - Find.TickManager.TicksGame) / 60f:0.0}s");
-            else if (!s.active && PainKit.DevaGapLeft(pawn) > 0f)
-                action.Disable($"Shinra Tensei and Banshō Ten'in share a gap: {PainKit.DevaGapLeft(pawn):0.0} s left.");
-            else if (!s.active && PainKit.ChibakuLock(pawn) is string held)
-                action.Disable(held);
-            else if (!s.active && GameComponent_Pain.Instance?.Holding(pawn, Find.TickManager.TicksGame) != null)
-                action.Disable("Pain is in the middle of a technique.");
-            else if (!s.active && PainKit.CannotPay(pawn, PainDefOf.AG_ShinraTensei) is string noCharge)
-                action.Disable(noCharge);
-            else if (!s.active && (!GameComponent_Shinra.HasEye(pawn) || !ShinraCastAnimation.Clip.CanAnimate(pawn)))
-                action.Disable("Requires Pain's hero form, a standing humanlike caster, and Melee Animation.");
-            yield return action;
-            if (s.active && !s.charge.releasing)
-                yield return new Command_Action { groupable = false, defaultLabel = $"Cancel ({s.charge.Power:P0})",
-                    defaultDesc = "Discard the charge without cooldown.", action = s.Cancel };
-            yield return new Command_Toggle { groupable = false, defaultLabel = "Auto-release", defaultDesc =
-                "At full charge, release when a reflectable incoming shot is about to threaten the caster. Close shots may arrive before the burst.",
-                isActive = () => s.autoRelease, toggleAction = () => s.autoRelease = !s.autoRelease };
+            yield return new Command_ShinraTensei(GameComponent_Shinra.Instance.For(pawn));
         }
     }
 
-    public sealed class Gizmo_ShinraCharge : Gizmo
+    /// <summary>
+    /// Shinra Tensei's one button (<see cref="Command_TapHold"/>): a tap is the quick version; a hold charges, the
+    /// arms rising at each size, and letting go releases the size reached. The bar fills over the full charge with a
+    /// line at each size. Auto-release is on the right-click menu.
+    /// </summary>
+    public sealed class Command_ShinraTensei : Command_TapHold
     {
-        private readonly ShinraPawnState state;
-        public Gizmo_ShinraCharge(ShinraPawnState state) { this.state = state; }
-        public override float GetWidth(float maxWidth) => 150f;
-        public override GizmoResult GizmoOnGUI(Vector2 topLeft, float maxWidth, GizmoRenderParms parms)
+        private readonly ShinraPawnState s;
+
+        public Command_ShinraTensei(ShinraPawnState state)
         {
-            Rect rect = new Rect(topLeft.x, topLeft.y, GetWidth(maxWidth), 75f);
-            Widgets.DrawWindowBackground(rect);
-            Widgets.Label(rect.ContractedBy(6f), $"Shinra charge: {state.charge.Power:P0}");
-            Widgets.FillableBar(new Rect(rect.x + 6f, rect.y + 40f, rect.width - 12f, 22f), state.charge.Power);
-            return new GizmoResult(GizmoState.Clear);
+            s = state;
+            ShinraTuning t = ShinraTuning.Get;
+            holder = state;
+            icon = ContentFinder<Texture2D>.Get("RimArt/Shinra/IconPush");
+            bool holding = s.active && !s.charge.releasing;
+            defaultLabel = holding ? "Let go: " + SizeLabel(s.charge.SizeNow) : "Shinra Tensei";
+            defaultDesc = Describe(t, s.pawn);
+            // A tap on a hold that is already charging (one restored from a save) lets it go.
+            tap = () => { if (s.active) s.Release(); else GameComponent_Shinra.Instance.Start(s.pawn, true); };
+            charge = () => { if (!s.active) GameComponent_Shinra.Instance.Start(s.pawn, false); };
+            release = s.Release;
+            cancel = () => { if (s.active && !s.charge.releasing) s.Cancel(); };
+            fill = () => s.active && !s.charge.tap && !s.charge.releasing ? Mathf.Max(0.02f, s.charge.Power) : 0f;
+            marks = t.sizes.Select(size => size.chargeSeconds / t.fullChargeSeconds).Where(m => m < 1f).ToArray();
+            if (!holding && s.CannotStart() is string why) Disable(why);
+        }
+
+        private static string SizeLabel(int size) =>
+            (size < 0 ? ShinraTuning.Get.tapRadius : ShinraTuning.Get.sizes[size].radius).ToString("0.#") + " cells";
+
+        private static string Describe(ShinraTuning t, Pawn pawn)
+        {
+            float echo = PainKit.Cost(pawn, PainDefOf.AG_ShinraTensei);
+            string sizes = string.Join(", ", t.sizes.Select(z =>
+                $"after {z.chargeSeconds:0.#} s {z.radius:0.#} cells ({z.cooldownSeconds:0} s cooldown)"));
+            return $"Tap: a {t.tapRadius:0.#}-cell push. Pushes {t.tapPush:0.#} cells, {t.tapWallDamage:0} blunt against a wall, "
+                + $"turns shots up to {t.tapShotLimit:0} damage for {t.tapDeflectSeconds:0.##} s. {t.tapCooldownSeconds:0} s cooldown"
+                + (echo > 0f ? $", {t.tapEchoCost:0} Echo charge." : ".")
+                + $"\n\nHold: charge for up to {t.fullChargeSeconds:0.#} s and let go: {sizes}. Let go sooner for the tap version. "
+                + $"Pushes {t.pushLow:0.#}-{t.pushHigh:0.#} cells and {t.wallDamageLow:0}-{t.wallDamageHigh:0} blunt against a wall by charge, "
+                + $"turns shots up to {t.shotLimitLow:0}-{t.shotLimitHigh:0} damage for {t.deflectSeconds:0.##} s, explosives only at full charge"
+                + (echo > 0f ? $". {echo:0} Echo charge." : ".")
+                + "\n\nRight-click or Esc while holding cancels, as does a move order. Pushed pawns (bigger bodies less far) include allies. "
+                + "Shinra Tensei and Banshō Ten'in share a 5-second gap, and both wait while a Chibaku Tensei ball holds.";
+        }
+
+        public override IEnumerable<FloatMenuOption> RightClickFloatMenuOptions
+        {
+            get
+            {
+                yield return new FloatMenuOption((s.autoRelease ? "Turn off" : "Turn on") + " auto-release: at full charge, "
+                    + "let go when a shot it can turn is about to hit", () => s.autoRelease = !s.autoRelease);
+            }
         }
     }
 

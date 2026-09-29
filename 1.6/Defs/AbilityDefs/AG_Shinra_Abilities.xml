@@ -3,7 +3,7 @@
   <AbilityDef>
     <defName>AG_ShinraTensei</defName>
     <label>Shinra Tensei</label>
-    <description>Charge for up to three seconds of power, then release a four-cell repulsion wave. Pushes allies and enemies, deals blunt damage only on collision, and briefly redirects incoming direct fire. Release commits a twenty-second cooldown.</description>
+    <description>A repulsion wave around the caster. Tap for a quick 2.5-cell push; hold to charge and let go for a 3-cell wave after one second or a 4-cell wave after two. Pushes allies and enemies, deals blunt damage only when a pawn hits a wall, and briefly turns incoming direct fire.</description>
     <iconPath>RimArt/Shinra/IconPush</iconPath>
     <category>AG_Genetic</category>
     <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
@@ -21,5 +21,42 @@
       <targetParams><canTargetSelf>true</canTargetSelf></targetParams>
     </verbProperties>
     <comps><li Class="RimArt.CompProperties_AbilityShinraTensei" /></comps>
+    <modExtensions>
+      <!-- One button: a tap is the quick version, a hold charges. A hold let go before the first size's
+           chargeSeconds is the quick version too. The charged release pays the Echo's cast cost
+           (AG_Echo_Pain, 5); the quick version pays tapEchoCost. Placeholders agreed 2026-09-29. -->
+      <li Class="RimArt.ShinraTuning">
+        <tapRadius>2.5</tapRadius>
+        <tapPush>4</tapPush>
+        <tapWallDamage>10</tapWallDamage>
+        <tapShotLimit>20</tapShotLimit>
+        <tapDeflectSeconds>0.45</tapDeflectSeconds>
+        <tapCooldownSeconds>8</tapCooldownSeconds>
+        <tapEchoCost>3</tapEchoCost>
+        <!-- Charged: push, wall damage and the shot limit go from low to high by power
+             (seconds charged / fullChargeSeconds); explosives are turned only at full power. -->
+        <fullChargeSeconds>3</fullChargeSeconds>
+        <pushLow>3</pushLow>
+        <pushHigh>7</pushHigh>
+        <wallDamageLow>8</wallDamageLow>
+        <wallDamageHigh>20</wallDamageHigh>
+        <shotLimitLow>12</shotLimitLow>
+        <shotLimitHigh>60</shotLimitHigh>
+        <deflectSeconds>0.75</deflectSeconds>
+        <sizes>
+          <li>
+            <chargeSeconds>1</chargeSeconds>
+            <radius>3</radius>
+            <cooldownSeconds>16</cooldownSeconds>
+          </li>
+          <li>
+            <chargeSeconds>2</chargeSeconds>
+            <radius>4</radius>
+            <cooldownSeconds>20</cooldownSeconds>
+          </li>
+        </sizes>
+        <staggerSeconds>0.5</staggerSeconds>
+      </li>
+    </modExtensions>
   </AbilityDef>
 </Defs>
