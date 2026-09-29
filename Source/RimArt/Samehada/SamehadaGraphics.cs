@@ -287,11 +287,12 @@ namespace RimArt
         {
             if (stacks <= 0) return;
             float k = Mathf.Min(1f, stacks / (float)MaxCharges);
-            Sprite(new Vector2(pos.x, pos.y + 0.05f), 0.9f, 0.55f, Fade(Wisp, 0.18f * k * alpha), soft, VfxDraw.Floor + 0.02f);
+            // On the body, fitted to a real pawn in game (PawnFit).
+            Sprite(new Vector2(pos.x, pos.y + PawnFit.Y(0.05f)), 0.9f * PawnFit.Body, 0.55f * PawnFit.Body, Fade(Wisp, 0.18f * k * alpha), soft, VfxDraw.Floor + 0.02f);
             for (int i = 0; i < stacks; i++)
             {
                 float u = Frac(s * 0.35f + i / (float)stacks), h = u * 0.8f;
-                Circle(new Vector2(pos.x, pos.y + 0.1f + h * Lift), 0.28f + u * 0.05f, 0.35f * (1f - u) * alpha, (pawnAltitude ?? PawnLayer) + 0.03f + i * 0.0001f, Wisp);
+                Circle(new Vector2(pos.x, pos.y + PawnFit.Y(0.1f + h * Lift)), (0.28f + u * 0.05f) * PawnFit.Body, 0.35f * (1f - u) * alpha, (pawnAltitude ?? PawnLayer) + 0.03f + i * 0.0001f, Wisp);
             }
         }
 
@@ -300,11 +301,12 @@ namespace RimArt
         {
             if (age < 0f || age >= life) return;
             float u = age / life;
-            Sprite(new Vector2(pos.x, pos.y + 0.3f + u * 0.3f), 0.7f, 0.9f, Fade(Heal, 0.32f * Mathf.Max(0f, Mathf.Sin(u * Mathf.PI)) * alpha), glow, Y + 0.07f);
+            // Up the body, fitted to a real pawn in game (PawnFit).
+            Sprite(new Vector2(pos.x, pos.y + PawnFit.Y(0.3f + u * 0.3f)), 0.7f * PawnFit.Body, 0.9f * PawnFit.Body, Fade(Heal, 0.32f * Mathf.Max(0f, Mathf.Sin(u * Mathf.PI)) * alpha), glow, Y + 0.07f);
             for (int i = 0; i < 5; i++)
             {
-                float v = Frac(u * 1.3f + Rand(i + 900) * 0.6f), x = pos.x + (Rand(i + 910) - 0.5f) * 0.5f;
-                Sprite(new Vector2(x, pos.y + 0.1f + v * 0.9f), 0.1f, 0.1f, Fade(Heal, (1f - v) * 0.8f * alpha), glow, Y + 0.071f + i * 0.00002f);
+                float v = Frac(u * 1.3f + Rand(i + 900) * 0.6f), x = pos.x + (Rand(i + 910) - 0.5f) * 0.5f * PawnFit.Body;
+                Sprite(new Vector2(x, pos.y + PawnFit.Y(0.1f + v * 0.9f)), 0.1f, 0.1f, Fade(Heal, (1f - v) * 0.8f * alpha), glow, Y + 0.071f + i * 0.00002f);
             }
         }
 
@@ -333,7 +335,7 @@ namespace RimArt
             bool above = Mathf.Sin(aimDeg * Mathf.Deg2Rad) < -0.5f;
             for (int i = 0; i < most; i++)
             {
-                var c = new Vector2(pos.x - 0.07f * (most - 1) + i * 0.14f, pos.y + (above ? 1.15f : -0.55f));
+                var c = new Vector2(pos.x - 0.07f * (most - 1) + i * 0.14f, pos.y + PawnFit.Y(above ? 1.15f : -0.55f));
                 float fill = Mathf.Clamp01(charges - i);
                 DrawMesh(scale, c, VfxDraw.Floor + 0.05f, 0.11f, 0.12f, 0f, Fade(ScaleEdge, 0.7f * alpha), solid);
                 DrawMesh(scale, c, VfxDraw.Floor + 0.051f, 0.085f, 0.095f, 0f, Fade(Color.Lerp(Hide, ScaleLit, fill), alpha * (0.5f + 0.5f * fill)), solid);

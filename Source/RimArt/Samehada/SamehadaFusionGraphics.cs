@@ -56,17 +56,17 @@ namespace RimArt
             if (s >= T.Merge0 && s < T.Fused0 + 0.2f)
             {
                 float u = Mathf.Clamp01((s - T.Merge0) / (T.Merge + 0.2f));
-                Sprite(new Vector2(holder.x + 0.2f * sign, holder.y + 0.35f), 0.7f, 0.6f, Fade(FleshLit, 0.5f * Mathf.Max(0f, Mathf.Sin(u * Mathf.PI))), glow, Y + 0.06f);
+                Sprite(PawnFit.At(holder, 0.2f * sign, 0.35f), 0.7f, 0.6f, Fade(FleshLit, 0.5f * Mathf.Max(0f, Mathf.Sin(u * Mathf.PI))), glow, Y + 0.06f);
                 for (int i = 0; i < 6; i++)
                 {
-                    float a = i / 6f * Mathf.PI * 2f + s * 4f, r = 0.35f * (1f - u);
-                    Sprite(new Vector2(holder.x + Mathf.Cos(a) * r, holder.y + 0.3f + Mathf.Sin(a) * r * 0.6f), 0.1f, 0.1f, Fade(Chakra, 0.8f * (1f - u)), glow, Y + 0.061f + i * 0.00002f);
+                    float a = i / 6f * Mathf.PI * 2f + s * 4f, r = 0.35f * (1f - u) * PawnFit.Body;
+                    Sprite(new Vector2(holder.x + Mathf.Cos(a) * r, holder.y + PawnFit.Y(0.3f) + Mathf.Sin(a) * r * 0.6f), 0.1f, 0.1f, Fade(Chakra, 0.8f * (1f - u)), glow, Y + 0.061f + i * 0.00002f);
                 }
             }
             if (s >= revert0 && s < revert0 + T.Revert + 0.2f)
             {
                 float u = Mathf.Clamp01((s - revert0) / (T.Revert + 0.2f));
-                Sprite(new Vector2(holder.x + 0.2f * sign, holder.y + 0.35f), 0.6f, 0.5f, Fade(FleshLit, 0.4f * Mathf.Max(0f, Mathf.Sin(u * Mathf.PI))), glow, Y + 0.06f);
+                Sprite(PawnFit.At(holder, 0.2f * sign, 0.35f), 0.6f, 0.5f, Fade(FleshLit, 0.4f * Mathf.Max(0f, Mathf.Sin(u * Mathf.PI))), glow, Y + 0.06f);
             }
         }
 
