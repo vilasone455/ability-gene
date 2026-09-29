@@ -11,14 +11,14 @@ extension instead of hiding one behind the torso.
 """
 import json
 import math
-import re
 from pathlib import Path
 
 from make_throw_anim import part, transform_curves, curve, bounds, HAND_SCALE
 
 ROOT = Path(__file__).resolve().parent
-TIMING = (ROOT / "Source/RimArt/Shinra/ShinraVfxTiming.cs").read_text()
-PUSH = float(re.search(r"ChargeEnd = ([\d.]+)f", TIMING).group(1))
+# The push clip's burst, the old picture's ChargeEnd; the charge clip's release segments burst PUSH - HOLD in
+# (ShinraCharge.ReleaseBurst).
+PUSH = 0.38
 LENGTH = 1.35
 NAME = "RimArt_ShinraPush"
 SOUTH = 2

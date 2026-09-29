@@ -1,5 +1,11 @@
 # Shinra Tensei: charged repulsion
 
+> **Out of date (2026-09-29).** Shinra Tensei is now granted by Pain's Echo (the eye grants nothing), has one
+> tap/hold button (`Command_TapHold`: tap 2.5 cells, hold 1 s for 3, 2 s for 4; numbers in `ShinraTuning` on
+> AG_ShinraTensei, see docs/hero-echo.md), plays the RimArt_ShinraTap / RimArt_ShinraCharge clips, and draws the
+> v2 dome (`ShinraDome.cs`, `ShinraDomeGraphics.cs`, ported from Tools/VfxLab/web/sketches/pain-shinra-tensei.js).
+> The glass dome, its timing class and Tests/ShinraVfx described below were removed with that port.
+
 Install a **repulsion eye** (3,200 silver) to gain Shinra Tensei. It uses the vanilla archotech
 implant trade pool and standard quest rewards, has no crafting recipe, and replaces one eye
 at normal sight efficiency. Installation requires Medicine 8, the device, and two medicine.
@@ -145,7 +151,6 @@ Automated checks:
 
 ```sh
 dotnet build Source/RimArt/RimArt.csproj -c Release
-dotnet run --project Tests/ShinraVfx
 dotnet run --project Tests/ShinraCombat
 dotnet run --project Tests/VectorEdit
 dotnet run --project Tests/OriginBlade/ApiChecks

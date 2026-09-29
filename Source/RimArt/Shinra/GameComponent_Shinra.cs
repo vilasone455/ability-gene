@@ -18,8 +18,6 @@ namespace RimArt
         public List<Thing> redirected = new List<Thing>();
         public CastClips.Handle animation;
         public bool restore;
-        /// <summary>The picture after the clip has ended: its own clock (picture seconds, -1 none) and size.</summary>
-        public float tail = -1f, tailRadius;
         /// <summary>False in a save made before the tap/hold button; such a cast is dropped on load.</summary>
         internal bool tapHold = true;
         public bool Protected => defenseUntil > Find.TickManager.TicksGame;
@@ -44,8 +42,8 @@ namespace RimArt
                 return echo <= 0f ? 0f : charge.Quick ? T.tapEchoCost : echo;
             }
         }
-        /// <summary>Seconds on the picture's clock (ShinraVfxTiming), whose burst is at ChargeEnd.</summary>
-        public float PictureTime => charge.time - charge.BurstAt + ShinraVfxTiming.ChargeEnd;
+        /// <summary>What the picture draws for this cast (<see cref="ShinraDomeGraphics"/>).</summary>
+        public ShinraDomeCast DomeCast => new ShinraDomeCast { radius = Radius, power = charge.Power, tap = charge.tap, quick = charge.Quick };
 
         public void ExposeData()
         {
@@ -56,8 +54,6 @@ namespace RimArt
             Scribe_Values.Look(ref autoRelease, "autoRelease");
             Scribe_Values.Look(ref cooldownUntil, "cooldownUntil");
             Scribe_Values.Look(ref defenseUntil, "defenseUntil");
-            Scribe_Values.Look(ref tail, "tail", -1f);
-            Scribe_Values.Look(ref tailRadius, "tailRadius");
             Scribe_Values.Look(ref charge.tap, "tap");
             Scribe_Values.Look(ref charge.size, "size", -1);
             Scribe_Values.Look(ref charge.ticks, "chargeTicks");
@@ -100,7 +96,6 @@ namespace RimArt
             active = false;
             if (pawn?.CurJobDef?.defName == "AM_InAnimation")
                 pawn.jobs.EndCurrentJob(JobCondition.InterruptForced);
-            if (charge.burst && tail < 0f) { tail = PictureTime; tailRadius = Radius; }
         }
 
         /// <summary>Why a new Shinra Tensei cannot start now, or null.</summary>
@@ -155,7 +150,6 @@ namespace RimArt
             s.animation = animation;
             s.active = true;
             s.restore = false;
-            s.tail = -1f;
             s.tapHold = true;
             s.redirected.Clear();
             if (tap)
@@ -182,11 +176,6 @@ namespace RimArt
             }
             foreach (var s in states)
             {
-                if (s.tail >= 0f)
-                {
-                    s.tail += 1f / 60f;
-                    if (s.tail >= ShinraVfxTiming.Duration) s.tail = -1f;
-                }
                 if (!s.Protected) s.redirected.Clear();
                 if (!s.active) continue;
                 if (s.pawn == null || !s.pawn.Spawned || s.pawn.Map != s.map || s.pawn.Dead
@@ -220,6 +209,7 @@ namespace RimArt
                     PainKit.StartDevaGap(s.pawn);
                     ShinraCombat.Push(s);
                     ShinraSound.Release(s.map, s.centre.ToIntVec3());
+                    s.map.GetComponent<MapComponent_ShinraCasts>()?.Burst(s);
                 }
                 if (s.charge.time >= s.charge.End) s.Cancel();
             }

@@ -160,8 +160,9 @@ static void Check(Recording recording, List<string> failures)
     if (label == "Shinra Tensei: VFX preview")
     {
         Frame release = recording.frames.FirstOrDefault(f => f.events.Any(e => e.def == "AG_ShinraRelease"));
-        if (release == null || Math.Abs(release.clock.Value - ShinraVfxTiming.ChargeEnd) > 1.01f / Fps)
-            failures.Add($"{label}: expected AG_ShinraRelease at ChargeEnd {ShinraVfxTiming.ChargeEnd:0.000}s, got {release?.clock?.ToString("0.000") ?? "none"}");
+        float burst = ShinraDome.PreviewBurst(3f);
+        if (release == null || Math.Abs(release.clock.Value - burst) > 1.01f / Fps)
+            failures.Add($"{label}: expected AG_ShinraRelease at the burst {burst:0.000}s, got {release?.clock?.ToString("0.000") ?? "none"}");
     }
 }
 
