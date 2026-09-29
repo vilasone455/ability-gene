@@ -11,11 +11,14 @@
 //   charged version, 3 Echo charge. Picture: a short press under the feet in the last 0.12 s, the
 //   dome pops out in the same 0.16 s, lines pour for 0.2 s, no white-out, no floating, a flash at the
 //   palm, a 2.5-cell crater. A raider in melee next to Pain shows what it is for.
-//   Charged: the rule below, clip RimArt_ShinraCharge. Its hold is no longer a still frame: the hands
-//   press in and rise to the chin, the body sinks into a crouch and trembles harder with the charge,
-//   and jerks at each size step; a ball of pale-blue light gathers between the palms and a chakra glow
-//   stands round the body (Storm 4, szCziDnCD-o 1:05), both growing and flaring at the steps. In the
-//   clip the hold is a 1 s segment standing for power 0 to 1 (see make_shinra_anim.py).
+//   Charged: the rule below, clip RimArt_ShinraCharge. Its hold is no longer a still frame: the arms
+//   open and step up with the size (down and out = 2 cells, a level T from 1 s = 3 cells, a Y above
+//   the shoulders from 2 s, up on the toes = 4 cells; the anime's Konoha charge and Mobile's spread
+//   arms), trembling harder with the charge; each open palm holds a pale-blue light and a chakra glow
+//   stands round the body (Storm 4, szCziDnCD-o 1:05), growing and flaring at the steps. A first try
+//   pressed the hands together under the chin; the user: "holding position is look too cute", and no
+//   source does it. In the clip the hold is a 1 s segment standing for power 0 to 1, with one release
+//   segment per size (see make_shinra_anim.py).
 //
 // The rule, as the game has it today (ShinraCharge.cs, ShinraCombat.cs):
 //   Charge up to 3 s (180 ticks, counted from the start of the gesture); power c = held / 3. Release
@@ -142,11 +145,30 @@ const Lead = .2, Hold = .27, Burst = .38, ClipEnd = 1.35;
 const HandKeys = [0, .14, .27, .38, .48, .76, 1.05, 1.35];
 const HandX = [.22, .15, .11, .34, .38, .36, .27, .22], HandZ = [.06, .12, .15, .16, .16, .15, .11, .06];
 const BodyKeyZ = [0, -.02, -.045, .03, .04, .025, .01, 0];
-// While charging, the hold is no longer a still frame (RimArt_ShinraCharge): with the charge the hands
-// press in closer (0.11 -> 0.07 from the middle) and rise toward the chin (+0.09), the body sinks into
-// a crouch (-0.06) and trembles harder (0.3 -> 2 hundredths of a cell); at each size step the hands
-// jerk in and the body dips for 0.25 s. All of it blends out over the 0.11 s release.
-const HoldIn = .04, HoldUp = .09, HoldSink = .06, TrembleLow = .003, TrembleHigh = .02, StepPulse = .25;
+// The charged hold (RimArt_ShinraCharge), from the anime's Konoha charge (arms down and out, then a
+// level T, then a raised Y, An1ZrG0mbf4 0:15-0:30) and Mobile's spread arms: the hands open from the
+// sides to down-and-out while the gesture starts, and the arms step up with the size, so the pose
+// shows the size: down and out, slowly rising (2 cells), a level T from 1 s (3 cells), a Y above the
+// shoulders from 2 s, up on the toes (4 cells). Each step takes 0.15 s with a small overshoot; a
+// tremble grows with the charge (0.3 -> 2 hundredths of a cell). The release snaps from the pose to
+// the T push in 0.11 s. Hand offsets are (out from the middle, up from the chest).
+const OpenKeys = [0, .14, .27], OpenX = [.22, .26, .30], OpenZ = [.06, .04, .03], OpenBody = [0, -.01, -.02];
+const HoldTiers = [
+  { span: [.30, .33], lift: [.03, .09], body: -.02 },   // 2 cells: down and out
+  { span: [.40, .40], lift: [.16, .19], body: -.02 },   // 3 cells: level T
+  { span: [.36, .37], lift: [.28, .31], body: .03 },    // 4 cells: Y, up on the toes
+];
+const StepT = .15, StepOver = .03, TrembleLow = .003, TrembleHigh = .02, StepPulse = .25;
+function holdPose(held) {
+  const i = Math.min(HoldTiers.length - 1, Math.floor(held / SizeStep)), T = HoldTiers[i], w = clamp((held - i * SizeStep) / SizeStep);
+  let span = lerp(T.span[0], T.span[1], w), lift = lerp(T.lift[0], T.lift[1], w), body = T.body;
+  const since = held - i * SizeStep;
+  if (i > 0 && since < StepT + .1) {
+    const P = HoldTiers[i - 1], k = smooth(since / StepT), over = StepOver * Math.sin(Math.PI * clamp(since / (StepT + .1)));
+    span = lerp(P.span[1], span, k); lift = lerp(P.lift[1], lift, k) + over; body = lerp(P.body, body, k);
+  }
+  return { span, lift, body };
+}
 // RimArt_ShinraTap (0.7 s, facing south): the west hand sweeps from the hip out and up to shoulder
 // height, palm open, and bursts at 0.22 s with a small lean back; the east hand stays low.
 const TapBurst = .22, TapEnd = .7;
@@ -459,24 +481,26 @@ function chargePicture(o, s, cNow, col, sun) {
 
 // ---- Pain with the clip's hands -------------------------------------------------------------------
 // The pose at clip time ct: body offset and the two hands, relative to Pain's cell. For the charged
-// version the hold is alive: see HoldIn and the lines under it.
+// version the hold is alive: see HoldTiers and holdPose().
 function poseAt(ct, s, t, p) {
   if (t.tap) {
     return { bx: 0, bz: key(TapKeys, TapBodyZ, ct), glowAt: -1, aura: 0,
       hands: [{ x: -key(TapKeys, TapCastX, ct), z: key(TapKeys, TapCastZ, ct) }, { x: key(TapKeys, TapOtherX, ct), z: key(TapKeys, TapOtherZ, ct) }] };
   }
   let span = key(HandKeys, HandX, ct), lift = key(HandKeys, HandZ, ct), bz = key(HandKeys, BodyKeyZ, ct), bx = 0, hx = 0, hz = 0, glowK = 0, aura = 0;
-  if (ct >= Hold && s - Lead > 0) {
-    const held = Math.min(s - Lead, p.charge), c = clamp(held / FullCharge);
-    const k = ct <= Hold ? 1 : 1 - clamp((ct - Hold) / (Burst - Hold));          // blends out over the release
+  if (ct < Hold) { span = key(OpenKeys, OpenX, ct); lift = key(OpenKeys, OpenZ, ct); bz = key(OpenKeys, OpenBody, ct); }
+  else if (ct < Burst && s - Lead > 0) {
+    // Held (ct stays at Hold), then the release: from the hold pose to the burst's T push.
+    const held = Math.min(s - Lead, p.charge), c = clamp(held / FullCharge), H = holdPose(held);
+    const r = smooth((ct - Hold) / (Burst - Hold)), k = 1 - r;
+    span = lerp(H.span, HandX[3], r); lift = lerp(H.lift, HandZ[3], r); bz = lerp(H.body, BodyKeyZ[3], r);
     const step = Math.floor(Math.min(held, (Sizes.length - 1) * SizeStep) / SizeStep) * SizeStep, since = held - step;
     const pulse = step > 0 && since < StepPulse ? 1 - since / StepPulse : 0, A = lerp(TrembleLow, TrembleHigh, c) * k;
-    span -= (HoldIn * c + .03 * pulse) * k; lift += HoldUp * c * k; bz -= (HoldSink * c + .02 * pulse) * k;
     hx = Math.sin(s * 44) * A; hz = Math.sin(s * 57 + 1) * A * .7; bx = Math.sin(s * 39 + 2) * A * .4;
-    glowK = (.25 + .45 * c + .5 * pulse) * k;
+    glowK = (.3 + .5 * c + .5 * pulse) * k;
     aura = (c + .6 * pulse) * k;
   }
-  return { bx, bz, glowAt: glowK, aura, hands: [{ x: -span + hx, z: lift + hz }, { x: span - hx, z: lift - hz }] };
+  return { bx, bz, glowAt: glowK, aura, palms: glowK > 0, hands: [{ x: -span + hx, z: lift + hz }, { x: span - hx, z: lift - hz }] };
 }
 function painGesture(o, pose, glowAmount, sun, strength, lift = 0, palmFlash = 0) {
   const g = { x: o.x + pose.bx, z: o.z + pose.bz + lift * Lift };
@@ -495,12 +519,17 @@ function painGesture(o, pose, glowAmount, sun, strength, lift = 0, palmFlash = 0
   if (pose.aura > 0) {
     sprite({ x: g.x, z: g.z + .3 }, lerp(.7, 1.5, Math.min(1, pose.aura)), lerp(.9, 1.8, Math.min(1, pose.aura)), SkyBlue.withAlpha(.3 * pose.aura), glow, pawnLayer - .005);
   }
-  const glowK = Math.max(glowAmount, pose.glowAt), mid = { x: (pose.hands[0].x + pose.hands[1].x) / 2, z: (pose.hands[0].z + pose.hands[1].z) / 2 };
-  if (glowK > 0) {
-    const size = lerp(.45, .95, Math.min(1, pose.aura || 0));
-    sprite({ x: o.x + mid.x, z: o.z + BodyZ + mid.z + lift * Lift }, size, size * .85, PaleBlue.withAlpha(.5 * glowK), glow, pawnLayer + .012);
-    sprite({ x: o.x + mid.x, z: o.z + BodyZ + mid.z + lift * Lift }, size * .35, size * .3, White.withAlpha(.7 * glowK), glow, pawnLayer + .0125);
+  // While charging each open palm holds a pale-blue light that grows with the charge; at the burst
+  // (charged version) a flash between the arms.
+  if (pose.palms) {
+    const size = lerp(.3, .6, Math.min(1, pose.aura || 0));
+    pose.hands.forEach((h, i) => {
+      const at = { x: o.x + h.x, z: o.z + BodyZ + h.z + lift * Lift };
+      sprite(at, size, size * .85, PaleBlue.withAlpha(.55 * pose.glowAt), glow, pawnLayer + .012 + i * .0002);
+      sprite(at, size * .35, size * .3, White.withAlpha(.6 * pose.glowAt), glow, pawnLayer + .0125 + i * .0002);
+    });
   }
+  if (glowAmount > 0) sprite({ x: o.x, z: o.z + BodyZ + .16 + pose.bz }, .7, .6, PaleBlue.withAlpha(.35 * glowAmount), glow, pawnLayer + .012);
 }
 
 // ---- pushed pawns ---------------------------------------------------------------------------------

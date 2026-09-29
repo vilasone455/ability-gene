@@ -10,6 +10,7 @@ south for the length of the clip, which is the one facing that shows both arms a
 extension instead of hiding one behind the torso.
 """
 import json
+import math
 import re
 from pathlib import Path
 
@@ -98,44 +99,72 @@ TAP = [
     (TAP_LENGTH, 0.22, 0.06, 0.15, 0.22, 0.06, 0.000),
 ]
 
-# RimArt_ShinraCharge, the charged version with a hold that moves. The clip has a charge segment
-# from HOLD to HOLD + CHARGE_SPAN that stands for power 0 to 1: the controller seeks to
-# HOLD + power * CHARGE_SPAN while the pawn charges, then plays on from RELEASE when it lets go (a
-# release before full power jumps to RELEASE; the pose there is at most 0.04 cells from any hold
-# pose, and the hands move fast in the next 0.11 s). Through the segment the hands press in closer
-# and rise toward the chin, the body sinks into a crouch and a tremble grows; at a third and two
-# thirds (the 1 s and 2 s size steps) the hands jerk in and the body dips.
+# RimArt_ShinraCharge, the charged version with a hold that moves. From the anime's Konoha charge
+# (arms down and out, then a level T, then a raised Y) and Naruto Mobile's spread arms: the hands open
+# from the sides to down-and-out while the gesture starts, then the charge segment from HOLD to
+# HOLD + CHARGE_SPAN stands for power 0 to 1 and the arms step up with the size: down and out, slowly
+# rising (2 cells), a level T from a third (3 cells), a Y above the shoulders from two thirds, up on
+# the toes (4 cells), each step with a small overshoot and a tremble that grows with the power. The
+# controller seeks to HOLD + power * CHARGE_SPAN while the pawn charges. On release it jumps to the
+# release segment of the size reached (RELEASES[i]) and plays it to its end: each one snaps from that
+# size's pose to the T push, bursts after PUSH - HOLD, and recovers. One segment per size keeps the
+# jump small (at most 0.06 cells, the slow rise inside a size).
 CHARGE_NAME = "RimArt_ShinraCharge"
 HOLD = 0.27
 CHARGE_SPAN = 1.00
-RELEASE = HOLD + CHARGE_SPAN
-CHARGE_BURST = RELEASE + (PUSH - HOLD)
-CHARGE_LENGTH = LENGTH + CHARGE_SPAN
-HOLD_IN, HOLD_UP, HOLD_SINK = 0.04, 0.09, 0.06
+OPEN = [(0.00, 0.22, 0.06, 0.15, 0.000), (0.14, 0.26, 0.04, 0.40, -0.010), (HOLD, 0.30, 0.03, 0.70, -0.020)]
+# Per size: (half-span, lift, splay, body) at the start and at the end of its third of the charge.
+TIERS = [
+    ((0.30, 0.03, 0.70, -0.020), (0.33, 0.09, 0.80, -0.020)),   # 2 cells: down and out
+    ((0.40, 0.16, 0.95, -0.020), (0.40, 0.19, 0.95, -0.020)),   # 3 cells: level T
+    ((0.36, 0.28, 1.00,  0.030), (0.37, 0.31, 1.00,  0.030)),   # 4 cells: Y, up on the toes
+]
+STEP = 0.15 / 3          # a step takes 0.15 s of a 3 s charge
+STEP_OVER = 0.03
 TREMBLE_LOW, TREMBLE_HIGH = 0.003, 0.02
-STEP_KEY = 0.05
+KEY = 0.025
+SEGMENT = LENGTH - HOLD  # release + burst + recovery, as in RimArt_ShinraPush
+GAP = 0.02               # between segments, never played
+RELEASES = [round(HOLD + CHARGE_SPAN + GAP + i * (SEGMENT + GAP), 4) for i in range(len(TIERS))]
+CHARGE_LENGTH = round(RELEASES[-1] + SEGMENT, 4)
+
+
+def lerp_pose(a, b, w):
+    return tuple(x + (y - x) * w for x, y in zip(a, b))
+
+
+def hold_pose(u):
+    """(half-span, lift, splay, body) at power u."""
+    n = len(TIERS)
+    i = min(n - 1, int(u * n))
+    w = min(1.0, u * n - i)
+    pose = lerp_pose(TIERS[i][0], TIERS[i][1], w)
+    since = w / n
+    if i > 0 and since < STEP * 1.7:
+        k = min(1.0, since / STEP)
+        k = k * k * (3 - 2 * k)
+        over = STEP_OVER * math.sin(math.pi * min(1.0, since / (STEP * 1.7)))
+        pose = lerp_pose(TIERS[i - 1][1], pose, k)
+        pose = (pose[0], pose[1] + over, pose[2], pose[3])
+    return pose
 
 
 def charge_poses():
     """(seconds, half-span, lift, splay, bob, body x) for RimArt_ShinraCharge."""
-    poses = [(t, span, lift, splay, bob, 0.0) for t, span, lift, splay, bob in POSES if t <= HOLD]
-    steps = round(CHARGE_SPAN / STEP_KEY)
+    poses = [(t, span, lift, splay, bob, 0.0) for t, span, lift, splay, bob in OPEN]
+    steps = round(CHARGE_SPAN / KEY)
     for k in range(1, steps + 1):
-        t = HOLD + k * STEP_KEY
         u = k / steps
-        pulse = 0.0
-        for step in (1 / 3, 2 / 3):
-            d = u - step
-            if -1e-9 <= d < 0.09:
-                pulse = max(pulse, 1 - d / 0.09)
-        amp = (TREMBLE_LOW + (TREMBLE_HIGH - TREMBLE_LOW) * u) * (1 if k < steps else 0)
+        span, lift, splay, bob = hold_pose(u)
+        amp = TREMBLE_LOW + (TREMBLE_HIGH - TREMBLE_LOW) * u
         shake = amp if k % 2 else -amp
-        span = POSES[2][1] - HOLD_IN * u - 0.03 * pulse + shake
-        lift = POSES[2][2] + HOLD_UP * u + 0.7 * shake
-        bob = POSES[2][4] - HOLD_SINK * u - 0.02 * pulse
-        poses.append((round(t, 4), round(span, 4), round(lift, 4), 0.0, round(bob, 4), round(-0.4 * shake, 4)))
-    poses += [(round(t + CHARGE_SPAN, 4), span, lift, splay, bob, 0.0)
-              for t, span, lift, splay, bob in POSES if t > HOLD]
+        poses.append((round(HOLD + k * KEY, 4), round(span + shake, 4), round(lift + 0.7 * shake, 4),
+                      splay, round(bob, 4), round(-0.4 * shake, 4)))
+    after = [(t - HOLD, span, lift, splay, bob) for t, span, lift, splay, bob in POSES if t > HOLD]
+    for start, tier in zip(RELEASES, TIERS):
+        span, lift, splay, bob = tier[1]
+        poses.append((start, span, lift, splay, bob, 0.0))
+        poses += [(round(start + dt, 4), sp, li, sl, bo, 0.0) for dt, sp, li, sl, bo in after]
     return poses
 
 
@@ -192,7 +221,8 @@ def main():
     for clip_name, clip in ((TAP_NAME, build_tap()), (CHARGE_NAME, build_charge())):
         (out / f"{clip_name}.json").write_text(json.dumps(clip, indent=2) + "\n")
         print(f"Wrote {clip_name}.json ({clip['Length']:.2f}s)")
-    print(f"Tap bursts at {TAP_BURST}s. Charge holds {HOLD}-{RELEASE:.2f}s (power 0-1), bursts at {CHARGE_BURST:.2f}s.")
+    print(f"Tap bursts at {TAP_BURST}s. Charge holds {HOLD}-{HOLD + CHARGE_SPAN:.2f}s (power 0-1); "
+          f"release segments at {RELEASES} (2, 3, 4 cells), each bursting {PUSH - HOLD:.2f}s in.")
 
 
 if __name__ == "__main__":
