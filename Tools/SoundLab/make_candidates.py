@@ -19,6 +19,11 @@ clips = {}
 for c in idx["clips"]:
     folders.setdefault(c["folder"].lower(), set()).add(c["source"])
     clips.setdefault((c["folder"] + "/" + c["clip"]).lower(), set()).add(c["source"])
+# The mod's own sounds (make_sounds.py), as the game finds them: a path under Sounds/.
+for f in (WT.parent.parent / "Sounds").rglob("*.wav"):
+    rel = f.relative_to(WT.parent.parent / "Sounds").with_suffix("").as_posix()
+    folders.setdefault(rel.rsplit("/", 1)[0].lower(), set()).add("RimArt")
+    clips.setdefault(rel.lower(), set()).add("RimArt")
 bad = []
 
 
@@ -514,6 +519,75 @@ ability("AG_AnchorMark",
           O("Stone impact (joy)", L("Interact/Joy/StoneImpact", 1.0, 50)),
           O("Swish + stone punch", L("Misc/Swish1", 1.2, 35), L("Impact/PunchHitBuilding/Stone", 1.0, 40, 0.3)),
           O("Chunk rock drop, light", L("Interact/Haul/Drop/ChunkRock", 1.4, 40))))
+
+# Synthesized options (make_sounds.py, Sounds/AG/): added after the game-clip options ---------------
+def add(defName, moment, *options):
+    next(m for m in A[defName]["moments"] if m["id"] == moment)["options"].extend(options)
+
+
+add("AG_GokuSolarFlare", "flash",
+    O("Synth: solar flare", L("AG/SolarFlare", 1.0, 50)),
+    O("Synth: solar flare + EMP crackle", L("AG/SolarFlare", 1.0, 45), L(ZAP, 1.3, 30)))
+add("AG_GokuInstantTransmission", "leave", O("Synth: shun", L("AG/Shun", 1.0, 45)))
+add("AG_GokuInstantTransmission", "arrive", O("Synth: shun, lower + punch miss", L("AG/Shun", 0.85, 45), L("Impact/PunchMiss", 0.8, 30)))
+add("AG_GokuKamehameha", "charge",
+    O("Synth: whine rising over the hum", L("AG/KiChargeStart", 1.0, 50), L("AG/KiCharge", 1.0, 30, loop=True)),
+    O("Synth: hum only", L("AG/KiCharge", 1.0, 45, loop=True)))
+add("AG_GokuKamehameha", "fire",
+    O("Synth: beam roar + whoomp", L("AG/KiBeam", 1.0, 50, loop=True), L("AG/KiBeamFire", 1.0, 50)),
+    O("Synth roar + orbital beam", L("AG/KiBeam", 1.0, 45, loop=True), L("Misc/OrbitalBeam", 1.1, 35, loop=True)))
+add("AG_GokuSpiritBomb", "gather",
+    O("Synth: airy chord", L("AG/SpiritGather", 1.0, 45, loop=True)),
+    O("Synth: chord + wind", L("AG/SpiritGather", 1.0, 40, loop=True), L("Misc/Tornado", 1.3, 15, loop=True)))
+for d in ("AG_ThunderGodJump", "AG_ThunderGodChain"):
+    add(d, "jump", O("Synth: shun, fast", L("AG/Shun", 1.15, 45)))
+add("AG_GuidingThunder", "redirect", O("Synth: shun, high", L("AG/Shun", 1.4, 35)))
+add("AG_Rasengan", "form",
+    O("Synth: spin (loop)", L("AG/Rasengan", 1.0, 45, loop=True)),
+    O("Synth: wind-up + spin", L("AG/RasenganForm", 1.0, 50), L("AG/Rasengan", 1.0, 30, loop=True)))
+add("AG_Rasengan", "hit",
+    O("Synth: grind + thump", L("AG/RasenganHit", 1.0, 55)),
+    O("Synth grind + thump cannon", L("AG/RasenganHit", 1.0, 50), L("Impact/ThumpCannon", 1.1, 40)))
+add("AG_SasukeAmenotejikara", "swap",
+    O("Synth: ting", L("AG/Ting", 1.0, 40)),
+    O("Synth: shun + ting", L("AG/Shun", 1.2, 35), L("AG/Ting", 1.0, 35)))
+add("AG_SasukeRaikoKusari", "link",
+    O("Synth: Chidori crack", L("AG/ChidoriCrack", 1.0, 50)),
+    O("Synth crack + thunder", L("AG/ChidoriCrack", 1.0, 45), L("Ambience/Thunder/lightning", 1.2, 30)))
+add("AG_SasukeRaikoKusari", "loop", O("Synth: Chidori chirping", L("AG/Chidori", 1.0, 40, loop=True)))
+add("AG_SasukeAmaterasu", "ignite", O("Synth: black flame catching", L("AG/BlackFlameIgnite", 1.0, 50)))
+add("AG_SasukeAmaterasu", "burn",
+    O("Synth: black flame", L("AG/BlackFlame", 1.0, 35, loop=True)),
+    O("Synth: black flame, lower", L("AG/BlackFlame", 0.8, 35, loop=True)))
+add("AG_PainBanshoTenin", "pull", O("Synth: sucked in, low", L("AG/KamuiIn", 0.7, 40)))
+add("AG_DispersalMurder", "depart",
+    O("Synth: wings", L("AG/CrowFlaps", 1.0, 50)),
+    O("Synth wings + crow calls (Odyssey)", L("AG/CrowFlaps", 1.0, 45), L("Pawn/Animal/Crow/Call", 1.0, 35)))
+add("AG_ItachiSusanoo", "loop", O("Synth: low hum", L("AG/SusanooHum", 1.0, 35, loop=True)))
+add("AG_VergilJudgementCut", "cuts",
+    O("Synth: space slices", L("AG/SpaceSliceCluster", 1.0, 50)),
+    O("Synth slices + shield break", L("AG/SpaceSliceCluster", 1.0, 45), L("Misc/EnergyShield/Broken", 1.0, 30)))
+add("AG_VergilYamatoDash", "sheath", O("Synth: click + one slice", L(CLICK, 0.9, 45), L("AG/SpaceSlice", 1.1, 40, 0.05)))
+add("AG_VergilSummonedSwords", "summon", O("Synth: glass arpeggio", L("AG/SwordSummon", 1.0, 45)))
+add("AG_VergilSummonedSwords", "fire", O("Synth: sword flies", L("AG/SwordFly", 1.0, 45)))
+add("AG_VergilJudgementCutEnd", "vanish",
+    O("Synth: slice storm", L("AG/Shun", 0.8, 35), L("AG/SpaceSliceCluster", 1.0, 45, 0.1), L("AG/SpaceSliceCluster", 1.15, 40, 0.6)))
+add("AG_VergilJudgementCutEnd", "end",
+    O("Synth: click, then slices + whoomp", L(CLICK, 0.8, 50), L("AG/SpaceSliceCluster", 0.9, 50, 0.3), L("AG/KiBeamFire", 1.2, 35, 0.3)))
+add("AG_ShadowImitation", "run", O("Synth: shadow run", L("AG/ShadowRun", 1.0, 50)))
+add("AG_ShadowSeam", "sew", O("Synth: shadow run + roping", L("AG/ShadowRun", 1.1, 45), L("Pawn/Human/Roping", 1.0, 35, 0.4)))
+add("AG_ShadowGrasp", "drag", O("Synth: shadow hold, faster", L("AG/ShadowHold", 1.3, 40, loop=True)))
+add("AG_ShadowDouble", "go", O("Synth: shadow run, low", L("AG/ShadowRun", 0.8, 50)))
+add("AG_ShadowNeckBind", "climb", O("Synth: shadow run, slow", L("AG/ShadowRun", 0.7, 45)))
+add("AG_ShadowNeckBind", "choke", O("Synth: shadow hold", L("AG/ShadowHold", 1.0, 40, loop=True)))
+add("AG_KamuiPhase", "on", O("Synth: swirl out, soft", L("AG/KamuiOut", 1.1, 30)))
+add("AG_KamuiWarp", "in", O("Synth: sucked into the eye", L("AG/KamuiIn", 1.0, 50)))
+add("AG_KamuiWarp", "out", O("Synth: out of the swirl", L("AG/KamuiOut", 1.0, 50)))
+add("AG_KamuiStore", "absorb", O("Synth: sucked in, fast", L("AG/KamuiIn", 1.4, 45)))
+add("AG_KamuiStore", "release", O("Synth: out, fast", L("AG/KamuiOut", 1.3, 45)))
+add("AG_AnchorBlackFlash", "hit",
+    O("Synth: black flash", L("AG/BlackFlash", 1.0, 55)),
+    O("Synth + bionic punch", L("AG/BlackFlash", 1.0, 50), L("Impact/BionicPunch_Hit", 0.8, 40)))
 
 # How long each looping moment lasts in game (s); the code ends the sustainer then, and the lab
 # cuts the preview at the same time with a short fade.

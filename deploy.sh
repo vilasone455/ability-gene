@@ -39,7 +39,7 @@ mkdir -p "$DEST"
 # build is fine, the validator is fine, and the feature is simply absent for the one person
 # testing the combination. Adding a folder should not also mean remembering to edit this line.
 cd "$SRC"
-for item in About 1.6 Textures Languages Animations loadFolders.xml Patch_*; do
+for item in About 1.6 Textures Sounds Languages Animations loadFolders.xml Patch_*; do
   [ -e "$item" ] && cp -r "$item" "$DEST/"
 done
 echo "Deployed to: $DEST"

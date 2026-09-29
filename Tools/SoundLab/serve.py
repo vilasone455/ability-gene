@@ -24,9 +24,12 @@ PICKS = LAB / "picks.json"
 PORT = 8766
 sys.path.insert(0, str(ROOT))
 import rimworld_paths  # noqa: E402
+sys.path.insert(0, str(LAB))
+from extract import features  # noqa: E402
 
 AUDIO_EXT = {".ogg", ".wav", ".mp3"}
 _lock = threading.Lock()
+_features = {}  # (path, mtime) -> measured length, loudness and envelope of a .wav
 
 
 def _range(el, name, default):
@@ -124,10 +127,16 @@ def mod_clips():
         for f in sorted(base.rglob("*")):
             if f.suffix.lower() in AUDIO_EXT:
                 rel = f.relative_to(base).with_suffix("").as_posix()
-                out.append({
+                entry = {
                     "source": "RimArt", "folder": rel.rsplit("/", 1)[0] if "/" in rel else "",
                     "clip": f.stem, "url": "/" + f.relative_to(ROOT).as_posix(),
-                })
+                }
+                if f.suffix.lower() == ".wav":
+                    key = (str(f), f.stat().st_mtime)
+                    if key not in _features:
+                        _features[key] = features(f.read_bytes())
+                    entry.update({k: v for k, v in _features[key].items() if k != "channels"})
+                out.append(entry)
     return out
 
 

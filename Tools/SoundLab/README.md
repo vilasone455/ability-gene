@@ -23,7 +23,12 @@ extracts the same clips only so they can be heard; `Tools/SoundLab/clips/` is gi
 | Odyssey | 877 | only for players who own it: `MayRequire="Ludeon.RimWorld.Odyssey"` |
 
 Soundtrack songs are left out. Ideology and Anomaly are extracted too when they are installed.
-The mod's own files under `Sounds/` are listed as source RimArt.
+
+The mod's own files under `Sounds/` are listed as source RimArt. `make_sounds.py` (repository
+root) writes the synthesized ones into `Sounds/AG/<Name>/`: 26 sounds, 68 WAV files, 6 MB, for
+what the game's clips cannot give (Chidori chirping, Rasengan whir, ki charge and beam, a flock's
+wings, space slices, Kamui swirls, black flame). These ship with the mod, and `deploy.sh` copies
+`Sounds/`. A SoundDef names one with `<clipFolderPath>AG/Chidori</clipFolderPath>`.
 
 ## The page
 
@@ -48,7 +53,7 @@ options, not about absolute level.
 
 | File | Written by | Committed |
 |---|---|---|
-| `candidates.json` | Claude, per ability moment | yes |
+| `candidates.json` | `make_candidates.py`, per ability moment | yes |
 | `picks.json` | the page, when you press Pick | yes: SoundDefs are written from it |
 | `clips/` | `extract.py` | no |
 

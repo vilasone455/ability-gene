@@ -147,7 +147,7 @@ async function load() {
   ]);
   if (!cat) { $("#status").textContent = "serve.py is not running"; return; }
   const clips = (index ? index.clips : []).map((c) => ({ ...c, url: CLIP_ROOT + c.file.split("/").map(encodeURIComponent).join("/") }));
-  for (const m of cat.modClips) clips.push({ ...m, env: null });
+  for (const m of cat.modClips) clips.push({ env: null, ...m });
   state.clips = clips;
   state.byFolder = new Map();
   for (const c of clips) {
