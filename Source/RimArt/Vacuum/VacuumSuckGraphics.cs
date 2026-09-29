@@ -58,7 +58,7 @@ namespace RimArt
                 Present = present, Churn = churn, Swell = SwellFor(kg), Pulse = pulse, Blink = blink,
                 MouthOpen = 0.18f + 0.82f * suck * (1f - 0.6f * blink), Bulges = Bulges, BulgeCount = bulges, Slack = shot.Slack,
             };
-            Vector2 tipG = f.Place(caster, NozzleTip, 0f), tipS = f.Place(caster, NozzleTip, 0f, HandH);
+            Vector2 tipG = f.Place(caster, NozzleTip, 0f), tipS = f.Place(caster, NozzleTip, 0f, PawnFit.H(HandH));
             if (weapon)
             {
                 VacuumParts v = Weapon(f, caster, pose, strength);
@@ -84,7 +84,7 @@ namespace RimArt
                     for (int k = 0; k < 4; k++)
                     {
                         float vv = Mathf.Clamp01(u + (k == 0 ? -0.07f : k == 1 ? -0.035f : k == 2 ? 0f : 0.02f));
-                        float h = vv * HandH + Mathf.Sin(vv * Mathf.PI) * 0.12f;
+                        float h = vv * PawnFit.H(HandH) + Mathf.Sin(vv * Mathf.PI) * 0.12f;
                         Streak[k] = new Vector2(g0.x + (tipG.x - g0.x) * vv, g0.y + (tipG.y - g0.y) * vv + h * SixPathsHeight.Lift);
                     }
                     Trail(Streak, 4, 0.06f, Fade(Pale, alpha), Y - 0.05f + i * 0.0001f);
@@ -111,7 +111,7 @@ namespace RimArt
                         float vv = Mathf.Clamp01((s - start - k * 0.045f) / (flight * 0.8f));
                         if (vv <= 0f || vv >= 1f) continue;
                         float e = Mathf.Pow(vv, 1.7f), jx = (Rand(k + 200) - 0.5f) * 0.5f, jz = (Rand(k + 210) - 0.5f) * 0.4f;
-                        float h = e * HandH + Mathf.Sin(vv * Mathf.PI) * 0.25f;
+                        float h = e * PawnFit.H(HandH) + Mathf.Sin(vv * Mathf.PI) * 0.25f;
                         var q = new Vector2(g0.x + jx + (tipG.x - g0.x - jx) * e, g0.y + jz + (tipG.y - g0.y - jz) * e + h * SixPathsHeight.Lift);
                         Disc(q, Y - 0.04f + (i * 8 + k) * 0.00002f, 0.07f * (1f - 0.5f * vv), 0.09f * (1f - 0.5f * vv), Fade(thing.Colour, 1f));
                     }
@@ -133,7 +133,7 @@ namespace RimArt
                     fu = (s - start) / flight;
                     float e = Mathf.Pow(Mathf.Clamp01(fu), 1.7f);
                     g = new Vector2(g0.x + (tipG.x - g0.x) * e, g0.y + (tipG.y - g0.y) * e);
-                    hNow = thing.H + (HandH - thing.H) * e + Mathf.Max(0f, Mathf.Sin(fu * Mathf.PI)) * 0.3f;
+                    hNow = thing.H + (PawnFit.H(HandH) - thing.H) * e + Mathf.Max(0f, Mathf.Sin(fu * Mathf.PI)) * 0.3f;
                     scale = 1f - 0.8f * Mathf.Clamp01((fu - 0.55f) / 0.45f);
                     layer = Y - 0.03f;
                 }
