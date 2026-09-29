@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Satō's pieces (Source/RimArt/Sato/Kit/AjinAnchor.cs). Not items: nothing hauls, eats, butchers, sells or
+       burns them, and they have no value. The picture is drawn in code (AjinResetGraphics); the texture is a
+       blank. -->
+  <ThingDef Name="AG_AjinPieceBase" Abstract="True">
+    <thingClass>RimArt.AjinAnchor</thingClass>
+    <category>Ethereal</category>
+    <selectable>true</selectable>
+    <useHitPoints>false</useHitPoints>
+    <tickerType>Normal</tickerType>
+    <drawerType>RealtimeOnly</drawerType>
+    <altitudeLayer>Item</altitudeLayer>
+    <rotatable>false</rotatable>
+    <graphicData>
+      <texPath>RimArt/Sato/Blank</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <statBases>
+      <MarketValue>0</MarketValue>
+    </statBases>
+  </ThingDef>
+
+  <!-- A part Sever threw off. He can rise from it and summon the Black Ghost at it; it crumbles when it rots
+       (Sever's rotDays), when a third one is thrown, or when he rises at another anchor. -->
+  <ThingDef ParentName="AG_AjinPieceBase">
+    <defName>AG_AjinAnchor</defName>
+    <label>Ajin anchor</label>
+    <description>A part Satō cut off and threw. Black matter holds it together. When his body is destroyed he rises from his biggest piece, and the Black Ghost can be summoned at it.</description>
+  </ThingDef>
+
+  <!-- Where his body was destroyed and no anchor could take him: the Reset runs here and he rises on this spot. -->
+  <ThingDef ParentName="AG_AjinPieceBase">
+    <defName>AG_AjinRemains</defName>
+    <label>Ajin remains</label>
+    <description>What is left where Satō's body was destroyed. Black matter is building him again.</description>
+  </ThingDef>
+
+  <!-- A limb the Black Ghost tore off, lying where it was thrown. Only a picture; it is gone after a day. -->
+  <ThingDef>
+    <defName>AG_TornLimb</defName>
+    <label>torn limb</label>
+    <description>A limb the Black Ghost tore off.</description>
+    <thingClass>RimArt.TornLimb</thingClass>
+    <category>Ethereal</category>
+    <selectable>false</selectable>
+    <useHitPoints>false</useHitPoints>
+    <tickerType>Rare</tickerType>
+    <drawerType>RealtimeOnly</drawerType>
+    <altitudeLayer>Item</altitudeLayer>
+    <rotatable>false</rotatable>
+    <graphicData>
+      <texPath>RimArt/Sato/Blank</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+  </ThingDef>
+
+  <!-- The Black Ghost (Source/RimArt/Sato/Kit/BlackGhost.cs): a real pawn of Satō's faction whose look is drawn in
+       code (BlackGhostGraphics). It fights on its own round where it formed, takes orders from its buttons (go
+       here, attack, tear), never eats or sleeps, and dissolves when its time runs out, when it would die or be
+       downed, or when Satō reverts. It is deaf: Inumaki's words do not reach it. Damage taken, speed and claws
+       are balance. -->
+  <ThingDef ParentName="BasePawn">
+    <defName>AG_BlackGhost</defName>
+    <label>black ghost</label>
+    <description>Satō's IBM: a figure of black matter only an Ajin can call. It fights with claws and a snapping jaw, shrugs off half of every hit, and dissolves after its time is up.</description>
+    <statBases>
+      <MoveSpeed>5.2</MoveSpeed>
+      <MarketValue>0</MarketValue>
+      <IncomingDamageFactor>0.5</IncomingDamageFactor>
+      <ComfyTemperatureMin>-100</ComfyTemperatureMin>
+      <ComfyTemperatureMax>250</ComfyTemperatureMax>
+      <ToxicResistance>1</ToxicResistance>
+      <ToxicEnvironmentResistance>1</ToxicEnvironmentResistance>
+      <PsychicSensitivity>0</PsychicSensitivity>
+      <Flammability>0</Flammability>
+      <MeleeDodgeChance>0.15</MeleeDodgeChance>
+      <Wildness>0</Wildness>
+    </statBases>
+    <tools>
+      <li>
+        <label>left claw</label>
+        <labelNoLocation>claw</labelNoLocation>
+        <capacities>
+          <li>Scratch</li>
+        </capacities>
+        <power>16</power>
+        <cooldownTime>1.3</cooldownTime>
+        <linkedBodyPartsGroup>LeftHand</linkedBodyPartsGroup>
+      </li>
+      <li>
+        <label>right claw</label>
+        <labelNoLocation>claw</labelNoLocation>
+        <capacities>
+          <li>Scratch</li>
+        </capacities>
+        <power>16</power>
+        <cooldownTime>1.3</cooldownTime>
+        <linkedBodyPartsGroup>RightHand</linkedBodyPartsGroup>
+      </li>
+      <li>
+        <label>jaw</label>
+        <capacities>
+          <li>Bite</li>
+        </capacities>
+        <power>14</power>
+        <cooldownTime>1.8</cooldownTime>
+        <linkedBodyPartsGroup>Teeth</linkedBodyPartsGroup>
+        <chanceFactor>0.5</chanceFactor>
+      </li>
+    </tools>
+    <race>
+      <intelligence>Animal</intelligence>
+      <thinkTreeMain>AG_BlackGhost</thinkTreeMain>
+      <renderTree>Animal</renderTree>
+      <body>Human</body>
+      <baseBodySize>1.2</baseBodySize>
+      <baseHealthScale>1.3</baseHealthScale>
+      <foodType>None</foodType>
+      <needsRest>false</needsRest>
+      <hasGenders>false</hasGenders>
+      <trainability>None</trainability>
+      <petness>0</petness>
+      <manhunterOnDamageChance>0</manhunterOnDamageChance>
+      <manhunterOnTameFailChance>0</manhunterOnTameFailChance>
+      <canBecomeShambler>false</canBecomeShambler>
+      <lifeExpectancy>1</lifeExpectancy>
+      <lifeStageAges>
+        <li>
+          <def>AnimalAdult</def>
+          <minAge>0</minAge>
+        </li>
+      </lifeStageAges>
+      <soundMeleeHitPawn>Pawn_Melee_BigBash_HitPawn</soundMeleeHitPawn>
+      <soundMeleeHitBuilding>Pawn_Melee_BigBash_HitBuilding</soundMeleeHitBuilding>
+      <soundMeleeMiss>Pawn_Melee_BigBash_Miss</soundMeleeMiss>
+    </race>
+    <comps>
+      <!-- 1.3x the sketch: the sketch was drawn next to small stand-ins, real pawns are bigger. -->
+      <li Class="RimArt.CompProperties_BlackGhost">
+        <drawScale>1.3</drawScale>
+      </li>
+    </comps>
+  </ThingDef>
+
+  <PawnKindDef>
+    <defName>AG_BlackGhost</defName>
+    <label>black ghost</label>
+    <race>AG_BlackGhost</race>
+    <combatPower>100</combatPower>
+    <canArriveManhunter>false</canArriveManhunter>
+    <lifeStages>
+      <li>
+        <bodyGraphicData>
+          <texPath>RimArt/Sato/Blank</texPath>
+          <graphicClass>Graphic_Single</graphicClass>
+          <drawSize>1.6</drawSize>
+        </bodyGraphicData>
+        <dessicatedBodyGraphicData>
+          <texPath>RimArt/Sato/Blank</texPath>
+          <graphicClass>Graphic_Single</graphicClass>
+          <drawSize>1.6</drawSize>
+        </dessicatedBodyGraphicData>
+      </li>
+    </lifeStages>
+  </PawnKindDef>
+
+  <!-- The Black Ghost's mind: orders from its buttons come first (they are started as jobs directly), then it
+       attacks the nearest standing enemy near its guard spot, then it goes back to the spot and waits. -->
+  <ThinkTreeDef>
+    <defName>AG_BlackGhost</defName>
+    <thinkRoot Class="ThinkNode_Priority">
+      <subNodes>
+        <li Class="RimArt.JobGiver_BlackGhostFight" />
+        <li Class="RimArt.JobGiver_BlackGhostGuard" />
+        <li Class="JobGiver_IdleError" />
+      </subNodes>
+    </thinkRoot>
+  </ThinkTreeDef>
+
+</Defs>

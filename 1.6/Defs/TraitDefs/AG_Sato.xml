@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Ajin: Satō's Echo forces it on awakening and it stays for life, so the Reset passive works in and out of
+       hero form (docs/hero-echo.md "Satō"). Every Reset number is in the AjinExtension below; the code in
+       Source/RimArt/Sato/Kit holds only the rules. Not rolled at random. -->
+  <TraitDef>
+    <defName>AG_Ajin</defName>
+    <commonality>0</commonality>
+    <commonalityFemale>0</commonalityFemale>
+    <allowOnHostileSpawn>false</allowOnHostileSpawn>
+    <canBeSuppressed>false</canBeSuppressed>
+    <degreeDatas>
+      <li>
+        <label>Ajin</label>
+        <description>This person cannot die. A killing blow, or a damaging explosion, only puts them into a Reset: they lie still while the body rebuilds, then stand up whole.\n\nManifested as Satō with enough charge in the pool, the Reset takes 20 seconds and pays charge by the piece he rises from: the body or a severed leg 20, an arm 25, a hand 40, a finger or an ear 60. When the body is destroyed (an explosion, or more than half its health lost while it lies there) he rises at his biggest severed piece, naked, and his gear stays where the body was. Otherwise the Reset takes a day and happens where he fell.\n\nA Reset heals injuries, missing limbs and organs, disease, toxic buildup, heatstroke and hypothermia, drug highs and mental breaks. It keeps bionics, addictions, genes, hunger, rest and memories. Organs removed by surgery crumble to dust.</description>
+        <degree>0</degree>
+      </li>
+    </degreeDatas>
+    <modExtensions>
+      <li Class="RimArt.AjinExtension">
+        <!-- Manifested and paid: seconds until he rises at his biggest piece. -->
+        <resetSeconds>20</resetSeconds>
+        <!-- Not manifested, or the pool cannot pay: the slow Reset where he fell, in ticks (60000 = 1 day). -->
+        <slowResetTicks>60000</slowResetTicks>
+        <!-- Share of the body's total part health that, lost while he lies in the Reset, destroys the body. -->
+        <destroyedDamageShare>0.5</destroyedDamageShare>
+        <!-- Damage that counts as an explosion: he resets at once and the body is destroyed. Friendly fire counts. -->
+        <explosionDamage>
+          <li>Bomb</li>
+          <li>BombSuper</li>
+          <li>Thump</li>
+        </explosionDamage>
+        <!-- Pieces he can rise from: size decides which is biggest, cost is the charge the rise takes. -->
+        <pieces>
+          <li><piece>Body</piece><size>100</size><cost>20</cost></li>
+          <li><piece>Leg</piece><size>14</size><cost>20</cost></li>
+          <li><piece>Arm</piece><size>12</size><cost>25</cost></li>
+          <li><piece>Hand</piece><size>2</size><cost>40</cost></li>
+          <li><piece>Finger</piece><size>1</size><cost>60</cost></li>
+          <li><piece>Ear</piece><size>1</size><cost>60</cost></li>
+        </pieces>
+        <!-- Removed by every Reset, on top of injuries, missing natural parts, infections, chronic
+             illnesses, drug highs and mental states. -->
+        <clearHediffs>
+          <li>BloodLoss</li>
+          <li>ToxicBuildup</li>
+          <li>Hypothermia</li>
+          <li>Heatstroke</li>
+        </clearHediffs>
+      </li>
+    </modExtensions>
+  </TraitDef>
+
+</Defs>

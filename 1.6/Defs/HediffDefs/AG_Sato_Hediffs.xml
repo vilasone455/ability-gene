@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Reset in progress (Source/RimArt/Sato/Kit/Hediff_AjinReset.cs). It keeps him from dying while it
+       lasts and holds consciousness at 10 %, so he lies downed like a dead man. The times and costs are on the
+       Ajin trait's AjinExtension; the hediff only carries them. -->
+  <HediffDef>
+    <defName>AG_AjinReset</defName>
+    <label>reset</label>
+    <description>The body is rebuilding itself. When the Reset ends he stands up whole.</description>
+    <hediffClass>RimArt.Hediff_AjinReset</hediffClass>
+    <defaultLabelColor>(0.55, 0.55, 0.6)</defaultLabelColor>
+    <isBad>false</isBad>
+    <preventsDeath>true</preventsDeath>
+    <everCurableByItem>false</everCurableByItem>
+    <stages>
+      <li>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <setMax>0.1</setMax>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <!-- The Game: the enemy Satō marked. His shots hit it harder; a kill while it lasts refunds charge. The
+       numbers are on the ability (AG_Sato_Abilities.xml); this only lasts and shows. -->
+  <HediffDef>
+    <defName>AG_SatoGameMark</defName>
+    <label>the game</label>
+    <description>Marked by Satō. His shots hit harder while the mark lasts.</description>
+    <hediffClass>RimArt.Hediff_SatoGameMark</hediffClass>
+    <defaultLabelColor>(0.9, 0.35, 0.3)</defaultLabelColor>
+    <isBad>true</isBad>
+    <everCurableByItem>false</everCurableByItem>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <!-- Replaced by the ability's markSeconds when it is cast. -->
+        <disappearsAfterTicks>1800</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+  </HediffDef>
+
+</Defs>

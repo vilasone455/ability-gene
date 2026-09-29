@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Satō (docs/hero-echo.md "Satō"). In a file of its own so it merges cleanly next to the other heroes' ports.
+       The Ajin trait is his cost and his passive: forced on awakening and kept for life, it carries the Reset
+       (AG_Sato.xml), so he cannot die even out of hero form. Psychopath is vanilla. Sever and Headshot Reset
+       cost no charge; every Reset while manifested costs by the piece he rises from (the trait's numbers).
+       Every number is a placeholder. -->
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Sato</defName>
+    <label>Satō</label>
+    <description>Death is only a reset, and the war is a game he means to win.</description>
+    <order>110</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Shooting</skill>
+        <level>12</level>
+      </li>
+      <li Class="RimArt.Trial_Record">
+        <record>Kills</record>
+        <count>30</count>
+      </li>
+      <li Class="RimArt.Trial_Record">
+        <record>DamageTaken</record>
+        <count>500</count>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>AG_Ajin</trait>
+      </li>
+      <li>
+        <trait>Psychopath</trait>
+      </li>
+    </forcedTraits>
+    <abilities>
+      <li>AG_SatoSever</li>
+      <li>AG_SatoHeadshotReset</li>
+      <li>AG_SatoGrenadeReset</li>
+      <li>AG_SatoBlackGhost</li>
+      <li>AG_SatoTheGame</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Sato</manifestHediff>
+    <upkeepPerHour>10</upkeepPerHour>
+    <castCosts>
+      <li><ability>AG_SatoGrenadeReset</ability><cost>5</cost></li>
+      <li><ability>AG_SatoBlackGhost</ability><cost>10</cost></li>
+      <li><ability>AG_SatoTheGame</ability><cost>5</cost></li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.62, 0.62, 0.6)</hairColor>
+  </RimArt.EchoDef>
+
+</Defs>
