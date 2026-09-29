@@ -62,7 +62,7 @@ namespace RimArt
                 if (seconds < leave) continue;
                 float u = Mathf.Clamp01((seconds - leave) / T.Fly);
                 Vector3 place = T.Slots[k];
-                var slot = new Vector2(body.x + place.x, body.y + place.y);
+                Vector2 slot = PawnFit.At(body, place.x, place.y);
                 if (u < 1f)
                 {
                     float join = Smooth((u - 0.7f) / 0.3f);

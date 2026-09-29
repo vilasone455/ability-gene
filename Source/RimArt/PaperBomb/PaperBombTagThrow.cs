@@ -30,7 +30,7 @@ namespace RimArt
         public static float Duration(float fuse) => BurstAt(fuse) + Aftermath;
 
         public static float StuckHeight(TagThrowTarget target) =>
-            target == TagThrowTarget.Pawn ? PawnHeight : target == TagThrowTarget.Wall ? WallHeight : 0f;
+            target == TagThrowTarget.Pawn ? PawnFit.H(PawnHeight) : target == TagThrowTarget.Wall ? WallHeight : 0f;
 
         /// <summary>The preview's carrier: walks up to the target cell until the tag lands, then on toward its group.</summary>
         public static float ScriptCarrierAlong(float seconds)

@@ -109,7 +109,9 @@ namespace RimArt
         public static void SealFlash(Vector2 feet, float amount)
         {
             if (amount <= 0f) return;
-            Vector2 chest = new Vector2(feet.x, feet.y + 0.5f);
+            // The sketch names this the chest but draws it at +0.5, its stand-in's chin, which the fit would
+            // keep on a real pawn's face; in game (PawnFit) it goes to the real chest, the stand-in's +0.3 fitted.
+            Vector2 chest = new Vector2(feet.x, feet.y + (PawnFit.On ? PawnFit.Y(0.3f) : 0.5f));
             Color flare = new Color(1f, 0.96f, 0.72f);
             float size = 0.3f * amount;
             Sprite(chest, size * 0.9f, size * 0.9f, Fade(flare, amount), glow, Overhead + 0.06f);
