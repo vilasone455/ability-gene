@@ -22,3 +22,6 @@ Tests/BankShot/bin/
 Tests/BankShot/obj/
 Tests/Ubw/bin/
 Tests/Ubw/obj/
+
+# Sound lab: the game's clips, extracted by Tools/SoundLab/extract.py; never shipped
+Tools/SoundLab/clips/

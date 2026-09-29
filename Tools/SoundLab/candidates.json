@@ -1,0 +1,4239 @@
+{
+ "note": "Candidate sounds per ability moment, written by Claude from clip names, vanilla SoundDef use, length and brightness. Nothing here was listened to before it was written; pick by ear in the lab.",
+ "abilities": {
+  "AG_GokuSolarFlare": {
+   "note": "One flash, no build-up: the anime cue is a sharp bright burst. Plays once at the flash.",
+   "moments": [
+    {
+     "id": "flash",
+     "label": "Flash",
+     "when": "when the flash goes off",
+     "options": [
+      {
+       "label": "EMP crackle up high + shield break sparkle",
+       "layers": [
+        {
+         "folder": "Misc/EMPDisabled",
+         "pitch": 1.3,
+         "volume": 55
+        },
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 1.2,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Orbital targeter fire, bright",
+       "layers": [
+        {
+         "folder": "Weapon/OrbitalTargeter",
+         "pitch": 1.4,
+         "volume": 50
+        },
+        {
+         "folder": "Electricity/PowerOn/Small",
+         "pitch": 1.5,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Charge shot + glass",
+       "layers": [
+        {
+         "clip": "Weapon/ChargeShotA",
+         "pitch": 1.5,
+         "volume": 45
+        },
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 1.6,
+         "volume": 25,
+         "delay": 0.03
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Goku"
+  },
+  "AG_GokuInstantTransmission": {
+   "note": "Anime: a short 'shun'. Two moments: leaving (on the 0.5 s start) and arriving.",
+   "moments": [
+    {
+     "id": "leave",
+     "label": "Leave",
+     "when": "fingers to forehead, Goku vanishes",
+     "options": [
+      {
+       "label": "Skip entry, fast",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 1.6,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Swish, high",
+       "layers": [
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 1.8,
+         "volume": 55
+        },
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 1.4,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Mech jump prelaunch",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/LongJumpMechLauncher/PreLaunch",
+         "pitch": 1.3,
+         "volume": 40
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "arrive",
+     "label": "Arrive",
+     "when": "Goku and the passenger appear",
+     "options": [
+      {
+       "label": "Skip entry reversed feel: low + short",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 1.9,
+         "volume": 40
+        },
+        {
+         "folder": "Impact/PunchMiss",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Swish, high",
+       "layers": [
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 2.0,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Skip exit (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Exit",
+         "pitch": 1.5,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Goku"
+  },
+  "AG_GokuKamehameha": {
+   "note": "Three moments: the held charge (loops until Fire), the beam (1.2 s), and the hit where the beam ends.",
+   "moments": [
+    {
+     "id": "charge",
+     "label": "Charge (loop)",
+     "when": "channel 2.5 s, then hold until Fire",
+     "options": [
+      {
+       "label": "Psychic warmup + mech control hum",
+       "layers": [
+        {
+         "clip": "Item/Psychic_Artifact_Warmup_A01",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Pawn/Mechanitor/ControlTaking",
+         "pitch": 1.2,
+         "volume": 30,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Bestow warmup rising",
+       "layers": [
+        {
+         "clip": "Misc/Bestow_Warmup",
+         "pitch": 1.0,
+         "volume": 45
+        },
+        {
+         "folder": "Buildings/BurningPowerCell/Loop",
+         "pitch": 1.4,
+         "volume": 20,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Antigrav loop, pitched up (Odyssey)",
+       "layers": [
+        {
+         "clip": "Gravship/Gravship_Antigrav_Loop",
+         "pitch": 1.6,
+         "volume": 40,
+         "loop": true
+        }
+       ]
+      }
+     ],
+     "duration": 3.5
+    },
+    {
+     "id": "fire",
+     "label": "Beam",
+     "when": "Fire: the beam runs 30 cells for 1.2 s",
+     "options": [
+      {
+       "label": "Orbital beam",
+       "layers": [
+        {
+         "folder": "Misc/OrbitalBeam",
+         "pitch": 1.1,
+         "volume": 60,
+         "loop": true
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Charge lance + beam graser",
+       "layers": [
+        {
+         "folder": "Weapon/ChargeLance/Fire",
+         "pitch": 1.0,
+         "volume": 55,
+         "loop": true
+        },
+        {
+         "folder": "Weapon/Beamgraser/Fire",
+         "pitch": 0.8,
+         "volume": 40,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Flamethrower roar pitched up",
+       "layers": [
+        {
+         "folder": "Weapon/Flamethrower",
+         "pitch": 1.3,
+         "volume": 55,
+         "loop": true
+        },
+        {
+         "folder": "Misc/EMPDisabled",
+         "pitch": 0.8,
+         "volume": 30
+        }
+       ]
+      }
+     ],
+     "duration": 1.2
+    },
+    {
+     "id": "hit",
+     "label": "Beam end",
+     "when": "where the beam stops (wall or 30 cells)",
+     "options": [
+      {
+       "label": "Mortar dry, low",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Rocket explosion",
+       "layers": [
+        {
+         "folder": "Weapon/RocketswarmLauncher/Explosion",
+         "pitch": 0.9,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Mech band shockwave",
+       "layers": [
+        {
+         "clip": "Explosion/Mechband_Shockwave_Explosion_01a",
+         "pitch": 0.9,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Goku"
+  },
+  "AG_GokuSpiritBomb": {
+   "note": "Gather loop while channelling (no upper limit), a small cue each time a colonist lends energy, the throw, and the landing.",
+   "moments": [
+    {
+     "id": "gather",
+     "label": "Gather (loop)",
+     "when": "channel, both hands up",
+     "options": [
+      {
+       "label": "Wind + reactor hum",
+       "layers": [
+        {
+         "folder": "Misc/Tornado",
+         "pitch": 1.3,
+         "volume": 20,
+         "loop": true
+        },
+        {
+         "folder": "Exotic/Ship_Reactor",
+         "pitch": 0.8,
+         "volume": 30,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Mech control loop, low",
+       "layers": [
+        {
+         "folder": "Pawn/Mechanitor/ControlTaking",
+         "pitch": 0.8,
+         "volume": 40,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Psycast casting loop (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Casting_Loop",
+         "pitch": 0.8,
+         "volume": 40,
+         "loop": true
+        }
+       ]
+      }
+     ],
+     "duration": 6
+    },
+    {
+     "id": "lend",
+     "label": "Lend energy",
+     "when": "a colonist starts lending",
+     "options": [
+      {
+       "label": "Mech control grain",
+       "layers": [
+        {
+         "folder": "Pawn/Mechanitor/ControlTaking/Grains",
+         "pitch": 1.3,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Psychic soothe pulse",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Soothe_Pulser",
+         "pitch": 1.4,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Power on",
+       "layers": [
+        {
+         "folder": "Electricity/PowerOn/Small",
+         "pitch": 0.9,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "throw",
+     "label": "Throw",
+     "when": "Throw pressed: the bomb moves to the target",
+     "options": [
+      {
+       "label": "Drop pod fall",
+       "layers": [
+        {
+         "folder": "Misc/DropPodFall/Default",
+         "pitch": 0.8,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Shuttle crash whoosh",
+       "layers": [
+        {
+         "folder": "Misc/Shuttle/Crash",
+         "pitch": 0.9,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Mortar incoming, low",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Incoming_Alt2",
+         "pitch": 0.7,
+         "volume": 50
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "impact",
+     "label": "Impact",
+     "when": "the bomb lands",
+     "options": [
+      {
+       "label": "Giant explosion",
+       "layers": [
+        {
+         "clip": "Explosion/GiantExplosion",
+         "pitch": 0.9,
+         "volume": 65
+        },
+        {
+         "folder": "Misc/Emergence/Quake",
+         "pitch": 1.0,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Planet-killer impact",
+       "layers": [
+        {
+         "clip": "Misc/PlanetkillerImpact",
+         "pitch": 1.0,
+         "volume": 65
+        }
+       ]
+      },
+      {
+       "label": "Mortar dry, very low + rumble",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.55,
+         "volume": 60
+        },
+        {
+         "folder": "Ambience/Thunder/OnMap",
+         "pitch": 0.8,
+         "volume": 40,
+         "delay": 0.1
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Goku"
+  },
+  "AG_ThunderGodJump": {
+   "note": "The flash of the jump, then the cut (the melee hit already plays its own hit sound).",
+   "moments": [
+    {
+     "id": "jump",
+     "label": "Jump",
+     "when": "Minato leaves and appears at the mark",
+     "options": [
+      {
+       "label": "Skip entry, very fast",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 2.0,
+         "volume": 40
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.2,
+         "volume": 35,
+         "delay": 0.05
+        }
+       ]
+      },
+      {
+       "label": "Swish + click",
+       "layers": [
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 2.2,
+         "volume": 50
+        },
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 1.0,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Bionic slash miss (Royalty)",
+       "layers": [
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.3,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Minato"
+  },
+  "AG_ThunderGodChain": {
+   "note": "Same jump sound as the single jump, once per jump (every 0.24 s), so it needs to be short.",
+   "moments": [
+    {
+     "id": "jump",
+     "label": "Each jump",
+     "when": "every 0.24 s, up to 5",
+     "options": [
+      {
+       "label": "Skip entry, very fast",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 2.0,
+         "volume": 40
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.2,
+         "volume": 35,
+         "delay": 0.05
+        }
+       ]
+      },
+      {
+       "label": "Swish + click",
+       "layers": [
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 2.2,
+         "volume": 50
+        },
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 1.0,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Bionic slash miss (Royalty)",
+       "layers": [
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.3,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Minato"
+  },
+  "AG_GuidingThunder": {
+   "note": "Barrier up, and the redirect each time a shot is sent to the mark.",
+   "moments": [
+    {
+     "id": "raise",
+     "label": "Barrier up",
+     "when": "cast: barrier for 6 s",
+     "options": [
+      {
+       "label": "Energy shield reset",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Reset",
+         "pitch": 1.2,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Bullet shield reactivate",
+       "layers": [
+        {
+         "folder": "Misc/BulletShieldGenerator/Reactivate",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Broadshield startup (Royalty)",
+       "layers": [
+        {
+         "folder": "Buildings/Security",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "redirect",
+     "label": "Shot sent away",
+     "when": "each shot that comes out at the mark",
+     "options": [
+      {
+       "label": "Deflect",
+       "layers": [
+        {
+         "folder": "Impact/Deflect",
+         "pitch": 1.3,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Shield absorb + skip",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Absorb",
+         "pitch": 1.2,
+         "volume": 35
+        },
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 2.2,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Swish, high",
+       "layers": [
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 2.0,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Minato"
+  },
+  "AG_Rasengan": {
+   "note": "Anime: a whirring, rising spin, then a grinding impact. Forming is 0.6 s; the spin can loop if Minato has to walk to the target.",
+   "moments": [
+    {
+     "id": "form",
+     "label": "Form (loop)",
+     "when": "0.6 s forming, loops while he closes in",
+     "options": [
+      {
+       "label": "Circular saw, high and light",
+       "layers": [
+        {
+         "folder": "Interact/Work/Construct/Circular_Saw/Saw_Circular_Cuts",
+         "pitch": 1.6,
+         "volume": 25,
+         "loop": true
+        },
+        {
+         "clip": "Item/Psychic_Artifact_Warmup_A01",
+         "pitch": 1.6,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Mech charger start + psychic hum",
+       "layers": [
+        {
+         "folder": "Buildings/Mechanoid/MechCharger/Start",
+         "pitch": 1.3,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 1.5,
+         "volume": 30,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Antigrav loop, fast (Odyssey)",
+       "layers": [
+        {
+         "clip": "Gravship/Gravship_Antigrav_Loop",
+         "pitch": 2.2,
+         "volume": 40,
+         "loop": true
+        }
+       ]
+      }
+     ],
+     "duration": 1.5
+    },
+    {
+     "id": "hit",
+     "label": "Hit",
+     "when": "driven into the target, 3-tile throw",
+     "options": [
+      {
+       "label": "Thump cannon impact + shockwave",
+       "layers": [
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 1.1,
+         "volume": 55
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 1.1,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Mortar dry, short and high",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 1.4,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/BionicPunch_Hit",
+         "pitch": 0.9,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Big animal hit + grind",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Pawn",
+         "pitch": 0.8,
+         "volume": 55
+        },
+        {
+         "folder": "Interact/Work/Construct/Circular_Saw/Saw_Circular_Cuts",
+         "pitch": 1.2,
+         "volume": 25
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Minato"
+  },
+  "AG_SasukeAmenoyodomi": {
+   "note": "A toggle; the sound that matters is a weapon stopping dead in the air.",
+   "moments": [
+    {
+     "id": "toggle",
+     "label": "Toggle",
+     "when": "each click to the next state",
+     "options": [
+      {
+       "label": "Psychic effect, short",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Psychic_Effect",
+         "pitch": 1.4,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Power on/off",
+       "layers": [
+        {
+         "folder": "Electricity/PowerOn/Small",
+         "pitch": 1.2,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Click",
+       "layers": [
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "hang",
+     "label": "Weapon stops in the air",
+     "when": "a thrown weapon stops over the cell",
+     "options": [
+      {
+       "label": "Shield absorb",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Absorb",
+         "pitch": 1.4,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Metal sharp + hiss",
+       "layers": [
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 1.3,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/Hiss",
+         "pitch": 1.5,
+         "volume": 20
+        }
+       ]
+      },
+      {
+       "label": "Deflect, soft",
+       "layers": [
+        {
+         "folder": "Impact/Deflect",
+         "pitch": 0.9,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Sasuke"
+  },
+  "AG_SasukeAmenotejikara": {
+   "note": "Anime: an instant swap with a light 'ting'. Plays at both ends.",
+   "moments": [
+    {
+     "id": "swap",
+     "label": "Swap",
+     "when": "both targets change places",
+     "options": [
+      {
+       "label": "Skip entry, very fast + ting",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 2.2,
+         "volume": 35
+        },
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 1.8,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Anchor clap style: puff",
+       "layers": [
+        {
+         "folder": "Impact/BeatFire",
+         "pitch": 1.4,
+         "volume": 45
+        },
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 1.6,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Swish + deflect",
+       "layers": [
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 2.0,
+         "volume": 40
+        },
+        {
+         "folder": "Impact/Deflect",
+         "pitch": 1.6,
+         "volume": 30
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Sasuke"
+  },
+  "AG_SasukeRaikoKusari": {
+   "note": "Chidori through the net: an electric crackle when it links, and a crackle loop while it stands.",
+   "moments": [
+    {
+     "id": "link",
+     "label": "Link",
+     "when": "the Chidori strings the weapons",
+     "options": [
+      {
+       "label": "Thunder lightning crack",
+       "layers": [
+        {
+         "folder": "Ambience/Thunder/lightning",
+         "pitch": 1.2,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/EMPDisabled",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "EMP crackle, doubled",
+       "layers": [
+        {
+         "folder": "Misc/EMPDisabled",
+         "pitch": 0.9,
+         "volume": 50
+        },
+        {
+         "folder": "Misc/EMPDisabled",
+         "pitch": 1.3,
+         "volume": 35,
+         "delay": 0.08
+        }
+       ]
+      },
+      {
+       "label": "Charge rifle zaps",
+       "layers": [
+        {
+         "folder": "Weapon/ChargeRifle",
+         "pitch": 1.3,
+         "volume": 40
+        },
+        {
+         "folder": "Weapon/Beamgraser/Resolve",
+         "pitch": 1.2,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "loop",
+     "label": "Net (loop)",
+     "when": "while the net stands",
+     "options": [
+      {
+       "label": "Burning power cell sizzle",
+       "layers": [
+        {
+         "folder": "Buildings/BurningPowerCell/Loop",
+         "pitch": 1.3,
+         "volume": 25,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Beam graser fire, looped",
+       "layers": [
+        {
+         "folder": "Weapon/Beamgraser/Fire",
+         "pitch": 1.5,
+         "volume": 20,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Mech control loop, high",
+       "layers": [
+        {
+         "folder": "Pawn/Mechanitor/ControlTaking",
+         "pitch": 1.8,
+         "volume": 25,
+         "loop": true
+        }
+       ]
+      }
+     ],
+     "duration": 4
+    }
+   ],
+   "hero": "Sasuke"
+  },
+  "AG_SasukeAmaterasu": {
+   "note": "Black flame catching, then its own burn loop on the target.",
+   "moments": [
+    {
+     "id": "ignite",
+     "label": "Ignite",
+     "when": "the flames light",
+     "options": [
+      {
+       "label": "Ignite + flamethrower start, low",
+       "layers": [
+        {
+         "folder": "Impact/Ignite",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Weapon/Flamethrower",
+         "pitch": 0.6,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Fire spew resolve, low",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/FireSpew/Resolve",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Incendiary mortar, dark",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Incendiary",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "burn",
+     "label": "Burn (loop)",
+     "when": "while a pawn burns (20 s)",
+     "options": [
+      {
+       "label": "Fire burning, low",
+       "layers": [
+        {
+         "folder": "Misc/Fire",
+         "pitch": 0.7,
+         "volume": 30,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Burning corpse",
+       "layers": [
+        {
+         "folder": "Interact/Work/Cremate/Burning_Corpse",
+         "pitch": 0.8,
+         "volume": 30,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Flamethrower, very low",
+       "layers": [
+        {
+         "folder": "Weapon/Flamethrower",
+         "pitch": 0.5,
+         "volume": 20,
+         "loop": true
+        }
+       ]
+      }
+     ],
+     "duration": 4
+    }
+   ],
+   "hero": "Sasuke"
+  },
+  "AG_PainBanshoTenin": {
+   "note": "The pull (a push-wave run backwards), the flight, and the face-down slam.",
+   "moments": [
+    {
+     "id": "pull",
+     "label": "Pull",
+     "when": "cast: the target starts to slide",
+     "options": [
+      {
+       "label": "Psychic pulse, low",
+       "layers": [
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Animal pulser (the Gravity Well hum's clip)",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Psychic pulse psycast (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Psychic_Pulse",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "slam",
+     "label": "Slam",
+     "when": "arrival: pushed face-down",
+     "options": [
+      {
+       "label": "Big animal hit + stone",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Pawn",
+         "pitch": 0.8,
+         "volume": 55
+        },
+        {
+         "folder": "Impact/PunchHitBuilding/Stone",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Thump cannon impact",
+       "layers": [
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 1.0,
+         "volume": 55
+        }
+       ]
+      },
+      {
+       "label": "Rock collapse, short",
+       "layers": [
+        {
+         "clip": "Misc/RockCollapse",
+         "pitch": 1.2,
+         "volume": 50
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Pain"
+  },
+  "AG_PainBlackReceiver": {
+   "note": "A rod thrown fast, and the stab.",
+   "moments": [
+    {
+     "id": "throw",
+     "label": "Throw",
+     "when": "the rod leaves his hand",
+     "options": [
+      {
+       "label": "Piercing spine launch",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/PiercingSpine",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Bow shot",
+       "layers": [
+        {
+         "clip": "Weapon/BowA",
+         "pitch": 0.9,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Swish + spiner",
+       "layers": [
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 1.4,
+         "volume": 40
+        },
+        {
+         "folder": "Weapon/Spiner",
+         "pitch": 0.8,
+         "volume": 30
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "hit",
+     "label": "Rod in",
+     "when": "the rod enters a pawn",
+     "options": [
+      {
+       "label": "Bullet flesh + metal sharp",
+       "layers": [
+        {
+         "folder": "Impact/Bullet_Flesh",
+         "pitch": 0.9,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 0.9,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Scyther hit",
+       "layers": [
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Bio bite (wet)",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/Bloodfeed",
+         "pitch": 1.2,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Pain"
+  },
+  "AG_PainChibakuTensei": {
+   "note": "The core formed and thrown up, the 3 s tearing of the ground, and the compression at the end.",
+   "moments": [
+    {
+     "id": "form",
+     "label": "Form + throw",
+     "when": "core between his hands, thrown up",
+     "options": [
+      {
+       "label": "Psychic warmup, low",
+       "layers": [
+        {
+         "clip": "Item/Psychic_Artifact_Warmup_A01",
+         "pitch": 0.6,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Bestow warmup, low",
+       "layers": [
+        {
+         "clip": "Misc/Bestow_Warmup",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Drop pod leaving",
+       "layers": [
+        {
+         "clip": "Misc/DropPodLeaving",
+         "pitch": 0.8,
+         "volume": 50
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "tear",
+     "label": "Tear (loop)",
+     "when": "3 s of ground torn up and pulled in",
+     "options": [
+      {
+       "label": "Emergence quake + tornado",
+       "layers": [
+        {
+         "folder": "Misc/Emergence/Quake",
+         "pitch": 0.8,
+         "volume": 55,
+         "loop": true
+        },
+        {
+         "folder": "Misc/Tornado",
+         "pitch": 0.8,
+         "volume": 25,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Tunnel rumble",
+       "layers": [
+        {
+         "folder": "Misc/Tunnel",
+         "pitch": 0.7,
+         "volume": 50,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Stone buildings breaking",
+       "layers": [
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Big",
+         "pitch": 0.7,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Medium",
+         "pitch": 0.8,
+         "volume": 40,
+         "delay": 0.8
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Big",
+         "pitch": 0.6,
+         "volume": 45,
+         "delay": 1.7
+        }
+       ]
+      }
+     ],
+     "duration": 3
+    },
+    {
+     "id": "close",
+     "label": "Close",
+     "when": "the rock sphere closes",
+     "options": [
+      {
+       "label": "Emergence end, large",
+       "layers": [
+        {
+         "folder": "Misc/Emergence/end_large",
+         "pitch": 0.9,
+         "volume": 55
+        }
+       ]
+      },
+      {
+       "label": "Rock collapse + mortar, low",
+       "layers": [
+        {
+         "clip": "Misc/RockCollapse",
+         "pitch": 0.6,
+         "volume": 55
+        },
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.5,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Bridge collapse",
+       "layers": [
+        {
+         "clip": "Misc/BridgeCollapse",
+         "pitch": 0.7,
+         "volume": 55
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Pain"
+  },
+  "AG_ItachiFalseFace": {
+   "note": "Genjutsu lands on everyone looking at him. A crow call is the Itachi signature; Odyssey has crows.",
+   "moments": [
+    {
+     "id": "cast",
+     "label": "Cast",
+     "when": "the illusion takes hold",
+     "options": [
+      {
+       "label": "Insanity lance + low pulse",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Insanity_Lance",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.6,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Crow call over a psychic pulse (Odyssey)",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Crow/Call",
+         "pitch": 0.9,
+         "volume": 40
+        },
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.7,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Word-of apply (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/WordOf/Apply",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Itachi"
+  },
+  "AG_ItachiSusanoo": {
+   "note": "Rise, the standing hum, the Yata Mirror turning a hit, and the Totsuka stab or seal.",
+   "moments": [
+    {
+     "id": "rise",
+     "label": "Rise",
+     "when": "the Susanoo stands up",
+     "options": [
+      {
+       "label": "Emergence quake + fire",
+       "layers": [
+        {
+         "folder": "Misc/Emergence/Quake",
+         "pitch": 1.0,
+         "volume": 45
+        },
+        {
+         "folder": "Weapon/Flamethrower",
+         "pitch": 0.6,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Wall raise (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Wall_Raise",
+         "pitch": 0.7,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Bestow warmup, fast",
+       "layers": [
+        {
+         "clip": "Misc/Bestow_Warmup",
+         "pitch": 1.5,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "loop",
+     "label": "Standing (loop)",
+     "when": "12 s while it stands",
+     "options": [
+      {
+       "label": "Ship reactor hum",
+       "layers": [
+        {
+         "folder": "Exotic/Ship_Reactor",
+         "pitch": 0.9,
+         "volume": 25,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Fire burning, low",
+       "layers": [
+        {
+         "folder": "Misc/Fire",
+         "pitch": 0.6,
+         "volume": 25,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Band node tuned hum",
+       "layers": [
+        {
+         "folder": "Buildings/Mechanoid/BandNode/Tuned",
+         "pitch": 0.8,
+         "volume": 25,
+         "loop": true
+        }
+       ]
+      }
+     ],
+     "duration": 5
+    },
+    {
+     "id": "mirror",
+     "label": "Mirror turns a hit",
+     "when": "each hit from outside",
+     "options": [
+      {
+       "label": "Shield absorb, low",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Absorb",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Deflect",
+       "layers": [
+        {
+         "folder": "Impact/Deflect",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Metal blunt",
+       "layers": [
+        {
+         "folder": "Impact/MeleeHit_Metal_Blunt",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "stab",
+     "label": "Totsuka stab / seal",
+     "when": "every 3 s on a target",
+     "options": [
+      {
+       "label": "Scyther hit + skip",
+       "layers": [
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.8,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Plasma sword (Royalty)",
+       "layers": [
+        {
+         "folder": "Impact/PlasmaSword",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Metal sharp + psychic effect",
+       "layers": [
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 0.7,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Insanity_Lance",
+         "pitch": 1.2,
+         "volume": 25
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Itachi"
+  },
+  "AG_DispersalMurder": {
+   "note": "Plays Longjump_Jump now. Crows are the missing part.",
+   "moments": [
+    {
+     "id": "depart",
+     "label": "Scatter into crows",
+     "when": "Itachi breaks into the flock",
+     "options": [
+      {
+       "label": "Crow calls + longjump (Odyssey)",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Crow/Angry",
+         "pitch": 1.0,
+         "volume": 40
+        },
+        {
+         "folder": "Pawn/Animal/Crow/Call",
+         "pitch": 1.1,
+         "volume": 30,
+         "delay": 0.1
+        },
+        {
+         "folder": "Pawn/Abilities/Longjump/Jump",
+         "pitch": 1.2,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Longjump + sweeping (flaps stand-in)",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/Longjump/Jump",
+         "pitch": 1.2,
+         "volume": 40
+        },
+        {
+         "folder": "Interact/Work/Clean/Cleaning_Sweeping",
+         "pitch": 1.8,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Crow calls only (Odyssey)",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Crow/Call",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Itachi"
+  },
+  "AG_VergilJudgementCut": {
+   "note": "DMC: a fast draw, a cluster of slices at the spot, a sheath click.",
+   "moments": [
+    {
+     "id": "draw",
+     "label": "Draw",
+     "when": "0.6 s before the cuts",
+     "options": [
+      {
+       "label": "Blade swish, high",
+       "layers": [
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.4,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Mono sword (Royalty)",
+       "layers": [
+        {
+         "folder": "Impact/MonoSword",
+         "pitch": 1.3,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Swish + ting",
+       "layers": [
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 1.6,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 1.6,
+         "volume": 25
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "cuts",
+     "label": "Cuts",
+     "when": "sphere of 5 hits over half a second",
+     "options": [
+      {
+       "label": "Shield break + blade hits",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 1.0,
+         "volume": 40
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+         "pitch": 1.2,
+         "volume": 35,
+         "delay": 0.1
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+         "pitch": 1.3,
+         "volume": 35,
+         "delay": 0.25
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+         "pitch": 1.1,
+         "volume": 35,
+         "delay": 0.4
+        }
+       ]
+      },
+      {
+       "label": "Glass + swishes",
+       "layers": [
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 1.2,
+         "volume": 35
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.5,
+         "volume": 35,
+         "delay": 0.08
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.7,
+         "volume": 30,
+         "delay": 0.22
+        }
+       ]
+      },
+      {
+       "label": "Bionic slash hits (Royalty)",
+       "layers": [
+        {
+         "folder": "Impact/BionicSlash_Hit",
+         "pitch": 1.2,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/BionicSlash_Hit",
+         "pitch": 1.4,
+         "volume": 35,
+         "delay": 0.2
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "sheath",
+     "label": "Sheath",
+     "when": "after the cuts",
+     "options": [
+      {
+       "label": "Click",
+       "layers": [
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 0.9,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Grenade pin, low",
+       "layers": [
+        {
+         "clip": "Weapon/GrenadePin",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Trap arm",
+       "layers": [
+        {
+         "folder": "Misc/Trap",
+         "pitch": 1.3,
+         "volume": 40
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Vergil"
+  },
+  "AG_VergilYamatoDash": {
+   "note": "Dash (0.15 s), then 0.4 s later the sheath click that lands the cuts.",
+   "moments": [
+    {
+     "id": "dash",
+     "label": "Dash",
+     "when": "he crosses the ground",
+     "options": [
+      {
+       "label": "Longjump + swish",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/Longjump/Jump",
+         "pitch": 1.6,
+         "volume": 35
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.3,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Skip entry fast + swish",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 2.0,
+         "volume": 30
+        },
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 1.6,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Bionic slash miss (Royalty)",
+       "layers": [
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.0,
+         "volume": 50
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "sheath",
+     "label": "Sheath + cuts land",
+     "when": "the blade clicks and the marked are cut",
+     "options": [
+      {
+       "label": "Click + blade hits",
+       "layers": [
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 0.9,
+         "volume": 45
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+         "pitch": 1.1,
+         "volume": 40,
+         "delay": 0.05
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+         "pitch": 1.3,
+         "volume": 35,
+         "delay": 0.12
+        }
+       ]
+      },
+      {
+       "label": "Pin + glass",
+       "layers": [
+        {
+         "clip": "Weapon/GrenadePin",
+         "pitch": 0.7,
+         "volume": 45
+        },
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 1.3,
+         "volume": 30,
+         "delay": 0.05
+        }
+       ]
+      },
+      {
+       "label": "Click + mono sword (Royalty)",
+       "layers": [
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 0.9,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/MonoSword",
+         "pitch": 1.2,
+         "volume": 40,
+         "delay": 0.05
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Vergil"
+  },
+  "AG_VergilSummonedSwords": {
+   "note": "Summon, each blade flying (once a second), each blade going in.",
+   "moments": [
+    {
+     "id": "summon",
+     "label": "Summon",
+     "when": "eight blades appear",
+     "options": [
+      {
+       "label": "Shield reset, bright",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Reset",
+         "pitch": 1.4,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Mortar shield reactivate",
+       "layers": [
+        {
+         "folder": "Misc/MortarShieldGenerator/Reactivate",
+         "pitch": 1.3,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Psychic warmup + glass",
+       "layers": [
+        {
+         "clip": "Item/Psychic_Artifact_Warmup_A01",
+         "pitch": 1.8,
+         "volume": 30
+        },
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 1.8,
+         "volume": 20
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "fire",
+     "label": "Blade flies",
+     "when": "one blade per second",
+     "options": [
+      {
+       "label": "Bow",
+       "layers": [
+        {
+         "clip": "Weapon/BowB",
+         "pitch": 1.3,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Piercing spine",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/PiercingSpine",
+         "pitch": 1.4,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Spiner",
+       "layers": [
+        {
+         "folder": "Weapon/Spiner",
+         "pitch": 1.2,
+         "volume": 40
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "hit",
+     "label": "Blade in",
+     "when": "a blade enters a pawn",
+     "options": [
+      {
+       "label": "Metal sharp",
+       "layers": [
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 1.2,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Bullet flesh + shield absorb",
+       "layers": [
+        {
+         "folder": "Impact/Bullet_Flesh",
+         "pitch": 1.1,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/EnergyShield/Absorb",
+         "pitch": 1.8,
+         "volume": 20
+        }
+       ]
+      },
+      {
+       "label": "Scyther hit, high",
+       "layers": [
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+         "pitch": 1.4,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Vergil"
+  },
+  "AG_VergilJudgementCutEnd": {
+   "note": "Warmup (1 s), vanish with a storm of cuts (1.5 s), return kneeling, final sheath with everything cut at once.",
+   "moments": [
+    {
+     "id": "vanish",
+     "label": "Vanish + cut storm",
+     "when": "1.5 s while he is gone",
+     "options": [
+      {
+       "label": "Skip + 6 swishes",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 1.2,
+         "volume": 40
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.3,
+         "volume": 30,
+         "delay": 0.15
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.4000000000000001,
+         "volume": 30,
+         "delay": 0.35
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.5,
+         "volume": 30,
+         "delay": 0.55
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.3,
+         "volume": 30,
+         "delay": 0.7500000000000001
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.4000000000000001,
+         "volume": 30,
+         "delay": 0.9500000000000001
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.5,
+         "volume": 30,
+         "delay": 1.15
+        }
+       ]
+      },
+      {
+       "label": "Glass + swishes + shield break",
+       "layers": [
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 1.0,
+         "volume": 35
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.5,
+         "volume": 30,
+         "delay": 0.2
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.5,
+         "volume": 30,
+         "delay": 0.45
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.5,
+         "volume": 30,
+         "delay": 0.7
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.5,
+         "volume": 30,
+         "delay": 0.95
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.5,
+         "volume": 30,
+         "delay": 1.2
+        },
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 0.9,
+         "volume": 35,
+         "delay": 1.3
+        }
+       ]
+      },
+      {
+       "label": "Bionic slashes (Royalty)",
+       "layers": [
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.1,
+         "volume": 35
+        },
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.2000000000000002,
+         "volume": 35,
+         "delay": 0.2
+        },
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.1,
+         "volume": 35,
+         "delay": 0.4
+        },
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.2000000000000002,
+         "volume": 35,
+         "delay": 0.6000000000000001
+        },
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.1,
+         "volume": 35,
+         "delay": 0.8
+        },
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.2000000000000002,
+         "volume": 35,
+         "delay": 1.0
+        },
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.1,
+         "volume": 35,
+         "delay": 1.2000000000000002
+        }
+       ]
+      }
+     ],
+     "duration": 1.6
+    },
+    {
+     "id": "end",
+     "label": "Sheath: all cut",
+     "when": "kneeling, the final click",
+     "options": [
+      {
+       "label": "Click, then shield break + mortar",
+       "layers": [
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 0.8,
+         "volume": 50
+        },
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 0.8,
+         "volume": 45,
+         "delay": 0.3
+        },
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.9,
+         "volume": 40,
+         "delay": 0.3
+        }
+       ]
+      },
+      {
+       "label": "Pin, then glass + blades",
+       "layers": [
+        {
+         "clip": "Weapon/GrenadePin",
+         "pitch": 0.6,
+         "volume": 50
+        },
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 0.9,
+         "volume": 40,
+         "delay": 0.3
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+         "pitch": 1.0,
+         "volume": 40,
+         "delay": 0.32
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+         "pitch": 1.2,
+         "volume": 40,
+         "delay": 0.38
+        }
+       ]
+      },
+      {
+       "label": "Click, then mech band shockwave",
+       "layers": [
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 0.8,
+         "volume": 50
+        },
+        {
+         "clip": "Explosion/Mechband_Shockwave_Explosion_01a",
+         "pitch": 1.0,
+         "volume": 45,
+         "delay": 0.3
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Vergil"
+  },
+  "AG_SatoSever": {
+   "note": "Cutting off a piece of himself and throwing it.",
+   "moments": [
+    {
+     "id": "cut",
+     "label": "Cut + throw",
+     "when": "the part comes off and is thrown",
+     "options": [
+      {
+       "label": "Execute cut + swish",
+       "layers": [
+        {
+         "folder": "Interact/Execute/Cut",
+         "pitch": 1.0,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 1.1,
+         "volume": 35,
+         "delay": 0.2
+        }
+       ]
+      },
+      {
+       "label": "Butcher meat + swish",
+       "layers": [
+        {
+         "folder": "Interact/Work/Butcher/Butcher_Meat",
+         "pitch": 1.1,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 1.1,
+         "volume": 35,
+         "delay": 0.2
+        }
+       ]
+      },
+      {
+       "label": "Surgery + bite",
+       "layers": [
+        {
+         "folder": "Interact/Work/Surgery/Surgery_Loop",
+         "pitch": 1.2,
+         "volume": 35
+        },
+        {
+         "folder": "Impact/HumanBite_Hit",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Sat\u014d"
+  },
+  "AG_SatoHeadshotReset": {
+   "note": "The shot to the temple, then the rise 6 s later (Sat\u014d's body re-forms).",
+   "moments": [
+    {
+     "id": "shot",
+     "label": "Shot",
+     "when": "pistol to the temple",
+     "options": [
+      {
+       "label": "Revolver",
+       "layers": [
+        {
+         "folder": "Weapon/Revolver",
+         "pitch": 1.0,
+         "volume": 55
+        }
+       ]
+      },
+      {
+       "label": "Autopistol + flesh",
+       "layers": [
+        {
+         "folder": "Weapon/Autopistol",
+         "pitch": 1.0,
+         "volume": 50
+        },
+        {
+         "folder": "Impact/Bullet_Flesh",
+         "pitch": 0.9,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Revolver + gun tail",
+       "layers": [
+        {
+         "folder": "Weapon/Revolver",
+         "pitch": 0.95,
+         "volume": 55
+        },
+        {
+         "folder": "Weapon/Tails/Light",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "rise",
+     "label": "Reset rise",
+     "when": "he rises healed",
+     "options": [
+      {
+       "label": "Resurrect cast",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/Resurrect",
+         "pitch": 0.9,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Mech resurrect",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/MechResurrect",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Pollution ooze + surgery",
+       "layers": [
+        {
+         "folder": "Misc/PollutionSpreading",
+         "pitch": 0.8,
+         "volume": 40
+        },
+        {
+         "folder": "Interact/Work/Surgery/Surgery_Loop",
+         "pitch": 0.8,
+         "volume": 30
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Sat\u014d"
+  },
+  "AG_SatoGrenadeReset": {
+   "note": "The pin, a short hold, the blast (the explosion itself already has vanilla sound), then the rise at an anchor.",
+   "moments": [
+    {
+     "id": "pin",
+     "label": "Pin",
+     "when": "he pulls the pin",
+     "options": [
+      {
+       "label": "Grenade pin",
+       "layers": [
+        {
+         "clip": "Weapon/GrenadePin",
+         "pitch": 1.0,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Grenade pin + click",
+       "layers": [
+        {
+         "clip": "Weapon/GrenadePin",
+         "pitch": 0.9,
+         "volume": 50
+        },
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 1.2,
+         "volume": 30,
+         "delay": 0.15
+        }
+       ]
+      },
+      {
+       "label": "Trap arm",
+       "layers": [
+        {
+         "folder": "Misc/Trap",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "rise",
+     "label": "Rise at anchor",
+     "when": "the body re-forms at the anchor",
+     "options": [
+      {
+       "label": "Resurrect cast",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/Resurrect",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Pollution ooze",
+       "layers": [
+        {
+         "folder": "Misc/PollutionSpreading",
+         "pitch": 0.8,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Deathrest casket exit",
+       "layers": [
+        {
+         "folder": "Buildings/DeathrestCasket/Exit",
+         "pitch": 0.9,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Sat\u014d"
+  },
+  "AG_SatoTheGame": {
+   "note": "Marking the next player to lose.",
+   "moments": [
+    {
+     "id": "mark",
+     "label": "Mark",
+     "when": "the enemy is marked",
+     "options": [
+      {
+       "label": "Turret acquires target",
+       "layers": [
+        {
+         "folder": "Weapon/GunTurret/Status",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Poker chips (it is a game)",
+       "layers": [
+        {
+         "folder": "Interact/Joy/PokerChips",
+         "pitch": 1.0,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Orbital targeter aim",
+       "layers": [
+        {
+         "folder": "Weapon/OrbitalTargeter",
+         "pitch": 1.2,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Sat\u014d"
+  },
+  "AG_SatoBlackGhost": {
+   "note": "Black matter pouring out and standing up, and the IBM tearing a limb off.",
+   "moments": [
+    {
+     "id": "summon",
+     "label": "Summon",
+     "when": "the IBM stands up",
+     "options": [
+      {
+       "label": "Pollution ooze + apocriton call, low",
+       "layers": [
+        {
+         "folder": "Misc/PollutionSpreading",
+         "pitch": 0.7,
+         "volume": 45
+        },
+        {
+         "folder": "Pawn/Mechanoid/Apocriton/Call",
+         "pitch": 0.6,
+         "volume": 35,
+         "delay": 0.3
+        }
+       ]
+      },
+      {
+       "label": "Toxifier pollute + diabolus call",
+       "layers": [
+        {
+         "folder": "Buildings/Mechanoid/Toxifier/Pollute",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Pawn/Mechanoid/Diabolus/Call",
+         "pitch": 0.8,
+         "volume": 35,
+         "delay": 0.3
+        }
+       ]
+      },
+      {
+       "label": "Emergence end + tesseron call",
+       "layers": [
+        {
+         "folder": "Misc/Emergence/end_small",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Pawn/Mechanoid/Tesseron/Call",
+         "pitch": 0.7,
+         "volume": 35,
+         "delay": 0.2
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "tear",
+     "label": "Tear a limb",
+     "when": "once per summon",
+     "options": [
+      {
+       "label": "Execute cut + flesh",
+       "layers": [
+        {
+         "folder": "Interact/Execute/Cut",
+         "pitch": 0.8,
+         "volume": 50
+        },
+        {
+         "folder": "Impact/Bullet_Flesh",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Butcher + big animal hit",
+       "layers": [
+        {
+         "folder": "Interact/Work/Butcher/Butcher_Meat",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Pawn",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Bloodfeed bite, low",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/Bloodfeed",
+         "pitch": 0.7,
+         "volume": 50
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Sat\u014d"
+  },
+  "AG_ShadowImitation": {
+   "note": "The shadow running over the ground, then catching.",
+   "moments": [
+    {
+     "id": "run",
+     "label": "Shadow runs out",
+     "when": "cast: the shadow crosses the ground",
+     "options": [
+      {
+       "label": "Pollution spreading (ooze)",
+       "layers": [
+        {
+         "folder": "Misc/PollutionSpreading",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Acid spray cast, low",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/AcidSpray",
+         "pitch": 0.7,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Cleaning fluid, low",
+       "layers": [
+        {
+         "folder": "Interact/Work/Clean/Cleaning_Fluid",
+         "pitch": 0.7,
+         "volume": 40
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "catch",
+     "label": "Caught",
+     "when": "the shadow holds the target",
+     "options": [
+      {
+       "label": "Roping",
+       "layers": [
+        {
+         "folder": "Pawn/Human/Roping",
+         "pitch": 0.9,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Mech control resolve",
+       "layers": [
+        {
+         "folder": "Pawn/Mechanitor/ControlTaking/Resolve",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Psychic effect, low",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Psychic_Effect",
+         "pitch": 0.7,
+         "volume": 40
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Shikamaru"
+  },
+  "AG_ShadowSeam": {
+   "note": "Two things sewn together.",
+   "moments": [
+    {
+     "id": "sew",
+     "label": "Sew",
+     "when": "the seam forms",
+     "options": [
+      {
+       "label": "Roping, twice",
+       "layers": [
+        {
+         "folder": "Pawn/Human/Roping",
+         "pitch": 1.0,
+         "volume": 45
+        },
+        {
+         "folder": "Pawn/Human/Roping",
+         "pitch": 1.1,
+         "volume": 40,
+         "delay": 0.25
+        }
+       ]
+      },
+      {
+       "label": "Tailoring start + ooze",
+       "layers": [
+        {
+         "folder": "Interact/Work/Tailor/Tailoring_Start",
+         "pitch": 0.8,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/PollutionSpreading",
+         "pitch": 1.0,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Ooze + mech control grain",
+       "layers": [
+        {
+         "folder": "Misc/PollutionSpreading",
+         "pitch": 1.1,
+         "volume": 40
+        },
+        {
+         "folder": "Pawn/Mechanitor/ControlTaking/Grains",
+         "pitch": 0.8,
+         "volume": 30
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Shikamaru"
+  },
+  "AG_ShadowGrasp": {
+   "note": "A hand of shadow dragging a thing over the ground.",
+   "moments": [
+    {
+     "id": "drag",
+     "label": "Drag (loop)",
+     "when": "while the thing slides",
+     "options": [
+      {
+       "label": "Sweeping, low",
+       "layers": [
+        {
+         "folder": "Interact/Work/Clean/Cleaning_Sweeping",
+         "pitch": 0.7,
+         "volume": 40,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Cleaning dirt",
+       "layers": [
+        {
+         "folder": "Interact/Work/Clean/Cleaning_Dirt",
+         "pitch": 0.8,
+         "volume": 35,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Ooze, looped",
+       "layers": [
+        {
+         "folder": "Misc/PollutionSpreading",
+         "pitch": 0.9,
+         "volume": 35,
+         "loop": true
+        }
+       ]
+      }
+     ],
+     "duration": 1.5
+    }
+   ],
+   "hero": "Shikamaru"
+  },
+  "AG_ShadowDouble": {
+   "note": "His shadow walks off and stands.",
+   "moments": [
+    {
+     "id": "go",
+     "label": "Double goes out",
+     "when": "cast",
+     "options": [
+      {
+       "label": "Ooze + psychic effect",
+       "layers": [
+        {
+         "folder": "Misc/PollutionSpreading",
+         "pitch": 0.9,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/Psycasts/Psycast_Psychic_Effect",
+         "pitch": 0.8,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Acid spray resolve, low",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/AcidSpray",
+         "pitch": 0.6,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Skip entry, low",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.6,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Shikamaru"
+  },
+  "AG_ShadowNeckBind": {
+   "note": "Hands climbing (2.1 s), then the choke while he channels.",
+   "moments": [
+    {
+     "id": "climb",
+     "label": "Hands climb",
+     "when": "2.1 s up the body",
+     "options": [
+      {
+       "label": "Roping, slow",
+       "layers": [
+        {
+         "folder": "Pawn/Human/Roping",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Ooze + cloth",
+       "layers": [
+        {
+         "folder": "Misc/PollutionSpreading",
+         "pitch": 1.1,
+         "volume": 40
+        },
+        {
+         "folder": "Interact/Work/Tailor/Tailoring_Loop",
+         "pitch": 0.8,
+         "volume": 30
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "choke",
+     "label": "Choke (loop)",
+     "when": "up to 8 s",
+     "options": [
+      {
+       "label": "Mech control loop, low",
+       "layers": [
+        {
+         "folder": "Pawn/Mechanitor/ControlTaking",
+         "pitch": 0.6,
+         "volume": 30,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Roping, looped",
+       "layers": [
+        {
+         "folder": "Pawn/Human/Roping",
+         "pitch": 0.7,
+         "volume": 30,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Psychic animal pulser, low",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.5,
+         "volume": 30,
+         "loop": true
+        }
+       ]
+      }
+     ],
+     "duration": 4
+    }
+   ],
+   "hero": "Shikamaru"
+  },
+  "AG_Imperative_Stop": {
+   "note": "LarynxExtension.wordSound is already there and empty; this fills it. One word, everyone in hearing obeys.",
+   "moments": [
+    {
+     "id": "word",
+     "label": "The word (stop)",
+     "when": "Inumaki speaks",
+     "options": [
+      {
+       "label": "Throne speech, low + psychic pulse",
+       "layers": [
+        {
+         "folder": "Misc/ThroneSpeech_Male",
+         "pitch": 0.7,
+         "volume": 50
+        },
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Throne speech + mech band shockwave",
+       "layers": [
+        {
+         "folder": "Misc/ThroneSpeech_Male",
+         "pitch": 0.8,
+         "volume": 50
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.9,
+         "volume": 35,
+         "delay": 0.15
+        }
+       ]
+      },
+      {
+       "label": "No voice: shock lance + shockwave",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Shock_Lance",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Inumaki"
+  },
+  "AG_Imperative_Drop": {
+   "note": "LarynxExtension.wordSound is already there and empty; this fills it. One word, everyone in hearing obeys.",
+   "moments": [
+    {
+     "id": "word",
+     "label": "The word (drop)",
+     "when": "Inumaki speaks",
+     "options": [
+      {
+       "label": "Throne speech, low + psychic pulse",
+       "layers": [
+        {
+         "folder": "Misc/ThroneSpeech_Male",
+         "pitch": 0.7,
+         "volume": 50
+        },
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Throne speech + mech band shockwave",
+       "layers": [
+        {
+         "folder": "Misc/ThroneSpeech_Male",
+         "pitch": 0.8,
+         "volume": 50
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.9,
+         "volume": 35,
+         "delay": 0.15
+        }
+       ]
+      },
+      {
+       "label": "No voice: shock lance + shockwave",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Shock_Lance",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Inumaki"
+  },
+  "AG_Imperative_Come": {
+   "note": "LarynxExtension.wordSound is already there and empty; this fills it. One word, everyone in hearing obeys.",
+   "moments": [
+    {
+     "id": "word",
+     "label": "The word (come)",
+     "when": "Inumaki speaks",
+     "options": [
+      {
+       "label": "Throne speech, low + psychic pulse",
+       "layers": [
+        {
+         "folder": "Misc/ThroneSpeech_Male",
+         "pitch": 0.7,
+         "volume": 50
+        },
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Throne speech + mech band shockwave",
+       "layers": [
+        {
+         "folder": "Misc/ThroneSpeech_Male",
+         "pitch": 0.8,
+         "volume": 50
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.9,
+         "volume": 35,
+         "delay": 0.15
+        }
+       ]
+      },
+      {
+       "label": "No voice: shock lance + shockwave",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Shock_Lance",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Inumaki"
+  },
+  "AG_Imperative_Run": {
+   "note": "LarynxExtension.wordSound is already there and empty; this fills it. One word, everyone in hearing obeys.",
+   "moments": [
+    {
+     "id": "word",
+     "label": "The word (run)",
+     "when": "Inumaki speaks",
+     "options": [
+      {
+       "label": "Throne speech, low + psychic pulse",
+       "layers": [
+        {
+         "folder": "Misc/ThroneSpeech_Male",
+         "pitch": 0.7,
+         "volume": 50
+        },
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Throne speech + mech band shockwave",
+       "layers": [
+        {
+         "folder": "Misc/ThroneSpeech_Male",
+         "pitch": 0.8,
+         "volume": 50
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.9,
+         "volume": 35,
+         "delay": 0.15
+        }
+       ]
+      },
+      {
+       "label": "No voice: shock lance + shockwave",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Shock_Lance",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Inumaki"
+  },
+  "AG_Imperative_Crush": {
+   "note": "Heavier than the light words: 15 blunt to every listener.",
+   "moments": [
+    {
+     "id": "word",
+     "label": "The word (crush)",
+     "when": "Inumaki speaks",
+     "options": [
+      {
+       "label": "Throne speech, lower + thump",
+       "layers": [
+        {
+         "folder": "Misc/ThroneSpeech_Male",
+         "pitch": 0.6,
+         "volume": 55
+        },
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 0.8,
+         "volume": 45,
+         "delay": 0.15
+        }
+       ]
+      },
+      {
+       "label": "Throne speech + stone breaking",
+       "layers": [
+        {
+         "folder": "Misc/ThroneSpeech_Male",
+         "pitch": 0.65,
+         "volume": 55
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Medium",
+         "pitch": 0.8,
+         "volume": 45,
+         "delay": 0.15
+        }
+       ]
+      },
+      {
+       "label": "No voice: shock lance + big animal hits",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Shock_Lance",
+         "pitch": 0.7,
+         "volume": 45
+        },
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Pawn",
+         "pitch": 0.7,
+         "volume": 50,
+         "delay": 0.1
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Inumaki"
+  },
+  "AG_Imperative_Explode": {
+   "note": "The explosions already have vanilla sound; this is only the word before them.",
+   "moments": [
+    {
+     "id": "word",
+     "label": "The word (explode)",
+     "when": "Inumaki speaks",
+     "options": [
+      {
+       "label": "Throne speech, lowest + pulse",
+       "layers": [
+        {
+         "folder": "Misc/ThroneSpeech_Male",
+         "pitch": 0.55,
+         "volume": 55
+        },
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.6,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Throne speech + insanity lance",
+       "layers": [
+        {
+         "folder": "Misc/ThroneSpeech_Male",
+         "pitch": 0.6,
+         "volume": 55
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Insanity_Lance",
+         "pitch": 0.7,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "No voice: shock lance, low",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Shock_Lance",
+         "pitch": 0.6,
+         "volume": 50
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Inumaki"
+  },
+  "AG_Trace_UnlimitedBladeWorks": {
+   "note": "Each 2 s verse, the world opening (fire ring in the source), and the world closing.",
+   "moments": [
+    {
+     "id": "verse",
+     "label": "Verse",
+     "when": "each of up to three verses",
+     "options": [
+      {
+       "label": "Bestow warmup",
+       "layers": [
+        {
+         "clip": "Misc/Bestow_Warmup",
+         "pitch": 1.2,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Psychic warmup",
+       "layers": [
+        {
+         "clip": "Item/Psychic_Artifact_Warmup_A01",
+         "pitch": 0.9,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Psycast casting loop (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Casting_Loop",
+         "pitch": 1.0,
+         "volume": 40
+        }
+       ]
+      }
+     ],
+     "duration": 2
+    },
+    {
+     "id": "open",
+     "label": "World opens",
+     "when": "everyone is taken in",
+     "options": [
+      {
+       "label": "Flamethrower sweep + psychic pulse",
+       "layers": [
+        {
+         "folder": "Weapon/Flamethrower",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Orbital beam + incendiary",
+       "layers": [
+        {
+         "folder": "Misc/OrbitalBeam",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Incendiary",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Skip pulse (Royalty) + fire",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Pulse",
+         "pitch": 0.8,
+         "volume": 50
+        },
+        {
+         "folder": "Weapon/Flamethrower",
+         "pitch": 0.7,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "close",
+     "label": "World closes",
+     "when": "everyone is put back",
+     "options": [
+      {
+       "label": "Skip entry, low",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Psychic pulse, reversed feel",
+       "layers": [
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 1.2,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Glass + skip",
+       "layers": [
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 0.8,
+         "volume": 35
+        },
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Shirou"
+  },
+  "AG_KamuiPhase": {
+   "note": "Toggle on/off, and a hit passing through him into the dimension.",
+   "moments": [
+    {
+     "id": "on",
+     "label": "Phase on / off",
+     "when": "the toggle",
+     "options": [
+      {
+       "label": "Skip entry, soft",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.9,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Psychic effect, low",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Psychic_Effect",
+         "pitch": 0.7,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Swish, low",
+       "layers": [
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 0.6,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "through",
+     "label": "Hit goes through",
+     "when": "each hit that passes into Kamui",
+     "options": [
+      {
+       "label": "Shield absorb, low",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Absorb",
+         "pitch": 0.6,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Swish, low",
+       "layers": [
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 0.7,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Hiss, low",
+       "layers": [
+        {
+         "folder": "Misc/Hiss",
+         "pitch": 0.6,
+         "volume": 30
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Obito"
+  },
+  "AG_KamuiWarp": {
+   "note": "Winding into his eye (1 s), and coming out of the swirl.",
+   "moments": [
+    {
+     "id": "in",
+     "label": "Wind in",
+     "when": "1 s into the eye",
+     "options": [
+      {
+       "label": "Skip entry, low",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Skip entry + low swish",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.8,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 0.5,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Psychic pulse, low + swish",
+       "layers": [
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.6,
+         "volume": 35
+        },
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 0.6,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "out",
+     "label": "Come out",
+     "when": "out of the swirl",
+     "options": [
+      {
+       "label": "Skip entry, normal",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Skip exit (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Exit",
+         "pitch": 0.9,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Swish + skip",
+       "layers": [
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 0.8,
+         "volume": 35
+        },
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 1.1,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Obito"
+  },
+  "AG_KamuiStore": {
+   "note": "A person or item winding into his eye (0.4 s), and being put back.",
+   "moments": [
+    {
+     "id": "absorb",
+     "label": "Absorb",
+     "when": "0.4 s wind in",
+     "options": [
+      {
+       "label": "Skip entry, low",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Skip entry + low swish",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.8,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 0.5,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Psychic pulse, low + swish",
+       "layers": [
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.6,
+         "volume": 35
+        },
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 0.6,
+         "volume": 35
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "release",
+     "label": "Release",
+     "when": "put back out",
+     "options": [
+      {
+       "label": "Skip entry, normal",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 1.1,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Skip exit (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Exit",
+         "pitch": 1.0,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Drop pod open, soft",
+       "layers": [
+        {
+         "folder": "Misc/DropPodOpen/Default",
+         "pitch": 1.2,
+         "volume": 30
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Obito"
+  },
+  "AG_WoodRelease": {
+   "note": "Branches bursting out (0.5 s warmup) and skewering the line.",
+   "moments": [
+    {
+     "id": "burst",
+     "label": "Branches burst",
+     "when": "the line of branches",
+     "options": [
+      {
+       "label": "Tree felled + wood break",
+       "layers": [
+        {
+         "folder": "Interact/Work/Construct/Trees/Tree_Felled",
+         "pitch": 1.2,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Wood/Small",
+         "pitch": 1.1,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Wood break, medium",
+       "layers": [
+        {
+         "folder": "Impact/BuildingDestroyed/Wood/Medium",
+         "pitch": 1.2,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Rummage wood + tree chop",
+       "layers": [
+        {
+         "folder": "Interact/Work/Construct/Wood/Rummage_Wood",
+         "pitch": 1.3,
+         "volume": 40
+        },
+        {
+         "folder": "Interact/Work/Construct/Trees/Tree_Chop",
+         "pitch": 1.1,
+         "volume": 40
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "hit",
+     "label": "Skewer",
+     "when": "each pawn on the line",
+     "options": [
+      {
+       "label": "Bullet wood + flesh",
+       "layers": [
+        {
+         "folder": "Impact/Bullet_Wood",
+         "pitch": 0.9,
+         "volume": 40
+        },
+        {
+         "folder": "Impact/Bullet_Flesh",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Melee hit wood",
+       "layers": [
+        {
+         "folder": "Impact/MeleeHit_Wood",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Punch hit building wood",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitBuilding/Wood",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Obito"
+  },
+  "AG_VectorReflection": {
+   "note": "The world stops, and the rounds are sent back.",
+   "moments": [
+    {
+     "id": "stop",
+     "label": "World stops",
+     "when": "the edit opens",
+     "options": [
+      {
+       "label": "Power off + skip, low",
+       "layers": [
+        {
+         "folder": "Electricity/PowerOff/Small",
+         "pitch": 0.7,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.6,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Skip pulse (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Pulse",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Geothermal stop",
+       "layers": [
+        {
+         "folder": "Electricity/GeothermalPlant/Stop",
+         "pitch": 1.2,
+         "volume": 40
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "release",
+     "label": "Rounds sent back",
+     "when": "the edit is applied",
+     "options": [
+      {
+       "label": "Deflects",
+       "layers": [
+        {
+         "folder": "Impact/Deflect",
+         "pitch": 1.0,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/Deflect",
+         "pitch": 1.2,
+         "volume": 35,
+         "delay": 0.06
+        }
+       ]
+      },
+      {
+       "label": "Power on + swish",
+       "layers": [
+        {
+         "folder": "Electricity/PowerOn/Small",
+         "pitch": 1.0,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 1.4,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Mech band shockwave, high",
+       "layers": [
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 1.4,
+         "volume": 40
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Accelerator"
+  },
+  "AG_VectorSurge": {
+   "note": "Five game seconds of a crawling world: a slowed-down loop fits.",
+   "moments": [
+    {
+     "id": "start",
+     "label": "Surge start",
+     "when": "the clock goes up",
+     "options": [
+      {
+       "label": "Psychic warmup, low",
+       "layers": [
+        {
+         "clip": "Item/Psychic_Artifact_Warmup_A01",
+         "pitch": 0.6,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Power off, slow",
+       "layers": [
+        {
+         "folder": "Electricity/PowerOff/Small",
+         "pitch": 0.5,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Geothermal start",
+       "layers": [
+        {
+         "folder": "Electricity/GeothermalPlant/Start",
+         "pitch": 1.0,
+         "volume": 40
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": "loop",
+     "label": "Surge (loop)",
+     "when": "while it lasts",
+     "options": [
+      {
+       "label": "Ship reactor, low",
+       "layers": [
+        {
+         "folder": "Exotic/Ship_Reactor",
+         "pitch": 0.6,
+         "volume": 25,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Mech booster working",
+       "layers": [
+        {
+         "folder": "Buildings/Mechanoid/MechBooster",
+         "pitch": 1.0,
+         "volume": 30,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Animal pulser, very low",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.4,
+         "volume": 30,
+         "loop": true
+        }
+       ]
+      }
+     ],
+     "duration": 5
+    }
+   ],
+   "hero": "Accelerator"
+  },
+  "AG_VectorShove": {
+   "note": "One body thrown away.",
+   "moments": [
+    {
+     "id": "shove",
+     "label": "Shove",
+     "when": "the push",
+     "options": [
+      {
+       "label": "Thump cannon impact + shockwave",
+       "layers": [
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 1.0,
+         "volume": 50
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Big animal hit + swish",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Pawn",
+         "pitch": 0.9,
+         "volume": 50
+        },
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Bionic punch hit, low",
+       "layers": [
+        {
+         "folder": "Impact/BionicPunch_Hit",
+         "pitch": 0.8,
+         "volume": 50
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Accelerator"
+  },
+  "AG_AnchorBlackFlash": {
+   "note": "Plays the vanilla punch now. Black Flash is a punch with a black spark.",
+   "moments": [
+    {
+     "id": "hit",
+     "label": "Black Flash hit",
+     "when": "the punch lands inside the window",
+     "options": [
+      {
+       "label": "Bionic punch + EMP crackle, low",
+       "layers": [
+        {
+         "folder": "Impact/BionicPunch_Hit",
+         "pitch": 0.8,
+         "volume": 50
+        },
+        {
+         "folder": "Misc/EMPDisabled",
+         "pitch": 0.6,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Thump cannon + zap",
+       "layers": [
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 1.1,
+         "volume": 50
+        },
+        {
+         "folder": "Weapon/ChargeRifle",
+         "pitch": 0.7,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Big hit + shockwave + zap",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Pawn",
+         "pitch": 0.9,
+         "volume": 50
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.8,
+         "volume": 35
+        },
+        {
+         "folder": "Misc/EMPDisabled",
+         "pitch": 0.8,
+         "volume": 30
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Todo"
+  },
+  "AG_AnchorMark": {
+   "note": "The stone thrown and landing.",
+   "moments": [
+    {
+     "id": "throw",
+     "label": "Stone lands",
+     "when": "the stone hits the ground",
+     "options": [
+      {
+       "label": "Stone impact (joy)",
+       "layers": [
+        {
+         "folder": "Interact/Joy/StoneImpact",
+         "pitch": 1.0,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Swish + stone punch",
+       "layers": [
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 1.2,
+         "volume": 35
+        },
+        {
+         "folder": "Impact/PunchHitBuilding/Stone",
+         "pitch": 1.0,
+         "volume": 40,
+         "delay": 0.3
+        }
+       ]
+      },
+      {
+       "label": "Chunk rock drop, light",
+       "layers": [
+        {
+         "folder": "Interact/Haul/Drop/ChunkRock",
+         "pitch": 1.4,
+         "volume": 40
+        }
+       ]
+      }
+     ]
+    }
+   ],
+   "hero": "Todo"
+  }
+ }
+}
