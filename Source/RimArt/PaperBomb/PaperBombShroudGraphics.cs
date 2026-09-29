@@ -89,8 +89,17 @@ namespace RimArt
         private static Vector2 Path(Vector2 feet, Vector2 toward, Vector2 across, float distance, Vector2 slot, int sheet, float v, out float height, out Vector2 ground)
         {
             float e = 1f - (1f - v) * (1f - v), join = Smooth((v - 0.7f) / 0.3f), swing = Mathf.Max(0f, Mathf.Sin(Mathf.PI * e));
-            ground = feet + toward * Mathf.Lerp(T.HandOut, distance, e) + across * (T.Bulge[sheet] * swing * (distance / 5f));
-            height = Mathf.Lerp(T.HandHeight, 0.3f, e) + T.Arc * swing;
+            // In game each tag leaves the clip's real hand as the fan sweeps (PaperBombGraphics.ClipHand); in the lab the sketch's.
+            Vector2 hand = toward * T.HandOut;
+            float h0 = T.HandHeight;
+            if (PawnFit.On)
+            {
+                T.ClipHandAt(T.LeaveAt(sheet), out float reach, out float side, out float lift);
+                hand = ClipHand(toward, reach, side);
+                h0 = lift / SixPathsHeight.Lift;
+            }
+            ground = feet + Vector2.Lerp(hand, toward * distance, e) + across * (T.Bulge[sheet] * swing * (distance / 5f));
+            height = Mathf.Lerp(h0, 0.3f, e) + T.Arc * swing;
             return Vector2.Lerp(Up(ground, height), slot, join);
         }
     }

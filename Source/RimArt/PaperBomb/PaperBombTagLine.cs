@@ -31,6 +31,11 @@ namespace RimArt
         public const float Wave = 0.22f, Rise = 0.3f, HandHeight = 0.38f, Width = 0.34f;
         /// <summary>Plain strip between the caster and tag 0, so the first burst does not reach the caster.</summary>
         public const float Leader = 2.5f, HandOut = 0.35f, TagHalf = 0.42f;
+        /// <summary>
+        /// The RimArt_TagFlick clip's hand held out over the running strip (0.46-2.45 s): reach with the body's lean,
+        /// side, and screen lift with the crouch (make_paper_bomb_anim.py). In game the strip's hand end is there.
+        /// </summary>
+        public const float ClipReach = 0.50f, ClipSide = -0.14f, ClipLift = 0.18f;
         public const float Aftermath = 2.2f, BurstShake = 0.1f;
 
         // The preview's script: 8 tags, lit by hand 1.8 s after the strip is down.

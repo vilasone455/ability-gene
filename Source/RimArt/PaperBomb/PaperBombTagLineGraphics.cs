@@ -34,6 +34,9 @@ namespace RimArt
             Begin(feet);
             PowerPoleGraphics.Sun(map, out Vector2 sun, out float shadow);
             var across = new Vector2(-toward.y, toward.x);
+            // In game the strip's hand end is the clip's real hand (PaperBombGraphics.ClipHand): moved there from the
+            // sketch's, fading out along the strip as its height does.
+            handShift = PawnFit.On ? ClipHand(toward, T.ClipReach, T.ClipSide) - toward * T.Start : Vector2.zero;
             float a0 = T.Start, aEnd = T.End(n), front = T.Front(s, n), torn = Smooth((s - T.Lay - 0.1f) / 0.2f);
             bool fusing = shot.FuseSeconds >= 0f;
             float burned = fusing ? shot.FuseSeconds / shot.PerTag : -1f;
@@ -127,15 +130,21 @@ namespace RimArt
         /// <summary>The drawn point of the strip's middle line at <paramref name="along"/>, with its wave and lift, and how much its twist narrows it.</summary>
         private static Vector2 Point(Vector2 feet, Vector2 toward, Vector2 across, float along, float s, int n, float torn, out float twist)
         {
-            Shape(along, s, n, torn, out float side, out float h, out twist);
-            return Up(feet + toward * along + across * side, h);
+            Shape(along, s, n, torn, out float side, out float h, out twist, out float hold);
+            return Up(feet + toward * along + across * side + handShift * hold, h);
         }
 
-        private static void Shape(float along, float s, int n, float torn, out float side, out float h, out float twist)
+        /// <summary>How far the strip's hand end is moved on the ground in game, from the sketch's hand to the clip's; zero in the lab.</summary>
+        private static Vector2 handShift;
+
+        /// <summary><paramref name="hold"/> is how much of the strip's height at <paramref name="along"/> is the hand's: 1 at the hand, 0 from 0.9 cells on and once it is torn.</summary>
+        private static void Shape(float along, float s, int n, float torn, out float side, out float h, out float twist, out float hold)
         {
             float e = Loose(along, s, n);
             side = T.Wave * e * Mathf.Sin(5f * along - 16f * s);
-            h = T.Rise * e * (0.6f + 0.4f * Mathf.Sin(7f * along - 20f * s + 1f)) + T.HandHeight * (1f - Smooth((along - T.Start) / 0.9f)) * (1f - torn);
+            hold = (1f - Smooth((along - T.Start) / 0.9f)) * (1f - torn);
+            float hand = PawnFit.On ? T.ClipLift / SixPathsHeight.Lift : T.HandHeight;
+            h = T.Rise * e * (0.6f + 0.4f * Mathf.Sin(7f * along - 20f * s + 1f)) + hand * hold;
             twist = 1f - 0.7f * e * Mathf.Abs(Mathf.Sin(3f * along - 11f * s));
         }
 
@@ -151,9 +160,9 @@ namespace RimArt
                 for (int i = 0; i < points; i++)
                 {
                     float along = Mathf.Lerp(low, high, i / (float)(points - 1));
-                    Shape(along, s, n, torn, out float side, out float h, out float twist);
+                    Shape(along, s, n, torn, out float side, out float h, out float twist, out float hold);
                     float half = T.Width / 2f * twist + (pass == 1 ? 0.03f : 0f);
-                    Vector2 ground = feet + toward * along + across * side;
+                    Vector2 ground = feet + toward * along + across * side + handShift * hold;
                     Vector2 mid = pass == 0 ? ground + sun * h : Up(ground, h);
                     left[i] = mid + across * half;
                     right[i] = mid - across * half;

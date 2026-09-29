@@ -58,5 +58,40 @@ namespace RimArt
                 yield return step;
             yield return 90;
         }
+
+        /// <summary>
+        /// Close shots of the Melee Animation hands in the three Paper Bomb clips, facing east and facing south:
+        /// Tag Throw (rest, at the roll, cocked, release), Tag Line's flick and the arm over the strip, and
+        /// Shroud's fan across the front. For checking the clips' hands against a real pawn's body.
+        /// </summary>
+        [RimArtTest("Paper Bomb", "height 2 the clips' hands facing east and south (screenshots)", 3000)]
+        private static IEnumerable<int> HeightClips(RimArtTestContext t)
+        {
+            t.Clear();
+            ThingDef scroll = DefDatabase<ThingDef>.GetNamed("AG_TagScroll");
+            foreach (IntVec3 way in new[] { new IntVec3(1, 0, 0), new IntVec3(0, 0, -1) })
+            {
+                string side = way.x > 0 ? "east" : "south";
+                Pawn caster = HeightShots.Stay(CastHoldTest.Caster(t, scroll));
+                Pawn target = HeightShots.Target(t, t.center + way * 6);
+                yield return 10;
+                foreach (int step in HeightShots.Cast(t, caster, PaperBombDefOf.AG_PaperBomb_TagThrow, target, t.center, "clip throw " + side, null, 2, 5, 11, 16, 19))
+                    yield return step;
+                yield return 60;
+                foreach (int step in HeightShots.Cast(t, caster, PaperBombDefOf.AG_PaperBomb_TagLine, t.center + way * 6, t.center, "clip flick " + side, null, 6, 12, 19, 40))
+                    yield return step;
+                yield return 180;
+                if (target.Spawned) target.Destroy();
+                target = HeightShots.Target(t, t.center + way * 4);
+                yield return 5;
+                foreach (int step in HeightShots.Cast(t, caster, PaperBombDefOf.AG_PaperBomb_Shroud, target, t.center, "clip fan " + side, null, 8, 17, 30, 42))
+                    yield return step;
+                yield return 200;
+                if (caster.Spawned) caster.Destroy();
+                if (target.Spawned) target.Destroy();
+                t.Clear();
+                yield return 10;
+            }
+        }
     }
 }

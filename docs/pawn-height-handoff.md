@@ -191,15 +191,21 @@ Decisions: the fit; one PR with a commit per kit; Power Pole's clips regenerated
   a real pawn (`OnBody` in the Bubble Pipe, Water Gun and Vacuum frames, `ChainSickleFrame.Hand`). A jar at
   the hip of a pawn facing east stays at the hip instead of going to the knees.
 - Exceptions, where a real pawn's own point was already right: Bubble Pipe's raised pipe at the mouth and
-  Eye Pop's face target; Paper Bomb's release points and Tag Line's strip hand (the Melee Animation clips
-  draw the real hands there, and those clips are still at stand-in heights); Flame Gauntlet's resting heat
+  Eye Pop's face target; Flame Gauntlet's resting heat
   between casts (it sits on the game's own gauntlet texture); the vault in the air (Power Pole); Samehada's
   blade and shark form (already right).
 - Each kit has a "height" game test with close shots (`-rimarttest="<kit>: height"`, several filters can be
   given with commas). Before/after crops were compared for all 12.
 
-Left open: Paper Bomb's Melee Animation clips put the real hands at stand-in heights (the tag throw, the
-flick and the fan): regenerating them with fitted lifts, as Power Pole's were, would let the release points
-and the strip be fitted too. Bank Shot's muzzle is 0.35 short of the real pistol's muzzle along the aim.
-The small list (Pain, Rinnegan) and the preview-only list were not touched.
+- Paper Bomb's clips were not fitted like Power Pole's: most of their hands already sit on a real body
+  (facing south: rest at the chest, cocked overhead), and the fit sent them to the feet. Only the east clip
+  (mirrored for west) was wrong: the rig showed the off side's offset as height, so the braced off hand
+  and the roll sat at the neck. `make_paper_bomb_anim.py` now drops the off side's offset there
+  (`sideways()`); in game the pin, the strip's hand end and each fan tag leave from the clip's hand
+  (`PaperBombGraphics.ClipHand` and the `Clip*` numbers in the three timing classes; change them with the
+  clips). `-rimarttest="Paper Bomb: height 2"` shoots the clips' hands facing east and south.
+
+Left open: Bank Shot's muzzle is 0.35 short of the real pistol's muzzle along the aim. A pawn whose warmup
+is shortened (Trigger-happy) releases Paper Bomb's tag before the fixed-length clip does. The small list
+(Pain, Rinnegan) and the preview-only list were not touched.
 
