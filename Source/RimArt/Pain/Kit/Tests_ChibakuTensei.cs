@@ -18,6 +18,22 @@ namespace RimArt
 
         private static float Damage(Pawn p) => p.health.hediffSet.hediffs.OfType<Hediff_Injury>().Sum(h => h.Severity);
 
+        /// <summary>
+        /// A pawn let out early landed hurt, with no more than the crush for the seconds it can have been held plus the
+        /// fall. Counted from its injuries before the cast (a generated raider can come with old wounds); a blunt hit has a
+        /// 40 % chance to also hurt a bone inside for 20-35 % more (the game's Blunt def), so the cap is 1.4 times that.
+        /// </summary>
+        private static void CheckEarlyLanding(RimArtTestContext t, Pawn raider, float before, ChibakuBall ball)
+        {
+            CompProperties_ChibakuTensei props = PainKit.ChibakuProps;
+            float heldAtMost = ball.Burst - ChibakuBall.Pull, raw = props.crushPerSecond * heldAtMost + props.fallDamage;
+            float full = props.crushPerSecond * (ChibakuBall.Formed + props.holdSeconds + ChibakuBall.CrackTime - ChibakuBall.Pull) + props.fallDamage;
+            float damage = Damage(raider) - before;
+            t.Log($"the raider took {damage:0.#} new injury (had {before:0.#} before), {(raider.Dead ? "dead" : raider.Downed ? "down" : "stunned " + raider.stances.stunner.Stunned)}");
+            t.Check(raider.Spawned && damage > 0f && damage <= raw * 1.4f,
+                $"it landed with the fall and at most {heldAtMost:0.0} s of crush: {damage:0.#} new injury, at most {raw * 1.4f:0.#} ({raw:0.#} damage; a full hold is {full:0.#})");
+        }
+
         /// <summary>The Chibaku arena with Pain's Host manifested at <paramref name="from"/>, and no ball on the map.</summary>
         private static Pawn Arena(RimArtTestContext t, IntVec3 from, out GameComponent_Echoes echoes, out EchoRecord record, out MapComponent_ChibakuPlates component)
         {
@@ -135,6 +151,7 @@ namespace RimArt
             IntVec3 c = t.center, from = c + new IntVec3(-10, 0, 0);
             Pawn host = Arena(t, from, out _, out EchoRecord record, out MapComponent_ChibakuPlates component);
             Pawn raider = Tests_Pain.Target(t, c + new IntVec3(1, 0, 0), 300);
+            float before = Damage(raider);
             yield return 5;
 
             Ability ability = Tests_Pain.Ready(t, host, Def);
@@ -156,9 +173,7 @@ namespace RimArt
             t.Check(PainKit.ChibakuLeft(host) <= ChibakuBall.CrackTime + .1f, "the lock ends with the burst (" + PainKit.ChibakuLeft(host).ToString("0.00") + " s left)");
 
             yield return Until(component, ball.Burst + ball.FallTime + .1f);
-            float damage = Damage(raider);
-            t.Log($"the raider took {damage:0.#} damage, {(raider.Dead ? "dead" : raider.Downed ? "down" : "stunned " + raider.stances.stunner.Stunned)}");
-            t.Check(raider.Spawned && damage > 0f && damage < 20f, "it landed with the fall and about 2 s of crush (a full hold is about 34)");
+            CheckEarlyLanding(t, raider, before, ball);
             yield return Until(component, ball.End + .2f);
             t.Check(!component.Live && component.Inner.Count == 0, "the ball ended with nothing left inside");
             Tests_Pain.Finish(record);
@@ -173,6 +188,7 @@ namespace RimArt
             IntVec3 c = t.center, from = c + new IntVec3(-10, 0, 0);
             Pawn host = Arena(t, from, out _, out EchoRecord record, out MapComponent_ChibakuPlates component);
             Pawn raider = Tests_Pain.Target(t, c + new IntVec3(1, 0, 0), 300);
+            float before = Damage(raider);
             yield return 5;
 
             Ability ability = Tests_Pain.Ready(t, host, Def), bansho = host.abilities.GetAbility(PainDefOf.AG_PainBanshoTenin);
@@ -201,9 +217,7 @@ namespace RimArt
             bool waits = bansho.GizmoDisabled(out string why) && why != null && why.Contains("Chibaku");
             t.Check(!waits, "Banshō Ten'in is free after the burst (" + why + ")");
             yield return Until(component, ball.Burst + ball.FallTime + .1f);
-            float damage = Damage(raider);
-            t.Log($"the raider took {damage:0.#} damage, {(raider.Dead ? "dead" : raider.Downed ? "down" : "stunned " + raider.stances.stunner.Stunned)}");
-            t.Check(raider.Spawned && damage > 0f && damage < 20f, "it landed with the fall and about 2 s of crush (a full hold is about 34)");
+            CheckEarlyLanding(t, raider, before, ball);
             yield return t.ShotAs("chibaku-tensei-7-released", c + new IntVec3(0, 0, 1), 12f);
             yield return Until(component, ball.End + .2f);
             t.Check(!component.Live && component.Inner.Count == 0, "the ball ended with nothing left inside");
