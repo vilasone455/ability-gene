@@ -36,6 +36,17 @@ namespace RimArt
         public int SizeNow => tap ? -1 : ShinraTuning.Get.SizeAfter(Seconds);
         public bool Held => !releasing && time >= Open;
 
+        // The rule for this cast: the quick version, or the size reached and the power charged.
+        private static ShinraTuning T => ShinraTuning.Get;
+        public ShinraSize Size => size >= 0 ? T.sizes[size] : null;
+        public float Radius => Size?.radius ?? T.tapRadius;
+        public float PushCells => Quick ? T.tapPush : ByPower(T.pushLow, T.pushHigh);
+        public float WallDamage => Quick ? T.tapWallDamage : ByPower(T.wallDamageLow, T.wallDamageHigh);
+        public float ShotLimit => Quick ? T.tapShotLimit : ByPower(T.shotLimitLow, T.shotLimitHigh);
+        /// <summary>Explosive shots are turned only by a full charge.</summary>
+        public bool TurnsExplosives => !Quick && Power >= 1f;
+        private float ByPower(float low, float high) => low + (high - low) * Power;
+
         public float BurstAt => tap ? TapBurst : Segment + ReleaseBurst;
         public float End => tap ? TapEnd : Segment + ReleaseLength;
         private float Segment => ReleaseAt[Math.Min(ReleaseAt.Length - 1, size + 1)];
