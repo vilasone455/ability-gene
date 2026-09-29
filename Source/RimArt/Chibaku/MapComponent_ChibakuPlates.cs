@@ -36,8 +36,9 @@ namespace RimArt
     /// Stopping the preview early does the same.
     ///
     /// Pain's ball bursts early when Pain can no longer hold it (downed, dead, off the map, out of hero form): the
-    /// seams open at once, or as soon as it is formed (<see cref="ChibakuBall.BreakAt"/>). While it holds, his
-    /// Shinra Tensei and Banshō Ten'in wait (<see cref="HoldLeft"/>).
+    /// seams open at once, or as soon as it is formed (<see cref="ChibakuBall.BreakAt"/>). He can also let it go
+    /// himself once it has formed (<see cref="Release"/>, the Release button). While it holds, his Shinra Tensei and
+    /// Banshō Ten'in wait (<see cref="HoldLeft"/>).
     ///
     /// Polish, after the ability itself is built: the crater's drawing (holes, ribs, drawn rocks) ends with the
     /// preview; it should fade out over about a day, leaving the stony soil, chunks and rubble.
@@ -114,6 +115,19 @@ namespace RimArt
 
         /// <summary>Seconds until the live ball <paramref name="pawn"/> cast bursts, or 0.</summary>
         public float HoldLeft(Pawn pawn) => pawn != null && caster == pawn && Live ? Mathf.Max(0f, ball.Burst - LiveSeconds) : 0f;
+
+        /// <summary>Pain can let his ball go now: it is his live ball, it has formed and its seams have not opened yet.</summary>
+        public bool CanRelease(Pawn pawn) => pawn != null && caster == pawn && Live && LiveSeconds >= ChibakuBall.Formed && LiveSeconds < ball.Crack;
+
+        /// <summary>
+        /// Pain lets his ball go before its time (the Release button, <see cref="Patch_ChibakuRelease"/>): the seams open
+        /// now and it bursts <see cref="ChibakuBall.CrackTime"/> later. Those inside take the crush only for the seconds
+        /// they were held, and Shinra Tensei and Banshō Ten'in are free after the burst.
+        /// </summary>
+        public void Release(Pawn pawn)
+        {
+            if (CanRelease(pawn)) ball.BreakAt(LiveSeconds);
+        }
 
         /// <summary>Pain can still hold his ball: on this map, standing, and in hero form.</summary>
         private bool CasterHolds() => caster.Spawned && caster.Map == map && !caster.Dead && !caster.Downed && PainKit.Has(caster, PainDefOf.AG_PainChibakuTensei);

@@ -495,6 +495,11 @@ fields on `CompProperties_ChibakuTensei`; tests `-rimarttest=chibaku`. Rules:
 - While the ball holds, Shinra Tensei and Banshō Ten'in are locked; Black Receiver is not. If Pain is
   downed, killed, leaves the map or hero form, the ball bursts at once (after it has formed if it is
   still forming). Lost before the core arrives, the core fades and nothing happens.
+- Release button (agreed 2026-09-29): once the ball has formed and until its seams open, Pain can let it go
+  early. It cracks at once and bursts 0.4 s later; those inside take the crush only for the seconds they were
+  held, plus the fall; Shinra Tensei and Banshō Ten'in are free after the burst. The cooldown and charge stay
+  spent. (A charge-up like Shinra Tensei's was considered and not taken: the source throws it without one, it
+  already holds Pain 4-6 s, and Pain has a hold button in Shinra.)
 - One ball per map. Cooldown 1 day, Echo charge 30.
 - The command works for any ability with this comp, so Gojo's Blue can reuse it with its own XML
   (min radius = max radius for a fixed well, no growth, no drift).
