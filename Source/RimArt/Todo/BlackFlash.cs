@@ -52,7 +52,7 @@ namespace RimArt
         /// </summary>
         public static Vector2 Fist(Vector2 todo, Vector2 aim, Vector2 contact, float seconds, float warmup)
         {
-            var shoulder = new Vector2(todo.x + aim.x * 0.08f, todo.y + 0.4f + aim.y * 0.05f);
+            var shoulder = new Vector2(todo.x + aim.x * 0.08f, todo.y + PawnFit.Y(0.4f) + aim.y * 0.05f);
             Vector2 rest = shoulder + aim * 0.18f, back = shoulder - aim * 0.1f;
             float pull = Pull(warmup), age = seconds - warmup;
             if (seconds < pull) return Vector2.Lerp(rest, back, VfxMath.Smooth(seconds / pull));
@@ -60,7 +60,7 @@ namespace RimArt
             return Vector2.Lerp(contact, rest, VfxMath.Smooth((age - 0.08f) / 0.25f));
         }
 
-        /// <summary>Where the fist meets the target standing at <paramref name="foe"/>, hit along <paramref name="aim"/>.</summary>
-        public static Vector2 Contact(Vector2 foe, Vector2 aim) => new Vector2(foe.x - aim.x * 0.2f, foe.y - aim.y * 0.2f + Chest);
+        /// <summary>Where the fist meets the target standing at <paramref name="foe"/>, hit along <paramref name="aim"/> (the chest fitted to a real pawn in game, PawnFit).</summary>
+        public static Vector2 Contact(Vector2 foe, Vector2 aim) => new Vector2(foe.x - aim.x * 0.2f, foe.y - aim.y * 0.2f + PawnFit.Y(Chest));
     }
 }

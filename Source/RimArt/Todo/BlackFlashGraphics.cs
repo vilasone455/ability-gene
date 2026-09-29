@@ -287,7 +287,7 @@ namespace RimArt
             for (int i = 0; i < 3; i++)
             {
                 float ang = seconds * 5f + i * 2.094f;
-                GokuGraphics.Glint(new Vector2(foe.x + Mathf.Cos(ang) * 0.27f, foe.y + 0.84f + Mathf.Sin(ang) * 0.1f), 0.1f,
+                GokuGraphics.Glint(new Vector2(foe.x + Mathf.Cos(ang) * 0.27f, foe.y + PawnFit.Y(0.84f) + Mathf.Sin(ang) * 0.1f), 0.1f,
                     alpha * (0.6f + 0.4f * Mathf.Sin(ang)), RedPale, 45f);
             }
         }
@@ -302,7 +302,7 @@ namespace RimArt
             int k = Mathf.FloorToInt((burst - F.ZoneStart) / F.ZoneEvery);
             float inPeriod = burst - F.ZoneStart - k * F.ZoneEvery, start = Rand(k * 3 + 400) * (F.ZoneEvery - F.ZoneFlick);
             if (inPeriod < start || inPeriod >= start + F.ZoneFlick) return;
-            var spot = new Vector2(todo.x + (Rand(k * 3 + 401) - 0.5f) * 0.4f, todo.y + 0.12f + Rand(k * 3 + 402) * 0.55f);
+            Vector2 spot = PawnFit.At(todo, (Rand(k * 3 + 401) - 0.5f) * 0.4f, 0.12f + Rand(k * 3 + 402) * 0.55f);
             Crackle(spot, seconds, 3, 0.35f, 0.045f, 1f - (inPeriod - start) / F.ZoneFlick, 700 + k * 13);
         }
 
