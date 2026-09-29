@@ -31,6 +31,8 @@ namespace RimArt
         internal static readonly Color Dust = new Color(0.52f, 0.45f, 0.37f);
         /// <summary>Chest height as drawn, and cells north per cell up (SixPathsHeight.Lift).</summary>
         internal const float Chest = 0.3f, Lift = SixPathsHeight.Lift;
+        /// <summary>The chest's height as drawn on a pawn: Chest in the lab, fitted to a real pawn in game (PawnFit, +0.06).</summary>
+        internal static float ChestOn => PawnFit.Y(Chest);
         internal static readonly float PawnLayer = AltitudeLayer.Pawn.AltitudeFor();
 
         private static readonly Mesh thinRing = VfxDraw.Ring(0.93f, "Goku thin ring");
@@ -39,6 +41,8 @@ namespace RimArt
         // The stand-in pawn's parts as ellipses: centre x, centre z, radius x, radius z. The slices are cut from them.
         private static readonly float[,] Standing = { { 0f, 0.18f, 0.22f, 0.32f }, { 0f, 0.58f, 0.16f, 0.17f }, { 0f, 0.69f, 0.19f, 0.1f } };
         private static readonly float[,] Lying = { { 0f, 0.12f, 0.32f, 0.2f }, { 0.42f, 0.14f, 0.16f, 0.17f } };
+        // The standing parts fitted to a real pawn (PawnFit): centres moved, sizes x1.3. Filled when drawn in game.
+        private static readonly float[,] FittedStanding = new float[3, 4];
         // The slices' ki colours, one per part: body, head, hair.
         private static readonly Color[] PartKi = { Ki, KiSky, KiDeep };
 
@@ -77,6 +81,19 @@ namespace RimArt
         {
             if (u <= 0f || u >= 1f) return;
             float[,] parts = lie ? Lying : Standing;
+            // A standing pawn's slices are cut from its parts fitted to a real pawn in game (PawnFit); there is
+            // no measurement of a lying one.
+            if (!lie && PawnFit.On)
+            {
+                for (int k = 0; k < 3; k++)
+                {
+                    FittedStanding[k, 0] = Standing[k, 0] * PawnFit.Body;
+                    FittedStanding[k, 1] = PawnFit.Y(Standing[k, 1]);
+                    FittedStanding[k, 2] = Standing[k, 2] * PawnFit.Body;
+                    FittedStanding[k, 3] = Standing[k, 3] * PawnFit.Body;
+                }
+                parts = FittedStanding;
+            }
             int count0 = lie || !hair ? 2 : 3;
             float left = 1f - u, low = float.MaxValue, high = float.MinValue;
             for (int k = 0; k < count0; k++)
@@ -99,7 +116,7 @@ namespace RimArt
                         Fade(Color.Lerp(PartKi[k], KiIce, Mathf.Min(1f, u * 1.3f)), left), solid, Overhead + k * 0.002f);
                 }
             }
-            Sprite(new Vector2(pos.x, pos.y + 0.3f), 1.2f + u, 1.1f, Fade(KiSky, 0.5f * Mathf.Sin(u * Mathf.PI)), glow, Overhead + 0.01f);
+            Sprite(new Vector2(pos.x, pos.y + (lie ? 0.3f : PawnFit.Y(0.3f))), 1.2f + u, 1.1f, Fade(KiSky, 0.5f * Mathf.Sin(u * Mathf.PI)), glow, Overhead + 0.01f);
         }
 
         /// <summary>
@@ -112,7 +129,7 @@ namespace RimArt
             float u = age / life, f = (1f - u) * (1f - u);
             for (int i = 0; i < 7; i++)
             {
-                float side = i % 2 == 1 ? 1f : -1f, z = pos.y - 0.05f + i * 0.115f, near = 0.1f + u * 1.2f, far = near + 0.5f + Rand(i + 3) * 0.9f * (1f - u * 0.5f);
+                float side = i % 2 == 1 ? 1f : -1f, z = pos.y + PawnFit.Y(-0.05f + i * 0.115f), near = 0.1f + u * 1.2f, far = near + 0.5f + Rand(i + 3) * 0.9f * (1f - u * 0.5f);
                 Streak(new Vector2(pos.x + side * near, z), new Vector2(pos.x + side * far, z), 0.045f, Fade(KiIce, f), whiteGlow, Overhead + 0.02f, 3);
             }
             PaperBombGraphics.RingAt(pos, 0.25f + Smooth(u) * 0.9f, Fade(KiIce, 0.6f * (1f - u)), Floor + 0.02f);
@@ -145,7 +162,7 @@ namespace RimArt
             for (int i = 0; i < 3; i++)
             {
                 float ang = seconds * 5f + i * 2.094f;
-                Glint(new Vector2(pos.x + Mathf.Cos(ang) * 0.27f, pos.y + 0.84f + Mathf.Sin(ang) * 0.1f), 0.1f, alpha * (0.6f + 0.4f * Mathf.Sin(ang)), Flare, 45f);
+                Glint(new Vector2(pos.x + Mathf.Cos(ang) * 0.27f, pos.y + PawnFit.Y(0.84f) + Mathf.Sin(ang) * 0.1f), 0.1f, alpha * (0.6f + 0.4f * Mathf.Sin(ang)), Flare, 45f);
             }
         }
 
@@ -185,13 +202,14 @@ namespace RimArt
             Sides(steps + 1, out Vector2[] left, out Vector2[] right);
             for (int j = 0; j <= steps; j++)
             {
-                float v = j / (float)steps, z = pos.y - 0.12f + v * (1.25f + 0.35f * power);
-                float half = (0.46f * Mathf.Sin(Mathf.PI * Mathf.Pow(v, 0.62f)) * (1f - v * 0.45f) + 0.03f) * (0.8f + 0.2f * power), sway = Mathf.Sin(seconds * 27f + j * 1.2f) * 0.045f * v;
+                // Round the body, fitted to a real pawn when a kit draws in game (PawnFit).
+                float v = j / (float)steps, z = pos.y + PawnFit.Y(-0.12f + v * (1.25f + 0.35f * power));
+                float half = (0.46f * Mathf.Sin(Mathf.PI * Mathf.Pow(v, 0.62f)) * (1f - v * 0.45f) + 0.03f) * (0.8f + 0.2f * power) * PawnFit.Body, sway = Mathf.Sin(seconds * 27f + j * 1.2f) * 0.045f * v;
                 left[j] = new Vector2(pos.x - half + sway + Mathf.Sin(seconds * 41f + j * 2.3f) * 0.025f, z);
                 right[j] = new Vector2(pos.x + half + sway + Mathf.Sin(seconds * 37f + j * 1.7f) * 0.025f, z);
             }
             Strip(left, right, Fade(tint, 0.34f * power), whiteGlow, PawnLayer - 0.02f);
-            Sprite(new Vector2(pos.x, pos.y + 0.35f), 1.5f, 1.9f, Fade(tint, 0.3f * power), glow, PawnLayer - 0.021f);
+            Sprite(new Vector2(pos.x, pos.y + PawnFit.Y(0.35f)), 1.5f * PawnFit.Body, 1.9f * PawnFit.Body, Fade(tint, 0.3f * power), glow, PawnLayer - 0.021f);
         }
     }
 }
