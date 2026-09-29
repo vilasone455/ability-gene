@@ -116,6 +116,11 @@ plexus follow the same hook.
   post-apparel wounds at 30); 89 facing north, over the head as vanilla shells are. Textures from
   `make_costume_textures.py`, fitted to the vanilla body outlines. Vergil: DMC3 blue coat, 256 px,
   Thin/Male/Female/Fat/Hulk x south/east/north.
+- `onlyOverWornApparel` (built 2026-09-29, for Satō): a costume node with it set is drawn only while
+  the pawn wears clothes or armour (`EchoCostume.IsClothing`: OnSkin, Middle or Shell, not drawn as
+  a pack; trousers alone count, belts and packs do not). While it is off, its `hideBodyApparel`,
+  `hideHeadgear` and `coversFace` do not apply either, so a naked Host's helmet shows. Default false;
+  no costume sets it until Satō's.
 - Shared costume (built 2026-09-28): the Akatsuki cloak lives on the abstract hediff
   `AG_EchoManifest_Akatsuki`; Pain's and Itachi's hero forms take it as their parent, and another
   member (Obito once his Echo exists) needs only `ParentName="AG_EchoManifest_Akatsuki"`. Two nodes:
@@ -503,13 +508,12 @@ anchors and Tear were agreed 2026-09-26):
 - Costume (agreed 2026-09-29; the look is not chosen yet, reference frames first): drawn like the
   other hero forms, but only while he wears body apparel. Rising at an anchor leaves his gear with
   the old body (agreed 2026-09-26), so he stands up naked while still manifested; a costume drawn
-  whenever the manifest hediff is on would show him dressed. New XML bool on
-  `PawnRenderNodeProperties_EchoCostume`, `onlyOverWornApparel` (default false): when set,
-  `PawnRenderNodeWorker_EchoCostume.CanDrawNow` also needs at least one worn OnSkin, Middle or Shell
-  apparel (trousers alone count). Every node of his costume sets it, a head piece too, so a naked
-  Satō shows no hat either. Once he is dressed again the costume is drawn again. The other costumes
-  do not set it and are unchanged. Test: a "costume" scenario with a naked Host (no costume drawn)
-  and the same Host dressed (costume drawn, clothes hidden).
+  whenever the manifest hediff is on would show him dressed. XML bool on
+  `PawnRenderNodeProperties_EchoCostume`, `onlyOverWornApparel` (default false; built 2026-09-29,
+  see the costume rules above): when set, `PawnRenderNodeWorker_EchoCostume.CanDrawNow` also needs
+  at least one worn OnSkin, Middle or Shell apparel (trousers alone count). Every node of his costume
+  sets it, a head piece too, so a naked Satō shows no hat either. Once he is dressed again the
+  costume is drawn again. The other costumes do not set it and are unchanged. Test: "costume 7".
 
 Inumaki revisit (agreed 2026-09-27; numbers are placeholders; the built words are in
 `Source/RimArt/Larynx`, `AG_Larynx_Abilities.xml`):
@@ -649,7 +653,11 @@ puff and the vanilla punch.
   Animation's eyebrows not drawn when that mod is loaded, all back when the hediff is removed; 4
   screenshots) and "costume 4" (Pain's piercings on an average and a narrow head: head node, beard
   < piercings < hair, x0.84 / x0.7 on the narrow head, face not covered, gone on revert; 3
-  close-up screenshots). `-rimarttest="Echo: costume"` runs all four.
+  close-up screenshots) and "costume 7" (`onlyOverWornApparel`, switched on for Minato's two nodes
+  during the test only: no other costume sets it; naked with a belt and a cowboy hat, both nodes not
+  drawn and the hat shows; trousers put on, both drawn and the hat hidden; trousers off, not drawn
+  again; the belt drawn throughout; 2 screenshots). The runner now disposes a test when it ends, so
+  a test's finally block also runs after a timeout. `-rimarttest="Echo: costume"` runs costume 1-7.
 - Debug window, kit "Itachi": make Host + manifest, false face (no cost, no cooldown), susanoo 12 s,
   weaken to 30 % health, totsuka stab the pawn under the mouse. Dispersal's "refill the plexus"
   and "shoot the carrier" still apply.
