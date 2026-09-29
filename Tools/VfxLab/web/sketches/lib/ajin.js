@@ -52,7 +52,7 @@ export function shard(i, x, layer, z, size, rot, colour) { draw(shards[i % 6], x
 
 // A limb through points `pts` ({u, h}) with a width per point, as a band in screen space.
 // `lit` draws only the east half (from `from` to `to` of the half width) for the sunlit face.
-function limbBand(key, S, pts, widths, colour, layer, { grow = 0, lit = false, from = .15, to = .92 } = {}) {
+export function limbBand(key, S, pts, widths, colour, layer, { grow = 0, lit = false, from = .15, to = .92 } = {}) {
   const P = pts.map(S), a = [], b = [];
   let sign = 1;
   for (let i = 0; i < P.length; i++) {
@@ -100,7 +100,7 @@ function part(key, S, pts, widths, layer, tone = 1) {
 }
 
 // The point at fractional index f along a polyline.
-function polyAt(P, f) {
+export function polyAt(P, f) {
   const i = Math.min(P.length - 2, Math.max(0, Math.floor(f))), t = f - i;
   return { x: lerp(P[i].x, P[i + 1].x, t), z: lerp(P[i].z, P[i + 1].z, t) };
 }
