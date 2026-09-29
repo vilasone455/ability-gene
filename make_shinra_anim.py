@@ -78,6 +78,109 @@ def build():
             "Events": [], "Parts": parts}
 
 
+# ---------------------------------------------------------------- Shinra Tensei v2 (proposed)
+#
+# Two clips for the two versions sketched in Tools/VfxLab/web/sketches/pain-shinra-tensei.js. The
+# game still plays RimArt_ShinraPush above until the port switches to these; nothing loads them yet.
+
+# RimArt_ShinraTap, the one-click version: the west hand (HandA) sweeps from the hip out and up to
+# shoulder height with the palm opening, bursts at TAP_BURST with a small lean back, holds, and comes
+# back down. The east hand barely moves.
+TAP_NAME = "RimArt_ShinraTap"
+TAP_LENGTH = 0.70
+TAP_BURST = 0.22
+# (seconds, cast hand out, cast hand lift, cast hand splay, other hand out, other hand lift, body bob)
+TAP = [
+    (0.00, 0.22, 0.06, 0.15, 0.22, 0.06, 0.000),
+    (0.12, 0.30, 0.20, 0.70, 0.21, 0.08, -0.010),
+    (TAP_BURST, 0.37, 0.23, 1.00, 0.20, 0.09, 0.030),
+    (0.40, 0.36, 0.21, 1.00, 0.20, 0.09, 0.020),
+    (TAP_LENGTH, 0.22, 0.06, 0.15, 0.22, 0.06, 0.000),
+]
+
+# RimArt_ShinraCharge, the charged version with a hold that moves. The clip has a charge segment
+# from HOLD to HOLD + CHARGE_SPAN that stands for power 0 to 1: the controller seeks to
+# HOLD + power * CHARGE_SPAN while the pawn charges, then plays on from RELEASE when it lets go (a
+# release before full power jumps to RELEASE; the pose there is at most 0.04 cells from any hold
+# pose, and the hands move fast in the next 0.11 s). Through the segment the hands press in closer
+# and rise toward the chin, the body sinks into a crouch and a tremble grows; at a third and two
+# thirds (the 1 s and 2 s size steps) the hands jerk in and the body dips.
+CHARGE_NAME = "RimArt_ShinraCharge"
+HOLD = 0.27
+CHARGE_SPAN = 1.00
+RELEASE = HOLD + CHARGE_SPAN
+CHARGE_BURST = RELEASE + (PUSH - HOLD)
+CHARGE_LENGTH = LENGTH + CHARGE_SPAN
+HOLD_IN, HOLD_UP, HOLD_SINK = 0.04, 0.09, 0.06
+TREMBLE_LOW, TREMBLE_HIGH = 0.003, 0.02
+STEP_KEY = 0.05
+
+
+def charge_poses():
+    """(seconds, half-span, lift, splay, bob, body x) for RimArt_ShinraCharge."""
+    poses = [(t, span, lift, splay, bob, 0.0) for t, span, lift, splay, bob in POSES if t <= HOLD]
+    steps = round(CHARGE_SPAN / STEP_KEY)
+    for k in range(1, steps + 1):
+        t = HOLD + k * STEP_KEY
+        u = k / steps
+        pulse = 0.0
+        for step in (1 / 3, 2 / 3):
+            d = u - step
+            if -1e-9 <= d < 0.09:
+                pulse = max(pulse, 1 - d / 0.09)
+        amp = (TREMBLE_LOW + (TREMBLE_HIGH - TREMBLE_LOW) * u) * (1 if k < steps else 0)
+        shake = amp if k % 2 else -amp
+        span = POSES[2][1] - HOLD_IN * u - 0.03 * pulse + shake
+        lift = POSES[2][2] + HOLD_UP * u + 0.7 * shake
+        bob = POSES[2][4] - HOLD_SINK * u - 0.02 * pulse
+        poses.append((round(t, 4), round(span, 4), round(lift, 4), 0.0, round(bob, 4), round(-0.4 * shake, 4)))
+    poses += [(round(t + CHARGE_SPAN, 4), span, lift, splay, bob, 0.0)
+              for t, span, lift, splay, bob in POSES if t > HOLD]
+    return poses
+
+
+def hands_clip(name, length, body_z, body_x, hand_a, hand_b):
+    """A two-handed south-facing clip. hand_a/hand_b: lists of (seconds, x, z, rotation)."""
+    body_pos = {"x": body_x, "z": body_z}
+    body = part(1001, "BodyA", "BodyA", curves=transform_curves(pos=body_pos),
+                default_overrides={"PawnBody.Direction": float(SOUTH)})
+    head = part(1002, "BodyA/HeadA", "HeadA", parent_id=1001)
+    parts = [body, head]
+    all_x, all_z = [], []
+    for index, keys in enumerate((hand_a, hand_b)):
+        xs = [(t, x) for t, x, _, _ in keys]
+        zs = [(t, z) for t, _, z, _ in keys]
+        rot = [(t, r) for t, _, _, r in keys]
+        all_x.extend(xs)
+        all_z.extend(zs)
+        name_ = "HandA" if index == 0 else "HandB"
+        parts.append(part(1003 + index, name_, name_,
+                          curves=transform_curves(pos={"x": xs, "z": zs}, rot={"y": rot}),
+                          default_overrides={"Transform.m_LocalPosition.y": 0.05 + index * 0.005,
+                              "Transform.m_LocalScale.x": HAND_SCALE,
+                              "Transform.m_LocalScale.y": HAND_SCALE,
+                              "Transform.m_LocalScale.z": HAND_SCALE}))
+    still = [(t, 0.0) for t, _ in all_x]
+    return {"ExportTimeUTC": "2026-09-29T00:00:00.0000000Z", "Name": name,
+            "Length": length, "Bounds": bounds(all_x, all_z, still, still, body_pos),
+            "Events": [], "Parts": parts}
+
+
+def build_tap():
+    # The cast hand is HandA on the west (x < 0); splay turns it from south to point west.
+    a = [(t, -out, lift, 90.0 + 90.0 * splay) for t, out, lift, splay, _, _, _ in TAP]
+    b = [(t, out2, lift2, 90.0 - 90.0 * 0.15) for t, _, _, _, out2, lift2, _ in TAP]
+    return hands_clip(TAP_NAME, TAP_LENGTH, [(t, bob) for t, *_, bob in TAP], [(t, 0.0) for t, *_ in TAP], a, b)
+
+
+def build_charge():
+    poses = charge_poses()
+    a = [(t, -span, lift, 90.0 + 90.0 * splay) for t, span, lift, splay, _, _ in poses]
+    b = [(t, span, lift, 90.0 - 90.0 * splay) for t, span, lift, splay, _, _ in poses]
+    return hands_clip(CHARGE_NAME, CHARGE_LENGTH, [(t, bob) for t, _, _, _, bob, _ in poses],
+                      [(t, bx) for t, *_, bx in poses], a, b)
+
+
 def main():
     out = ROOT / "Animations"
     out.mkdir(exist_ok=True)
@@ -86,6 +189,10 @@ def main():
     print(f"Wrote {path.name}")
     span = max(span for _, span, _, _, _ in POSES)
     print(f"Arms reach the T at {PUSH}s, {span*2:.2f} cells across; recover by {LENGTH}s.")
+    for clip_name, clip in ((TAP_NAME, build_tap()), (CHARGE_NAME, build_charge())):
+        (out / f"{clip_name}.json").write_text(json.dumps(clip, indent=2) + "\n")
+        print(f"Wrote {clip_name}.json ({clip['Length']:.2f}s)")
+    print(f"Tap bursts at {TAP_BURST}s. Charge holds {HOLD}-{RELEASE:.2f}s (power 0-1), bursts at {CHARGE_BURST:.2f}s.")
 
 
 if __name__ == "__main__":

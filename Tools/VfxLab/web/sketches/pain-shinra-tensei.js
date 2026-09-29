@@ -2,6 +2,21 @@
 // drawn by Source/RimArt/Shinra/ShinraVfxGraphics.cs ("Shinra Tensei: VFX preview" in the lab).
 // Proposed 2026-09-29, the user said "yes build it"; not ported.
 //
+// Two versions (the user, 2026-09-29: "new shinra tensei will have two version, one click version
+// and charge version"), picked by the Version dropdown; both draw the same dome.
+//   One click (proposed, placeholders): one order, no target; clip RimArt_ShinraTap (0.7 s: the west
+//   hand sweeps from the hip out and up to shoulder height, bursts at 0.22 s with a small lean back,
+//   holds to 0.4, comes down). 2.5 cells, pushes 4 cells (divided by body size), 10 blunt on a wall
+//   hit, shots up to 20 damage turned for 0.45 s (the dome's life), cooldown 8 s shared with the
+//   charged version, 3 Echo charge. Picture: a short press under the feet in the last 0.12 s, the
+//   dome pops out in the same 0.16 s, lines pour for 0.2 s, no white-out, no floating, a flash at the
+//   palm, a 2.5-cell crater. A raider in melee next to Pain shows what it is for.
+//   Charged: the rule below, clip RimArt_ShinraCharge. Its hold is no longer a still frame: the hands
+//   press in and rise to the chin, the body sinks into a crouch and trembles harder with the charge,
+//   and jerks at each size step; a ball of pale-blue light gathers between the palms and a chakra glow
+//   stands round the body (Storm 4, szCziDnCD-o 1:05), both growing and flaring at the steps. In the
+//   clip the hold is a 1 s segment standing for power 0 to 1 (see make_shinra_anim.py).
+//
 // The rule, as the game has it today (ShinraCharge.cs, ShinraCombat.cs):
 //   Charge up to 3 s (180 ticks, counted from the start of the gesture); power c = held / 3. Release
 //   at 0.38 s of the clip. Every living pawn within 4 cells of Pain with a line from him is pushed
@@ -103,7 +118,16 @@ const White = new Color(1, 1, 1), Mist = new Color(.86, .9, .96), Shade = new Co
 const Bag = new Color(.64, .57, .42), BagDark = new Color(.36, .31, .22);
 
 // The rule's numbers (ShinraCharge / ShinraCombat; placeholders, XML later).
-const FullCharge = 3, DefenseT = .75, PushLow = 3, PushHigh = 7;
+const FullCharge = 3, PushLow = 3, PushHigh = 7;
+// The one-click version (proposed 2026-09-29, placeholders): no charge, 2.5 cells, pushes 4 cells
+// (divided by body size), 10 blunt on a wall hit, turns shots up to 20 damage for 0.45 s, cooldown 8 s
+// shared with the charged version, 3 Echo charge. Drawn with the same dome, smaller and quicker, and
+// its own clip (RimArt_ShinraTap).
+const Versions = ['charged', 'one click'];
+const TapRadius = 2.5, TapPush = 4, TapDefense = .45, TapPour = .2, TapPower = .35;
+// Per frame, set at the top of draw() from the version: how long the dome holds (the shots-turned
+// window) and how long its lines pour.
+let DefenseT = .75, Pour = .3;
 // Proposed (Naruto Mobile: three sizes by how long the button is held): the dome, and so the area
 // pushed, is 2 cells after up to 1 s of charge, 3 cells after 1-2 s and 4 cells after 2-3 s.
 const Sizes = [2, 3, 4], SizeStep = 1;
@@ -118,10 +142,22 @@ const Lead = .2, Hold = .27, Burst = .38, ClipEnd = 1.35;
 const HandKeys = [0, .14, .27, .38, .48, .76, 1.05, 1.35];
 const HandX = [.22, .15, .11, .34, .38, .36, .27, .22], HandZ = [.06, .12, .15, .16, .16, .15, .11, .06];
 const BodyKeyZ = [0, -.02, -.045, .03, .04, .025, .01, 0];
+// While charging, the hold is no longer a still frame (RimArt_ShinraCharge): with the charge the hands
+// press in closer (0.11 -> 0.07 from the middle) and rise toward the chin (+0.09), the body sinks into
+// a crouch (-0.06) and trembles harder (0.3 -> 2 hundredths of a cell); at each size step the hands
+// jerk in and the body dips for 0.25 s. All of it blends out over the 0.11 s release.
+const HoldIn = .04, HoldUp = .09, HoldSink = .06, TrembleLow = .003, TrembleHigh = .02, StepPulse = .25;
+// RimArt_ShinraTap (0.7 s, facing south): the west hand sweeps from the hip out and up to shoulder
+// height, palm open, and bursts at 0.22 s with a small lean back; the east hand stays low.
+const TapBurst = .22, TapEnd = .7;
+const TapKeys = [0, .12, .22, .4, .7];
+const TapCastX = [.22, .3, .37, .36, .22], TapCastZ = [.06, .2, .23, .21, .06];
+const TapOtherX = [.22, .21, .2, .2, .22], TapOtherZ = [.06, .08, .09, .09, .06];
+const TapBodyZ = [0, -.01, .03, .02, 0];
 // Decided look.
 const FlashT = .12, DustDrift = .6, Streaks = 20, Scrapes = 22;
 // The dome's motion: lines pour down for 0.3 s, then flash for about 0.26 s each; two ripples.
-const Pour = .3, FlashLife = .26, Ripples = [.02, .24], RippleLife = .4, Wisps = 18, WhiteoutT = .12;
+const FlashLife = .26, Ripples = [.02, .24], RippleLife = .4, Wisps = 18, WhiteoutT = .12;
 
 const Scenarios = ['pawns round Pain', 'shots during and after', 'effect only'];
 const Terrains = {
@@ -173,13 +209,15 @@ shellMesh.uv = new Float32Array([0, 0, 1, 0, 1, .5, 0, .5, 0, .5, 1, .5, 1, 1, 0
 
 // ---- timing ---------------------------------------------------------------------------------------
 function times(p) {
+  if (p.version === Versions[1]) { const R = Lead + TapBurst; return { tap: true, hold: 0, power: TapPower, R, end: R + Math.max(2.6, .6 + p.dustFade + .6) }; }
   const hold = Math.max(p.charge, Hold), power = clamp(p.charge / FullCharge);
   const R = Lead + hold + (Burst - Hold);
-  return { hold, power, R, end: R + Math.max(3.2, .8 + p.dustFade + .9) };
+  return { tap: false, hold, power, R, end: R + Math.max(3.2, .8 + p.dustFade + .9) };
 }
 function clipTime(s, t) {
   const k = s - Lead;
   if (k <= 0) return 0;
+  if (t.tap) return Math.min(TapEnd, k);
   if (k < t.hold) return Math.min(Hold, k);
   return Math.min(ClipEnd, Hold + (k - t.hold));
 }
@@ -420,23 +458,54 @@ function chargePicture(o, s, cNow, col, sun) {
 }
 
 // ---- Pain with the clip's hands -------------------------------------------------------------------
-function painGesture(o, ct, glowAmount, sun, strength, lift = 0) {
-  const bz = key(HandKeys, BodyKeyZ, ct), g = { x: o.x, z: o.z + bz + lift * Lift };
+// The pose at clip time ct: body offset and the two hands, relative to Pain's cell. For the charged
+// version the hold is alive: see HoldIn and the lines under it.
+function poseAt(ct, s, t, p) {
+  if (t.tap) {
+    return { bx: 0, bz: key(TapKeys, TapBodyZ, ct), glowAt: -1, aura: 0,
+      hands: [{ x: -key(TapKeys, TapCastX, ct), z: key(TapKeys, TapCastZ, ct) }, { x: key(TapKeys, TapOtherX, ct), z: key(TapKeys, TapOtherZ, ct) }] };
+  }
+  let span = key(HandKeys, HandX, ct), lift = key(HandKeys, HandZ, ct), bz = key(HandKeys, BodyKeyZ, ct), bx = 0, hx = 0, hz = 0, glowK = 0, aura = 0;
+  if (ct >= Hold && s - Lead > 0) {
+    const held = Math.min(s - Lead, p.charge), c = clamp(held / FullCharge);
+    const k = ct <= Hold ? 1 : 1 - clamp((ct - Hold) / (Burst - Hold));          // blends out over the release
+    const step = Math.floor(Math.min(held, (Sizes.length - 1) * SizeStep) / SizeStep) * SizeStep, since = held - step;
+    const pulse = step > 0 && since < StepPulse ? 1 - since / StepPulse : 0, A = lerp(TrembleLow, TrembleHigh, c) * k;
+    span -= (HoldIn * c + .03 * pulse) * k; lift += HoldUp * c * k; bz -= (HoldSink * c + .02 * pulse) * k;
+    hx = Math.sin(s * 44) * A; hz = Math.sin(s * 57 + 1) * A * .7; bx = Math.sin(s * 39 + 2) * A * .4;
+    glowK = (.25 + .45 * c + .5 * pulse) * k;
+    aura = (c + .6 * pulse) * k;
+  }
+  return { bx, bz, glowAt: glowK, aura, hands: [{ x: -span + hx, z: lift + hz }, { x: span - hx, z: lift - hz }] };
+}
+function painGesture(o, pose, glowAmount, sun, strength, lift = 0, palmFlash = 0) {
+  const g = { x: o.x + pose.bx, z: o.z + pose.bz + lift * Lift };
   // His shadow stays on the ground and shrinks a little as he rises.
   const k = 1 - .35 * lift / FloatH;
   sprite({ x: o.x + sun.x * (.45 + lift), z: o.z + sun.z * (.45 + lift) }, .85 * k, .4 * k, Ink.withAlpha(strength * k), soft, shadowLayer);
   pain(g, sun, 0);
-  const hx = key(HandKeys, HandX, ct), hz = key(HandKeys, HandZ, ct);
-  for (const side of [-1, 1]) {
-    const shoulder = { x: g.x + side * .13, z: g.z + BodyZ + .14 }, hand = { x: o.x + side * hx, z: o.z + BodyZ + hz + lift * Lift };
-    line(`shinra sleeve ${side}`, [shoulder, hand], .09, Cloak, undefined, pawnLayer + .01, 'none');
+  pose.hands.forEach((h, i) => {
+    const side = h.x < 0 ? -1 : 1, shoulder = { x: g.x + side * .13, z: g.z + BodyZ + .14 }, hand = { x: o.x + h.x, z: o.z + BodyZ + h.z + lift * Lift };
+    line(`shinra sleeve ${i}`, [shoulder, hand], .09, Cloak, undefined, pawnLayer + .01, 'none');
     draw(disc, hand.x, pawnLayer + .011, hand.z, .055, .055, 0, Skin);
+    if (i === 0 && palmFlash > 0) sprite(hand, .7, .6, IceBright.withAlpha(.8 * palmFlash), glow, pawnLayer + .013);
+  });
+  // While charging: a ball of pale-blue light gathers between the palms and a chakra glow stands round
+  // the body (Storm 4, szCziDnCD-o 1:05), both growing with the charge and flaring at each size step.
+  if (pose.aura > 0) {
+    sprite({ x: g.x, z: g.z + .3 }, lerp(.7, 1.5, Math.min(1, pose.aura)), lerp(.9, 1.8, Math.min(1, pose.aura)), SkyBlue.withAlpha(.3 * pose.aura), glow, pawnLayer - .005);
   }
-  if (glowAmount > 0) sprite({ x: o.x, z: o.z + BodyZ + .16 }, .7, .6, PaleBlue.withAlpha(.35 * glowAmount), glow, pawnLayer + .012);
+  const glowK = Math.max(glowAmount, pose.glowAt), mid = { x: (pose.hands[0].x + pose.hands[1].x) / 2, z: (pose.hands[0].z + pose.hands[1].z) / 2 };
+  if (glowK > 0) {
+    const size = lerp(.45, .95, Math.min(1, pose.aura || 0));
+    sprite({ x: o.x + mid.x, z: o.z + BodyZ + mid.z + lift * Lift }, size, size * .85, PaleBlue.withAlpha(.5 * glowK), glow, pawnLayer + .012);
+    sprite({ x: o.x + mid.x, z: o.z + BodyZ + mid.z + lift * Lift }, size * .35, size * .3, White.withAlpha(.7 * glowK), glow, pawnLayer + .0125);
+  }
 }
 
 // ---- pushed pawns ---------------------------------------------------------------------------------
 const Cast = [
+  { x: -.9, z: .7, kind: 'raider' },               // in melee, right next to Pain
   { x: 1.7, z: 1.1, kind: 'raider' },
   { x: -2.5, z: -1.5, kind: 'raider', wall: 5 },   // sandbags across its line at 5 cells
   { x: -1.1, z: 2.3, kind: 'ally' },
@@ -471,7 +540,7 @@ function pushed(o, e, p, c, sun, strength) {
       rods(k, start, sun, strength, inside && e > hitAt ? bump(clamp((e - hitAt) / .35)) : 0);
       return;
     }
-    const want = inside ? lerp(PushLow, PushHigh, c) / Math.max(1, q.body ?? 1) : 0;
+    const want = inside ? (p.version === Versions[1] ? TapPush : lerp(PushLow, PushHigh, c)) / Math.max(1, q.body ?? 1) : 0;
     const travel = q.wall ? Math.min(want, q.wall - .55 - d0) : want, hit = q.wall && want > q.wall - .55 - d0;
     const fly = .1 + .05 * travel, u = travel > 0 && e > hitAt ? clamp((e - hitAt) / fly) : 0;
     const along = d0 + travel * (1 - (1 - u) * (1 - u)), g = { x: o.x + ux * along, z: o.z + uz * along };
@@ -565,8 +634,9 @@ export default {
   label: 'Shinra Tensei (sketch)',
   compareWith: 'Shinra Tensei: VFX preview',
   params: {
+    version: { label: 'Version', value: Versions[0], options: Versions, group: 'Mechanic' },
     scenario: { label: 'Scenario', value: Scenarios[0], options: Scenarios, group: 'Mechanic' },
-    charge: P('Charge held (s)', 3, .1, 3, .1, 'Mechanic'),
+    charge: P('Charge held (s, charged version)', 3, .1, 3, .1, 'Mechanic'),
     terrain: { label: 'Ground', value: 'soil', options: Object.keys(Terrains), group: 'Look' },
     wave: P('Dome forms in (s)', .16, .06, .6, .02, 'Timing (s)'),
     whiteout: { label: 'White-out at the burst (Mobile)', value: true, group: 'Look' },
@@ -579,6 +649,8 @@ export default {
   duration(p) { return times(p).end; },
   phases(p) {
     const t = times(p);
+    if (t.tap) return [{ name: 'Rest', t: 0 }, { name: 'Hand out', t: Lead }, { name: 'Burst', t: t.R }, { name: 'Dome full size', t: t.R + p.wave },
+      { name: 'Dome gone (shots turned until)', t: t.R + TapDefense }, { name: 'Dust gone', t: t.R + .5 + p.dustFade }];
     return [
       { name: 'Rest', t: 0 }, { name: 'Hands to chest', t: Lead }, { name: 'Hold (charging)', t: Lead + Hold },
       ...Sizes.slice(1).map((r, i) => ({ name: `Size ${r} cells`, t: Lead + (i + 1) * SizeStep })).filter(q => q.t - Lead <= p.charge),
@@ -588,6 +660,7 @@ export default {
   },
   events(p) {
     const t = times(p);
+    if (t.tap) return [{ t: t.R, type: 'shake', value: .04 }, { t: t.R, type: 'sound', def: 'AG_ShinraRelease' }];
     return [
       { t: Lead, type: 'sound', def: 'AG_ShinraCharge' },
       { t: t.R, type: 'shake', value: lerp(.03, .09, t.power) },
@@ -598,21 +671,25 @@ export default {
   draw(s, p, { origin, scene }) {
     const sun = scene?.shadowVector ?? { x: -.45, z: -.32 }, strength = scene?.sun?.strength ?? .32;
     const t = times(p), c = t.power, e = s - t.R, col = Terrains[p.terrain] ?? Terrains.soil;
-    Radius = sizeFor(p.charge);
+    Radius = t.tap ? TapRadius : sizeFor(p.charge);
+    DefenseT = t.tap ? TapDefense : .75; Pour = t.tap ? TapPour : .3;
     const o = { x: origin.x, z: origin.z }, ct = clipTime(s, t);
     // Charge counted from the start of the gesture, frozen when the release is asked.
     const cNow = clamp(Math.min(s - Lead, p.charge) / FullCharge);
 
     if (e < 0) {
-      chargePicture(o, s, s > Lead ? Math.max(cNow, .05) : 0, col, sun);
-      if (s > Lead) sizeRing(o, Math.min(s - Lead, p.charge));
+      if (t.tap) { const k = clamp((s - (t.R - .12)) / .12); if (k > 0) pressed(o, .45 * k, .35, k, col); }
+      else {
+        chargePicture(o, s, s > Lead ? Math.max(cNow, .05) : 0, col, sun);
+        if (s > Lead) sizeRing(o, Math.min(s - Lead, p.charge));
+      }
     } else {
       // The ground: what stays.
       const F = front(e, p);
       sprite(o, F * 2 / .9, F * 2 / .9, col.scour.withAlpha(.55), scourMat, Floor + .001);   // the texture's edge is at 0.9
       scrapes(o, F, col);
       lip(o, smooth((e - p.wave * .7) / .2), col);
-      pressed(o, lerp(.4, .9, c), .3, 1, col);
+      pressed(o, t.tap ? .45 : lerp(.4, .9, c), .3, 1, col);
       rimCracks(o, lerp(.4, .9, c), clamp((c - .5) * 2), col);
 
       // The dust skirt where the dome meets the floor, blown out and fading.
@@ -632,11 +709,12 @@ export default {
       floorRing(o, rsD, clamp(e / .03) * (1 - smooth((e - (DefenseT - .1)) / .25)) * p.dome);
       dome(o, e, p, rsD, domeA, e < .2 ? (1 - e / .2) ** 2 : 0, sun);
       // Mobile whites out the whole screen for a moment at the burst (0:03, 0:17 of KQQE2-wx_yw).
-      if (p.whiteout && e < WhiteoutT) Overlay.Fill(0, 0, 1, 1, White.withAlpha(.5 * (1 - e / WhiteoutT) ** 2));
+      if (!t.tap && p.whiteout && e < WhiteoutT) Overlay.Fill(0, 0, 1, 1, White.withAlpha(.5 * (1 - e / WhiteoutT) ** 2));
     }
 
-    const lift = e < 0 ? 0 : FloatH * smooth(e / .25) * (1 - smooth((e - DefenseT - .05) / .3));
-    painGesture(o, ct, e < 0 && s > Lead + Hold ? cNow : e >= 0 && e < .1 ? 1 - e / .1 : 0, sun, strength, lift);
+    const lift = e < 0 || t.tap ? 0 : FloatH * smooth(e / .25) * (1 - smooth((e - DefenseT - .05) / .3));
+    const flashK = e >= 0 && e < .1 ? 1 - e / .1 : 0;
+    painGesture(o, poseAt(ct, s, t, p), t.tap ? 0 : flashK, sun, strength, lift, t.tap ? flashK : 0);
     if (p.scenario === Scenarios[0]) pushed(o, Math.max(-1, e), p, c, sun, strength);
     else if (p.scenario === Scenarios[1]) shots(o, e, p, sun, strength);
   },
