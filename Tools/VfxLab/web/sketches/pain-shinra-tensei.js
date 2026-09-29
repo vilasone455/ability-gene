@@ -23,15 +23,18 @@
 //   3.20  release asked (3 s of charge); the clip moves on from the hold marker
 //   3.31  burst (clip 0.38): hands thrown wide, a white flash, camera shake 0.03 -> 0.09 by charge
 //   3.31-3.61  the dome grows from Pain to exactly 4 cells in 0.30 s, easing out. It starts white
-//         (Storm 4's first frame), then clears to a see-through half sphere of grey-white wind with
-//         swirl lines over its surface. Faint white wind streaks run ahead of it. Behind it the
+//         (Storm 4's first frame), then clears to a see-through half sphere of grey-white wind; 16
+//         lines pour over it from the top down to the floor as it fills. Two soft ripples roll from
+//         the top down to the floor (starting 0.02 and 0.24 s, 0.4 s each). Faint white wind streaks run ahead of it. Behind it the
 //         ground is scoured darker, with short outward scrape marks; a grey-white dust skirt rides
 //         its foot. Pawns are thrown as it reaches them: raider, ally, a heavy animal that slides
 //         (body size 2.4), a raider stopped by sandbags (hit), a rod-pinned raider that stays (rods
 //         flare), a raider at 5.9 cells untouched. Stones fly out and land 4.3-6.2 cells out
-//   3.61-3.86  the dome holds at 4 cells, its swirl lines turning and drifting up; a low lip of
-//         pushed soil with clods rises at 4 cells
-//   3.86-4.06  the dome swells 8 % and fades: gone at 0.75 s, when shots stop being turned
+//   3.61-3.86  the dome overshoots about 0.2 cells and settles at 4. It does not turn (Naruto Mobile,
+//         -D6cQGfYKu8 0:38-0:47: the lines flash in new places each frame): each line now flashes
+//         along a short path somewhere new, runs about 0.26 s and is gone; the rim shimmers. A low lip
+//         of pushed soil with clods rises at 4 cells
+//   3.86-4.06  the dome swells 10 % and fades (Mobile 0:47): gone at 0.75 s, when shots stop being turned
 //   4.1-5.6  the dust skirt drifts out to 4.6 cells and fades
 //   after the scoured circle (4 cells), its lip and clods, the scrape marks, the pressed circle and
 //         the stones stay. In game they would fade over about 30 s (placeholder); the lab keeps them.
@@ -41,7 +44,8 @@
 // A first version (same day) had the anime's overhead Konoha shot as its main shape: a tan dust ring
 // with 36 pointed spikes. The user: "i feel like it's sand jutsu instead of shinra tensei", and wanted
 // "more depth in shinra dome like game or anime". The dome is now the main shape; the dust is a soft
-// grey-white skirt.
+// grey-white skirt. Its lines first turned round it; the user: motion "can better than rotate", the
+// sources do not turn. Now they pour, flash and ripple.
 //
 // Drawing: everything is a level circle, a radial strip, a sprite or a line on the dome's surface,
 // so there is no per-facing method; the gesture is the one south-facing clip the game plays (hand
@@ -52,8 +56,10 @@
 // On it: a mottled milky fill (lab/shinra-fill, Transparent; the same texture additive for the white
 // burst), a soft brighter rim (lab/shinra-shell, additive), a highlight 0.95 rad up on the sun's side,
 // a darker limb on the far side (5 soft sprites), a soft line round the floor circle (to the north it
-// sits inside the outline, showing the height), and 16 swirl lines: even ones round at one height,
-// odd ones curling from near the top down to the floor. A line's points that face the viewer
+// sits inside the outline, showing the height), 16 surface lines (a pour from the top to the floor,
+// then flashes: head and tail run along a path picked by hash per line and generation, so nothing
+// turns) and 2 ripple rings (level circles on the surface, sliding from the top to the floor).
+// A line's points that face the viewer
 // (sin el - Lift cos el sin az > 0) are drawn bright over the pawns, the far-wall part faint under
 // them, so Pain stands inside the dome. The scoured ground is one sprite (lab/shinra-scour). The lab/
 // textures go into make_shinra_textures.py for the port. Dust colours follow the ground dropdown; in
@@ -84,6 +90,8 @@ const HandX = [.22, .15, .11, .34, .38, .36, .27, .22], HandZ = [.06, .12, .15, 
 const BodyKeyZ = [0, -.02, -.045, .03, .04, .025, .01, 0];
 // Decided look.
 const FlashT = .12, DustDrift = .6, Streaks = 20, Scrapes = 22;
+// The dome's motion: lines pour down for 0.3 s, then flash for about 0.26 s each; two ripples.
+const Pour = .3, FlashLife = .26, Ripples = [.02, .24], RippleLife = .4;
 
 const Scenarios = ['pawns round Pain', 'shots during and after', 'effect only'];
 const Terrains = {
@@ -246,7 +254,8 @@ function dome(o, e, p, rs, alpha, flash, sun) {
   const a = alpha * p.dome;
   draw(shellMesh, o.x, Y + .02, o.z, rs, rs, 0, Mist.withAlpha(Math.min(1, .16 * a + .35 * flash)), fillMat);
   if (flash > 0) draw(shellMesh, o.x, Y + .0205, o.z, rs, rs, 0, White.withAlpha(.55 * flash), fillGlowMat);
-  draw(shellMesh, o.x, Y + .021, o.z, rs * 1.03, rs * 1.03, 0, PaleBlue.withAlpha(.32 * a), shellMat);
+  const shimmer = 1 + .08 * Math.sin(e * 71) + .05 * Math.sin(e * 113 + 1.3);
+  draw(shellMesh, o.x, Y + .021, o.z, rs * 1.03, rs * 1.03, 0, PaleBlue.withAlpha(.32 * a * shimmer), shellMat);
   // Light: a highlight high on the sun's side, the limb away from the sun a shade darker.
   const lightAz = Math.atan2(-sun.z, -sun.x), hi = domeAt(o, rs, lightAz, .95);
   sprite(hi, rs * .75, rs * .55, White.withAlpha(.4 * a), glow, Y + .022);
@@ -259,33 +268,64 @@ function dome(o, e, p, rs, alpha, flash, sun) {
   const base = [];
   for (let j = 0; j <= 64; j++) { const az = j / 64 * TAU; base.push({ x: o.x + Math.cos(az) * rs, z: o.z + Math.sin(az) * rs }); }
   line('shinra dome base glow', base, .4, White.withAlpha(.14 * a), whiteGlow, Y + .0215, 'none');
+  // Two pressure ripples roll from the top down to the floor, widening as they go (Naruto Mobile's
+  // dome does not turn; its lines flash along the surface in new places).
+  Ripples.forEach((start, i) => {
+    const u = (e - start) / RippleLife;
+    if (u <= 0 || u >= 1) return;
+    const el = Math.PI / 2 * (1 - easeOut(u)) + .04, pts = [];
+    for (let j = 0; j <= 48; j++) pts.push(domeAt(o, rs, j / 48 * TAU, el));
+    surfaceLine(`shinra ripple ${i}`, pts, .5, .12, a * bump(u) * 1.3, false, .15);   // soft band, almost no core
+  });
+  // Surface lines. For the first 0.3 s they pour from the top down to the floor as the dome fills;
+  // after that each one flashes along a short path somewhere new, runs, and is gone.
   const n = Math.round(p.swirls);
   for (let k = 0; k < n; k++) {
-    const spin = (k % 2 ? 1 : -1) * (1.6 + 1.2 * rand(k * 19 + 1)), az0 = rand(k * 19 + 2) * TAU + spin * e;
-    // Even strokes swirl round at one height; odd ones curl from near the top down to the floor.
-    const sweep = k % 2 === 1, span = sweep ? .45 + .5 * rand(k * 19 + 4) : .7 + .9 * rand(k * 19 + 4);
-    const el0 = sweep ? .85 + .1 * rand(k * 19 + 3) : .15 + .9 * rand(k * 19 + 3) + .3 * clamp(e / DefenseT);
-    const rise = sweep ? -(1.1 + .3 * rand(k * 19 + 5)) : (rand(k * 19 + 5) - .5) * .7;
-    const runs = [];
-    let run = null;
-    for (let j = 0; j <= 18; j++) {
-      const u = j / 18, q = domeAt(o, rs, az0 + span * u, Math.max(.03, Math.min(1.5, el0 + rise * (u - .5))));
-      if (!run || run.front !== q.front) { run = { front: q.front, pts: run ? [run.pts[run.pts.length - 1]] : [] }; runs.push(run); }
-      run.pts.push(q);
+    let u, az0, el0, dAz, dEl;
+    if (e < Pour) {
+      u = e / Pour;
+      az0 = (k + rand(k * 23 + 1)) / n * TAU; el0 = 1.45; dAz = (rand(k * 23 + 2) - .5) * .9; dEl = -(1.3 + .1 * rand(k * 23 + 3));
+    } else {
+      const period = FlashLife * (.8 + .4 * rand(k * 23 + 4)), x = (e - Pour) / period + rand(k * 23 + 5), g = Math.floor(x), seed = k * 97 + g * 13;
+      u = x - g;
+      const down = rand(seed + 1) < .7;
+      az0 = rand(seed + 2) * TAU;
+      el0 = down ? .75 + .6 * rand(seed + 3) : .2 + .7 * rand(seed + 3);
+      dAz = down ? (rand(seed + 4) - .5) * .7 : (rand(seed + 4) < .5 ? -1 : 1) * (.5 + .6 * rand(seed + 5));
+      dEl = down ? -(el0 - .05 - .1 * rand(seed + 6)) : (rand(seed + 6) - .5) * .35;
     }
-    const f = a * (.55 + .45 * rand(k * 19 + 6));
-    runs.forEach((r, i) => {
-      if (r.pts.length < 3) return;
-      const key = `shinra swirl ${k} ${i}`;
-      if (r.front) {
-        line(`${key} glow`, r.pts, .16, White.withAlpha(.1 * f), whiteGlow, Y + .03, 'both');
-        line(`${key} core`, r.pts, .045, White.withAlpha(.42 * f), whiteGlow, Y + .031, 'both');
-      } else {
-        line(`${key} glow`, r.pts, .1, Mist.withAlpha(.05 * f), whiteGlow, pawnLayer - .012, 'both');
-        line(`${key} core`, r.pts, .03, Mist.withAlpha(.2 * f), whiteGlow, pawnLayer - .011, 'both');
-      }
-    });
+    // The head runs out along the path, the tail follows it and they meet at the end.
+    const head = easeOut(clamp(u / .55)), tail = smooth(clamp((u - .3) / .7));
+    if (head - tail < .03) continue;
+    const pts = [];
+    for (let j = 0; j <= 16; j++) {
+      const w = lerp(tail, head, j / 16);
+      pts.push(domeAt(o, rs, az0 + dAz * w, Math.max(.03, Math.min(1.52, el0 + dEl * w))));
+    }
+    surfaceLine(`shinra swirl ${k}`, pts, .16, .045, a * (.55 + .45 * rand(k * 23 + 7)) * clamp(u / .08) * (1 - tail * .6), true);
   }
+}
+// A line on the dome's surface: the part facing the viewer bright over the pawns, the far-wall part
+// faint under them. taper false keeps its width (a closed ripple ring).
+function surfaceLine(key, pts, glowW, coreW, f, taper, coreK = 1) {
+  if (f <= 0) return;
+  const runs = [];
+  let run = null;
+  for (const q of pts) {
+    if (!run || run.front !== q.front) { run = { front: q.front, pts: run ? [run.pts[run.pts.length - 1]] : [] }; runs.push(run); }
+    run.pts.push(q);
+  }
+  runs.forEach((r, i) => {
+    if (r.pts.length < 3) return;
+    const t = taper ? 'both' : 'none';
+    if (r.front) {
+      line(`${key} ${i} glow`, r.pts, glowW, White.withAlpha(.1 * f), whiteGlow, Y + .03, t);
+      line(`${key} ${i} core`, r.pts, coreW, White.withAlpha(.42 * f * coreK), whiteGlow, Y + .031, t);
+    } else {
+      line(`${key} ${i} glow`, r.pts, glowW * .65, Mist.withAlpha(.05 * f), whiteGlow, pawnLayer - .012, t);
+      line(`${key} ${i} core`, r.pts, coreW * .7, Mist.withAlpha(.2 * f * coreK), whiteGlow, pawnLayer - .011, t);
+    }
+  });
 }
 
 // ---- charge ------------------------------------------------------------------------------------------
@@ -499,7 +539,8 @@ export default {
       }
       windStreaks(o, e, p, p.streaks * lerp(.6, 1, c));
       const fade = smooth((e - (DefenseT - .2)) / .2);
-      dome(o, e, p, F * (1 + .08 * fade), clamp(e / .03) * (1 - fade), e < .25 ? (1 - e / .25) ** 2 : 0, sun);
+      const x = Math.max(0, e - p.wave), spring = .05 * Math.exp(-7 * x) * Math.sin(14 * x);   // overshoots about 0.2 cells, settles
+      dome(o, e, p, F * (1 + spring + .1 * fade), clamp(e / .03) * (1 - fade), e < .25 ? (1 - e / .25) ** 2 : 0, sun);
     }
 
     painGesture(o, ct, e < 0 && s > Lead + Hold ? cNow : e >= 0 && e < .1 ? 1 - e / .1 : 0, sun, strength);
