@@ -248,6 +248,36 @@ if (seconds - lead >= clip.release) { /* the item has left the hand: start the p
 - In game the thrown projectile starts at the pawn's `DrawPos`, not at the hand
   (`PendingThrow.cs`), so `itemAtRelease` is for judging that gap, not the real launch point.
 
+### Stand-in pawns
+
+The lab has no pawn art, so a sketch draws a stand-in pawn and places its effects on it. A new
+sketch uses `lib/pawn.js`, which has the height and width of a real pawn (measured in game on
+2026-09-29, see `docs/pawn-height-handoff.md`):
+
+```js
+import { pawn, at } from './lib/pawn.js';
+
+const who = { body: 'average', sun: scene.shadowVector };  // or 'fat', 'hulk'; downed: true
+pawn(target, who);                                          // drawn on the cell centre `target`
+const chest = at(target, 'chest', who);                     // headTop, head, neck, chest, waist, feet
+```
+
+- Heights are on screen, in cells from the cell centre, which is the pawn's `DrawPos` in game. A C#
+  port uses `DrawPos` plus the same number, with no `PawnFit` and no feet shift.
+- Floor things at the pawn's cell (rings, lanes, dust) stay on the cell centre, not on the feet.
+- `shape(target, who)` returns the drawn ellipses, for an effect that covers or outlines the body.
+  `height(part, who)` is a body point's height above the feet in lab height (height x 0.60 on
+  screen), for its shadow.
+- The outline is the south-facing one for every facing: only south was measured. Downed is the
+  standing picture turned about the cell centre (default -90 degrees, head to the west); the lying
+  layout was not measured.
+- Pass the same `who` to every call, so the effect follows the body type and the pose.
+- Sketches written before 2026-09-29 draw their own two-disc stand-in, 0.89 tall with its feet 0.4
+  above a real pawn's. Leave them as they are: their C# ports fit the positions to the real pawn
+  (`Shared/PawnFit.cs`).
+- `Pawn stand-in (sketch)` under "Lab" shows average, fat and hulk with their height marks next to
+  the old stand-in.
+
 ### A 3D camera
 
 A sketch that exports `camera(seconds, p, ctx)` is drawn through a perspective camera: a cutscene that
