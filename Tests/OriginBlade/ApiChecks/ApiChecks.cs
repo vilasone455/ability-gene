@@ -339,6 +339,13 @@ static class ApiChecks
                 typeof(Action<>).MakeGenericType(am.GetType("AM.Events.EventBase")
                     ?? am.GetTypes().Single(t => t.Name == "EventBase")), typeof(bool) }, null) == null)
             throw new Exception("Shinra requires AnimRenderer.TimeScale, Seek and Destroy");
+        // Shinra's sleeves (CastClips.Needs.Parts): the part's own GetSnapshot, which returns a copy that reflection
+        // can invoke, and the snapshot's WorldMatrix and Active.
+        Type snapshotType = partData.GetMethod("GetSnapshot", new[] { renderer })?.ReturnType;
+        if (snapshotType?.GetField("WorldMatrix", Any)?.FieldType != typeof(UnityEngine.Matrix4x4)
+            || snapshotType.GetField("Active", Any)?.FieldType != typeof(bool)
+            || renderer.GetField("RootTransform", Any)?.FieldType != typeof(UnityEngine.Matrix4x4))
+            throw new Exception("Shinra sleeves: AnimPartData.GetSnapshot(AnimRenderer), AnimPartSnapshot.WorldMatrix / Active or RootTransform changed");
         Type settingsType = am.GetType("AM.Core").GetField("Settings", Any)?.FieldType;
         if (settingsType?.GetField("GlobalAnimationSpeed", Any)?.FieldType != typeof(float))
             throw new Exception("Shinra animation speed setting contract changed");

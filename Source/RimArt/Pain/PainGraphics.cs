@@ -90,15 +90,7 @@ namespace RimArt
             Vector2 d = hand - shoulder;
             float L = d.magnitude;
             if (L <= 0f) L = 1f;
-            var u = new Vector2(d.x / L, d.y / L);
-            var p = new Vector2(-u.y, u.x);
-            Vector2 wrist = hand - u * 0.045f;
-            const float w0 = 0.065f, w1 = 0.042f;
-            Sides(2, out Vector2[] a, out Vector2[] b);
-            a[0] = shoulder + p * w0; a[1] = wrist + p * w1;
-            b[0] = shoulder - p * w0; b[1] = wrist - p * w1;
-            Strip(a, b, Cloak, solid, PawnLayer + 0.01f);
-            ChainSickleGraphics.Rect(wrist, 0.03f, w1 * 2.3f, Mathf.Atan2(u.y, u.x) * Mathf.Rad2Deg, Cuff, PawnLayer + 0.0102f);
+            Sleeve(shoulder, hand - new Vector2(d.x / L, d.y / L) * 0.045f, PawnLayer + 0.01f);
             float baseDeg = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg, spread = Mathf.Lerp(64f, 30f, grip), reach = Mathf.Lerp(1f, 0.6f, grip);
             for (int i = 0; i < 5; i++)
             {
@@ -108,6 +100,26 @@ namespace RimArt
                 Line2(root, root + c * (Fingers[i, 1] * reach), 0.034f, Skin, PawnLayer + 0.0106f);
             }
             Disc(hand.x, hand.y, PawnLayer + 0.0108f, 0.062f, 0.062f, 0f, Skin);
+        }
+
+        /// <summary>
+        /// <see cref="Arm"/>'s sleeve and grey cuff alone, from <paramref name="shoulder"/> to <paramref name="wrist"/>:
+        /// the strip at <paramref name="altitude"/>, the cuff 0.0002 over it. Shinra Tensei draws it under Melee
+        /// Animation's hands (<see cref="ShinraSleeves"/>).
+        /// </summary>
+        public static void Sleeve(Vector2 shoulder, Vector2 wrist, float altitude)
+        {
+            Vector2 d = wrist - shoulder;
+            float L = d.magnitude;
+            if (L <= 0f) L = 1f;
+            var u = new Vector2(d.x / L, d.y / L);
+            var p = new Vector2(-u.y, u.x);
+            const float w0 = 0.065f, w1 = 0.042f;
+            Sides(2, out Vector2[] a, out Vector2[] b);
+            a[0] = shoulder + p * w0; a[1] = wrist + p * w1;
+            b[0] = shoulder - p * w0; b[1] = wrist - p * w1;
+            Strip(a, b, Cloak, solid, altitude);
+            ChainSickleGraphics.Rect(wrist, 0.03f, w1 * 2.3f, Mathf.Atan2(u.y, u.x) * Mathf.Rad2Deg, Cuff, altitude + 0.0002f);
         }
 
         // ------------------------------------------------------------------ stand-ins (previews only)

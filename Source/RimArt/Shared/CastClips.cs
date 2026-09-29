@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
@@ -37,6 +38,8 @@ namespace RimArt
             Job = 2,
             /// <summary>Moving the clip's root after a pawn that changed cell.</summary>
             Root = 4,
+            /// <summary>Reading where a free clip's parts (BodyA, HandA...) are drawn.</summary>
+            Parts = 8,
         }
 
         private readonly string label;
@@ -131,6 +134,7 @@ namespace RimArt
         {
             private readonly CastClips owner;
             private readonly object renderer;
+            private readonly Dictionary<string, object> parts = new Dictionary<string, object>();
             internal Handle(CastClips owner, object renderer) { this.owner = owner; this.renderer = renderer; }
 
             public void Stop() { Api.destroy.Invoke(renderer, null); }
@@ -157,6 +161,30 @@ namespace RimArt
                     float length = (float)Api.duration.GetValue(renderer);
                     finished = time >= length;
                     return finished || !(bool)Api.destroyed.GetValue(renderer);
+                }
+                catch (Exception e) { owner.Disable(e); return false; }
+            }
+
+            /// <summary>
+            /// Where the part <paramref name="name"/> is drawn now: the centre of its quad in map space, y its
+            /// altitude (Melee Animation draws each part at RootTransform * WorldMatrix). False when the clip has no
+            /// such part, the part is hidden, or the clip is gone. Needs <see cref="Needs.Parts"/>.
+            /// </summary>
+            public bool TryPart(string name, out Vector3 at)
+            {
+                at = Vector3.zero;
+                if (!owner.present) return false;
+                try
+                {
+                    if ((bool)Api.destroyed.GetValue(renderer)) return false;
+                    if (!parts.TryGetValue(name, out object part))
+                        parts[name] = part = Api.getPart.Invoke(renderer, new object[] { name });
+                    if (part == null) return false;
+                    object snapshot = Api.partSnapshot.Invoke(part, new[] { renderer });
+                    if (!(bool)Api.snapshotActive.GetValue(snapshot)) return false;
+                    Matrix4x4 world = (Matrix4x4)Api.rootTransform.GetValue(renderer) * (Matrix4x4)Api.snapshotWorld.GetValue(snapshot);
+                    at = world.MultiplyPoint3x4(Vector3.zero);
+                    return true;
                 }
                 catch (Exception e) { owner.Disable(e); return false; }
             }
@@ -243,8 +271,8 @@ namespace RimArt
             private static bool resolved, found;
             internal static Type animDef;
             internal static ConstructorInfo constructor;
-            internal static MethodInfo trigger, animatorFor, seek, destroy;
-            internal static FieldInfo startJob, rendererJob, timeScale, rootTransform, settings, globalSpeed;
+            internal static MethodInfo trigger, animatorFor, seek, destroy, getPart, partSnapshot;
+            internal static FieldInfo startJob, rendererJob, timeScale, rootTransform, settings, globalSpeed, snapshotWorld, snapshotActive;
             internal static PropertyInfo currentTime, duration, destroyed;
 
             /// <summary>False when Melee Animation's types are not loaded at all.</summary>
@@ -271,6 +299,14 @@ namespace RimArt
                 currentTime = AccessTools.Property(renderer, "CurrentTime");
                 duration = AccessTools.Property(renderer, "Duration");
                 destroyed = AccessTools.Property(renderer, "IsDestroyed");
+                // AnimPartData and AnimPartSnapshot carry no namespace. The part's own GetSnapshot returns a copy;
+                // the renderer's returns by ref, which reflection cannot invoke.
+                getPart = AccessTools.Method(renderer, "GetPart", new[] { typeof(string) });
+                Type part = AccessTools.TypeByName("AnimPartData");
+                partSnapshot = part == null ? null : AccessTools.Method(part, "GetSnapshot", new[] { renderer });
+                Type snapshot = partSnapshot?.ReturnType;
+                snapshotWorld = snapshot == null ? null : AccessTools.Field(snapshot, "WorldMatrix");
+                snapshotActive = snapshot == null ? null : AccessTools.Field(snapshot, "Active");
                 return true;
             }
 
@@ -286,8 +322,12 @@ namespace RimArt
                         + (duration == null ? "Duration " : "");
                 if ((needs & Needs.Job) != 0)
                     names += (startJob == null ? "CustomJobDef(start) " : "") + (rendererJob == null ? "CustomJobDef(renderer) " : "");
-                if ((needs & Needs.Root) != 0)
+                if ((needs & (Needs.Root | Needs.Parts)) != 0)
                     names += rootTransform == null ? "RootTransform " : "";
+                if ((needs & Needs.Parts) != 0)
+                    names += (getPart == null ? "GetPart " : "")
+                        + (partSnapshot == null ? "AnimPartData.GetSnapshot " : "") + (snapshotWorld == null ? "WorldMatrix " : "")
+                        + (snapshotActive == null ? "Active " : "");
                 return names.Length == 0 ? null : names.TrimEnd();
             }
         }

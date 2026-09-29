@@ -143,6 +143,37 @@ namespace RimArt
             Finish(record);
         }
 
+        [RimArtTest("Pain", "shinra 2 the clip's body and hands are read each frame for the sleeves: hands on both sides, out past 0.3 at the burst (screenshots)")]
+        private static IEnumerable<int> Sleeves(RimArtTestContext t)
+        {
+            GameComponent_Echoes echoes = Setup(t);
+            yield return 5;
+            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            yield return 5;
+            if (!t.Check(ShinraCastAnimation.Clip.TryStart(host, out CastClips.Handle clip), "the Shinra clip starts ("
+                    + (ShinraCastAnimation.Clip.Missing ?? "Melee Animation present") + ")"))
+            { Finish(record); yield break; }
+            GameComponent_Shinra.Instance.Begin(host, clip);
+            ShinraPawnState s = GameComponent_Shinra.Instance.For(host);
+            yield return 40;
+            t.Check(s.active && s.charge.Held, "holding at " + s.charge.time.ToString("0.00") + " s");
+            bool body = clip.TryPart("BodyA", out Vector3 b), a = clip.TryPart("HandA", out Vector3 ha), c = clip.TryPart("HandB", out Vector3 hb);
+            t.Check(body && a && c, "BodyA, HandA, HandB read: body " + b.ToString("F3") + ", hands " + ha.ToString("F3") + " " + hb.ToString("F3"));
+            t.Check((ha.x - b.x) * (hb.x - b.x) < 0f, "one hand each side of the body");
+            t.Check(ha.y > b.y + 0.04f && hb.y > b.y + 0.04f, "the hands are drawn over the pawn's layers, so the sleeves fit between");
+            yield return t.ShotAs("shinra sleeves hold", host.Position, 4f);
+            s.Release();
+            for (int i = 0; i < 120 && s.active && s.charge.time < ShinraCharge.Burst + 0.1f; i++) yield return 1;
+            clip.TryPart("BodyA", out b);
+            clip.TryPart("HandA", out ha);
+            clip.TryPart("HandB", out hb);
+            t.Check(Mathf.Abs(ha.x - b.x) > 0.3f && Mathf.Abs(hb.x - b.x) > 0.3f, "at " + s.charge.time.ToString("0.00")
+                + " s the hands are out " + Mathf.Abs(ha.x - b.x).ToString("0.00") + " / " + Mathf.Abs(hb.x - b.x).ToString("0.00"));
+            yield return t.ShotAs("shinra sleeves burst", host.Position, 4f);
+            s.Cancel();
+            Finish(record);
+        }
+
         // ---- Banshō Ten'in -----------------------------------------------------------------------------------------
 
         [RimArtTest("Pain", "bansho 1 pulls a raider 8 cells to the cell in front of Pain: 15 blunt, stunned 2 s, face-down; takes 3 charge; Shinra waits 5 s (screenshots)")]
