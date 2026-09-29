@@ -183,7 +183,7 @@ namespace RimArt
             Finish(record);
         }
 
-        [RimArtTest("Pain", "shinra 3 one button: tap 2.5 cells (3 charge, 8 s); a hold let go early is the tap; 1 s 3 cells (5, 16 s); 2 s 4 cells (20 s); cancel costs nothing", 3000)]
+        [RimArtTest("Pain", "shinra 3 one button: tap 2.5 cells (3 charge, 8 s); a hold let go early is the tap; 1 s 3 cells (5, 16 s); 2 s 4 cells (20 s), lifted off; cancel costs nothing (screenshots)", 3000)]
         private static IEnumerable<int> Button(RimArtTestContext t)
         {
             GameComponent_Echoes echoes = Setup(t);
@@ -218,6 +218,11 @@ namespace RimArt
                         GameComponent_TapHold.Step(true, k.held);
                         t.Check(s.active && !s.charge.tap, k.name + ": holding past " + Command_TapHold.TapSeconds + " s starts the charge");
                         yield return k.ticks;
+                        // He lifts off for the 4-cell size only (RimArt_ShinraCharge, from 2 s of charge).
+                        bool top = k.radius >= 4f;
+                        float up = s.animation != null && s.animation.TryPart("BodyA", out Vector3 bodyAt) ? bodyAt.z - host.Position.ToVector3Shifted().z : 0f;
+                        t.Check(top ? up > 0.1f : up < 0.05f, k.name + (top ? ": lifted off" : ": on the ground") + " (body " + up.ToString("0.00") + " north of the cell centre)");
+                        if (top) yield return t.ShotAs("shinra float hold", host.Position, 4f);
                     }
                     GameComponent_TapHold.Step(false, k.held + 0.01f);
                     t.Check(s.active && s.charge.releasing, k.name + ": letting go fires");
@@ -225,6 +230,11 @@ namespace RimArt
                     t.Check(Mathf.Abs(echoes.charge - (100f - k.cost)) < 0.01f, k.name + ": took " + (100f - echoes.charge).ToString("0.#") + " charge");
                     float cooldown = (s.cooldownUntil - Find.TickManager.TicksGame) / 60f;
                     t.Check(Mathf.Abs(cooldown - k.cooldown) < 0.1f, k.name + ": cooldown " + cooldown.ToString("0.0") + " s");
+                    if (k.radius >= 4f)
+                    {
+                        foreach (int wait in WaitFor(() => !s.active || s.charge.time >= s.charge.BurstAt + 0.2f, 60)) yield return wait;
+                        yield return t.ShotAs("shinra float burst", host.Position, 5f);
+                    }
                     foreach (int wait in WaitFor(() => !s.active, 150)) yield return wait;
                     t.Check(near.Position != nearAt, k.name + ": the raider " + k.inside.LengthHorizontal.ToString("0.0") + " cells away was pushed (" + nearAt + " -> " + At(near) + ")");
                     t.Check(far.Position == farAt, k.name + ": the raider " + k.outside.LengthHorizontal.ToString("0.0") + " cells away was not");

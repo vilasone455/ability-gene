@@ -38,6 +38,8 @@
     <type>Other</type>
     <pawnCount>1</pawnCount>
     <data>RimArt_ShinraCharge.json</data>
+    <!-- He lifts off for the 4-cell size: the body's DataC keeps a shadow on the ground (0 = his own). -->
+    <shadowDrawFromData>true</shadowDrawFromData>
     <cellData><li><type>PawnStart</type><position>(0, 0)</position><pawnIndex>0</pawnIndex></li></cellData>
     <handsVisibility><li><pawnIndex>0</pawnIndex><showMainHand>true</showMainHand><showAltHand>true</showAltHand></li></handsVisibility>
     <canEditProbability>false</canEditProbability>

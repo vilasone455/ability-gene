@@ -509,6 +509,9 @@ static class ApiChecks
                 byRef(unity("MaterialPropertyBlock")) }, null) == null
             || worker.GetMethod("SetupRenderer", Any, null, new[] { renderer }, null) == null)
             throw new Exception("Throw aim: AnimationRendererWorker.PreRenderPart / SetupRenderer changed");
+        // Shinra's charge clip lifts Pain off for the 4-cell size; its AnimDef draws the ground shadow from BodyA's DataC.
+        if (animDef.GetField("shadowDrawFromData", Any)?.FieldType != typeof(bool))
+            throw new Exception("Shinra float: AnimDef.shadowDrawFromData (bool) is gone");
         if (animDef.GetField("rendererWorker", Any)?.FieldType != typeof(Type))
             throw new Exception("Throw aim: AnimDef.rendererWorker (Type) is gone");
         if (renderer.GetField("RootTransform", Any)?.FieldType != typeof(UnityEngine.Matrix4x4)
