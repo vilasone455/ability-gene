@@ -51,10 +51,13 @@ namespace RimArt
         }
 
         /// <summary>
-        /// Chibaku Tensei's cast (the sketch pain-chibaku-tensei.js): Pain's arm comes up at the cell during the warmup
-        /// with the core growing over the palm, the core flies to its place over the cell with a dark trail, and the arm
-        /// stays up until the ball is formed, then comes down. From the core's arrival the ball is drawn by
-        /// <see cref="ChibakuBall"/>. A cast that lost Pain before the arrival fades its core out where it is.
+        /// Chibaku Tensei's cast (the sketch pain-chibaku-tensei-v2.js): Pain cups both hands at his chest during the
+        /// warmup while the core forms between them in a white glow; the near hand throws it straight up; the core climbs
+        /// over its place over the cell and comes down onto it as a black sun with a dark trail; from just after the launch
+        /// he holds his palms pressed together at his chest, fingers up, until the ball is formed, then his hands come
+        /// down (<see cref="ChibakuCast.Hands"/>). Facing north his back is to the camera, so the hands are drawn behind
+        /// his body. From the core's arrival the ball is drawn by <see cref="ChibakuBall"/>. A cast that lost Pain before
+        /// the arrival fades its core out where it is.
         /// </summary>
         public static void Chibaku(ChibakuCast cast, float s)
         {
@@ -63,34 +66,43 @@ namespace RimArt
             float fade = cast.aborted ? 1f - Mathf.Clamp01(UbwClock.Since(cast.abortTick) / ChibakuCast.FadeSeconds) : 1f;
             if (fade <= 0f) return;
             if (cast.Fired && !cast.handed && s >= cast.LaunchAt)
-                ChibakuFlight(cast, Mathf.Clamp01((s - cast.LaunchAt) / Mathf.Max(.01f, cast.Arrive - cast.LaunchAt)), fade, top);
+                ChibakuFlight(cast, Mathf.Clamp01((s - cast.LaunchAt) / Mathf.Max(.01f, cast.Arrive - cast.LaunchAt)), fade, top, s);
             if (caster == null || !caster.Spawned || cast.aborted) return;
+            if (!cast.Hands(s, out ChibakuCast.PainHand near, out ChibakuCast.PainHand far)) return;
             Vector2 me = PainKit.Ground(caster.DrawPos);
             Vector2 aim = cast.Fired ? cast.aim : ChibakuCast.AimFrom(caster, cast.cell);
-            float warm = ChibakuCast.Warmup, since = s - ChibakuCast.LeadTime;
-            float armUp = Smooth01(since / (warm * .6f)), armDown = cast.Fired ? Smooth01((s - cast.Formed - ChibakuCast.ArmDownAfter) / ChibakuCast.ArmDownTime) : 0f;
-            float reach = PainGraphics.Reach * armUp * (1f - armDown);
-            float handH = Mathf.Lerp(Mathf.Lerp(PainGraphics.HandH, ChibakuCast.RaisedH, armUp), PainGraphics.HandH * .7f, armDown);
-            if (armUp > 0f && armDown < 1f)
-                PainGraphics.Arm(PainGraphics.Place(me, aim, .05f, -.1f, PainGraphics.ShoulderH), PainGraphics.Place(me, aim, .12f + reach, -.1f, handH), aim, 0f);
-            if (since >= 0f && (!cast.Fired || s < cast.LaunchAt))
-            {
-                float warmU = Mathf.Clamp01(since / warm);
-                ChibakuBall.BlackCore(PainGraphics.Place(me, aim, .12f + reach + ChibakuCast.PalmGap, -.1f, handH + .12f),
-                    ChibakuCast.PalmR * Smooth01(warmU * 1.25f), Smooth01(warmU * 1.4f), top);
-            }
+            float altitude = aim.y > .707f ? PainGraphics.PawnLayer - .01f : PainGraphics.PawnLayer + .01f;
+            ChibakuArm(me, aim, near, 1f, altitude);
+            ChibakuArm(me, aim, far, -1f, altitude);
+            if (cast.Fired && s >= cast.LaunchAt) return;
+            // The core forming between the cupped hands in a white glow, riding up on the near hand as it throws.
+            float warmU = Mathf.Clamp01((s - ChibakuCast.LeadTime) / ChibakuCast.Warmup), wg = Smooth01(warmU * 1.6f);
+            Vector2 at = s >= cast.LaunchAt - ChibakuCast.ThrowTime
+                ? PainGraphics.Place(me, aim, near.at.x + .02f, near.at.y, near.at.z + .12f)
+                : PainGraphics.Place(me, aim, (near.at.x + far.at.x) / 2f + .05f, (near.at.y + far.at.y) / 2f, (near.at.z + far.at.z) / 2f + .06f);
+            VfxDraw.Sprite(at, .25f + .45f * wg, .25f + .45f * wg, VfxDraw.Fade(Color.white, .7f * wg), VfxDraw.glow, top - .001f);
+            ChibakuBall.BlackCore(at, ChibakuCast.PalmR * Smooth01((warmU - .35f) / .5f), 1f, top, .45f, s);
         }
 
-        private static void ChibakuFlight(ChibakuCast cast, float u, float fade, float top)
+        /// <summary>One of Pain's hands for Chibaku Tensei: a sleeve from the shoulder on that side (1 near, -1 far) to the hand.</summary>
+        private static void ChibakuArm(Vector2 me, Vector2 aim, ChibakuCast.PainHand hand, float side, float altitude)
         {
+            Vector2 shoulder = PainGraphics.Place(me, aim, .03f, side * .13f, PainGraphics.ShoulderH);
+            Vector2 at = PainGraphics.Place(me, aim, hand.at.x, hand.at.y, hand.at.z);
+            PainGraphics.Arm(shoulder, at, hand.up ? Vector2.up : aim, hand.grip, altitude);
+        }
+
+        private static void ChibakuFlight(ChibakuCast cast, float u, float fade, float top, float s)
+        {
+            float r = Mathf.Lerp(ChibakuCast.PalmR, ChibakuBall.CoreR * .85f, Smooth01(u)), glowA = Mathf.Lerp(.5f, .85f, u);
             if (fade < 1f)
             {
                 // Lost on the way: the core stops where it was and shrinks away.
-                Vector3 at = Vector3.Lerp(cast.from, cast.to, u);
-                ChibakuBall.BlackCore(new Vector2(at.x, at.z + at.y * Lift), ChibakuCast.PalmR * 1.1f * fade, fade, top);
+                Vector3 at = ChibakuBall.CorePoint(cast.from, cast.to, u);
+                ChibakuBall.BlackCore(new Vector2(at.x, at.z + at.y * Lift), r * fade, fade, top, glowA, s);
                 return;
             }
-            ChibakuBall.FlyingCore(cast.from, cast.to, u, ChibakuCast.PalmR * 1.1f, top);
+            ChibakuBall.FlyingCore(cast.from, cast.to, u, r, top, s, glowA);
         }
 
         private static float Smooth01(float x)

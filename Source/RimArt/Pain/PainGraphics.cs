@@ -83,23 +83,26 @@ namespace RimArt
         /// at the target. <paramref name="grip"/> 0..1 closes the fingers to 30 degrees and 0.6 of their length (round
         /// a head, or round a rod). <paramref name="shoulder"/> and <paramref name="hand"/> are drawn points (height
         /// already shifted north); <paramref name="dir"/> is the unit way the fingers point. The hand lies level at its
-        /// height, so it turns with the aim. Drawn 0.01 over the pawn layer, so over the real pawn.
+        /// height, so it turns with the aim. Drawn 0.01 over the pawn layer, so over the real pawn, unless
+        /// <paramref name="altitude"/> is given: one under the pawn layer hides the arm behind the body (Pain facing north,
+        /// his back to the camera).
         /// </summary>
-        public static void Arm(Vector2 shoulder, Vector2 hand, Vector2 dir, float grip)
+        public static void Arm(Vector2 shoulder, Vector2 hand, Vector2 dir, float grip, float altitude = -1f)
         {
             Vector2 d = hand - shoulder;
             float L = d.magnitude;
             if (L <= 0f) L = 1f;
-            Sleeve(shoulder, hand - new Vector2(d.x / L, d.y / L) * 0.045f, PawnLayer + 0.01f);
+            if (altitude < 0f) altitude = PawnLayer + 0.01f;
+            Sleeve(shoulder, hand - new Vector2(d.x / L, d.y / L) * 0.045f, altitude);
             float baseDeg = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg, spread = Mathf.Lerp(64f, 30f, grip), reach = Mathf.Lerp(1f, 0.6f, grip);
             for (int i = 0; i < 5; i++)
             {
                 float ang = (baseDeg + Fingers[i, 0] * spread) * Mathf.Deg2Rad;
                 var c = new Vector2(Mathf.Cos(ang), Mathf.Sin(ang));
                 Vector2 root = hand + c * 0.04f;
-                Line2(root, root + c * (Fingers[i, 1] * reach), 0.034f, Skin, PawnLayer + 0.0106f);
+                Line2(root, root + c * (Fingers[i, 1] * reach), 0.034f, Skin, altitude + 0.0006f);
             }
-            Disc(hand.x, hand.y, PawnLayer + 0.0108f, 0.062f, 0.062f, 0f, Skin);
+            Disc(hand.x, hand.y, altitude + 0.0008f, 0.062f, 0.062f, 0f, Skin);
         }
 
         /// <summary>
