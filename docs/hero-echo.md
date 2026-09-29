@@ -491,8 +491,9 @@ fields on `CompProperties_ChibakuTensei`; tests `-rimarttest=chibaku`. Rules:
   too), with items and corpses; plants and filth are destroyed, trees torn out. The ground under a roof,
   a building or a built floor stays, with what is on it. Pain and pawns pinned by Black Receiver are
   never taken, and the plates they stood on stay.
-- The ball holds 12 s: 2 blunt per second, then the burst: 8 blunt for the fall, in hits of up to 8,
-  from Pain (kills count for him), stunned 2.5 s. It may kill (agreed 2026-09-28).
+- The ball holds 12 s, then the burst. When a pawn lands it takes 2 blunt for each second it was held plus 8
+  for the fall, all at once, in hits of up to 8, from Pain (kills count for him), and is stunned 2.5 s. It may
+  kill (agreed 2026-09-28); nothing dies inside the ball.
 - Pulled soil becomes stony soil; 6-10 real rock chunks land (one per 16 plates pulled).
 - While the ball holds, Shinra Tensei and Banshō Ten'in are locked; Black Receiver is not. If Pain is
   downed, killed, leaves the map or hero form, the ball bursts at once (after it has formed if it is
