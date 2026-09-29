@@ -20,7 +20,7 @@
 // v2 against v1: the ground goes dark blue and a storm of fog turns over the 4-cell pull; slabs, planks
 // and chips are torn out of the floor (holes stay), spiral up and orbit the ball before they are packed
 // in, passing behind and in front of it; the 1-cell core is a translucent cyan bubble with a dark
-// inside (the game's sphere) round a white-hot ball; cracks run out across the floor; light rays;
+// inside (the game's sphere), with a whirlpool and a white point in it (improved 2026-09-29, see sphere()); cracks run out across the floor; light rays;
 // cyan arcs round Gojo; a rumble. The implosion throws the debris out and raises a big grey dust cloud.
 //
 // Order ("group", the default; Blue 8 cells from Gojo, hold 3 s):
@@ -56,10 +56,10 @@ const TAU = Math.PI * 2, D2R = Mathf.Deg2Rad, ChestUp = Chest / Lift;
 const disc = Meshes.disc(32, 'blue2 disc');
 const puff = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.Transparent), puffGlow = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.MoteGlow);
 // Decided values.
-const Raise = .15, Grow = .3, Rush = .12, Tail = 2.2, Reach = .5, HeldLift = .25, BallR = .38;
+const Raise = .15, Grow = .3, Rush = .12, Tail = 2.2, Reach = .5, HeldLift = .25, Bands = 12, Wisps = 6;
 const Streaks = 14, StreakPeriod = .6, Fog = 30, FogArms = 3, Rays = 8, Cracks = 10, Clouds = 20, Thrown = 16, CraterR = .8, Specks = 26;
 const Slabs = 14, Planks = 8, Chips = 26, TearShare = .75, Arcs = [[1.1, 30], [1.4, 210]], ArcSweep = 200;
-const Sat = new Color(.1, .3, 1), Cyan = new Color(.45, .85, 1), Crater = new Color(.14, .12, .1), Torn = new Color(.45, .38, .3);
+const Royal = new Color(.12, .32, .95), Abyss = new Color(.01, .03, .16), Pale = new Color(.7, .85, 1), Cyan = new Color(.45, .85, 1), Crater = new Color(.14, .12, .1), Torn = new Color(.45, .38, .3);
 const Wood = new Color(.4, .28, .16), WoodLit = new Color(.55, .4, .24), Steel = new Color(.45, .46, .5), Cloud = new Color(.62, .62, .64);
 const Group = [[60, 2.5, 'raider'], [200, 3.6, 'raider'], [-70, 3.2, 'ally'], [150, 5, 'raider'], [-20, 1.8, 'chunk'], [110, 2.8, 'rifle']];
 
@@ -122,38 +122,65 @@ function debris(g, at, spin, layer, alpha = 1) {
   } else rock(at, g.size, spin, alpha, g.kind === 'slab' ? 2 * (g.i % 3) : 1 + 2 * (g.i % 3), layer);
 }
 
-// The core sphere (Cursed Clash's): a dark-blue inside with the packed debris in it, a faint cyan fill,
-// a bright rim and a highlight on the upper left; the white-hot ball turning in the middle.
+// The core sphere, lit from its edge (Cursed Clash #41) with a whirlpool inside (anime #29) and a white
+// point at its heart (anime #9). Layers, back to front: a soft blue and cyan halo; a royal-blue body
+// darkening smoothly to near-black in the middle; the packed debris sinking in a spiral toward the
+// centre, tinted by the body over it; 5 thin cyan rings fading inward from the rim (the lit edge) and a
+// faint pale line; 12 swirl bands turning faster the nearer the middle they are, with white foam at
+// their heads; glitter on the shell; the eye (dark disc, thin pale ring, a beating white point, 2 short
+// flickering rays); 6 wisps flicking off
+// the edge the way it turns; a soft highlight and a glint on the upper left. Nothing is a hard ring.
 function sphere(key, at, R, s, swirl, packedPieces, alpha) {
   if (R <= .01 || alpha <= 0) return;
-  sprite(at, R * 5, R * 5, Blue.withAlpha(.35 * alpha), glow, Y + .1);
-  draw(disc, at.x, Y + .104, at.z, R * .97, R * .97, 0, Deep.withAlpha(.55 * alpha));
+  const beat = 1 + .08 * Math.sin(s * 11), spin = swirl * .6;
+  sprite(at, R * 4.4, R * 4.4, Blue.withAlpha(.4 * alpha), glow, Y + .1);
+  sprite(at, R * 2.7, R * 2.7, Cyan.withAlpha(.28 * alpha), glow, Y + .1005);
+  draw(disc, at.x, Y + .101, at.z, R, R, 0, Royal.withAlpha(.92 * alpha));
+  sprite(at, R * 1.9, R * 1.9, Abyss.withAlpha(.95 * alpha), soft, Y + .1015);
+  // Packed debris: each piece sinks from 0.85 R to 0.2 R over 1.5 s after it arrived, turning faster
+  // as it goes in; the body is drawn over it again at 40 % so it sits inside.
   packedPieces.forEach((g, k) => {
-    const q = k * 2.4 + swirl * .2, d = R * (.2 + .65 * rand(g.i + 1200));
-    debris({ ...g, size: g.size * .7 }, { x: at.x + Math.cos(q) * d, z: at.z + Math.sin(q) * d }, rand(g.i + 1210) * 360 + swirl * 15, Y + .105 + k * .0001, .75 * alpha);
+    const u = clamp((s - g.packedAt) / 1.5), d = R * (.85 - .65 * u * u), q = rand(g.i + 1200) * TAU + swirl * (.3 + 1.2 * u);
+    debris({ ...g, size: g.size * (.75 - .35 * u) }, { x: at.x + Math.cos(q) * d, z: at.z + Math.sin(q) * d }, rand(g.i + 1210) * 360 + swirl * 25, Y + .102 + k * .0001, (.8 - .4 * u) * alpha);
   });
-  draw(disc, at.x, Y + .1065, at.z, R * .97, R * .97, 0, Deep.withAlpha(.3 * alpha));
-  sprite(at, R * 2.1, R * 2.1, Cyan.withAlpha(.18 * alpha), glow, Y + .107);
-  // The ball: glow, deep body, a faint swirl, glitter, a white centre.
-  const r = BallR * Math.min(1, R / .9), beat = 1 + .06 * Math.sin(s * 11);
-  sprite(at, r * 6 * beat, r * 6 * beat, Cyan.withAlpha(.45 * alpha), glow, Y + .108);
-  draw(disc, at.x, Y + .109, at.z, r, r, 0, Sat.withAlpha(alpha));
-  for (let i = 0; i < 4; i++) {
-    const pts = [], a0 = swirl + i * TAU / 4;
-    for (let k = 0; k <= 10; k++) { const v = k / 10, rr = r * (1.05 - .75 * v), q = a0 + v * 2.2; pts.push({ x: at.x + Math.cos(q) * rr, z: at.z + Math.sin(q) * rr }); }
-    line(`${key} swirl ${i}`, pts, r * .2, Cyan.withAlpha(.4 * alpha), whiteGlow, Y + .11, 'both');
+  draw(disc, at.x, Y + .104, at.z, R * .97, R * .97, 0, Royal.withAlpha(.25 * alpha));
+  sprite(at, R * 1.4, R * 1.4, Abyss.withAlpha(.7 * alpha), soft, Y + .1042);
+  // The lit edge: thin cyan rings fading inward from the rim, so the light falls off like a lit sphere,
+  // and a faint pale line on the rim.
+  [[.985, .38], [.95, .28], [.91, .19], [.87, .12], [.83, .07]].forEach(([f, a], j) =>
+    ringAt(at, R * f, Cyan.withAlpha(a * alpha), Y + .1045 + j * .0001, false, whiteGlow));
+  ringAt(at, R, Ice.withAlpha(.25 * alpha), Y + .105, false, whiteGlow);
+  // Swirl bands: the whirlpool. Inner bands turn faster.
+  for (let k = 0; k < Bands; k++) {
+    const v = k / (Bands - 1), rr = R * (.3 + .62 * v), w = 3.2 * Math.pow(R / rr, 1.1), a0 = rand(k + 1250) * TAU + swirl * w * .35;
+    const span = .9 + .8 * rand(k + 1260), pts = [];
+    for (let m = 0; m <= 8; m++) { const q = a0 + span * m / 8, wob = 1 + .04 * Math.sin(m * 1.7 + s * 6 + k); pts.push({ x: at.x + Math.cos(q) * rr * wob, z: at.z + Math.sin(q) * rr * wob }); }
+    const colour = Color.Lerp(Cyan, Pale, v), width = R * (.05 + .05 * rand(k + 1270));
+    line(`${key} band ${k}`, pts, width, colour.withAlpha(.42 * alpha), whiteGlow, Y + .106 + k * .0002, 'both');
+    sprite(pts[0], width * 2.4, width * 2.4, White.withAlpha(.55 * alpha), glow, Y + .1085);
   }
-  sprite(at, r * 1.6, r * 1.6, White.withAlpha(.85 * alpha), glow, Y + .111);
   for (let i = 0; i < Specks; i++) {
-    const q = rand(i + 730) * TAU + swirl * (.8 + .6 * rand(i + 740)), d = R * (.2 + 1.2 * rand(i + 750) ** 1.5), tw = .3 + .7 * Math.abs(Math.sin(s * 13 + i * 1.7)), size = .05 + .06 * rand(i + 760);
-    sprite({ x: at.x + Math.cos(q) * d, z: at.z + Math.sin(q) * d }, size * 1.6, size * 1.6, (i % 3 ? White : Cyan).withAlpha(tw * alpha), glow, Y + .112);
+    const d = R * (.55 + .5 * rand(i + 750)), q = rand(i + 730) * TAU + swirl * 3.2 * Math.pow(R / d, 1.1) * .35, tw = .3 + .7 * Math.abs(Math.sin(s * 13 + i * 1.7)), size = .04 + .05 * rand(i + 760);
+    sprite({ x: at.x + Math.cos(q) * d, z: at.z + Math.sin(q) * d }, size * 1.6, size * 1.6, (i % 3 ? White : Cyan).withAlpha(tw * alpha), glow, Y + .109);
   }
-  // Rim and highlight: a thin pale ring, a wider cyan one, a white arc on the upper left.
-  ringAt(at, R, Ice.withAlpha(.65 * alpha), Y + .113, false, whiteGlow);
-  ringAt(at, R * 1.04, Cyan.withAlpha(.35 * alpha), Y + .1125, true, whiteGlow);
-  const hl = [];
-  for (let k = 0; k <= 8; k++) { const q = (105 + k * 8) * D2R; hl.push({ x: at.x + Math.cos(q) * R * .82, z: at.z + Math.sin(q) * R * .82 }); }
-  line(`${key} highlight`, hl, R * .09, White.withAlpha(.55 * alpha), whiteGlow, Y + .114, 'both');
+  // The eye.
+  draw(disc, at.x, Y + .11, at.z, R * .17, R * .17, 0, Abyss.withAlpha(.9 * alpha));
+  ringAt(at, R * .2, Ice.withAlpha(.55 * alpha), Y + .1105, false, whiteGlow);
+  sprite(at, R * .55 * beat, R * .55 * beat, Cyan.withAlpha(.55 * alpha), glow, Y + .111);
+  sprite(at, R * .22 * beat, R * .22 * beat, White.withAlpha(alpha), glow, Y + .1112);
+  for (let i = 0; i < 2; i++) {
+    const q = (i * 90 + 30 * Math.sin(s * 2) + 20) * D2R, len = R * (.12 + .14 * Math.abs(Math.sin(s * 19 + i * 2.3)));
+    line(`${key} eye ray ${i}`, [{ x: at.x - Math.cos(q) * len, z: at.z - Math.sin(q) * len }, at, { x: at.x + Math.cos(q) * len, z: at.z + Math.sin(q) * len }], R * .03, White.withAlpha(.5 * alpha), whiteGlow, Y + .1114, 'both');
+  }
+  // Wisps flicking off the edge the way it turns.
+  for (let i = 0; i < Wisps; i++) {
+    const a0 = i * TAU / Wisps + spin, life = ((s * 1.6 + rand(i + 1280)) % 1), pts = [];
+    for (let m = 0; m <= 6; m++) { const v = m / 6, rr = R * (1 + .45 * v * life + .05), q = a0 - v * .9; pts.push({ x: at.x + Math.cos(q) * rr, z: at.z + Math.sin(q) * rr }); }
+    line(`${key} wisp ${i}`, pts, R * .09, Cyan.withAlpha(.5 * alpha * Math.sin(Math.PI * life)), whiteGlow, Y + .1116, 'both');
+  }
+  // Soft highlight and a glint on the upper left: the glossy marble of the anime's close-ups.
+  sprite({ x: at.x - R * .36, z: at.z + R * .42 }, R * .55, R * .3, White.withAlpha(.3 * alpha), glow, Y + .112, 35);
+  draw(disc, at.x - R * .44, Y + .1122, at.z + R * .52, R * .06, R * .05, 0, White.withAlpha(.9 * alpha));
 }
 
 export default {
@@ -310,7 +337,7 @@ export default {
         line(`blue2 ray ${i}`, [C, { x: C.x + Math.cos(q) * len * .5, z: C.z + Math.sin(q) * len * .5 }, { x: C.x + Math.cos(q) * len, z: C.z + Math.sin(q) * len }], .14, Ice.withAlpha(.35 * rayK * fl), whiteGlow, Y + .095, 'end');
       }
     }
-    if (live) sphere('blue2 sphere', C, p.coreR * grow * shrink, s, swirl, packedPieces.slice(-18), s >= t.implode ? .6 + .4 * shrink : 1);
+    if (live) sphere('blue2 sphere', C, p.coreR * grow * shrink, s, swirl, packedPieces.slice(-20), s >= t.implode ? .6 + .4 * shrink : 1);
 
     // --- the implosion -----------------------------------------------------------------------------------------------------
     if (burst) {
