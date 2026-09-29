@@ -18,7 +18,6 @@
   <AG_RecursionCloseLabel>Drop barrier</AG_RecursionCloseLabel>
   <AG_RecursionCloseDesc>Drop the phase barrier and start breathing again. Every suspended round and unfinished blow resumes immediately.</AG_RecursionCloseDesc>
 
-  <AG_ShoveNeedsPawn>Must target a person, animal or mech.</AG_ShoveNeedsPawn>
 
   <AG_VectorEditNothing>Nothing is flying within reach of {0}.</AG_VectorEditNothing>
   <AG_VectorEditCaught>{0}'s reflex booster caught {1} rounds in flight.</AG_VectorEditCaught>

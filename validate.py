@@ -451,9 +451,7 @@ RETIRED = {"AG_Panoply_Rain", "AG_Panoply_Loose", "AG_Panoply_Grasp", "AG_Gravit
 # Hero abilities that still have their pre-hero source (an implant, a gene or a trait) while the
 # Echo that uses them is being built. Each is to lose one source once it is decided whether the
 # old item stays in the game; until then two sources are expected, and only these two.
-SHARED_WITH_ECHO = {
-    "AG_VectorReflection", "AG_VectorSurge", "AG_VectorShove",
-}
+SHARED_WITH_ECHO = set()
 
 for ability, f in sorted(ability_defs.items()):
     sources = grants.get(ability, set())

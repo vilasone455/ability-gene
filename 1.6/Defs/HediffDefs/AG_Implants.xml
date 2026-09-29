@@ -1,20 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- Reflex booster implant — grants Vector Reflection and Shove. -->
+  <!-- Reflex booster implant. Echo-only since the Accelerator port: it grants nothing; vector
+       manipulation, reflex surge and vector shove come from Accelerator's Echo. The def stays loadable. -->
   <HediffDef>
     <defName>AG_ReflexBooster</defName>
     <hediffClass>Hediff_Implant</hediffClass>
     <label>reflex booster</label>
     <labelNoun>a reflex booster</labelNoun>
-    <description>A spinal implant that reads and redirects momentum. It can drive its carrier's perception far ahead of the world's, seize the rounds flying near them and turn them, or throw an attacker away.</description>
+    <description>A spinal implant. Its vector powers come from Accelerator's Echo since the hero port; the implant no longer grants them.</description>
     <defaultLabelColor>(0.6, 0.8, 1.0)</defaultLabelColor>
     <isBad>false</isBad>
-    <abilities>
-      <li>AG_VectorSurge</li>
-      <li>AG_VectorReflection</li>
-      <li>AG_VectorShove</li>
-    </abilities>
+    <spawnThingOnRemoved>AG_ReflexBooster</spawnThingOnRemoved>
   </HediffDef>
 
   <!-- Phase barrier implant — grants Phase Guard. Archotech tier. -->

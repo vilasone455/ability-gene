@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+  <AG_ShoveNeedsTarget>Must touch a pawn, or a stone chunk, corpse or weapon on the ground.</AG_ShoveNeedsTarget>
+  <AG_ShoveLabel>Thrown {0} cells</AG_ShoveLabel>
+  <AG_PlasmaReport>compressing plasma.</AG_PlasmaReport>
+</LanguageData>

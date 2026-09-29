@@ -26,6 +26,10 @@
         </statOffsets>
       </li>
     </stages>
+    <!-- Vector shove's force returned reads the last melee hit he took from here. -->
+    <comps>
+      <li Class="RimArt.HediffCompProperties_ForceReturn" />
+    </comps>
   </HediffDef>
 
   <!-- The Akatsuki cloak, shared: every Echo who wears it takes this as its parent, and its own
