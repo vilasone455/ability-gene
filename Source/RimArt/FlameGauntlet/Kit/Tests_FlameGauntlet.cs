@@ -238,5 +238,33 @@ namespace RimArt
             t.Check(UnityEngine.Mathf.Abs(g.Heat - 9f) < 0.05f, "heat is 9 after 30 s (" + g.Heat.ToString("0.00") + ")");
             t.Check(CompFlameGauntlet.HeldBy(holder) == g, "the holder still holds the same gauntlet");
         }
+
+        /// <summary>
+        /// Close shots for the pawn height fit: a holder at 17 heat standing (the resting heat on the
+        /// hand, the Overheating haze and, after 5 s, the burn mark on the arm), then Release 6 cells east
+        /// with an enemy at 4 (the fist forward, the jet leaving the hand), then Devour on a burning
+        /// colonist 4 cells south (the flame tongues on it, the parcel leaving it).
+        /// </summary>
+        [RimArtTest("Flame Gauntlet", "height 1 held heat, overheating, release and a burning pawn on real pawns (screenshots)", 2400)]
+        private static IEnumerable<int> Height(RimArtTestContext t)
+        {
+            t.Clear();
+            Pawn holder = HeightShots.Stay(Holder(t, 17f, out CompFlameGauntlet g));
+            Pawn enemy = HeightShots.Target(t, t.center + new IntVec3(4, 0, 0));
+            IntVec3 camera = t.center + new IntVec3(2, 0, 0);
+            yield return 380;
+            yield return HeightShots.Shoot(t, "flame held overheating", camera, holder);
+            foreach (int step in HeightShots.Cast(t, holder, FlameGauntletDefOf.AG_FlameGauntlet_Release, t.center + new IntVec3(6, 0, 0), camera,
+                "flame release", enemy, 1, 10, 22)) yield return step;
+            yield return 120;
+            Pawn ally = t.Colonist(t.center + new IntVec3(0, 0, -4));
+            ally.drafter.Drafted = false;
+            HeightShots.Plain(ally, Rot4.South);
+            ally.TryAttachFire(0.5f, null);
+            yield return 2;
+            foreach (int step in HeightShots.Cast(t, holder, FlameGauntletDefOf.AG_FlameGauntlet_Devour, ally.Position, t.center + new IntVec3(0, 0, -2),
+                "flame devour", ally, 10, 22, 30)) yield return step;
+            yield return 120;
+        }
     }
 }

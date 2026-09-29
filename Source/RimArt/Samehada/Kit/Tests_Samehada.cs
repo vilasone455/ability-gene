@@ -407,5 +407,40 @@ namespace RimArt
             t.Check(pawns.All(p => p.Rotation == Facings[pawns.IndexOf(p)]), "each pawn faces its way (north, east, south, west from the left)");
             yield return t.ShotAs("fused-N-E-S-W");
         }
+
+        /// <summary>
+        /// Close shots for the pawn height fit: a wounded holder facing east hits a standing, stunned enemy
+        /// in armour next to it (the bite and drain on its chest, the holder's healing glow, the Drained
+        /// haze round its feet), then casts Fusion (the merge flash and motes at the grip).
+        /// </summary>
+        [RimArtTest("Samehada", "height 1 bite, drain, healing, drained and fusion flash on real pawns (screenshots)", 2400)]
+        private static IEnumerable<int> Height(RimArtTestContext t)
+        {
+            t.Clear();
+            Pawn holder = HeightShots.Plain(Holder(t, 0, out CompSamehada blade));
+            Wound(holder);
+            Pawn enemy = HeightShots.Target(t, t.center + IntVec3.East);
+            Armour(enemy);
+            enemy.stances.stunner.StunFor(900, null, false);
+            IntVec3 camera = t.center;
+            // The drafted holder hits the enemy beside it by itself; a strike is ordered when it is free.
+            int hit = -1;
+            for (int i = 0; i < 300 && hit < 0; i++)
+            {
+                if (blade.Charges > 0) hit = t.Now;
+                else if (holder.stances.curStance is Stance_Mobile) holder.meleeVerbs.TryMeleeAttack(enemy, BladeVerb(holder), true);
+                if (hit < 0) yield return 1;
+            }
+            if (!t.Check(hit >= 0, "the blade fed on a hit")) yield break;
+            foreach (int at in new[] { 3, 20, 60 })
+            {
+                yield return hit + at - t.Now;
+                yield return HeightShots.Shoot(t, "samehada feed " + at, camera, holder, enemy);
+            }
+            blade.SetCharges(5);
+            yield return 2;
+            foreach (int step in HeightShots.Cast(t, holder, SamehadaDefOf.AG_Samehada_Fusion, holder, camera, "samehada fusion", enemy, 24, 33)) yield return step;
+            yield return 60;
+        }
     }
 }

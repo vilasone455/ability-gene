@@ -477,5 +477,27 @@ namespace RimArt
             t.Check(echoes.charge == 47f, "3 paid at the fire (" + echoes.charge + ")");
             TearDown();
         }
+
+        // ------------------------------------------------------------------ pawn height
+
+        /// <summary>
+        /// Close shots for the pawn height fit: the shadow double standing 3 cells east of Shikamaru, next
+        /// to a real enemy one cell further on, so its silhouette can be set against two real pawns.
+        /// </summary>
+        [RimArtTest("Shadow Plexus", "height 1 the double stands the size of a real pawn (screenshots)")]
+        private static IEnumerable<int> HeightDouble(RimArtTestContext t)
+        {
+            Pawn shikamaru = HeightShots.Plain(Setup(t), strip: false);
+            IntVec3 spot = t.center + East * 3;
+            Pawn enemy = HeightShots.Target(t, t.center + East * 4);
+            enemy.stances.stunner.StunFor(600, null, false);
+            yield return 2;
+            Cast(shikamaru, ShadowPlexusDefOf.AG_ShadowDouble, spot);
+            yield return 10;
+            yield return HeightShots.Shoot(t, "shadow double rising", t.center + East * 2, shikamaru, enemy);
+            yield return 30;
+            yield return HeightShots.Shoot(t, "shadow double standing", t.center + East * 2, shikamaru, enemy);
+            TearDown();
+        }
     }
 }
