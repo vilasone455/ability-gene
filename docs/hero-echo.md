@@ -500,6 +500,16 @@ anchors and Tear were agreed 2026-09-26):
   30 cells, 45 s, takes 50 % damage, cd 120 s, lifetime by piece: leg 45 s, arm 35 s, hand 20 s,
   finger 10 s; Tear order once per summon; the Relay order is still undecided); The Game (mark one
   enemy 30 s, +30 % damage from his shots, cd 45 s).
+- Costume (agreed 2026-09-29; the look is not chosen yet, reference frames first): drawn like the
+  other hero forms, but only while he wears body apparel. Rising at an anchor leaves his gear with
+  the old body (agreed 2026-09-26), so he stands up naked while still manifested; a costume drawn
+  whenever the manifest hediff is on would show him dressed. New XML bool on
+  `PawnRenderNodeProperties_EchoCostume`, `onlyOverWornApparel` (default false): when set,
+  `PawnRenderNodeWorker_EchoCostume.CanDrawNow` also needs at least one worn OnSkin, Middle or Shell
+  apparel (trousers alone count). Every node of his costume sets it, a head piece too, so a naked
+  Satō shows no hat either. Once he is dressed again the costume is drawn again. The other costumes
+  do not set it and are unchanged. Test: a "costume" scenario with a naked Host (no costume drawn)
+  and the same Host dressed (costume drawn, clothes hidden).
 
 Inumaki revisit (agreed 2026-09-27; numbers are placeholders; the built words are in
 `Source/RimArt/Larynx`, `AG_Larynx_Abilities.xml`):
