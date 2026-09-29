@@ -22,13 +22,22 @@
 //               Gojo points, Red charges at his finger (red swirl, orb growing)
 //   0.65-0.91   Red flies at 20 cells/s into Blue
 //   0.91-1.26   merge: the red orb and the blue sphere spiral round each other and in; 6 red and blue
-//               arcs swirl round them; the ground lit red on one side and blue on the other
-//   1.26        ignition: a white point and flash, 4 purple ripple rings spreading to 3 cells, 12 rays
+//               arcs swirl round them; the world split red on one side and blue on the other (8-cell
+//               lights and tints), a red and a cyan half ring 2.2 cells out spinning opposite ways;
+//               over the last 0.15 s everything within 10 cells darkens (the world holds its breath)
+//   1.26        ignition: a white point and flash, a purple wash 18 cells across fading in 0.5 s, 4 purple
+//               ripple rings spreading to 3 cells, 12 rays
 //   1.26-1.56   Purple grows to 1.5 cells
 //   1.56-3.89   it travels 14 cells at 6 cells/s: a deep purple sphere lit from its edge, violet swirl
 //               bands, a white core with rays, 5 lightning bolts crackling off it, a ripple ring every
 //               0.5 s, light rays along the path, a purple wash on the ground, the trench behind it with
-//               glowing edges that fade (a pale scoured strip, half transparent). Whatever it touches dissolves into purple specks drawn into it: a
+//               glowing edges that fade (a pale scoured strip, half transparent); a small shake every 0.5 s.
+//               Travel and erasing (S1 ep 20 #47-48, #61-63): under the sphere the ground glows lilac, a white
+//               cut line runs round the front of its footprint and 18 specks of earth lift into it; behind it
+//               a band of purple haze rises along the cut and fades over 1.1 s; the cut edges glow white ->
+//               lilac -> violet and are dark 1.5 s after it passed; the trench shows its north wall (0.6 cells
+//               deep, drawn 0.36 north as earth with a dark foot and a pale lip); dust rises off both lips
+//               0.25 s after it passed and fades over 2 s. Whatever it touches dissolves into purple specks drawn into it: a
 //               tree at 2.5 cells, a raider at 4 (60 damage: flash, falls), an ally at 6.5 (the same, friend
 //               or foe), the 3 middle cells of a 7-cell wall at 9 (the cut faces glow and fade), a crate at
 //               12.5. A raider 2.4 cells off the line is only lit.
@@ -39,22 +48,25 @@
 // Drawing: level circles, spirals, strips and quads; nothing per facing (the path and the wall turn with the
 // aim). Blue and Red are compact copies of the Blue v2 and Red v2 looks, not the full effects. Light is
 // additive; the sphere's body, the trench and the burns are Transparent. Pawns, tree, wall, crate are stand-ins.
-import { Color, Mathf, Meshes, MeshPool } from '../js/engine.js';
+import { Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../js/engine.js';
 import { draw, mesh } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
 import { caster, Uniform } from './lib/gojo.js';
 import { Blue, Deep, Ice } from './lib/vergil.js';
-import { pawn, ringAt, line, glint, whiteGlow, wallCell, EnemyColour, Ally, Ink, White, Lift, Chest, Skin, pawnLayer, buildingLayer, clamp, smooth } from './lib/goku.js';
+import { pawn, ringAt, line, strip, glint, whiteGlow, wallCell, EnemyColour, Ally, Ink, White, Lift, Chest, Skin, pawnLayer, buildingLayer, clamp, smooth } from './lib/goku.js';
 
 const TAU = Math.PI * 2, D2R = Mathf.Deg2Rad, ChestUp = Chest / Lift;
 const disc = Meshes.disc(40, 'purple disc');
+const puff = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.Transparent), puffGlow = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.MoteGlow);
 // Decided values. Red's speed is the agreed 20 cells/s.
 const Raise = .15, Start = .15, RedSpeed = 20, Tip = .8, Reach = .5, Grow = .3, Fade = .5, Tail = 1.2;
 const BlueR = .9, OrbR = .2, Bands = 12, Bolts = 5, Rays = 10, RingEvery = .5, Specks = 24;
+// Travel and erasing (S1 ep 20 #47-48 the purple band behind the head, #61-63 the trench walls and dust).
+const TrenchDepth = .6, BandStep = .4, BandLife = 1.1, EdgeStep = .4, EdgeCool = 1.5, Lifted = 18, DustStep = .45, DustLife = 2;
 const Red = new Color(1, .1, .14), RedDeep = new Color(.42, 0, .05), HotPink = new Color(1, .78, .82);
 const Royal = new Color(.12, .32, .95), Abyss = new Color(.01, .03, .16), Cyan = new Color(.45, .85, 1);
 const Violet = new Color(.58, .22, 1), Lilac = new Color(.86, .72, 1), Plum = new Color(.2, .03, .36), Night = new Color(.06, 0, .12), Magenta = new Color(.95, .35, 1);
-const Scoured = new Color(.3, .25, .23), Bark = new Color(.35, .24, .14), Leaves = new Color(.25, .45, .2), Crate = new Color(.55, .4, .22);
+const Scoured = new Color(.3, .25, .23), Earth = new Color(.38, .3, .24), Lip = new Color(.62, .56, .5), Haze = new Color(.72, .67, .6), Bark = new Color(.35, .24, .14), Leaves = new Color(.25, .45, .2), Crate = new Color(.55, .4, .22);
 // Things on the path for "wall and raiders": [cells past Blue's centre along the path, cells across, kind].
 const Path = [[2.5, .5, 'tree'], [4, -.3, 'raider'], [6.5, .8, 'ally'], [11, 2.4, 'raider'], [12.5, -.6, 'crate']];
 const WallAt = 9, WallCells = [-3, -2, -1, 0, 1, 2, 3];
@@ -182,7 +194,9 @@ export default {
   },
   events(p) {
     const t = times(p);
-    return [{ t: t.fire, type: 'shake', value: .03 }, { t: t.contact, type: 'shake', value: .05 }, { t: t.ignite, type: 'shake', value: .16 }, { t: t.move + 1, type: 'shake', value: .04 }, { t: t.move + 2, type: 'shake', value: .04 }];
+    const rumble = [];
+    for (let r = t.move + .5; r < t.stop; r += .5) rumble.push({ t: r, type: 'shake', value: .035 });
+    return [{ t: t.fire, type: 'shake', value: .03 }, { t: t.contact, type: 'shake', value: .05 }, { t: t.ignite, type: 'shake', value: .16 }, ...rumble];
   },
 
   draw(s, p, { origin: o, scene }) {
@@ -201,17 +215,30 @@ export default {
     // When the sphere reaches a thing at (along, across): its centre is within the radius of it.
     const hitAt = (along, across) => Math.abs(across) >= R ? Infinity : t.move + Math.max(0, along - B - Math.sqrt(R * R - across * across)) / p.speed;
 
-    // --- floor: the trench with glowing edges, purple light, burns --------------------------------------------------
+    // --- floor: the trench, a cut with a wall you can see; the cut edges cooling; the ground being erased ------------
+    const passedAt = x => t.move + Math.max(0, x - B) / p.speed;   // when the sphere's centre passed a point on the path
+    const mv = s >= t.move && s < t.gone ? smooth((s - t.move) / .3) * fading : 0;
     if (p.trench && s >= t.move) {
-      const from = B, to = at, glowK = s < t.stop ? 1 : 1 - smooth((s - t.stop) / 1);
+      const from = B, to = at;
       if (to > from + .05) {
-        const edge = k => [place(from, k * R), place(to, k * R)];
         capsule('purple trench', place(from), place(to), R, a, Scoured.withAlpha(.5), Floor + .012);
+        capsule('purple trench floor', place(from), place(to), R * .9, a, Night.withAlpha(.12), Floor + .0122);
         [-1, 1].forEach(k => {
-          line(`purple trench shade ${k}`, [place(from, k * R * .82), place(to, k * R * .82)], R * .35, Night.withAlpha(.18), undefined, Floor + .0125, 'none');
-          line(`purple trench edge ${k}`, edge(k), .06, Night.withAlpha(.7), undefined, Floor + .013, 'none');
-          const back = Math.max(from, to - 4), glowPts = [place(to, k * R * .98), place(back, k * R * .98)];
-          line(`purple trench glow ${k}`, glowPts, .16, Violet.withAlpha(.6 * glowK), whiteGlow, Floor + .014, 'end');
+          const top = [place(from, k * R), place(to, k * R)], north = k * ca > .05;
+          if (north) {
+            // The wall below the north lip is seen from above: a band TrenchDepth x 0.6 tall, earth, darker at its foot.
+            const drop = TrenchDepth * Lift, foot = top.map(q => ({ x: q.x, z: q.z - drop }));
+            strip(`purple trench wall ${k}`, top, foot, Earth.withAlpha(.9), undefined, Floor + .0126);
+            line(`purple trench foot ${k}`, foot, .07, Night.withAlpha(.5), undefined, Floor + .0127, 'none');
+            line(`purple trench lip ${k}`, top, .05, Lip.withAlpha(.6), undefined, Floor + .0128, 'none');
+          } else line(`purple trench lip ${k}`, top, .08, Night.withAlpha(.6), undefined, Floor + .0128, 'none');
+          // The cut edges glow where the sphere has just passed: white, then lilac, then violet, gone in 1.5 s.
+          for (let x0 = Math.max(from, to - EdgeCool * p.speed - EdgeStep); x0 < to; x0 += EdgeStep) {
+            const x1 = Math.min(to, x0 + EdgeStep), age = s - passedAt((x0 + x1) / 2), u = clamp(age / EdgeCool);
+            if (u >= 1) continue;
+            const colour = age < .3 ? Color.Lerp(White, Lilac, age / .3) : Color.Lerp(Lilac, Violet, clamp((age - .3) / .6));
+            line(`purple cut glow ${k} ${Math.round(x0 * 10)}`, [place(x0, k * R * .99, .02), place(x1, k * R * .99, .02)], .15 - .07 * u, colour.withAlpha(.9 * (1 - u)), whiteGlow, Floor + .014, 'none');
+          }
         });
       }
     }
@@ -219,6 +246,44 @@ export default {
       sprite(place(at), 11 * grown, 8.5 * grown, Plum.withAlpha(.3 * fading), soft, Floor + .029);
       sprite(place(at), 12 * grown, 9 * grown, Violet.withAlpha(.45 * fading), glow, Floor + .03);
     }
+    // The ground under the sphere being erased: a glow, a bright cut line round the front of its footprint,
+    // and specks of earth lifting off and drawn into it.
+    if (mv > 0) {
+      sprite(place(at), R * 2.2, R * 1.6, Lilac.withAlpha(.5 * mv), glow, Floor + .034);
+      sprite(place(at + R * .45), R * 1.2, R * .6, White.withAlpha(.45 * mv), glow, Floor + .035, -p.aim);
+      const cut = [];
+      for (let m = 0; m <= 12; m++) { const q = a + (m / 12 * 2 - 1) * 80 * D2R; cut.push({ x: place(at).x + Math.cos(q) * R, z: place(at).z + Math.sin(q) * R }); }
+      line('purple ground cut wide', cut, .3, Lilac.withAlpha(.35 * mv), whiteGlow, Floor + .036, 'both');
+      line('purple ground cut', cut, .08, White.withAlpha(.9 * mv), whiteGlow, Floor + .037, 'both');
+      for (let i = 0; i < Lifted; i++) {
+        const ph = (s / .35 + rand(i + 3200)) % 1, along = (rand(i + 3210) - .2) * R, across = (rand(i + 3220) - .5) * R * 1.8;
+        const g0 = place(at + along, across), k = smooth(ph), x = g0.x + (P0.x - g0.x) * k * .7, z = g0.z + (P0.z - g0.z) * k * .7 + k * .2;
+        sprite({ x, z }, .09, .09, Color.Lerp(Haze, Lilac, k).withAlpha(Math.sin(Math.PI * ph) * mv), glow, Y + .14 + i * .0001);
+      }
+    }
+    // The purple band left behind (S1 #47-48): haze rising along the cut and fading over 1.1 s after the sphere passes.
+    if (s >= t.move) for (let n = 0; ; n++) {
+      const x = B + (n + .5) * BandStep;
+      if (x >= at) break;
+      const age = s - passedAt(x), u = age / BandLife;
+      if (u < 0 || u >= 1) continue;
+      [-.55, 0, .55].forEach((c, j) => {
+        const up = .2 + 1.2 * u, sz = R * 1.7 * (.7 + .5 * u), q = place(x + (rand(n * 3 + j + 3330) - .5) * .3, c * R + (rand(n * 3 + j + 3300) - .5) * .3, up);
+        sprite(q, sz, sz * .8, Plum.withAlpha(.28 * (1 - u)), puff, Y + .02 + (n % 30) * .0002, rand(n * 3 + j + 3310) * 360 + u * 70);
+        sprite(q, sz * .85, sz * .7, Violet.withAlpha(.5 * (1 - u) ** 1.5), puffGlow, Y + .1 + (n % 30) * .0002, rand(n * 3 + j + 3320) * 360 - u * 70);
+      });
+    }
+    // Dust rising off both lips of the trench once the band has thinned (S1 #61), fading over 2 s.
+    if (p.trench && s >= t.move) [-1, 1].forEach(k => {
+      for (let n = 0; ; n++) {
+        const x = B + (n + .5) * DustStep;
+        if (x >= at) break;
+        const id = n * 2 + (k > 0 ? 1 : 0), u = (s - passedAt(x) - .25 - .3 * rand(id + 3410)) / (DustLife * (.7 + .5 * rand(id + 3420)));
+        if (u <= 0 || u >= 1) continue;
+        const q = place(x + (rand(id + 3430) - .5) * .5, k * R * (1 + .1 * rand(id + 3440) + .35 * u), .1 + (.5 + .8 * rand(id + 3450)) * u), sz = (.4 + 1.3 * u) * (.7 + .6 * rand(id + 3460));
+        sprite(q, sz, sz * .85, Haze.withAlpha(.28 * Math.sin(Math.PI * u)), puff, Y + .015 + (n % 30) * .0002, rand(n * 2 + (k > 0 ? 1 : 0) + 3400) * 360 + u * 50);
+      }
+    });
 
     // --- the wall: 7 cells across the path; the middle 3 are erased; the cut faces glow ------------------------------
     if (!field(p)) WallCells.forEach(k => {
@@ -274,8 +339,22 @@ export default {
       const u = (s - t.contact) / p.merge, e = smooth(u), rho = .8 * (1 - e), th = a + Math.PI + e * 4 * TAU / 2;
       const rP = { x: C.x + Math.cos(th) * rho, z: C.z + Math.sin(th) * rho }, bP = { x: C.x - Math.cos(th) * rho * .6, z: C.z - Math.sin(th) * rho * .6 };
       const side = { x: -sa, z: ca };
-      sprite({ x: place(B).x + side.x * 1.5, z: place(B).z + side.z * 1.5 }, 5, 4, Red.withAlpha(.35 * Math.sin(Math.PI * u)), glow, Floor + .03);
-      sprite({ x: place(B).x - side.x * 1.5, z: place(B).z - side.z * 1.5 }, 5, 4, Blue.withAlpha(.4 * Math.sin(Math.PI * u)), glow, Floor + .031);
+      // The world split red and blue (S2 ep 4 #30-32): a red half on one side, a blue half on the other,
+      // and a red and a cyan half ring 2.2 cells out spinning opposite ways.
+      const env = Math.sin(Math.PI * clamp(u * 1.1));
+      sprite({ x: place(B).x + side.x * 3, z: place(B).z + side.z * 3 }, 8, 7, Red.withAlpha(.45 * env), glow, Floor + .03);
+      sprite({ x: place(B).x - side.x * 3, z: place(B).z - side.z * 3 }, 8, 7, Blue.withAlpha(.5 * env), glow, Floor + .031);
+      sprite({ x: C.x + side.x * 2.5, z: C.z + side.z * 2.5 }, 6, 5, RedDeep.withAlpha(.25 * env), soft, Y + .0012);
+      sprite({ x: C.x - side.x * 2.5, z: C.z - side.z * 2.5 }, 6, 5, Abyss.withAlpha(.25 * env), soft, Y + .0013);
+      [[Red, 1], [Cyan, -1]].forEach(([colour, dirn], j) => {
+        const pts = [], q0 = a + Math.PI / 2 * dirn + dirn * (s - t.contact) * 7;
+        for (let m = 0; m <= 16; m++) { const q = q0 + Math.PI * m / 16; pts.push({ x: C.x + Math.cos(q) * 2.2 * (1 - .4 * e), z: C.z + Math.sin(q) * 2.2 * (1 - .4 * e) }); }
+        line(`purple half ring ${j}`, pts, .3, colour.withAlpha(.6 * env), whiteGlow, Y + .124 + j * .0002, 'both');
+        line(`purple half ring ${j} core`, pts, .08, White.withAlpha(.7 * env), whiteGlow, Y + .1242 + j * .0002, 'both');
+      });
+      // The world holds its breath: it darkens over the last 0.15 s before the flash.
+      const hush = smooth((s - (t.ignite - .15)) / .15);
+      if (hush > 0) sprite(C, 20, 18, Night.withAlpha(.45 * hush), soft, Y + .0015);
       for (let i = 0; i < 6; i++) {
         const rr = .6 + .2 * i, q0 = th * (1 + .15 * i) + i * 1.3, pts = [];
         for (let m = 0; m <= 10; m++) { const q = q0 + 1.6 * m / 10; pts.push({ x: C.x + Math.cos(q) * rr * (1 - .5 * e), z: C.z + Math.sin(q) * rr * (1 - .5 * e) }); }
@@ -289,6 +368,7 @@ export default {
     // --- ignition: white point, flash, ripple rings, rays ---------------------------------------------------------
     if (s >= t.ignite && s < t.ignite + .7) {
       const age = s - t.ignite;
+      if (age < .5) { const f = age / .5; sprite(C, 18, 16, Violet.withAlpha(.5 * (1 - f)), glow, Y + .0016); sprite(C, 16, 14, Plum.withAlpha(.3 * (1 - f)), soft, Y + .0015); }
       if (age < .25) { const f = age / .25; sprite(C, 3.5 * (1 - f) + .5, 3.5 * (1 - f) + .5, White.withAlpha(.95 * (1 - f)), glow, Y + .2); glint('purple ignite', C, 1.6 * (1 - f) + .3, 1 - f, Lilac, 15); }
       for (let i = 0; i < 4; i++) {
         const u = clamp((age - i * .08) / .6);
