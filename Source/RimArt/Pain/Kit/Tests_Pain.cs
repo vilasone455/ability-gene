@@ -239,6 +239,16 @@ namespace RimArt
                     float away = (near.DrawPos - near.Position.ToVector3Shifted()).Yto0().magnitude;
                     t.Check(casts.Flying(near) && away > 0.3f, k.name + ": just after the push the raider is still drawn on its way ("
                         + away.ToString("0.00") + " cells from where the push put it)");
+                    if (k.name == "tap")
+                    {
+                        // Close shots of the landing dust (0.4 s) against the real pawn's feet (docs/pawn-height-handoff.md).
+                        foreach (int wait in WaitFor(() => { casts.PoseFlights(); return (near.DrawPos - near.Position.ToVector3Shifted()).Yto0().magnitude < 0.15f; }, 90))
+                            yield return wait;
+                        yield return 4;
+                        yield return HeightShots.Shoot(t, "pain height shinra landing 4", near.Position, near);
+                        yield return 8;
+                        yield return HeightShots.Shoot(t, "pain height shinra landing 12", near.Position, near);
+                    }
                     if (k.radius >= 4f)
                     {
                         foreach (int wait in WaitFor(() => !s.active || s.charge.time >= s.charge.BurstAt + 0.2f, 60)) yield return wait;
@@ -311,6 +321,7 @@ namespace RimArt
             t.Check(!cast.blocked && !cast.heavy, "not blocked, not dragged");
             yield return 20;
             yield return t.ShotAs("bansho face-down");
+            yield return HeightShots.Shoot(t, "pain height bansho face-down", raider.Position, host, raider);
             t.Check(PainLooks.TryGet(raider, out PainLook look) && look.lying && look.facing == Rot4.North, "drawn face-down while stunned");
             t.Check(pull.OnCooldown && pull.CooldownTicksRemaining > 700, "15 s cooldown (" + pull.CooldownTicksRemaining + " ticks)");
             t.Check(host.Position == from, "Pain did not move");
@@ -344,6 +355,7 @@ namespace RimArt
             t.Check(Stunned(raider) && Stunned(wall), "both stunned");
             yield return 6;
             yield return t.ShotAs("bansho blocked");
+            yield return HeightShots.Shoot(t, "pain height bansho blocked", wall.Position, raider, wall);
             Finish(record);
         }
 
