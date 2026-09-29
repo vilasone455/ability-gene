@@ -55,7 +55,8 @@ namespace RimArt
             public Pawn caster, target;
             public int kickTick, hitTick;
             public bool hit;
-            public float damage, armorPenetration, warmup, distance;
+            public float damage, armorPenetration, warmup, distance, speed;
+            public int seed;
             /// <summary>Where the caster stood and the aim at the kick, for the picture.</summary>
             public Vector2 feet, aim;
 
@@ -70,6 +71,8 @@ namespace RimArt
                 Scribe_Values.Look(ref armorPenetration, "armorPenetration");
                 Scribe_Values.Look(ref warmup, "warmup");
                 Scribe_Values.Look(ref distance, "distance");
+                Scribe_Values.Look(ref speed, "speed", 42f);
+                Scribe_Values.Look(ref seed, "seed");
                 Scribe_Values.Look(ref feet, "feet");
                 Scribe_Values.Look(ref aim, "aim");
             }
@@ -79,6 +82,7 @@ namespace RimArt
         public const int TailTicks = 90;
 
         private List<Flick> flicks = new List<Flick>();
+        private int kicks;
 
         public IReadOnlyList<Flick> Flicks => flicks;
 
@@ -90,12 +94,16 @@ namespace RimArt
             Vector3 from = caster.DrawPos, to = target.DrawPos;
             var run = new Vector2(to.x - from.x, to.z - from.z);
             float distance = run.magnitude;
+            float speed = Mathf.Max(1f, props.cellsPerSecond);
             flicks.Add(new Flick
             {
                 caster = caster, target = target, kickTick = now, damage = props.damage, armorPenetration = props.armorPenetration,
-                warmup = warmup, distance = distance, feet = new Vector2(from.x, from.z), aim = distance < 1e-4f ? Vector2.right : run / distance,
-                hitTick = now + Mathf.Max(1, Mathf.RoundToInt(distance / Mathf.Max(1f, props.cellsPerSecond) * 60f)),
+                warmup = warmup, distance = distance, speed = speed, seed = kicks++,
+                feet = new Vector2(from.x, from.z), aim = distance < 1e-4f ? Vector2.right : run / distance,
+                // The pebble leaves from his foot, not his centre (the picture's HitAt).
+                hitTick = now + Mathf.Max(1, Mathf.RoundToInt(VectorFlick.HitAt(0f, distance, speed) * 60f)),
             });
+            if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(VectorFlick.KickShake);
         }
 
         public override void MapComponentTick()
@@ -114,8 +122,61 @@ namespace RimArt
                         float angle = new Vector3(f.aim.x, 0f, f.aim.y).AngleFlat();
                         target.TakeDamage(new DamageInfo(DamageDefOf.Blunt, f.damage, f.armorPenetration, angle, f.caster));
                     }
+                    if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(VectorFlick.HitShake);
                 }
                 if (f.hit && now - f.hitTick > TailTicks) flicks.RemoveAt(i);
+            }
+        }
+
+        // ---- the picture (VectorFlickGraphics, the port of accelerator-vector-flick.js) -----------------------------
+
+        public override void MapComponentUpdate()
+        {
+            if (Find.CurrentMap != map) return;
+            PawnFit.Begin();
+            try
+            {
+                DrawWarmups();
+                for (int i = 0; i < flicks.Count; i++) Draw(flicks[i]);
+            }
+            finally
+            {
+                PawnFit.End();
+            }
+        }
+
+        private static readonly Color Shoe = new Color(0.07f, 0.07f, 0.08f);
+
+        private void Draw(Flick f)
+        {
+            Vector2? target = null;
+            if (f.target != null && f.target.Spawned && f.target.Map == map) target = new Vector2(f.target.DrawPos.x, f.target.DrawPos.z);
+            VectorFlickGraphics.Draw(Shot(f.caster, f.feet, f.aim, f.distance, f.warmup, f.speed, target, f.seed), f.warmup + UbwClock.Since(f.kickTick), map);
+        }
+
+        private static VectorFlickShot Shot(Pawn caster, Vector2 feet, Vector2 aim, float distance, float warmup, float speed, Vector2? target, int seed) =>
+            new VectorFlickShot
+            {
+                Feet = feet, Aim = Mathf.Atan2(aim.y, aim.x) * Mathf.Rad2Deg, Distance = distance, Warmup = warmup, Speed = speed,
+                Pants = AcceleratorKit.Pants(caster), Shoe = Shoe, Target = target, Seed = seed,
+            };
+
+        /// <summary>The warm-up (the pebble popping out of the floor, the leg drawn back) from his aiming stance, before the kick.</summary>
+        private void DrawWarmups()
+        {
+            List<Pawn> colonists = map.mapPawns.FreeColonistsSpawned;
+            for (int i = 0; i < colonists.Count; i++)
+            {
+                Pawn pawn = colonists[i];
+                if (!(pawn.stances?.curStance is Stance_Warmup warmup) || !(warmup.verb is Verb_CastAbility verb)) continue;
+                if (verb.ability?.def != AcceleratorDefOf.AG_VectorFlick || !(warmup.focusTarg.Thing is Pawn target) || !target.Spawned) continue;
+                float elapsed = UbwClock.Since(warmup.startedTick), total = (Find.TickManager.TicksGame - warmup.startedTick + warmup.ticksLeft) / 60f;
+                Vector3 from = pawn.DrawPos, to = target.DrawPos;
+                var run = new Vector2(to.x - from.x, to.z - from.z);
+                float distance = run.magnitude;
+                var props = AcceleratorKit.Props<CompProperties_VectorFlick>(verb.ability.def);
+                VectorFlickGraphics.Draw(Shot(pawn, new Vector2(from.x, from.z), distance < 1e-4f ? Vector2.right : run / distance, distance,
+                    Mathf.Max(0.05f, total), props?.cellsPerSecond ?? 42f, new Vector2(to.x, to.z), kicks), Mathf.Min(elapsed, total - 0.001f), map);
             }
         }
 
@@ -163,7 +224,46 @@ namespace RimArt
             Vector3 at = caster.DrawPos;
             var entry = new Applied { caster = caster, feet = new Vector2(at.x, at.z), tick = Find.TickManager.TicksGame, strain = strain };
             applied.Add(entry);
+            if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(VectorApply.Shake);
             return entry;
+        }
+
+        public override void MapComponentUpdate()
+        {
+            if (Find.CurrentMap != map || applied.Count == 0) return;
+            PawnFit.Begin();
+            try
+            {
+                foreach (Applied a in applied) Draw(a);
+            }
+            finally
+            {
+                PawnFit.End();
+            }
+        }
+
+        private VectorApplyRound[] scratch = new VectorApplyRound[16];
+
+        private void Draw(Applied a)
+        {
+            if (scratch.Length != a.rounds.Count) scratch = new VectorApplyRound[a.rounds.Count];
+            for (int i = 0; i < a.rounds.Count; i++)
+            {
+                Edited e = a.rounds[i];
+                bool exists = !e.gone && e.round != null && e.round.Spawned && !e.round.Destroyed;
+                if (exists)
+                {
+                    Vector3 p = Rounds.For(e.round)?.Position(e.round) ?? e.round.DrawPos;
+                    e.last = new Vector2(p.x, p.z);
+                }
+                scratch[i] = new VectorApplyRound
+                {
+                    Caught = e.caught, OldHeading = e.before, NewHeading = e.after, Force = e.force, Speed = e.speedPerTick * 60f,
+                    Live = e.last, Exists = exists, Seed = i,
+                };
+            }
+            VectorApplyGraphics.Draw(new VectorApplyShot { Feet = a.feet, Strain = a.strain, Reach = VectorEditDefaults.ScanRadiusCells, Rounds = scratch },
+                UbwClock.Since(a.tick), map);
         }
 
         public override void MapComponentTick()
