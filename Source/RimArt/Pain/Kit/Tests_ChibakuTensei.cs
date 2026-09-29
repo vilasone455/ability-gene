@@ -10,7 +10,7 @@ namespace RimArt
     /// Game tests for Pain's Chibaku Tensei cast from his Echo (run with -quicktest -rimarttest=chibaku, with the
     /// ground and ball tests of <see cref="Tests_ChibakuPlates"/>): the cost and cooldown, the launch and hand-over to
     /// the ball, Pain held until it forms, the Shinra Tensei / Banshō Ten'in lock, Pain and a pinned pawn left on their
-    /// ground, and the early burst when Pain goes down.
+    /// ground, the early burst when Pain goes down, and the Release button.
     /// </summary>
     public static class Tests_ChibakuTensei
     {
@@ -49,6 +49,7 @@ namespace RimArt
             ability.QueueCastingJob(new LocalTargetInfo(c), LocalTargetInfo.Invalid);
             foreach (int step in Tests_Pain.WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.Seconds(t.Now) >= .75f, 90)) yield return step;
             yield return t.ShotAs("chibaku-tensei-1-warm-up", view, 12f);
+            yield return t.ShotAs("chibaku-tensei-1b-hands-cupped", from, 4f);
             foreach (int step in Tests_Pain.WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.Fired == true, 90)) yield return step;
             ChibakuCast cast = Tests_Pain.Cast<ChibakuCast>(host);
             if (!t.Check(cast != null && cast.Fired, "the core was launched")) { Tests_Pain.Finish(record); yield break; }
@@ -64,6 +65,7 @@ namespace RimArt
             t.Check(host.CurJobDef == PainDefOf.AG_CastPain, "Pain holds his hand up (the cast job)");
             yield return Until(component, ChibakuBall.Pull + 1.2f);
             yield return t.ShotAs("chibaku-tensei-3-pull", view, 12f);
+            yield return t.ShotAs("chibaku-tensei-3b-seal", from, 4f);
 
             yield return Until(component, ChibakuBall.Formed - .1f);
             foreach (Pawn p in taken) t.Check(!p.Spawned && p.ParentHolder == component, p.LabelShort + " is in the ball");
@@ -76,6 +78,11 @@ namespace RimArt
             t.Check(!receiver.GizmoDisabled(out string receiverWhy), "Black Receiver can be used while the ball holds (" + receiverWhy + ")");
             t.Check(bansho.GizmoDisabled(out why) && why.Contains("Chibaku"), "Banshō Ten'in still waits");
             yield return t.ShotAs("chibaku-tensei-4-held", view, 12f);
+            yield return t.ShotAs("chibaku-tensei-4a-ball-close", c + new IntVec3(0, 0, 3), 8f);
+            yield return Until(component, ball.Crack - .5f);
+            yield return t.ShotAs("chibaku-tensei-4b-hairline-cracks", c + new IntVec3(0, 0, 3), 8f);
+            yield return Until(component, ball.Crack + .3f);
+            yield return t.ShotAs("chibaku-tensei-4c-cracks-open", c + new IntVec3(0, 0, 3), 8f);
 
             yield return Until(component, ball.Burst + ball.FallTime + .1f);
             foreach (Pawn p in taken)
@@ -152,6 +159,52 @@ namespace RimArt
             float damage = Damage(raider);
             t.Log($"the raider took {damage:0.#} damage, {(raider.Dead ? "dead" : raider.Downed ? "down" : "stunned " + raider.stances.stunner.Stunned)}");
             t.Check(raider.Spawned && damage > 0f && damage < 20f, "it landed with the fall and about 2 s of crush (a full hold is about 34)");
+            yield return Until(component, ball.End + .2f);
+            t.Check(!component.Live && component.Inner.Count == 0, "the ball ended with nothing left inside");
+            Tests_Pain.Finish(record);
+        }
+
+        private static Command_Action ReleaseButton(Ability ability) =>
+            ability.GetGizmos().OfType<Command_Action>().FirstOrDefault(c => c.defaultLabel == Patch_ChibakuRelease.Label);
+
+        [RimArtTest("Chibaku", "tensei 4 Pain presses Release while the ball holds: no button while it forms, it bursts 0.4 s later, the raider inside takes the crush only for the time held, Banshō is free after the burst (screenshot)", 1500)]
+        private static IEnumerable<int> Release(RimArtTestContext t)
+        {
+            IntVec3 c = t.center, from = c + new IntVec3(-10, 0, 0);
+            Pawn host = Arena(t, from, out _, out EchoRecord record, out MapComponent_ChibakuPlates component);
+            Pawn raider = Tests_Pain.Target(t, c + new IntVec3(1, 0, 0), 300);
+            yield return 5;
+
+            Ability ability = Tests_Pain.Ready(t, host, Def), bansho = host.abilities.GetAbility(PainDefOf.AG_PainBanshoTenin);
+            if (ability == null || bansho == null) { Tests_Pain.Finish(record); yield break; }
+            t.Check(ReleaseButton(ability) == null, "no Release button before the cast");
+            ability.QueueCastingJob(new LocalTargetInfo(c), LocalTargetInfo.Invalid);
+            foreach (int step in Tests_Pain.WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.handed == true, 150)) yield return step;
+            ChibakuBall ball = component.Ball;
+            if (!t.Check(component.Live && ball != null, "the ball began")) { Tests_Pain.Finish(record); yield break; }
+            yield return Until(component, ChibakuBall.Pull + 1f);
+            t.Check(ReleaseButton(ability) == null, "no Release button while the ball is still forming");
+
+            yield return Until(component, ChibakuBall.Formed + 2f);
+            t.Check(!raider.Spawned, "the raider is in the ball");
+            float fullBurst = ball.Burst;
+            Command_Action release = ReleaseButton(ability);
+            if (!t.Check(release != null && !release.Disabled, "the Release button is there once the ball has formed")) { Tests_Pain.Finish(record); yield break; }
+            float pressedAt = component.LiveSeconds;
+            release.action();
+            t.Check(ball.Broken && Mathf.Abs(ball.Burst - (pressedAt + ChibakuBall.CrackTime)) < .05f,
+                $"it bursts {ChibakuBall.CrackTime:0.0} s after the press: at {ball.Burst:0.00} s instead of {fullBurst:0.00} s");
+            t.Check(ReleaseButton(ability) == null, "the button is gone once the seams have opened");
+            t.Check(PainKit.ChibakuLeft(host) <= ChibakuBall.CrackTime + .05f, "the lock ends with the burst (" + PainKit.ChibakuLeft(host).ToString("0.00") + " s left)");
+
+            yield return Until(component, ball.Burst + .1f);
+            bool waits = bansho.GizmoDisabled(out string why) && why != null && why.Contains("Chibaku");
+            t.Check(!waits, "Banshō Ten'in is free after the burst (" + why + ")");
+            yield return Until(component, ball.Burst + ball.FallTime + .1f);
+            float damage = Damage(raider);
+            t.Log($"the raider took {damage:0.#} damage, {(raider.Dead ? "dead" : raider.Downed ? "down" : "stunned " + raider.stances.stunner.Stunned)}");
+            t.Check(raider.Spawned && damage > 0f && damage < 20f, "it landed with the fall and about 2 s of crush (a full hold is about 34)");
+            yield return t.ShotAs("chibaku-tensei-7-released", c + new IntVec3(0, 0, 1), 12f);
             yield return Until(component, ball.End + .2f);
             t.Check(!component.Live && component.Inner.Count == 0, "the ball ended with nothing left inside");
             Tests_Pain.Finish(record);

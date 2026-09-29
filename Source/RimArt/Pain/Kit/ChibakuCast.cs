@@ -76,11 +76,14 @@ namespace RimArt
     }
 
     /// <summary>
-    /// One Chibaku Tensei, from the raised hand to the ball being formed. The warmup is the hand coming up at the cell
-    /// and the core growing over the palm; the fire tick is the launch: the core flies at <c>coreSpeed</c> from the palm
-    /// to 5 cells over the cell (<see cref="ChibakuBall.DefaultHeight"/>), and on arrival the map's
-    /// <see cref="MapComponent_ChibakuPlates"/> takes over (the pull, the ball, the burst). The cast job holds Pain with
-    /// his hand up until the ball is formed and the hand is down again; the ball itself goes on without him standing.
+    /// One Chibaku Tensei, from the cupped hands to the ball being formed (the sketch pain-chibaku-tensei-v2.js). The
+    /// warmup is Pain cupping his hands at his chest while the core forms between them in a white glow, and in its last
+    /// <see cref="ThrowTime"/> the near hand throwing it straight up; the fire tick is the launch: the core leaves the
+    /// raised hand at <c>coreSpeed</c>, climbs over its place and comes down 5 cells over the cell
+    /// (<see cref="ChibakuBall.CorePoint"/>, <see cref="ChibakuBall.DefaultHeight"/>), and on arrival the map's
+    /// <see cref="MapComponent_ChibakuPlates"/> takes over (the pull, the ball, the burst). From just after the launch
+    /// Pain holds his palms pressed together at his chest, trembling harder through the pull (<see cref="Hands"/>); the
+    /// cast job holds him until the ball is formed and his hands are down again; the ball goes on without him standing.
     /// If Pain is downed, killed, leaves the map or hero form while the core flies, the core fades and nothing happens
     /// (the charge and cooldown are spent); after it arrives, the map component bursts the ball instead.
     /// </summary>
@@ -89,16 +92,29 @@ namespace RimArt
         public IntVec3 cell = IntVec3.Invalid;
         /// <summary>The unit way from Pain to the cell (x, z), fixed at the launch.</summary>
         public Vector2 aim = Vector2.up;
-        /// <summary>The core's start over the palm and its place over the cell: (x, height, z) in cells.</summary>
+        /// <summary>The core's start over the raised hand and its place over the cell: (x, height, z) in cells.</summary>
         public Vector3 from, to;
-        /// <summary>Cells the core flies.</summary>
+        /// <summary>Cells the core flies (along its curve).</summary>
         public float run;
         public bool handed, aborted;
         public int abortTick = -1;
 
-        // Sketch timing and shape (pain-chibaku-tensei.js): rest before the warmup, the raised hand's height, the palm
-        // core's radius and its gap past the hand, when the hand comes down after the ball is formed and how long it takes.
-        public const float LeadTime = .2f, RaisedH = .72f, PalmR = .2f, PalmGap = .3f, ArmDownAfter = .3f, ArmDownTime = .4f, FadeSeconds = .3f;
+        // Sketch timing and shape (pain-chibaku-tensei-v2.js): rest before the warmup, the core's radius between the hands,
+        // when the hands come down after the ball is formed and how long it takes; the hands cupping, the throw at the end
+        // of the warmup, the seal after the launch; the raised hand's height.
+        public const float LeadTime = .2f, PalmR = .08f, ArmDownAfter = .3f, ArmDownTime = .4f, FadeSeconds = .3f;
+        public const float CupIn = .3f, ThrowTime = .18f, SealAfter = .1f, SealIn = .35f, ThrowH = 1.05f;
+        // Pain's hands, (cells along the aim, across it to the left, up) from his ground point: the near hand first.
+        private static readonly Vector3 Rest0 = new Vector3(.04f, .2f, .3f), Rest1 = new Vector3(.04f, -.2f, .3f), Cup0 = new Vector3(.24f, .06f, .5f),
+            Cup1 = new Vector3(.24f, -.06f, .5f), Raised = new Vector3(.1f, .14f, ThrowH), Seal0 = new Vector3(.2f, .028f, .56f), Seal1 = new Vector3(.2f, -.028f, .56f);
+
+        /// <summary>One of Pain's hands: where (along the aim, across it, up), whether the fingers point up, how far they are closed.</summary>
+        public struct PainHand
+        {
+            public Vector3 at;
+            public bool up;
+            public float grip;
+        }
 
         public override AbilityDef Def => PainDefOf.AG_PainChibakuTensei;
         protected override float Lead => LeadTime;
@@ -114,8 +130,66 @@ namespace RimArt
         /// <summary>The hand is down again: the cast job lets Pain go.</summary>
         public float Free => Formed + ArmDownAfter + ArmDownTime;
 
-        /// <summary>The palm core's point on the floor (its height is <see cref="RaisedH"/> + 0.12), from Pain's ground point.</summary>
-        public static Vector2 PalmGround(Vector2 pain, Vector2 aim) => PainGraphics.Place(pain, aim, .12f + PainGraphics.Reach + PalmGap, -.1f);
+        /// <summary>Seconds on this cast's clock when the ball starts pulling.</summary>
+        public float PullAt => Arrive + ChibakuBall.Pull;
+
+        /// <summary>
+        /// Pain's two hands at <paramref name="s"/> seconds on the cast's clock (the sketch's hands()): cupping at the chest
+        /// over <see cref="CupIn"/>, the near hand throwing the core straight up over the last <see cref="ThrowTime"/> of
+        /// the warmup, both palms pressed together at the chest from <see cref="SealAfter"/> after the launch, trembling
+        /// harder through the pull, and down to his sides once the ball has formed. False when neither is drawn.
+        /// </summary>
+        public bool Hands(float s, out PainHand near, out PainHand far)
+        {
+            near = far = default;
+            if (s < LeadTime || (Fired && s >= Free)) return false;
+            float cup = Smooth((s - LeadTime) / CupIn), throwAt = LaunchAt - ThrowTime;
+            Vector3 h0 = Vector3.Lerp(Rest0, Cup0, cup), h1 = Vector3.Lerp(Rest1, Cup1, cup);
+            bool up0 = false, up1 = false;
+            float g0 = .55f, g1 = .55f;
+            if (s >= throwAt)
+            {
+                float up = Mathf.Pow(Mathf.Clamp01((s - throwAt) / ThrowTime), 2f);
+                h0 = Vector3.Lerp(Cup0, Raised, up);
+                g0 = Mathf.Lerp(.55f, .05f, up);
+                up0 = up > .5f;
+            }
+            if (Fired && s >= LaunchAt + SealAfter)
+            {
+                float k = Smooth((s - LaunchAt - SealAfter) / SealIn);
+                h0 = Vector3.Lerp(Raised, Seal0, k);
+                h1 = Vector3.Lerp(Cup1, Seal1, k);
+                if (k > .5f)
+                {
+                    up0 = up1 = true;
+                    g0 = g1 = .9f;
+                }
+                float A = (s < PullAt ? .003f : Mathf.Lerp(.004f, .02f, Mathf.Clamp01((s - PullAt) / ChibakuBall.PullSeconds))) * k;
+                var jig = new Vector3(Mathf.Sin(s * 47f) * A, Mathf.Sin(s * 59f + 1f) * A * .6f, Mathf.Sin(s * 53f + 2f) * A);
+                h0 += jig;
+                h1 += jig;
+            }
+            if (Fired && s >= Formed + ArmDownAfter)
+            {
+                float k = Smooth((s - Formed - ArmDownAfter) / ArmDownTime);
+                h0 = Vector3.Lerp(h0, Rest0, k);
+                h1 = Vector3.Lerp(h1, Rest1, k);
+                if (k > .5f)
+                {
+                    up0 = up1 = false;
+                    g0 = g1 = .5f;
+                }
+            }
+            near = new PainHand { at = h0, up = up0, grip = g0 };
+            far = new PainHand { at = h1, up = up1, grip = g1 };
+            return true;
+        }
+
+        private static float Smooth(float x)
+        {
+            x = Mathf.Clamp01(x);
+            return x * x * (3f - 2f * x);
+        }
 
         /// <summary>The unit way from <paramref name="pawn"/> to <paramref name="target"/>, level.</summary>
         public static Vector2 AimFrom(Pawn pawn, IntVec3 target)
@@ -130,11 +204,12 @@ namespace RimArt
             MarkFired(now);
             cell = target;
             aim = AimFrom(caster, target);
-            Vector2 palm = PalmGround(PainKit.Ground(caster.DrawPos), aim);
-            from = new Vector3(palm.x, RaisedH + .12f, palm.y);
+            // The core leaves just over the raised near hand.
+            Vector2 hand = PainGraphics.Place(PainKit.Ground(caster.DrawPos), aim, Raised.x + .02f, Raised.y);
+            from = new Vector3(hand.x, ThrowH + .12f, hand.y);
             Vector3 middle = target.ToVector3Shifted();
             to = new Vector3(middle.x, ChibakuBall.DefaultHeight, middle.z);
-            run = (to - from).magnitude;
+            run = ChibakuBall.CorePathLength(from, to);
         }
 
         public override bool Holds(int now)

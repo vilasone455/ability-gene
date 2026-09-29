@@ -387,6 +387,15 @@ Gojo (agreed 2026-09-27; numbers are placeholders):
   buildings, plants and items are destroyed with no drops; pawns take 60 erasure damage that ignores
   armour; friend or foe. Its own cooldown 1 day plus 20 charge; if it is not ready or the pool cannot
   pay, Red passes through Blue and pushes as normal.
+  Erasure rules (added 2026-09-29; placeholders): a pawn whose cell centre is within 0.5 cells of the
+  path is erased (dies with no corpse; apparel, weapon and inventory destroyed; counts as Gojo's kill;
+  mechanoids too; bosses, `PawnKindDef.isBoss` (Apocriton, War Queen, Diabolus, Hive Queen), are not
+  erased and take the 60 instead; large animals are erased like any pawn); pawns 0.5 to 1.5 cells off the
+  path take the 60, and a part it destroys is gone with no bleeding. Every cell whose centre is within
+  1.5 cells of the path becomes a new terrain, Erased ground (smooth, pale violet-grey, fertility 0, can
+  be built on and floored over); built floors there are removed with no refund, water stays, roofs over
+  the lane are removed (thick rock roof too), rock and ore are erased with no chunks. The scar is
+  permanent (agreed 2026-09-29): it never grows back. Sketch: `gojo-purple.js`.
 - Unlimited Void: the pocket map (pictures on main, PR #34). Everyone within 9 cells is taken in,
   keeping positions relative to Gojo; 10 s or Release, then back to the matching cells. Anyone not
   spared is overloaded (consciousness capped at 10 % for 60 s, then void-scarred 2 days). Cooldown
@@ -477,19 +486,27 @@ Pain, Chibaku Tensei replaces Gravity Well as his ultimate (2026-09-28; the user
 validate.py `RETIRED`) and its code stays for Gojo's Blue. Sketch `pain-chibaku-tensei.js`; the ball
 preview is `Source/RimArt/Chibaku`, the cast `Source/RimArt/Pain/Kit/ChibakuCast.cs`; numbers are XML
 fields on `CompProperties_ChibakuTensei`; tests `-rimarttest=chibaku`. Rules:
-- Target a cell up to 25 cells away in sight. Warm-up 0.8 s (hand up, core over the palm), then the core
-  flies at 14 cells/s to 5 cells over the cell. Pain stands with his hand up until the ball has formed
-  (about 4-6 s from the click), then is free.
+- Target a cell up to 25 cells away in sight. Warm-up 0.8 s (hands cupped, the core forming between them,
+  thrown straight up in the last 0.18 s), then the core climbs 2.5 cells over its place and comes down 5
+  cells over the cell, at 14 cells/s along the curve. Pain stands with his palms pressed together until the
+  ball has formed (about 4-6 s from the click), then is free. The v2 look (sketch
+  `pain-chibaku-tensei-v2.js`) was ported 2026-09-29.
 - Pull 3 s, radius 6: every pawn on the torn ground is taken (any faction, colonists and big animals
   too), with items and corpses; plants and filth are destroyed, trees torn out. The ground under a roof,
   a building or a built floor stays, with what is on it. Pain and pawns pinned by Black Receiver are
   never taken, and the plates they stood on stay.
-- The ball holds 12 s: 2 blunt per second, then the burst: 8 blunt for the fall, in hits of up to 8,
-  from Pain (kills count for him), stunned 2.5 s. It may kill (agreed 2026-09-28).
+- The ball holds 12 s, then the burst. When a pawn lands it takes 2 blunt for each second it was held plus 8
+  for the fall, all at once, in hits of up to 8, from Pain (kills count for him), and is stunned 2.5 s. It may
+  kill (agreed 2026-09-28); nothing dies inside the ball.
 - Pulled soil becomes stony soil; 6-10 real rock chunks land (one per 16 plates pulled).
 - While the ball holds, Shinra Tensei and Banshō Ten'in are locked; Black Receiver is not. If Pain is
   downed, killed, leaves the map or hero form, the ball bursts at once (after it has formed if it is
   still forming). Lost before the core arrives, the core fades and nothing happens.
+- Release button (agreed 2026-09-29): once the ball has formed and until its seams open, Pain can let it go
+  early. It cracks at once and bursts 0.4 s later; those inside take the crush only for the seconds they were
+  held, plus the fall; Shinra Tensei and Banshō Ten'in are free after the burst. The cooldown and charge stay
+  spent. (A charge-up like Shinra Tensei's was considered and not taken: the source throws it without one, it
+  already holds Pain 4-6 s, and Pain has a hold button in Shinra.)
 - One ball per map. Cooldown 1 day, Echo charge 30.
 - The command works for any ability with this comp, so Gojo's Blue can reuse it with its own XML
   (min radius = max radius for a fixed well, no growth, no drift).
