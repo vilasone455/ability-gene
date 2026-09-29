@@ -25,6 +25,13 @@ namespace RimArt
         /// <summary>Cells of pole at each end that do not stretch, the dark outline round the pole, the carried staff.</summary>
         internal const float FerruleLength = 0.14f, Outline = 0.02f, Width = 0.12f;
         internal const float RestBack = -0.45f, RestTip = 0.75f, HandHeight = 0.5f;
+        /// <summary>
+        /// The hands' height as drawn: HandHeight in the lab, fitted to a real pawn in game (PawnFit, +0.06 on
+        /// screen). make_power_pole_anim.py puts the Melee Animation hands at the same fitted height.
+        /// </summary>
+        internal static float Hand => PawnFit.H(HandHeight);
+        /// <summary>The hands' height off the floor for their shadow: a real pawn's hands are higher.</summary>
+        internal static float HandShadow => HandHeight * PawnFit.Body;
         /// <summary>The lab's shadow strength at full daylight.</summary>
         private const float ShadowStrength = 0.32f;
 

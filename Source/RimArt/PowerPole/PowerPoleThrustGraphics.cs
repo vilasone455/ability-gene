@@ -54,7 +54,7 @@ namespace RimArt
 
             Vector2 a = feet + toward * back, b = feet + toward * tip;
             if (keepPole || seconds < T.HomeAt)
-                Pole(Raised(a, HandHeight), Raised(b, HandHeight), a + sun * HandHeight, b + sun * HandHeight, tip - back, Width, shadow, Overhead);
+                Pole(Raised(a, Hand), Raised(b, Hand), a + sun * HandShadow, b + sun * HandShadow, tip - back, Width, shadow, Overhead);
 
             // Speed lines beside the shaft while the tip is moving out.
             float moving = seconds >= T.ThrustAt && seconds < T.PushedAt
@@ -64,7 +64,7 @@ namespace RimArt
                 {
                     float side = (i % 2 == 1 ? 1f : -1f) * (0.14f + Rand(i + 7) * 0.2f), length = (0.8f + Rand(i + 3) * 1.4f) * moving;
                     float head = tip - Rand(i + 11) * 0.6f, tail = Mathf.Max(back, head - length);
-                    Vector2 from = Raised(feet + toward * tail, HandHeight);
+                    Vector2 from = Raised(feet + toward * tail, Hand);
                     Part(from, toward * (head - tail), across, 0f, 1f, side - 0.012f, side + 0.012f, Fade(Cream, 0.55f * moving), Overhead + 0.01f + i * 0.0002f);
                 }
 
@@ -73,7 +73,7 @@ namespace RimArt
             if (shot.Hit && hitAge >= 0f && hitAge < 0.5f)
             {
                 Vector2 spot = feet + toward * shot.Contact;
-                Sprite(Raised(spot, HandHeight), 1.6f, 1.1f, Fade(Cream, Mathf.Max(0f, 1f - hitAge / 0.12f) * 0.85f), glow, Overhead + 0.02f);
+                Sprite(Raised(spot, Hand), 1.6f, 1.1f, Fade(Cream, Mathf.Max(0f, 1f - hitAge / 0.12f) * 0.85f), glow, Overhead + 0.02f);
                 Circle(spot, 0.25f + hitAge * 2.2f, (1f - hitAge / 0.5f) * 0.6f, Floor, Cream);
                 for (int i = 0; i < T.HitPuffs; i++)
                 {

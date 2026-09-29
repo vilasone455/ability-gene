@@ -69,7 +69,7 @@ namespace RimArt
         {
             Vector2 pawn = PawnAt(time, shot);
             return new Vector2(pawn.x + Mathf.Lerp(HandsBack, 0f, PowerPoleGraphics.Smooth01((time - shot.PeakAt) / WhipTime)),
-                pawn.y + Mathf.Lerp(HandsHigh, PowerPoleGraphics.HandHeight, PowerPoleGraphics.Smooth01((time - shot.PinEndAt) / Retract)));
+                pawn.y + Mathf.Lerp(HandsHigh, PowerPoleGraphics.Hand, PowerPoleGraphics.Smooth01((time - shot.PinEndAt) / Retract)));
         }
 
         /// <summary>
@@ -82,8 +82,8 @@ namespace RimArt
         {
             tipAcross = 0f;
             Vector2 pawn = PawnAt(time, shot), planted = new Vector2(Foot, 0f), target = new Vector2(shot.TargetAlong, 0f);
-            Vector2 carryTip = new Vector2(pawn.x + PowerPoleGraphics.RestTip, pawn.y + PowerPoleGraphics.HandHeight);
-            Vector2 carryGrip = new Vector2(pawn.x + PowerPoleGraphics.RestBack, pawn.y + PowerPoleGraphics.HandHeight);
+            Vector2 carryTip = new Vector2(pawn.x + PowerPoleGraphics.RestTip, pawn.y + PowerPoleGraphics.Hand);
+            Vector2 carryGrip = new Vector2(pawn.x + PowerPoleGraphics.RestBack, pawn.y + PowerPoleGraphics.Hand);
             Vector2 top = new Vector2(pawn.x + TopBack, pawn.y + TopHeight);
             if (time < shot.LaunchAt)
             {
