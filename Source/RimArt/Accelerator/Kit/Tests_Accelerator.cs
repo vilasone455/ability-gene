@@ -325,6 +325,54 @@ namespace RimArt
             Finish(record);
         }
 
+        [RimArtTest("Accelerator", "plasma 4 a bullet fired from inside the radius (3 cells) is caught before it hits, one from 11 cells too; close-ups of the spiral")]
+        private static IEnumerable<int> PlasmaCloseCatch(RimArtTestContext t)
+        {
+            GameComponent_Echoes echoes = Setup(t);
+            yield return 2;
+            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn near = Target(t, t.center + new IntVec3(0, 0, 3));
+            Pawn far = Target(t, t.center + new IntVec3(-11, 0, 0));
+            yield return 5;
+            host.abilities.GetAbility(AcceleratorDefOf.AG_VectorPlasma).QueueCastingJob(t.center + new IntVec3(12, 0, 0), LocalTargetInfo.Invalid);
+            yield return 40;
+            PlasmaChannel channel = Plasmas(t).For(host);
+            t.Check(channel != null && channel.Channelling, "channelling (" + RimArtTestContext.Describe(host) + ")");
+            float before = Health(host);
+            ThingDef def = DefDatabase<ThingDef>.GetNamed("Bullet_Revolver");
+            var close = (Projectile)GenSpawn.Spawn(def, near.Position, t.map);
+            close.Launch(near, near.DrawPos, host, host, ProjectileHitFlags.All);
+            var distant = (Projectile)GenSpawn.Spawn(def, far.Position, t.map);
+            distant.Launch(far, far.DrawPos, host, host, ProjectileHitFlags.All);
+            int fired = t.Now, closeGone = -1, distantGone = -1;
+            for (int i = 0; i < 30 && (closeGone < 0 || distantGone < 0); i++)
+            {
+                yield return 1;
+                if (closeGone < 0 && close.Destroyed) closeGone = t.Now - fired;
+                if (distantGone < 0 && distant.Destroyed) distantGone = t.Now - fired;
+            }
+            t.Log("the 3-cell bullet was destroyed after " + closeGone + " ticks, the 11-cell one after " + distantGone);
+            var feet = new UnityEngine.Vector2(host.DrawPos.x, host.DrawPos.z);
+            foreach (PlasmaChannel.Caught c in channel?.caught ?? new List<PlasmaChannel.Caught>())
+                t.Log("caught at " + c.at.ToString("F2") + ", " + (c.at - feet).magnitude.ToString("0.0") + " cells from him, tick +" + (c.tick - fired));
+            t.Check(closeGone > 0, "the bullet fired from 3 cells was caught");
+            t.Check(distantGone > 0, "the bullet fired from 11 cells was caught");
+            t.Check(channel != null && channel.caught.Count == 2, "two catches drawn (" + (channel?.caught.Count ?? 0) + ")");
+            t.Check(Health(host) >= before, "Accelerator was not hit");
+            // The spiral lasts Plasma.BendTime (1.3 s, 78 ticks) from each catch.
+            yield return 10;
+            yield return t.ShotAs("plasma-spiral-close-a", host.Position, 4f);
+            yield return 20;
+            yield return t.ShotAs("plasma-spiral-close-b", host.Position, 4f);
+            yield return 5;
+            yield return t.ShotAs("plasma-spiral-wide", host.Position, 9f);
+            yield return 25;
+            yield return t.ShotAs("plasma-spiral-close-c", host.Position, 4f);
+            foreach (int w in WaitFor(() => channel != null && channel.burst, 200)) yield return w;
+            t.Check(channel != null && channel.burst, "the channel still released and burst");
+            Finish(record);
+        }
+
         // ---- vector manipulation ----------------------------------------------------------------------------------
 
         [RimArtTest("Accelerator", "manipulation 1 strain costs come from the ability def")]
