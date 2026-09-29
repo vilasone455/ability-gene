@@ -389,8 +389,8 @@ Gojo (agreed 2026-09-27; numbers are placeholders):
   no bleeding. Every cell whose centre is within 1.5 cells of the path becomes a new terrain, Erased
   ground (smooth, pale violet-grey, fertility 0, can be built on and floored over); built floors there
   are removed with no refund, water stays, roofs over the lane are removed (thick rock roof too), rock
-  and ore are erased with no chunks. Open: whether mech bosses and large animals are erased or only
-  take the 60; whether the scar stays for good (proposed) or grows back. Sketch: `gojo-purple.js`.
+  and ore are erased with no chunks. The scar is permanent (agreed 2026-09-29): it never grows back.
+  Open: whether mech bosses and large animals are erased or only take the 60. Sketch: `gojo-purple.js`.
 - Unlimited Void: the pocket map (pictures on main, PR #34). Everyone within 9 cells is taken in,
   keeping positions relative to Gojo; 10 s or Release, then back to the matching cells. Anyone not
   spared is overloaded (consciousness capped at 10 % for 60 s, then void-scarred 2 days). Cooldown

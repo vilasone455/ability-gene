@@ -15,9 +15,8 @@
 //   - The lane: every cell whose centre is within 1.5 cells of the path becomes a new terrain, Erased ground
 //     (smooth, pale violet-grey, fertility 0, can be built on and floored over). Built floors there are removed
 //     with no refund; water stays water; roofs over the lane are removed, thick rock roof too; rock and ore in
-//     the lane are erased with no chunks.
-//   Open: whether mech bosses and large animals are erased or only take the 60; whether the scar stays for good
-//   (proposed) or grows back after some days.
+//     the lane are erased with no chunks. The scar is permanent (user 2026-09-29): it never grows back.
+//   Open: whether mech bosses and large animals are erased or only take the 60.
 //
 // Sources (YouTube storyboards, 2026-09-29):
 //   anime S1 ep 20, U2ja8ZLRwrA  17-20 s a blue swirl on one side, a red swirl on the other; 28-30 s they
