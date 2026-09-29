@@ -482,9 +482,11 @@ Pain, Chibaku Tensei replaces Gravity Well as his ultimate (2026-09-28; the user
 validate.py `RETIRED`) and its code stays for Gojo's Blue. Sketch `pain-chibaku-tensei.js`; the ball
 preview is `Source/RimArt/Chibaku`, the cast `Source/RimArt/Pain/Kit/ChibakuCast.cs`; numbers are XML
 fields on `CompProperties_ChibakuTensei`; tests `-rimarttest=chibaku`. Rules:
-- Target a cell up to 25 cells away in sight. Warm-up 0.8 s (hand up, core over the palm), then the core
-  flies at 14 cells/s to 5 cells over the cell. Pain stands with his hand up until the ball has formed
-  (about 4-6 s from the click), then is free.
+- Target a cell up to 25 cells away in sight. Warm-up 0.8 s (hands cupped, the core forming between them,
+  thrown straight up in the last 0.18 s), then the core climbs 2.5 cells over its place and comes down 5
+  cells over the cell, at 14 cells/s along the curve. Pain stands with his palms pressed together until the
+  ball has formed (about 4-6 s from the click), then is free. The v2 look (sketch
+  `pain-chibaku-tensei-v2.js`) was ported 2026-09-29.
 - Pull 3 s, radius 6: every pawn on the torn ground is taken (any faction, colonists and big animals
   too), with items and corpses; plants and filth are destroyed, trees torn out. The ground under a roof,
   a building or a built floor stays, with what is on it. Pain and pawns pinned by Black Receiver are

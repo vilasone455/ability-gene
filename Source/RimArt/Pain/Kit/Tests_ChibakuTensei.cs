@@ -49,6 +49,7 @@ namespace RimArt
             ability.QueueCastingJob(new LocalTargetInfo(c), LocalTargetInfo.Invalid);
             foreach (int step in Tests_Pain.WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.Seconds(t.Now) >= .75f, 90)) yield return step;
             yield return t.ShotAs("chibaku-tensei-1-warm-up", view, 12f);
+            yield return t.ShotAs("chibaku-tensei-1b-hands-cupped", from, 4f);
             foreach (int step in Tests_Pain.WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.Fired == true, 90)) yield return step;
             ChibakuCast cast = Tests_Pain.Cast<ChibakuCast>(host);
             if (!t.Check(cast != null && cast.Fired, "the core was launched")) { Tests_Pain.Finish(record); yield break; }
@@ -64,6 +65,7 @@ namespace RimArt
             t.Check(host.CurJobDef == PainDefOf.AG_CastPain, "Pain holds his hand up (the cast job)");
             yield return Until(component, ChibakuBall.Pull + 1.2f);
             yield return t.ShotAs("chibaku-tensei-3-pull", view, 12f);
+            yield return t.ShotAs("chibaku-tensei-3b-seal", from, 4f);
 
             yield return Until(component, ChibakuBall.Formed - .1f);
             foreach (Pawn p in taken) t.Check(!p.Spawned && p.ParentHolder == component, p.LabelShort + " is in the ball");
@@ -76,6 +78,11 @@ namespace RimArt
             t.Check(!receiver.GizmoDisabled(out string receiverWhy), "Black Receiver can be used while the ball holds (" + receiverWhy + ")");
             t.Check(bansho.GizmoDisabled(out why) && why.Contains("Chibaku"), "Banshō Ten'in still waits");
             yield return t.ShotAs("chibaku-tensei-4-held", view, 12f);
+            yield return t.ShotAs("chibaku-tensei-4a-ball-close", c + new IntVec3(0, 0, 3), 8f);
+            yield return Until(component, ball.Crack - .5f);
+            yield return t.ShotAs("chibaku-tensei-4b-hairline-cracks", c + new IntVec3(0, 0, 3), 8f);
+            yield return Until(component, ball.Crack + .3f);
+            yield return t.ShotAs("chibaku-tensei-4c-cracks-open", c + new IntVec3(0, 0, 3), 8f);
 
             yield return Until(component, ball.Burst + ball.FallTime + .1f);
             foreach (Pawn p in taken)
