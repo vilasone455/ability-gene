@@ -298,6 +298,56 @@
     </renderNodeProperties>
   </HediffDef>
 
+  <!-- Satō's hero form. He has no EchoDef until his kit is ported, so for now this hediff only carries
+       his combat look, from the manga colour art and the anime's fights: a white shirt with the sleeves
+       rolled above the elbow, a brown plate carrier with magazine pouches and a grenade, dark trousers,
+       brown shoes, and his flat cap. Two pieces: the outfit on the body, drawn like Sasuke's (no arms,
+       a seam and the rolled cuff mark the sleeves), and the cap on the head, which hides the hair as a
+       vanilla hat does. Both are drawn only while he wears clothes (onlyOverWornApparel): he rises
+       naked at an anchor while still manifested.
+       Textures: make_costume_textures.py. -->
+  <HediffDef ParentName="AG_EchoManifestBase">
+    <defName>AG_EchoManifest_Sato</defName>
+    <label>hero form: Satō</label>
+    <description>This Host has manifested Satō. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <renderNodeProperties>
+      <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
+        <debugLabel>Sato combat outfit</debugLabel>
+        <hideBodyApparel>true</hideBodyApparel>
+        <hideHeadgear>true</hideHeadgear>
+        <onlyOverWornApparel>true</onlyOverWornApparel>
+        <workerClass>RimArt.PawnRenderNodeWorker_EchoCostume</workerClass>
+        <parentTagDef>ApparelBody</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <texPath>RimArt/Echo/Costume/SatoOutfit_Thin</texPath>
+        <bodyTypeGraphicPaths>
+          <Thin>RimArt/Echo/Costume/SatoOutfit_Thin</Thin>
+          <Male>RimArt/Echo/Costume/SatoOutfit_Male</Male>
+          <Female>RimArt/Echo/Costume/SatoOutfit_Female</Female>
+          <Fat>RimArt/Echo/Costume/SatoOutfit_Fat</Fat>
+          <Hulk>RimArt/Echo/Costume/SatoOutfit_Hulk</Hulk>
+        </bodyTypeGraphicPaths>
+        <baseLayer>29</baseLayer>
+        <drawData>
+          <dataNorth>
+            <layer>89</layer>
+          </dataNorth>
+        </drawData>
+      </li>
+      <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
+        <debugLabel>Sato cap</debugLabel>
+        <hidesHair>true</hidesHair>
+        <onlyOverWornApparel>true</onlyOverWornApparel>
+        <workerClass>RimArt.PawnRenderNodeWorker_EchoCostume</workerClass>
+        <parentTagDef>Head</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <texPath>RimArt/Echo/Costume/SatoCap</texPath>
+        <narrowHeadScale>(0.84, 0.7)</narrowHeadScale>
+        <baseLayer>63</baseLayer>
+      </li>
+    </renderNodeProperties>
+  </HediffDef>
+
   <HediffDef ParentName="AG_EchoManifestBase">
     <defName>AG_EchoManifest_Goku</defName>
     <label>hero form: Goku</label>

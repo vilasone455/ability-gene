@@ -119,8 +119,12 @@ plexus follow the same hook.
 - `onlyOverWornApparel` (built 2026-09-29, for Satō): a costume node with it set is drawn only while
   the pawn wears clothes or armour (`EchoCostume.IsClothing`: OnSkin, Middle or Shell, not drawn as
   a pack; trousers alone count, belts and packs do not). While it is off, its `hideBodyApparel`,
-  `hideHeadgear` and `coversFace` do not apply either, so a naked Host's helmet shows. Default false;
-  no costume sets it until Satō's.
+  `hideHeadgear`, `coversFace` and `hidesHair` do not apply either, so a naked Host's helmet shows.
+  Default false; only Satō's costume sets it.
+- `hidesHair` (built 2026-09-29, for Satō's cap): the hair is not drawn while the costume is on, as
+  under a vanilla hat. A Harmony postfix on `PawnRenderTree.AdjustParms` adds the Hair render skip
+  flag, where the tree adds the worn headgear's. A hidden vanilla hat no longer adds it (see
+  `hideHeadgear`), so this is what hides the hair under a costume hat.
 - Shared costume (built 2026-09-28): the Akatsuki cloak lives on the abstract hediff
   `AG_EchoManifest_Akatsuki`; Pain's and Itachi's hero forms take it as their parent, and another
   member (Obito once his Echo exists) needs only `ParentName="AG_EchoManifest_Akatsuki"`. Two nodes:
@@ -505,8 +509,12 @@ anchors and Tear were agreed 2026-09-26):
   30 cells, 45 s, takes 50 % damage, cd 120 s, lifetime by piece: leg 45 s, arm 35 s, hand 20 s,
   finger 10 s; Tear order once per summon; the Relay order is still undecided); The Game (mark one
   enemy 30 s, +30 % damage from his shots, cd 45 s).
-- Costume (agreed 2026-09-29; the look is not chosen yet, reference frames first): drawn like the
-  other hero forms, but only while he wears body apparel. Rising at an anchor leaves his gear with
+- Costume (agreed 2026-09-29; combat look chosen and built 2026-09-29 on `AG_EchoManifest_Sato`, which
+  has no EchoDef yet): his flat cap, a white shirt with the sleeves rolled above the elbow, a brown
+  plate carrier with magazine pouches and a grenade, dark trousers, brown shoes, from the manga colour
+  art and the anime's fights (season 1 episode 12, season 2 episode 9, the final fight). Two pieces:
+  the outfit (hides worn clothes and headgear; no arms, as on the other costumes: a seam and the
+  rolled cuff mark the sleeves) and the cap on the head (`hidesHair`). Drawn like the other hero forms, but only while he wears body apparel. Rising at an anchor leaves his gear with
   the old body (agreed 2026-09-26), so he stands up naked while still manifested; a costume drawn
   whenever the manifest hediff is on would show him dressed. XML bool on
   `PawnRenderNodeProperties_EchoCostume`, `onlyOverWornApparel` (default false; built 2026-09-29,
@@ -657,7 +665,11 @@ puff and the vanilla punch.
   during the test only: no other costume sets it; naked with a belt and a cowboy hat, both nodes not
   drawn and the hat shows; trousers put on, both drawn and the hat hidden; trousers off, not drawn
   again; the belt drawn throughout; 2 screenshots). The runner now disposes a test when it ends, so
-  a test's finally block also runs after a timeout. `-rimarttest="Echo: costume"` runs costume 1-7.
+  a test's finally block also runs after a timeout. "costume 8" (Satō's hero form hediff added
+  directly: two nodes, both set to `onlyOverWornApparel`, 18 textures load; a dressed Host with an
+  afro, a cowboy hat and a pack: both drawn, the hair hidden under the cap, shirt and hat hidden, pack
+  drawn; a naked Host: nothing drawn, the hair drawn; trousers on, both drawn; the form removed, nothing of it left and the cowboy hat hides the hair
+  again; 4 screenshots). `-rimarttest="Echo: costume"` runs costume 1-8.
 - Debug window, kit "Itachi": make Host + manifest, false face (no cost, no cooldown), susanoo 12 s,
   weaken to 30 % health, totsuka stab the pawn under the mouse. Dispersal's "refill the plexus"
   and "shoot the carrier" still apply.
@@ -695,7 +707,7 @@ puff and the vanilla punch.
 
 - Meteor incident that brings the device (the device is researched and built for now).
 - Costumes for the other Echoes (Vergil's coat, the Akatsuki cloak for Pain, Itachi and Obito,
-  Obito's mask and Pain's piercings are built), the other head pieces, eye overlays, a transform effect per Echo, a marker
+  Obito's mask and Pain's piercings, Minato's, Sasuke's and Satō's are built), the other head pieces, eye overlays, a transform effect per Echo, a marker
   for manifested Hosts.
 - Pocket spaces closing on `PoolEmptied`, except Unlimited Blade Works: its world closes when the
   caster loses the ability, which an empty pool causes by reverting every Host.

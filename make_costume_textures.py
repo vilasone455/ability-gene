@@ -75,6 +75,22 @@ Echo/Costume/SasukeOutfit_<Body>_<facing>.png
     ends), stored facing right because the game mirrors every west picture. The art's colours are
     pushed toward blue so they do not read beige and pink in the game's warm light.
 
+Echo/Costume/SatoOutfit_<Body>_<facing>.png
+    256 px, the same 5 body types x 3 facings (west is east mirrored): Satō's combat look, from the
+    manga colour art and the anime's fights. A white shirt with the sleeves rolled above the elbow; a
+    brown plate carrier over the chest and belly, its straps over the shoulders, three magazine
+    pouches low on the front, a grenade and a small pouch high on the chest, rows of webbing and a
+    grab handle on the back plate; a dark brown belt, dark trousers and brown shoes. The arms are not
+    drawn, as on the other costumes: a seam from each shoulder to the elbow and the rolled cuff there
+    mark the sleeve.
+
+Echo/Costume/SatoCap_<facing>.png
+    256 px, south, east, north (west is east mirrored): Satō's flat cap, on the head (layer 63). A
+    dark slate crown, flatter and wider than the head, a seam down the middle, a short stiff brim at
+    the front with its shadow on the forehead. It hides the hair as a vanilla hat does.
+
+`python3 make_costume_textures.py sato` makes only Satō's pieces.
+
 The costume is fitted to the vanilla body outlines in BODIES, measured from the game's
 Naked_<Body>_<facing> textures (outer edge of the black outline, every 2 rows, on the 128 px
 sheet). Every length below is in those 128 px units; the picture is drawn 8x larger and reduced.
@@ -2328,6 +2344,350 @@ def sasuke_outfit():
         sasuke_back(Body(BODIES[(body, "north")]), f"SasukeOutfit_{body}_north.png")
 
 
+# ---- Satō's combat look ----
+
+# From the manga colour art and the anime's fights (season 1 episode 12, season 2 episode 9 and the
+# final fight): a white shirt with the sleeves rolled above the elbow, a brown plate carrier with
+# magazine pouches and a grenade, a dark brown belt, dark trousers and brown shoes. The arms are not
+# drawn, as on the other costumes: facing south and north a seam from each shoulder to the elbow and
+# the rolled cuff there mark the sleeve.
+ST_SHIRT, ST_SHIRT_LIT, ST_SHIRT_DARK = (212, 216, 218), (240, 242, 242), (148, 156, 162)
+ST_VEST, ST_VEST_LIT, ST_VEST_DARK = (128, 102, 68), (164, 136, 94), (78, 60, 38)
+ST_WEBBING = (104, 82, 54)
+ST_TROUSERS, ST_TROUSERS_LIT, ST_TROUSERS_DARK = (54, 56, 50), (80, 84, 74), (32, 33, 30)
+ST_BELT = (66, 46, 30)
+ST_SHOE, ST_SHOE_LIT, ST_SHOE_DARK = (96, 60, 36), (132, 88, 56), (58, 36, 22)
+ST_GRENADE, ST_GRENADE_LIT, ST_GRENADE_DARK = (70, 82, 56), (104, 118, 82), (40, 48, 32)
+
+
+class Combat:
+    """Heights the three facings share. The sleeves are rolled to just above the elbow: the cuff is the
+    rolled band. The plate carrier covers the chest and belly down to the belt; the magazine pouches
+    fill its lower third."""
+
+    def __init__(self, body):
+        top, h = body.top, body.height
+        self.cuff = top + 0.27 * h  # the rolled cuff's top
+        self.cuff_end = top + 0.33 * h  # its bottom
+        self.plate = top + 0.13 * h  # the plate's top edge
+        self.belt = body.waist + 0.1 * h  # the vest's bottom and the belt's top
+        self.belt_end = self.belt + 0.045 * h
+        self.pouches = self.belt - 0.36 * (self.belt - self.plate)
+        self.shoe = body.bottom - 0.05 * h
+
+
+def combat_arms(body):
+    """South and north: the costume's sides, and on side s (-1 the viewer's left) the arm's outer edge
+    (the costume's side) and inner edge (the sleeve's seam)."""
+    side = coat_sides(body, body.bottom, 0, 0)
+    aw = min(4.2, 0.2 * body.width)
+
+    def outer(y, s):
+        return side(y)[1 if s > 0 else 0]
+
+    def inner(y, s):
+        return outer(y, s) - s * aw
+    return side, outer, inner
+
+
+def sato_legs(image, body, lay, legs, light=None):
+    """The trousers from the belt down, a crease between the legs, and the brown shoes."""
+    c = body.centre
+    shade(image, legs, ST_TROUSERS_DARK, ST_TROUSERS, ST_TROUSERS_LIT, light, reach=1.4)
+    crotch = lay.belt_end + 0.45 * (body.bottom - lay.belt_end)
+    paint(image, inter(stroke([(c(crotch), crotch), (c(body.bottom), body.bottom)], 0.5), legs), ST_TROUSERS_DARK)
+    shoes = inter(legs, band(lay.shoe, 128))
+    shade(image, shoes, ST_SHOE_DARK, ST_SHOE, ST_SHOE_LIT, light, reach=0.8)
+    paint(image, inter(band(lay.shoe - 0.2, lay.shoe + 0.3), legs), ST_TROUSERS_DARK)
+
+
+def sato_belt(image, lay, within, buckle_x=None):
+    paint(image, inter(band(lay.belt, lay.belt_end), within), ST_BELT)
+    if buckle_x is not None:
+        bh = lay.belt_end - lay.belt
+        buckle = polygon([(buckle_x - 1.3, lay.belt + 0.1 * bh), (buckle_x + 1.3, lay.belt + 0.1 * bh),
+                          (buckle_x + 1.3, lay.belt_end - 0.1 * bh), (buckle_x - 1.3, lay.belt_end - 0.1 * bh)])
+        paint(image, inter(buckle, within), SILVER)
+        paint(image, inter(shrink(buckle, 0.45), within), ST_BELT)
+
+
+def rolled_sleeves(image, lay, outer, inner, within):
+    """South and north: a seam from each shoulder down to the elbow, and there the rolled cuff, a band
+    across the sleeve with two roll lines."""
+    for s in (-1, 1):
+        paint(image, inter(stroke([(inner(y, s), y) for y in steps(lay.cuff - 12, lay.cuff_end)], 0.45), within),
+              ST_SHIRT_DARK)
+        cuff = inter(polygon([(inner(lay.cuff, s), lay.cuff), (outer(lay.cuff, s) + s * 2, lay.cuff),
+                              (outer(lay.cuff_end, s) + s * 2, lay.cuff_end), (inner(lay.cuff_end, s), lay.cuff_end)]),
+                     within)
+        shade(image, cuff, ST_SHIRT_DARK, ST_SHIRT, ST_SHIRT_LIT, reach=0.7)
+        for y in (lay.cuff, lay.cuff + 0.36 * (lay.cuff_end - lay.cuff), lay.cuff + 0.7 * (lay.cuff_end - lay.cuff),
+                  lay.cuff_end):
+            paint(image, inter(stroke([(inner(y, s), y), (outer(y, s) + s * 2, y + 0.2)], 0.35), cuff), ST_SHIRT_DARK)
+
+
+def paint_pouches(image, left, right, top, bottom, within, n=3):
+    """n magazine pouches side by side from left to right: each with its flap, a lit top edge and a dark
+    gap between them."""
+    gap = 0.5
+    pw = (right - left - gap * (n + 1)) / n
+    for i in range(n):
+        x0 = left + gap + i * (pw + gap)
+        pouch = inter(polygon([(x0, top), (x0 + pw, top), (x0 + pw, bottom), (x0, bottom)]), within)
+        paint(image, inter(grow(pouch, 0.35), within), ST_VEST_DARK)
+        shade(image, pouch, ST_VEST_DARK, ST_VEST, ST_VEST_LIT, band(top, top + 1.0), reach=0.6)
+        flap = top + 0.38 * (bottom - top)
+        paint(image, inter(band(flap - 0.2, flap + 0.25), pouch), ST_VEST_DARK)
+
+
+def paint_webbing(image, plate, top, bottom, rows):
+    """The rows of webbing across a plate: faint lines, evenly spaced."""
+    for k in range(rows):
+        y = top + (k + 0.5) * (bottom - top) / rows
+        paint(image, inter(stroke([(0, y), (128, y)], 0.4), shrink(plate, 1.2)), ST_WEBBING)
+
+
+def paint_grenade(image, x, y, r):
+    """A frag grenade clipped to the vest: an olive egg, its spoon down one side and the ring on top."""
+    egg = ellipse(x, y, r, 1.2 * r)
+    paint(image, grow(egg, 0.3), INK)
+    shade(image, egg, ST_GRENADE_DARK, ST_GRENADE, ST_GRENADE_LIT, ellipse(x - 0.4 * r, y - 0.4 * r, 0.6 * r, 0.6 * r),
+          reach=0.5)
+    paint(image, stroke([(x + 0.2 * r, y - 1.3 * r), (x + 0.8 * r, y - 0.7 * r), (x + 0.9 * r, y + 0.5 * r)], 0.45), SILVER)
+    paint(image, minus(ellipse(x - 0.3 * r, y - 1.45 * r, 0.55 * r, 0.45 * r),
+                       ellipse(x - 0.3 * r, y - 1.45 * r, 0.3 * r, 0.22 * r)), SILVER)
+
+
+def carrier_plate(outer, inner, top, bottom):
+    ys = steps(top, bottom)
+    return grow(shrink(polygon([(inner(y, -1) + 0.4, y) for y in ys] + [(inner(y, 1) - 0.4, y) for y in reversed(ys)]),
+                       1.0), 1.0)
+
+
+def carrier_straps(c, w, top, plate):
+    sw = max(2.6, min(4.6, 0.15 * w))
+    return [polygon([(c(top) + s * 0.16 * w, top), (c(top) + s * (0.16 * w + sw), top),
+                     (c(plate) + s * (0.18 * w + sw), plate + 1), (c(plate) + s * 0.18 * w, plate + 1)]) for s in (-1, 1)]
+
+
+def sato_front(body, name):
+    """South: the plate carrier over the chest and belly, its straps over the shoulders, three
+    magazine pouches low on the front, a grenade clipped high on his right (the viewer's left) and a
+    small pouch on his left; the white shirt round it, a seam down each sleeve to the rolled cuff at
+    the elbow; the belt and buckle, dark trousers and brown shoes."""
+    w, c, top = body.width, body.centre, body.top
+    lay = Combat(body)
+    side, outer, inner = combat_arms(body)
+    shirt = cloak_outline(side, top - 0.5, lay.belt_end)
+    gap = leg_gap(body)
+    legs = minus(inter(body_outline(body), band(lay.belt, 128)), gap)
+    plate = carrier_plate(outer, inner, lay.plate, lay.belt)
+    vest = union(plate, *carrier_straps(c, w, top - 1, lay.plate))
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = inter(ramp(c(top) - w * 0.7, c(top) + w * 0.4, 150, 0), ellipse(c(top) - w * 0.3, top + 20, w * 0.45, 26)
+                  .filter(ImageFilter.GaussianBlur(6 * U)))
+    sato_legs(image, body, lay, legs, light)
+    shade(image, shirt, ST_SHIRT_DARK, ST_SHIRT, ST_SHIRT_LIT, light, reach=2.4)
+    rolled_sleeves(image, lay, outer, inner, shirt)
+    sato_belt(image, lay, union(shirt, legs), c(lay.belt))
+
+    shade(image, vest, ST_VEST_DARK, ST_VEST, ST_VEST_LIT, light, reach=1.5)
+    paint_pouches(image, inner(lay.pouches, -1) + 0.8, inner(lay.pouches, 1) - 0.8, lay.pouches, lay.belt - 0.6, plate)
+    r = max(1.3, min(2.1, 0.07 * w))
+    gy = lay.plate + 0.45 * (lay.pouches - lay.plate)
+    small = polygon([(c(gy) + 0.1 * w, gy - 1.2 * r), (c(gy) + 0.1 * w + 2.4 * r, gy - 1.2 * r),
+                     (c(gy) + 0.1 * w + 2.4 * r, gy + 1.3 * r), (c(gy) + 0.1 * w, gy + 1.3 * r)])
+    paint(image, inter(grow(small, 0.35), plate), ST_VEST_DARK)
+    shade(image, inter(small, plate), ST_VEST_DARK, ST_VEST, ST_VEST_LIT, reach=0.6)
+    paint(image, inter(band(gy - 0.4 * r, gy - 0.4 * r + 0.4), small), ST_VEST_DARK)
+    paint_grenade(image, c(gy) - 0.18 * w, gy + 0.2 * r, r)
+
+    finish(image, minus(union(shirt, legs, vest), gap), name)
+
+
+def sato_back(body, name):
+    """North: the shirt's turned-down collar over the nape, the back plate with three rows of webbing
+    and a grab handle at its top, the straps over the shoulders, the rolled sleeves, the belt, trousers
+    and shoes. Drawn over the head facing north, as the other costumes."""
+    w, c, top = body.width, body.centre, body.top
+    lay = Combat(body)
+    side, outer, inner = combat_arms(body)
+    ys = steps(top + 3, lay.belt_end)
+    back = polygon([(side(y)[0], y) for y in ys] + [(side(y)[1], y) for y in reversed(ys)])
+    # A plain shirt collar, lower than the ninja collars: sized to the neck, the same on every body type.
+    cw = 11.0
+    cys = steps(0, 1, 0.05)
+    rim = [(c(top) - 0.9 * cw * math.cos(math.pi * t), top + 0.6 - 1.4 * math.sin(math.pi * t)) for t in cys]
+    collar = polygon([(c(top) - cw - 0.6, top + 6), (c(top) - 0.9 * cw - 0.4, top + 1.2)] + rim +
+                     [(c(top) + 0.9 * cw + 0.4, top + 1.2), (c(top) + cw + 0.6, top + 6),
+                      (side(top + 10)[1], top + 10), (side(top + 10)[0], top + 10)])
+    shoulders = polygon([(c(top) - cw - 0.6, top + 5), (side(top + 12)[0], top + 12),
+                         (side(top + 12)[1], top + 12), (c(top) + cw + 0.6, top + 5)])
+    shirt = union(back, collar, shoulders)
+    gap = leg_gap(body)
+    legs = minus(inter(body_outline(body), band(lay.belt, 128)), gap)
+    plate = carrier_plate(outer, inner, lay.plate - 1, lay.belt)
+    vest = union(plate, *carrier_straps(c, w, top + 2, lay.plate))
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = ellipse(c(top) - w * 0.15, top + 22, w * 0.42, 22).filter(ImageFilter.GaussianBlur(7 * U))
+    sato_legs(image, body, lay, legs, light)
+    shade(image, shirt, ST_SHIRT_DARK, ST_SHIRT, ST_SHIRT_LIT, light, reach=2.4)
+    # The collar's fold, a little under its rim.
+    paint(image, inter(stroke([(x, y + 2.2) for x, y in rim], 0.45), shirt), ST_SHIRT_DARK)
+    rolled_sleeves(image, lay, outer, inner, shirt)
+    sato_belt(image, lay, union(shirt, legs))
+
+    shade(image, vest, ST_VEST_DARK, ST_VEST, ST_VEST_LIT, light, reach=1.5)
+    paint_webbing(image, plate, lay.plate + 3.0, lay.belt - 1.0, 3)
+    handle = [(c(lay.plate) - 2.2, lay.plate + 0.2), (c(lay.plate) - 1.6, lay.plate - 1.6),
+              (c(lay.plate) + 1.6, lay.plate - 1.6), (c(lay.plate) + 2.2, lay.plate + 0.2)]
+    paint(image, stroke(handle, 0.9), INK)
+    paint(image, stroke(handle, 0.5), ST_VEST_DARK)
+
+    finish(image, minus(union(shirt, legs, vest), gap), name)
+
+
+def sato_side(body, name):
+    """East (facing right): the plate carrier's front and back plates standing off the chest and back,
+    the magazine pouches bulging at the front, the strap over the shoulder, the side band between the
+    plates; the belt, trousers and shoes. The arm is not drawn, as on the other costumes. West is this
+    mirrored by the game: the vest is the same on both sides."""
+    top = body.top
+    lay = Combat(body)
+
+    def shirt_front(y):
+        return body.edges(y)[1] + PAD * 0.8
+
+    def shirt_back(y):
+        return body.edges(y)[0] - PAD * 0.8
+    ys = steps(top + 1, lay.belt_end)
+    shirt = polygon([(shirt_front(y), y) for y in ys] + [(shirt_back(y), y) for y in reversed(ys)])
+    legs = inter(body_outline(body), band(lay.belt, 128))
+
+    def vest_front(y):
+        return shirt_front(y) + 0.9 + 1.3 * smooth(lay.pouches - 1.0, lay.pouches + 0.5, y)
+
+    def vest_back(y):
+        return shirt_back(y) - 0.9
+    vys = steps(lay.plate, lay.belt)
+    vest = grow(shrink(polygon([(vest_front(y), y) for y in vys] + [(vest_back(y), y) for y in reversed(vys)]), 0.8), 0.8)
+    strap = stroke([(shirt_front(lay.plate) - 1.5, lay.plate + 0.5), (body.centre(top) + 3.5, top + 0.8),
+                    (body.centre(top) - 3.5, top + 0.8), (shirt_back(lay.plate) + 1.5, lay.plate + 0.5)], 2.6)
+    strap = inter(strap, union(shirt, vest, band(0, lay.plate + 1)))
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = ramp(body.edges(top + 20)[0], body.edges(top + 20)[1] + 3, 0, 140)
+    sato_legs(image, body, lay, legs, inter(light, legs))
+    shade(image, shirt, ST_SHIRT_DARK, ST_SHIRT, ST_SHIRT_LIT, light, reach=2.4)
+    sato_belt(image, lay, union(shirt, legs))
+    shade(image, union(vest, strap), ST_VEST_DARK, ST_VEST, ST_VEST_LIT, inter(light, vest), reach=1.4)
+    # Where the plates meet the side band, and the flaps of the pouches seen from the side.
+    for x_at in (lambda y: shirt_front(y) - 1.6, lambda y: shirt_back(y) + 1.8):
+        paint(image, inter(stroke([(x_at(y), y) for y in steps(lay.plate + 1, lay.belt - 0.5)], 0.4), vest), ST_VEST_DARK)
+    flap = lay.pouches + 0.38 * (lay.belt - 0.6 - lay.pouches)
+    paint(image, inter(band(flap - 0.2, flap + 0.25), inter(vest, half_of(lambda y: shirt_front(y) - 1.6, 0, 128, 1))),
+          ST_VEST_DARK)
+
+    finish(image, union(shirt, legs, vest, strap), name)
+
+
+# ---- Satō's flat cap ----
+
+ST_CAP, ST_CAP_LIT, ST_CAP_DARK = (46, 58, 64), (82, 98, 106), (24, 30, 34)
+# In head space. The vanilla head is 41-86 wide at y 54-63 face-on with its crown at y 39; in profile it
+# is 39-88, its face front at x 87-88 at y 57-66. The cap sits low on the brow, just above the brows
+# (the eyes are at y 67-72), flatter and lower than the vanilla tuque (whose top is at 29) and wider
+# than the head, its crown puffed out over a short stiff brim. It hides the hair, as a vanilla hat does.
+CAP_TOP, CAP_BAND, CAP_HALF = 36.0, 59.0, 25.0
+CAP_SQUARE = 3.4  # how square the crown is face-on: 2 is round, higher is flatter on top
+# Profile, facing right: the crown from the back of the band up over the top and down the front,
+# where it overhangs the brim, then the band's lower edge back along the head.
+CAP_SIDE = [(38.0, 61.8), (37.2, 57.0), (37.6, 51.0), (39.5, 45.5), (43.0, 40.6), (48.0, 37.2), (54.0, 35.2),
+            (61.0, 34.5), (68.0, 35.2), (75.0, 37.5), (81.0, 41.0), (86.0, 45.4), (89.6, 50.0), (90.9, 53.8),
+            (90.3, 56.4), (86.0, 58.2), (76.0, 59.3), (64.0, 60.3), (52.0, 61.2), (44.0, 61.7)]
+CAP_BRIM = [(88.4, 55.4), (92.6, 56.1), (96.2, 57.3), (97.3, 58.3), (96.5, 59.2), (92.0, 59.5), (87.4, 59.1)]
+
+
+def cap_dome(bottom_at):
+    """Face-on: a squared dome from CAP_TOP down to its lower edge bottom_at(x), widest a third of the
+    way up and drawn in a little toward the band, as a flat cap's crown puffs out over it."""
+    puff = CAP_BAND - 0.35 * (CAP_BAND - CAP_TOP)
+    points = []
+    for t in steps(0, 1, 0.01):
+        a = math.pi * t
+        y = CAP_BAND - (CAP_BAND - CAP_TOP) * abs(math.sin(a)) ** (2 / CAP_SQUARE)
+        k = abs(math.cos(a)) ** (2 / CAP_SQUARE) * (1 - 0.06 * smooth(puff, CAP_BAND, y))
+        x = HEAD_CX - math.copysign(CAP_HALF * k, math.cos(a))
+        points.append((x, min(y, bottom_at(x))))
+    return polygon(points + [(x, bottom_at(x)) for x in steps(HEAD_CX + CAP_HALF, HEAD_CX - CAP_HALF, 0.4)])
+
+
+def cap_front(name):
+    """South: the crown, lit on the viewer's left and darker on the right, a seam down the middle to the
+    brim; the brim a crescent under the crown's front edge with a lit rim, and its shadow on the
+    forehead."""
+    cx = HEAD_CX
+    crown = cap_dome(lambda x: CAP_BAND + 0.6 * (1 - ((x - cx) / CAP_HALF) ** 2))
+    bh = 17.0
+
+    def brim_bottom(x):
+        return CAP_BAND + 0.9 + 1.9 * max(0.0, 1 - ((x - cx) / bh) ** 2)
+    bxs = steps(cx - bh, cx + bh, 0.4)
+    brim = polygon([(x, CAP_BAND - 0.4) for x in bxs] + [(x, brim_bottom(x)) for x in reversed(bxs)])
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    shadow = inter(polygon([(x, brim_bottom(x) - 0.5) for x in bxs] + [(x, brim_bottom(x) + 1.6) for x in reversed(bxs)]),
+                   ellipse(cx, 64, 20, 26))
+    paint(image, shadow, INK + (70,))
+    shade(image, crown, ST_CAP_DARK, ST_CAP, ST_CAP_LIT, ramp(cx - CAP_HALF, cx + 2, 190, 0), reach=1.6)
+    paint(image, inter(stroke([(cx + 0.3 * math.sin(math.pi * (y - CAP_TOP) / (CAP_BAND - CAP_TOP)), y)
+                               for y in steps(CAP_TOP + 0.5, CAP_BAND)], 0.4), crown), ST_CAP_DARK)
+    shade(image, brim, ST_CAP_DARK, ST_CAP, ST_CAP_LIT, ramp(cx - bh, cx + 5, 120, 0), reach=0.6)
+    paint(image, inter(stroke([(x, brim_bottom(x) - 0.45) for x in bxs], 0.35), brim), ST_CAP_LIT)
+    paint(image, inter(stroke([(x, CAP_BAND - 0.3) for x in bxs], 0.45), brim), ST_CAP_DARK)
+    finish(image, union(crown, brim), name, outline_width=0.8)
+
+
+def cap_side(name):
+    """East: the crown from the back of the head up over the flat top and down the front, overhanging
+    the short brim; a panel seam from the top down the side to the band. West is this mirrored by the
+    game: the cap is the same on both sides."""
+    crown = polygon(CAP_SIDE)
+    brim = polygon(CAP_BRIM)
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    paint(image, polygon([(86.0, 58.6), (92.0, 59.4), (89.0, 62.0), (84.0, 61.4)]), INK + (60,))
+    light = union(ramp(40, 90, 0, 120), ellipse(66, 36, 18, 5).filter(ImageFilter.GaussianBlur(3 * U)))
+    shade(image, brim, ST_CAP_DARK, ST_CAP, ST_CAP_LIT, reach=0.5)
+    shade(image, crown, ST_CAP_DARK, ST_CAP, ST_CAP_LIT, light, reach=1.4)
+    seam = [(61.0 + 2.5 * math.sin(0.5 * math.pi * t), 34.8 + (60.0 - 34.8) * t) for t in steps(0, 1, 0.05)]
+    paint(image, inter(stroke(seam, 0.4), crown), ST_CAP_DARK)
+    paint(image, inter(stroke([(86.5, 57.8), (90.2, 56.2)], 0.4), crown), ST_CAP_DARK)
+    finish(image, union(crown, brim), name, outline_width=0.8)
+
+
+def cap_back(name):
+    """North: the back of the crown down to the band, which sits a little lower at the back, a seam down
+    the middle."""
+    cx = HEAD_CX
+    crown = cap_dome(lambda x: CAP_BAND + 2.4 - 0.5 * ((x - cx) / CAP_HALF) ** 2)
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    shade(image, crown, ST_CAP_DARK, ST_CAP, ST_CAP_LIT, ramp(cx - CAP_HALF, cx + 2, 170, 0), reach=1.6)
+    paint(image, inter(stroke([(cx, y) for y in steps(CAP_TOP + 0.5, CAP_BAND + 2.4)], 0.4), crown), ST_CAP_DARK)
+    finish(image, crown, name, outline_width=0.8)
+
+
+def sato_outfit():
+    for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
+        sato_front(Body(BODIES[(body, "south")]), f"SatoOutfit_{body}_south.png")
+        sato_side(Body(BODIES[(body, "east")]), f"SatoOutfit_{body}_east.png")
+        sato_back(Body(BODIES[(body, "north")]), f"SatoOutfit_{body}_north.png")
+    cap_front("SatoCap_south.png")
+    cap_side("SatoCap_east.png")
+    cap_back("SatoCap_north.png")
+
+
 def main():
     for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
         vergil_front(Body(BODIES[(body, "south")]), f"VergilCoat_{body}_south.png")
@@ -2358,7 +2718,13 @@ def main():
     headband_side("MinatoHeadband_east.png")
     headband_back("MinatoHeadband_north.png")
     sasuke_outfit()
+    sato_outfit()
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    # "sato" makes only Satō's costume; with no argument every costume is made.
+    if sys.argv[1:] == ["sato"]:
+        sato_outfit()
+    else:
+        main()

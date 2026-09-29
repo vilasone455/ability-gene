@@ -19,6 +19,12 @@ namespace RimArt
         public bool hideHeadgear;
 
         /// <summary>
+        /// The hair is not drawn, as under a vanilla hat: for a hat of the costume's own (Satō's cap), so no
+        /// hair sticks out through it. See Patch_AdjustParms_EchoCostumeHair.
+        /// </summary>
+        public bool hidesHair;
+
+        /// <summary>
         /// A mask over the whole face: face parts another mod draws over headgear are not drawn
         /// (Facial Animation's eyebrows, see Patch_CanDrawNow_FaceCovered).
         /// </summary>
@@ -86,6 +92,8 @@ namespace RimArt
         public static bool HidesHeadgear(Pawn pawn) => Any(pawn, c => c.hideHeadgear);
 
         public static bool CoversFace(Pawn pawn) => Any(pawn, c => c.coversFace);
+
+        public static bool HidesHair(Pawn pawn) => Any(pawn, c => c.hidesHair);
 
         // Asked while the render tree works out what to draw, which may run off the main thread, so
         // this only reads: a few hediffs, each with a short list of node properties.
@@ -181,6 +189,19 @@ namespace RimArt
         static void Postfix(PawnDrawParms parms, ref bool __result)
         {
             if (__result && EchoCostume.HidesHeadgear(parms.pawn)) __result = false;
+        }
+    }
+
+    /// <summary>
+    /// The hair is not drawn under a costume that hides it, as under a vanilla hat: the same render skip
+    /// flag, added where the render tree adds the worn headgear's.
+    /// </summary>
+    [HarmonyPatch(typeof(PawnRenderTree), "AdjustParms")]
+    static class Patch_AdjustParms_EchoCostumeHair
+    {
+        static void Postfix(PawnRenderTree __instance, ref PawnDrawParms parms)
+        {
+            if (EchoCostume.HidesHair(__instance.pawn)) parms.skipFlags |= RenderSkipFlagDefOf.Hair;
         }
     }
 

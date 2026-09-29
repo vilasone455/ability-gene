@@ -992,5 +992,106 @@ namespace RimArt
                 foreach (PawnRenderNodeProperties_EchoCostume p in props) p.onlyOverWornApparel = false;
             }
         }
+
+        /// <summary>The draw parms the render tree works with for this pawn facing south, its skip flags included.</summary>
+        private static PawnDrawParms TreeParms(Pawn pawn)
+        {
+            PawnDrawParms parms = PawnDrawParms.DefaultFor(pawn);
+            parms.facing = Rot4.South;
+            object[] args = { parms };
+            HarmonyLib.AccessTools.Method(typeof(PawnRenderTree), "AdjustParms").Invoke(pawn.Drawer.renderer.renderTree, args);
+            return (PawnDrawParms)args[0];
+        }
+
+        // Satō has no EchoDef until his kit is ported, so the hero form hediff is added directly.
+        [RimArtTest("Echo", "costume 8 Satō's hero form draws the combat outfit and the flat cap, which hides the hair; nothing of it on a naked Host (screenshots)")]
+        private static IEnumerable<int> SatoCombat(RimArtTestContext t)
+        {
+            Setup(t);
+            HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Sato");
+            List<PawnRenderNodeProperties_EchoCostume> props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
+            if (!t.Check(props?.Count == 2, "the hero form has the outfit and the cap (" + (props?.Count ?? 0) + " costume nodes)"))
+                yield break;
+            PawnRenderNodeProperties_EchoCostume outfitProps = props[0], capProps = props[1];
+            t.Check(props.All(p => p.onlyOverWornApparel), "both are drawn only over worn clothes");
+            t.Check(outfitProps.hideBodyApparel && outfitProps.hideHeadgear, "the outfit hides body apparel and headgear");
+            t.Check(capProps.hidesHair && capProps.parentTagDef == PawnRenderNodeTagDefOf.Head, "the cap is on the head and hides the hair");
+            foreach (string facing in new[] { "south", "east", "north" })
+            {
+                foreach (BodyTypeGraphicData body in outfitProps.bodyTypeGraphicPaths)
+                    t.Check(ContentFinder<UnityEngine.Texture2D>.Get(body.texturePath + "_" + facing, false) != null,
+                        "outfit " + body.bodyType.defName + " " + facing + " texture loads");
+                t.Check(ContentFinder<UnityEngine.Texture2D>.Get(capProps.texPath + "_" + facing, false) != null,
+                    "cap " + facing + " texture loads");
+            }
+
+            // The first is dressed, with a hat and a pack; the second is naked (a hat would hide its hair as
+            // vanilla). Both have an afro, the hair most likely to stick out of a cap.
+            Pawn a = Colonist(t, -2), b = Colonist(t, 2);
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                pawn.apparel.DestroyAll();
+                pawn.story.hairDef = DefDatabase<HairDef>.GetNamed("Afro");
+                pawn.story.bodyType = BodyTypeDefOf.Thin;
+                if (pawn == a)
+                    foreach (string piece in new[] { "Apparel_BasicShirt", "Apparel_Pants", "Apparel_CowboyHat", "Apparel_SmokepopBelt" })
+                        Wear(pawn, piece);
+                pawn.health.AddHediff(form);
+                pawn.Drawer.renderer.SetAllGraphicsDirty();
+            }
+            yield return 2;
+
+            foreach ((Pawn pawn, bool dressed) in new[] { (a, true), (b, false) })
+            {
+                string who = dressed ? "dressed" : "naked";
+                PawnDrawParms parms = TreeParms(pawn);
+                List<PawnRenderNode> nodes = CostumeNodes(pawn, form).ToList();
+                t.Check(nodes.Count == 2, who + ": both pieces are in the render tree (" + nodes.Count + ")");
+                foreach (PawnRenderNode node in nodes)
+                    t.Check(node.Worker.CanDrawNow(node, parms) == dressed, who + ": " + node.Props.debugLabel + (dressed ? " is drawn" : " is not drawn"));
+                PawnRenderNode hair = RenderNodes(pawn).FirstOrDefault(n => n.Props.debugLabel == "Hair");
+                t.Check(hair != null && hair.Worker.CanDrawNow(hair, parms) != dressed,
+                    who + ": the hair " + (dressed ? "is hidden under the cap" : "is drawn"));
+                if (dressed)
+                {
+                    PawnRenderNode outfit = nodes.FirstOrDefault(n => n.Props == outfitProps);
+                    t.Check(outfit?.PrimaryGraphic?.path == "RimArt/Echo/Costume/SatoOutfit_Thin",
+                        "the outfit is the Thin one (" + outfit?.PrimaryGraphic?.path + ")");
+                    CheckDrawn(t, pawn, who, ("Apparel_BasicShirt", false), ("Apparel_CowboyHat", false), ("Apparel_SmokepopBelt", true));
+                }
+            }
+            foreach (Rot4 rot in new[] { Rot4.South, Rot4.East, Rot4.North, Rot4.West })
+            {
+                Face(a, rot);
+                Face(b, rot);
+                yield return 20;
+                yield return t.ShotAs("sato-" + rot.ToStringHuman().ToLowerInvariant());
+            }
+
+            // Dressed again, the naked Host shows it all; the form removed, nothing of Satō is left.
+            Wear(b, "Apparel_Pants");
+            yield return 2;
+            PawnDrawParms bParms = TreeParms(b);
+            t.Check(CostumeNodes(b, form).All(n => n.Worker.CanDrawNow(n, bParms)), "trousers on: both pieces are drawn");
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                pawn.health.RemoveHediff(pawn.health.hediffSet.GetFirstHediffOfDef(form));
+                pawn.Drawer.renderer.SetAllGraphicsDirty();
+            }
+            yield return 2;
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                PawnDrawParms parms = TreeParms(pawn);
+                PawnRenderNode hair = RenderNodes(pawn).FirstOrDefault(n => n.Props.debugLabel == "Hair");
+                t.Check(!CostumeNodes(pawn, form).Any(), pawn.LabelShort + ": nothing of Satō is drawn after the form is removed");
+                if (pawn == a)
+                {
+                    CheckDrawn(t, pawn, "dressed after", ("Apparel_BasicShirt", true), ("Apparel_CowboyHat", true));
+                    t.Check(hair != null && !hair.Worker.CanDrawNow(hair, parms), "dressed after: the cowboy hat hides the hair, as vanilla");
+                }
+                else
+                    t.Check(hair != null && hair.Worker.CanDrawNow(hair, parms), "trousers only after: the hair is drawn");
+            }
+        }
     }
 }
