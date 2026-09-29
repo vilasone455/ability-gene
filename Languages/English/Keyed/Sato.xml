@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <!-- Reset (the Ajin trait's passive) -->
+  <AG_AjinResetFast>Manifested and paid ({0} charge): he rises at his biggest piece when the time is up.</AG_AjinResetFast>
+  <AG_AjinResetSlow>The slow Reset: he rises where he fell, anchors ignored.</AG_AjinResetSlow>
+  <AG_AjinPiece_Body>remains</AG_AjinPiece_Body>
+  <AG_AjinPiece_Leg>leg</AG_AjinPiece_Leg>
+  <AG_AjinPiece_Arm>arm</AG_AjinPiece_Arm>
+  <AG_AjinPiece_Hand>hand</AG_AjinPiece_Hand>
+  <AG_AjinPiece_Finger>finger</AG_AjinPiece_Finger>
+  <AG_AjinPiece_Ear>ear</AG_AjinPiece_Ear>
+  <AG_AjinPieceOf>{0}'s {1}</AG_AjinPieceOf>
+  <AG_AjinRising>Rising here in {0}</AG_AjinRising>
+  <AG_AjinRotsIn>Rots in {0}</AG_AjinRotsIn>
+
+  <!-- Abilities -->
+  <AG_SeverNothingLeft>Nothing left to cut off.</AG_SeverNothingLeft>
+  <AG_SeverFinger>a finger ({0})</AG_SeverFinger>
+  <AG_HeadshotNeedsCharge>The Reset needs {0} charge in the pool.</AG_HeadshotNeedsCharge>
+  <AG_TheGameEnemiesOnly>The Game marks an enemy.</AG_TheGameEnemiesOnly>
+  <AG_GhostAlreadyOut>The Black Ghost is already out.</AG_GhostAlreadyOut>
+  <AG_GhostTargetSelfOrAnchor>Target Satō or one of his anchors.</AG_GhostTargetSelfOrAnchor>
+
+  <!-- The Black Ghost's buttons -->
+  <AG_GhostGo>Go here</AG_GhostGo>
+  <AG_GhostGoDesc>Send the Black Ghost to a cell. It guards that spot and fights enemies near it.</AG_GhostGoDesc>
+  <AG_GhostAttack>Attack</AG_GhostAttack>
+  <AG_GhostAttackDesc>Send the Black Ghost after one enemy.</AG_GhostAttackDesc>
+  <AG_GhostTear>Tear</AG_GhostTear>
+  <AG_GhostTearDesc>The Black Ghost grabs an enemy and rips an arm or a leg off. An arm drops its weapon; a second leg downs it. Once per summon, fleshy enemies only.</AG_GhostTearDesc>
+  <AG_GhostTearArm>Tear an arm</AG_GhostTearArm>
+  <AG_GhostTearLeg>Tear a leg</AG_GhostTearLeg>
+  <AG_GhostTearUsed>Already used this summon.</AG_GhostTearUsed>
+</LanguageData>

@@ -256,7 +256,7 @@ Agreed, not built (no EchoDef yet; the abilities do not exist):
 | Obito ("Watcher Behind the Spiral Mask"; built 2026-09-28, see "Obito" below) | Melee 12, Intellectual 10, has a missing or artificial body part (`Trial_ArtificialPart`: any missing part or added part) | Depressive (Natural mood -2) | Kamui: Phase, Kamui: Warp, Kamui: Store, Wood Release | 12 | Phase 0 (its own 30 s pool), Warp 2, Store 1, Wood Release 2 | fold organ gene Echo-only: added on awakening (the dimension is generated then), abilities only while manifested |
 | Gojo ("Bearer of the Six Eyes") | Intellectual 14, 1 day spent downed in total (vanilla `TimeDowned` record; the Trial label shows hours), colony wealth 200,000 | The Strongest (new custom trait) | Infinity, Blue, Red, Unlimited Void (+ Hollow Purple combo) | 15 | Infinity 0 (its breath is the price), Blue 3, Red 3, Hollow Purple 20 (+ its own 1-day cooldown), Unlimited Void 30 | white hair; phase barrier implant Echo-only; no forced weapon |
 | Nakime ("Player of the Endless Halls") | Artistic 12, Construction 10, 15 humanlike kills (vanilla `KillsHumanlikes`) | Night Owl | Infinity Castle (commands: shift, drop, seal/open, crush, summon, release; passives castle sight, void rule) | 12 | Infinity Castle 30, commands 0 (the 1.5 s strum rhythm and crush's own 10 s cooldown limit them) | black hair; forced biwa; castle gene Echo-only, added on awakening; sunlight burns her always (the gene's rule, 4 per second outdoors by day), not only while manifested |
-| Satō | Shooting 12, 30 kills, 500 damage taken | Ajin (new custom trait carrying the Reset passive) + Psychopath | Reset (passive), Black Ghost, The Game, Sever, Headshot Reset, Grenade Reset | 10 | Sever 0, Headshot Reset 0, Grenade Reset 5, Black Ghost 10, The Game 5 (a kill on the marked enemy refunds 15); every Reset while manifested costs by the piece he rises from (body or leg 20, arm 25, hand 40, finger or ear 60) | half pain while manifested; on revert the Ghost dissolves and the mark ends |
+| Satō (`AG_Echo_Sato.xml`; built 2026-09-29, see "Satō" below) | Shooting 12, 30 kills, 500 damage taken | Ajin (new custom trait carrying the Reset passive) + Psychopath | Reset (passive), Black Ghost, The Game, Sever, Headshot Reset, Grenade Reset | 10 | Sever 0, Headshot Reset 0, Grenade Reset 5, Black Ghost 10, The Game 5 (a kill on the marked enemy refunds 15); every Reset while manifested costs by the piece he rises from (body or leg 20, arm 25, hand 40, finger or ear 60) | half pain while manifested; on revert the Ghost dissolves and the mark ends |
 
 Goku (built 2026-09-27, `Source/RimArt/Goku/Kit`): Kamehameha and Spirit Bomb are channels that hold the
 caster in `AG_GokuChannel`; Cancel, a move order or a revert gives the charge and cooldown back, a
@@ -526,8 +526,8 @@ anchors and Tear were agreed 2026-09-26):
   30 cells, 45 s, takes 50 % damage, cd 120 s, lifetime by piece: leg 45 s, arm 35 s, hand 20 s,
   finger 10 s; Tear order once per summon; the Relay order is still undecided); The Game (mark one
   enemy 30 s, +30 % damage from his shots, cd 45 s).
-- Costume (agreed 2026-09-29; combat look chosen and built 2026-09-29 on `AG_EchoManifest_Sato`, which
-  has no EchoDef yet): his flat cap, a white shirt with the sleeves rolled above the elbow, a brown
+- Costume (agreed 2026-09-29; combat look chosen and built 2026-09-29 on `AG_EchoManifest_Sato`, the
+  hero form of `AG_Echo_Sato`): his flat cap, a white shirt with the sleeves rolled above the elbow, a brown
   plate carrier with magazine pouches and a grenade, dark trousers, brown shoes, from the manga colour
   art and the anime's fights (season 1 episode 12, season 2 episode 9, the final fight). Two pieces:
   the outfit (hides worn clothes and headgear; no arms, as on the other costumes: a seam and the
@@ -539,6 +539,29 @@ anchors and Tear were agreed 2026-09-26):
   at least one worn OnSkin, Middle or Shell apparel (trousers alone count). Every node of his costume
   sets it, a head piece too, so a naked Satō shows no hat either. Once he is dressed again the
   costume is drawn again. The other costumes do not set it and are unchanged. Test: "costume 7".
+- Ported 2026-09-29 (`AG_Echo_Sato.xml`, `AG_Sato.xml`, `AG_Sato_Abilities.xml`, `AG_Sato_Things.xml`;
+  code in `Source/RimArt/Sato/Kit`, pictures in `Source/RimArt/Sato`; tests `-rimarttest=sato`). Rules
+  settled while porting:
+  - The Black Ghost fights on its own and takes orders from buttons: Go here (it guards that cell and
+    fights enemies within 9 cells of it), Attack (one enemy), Tear (arm or leg, once per summon). It is
+    not draftable (user's pick, 2026-09-29). It dissolves when its time runs out, when it would die or is
+    downed, and when Satō reverts. It is a real pawn of his faction with an invisible sprite; its picture
+    is drawn in code.
+  - A third Sever makes the oldest anchor crumble (user's pick, 2026-09-29).
+  - Downed for 5 s while manifested and not carried, he Resets himself. Out of hero form a downed Satō is
+    an ordinary downed pawn.
+  - Body destroyed with no anchor: remains on the spot hold him, and he rises there naked.
+  - Damage that destroys the lying body: half of his total part health at the moment the Reset began.
+  - Body destroyed during a paid Reset: he pays the difference for the smaller piece he now rises from
+    (body 20, arm 25: 5 more). If the pool cannot pay it, the Reset becomes the slow one on the spot.
+  - A Reset heals injuries, missing natural parts, infections, chronic illness, drug highs, blood loss,
+    toxic buildup, heatstroke, hypothermia, mental states and fire.
+  - Kidnappers skip a Resetting Ajin. A natural part surgery removes from him crumbles.
+  - The Game counts only his ranged hits (the damage's weapon is a ranged weapon).
+  - Grenade Reset is a vanilla explosion (Bomb 50, radius 3, AP 0.3) with him as the instigator.
+  - The Relay order is not built. Sever, The Game and Grenade Reset have no sketch: Sever's thrown piece and
+    the anchors use the Reset pictures, The Game shows the vanilla target reticle on the mark, Grenade
+    Reset is the vanilla explosion.
 
 Inumaki revisit (agreed 2026-09-27; numbers are placeholders; the built words are in
 `Source/RimArt/Larynx`, `AG_Larynx_Abilities.xml`):

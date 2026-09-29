@@ -22,12 +22,12 @@ namespace RimArt
     {
         /// <summary>
         /// Deaf pawns are immune: Hearing at or below <see cref="LarynxExtension.minHearing"/> (both
-        /// ears missing gives 0), and every mechanoid.
+        /// ears missing gives 0), every mechanoid, and Satō's Black Ghost (a summoned figure).
         /// </summary>
         public static bool CanHear(Pawn target)
         {
             if (target == null || target.Dead || target.health?.capacities == null) return false;
-            if (target.RaceProps.IsMechanoid) return false;
+            if (target.RaceProps.IsMechanoid || target.def == SatoDefOf.AG_BlackGhost) return false;
             return target.health.capacities.GetLevel(PawnCapacityDefOf.Hearing) > LarynxExtension.Get.minHearing;
         }
 

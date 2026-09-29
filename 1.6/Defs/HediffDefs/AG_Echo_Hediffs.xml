@@ -298,8 +298,8 @@
     </renderNodeProperties>
   </HediffDef>
 
-  <!-- Satō's hero form. He has no EchoDef until his kit is ported, so for now this hediff only carries
-       his combat look, from the manga colour art and the anime's fights: a white shirt with the sleeves
+  <!-- Satō's hero form (AG_Echo_Sato.xml): half pain, the downed Reset, and his combat look, from the
+       manga colour art and the anime's fights: a white shirt with the sleeves
        rolled above the elbow, a brown plate carrier with magazine pouches and a grenade, dark trousers,
        brown shoes, and his flat cap. Two pieces: the outfit on the body, drawn like Sasuke's (no arms,
        a seam and the rolled cuff mark the sleeves), and the cap on the head, which hides the hair as a
@@ -309,7 +309,18 @@
   <HediffDef ParentName="AG_EchoManifestBase">
     <defName>AG_EchoManifest_Sato</defName>
     <label>hero form: Satō</label>
-    <description>This Host has manifested Satō. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <description>This Host has manifested Satō. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work. Pain is halved, and downed for a few seconds he Resets himself.</description>
+    <stages>
+      <li>
+        <painFactor>0.5</painFactor>
+      </li>
+    </stages>
+    <comps>
+      <!-- Downed this long while manifested (and not carried): the Reset starts, as if he had been killed. -->
+      <li Class="RimArt.HediffCompProperties_AjinDowned">
+        <downedSeconds>5</downedSeconds>
+      </li>
+    </comps>
     <renderNodeProperties>
       <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
         <debugLabel>Sato combat outfit</debugLabel>

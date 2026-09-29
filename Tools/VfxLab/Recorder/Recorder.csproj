@@ -67,6 +67,8 @@
     <Compile Include="../../../Source/RimArt/Todo/*.cs" LinkBase="Linked/Todo" />
     <!-- Sasuke's Rinnegan pictures (not Rinnegan/Kit, which is game code). -->
     <Compile Include="../../../Source/RimArt/Rinnegan/*.cs" LinkBase="Linked/Rinnegan" />
+    <!-- Satō's Reset and Headshot Reset pictures (not Sato/Kit, which is game code). -->
+    <Compile Include="../../../Source/RimArt/Sato/*.cs" LinkBase="Linked/Sato" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleport.cs" Link="Linked/Anchor/ClapTeleport.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleportGraphics.cs" Link="Linked/Anchor/ClapTeleportGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/DebugActions_ClapTeleport.cs" Link="Linked/Anchor/DebugActions_ClapTeleport.cs" />

@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Satō's five abilities (docs/hero-echo.md "Satō"; sketches Tools/VfxLab/web/sketches/ajin-*.js), granted by
+       his Echo while manifested (AG_Echo_Sato.xml, which holds their charge costs). The Reset they lean on is
+       the Ajin trait's passive (AG_Sato.xml). Every balance number is a field here; the C# in
+       Source/RimArt/Sato/Kit holds only the rules. The icons are placeholders (make_sato_textures.py). -->
+
+  <AbilityDef Name="AG_SatoAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+  </AbilityDef>
+
+  <!-- Sever: the button first asks which part, then the cell. The part comes off (the stump bleeds) and lands
+       there as an anchor. Parts are matched by body part def, so a race with other names can list its own. -->
+  <AbilityDef ParentName="AG_SatoAbilityBase">
+    <defName>AG_SatoSever</defName>
+    <label>sever</label>
+    <description>Satō cuts off a part of his own body and throws it: a leg, an arm, a hand, a finger or an ear. It lands as an anchor. If his body is destroyed he rises at his biggest anchor, and the Black Ghost can be summoned at any of them.\n\nUp to 6 cells. At most 2 anchors: throwing a third makes the oldest crumble. An anchor rots after 3 days. The stump bleeds; a Reset grows the part back. With both ears cut off he is deaf.</description>
+    <iconPath>RimArt/Sato/IconSever</iconPath>
+    <gizmoClass>RimArt.Command_Sever</gizmoClass>
+    <cooldownTicksRange>600</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>6.9</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>false</canTargetPawns>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetItems>false</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_Sever">
+        <maxAnchors>2</maxAnchors>
+        <rotDays>3</rotDays>
+        <parts>
+          <li><piece>Leg</piece><part>Leg</part></li>
+          <li><piece>Arm</piece><part>Arm</part></li>
+          <li><piece>Hand</piece><part>Hand</part></li>
+          <li><piece>Finger</piece><part>Finger</part></li>
+          <li><piece>Ear</piece><part>Ear</part></li>
+        </parts>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Headshot Reset: the cast is the pistol coming up to his temple (HeadshotGraphics); the fire tick is the
+       shot. The Reset's own cost (the body's) is taken as it starts; the button is greyed below it, so this
+       never drops him into the slow Reset. -->
+  <AbilityDef ParentName="AG_SatoAbilityBase">
+    <defName>AG_SatoHeadshotReset</defName>
+    <label>headshot reset</label>
+    <description>Satō puts a pistol to his temple and fires. He plays dead for 6 seconds, then rises where he fell with every wound healed and every cut-off part grown back. His gear stays on him and his anchors stay where they are.\n\nThe Reset takes the body's rise cost (20 charge), so the button is greyed while the pool holds less. Raiders take him for downed while he lies there. Destroying the body in those seconds sends him to his biggest anchor.</description>
+    <iconPath>RimArt/Sato/IconHeadshotReset</iconPath>
+    <cooldownTicksRange>3600</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.6</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_HeadshotReset">
+        <resetSeconds>6</resetSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Grenade Reset: his own explosion. Bomb damage is on the Ajin's explosion list, so it Resets him with the
+       body destroyed and he rises at his biggest anchor, or on the spot when he has none. -->
+  <AbilityDef ParentName="AG_SatoAbilityBase">
+    <defName>AG_SatoGrenadeReset</defName>
+    <label>grenade reset</label>
+    <description>Satō pulls the pin and holds on. The blast hurts everyone within 3 cells, allies included, and destroys his body: he rises at his biggest anchor, naked, or where he stood if he has none. His gear lies where he blew up.\n\n50 bomb damage, radius 3.</description>
+    <iconPath>RimArt/Sato/IconGrenadeReset</iconPath>
+    <cooldownTicksRange>3600</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>true</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_GrenadeReset">
+        <radius>3</radius>
+        <damage>50</damage>
+        <armorPenetration>0.3</armorPenetration>
+        <damageDef>Bomb</damageDef>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- The Game: a mark on one enemy. His ranged hits on it are multiplied; a kill while it lasts, by anyone,
+       refunds charge. One mark at a time. -->
+  <AbilityDef ParentName="AG_SatoAbilityBase">
+    <defName>AG_SatoTheGame</defName>
+    <label>the game</label>
+    <description>Satō picks the next player to lose. The marked enemy takes 30% more damage from his shots for 30 seconds. If it dies while marked, to anyone, the pool gets 15 charge back.\n\nOne mark at a time.</description>
+    <iconPath>RimArt/Sato/IconTheGame</iconPath>
+    <cooldownTicksRange>2700</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>29.9</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_TheGame">
+        <markSeconds>30</markSeconds>
+        <damageFactor>1.3</damageFactor>
+        <killRefund>15</killRefund>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Black Ghost: target Satō himself (it forms next to him, as the body) or one of his anchors within range
+       (no sight needed). Its life comes from the piece it formed at. One at a time. -->
+  <AbilityDef ParentName="AG_SatoAbilityBase">
+    <defName>AG_SatoBlackGhost</defName>
+    <label>black ghost</label>
+    <description>Black matter pours out of Satō and stands up as his IBM, next to him or at one of his anchors within 30 cells. It fights on its own round where it formed and takes orders: go here, attack, and once per summon tear an arm or a leg off an enemy next to it. It takes half damage.\n\nIt lasts by the piece it formed at: next to him or at a leg 45 seconds, an arm 35, a hand 20, a finger or an ear 10. It dissolves when he reverts.</description>
+    <iconPath>RimArt/Sato/IconBlackGhost</iconPath>
+    <cooldownTicksRange>7200</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>30.9</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetItems>false</canTargetItems>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_BlackGhostSummon">
+        <anchorSearchRadius>1.5</anchorSearchRadius>
+        <guardRadius>9</guardRadius>
+        <lifeSeconds>
+          <li><piece>Body</piece><seconds>45</seconds></li>
+          <li><piece>Leg</piece><seconds>45</seconds></li>
+          <li><piece>Arm</piece><seconds>35</seconds></li>
+          <li><piece>Hand</piece><seconds>20</seconds></li>
+          <li><piece>Finger</piece><seconds>10</seconds></li>
+          <li><piece>Ear</piece><seconds>10</seconds></li>
+        </lifeSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

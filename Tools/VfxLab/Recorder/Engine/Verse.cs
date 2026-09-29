@@ -46,6 +46,23 @@ namespace Verse
         public override int GetHashCode() => (x * 397) ^ z;
     }
 
+    /// <summary>The game's Rot4: 0 north, 1 east, 2 south, 3 west. Only the members the recorded pictures use.</summary>
+    public struct Rot4 : IEquatable<Rot4>
+    {
+        private byte rotInt;
+        public static readonly Rot4 North = new Rot4(0), East = new Rot4(1), South = new Rot4(2), West = new Rot4(3);
+        public Rot4(int newRot) { rotInt = (byte)(((newRot % 4) + 4) % 4); }
+        public int AsInt { get => rotInt; set => rotInt = (byte)(((value % 4) + 4) % 4); }
+        public float AsAngle => rotInt * 90f;
+        public bool IsHorizontal => rotInt == 1 || rotInt == 3;
+        public bool IsVertical => rotInt == 0 || rotInt == 2;
+        public static bool operator ==(Rot4 a, Rot4 b) => a.AsInt == b.AsInt;
+        public static bool operator !=(Rot4 a, Rot4 b) => a.AsInt != b.AsInt;
+        public bool Equals(Rot4 other) => other.rotInt == rotInt;
+        public override bool Equals(object o) => o is Rot4 r && r.rotInt == rotInt;
+        public override int GetHashCode() => rotInt;
+    }
+
     public static class Vector3Utility
     {
         public static Vector3 WithY(this Vector3 v, float y) => new Vector3(v.x, y, v.z);

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Black Ghost's Tear order (Source/RimArt/Sato/Kit/Tear.cs): walk to the enemy, hold it up and rip an
+       arm or a leg off. Once per summon. -->
+  <JobDef>
+    <defName>AG_BlackGhostTear</defName>
+    <driverClass>RimArt.JobDriver_BlackGhostTear</driverClass>
+    <reportString>tearing TargetA apart.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+  </JobDef>
+
+</Defs>

@@ -211,6 +211,24 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Sato", Prefix = "Sato: reset", Component = typeof(MapComponent_SatoResetPreview), Clock = "seconds",
+                Phases = label => label.Contains("pieces") ? SatoPiecesPhases() : SatoResetPhases(),
+                // The pieces lie still for their first second, then crumble.
+                StartsStill = label => label.Contains("pieces"),
+            },
+            new Kit
+            {
+                Name = "Sato", Prefix = "Sato: headshot", Component = typeof(MapComponent_SatoResetPreview), Clock = "seconds",
+                Phases = _ => SatoHeadshotPhases(),
+            },
+            new Kit
+            {
+                Name = "Sato", Prefix = "Sato: black ghost", Component = typeof(MapComponent_BlackGhostPreview), Clock = "seconds",
+                // The sketch's markers (ajin-black-ghost-v2.js), from the preview's plan and TearGraphics, per scene and direction.
+                Phases = label => MapComponent_BlackGhostPreview.PhasesFor(label).Select(p => new Phase(p.name, p.seconds)).ToArray(),
+            },
+            new Kit
+            {
                 Name = "Pain", Prefix = "Pain: bansho", Component = typeof(MapComponent_BanshoPreview), Clock = "seconds",
                 Phases = label => BanshoPhases(label.Contains("thrumbo") ? BanshoScenario.Thrumbo
                     : label.Contains("blocked") ? BanshoScenario.Blocked : BanshoScenario.Sandbags),
@@ -976,6 +994,36 @@ namespace RimArt.VfxLab
                 new Phase("Stun ends", hit + BlackFlash.StunTime),
             };
         }
+
+        // ajin-reset.js's markers: Delay, Rebuild, Rise, off the preview's script and AjinResetTiming.
+        private static Phase[] SatoResetPhases() => new[]
+        {
+            new Phase("Lying", 0f),
+            new Phase("Delay", MapComponent_SatoResetPreview.ResetHold),
+            new Phase("Rebuild", MapComponent_SatoResetPreview.ResetHold + MapComponent_SatoResetPreview.ResetDelay - AjinResetTiming.Rebuild),
+            new Phase("Rise", MapComponent_SatoResetPreview.ResetHold + MapComponent_SatoResetPreview.ResetDelay),
+        };
+
+        private static Phase[] SatoPiecesPhases()
+        {
+            var phases = new List<Phase> { new Phase("Lying", 0f) };
+            string[] names = { "leg", "arm", "hand", "finger", "ear" };
+            for (int i = 0; i < names.Length; i++)
+                phases.Add(new Phase("Crumble: " + names[i], MapComponent_SatoResetPreview.PiecesCrumble + i * MapComponent_SatoResetPreview.PiecesGap));
+            return phases.ToArray();
+        }
+
+        // ajin-headshot-reset.js's markers: Draw, Shot, Fall, Play dead, Rebuild, Rise.
+        private static Phase[] SatoHeadshotPhases() => new[]
+        {
+            new Phase("Wounded", 0f),
+            new Phase("Draw", MapComponent_SatoResetPreview.HeadshotHold),
+            new Phase("Shot", MapComponent_SatoResetPreview.HeadshotShot),
+            new Phase("Fall", MapComponent_SatoResetPreview.HeadshotShot + 0.1f),
+            new Phase("Play dead", MapComponent_SatoResetPreview.HeadshotLie),
+            new Phase("Rebuild", MapComponent_SatoResetPreview.HeadshotStand - HeadshotTiming.Rebuild),
+            new Phase("Rise", MapComponent_SatoResetPreview.HeadshotStand),
+        };
 
         private static Phase[] ClapPhases(bool twice)
         {
