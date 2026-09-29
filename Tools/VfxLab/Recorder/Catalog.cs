@@ -194,6 +194,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Accelerator", Prefix = "Accelerator: vector shove", Component = typeof(MapComponent_VectorShovePreview), Clock = "seconds",
+                Phases = VectorShovePhases,
+            },
+            new Kit
+            {
                 Name = "Sasuke", Prefix = "Sasuke: raiko kusari", Component = typeof(MapComponent_RaikoKusariPreview), Clock = "seconds",
                 Phases = label => RaikoKusariPhases(label.Contains("ring") ? RaikoScenario.Ring
                     : label.Contains("drifting") ? RaikoScenario.DriftingNet
@@ -997,6 +1002,21 @@ namespace RimArt.VfxLab
             {
                 new Phase("Stand", 0f), new Phase("Channel", Plasma.Lead), new Phase("Release", Plasma.Lead + Plasma.Channel),
                 new Phase("Burst", MapComponent_PlasmaPreview.HitAt(wall)),
+            };
+        }
+
+        // accelerator-vector-shove.js's phases(): Stand, Mace hits (not for the chunk), Touch, Throw, Slam / Lands / Hit.
+        private static Phase[] VectorShovePhases(string label)
+        {
+            VectorShoveScene scene = label.Contains("chunk") ? VectorShoveScene.Chunk : label.Contains("line") ? VectorShoveScene.Line : VectorShoveScene.Wall;
+            float touch = MapComponent_VectorShovePreview.TouchAt(scene, label.Contains("window closed") ? VectorShove.ClosedReact : VectorShove.React);
+            float fly = touch + VectorShove.Touch, arrive = touch + VectorShove.Arrive(MapComponent_VectorShovePreview.Stop(scene));
+            if (scene == VectorShoveScene.Chunk)
+                return new[] { new Phase("Stand", 0f), new Phase("Touch", touch), new Phase("Throw", fly), new Phase("Hit", arrive) };
+            return new[]
+            {
+                new Phase("Stand", 0f), new Phase("Mace hits", VectorShove.Lead), new Phase("Touch", touch), new Phase("Throw", fly),
+                new Phase(scene == VectorShoveScene.Wall ? "Slam" : "Lands", arrive),
             };
         }
 
