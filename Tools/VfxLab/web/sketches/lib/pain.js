@@ -84,18 +84,19 @@ export function lying(key, g, colour, toward, sun, strength, alpha = 1) {
 // Pain's arm, drawn by the ability: a sleeve in the cloak's colour that narrows from the shoulder to the
 // wrist, a grey cuff, and an open hand, a palm with the thumb and four fingers spread at the target (the
 // anime's pose). grip 0..1 closes the fingers (round a head, or round a rod). dir points the way the
-// fingers point. The hand lies level at its height, so it turns with the aim.
-export function arm(key, shoulder, hand, dir, grip) {
+// fingers point. The hand lies level at its height, so it turns with the aim. layer: pass one under
+// pawnLayer to hide the arm behind the body (Pain facing north, his back to the camera).
+export function arm(key, shoulder, hand, dir, grip, layer = pawnLayer + .01) {
   const dx = hand.x - shoulder.x, dz = hand.z - shoulder.z, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, px = -uz, pz = ux;
   const wrist = { x: hand.x - ux * .045, z: hand.z - uz * .045 }, w0 = .065, w1 = .042;
   band(`${key} sleeve`, [{ x: shoulder.x + px * w0, z: shoulder.z + pz * w0 }, { x: wrist.x + px * w1, z: wrist.z + pz * w1 }],
-    [{ x: shoulder.x - px * w0, z: shoulder.z - pz * w0 }, { x: wrist.x - px * w1, z: wrist.z - pz * w1 }], Cloak, pawnLayer + .01);
-  rect(`${key} cuff`, wrist, .03, w1 * 2.3, Math.atan2(uz, ux) / D2R, Cuff, pawnLayer + .0102);
+    [{ x: shoulder.x - px * w0, z: shoulder.z - pz * w0 }, { x: wrist.x - px * w1, z: wrist.z - pz * w1 }], Cloak, layer);
+  rect(`${key} cuff`, wrist, .03, w1 * 2.3, Math.atan2(uz, ux) / D2R, Cuff, layer + .0002);
   const base = Math.atan2(dir.z, dir.x) / D2R, spread = lerp(64, 30, grip), reach = lerp(1, .6, grip);
   // [angle as a share of the spread, length]: the thumb out to one side, the middle fingers longest.
   [[-1.2, .09], [-.5, .125], [-.17, .14], [.17, .13], [.5, .105]].forEach(([k, len], i) => {
     const ang = (base + k * spread) * D2R, cx = Math.cos(ang), cz = Math.sin(ang), root = { x: hand.x + cx * .04, z: hand.z + cz * .04 };
-    line(`${key} finger ${i}`, [root, { x: root.x + cx * len * reach, z: root.z + cz * len * reach }], .034, Skin, undefined, pawnLayer + .0106, 'none');
+    line(`${key} finger ${i}`, [root, { x: root.x + cx * len * reach, z: root.z + cz * len * reach }], .034, Skin, undefined, layer + .0006, 'none');
   });
-  draw(disc, hand.x, pawnLayer + .0108, hand.z, .062, .062, 0, Skin);
+  draw(disc, hand.x, layer + .0008, hand.z, .062, .062, 0, Skin);
 }
