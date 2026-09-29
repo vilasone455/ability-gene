@@ -101,6 +101,7 @@ namespace RimArt
                 // Force returned: the target's last melee hit on him, if it was recent enough.
                 HediffComp_ForceReturn record = ForceReturnOf(caster);
                 plan.bonus = record?.Returned(victim, Props.forceReturnTicks) ?? 0f;
+                plan.returned = plan.bonus > 0f;
             }
             caster.Map.GetComponent<MapComponent_Shoves>().Begin(plan);
             VectorStrain.Add(caster, Props.strainCost);
@@ -141,10 +142,13 @@ namespace RimArt
         public Thing wall;
         /// <summary>For a thrown thing: the pawn it hits.</summary>
         public Pawn struck;
+        /// <summary>Force returned: the target's melee hit on Accelerator, added to the first pawn struck (or the thrown pawn).</summary>
         public float bonus;
+        public bool returned;
         public List<Liner> liners = new List<Liner>();
-        public int startTick, arriveTick;
-        public bool arrived;
+        /// <summary>The touch; the throw (the hand lands VectorShove.Touch before the body flies); the arrival.</summary>
+        public int startTick, throwTick, arriveTick;
+        public bool launched, arrived;
         /// <summary>The thing in flight (not spawned while it flies).</summary>
         public Thing flying;
         // The numbers of the ability at cast time.
@@ -163,6 +167,8 @@ namespace RimArt
             /// <summary>Where it stood when struck, and the returned force it took (for the picture).</summary>
             public Vector2 at;
             public float bonus;
+            /// <summary>The side it was knocked to (1 left of the throw, -1 right, 0 not moved).</summary>
+            public float side;
 
             public void ExposeData()
             {
@@ -172,6 +178,7 @@ namespace RimArt
                 Scribe_Values.Look(ref tick, "tick");
                 Scribe_Values.Look(ref done, "done");
                 Scribe_Values.Look(ref bonus, "bonus");
+                Scribe_Values.Look(ref side, "side");
             }
         }
 
@@ -262,8 +269,11 @@ namespace RimArt
             Scribe_References.Look(ref wall, "wall");
             Scribe_References.Look(ref struck, "struck");
             Scribe_Values.Look(ref bonus, "bonus");
+            Scribe_Values.Look(ref returned, "returned");
             Scribe_Collections.Look(ref liners, "liners", LookMode.Deep);
             Scribe_Values.Look(ref startTick, "startTick");
+            Scribe_Values.Look(ref throwTick, "throwTick");
+            Scribe_Values.Look(ref launched, "launched");
             Scribe_Values.Look(ref arriveTick, "arriveTick");
             Scribe_Values.Look(ref arrived, "arrived");
             Scribe_Values.Look(ref damagePerCell, "damagePerCell");
@@ -312,9 +322,10 @@ namespace RimArt
     }
 
     /// <summary>
-    /// Runs vector shoves on a map: the thrown pawn in its flyer, the pawns it bowls over as it passes, the slam
-    /// or landing, and a thrown thing's flight and hit. Also keeps the melee hits on Accelerator that the
-    /// picture marks (the force-returned window). The clock is game ticks.
+    /// Runs vector shoves on a map: the touch, then the thrown pawn in its flyer, the pawns it bowls over as it
+    /// passes, the slam or landing; or a thrown thing's flight and hit. Also keeps the melee hits on Accelerator
+    /// that the picture marks (the force-returned window), and draws VectorShoveGraphics for all of it. The
+    /// clock is game ticks.
     /// </summary>
     public class MapComponent_Shoves : MapComponent
     {
@@ -330,6 +341,8 @@ namespace RimArt
 
         public IReadOnlyList<ShovePlan> Throws => throws;
 
+        private static int TouchTicks => Mathf.RoundToInt(VectorShove.Touch * 60f);
+
         public MapComponent_Shoves(Map map) : base(map) { }
 
         public void MeleeHit(Pawn accelerator, Pawn attacker)
@@ -338,21 +351,15 @@ namespace RimArt
             hits.Add(new Hit { accelerator = accelerator, attacker = attacker, tick = Find.TickManager.TicksGame });
         }
 
+        /// <summary>The touch: the body is held still for the moment the hand is on it, then thrown.</summary>
         public void Begin(ShovePlan plan)
         {
             int now = Find.TickManager.TicksGame;
             plan.startTick = now;
-            plan.arriveTick = now + plan.TicksFor(plan.travel);
-            foreach (ShovePlan.Liner liner in plan.liners) liner.tick = now + plan.TicksFor(liner.along);
-            if (plan.thrown != null)
-            {
-                if (plan.land != plan.start) PawnFlyer_VectorThrown.Throw(plan.thrown, plan.land, plan.speed);
-            }
-            else
-            {
-                plan.flying = plan.thing;
-                if (plan.flying.Spawned) plan.flying.DeSpawn();
-            }
+            plan.throwTick = now + TouchTicks;
+            plan.arriveTick = plan.throwTick + plan.TicksFor(plan.travel);
+            foreach (ShovePlan.Liner liner in plan.liners) liner.tick = plan.throwTick + plan.TicksFor(liner.along);
+            if (plan.thrown != null) plan.thrown.stances?.stunner?.StunFor(TouchTicks + 1, plan.caster, false, false);
             // The one who hit him has been answered.
             hits.RemoveAll(h => h.accelerator == plan.caster);
             throws.Add(plan);
@@ -365,11 +372,30 @@ namespace RimArt
             for (int i = throws.Count - 1; i >= 0; i--)
             {
                 ShovePlan plan = throws[i];
+                if (!plan.launched && now >= plan.throwTick) Launch(plan);
                 if (plan.thrown != null) TickPawnThrow(plan, now);
                 else TickThingThrow(plan, now);
                 // Kept for the picture's tail after the arrival.
-                if (plan.arrived && now - plan.arriveTick > 150) throws.RemoveAt(i);
+                if (plan.arrived && now - plan.arriveTick > Mathf.RoundToInt(VectorShove.Tail * 60f) + 10) throws.RemoveAt(i);
             }
+        }
+
+        private void Launch(ShovePlan plan)
+        {
+            plan.launched = true;
+            if (plan.thrown != null)
+            {
+                if (plan.thrown.Spawned && plan.land != plan.thrown.Position) PawnFlyer_VectorThrown.Throw(plan.thrown, plan.land, plan.speed);
+                if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(VectorShove.ThrowShake);
+                return;
+            }
+            if (plan.thing == null || !plan.thing.Spawned)
+            {
+                plan.arrived = true;
+                return;
+            }
+            plan.flying = plan.thing;
+            plan.flying.DeSpawn();
         }
 
         private void TickPawnThrow(ShovePlan plan, int now)
@@ -384,6 +410,8 @@ namespace RimArt
                 if (other == null || other.Dead || !other.Spawned || other.Map != map || other.Position.DistanceTo(liner.cell) > 1.5f) continue;
                 liner.at = new Vector2(other.DrawPos.x, other.DrawPos.z);
                 IntVec3 to = ShovePlan.KnockCell(other, other.Position, plan.dir, plan.knockCells, map, plan.start);
+                var rel = new Vector2(to.x - other.Position.x, to.z - other.Position.z);
+                liner.side = rel.sqrMagnitude < 0.01f ? 0f : Mathf.Sign(-plan.dir.y * rel.x + plan.dir.x * rel.y);
                 // Force returned goes to the first pawn struck; the thrown pawn keeps it only if it strikes none.
                 float damage = plan.knockDamage + plan.bonus;
                 liner.bonus = plan.bonus;
@@ -391,26 +419,27 @@ namespace RimArt
                 Hurt(other, damage, plan);
                 if (other.Dead || !other.Spawned) continue;
                 other.stances?.stunner?.StunFor(plan.knockStunTicks, plan.caster, false, true);
-                if (to != other.Position) PawnFlyer_VectorThrown.Throw(other, to, plan.knockCells / 0.2f);
+                if (to != other.Position) PawnFlyer_VectorThrown.Throw(other, to, plan.knockCells / VectorShove.KnockTime);
             }
             if (plan.arrived || now < plan.arriveTick) return;
             Pawn thrown = plan.thrown;
             // The flyer lands on its own tick; wait for it.
             if (!thrown.Dead && !thrown.Spawned && now < plan.arriveTick + 10) return;
             plan.arrived = true;
+            if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(VectorShove.ArriveShake(plan.walled, plan.bonus > 0f));
             if (thrown.Dead || !thrown.Spawned || thrown.Map != map) return;
             float hit = plan.travel * plan.damagePerCell + (plan.walled ? plan.slamDamage : 0f) + plan.bonus;
             Hurt(thrown, hit, plan);
             if (!thrown.Dead) thrown.stances?.stunner?.StunFor(plan.stunTicks, plan.caster, false, true);
-            if (plan.walled && Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(0.1f);
         }
 
         private void TickThingThrow(ShovePlan plan, int now)
         {
-            if (plan.arrived || now < plan.arriveTick) return;
+            if (plan.arrived || !plan.launched || now < plan.arriveTick) return;
             plan.arrived = true;
             Thing thing = plan.flying;
             plan.flying = null;
+            if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(VectorShove.LandShake);
             if (plan.struck != null && !plan.struck.Dead && plan.struck.Spawned && plan.struck.Map == map)
                 Hurt(plan.struck, plan.thingDamage, plan);
             else if (plan.walled && plan.wall != null && !plan.wall.Destroyed && plan.wall.def.useHitPoints)
@@ -425,6 +454,100 @@ namespace RimArt
         {
             if (damage < 0.5f) return;
             pawn.TakeDamage(new DamageInfo(DamageDefOf.Blunt, damage, 0f, Angle(plan), plan.caster));
+        }
+
+        // ---- the picture ----------------------------------------------------------------------------------------------
+
+        private VectorShoveLiner[] linerScratch = new VectorShoveLiner[8];
+
+        public override void MapComponentUpdate()
+        {
+            if (Find.CurrentMap != map || (throws.Count == 0 && hits.Count == 0)) return;
+            PawnFit.Begin();
+            try
+            {
+                for (int i = 0; i < throws.Count; i++) Draw(throws[i]);
+                DrawHits();
+            }
+            finally
+            {
+                PawnFit.End();
+            }
+        }
+
+        private static Vector2 Ground(Vector3 at) => new Vector2(at.x, at.z);
+
+        private void Draw(ShovePlan plan)
+        {
+            float s = UbwClock.Since(plan.startTick);
+            Vector3 origin = plan.start.ToVector3Shifted();
+            Vector2 start = Ground(origin);
+            float face = 0f, stop = plan.travel;
+            if (plan.walled)
+            {
+                // The wall's face: half a cell short of the first blocked cell's centre, along the throw.
+                face = plan.travel + 0.5f;
+                if (plan.thrown != null) stop = VectorShove.Stop(plan.travel + 1f, face);
+            }
+            if (s > VectorShove.End(stop)) return;
+            if (linerScratch.Length < plan.liners.Count) linerScratch = new VectorShoveLiner[plan.liners.Count];
+            int count = 0;
+            foreach (ShovePlan.Liner liner in plan.liners)
+            {
+                if (!liner.done || liner.at == default(Vector2)) continue;
+                Pawn pawn = liner.pawn;
+                Vector2 rel = liner.at - start;
+                linerScratch[count++] = new VectorShoveLiner
+                {
+                    Along = liner.along, Across = -plan.dir.y * rel.x + plan.dir.x * rel.y, Side = liner.side == 0f ? 1f : liner.side,
+                    Live = pawn != null && pawn.Spawned && pawn.Map == map, At = pawn != null && pawn.Spawned ? Ground(pawn.DrawPos) : liner.at,
+                };
+            }
+            Pawn thrown = plan.thrown;
+            Vector2 lies = thrown != null && thrown.Spawned && thrown.Map == map ? Ground(thrown.DrawPos) : Ground(plan.land.ToVector3Shifted());
+            bool chunk = plan.thrown == null && plan.thing != null && plan.thing.def.thingCategories != null
+                && (plan.thing.def.thingCategories.Contains(ThingCategoryDefOf.StoneChunks) || plan.thing.def.thingCategories.Contains(ThingCategoryDefOf.Chunks));
+            Vector2 hitAt = plan.struck != null ? (plan.struck.Spawned ? Ground(plan.struck.DrawPos) : Ground(plan.land.ToVector3Shifted()))
+                : start + plan.dir * (plan.walled ? face : stop);
+            VectorShoveGraphics.Draw(new VectorShoveShot
+            {
+                Caster = plan.caster != null && plan.caster.Spawned ? Ground(plan.caster.DrawPos) : start - plan.dir,
+                Start = start, Lies = lies, Degrees = Mathf.Atan2(plan.dir.y, plan.dir.x) * Mathf.Rad2Deg, Stop = stop,
+                HitsWall = plan.walled, WallFace = face, Bonus = plan.returned,
+                Thing = plan.thrown == null, Hit = plan.struck != null || plan.walled, DrawRock = chunk, HitAt = hitAt,
+                Liners = linerScratch, LinerCount = count,
+                Sleeve = AcceleratorKit.Sleeve(plan.caster), Skin = AcceleratorKit.Skin(plan.caster),
+            }, s, map);
+            // A thrown weapon or corpse is drawn as itself along the arc the picture gives a chunk.
+            if (plan.thrown == null && !chunk && plan.flying != null && !plan.arrived)
+            {
+                float flown = VectorShove.Flown(s, stop), u = stop > 0f ? flown / stop : 1f;
+                Vector2 at = start + plan.dir * flown;
+                float h = VectorShove.ChunkArc * Mathf.Sin(u * Mathf.PI);
+                plan.flying.DrawNowAt(new Vector3(at.x, AltitudeLayer.Projectile.AltitudeFor(), at.y + h * SixPathsHeight.Lift));
+            }
+        }
+
+        private void DrawHits()
+        {
+            int now = Find.TickManager.TicksGame;
+            for (int i = hits.Count - 1; i >= 0; i--)
+            {
+                Hit hit = hits[i];
+                float age = UbwClock.Since(hit.tick);
+                if (age > VectorShove.Window || hit.accelerator == null || !hit.accelerator.Spawned || hit.accelerator.Map != map)
+                {
+                    if (now - hit.tick > 120) hits.RemoveAt(i);
+                    continue;
+                }
+                Vector2 accelerator = Ground(hit.accelerator.DrawPos);
+                if (hit.attacker != null && hit.attacker.Spawned && hit.attacker.Map == map)
+                {
+                    Vector2 attacker = Ground(hit.attacker.DrawPos), toward = attacker - accelerator;
+                    VectorShoveGraphics.HitFlash(accelerator, toward.sqrMagnitude < 1e-6f ? Vector2.right : toward.normalized, age, map);
+                    VectorShoveGraphics.WindowRing(attacker, age, map);
+                }
+            }
         }
 
         public override void ExposeData()
