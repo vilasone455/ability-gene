@@ -40,7 +40,8 @@ namespace RimArt
 
         private static readonly List<double> cuts = new List<double>();
 
-        private static Vector2 Lifted(Vector2 ground) => new Vector2(ground.x, ground.y + T.HandHeight * Lift);
+        /// <summary>A ground point at hand height as drawn: fitted to a real pawn's hands in game (PawnFit), where it meets the barrel of the aimed pistol.</summary>
+        private static Vector2 Lifted(Vector2 ground) => new Vector2(ground.x, ground.y + PawnFit.H(T.HandHeight) * Lift);
 
         private static Vector2 At(in BankShotShot shot, double d, out Vector2 dir)
         {
@@ -274,7 +275,7 @@ namespace RimArt
         internal static void Wound(Vector2 feet, Vector2 dir, float age, int bounces)
         {
             if (age < 0f) return;
-            var chest = new Vector2(feet.x, feet.y + T.ChestHeight * Lift);
+            var chest = new Vector2(feet.x, feet.y + PawnFit.H(T.ChestHeight) * Lift);
             float k = 0.8f + 0.2f * bounces, heading = Mathf.Atan2(dir.y, dir.x);
             if (age < 0.1f) GokuGraphics.Glint(chest, 0.5f * k, 1f - age / 0.1f, GokuGraphics.Flare);
             if (age < 0.12f) Sprite(chest, 0.5f * k, 0.4f * k, Fade(Blood, 0.8f * (1f - age / 0.12f)), soft, Overhead + 0.09f);
