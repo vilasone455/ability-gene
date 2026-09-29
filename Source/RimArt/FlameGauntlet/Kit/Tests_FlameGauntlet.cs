@@ -261,8 +261,10 @@ namespace RimArt
             ally.drafter.Drafted = false;
             HeightShots.Plain(ally, Rot4.South);
             ally.TryAttachFire(0.5f, null);
+            // Stunned so it stands still while it burns; a burning pawn runs about.
+            ally.stances.stunner.StunFor(600, null, false);
             yield return 2;
-            foreach (int step in HeightShots.Cast(t, holder, FlameGauntletDefOf.AG_FlameGauntlet_Devour, ally.Position, t.center + new IntVec3(0, 0, -2),
+            foreach (int step in HeightShots.Cast(t, holder, FlameGauntletDefOf.AG_FlameGauntlet_Devour, ally, t.center + new IntVec3(0, 0, -2),
                 "flame devour", ally, 10, 22, 30)) yield return step;
             yield return 120;
         }

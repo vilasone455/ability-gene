@@ -86,7 +86,7 @@ namespace RimArt
             // The hand: forward from the wind-up, a recoil at the release, back at the result.
             float raise = Smooth((s - lead) / T.Windup), closing = Smooth((s - result) / T.Close);
             float fwd = raise * (1f - closing), recoil = lit > 0 ? 0.08f * Bump((s - go) / 0.25f) : 0f;
-            Vector2 hand = f.Ground(caster, Mathf.Lerp(0.12f, 0.34f, fwd) - recoil, Mathf.Lerp(0.18f, 0.08f, fwd));
+            Vector2 hand = f.Hand(caster, Mathf.Lerp(0.12f, 0.34f, fwd) - recoil, Mathf.Lerp(0.18f, 0.08f, fwd));
             float lean = lit > 0 ? fwd * (1f - Smooth((s - go - T.Spread) / 0.3f)) : fwd * (1f - Smooth((s - go) / 0.2f));
 
             // Floor first: the cone outline while it matters.
@@ -127,7 +127,7 @@ namespace RimArt
 
             FlameGauntletPose g = weapon
                 ? Gauntlet(hand, shot.Aim, heat, shot.MaxHeat, shot.OverheatAt, s, sun, strength, 0f, lean)
-                : Pose(Raised(hand, HandH), shot.Aim);
+                : Pose(Raised(hand, Hand), shot.Aim);
 
             // The wind-up: the glow at the knuckles, and the light it throws on the floor under the fist.
             float charge = raise * (1f - Smooth((s - go) / (lit > 0 ? 0.08f : 0.2f))) * (1f + 0.12f * Mathf.Sin(s * 41f));
@@ -155,13 +155,13 @@ namespace RimArt
                 // Too cold: the knuckles flash dull red and go dark, a pale puff coughs out of the fist,
                 // and three sparks drop off them to the floor and go out. Nothing reaches the cone.
                 if (since >= 0f && since < 0.2f) Sprite(g.Fist, 0.4f, 0.35f, Fade(Ember, 0.6f * (1f - since / 0.2f)), glow, Y + 0.15f);
-                Cough(Raised(f.Ground(caster, 0.45f, 0f), HandH), g.D, since);
+                Cough(Raised(f.Ground(caster, 0.45f, 0f), Hand), g.D, since);
                 for (int k = 0; k < 3; k++)
                 {
                     float u = (since - k * 0.05f) / 0.35f;
                     if (u <= 0f || u >= 1f) continue;
                     Vector2 q = f.Ground(caster, 0.4f + 0.15f * u + k * 0.04f, 0.06f * (k - 1));
-                    var pt = new Vector2(q.x, q.y + HandH * (1f - u * u) * Lift);
+                    var pt = new Vector2(q.x, q.y + Hand * (1f - u * u) * Lift);
                     Sprite(pt, 0.16f, 0.14f, Fade(Flame, 0.35f * (1f - u)), glow, Y + 0.119f);
                     Sprite(pt, 0.08f, 0.08f, Fade(Core, 0.9f * (1f - u)), glow, Y + 0.12f);
                 }
