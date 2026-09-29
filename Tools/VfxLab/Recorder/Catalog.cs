@@ -242,14 +242,11 @@ namespace RimArt.VfxLab
             new Kit
             {
                 Name = "Shinra Tensei", Prefix = "Shinra Tensei:", Component = typeof(MapComponent_ShinraVfx), Clock = "elapsed",
-                Phases = _ => new[]
-                {
-                    new Phase("Charge", 0f),
-                    new Phase("Release", ShinraVfxTiming.ChargeEnd),
-                    new Phase("Expand", ShinraVfxTiming.FlashEnd),
-                    new Phase("Peak", ShinraVfxTiming.PeakTime),
-                    new Phase("Shell ends", ShinraVfxTiming.ShellEnd),
-                },
+                // The sketch's markers (pain-shinra-tensei.js), from the timing class, per preview.
+                Phases = label => ShinraDome.PreviewPhases(label.Contains("tap") ? 0f : label.Contains("1.5") ? 1.5f : 3f)
+                    .Select(p => new Phase(p.name, p.seconds)).ToArray(),
+                // The first 0.2 s draw nothing (the sketch's Pain raises his hands; the port draws no pawn).
+                StartsStill = label => !label.Contains("frozen"),
             },
         };
 

@@ -1,6 +1,7 @@
-// Shinra Tensei (Almighty Push) v2: a new picture for the existing ability. Replaces the glass dome
-// drawn by Source/RimArt/Shinra/ShinraVfxGraphics.cs ("Shinra Tensei: VFX preview" in the lab).
-// Proposed 2026-09-29, the user said "yes build it"; not ported.
+// Shinra Tensei (Almighty Push) v2: a new picture for the existing ability. Replaced the glass dome
+// (ShinraVfxGraphics.cs, removed). Proposed 2026-09-29, the user said "yes build it". Ported the same day
+// to Source/RimArt/Shinra/ShinraDome.cs (timing) and ShinraDomeGraphics.cs (drawing); the lab's
+// "Shinra Tensei: VFX preview", "VFX 1.5 s hold" and "VFX tap" are its recordings (no pawn, soil).
 //
 // Two versions (the user, 2026-09-29: "new shinra tensei will have two version, one click version
 // and charge version"), picked by the Version dropdown; both draw the same dome.
