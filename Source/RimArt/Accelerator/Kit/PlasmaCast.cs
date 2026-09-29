@@ -234,7 +234,7 @@ namespace RimArt
             channel.releaseTick = now;
             Lane(channel);
             channel.hitTick = now + Mathf.Max(1, Mathf.RoundToInt(channel.flightSeconds * channel.stop / Mathf.Max(0.5f, channel.length) * 60f));
-            if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(0.07f);
+            if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(Plasma.FireShake);
             return true;
         }
 
@@ -293,6 +293,8 @@ namespace RimArt
                 PlasmaChannel c = channels[i];
                 if (c.Channelling) TickChannel(c, now);
                 else if (c.releaseTick >= 0 && !c.burst && now >= c.hitTick) Burst(c);
+                if (c.burst && now == c.hitTick + Mathf.RoundToInt(Plasma.AfterShakeDelay * 60f) && Find.CurrentMap == map)
+                    Find.CameraDriver.shaker.DoShake(Plasma.AfterShake);
                 bool over = c.cancelTick >= 0 ? now - c.cancelTick > 30 : c.burst && now - c.hitTick > TailTicks;
                 if (over) channels.RemoveAt(i);
             }
@@ -350,7 +352,39 @@ namespace RimArt
             if (c.caster != null) ignored.Add(c.caster);
             GenExplosion.DoExplosion(c.burstCell, map, c.burstRadius, DamageDefOf.Flame, c.caster, Mathf.RoundToInt(c.damage), c.armorPenetration,
                 chanceToStartFire: c.chanceToStartFire, ignoredThings: ignored, doVisualEffects: false, screenShakeFactor: 0f);
-            if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(0.14f);
+            if (Find.CurrentMap == map) Find.CameraDriver.shaker.DoShake(Plasma.HitShake);
+        }
+
+        private readonly List<PlasmaCatch> caughtScratch = new List<PlasmaCatch>();
+
+        /// <summary>The picture (PlasmaGraphics, the port of accelerator-plasma.js) on the real pawn, one per channel.</summary>
+        public override void MapComponentUpdate()
+        {
+            if (channels.Count == 0 || Find.CurrentMap != map) return;
+            PawnFit.Begin();
+            try
+            {
+                for (int i = 0; i < channels.Count; i++) Draw(channels[i]);
+            }
+            finally
+            {
+                PawnFit.End();
+            }
+        }
+
+        private void Draw(PlasmaChannel c)
+        {
+            caughtScratch.Clear();
+            for (int i = 0; i < c.caught.Count; i++) caughtScratch.Add(new PlasmaCatch(c.caught[i].at, (c.caught[i].tick - c.startTick) / 60f));
+            Vector3 feet = c.caster != null && c.caster.Spawned ? c.caster.DrawPos : c.from.ToVector3Shifted();
+            PlasmaGraphics.Draw(new PlasmaShot
+            {
+                Feet = new Vector2(feet.x, feet.z), Aim = c.AimDegrees,
+                Length = c.length, Width = c.width, Radius = c.burstRadius, Pull = c.catchRadius, BallSize = Plasma.BallSize,
+                Channel = c.channelTicks / 60f, Flight = c.flightSeconds, Stop = c.stop, Walled = c.walled, WallAt = c.wallAt,
+                Seconds = UbwClock.Since(c.startTick), Cancelled = c.cancelTick >= 0 ? (c.cancelTick - c.startTick) / 60f : -1f,
+                Caught = caughtScratch, RealFires = true, Sleeve = AcceleratorKit.Sleeve(c.caster), Skin = AcceleratorKit.Skin(c.caster),
+            }, map);
         }
 
         public override void ExposeData()
