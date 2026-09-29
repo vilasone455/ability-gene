@@ -385,12 +385,13 @@ Gojo (agreed 2026-09-27; numbers are placeholders):
   pay, Red passes through Blue and pushes as normal.
   Erasure rules (added 2026-09-29; placeholders): a pawn whose cell centre is within 0.5 cells of the
   path is erased (dies with no corpse; apparel, weapon and inventory destroyed; counts as Gojo's kill;
-  mechanoids too); pawns 0.5 to 1.5 cells off the path take the 60, and a part it destroys is gone with
-  no bleeding. Every cell whose centre is within 1.5 cells of the path becomes a new terrain, Erased
-  ground (smooth, pale violet-grey, fertility 0, can be built on and floored over); built floors there
-  are removed with no refund, water stays, roofs over the lane are removed (thick rock roof too), rock
-  and ore are erased with no chunks. The scar is permanent (agreed 2026-09-29): it never grows back.
-  Open: whether mech bosses and large animals are erased or only take the 60. Sketch: `gojo-purple.js`.
+  mechanoids too; bosses, `PawnKindDef.isBoss` (Apocriton, War Queen, Diabolus, Hive Queen), are not
+  erased and take the 60 instead; large animals are erased like any pawn); pawns 0.5 to 1.5 cells off the
+  path take the 60, and a part it destroys is gone with no bleeding. Every cell whose centre is within
+  1.5 cells of the path becomes a new terrain, Erased ground (smooth, pale violet-grey, fertility 0, can
+  be built on and floored over); built floors there are removed with no refund, water stays, roofs over
+  the lane are removed (thick rock roof too), rock and ore are erased with no chunks. The scar is
+  permanent (agreed 2026-09-29): it never grows back. Sketch: `gojo-purple.js`.
 - Unlimited Void: the pocket map (pictures on main, PR #34). Everyone within 9 cells is taken in,
   keeping positions relative to Gojo; 10 s or Release, then back to the matching cells. Anyone not
   spared is overloaded (consciousness capped at 10 % for 60 s, then void-scarred 2 days). Cooldown
