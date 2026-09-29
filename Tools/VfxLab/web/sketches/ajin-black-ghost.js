@@ -39,6 +39,7 @@ import { P } from './lib/six-paths-impact.js';
 import {
   ghost, flakes, edgeFlakes, ooze, standIn, shard, Top, Stand, Lift, Floor, Y, pawnLayer,
   Shirt, Cap, Enemy, Blood, Slash, Skin, Flake, hand, draw, disc, band, sprite, trail, soft, puff, rand, smooth, clamp, lerp, TAU,
+  limbSeg, rifle,
 } from './lib/ajin.js';
 
 const ring = Meshes.band(.93, 1, 48, 'ajin anchor ring');
@@ -62,27 +63,11 @@ const Pause = .35;      // idle after forming
 const Pick = .55, Place = .45, Grab = .3, Pull = .7, Toss = .5;
 const chestOf = (feet, sc) => ({ x: feet.x, z: feet.z + 1.2 * Stand * sc });
 const unit = v => { const l = len(v) || 1; return { x: v.x / l, z: v.z / l }; };
-const Pants = new Color(.30, .25, .20), Boot = new Color(.15, .12, .10), Outline = new Color(.10, .08, .07), Steel = new Color(.17, .17, .18), Stock = new Color(.40, .27, .15);
+const Pants = new Color(.30, .25, .20), Boot = new Color(.15, .12, .10);
 // Where the tear-scenario enemy's near limbs attach and end, from its feet, x toward the ghost.
 const LimbAt = { shoulder: { x: .25, z: .10 }, hand: { x: .34, z: -.20 }, hip: { x: .10, z: -.40 }, foot: { x: .11, z: -.64 } };
 // The grip point on the enemy's limb, relative to Satō, for the ghost's reach.
 const limbGrip = (L, limb) => { const q = limb === 'arm' ? LimbAt.hand : LimbAt.foot; return { x: L.enemy.x + q.x * L.sx, z: L.enemy.z + q.z }; };
-function bar(key, a, b, w, colour, layer) {
-  const dx = b.x - a.x, dz = b.z - a.z, l = Math.hypot(dx, dz) || 1, nx = -dz / l * w / 2, nz = dx / l * w / 2;
-  band(key, [{ x: a.x + nx, z: a.z + nz }, { x: b.x + nx, z: b.z + nz }], [{ x: a.x - nx, z: a.z - nz }, { x: b.x - nx, z: b.z - nz }], colour, layer);
-}
-// A limb from `a` (sleeve or trouser colour) to `b` (hand or boot), with a dark outline.
-function limbSeg(key, a, b, w, col, tipCol, layer) {
-  const m = { x: lerp(a.x, b.x, .62), z: lerp(a.z, b.z, .62) };
-  bar(key + ' o', a, b, w + .03, Outline, layer); bar(key + ' a', a, m, w, col, layer); bar(key + ' b', m, b, w * .9, tipCol, layer);
-}
-// A rifle lying or held at `c`, pointing along screen angle `deg`.
-function rifle(c, deg, layer) {
-  const r = deg * Mathf.Deg2Rad, dx = Math.cos(r), dz = Math.sin(r);
-  const A = { x: c.x - dx * .22, z: c.z - dz * .22 }, B = { x: c.x + dx * .30, z: c.z + dz * .30 }, S0 = { x: c.x - dx * .34, z: c.z - dz * .34 };
-  bar('rifle o', S0, B, .1, Outline, layer); bar('rifle s', S0, A, .08, Stock, layer); bar('rifle b', A, B, .055, Steel, layer);
-}
-
 // Layout in cells relative to Satō, and the timeline, from the params.
 function plan(p) {
   const d = Dirs[p.dir], straightNS = p.dir === 'north' || p.dir === 'south';
