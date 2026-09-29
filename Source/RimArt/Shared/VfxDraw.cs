@@ -46,6 +46,24 @@ namespace RimArt
         /// <summary>Call once at the start of an effect's Draw with the effect's ground point.</summary>
         internal static void Begin(Vector2 ground) => anchor = ground;
 
+        /// <summary>A scale about a ground point, applied to every draw between BeginScale and EndScale.</summary>
+        private static bool scaled;
+        private static Vector2 scaleAbout;
+        private static float scaleBy = 1f;
+
+        /// <summary>
+        /// Draws everything until <see cref="EndScale"/> <paramref name="k"/> times bigger on the map about
+        /// <paramref name="about"/> (altitudes unchanged), so a whole picture can be drawn at another size.
+        /// </summary>
+        internal static void BeginScale(Vector2 about, float k)
+        {
+            scaled = Mathf.Abs(k - 1f) > 0.001f;
+            scaleAbout = about;
+            scaleBy = k;
+        }
+
+        internal static void EndScale() => scaled = false;
+
         internal static bool Shown(Vector2 at, Map map)
         {
             IntVec3 cell = new Vector3(at.x, 0f, at.y).ToIntVec3();
@@ -65,6 +83,13 @@ namespace RimArt
         {
             if (colour.a <= 0.001f) return;
             properties.SetColor(ShaderPropertyIDs.Color, colour);
+            if (scaled)
+            {
+                // A uniform scale on the ground turns with any angle, so moving the point and sizing the mesh is enough.
+                at = scaleAbout + (at - scaleAbout) * scaleBy;
+                width *= scaleBy;
+                depth *= scaleBy;
+            }
             Graphics.DrawMesh(mesh, Matrix4x4.TRS(new Vector3(at.x, altitude, at.y), Quaternion.AngleAxis(angle, Vector3.up),
                 new Vector3(width, 1f, depth)), material, 0, null, 0, properties);
         }

@@ -137,7 +137,10 @@
       <soundMeleeMiss>Pawn_Melee_BigBash_Miss</soundMeleeMiss>
     </race>
     <comps>
-      <li Class="RimArt.CompProperties_BlackGhost" />
+      <!-- 1.3x the sketch: the sketch was drawn next to small stand-ins, real pawns are bigger. -->
+      <li Class="RimArt.CompProperties_BlackGhost">
+        <drawScale>1.3</drawScale>
+      </li>
     </comps>
   </ThingDef>
 

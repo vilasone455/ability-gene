@@ -108,7 +108,16 @@ namespace RimArt
 
     public class CompProperties_BlackGhost : CompProperties
     {
+        /// <summary>
+        /// The picture's size in game, about its feet. The sketch's ghost was drawn next to the lab's small two-disc
+        /// stand-ins; real pawns are bigger (heads, fat and hulk bodies), so the ghost is drawn bigger to keep its
+        /// size next to them. Tear's hands and the torn limb follow.
+        /// </summary>
+        public float drawScale = 1f;
+
         public CompProperties_BlackGhost() { compClass = typeof(CompBlackGhost); }
+
+        public static float Scale => SatoDefOf.AG_BlackGhost.GetCompProperties<CompProperties_BlackGhost>()?.drawScale ?? 1f;
     }
 
     /// <summary>

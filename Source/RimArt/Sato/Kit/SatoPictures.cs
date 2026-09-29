@@ -187,7 +187,16 @@ namespace RimArt
         public static void DrawTornLimb(TornLimb limb, Vector3 drawLoc)
         {
             Vector3 at = limb.exact == Vector3.zero ? drawLoc : new Vector3(limb.exact.x, drawLoc.y, limb.exact.z);
-            TearGraphics.DrawTornPiece(at, limb.arm, limb.angle);
+            // The same size it had in the ghost's claw.
+            VfxDraw.BeginScale(new Vector2(at.x, at.z), CompProperties_BlackGhost.Scale);
+            try
+            {
+                TearGraphics.DrawTornPiece(at, limb.arm, limb.angle);
+            }
+            finally
+            {
+                VfxDraw.EndScale();
+            }
         }
 
         /// <summary>The ghost pawn this frame: its state from the comp and the pather, drawn in place of its sprite.</summary>
@@ -226,8 +235,16 @@ namespace RimArt
             // pawns share one altitude, so the ghost drops just under the pawn layer while that pawn is south of it.
             Pawn near = comp.tearTarget ?? swipeTarget;
             if (near != null && near.Spawned && near.Position.z < ghost.Position.z) shot.Pos.y -= GhostBehind;
-            BlackGhostGraphics.DrawGhost(shot);
-            if (shot.TearSeconds >= 0f) TearGraphics.DrawTear(new TearShot { Ghost = shot });
+            VfxDraw.BeginScale(new Vector2(drawLoc.x, drawLoc.z + BlackGhostGraphics.FeetDrop), CompProperties_BlackGhost.Scale);
+            try
+            {
+                BlackGhostGraphics.DrawGhost(shot);
+                if (shot.TearSeconds >= 0f) TearGraphics.DrawTear(new TearShot { Ghost = shot });
+            }
+            finally
+            {
+                VfxDraw.EndScale();
+            }
             float hit = swipe - BlackGhostGraphics.SwipeHitAt;
             if (comp.swipeTarget != null && comp.swipeTarget.Spawned && hit >= BlackGhostGraphics.HitFrom && hit <= BlackGhostGraphics.HitUntil)
             {

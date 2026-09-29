@@ -559,6 +559,8 @@ anchors and Tear were agreed 2026-09-26):
   - Kidnappers skip a Resetting Ajin. A natural part surgery removes from him crumbles.
   - The Game counts only his ranged hits (the damage's weapon is a ranged weapon).
   - Grenade Reset is a vanilla explosion (Bomb 50, radius 3, AP 0.3) with him as the instigator.
+  - The Black Ghost is drawn 1.3x the sketch in game (`drawScale` on its def, 2026-09-29): the sketch's
+    two-disc stand-ins are smaller than real pawns, so at 1x it looked small next to them.
   - The Relay order is not built. Sever, The Game and Grenade Reset have no sketch: Sever's thrown piece and
     the anchors use the Reset pictures, The Game shows the vanilla target reticle on the mark, Grenade
     Reset is the vanilla explosion.
