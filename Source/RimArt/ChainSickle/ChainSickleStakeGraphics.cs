@@ -50,7 +50,7 @@ namespace RimArt
             var f = new ChainSickleFrame(shot.Aim, sun);
             Vector2 o = shot.Target;
             float big = Mathf.Sqrt(Mathf.Max(0.1f, shot.Size)), pin = shot.Pin > 0f ? shot.Pin : T.NoPin;
-            Vector2 hand = f.Ground(shot.Caster, 0.20f, 0.18f);
+            Vector2 hand = f.Hand(shot.Caster, 0.20f, 0.18f);
             Vector2 body = shot.BodyAt ?? f.Ground(o, shot.Strain, 0f);
 
             // The stake point: beside the far foot, in the floor.
@@ -82,8 +82,8 @@ namespace RimArt
             }
 
             // The coil: stays at the chest and tightens on the arms.
-            float cr = Mathf.Lerp(CoilR, 0.21f, tightU) * big;
-            int coil = CoilPath(CoilPts, body, CoilTurns, cr, (ChestH + 0.1f) * big, 0.25f * big, shot.Aim + 180f);
+            float cr = Mathf.Lerp(CoilR, 0.21f, tightU) * big * PawnFit.Body;
+            int coil = CoilPath(CoilPts, body, CoilTurns, cr, PawnFit.H((ChestH + 0.1f) * big), PawnFit.H(0.25f * big), shot.Aim + 180f);
             Vector3 coilEnd = CoilPts[coil - 1];
 
             // The weight: rides the coil's end, then drops to the stake point during the yank.
@@ -95,7 +95,7 @@ namespace RimArt
             // The chain from hand to coil: taut while the holder stands back, slack once next to the
             // pawn, snapped straight while the pawn strains. A short tether coil -> stake is always taut.
             float slack = shot.Slack * 0.3f + (s < T.Yank0 ? 0.03f : 0.1f * (1f - shot.Slack)) - (shot.Strain > 0f ? 0.06f : 0f);
-            int path = ChainPath(PathPts, At(hand, HandH), CoilPts[0], Mathf.Max(0.01f, slack), 24, shot.Strain > 0f ? 0.01f : 0f, s);
+            int path = ChainPath(PathPts, At(hand, PawnFit.H(HandH)), CoilPts[0], Mathf.Max(0.01f, slack), 24, shot.Strain > 0f ? 0.01f : 0f, s);
             int tether = yankU > 0f ? ChainPath(TetherPts, coilEnd, w, 0.01f, 6) : 0;
 
             if (shot.Strain > 0.05f) Kick(body, s, 0.6f, 11);
@@ -122,7 +122,7 @@ namespace RimArt
                 deg = shot.Aim - 70f + 120f * EaseOut(u);
                 if (swingAge < T.Swing + 0.2f)
                 {
-                    float fade = 1f - Clamp01((swingAge - T.Swing) / 0.2f), a0 = (shot.Aim - 70f) * Mathf.Deg2Rad, a1 = deg * Mathf.Deg2Rad, hz = HandH * Lift;
+                    float fade = 1f - Clamp01((swingAge - T.Swing) / 0.2f), a0 = (shot.Aim - 70f) * Mathf.Deg2Rad, a1 = deg * Mathf.Deg2Rad, hz = PawnFit.H(HandH) * Lift;
                     const int n = 12;
                     Sides(n + 1, out Vector2[] inner, out Vector2[] outer);
                     for (int i = 0; i <= n; i++)
@@ -134,7 +134,7 @@ namespace RimArt
                     Strip(inner, outer, Fade(Cream, 0.55f * fade), solid, Y + 0.045f);
                 }
             }
-            if (weapon) Sickle(hand, HandH, deg, sun, strength, Y + 0.05f);
+            if (weapon) Sickle(hand, PawnFit.H(HandH), deg, sun, strength, Y + 0.05f);
             Chain(PathPts, path, sun, strength, Y + 0.02f);
             Coil(CoilPts, coil, body.y + 0.02f, sun, strength);
             if (tether > 0) Chain(TetherPts, tether, sun, strength, Y + 0.021f);
@@ -144,7 +144,7 @@ namespace RimArt
             if (cutAge >= 0f && cutAge < 0.25f)
             {
                 float fl = 1f - cutAge / 0.25f;
-                var chest = new Vector2(body.x, body.y + ChestH * big * Lift);
+                var chest = new Vector2(body.x, body.y + PawnFit.H(ChestH * big) * Lift);
                 Sprite(chest, 1.4f * fl + 0.3f, 1.0f * fl + 0.2f, Fade(Flash, fl * 0.9f), glow, Y + 0.08f);
                 Sprite(chest, 0.5f, 0.12f, Fade(Blood, fl), soft, Y + 0.085f, shot.Aim + 40f);
             }
