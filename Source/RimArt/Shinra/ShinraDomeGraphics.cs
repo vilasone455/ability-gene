@@ -44,7 +44,7 @@ namespace RimArt
     {
         private static readonly Color White = new Color(1f, 1f, 1f), Mist = new Color(0.86f, 0.9f, 0.96f), Shade = new Color(0.32f, 0.36f, 0.44f),
             IceBright = new Color(0.8f, 0.89f, 0.95f), SkyBlue = new Color(0.42f, 0.6f, 0.92f), Haze = new Color(0.55f, 0.62f, 0.72f),
-            Leaf = new Color(0.36f, 0.55f, 0.2f), LeafDry = new Color(0.55f, 0.45f, 0.22f);
+            Leaf = new Color(0.36f, 0.55f, 0.2f), LeafDry = new Color(0.55f, 0.45f, 0.22f), Hurt = new Color(0.8f, 0.12f, 0.1f);
 
         private static readonly Material shellMat = MaterialPool.MatFrom("RimArt/Shinra/DomeShell", ShaderDatabase.MoteGlow);
         private static readonly Material fillMat = MaterialPool.MatFrom("RimArt/Shinra/DomeFill", ShaderDatabase.Transparent);
@@ -219,6 +219,32 @@ namespace RimArt
             FloorRing(o, rsD, Mathf.Clamp01(e / 0.03f) * (1f - Smooth((e - (defense - 0.1f)) / 0.25f)) * ShinraDome.DomeStrength);
             Dome(o, e, cast, rsD, domeA, e < 0.2f ? Mathf.Pow(1f - e / 0.2f, 2f) : 0f, sun);
             Warp(o, e, rsD, defense);
+        }
+
+        /// <summary>
+        /// What goes with a pushed pawn, e seconds after the burst (the pawn itself is the game's, drawn along the flight
+        /// by PainLooks): a heavy body's drag mark (kept while <paramref name="m"/> lasts) and the dust at its feet; a
+        /// thrown one's dust as it lands; a red flash and a glint where it hit a wall.
+        /// </summary>
+        public static void Pushed(Vector2 start, Vector2 end, float hitAt, float fly, bool heavy, bool hit, int seed, float e, float m)
+        {
+            float u = Mathf.Clamp01((e - hitAt) / fly), since = e - hitAt - fly;
+            if (u <= 0f) return;
+            Begin(start);
+            Vector2 at = Vector2.Lerp(start, end, ShinraDome.FlightAlong(u));
+            if (heavy)
+            {
+                ChainSickleGraphics.Scuff(start, end, ShinraDome.FlightAlong(u), 0.45f * m);
+                if (u < 1f) ChainSickleGraphics.Kick(at, e, 1f, seed);
+            }
+            else if (since >= 0f && since < 0.4f) ChainSickleGraphics.Kick(end, since, 1f - since / 0.4f, seed);
+            if (hit && since >= 0f && since < 0.5f)
+            {
+                Vector2 dir = (end - start).sqrMagnitude > 1e-4f ? (end - start).normalized : Vector2.up;
+                Vector2 flash = end + dir * 0.35f + new Vector2(0f, 0.3f);
+                Sprite(flash, 0.9f, 0.7f, Fade(Hurt, 0.5f * (1f - since / 0.5f)), glow, Y + 0.05f);
+                GokuGraphics.Glint(flash, 0.5f, 1f - since / 0.5f, White, 20f);
+            }
         }
 
         /// <summary>The white-out's alpha e seconds after the burst (charged, not quick): a screen overlay, 0.12 s.</summary>

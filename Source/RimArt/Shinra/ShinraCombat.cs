@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using RimWorld;
@@ -8,8 +9,13 @@ namespace RimArt
 {
     public static class ShinraCombat
     {
-        public static void Push(ShinraPawnState s)
+        /// <summary>
+        /// Moves every pawn in reach at once. Returns how each moved pawn is drawn getting there (<see cref="ShinraFlight"/>):
+        /// the game moves it now, the picture flies it once the dome's front reaches it.
+        /// </summary>
+        public static List<ShinraFlight> Push(ShinraPawnState s)
         {
+            var flights = new List<ShinraFlight>();
             foreach (Pawn pawn in s.map.mapPawns.AllPawnsSpawned.ToArray())
             {
                 if (pawn == s.pawn || pawn.Dead) continue;
@@ -24,6 +30,7 @@ namespace RimArt
                 direction.y = 0f;
                 if (direction.magnitude > s.Radius
                     || !GenSight.LineOfSight(s.centre.ToIntVec3(), pawn.Position, s.map)) continue;
+                float fromPain = direction.magnitude;
                 if (direction.sqrMagnitude < 0.001f) direction = Vector3.forward;
                 direction.Normalize();
                 float distance = s.PushCells / Mathf.Max(1f, pawn.BodySize);
@@ -41,12 +48,14 @@ namespace RimArt
                     last = cell;
                 }
                 pawn.pather?.StopDead();
+                if (last != pawn.Position) flights.Add(new ShinraFlight(pawn, pawn.DrawPos, last, fromPain, s.Radius, collision));
                 pawn.Position = last;
                 pawn.Notify_Teleported();
                 pawn.stances.stagger.StaggerFor(Mathf.RoundToInt(ShinraTuning.Get.staggerSeconds * 60f));
                 if (collision) pawn.TakeDamage(new DamageInfo(DamageDefOf.Blunt, s.WallDamage,
                     0f, -1f, s.pawn));
             }
+            return flights;
         }
 
         private static bool Reflectable(Thing round, RoundBackend backend, ShinraPawnState s) =>

@@ -73,6 +73,21 @@ namespace RimArt
             0.5f + 0.2f * Mathf.Sin(a * 5f + Rand(seed) * Mathf.PI * 2f) + 0.17f * Mathf.Sin(a * 13f + Rand(seed + 1) * Mathf.PI * 2f)
             + 0.13f * Mathf.Sin(a * 29f + Rand(seed + 2) * Mathf.PI * 2f);
 
+        // ---- a pushed pawn (the sketch's pushed()): the game moves it at the burst; the picture flies it there ----
+
+        /// <summary>Seconds a pawn pushed <paramref name="travel"/> cells is in the air, from when the front reaches it.</summary>
+        public static float FlightSeconds(float travel) => 0.1f + 0.05f * travel;
+        /// <summary>Share of the way flown at u (0..1 of the flight): fast out, easing into the landing.</summary>
+        public static float FlightAlong(float u) => 1f - (1f - u) * (1f - u);
+        /// <summary>Cells up at u: a low hop, 0.3 at most (a 4-cell push or more).</summary>
+        public static float FlightHeight(float travel, float u) => 0.3f * Mathf.Min(1f, travel / 4f) * Bump(u);
+        /// <summary>Cells across the landing sways, <paramref name="since"/> seconds after landing, for 0.5 s.</summary>
+        public static float LandingSway(float since) => since < 0f || since >= 0.5f ? 0f : Mathf.Sin(since * 30f) * 0.05f * (1f - since / 0.5f);
+        /// <summary>A body this big slides upright instead of being thrown (the sketch's heavy animal, body 2.4).</summary>
+        public const float SlideBodySize = 2f;
+        /// <summary>Seconds after landing that the picture keeps a pushed pawn (sway, dust, the wall-hit flash).</summary>
+        public const float AfterLanding = 0.5f;
+
         /// <summary>The charge picture's size ring: the radius a release now would give after <paramref name="held"/> s, and its pulse at each step.</summary>
         public static float SizeRing(float held, float[] sizes, out float pulse)
         {
