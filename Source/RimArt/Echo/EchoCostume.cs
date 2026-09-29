@@ -37,17 +37,26 @@ namespace RimArt
         /// its texture has no kneel picture. Null for none.
         /// </summary>
         public string kneelTexPath;
+
+        /// <summary>
+        /// Drawn only while the pawn wears clothes or armour (EchoCostume.IsClothing; trousers alone count,
+        /// belts and packs do not). While it is not drawn, its hide flags do not apply either. For Satō, who
+        /// rises naked at an anchor while still manifested.
+        /// </summary>
+        public bool onlyOverWornApparel;
     }
 
     /// <summary>
     /// Draws the costume. The body worker hides it with the body (in a bed that hides its sleeper, or when
     /// the body is not drawn); on top of that it is skipped when the drawer asks for no clothes, as worn
-    /// apparel is. The vanilla apparel worker cannot be used: it expects the node to belong to a worn Apparel.
+    /// apparel is, and when it is off (EchoCostume.Shown). The vanilla apparel worker cannot be used: it
+    /// expects the node to belong to a worn Apparel.
     /// </summary>
     public class PawnRenderNodeWorker_EchoCostume : PawnRenderNodeWorker_Body
     {
         public override bool CanDrawNow(PawnRenderNode node, PawnDrawParms parms) =>
-            base.CanDrawNow(node, parms) && parms.flags.FlagSet(PawnRenderFlags.Clothes);
+            base.CanDrawNow(node, parms) && parms.flags.FlagSet(PawnRenderFlags.Clothes)
+            && (!(node.Props is PawnRenderNodeProperties_EchoCostume costume) || EchoCostume.Shown(costume, parms.pawn));
 
         /// <summary>A head piece is narrowed on a narrow head (narrowHeadScale), about the head's middle.</summary>
         public override UnityEngine.Vector3 ScaleFor(PawnRenderNode node, PawnDrawParms parms)
@@ -89,9 +98,22 @@ namespace RimArt
                 HediffDef def = hediffs[i].def;
                 if (!def.HasDefinedGraphicProperties) continue;
                 foreach (PawnRenderNodeProperties props in def.RenderNodeProperties)
-                    if (props is PawnRenderNodeProperties_EchoCostume costume && test(costume))
+                    if (props is PawnRenderNodeProperties_EchoCostume costume && test(costume) && Shown(costume, pawn))
                         return true;
             }
+            return false;
+        }
+
+        /// <summary>Whether the costume is on: always, or with onlyOverWornApparel only while the pawn wears clothes or armour.</summary>
+        public static bool Shown(PawnRenderNodeProperties_EchoCostume costume, Pawn pawn) =>
+            !costume.onlyOverWornApparel || WearsClothing(pawn);
+
+        public static bool WearsClothing(Pawn pawn)
+        {
+            List<Apparel> worn = pawn?.apparel?.WornApparel;
+            if (worn == null) return false;
+            for (int i = 0; i < worn.Count; i++)
+                if (IsClothing(worn[i])) return true;
             return false;
         }
 

@@ -188,6 +188,9 @@ namespace RimArt
 
         private void End(string problem)
         {
+            // Runs the test's finally blocks when it stops early (a timeout), so it can put back defs it changed.
+            try { steps?.Dispose(); }
+            catch (Exception e) { context.failures.Add("cleanup threw: " + e); }
             steps = null;
             if (problem != null) context.failures.Add(problem);
             foreach (string error in errors) context.failures.Add("error logged: " + error);

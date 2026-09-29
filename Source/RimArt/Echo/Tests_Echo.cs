@@ -927,5 +927,70 @@ namespace RimArt
                 CheckDrawn(t, pawn, pawn.LabelShort + " after", ("Apparel_BasicShirt", true), ("Apparel_CowboyHat", true));
             }
         }
+
+        // Satō has no hero form until his kit is ported: Minato's two costume nodes get the flag for this test
+        // only, and the finally block puts it back.
+        [RimArtTest("Echo", "costume 7 a costume set to onlyOverWornApparel is not drawn on a naked Host and hides nothing; trousers bring it back, a belt does not (screenshots)")]
+        private static IEnumerable<int> OnlyOverWornApparel(RimArtTestContext t)
+        {
+            Setup(t);
+            int flagged = DefDatabase<HediffDef>.AllDefsListForReading
+                .Where(d => d.defName != "AG_EchoManifest_Sato" && d.HasDefinedGraphicProperties)
+                .SelectMany(d => d.RenderNodeProperties.OfType<PawnRenderNodeProperties_EchoCostume>())
+                .Count(p => p.onlyOverWornApparel);
+            t.Check(flagged == 0, "no costume other than Satō's sets onlyOverWornApparel (" + flagged + ")");
+            HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Minato");
+            List<PawnRenderNodeProperties_EchoCostume> props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
+            if (!t.Check(props?.Count == 2 && props.Any(p => p.hideHeadgear), "Minato's hero form has two costume nodes, one hiding headgear")) yield break;
+
+            void CheckCostume(Pawn pawn, string when, bool want)
+            {
+                PawnDrawParms parms = PawnDrawParms.DefaultFor(pawn);
+                parms.facing = Rot4.South;
+                List<PawnRenderNode> nodes = CostumeNodes(pawn, form).ToList();
+                t.Check(nodes.Count == 2, when + ": both costume nodes are in the render tree (" + nodes.Count + ")");
+                foreach (PawnRenderNode node in nodes)
+                    t.Check(node.Worker.CanDrawNow(node, parms) == want, when + ": " + node.Props.debugLabel + (want ? " is drawn" : " is not drawn"));
+                t.Check(PawnRenderNodeWorker_Apparel_Head.HeadgearVisible(parms) != want,
+                    when + ": the hat " + (want ? "is hidden by the costume" : "shows, the costume that hides it is off"));
+            }
+
+            try
+            {
+                foreach (PawnRenderNodeProperties_EchoCostume p in props) p.onlyOverWornApparel = true;
+                Pawn host = Colonist(t);
+                host.apparel.DestroyAll();
+                foreach (string piece in new[] { "Apparel_SmokepopBelt", "Apparel_CowboyHat" }) Wear(host, piece);
+                host.health.AddHediff(form);
+                host.Drawer.renderer.SetAllGraphicsDirty();
+                yield return 2;
+                t.Check(!EchoCostume.WearsClothing(host), "a belt and a hat are not clothes");
+                CheckCostume(host, "naked with a belt and a hat", false);
+                CheckDrawn(t, host, "naked", ("Apparel_SmokepopBelt", true), ("Apparel_CowboyHat", true));
+                Face(host, Rot4.South);
+                yield return 20;
+                yield return t.ShotAs("worn-flag-naked-south");
+
+                Wear(host, "Apparel_Pants");
+                yield return 2;
+                t.Check(EchoCostume.WearsClothing(host), "trousers count as clothes");
+                CheckCostume(host, "trousers on", true);
+                CheckDrawn(t, host, "trousers on", ("Apparel_SmokepopBelt", true), ("Apparel_CowboyHat", false));
+                Face(host, Rot4.South);
+                yield return 20;
+                yield return t.ShotAs("worn-flag-trousers-south");
+
+                Apparel pants = host.apparel.WornApparel.First(a => a.def.defName == "Apparel_Pants");
+                host.apparel.Remove(pants);
+                pants.Destroy();
+                yield return 2;
+                CheckCostume(host, "trousers off", false);
+                CheckDrawn(t, host, "trousers off", ("Apparel_SmokepopBelt", true), ("Apparel_CowboyHat", true));
+            }
+            finally
+            {
+                foreach (PawnRenderNodeProperties_EchoCostume p in props) p.onlyOverWornApparel = false;
+            }
+        }
     }
 }
