@@ -199,6 +199,18 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                // The sketch's markers (accelerator-vector-flick.js): Stand, then per kick Warm-up, Kick, Hit.
+                Name = "Accelerator", Prefix = "Accelerator: vector flick", Component = typeof(MapComponent_FlickApplyPreview), Clock = "seconds",
+                Phases = label => MapComponent_FlickApplyPreview.FlickPhases(label.Contains("three")).Select(p => new Phase(p.name, p.seconds)).ToArray(),
+            },
+            new Kit
+            {
+                // The sketch's markers (accelerator-vector-apply.js): Volley, Paused, Apply, Last round stops.
+                Name = "Accelerator", Prefix = "Accelerator: vector apply", Component = typeof(MapComponent_FlickApplyPreview), Clock = "seconds",
+                Phases = label => MapComponent_FlickApplyPreview.ApplyPhases(label.Contains("2 groups") ? 2 : 4).Select(p => new Phase(p.name, p.seconds)).ToArray(),
+            },
+            new Kit
+            {
                 Name = "Sasuke", Prefix = "Sasuke: raiko kusari", Component = typeof(MapComponent_RaikoKusariPreview), Clock = "seconds",
                 Phases = label => RaikoKusariPhases(label.Contains("ring") ? RaikoScenario.Ring
                     : label.Contains("drifting") ? RaikoScenario.DriftingNet
