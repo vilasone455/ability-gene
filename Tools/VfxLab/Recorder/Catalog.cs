@@ -189,6 +189,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Accelerator", Prefix = "Accelerator: plasma", Component = typeof(MapComponent_PlasmaPreview), Clock = "seconds",
+                Phases = label => PlasmaPhases(label.Contains("wall"), label.Contains("broken")),
+            },
+            new Kit
+            {
                 Name = "Sasuke", Prefix = "Sasuke: raiko kusari", Component = typeof(MapComponent_RaikoKusariPreview), Clock = "seconds",
                 Phases = label => RaikoKusariPhases(label.Contains("ring") ? RaikoScenario.Ring
                     : label.Contains("drifting") ? RaikoScenario.DriftingNet
@@ -982,6 +987,18 @@ namespace RimArt.VfxLab
             new Phase("Reach out", 0f), new Phase("Stone flares", StoneThrow.Place - StoneThrow.FlareLead),
             new Phase("Stone leaves the cell", StoneThrow.Place), new Phase("Caught", StoneThrow.CatchTime(StoneThrow.Place)),
         };
+
+        // The sketch's phases(): Stand, Channel, Release, Burst; the broken channel ends at the break.
+        private static Phase[] PlasmaPhases(bool wall, bool broken)
+        {
+            if (broken)
+                return new[] { new Phase("Stand", 0f), new Phase("Channel", Plasma.Lead), new Phase("Broken", Plasma.Lead + MapComponent_PlasmaPreview.BreakAt) };
+            return new[]
+            {
+                new Phase("Stand", 0f), new Phase("Channel", Plasma.Lead), new Phase("Release", Plasma.Lead + Plasma.Channel),
+                new Phase("Burst", MapComponent_PlasmaPreview.HitAt(wall)),
+            };
+        }
 
         private static Phase[] BlackFlashPhases(bool plain)
         {
