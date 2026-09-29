@@ -32,7 +32,8 @@ export const Ink = new Color(.10, .10, .12), InkEdge = new Color(.02, .02, .025)
 export const Bandage = new Color(.52, .52, .56), LooseBandage = new Color(.33, .33, .37);
 export const Maw = new Color(.30, .05, .06), Tongue = new Color(.62, .13, .15), Teeth = new Color(.90, .89, .84), Spit = new Color(.86, .88, .92);
 export const Top2 = 1.87;   // head top at scale 1 (front), in cells of height
-const TonguePeriod = 2.6, FlickLen = .34, SwayPeriod = 2.6, ClawLen = .34, JawSwing = .55;
+const TonguePeriod = 2.6, FlickLen = .34, SwayPeriod = 2.6, JawSwing = .55;
+export const ClawLen = .34;
 
 // Head shapes in the head's own (u, h), origin at the top of the neck.
 // Front: left edge from the blunt snout (over the upper chest) up to the middle of the back edge;
@@ -119,8 +120,9 @@ function torso2(key, Lp, Rp, layer, tone) {
 }
 
 // Six long claws fanning from the wrist, each curling in toward the middle of the hand. `flex`
-// -1..1 opens and closes the fan by 30 %.
-function claws2(key, S, elbow, wrist, len, flex, layer, tone = 1) {
+// -1..1 opens and closes the fan by 30 %. `S` maps the points to the screen (pass q => q for
+// screen points, as the Tear sketch does to draw a gripping hand again over the enemy).
+export function claws2(key, S, elbow, wrist, len, flex, layer, tone = 1) {
   const E = S(elbow), W = S(wrist), base = Math.atan2(W.z - E.z, W.x - E.x), spread = .15 * (1 + .3 * flex);
   for (let i = 0; i < 6; i++) {
     const a = base + (i - 2.5) * spread, l = len * (.82 + (i === 0 || i === 5 ? -.18 : rand(i + 3) * .18));
@@ -184,16 +186,19 @@ function looseEnd(key, root, dir, len, w, t, phase, amp, colour, layer) {
 }
 
 // The pose in (u, h) at scale 1. facing 'south' | 'north' | 'east' (west = east mirrored by the
-// caller). gait: steps taken; walk 0..1; swipe 0..1 with side +1/-1; reach 0..1 bends down to the
-// floor with the near (index 1) hand; t: clip time for the idle motion; jaw 0..1 and tongue 0..1
-// from the caller (the swipe opens the jaw by itself).
-export function pose2(facing, { gait = 0, walk = 0, swipe = -1, side = 1, reach = 0, t = 0, jaw = 0, tongue: tg = 0 } = {}) {
+// caller). gait: steps taken; walk 0..1; swipe 0..1 with side +1/-1; reach 0..1 bends to an item
+// lying at the middle of the next cell (0.6 above the feet, which sit on the cell's bottom edge) with
+// the near (index 1) hand; t: clip time for the idle motion; jaw 0..1 and tongue 0..1
+// from the caller (the swipe opens the jaw by itself). grip { hold, tear, kh, kt }: wrist targets in
+// (u, h) for the far or left hand (index 0, holding) and the near or right hand (index 1, tearing),
+// with how far each hand has gone to its target.
+export function pose2(facing, { gait = 0, walk = 0, swipe = -1, side = 1, reach = 0, t = 0, jaw = 0, tongue: tg = 0, grip = null } = {}) {
   const J = {}, ph = gait * TAU, idle = 1 - walk, busy = swipe >= 0 ? 1 : 0;
   // Swipe: raise over 0..0.5, strike 0.5..0.68, recover 0.68..1.
   const up = swipe < 0 ? 0 : swipe < .5 ? smooth(swipe / .5) : swipe < .68 ? 1 : 1 - smooth((swipe - .68) / .32);
   const strike = swipe < .5 ? 0 : swipe < .68 ? smooth((swipe - .5) / .18) : 1 - smooth((swipe - .68) / .32);
   const sway = idle * (1 - busy) * Math.sin(t * TAU / SwayPeriod);
-  const d = idle * Math.sin(t * 2.3) * .012 + walk * (Math.abs(Math.sin(ph)) - .5) * .05 - .10 * reach;   // breathing, stride bob, bending down
+  const d = idle * Math.sin(t * 2.3) * .012 + walk * (Math.abs(Math.sin(ph)) - .5) * .05 - .06 * reach;   // breathing, stride bob, bending down
   J.jaw = Math.max(jaw, up * .45 + strike * .55);
   J.tongue = busy ? 0 : tg;
   J.flex = idle * Math.sin(t * 3.1);
@@ -208,20 +213,21 @@ export function pose2(facing, { gait = 0, walk = 0, swipe = -1, side = 1, reach 
     J.arms = [-1, 1].map(s => {
       const sw = walk * Math.sin(ph + (s < 0 ? 0 : Math.PI)) * .07, sh = { u: s * .39 + hs, h: 1.33 + d };
       let el = { u: s * .52 + hs, h: .93 + sw + d }, wr = { u: s * .49 + hs, h: .47 + sw * 1.4 + d };
-      if (s === 1 && reach > 0) { el = { u: lerp(el.u, .44, reach), h: lerp(el.h, .62, reach) }; wr = { u: lerp(wr.u, .30, reach), h: lerp(wr.h, .12, reach) }; }
+      if (s === 1 && reach > 0) { el = { u: lerp(el.u, .46, reach), h: lerp(el.h, .95, reach) }; wr = { u: lerp(wr.u, .30, reach), h: lerp(wr.h, .60, reach) }; }
       if (s === side && swipe >= 0) {
         el = { u: lerp(lerp(el.u, s * .58, up), s * .10, strike), h: lerp(lerp(el.h, 1.62, up), 1.00, strike) };
         wr = { u: lerp(lerp(wr.u, s * .40, up), -s * .34, strike), h: lerp(lerp(wr.h, 2.00, up), facing === 'south' ? .34 : .60, strike) };
       }
       return [sh, el, wr];
     });
+    if (grip) gripArms(J, grip, 1);
     J.neck = [{ u: hs, h: 1.40 + d }, { u: hs, h: 1.50 + d }];
     J.head = { u: hs + .05 * sway, h: 1.50 + d - .05 * strike, tilt: -.09 * sway, grow: 1 + .06 * strike };
     return J;
   }
   // Profile, facing +u: pelvis back, ribcage forward, neck thrust forward and the head in front of
   // the chest; knees bent; far limbs a little apart from the near ones (near = index 1).
-  const lean = .16 + .06 * strike + .12 * reach;
+  const lean = .16 + .06 * strike + .12 * reach + (grip ? .08 * Math.max(grip.kh, grip.kt) : 0);
   J.legs = [-1, 1].map(s => {
     const a = ph + (s < 0 ? Math.PI : 0), fu = walk * .36 * Math.sin(a) + (s < 0 ? -.08 : .04), lift = walk * Math.max(0, Math.cos(a)) * .14;
     return [{ u: -.04, h: .95 + d * .5 }, { u: fu * .5 + .13, h: .52 + lift }, { u: fu - .04, h: .08 + lift * .45 }, { u: fu + .14, h: lift * .3 }];
@@ -234,17 +240,30 @@ export function pose2(facing, { gait = 0, walk = 0, swipe = -1, side = 1, reach 
   J.arms = [-1, 1].map(s => {
     const sw = walk * Math.sin(ph + (s < 0 ? 0 : Math.PI)), S0 = { u: sh.u + (s < 0 ? .07 : 0), h: sh.h };
     let el = { u: S0.u + .02 + .16 * sw, h: .93 + d }, wr = { u: S0.u + .12 + .34 * sw, h: .50 + d + .05 * Math.abs(sw) };
-    if (s === 1 && reach > 0) { el = { u: lerp(el.u, sh.u + .33, reach), h: lerp(el.h, .70, reach) }; wr = { u: lerp(wr.u, sh.u + .55, reach), h: lerp(wr.h, .12, reach) }; }
+    if (s === 1 && reach > 0) { el = { u: lerp(el.u, sh.u + .30, reach), h: lerp(el.h, .95, reach) }; wr = { u: lerp(wr.u, sh.u + .52, reach), h: lerp(wr.h, .60, reach) }; }
     if (s === 1 && swipe >= 0) {
       el = { u: lerp(lerp(el.u, sh.u - .15, up), sh.u + .45, strike), h: lerp(lerp(el.h, 1.65, up), 1.22, strike) };
       wr = { u: lerp(lerp(wr.u, sh.u - .03, up), sh.u + .85, strike), h: lerp(lerp(wr.h, 2.00, up), .84, strike) };
     }
     return [S0, el, wr];
   });
+  if (grip) gripArms(J, grip, 0);
   const nt = { u: .30 + lean * 1.1, h: 1.44 + d };
   J.neck = [{ u: .14 + lean, h: 1.36 + d }, nt];
   J.head = { u: nt.u + .03 * sway + .10 * strike, h: nt.h - .02 * strike, tilt: -.10 + .05 * sway, grow: 1 };
   return J;
+}
+
+// Hands to the grip targets: each wrist moves its share k of the way to its target and the elbow
+// bends outward (front view) or down (side view) between shoulder and wrist.
+function gripArms(J, grip, front) {
+  J.arms = J.arms.map((a, i) => {
+    const q = i ? grip.tear : grip.hold, k = i ? grip.kt : grip.kh;
+    if (!q || k <= 0) return a;
+    const sh = a[0], wr = { u: lerp(a[2].u, q.u, k), h: lerp(a[2].h, q.h, k) };
+    const el = { u: (sh.u + wr.u) / 2 + (front ? (i ? .10 : -.10) : -.04), h: (sh.h + wr.h) / 2 - .10 };
+    return [sh, { u: lerp(a[1].u, el.u, k), h: lerp(a[1].h, el.h, k) }, wr];
+  });
 }
 
 // Draw the v2 ghost. facing 'south' | 'north' | 'east' | 'west'. lo/hi clamp heights (forming and
