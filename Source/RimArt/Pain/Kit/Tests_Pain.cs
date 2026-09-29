@@ -183,7 +183,7 @@ namespace RimArt
             Finish(record);
         }
 
-        [RimArtTest("Pain", "shinra 3 one button: tap 2.5 cells (3 charge, 8 s); a hold let go early is the tap; 1 s 3 cells (5, 16 s); 2 s 4 cells (20 s), lifted off; cancel costs nothing (screenshots)", 3000)]
+        [RimArtTest("Pain", "shinra 3 one button: tap 2.5 cells (3 charge, 8 s); a hold let go early is the tap; 1 s 3 cells (5, 16 s); 2 s 4 cells (20 s), lifted off; pushed raiders drawn flying; cancel costs nothing (screenshots)", 3000)]
         private static IEnumerable<int> Button(RimArtTestContext t)
         {
             GameComponent_Echoes echoes = Setup(t);
@@ -230,11 +230,25 @@ namespace RimArt
                     t.Check(Mathf.Abs(echoes.charge - (100f - k.cost)) < 0.01f, k.name + ": took " + (100f - echoes.charge).ToString("0.#") + " charge");
                     float cooldown = (s.cooldownUntil - Find.TickManager.TicksGame) / 60f;
                     t.Check(Mathf.Abs(cooldown - k.cooldown) < 0.1f, k.name + ": cooldown " + cooldown.ToString("0.0") + " s");
+                    // The game moves the raider at the burst; the picture flies it there (ShinraFlight).
+                    MapComponent_ShinraCasts casts = t.map.GetComponent<MapComponent_ShinraCasts>();
+                    foreach (int wait in WaitFor(() => near.Position != nearAt, 90)) yield return wait;
+                    yield return 2;
+                    // Looks are set once a frame; the test may tick faster than frames, so pose them now.
+                    casts.PoseFlights();
+                    float away = (near.DrawPos - near.Position.ToVector3Shifted()).Yto0().magnitude;
+                    t.Check(casts.Flying(near) && away > 0.3f, k.name + ": just after the push the raider is still drawn on its way ("
+                        + away.ToString("0.00") + " cells from where the push put it)");
                     if (k.radius >= 4f)
                     {
                         foreach (int wait in WaitFor(() => !s.active || s.charge.time >= s.charge.BurstAt + 0.2f, 60)) yield return wait;
                         yield return t.ShotAs("shinra float burst", host.Position, 5f);
                     }
+                    foreach (int wait in WaitFor(() => !casts.Flying(near), 90)) yield return wait;
+                    yield return 2;
+                    casts.PoseFlights();
+                    away = (near.DrawPos - near.Position.ToVector3Shifted()).Yto0().magnitude;
+                    t.Check(away < 0.1f, k.name + ": and lands there (drawn " + away.ToString("0.00") + " cells off)");
                     foreach (int wait in WaitFor(() => !s.active, 150)) yield return wait;
                     t.Check(near.Position != nearAt, k.name + ": the raider " + k.inside.LengthHorizontal.ToString("0.0") + " cells away was pushed (" + nearAt + " -> " + At(near) + ")");
                     t.Check(far.Position == farAt, k.name + ": the raider " + k.outside.LengthHorizontal.ToString("0.0") + " cells away was not");

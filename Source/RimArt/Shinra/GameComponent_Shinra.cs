@@ -207,9 +207,9 @@ namespace RimArt
                 {
                     s.defenseUntil = Find.TickManager.TicksGame + s.DeflectTicks;
                     PainKit.StartDevaGap(s.pawn);
-                    ShinraCombat.Push(s);
+                    List<ShinraFlight> flights = ShinraCombat.Push(s);
                     ShinraSound.Release(s.map, s.centre.ToIntVec3());
-                    s.map.GetComponent<MapComponent_ShinraCasts>()?.Burst(s);
+                    s.map.GetComponent<MapComponent_ShinraCasts>()?.Burst(s, flights);
                 }
                 if (s.charge.time >= s.charge.End) s.Cancel();
             }

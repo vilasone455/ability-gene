@@ -9,7 +9,8 @@ namespace RimArt
     /// Shinra Tensei's picture on the map (<see cref="ShinraDomeGraphics"/>). While a cast charges: the pressed ground,
     /// the size ring, Pain's sleeves, and the light in his palms where the clip draws his hands. From the burst: a
     /// mark per cast that draws the dome and everything after it on game time, and keeps the scoured ground until it
-    /// has faded (<see cref="ShinraDome.MarkSeconds"/>). Marks are not saved; they are picture only.
+    /// has faded (<see cref="ShinraDome.MarkSeconds"/>), with the pawns it pushed drawn flying to where the game put them
+    /// (<see cref="ShinraFlight"/>, posed through <see cref="PoseFlights"/>). Marks are not saved; they are picture only.
     /// Drawing never advances or commits gameplay. All maps share the game-tick controller.
     /// </summary>
     public class MapComponent_ShinraCasts : MapComponent
@@ -21,6 +22,7 @@ namespace RimArt
             public ShinraDomeCast cast;
             public ShinraPalette palette;
             public int burstTick;
+            public List<ShinraFlight> flights;
         }
 
         private readonly List<Mark> marks = new List<Mark>();
@@ -29,15 +31,39 @@ namespace RimArt
         public MapComponent_ShinraCasts(Map map) : base(map) { }
         public bool Running(Pawn pawn) => GameComponent_Shinra.Instance.For(pawn).active;
 
-        /// <summary>A cast has burst: its dome and ground marks start now.</summary>
-        public void Burst(ShinraPawnState s)
+        /// <summary>A cast has burst: its dome and ground marks start now, and the pawns it moved fly there.</summary>
+        public void Burst(ShinraPawnState s, List<ShinraFlight> flights = null)
         {
             IntVec3 cell = s.centre.ToIntVec3();
             marks.Add(new Mark
             {
                 at = new Vector2(s.centre.x, s.centre.z), cell = cell, cast = s.DomeCast,
-                palette = Palette(map, cell), burstTick = Find.TickManager.TicksGame,
+                palette = Palette(map, cell), burstTick = Find.TickManager.TicksGame, flights = flights,
             });
+        }
+
+        /// <summary>
+        /// Draws each pushed pawn along its flight this frame. Called by <see cref="GameComponent_Pain"/> right after it
+        /// rebuilds the kit's pawn looks, so these are not cleared before the pawns are drawn.
+        /// </summary>
+        public void PoseFlights()
+        {
+            foreach (Mark mark in marks)
+            {
+                if (mark.flights == null) continue;
+                float e = Since(mark);
+                foreach (ShinraFlight flight in mark.flights) flight.Pose(e, map);
+            }
+        }
+
+        /// <summary>True while a pushed pawn is still drawn on its way (tests).</summary>
+        public bool Flying(Pawn pawn)
+        {
+            foreach (Mark mark in marks)
+                if (mark.flights != null)
+                    foreach (ShinraFlight flight in mark.flights)
+                        if (flight.pawn == pawn && Since(mark) < flight.hitAt + flight.fly) return true;
+            return false;
         }
 
         /// <summary>The ground's colours under <paramref name="cell"/>: snow, sand, or soil for everything else.</summary>
@@ -59,7 +85,13 @@ namespace RimArt
             // A settled mark is still about 420 draws a frame (clods, grit, stones, scrapes): skip the ones out of view.
             CellRect view = Find.CameraDriver.CurrentViewRect.ExpandedBy(7);
             foreach (Mark mark in marks)
-                if (view.Contains(mark.cell) && !mark.cell.Fogged(map)) ShinraDomeGraphics.Burst(mark.at, Since(mark), mark.cast, mark.palette, sun);
+            {
+                if (!view.Contains(mark.cell) || mark.cell.Fogged(map)) continue;
+                float e = Since(mark);
+                ShinraDomeGraphics.Burst(mark.at, e, mark.cast, mark.palette, sun);
+                if (mark.flights != null)
+                    foreach (ShinraFlight flight in mark.flights) flight.Draw(e, ShinraDome.MarkAlpha(e));
+            }
             foreach (var s in GameComponent_Shinra.Instance.States)
             {
                 if (s.map != map || !s.active || s.centre.ToIntVec3().Fogged(map)) continue;

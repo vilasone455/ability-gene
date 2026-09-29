@@ -200,6 +200,8 @@ namespace RimArt
             for (int i = 0; i < rodded.Count; i++) rodded[i].Pose();
             Map map = Find.CurrentMap;
             if (map == null) return;
+            // Shinra Tensei's pushed pawns fly to where the push put them (a look like the ones above).
+            map.GetComponent<MapComponent_ShinraCasts>()?.PoseFlights();
             for (int i = 0; i < marks.Count; i++)
                 if (marks[i].map == map) marks[i].Draw();
             for (int i = 0; i < rodded.Count; i++)
