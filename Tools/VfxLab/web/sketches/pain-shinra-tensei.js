@@ -37,9 +37,12 @@
 //   cooldowns"; follows Mobile; placeholders for XML, not drawn). The one click's 8 s stays.
 //   Replaced the same day by one tap/hold button (the user agreed): a hold let go before 1 s gives the
 //   one-click version (2.5 cells, 8 s), 1 s gives 3 cells (16 s), 2 s gives 4 cells (20 s); the 2-cell
-//   size is gone. In game since then (ShinraTuning, Command_TapHold); this sketch still draws 2 cells
-//   for a charge under 1 s.
-//   Pain floats 0.45 cells up inside the dome and lands after it (picture only).
+//   size is gone. In game since then (ShinraTuning, Command_TapHold), and drawn here since the float.
+//   Pain floats only for the 4-cell size (the user, 2026-09-29, "yes build it"): the anime's floating
+//   charge is the big one over Konoha, and in his ground fights he pushes standing. From 2 s of charge
+//   he lifts off to 0.3 cells in 0.15 s (with the arms' step to the Y) and hovers; at the release he goes up to 0.45 (Mobile) and comes
+//   down as the dome fades. Tap, quick and 3-cell casts stay on the ground. Picture only: a small lift
+//   reads as a hover, not flight, and he can still be hit. RimArt_ShinraCharge carries the same heights.
 //
 // Order, with the default sliders (full charge, "pawns round Pain"):
 //   0.00  rest
@@ -136,15 +139,32 @@ const TapRadius = 2.5, TapPush = 4, TapDefense = .45, TapPour = .2, TapPower = .
 // Per frame, set at the top of draw() from the version: how long the dome holds (the shots-turned
 // window) and how long its lines pour.
 let DefenseT = .75, Pour = .3;
-// Proposed (Naruto Mobile: three sizes by how long the button is held): the dome, and so the area
-// pushed, is 2 cells after up to 1 s of charge, 3 cells after 1-2 s and 4 cells after 2-3 s.
-const Sizes = [2, 3, 4], SizeStep = 1;
+// Naruto Mobile's three sizes by how long the button is held, as agreed for the tap/hold button: a hold
+// let go before 1 s is the quick version (2.5 cells), 1-2 s gives 3 cells, 2-3 s gives 4 cells.
+const Sizes = [TapRadius, 3, 4], SizeStep = 1;
 const sizeFor = held => Sizes[Math.min(Sizes.length - 1, Math.floor(held / SizeStep))];
 // The area of the cast being drawn: set from the charge at the top of draw(), so every helper below
 // reads the same value for that frame.
 let Radius = 4;
-// Pain floats up inside the dome (Mobile 0:43-0:46) and comes down after it.
-const FloatH = .45;
+// Pain lifts off for the 4-cell size only: from TopAt s of charge he rises to HoverH in RiseT and hovers
+// with a slow bob; at the release he goes up to FloatH (Mobile 0:43-0:46), reached 0.15 s after the
+// burst, and comes down as the dome fades (LandAt s after the burst, over LandT). make_shinra_anim.py
+// puts the same heights into RimArt_ShinraCharge.
+const FloatH = .45, HoverH = .3, RiseT = .15, HoverBob = .015, TopAt = 2 * SizeStep, LandAt = .6, LandT = .3;
+function hoverAt(held) {
+  const since = held - TopAt;
+  if (since <= 0) return 0;
+  const k = clamp(since / RiseT);
+  return HoverH * easeOut(k) + HoverBob * Math.sin(since * 5) * k;
+}
+// His height at scene second s, e seconds after the burst.
+function liftAt(s, t, p, e) {
+  if (t.tap || p.charge < TopAt) return 0;
+  const letGo = Lead + p.charge;
+  if (s < letGo) return s > Lead ? hoverAt(s - Lead) : 0;
+  const up = lerp(hoverAt(p.charge), FloatH, smooth((s - letGo) / (t.R - letGo + .15)));
+  return up * (1 - smooth((e - LandAt) / LandT));
+}
 // The clip: hands at the chest at 0.27 s (held there while charging), burst 0.38, end 1.35.
 const Lead = .2, Hold = .27, Burst = .38, ClipEnd = 1.35;
 const HandKeys = [0, .14, .27, .38, .48, .76, 1.05, 1.35];
@@ -574,7 +594,7 @@ function pushed(o, e, p, c, sun, strength) {
       rods(k, start, sun, strength, inside && e > hitAt ? bump(clamp((e - hitAt) / .35)) : 0);
       return;
     }
-    const want = inside ? (p.version === Versions[1] ? TapPush : lerp(PushLow, PushHigh, c)) / Math.max(1, q.body ?? 1) : 0;
+    const want = inside ? (p.version === Versions[1] || p.charge < SizeStep ? TapPush : lerp(PushLow, PushHigh, c)) / Math.max(1, q.body ?? 1) : 0;
     const travel = q.wall ? Math.min(want, q.wall - .55 - d0) : want, hit = q.wall && want > q.wall - .55 - d0;
     const fly = .1 + .05 * travel, u = travel > 0 && e > hitAt ? clamp((e - hitAt) / fly) : 0;
     const along = d0 + travel * (1 - (1 - u) * (1 - u)), g = { x: o.x + ux * along, z: o.z + uz * along };
@@ -705,8 +725,10 @@ export default {
   draw(s, p, { origin, scene }) {
     const sun = scene?.shadowVector ?? { x: -.45, z: -.32 }, strength = scene?.sun?.strength ?? .32;
     const t = times(p), c = t.power, e = s - t.R, col = Terrains[p.terrain] ?? Terrains.soil;
+    // A hold let go before the first size is the quick version: its size, shots window, pour, no white-out.
+    const quick = t.tap || p.charge < SizeStep;
     Radius = t.tap ? TapRadius : sizeFor(p.charge);
-    DefenseT = t.tap ? TapDefense : .75; Pour = t.tap ? TapPour : .3;
+    DefenseT = quick ? TapDefense : .75; Pour = quick ? TapPour : .3;
     const o = { x: origin.x, z: origin.z }, ct = clipTime(s, t);
     // Charge counted from the start of the gesture, frozen when the release is asked.
     const cNow = clamp(Math.min(s - Lead, p.charge) / FullCharge);
@@ -743,10 +765,10 @@ export default {
       floorRing(o, rsD, clamp(e / .03) * (1 - smooth((e - (DefenseT - .1)) / .25)) * p.dome);
       dome(o, e, p, rsD, domeA, e < .2 ? (1 - e / .2) ** 2 : 0, sun);
       // Mobile whites out the whole screen for a moment at the burst (0:03, 0:17 of KQQE2-wx_yw).
-      if (!t.tap && p.whiteout && e < WhiteoutT) Overlay.Fill(0, 0, 1, 1, White.withAlpha(.5 * (1 - e / WhiteoutT) ** 2));
+      if (!quick && p.whiteout && e < WhiteoutT) Overlay.Fill(0, 0, 1, 1, White.withAlpha(.5 * (1 - e / WhiteoutT) ** 2));
     }
 
-    const lift = e < 0 || t.tap ? 0 : FloatH * smooth(e / .25) * (1 - smooth((e - DefenseT - .05) / .3));
+    const lift = liftAt(s, t, p, e);
     const flashK = e >= 0 && e < .1 ? 1 - e / .1 : 0;
     painGesture(o, poseAt(ct, s, t, p), t.tap ? 0 : flashK, sun, strength, lift, t.tap ? flashK : 0);
     if (p.scenario === Scenarios[0]) pushed(o, Math.max(-1, e), p, c, sun, strength);

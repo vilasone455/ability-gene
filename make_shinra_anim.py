@@ -14,7 +14,7 @@ import math
 import re
 from pathlib import Path
 
-from make_throw_anim import part, transform_curves, bounds, HAND_SCALE
+from make_throw_anim import part, transform_curves, curve, bounds, HAND_SCALE
 
 ROOT = Path(__file__).resolve().parent
 TIMING = (ROOT / "Source/RimArt/Shinra/ShinraVfxTiming.cs").read_text()
@@ -128,6 +128,45 @@ GAP = 0.02               # between segments, never played
 RELEASES = [round(HOLD + CHARGE_SPAN + GAP + i * (SEGMENT + GAP), 4) for i in range(len(TIERS))]
 CHARGE_LENGTH = round(RELEASES[-1] + SEGMENT, 4)
 
+# Pain lifts off for the 4-cell size only, as the sketch's liftAt() (pain-shinra-tensei.js): from TOP_AT s of
+# charge he rises to HOVER_H in RISE_T (with the arms' step to the Y) and hovers with a slow bob; in the
+# 4-cell release segment he goes up to FLOAT_H, reached 0.15 s after the burst, and comes down LAND_AT s
+# after the burst over LAND_T. Heights are cells up, drawn LIFT cells north per cell; the body and both
+# hands rise together. The body's DataC is Melee Animation's shadow on the ground (the AnimDef's
+# shadowDrawFromData): 0 standing (the pawn's own shadow), else 1 - 0.35 * height / FLOAT_H, fading as
+# the sketch's shadow shrinks. A release in the first RISE_T of the 4-cell size jumps up to the hover.
+FULL_CHARGE = 3.0
+TOP_AT = 2.0
+HOVER_H, RISE_T, HOVER_BOB = 0.3, 0.15, 0.015
+FLOAT_H, FLOAT_BY, LAND_AT, LAND_T = 0.45, PUSH - HOLD + 0.15, 0.6, 0.3
+LIFT = 0.6
+SEAL = 0.001             # keys this far inside each segment edge keep its tangent off the next segment
+FINE = 0.04              # key spacing in the 4-cell release segment, for the float
+
+
+def smooth(x):
+    x = min(1.0, max(0.0, x))
+    return x * x * (3 - 2 * x)
+
+
+def hover(held):
+    """Height (cells up) after `held` seconds of charge: the sketch's hoverAt()."""
+    since = held - TOP_AT
+    if since <= 0:
+        return 0.0
+    k = min(1.0, since / RISE_T)
+    return HOVER_H * (1 - (1 - k) ** 3) + HOVER_BOB * math.sin(since * 5) * k
+
+
+def top_release_height(dt):
+    """Height dt seconds into the 4-cell release segment (the burst is PUSH - HOLD in)."""
+    up = HOVER_H + (FLOAT_H - HOVER_H) * smooth(dt / FLOAT_BY)
+    return up * (1 - smooth((dt - (PUSH - HOLD) - LAND_AT) / LAND_T))
+
+
+def shadow(height):
+    return 0.0 if height <= 0.001 else 1 - 0.35 * height / FLOAT_H
+
 
 def lerp_pose(a, b, w):
     return tuple(x + (y - x) * w for x, y in zip(a, b))
@@ -149,9 +188,17 @@ def hold_pose(u):
     return pose
 
 
+def along(keys, dt):
+    """(span, lift, splay, bob) dt seconds in, eased between keys as the sketch's key() does."""
+    for (t0, *a), (t1, *b) in zip(keys, keys[1:]):
+        if dt <= t1:
+            return tuple(lerp_pose(a, b, smooth((dt - t0) / (t1 - t0))))
+    return tuple(keys[-1][1:])
+
+
 def charge_poses():
-    """(seconds, half-span, lift, splay, bob, body x) for RimArt_ShinraCharge."""
-    poses = [(t, span, lift, splay, bob, 0.0) for t, span, lift, splay, bob in OPEN]
+    """(seconds, half-span, lift, splay, bob, body x, height) for RimArt_ShinraCharge."""
+    poses = [(t, span, lift, splay, bob, 0.0, 0.0) for t, span, lift, splay, bob in OPEN]
     steps = round(CHARGE_SPAN / KEY)
     for k in range(1, steps + 1):
         u = k / steps
@@ -159,19 +206,33 @@ def charge_poses():
         amp = TREMBLE_LOW + (TREMBLE_HIGH - TREMBLE_LOW) * u
         shake = amp if k % 2 else -amp
         poses.append((round(HOLD + k * KEY, 4), round(span + shake, 4), round(lift + 0.7 * shake, 4),
-                      splay, round(bob, 4), round(-0.4 * shake, 4)))
+                      splay, round(bob, 4), round(-0.4 * shake, 4), round(hover(u * FULL_CHARGE), 4)))
     after = [(t - HOLD, span, lift, splay, bob) for t, span, lift, splay, bob in POSES if t > HOLD]
-    for start, tier in zip(RELEASES, TIERS):
-        span, lift, splay, bob = tier[1]
-        poses.append((start, span, lift, splay, bob, 0.0))
-        poses += [(round(start + dt, 4), sp, li, sl, bo, 0.0) for dt, sp, li, sl, bo in after]
-    return poses
+    for i, (start, tier) in enumerate(zip(RELEASES, TIERS)):
+        keys = [(0.0, *tier[1])] + after
+        top = i == len(TIERS) - 1
+        times = sorted({dt for dt, *_ in keys} | ({round(j * FINE, 4) for j in range(int(SEGMENT / FINE) + 1)} if top else set()))
+        for dt in times:
+            span, lift, splay, bob = along(keys, dt)
+            poses.append((round(start + dt, 4), span, lift, splay, bob, 0.0, round(top_release_height(dt), 4) if top else 0.0))
+    # Seal every segment edge: a copy of the edge key SEAL inside it, so the jump to the next segment
+    # (never played, across GAP) only bends the curve for SEAL seconds instead of the edge interval.
+    sealed = list(poses)
+    for a, b in zip(poses, poses[1:]):
+        if b[0] in RELEASES:
+            sealed.append((round(a[0] - SEAL, 4), *a[1:]))
+            sealed.append((round(b[0] + SEAL, 4), *b[1:]))
+    return sorted(sealed, key=lambda pose: pose[0])
 
 
-def hands_clip(name, length, body_z, body_x, hand_a, hand_b):
-    """A two-handed south-facing clip. hand_a/hand_b: lists of (seconds, x, z, rotation)."""
+def hands_clip(name, length, body_z, body_x, hand_a, hand_b, body_shadow=None):
+    """A two-handed south-facing clip. hand_a/hand_b: lists of (seconds, x, z, rotation). body_shadow:
+    (seconds, DataC) for a clip whose AnimDef draws the shadow from data (shadowDrawFromData)."""
     body_pos = {"x": body_x, "z": body_z}
-    body = part(1001, "BodyA", "BodyA", curves=transform_curves(pos=body_pos),
+    curves = transform_curves(pos=body_pos)
+    if body_shadow:
+        curves["AnimatedPart.DataC"] = curve(body_shadow, smooth=False)
+    body = part(1001, "BodyA", "BodyA", curves=curves,
                 default_overrides={"PawnBody.Direction": float(SOUTH)})
     head = part(1002, "BodyA/HeadA", "HeadA", parent_id=1001)
     parts = [body, head]
@@ -204,10 +265,11 @@ def build_tap():
 
 def build_charge():
     poses = charge_poses()
-    a = [(t, -span, lift, 90.0 + 90.0 * splay) for t, span, lift, splay, _, _ in poses]
-    b = [(t, span, lift, 90.0 - 90.0 * splay) for t, span, lift, splay, _, _ in poses]
-    return hands_clip(CHARGE_NAME, CHARGE_LENGTH, [(t, bob) for t, _, _, _, bob, _ in poses],
-                      [(t, bx) for t, *_, bx in poses], a, b)
+    a = [(t, -span, round(lift + h * LIFT, 4), 90.0 + 90.0 * splay) for t, span, lift, splay, _, _, h in poses]
+    b = [(t, span, round(lift + h * LIFT, 4), 90.0 - 90.0 * splay) for t, span, lift, splay, _, _, h in poses]
+    return hands_clip(CHARGE_NAME, CHARGE_LENGTH, [(t, round(bob + h * LIFT, 4)) for t, _, _, _, bob, _, h in poses],
+                      [(t, bx) for t, _, _, _, _, bx, _ in poses], a, b,
+                      body_shadow=[(t, round(shadow(h), 4)) for t, *_, h in poses])
 
 
 def main():
@@ -222,7 +284,8 @@ def main():
         (out / f"{clip_name}.json").write_text(json.dumps(clip, indent=2) + "\n")
         print(f"Wrote {clip_name}.json ({clip['Length']:.2f}s)")
     print(f"Tap bursts at {TAP_BURST}s. Charge holds {HOLD}-{HOLD + CHARGE_SPAN:.2f}s (power 0-1); "
-          f"release segments at {RELEASES} (2, 3, 4 cells), each bursting {PUSH - HOLD:.2f}s in.")
+          f"release segments at {RELEASES} (quick 2.5, 3, 4 cells), each bursting {PUSH - HOLD:.2f}s in; "
+          f"lifts off from {TOP_AT:.0f}s of charge to {HOVER_H} cells, {FLOAT_H} at the 4-cell burst.")
 
 
 if __name__ == "__main__":
