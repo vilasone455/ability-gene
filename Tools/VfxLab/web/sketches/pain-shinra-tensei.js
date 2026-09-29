@@ -33,7 +33,8 @@
 //   Proposed change, drawn here (2026-09-29, the user: "let try do", after Naruto Mobile's Shinra was
 //   found to have three sizes by how long it is held, its cooldown growing with the size): the area
 //   is 2 cells after up to 1 s of charge, 3 cells after 1-2 s, 4 cells after 2-3 s (full keeps
-//   today's 4). A cooldown of 12 / 16 / 20 s by size would follow Mobile (placeholder, not drawn).
+//   today's 4). Cooldown 12 / 16 / 20 s by the size reached (the user, 2026-09-29: "use 12/16/20
+//   cooldowns"; follows Mobile; placeholders for XML, not drawn). The one click's 8 s stays.
 //   Pain floats 0.45 cells up inside the dome and lands after it (picture only).
 //
 // Order, with the default sliders (full charge, "pawns round Pain"):
