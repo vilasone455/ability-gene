@@ -38,7 +38,7 @@ export function arm(pos, deg, reach, alpha = 1) {
 }
 
 // The ball of air being compressed into plasma. stage 0 is loose air (large, faint, swirling),
-// stage 1 is plasma (small, white core, violet shell, rays). size is the ball across at stage 1.
+// stage 1 is plasma (small, white core, pale blue shell, rays). size is the ball across at stage 1.
 export function plasmaBall(key, at, size, s, alpha, stage) {
   if (size <= .01 || alpha <= 0) return;
   const r = size / 2 * (1.9 - .9 * stage), beat = 1 + .1 * Math.sin(s * 41) * stage, hot = clamp((stage - .6) / .4);

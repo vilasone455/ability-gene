@@ -1,5 +1,7 @@
-// Vector shove, reworked — ability proposal for the Accelerator kit, not the game. Source/RimArt
-// has the old shove (12.9 cells, always away from the caster); this is what replaces it.
+// Vector shove, reworked. Ported to C# 2026-09-29 (Source/RimArt/Accelerator/VectorShove*.cs, previews
+// "Accelerator: vector shove: ..."), played in game by MapComponent_Shoves (Accelerator/Kit/ShoveThrow.cs):
+// the thrown pawn flies in a PawnFlyer, the throw starts Touch (0.12 s) after the hand lands, and the
+// raider's squash on the wall is left out (a real pawn cannot be squashed). Numbers are AG_VectorShove's XML.
 //
 // What it is for (agreed 2026-09-24; every number is a placeholder for XML).
 //   Touch range, no warmup: Accelerator lays a hand on one adjacent body and reverses its momentum.

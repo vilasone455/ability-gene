@@ -24,6 +24,8 @@
     <label>reflex booster</label>
     <description>An uncraftable spinal implant. Its vector powers now belong to Accelerator's Echo, so it grants no ability. It can be recovered surgically and transferred.</description>
     <descriptionHyperlinks><RecipeDef>AG_InstallReflexBooster</RecipeDef></descriptionHyperlinks>
+    <!-- BodyPartProstheticBase has a recipeMaker of its own; a recipe with no cost is a config error. -->
+    <recipeMaker IsNull="True" />
     <statBases>
       <MarketValue>600</MarketValue>
       <Mass>0.3</Mass>

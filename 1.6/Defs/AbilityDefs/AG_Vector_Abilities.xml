@@ -6,7 +6,8 @@
        implant grants none of them since the port. Brain strain (AG_VectorStrain) is his cost: the
        strain abilities cost 0 Echo charge. Every balance number is a field here; the C# in
        Source/RimArt/Vector and Source/RimArt/Accelerator/Kit holds only shape and logic. The defNames
-       keep the implant era's AG_Vector prefix so saves still find them. -->
+       keep the implant era's AG_Vector prefix so saves still find them. The icons are placeholders
+       (make_accelerator_textures.py). -->
 
   <AbilityDef Name="AG_AcceleratorAbilityBase" Abstract="True">
     <category>AG_Genetic</category>
@@ -28,7 +29,7 @@
     <defName>AG_VectorReflection</defName>
     <label>vector manipulation</label>
     <description>Pause the game and take hold of every bullet that will pass within 12 cells of Accelerator in the next 0.35 seconds. Sort them into up to 4 groups and give each group a turn (-180 to 180 degrees) and a force (x0.25, x0.5, x1 or x2). Apply rewrites every bullet in a changed group from where it was caught: new heading, speed and damage times the force, and 20 cells of travel times the force. Bullets in no group fly on as they were. Mortar shells and rockets cannot be caught.\n\nBrain strain on Apply: 8% for one changed group, 24% for two, 48% for three, 80% for four. Cooldown 5 seconds. Reflex surge slows the world so there is time to press this.</description>
-    <iconPath>UI/Abilities/PiercingSpine</iconPath>
+    <iconPath>RimArt/Accelerator/IconManipulation</iconPath>
     <gizmoClass>RimArt.Command_VectorEdit</gizmoClass>
     <cooldownTicksRange>300</cooldownTicksRange>
     <targetRequired>false</targetRequired>
@@ -70,7 +71,7 @@
     <defName>AG_VectorSurge</defName>
     <label>reflex surge</label>
     <description>For 5 seconds of game time the game runs at a quarter of its speed (about 20 real seconds), whatever speed button is pressed. Nothing moves further or hits harder, Accelerator included; it only gives time to watch and to use vector manipulation.\n\nCosts 10% brain strain. Ends early from the button on its hediff. Cooldown 30 seconds.</description>
-    <iconPath>UI/Icons/Genes/Gene_QuickMovespeed</iconPath>
+    <iconPath>RimArt/Accelerator/IconSurge</iconPath>
     <cooldownTicksRange>1800</cooldownTicksRange>
     <targetRequired>false</targetRequired>
     <hostile>false</hostile>
@@ -103,7 +104,7 @@
     <defName>AG_VectorShove</defName>
     <label>vector shove</label>
     <description>Touch an adjacent pawn or loose thing, then pick a direction.\n\nA pawn is thrown 8 cells (divided by its body size) at 20 cells per second. It takes 1.5 blunt damage per cell travelled and is stunned for 1 second. A wall ends the throw early and adds 8 blunt. Every pawn in the path is knocked 1 cell aside, takes 8 blunt and is stunned for 0.5 seconds; the thrown pawn keeps going.\n\nA stone chunk, corpse or weapon on the ground is thrown 12 cells and hits the first pawn or wall in its path for 1 blunt per kg of its mass (at most 40); it lands there.\n\nForce returned: if the target hit Accelerator in melee within the last second, that hit's damage is added as blunt to the first pawn the thrown pawn strikes, or to the thrown pawn itself if it strikes none. It does not undo the hit Accelerator took.\n\nCosts 5% brain strain. Cooldown 20 seconds.</description>
-    <iconPath>UI/Abilities/Longjump</iconPath>
+    <iconPath>RimArt/Accelerator/IconShove</iconPath>
     <cooldownTicksRange>1200</cooldownTicksRange>
     <hostile>true</hostile>
     <verbProperties>
@@ -156,7 +157,7 @@
     <defName>AG_VectorPlasma</defName>
     <label>plasma</label>
     <description>Target a direction. Accelerator stands still for 3 seconds and compresses the air at one hand into plasma. While he channels, every bullet that comes within 8 cells of him is bent into his hand and destroyed (mortar shells and rockets are not caught).\n\nThen the plasma goes down a lane 1 cell wide and up to 15 cells long and stops at the first standing pawn or wall. It bursts there: radius 1.5 cells, 50 heat damage at 40% armour penetration, and fires start. Pawns further down the lane are not hit. Accelerator is not hurt by his own burst.\n\nCosts 45% brain strain when released. A stun, a downing or an order during the channel cancels it: the cooldown is spent, the strain is not. Cooldown 90 seconds.</description>
-    <iconPath>UI/Abilities/FireBurst</iconPath>
+    <iconPath>RimArt/Accelerator/IconPlasma</iconPath>
     <jobDef>AG_VectorPlasmaChannel</jobDef>
     <cooldownTicksRange>5400</cooldownTicksRange>
     <hostile>true</hostile>
@@ -202,7 +203,7 @@
     <defName>AG_VectorFlick</defName>
     <label>vector flick</label>
     <description>Target a pawn within 24.9 cells in line of sight. Accelerator flicks a pebble up off the floor and kicks it at 42 cells per second. It always hits the target for 14 blunt damage at 30% armour penetration; pawns in between are not hit.\n\nWarm-up 0.3 seconds. No brain strain. Cooldown 2 seconds.</description>
-    <iconPath>UI/Abilities/MechLongJump</iconPath>
+    <iconPath>RimArt/Accelerator/IconFlick</iconPath>
     <cooldownTicksRange>120</cooldownTicksRange>
     <hostile>true</hostile>
     <verbProperties>
