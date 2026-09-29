@@ -383,6 +383,14 @@ Gojo (agreed 2026-09-27; numbers are placeholders):
   buildings, plants and items are destroyed with no drops; pawns take 60 erasure damage that ignores
   armour; friend or foe. Its own cooldown 1 day plus 20 charge; if it is not ready or the pool cannot
   pay, Red passes through Blue and pushes as normal.
+  Erasure rules (added 2026-09-29; placeholders): a pawn whose cell centre is within 0.5 cells of the
+  path is erased (dies with no corpse; apparel, weapon and inventory destroyed; counts as Gojo's kill;
+  mechanoids too); pawns 0.5 to 1.5 cells off the path take the 60, and a part it destroys is gone with
+  no bleeding. Every cell whose centre is within 1.5 cells of the path becomes a new terrain, Erased
+  ground (smooth, pale violet-grey, fertility 0, can be built on and floored over); built floors there
+  are removed with no refund, water stays, roofs over the lane are removed (thick rock roof too), rock
+  and ore are erased with no chunks. Open: whether mech bosses and large animals are erased or only
+  take the 60; whether the scar stays for good (proposed) or grows back. Sketch: `gojo-purple.js`.
 - Unlimited Void: the pocket map (pictures on main, PR #34). Everyone within 9 cells is taken in,
   keeping positions relative to Gojo; 10 s or Release, then back to the matching cells. Anyone not
   spared is overloaded (consciousness capped at 10 % for 60 s, then void-scarred 2 days). Cooldown

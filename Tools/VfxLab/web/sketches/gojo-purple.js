@@ -6,7 +6,18 @@
 //   6 cells/s, 30 cells or the map edge. It erases what it touches: walls, buildings, plants and items are
 //   destroyed with no drops; pawns take 60 erasure damage that ignores armour, friend or foe. Its own
 //   cooldown is 1 day plus 20 charge; if it is not ready or the pool cannot pay, Red passes through Blue and
-//   pushes as normal. The floor is not changed by the mechanic; the trench here is a mark only.
+//   pushes as normal.
+// Erasure rules (added 2026-09-29 on the user's "ok"; placeholders):
+//   - Centre row: a pawn whose cell centre is within 0.5 cells of the path is erased: it dies with no corpse,
+//     its apparel, weapon and inventory are destroyed, and it counts as Gojo's kill. Mechanoids too; friend or foe.
+//   - Side rows (0.5 to 1.5 cells off the path): the 60 erasure damage above; a part it destroys is gone with
+//     no bleeding from it.
+//   - The lane: every cell whose centre is within 1.5 cells of the path becomes a new terrain, Erased ground
+//     (smooth, pale violet-grey, fertility 0, can be built on and floored over). Built floors there are removed
+//     with no refund; water stays water; roofs over the lane are removed, thick rock roof too; rock and ore in
+//     the lane are erased with no chunks.
+//   Open: whether mech bosses and large animals are erased or only take the 60; whether the scar stays for good
+//   (proposed) or grows back after some days.
 //
 // Sources (YouTube storyboards, 2026-09-29):
 //   anime S1 ep 20, U2ja8ZLRwrA  17-20 s a blue swirl on one side, a red swirl on the other; 28-30 s they
@@ -38,16 +49,27 @@
 //               lilac -> violet and are dark 1.5 s after it passed; the trench shows its north wall (0.6 cells
 //               deep, drawn 0.36 north as earth with a dark foot and a pale lip); dust rises off both lips
 //               0.25 s after it passed and fades over 2 s. Whatever it touches dissolves into purple specks drawn into it: a
-//               tree at 2.5 cells, a raider at 4 (60 damage: flash, falls), an ally at 6.5 (the same, friend
-//               or foe), the 3 middle cells of a 7-cell wall at 9 (the cut faces glow and fade), a crate at
-//               12.5. A raider 2.4 cells off the line is only lit.
-//   3.89-4.39   it breaks into specks and fades; a last ring
-//   stays       the trench, the cut wall ends, the fallen pawns
+//               tree at 2.5 cells, a raider at 4 on the centre row (erased: a white flash as the sphere
+//               touches him, then nothing; 16 specks drawn into the sphere), an ally at 6.5 on a side row (60
+//               damage: flash, falls; a cut glows on the edge of him facing the lane, white 0.8 s, then
+//               lilac, violet, out by 2.5 s; no burn, no blood), the 3 middle cells of a 7-cell wall at 9 (the cut faces glow and
+//               fade), a crate at 12.5. A raider 2.4 cells off the line is only lit.
+//               Behind the sphere every cell of the lane turns to Erased ground as its centre passes.
+//               The world is lit purple (S1 ep 20 46-53 s "everything lit purple"): from ignition the whole view
+//               dims 35 % toward violet-black over 0.3 s, and violet light sits round the sphere above the dim.
+//   3.89-4.39   it breaks into specks and fades; a last ring; the dim lifts over 0.6 s
+//   4.29-5.89   the trench shading (scoured strip, north wall, lips) fades, leaving the flat lane
+//   stays       the Erased ground lane (stepped by cells on a slant), the cut wall ends, the downed ally;
+//               no body where the raider stood
 //   "open field": nothing on the path, to see Purple alone.
 //
 // Drawing: level circles, spirals, strips and quads; nothing per facing (the path and the wall turn with the
 // aim). Blue and Red are compact copies of the Blue v2 and Red v2 looks, not the full effects. Light is
-// additive; the sphere's body, the trench and the burns are Transparent. Pawns, tree, wall, crate are stand-ins.
+// additive; the sphere's body, the trench and the dim are Transparent. Pawns, tree, wall, crate are stand-ins.
+// The lane cells stand in for the Erased ground terrain (in game the map draws it). The trench shading is a
+// pass effect that cannot stay, because terrain has no depth. The dim is one quad over the camera's view
+// (ctx.view; in game Find.CameraDriver's rect). A lost part does not show on a pawn's sprite in game (only in its
+// health tab), so the side-row pawn is drawn whole and the glowing cut is the only sign on the map.
 import { Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../js/engine.js';
 import { draw, mesh } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
@@ -59,13 +81,17 @@ const TAU = Math.PI * 2, D2R = Mathf.Deg2Rad, ChestUp = Chest / Lift;
 const disc = Meshes.disc(40, 'purple disc');
 const puff = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.Transparent), puffGlow = MaterialPool.MatFrom('RimArt/SixPaths/Puff', ShaderDatabase.MoteGlow);
 // Decided values. Red's speed is the agreed 20 cells/s.
-const Raise = .15, Start = .15, RedSpeed = 20, Tip = .8, Reach = .5, Grow = .3, Fade = .5, Tail = 1.2;
+const Raise = .15, Start = .15, RedSpeed = 20, Tip = .8, Reach = .5, Grow = .3, Fade = .5, Tail = 2;
 const BlueR = .9, OrbR = .2, Bands = 12, Bolts = 5, Rays = 10, RingEvery = .5, Specks = 24;
 // Travel and erasing (S1 ep 20 #47-48 the purple band behind the head, #61-63 the trench walls and dust).
 const TrenchDepth = .6, BandStep = .4, BandLife = 1.1, EdgeStep = .4, EdgeCool = 1.5, Lifted = 18, DustStep = .45, DustLife = 2;
+// Erasure: the centre row (erased) is 0.5 cells either side of the path. The trench shading holds 0.4 s after the
+// sphere stops, then fades over 1.6 s into the flat lane. The dim comes in over 0.3 s and lifts over 0.6 s.
+const CentreRow = .5, TrenchHold = .4, TrenchFade = 1.6, DimIn = .3, DimRelease = .6, CutGlow = 2.5;
 const Red = new Color(1, .1, .14), RedDeep = new Color(.42, 0, .05), HotPink = new Color(1, .78, .82);
 const Royal = new Color(.12, .32, .95), Abyss = new Color(.01, .03, .16), Cyan = new Color(.45, .85, 1);
 const Violet = new Color(.58, .22, 1), Lilac = new Color(.86, .72, 1), Plum = new Color(.2, .03, .36), Night = new Color(.06, 0, .12), Magenta = new Color(.95, .35, 1);
+const ErasedGround = new Color(.58, .54, .63);
 const Scoured = new Color(.3, .25, .23), Earth = new Color(.38, .3, .24), Lip = new Color(.62, .56, .5), Haze = new Color(.72, .67, .6), Bark = new Color(.35, .24, .14), Leaves = new Color(.25, .45, .2), Crate = new Color(.55, .4, .22);
 // Things on the path for "wall and raiders": [cells past Blue's centre along the path, cells across, kind].
 const Path = [[2.5, .5, 'tree'], [4, -.3, 'raider'], [6.5, .8, 'ally'], [11, 2.4, 'raider'], [12.5, -.6, 'crate']];
@@ -162,6 +188,19 @@ function dissolve(key, at, size, age, colour, pull, count = 12) {
   }
 }
 
+// A side-row pawn lying after the hit: the cut where the part facing the lane was erased, on that edge of the body.
+// It glows white for 0.8 s, lilac by 1.6 s, and fades out by 2.5 s: longer than the wall's cuts, because the sphere
+// covers a side-row pawn for about 0.4 s after the hit. side is +1 when the lane is north of him. The pawn itself is
+// drawn whole, as the game draws it: a pawn's sprite has no separate arms, so a lost arm shows only in its health tab.
+function cutGlow(key, pos, side, age) {
+  const u = clamp(age / CutGlow);
+  if (u >= 1) return;
+  const hot = age < .8 ? White : Color.Lerp(Lilac, Violet, clamp((age - 1.6) / .9)), z = pos.z + .12 + side * .2;
+  const lit = age < .8 ? White : Color.Lerp(White, Lilac, clamp((age - .8) / .8));
+  sprite({ x: pos.x - .01, z }, .5, .26, Lilac.withAlpha(.7 * (1 - u)), glow, pawnLayer + .009);
+  line(key, [{ x: pos.x - .17, z }, { x: pos.x + .15, z }], .11 - .04 * u, (age < 1.6 ? lit : hot).withAlpha(.95 * (1 - u * u)), whiteGlow, pawnLayer + .01, 'both');
+}
+
 // The trench mark: one mesh, a half circle of radius R behind 'from' and a straight band to 'to', so
 // the rounded start is not drawn twice. dir is the path angle in radians.
 function capsule(key, from, to, R, dir, colour, layer) {
@@ -185,12 +224,14 @@ export default {
     merge: P('Red and Blue merge', .35, .15, 1, .05, 'Timing (s)'),
     speed: P('Purple speed (cells/s)', 6, 2, 15, .5, 'Mechanic'),
     radius: P('Purple radius (cells)', 1.5, .75, 3, .25, 'Mechanic'),
-    trench: { label: 'Trench mark on the floor', value: true, group: 'Shape' },
+    trench: { label: 'Trench shading while it passes', value: true, group: 'Shape' },
+    dim: P('World dim while it travels (0 to 1)', .35, 0, .7, .05, 'Shape'),
+    rules: { label: 'Rule lines: centre row and lane edge (not in game)', value: false, group: 'Showcase' },
   },
   duration(p) { return times(p).end; },
   phases(p) {
     const t = times(p);
-    return [{ name: 'Blue', t: 0 }, { name: 'Red', t: t.fire }, { name: 'Merge', t: t.contact }, { name: 'Ignite', t: t.ignite }, { name: 'Travel', t: t.move }, { name: 'Fade', t: t.stop }];
+    return [{ name: 'Blue', t: 0 }, { name: 'Red', t: t.fire }, { name: 'Merge', t: t.contact }, { name: 'Ignite', t: t.ignite }, { name: 'Travel', t: t.move }, { name: 'Fade', t: t.stop }, { name: 'After', t: t.gone }];
   },
   events(p) {
     const t = times(p);
@@ -199,7 +240,7 @@ export default {
     return [{ t: t.fire, type: 'shake', value: .03 }, { t: t.contact, type: 'shake', value: .05 }, { t: t.ignite, type: 'shake', value: .16 }, ...rumble];
   },
 
-  draw(s, p, { origin: o, scene }) {
+  draw(s, p, { origin: o, scene, view }) {
     const t = times(p);
     if (s < 0 || s >= t.end) return;
     const sun = scene?.shadowVector ?? { x: -.45, z: -.32 }, strength = scene?.sun?.strength ?? .32;
@@ -218,20 +259,37 @@ export default {
     // --- floor: the trench, a cut with a wall you can see; the cut edges cooling; the ground being erased ------------
     const passedAt = x => t.move + Math.max(0, x - B) / p.speed;   // when the sphere's centre passed a point on the path
     const mv = s >= t.move && s < t.gone ? smooth((s - t.move) / .3) * fading : 0;
-    if (p.trench && s >= t.move) {
+    // The lane: every cell whose centre is within R of the path turns to Erased ground once the sphere's centre has
+    // passed it. A stand-in for the terrain the game will lay, so it follows the cells and steps on a slant.
+    if (s >= t.move) {
+      const start = place(B), end = place(B + p.travel), pad = R + 1;
+      const x0 = Math.floor(Math.min(start.x, end.x) - pad), x1 = Math.ceil(Math.max(start.x, end.x) + pad);
+      const z0 = Math.floor(Math.min(start.z, end.z) - pad), z1 = Math.ceil(Math.max(start.z, end.z) + pad);
+      for (let cx = x0; cx <= x1; cx++) for (let cz = z0; cz <= z1; cz++) {
+        const dx = cx + .5 - G.x, dz = cz + .5 - G.z, along = dx * ca + dz * sa, across = dz * ca - dx * sa;
+        const on = Math.min(Math.max(along, B), B + p.travel);
+        if (on > at + 1e-6 || Math.hypot(along - on, across) > R) continue;
+        draw(MeshPool.plane10, cx + .5, Floor + .0105, cz + .5, 1, 1, 0, ErasedGround);
+      }
+    }
+    if (p.rules) [[CentreRow, Lilac], [R, White]].forEach(([w, colour]) => [-1, 1].forEach(k =>
+      line(`purple rule ${w} ${k}`, [place(B, k * w), place(B + p.travel, k * w)], .04, colour.withAlpha(.55), undefined, Floor + .02, 'none')));
+    // The trench shading holds while it passes, then fades into the flat lane: terrain has no depth to keep.
+    const tr = s < t.stop + TrenchHold ? 1 : 1 - smooth((s - t.stop - TrenchHold) / TrenchFade);
+    if (p.trench && s >= t.move && tr > 0) {
       const from = B, to = at;
       if (to > from + .05) {
-        capsule('purple trench', place(from), place(to), R, a, Scoured.withAlpha(.5), Floor + .012);
-        capsule('purple trench floor', place(from), place(to), R * .9, a, Night.withAlpha(.12), Floor + .0122);
+        capsule('purple trench', place(from), place(to), R, a, Scoured.withAlpha(.5 * tr), Floor + .012);
+        capsule('purple trench floor', place(from), place(to), R * .9, a, Night.withAlpha(.12 * tr), Floor + .0122);
         [-1, 1].forEach(k => {
           const top = [place(from, k * R), place(to, k * R)], north = k * ca > .05;
           if (north) {
             // The wall below the north lip is seen from above: a band TrenchDepth x 0.6 tall, earth, darker at its foot.
             const drop = TrenchDepth * Lift, foot = top.map(q => ({ x: q.x, z: q.z - drop }));
-            strip(`purple trench wall ${k}`, top, foot, Earth.withAlpha(.9), undefined, Floor + .0126);
-            line(`purple trench foot ${k}`, foot, .07, Night.withAlpha(.5), undefined, Floor + .0127, 'none');
-            line(`purple trench lip ${k}`, top, .05, Lip.withAlpha(.6), undefined, Floor + .0128, 'none');
-          } else line(`purple trench lip ${k}`, top, .08, Night.withAlpha(.6), undefined, Floor + .0128, 'none');
+            strip(`purple trench wall ${k}`, top, foot, Earth.withAlpha(.9 * tr), undefined, Floor + .0126);
+            line(`purple trench foot ${k}`, foot, .07, Night.withAlpha(.5 * tr), undefined, Floor + .0127, 'none');
+            line(`purple trench lip ${k}`, top, .05, Lip.withAlpha(.6 * tr), undefined, Floor + .0128, 'none');
+          } else line(`purple trench lip ${k}`, top, .08, Night.withAlpha(.6 * tr), undefined, Floor + .0128, 'none');
           // The cut edges glow where the sphere has just passed: white, then lilac, then violet, gone in 1.5 s.
           for (let x0 = Math.max(from, to - EdgeCool * p.speed - EdgeStep); x0 < to; x0 += EdgeStep) {
             const x1 = Math.min(to, x0 + EdgeStep), age = s - passedAt((x0 + x1) / 2), u = clamp(age / EdgeCool);
@@ -380,6 +438,15 @@ export default {
       }
     }
 
+    // --- the world lit purple while it travels (S1 ep 20 46-53 s): the view dims toward violet-black over pawns and
+    // walls, violet light round the sphere above the dim; the dim lifts as the sphere breaks up ----------------------------
+    const dim = p.dim * (s < t.ignite ? 0 : s < t.stop ? smooth((s - t.ignite) / DimIn) : 1 - smooth((s - t.stop) / DimRelease));
+    if (dim > 0) {
+      const v = view ?? { cx: o.x, cz: o.z, halfW: 40, halfH: 25 };
+      draw(MeshPool.plane10, v.cx, Y + .0014, v.cz, v.halfW * 2 + 4, v.halfH * 2 + 4, 0, Night.withAlpha(dim));
+      if (purpleOn) sprite(place(at), 10 * grown, 8 * grown, Violet.withAlpha(.5 * dim * fading), glow, Y + .0017);
+    }
+
     // --- things on the path: stand, then dissolve or fall -------------------------------------------------------------
     const figures = [{ kind: 'gojo', pos: G }];
     if (!field(p)) Path.forEach(([d, across, kind], i) => figures.push({ kind, i, d, across, hit: hitAt(B + d, across), pos: place(B + d, across) }));
@@ -402,10 +469,18 @@ export default {
       }
       const colour = g.kind === 'ally' ? Ally : EnemyColour;
       if (age < 0) { pawn(g.pos, colour, sun, strength, { tint: Violet, tintAmount: purpleLight(g.pos) }); return; }
-      // Hit: 60 erasure damage. A white-purple flash, specks off the body, then down with a burn under him.
-      const flash = 1 - clamp(age / .2);
-      if (age > .15) sprite(g.pos, 1.1, .8, Plum.withAlpha(.55 * clamp((age - .15) / .2)), soft, Floor + .011);
-      pawn(g.pos, colour, sun, strength, { lie: age > .15, tint: flash > 0 ? White : Violet, tintAmount: flash > 0 ? .8 * flash : purpleLight(g.pos) });
+      if (Math.abs(g.across) <= CentreRow) {
+        // Centre row, erased: a white flash as the sphere touches him, then nothing. His specks go into the sphere;
+        // no body, no gear, no burn is left.
+        if (age < .1) pawn(g.pos, colour, sun, strength, { alpha: 1 - age / .1, tint: White, tintAmount: .85 });
+        dissolve(`purple pawn ${g.i}`, place(B + g.d, g.across, .5), .7, age, colour, P0, 16);
+        return;
+      }
+      // Side row, 60 erasure damage: a white flash, specks off the body, down; a cut glows on the edge facing the lane
+      // (side +1 when the path runs north of him; on a path near north-south the lower edge stands in). No burn, no blood.
+      const flash = 1 - clamp(age / .2), tint = flash > 0 ? White : Violet, tintAmount = flash > 0 ? .8 * flash : purpleLight(g.pos);
+      pawn(g.pos, colour, sun, strength, { lie: age > .15, tint, tintAmount });
+      if (age > .15) cutGlow(`purple pawn ${g.i} cut`, g.pos, -Math.sign(g.across) * ca > .3 ? 1 : -1, age - .15);
       dissolve(`purple pawn ${g.i}`, place(B + g.d, g.across, .5), .6, age, colour, P0, 10);
     });
 
