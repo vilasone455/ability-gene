@@ -477,5 +477,64 @@ export function arc(key, c, r, frac, w, colour, layer) {
   band(key, A, B, colour, layer);
 }
 
+// The Reset timer: a faint full ring and the part filled so far, on the floor round `c`.
+const timerMesh = Meshes.band(.9, 1, 48, 'ajin reset ring');
+export const TimerCol = new Color(.85, .85, .9);
+export function timerRing(key, c, r, frac, fade) {
+  draw(timerMesh, c.x, Floor + .02, c.z, r + .02, r + .02, 0, TimerCol.withAlpha(.18 * fade));
+  arc(key, c, r, frac, .045, TimerCol.withAlpha(.8 * fade), Floor + .025);
+}
+
+// Black matter seeping from a wound at `at`: flakes and smoke rising, `k` how strong.
+export function seep(key, at, t, k, amount) {
+  if (k <= 0) return;
+  edgeFlakes(key, { x: at.x, z: at.z }, 0, .16, t, { amount: .45 * amount * k, rise: .35 });
+  for (let i = 0; i < 3; i++) {
+    const u = Mathf.Repeat(t * 1.6 + rand(i + key.length), 1);
+    sprite({ x: at.x + (rand(i + 5) - .5) * .12, z: at.z + u * .22 }, .14 * (1 + u), .11 * (1 + u), Flake.withAlpha((1 - u) * .45 * k), puff, Y + .004 + i * .0003);
+  }
+}
+
+// Black matter covering a stand-in from standInBlend (`B`, `H`), lying (k = 0) or standing
+// (k = 1): dark discs over the body and head, then light bands across the body's long axis
+// (vertical while lying, horizontal once up). `body` and `head` are how covered each is (0..1),
+// `grow` the size of the cover against the discs.
+export function coverStandIn(key, B, H, k, { body = 1, head = body, grow = 1, layer = pawnLayer } = {}) {
+  if (body > .01) {
+    draw(disc, B.x, layer, B.z, (B.rx + .04) * grow, (B.rz + .04) * grow, 0, GhostEdge.withAlpha(body));
+    draw(disc, B.x, layer, B.z, B.rx * grow, B.rz * grow, 0, Ghost.withAlpha(body));
+  }
+  if (head > .01) {
+    draw(disc, H.x, layer, H.z, (H.rx + .035) * grow, (H.rz + .035) * grow, 0, GhostEdge.withAlpha(head));
+    draw(disc, H.x, layer, H.z, H.rx * grow, H.rz * grow, 0, Ghost.withAlpha(head));
+  }
+  if (body <= .01) return;
+  for (let j = 0; j < 5; j++) {
+    const f = (j + .5) / 5 * 2 - 1, standing = k;
+    const cx = B.x + f * B.rx * .75 * (1 - standing), cz = B.z + f * B.rz * .75 * standing;
+    const ax = lerp(0, 1, standing), az = 1 - ax, w = (standing ? B.rx : B.rz) * .8 * grow;
+    const half = { x: ax * w, z: az * w };
+    trail(`${key} band ${j}`, [{ x: cx - half.x, z: cz - half.z }, { x: cx + (1 - standing) * .02, z: cz - standing * .02 }, { x: cx + half.x, z: cz + half.z }], .032, Wrap.withAlpha(.55 * body), layer);
+  }
+}
+
+// Drawn limbs and a rifle for stand-in pawns (vanilla pawns have no arms; these are the
+// ability-drawn kind, see the Black Ghost's Tear).
+export const Outline = new Color(.10, .08, .07), GunSteel = new Color(.17, .17, .18), Stock = new Color(.40, .27, .15);
+export function bar(key, a, b, w, colour, layer) {
+  const dx = b.x - a.x, dz = b.z - a.z, l = Math.hypot(dx, dz) || 1, nx = -dz / l * w / 2, nz = dx / l * w / 2;
+  band(key, [{ x: a.x + nx, z: a.z + nz }, { x: b.x + nx, z: b.z + nz }], [{ x: a.x - nx, z: a.z - nz }, { x: b.x - nx, z: b.z - nz }], colour, layer);
+}
+// A limb from `a` (sleeve or trouser colour) to `b` (hand or boot), with a dark outline.
+export function limbSeg(key, a, b, w, col, tipCol, layer) {
+  const m = { x: lerp(a.x, b.x, .62), z: lerp(a.z, b.z, .62) };
+  bar(key + ' o', a, b, w + .03, Outline, layer); bar(key + ' a', a, m, w, col, layer); bar(key + ' b', m, b, w * .9, tipCol, layer);
+}
+// A rifle lying or held at `c`, pointing along screen angle `deg`.
+export function rifle(c, deg, layer, key = 'rifle') {
+  const r = deg * Mathf.Deg2Rad, dx = Math.cos(r), dz = Math.sin(r);
+  const A = { x: c.x - dx * .22, z: c.z - dz * .22 }, B = { x: c.x + dx * .30, z: c.z + dz * .30 }, S0 = { x: c.x - dx * .34, z: c.z - dz * .34 };
+  bar(key + ' o', S0, B, .1, Outline, layer); bar(key + ' s', S0, A, .08, Stock, layer); bar(key + ' b', A, B, .055, GunSteel, layer);
+}
 
 export { Body, Y, Floor, Lift, sprite, band, trail, soft, rand, smooth, clamp, lerp, TAU, draw };

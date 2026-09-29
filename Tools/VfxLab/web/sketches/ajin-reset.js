@@ -28,17 +28,15 @@
 // Drawing: see lib/ajin.js (shell, standInBlend, edgeFlakes, arc, hand). The shell is a band
 // between a left and a right edge in screen space, built to the real pawn's outline, so it has no
 // per-facing work. Pawns are the lab's two-disc stand-ins at real size.
-import { Color, Meshes, Mathf } from '../js/engine.js';
+import { Color } from '../js/engine.js';
 import { P } from './lib/six-paths-impact.js';
 import {
-  edgeFlakes, standInBlend, shell, Shell, arc, hand, shard, Stand, Floor, Y, pawnLayer,
-  Shirt, Cap, Skin, Blood, Flake, Ghost, GhostEdge, Wrap, draw, disc, sprite, trail, puff, rand, smooth, clamp, lerp, TAU,
+  edgeFlakes, standInBlend, shell, Shell, hand, Stand, Floor, Y, pawnLayer, seep, coverStandIn, timerRing,
+  Shirt, Cap, Skin, Blood, Flake, GhostEdge, draw, disc, sprite, trail, puff, rand, smooth, clamp, lerp, TAU,
 } from './lib/ajin.js';
 
 const Hold = .35, Tail = .9;
 const Scorch = new Color(.09, .07, .06), Cloth = new Color(.80, .80, .77), Steel = new Color(.16, .16, .17);
-const TimerCol = new Color(.85, .85, .9);
-const ringMesh = Meshes.band(.9, 1, 48, 'ajin reset ring');
 
 function plan(p) {
   const t0 = Hold, t1 = t0 + p.delay, t2 = t1 + p.rebuild, t3 = t2 + p.rise;
@@ -47,16 +45,6 @@ function plan(p) {
 
 // Wound spots on the lying body, relative to the body's centre.
 const Wounds = [{ x: -.12, z: .04 }, { x: .16, z: -.05 }, { x: .30, z: .08 }];
-
-// Black matter seeping from a point: flakes and smoke rising, `k` how strong.
-function seep(key, at, t, k, amount) {
-  if (k <= 0) return;
-  edgeFlakes(key, { x: at.x, z: at.z }, 0, .16, t, { amount: .45 * amount * k, rise: .35 });
-  for (let i = 0; i < 3; i++) {
-    const u = Mathf.Repeat(t * 1.6 + rand(i + key.length), 1);
-    sprite({ x: at.x + (rand(i + 5) - .5) * .12, z: at.z + u * .22 }, .14 * (1 + u), .11 * (1 + u), Flake.withAlpha((1 - u) * .45 * k), puff, Y + .004 + i * .0003);
-  }
-}
 
 export default {
   kit: 'Satō (Ajin)',
@@ -96,26 +84,10 @@ export default {
       // Black matter covering the body: it grows over the discs during Rebuild and flakes off
       // upward during Rise, following him as he stands.
       const cover = smooth(kBuild) * (1 - smooth(clamp(kRise * 1.15)));
-      if (cover > .01) {
-        const grow = .6 + .4 * smooth(kBuild);
-        draw(disc, B.x, pawnLayer, B.z, (B.rx + .04) * grow, (B.rz + .04) * grow, 0, GhostEdge.withAlpha(cover));
-        draw(disc, B.x, pawnLayer, B.z, B.rx * grow, B.rz * grow, 0, Ghost.withAlpha(cover));
-        draw(disc, H.x, pawnLayer, H.z, (H.rx + .035) * grow, (H.rz + .035) * grow, 0, GhostEdge.withAlpha(cover));
-        draw(disc, H.x, pawnLayer, H.z, H.rx * grow, H.rz * grow, 0, Ghost.withAlpha(cover));
-        // Bands across the body's long axis: vertical while lying, horizontal once up.
-        for (let j = 0; j < 5; j++) {
-          const f = (j + .5) / 5 * 2 - 1, standing = k;
-          const cx = B.x + f * B.rx * .75 * (1 - standing), cz = B.z + f * B.rz * .75 * standing;
-          const ax = lerp(0, 1, standing), az = 1 - ax, w = (standing ? B.rx : B.rz) * .8 * grow;
-          const half = { x: ax * w, z: az * w };
-          trail(`reset band ${j}`, [{ x: cx - half.x, z: cz - half.z }, { x: cx + (1 - standing) * .02, z: cz - standing * .02 }, { x: cx + half.x, z: cz + half.z }], .032, Wrap.withAlpha(.55 * cover), pawnLayer);
-        }
-      }
+      coverStandIn('reset', B, H, k, { body: cover, grow: .6 + .4 * smooth(kBuild) });
       if (t > L.t2 && kRise < 1) edgeFlakes('reset peel', { x: B.x, z: B.z - .2 }, .1 + k * .6, .6, t, { amount: 1.6 * p.flakes, rise: .8, alpha: 1 - kRise * .6 });
       if (p.timer && t > L.t0 && t < L.t2 + .3) {
-        const fade = 1 - smooth(clamp((t - L.t2) / .3));
-        draw(ringMesh, pos.x, Floor + .02, pos.z - .15, .72, .72, 0, TimerCol.withAlpha(.18 * fade));
-        arc('reset timer', { x: pos.x, z: pos.z - .15 }, .70, timerFrac, .045, TimerCol.withAlpha(.8 * fade), Floor + .025);
+        timerRing('reset timer', { x: pos.x, z: pos.z - .15 }, .70, timerFrac, 1 - smooth(clamp((t - L.t2) / .3)));
       }
       return;
     }
@@ -174,9 +146,7 @@ export default {
       }
     }
     if (p.timer && t > L.t0 && t < L.t2 + .3) {
-      const fade = 1 - smooth(clamp((t - L.t2) / .3));
-      draw(ringMesh, Bp.x, Floor + .02, Bp.z - .1, .62, .62, 0, TimerCol.withAlpha(.18 * fade));
-      arc('reset timer', { x: Bp.x, z: Bp.z - .1 }, .60, timerFrac, .045, TimerCol.withAlpha(.8 * fade), Floor + .025);
+      timerRing('reset timer', { x: Bp.x, z: Bp.z - .1 }, .60, timerFrac, 1 - smooth(clamp((t - L.t2) / .3)));
     }
   },
 };
