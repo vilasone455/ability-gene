@@ -17,6 +17,7 @@
     <!-- The drawing helpers every ported picture shares (Shared/CastClips and ItemAbilityGrant are game code, not linked). -->
     <Compile Include="../../../Source/RimArt/Shared/VfxDraw.cs" Link="Linked/Shared/VfxDraw.cs" />
     <Compile Include="../../../Source/RimArt/Shared/VfxMath.cs" Link="Linked/Shared/VfxMath.cs" />
+    <Compile Include="../../../Source/RimArt/Shared/PawnFit.cs" Link="Linked/Shared/PawnFit.cs" />
     <!-- Six Paths -->
     <Compile Include="../../../Source/RimArt/Debug/RimArtDebugAttribute.cs" Link="Linked/Debug/RimArtDebugAttribute.cs" />
     <Compile Include="../../../Source/RimArt/SixPaths/*.cs" LinkBase="Linked/SixPaths" />
