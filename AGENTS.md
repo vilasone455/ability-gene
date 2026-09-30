@@ -45,7 +45,7 @@ reads it directly). Agreed 2026-09-30. New code follows it; old code is changed 
 | `Shared/VfxDraw.cs` | Materials, meshes, sprites, strips and streaks every ported picture uses |
 | `Shared/VfxMath.cs` | The lab's `Smooth`, `Hash`, `Rand`, so a port matches its sketch |
 | `Echo/EchoUtility.cs` | Hero layer: `ForceHost`, `Awaken`, `Manifest`, `Revert`, `ManifestedWith` |
-| `Testing/RimArtTestContext.cs` | `Clear`, `Colonist`, `Enemy`, `Mech`, `Hold`, `Equip`, `Describe`, `Check`, `Log`, `ShotAs`; kit tests: `WaitFor`, `ClearEchoes`, `Host`, `EndHost`, `Target`, `Strike`, `NoWimp`, `Note`/`Hurt`/`Untouched`, `Stunned`, `Wall`, `Face` |
+| `Testing/RimArtTestContext.cs` | `Clear`, `Colonist`, `Enemy`, `Mech`, `Hold`, `Equip`, `Describe`, `Check`, `Log`, `ShotAs`; kit tests: `WaitFor`, `ClearEchoes`, `Host`, `EndHost`, `Target`, `Strike`, `NoWimp`, `Note`/`Hurt`/`Untouched`, `Stunned`, `Free`, `Wall`, `Face` |
 
 ### Known copies, not shared yet
 

@@ -28,8 +28,10 @@ namespace RimArt
 
         private static float Health(Pawn pawn) => pawn.Dead ? 0f : pawn.health.summaryHealth.SummaryHealthPercent;
         private static float Strain(Pawn pawn) => VectorStrain.Current(pawn);
+        /// <summary>Injury severity plus the health of every part a hit took off: a 14 blunt hit on a finger leaves a missing part, not a 14 injury.</summary>
         private static float InjuryTotal(Pawn pawn) =>
-            pawn.health.hediffSet.hediffs.OfType<Hediff_Injury>().Sum(h => h.Severity);
+            pawn.health.hediffSet.hediffs.OfType<Hediff_Injury>().Sum(h => h.Severity)
+            + pawn.health.hediffSet.hediffs.OfType<Hediff_MissingPart>().Sum(h => h.Part?.def.GetMaxHealth(pawn) ?? 0f);
 
         // ---- the Echo ---------------------------------------------------------------------------------------------
 
@@ -149,9 +151,11 @@ namespace RimArt
             host.TakeDamage(new DamageInfo(DamageDefOf.Blunt, 6f, 0f, -1f, target));
             HediffComp_ForceReturn memory = CompAbilityEffect_VectorShove.ForceReturnOf(host);
             t.Check(memory != null && memory.attacker == target && Math.Abs(memory.damage - 6f) < 0.01f, "the hit is remembered (" + (memory == null ? "no comp" : memory.damage + " from " + memory.attacker?.LabelShort) + ")");
-            host.abilities.GetAbility(AcceleratorDefOf.AG_VectorShove).QueueCastingJob(target, new LocalTargetInfo(t.center + new IntVec3(12, 0, 0)));
-            yield return 1;
-            ShovePlan plan = Shoves(t).Throws.LastOrDefault(p => p.thrown == target);
+            // Cast in the same tick as the hit, before the drafted host's idle job punches the adjacent hostile by itself
+            // (that melee cooldown ends a queued cast at once). About 1 run in 3 a fresh host is also stunned for 2 s right
+            // after the hit (source not found): then Cast waits until he is free, moves the hit to now, and casts again.
+            ShovePlan plan = null;
+            foreach (int w in Cast(t, host, target, memory, 0, p => plan = p)) yield return w;
             t.Check(plan != null && plan.returned && Math.Abs(plan.bonus - 6f) < 0.01f, "the throw carries 6 returned (" + (plan?.bonus ?? -1f) + ")");
             foreach (int w in WaitFor(() => plan != null && plan.arrived, 90, 2)) yield return w;
             ShovePlan.Liner struck = plan?.liners.FirstOrDefault();
@@ -169,12 +173,29 @@ namespace RimArt
             // The hit is moved 75 ticks into the past rather than waited out: a drafted Host next to a hostile
             // punches it by itself, and the melee cooldown would end the queued cast.
             HediffComp_ForceReturn memory2 = CompAbilityEffect_VectorShove.ForceReturnOf(host2);
-            if (memory2 != null) memory2.tick -= 75;
-            host2.abilities.GetAbility(AcceleratorDefOf.AG_VectorShove).QueueCastingJob(late, new LocalTargetInfo(t.center + new IntVec3(12, 0, 0)));
-            yield return 1;
-            ShovePlan plan2 = Shoves(t).Throws.LastOrDefault(p => p.thrown == late);
+            ShovePlan plan2 = null;
+            foreach (int w in Cast(t, host2, late, memory2, 75, p => plan2 = p)) yield return w;
             t.Check(plan2 != null && !plan2.returned, "a hit 1.25 s old is not returned (" + (plan2 == null ? "no throw" : "returned " + plan2.bonus) + ")");
             EndHost(record2);
+        }
+
+        /// <summary>
+        /// Queues a shove of <paramref name="target"/> east with the remembered hit set to <paramref name="hitAge"/> ticks ago.
+        /// On no throw (the caster stunned or in a melee cooldown), waits until he is free and tries again, up to three times.
+        /// </summary>
+        private static IEnumerable<int> Cast(RimArtTestContext t, Pawn host, Pawn target, HediffComp_ForceReturn memory, int hitAge, Action<ShovePlan> got)
+        {
+            ShovePlan plan = null;
+            for (int attempt = 0; attempt < 3 && plan == null; attempt++)
+            {
+                if (attempt > 0) foreach (int w in WaitFor(() => Free(host), 240, 2)) yield return w;
+                if (memory != null) memory.tick = t.Now - hitAge;
+                t.Log("cast " + (attempt + 1) + ": " + RimArtTestContext.Describe(host) + "; the hit is " + hitAge + " ticks old");
+                host.abilities.GetAbility(AcceleratorDefOf.AG_VectorShove).QueueCastingJob(target, new LocalTargetInfo(t.center + new IntVec3(12, 0, 0)));
+                yield return 1;
+                plan = Shoves(t).Throws.LastOrDefault(p => p.thrown == target);
+            }
+            got(plan);
         }
 
         [RimArtTest("Accelerator", "shove 4 a stone chunk is thrown at the first pawn in its path and lands there")]
@@ -235,7 +256,8 @@ namespace RimArt
             yield return 5;
             t.Check(t.Hurt(first), "the first pawn is hurt");
             t.Check(t.Untouched(behind), "the pawn 4 cells behind is not");
-            t.Check(t.Untouched(host), "Accelerator is not hurt by his burst");
+            if (!t.Check(t.Untouched(host), "Accelerator is not hurt by his burst"))
+                t.Log(RimArtTestContext.Describe(host) + " health " + Health(host).ToString("0.###") + "; " + string.Join(", ", host.health.hediffSet.hediffs.Select(h => h.LabelCap + (h.Part != null ? " (" + h.Part.Label + ")" : ""))));
             t.Check(Math.Abs(Strain(host) - 0.45f) < 0.01f, "strain 45 % (" + Strain(host).ToString("0.###") + ")");
             t.Check(plasma.CooldownTicksRemaining > 0, "the cooldown runs");
             yield return 20;
