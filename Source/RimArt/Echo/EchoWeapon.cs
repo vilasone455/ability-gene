@@ -151,19 +151,20 @@ namespace RimArt
 
     /// <summary>
     /// Every vanilla drop (the drop order, downing, death, Disarm, Chain Sickle's Stake, Inumaki's
-    /// "drop") comes here: the hero weapon vanishes instead of landing.
+    /// "drop") comes to <see cref="BoundWeapon"/>: the hero weapon vanishes instead of landing.
     /// </summary>
-    [HarmonyPatch(typeof(Pawn_EquipmentTracker), nameof(Pawn_EquipmentTracker.TryDropEquipment))]
-    static class Patch_TryDropEquipment_EchoWeapon
+    [StaticConstructorOnStartup]
+    static class EchoWeaponBound
     {
-        static bool Prefix(ThingWithComps eq, out ThingWithComps resultingEq, ref bool __result)
+        static EchoWeaponBound()
         {
-            resultingEq = null;
-            EchoRecord record = EchoWeapon.OwnerOf(eq);
-            if (record == null) return true;
-            EchoWeapon.Vanish(record, eq);
-            __result = true;
-            return false;
+            BoundWeapon.Register(eq =>
+            {
+                EchoRecord record = EchoWeapon.OwnerOf(eq);
+                if (record == null) return false;
+                EchoWeapon.Vanish(record, eq);
+                return true;
+            });
         }
     }
 

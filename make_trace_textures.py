@@ -18,6 +18,10 @@ Sky.png      64 x 64, the world v2's sky gradient (lib/ubw-sky.js lab/ubw-sky): 
              bottom to dusk red at the top
 IconUnlimitedBladeWorks.png  128 x 128, the ability's icon: three swords standing in a ring of fire, drawn
              at 4x and scaled down, dark outlines as the Panoply icons have
+IconTraceOn.png  128 x 128, Trace On's icon: a sword whose grip half is steel and whose point half is still
+             the teal wire (outline, centre line, cross lines), a bright line where the steel is filling in
+IconReinforcement.png  128 x 128, Reinforcement's icon: a steel sword with a teal glow along its edge and
+             square circuit lines behind it
 
 The formulas are the ones the lab sketches were tuned with, and hash, noise and fbm below are
 Tools/VfxLab/web/js/standins.js's, integer overflow included, so the game draws the pixels the sketches
@@ -221,36 +225,92 @@ def icon():
             d.polygon(tongue(w, h, 0), fill=FIRE_OUT)
             d.polygon(tongue(w * .5, h * .55, 0), fill=FIRE_IN)
 
-    def sword(x, y, length, lean):
-        # Point in the ground at (x, y), pommel up, leaning by `lean` radians.
-        dx, dy = math.sin(lean), -math.cos(lean)
-        px, py = -dy, dx
-        def at(t, s):
-            return (x + dx * t + px * s, y + dy * t + py * s)
-        blade, half, o = length * .72, 5.5 * k, 3 * k
-        tip = 12 * k
-        shape = [at(0, 0), at(tip, half), at(blade, half), at(blade, -half), at(tip, -half)]
-        grow = [at(-o, 0), at(tip, half + o), at(blade + o, half + o), at(blade + o, -half - o), at(tip, -half - o)]
-        d.polygon(grow, fill=OUTLINE)
-        d.polygon(shape, fill=STEEL)
-        d.polygon([at(tip * .6, 0), at(tip, half * .45), at(blade, half * .45), at(blade, 0)], fill=STEEL_LIT)
-        g0, g1 = blade, blade + 5 * k
-        d.polygon([at(g0 - o, 15 * k + o), at(g1 + o, 15 * k + o), at(g1 + o, -15 * k - o), at(g0 - o, -15 * k - o)], fill=OUTLINE)
-        d.polygon([at(g0, 15 * k), at(g1, 15 * k), at(g1, -15 * k), at(g0, -15 * k)], fill=GUARD)
-        h0, h1 = g1, length
-        d.polygon([at(h0, 4 * k + o), at(h1 + o, 4 * k + o), at(h1 + o, -4 * k - o), at(h0, -4 * k - o)], fill=OUTLINE)
-        d.polygon([at(h0, 4 * k), at(h1, 4 * k), at(h1, -4 * k), at(h0, -4 * k)], fill=HILT)
-        cxp, cyp = at(length + 2 * k, 0)
-        d.ellipse([cxp - 6.5 * k, cyp - 6.5 * k, cxp + 6.5 * k, cyp + 6.5 * k], fill=OUTLINE)
-        d.ellipse([cxp - 4 * k, cyp - 4 * k, cxp + 4 * k, cyp + 4 * k], fill=GUARD)
-
     ring(9 * k, OUTLINE)
     ring(5 * k, FIRE_OUT)
     flames(True)
-    sword(40 * k, 88 * k, 64 * k, -.32)
-    sword(88 * k, 90 * k, 60 * k, .28)
-    sword(64 * k, 94 * k, 82 * k, .03)
+    sword(d, k, 40 * k, 88 * k, 64 * k, -.32)
+    sword(d, k, 88 * k, 90 * k, 60 * k, .28)
+    sword(d, k, 64 * k, 94 * k, 82 * k, .03)
     flames(False)
+    return image.resize((128, 128), Image.LANCZOS)
+
+
+def sword(d, k, x, y, length, lean):
+    # Point in the ground at (x, y), pommel up, leaning by `lean` radians.
+    dx, dy = math.sin(lean), -math.cos(lean)
+    px, py = -dy, dx
+    def at(t, s):
+        return (x + dx * t + px * s, y + dy * t + py * s)
+    blade, half, o = length * .72, 5.5 * k, 3 * k
+    tip = 12 * k
+    shape = [at(0, 0), at(tip, half), at(blade, half), at(blade, -half), at(tip, -half)]
+    grow = [at(-o, 0), at(tip, half + o), at(blade + o, half + o), at(blade + o, -half - o), at(tip, -half - o)]
+    d.polygon(grow, fill=OUTLINE)
+    d.polygon(shape, fill=STEEL)
+    d.polygon([at(tip * .6, 0), at(tip, half * .45), at(blade, half * .45), at(blade, 0)], fill=STEEL_LIT)
+    g0, g1 = blade, blade + 5 * k
+    d.polygon([at(g0 - o, 15 * k + o), at(g1 + o, 15 * k + o), at(g1 + o, -15 * k - o), at(g0 - o, -15 * k - o)], fill=OUTLINE)
+    d.polygon([at(g0, 15 * k), at(g1, 15 * k), at(g1, -15 * k), at(g0, -15 * k)], fill=GUARD)
+    h0, h1 = g1, length
+    d.polygon([at(h0, 4 * k + o), at(h1 + o, 4 * k + o), at(h1 + o, -4 * k - o), at(h0, -4 * k - o)], fill=OUTLINE)
+    d.polygon([at(h0, 4 * k), at(h1, 4 * k), at(h1, -4 * k), at(h0, -4 * k)], fill=HILT)
+    cxp, cyp = at(length + 2 * k, 0)
+    d.ellipse([cxp - 6.5 * k, cyp - 6.5 * k, cxp + 6.5 * k, cyp + 6.5 * k], fill=OUTLINE)
+    d.ellipse([cxp - 4 * k, cyp - 4 * k, cxp + 4 * k, cyp + 4 * k], fill=GUARD)
+
+TRACE, TRACE_HOT = (89, 255, 209, 255), (209, 255, 242, 255)
+
+
+def blade_at(k, x, y, lean):
+    """The (along, across) to pixel map of sword()'s blade: point at (x, y), pommel along lean."""
+    dx, dy = math.sin(lean), -math.cos(lean)
+    px, py = -dy, dx
+    return lambda t, s: (x + dx * t + px * s, y + dy * t + py * s)
+
+
+def icon_trace_on():
+    """Trace On: the grip half steel, the point half the wire the copy is traced from."""
+    k = 4
+    n = 128 * k
+    x, y, length, lean = 100 * k, 26 * k, 112 * k, -2.36
+    solid = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    sword(ImageDraw.Draw(solid), k, x, y, length, lean)
+    wire = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    d = ImageDraw.Draw(wire)
+    at = blade_at(k, x, y, lean)
+    blade, half, tip = length * .72, 5.5 * k, 12 * k
+    shape = [at(0, 0), at(tip, half), at(blade, half), at(blade, -half), at(tip, -half)]
+    d.polygon(shape, outline=TRACE, width=3 * k)
+    d.line([at(4 * k, 0), at(blade, 0)], fill=TRACE, width=2 * k)
+    for t in (.25, .5, .75):
+        d.line([at(blade * t, half * .85), at(blade * t, -half * .85)], fill=TRACE, width=2 * k)
+    # Steel from the pommel up to `front` along the sword, wire beyond it, a bright line at it.
+    front = length * .5
+    mask = Image.new("L", (n, n), 0)
+    far = 200 * k
+    ImageDraw.Draw(mask).polygon([at(front, far), at(front, -far), at(front + far * 2, -far), at(front + far * 2, far)], fill=255)
+    image = Image.composite(solid, wire, mask)
+    d = ImageDraw.Draw(image)
+    d.line([at(front, half + 5 * k), at(front, -half - 5 * k)], fill=TRACE_HOT, width=3 * k)
+    return image.resize((128, 128), Image.LANCZOS)
+
+
+def icon_reinforcement():
+    """Reinforcement: steel with a teal glow along its edge, square circuit lines behind it."""
+    k = 4
+    n = 128 * k
+    image = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    d = ImageDraw.Draw(image)
+    for pts in ([(14, 30), (30, 30), (30, 18), (48, 18)], [(18, 104), (18, 84), (34, 84), (34, 70)], [(80, 116), (98, 116), (98, 100), (114, 100)]):
+        d.line([(a * k, b * k) for a, b in pts], fill=TRACE, width=3 * k, joint="curve")
+        for a, b in pts[1:]:
+            d.ellipse([(a - 3) * k, (b - 3) * k, (a + 3) * k, (b + 3) * k], fill=TRACE_HOT)
+    x, y, length, lean = 100 * k, 26 * k, 112 * k, -2.36
+    at = blade_at(k, x, y, lean)
+    blade, half, tip, glow = length * .72, 5.5 * k, 12 * k, 7 * k
+    d.polygon([at(-glow, 0), at(tip, half + glow), at(blade, half + glow), at(blade, -half - glow), at(tip, -half - glow)], fill=(89, 255, 209, 150))
+    sword(d, k, x, y, length, lean)
+    d.polygon([at(0, 0), at(tip, half), at(blade, half), at(blade, -half), at(tip, -half)], outline=TRACE, width=2 * k)
     return image.resize((128, 128), Image.LANCZOS)
 
 
@@ -264,6 +324,8 @@ def main():
     terrain_atlas().save(OUT / "TerrainAtlas.png")
     pixels(64, sky).save(OUT / "Sky.png")
     icon().save(OUT / "IconUnlimitedBladeWorks.png")
+    icon_trace_on().save(OUT / "IconTraceOn.png")
+    icon_reinforcement().save(OUT / "IconReinforcement.png")
     for f in sorted(OUT.glob("*.png")):
         print(f"{f.relative_to(OUT.parent.parent.parent)}  {f.stat().st_size} bytes")
 

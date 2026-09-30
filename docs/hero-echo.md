@@ -181,9 +181,10 @@ Rules:
   in `statBases` (a config error otherwise).
 - If it leaves the hand it is destroyed instead of dropping and returns after `weaponReturnTicks`
   while still manifested and not downed. Every vanilla drop goes through the
-  `Pawn_EquipmentTracker.TryDropEquipment` patch: downing, death, Disarm, Chain Sickle Stake,
-  Inumaki's "drop". Vacuum Suck removes weapons its own way and has its own check. Any other path is
-  caught by the pool interval check.
+  `Pawn_EquipmentTracker.TryDropEquipment` patch in `Shared/BoundWeapon.cs` (shared with Shirou's
+  traced copies): downing, death, Disarm, Chain Sickle Stake, Inumaki's "drop". Vacuum Suck removes
+  weapons its own way and asks `BoundWeapon.Leave` first. Any other path is caught by the pool
+  interval check.
 - Downing drops the whole inventory (vanilla), so the stored weapon lands on the ground, forbidden,
   and revert does not pick it up.
 - Tests: `-rimarttest=echo`, "weapon 1" to "weapon 4" (the forced-weapon tests lend Vergil a
@@ -206,7 +207,7 @@ Rules:
 | Pain (`AG_Echo_Pain.xml`) | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei, Banshō Ten'in, Black Receiver, Chibaku Tensei (replaced Gravity Well 2026-09-28) | 15 | Shinra 5 charged / 3 quick (tap/hold button, 2026-09-29), Banshō 3, Black Receiver 0 (its three charges), Chibaku Tensei 30 |
 | Inumaki | Social 10, not Psychopath | Kind | stop, drop, crush, come, run, explode | 8 | 0 each (the throat is his cost) |
 | Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | Judgement Cut, Yamato Dash, Summoned Swords, Judgement Cut End (the def grants none until the kit is ported) | 10 | Judgement Cut 3, Yamato Dash 2, Summoned Swords 10, Judgement Cut End 0 (Style is its limit) |
-| Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40; +0.4 move speed, auburn hair, wealth 6000, his everyday clothes (white shirt with navy raglan sleeves, indigo jeans, grey trainers; `python3 make_costume_textures.py shirou`, test "costume 10") |
+| Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Reinforcement, Trace On, Unlimited Blade Works (UBW's commands not built) | 12 | Reinforcement 0, Trace On 10, UBW 40; +0.4 move speed, auburn hair, wealth 6000, his everyday clothes (white shirt with navy raglan sleeves, indigo jeans, grey trainers; `python3 make_costume_textures.py shirou`, test "costume 10") |
 | Itachi ("Crow of the Crimson Eye") | Melee 12, Intellectual 12, Kills 30 | Sickly (Immunity -1) + the dispersal plexus gene (awakenGenes) | crow dispersal (Murder + automatic Scatter), carrion, false face, susanoo | 10 | crow abilities 0 (the plexus's 3 charges), false face 3, susanoo 20 |
 | Shikamaru | Intellectual 14, 5 people captured | Lazy | shadow imitation, shadow seam, shadow grasp, shadow double, shadow neck bind | 10 | imitation 3, seam 3, grasp 1, double 5, neck bind 2 |
 | Sasuke ("Avenger of the Crimson Eye") | Melee 14, Intellectual 10, 15 kills with the Fūma Shuriken | Pessimist | Amenoyodomi, Amenotejikara, Raikō Kusari, Amaterasu | 12 | Amenoyodomi 0, Amenotejikara 2, Raikō Kusari 8, Amaterasu 5 (+ Bleeding eye); +0.4 move speed, black hair, wealth 6000, no forced weapon, Fourth War outfit |
@@ -801,6 +802,42 @@ empty hands replaces the gene's old weapon ban. The pictures are the three Todo 
 C# (`Source/RimArt/Todo/`): Boogie Woogie for the claps, the stone throw for the stone, Black Flash
 for the punch. The magician's cards stay in the code for a later hero. Sounds are the old clap and
 puff and the vanilla punch.
+
+Shirou (Reinforcement and Trace On ported 2026-09-30, `Source/RimArt/Trace/Kit`; rules in the
+`trace-reinforcement.js` and `trace-on.js` sketch headers and docs/heroes.md; numbers are XML fields
+on `AG_Trace_Abilities.xml` and `AG_Trace_Hediffs.xml`; Unlimited Blade Works is
+docs/unlimited-blade-works.md). His three magics come only from his Echo.
+- Reinforcement: self, 0.5 s cast, then 20 s of move speed x1.3 and melee damage x1.4 (vanilla
+  give-hediff comp, `AG_TraceReinforced`). 0 charge, cooldown 45 s. The picture: a ring at the feet,
+  the circuit running out over the body (narrower facing east or west) and back in when the buff ends,
+  the held weapon's outline lit from the grip and then pulsing, footprints and heel streaks while
+  moving, a slash on every melee hit that lands.
+- Trace On: the button lists the trace library. The library is Origin: Blade's study record: every
+  blade studied, by weapon and material, with the best quality studied. Studying stays open after
+  awakening and then only adds to the library (a new weapon or material, or a better quality; the
+  right-click option says "Study blade for Trace On"). Saves from before load the five studied types
+  as default material at normal quality. The copy is the studied weapon in its material,
+  `qualityBelow` (1) below the best studied, never under awful. 0.6 s cast, 10 charge, cooldown 5 s.
+  The cast job first empties the hand: a held copy breaks and the warmup starts 0.1 s later; a real
+  weapon is drawn sliding to the hip for 0.25 s and then goes to the inventory (it stays there if the
+  cast is called off afterwards). Weapons with powers of their own cannot be traced (greyed out in the
+  menu with the reason; they still count as studied types for Origin: Blade): persona weapons (the
+  copy would bond and grieve when it breaks), weapons that grant abilities (vanilla's equippable
+  ability, or any comp from this mod: Samehada, Chain Sickle, Fūma Shuriken; they keep their cooldowns
+  on the item, so every fresh copy would bring them back ready) and an Echo's manifest weapon (Yamato).
+- Copies (`TraceCopies`): a copy exists only in the hand that traced it. It breaks into light when it
+  leaves the hand by any path (drop order, disarm, another weapon equipped, downed or killed: it turns
+  in the air first; Vacuum Suck) through `Shared/BoundWeapon.cs`, and within 30 ticks when it left by
+  another path or its holder no longer has Trace On (revert, empty pool). Market value 0.
+- Pictures on real pawns: the game's own weapon plane is read in a `DrawEquipmentAiming` prefix
+  (`TraceHands`), so the wire, steel and glow land on the drawn weapon; the texture's tip, pommel,
+  width table, outline and silhouette are read from its alpha (`TraceWeaponShapes`, shared with UBW's
+  atlas). During the warmup the weapon is carried, not aimed at the caster itself. The cast job
+  shows the weapon while an undrafted pawn casts and holds the pawn 0.3 s (Trace On) or 0.1 s
+  (Reinforcement) after the fire.
+- Tests: `-rimarttest=trace` (library, trace into an empty hand, over a real weapon and over a copy,
+  copies breaking, Reinforcement with a hit, four facings of both pictures). Previews: debug window
+  kit "Trace", "trace on: ..." and "reinforcement: run and hit".
 
 ## Debug and tests
 

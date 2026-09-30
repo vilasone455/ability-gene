@@ -196,6 +196,18 @@ namespace RimArt.VfxLab
                 Name = "Obito", Prefix = "Kamui dimension:", Component = typeof(MapComponent_KamuiPreview), Clock = "seconds",
                 Phases = _ => new[] { new Phase("Map", 0f) },
             },
+            // Shirou's hand pictures come before the UBW entry, which takes every other "Trace:" label.
+            new Kit
+            {
+                Name = "Trace", Prefix = "Trace: trace on", Component = typeof(MapComponent_TracePreview), Clock = "seconds",
+                Phases = label => TraceOnPhases(label.Contains("swap") ? TraceOnScenario.SwapCopy : label.Contains("real") ? TraceOnScenario.RealWeapon
+                    : label.Contains("downed") ? TraceOnScenario.Downed : TraceOnScenario.EmptyHand),
+            },
+            new Kit
+            {
+                Name = "Trace", Prefix = "Trace: reinforcement", Component = typeof(MapComponent_TracePreview), Clock = "seconds",
+                Phases = _ => ReinforcementPhases(),
+            },
             new Kit
             {
                 Name = "Trace", Prefix = "Trace:", Component = typeof(MapComponent_UbwPreview), Clock = "seconds",
@@ -481,6 +493,28 @@ namespace RimArt.VfxLab
             new Phase("Hold", InfinityCastleInsideTiming.Landed),
             new Phase("Release", InfinityCastleInsideTiming.Release),
             new Phase("Castle removed", InfinityCastleInsideTiming.FadeAt),
+        };
+
+        // The sketch's markers: Arm line, Wire, Steel, Done; Stow before them with a real weapon, Swap and New copy or
+        // Down after them.
+        private static Phase[] TraceOnPhases(TraceOnScenario scenario)
+        {
+            TraceTimes t = TraceOnTiming.First(scenario);
+            var phases = new List<Phase> { new Phase("Arm line", t.At), new Phase("Wire", t.Wire), new Phase("Steel", t.Fill), new Phase("Done", t.Lit) };
+            if (scenario == TraceOnScenario.RealWeapon) phases.Insert(0, new Phase("Stow", TraceOnTiming.CastAt));
+            if (scenario == TraceOnScenario.SwapCopy)
+            {
+                phases.Add(new Phase("Swap", TraceOnTiming.SwapAt));
+                phases.Add(new Phase("New copy", TraceOnTiming.Second.At));
+            }
+            if (scenario == TraceOnScenario.Downed) phases.Add(new Phase("Down", TraceOnTiming.SwapAt));
+            return phases.ToArray();
+        }
+
+        private static Phase[] ReinforcementPhases() => new[]
+        {
+            new Phase("Cast", TraceReinforcementTiming.CastAt), new Phase("Run", TraceReinforcementTiming.Run),
+            new Phase("Hits", TraceReinforcementTiming.Hit(0)), new Phase("Ends", TraceReinforcementTiming.End),
         };
 
         private static Phase[] UbwCastPhases()

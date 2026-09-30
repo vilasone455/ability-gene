@@ -9,7 +9,8 @@ namespace Verse
     public class ThingDef : Def { public bool IsMeleeWeapon, IsRangedWeapon; public List<Tool> tools; }
     public class Tool { public List<ToolCapacityDef> capacities = new(); }
     public class ToolCapacityDef : Def { }
-    public class ThingWithComps { public ThingDef def; }
+    public class Thing { public ThingDef def; }
+    public class ThingWithComps : Thing { }
     public class Pawn
     {
         public bool IsColonistPlayerControlled = true, Dead, Destroyed, Spawned = true, ViolentDisabled;

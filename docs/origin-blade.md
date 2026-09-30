@@ -46,7 +46,13 @@ actually made. Psytrainers and psylink neuroformers reject use before consuming 
 
 Origin: Blade grants no abilities. It is the one Trial of the Shirou Echo (`Trial_Trait`, see
 docs/hero-echo.md): a colonist with it can be tuned at the resonance device and awakened as Shirou,
-whose hero form grants Unlimited Blade Works (docs/unlimited-blade-works.md). Until 2026-09-25 the
+whose hero form grants Reinforcement, Trace On and Unlimited Blade Works (docs/unlimited-blade-works.md).
+
+Every study also goes into the pawn's trace library, the list Trace On copies from: the weapon, its
+material and the best quality studied. After awakening the right-click option becomes "Study blade for
+Trace On" and stays open for good; such a study only adds to the library (a weapon or material not
+studied yet, or a better quality than before) and is refused otherwise. Saves from before the library
+load the five studied types as their default material at normal quality. Until 2026-09-25 the
 trait granted Rain, Loose and Grasp; those now have no source, and their defs and code stay. A pawn
 awakened in an older save keeps the three it had (the sync only grants).
 

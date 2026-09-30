@@ -54,4 +54,80 @@
     </modExtensions>
   </AbilityDef>
 
+  <!-- Reinforcement, the first of Shirou's three magics (docs/hero-echo.md, Shirou; the sketch is
+       Tools/VfxLab/web/sketches/trace-reinforcement.js). Granted by the Shirou Echo while manifested; it costs
+       no charge. Self, 0.5 s cast, then AG_TraceReinforced (AG_Trace_Hediffs.xml) for durationSecondsOverride.
+       Cooldown 45 s. Every number is a placeholder. -->
+  <AbilityDef>
+    <defName>AG_Trace_Reinforcement</defName>
+    <label>reinforcement</label>
+    <description>Shirou strengthens his body and the weapon in his hand.\n\nCast time 0.5 seconds. For 20 seconds he moves 30% faster and deals 40% more melee damage.</description>
+    <iconPath>RimArt/Trace/IconReinforcement</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>2700</cooldownTicksRange>
+    <jobDef>AG_CastTrace</jobDef>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.5</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="CompProperties_AbilityGiveHediff">
+        <compClass>CompAbilityEffect_GiveHediff</compClass>
+        <hediffDef>AG_TraceReinforced</hediffDef>
+        <onlyApplyToSelf>true</onlyApplyToSelf>
+        <replaceExisting>true</replaceExisting>
+        <durationSecondsOverride>20~20</durationSecondsOverride>
+      </li>
+      <li Class="RimArt.CompProperties_TraceFired" />
+    </comps>
+  </AbilityDef>
+
+  <!-- Trace On, the second (docs/hero-echo.md, Shirou; the sketch is trace-on.js). Granted by the Shirou Echo
+       while manifested; charge in AG_Echoes.xml. The button lists the trace library (every blade the pawn has
+       studied through Origin: Blade, by weapon and material, best quality kept); the cast job puts away what the
+       hand holds, then the 0.6 s warmup traces the copy. Cooldown 5 s. Every number is a placeholder. -->
+  <AbilityDef>
+    <defName>AG_Trace_On</defName>
+    <label>trace on</label>
+    <description>Pick a blade Shirou has studied. After a 0.6 second cast a copy of it is in his hand: the same weapon and material, one quality level below the best one of it he studied.\n\nA real weapon in his hand goes to his inventory first; a copy in his hand breaks. A copy breaks when it leaves his hand (dropped, disarmed, downed, another weapon equipped) and when he stops being Shirou. It cannot be hauled, sold or given away, and it is worth nothing.\n\nWeapons with powers of their own cannot be traced: persona weapons, weapons that grant abilities (Samehada, Chain Sickle, Fūma Shuriken) and a hero's own weapon (Yamato).\n\nA colonist with Origin: Blade can study more blades: select them and right-click a blade on the ground. A weapon or material not studied yet, or a better quality, is added to the list.</description>
+    <iconPath>RimArt/Trace/IconTraceOn</iconPath>
+    <gizmoClass>RimArt.Command_TraceOn</gizmoClass>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>300</cooldownTicksRange>
+    <jobDef>AG_CastTrace</jobDef>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0.6</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_TraceOn">
+        <qualityBelow>1</qualityBelow>
+      </li>
+    </comps>
+  </AbilityDef>
+
 </Defs>

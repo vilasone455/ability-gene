@@ -73,17 +73,21 @@ static class ApiChecks
             throw new Exception("Origin: Blade grants nothing; Unlimited Blade Works comes from the Shirou Echo");
         var shirou = XDocument.Load("1.6/Defs/EchoDefs/AG_Echoes.xml").Root.Elements("RimArt.EchoDef")
             .Single(e => (string)e.Element("defName") == "AG_Echo_Shirou");
-        if (!shirou.Element("abilities").Elements("li").Select(e => e.Value).SequenceEqual(new[] { "AG_Trace_UnlimitedBladeWorks" })
+        if (!shirou.Element("abilities").Elements("li").Select(e => e.Value)
+                .SequenceEqual(new[] { "AG_Trace_Reinforcement", "AG_Trace_On", "AG_Trace_UnlimitedBladeWorks" })
             || !shirou.Element("trials").Elements("li").Any(e => (string)e.Attribute("Class") == "RimArt.Trial_Trait"
                 && (string)e.Element("trait") == "AG_OriginBlade"))
-            throw new Exception("The Shirou Echo must grant Unlimited Blade Works behind an Origin: Blade trial");
+            throw new Exception("The Shirou Echo must grant Reinforcement, Trace On and Unlimited Blade Works behind an Origin: Blade trial");
         foreach (string file in new[] { "1.6/Defs/TraitDefs/AG_OriginBlade.xml", "1.6/Defs/JobDefs/AG_StudyBlade.xml",
-                     "1.6/Defs/AbilityDefs/AG_Trace_Abilities.xml", "1.6/Defs/JobDefs/AG_Trace_Jobs.xml" })
+                     "1.6/Defs/AbilityDefs/AG_Trace_Abilities.xml", "1.6/Defs/JobDefs/AG_Trace_Jobs.xml", "1.6/Defs/HediffDefs/AG_Trace_Hediffs.xml" })
         foreach (var element in XDocument.Load(file).Descendants())
         {
             string className = (string)element.Attribute("Class")
                 ?? (element.Name.LocalName == "driverClass" ? element.Value : null);
-            if (className != null && assembly.GetType(className) == null)
+            // A name without a namespace is the game's (CompProperties_AbilityGiveHediff), looked up in its RimWorld namespace.
+            if (className != null && assembly.GetType(className) == null
+                && typeof(RimWorld.Ability).Assembly.GetType("RimWorld." + className) == null
+                && typeof(RimWorld.Ability).Assembly.GetType("Verse." + className) == null)
                 throw new Exception($"Missing class {className}");
         }
         string defFields = CheckDefFields(assembly);

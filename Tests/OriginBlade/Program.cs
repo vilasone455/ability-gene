@@ -35,6 +35,7 @@ static class Program
         defName = name, IsMeleeWeapon = true,
         tools = new List<Tool> { new Tool { capacities = new List<ToolCapacityDef> { OriginBladeDefOf.Cut } } }
     };
+    private static Thing Item(ThingDef def) => new Thing { def = def };
     private static Pawn ReadyPawn()
     {
         Pawn pawn = new();
@@ -59,12 +60,12 @@ static class Program
         Check(!OriginBladeUtility.IsBlade(gun), "Gun with sharp melee tools must not count");
         Check(!OriginBladeUtility.IsBlade(new ThingDef { IsMeleeWeapon = true }), "Blunt weapon must not count");
         Check(!OriginBladeUtility.IsBlade(null), "Missing study target is not eligible");
-        studies.CompleteStudy(pawn, gun);
+        studies.CompleteStudy(pawn, Item(gun));
         Check(studies.RecordFor(pawn).bladeTypes.Count == 0, "Invalid studies give no progress");
-        studies.CompleteStudy(pawn, knife);
-        studies.CompleteStudy(pawn, Blade("Knife"));
+        studies.CompleteStudy(pawn, Item(knife));
+        studies.CompleteStudy(pawn, Item(Blade("Knife")));
         Check(studies.RecordFor(pawn).bladeTypes.Count == 1, "Distinct objects/material/quality variants share the same type credit");
-        foreach (string name in new[] { "Ikwa", "Spear", "Gladius" }) studies.CompleteStudy(pawn, Blade(name));
+        foreach (string name in new[] { "Ikwa", "Spear", "Gladius" }) studies.CompleteStudy(pawn, Item(Blade(name)));
         Check(!OriginBladeUtility.HasOrigin(pawn), "Four studies cannot unlock");
         var psychic = new Ability { def = new AbilityDef { IsPsycast = true } };
         var ordinary = new Ability { def = new AbilityDef() };
@@ -74,7 +75,7 @@ static class Program
         var ranged = new ThingWithComps { def = gun };
         var melee = new ThingWithComps { def = knife };
         pawn.equipment.AllEquipmentListForReading.AddRange(new[] { ranged, melee });
-        studies.CompleteStudy(pawn, Blade("Longsword"));
+        studies.CompleteStudy(pawn, Item(Blade("Longsword")));
         Check(!OriginBladeUtility.HasOrigin(pawn), "Completing the checklist must not awaken on its own");
         Check(OriginBladeUtility.ReadyToAwaken(pawn) && Offered(pawn), "Fifth type offers the awakening at exact skill thresholds");
         Check(pawn.abilities.abilities.Contains(psychic) && pawn.equipment.AllEquipmentListForReading.Contains(ranged),
@@ -83,6 +84,11 @@ static class Program
         Check(Find.LetterStack.Stack.Count == 1, "The offer is made once, not every tick");
         Accept(pawn);
         Check(OriginBladeUtility.HasOrigin(pawn), "Accepting awakens");
+        int types = studies.RecordFor(pawn).bladeTypes.Count, library = studies.RecordFor(pawn).library.Count;
+        Check(library == 5, "The five studies are in the trace library");
+        studies.CompleteStudy(pawn, Item(Blade("Scythe")));
+        Check(studies.RecordFor(pawn).bladeTypes.Count == types && studies.RecordFor(pawn).library.Count == library + 1,
+            "After awakening a study only adds to the trace library");
         Check(!Offered(pawn), "Accepting clears the letter");
         Check(pawn.abilities.abilities.Count == 1 && pawn.abilities.abilities.Contains(ordinary), "Only psycasts are removed");
         Check(pawn.health.hediffSet.hediffs.Count == 1 && pawn.health.hediffSet.hediffs.Contains(injury), "Only psylinks are removed");
@@ -98,7 +104,7 @@ static class Program
         Check(pawn.inventory.innerContainer.Contains(ranged) && !pawn.equipment.AllEquipmentListForReading.Contains(ranged),
             "Off-map restriction transfers the weapon safely to inventory");
         var later = ReadyPawn(); later.skills.GetSkill(SkillDefOf.Crafting).Level = 11;
-        foreach (string name in new[] { "Knife", "Ikwa", "Spear", "Gladius", "Longsword" }) studies.CompleteStudy(later, Blade(name));
+        foreach (string name in new[] { "Knife", "Ikwa", "Spear", "Gladius", "Longsword" }) studies.CompleteStudy(later, Item(Blade(name)));
         Check(!OriginBladeUtility.HasOrigin(later) && !Offered(later), "Five studies cannot bypass Crafting threshold");
         later.skills.GetSkill(SkillDefOf.Crafting).Level = 12;
         later.skills.GetSkill(SkillDefOf.Melee).Level = 13;
