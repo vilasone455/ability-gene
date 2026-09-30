@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Gojo's Blue, Red and Hollow Purple (docs/hero-echo.md, "Gojo"; sketches gojo-blue-v2.js, gojo-red-v2.js,
+       gojo-purple.js), granted by the Gojo Echo while manifested (AG_Echo_Gojo holds the charge costs: Blue 3,
+       Red 3, Purple 20). Every balance number is a field here; the C# in Source/RimArt/Gojo/Kit holds shape and
+       logic, and the pictures in Source/RimArt/Gojo. Numbers are placeholders. -->
+
+  <AbilityDef Name="AG_GojoKitAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+  </AbilityDef>
+
+  <!-- Lapse: Blue. A lesser Gravity Well: Gravity Well's code (Source/RimArt/Gravity) with a fixed radius and
+       duration, no drift, no bullet bending, and a caster left free (holdsCaster false: no Melee Animation clip,
+       no Implode or Cancel button). Its button is the Gravity Well command, which targets the cell itself, so the
+       verb has no range or warmup. The opening is the picture's 0.45 s (arm up and the ball growing); the picture's
+       hold is the 3 s pull less its 0.12 s rush-in, so the implosion lands on the flash. It draws with the Blue
+       picture (look GojoBlue, Source/RimArt/Gojo/Kit/GojoBlueLook.cs). Its cooldown starts when it closes. -->
+  <AbilityDef ParentName="AG_GojoKitAbilityBase">
+    <defName>AG_GojoBlue</defName>
+    <label>Lapse: Blue</label>
+    <description>Gojo opens Blue at a cell up to 15 cells away (a clear walking line). It opens in 0.45 seconds, then for 3 seconds pulls every pawn, allies too, and loose items and corpses within 4 cells toward its centre: 6 cells per second at the edge of its 1-cell core, falling to nothing at 4 cells, divided by body size over 1. Gojo himself is never pulled. Pawns that reach the core are held there; items and corpses there are crushed (destroyed).\n\nThen it implodes: 10 to 25 blunt damage within 2 cells, by the mass that reached its core (25 at 120, two people). It does not grow, move or bend bullets.\n\nGojo is free while it holds and can cast Red: Red passing within 1 cell of its centre makes Hollow Purple when Purple is ready.\n\nCooldown 20 seconds, counted from when Blue closes.</description>
+    <iconPath>RimArt/Gojo/IconBlue</iconPath>
+    <jobDef>AG_CastAbilityOnThingWithoutWeapon</jobDef>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams><canTargetSelf>true</canTargetSelf></targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityGravityWell">
+        <holdsCaster>false</holdsCaster>
+        <bendsBullets>false</bendsBullets>
+        <openingSeconds>0.45</openingSeconds>
+        <look>GojoBlue</look>
+        <range>15</range>
+        <minRadius>4</minRadius>
+        <maxRadius>4</maxRadius>
+        <fullMass>120</fullMass>
+        <coreRadius>1</coreRadius>
+        <pullSpeed>6</pullSpeed>
+        <maxBulletRadius>0</maxBulletRadius>
+        <bendDegrees>0</bendDegrees>
+        <baseSeconds>3</baseSeconds>
+        <secondsPerEaten>0</secondsPerEaten>
+        <maxSeconds>3</maxSeconds>
+        <minDamage>10</minDamage>
+        <maxDamage>25</maxDamage>
+        <minBurstRadius>2</minBurstRadius>
+        <maxBurstRadius>2</maxBurstRadius>
+        <coreDamage>0</coreDamage>
+        <cooldownSeconds>20</cooldownSeconds>
+        <bodyMass>60</bodyMass>
+        <driftSpeed>0</driftSpeed>
+        <leash>0</leash>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Reversal: Red. The warmup is the picture's arm and charge at the finger (0.1 + 0.5 s); the fire tick is Red
+       leaving the finger. The flight, burst, throw and pushes run on the shot's clock (RedShot.cs); the cast job
+       (AG_CastGojoRed) keeps Gojo standing with his arm out until the picture lowers it. -->
+  <AbilityDef ParentName="AG_GojoKitAbilityBase">
+    <defName>AG_GojoRed</defName>
+    <label>Reversal: Red</label>
+    <description>Gojo charges Red at his finger for 0.6 seconds, then fires it at a cell up to 20 cells away (line of sight). It flies at 20 cells per second.\n\nThe first pawn or loose thing (an item, chunk or corpse) in its path, friend or foe, is thrown 6 cells along Red's direction. A thrown pawn takes 1.5 blunt damage per cell it travels, and 10 more if a wall stops it. Every other pawn and loose thing within 1.5 cells of the burst is pushed 2 cells straight away from it; a pushed pawn takes 8 blunt. A wall in the way ends Red there; with nothing hit it bursts at the cell. No stun. Gojo is never hit by his own Red.\n\nRed passing within 1 cell of the centre of Gojo's active Blue makes Hollow Purple when Purple is ready; otherwise it passes through.\n\nCooldown 10 seconds.</description>
+    <iconPath>RimArt/Gojo/IconRed</iconPath>
+    <jobDef>AG_CastGojoRed</jobDef>
+    <cooldownTicksRange>600</cooldownTicksRange>
+    <hostile>true</hostile>
+    <targetRequired>true</targetRequired>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>20</range>
+      <warmupTime>0.6</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetItems>true</canTargetItems>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_GojoRed">
+        <speed>20</speed>
+        <throwCells>6</throwCells>
+        <damagePerCell>1.5</damagePerCell>
+        <slamDamage>10</slamDamage>
+        <burstRadius>1.5</burstRadius>
+        <pushCells>2</pushCells>
+        <pushDamage>8</pushDamage>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Hollow Purple: a combo, never cast from its button (always disabled; it shows the cooldown). Red makes it
+       when it meets an active Blue (MapComponent_GojoKit.TryHollowPurple), which pays the Echo charge itself and
+       starts this def's cooldown. The merge and growth before it travels (0.35 + 0.3 s) are the picture's. -->
+  <AbilityDef ParentName="AG_GojoKitAbilityBase">
+    <defName>AG_GojoHollowPurple</defName>
+    <label>Hollow Purple</label>
+    <description>A combo, not cast from this button. When Gojo's Red passes within 1 cell of the centre of his active Blue while Hollow Purple is ready, both are used up (Blue ends at once without imploding and lets go of what it held) and Hollow Purple forms at Blue's centre. 0.65 seconds later it travels in Red's direction at 6 cells per second, for 30 cells or to the edge of the map, radius 1.5.\n\nIt erases what it touches, friend or foe. A pawn whose cell centre is within 0.5 cells of its path is erased: it dies and leaves nothing, no corpse, apparel, weapon or inventory, and the kill is Gojo's. Mechanoids and large animals too; bosses are not erased. Every other pawn it touches, and a boss, takes 60 erasure damage that ignores armour; a body part it destroys does not bleed. Walls, buildings, rock, ore, plants and items vanish, with no drops, refund or chunks.\n\nEvery cell within 1.5 cells of its path becomes Erased ground for good: built floors are removed with no refund and the roof is removed, thick rock roof too. Water stays water.\n\nIf Hollow Purple is on cooldown, or Gojo's Echo charge cannot pay it, Red passes through Blue as a normal Red.\n\nCooldown 1 day.</description>
+    <iconPath>RimArt/Gojo/IconPurple</iconPath>
+    <cooldownTicksRange>60000</cooldownTicksRange>
+    <hostile>true</hostile>
+    <targetRequired>false</targetRequired>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams><canTargetSelf>true</canTargetSelf></targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_GojoHollowPurple">
+        <blueRadius>1</blueRadius>
+        <radius>1.5</radius>
+        <speed>6</speed>
+        <maxTravel>30</maxTravel>
+        <centreRow>0.5</centreRow>
+        <damage>60</damage>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

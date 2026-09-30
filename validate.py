@@ -475,9 +475,16 @@ RETIRED = {"AG_Panoply_Rain", "AG_Panoply_Loose", "AG_Panoply_Grasp", "AG_Gravit
 # old item stays in the game; until then two sources are expected, and only these two.
 SHARED_WITH_ECHO = set()
 
+# Abilities whose Echo is being written on a parallel branch (2026-09-30: Gojo's Blue, Red and Hollow Purple,
+# granted by AG_Echo_Gojo). Until that Echo is merged they have no source; once it is, the normal rule
+# applies to them again and this entry can go.
+AWAITING_ECHO = {"AG_GojoBlue", "AG_GojoRed", "AG_GojoHollowPurple"}
+
 for ability, f in sorted(ability_defs.items()):
     sources = grants.get(ability, set())
     if ability in RETIRED and not sources:
+        continue
+    if ability in AWAITING_ECHO and not sources:
         continue
     if ability in SHARED_WITH_ECHO and len(sources) == 2 \
             and sum(1 for src in sources if src.startswith("RimArt.EchoDef:")) == 1:

@@ -94,7 +94,7 @@ namespace RimArt
             float nearest = float.MaxValue;
             foreach (var cast in component.Casts)
             {
-                if (!cast.Field || !cast.Valid || !Rounds.SegmentEntersCircle(from, to, cast.Centre,
+                if (!cast.Field || !cast.Props.bendsBullets || !cast.Valid || !Rounds.SegmentEntersCircle(from, to, cast.Centre,
                     cast.BulletRadius, out var entry) || !cast.ClearTo(entry.ToIntVec3())) continue;
                 float distance = (entry - from).Yto0().sqrMagnitude;
                 if (distance < nearest || (distance == nearest && (selected == null || cast.id < selected.id)))
@@ -185,7 +185,8 @@ namespace RimArt
             Vector3 to = from + backend.Heading(round) * Mathf.Min(remaining, backend.CurrentSpeedPerTick(round) * delta);
             foreach (var cast in component.Casts)
             {
-                if (!cast.Field || !cast.Valid || !Rounds.SegmentEntersCircle(from, to, cast.Centre, cast.Props.coreRadius, out var entry)
+                if (!cast.Field || !cast.Props.bendsBullets || !cast.Valid
+                    || !Rounds.SegmentEntersCircle(from, to, cast.Centre, cast.Props.coreRadius, out var entry)
                     || !cast.ClearTo(entry.ToIntVec3())) continue;
                 cast.Eat(round);
                 return false;

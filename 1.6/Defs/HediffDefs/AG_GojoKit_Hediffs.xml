@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The wound Hollow Purple's erasure damage leaves (AG_Erasure). It does not bleed; a part it destroys is
+       marked not fresh by PurpleRun.Strike, so the stump does not bleed either. No infection. -->
+  <HediffDef ParentName="InjuryBase">
+    <defName>AG_Erased</defName>
+    <label>erased</label>
+    <labelNoun>an erased wound</labelNoun>
+    <description>Flesh Hollow Purple erased. It does not bleed.</description>
+    <comps>
+      <li Class="HediffCompProperties_TendDuration">
+        <labelTendedWell>bandaged</labelTendedWell>
+        <labelTendedWellInner>sutured</labelTendedWellInner>
+        <labelSolidTendedWell>set</labelSolidTendedWell>
+      </li>
+      <li Class="HediffCompProperties_GetsPermanent">
+        <permanentLabel>erasure scar</permanentLabel>
+      </li>
+    </comps>
+    <injuryProps>
+      <painPerSeverity>0.0125</painPerSeverity>
+      <averagePainPerSeverityPermanent>0.00625</averagePainPerSeverityPermanent>
+      <bleedRate>0</bleedRate>
+      <canMerge>false</canMerge>
+      <destroyedLabel>Erased</destroyedLabel>
+      <destroyedOutLabel>Erased</destroyedOutLabel>
+    </injuryProps>
+  </HediffDef>
+
+</Defs>
