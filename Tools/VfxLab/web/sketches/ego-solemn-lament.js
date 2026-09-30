@@ -20,9 +20,10 @@
 //   Guns: one white pistol and one black pistol, one in each hand, arms out, firing in turn.
 //   White shot: a white crescent swept round the gun hand, a white flash with short spikes at the
 //         muzzle, a thin pale smoky line to the target, a white sunburst of thin spikes on the hit.
-//   Black shot: a black ink splash of jagged shards off the muzzle, a dark line; on the hit one
-//         solid black ink splat over the torso with a spiky edge, red streaks inside it, black
-//         droplets and slivers flung out, then it breaks into chunks that fly off; blood.
+//   Black shot: at the muzzle a black ink splat with a white glow behind it and a torn ink smear
+//         thrown along the shot (drips, slivers), a dark line; on the hit one solid black ink
+//         splat over the torso with a spiky edge, red streaks inside it, black droplets and slivers
+//         flung out, then it breaks into chunks that fly off; blood.
 //   Butterflies: lace butterflies drift off the hit and settle: line art, a white outline and a
 //         web of white veins cutting each wing into small irregular cells, see-through between the
 //         lines; big rounded forewings, smaller hindwings, scalloped edges. .3 cells across here,
@@ -41,7 +42,7 @@
 //   0.35  shot 1, white: crescent and muzzle flash, the line reaches the raider 5 cells off in
 //         .08 s, white sunburst; 2 pale butterflies loop off the chest and land on the body in .5 s;
 //         the white gun kicks up 28 degrees and settles in .3 s
-//   0.60  shot 2, black: ink splash, dark line; on the hit a black ink splat over the chest in
+//   0.60  shot 2, black: muzzle splat and ink smear, dark line; on the hit a black ink splat over the chest in
 //         .06 s with red inside, breaking into flying chunks from .1 s, gone by .4 s; blood thrown
 //         on, a floor spatter that stays, the raider flinches .07 cells; 1 dark butterfly lands
 //   ...   one shot every .25 s, alternating. The raider sways more with each stack (consciousness).
@@ -291,12 +292,6 @@ function pistol(key, hand, d, white, tilt, slide, layer, sun, strength) {
 // The barrel's kick after a shot: up in .04 s, then a damped swing back to level (about .3 s).
 const kickAt = age => age < 0 ? 0 : age < KickUp ? Math.sin(age / KickUp * Math.PI / 2) : Math.max(0, Math.exp(-KickDamp * (age - KickUp)) * Math.cos(KickSwing * (age - KickUp)));
 
-// A jagged ink shard: a thin triangle pointing along t.
-function shard(key, c, t, len, wid, colour, layer) {
-  const dx = Math.cos(t), dz = Math.sin(t), nx = -dz * wid / 2, nz = dx * wid / 2;
-  const b = { x: c.x - dx * len * .35, z: c.z - dz * len * .35 }, tip = { x: c.x + dx * len * .65, z: c.z + dz * len * .65 };
-  band(key, [{ x: b.x + nx, z: b.z + nz }, tip], [{ x: b.x - nx, z: b.z - nz }, tip], colour, layer);
-}
 // White shot at the muzzle: a flash with seven short spikes for .08 s, and the crescent: a white arc
 // swept round the gun hand on its outer side in .05 s, thick in the middle, gone in .18 s.
 function whiteMuzzle(key, m, dir, hand, out, age) {
@@ -318,17 +313,44 @@ function whiteMuzzle(key, m, dir, hand, out, age) {
   }
   strip(`${key} crescent`, inner, outer, White.withAlpha(.9 * f), whiteGlow, Y + .059);
 }
-// Black shot at the muzzle: a dark blot and ten ink shards sprayed forward in a 130-degree cone,
-// gone in .22 s, with a pale core for .06 s so the shot still reads as a flash.
-function blackMuzzle(key, m, dir, age) {
-  if (age < 0 || age > .22) return;
-  const f = 1 - age / .22, aim = Math.atan2(dir.z, dir.x);
-  sprite(m, .3 + .25 * (1 - f), .28 + .22 * (1 - f), Ink.withAlpha(.75 * f), soft, Y + .062);
-  for (let i = 0; i < 10; i++) {
-    const t = aim + (i / 9 - .5) * 2.3 + (rand(i + 70) - .5) * .25, v = (.9 + 1.6 * rand(i + 80)) * (1 - .5 * Math.abs(i / 9 - .5)), l = (.1 + .26 * rand(i + 90)) * (.4 + .6 * f), d0 = .06 + v * age;
-    shard(`${key} shard ${i}`, { x: m.x + Math.cos(t) * d0, z: m.z + Math.sin(t) * d0 }, t, l, l * .35, Ink.withAlpha(Math.min(1, f * 1.6)), Y + .063);
+// Black shot at the muzzle, as the Limbus frames draw it (Skill 1: a black splat with a white glow
+// behind it; Skill 2: a torn ink smear thrown along the shot):
+//   a soft white glow .9 cells wide, .2 ahead of the muzzle, for .12 s, so the dark flash still
+//   reads as a flash; a black ink splat (the hit's shapes) centred .22 ahead (its back at the muzzle), stretched 1.6x along the shot, out to
+//   .2 cells in .04 s, shrinking away from .06 s, opaque, gone by .2 s;
+//   a torn ink smear from the muzzle along the shot, out to .95 cells in .05 s, .15 wide at the
+//   muzzle and tapering, ragged on both edges; from .06 s its back end chases the front, gone by .26 s;
+//   six drips thrown sideways off the smear and eight pointed slivers flung forward in a 70-degree
+//   cone at 2-4 cells/s, all shrinking, gone by .3 s.
+function blackMuzzle(key, m, dir, age, seed) {
+  if (age < 0 || age > .3) return;
+  const aim = Math.atan2(dir.z, dir.x), across = side(dir);
+  if (age < .12) { const g = 1 - age / .12; sprite(move(m, dir, .2), .9 * g, .75 * g, White.withAlpha(.8 * g), glow, Y + .061); }
+  const grow = 1 - Math.pow(1 - clamp(age / .04), 3), R = .2 * grow * (1 - Math.pow(clamp((age - .06) / .14), 1.5));
+  if (R > .01) {
+    const c = move(m, dir, .22);
+    draw(Splats[(seed + 1) % 3], c.x, Y + .063, c.z, R * 1.6, R * .9, -aim / D2R, Ink.withAlpha(.95));
   }
-  if (age < .06) sprite(m, .22, .2, Pale.withAlpha(.6 * (1 - age / .06)), glow, Y + .064);
+  const reach = .95 * (1 - Math.pow(1 - clamp(age / .05), 2)), tail = Math.pow(clamp((age - .06) / .2), 1.3) * reach;
+  if (reach - tail > .02) {
+    const N = 14, a = [], b = [];
+    for (let i = 0; i <= N; i++) {
+      const u = i / N, d = tail + (reach - tail) * u, w = .075 * Math.pow(1 - u, .6) + .008, q = move(m, dir, d);
+      const up = w * (.5 + .9 * rand(seed * 41 + i)), dn = w * (.5 + .9 * rand(seed * 43 + i + 7));
+      a.push(move(q, across, up)); b.push(move(q, across, -dn));
+    }
+    band(`${key} smear`, a, b, Ink.withAlpha(.95), Y + .062);
+  }
+  for (let i = 0; i < 6; i++) {
+    const u = age / (.2 + .1 * rand(seed * 47 + i)); if (u >= 1) continue;
+    const q = move(move(m, dir, .15 + .7 * rand(seed * 53 + i)), across, (i % 2 ? 1 : -1) * (.05 + (1 + rand(seed * 59 + i)) * age)), r = .028 * (1 - u * u);
+    draw(disc, q.x, Y + .0625, q.z - 1.5 * age * age, r, r, 0, Ink);
+  }
+  for (let i = 0; i < 8; i++) {
+    const u = age / (.22 + .08 * rand(seed * 61 + i)); if (u >= 1) continue;
+    const t = aim + (rand(seed * 67 + i) - .5) * 1.2, v = 2 + 2 * rand(seed * 71 + i), d0 = .15 + v * age;
+    chunk(`${key} sliver ${i}`, { x: m.x + Math.cos(t) * d0, z: m.z + Math.sin(t) * d0 }, t, .05 * (1 - u), seed * 73 + i, Ink.withAlpha(.95), Y + .064);
+  }
 }
 // The round's line from the muzzle to the target: drawn out at Speed, then faded over TrailLife.
 function shotTrail(key, from, to, age, white) {
@@ -585,7 +607,7 @@ function drawBurst(s, p, o, who, sun, strength) {
       shotTrail(`sl trail ${sh.k}`, m0, chest, age, true);
       whiteHit(`sl hit ${sh.k}`, chest, s - sh.hit);
     } else {
-      blackMuzzle(`sl muzzle ${sh.k}`, m0, g.gd, age);
+      blackMuzzle(`sl muzzle ${sh.k}`, m0, g.gd, age, sh.k);
       shotTrail(`sl trail ${sh.k}`, m0, chest, age, false);
       blackHit(`sl hit ${sh.k}`, chest, tpos, d, s - sh.hit, sh.k);
     }
