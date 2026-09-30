@@ -27,8 +27,9 @@
 //          pawn heights, the right smaller), a tan slab stands at the target, and a tan brush
 //          sweep runs along the floor from the shooter's feet. Short cyan speed lines fly past the
 //          circle. The rifle kicks up about 30 degrees, held one-handed.
-//   Hit:   a yellow spiked stagger burst at the chest, an orange lightning bolt beside it, orange
-//          fire. The brackets and slab thin to tan oval outlines and stay a second.
+//   Hit:   the target lit yellow-white, a burst of thin yellow spikes and long rays, an orange
+//          lightning bolt arcing past it along the beam, orange sparks flung on forward, orange
+//          streak lines, a small burn. The brackets and slab thin to tan oval outlines and stay.
 //   Count 4-6: two or more circles stacked along the aim .48 cells apart, each 45 % bigger than the
 //          one before (the source's second circle is about 1.6x the first), the beam
 //          wider and blue-violet.
@@ -337,49 +338,66 @@ function bolt(key, from, t, reach, n, seed, width, colour, glowColour, layer) {
   line(`${key} glow`, pts, width * 2.8, glowColour, whiteGlow, layer, 'end');
 }
 
-// One pawn crossed by the line: a blue-white flash, a yellow spiked stagger burst, an orange bolt,
-// orange fire for .6 s, blood thrown on past, a spatter that stays. heavy = the seventh, which
-// also throws orange streak lines on past the target.
-function wound(key, pos, who, d, age, heavy, s) {
+// One pawn crossed by the line, as the hit frames show it: the pawn lit yellow-white for .15 s, a
+// burst of fourteen thin yellow spikes and four long rays over .35 s, an orange bolt arcing past
+// the target along the beam, orange sparks flung on forward, orange streak lines flying past, a
+// small burn (fire for .6 s), blood thrown on and a spatter that stays. tier scales it: the
+// seventh's is 1.5x.
+function wound(key, pos, who, d, age, tier, s) {
   if (age < 0) return;
-  const chest = at(pos, 'chest', who), k = heavy ? 1.2 : 1, aim = Math.atan2(d.z, d.x);
-  if (age < .1) glint(`${key} flash`, chest, .55 * k, 1 - age / .1, Beam);
-  if (age < .12) sprite(chest, .5 * k, .4 * k, Blood.withAlpha(.8 * (1 - age / .12)), soft, Y + .09);
-  if (age < .3) {                      // the stagger burst: eight yellow spikes and a glow
-    const u = age / .3, len = (.35 + .45 * Math.sqrt(u)) * k, fade = 1 - u * u;
-    sprite(chest, .8 * k, .7 * k, Stagger.withAlpha(.7 * fade), glow, Y + .093);
-    for (let i = 0; i < 8; i++) {
-      const t = i / 8 * TAU + .3, l = len * (.6 + .4 * rand(i + 700));
-      streak(`${key} spike ${i}`, chest, { x: chest.x + Math.cos(t) * l, z: chest.z + Math.sin(t) * l * .85 }, .07 * k, Stagger.withAlpha(.95 * fade), whiteGlow, Y + .094, 4);
+  const chest = at(pos, 'chest', who), k = 1 + tier * .25, aim = Math.atan2(d.z, d.x), frame = Math.floor(s * 18);
+  if (age < .15) {                     // the pawn lit
+    const f = 1 - age / .15;
+    sprite({ x: chest.x, z: chest.z - .12 }, .7 * k, 1.0 * k, Stagger.withAlpha(.7 * f), glow, Y + .091);
+    sprite(chest, .45 * k, .45 * k, White.withAlpha(.8 * f), glow, Y + .0911);
+  }
+  if (age < .35) {                     // the stagger burst
+    const u = age / .35, grow = Math.sqrt(Math.min(1, age / .08)), fade = 1 - u * u;
+    sprite(chest, 1.1 * k * grow, 1.0 * k * grow, Stagger.withAlpha(.5 * fade), glow, Y + .093);
+    sprite(chest, .5 * k * grow, .45 * k * grow, FireCore.withAlpha(.9 * fade), glow, Y + .0931);
+    for (let i = 0; i < 14; i++) {
+      const t = i / 14 * TAU + .2 + rand(i + 700) * .3, l = (.35 + .6 * rand(i + 710)) * k * grow;
+      streak(`${key} spike ${i}`, chest, { x: chest.x + Math.cos(t) * l, z: chest.z + Math.sin(t) * l * .85 }, (.055 - .025 * u) * k, Stagger.withAlpha(.95 * fade), whiteGlow, Y + .094, 4);
+    }
+    for (let i = 0; i < 4; i++) {
+      const t = i / 4 * TAU + .6, l = (1.1 + .4 * rand(i + 720)) * k * grow;
+      streak(`${key} ray ${i}`, chest, { x: chest.x + Math.cos(t) * l, z: chest.z + Math.sin(t) * l * .85 }, .03, FireCore.withAlpha(.8 * fade), whiteGlow, Y + .0941, 3);
     }
   }
-  if (age < .35) {                     // an orange lightning bolt beside the hit, flickering
-    const frame = Math.floor(s * 18);
-    for (let i = 0; i < 2; i++) {
-      if (rand(frame * 3 + i) < .3) continue;
-      const t = aim + (i ? 1 : -1) * (1.1 + rand(frame + i) * .6);
-      bolt(`${key} bolt ${i}`, chest, t, (.6 + rand(i + frame) * .5) * k, 5, frame * 5 + i * 13, .045, Bolt.withAlpha(.95 * (1 - age / .35)), Fire.withAlpha(.5 * (1 - age / .35)), Y + .097);
+  if (age < .4) {                      // the orange bolt past the target, redrawn every 1/18 s
+    const f = 1 - age / .4;
+    for (let b = 0; b < (tier ? 2 : 1); b++) {
+      if (rand(frame * 3 + b) < .25) continue;
+      const back = .7 + rand(frame + b * 7) * .5, acr = (rand(frame * 5 + b) - .5) * .9;
+      const from = { x: chest.x - d.x * back - d.z * acr, z: chest.z - d.z * back + d.x * acr };
+      bolt(`${key} bolt ${b}`, from, aim + (rand(frame * 7 + b * 3) - .5) * .5, (1.5 + rand(frame + b) * .8) * k, 7, frame * 11 + b * 29, .045, Bolt.withAlpha(.95 * f), Fire.withAlpha(.5 * f), Y + .097);
     }
   }
-  if (age < .3) {                      // the fire burst: a ball of orange fire that flares and thins
-    const u = age / .3, size = (.4 + .6 * Math.sqrt(u)) * k;
-    sprite(chest, size, size * .85, Fire.withAlpha(.85 * (1 - u * u)), puff, Y + .092);
-    sprite(chest, size * .6, size * .5, FireCore.withAlpha(.9 * (1 - u)), glow, Y + .0921);
+  for (let i = 0; i < 12; i++) {       // sparks flung on forward, as short streaks
+    const life = .3 + rand(i + 800) * .2, u = age / life; if (u > 1) continue;
+    const a = aim + (rand(i + 810) - .5) * 1.6, v = (2.5 + rand(i + 820) * 4) * k;
+    const q = { x: chest.x + Math.cos(a) * v * age, z: chest.z + Math.sin(a) * v * age };
+    streak(`${key} spark ${i}`, { x: q.x - Math.cos(a) * v * .03, z: q.z - Math.sin(a) * v * .03 }, q, .035, (i % 3 ? Bolt : FireCore).withAlpha(1 - u), whiteGlow, Y + .0975, 3);
   }
-  for (let i = 0; i < 7; i++) {        // flames rising off them for .6 s
-    const life = .6, u = age / life; if (u > 1) continue;
-    const ph = (age * (2.2 + rand(i + 500)) + rand(i + 510)) % 1, x = chest.x + (rand(i + 520) - .5) * .5 * k;
-    sprite({ x, z: chest.z - .15 + ph * .55 }, (.18 + .14 * (1 - ph)) * k, (.22 + .18 * (1 - ph)) * k, Fire.withAlpha(.85 * Math.sin(ph * Math.PI) * (1 - u)), puff, Y + .095);
-    sprite({ x, z: chest.z - .15 + ph * .55 }, .09 * k, .11 * k, FireCore.withAlpha(.7 * Math.sin(ph * Math.PI) * (1 - u)), glow, Y + .096);
-  }
-  if (heavy && age < .45) {            // orange streak lines flying on past the target
-    for (let i = 0; i < 7; i++) {
+  if (age < .45) {                     // streak lines flying on past the target
+    for (let i = 0; i < 3 + tier * 2; i++) {
       const u = age / .45, a0 = rand(i + 600) * 1.5 + u * 3, l = .6 + rand(i + 610) * 1.2, acr = (rand(i + 620) - .5) * 1.2;
       const from = { x: chest.x + d.x * a0 - d.z * acr, z: chest.z + d.z * a0 + d.x * acr };
       streak(`${key} streak ${i}`, from, move(from, d, l), .05, Bolt.withAlpha(.9 * (1 - u)), whiteGlow, Y + .098, 3);
     }
   }
-  for (let i = 0; i < 8; i++) {
+  if (age < .3) {                      // the burn: a small ball of fire that flares and thins
+    const u = age / .3, size = (.25 + .35 * Math.sqrt(u)) * k;
+    sprite(chest, size, size * .85, Fire.withAlpha(.8 * (1 - u * u)), puff, Y + .092);
+  }
+  for (let i = 0; i < 5; i++) {        // flames rising off them for .6 s
+    const life = .6, u = age / life; if (u > 1) continue;
+    const ph = (age * (2.2 + rand(i + 500)) + rand(i + 510)) % 1, x = chest.x + (rand(i + 520) - .5) * .4 * k;
+    sprite({ x, z: chest.z - .15 + ph * .5 }, (.14 + .12 * (1 - ph)) * k, (.18 + .14 * (1 - ph)) * k, Fire.withAlpha(.85 * Math.sin(ph * Math.PI) * (1 - u)), puff, Y + .095);
+    sprite({ x, z: chest.z - .15 + ph * .5 }, .07 * k, .09 * k, FireCore.withAlpha(.7 * Math.sin(ph * Math.PI) * (1 - u)), glow, Y + .096);
+  }
+  if (age < .12) sprite(chest, .5 * k, .4 * k, Blood.withAlpha(.8 * (1 - age / .12)), soft, Y + .09);
+  for (let i = 0; i < 8; i++) {        // blood thrown on past
     const life = .25 + rand(i + 900) * .12, u = age / life; if (u > 1) continue;
     const a = aim + (rand(i + 910) - .5) * 1.1, v = (2 + rand(i + 920) * 3.5) * k;
     const x = chest.x + Math.cos(a) * v * age, z = chest.z + Math.sin(a) * v * age - 6 * age * age;
@@ -539,7 +557,7 @@ export default {
       line('mb sweep', [move(o, L.d, .2), move(o, L.d, .2 + 2.6 * g)], .6, Tan.withAlpha(.55 * f), flat, Floor + .032, 'end');
       line('mb sweep 2', [{ x: o.x - across.x * .25 + L.d.x * .5, z: o.z - across.z * .25 + L.d.z * .5 }, move(o, L.d, .5 + 1.6 * g)], .3, TanDark.withAlpha(.35 * f), flat, Floor + .0321, 'end');
     }
-    for (const h of hits) if (h.kind === 'pawn') wound(`mb wound ${h.who.tag}`, h.who.pos, who, L.d, hitAge(h), seventh, s);
+    for (const h of hits) if (h.kind === 'pawn') wound(`mb wound ${h.who.tag}`, h.who.pos, who, L.d, hitAge(h), tier, s);
 
     if (p.actors) walls('mb walls', o, wallCells, sun, strength);
     for (const h of hits) if (h.kind === 'wall') punch(`mb punch ${h.cell.x},${h.cell.z}`, h.at, L.d, hitAge(h));
