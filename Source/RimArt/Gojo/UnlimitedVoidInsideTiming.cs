@@ -45,7 +45,9 @@ namespace RimArt
         /// <summary>The white light at the vanishing point, 0..1.</summary>
         public static float Light(float s) => Smooth((s - LightAt) / 0.45f) * (1f - Smooth((s - (LinesFor - 0.15f)) / 0.45f));
         /// <summary>The collapse at the end, 0..1.</summary>
-        public static float Ending(float s) => Mathf.Clamp01((s - Hold) / Collapse);
+        public static float Ending(float s) => Ending(s, Hold);
+        /// <summary>The collapse at the end of a domain that ends <paramref name="hold"/> seconds after the arrival, 0..1.</summary>
+        public static float Ending(float s, float hold) => Mathf.Clamp01((s - hold) / Collapse);
         /// <summary>The streaks stop this far from the point; the gap widens with the opening black hole, so they pour out of its rim.</summary>
         public static float Hollow(float s) => Mathf.Max(1.2f, HoleRadius * Open(s) * 1.25f);
 

@@ -30,12 +30,16 @@ namespace RimArt
         public static void DrawPreview(Vector3 centre, float reach, float seconds, Map map) =>
             Draw(new Vector2(centre.x, centre.z), reach, VoidLayers.Preview, seconds, map);
 
-        public static void Draw(Vector2 o, float reach, in VoidLayers layers, float s, Map map)
+        public static void Draw(Vector2 o, float reach, in VoidLayers layers, float s, Map map) => Draw(o, reach, layers, s, map, T.Hold);
+
+        /// <param name="hold">When the domain ends, in seconds from the arrival: the collapse starts there. The preview's
+        /// is <see cref="T.Hold"/>; the ability passes the real end, or infinity while the domain stands.</param>
+        public static void Draw(Vector2 o, float reach, in VoidLayers layers, float s, Map map, float hold)
         {
-            if (s < 0f || s >= T.Duration || !Shown(o, map)) return;
+            if (s < 0f || s >= hold + T.Collapse + T.Tail || !Shown(o, map)) return;
             Begin(o);
             Vector2 point = T.PointFor(o);
-            float ending = T.Ending(s), open = T.Open(s), lines = T.Lines(s);
+            float ending = T.Ending(s, hold), open = T.Open(s), lines = T.Lines(s);
 
             // --- the space, the speed-line tunnel and the black hole --------------------------------------------
             // The space flies in from the vanishing point while the lines run and settles as they end; the
