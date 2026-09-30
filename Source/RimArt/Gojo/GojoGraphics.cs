@@ -7,10 +7,11 @@ namespace RimArt
 {
     /// <summary>
     /// The drawing pieces shared by Unlimited Void and the Gojo abilities that come after it: the kit's
-    /// colours, the rim light round Gojo, the white splatter burst, the light over the whole view, and
-    /// the dome's outline under the 0.6 lift. The port of the parts of the lab's lib/gojo.js that the
-    /// pocket-map sketches use. Everything is a level circle, a quad or a flat polygon about one point,
-    /// so nothing needs a per-facing method. Every function takes ages and times and keeps no state.
+    /// colours, the rim light round Gojo, the white splatter burst, the light over the whole view, the
+    /// dome's outline under the 0.6 lift, and the pointing arm of the Red, Blue and Purple sketches. The
+    /// port of the parts of the lab's lib/gojo.js that the pocket-map sketches use. Everything is a level
+    /// circle, a quad or a flat polygon about one point, so nothing needs a per-facing method. Every
+    /// function takes ages and times and keeps no state.
     ///
     /// Not ported: the stand-in Gojo (body, hair, blindfold, eyes, hands and the hand sign) and the
     /// old dome, cutscene, black hole and ray pieces the superseded sketches draw with.
@@ -24,6 +25,10 @@ namespace RimArt
         internal static readonly Color Peach = new Color(1f, 0.92f, 0.75f);
         internal static readonly Color White = new Color(1f, 1f, 1f);
         internal static readonly Color Ice = VergilGraphics.Ice, Blue = VergilGraphics.Blue;
+        /// <summary>Gojo's uniform (lib/gojo.js Uniform) and the lab stand-in's skin: the drawn arm's sleeve and hand in the previews.</summary>
+        internal static readonly Color Uniform = new Color(0.08f, 0.09f, 0.14f), Skin = new Color(0.83f, 0.70f, 0.54f);
+        /// <summary>How far the pointing arm reaches from Gojo's centre, in cells, when fully out.</summary>
+        internal const float ArmReach = 0.5f;
 
         internal static readonly Material PuffGlow = MaterialPool.MatFrom("RimArt/SixPaths/Puff", ShaderDatabase.MoteGlow);
         internal static readonly float PawnLayer = AltitudeLayer.Pawn.AltitudeFor(), ShadowLayer = AltitudeLayer.Shadows.AltitudeFor();
@@ -80,6 +85,24 @@ namespace RimArt
             Color edge = Fade(Violet, 0.7f * rim * alpha);
             DrawMesh(disc, new Vector2(feet.x, feet.y + 0.18f), PawnLayer - 0.003f, 0.26f, 0.36f, 0f, edge, solid);
             DrawMesh(disc, new Vector2(feet.x, feet.y + 0.58f), PawnLayer - 0.0031f, 0.19f, 0.2f, 0f, edge, solid);
+        }
+
+        /// <summary>
+        /// Gojo's arm held out toward <paramref name="degrees"/> (0 east, 90 north), the pointing arm the Red,
+        /// Blue and Hollow Purple sketches draw: a sleeve, the hand and the index finger. <paramref name="feet"/>
+        /// is the pawn's point, <paramref name="chest"/> the chest's height as drawn (GokuGraphics.ChestOn),
+        /// <paramref name="raised"/> 0 to 1. Under the pawn layer when it points north (sin above 0.35), over it
+        /// otherwise, as the sketches draw it before or after the body.
+        /// </summary>
+        internal static void PointingArm(Vector2 feet, float degrees, float raised, float chest, Color sleeve, Color skin)
+        {
+            if (raised <= 0.02f) return;
+            Vector2 toward = Turn(degrees), shoulder = new Vector2(feet.x, feet.y + chest);
+            float reach = ArmReach * raised, layer = toward.y > 0.35f ? PawnLayer - 0.004f : PawnLayer + 0.016f;
+            Vector2 hand = shoulder + toward * reach, tip = shoulder + toward * (reach + 0.16f * raised);
+            DrawMesh(MeshPool.plane10, shoulder + toward * (reach * 0.4f), layer, 0.12f, reach * 0.8f, 90f - degrees, sleeve, solid);
+            DrawMesh(disc, hand, layer + 0.001f, 0.06f, 0.06f, 0f, skin, solid);
+            DrawMesh(MeshPool.plane10, (hand + tip) / 2f, layer + 0.0015f, 0.03f, 0.16f * raised, 90f - degrees, skin, solid);
         }
 
         /// <summary>

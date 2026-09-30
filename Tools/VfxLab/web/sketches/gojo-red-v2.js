@@ -53,7 +53,11 @@
 // Drawing: flat shapes and level circles only, so it turns with the aim and needs no per-facing
 // method. Height is drawn north (0.6 per cell) with shadows left on the floor. Red is light: soft
 // additive layers, a Transparent dark-red layer under the wash. Gojo is lib/gojo.js's stand-in with a
-// pointing arm drawn here; raiders, wall and rocks are stand-ins.
+// pointing arm drawn here; raiders and wall are stand-ins.
+//
+// Ported to C# as a picture (Source/RimArt/Gojo/GojoRed*.cs, recorded as "Gojo: red: ..."). "Stand-in
+// pawns and props" off hides Gojo's body, the raiders' bodies and shadows and the wall, and shows what
+// the port draws.
 import { Color, Mathf, Meshes, MeshPool } from '../js/engine.js';
 import { draw } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
@@ -197,15 +201,17 @@ function redEdge(pos, k) {
 
 // The thrown body: lying along the throw, head leading, at pos (already lifted); shadow at ground.
 // wob turns it a little (degrees) so it does not fly rigid. lit tints it red, edge draws a red rim.
-function flung(pos, ground, h, deg, colour, lit, edge, wob, sun, strength) {
+// actors false draws the red rim only (what the port draws round a real pawn).
+function flung(pos, ground, h, deg, colour, lit, edge, wob, sun, strength, actors = true) {
   const q = deg * D2R, ux = Math.cos(q), uz = Math.sin(q), rot = -deg + wob;
   const head = { x: pos.x + ux * .42, z: pos.z + uz * .42 }, body = { x: pos.x, z: pos.z + .12 };
-  sprite({ x: ground.x + sun.x * (h + .2), z: ground.z + sun.z * (h + .2) }, .95 * (1 - .25 * h), .4 * (1 - .25 * h), Ink.withAlpha(strength * (1 - .35 * h)), soft, shadowLayer, rot);
+  if (actors) sprite({ x: ground.x + sun.x * (h + .2), z: ground.z + sun.z * (h + .2) }, .95 * (1 - .25 * h), .4 * (1 - .25 * h), Ink.withAlpha(strength * (1 - .35 * h)), soft, shadowLayer, rot);
   if (edge > 0) {
     draw(disc, body.x, pawnLayer - .003, body.z, .38, .26, rot, Red.withAlpha(.85 * edge));
     draw(disc, head.x, pawnLayer - .003, head.z + .02, .22, .23, rot, Red.withAlpha(.85 * edge));
     sprite(body, 1.4, .9, Red.withAlpha(.35 * edge), glow, pawnLayer - .004, rot);
   }
+  if (!actors) return;
   draw(disc, body.x, pawnLayer, body.z, .32, .2, rot, Color.Lerp(colour, Red, lit));
   draw(disc, head.x, pawnLayer + .002, head.z + .02, .16, .17, rot, Skin);
 }
@@ -224,6 +230,7 @@ export default {
   kit: 'Gojo', label: 'Reversal: Red v2 (sketch)',
   params: {
     scenario: { label: 'Scenario', value: 'raider into a wall', options: ['raider into a wall', 'group in the open', 'empty cell'], group: 'Showcase' },
+    actors: { label: 'Stand-in pawns and props', value: true, group: 'Showcase' },
     aim: P('Aim (degrees, 0 east, 90 north)', 0, 0, 355, 5, 'Showcase'),
     dist: P('First pawn or target cell (cells from Gojo, up to 20)', 9, 3, 20, .5, 'Showcase'),
     wallBehind: P('Wall behind the raider (cells)', 4, 2, 8, 1, 'Showcase'),
@@ -286,7 +293,7 @@ export default {
     // --- the wall: shakes on the slam, a dent and cracks stay on its face ---------------------------------------------------
     if (wall(p)) {
       const shake = slamAge >= 0 && slamAge < .15 ? .05 * Math.sin(slamAge * 95) * (1 - slamAge / .15) : 0;
-      for (let k = -1; k <= 1; k++) wallCell(place(p.dist + p.wallBehind + shake, k), p.aim);
+      if (p.actors) for (let k = -1; k <= 1; k++) wallCell(place(p.dist + p.wallBehind + shake, k), p.aim);
       if (slamAge >= 0) {
         const grow = smooth(slamAge / .06), up = slamUp + ChestUp * .6, D = place(face + .14, 0, up);
         sprite(D, .45, .65, Ink.withAlpha(.5 * grow), soft, buildingLayer + .004, -p.aim);
@@ -321,7 +328,7 @@ export default {
         const out = smooth(s / Raise) * (1 - smooth((s - t.arrive - .4) / .3)), north = sa > .35;
         const lit = charging ? .4 * charge : s >= t.fire ? .4 * (1 - clamp((s - t.fire) / .4)) : 0;
         if (north) pointingArm(place, p.aim, out, pawnLayer - .004);
-        caster(g.pos, sun, strength, { tint: Red, tintAmount: lit });
+        if (p.actors) caster(g.pos, sun, strength, { tint: Red, tintAmount: lit });
         if (!north) pointingArm(place, p.aim, out, pawnLayer + .016);
         return;
       }
@@ -329,21 +336,21 @@ export default {
         const edge = burst ? 1 - clamp(age / .4) : 0, lit = burst ? .75 * (1 - clamp(age / .6)) : litByOrb(g.pos);
         if (slamAge >= 0) {
           // On the wall: squashed at the height he hit, then slides down and stands at its foot.
-          if (slamAge < Squash) { const k = smooth(slamAge / .05), at = p.dist + stop + .06 * k; squashed(place(at, 0, slamUp), place(at), Color.Lerp(EnemyColour, Red, lit), k, p.aim, sun, strength); return; }
+          if (slamAge < Squash) { const k = smooth(slamAge / .05), at = p.dist + stop + .06 * k; if (p.actors) squashed(place(at, 0, slamUp), place(at), Color.Lerp(EnemyColour, Red, lit), k, p.aim, sun, strength); return; }
           const u = smooth((slamAge - Squash) / .15), at = place(p.dist + stop - .2 * u, 0, slamUp * (1 - u));
           redEdge(at, edge);
-          pawn(at, EnemyColour, sun, strength, { tint: Red, tintAmount: lit });
+          if (p.actors) pawn(at, EnemyColour, sun, strength, { tint: Red, tintAmount: lit });
           return;
         }
         // Standing until hit; lying while he flies and skids; up again 0.15 s after he stops.
         const up = !burst || age > t.fly + .15;
-        if (up) { redEdge(g.pos, edge); pawn(g.pos, EnemyColour, sun, strength, { tint: Red, tintAmount: lit }); return; }
-        flung(place(p.dist + gone, 0, h), g.pos, h, p.aim, EnemyColour, lit, edge, 18 * Math.sin(age * 22) * (h > .05 ? 1 : 0), sun, strength);
+        if (up) { redEdge(g.pos, edge); if (p.actors) pawn(g.pos, EnemyColour, sun, strength, { tint: Red, tintAmount: lit }); return; }
+        flung(place(p.dist + gone, 0, h), g.pos, h, p.aim, EnemyColour, lit, edge, 18 * Math.sin(age * 22) * (h > .05 ? 1 : 0), sun, strength, p.actors);
         return;
       }
       const lit = burst ? (g.inside ? .6 : .35) * (1 - clamp(age / .6)) : litByOrb(g.pos);
       if (g.inside && burst) redEdge(g.pos, 1 - clamp(age / .2));
-      pawn(g.pos, EnemyColour, sun, strength, { tint: Red, tintAmount: lit });
+      if (p.actors) pawn(g.pos, EnemyColour, sun, strength, { tint: Red, tintAmount: lit });
     });
 
     // --- the charge: swirl at the finger, ribbon arcs round Gojo, the orb --------------------------------------------------
