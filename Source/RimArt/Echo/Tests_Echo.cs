@@ -1195,5 +1195,67 @@ namespace RimArt
                     t.Check(brow.Worker.CanDrawNow(brow, south), who + ": " + brow.Props.debugLabel + " is drawn again");
             }
         }
+
+        [RimArtTest("Echo", "costume 10 Shirou's hero form draws the raglan shirt, jeans and trainers over worn clothes and on a naked Host, hides the shirt and hat but not the belt, and goes on revert (screenshots)")]
+        private static IEnumerable<int> ShirouCasual(RimArtTestContext t)
+        {
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
+            EchoDef shirou = DefDatabase<EchoDef>.GetNamed("AG_Echo_Shirou");
+            HediffDef form = shirou.manifestHediff;
+            List<PawnRenderNodeProperties_EchoCostume> props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
+            if (!t.Check(props?.Count == 1 && props[0].bodyTypeGraphicPaths != null,
+                    "the hero form has one costume node with body types (" + (props?.Count ?? 0) + " nodes)"))
+                yield break;
+            PawnRenderNodeProperties_EchoCostume clothes = props[0];
+            t.Check(clothes.parentTagDef == PawnRenderNodeTagDefOf.ApparelBody, "the clothes hang on the body apparel node");
+            t.Check(clothes.hideBodyApparel && clothes.hideHeadgear, "the clothes hide body apparel and headgear");
+            t.Check(!clothes.onlyOverWornApparel, "the clothes are drawn whether or not the Host wears clothes");
+            foreach (string facing in new[] { "south", "east", "north" })
+                foreach (BodyTypeGraphicData body in clothes.bodyTypeGraphicPaths)
+                    t.Check(ContentFinder<UnityEngine.Texture2D>.Get(body.texturePath + "_" + facing, false) != null,
+                        body.bodyType.defName + " " + facing + " texture loads");
+
+            Pawn host = Colonist(t);
+            host.apparel.DestroyAll();
+            foreach (string piece in new[] { "Apparel_BasicShirt", "Apparel_Pants", "Apparel_CowboyHat", "Apparel_SmokepopBelt" })
+                Wear(host, piece);
+            EchoRecord record = EchoUtility.ForceHost(shirou, host);
+            echoes.charge = 100f;
+            t.Check(EchoUtility.Manifest(record), "manifested dressed");
+            yield return 2;
+            PawnRenderNode node = CostumeNodes(host, form).FirstOrDefault();
+            t.Check(node?.PrimaryGraphic?.path == "RimArt/Echo/Costume/ShirouCasual_" + host.story.bodyType.defName,
+                "the clothes are the " + host.story.bodyType.defName + " set (" + node?.PrimaryGraphic?.path + ")");
+            t.Check(node != null && node.Worker.CanDrawNow(node, TreeParms(host)), "the clothes are drawn");
+            t.Check(host.story.HairColor == shirou.hairColor, "the hair has Shirou's colour (" + host.story.HairColor + ")");
+            CheckDrawn(t, host, "dressed", ("Apparel_BasicShirt", false), ("Apparel_CowboyHat", false), ("Apparel_SmokepopBelt", true));
+            PawnRenderNode hair = RenderNodes(host).FirstOrDefault(n => n.Props.debugLabel == "Hair");
+            t.Check(hair != null && hair.Worker.CanDrawNow(hair, TreeParms(host)), "the hat is hidden, so the hair is drawn");
+            foreach (Rot4 rot in new[] { Rot4.South, Rot4.East, Rot4.North, Rot4.West })
+            {
+                Face(host, rot);
+                yield return 20;
+                yield return t.ShotAs("shirou-" + rot.ToStringHuman().ToLowerInvariant());
+            }
+
+            // Naked: the clothes are still drawn (Shirou has no reason to show the Host's own body).
+            EchoUtility.Revert(record, collapse: false);
+            host.apparel.DestroyAll();
+            echoes.charge = 100f;
+            t.Check(EchoUtility.Manifest(record), "manifested naked");
+            yield return 2;
+            node = CostumeNodes(host, form).FirstOrDefault();
+            t.Check(node != null && node.Worker.CanDrawNow(node, TreeParms(host)), "naked: the clothes are drawn");
+            Face(host, Rot4.South);
+            yield return 20;
+            yield return t.ShotAs("shirou-naked-south");
+
+            EchoUtility.Revert(record, collapse: false);
+            foreach (string piece in new[] { "Apparel_BasicShirt", "Apparel_CowboyHat" })
+                Wear(host, piece);
+            yield return 2;
+            t.Check(!CostumeNodes(host, form).Any(), "nothing of Shirou is drawn after revert");
+            CheckDrawn(t, host, "after revert", ("Apparel_BasicShirt", true), ("Apparel_CowboyHat", true));
+        }
     }
 }
