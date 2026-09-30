@@ -207,7 +207,7 @@ namespace RimArt
             foreach (EchoTrial trial in defs[cap].trials)
             {
                 if (trial is Trial_Skill skill) extra.skills.GetSkill(skill.skill).Level = skill.level;
-                else if (trial is Trial_Record rec) extra.records.AddTo(rec.record, rec.count);
+                else if (trial is Trial_Record rec) rec.Meet(extra);
             }
             yield return 2;
             bool met = EchoUtility.TrialsMet(record);

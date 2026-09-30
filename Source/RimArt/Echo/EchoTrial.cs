@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Reflection;
+using HarmonyLib;
 using RimWorld;
 using Verse;
 
@@ -61,15 +63,49 @@ namespace RimArt
         }
     }
 
-    /// <summary>A vanilla record (Kills, DamageTaken, PeopleCaptured ...), counted over the pawn's whole life.</summary>
+    /// <summary>
+    /// A vanilla record (Kills, DamageTaken, PeopleCaptured ...), counted over the pawn's whole life. For a
+    /// time record (TimeDowned ...) count is in hours and the card shows hours; the record itself counts ticks.
+    /// </summary>
     public class Trial_Record : EchoTrial
     {
         public RecordDef record;
         public float count;
 
-        public override float Current(Pawn pawn) => pawn?.records?.GetValue(record) ?? 0f;
+        private bool InHours => record.type == RecordType.Time;
+
+        public override float Current(Pawn pawn)
+        {
+            float value = pawn?.records?.GetValue(record) ?? 0f;
+            return InHours ? value / GenDate.TicksPerHour : value;
+        }
+
         public override float Target => count;
-        protected override string DefaultLabel => record.LabelCap + " " + count.ToString("0");
+        protected override string DefaultLabel => InHours
+            ? "AG_EchoTrialHours".Translate(record.LabelCap, count.ToString("0")).ToString()
+            : record.LabelCap + " " + count.ToString("0");
+
+        public override string ProgressText(Pawn pawn) => InHours
+            ? "AG_EchoTrialHoursProgress".Translate(Current(pawn).ToString("0.#"), count.ToString("0")).ToString()
+            : base.ProgressText(pawn);
+
+        private static readonly FieldInfo RecordsField = AccessTools.Field(typeof(Pawn_RecordsTracker), "records");
+
+        /// <summary>
+        /// Debug and tests: raises the pawn's record to what this trial asks. Vanilla only adds to Int and Float
+        /// records (Pawn_RecordsTracker.AddTo logs an error for a time record and adds nothing), so a time
+        /// record is set, in ticks.
+        /// </summary>
+        public void Meet(Pawn pawn)
+        {
+            if (pawn?.records == null || Current(pawn) >= count) return;
+            if (!InHours)
+            {
+                pawn.records.AddTo(record, count - Current(pawn));
+                return;
+            }
+            ((DefMap<RecordDef, float>)RecordsField.GetValue(pawn.records))[record] = count * GenDate.TicksPerHour;
+        }
 
         public override IEnumerable<string> ConfigErrors()
         {

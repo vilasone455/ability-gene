@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Strongest (TraitDefs/AG_Gojo.xml): who counts as young or old is on the trait's StrongestExtension;
+       the workers are in Source/RimArt/Gojo/Echo/TheStrongest.cs. Only colonists of the same faction count. -->
+
+  <ThoughtDef>
+    <defName>AG_StrongestOfYoung</defName>
+    <thoughtClass>Thought_SituationalSocial</thoughtClass>
+    <workerClass>RimArt.ThoughtWorker_StrongestOfYoung</workerClass>
+    <validWhileDespawned>true</validWhileDespawned>
+    <requiredTraits>
+      <li>AG_TheStrongest</li>
+    </requiredTraits>
+    <stages>
+      <li>
+        <label>young and full of promise</label>
+        <baseOpinionOffset>20</baseOpinionOffset>
+      </li>
+    </stages>
+  </ThoughtDef>
+
+  <ThoughtDef>
+    <defName>AG_StrongestOfOld</defName>
+    <thoughtClass>Thought_SituationalSocial</thoughtClass>
+    <workerClass>RimArt.ThoughtWorker_StrongestOfOld</workerClass>
+    <validWhileDespawned>true</validWhileDespawned>
+    <requiredTraits>
+      <li>AG_TheStrongest</li>
+    </requiredTraits>
+    <stages>
+      <li>
+        <label>old and set in their ways</label>
+        <baseOpinionOffset>-20</baseOpinionOffset>
+      </li>
+    </stages>
+  </ThoughtDef>
+
+  <ThoughtDef>
+    <defName>AG_YoungOfStrongest</defName>
+    <thoughtClass>Thought_SituationalSocial</thoughtClass>
+    <workerClass>RimArt.ThoughtWorker_YoungOfStrongest</workerClass>
+    <validWhileDespawned>true</validWhileDespawned>
+    <stages>
+      <li>
+        <label>looks out for the young</label>
+        <baseOpinionOffset>10</baseOpinionOffset>
+      </li>
+    </stages>
+  </ThoughtDef>
+
+  <ThoughtDef>
+    <defName>AG_OldOfStrongest</defName>
+    <thoughtClass>Thought_SituationalSocial</thoughtClass>
+    <workerClass>RimArt.ThoughtWorker_OldOfStrongest</workerClass>
+    <validWhileDespawned>true</validWhileDespawned>
+    <stages>
+      <li>
+        <label>disrespects elders</label>
+        <baseOpinionOffset>-10</baseOpinionOffset>
+      </li>
+    </stages>
+  </ThoughtDef>
+
+  <!-- Stage 0 while no other Host is awakened in the colony, stage 1 once another is. -->
+  <ThoughtDef>
+    <defName>AG_StrongestAlone</defName>
+    <workerClass>RimArt.ThoughtWorker_StrongestAlone</workerClass>
+    <validWhileDespawned>true</validWhileDespawned>
+    <requiredTraits>
+      <li>AG_TheStrongest</li>
+    </requiredTraits>
+    <stages>
+      <li>
+        <label>alone at the top</label>
+        <description>No other hero in the colony stands where I stand.</description>
+        <baseMoodEffect>-6</baseMoodEffect>
+      </li>
+      <li>
+        <label>not alone at the top</label>
+        <description>Another hero has awakened in the colony.</description>
+        <baseMoodEffect>4</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
+
+</Defs>

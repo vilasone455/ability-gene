@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Unlimited Void's one terrain. The mod draws the space over it (MapComponent_UnlimitedVoid), so its
+       texture is only a near-black fallback (the Infinity Castle void's). Walkable everywhere; nothing can
+       be built on it. -->
+  <TerrainDef>
+    <defName>AG_VoidFloor</defName>
+    <label>void</label>
+    <description>The floor of Unlimited Void's pocket map. Walkable; nothing can be built on it.</description>
+    <texturePath>RimArt/InfinityCastle/Void</texturePath>
+    <edgeType>Hard</edgeType>
+    <renderPrecedence>35</renderPrecedence>
+    <pathCost>0</pathCost>
+    <holdSnowOrSand>false</holdSnowOrSand>
+    <fertility>0</fertility>
+    <affordances />
+    <statBases>
+      <Beauty>0</Beauty>
+    </statBases>
+  </TerrainDef>
+
+</Defs>

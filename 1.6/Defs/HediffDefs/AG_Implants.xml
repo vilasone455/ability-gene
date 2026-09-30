@@ -14,18 +14,17 @@
     <spawnThingOnRemoved>AG_ReflexBooster</spawnThingOnRemoved>
   </HediffDef>
 
-  <!-- Phase barrier implant — grants Phase Guard. Archotech tier. -->
+  <!-- Phase barrier implant. Echo-only since the Gojo port: it grants nothing; Phase Guard (Infinity) comes from
+       Gojo's Echo. The def stays loadable. -->
   <HediffDef>
     <defName>AG_PhaseBarrier</defName>
     <hediffClass>Hediff_Implant</hediffClass>
     <label>phase barrier</label>
     <labelNoun>a phase barrier</labelNoun>
-    <description>An archotech implant that repeatedly halves the remaining distance of anything approaching its user. It suspends attacks without destroying them and blocks air on the same terms.</description>
+    <description>An archotech brain implant. Its phase guard comes from Gojo's Echo since the hero port; the implant no longer grants it.</description>
     <defaultLabelColor>(0.5, 1.0, 0.6)</defaultLabelColor>
     <isBad>false</isBad>
-    <abilities>
-      <li>AG_Recursion</li>
-    </abilities>
+    <spawnThingOnRemoved>AG_PhaseBarrier</spawnThingOnRemoved>
   </HediffDef>
 
   <!-- Neural accelerator implant — grants the three time-alter abilities. -->

@@ -363,8 +363,8 @@
     </renderNodeProperties>
   </HediffDef>
 
-  <!-- Gojo's hero form. No EchoDef yet (his kit is not ported), so for now only the costume: his teacher's
-       uniform from the anime's model sheets. Three pieces:
+  <!-- Gojo's hero form (AG_Echo_Gojo). The costume is his teacher's uniform from the anime's model sheets.
+       Three pieces:
        - the near-black zip-up jacket to the top of the thighs, black trousers and boots, on the body; it
          hides worn clothes and headgear and, facing north, goes over the head so its collar covers the
          nape, as Minato's haori;

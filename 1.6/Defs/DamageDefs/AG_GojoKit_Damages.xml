@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Hollow Purple's erasure. A pawn on a side row of its path takes 60 of it with armour ignored
+       (DamageInfo.SetIgnoreArmor in PurpleRun.Strike; no armorCategory here either); an erased pawn is killed
+       with it. No blood: makesBlood is off and its injury (AG_Erased) does not bleed. -->
+  <DamageDef>
+    <defName>AG_Erasure</defName>
+    <label>erasure</label>
+    <workerClass>DamageWorker_AddInjury</workerClass>
+    <externalViolence>true</externalViolence>
+    <makesBlood>false</makesBlood>
+    <deathMessage>{0} has been erased.</deathMessage>
+    <hediff>AG_Erased</hediff>
+    <defaultDamage>60</defaultDamage>
+  </DamageDef>
+
+</Defs>

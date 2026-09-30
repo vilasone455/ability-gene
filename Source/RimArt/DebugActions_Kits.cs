@@ -129,8 +129,8 @@ namespace RimArt
 
                 Implant("Neural accelerator", "AG_NeuralAccelerator", "Brain", "Bionics"),
                 Implant("Reflex booster", "AG_ReflexBooster", "Spine", "Prosthetics"),
-                // No research: the phase barrier is deliberately uncraftable.
-                Implant("Phase barrier", "AG_PhaseBarrier", "Brain", null),
+                // No phase barrier: since the Gojo port it grants nothing. Infinity comes from Gojo's Echo
+                // (Echo, "make Host (no trials)").
 
                 new Kit { Label = "Stasis belt", Grant = GrantStasisBelt },
                 new Kit { Label = "Frost bomb", Grant = GrantFrostBomb },

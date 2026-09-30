@@ -19,13 +19,17 @@
 //   have none: they are taken but not frozen and act normally (an enemy mech fights inside; the
 //   colony's androids and mechs can fight beside Gojo).
 //   Gojo can walk and act. Touching a frozen pawn (walk next to it, 0.3 s) spares it for the rest of
-//   the domain, as Yuji holding Gojo in anime ep. 7. That is the dilemma: 10 s to reach the allies
-//   caught with him, or to hit enemies.
+//   the domain, as Yuji holding Gojo in anime ep. 7: its overload stops building, and it keeps what
+//   it already has. That is the dilemma: 10 s to reach the allies caught with him, or to hit enemies.
 //   The domain lasts 10 s, or until Release, or until Gojo is downed. Everyone comes out at the
-//   matching home-map cell (nearest free cell if blocked). Everyone still frozen at the end, friend
-//   or foe, gets Void Overload: Consciousness capped at 10 % for 60 s (downed), then Void-scarred,
-//   Consciousness -15 % and Sight -20 % for 2 days. No damage. Overloading a neutral visitor costs
-//   goodwill as a harmful psycast does. Cooldown 2 days.
+//   matching home-map cell (nearest free cell if blocked).
+//   Void Overload builds over time (agreed 2026-09-30): every untouched victim, friend or foe, gains
+//   10 % per second frozen. On exit, Consciousness is capped at 100 % minus the overload (never below
+//   10 %); the overload then falls 0.5 % per second. Past 7 s (over 70 %) the pawn is downed until
+//   it falls back to 70 %, and only a pawn that went down is also Void-scarred: Consciousness -15 %
+//   and Sight -20 % for 2 days. A full 10 s = consciousness 10 %, downed 60 s, 140 s recovering, then
+//   scarred. No damage. Overloading a neutral visitor costs goodwill as a harmful psycast does.
+//   Cooldown 2 days.
 //
 // Order, with the default sliders (scenario "mixed", plan "touch allies first"):
 //   0.00  white (the camera switches maps behind it); a white burst and ring on Gojo, the crowd

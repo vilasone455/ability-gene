@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Erased ground: every cell within 1.5 cells of Hollow Purple's path becomes this, for good
+       (PurpleRun.Scar). Smooth, pale violet-grey (the sketch's lane colour, 0.58 0.54 0.63), nothing grows in it,
+       and it takes buildings and floors like smooth stone. The texture is vanilla's smooth stone, tinted; the
+       edges are hard, so the lane steps by cells on a slant as in the sketch. Not layerable: it replaces the
+       ground under it. -->
+  <TerrainDef>
+    <defName>AG_ErasedGround</defName>
+    <label>erased ground</label>
+    <description>Ground Hollow Purple passed over: smooth, flat and pale. Nothing grows in it. It can be built on and floored over.</description>
+    <texturePath>Terrain/Surfaces/SmoothStone</texturePath>
+    <color>(0.58, 0.54, 0.63)</color>
+    <edgeType>Hard</edgeType>
+    <renderPrecedence>255</renderPrecedence>
+    <pathCost>0</pathCost>
+    <fertility>0</fertility>
+    <affordances>
+      <li>Light</li>
+      <li>Medium</li>
+      <li>Heavy</li>
+      <li>Walkable</li>
+    </affordances>
+    <statBases>
+      <Beauty>0</Beauty>
+    </statBases>
+  </TerrainDef>
+
+</Defs>

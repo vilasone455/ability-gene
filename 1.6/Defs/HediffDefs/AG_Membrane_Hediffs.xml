@@ -11,8 +11,8 @@
        closes it with the gizmo on this hediff, or until it closes them. -->
   <HediffDef>
     <defName>AG_Recursion</defName>
-    <label>phase barrier</label>
-    <description>A phase barrier is halving every approach to this person. Nothing has been stopped or deflected; it is all still coming in steps too small to finish.\n\nThe field holds back the next breath as readily as a bullet, so its wearer is not breathing.</description>
+    <label>Infinity</label>
+    <description>Infinity is halving every approach to this person within 3.9 cells. Nothing has been stopped or deflected; it is all still coming in steps too small to finish.\n\nThe field holds back air as well as bullets, so this person is not breathing until it drops.</description>
     <hediffClass>HediffWithComps</hediffClass>
     <defaultLabelColor>(0.75, 0.8, 0.95)</defaultLabelColor>
     <scenarioCanAdd>false</scenarioCanAdd>

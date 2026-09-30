@@ -11,6 +11,9 @@ namespace RimArt
         public Thing thing;
         // Exact position; for an item it runs ahead of Thing.Position between commits.
         public Vector3 position;
+        // Where the thing was when a well first took it (Blue's drag marks). Not saved: a loaded motion
+        // starts from where it is.
+        public Vector3 start;
         // Thing.Position as last committed or seen; a different Thing.Position means something else moved it.
         public IntVec3 cell;
         public Vector3 walking;
@@ -20,6 +23,7 @@ namespace RimArt
             Scribe_References.Look(ref thing, "thing");
             Scribe_Values.Look(ref position, "position");
             Scribe_Values.Look(ref cell, "cell");
+            if (Scribe.mode == LoadSaveMode.PostLoadInit) start = position;
         }
     }
 
