@@ -8,8 +8,9 @@ using Verse.AI.Group;
 namespace RimArt
 {
     /// <summary>
-    /// Moving pawns between a home map and a pocket map, shared by Unlimited Blade Works, Infinity Castle and
-    /// Unlimited Void: the move itself, the free cell a pawn lands on, and the lord hostile pawns fight on under.
+    /// Moving pawns between a home map and a pocket map, shared by Unlimited Blade Works, Infinity Castle,
+    /// Unlimited Void and the Kamui dimension: the move itself, the free cell a pawn lands on, and the lord hostile
+    /// pawns fight on under. <see cref="PocketGuest"/> and <see cref="PocketReturn"/> build the take and the return on it.
     /// </summary>
     public static class CrossMapMove
     {

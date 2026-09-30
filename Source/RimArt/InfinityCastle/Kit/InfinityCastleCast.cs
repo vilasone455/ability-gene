@@ -15,14 +15,10 @@ namespace RimArt
 {
     public enum CastleGuest { Enemy, Carrier, Summoned }
 
-    /// <summary>One pawn a cast moved into the castle: where it came from, the lord it left, and its doors.</summary>
-    public sealed class CastleTaken : IExposable
+    /// <summary>One pawn a cast moved into the castle: where it came from and the lord it left (<see cref="PocketGuest"/>), and its doors.</summary>
+    public sealed class CastleTaken : PocketGuest
     {
-        public Pawn pawn;
         public CastleGuest kind;
-        /// <summary>The home-map cell it goes back to.</summary>
-        public IntVec3 from;
-        public Lord lord;
         /// <summary>Take: where its door opens, in cells from the target cell, and when (seconds from the start of the warm-up).</summary>
         public Vector2 at;
         public float door;
@@ -30,14 +26,10 @@ namespace RimArt
         internal float back = -1f;
         internal bool up;
 
-        public void ExposeData()
+        public override void ExposeData()
         {
-            // A lord that has ended is saved nowhere, and a reference to it would not resolve on load.
-            if (Scribe.mode == LoadSaveMode.Saving && lord != null && (lord.Map == null || !lord.Map.lordManager.lords.Contains(lord))) lord = null;
-            Scribe_References.Look(ref pawn, "pawn", true);
+            base.ExposeData();
             Scribe_Values.Look(ref kind, "kind");
-            Scribe_Values.Look(ref from, "from");
-            Scribe_References.Look(ref lord, "lord");
             Scribe_Values.Look(ref at, "at");
             Scribe_Values.Look(ref door, "door");
         }
@@ -64,7 +56,7 @@ namespace RimArt
     ///   the carrier is downed, dies, leaves the castle or loses the ability (reverted, or the pool ran dry).
     /// - Release: a door opens under everyone in the castle and they sink, the carrier last, the castle
     ///   fades. Then everyone alive, downed or not, goes back to the cell they came from (a summoned
-    ///   colonist to where it was summoned from), and enemies rejoin their old lord if it still exists,
+    ///   colonist to where it was summoned from), and enemies rejoin their old lord if it still exists and takes them,
     ///   else get a lord that leaves the map. Corpses and items come up round the target cell. The castle
     ///   map is removed. With no map to return to, everyone waits in the castle until there is one.
     ///
@@ -230,8 +222,7 @@ namespace RimArt
                 Fizzle("Infinity Castle: the castle was gone before anyone went in.");
                 return;
             }
-            bool watching = Find.CurrentMap == home;
-            var selected = new HashSet<Pawn>(Find.Selector.SelectedPawns);
+            var view = new FollowView(home);
 
             // Killed or gone while waiting over the door: left behind.
             foreach (CastleTaken t in taken.ToList())
@@ -282,12 +273,7 @@ namespace RimArt
             component.Arrive(arrived, caster);
             Assault(hostile, castle);
             inTick = now;
-
-            if (watching)
-            {
-                CameraJumper.TryJump(new GlobalTargetInfo(component.DaisCell, castle));
-                foreach (Pawn p in arrived.Append(caster)) if (selected.Contains(p)) Find.Selector.Select(p, false, false);
-            }
+            view.Follow(new GlobalTargetInfo(component.DaisCell, castle), arrived.Append(caster));
             Messages.Message("Infinity Castle: " + arrived.Count + " taken in for " + castleSeconds.ToString("0") + " s.", caster, MessageTypeDefOf.NeutralEvent, false);
         }
 
@@ -358,7 +344,7 @@ namespace RimArt
 
         private void Return(int now)
         {
-            Map to = home != null && Find.Maps.Contains(home) ? home : Find.AnyPlayerHomeMap;
+            Map to = PocketReturn.HomeOr(home);
             if (castle == null || !Find.Maps.Contains(castle))
             {
                 returned = true;
@@ -379,19 +365,13 @@ namespace RimArt
             var o = new Vector2(drop.x + 0.5f, drop.z + 0.5f);
             Vector2 Offset(IntVec3 c) => new Vector2(c.x + 0.5f, c.z + 0.5f) - o;
             returnPlan = new CastleOpenPlan { take = false, radius = radius, casterShaft = true };
-            bool watching = Find.CurrentMap == castle;
-            var selected = new HashSet<Pawn>(Find.Selector.SelectedPawns);
-            var moved = new List<Pawn>();
-            var leavingMap = new List<Pawn>();
+            var back = new PocketReturn(castle, to, hostilesFight: false);
             int k = 0;
 
             void Back(Pawn p, IntVec3 want, CastleTaken t)
             {
                 InfinityCastleRide.Release(p);
-                p.GetLord()?.RemovePawn(p);
-                IntVec3 cell = FreeCellNear(to, want);
-                Move(p, cell, to);
-                moved.Add(p);
+                IntVec3 cell = back.Bring(p, want);
                 float door = t?.kind == CastleGuest.Carrier ? OT.CasterBackDoor : OT.BackDoorOf(k++);
                 if (t?.kind == CastleGuest.Carrier) { returnPlan.caster = Offset(cell); returnPlan.casterTime = door; }
                 else returnPlan.doors.Add((Offset(cell), door));
@@ -401,45 +381,32 @@ namespace RimArt
                 p.stances?.stunner.StunFor(Mathf.CeilToInt((door + DoorThrough + OT.Rise) * 60f), null, false, false);
             }
 
-            // Everyone alive, back where they came from. A pawn carried by another is inside its carrier and goes with it.
+            // Everyone alive, back where they came from; the enemies rejoin their old lord or leave the map.
             foreach (CastleTaken t in taken)
             {
-                Pawn p = t.pawn;
-                if (p == null || p.Destroyed || p.Dead || !p.Spawned || p.Map != castle) continue;
-                Back(p, to == home ? t.from : drop, t);
-                if (t.kind != CastleGuest.Enemy) continue;
-                if (t.lord != null && to.lordManager.lords.Contains(t.lord) && t.lord.CanAddPawn(p)) t.lord.AddPawn(p);
-                else if (p.Faction != null && p.Faction != Faction.OfPlayer) leavingMap.Add(p);
+                if (!back.Here(t.pawn)) continue;
+                Back(t.pawn, to == home ? t.from : drop, t);
+                back.Rejoin(t.pawn, t.lord);
             }
             // Anyone else in the castle by now, round the target cell.
-            foreach (Pawn p in castle.mapPawns.AllPawnsSpawned.ToList())
+            foreach (Pawn p in back.Others())
             {
-                if (p.Dead) continue;
                 Back(p, drop, null);
-                if (p.Faction != null && p.Faction != Faction.OfPlayer && p.GetLord() == null) leavingMap.Add(p);
+                back.NoLord(p);
             }
             // Corpses, dropped weapons and everything else lying in the castle, round the target cell; a door for each corpse.
             int c = 0;
-            foreach (Thing thing in castle.listerThings.AllThings.ToList())
+            foreach (Thing thing in back.Items())
             {
-                if (thing.Destroyed || !thing.Spawned || thing.def.category != ThingCategory.Item) continue;
                 // A pawn that died while hidden (gone through its Release door) would come home an unseen corpse.
                 if (thing is Corpse dead) InfinityCastleRide.Release(dead.InnerPawn);
-                thing.DeSpawn();
-                if (GenPlace.TryPlaceThing(thing, drop, to, ThingPlaceMode.Near) && thing is Corpse && thing.Spawned)
+                if (back.Place(thing, drop) && thing is Corpse && thing.Spawned)
                     returnPlan.doors.Add((Offset(thing.Position), OT.CorpseDoor + 0.07f * c++));
             }
-            foreach (IGrouping<Faction, Pawn> group in leavingMap.GroupBy(p => p.Faction))
-                LordMaker.MakeNewLord(group.Key, new LordJob_ExitMapBest(LocomotionUrgency.Jog), to, group);
+            back.Finish(new GlobalTargetInfo(drop, to), LocomotionUrgency.Jog);
             // Anyone else it hid and did not bring home alive (dead with no corpse left): nothing to show later.
             foreach (CastleTaken t in taken)
                 if (t.pawn != null && t.pawn.Dead) InfinityCastleRide.Release(t.pawn);
-
-            if (watching)
-            {
-                CameraJumper.TryJump(new GlobalTargetInfo(drop, to));
-                foreach (Pawn p in moved) if (selected.Contains(p)) Find.Selector.Select(p, false, false);
-            }
             InfinityCastleMap.CloseLater(castle);
         }
 
@@ -458,8 +425,6 @@ namespace RimArt
                 foreach (Pawn p in home?.mapPawns?.AllPawnsSpawned ?? new List<Pawn>())
                     if (InfinityCastleRide.Hidden(p) && !taken.Any(t => t.pawn == p)) InfinityCastleRide.Release(p);
         }
-
-        // Moving pawns: Move, FreeCellNear and Assault are CrossMapMove's (Source/RimArt/Shared).
 
         // ---- the clock ------------------------------------------------------------------------------------------
 

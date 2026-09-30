@@ -220,7 +220,7 @@ namespace RimArt
             fromMap = origin;
             fromCell = pawn.Position;
             ObitoFX.WarpedIn(pawn);
-            Move(pawn, InvoluteUtility.FreeCellNear(inside, mouth), inside, true);
+            Move(pawn, CrossMapMove.FreeCellNear(inside, mouth), inside, true);
             return true;
         }
 
@@ -242,7 +242,7 @@ namespace RimArt
             exitMap = null;
             exitCell = IntVec3.Invalid;
             if (!Inside || map == null || !Find.Maps.Contains(map)) return;
-            IntVec3 to = InvoluteUtility.FreeCellNear(map, cell);
+            IntVec3 to = CrossMapMove.FreeCellNear(map, cell);
             Move(pawn, to, map, true);
             ObitoFX.WarpedOut(pawn);
             fromMap = null;
@@ -259,7 +259,7 @@ namespace RimArt
             Map map = OutsideMap;
             if (map == null) return;
             IntVec3 cell = map == fromMap && fromCell.IsValid ? fromCell : map.Center;
-            Move(pawn, InvoluteUtility.FreeCellNear(map, cell), map, true);
+            Move(pawn, CrossMapMove.FreeCellNear(map, cell), map, true);
             fromMap = null;
             fromCell = IntVec3.Invalid;
         }
@@ -366,13 +366,13 @@ namespace RimArt
             if (thing is Pawn p && p.Dead && p.Corpse != null) thing = p.Corpse;
             if (thing is Pawn pawnOut)
             {
-                Move(pawnOut, InvoluteUtility.FreeCellNear(map, cell), map, false);
+                Move(pawnOut, CrossMapMove.FreeCellNear(map, cell), map, false);
                 if (pawnOut.HostileTo(Faction.OfPlayer))
                 {
                     pawnOut.stances?.stunner.StunFor(stunTicks, pawn, false, true);
-                    if (pawnOut.GetLord() == null && pawnOut.Faction != null && pawnOut.RaceProps.Humanlike && !pawnOut.Downed)
-                        LordMaker.MakeNewLord(pawnOut.Faction, new LordJob_AssaultColony(pawnOut.Faction, false, false, false, false, false), map,
-                            new List<Pawn> { pawnOut });
+                    // Assault gives none to a pawn hostile only through a mental state (a berserk colonist).
+                    if (pawnOut.GetLord() == null && pawnOut.RaceProps.Humanlike && !pawnOut.Downed)
+                        CrossMapMove.Assault(new List<Pawn> { pawnOut }, map);
                 }
                 return;
             }
