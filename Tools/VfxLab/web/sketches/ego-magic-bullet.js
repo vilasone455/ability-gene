@@ -29,7 +29,7 @@
 //          the target, and a curved tan brush sweep with a frayed tip runs along the floor from the
 //          shooter's feet. From shot four two wide paper columns stand further down the beam. Short
 //          cyan speed lines fly past the
-//          circle. The rifle kicks up about 30 degrees, held one-handed.
+//          circle. The rifle kicks up about 40 degrees, held one-handed, the shooter rocked back.
 //   Hit:   the target lit yellow-white, a burst of thin yellow spikes and long rays, an orange
 //          lightning bolt arcing past it along the beam, orange sparks flung on forward, orange
 //          streak lines, a small burn. The brackets and slab thin to tan oval outlines and stay.
@@ -49,7 +49,8 @@
 //   0.00  aim: rifle level at chest height on the aim; seven pips over the head show the count;
 //         the circle opens a cell ahead of the muzzle over the first 40 % of the aim time, then
 //         slides back to .4 cells ahead; blue sparks drift up; the chamber glows
-//   0.45  fire: flash, the rifle kicks up 30 degrees and settles over .45 s; the bullet flies at
+//   0.45  fire: flash, the shooter rocks back .09 cells, the rifle slides back .16 and its barrel
+//         jumps up 40 degrees in .05 s and swings back down, level by .59 s; the bullet flies at
 //         120 cells/s out through the circle; the brackets, slab and floor sweep appear in .08 s;
 //         the beam is left from the muzzle to the range with forks along it; it crosses the wall
 //         (a punched hole and dust that stay) and every pawn on the line (the raider in front of
@@ -116,7 +117,9 @@ const Chunk = 2;                      // the beam fades in 2-cell pieces from wh
 const Swing = .35, Tail = .5;
 const Flinch = .18, Settle = .08;
 const BeamLife = .6, CircleClose = .25;
-const KickTilt = 30 * D2R, KickUp = .06, KickSettle = .45;   // the barrel swings up 30 degrees in .06 s and comes down over .45 s
+const KickTilt = 40 * D2R, KickUp = .05;                     // the barrel jumps up 40 degrees in .05 s ...
+const KickDamp = 3.2, KickSwing = 2.9;                       // ... and comes down as a damped swing: 40 x e^(-3.2 t) cos(2.9 t), level again at .59 s
+const KickSlide = .16, RockBack = .09;                       // the rifle slides back .16 cells; the shooter rocks back .09
 const PaperOpen = .08, PaperThin = .5, PaperLife = 1.4;      // the parchment: full in .08 s, thins to an outline over .5 s, gone by 1.4 s
 const Shots = 7;
 const CirclesFor = [1, 1, 2, 2, 3, 4, 5];   // Limbus: circles per Magic Bullet count
@@ -533,7 +536,7 @@ export default {
   },
   events(p) {
     const t = times(p);
-    return [{ t: t.fire, type: 'sound', def: p.shot >= Shots ? 'RimArt_MagicBulletSeventh' : 'RimArt_MagicBulletFire' }, { t: t.fire, type: 'shake', value: p.shot >= Shots ? .03 : .015 }];
+    return [{ t: t.fire, type: 'sound', def: p.shot >= Shots ? 'RimArt_MagicBulletSeventh' : 'RimArt_MagicBulletFire' }, { t: t.fire, type: 'shake', value: p.shot >= Shots ? .06 : .035 }];
   },
 
   draw(s, p, { origin: o, scene }) {
@@ -605,18 +608,22 @@ export default {
         if (life) parchment(`mb slab ${q.tag}`, at(pos, 'chest', who), u, 1, -.1, .18, .6 * life.open, .3 * life.open, life.alpha * .9, life.thin, 40 + q.pos.x);
       }
     }
-    // The shooter, the counter, and the rifle in front. The kick swings the barrel up.
-    pawn(o, { ...who, shirt: Holder });
-    if (p.corroded) abnormality(o, who, sun, strength, s);
-    counter('mb counter', at(o, 'headTop', who), p.shot, s);
-    const gd = dirOf(gunDeg), kick = fired ? .1 * bump(age / .14) : 0;
-    const tiltU = !fired ? 0 : age < KickUp ? age / KickUp : 1 - smooth((age - KickUp) / KickSettle);
-    const hand = move(o, gd, GripAlong);
+    // The shooter, the counter, and the rifle in front. The kick: the shooter rocks back along the
+    // shot line, the rifle slides back in the hands and its barrel jumps up, then swings back down.
+    const gd = dirOf(gunDeg);
+    const rock = fired ? RockBack * (bump(age / .3) * .7 + .3 * clamp(age / .1) * (1 - smooth((age - .3) / .5))) : 0;
+    const stand = move(o, L.d, -rock);
+    pawn(stand, { ...who, shirt: Holder });
+    if (p.corroded) abnormality(stand, who, sun, strength, s);
+    counter('mb counter', at(stand, 'headTop', who), p.shot, s);
+    const kick = fired ? KickSlide * (bump(age / .12) * .75 + .25 * clamp(age / .06) * (1 - smooth((age - .12) / .5))) : 0;
+    const tiltU = !fired ? 0 : age < KickUp ? Math.sin(age / KickUp * Math.PI / 2) : Math.max(0, Math.exp(-KickDamp * (age - KickUp)) * Math.cos(KickSwing * (age - KickUp)));
+    const hand = move(stand, gd, GripAlong);
     const gun = rifle('mb rifle', hand, gunDeg, sun, strength, kick, KickTilt * tiltU);
 
     // Before the shot: the chamber glows and the magic circles open ahead of the muzzle, then slide
     // back to it. They follow the muzzle while the rifle turns, and close after the bullet has left.
-    const head = at(o, 'headTop', who);
+    const head = at(stand, 'headTop', who);
     const charge = clamp((s - .02) / (t.fire - .02)) * (fired ? 1 - clamp(age / .12) : 1);
     chamberGlow('mb chamber', gun.chamber, gun.muzzle, head, charge, s);
     const openU = seventh ? clamp((s - p.lead - Swing * .5) / (Swing * .5 + .05)) : clamp(s / (p.lead * .4));
