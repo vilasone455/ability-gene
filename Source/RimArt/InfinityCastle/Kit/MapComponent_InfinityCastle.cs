@@ -4,6 +4,7 @@ using RimWorld;
 using RimWorld.Planet;
 using UnityEngine;
 using Verse;
+using Verse.AI.Group;
 using static RimArt.VfxDraw;
 using static RimArt.VfxMath;
 using static RimArt.CastleEffectGraphics;
@@ -27,7 +28,9 @@ namespace RimArt
     /// A castle the ability opened is <see cref="driven"/>: its arrival doors are the real pawns'
     /// (<see cref="Arrive"/>), its Release doors open under whoever is leaving, and once the fade is black
     /// it holds there (<see cref="Faded"/>) for <see cref="InfinityCastleCast"/> to bring everyone home
-    /// and close it. The debug window's castle plays the sketch's arrival and closes itself.
+    /// and close it. Its clock is game time, one tick at a time, as the cast's stuns are: it stops when
+    /// the game is paused and runs faster at speed. The debug window's castle plays the sketch's arrival,
+    /// closes itself, and runs on real time as the previews do.
     /// </summary>
     public sealed class MapComponent_InfinityCastle : MapComponent
     {
@@ -37,10 +40,33 @@ namespace RimArt
         public bool driven;
         private float seconds, releasedAt = -1f;
         private bool closing;
+
+        /// <summary>Pawns going through the floor on the castle's timeline: each with its door, and whether it has been shown (arriving) or hidden (leaving) yet.</summary>
+        private sealed class DoorQueue
+        {
+            public readonly List<Pawn> pawns = new List<Pawn>();
+            public readonly List<Vector2> cells = new List<Vector2>();
+            public readonly List<bool> done = new List<bool>();
+
+            public int Count => pawns.Count;
+
+            public void Clear()
+            {
+                pawns.Clear();
+                cells.Clear();
+                done.Clear();
+            }
+
+            public void Add(Pawn pawn, Vector2 cell)
+            {
+                pawns.Add(pawn);
+                cells.Add(cell);
+                done.Add(false);
+            }
+        }
+
         // The live arrival and Release, not saved: a loaded castle opens in its hold with nobody hidden.
-        private readonly List<Pawn> arrivalPawns = new List<Pawn>(), leavingPawns = new List<Pawn>();
-        private readonly List<Vector2> arrivalCells = new List<Vector2>(), leavingCells = new List<Vector2>();
-        private readonly List<bool> arrivalUp = new List<bool>(), leavingGone = new List<bool>();
+        private readonly DoorQueue arriving = new DoorQueue(), leaving = new DoorQueue();
         private Pawn carrier;
         private bool carrierUp, carrierGone;
         private CastleLayout castle;
@@ -113,8 +139,8 @@ namespace RimArt
             releasedAt = -1f;
             closing = false;
             Faded = false;
-            arrivalPawns.Clear(); arrivalCells.Clear(); arrivalUp.Clear();
-            leavingPawns.Clear(); leavingCells.Clear(); leavingGone.Clear();
+            arriving.Clear();
+            leaving.Clear();
             carrier = null;
         }
 
@@ -122,24 +148,17 @@ namespace RimArt
         public void Release() => Release(null, null);
 
         /// <summary>
-        /// The ability's Release: a door opens under each of <paramref name="leaving"/> where it stands now,
+        /// The ability's Release: a door opens under each of <paramref name="pawns"/> where it stands now,
         /// 0.05 s apart, and the carrier's last on the dais; each is hidden once it has sunk.
         /// </summary>
-        public void Release(List<Pawn> leaving, Pawn carrier)
+        public void Release(List<Pawn> pawns, Pawn carrier)
         {
             if (!IsCastle || releasedAt >= 0f) return;
             releasedAt = seconds;
-            leavingPawns.Clear();
-            leavingCells.Clear();
-            leavingGone.Clear();
-            if (leaving != null)
-                foreach (Pawn pawn in leaving)
-                {
-                    if (pawn == null || !pawn.Spawned || pawn.Map != map) continue;
-                    leavingPawns.Add(pawn);
-                    leavingCells.Add(new Vector2(pawn.DrawPos.x, pawn.DrawPos.z));
-                    leavingGone.Add(false);
-                }
+            leaving.Clear();
+            if (pawns != null)
+                foreach (Pawn pawn in pawns)
+                    if (pawn != null && pawn.Spawned && pawn.Map == map) leaving.Add(pawn, new Vector2(pawn.DrawPos.x, pawn.DrawPos.z));
             if (carrier != null) this.carrier = carrier;
             carrierGone = false;
         }
@@ -161,14 +180,10 @@ namespace RimArt
         public void Arrive(List<Pawn> pawns, Pawn carrier)
         {
             seconds = 0f;
-            arrivalPawns.Clear();
-            arrivalCells.Clear();
-            arrivalUp.Clear();
+            arriving.Clear();
             foreach (Pawn pawn in pawns)
             {
-                arrivalPawns.Add(pawn);
-                arrivalCells.Add(new Vector2(pawn.Position.x + 0.5f, pawn.Position.z + 0.5f));
-                arrivalUp.Add(false);
+                arriving.Add(pawn, new Vector2(pawn.Position.x + 0.5f, pawn.Position.z + 0.5f));
                 InfinityCastleRide.Hide(pawn);
             }
             this.carrier = carrier;
@@ -182,7 +197,7 @@ namespace RimArt
             get
             {
                 if (releasedAt >= 0f) return T.Release + (seconds - releasedAt);
-                float quiet = driven ? T.EnemyLands(Mathf.Max(1, arrivalPawns.Count) - 1) + CastleEffectGraphics.DoorEnd(T.Rise * 0.75f) + 0.25f : T.Quiet;
+                float quiet = driven ? T.EnemyLands(Mathf.Max(1, arriving.Count) - 1) + CastleEffectGraphics.DoorEnd(T.Rise * 0.75f) + 0.25f : T.Quiet;
                 return Mathf.Min(seconds, quiet);
             }
         }
@@ -521,11 +536,10 @@ namespace RimArt
             if (StrumWait > 0f) { why = "The last strum is still sounding."; return false; }
             IntVec3 to = LandingIn(room);
             pawn.carryTracker?.TryDropCarriedThing(pawn.Position, ThingPlaceMode.Near, out _);
-            bool drafted = pawn.Drafted;
-            pawn.DeSpawnOrDeselect();
-            GenSpawn.Spawn(pawn, to, map);
-            pawn.Notify_Teleported(true, true);
-            if (drafted && pawn.drafter != null && !pawn.Downed) pawn.drafter.Drafted = true;
+            // It leaves its map as if it walked off it: out of a ritual, a party or a forming caravan there, so
+            // that lord neither gives it duties with home-map targets nor loses it later at the return.
+            pawn.GetLord()?.Notify_PawnLost(pawn, PawnLostCondition.ExitedMap);
+            CrossMapMove.Move(pawn, to, map);
             var drop = new CastleDrop { pawn = pawn, from = to, to = to, startAt = seconds, doorUnder = 0.1f, strum = true, summoned = true, toRoom = room.Id };
             pawn.stances?.stunner.StunFor(Mathf.CeilToInt((drop.Arrive + CastleDrop.Rise) * 60f), null, false, false);
             InfinityCastleRide.Hide(pawn);
@@ -608,11 +622,11 @@ namespace RimArt
             // The ability's arrival: each pawn is shown once its door is half open. Its Release: each is
             // hidden once it has sunk. Changed once each, so a rider's offset is never cleared under it.
             float timeline = Timeline;
-            for (int i = 0; i < arrivalPawns.Count; i++)
-                if (!arrivalUp[i] && timeline >= T.EnemyLands(i) + DoorThrough)
+            for (int i = 0; i < arriving.Count; i++)
+                if (!arriving.done[i] && timeline >= T.EnemyLands(i) + DoorThrough)
                 {
-                    arrivalUp[i] = true;
-                    if (arrivalPawns[i] != null) InfinityCastleRide.Release(arrivalPawns[i]);
+                    arriving.done[i] = true;
+                    if (arriving.pawns[i] != null) InfinityCastleRide.Release(arriving.pawns[i]);
                 }
             if (carrier != null && !carrierUp && timeline >= T.CasterLands + DoorThrough)
             {
@@ -620,11 +634,11 @@ namespace RimArt
                 InfinityCastleRide.Release(carrier);
             }
             if (releasedAt < 0f) return;
-            for (int i = 0; i < leavingPawns.Count; i++)
-                if (!leavingGone[i] && timeline >= T.EnemyOut(i) + DoorThrough + T.Sink)
+            for (int i = 0; i < leaving.Count; i++)
+                if (!leaving.done[i] && timeline >= T.EnemyOut(i) + DoorThrough + T.Sink)
                 {
-                    leavingGone[i] = true;
-                    if (leavingPawns[i] != null && leavingPawns[i].Map == map) InfinityCastleRide.Hide(leavingPawns[i]);
+                    leaving.done[i] = true;
+                    if (leaving.pawns[i] != null && leaving.pawns[i].Map == map) InfinityCastleRide.Hide(leaving.pawns[i]);
                 }
             if (driven && carrier != null && !carrierGone && timeline >= T.CasterOut + DoorThrough + T.Sink)
             {
@@ -633,12 +647,20 @@ namespace RimArt
             }
         }
 
+        /// <summary>The ability's castle keeps game time: one tick of it per game tick.</summary>
+        public override void MapComponentTick()
+        {
+            if (driven && IsCastle && !closing) seconds += 1f / 60f;
+        }
+
         public override void MapComponentUpdate()
         {
             if (!IsCastle || closing) return;
-            // Unscaled, as the previews: the lanterns, the drift and the commands go on while the game is
-            // paused, and on or off screen.
-            seconds += Time.unscaledDeltaTime;
+            // The debug window's castle runs unscaled, as the previews: the lanterns, the drift and the commands
+            // go on while the game is paused. The ability's castle has advanced on its ticks (MapComponentTick),
+            // because the cast's stuns count ticks and the doors must hide and show pawns while those hold them.
+            // Both run on or off screen.
+            if (!driven) seconds += Time.unscaledDeltaTime;
             Advance();
             float timeline = Timeline;
             if (driven)
@@ -661,7 +683,7 @@ namespace RimArt
                 Backstop, Backstop, 0f, CastleRoomGraphics.VoidDeep, solid);
             CellRect view = Find.CameraDriver.CurrentViewRect;
             InfinityCastleInsideGraphics.Draw(Castle, Vector2.zero, timeline, seconds, false, CastleLayers.Pocket, view, Batch, SlidingRoom,
-                driven ? arrivalCells : null, driven ? leavingCells : null, driven);
+                driven ? arriving.cells : null, driven ? leaving.cells : null, driven);
             if (shift != null && shift.picture) DrawShift(view);
             DrawSeals();
             if (crush != null) DrawCrush();
@@ -922,7 +944,7 @@ namespace RimArt
             if (shift != null) foreach (Pawn rider in shift.riders) InfinityCastleRide.Release(rider);
             foreach (CastleDrop drop in drops) if (drop.pawn != null) InfinityCastleRide.Release(drop.pawn);
             // Whoever was hidden arriving or leaving; the cast hides the ones it brings home itself.
-            foreach (Pawn pawn in arrivalPawns.Concat(leavingPawns)) if (pawn != null && pawn.MapHeld == map) InfinityCastleRide.Release(pawn);
+            foreach (Pawn pawn in arriving.pawns.Concat(leaving.pawns)) if (pawn != null && pawn.MapHeld == map) InfinityCastleRide.Release(pawn);
             if (carrier != null && carrier.MapHeld == map) InfinityCastleRide.Release(carrier);
         }
 
@@ -958,8 +980,8 @@ namespace RimArt
                 closing = false;
                 // A driven castle saved during its Release is released again by its cast.
                 Faded = false;
-                arrivalPawns.Clear(); arrivalCells.Clear(); arrivalUp.Clear();
-                leavingPawns.Clear(); leavingCells.Clear(); leavingGone.Clear();
+                arriving.Clear();
+                leaving.Clear();
                 carrier = null;
             }
         }

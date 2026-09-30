@@ -182,19 +182,28 @@ window. The rules and pictures are in `MapComponent_InfinityCastle` and `Infinit
   removed.
 - Lords: each enemy leaves its lord with `Notify_PawnLost(ExitedMap)` before it moves, so a raid taken
   whole ends its lord. At the return a pawn rejoins its old lord if that still exists on the home map,
-  else a pawn of another faction gets `LordJob_ExitMapBest` (jog). Inside, the hostile ones get
-  `LordJob_AssaultColony` per faction; pawns in a mental state keep it and get no lord.
-- The castle map's clock is real time and now runs whether or not the castle is on screen (it used to
-  stop while you looked at the home map). A castle the ability made is `driven`: its arrival doors
-  open under the real pawns (`Arrive`), its Release doors under whoever is leaving, and it holds at
-  black (`Faded`) for the cast to bring everyone home. The debug window's castle still plays the
-  sketch's arrival and closes itself; "castle map: close now" refuses a driven castle.
+  else a pawn of another faction gets `LordJob_ExitMapBest` (jog). Inside, pawns of a faction hostile
+  to the colony get `LordJob_AssaultColony` per faction (`CrossMapMove.Assault`, shared with Unlimited
+  Blade Works and Unlimited Void). A pawn hostile only through a mental state or a rebellion (a berserk
+  colonist, a rebelling slave) is taken but gets no lord; its mental state drives it.
+- If every pawn taken dies or leaves while held over its door, nobody moves and the cooldown and charge
+  come back. With no map to return to, everyone waits in the castle (held at black) until there is one.
+- The castle map's clock now runs whether or not the castle is on screen (it used to stop while you
+  looked at the home map). A castle the ability made is `driven`: its clock is game time, one tick at a
+  time, so the doors that hide and show pawns stay in step with the stuns that hold them at any speed,
+  and it stops when the game is paused. Its arrival doors open under the real pawns (`Arrive`), its
+  Release doors under whoever is leaving, and it holds at black (`Faded`) for the cast to bring
+  everyone home; the leavers stay stunned until then. The debug window's castle still runs on real
+  time, plays the sketch's arrival and closes itself. "castle map: release" releases a driven castle
+  through its cast; "castle map: close now" refuses one.
 - The home-map picture (`InfinityCastleOpenGraphics`) takes a `CastleOpenPlan`: the preview's is the
   sketch's script, the ability's is built from the real pawns (door times from their distance to the
   target cell). The same plan draws the warm-up from the Host's warm-up stance. With a real carrier
   the shaft's dark also closes over her and lifts off her; the sketch drew its stand-in instead.
-- Summon (new): the colonist leaves the home map at once and comes up in the chosen room through a
-  floor door (a `CastleDrop` with `summoned` set); on the home map a floor door opens where it stood.
+- Summon (new): the colonist leaves the home map at once, and any lord there (a ritual, a party, a
+  forming caravan) as if it had walked off the map, and comes up in the chosen room through a floor
+  door (a `CastleDrop` with `summoned` set). No door is drawn on the home map: the command is only given
+  from the castle, so nobody would see it.
 - Not built: the Nakime costume, sounds (strum, slide, thud, bar, crush), the strum clip, the sunlight
   picture, command icons beyond flat placeholders, pathing that keeps her indoors by day. The hitch
   of generating the castle mid-fight and save/load while the castle stands have not been measured

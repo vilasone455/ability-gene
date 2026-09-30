@@ -7,6 +7,7 @@ using Verse;
 using Verse.AI;
 using Verse.AI.Group;
 using static RimArt.CastleEffectGraphics;
+using static RimArt.CrossMapMove;
 using OT = RimArt.InfinityCastleOpenTiming;
 using IT = RimArt.InfinityCastleInsideTiming;
 
@@ -57,18 +58,20 @@ namespace RimArt
     ///   attack, <see cref="JobDriver_CastlePlay"/>). Each enemy first drops what it carries where it
     ///   stood and leaves its lord (ExitedMap, not a violent loss); inside, the hostile ones get an
     ///   assault lord of their faction. If the carrier is downed, gone or reverted before that, nobody
-    ///   moves and the cooldown and charge stay spent.
+    ///   moves and the cooldown and charge stay spent. If every pawn taken died or left while held, nobody
+    ///   moves and the cooldown and charge come back.
     /// - The castle stands castleSeconds of game time from the move, and ends early on Release, or when
     ///   the carrier is downed, dies, leaves the castle or loses the ability (reverted, or the pool ran dry).
     /// - Release: a door opens under everyone in the castle and they sink, the carrier last, the castle
     ///   fades. Then everyone alive, downed or not, goes back to the cell they came from (a summoned
     ///   colonist to where it was summoned from), and enemies rejoin their old lord if it still exists,
     ///   else get a lord that leaves the map. Corpses and items come up round the target cell. The castle
-    ///   map is removed.
+    ///   map is removed. With no map to return to, everyone waits in the castle until there is one.
     ///
-    /// Two clocks: the home side (the take, the return) and every rule run on game ticks; the castle's
-    /// own picture and its commands run on the castle map's real-time clock
-    /// (<see cref="MapComponent_InfinityCastle"/>), which this cast waits on for the fade.
+    /// Everything runs on game time: the home side (the take, the return) and every rule on game ticks, and
+    /// the castle's own picture and commands on the castle map's clock, which for this castle advances one
+    /// tick at a time (<see cref="MapComponent_InfinityCastle"/>), so the stuns that hold pawns and the doors
+    /// that hide and show them stay together at any speed and stop when the game is paused.
     /// </summary>
     public sealed class InfinityCastleCast : IExposable
     {
@@ -87,7 +90,8 @@ namespace RimArt
 
         // The pictures, not saved: a loaded cast skips what it was drawing.
         private CastleOpenPlan takePlan, returnPlan;
-        private readonly List<(Vector2 at, float realTime)> summonDoors = new List<(Vector2 at, float realTime)>();
+        /// <summary>The return found no map to go to and is waiting for one (said once). Not saved.</summary>
+        private bool waitingForMap;
 
         public bool Taking => !fizzled && inTick < 0;
         public bool Standing => !fizzled && inTick >= 0 && !returned;
@@ -239,6 +243,16 @@ namespace RimArt
             }
 
             List<CastleTaken> enemies = taken.Where(t => t.kind == CastleGuest.Enemy).ToList();
+            if (enemies.Count == 0)
+            {
+                // Everyone it took died or left while held: nothing was done, so nothing is spent (as a strum with
+                // nobody in reach).
+                Ability?.ResetCooldown();
+                GameComponent_Echoes.Get?.Refund(paid);
+                paid = 0f;
+                Fizzle("Infinity Castle: nobody taken was left to go in. No cooldown or charge spent.");
+                return;
+            }
             List<CastleRoom> rooms = component.Castle.ArrivalRooms(enemies.Count);
             var arrived = new List<Pawn>();
             var hostile = new List<Pawn>();
@@ -306,7 +320,6 @@ namespace RimArt
             IntVec3 from = colonist.Position;
             if (!component.TrySummon(colonist, cell, out why)) return false;
             taken.Add(new CastleTaken { pawn = colonist, kind = CastleGuest.Summoned, from = from });
-            summonDoors.Add((new Vector2(from.x + 0.5f, from.z + 0.5f), Time.realtimeSinceStartup));
             return true;
         }
 
@@ -333,9 +346,11 @@ namespace RimArt
             MapComponent_InfinityCastle component = Component;
             if (component == null) return;
             List<Pawn> leaving = Leaving();
-            // Everyone stops where they stand until their door has taken them.
-            for (int i = 0; i < leaving.Count; i++)
-                if (!leaving[i].Downed) leaving[i].stances?.stunner.StunFor(Mathf.CeilToInt((IT.EnemyOut(i) - IT.Release + DoorThrough + IT.Sink) * 60f) + 30, null, false, false);
+            // Everyone stops where they stand: their door takes them, and once gone they wait unseen for the return
+            // at black. Both run on game time (the castle's clock too), so the stun covers the whole fade.
+            int untilBlack = Mathf.CeilToInt((IT.FadeAt + IT.FadeFor - IT.Release) * 60f) + 30;
+            foreach (Pawn p in leaving)
+                if (!p.Downed) p.stances?.stunner.StunFor(untilBlack, null, false, false);
             component.Release(leaving, caster != null && caster.Spawned && caster.Map == castle ? caster : null);
         }
 
@@ -343,15 +358,23 @@ namespace RimArt
 
         private void Return(int now)
         {
-            returned = true;
-            returnTick = now;
             Map to = home != null && Find.Maps.Contains(home) ? home : Find.AnyPlayerHomeMap;
-            if (castle == null || !Find.Maps.Contains(castle)) return;
-            if (to == null)
+            if (castle == null || !Find.Maps.Contains(castle))
             {
-                Messages.Message("Infinity Castle: there is no map to return to; the castle stays.", MessageTypeDefOf.NegativeEvent, false);
+                returned = true;
+                returnTick = now;
                 return;
             }
+            if (to == null)
+            {
+                // The castle holds at black and everyone waits in it; the cast asks again every tick, so they come
+                // out as soon as the colony has a map again, and the castle is never left with no cast to close it.
+                if (!waitingForMap) Messages.Message("Infinity Castle: there is no map to return to; everyone waits in the castle.", MessageTypeDefOf.NegativeEvent, false);
+                waitingForMap = true;
+                return;
+            }
+            returned = true;
+            returnTick = now;
             IntVec3 drop = to == home ? target : to.Center;
             var o = new Vector2(drop.x + 0.5f, drop.z + 0.5f);
             Vector2 Offset(IntVec3 c) => new Vector2(c.x + 0.5f, c.z + 0.5f) - o;
@@ -400,12 +423,17 @@ namespace RimArt
             foreach (Thing thing in castle.listerThings.AllThings.ToList())
             {
                 if (thing.Destroyed || !thing.Spawned || thing.def.category != ThingCategory.Item) continue;
+                // A pawn that died while hidden (gone through its Release door) would come home an unseen corpse.
+                if (thing is Corpse dead) InfinityCastleRide.Release(dead.InnerPawn);
                 thing.DeSpawn();
                 if (GenPlace.TryPlaceThing(thing, drop, to, ThingPlaceMode.Near) && thing is Corpse && thing.Spawned)
                     returnPlan.doors.Add((Offset(thing.Position), OT.CorpseDoor + 0.07f * c++));
             }
             foreach (IGrouping<Faction, Pawn> group in leavingMap.GroupBy(p => p.Faction))
                 LordMaker.MakeNewLord(group.Key, new LordJob_ExitMapBest(LocomotionUrgency.Jog), to, group);
+            // Anyone else it hid and did not bring home alive (dead with no corpse left): nothing to show later.
+            foreach (CastleTaken t in taken)
+                if (t.pawn != null && t.pawn.Dead) InfinityCastleRide.Release(t.pawn);
 
             if (watching)
             {
@@ -431,38 +459,7 @@ namespace RimArt
                     if (InfinityCastleRide.Hidden(p) && !taken.Any(t => t.pawn == p)) InfinityCastleRide.Release(p);
         }
 
-        // ---- moving pawns ------------------------------------------------------------------------------------------
-
-        /// <summary>Takes a pawn off its map and puts it on another, keeping it drafted if it was.</summary>
-        private static void Move(Pawn p, IntVec3 cell, Map to)
-        {
-            bool drafted = p.Drafted;
-            Rot4 facing = p.Rotation;
-            p.DeSpawnOrDeselect();
-            GenSpawn.Spawn(p, cell, to, facing);
-            p.Notify_Teleported(true, true);
-            if (drafted && p.drafter != null && !p.Downed) p.drafter.Drafted = true;
-        }
-
-        /// <summary>The nearest cell to <paramref name="want"/> a pawn can stand on with no other pawn on it.</summary>
-        private static IntVec3 FreeCellNear(Map map, IntVec3 want)
-        {
-            want = new IntVec3(Mathf.Clamp(want.x, 1, map.Size.x - 2), 0, Mathf.Clamp(want.z, 1, map.Size.z - 2));
-            int cells = GenRadial.NumCellsInRadius(8f);
-            for (int i = 0; i < cells; i++)
-            {
-                IntVec3 c = want + GenRadial.RadialPattern[i];
-                if (c.InBounds(map) && c.Standable(map) && c.GetFirstPawn(map) == null) return c;
-            }
-            return CellFinder.StandableCellNear(want, map, 20f);
-        }
-
-        /// <summary>Hostile pawns fight on: an assault lord for each faction, with no fleeing and no kidnapping.</summary>
-        private static void Assault(List<Pawn> pawns, Map map)
-        {
-            foreach (IGrouping<Faction, Pawn> group in pawns.GroupBy(p => p.Faction))
-                LordMaker.MakeNewLord(group.Key, new LordJob_AssaultColony(group.Key, false, false, false, false, false), map, group);
-        }
+        // Moving pawns: Move, FreeCellNear and Assault are CrossMapMove's (Source/RimArt/Shared).
 
         // ---- the clock ------------------------------------------------------------------------------------------
 
@@ -496,7 +493,8 @@ namespace RimArt
                 }
                 if (!releasing)
                 {
-                    // The debug window's "castle map: release" releases the map itself: the cast follows.
+                    // The debug window's "castle map: release" orders the cast's Release; a castle released some
+                    // other way is followed.
                     if (releaseOrdered || component.Released || now - inTick >= Mathf.RoundToInt(castleSeconds * 60f) || !CarrierHolds(castle)) BeginRelease();
                     else if (!caster.InMentalState && caster.CurJobDef != InfinityCastleDefOf.AG_CastlePlay) Play();
                     return true;
@@ -521,19 +519,7 @@ namespace RimArt
                 InfinityCastleOpenGraphics.Draw(Origin, takePlan, UbwClock.Since(startTick), home);
             }
             else if (returnPlan != null) InfinityCastleOpenGraphics.Draw(Origin, returnPlan, UbwClock.Since(returnTick), home);
-
-            // Summon's door on the home map: it opens under the colonist, who is already gone.
-            CastleLayers layers = CastleLayers.Pocket;
-            for (int i = summonDoors.Count - 1; i >= 0; i--)
-            {
-                var (at, when) = summonDoors[i];
-                float age = Time.realtimeSinceStartup - when - 0.1f;
-                if (age > DoorEnd(OT.Sink + 0.05f)) { summonDoors.RemoveAt(i); continue; }
-                if (!VfxDraw.Shown(at, home)) continue;
-                VfxDraw.Begin(at);
-                DoorAt(age, OT.Sink + 0.05f, out float alpha, out float open);
-                FloorDoor(at, open, alpha, age, layers.Door);
-            }
+            // Summon draws no door on the home map: the command is only given from the castle, so nobody sees it.
         }
 
         public void ExposeData()

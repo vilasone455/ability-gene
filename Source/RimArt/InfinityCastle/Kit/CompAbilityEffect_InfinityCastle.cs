@@ -40,6 +40,31 @@ namespace RimArt
     {
         public new CompProperties_AbilityInfinityCastle Props => (CompProperties_AbilityInfinityCastle)props;
 
+        // The last answer of CandidatesAt: the targeting cursor asks Valid, the preview and the label each frame.
+        private List<Pawn> candidates;
+        private int candidatesFrame = -1, candidatesTick = -1;
+        private IntVec3 candidatesCell;
+        private Map candidatesMap;
+
+        /// <summary>
+        /// <see cref="InfinityCastleCast.Candidates"/> for the caster at <paramref name="cell"/>, worked out once per
+        /// frame and game tick. The list is shared: read it, do not keep or change it.
+        /// </summary>
+        public List<Pawn> CandidatesAt(IntVec3 cell)
+        {
+            Pawn pawn = parent.pawn;
+            int frame = Time.frameCount, tick = Find.TickManager.TicksGame;
+            if (candidates == null || frame != candidatesFrame || tick != candidatesTick || cell != candidatesCell || pawn.Map != candidatesMap)
+            {
+                candidates = InfinityCastleCast.Candidates(pawn, pawn.Map, cell, Props);
+                candidatesFrame = frame;
+                candidatesTick = tick;
+                candidatesCell = cell;
+                candidatesMap = pawn.Map;
+            }
+            return candidates;
+        }
+
         public override void Apply(LocalTargetInfo target, LocalTargetInfo dest)
         {
             base.Apply(target, dest);
@@ -65,7 +90,7 @@ namespace RimArt
                 if (throwMessages) Messages.Message("Infinity Castle cannot be opened inside a pocket map.", pawn, MessageTypeDefOf.RejectInput, false);
                 return false;
             }
-            if (target.IsValid && InfinityCastleCast.Candidates(pawn, pawn.Map, target.Cell, Props).Count == 0)
+            if (target.IsValid && CandidatesAt(target.Cell).Count == 0)
             {
                 if (throwMessages) Messages.Message("No hostile within " + Props.radius.ToString("0.#") + " cells of that cell.", pawn, MessageTypeDefOf.RejectInput, false);
                 return false;
@@ -95,14 +120,14 @@ namespace RimArt
             Pawn pawn = parent.pawn;
             if (!target.IsValid || pawn.Map == null) return;
             GenDraw.DrawRadiusRing(target.Cell, Props.radius);
-            foreach (Pawn p in InfinityCastleCast.Candidates(pawn, pawn.Map, target.Cell, Props)) GenDraw.DrawTargetHighlight(p);
+            foreach (Pawn p in CandidatesAt(target.Cell)) GenDraw.DrawTargetHighlight(p);
         }
 
         public override string ExtraLabelMouseAttachment(LocalTargetInfo target)
         {
             Pawn pawn = parent.pawn;
             if (!target.IsValid || pawn.Map == null) return null;
-            int n = InfinityCastleCast.Candidates(pawn, pawn.Map, target.Cell, Props).Count;
+            int n = CandidatesAt(target.Cell).Count;
             return n == 0 ? "Nobody to take" : n + " taken";
         }
     }

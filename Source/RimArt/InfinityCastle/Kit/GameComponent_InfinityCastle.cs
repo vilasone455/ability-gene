@@ -26,6 +26,14 @@ namespace RimArt
             return null;
         }
 
+        /// <summary>The standing cast whose castle is <paramref name="castle"/>, if any.</summary>
+        public InfinityCastleCast ForCastle(Map castle)
+        {
+            for (int i = 0; i < casts.Count; i++)
+                if (casts[i].castle == castle && casts[i].Standing) return casts[i];
+            return null;
+        }
+
         /// <summary>Whether <paramref name="pawn"/> should be on the dais playing: its castle stands and it is in it.</summary>
         public bool PlayingFor(Pawn pawn)
         {
@@ -77,13 +85,13 @@ namespace RimArt
             foreach (Pawn pawn in map.mapPawns.FreeColonistsSpawned)
             {
                 if (!(pawn.stances?.curStance is Stance_Warmup warmup) || !(warmup.verb is Verb_CastAbility verb) || verb.ability?.def != def) continue;
-                var props = verb.ability.CompOfType<CompAbilityEffect_InfinityCastle>()?.Props;
-                if (props == null || !warmup.focusTarg.IsValid) continue;
+                var comp = verb.ability.CompOfType<CompAbilityEffect_InfinityCastle>();
+                if (comp == null || !warmup.focusTarg.IsValid) continue;
                 IntVec3 cell = warmup.focusTarg.Cell;
                 float total = Mathf.Max(0.05f, verb.verbProps.warmupTime);
                 float s = Mathf.Clamp(total - warmup.ticksLeft / 60f, 0f, total - 0.001f);
-                List<Pawn> pawns = InfinityCastleCast.Candidates(pawn, map, cell, props);
-                CastleOpenPlan plan = InfinityCastleCast.TakePlan(pawn, cell, pawns, props.radius, total);
+                List<Pawn> pawns = comp.CandidatesAt(cell);
+                CastleOpenPlan plan = InfinityCastleCast.TakePlan(pawn, cell, pawns, comp.Props.radius, total);
                 InfinityCastleOpenGraphics.Draw(new Vector2(cell.x + 0.5f, cell.z + 0.5f), plan, s, map);
             }
         }
