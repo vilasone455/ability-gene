@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -118,6 +119,98 @@ namespace RimArt
             if (pawn.equipment.Primary != null) pawn.equipment.DestroyEquipment(pawn.equipment.Primary);
             pawn.equipment.AddEquipment((ThingWithComps)ThingMaker.MakeThing(weapon,
                 weapon.MadeFromStuff ? GenStuff.DefaultStuffFor(weapon) : null));
+        }
+
+        // ---- kit test setup (AGENTS.md: shared here, not copied into each Tests_ file) ----------------------------
+
+        /// <summary>Waits <paramref name="step"/> ticks at a time until <paramref name="done"/>, at most <paramref name="maxTicks"/>.</summary>
+        public static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 1)
+        {
+            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
+        }
+
+        /// <summary>
+        /// <see cref="Clear"/>, then no Hosts and an empty pool. <paramref name="device"/> stands in for the resonance
+        /// device (tests have no power grid): false none works, true one does, null the real search.
+        /// </summary>
+        public GameComponent_Echoes ClearEchoes(bool? device = false)
+        {
+            Clear();
+            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
+            echoes.ResetForTests();
+            EchoDevice.workingForTests = device;
+            return echoes;
+        }
+
+        /// <summary>A colonist at <paramref name="at"/> made the Host of <paramref name="echo"/>, the pool at 100, in hero form unless <paramref name="manifest"/> is false.</summary>
+        public Pawn Host(EchoDef echo, IntVec3 at, out EchoRecord record, bool manifest = true)
+        {
+            Pawn host = Colonist(at);
+            record = EchoUtility.ForceHost(echo, host);
+            GameComponent_Echoes.Get.charge = 100f;
+            if (manifest) EchoUtility.Manifest(record);
+            return host;
+        }
+
+        /// <summary>The end of a test with a Host: out of hero form (no collapse), and the device back to the real search.</summary>
+        public static void EndHost(EchoRecord record)
+        {
+            if (record != null) EchoUtility.Revert(record, collapse: false);
+            EchoDevice.workingForTests = null;
+        }
+
+        /// <summary>
+        /// An enemy at <paramref name="at"/> (<see cref="Enemy"/>), unarmed unless <paramref name="armed"/>, stunned for
+        /// <paramref name="stunTicks"/>. <paramref name="bare"/>: its apparel destroyed, so armour cannot turn a hit to 0.
+        /// </summary>
+        public Pawn Target(IntVec3 at, int stunTicks = 0, bool bare = true, bool armed = false, Faction faction = null)
+        {
+            Pawn pawn = Enemy(at, armed, faction);
+            if (bare) pawn.apparel?.DestroyAll();
+            if (stunTicks > 0) pawn.stances.stunner.StunFor(stunTicks, null, false);
+            return pawn;
+        }
+
+        /// <summary>Removes Wimp: at 20 % pain it downs a pawn a test means to wound, which then drops its weapon.</summary>
+        public static void NoWimp(Pawn pawn)
+        {
+            Trait wimp = pawn.story?.traits?.GetTrait(TraitDefOf.Wimp);
+            if (wimp != null) pawn.story.traits.RemoveTrait(wimp);
+        }
+
+        private readonly Dictionary<Pawn, float> startHealth = new Dictionary<Pawn, float>();
+
+        /// <summary>Notes the pawn's health now for <see cref="Hurt"/>; a pawn never noted counts from full health.</summary>
+        public Pawn Note(Pawn pawn)
+        {
+            startHealth[pawn] = pawn.health.summaryHealth.SummaryHealthPercent;
+            return pawn;
+        }
+
+        /// <summary>Dead, downed, or below the health noted for it.</summary>
+        public bool Hurt(Pawn pawn) =>
+            pawn.Dead || pawn.Downed || pawn.health.summaryHealth.SummaryHealthPercent < (startHealth.TryGetValue(pawn, out float h) ? h : 1f) - 0.001f;
+
+        public bool Untouched(Pawn pawn) => !Hurt(pawn);
+
+        public static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned == true;
+
+        /// <summary>A wall at <paramref name="at"/> made of <paramref name="stuff"/> (granite blocks if null), the player's unless <paramref name="owned"/> is false.</summary>
+        public Thing Wall(IntVec3 at, ThingDef stuff = null, bool owned = true)
+        {
+            Thing wall = ThingMaker.MakeThing(ThingDefOf.Wall, stuff ?? ThingDefOf.BlocksGranite);
+            if (owned) wall.SetFaction(Faction.OfPlayer);
+            return GenSpawn.Spawn(wall, at, map);
+        }
+
+        /// <summary>Undrafted and standing facing <paramref name="rot"/> for 10 s: a drafted idle pawn turns to face south every tick.</summary>
+        public static void Face(Pawn pawn, Rot4 rot)
+        {
+            if (pawn.drafter != null) pawn.drafter.Drafted = false;
+            Job wait = JobMaker.MakeJob(JobDefOf.Wait_MaintainPosture, pawn.Position + rot.FacingCell * 3);
+            wait.expiryInterval = 600;
+            pawn.jobs.StartJob(wait, JobCondition.InterruptForced);
+            pawn.Rotation = rot;
         }
 
         /// <summary>One line on a pawn: where it is, its job and toil, stance, stun, and whether it is inside a flyer.</summary>

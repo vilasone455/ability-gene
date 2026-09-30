@@ -3,6 +3,7 @@ using System.Linq;
 using RimWorld;
 using Verse;
 using Verse.AI;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -20,16 +21,10 @@ namespace RimArt
         /// <summary>A cleared arena lit everywhere, with a manifested, drafted Shikamaru at the centre.</summary>
         private static Pawn Setup(RimArtTestContext t)
         {
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = false;
+            GameComponent_Echoes echoes = t.ClearEchoes();
             ShadowLight.levelForTests = _ => 1f;
             Plexus(t)?.ReleaseAll();
-            Pawn shikamaru = t.Colonist(t.center);
-            EchoRecord record = EchoUtility.ForceHost(ShadowPlexusDefOf.AG_Echo_Shikamaru, shikamaru);
-            echoes.charge = 100f;
-            EchoUtility.Manifest(record);
+            Pawn shikamaru = t.Host(ShadowPlexusDefOf.AG_Echo_Shikamaru, t.center, out EchoRecord record);
             return shikamaru;
         }
 
@@ -57,9 +52,7 @@ namespace RimArt
 
         private static Pawn Enemy(RimArtTestContext t, int dx, int dz)
         {
-            Pawn pawn = t.Enemy(t.center + new IntVec3(dx, 0, dz), armed: false);
-            pawn.apparel?.DestroyAll();
-            return pawn;
+            return t.Target(t.center + new IntVec3(dx, 0, dz));
         }
 
         private static Thing Steel(RimArtTestContext t, int dx, int dz) =>
@@ -71,8 +64,6 @@ namespace RimArt
             pawn.Position += delta;
             pawn.Notify_Teleported(false, false);
         }
-
-        private static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned ?? false;
 
         private static Hediff Choked(Pawn pawn) => pawn.health.hediffSet.GetFirstHediffOfDef(ShadowPlexusDefOf.AG_ShadowChoked);
 

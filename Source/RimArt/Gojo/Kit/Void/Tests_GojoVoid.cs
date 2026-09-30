@@ -5,6 +5,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.AI.Group;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -69,11 +70,6 @@ namespace RimArt
             got(cast != null && cast.Standing ? cast : null);
         }
 
-        private static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 2)
-        {
-            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
-        }
-
         private static IEnumerable<int> WaitUntil(int tick)
         {
             while (Find.TickManager.TicksGame < tick) yield return 1;
@@ -85,8 +81,6 @@ namespace RimArt
         private static float OverloadOf(Pawn pawn) => Overload(pawn)?.Severity ?? 0f;
         private static bool Scarred(Pawn pawn) => pawn.health.hediffSet.HasHediff(VoidDefOf.AG_VoidScarred);
         private static float Consciousness(Pawn pawn) => pawn.health.capacities.GetLevel(PawnCapacityDefOf.Consciousness);
-        private static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned == true;
-
         private static void LogPawns(RimArtTestContext t, UnlimitedVoidCast cast, params Pawn[] pawns)
         {
             foreach (Pawn p in pawns)
@@ -146,7 +140,7 @@ namespace RimArt
                 t.Check(gojo.Map == t.map && gojo.Position == gojoFrom, "Gojo is back on his cell " + gojoFrom);
                 foreach (Pawn p in inside)
                     t.Check(p.MapHeld == t.map && p.Position == from[p], p.LabelShort + " is back on its cell " + from[p]);
-                foreach (int w in WaitFor(() => !Find.Maps.Contains(pocket), 300)) yield return w;
+                foreach (int w in WaitFor(() => !Find.Maps.Contains(pocket), 300, 2)) yield return w;
                 t.Check(!Find.Maps.Contains(pocket), "the pocket map was removed");
                 t.Check(gojo.abilities.GetAbility(Void).CooldownTicksRemaining > 0, "the cooldown is spent");
             }
@@ -432,7 +426,7 @@ namespace RimArt
                     GenSpawn.Spawn(visitor, t.center + new IntVec3(3, 0, 0), t.map);
                     RimArtTestContext.Hold(visitor);
                 }
-                foreach (int w in WaitFor(() => Casts.For(gojo) == null, 120)) yield return w;
+                foreach (int w in WaitFor(() => Casts.For(gojo) == null, 120, 2)) yield return w;
                 cast = null;
                 foreach (int w in CastAndTake(t, gojo, c => cast = c)) yield return w;
                 if (!t.Check(cast != null, "the second domain opened")) yield break;

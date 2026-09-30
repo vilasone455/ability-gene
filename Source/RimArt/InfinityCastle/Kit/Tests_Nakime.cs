@@ -5,6 +5,7 @@ using RimWorld;
 using Verse;
 using Verse.AI;
 using Verse.AI.Group;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -22,21 +23,14 @@ namespace RimArt
         private static GameComponent_Echoes Setup(RimArtTestContext t)
         {
             GameComponent_InfinityCastle.Instance.ResetForTests();
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = false;
-            return echoes;
+            return t.ClearEchoes();
         }
 
         /// <summary>A drafted colonist 8 cells west of the centre made Nakime's Host and manifested, a full pool, a roof over her.</summary>
-        private static Pawn Host(RimArtTestContext t, GameComponent_Echoes echoes, out EchoRecord record)
+        private static Pawn Host(RimArtTestContext t, out EchoRecord record)
         {
-            Pawn host = t.Colonist(t.center + new IntVec3(-8, 0, 0));
+            Pawn host = t.Host(Nakime, t.center + new IntVec3(-8, 0, 0), out record);
             foreach (IntVec3 c in GenRadial.RadialCellsAround(host.Position, 2.5f, true)) t.map.roofGrid.SetRoof(c, RoofDefOf.RoofConstructed);
-            record = EchoUtility.ForceHost(Nakime, host);
-            echoes.charge = 100f;
-            EchoUtility.Manifest(record);
             host.drafter.Drafted = true;
             return host;
         }
@@ -44,11 +38,6 @@ namespace RimArt
         private static IntVec3 Target(RimArtTestContext t) => t.center + new IntVec3(4, 0, 0);
 
         private static InfinityCastleCast CastOf(Pawn pawn) => GameComponent_InfinityCastle.Instance?.For(pawn);
-
-        private static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 5)
-        {
-            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
-        }
 
         private static void LogPawns(RimArtTestContext t, InfinityCastleCast cast, params Pawn[] pawns)
         {
@@ -61,19 +50,19 @@ namespace RimArt
         {
             host.abilities.GetAbility(CastleAbility).QueueCastingJob(new LocalTargetInfo(Target(t)), LocalTargetInfo.Invalid);
             InfinityCastleCast cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Standing || cast != null && cast.fizzled, 900)) yield return w;
+            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Standing || cast != null && cast.fizzled, 900, 5)) yield return w;
             got(cast);
         }
 
         private static IEnumerable<int> ReleaseAndWait(InfinityCastleCast cast)
         {
             cast.releaseOrdered = true;
-            foreach (int w in WaitFor(() => cast.returned, 9000)) yield return w;
+            foreach (int w in WaitFor(() => cast.returned, 9000, 5)) yield return w;
         }
 
         private static IEnumerable<int> StrumReady(MapComponent_InfinityCastle castle)
         {
-            foreach (int w in WaitFor(() => castle.StrumWait <= 0f, 9000)) yield return w;
+            foreach (int w in WaitFor(() => castle.StrumWait <= 0f, 9000, 5)) yield return w;
         }
 
         [RimArtTest("Nakime", "echo 1 awakening gives the castle organ; manifest gives Infinity Castle and the biwa; revert takes both, the gene stays")]
@@ -111,7 +100,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, out EchoRecord record);
+            Pawn host = Host(t, out EchoRecord record);
             IntVec3 target = Target(t);
             Pawn a = t.Enemy(target + new IntVec3(1, 0, 0), armed: false);
             Pawn b = t.Enemy(target + new IntVec3(0, 0, 3), armed: false);
@@ -137,7 +126,7 @@ namespace RimArt
             yield return 30;
             yield return t.ShotAs("nakime-take", target, 12f);
 
-            foreach (int w in WaitFor(() => cast.Standing || cast.fizzled, 600)) yield return w;
+            foreach (int w in WaitFor(() => cast.Standing || cast.fizzled, 600, 5)) yield return w;
             LogPawns(t, cast, host, a, b, c, far, downed, ally);
             if (!t.Check(cast.Standing, "the castle stands")) yield break;
             MapComponent_InfinityCastle castle = cast.Component;
@@ -166,7 +155,7 @@ namespace RimArt
             t.Check(host.Drafted, "Nakime is still drafted");
             yield return 20;
             yield return t.ShotAs("nakime-return", target, 12f);
-            foreach (int w in WaitFor(() => !Find.Maps.Contains(castleMap), 600)) yield return w;
+            foreach (int w in WaitFor(() => !Find.Maps.Contains(castleMap), 600, 5)) yield return w;
             t.Check(!Find.Maps.Contains(castleMap), "the castle was removed");
             t.Check(host.abilities.GetAbility(CastleAbility).CooldownTicksRemaining > 0, "the cooldown is spent");
             EchoUtility.Revert(record, collapse: false);
@@ -178,7 +167,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, out EchoRecord record);
+            Pawn host = Host(t, out EchoRecord record);
             IntVec3 target = Target(t);
             var offsets = new[] { (0, 1), (1, 0), (0, -1), (-1, 0), (2, 2), (-2, 2), (2, -2), (-2, -2), (5, 0), (0, -5) };
             List<Pawn> enemies = offsets.Select(o => t.Enemy(target + new IntVec3(o.Item1, 0, o.Item2), armed: false)).ToList();
@@ -200,7 +189,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, out EchoRecord record);
+            Pawn host = Host(t, out EchoRecord record);
             IntVec3 target = Target(t);
             Pawn a1 = t.Enemy(target + new IntVec3(1, 0, 0), armed: false);
             Pawn a2 = t.Enemy(t.center + new IntVec3(-10, 0, 10), armed: false);
@@ -235,7 +224,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, out EchoRecord record);
+            Pawn host = Host(t, out EchoRecord record);
             IntVec3 target = Target(t);
             Pawn a = t.Enemy(target + new IntVec3(1, 0, 0), armed: false);
             Pawn b = t.Enemy(target + new IntVec3(0, 0, 3), armed: false);
@@ -325,7 +314,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, out EchoRecord record);
+            Pawn host = Host(t, out EchoRecord record);
             Pawn a = t.Enemy(Target(t) + new IntVec3(1, 0, 0), armed: false);
             yield return 2;
             InfinityCastleCast cast = null;
@@ -333,7 +322,7 @@ namespace RimArt
             if (!t.Check(cast != null && cast.Standing, "the castle stands")) yield break;
             yield return 60;
             HealthUtility.DamageUntilDowned(host, false);
-            foreach (int w in WaitFor(() => cast.returned, 9000)) yield return w;
+            foreach (int w in WaitFor(() => cast.returned, 9000, 5)) yield return w;
             LogPawns(t, cast, host, a);
             t.Check(cast.returned, "the castle ended");
             t.Check(cast.SecondsLeft(t.Now) > 20f, "it ended early (" + cast.SecondsLeft(t.Now).ToString("0.#") + " s were left)");
@@ -346,7 +335,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, out EchoRecord record);
+            Pawn host = Host(t, out EchoRecord record);
             Pawn a = t.Enemy(Target(t) + new IntVec3(1, 0, 0), armed: false);
             yield return 2;
             InfinityCastleCast cast = null;
@@ -355,10 +344,10 @@ namespace RimArt
             Map castleMap = cast.castle;
             yield return 30;
             EchoUtility.Revert(record, collapse: false);
-            foreach (int w in WaitFor(() => cast.returned, 9000)) yield return w;
+            foreach (int w in WaitFor(() => cast.returned, 9000, 5)) yield return w;
             LogPawns(t, cast, host, a);
             t.Check(cast.returned && host.Map == t.map, "the castle ended and Nakime is home");
-            foreach (int w in WaitFor(() => !Find.Maps.Contains(castleMap), 600)) yield return w;
+            foreach (int w in WaitFor(() => !Find.Maps.Contains(castleMap), 600, 5)) yield return w;
             t.Check(!Find.Maps.Contains(castleMap), "the castle was removed");
             EchoDevice.workingForTests = null;
         }
@@ -368,7 +357,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, out EchoRecord record);
+            Pawn host = Host(t, out EchoRecord record);
             Pawn a = t.Enemy(Target(t) + new IntVec3(1, 0, 0), armed: false);
             IntVec3 aFrom = a.Position;
             yield return 2;
@@ -382,7 +371,7 @@ namespace RimArt
             t.Check(cast.fizzled, "the cast ended");
             t.Check(a.Map == t.map && a.Position == aFrom, "the enemy stayed where it was");
             t.Check(host.MapHeld == t.map, "Nakime stayed");
-            foreach (int w in WaitFor(() => !Find.Maps.Contains(castleMap), 600)) yield return w;
+            foreach (int w in WaitFor(() => !Find.Maps.Contains(castleMap), 600, 5)) yield return w;
             t.Check(!Find.Maps.Contains(castleMap), "the castle was removed");
             EchoDevice.workingForTests = null;
         }
@@ -392,7 +381,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, out EchoRecord record);
+            Pawn host = Host(t, out EchoRecord record);
             Pawn a = t.Enemy(Target(t) + new IntVec3(1, 0, 0), armed: false);
             yield return 2;
             InfinityCastleCast cast = null;

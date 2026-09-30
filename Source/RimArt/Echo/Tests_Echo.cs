@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -12,15 +13,6 @@ namespace RimArt
         private static EchoDef Vergil => DefDatabase<EchoDef>.GetNamed("AG_Echo_Vergil");
         private static EchoDef Goku => DefDatabase<EchoDef>.GetNamed("AG_Echo_Goku");
         private static AbilityDef Shove => DefDatabase<AbilityDef>.GetNamed("AG_VectorShove");
-
-        private static GameComponent_Echoes Setup(RimArtTestContext t)
-        {
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = null;
-            return echoes;
-        }
 
         private static Pawn Colonist(RimArtTestContext t, int dx = 0)
         {
@@ -33,7 +25,7 @@ namespace RimArt
         [RimArtTest("Echo", "pool 1 a working device refills and a manifested Host drains")]
         private static IEnumerable<int> PoolRefillDrain(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoDevice.workingForTests = true;
             echoes.charge = 10f;
             yield return GameComponent_Echoes.PoolInterval * 5;
@@ -57,7 +49,7 @@ namespace RimArt
         [RimArtTest("Echo", "pool 2 an empty pool reverts every Host and collapses them")]
         private static IEnumerable<int> PoolEmpty(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoDevice.workingForTests = false;
             Pawn a = Colonist(t, -2), b = Colonist(t, 2);
             EchoRecord ra = EchoUtility.ForceHost(Accelerator, a);
@@ -81,7 +73,7 @@ namespace RimArt
         [RimArtTest("Echo", "manifest 1 hero form grants abilities, blocks work, sets the body and hair; revert restores")]
         private static IEnumerable<int> ManifestRevert(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             Pawn host = Colonist(t);
             BodyTypeDef body = host.story.bodyType;
             UnityEngine.Color hair = host.story.HairColor;
@@ -110,7 +102,7 @@ namespace RimArt
         [RimArtTest("Echo", "manifest 2 removing the hero form hediff from outside reverts the Echo")]
         private static IEnumerable<int> HediffRemoved(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             Pawn host = Colonist(t);
             EchoRecord record = EchoUtility.ForceHost(Accelerator, host);
             echoes.charge = 100f;
@@ -125,7 +117,7 @@ namespace RimArt
         [RimArtTest("Echo", "cast 1 a cast cost disables the ability when short and is paid when it fires")]
         private static IEnumerable<int> CastCost(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoDevice.workingForTests = false;
             Pawn host = Colonist(t);
             // Goku's Solar Flare: Accelerator's abilities cost no charge since his port (brain strain is his cost).
@@ -155,7 +147,7 @@ namespace RimArt
         [RimArtTest("Echo", "awaken 1 met trials send the letter; awakening gives the trait and replaces a conflicting one")]
         private static IEnumerable<int> Awaken(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             Pawn pawn = Colonist(t);
             TraitDef kind = DefDatabase<TraitDef>.GetNamed("Kind"), abrasive = DefDatabase<TraitDef>.GetNamed("Abrasive");
             foreach (Trait trait in pawn.story.traits.allTraits.ToList())
@@ -185,7 +177,7 @@ namespace RimArt
         [RimArtTest("Echo", "cap 1 awakening is refused when the hero cap is reached")]
         private static IEnumerable<int> Cap(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             int cap = echoes.HeroCap;
             List<EchoDef> defs = EchoUtility.AllEchoes.ToList();
             t.Log("hero cap " + cap + ", echoes " + defs.Count);
@@ -220,7 +212,7 @@ namespace RimArt
         [RimArtTest("Echo", "deeds 1 a longsword kill counts for Vergil's trial")]
         private static IEnumerable<int> LongswordKill(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             Pawn killer = Colonist(t);
             ThingDef longsword = DefDatabase<ThingDef>.GetNamed("MeleeWeapon_LongSword");
             killer.equipment.AddEquipment((ThingWithComps)ThingMaker.MakeThing(longsword, GenStuff.DefaultStuffFor(longsword)));
@@ -243,7 +235,7 @@ namespace RimArt
         [RimArtTest("Echo", "ui 1 device tab and Host gizmos")]
         private static IEnumerable<int> Ui(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoDevice.workingForTests = true;
             Thing device = ThingMaker.MakeThing(EchoDefOf.AG_EchoDevice);
             device.SetFaction(Faction.OfPlayer);
@@ -279,7 +271,7 @@ namespace RimArt
         [RimArtTest("Echo", "dev 1 the god-mode Meet trials command completes Vergil's trials and sends the letter")]
         private static IEnumerable<int> DevMeetTrials(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             Pawn pawn = null;
             for (int tries = 0; tries < 10 && pawn == null; tries++)
             {
@@ -344,7 +336,7 @@ namespace RimArt
         [RimArtTest("Echo", "weapon 1 empty hands: the held weapon waits in the inventory, equip is refused, revert hands it back")]
         private static IEnumerable<int> WeaponEmptyHands(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             Pawn host = Colonist(t);
             t.Equip(host, Longsword);
             ThingWithComps sword = host.equipment.Primary;
@@ -374,7 +366,7 @@ namespace RimArt
         [RimArtTest("Echo", "weapon 2 forced weapon: manifest puts it in hand, equip is refused, revert destroys it and hands back the old one")]
         private static IEnumerable<int> WeaponForced(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoRecord record = ForcedWeaponHost(t, echoes, out Pawn host, out ThingDef before);
             ThingWithComps sword = host.inventory.innerContainer.OfType<ThingWithComps>().FirstOrDefault(w => w.def == Longsword);
             yield return 2;
@@ -397,7 +389,7 @@ namespace RimArt
         [RimArtTest("Echo", "weapon 3 a dropped hero weapon vanishes and returns after the return time, not while downed")]
         private static IEnumerable<int> WeaponReturns(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoRecord record = ForcedWeaponHost(t, echoes, out Pawn host, out ThingDef before);
             ThingWithComps sword = host.inventory.innerContainer.OfType<ThingWithComps>().FirstOrDefault(w => w.def == Longsword);
             yield return 2;
@@ -436,7 +428,7 @@ namespace RimArt
         [RimArtTest("Echo", "weapon 4 a Host who dies leaves no hero weapon behind")]
         private static IEnumerable<int> WeaponDeath(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             // A second colonist keeps the colony alive, so the death does not end the game.
             Colonist(t, 4);
             EchoRecord record = ForcedWeaponHost(t, echoes, out Pawn host, out ThingDef before);
@@ -497,21 +489,10 @@ namespace RimArt
             pawn.apparel.Wear((Apparel)ThingMaker.MakeThing(def, def.MadeFromStuff ? GenStuff.DefaultStuffFor(def) : null));
         }
 
-        /// <summary>Turns the pawn and keeps it turned: undrafted, a wait job facing a cell 3 away.</summary>
-        private static void Face(Pawn pawn, Rot4 rot)
-        {
-            // Pawn_RotationTracker turns a drafted pawn that stands idle to face south.
-            pawn.drafter.Drafted = false;
-            Verse.AI.Job wait = JobMaker.MakeJob(JobDefOf.Wait_MaintainPosture, pawn.Position + rot.FacingCell * 3);
-            wait.expiryInterval = 600;
-            pawn.jobs.StartJob(wait, Verse.AI.JobCondition.InterruptForced);
-            pawn.Rotation = rot;
-        }
-
         [RimArtTest("Echo", "costume 1 Vergil's coat is drawn in hero form, hides worn clothes, armour and headgear but not belts, and goes on revert (screenshots)")]
         private static IEnumerable<int> VergilCoat(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             Pawn host = Colonist(t);
             foreach (string piece in new[] { "Apparel_BasicShirt", "Apparel_Pants", "Apparel_SmokepopBelt" }) Wear(host, piece);
             t.Equip(host, DefDatabase<ThingDef>.GetNamed("MeleeWeapon_LongSword"));
@@ -583,7 +564,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 2 the Akatsuki cloak is shared: Pain's and Itachi's hero forms draw the cloak on the body and the collar on the head, hide worn clothes and hats, and go on revert (screenshots)")]
         private static IEnumerable<int> AkatsukiCloak(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoDef pain = DefDatabase<EchoDef>.GetNamed("AG_Echo_Pain");
             EchoDef itachi = DefDatabase<EchoDef>.GetNamed("AG_Echo_Itachi");
             foreach (EchoDef echo in new[] { pain, itachi })
@@ -652,7 +633,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 4 Pain's piercings are on the head over the beard and face parts and under the hair, narrower on a narrow head (close-up screenshots)")]
         private static IEnumerable<int> PainPiercings(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoDef pain = DefDatabase<EchoDef>.GetNamed("AG_Echo_Pain");
             HediffDef form = pain.manifestHediff;
             var props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
@@ -707,7 +688,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 3 Obito's hero form draws the cloak, the collar and the spiral mask, the mask on the head between the hair and the collar and narrower on a narrow head (screenshots)")]
         private static IEnumerable<int> ObitoMask(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Obito");
             var props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
             t.Check(props?.Count == 3, "the hero form has the cloak, the collar and the mask (" + (props?.Count ?? 0) + " costume nodes)");
@@ -789,7 +770,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 5 Minato's hero form draws the haori on the body and the forehead protector on the head over the hair, hides worn clothes and hats but not belts, narrower on a narrow head (screenshots)")]
         private static IEnumerable<int> MinatoHaori(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Minato");
             var props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
             t.Check(props?.Count == 2, "the hero form has the haori and the forehead protector (" + (props?.Count ?? 0) + " costume nodes)");
@@ -873,7 +854,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 6 Sasuke's hero form draws the war outfit with its own west picture, hides worn clothes and hats but not belts (screenshots)")]
         private static IEnumerable<int> SasukeOutfit(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Sasuke");
             var props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
             t.Check(props?.Count == 1, "the hero form has one costume node (" + (props?.Count ?? 0) + ")");
@@ -937,7 +918,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 7 a costume set to onlyOverWornApparel is not drawn on a naked Host and hides nothing; trousers bring it back, a belt does not (screenshots)")]
         private static IEnumerable<int> OnlyOverWornApparel(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             int flagged = DefDatabase<HediffDef>.AllDefsListForReading
                 .Where(d => d.defName != "AG_EchoManifest_Sato" && d.HasDefinedGraphicProperties)
                 .SelectMany(d => d.RenderNodeProperties.OfType<PawnRenderNodeProperties_EchoCostume>())
@@ -1011,7 +992,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 8 Satō's hero form draws the combat outfit and the flat cap, which hides the hair; nothing of it on a naked Host (screenshots)")]
         private static IEnumerable<int> SatoCombat(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Sato");
             List<PawnRenderNodeProperties_EchoCostume> props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
             if (!t.Check(props?.Count == 2, "the hero form has the outfit and the cap (" + (props?.Count ?? 0) + " costume nodes)"))
@@ -1102,7 +1083,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 9 Gojo's hero form draws the uniform, the high collar and the blindfold with his hair, which hides the Host's hair and eyebrows; narrower on a narrow head (screenshots)")]
         private static IEnumerable<int> GojoUniform(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Gojo");
             List<PawnRenderNodeProperties_EchoCostume> props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
             if (!t.Check(props?.Count == 3, "the hero form has the uniform, the collar and the blindfold (" + (props?.Count ?? 0) + " costume nodes)"))

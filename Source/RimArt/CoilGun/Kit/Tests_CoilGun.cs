@@ -27,9 +27,7 @@ namespace RimArt
         /// <summary>A hostile humanlike with no apparel (no armour, no shield belt), so the damage asked for is what lands.</summary>
         private static Pawn Bare(RimArtTestContext t, IntVec3 at)
         {
-            Pawn pawn = t.Enemy(at, armed: false);
-            pawn.apparel?.DestroyAll();
-            return pawn;
+            return t.Target(at);
         }
 
         private static Pawn Mech(RimArtTestContext t, IntVec3 at)

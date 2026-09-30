@@ -44,12 +44,10 @@ reads it directly). Agreed 2026-09-30. New code follows it; old code is changed 
 | `Shared/VfxDraw.cs` | Materials, meshes, sprites, strips and streaks every ported picture uses |
 | `Shared/VfxMath.cs` | The lab's `Smooth`, `Hash`, `Rand`, so a port matches its sketch |
 | `Echo/EchoUtility.cs` | Hero layer: `ForceHost`, `Awaken`, `Manifest`, `Revert`, `ManifestedWith` |
-| `Testing/RimArtTestContext.cs` | `Clear`, `Colonist`, `Enemy` (optional faction), `Hold`, `Equip`, `Describe`, `Check`, `Log`, `ShotAs` |
+| `Testing/RimArtTestContext.cs` | `Clear`, `Colonist`, `Enemy`, `Hold`, `Equip`, `Describe`, `Check`, `Log`, `ShotAs`; kit tests: `WaitFor`, `ClearEchoes`, `Host`, `EndHost`, `Target`, `NoWimp`, `Note`/`Hurt`/`Untouched`, `Stunned`, `Wall`, `Face` |
 
 ### Known copies, not shared yet
 
-- Test setup (`Host`, `Target`, `Wall`, `WaitFor`, `Hurt`, `Finish`) is copied in 4 to 12 test files. Being
-  moved to `Testing/` now. New tests add a missing helper there, not in their own file.
 - Each kit keeps its own list of running casts: 27 Map/GameComponents in 21 kits, 21 `JobDriver_Cast*`.
   One shared base is planned after v1 (2026-10-20). Until then a new kit copies the Vergil shape
   (`VergilCast`, `GameComponent_Vergil`, `JobDriver_CastVergil`) instead of making a new one.
@@ -82,7 +80,8 @@ reads it directly). Agreed 2026-09-30. New code follows it; old code is changed 
 
 - Every new rule gets a `[RimArtTest]` scenario next to the kit (`Tests_<Kit>.cs`). Log the pawns' state
   over time; do not rely on PASS/FAIL alone.
-- Test setup goes through `Testing/` helpers, not private copies.
+- Test setup goes through `Testing/` helpers, not private copies. A kit keeps a wrapper (`Host`, `Target`, `Setup`)
+  only for its own steps on top of them; `using static RimArt.RimArtTestContext;` brings the static ones in.
 - Rule code with no game calls (timing, geometry, layout) can also get a console test in `Tests/<Kit>/`,
   which compiles the source files it needs and runs without RimWorld.
 - Run only the filter for what changed (`-rimarttest=<kit>`), never `all`.

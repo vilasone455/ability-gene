@@ -5,6 +5,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -23,44 +24,22 @@ namespace RimArt
                 foreach (Thing thing in t.map.listerThings.ThingsOfDef(def).ToList())
                     (thing as AjinAnchor)?.DiscardForTests();
             GameComponent_Sato.Instance.ResetForTests();
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = false;
-            return echoes;
+            return t.ClearEchoes();
         }
 
         /// <summary>A colonist made Satō's Host, stripped, with a full pool; manifested unless told not to.</summary>
-        private static Pawn Host(RimArtTestContext t, GameComponent_Echoes echoes, IntVec3 at, out EchoRecord record, bool manifest = true)
+        private static Pawn Host(RimArtTestContext t, IntVec3 at, out EchoRecord record, bool manifest = true)
         {
-            Pawn host = t.Colonist(at);
-            record = EchoUtility.ForceHost(Sato, host);
-            echoes.charge = 100f;
-            if (manifest) EchoUtility.Manifest(record);
+            Pawn host = t.Host(Sato, at, out record, manifest);
             host.drafter.Drafted = false;
             RimArtTestContext.Hold(host);
-            Trait wimp = host.story?.traits?.GetTrait(TraitDefOf.Wimp);
-            if (wimp != null) host.story.traits.RemoveTrait(wimp);
+            NoWimp(host);
             return host;
         }
 
         private static Pawn Target(RimArtTestContext t, IntVec3 at, bool armed = false, int stunTicks = 900)
         {
-            Pawn pawn = t.Enemy(at, armed);
-            pawn.apparel?.DestroyAll();
-            pawn.stances.stunner.StunFor(stunTicks, null, false);
-            return pawn;
-        }
-
-        private static void Finish(EchoRecord record)
-        {
-            if (record != null) EchoUtility.Revert(record, collapse: false);
-            EchoDevice.workingForTests = null;
-        }
-
-        private static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 1)
-        {
-            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
+            return t.Target(at, stunTicks, armed: armed);
         }
 
         /// <summary>Cuts the Reset short: he rises after a few ticks.</summary>
@@ -95,7 +74,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             t.Check(AjinReset.IsAjin(host), "awakening gave the Ajin trait");
             t.Check(host.story.traits.HasTrait(TraitDefOf.Psychopath), "awakening gave Psychopath");
             host.TakeDamage(new DamageInfo(DamageDefOf.Cut, 8f, 0f, -1f, null, Part(host, BodyPartDefOf.Arm)));
@@ -115,7 +94,7 @@ namespace RimArt
             t.Check(host.Spawned && host.Position == lay, "he rose where he lay");
             t.Check(!host.Downed, "he stands");
             t.Check(Wounds(host) == 0, "no wounds left (" + Wounds(host) + ")");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Sato", "reset 2 out of hero form: the slow Reset, one day, no charge, in place")]
@@ -123,7 +102,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record, manifest: false);
+            Pawn host = Host(t, t.center, out EchoRecord record, manifest: false);
             float before = Charge;
             host.Kill(null);
             yield return 3;
@@ -134,7 +113,7 @@ namespace RimArt
             Hurry(host);
             yield return 30;
             t.Check(AjinReset.Resetting(host) == null && host.Spawned && host.Position == t.center && !host.Downed, "he rose in place");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Sato", "reset 3 an explosion with two anchors: body gone, gear on the spot, rises naked at the arm, the hand crumbles")]
@@ -142,7 +121,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             t.Equip(host, ThingDef.Named("Gun_Autopistol"));
             host.apparel.Wear((Apparel)ThingMaker.MakeThing(ThingDef.Named("Apparel_BasicShirt"), ThingDefOf.Cloth));
             AjinAnchor hand = Sever(host, BodyPartDefOf.Hand, t.center + new IntVec3(5, 0, 0));
@@ -168,7 +147,7 @@ namespace RimArt
             t.Check(arm.Destroyed, "the arm was used up");
             t.Check(hand.Destroyed, "the other anchor crumbled");
             t.Check(Wounds(host) == 0, "arm and hand grew back");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Sato", "reset 4 an explosion with no anchor: remains on the spot, rises there")]
@@ -176,7 +155,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             IntVec3 spot = host.Position;
             GenExplosion.DoExplosion(spot, t.map, 1.9f, DamageDefOf.Bomb, null, 20);
             yield return 3;
@@ -187,7 +166,7 @@ namespace RimArt
             yield return 30;
             t.Check(host.Spawned && host.Position.InHorDistOf(spot, 1.5f) && !host.Downed, "he rose on the spot");
             t.Check(remains == null || remains.Destroyed, "the remains are gone");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Sato", "reset 5 half the body's health lost while he lies there destroys it: he goes to his leg")]
@@ -195,7 +174,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             AjinAnchor leg = Sever(host, BodyPartDefOf.Leg, t.center + new IntVec3(4, 0, 0));
             yield return 25;
             host.Kill(null);
@@ -214,7 +193,7 @@ namespace RimArt
             Hurry(host);
             yield return 30;
             t.Check(host.Spawned && !host.Downed && Wounds(host) == 0, "he rose whole at the leg");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Sato", "reset 6 downed 5 s in hero form Resets him; out of hero form it does not")]
@@ -222,7 +201,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             // One record per Echo, so the second Ajin just gets the trait: an Ajin out of hero form.
             Pawn plain = t.Colonist(t.center + new IntVec3(4, 0, 0));
             plain.drafter.Drafted = false;
@@ -241,7 +220,7 @@ namespace RimArt
             Hurry(host);
             yield return 30;
             t.Check(!host.Downed && Wounds(host) == 0, "he rose with both legs");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Sever ---------------------------------------------------------------------------------------------
@@ -251,7 +230,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             IntVec3 a = t.center + new IntVec3(3, 0, 0), b = t.center + new IntVec3(0, 0, 3), c = t.center + new IntVec3(-3, 0, 0);
             AjinAnchor first = Sever(host, BodyPartDefOf.Hand, a);
             t.Check(first != null && first.Position == a && first.piece == AjinPiece.Hand, "a hand anchor at the aimed cell");
@@ -264,7 +243,7 @@ namespace RimArt
             t.Check(first.Destroyed, "the oldest crumbled");
             t.Check(!second.Destroyed && !third.Destroyed && AjinReset.Anchors(host, t.map).Count == 2, "two anchors left");
             t.Check(third.piece == AjinPiece.Leg && second.piece == AjinPiece.Ear, "pieces: ear and leg");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Headshot / Grenade -------------------------------------------------------------------------------
@@ -274,7 +253,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             AjinAnchor hand = Sever(host, BodyPartDefOf.Hand, t.center + new IntVec3(4, 0, 0));
             yield return 25;
             Ability shot = host.abilities.GetAbility(SatoDefOf.AG_SatoHeadshotReset);
@@ -290,7 +269,7 @@ namespace RimArt
             t.Check(AjinReset.Resetting(host) == null && host.Position == t.center && !host.Downed, "he rose in place");
             t.Check(!hand.Destroyed, "the hand anchor stays");
             t.Check(Wounds(host) == 0, "the hand grew back");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Sato", "grenade 1 the blast hurts the enemy and the ally next to him, and he rises at his anchor")]
@@ -298,7 +277,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             AjinAnchor leg = Sever(host, BodyPartDefOf.Leg, t.center + new IntVec3(0, 0, 6));
             yield return 25;
             Pawn enemy = Target(t, t.center + new IntVec3(1, 0, 0));
@@ -316,7 +295,7 @@ namespace RimArt
             Hurry(host);
             yield return 30;
             t.Check(host.Spawned && host.Position.InHorDistOf(t.center + new IntVec3(0, 0, 6), 1.5f), "he rose at the leg");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- The Game ------------------------------------------------------------------------------------------
@@ -326,7 +305,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             Pawn other = t.Colonist(t.center + new IntVec3(-2, 0, 0));
             Pawn enemy = Target(t, t.center + new IntVec3(6, 0, 0));
             Ability game = host.abilities.GetAbility(SatoDefOf.AG_SatoTheGame);
@@ -344,7 +323,7 @@ namespace RimArt
             enemy.Kill(null);
             yield return 2;
             t.Check(Mathf.Abs(Charge - 65f) < 0.5f, "the kill refunded 15 (" + Charge.ToString("0.0") + ")");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Black Ghost ---------------------------------------------------------------------------------------
@@ -354,7 +333,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             IntVec3 at = t.center + new IntVec3(8, 0, 0);
             AjinAnchor hand = Sever(host, BodyPartDefOf.Hand, t.center + new IntVec3(6, 0, 0));
             yield return 25;
@@ -383,7 +362,7 @@ namespace RimArt
             EchoUtility.Revert(record, collapse: false);
             yield return CompBlackGhost.DissolveTicks + 10;
             t.Check(ghost.Destroyed, "it dissolved on revert");
-            Finish(null);
+            EndHost(null);
         }
 
         [RimArtTest("Sato", "ghost 2 tear an arm: the enemy loses it and drops its weapon, a limb lies behind the ghost, once per summon")]
@@ -391,7 +370,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             Ability summon = host.abilities.GetAbility(SatoDefOf.AG_SatoBlackGhost);
             summon.Activate(new LocalTargetInfo(host), LocalTargetInfo.Invalid);
             yield return CompBlackGhost.BuildTicks + 5;
@@ -410,7 +389,7 @@ namespace RimArt
             t.Check(enemy.equipment.Primary == null, "the weapon dropped");
             t.Check(t.map.listerThings.ThingsOfDef(SatoDefOf.AG_TornLimb).Any(), "a torn limb lies on the floor");
             t.Check(comp.tearUsed, "Tear is used up");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- pictures ------------------------------------------------------------------------------------------
@@ -420,7 +399,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             host.Rotation = Rot4.South;
             AjinAnchor hand = Sever(host, BodyPartDefOf.Hand, t.center + new IntVec3(2, 0, 0));
             yield return 2;
@@ -455,7 +434,7 @@ namespace RimArt
             yield return 30;
             yield return t.ShotAs("sato peel at the leg", host.Position, 3.5f);
             yield return 40;
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Sato", "pictures 2 the Black Ghost builds, fights, tears an arm and dissolves (screenshots)", 3000)]
@@ -463,7 +442,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center + new IntVec3(-3, 0, 0), out EchoRecord record);
+            Pawn host = Host(t, t.center + new IntVec3(-3, 0, 0), out EchoRecord record);
             Ability summon = host.abilities.GetAbility(SatoDefOf.AG_SatoBlackGhost);
             summon.Activate(new LocalTargetInfo(host), LocalTargetInfo.Invalid);
             yield return 30;
@@ -495,7 +474,7 @@ namespace RimArt
             yield return t.ShotAs("sato ghost dissolving", ghost.Position, 3.5f);
             yield return 60;
             t.Check(ghost.Destroyed, "dissolved");
-            Finish(null);
+            EndHost(null);
         }
 
         // ---- surgery -------------------------------------------------------------------------------------------
@@ -505,7 +484,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record, manifest: false);
+            Pawn host = Host(t, t.center, out EchoRecord record, manifest: false);
             Pawn plain = t.Colonist(t.center + new IntVec3(3, 0, 0));
             BodyPartRecord kidney = host.health.hediffSet.GetNotMissingParts().First(p => p.def.defName == "Kidney");
             BodyPartRecord otherKidney = plain.health.hediffSet.GetNotMissingParts().First(p => p.def.defName == "Kidney");
@@ -513,7 +492,7 @@ namespace RimArt
             Thing theirs = MedicalRecipesUtility.SpawnNaturalPartIfClean(plain, otherKidney, plain.Position, t.map);
             t.Check(his == null, "no kidney from him");
             t.Check(theirs != null, "a kidney from the other colonist");
-            Finish(record);
+            EndHost(record);
         }
     }
 }

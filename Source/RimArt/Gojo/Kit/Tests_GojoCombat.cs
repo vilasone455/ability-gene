@@ -4,6 +4,7 @@ using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -75,18 +76,6 @@ namespace RimArt
             Thing thing = ThingMaker.MakeThing(def, def.MadeFromStuff ? GenStuff.DefaultStuffFor(def) : null);
             thing.stackCount = count;
             return GenSpawn.Spawn(thing, at, t.map);
-        }
-
-        private static Thing Wall(RimArtTestContext t, IntVec3 at)
-        {
-            Thing wall = ThingMaker.MakeThing(ThingDefOf.Wall, ThingDefOf.BlocksGranite);
-            wall.SetFaction(Faction.OfPlayer);
-            return GenSpawn.Spawn(wall, at, t.map);
-        }
-
-        private static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 1)
-        {
-            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
         }
 
         private static float Injuries(Pawn pawn) => pawn.health.hediffSet.hediffs.OfType<Hediff_Injury>().Sum(h => h.Severity);
@@ -250,7 +239,7 @@ namespace RimArt
             Setup(t);
             yield return 2;
             IntVec3 c = t.center;
-            for (int z = -1; z <= 1; z++) Wall(t, c + new IntVec3(3, 0, z));
+            for (int z = -1; z <= 1; z++) t.Wall(c + new IntVec3(3, 0, z));
             Pawn gojo = Gojo(t, c + new IntVec3(-6, 0, 0));
             Pawn first = Raider(t, c);
             yield return 5;
@@ -281,7 +270,7 @@ namespace RimArt
             RedShot shot = null;
             foreach (int w in WaitFor(() => (shot = Kit(t).Reds.FirstOrDefault(r => r.caster == gojo))?.Fired == true, 120)) yield return w;
             // After the fire: the verb's line of sight check is behind it, Red is in the air.
-            for (int z = -1; z <= 1; z++) Wall(t, c + new IntVec3(4, 0, z));
+            for (int z = -1; z <= 1; z++) t.Wall(c + new IntVec3(4, 0, z));
             t.Log("walls built " + (t.Now - shot?.fireTick) + " ticks after the fire, Red at " + shot?.along.ToString("0.00"));
             foreach (int w in WaitFor(() => shot.Burst, 90)) yield return w;
             t.Log(Shot(shot));
@@ -341,7 +330,7 @@ namespace RimArt
             Thing steel = Item(t, ThingDefOf.Steel, 40, c + new IntVec3(4, 0, -1));
             Thing rock = GenSpawn.Spawn(ThingMaker.MakeThing(ThingDef.Named("Granite")), c + new IntVec3(7, 0, -1), map);
             var walls = new Dictionary<int, Thing>();
-            for (int z = -3; z <= 3; z++) walls[z] = Wall(t, c + new IntVec3(9, 0, z));
+            for (int z = -3; z <= 3; z++) walls[z] = t.Wall(c + new IntVec3(9, 0, z));
             IntVec3 floor = c + new IntVec3(0, 0, 1), water = c + new IntVec3(1, 0, 1), rough = c + new IntVec3(3, 0, 2);
             map.terrainGrid.SetTerrain(floor, TerrainDefOf.WoodPlankFloor);
             map.terrainGrid.SetTerrain(water, TerrainDefOf.WaterShallow);
