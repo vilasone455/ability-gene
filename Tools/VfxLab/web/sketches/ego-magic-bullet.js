@@ -9,8 +9,10 @@
 //         lover, friend; a bonded animal; else the shooter) and still pierces everyone between.
 //         30 damage. Count resets after. 20 s cooldown before shot one.
 //   Gizmo: a counter showing the next shot number; on six it names the seventh's target.
-//   Corrosion (shared system): only the look is sketched here (the "Corroded look" checkbox). The
-//         corroded targeting rule (nearest pawn, any faction) is not shown.
+//   Corrosion (shared system): the "Corroded" checkbox. The gun aims itself at the nearest living
+//         pawn, any faction: the colonist stand-in walks up to 2 cells, nearer than the raider, and
+//         the shot turns onto them; a violet floor ring and dashed line mark the gun's target. The
+//         seventh still goes to the beloved.
 //
 // Look, from the source. Second pass 2026-09-30 against seven frames of the Limbus "Magic Bullet
 // Fire" skill (youtube P3Kq4RHdDE0: aim, bullet at the muzzle, shot 1, hit, a two-circle aim, the
@@ -23,13 +25,13 @@
 //   Shot 1-3: a thin dim blue line with a long white-violet lightning bolt running along it that
 //          swings up to half a cell to either side and throws short branches; the light sits at
 //          the circle, with short rays off it, not at the muzzle.
-//          Two tall tan parchment brackets stand either side of the circle (the left about 1.6
-//          pawn heights, the right smaller): opaque brush marks with frayed ends, fibre lines and
-//          a darker rim, that afterwards close into thin oval outlines. A wide tan slab stands at
-//          the target, and a curved tan brush sweep with a frayed tip runs along the floor from the
-//          shooter's feet. From shot four two wide paper columns stand further down the beam. Short
-//          cyan speed lines fly past the
-//          circle. The rifle kicks up about 40 degrees, held one-handed, the shooter rocked back.
+//          The source frames put tan parchment brush marks around the circle and the target; those
+//          were tried and dropped (2026-09-30) as not fitting RimWorld. The shot's force is shown
+//          with the game's own stuff instead: a pale dust ring on the floor expanding 2.2 cells
+//          from under the circle in .45 s, dust thrown sideways off the first cells of the beam
+//          and back from the shooter's feet, and at each hit pawn a dust burst and a dark scorch
+//          streak 1.2 cells along the floor past them that stays. Short cyan speed lines fly past
+//          the circle. The rifle kicks up about 40 degrees, held one-handed, the shooter rocked back.
 //   Hit:   the target lit yellow-white, a burst of thin yellow spikes and long rays, an orange
 //          lightning bolt arcing past it along the beam, orange sparks flung on forward, orange
 //          streak lines, a small burn. The brackets and slab thin to tan oval outlines and stay.
@@ -41,9 +43,10 @@
 //          past the target.
 //   Rifle: about nine times longer than wide (the icon is 200 x 23): black barrel, a gold filigree
 //          band around the chamber, a navy stock.
-//   Corroded: Der Freischütz himself bleeds through: the body a black smoke silhouette with
-//          tendrils off the head and the legs trailing into smoke, two glowing blue eyes, a navy
-//          cape with gold trim over the shoulders. No hat.
+//   Corroded: not the source's smoke silhouette (it hid the pawn, which RimWorld cannot afford).
+//          Made for the game instead: the pawn stays readable with the weapon's magic on him: a dim
+//          contract circle on the floor under his feet, dark violet veins from the chest, blue eyes,
+//          thin wisps off the shoulders, the barrel lit blue, the counter pips turned violet.
 //
 // Order (default sliders, shot 1..6):
 //   0.00  aim: rifle level at chest height on the aim; seven pips over the head show the count;
@@ -55,10 +58,10 @@
 //         the beam is left from the muzzle to the range with forks along it; it crosses the wall
 //         (a punched hole and dust that stay) and every pawn on the line (the raider in front of
 //         the wall, the colonist behind it): stagger star, orange bolt, fire, blood, a floor
-//         spatter that stays; each hit pawn flinches .18 cells
+//         spatter and a scorch streak that stay; each hit pawn flinches .18 cells; the dust ring,
+//         the beam dust and the recoil dust are up and settle within .9 s
 //   0.80  the bullet has reached the 40-cell range; each 2-cell piece of the beam fades over .6 s
-//         from when the bullet passed it; the circle closes .35 s later; the parchment thins to outlines over
-//         .5 s and fades by 1.4 s; the result is held 1.5 s
+//         from when the bullet passed it; the circle closes .35 s later; the result is held 1.5 s
 // Shot 7: at 0.45 the rifle swings from the aim to the beloved over .35 s (the shooter's arms turn
 //   it, not the player), five circles open on the new line, then it fires the wide beam the same
 //   way. The raider standing between takes the hit first, then the beloved. After shot 6 (and
@@ -75,10 +78,8 @@
 // is a circle in the (east, up) plane at every aim, a 1 : .6 ellipse with a fixed screen
 // orientation like Twin Maw's jaws; "lies flat" is a level ring. Up is drawn as .6 north. Standing
 // ones get a ground shadow along the sun, a lit top rim and a dark back rim .04 north for thickness.
-// The parchment brackets are tall and thin, so they get the projection's free axis: they stand in
-// the plane of (u, up) where u is the aim when the aim is more east-west than north-south, else the
-// across direction; up is drawn as .6 north. Facing east or west that is the source's side view;
-// facing north or south the pair flanks the beam. The rifle's kick is a real tilt: the muzzle end
+// Dust and the scorch are level puffs and floor sprites, so they need no per-facing work. The
+// rifle's kick is a real tilt: the muzzle end
 // goes cos(tilt) along the aim and Lift x sin(tilt) north, so facing east or west the barrel visibly
 // swings up, facing north or south it shortens. Pawns are lib/pawn.js real-size stand-ins (average
 // body); walls are the Paper Bomb kit's stand-ins. Hits are found every frame from the params: a
@@ -102,15 +103,16 @@ const move = (q, d, k) => ({ x: q.x + d.x * k, z: q.z + d.z * k });
 const side = d => ({ x: -d.z, z: d.x });
 
 // Palette, from the frames: the circle bright blue over a deep blue fill, the beam blue, its forks
-// white over violet, the seventh cyan-white, the parchment tan, the hit yellow and orange.
+// white over violet, the seventh cyan-white, the dust pale, the scorch near-black, the hit yellow and orange.
 const White = new Color(1, 1, 1), Beam = new Color(.55, .80, 1), BeamEdge = new Color(.20, .45, 1);
 const Circle = new Color(.35, .62, 1), CircleBright = new Color(.50, .78, 1), CircleDeep = new Color(.12, .22, .80);
 const Cyan = new Color(.55, .96, 1), Halo = new Color(.65, .85, 1), Violet = new Color(.72, .62, 1);
 const Barrel = new Color(.07, .07, .09), BarrelLit = new Color(.30, .31, .36), Gold = new Color(.86, .68, .26), Navy = new Color(.11, .14, .38);
-const BeamViolet = new Color(.55, .45, 1), Tan = new Color(.82, .74, .56), TanDark = new Color(.62, .54, .38);
+const BeamViolet = new Color(.55, .45, 1), Scorch = new Color(.06, .05, .05), Pale = new Color(.92, .90, .84);
 const Smoke = new Color(.04, .03, .05), Eye = new Color(.45, .75, 1), Fire = new Color(1, .50, .12), FireCore = new Color(1, .90, .50);
 const Stagger = new Color(1, .85, .25), Bolt = new Color(1, .62, .18);
 const Warn = new Color(.75, .16, .10), Heart = new Color(.95, .45, .55);
+const Vein = new Color(.34, .18, .62), Corrupt = new Color(.55, .28, .88);   // the corroded look's veins and its floor marker
 // Decided looks and the rule's fixed numbers.
 const Speed = 120;                    // cells/s: the shot is near-instant (40 cells in .33 s); the beam is what the player sees
 const Chunk = 2;                      // the beam fades in 2-cell pieces from when the bullet passed each
@@ -120,7 +122,7 @@ const BeamLife = .6, CircleClose = .25;
 const KickTilt = 40 * D2R, KickUp = .05;                     // the barrel jumps up 40 degrees in .05 s ...
 const KickDamp = 3.2, KickSwing = 2.9;                       // ... and comes down as a damped swing: 40 x e^(-3.2 t) cos(2.9 t), level again at .59 s
 const KickSlide = .16, RockBack = .09;                       // the rifle slides back .16 cells; the shooter rocks back .09
-const PaperOpen = .08, PaperThin = .5, PaperLife = 1.4;      // the parchment: full in .08 s, thins to an outline over .5 s, gone by 1.4 s
+const ShockRadius = 2.2, ShockTime = .45;                    // the dust ring from under the circle grows to this over this
 const Shots = 7;
 const CirclesFor = [1, 1, 2, 2, 3, 4, 5];   // Limbus: circles per Magic Bullet count
 const CircleFar = 1.0, CircleNear = .4;     // the circle opens this far ahead of the muzzle and slides back to this before the shot
@@ -134,6 +136,7 @@ const lift = q => ({ x: q.x, z: q.z + ChestLift });
 const Wall = { along: 4, halfWidth: 1 };          // three wall cells across the aim
 const Raider = { along: 2.5, across: 0 };
 const Colonist = { along: 6.5, across: 0 };
+const CorrodedAlly = { along: 1.29, across: 1.53 };   // while corroded the colonist has walked up to 2 cells, nearer than the raider at 2.5
 const BelovedDeg = 125, BelovedDist = 5.5, BetweenDist = 2.8;
 
 function times(p) {
@@ -142,8 +145,8 @@ function times(p) {
 }
 
 // The line the shot takes, and everything it crosses, in order of distance from the muzzle.
-function shotLine(p, o, seventhDeg) {
-  const deg = p.shot >= Shots ? seventhDeg : p.aim, d = dirOf(deg);
+function shotLine(p, o, seventhDeg, aimDeg) {
+  const deg = p.shot >= Shots ? seventhDeg : aimDeg, d = dirOf(deg);
   const start = move(o, d, MuzzleAlong);
   return { deg, d, start, end: move(start, d, p.range) };
 }
@@ -155,23 +158,16 @@ function crossings(lineDef, people, wallCells) {
   for (const who of people) { const a = along(who.pos); if (a > 0 && across(who.pos) <= HitWidth) out.push({ kind: 'pawn', d: a, at: move(start, d, a), who }); }
   return out.sort((m, n) => m.d - n.d);
 }
-// The projection's free axis for tall thin things: the aim when it is more east-west than
-// north-south, else the across direction. Always points east-ish so a pair reads the same way.
-function freeAxis(d) {
-  const s = side(d), u = Math.abs(d.x) >= Math.abs(s.x) ? d : s;
-  return u.x < 0 ? { x: -u.x, z: -u.z } : u;
-}
-
 // The seven pips over the shooter's head. Filled ones are shots already taken; the next one is lit;
 // pip seven is the big one. On six it pulses.
-function counter(key, head, shot, s) {
+function counter(key, head, shot, s, tint = Beam) {
   const pitch = .13, x0 = head.x - pitch * 3, z = head.z + .32;
   for (let i = 0; i < Shots; i++) {
     const n = i + 1, spent = n < shot, next = n === shot, last = n === Shots;
     const warm = next && last ? .5 + .5 * Math.sin(s * 9) : 0, r = last ? .06 : .045;
     draw(disc, x0 + i * pitch, Y + .2, z, r, r, 0, spent ? CircleDeep : CircleDeep.withAlpha(.25));
-    if (next) sprite({ x: x0 + i * pitch, z }, .18, .18, Beam.withAlpha(.5 + .3 * warm), glow, Y + .201);
-    if (!spent) draw(disc, x0 + i * pitch, Y + .202, z, r + .005, r + .005, 0, Beam.withAlpha(.5));
+    if (next) sprite({ x: x0 + i * pitch, z }, .18, .18, tint.withAlpha(.5 + .3 * warm), glow, Y + .201);
+    if (!spent) draw(disc, x0 + i * pitch, Y + .202, z, r + .005, r + .005, 0, tint.withAlpha(.5));
   }
 }
 
@@ -217,9 +213,9 @@ function chamberGlow(key, c, muzzle, head, u, s) {
 // toward the shooter for east and west, see gateAxes). Rings and the fill are strips built from
 // those points. A standing one gets a ground shadow along the sun (hTrue is the real across
 // direction), a dark back rim .04 north and a lit top rim.
-function magicCircle(key, c, r, open, s, k, H, V, hTrue, stands, sun, strength) {
+function magicCircle(key, c, r, open, s, k, H, V, hTrue, stands, sun, strength, L = Y + .04, dim = 1) {
   if (open <= 0) return;
-  const rr = r * open, a = Math.min(1, open * 1.5), spin = s * (k % 2 ? .9 : -.7) + k, N = 48;
+  const rr = r * open, a = Math.min(1, open * 1.5) * dim, spin = s * (k % 2 ? .9 : -.7) + k, N = 48;
   const on = (t, rad, q = c, h = H, v = V) => ({ x: q.x + h.x * rad * Math.cos(t) + v.x * rad * Math.sin(t), z: q.z + h.z * rad * Math.cos(t) + v.z * rad * Math.sin(t) });
   const ringAt = (name, q, rad, alpha, layer, colour, thick = .03) => {
     const inner = [], outer = [];
@@ -235,40 +231,40 @@ function magicCircle(key, c, r, open, s, k, H, V, hTrue, stands, sun, strength) 
   if (stands) {
     discAt('shadow', { x: c.x + sun.x * .5, z: c.z - ChestLift + sun.z * .5 }, rr, .9 * strength * a, shadowLayer, Body, hTrue, { x: 0, z: .25 });
     const back = { x: c.x, z: c.z + .04 };
-    ringAt('back', back, rr, .7 * a, Y + .0405, CircleDeep, .04);
-    ringAt('back 2', back, rr * .80, .5 * a, Y + .0405, CircleDeep);
+    ringAt('back', back, rr, .7 * a, L + .0005, CircleDeep, .04);
+    ringAt('back 2', back, rr * .80, .5 * a, L + .0005, CircleDeep);
   }
-  sprite(c, gw, gh, CircleDeep.withAlpha(.30 * a), glow, Y + .04);
-  discAt('fill', c, rr * .98, .28 * a, Y + .0401, Circle);                  // the translucent fill
-  ringAt('outer', c, rr, 1.0 * a, Y + .041, CircleBright, .035);
-  ringAt('outer 2', c, rr * .955, .55 * a, Y + .041, Circle, .02);
-  ringAt('rune', c, rr * .80, .9 * a, Y + .041, Circle);
-  ringAt('mid', c, rr * .62, .8 * a, Y + .041, CircleBright);
-  ringAt('inner', c, rr * .36, .8 * a, Y + .041, CircleBright);
-  ringAt('inner 2', c, rr * .30, .5 * a, Y + .041, Circle, .02);
-  if (stands) sprite(on(Math.PI / 2, rr * .88), gw * .4, rr * .3, White.withAlpha(.35 * a), glow, Y + .0411);   // the lit top rim
+  sprite(c, gw, gh, CircleDeep.withAlpha(.30 * a), glow, L);
+  discAt('fill', c, rr * .98, .28 * a, L + .0001, Circle);                  // the translucent fill
+  ringAt('outer', c, rr, 1.0 * a, L + .001, CircleBright, .035);
+  ringAt('outer 2', c, rr * .955, .55 * a, L + .001, Circle, .02);
+  ringAt('rune', c, rr * .80, .9 * a, L + .001, Circle);
+  ringAt('mid', c, rr * .62, .8 * a, L + .001, CircleBright);
+  ringAt('inner', c, rr * .36, .8 * a, L + .001, CircleBright);
+  ringAt('inner 2', c, rr * .30, .5 * a, L + .001, Circle, .02);
+  if (stands) sprite(on(Math.PI / 2, rr * .88), gw * .4, rr * .3, White.withAlpha(.35 * a), glow, L + .0011);   // the lit top rim
   const ticks = 36;                    // the rune ring between .80 and .955, every third tick long
   for (let i = 0; i < ticks; i++) {
     const t = spin + i / ticks * TAU, outer = rr * (i % 3 ? .90 : .955);
-    streak(`${key} tick ${i}`, on(t, rr * .80), on(t, outer), .02, CircleBright.withAlpha(.6 * a), whiteGlow, Y + .042, 3);
+    streak(`${key} tick ${i}`, on(t, rr * .80), on(t, outer), .02, CircleBright.withAlpha(.6 * a), whiteGlow, L + .002, 3);
   }
   for (let tri = 0; tri < 2; tri++) {  // the hexagram: two triangles inscribed in the .62 ring
     const pts = [];
     for (let i = 0; i <= 3; i++) pts.push(on(-spin * .5 + tri * Math.PI / 3 + i * TAU / 3 + Math.PI / 2, rr * .62));
-    line(`${key} tri ${tri}`, pts, .025, CircleBright.withAlpha(.6 * a), whiteGlow, Y + .0415, 'none');
+    line(`${key} tri ${tri}`, pts, .025, CircleBright.withAlpha(.6 * a), whiteGlow, L + .0015, 'none');
   }
   const sq = [];                       // the centre sigil: a square in the inner ring, a dot
   for (let i = 0; i <= 4; i++) sq.push(on(spin + i * TAU / 4 + Math.PI / 4, rr * .30));
-  line(`${key} sigil`, sq, .022, CircleBright.withAlpha(.6 * a), whiteGlow, Y + .0415, 'none');
-  sprite(c, gw * .1, gh * .1, Circle.withAlpha(.5 * a), glow, Y + .0425);
-  sprite(c, gw * .035, gh * .035, White.withAlpha(.7 * a), glow, Y + .0426);
+  line(`${key} sigil`, sq, .022, CircleBright.withAlpha(.6 * a), whiteGlow, L + .0015, 'none');
+  sprite(c, gw * .1, gh * .1, Circle.withAlpha(.5 * a), glow, L + .0025);
+  sprite(c, gw * .035, gh * .035, White.withAlpha(.7 * a), glow, L + .0026);
   for (let i = 0; i < 6; i++) {        // rune dots on the .71 ring, spinning the other way
     const g = on(-spin * .7 + i / 6 * TAU, rr * .71);
-    sprite(g, .04, .036, White.withAlpha(.6 * a), glow, Y + .0425);
+    sprite(g, .04, .036, White.withAlpha(.6 * a), glow, L + .0025);
   }
   for (let i = 0; i < 4; i++) {        // white sparks around the rim
     const ph = (s * 1.7 + rand(i + 200 + k)) % 1, t = rand(i + 210 + k) * TAU + s * .8;
-    sprite(on(t, rr * (1 + ph * .3)), .07, .06, White.withAlpha(a * (1 - ph)), glow, Y + .043);
+    sprite(on(t, rr * (1 + ph * .3)), .07, .06, White.withAlpha(a * (1 - ph)), glow, L + .003);
   }
 }
 // The circle's screen axes for the chosen mode. A gate facing the aim has H across the aim and V
@@ -288,65 +284,75 @@ function gateAxes(mode, dir) {
   return { H: h, V: { x: -sl * dir.x, z: Lift * cl - sl * dir.z }, hTrue: h, stands: true };
 }
 
-// A parchment stroke, as the frames draw them: a brush mark standing in the plane (u, up), an arc
-// of an ellipse with its middle gap cells from c on side sgn (+1 or -1), half-width W, half-height
-// H (screen cells: up is already scaled). Opaque tan, thickest a third of the way down, a darker
-// rim on its convex side, three faint fibre lines along it, wobbly edges and frayed ends. thin
-// 0..1 hollows it: the thickness drops to a line and the arc grows round into a closed oval, which
-// is what is left on screen in the hit frame. seed varies the wobble between strokes.
-function parchment(key, c, u, sgn, gap, W, H, thick, alpha, thin, seed = 0) {
-  if (alpha <= 0) return;
-  const n = 26, half = (80 + 100 * thin) * D2R, at = (uo, z) => ({ x: c.x + u.x * uo, z: c.z + u.z * uo + z });
-  const tkAt = t => Math.max(.018, thick * (.2 + .8 * Math.exp(-Math.pow((t - 25 * D2R) / (55 * D2R), 2))) * (1 - thin * .85));
-  const inner = [], outer = [], fibre = [[], [], []];
-  for (let i = 0; i <= n; i++) {
-    const t = -half + 2 * half * i / n, ct = Math.cos(t), st = Math.sin(t);
-    const wob = (rand(seed + i * 7) - .5) * thick * .3 * (1 - thin), tk = tkAt(t) + wob;
-    const uo = sgn * (gap + W * ct), z = H * st;
-    inner.push(at(uo, z)); outer.push(at(uo + sgn * tk, z));
-    fibre.forEach((f, j) => f.push(at(uo + sgn * tk * (.3 + .22 * j), z)));
-  }
-  band(`${key} face`, inner, outer, Tan.withAlpha(.95 * alpha), Y + .030);
-  band(`${key} edge`, outer.map((q, i) => ({ x: q.x + (q.x - inner[i].x) * .25, z: q.z + (q.z - inner[i].z) * .25 })), outer, TanDark.withAlpha(alpha * .85), Y + .0299);
-  if (thin < .9) fibre.forEach((f, j) => line(`${key} fibre ${j}`, f.slice(3, n - 2), .014, TanDark.withAlpha(.4 * alpha * (1 - thin)), flat, Y + .0301, 'both'));
-  if (thin < .9) for (const end of [0, 1]) {                                     // the frayed ends: three bristles past each end
-    const a = end ? inner[n] : inner[0], b = end ? inner[n - 2] : inner[2], dx = a.x - b.x, dz = a.z - b.z, len = Math.hypot(dx, dz) || 1;
-    for (let k = 0; k < 3; k++) {
-      const spread = (k - 1) * .35, reach = H * (.12 + .1 * rand(seed + k + end * 5)) * (1 - thin);
-      const dir = { x: (dx / len) + u.x * sgn * spread * .5, z: (dz / len) + spread * .2 };
-      const from = { x: a.x + u.x * sgn * tkAt(end ? half : -half) * (.2 + .3 * k), z: a.z };
-      streak(`${key} fray ${end} ${k}`, from, { x: from.x + dir.x * reach, z: from.z + dir.z * reach }, .035, Tan.withAlpha(.9 * alpha * (1 - thin)), flat, Y + .0302, 3);
-    }
+// Dust: n puffs thrown from g in a fan of spread degrees around deg, from r0 to r1 cells out,
+// rising a little, over life seconds. tier scales it by 1 + .3 tier. The kit's Dust colour.
+function dust(key, g, age, deg, spread, n, r0, r1, life, tier) {
+  if (age < 0 || age > life) return;
+  const k = 1 + tier * .3;
+  for (let i = 0; i < n; i++) {
+    const u0 = age / (life * (.7 + .3 * rand(i + 40))), u = clamp(u0); if (u >= 1) continue;
+    const t = (deg + (rand(i + 50) - .5) * spread) * D2R, r = (r0 + (r1 - r0) * (1 - Math.pow(1 - u, 2)) * (.6 + .4 * rand(i + 60))) * k;
+    const q = { x: g.x + Math.cos(t) * r, z: g.z + Math.sin(t) * r + u * .15 }, size = (.25 + .45 * u) * k;
+    sprite(q, size, size * .85, Dust.withAlpha(.5 * (1 - u) * (1 - u)), puff, Y + .03);
   }
 }
-// Its life: full in PaperOpen, thinning to an outline over PaperThin, gone by PaperLife.
-function paperLife(age) {
-  if (age < 0 || age > PaperLife) return null;
-  return { open: smooth(age / PaperOpen), thin: smooth((age - PaperOpen - .15) / PaperThin), alpha: 1 - smooth((age - PaperLife + .4) / .4) };
+// The shot's pressure on the ground: a pale ring on the floor spreading from under the first circle
+// to ShockRadius in ShockTime, thinning as it goes, with puffs riding its rim.
+function shockRing(key, g, age, tier) {
+  if (age < 0 || age > ShockTime) return;
+  const u = age / ShockTime, r = ShockRadius * (1 + .4 * tier) * (1 - Math.pow(1 - u, 2.2)), a = (1 - u) * .7;
+  for (let j = 0; j < 6; j++) circle(g, r * (1 - j * .025), a * (j < 2 ? .5 : .3), Floor + .03, j < 2 ? Pale : Dust);   // a soft band, pale at the front
+  sprite(g, r * 2.1, r * 2.1, Dust.withAlpha(.12 * (1 - u)), soft, Floor + .029);
+  for (let i = 0; i < 18; i++) {       // dust riding the rim
+    const t = i / 18 * TAU + rand(i + 70) * .4, rr = r * (.88 + .18 * rand(i + 80)), size = (.35 + .45 * u) * (.7 + .5 * rand(i + 85));
+    sprite({ x: g.x + Math.cos(t) * rr, z: g.z + Math.sin(t) * rr }, size, size * .85, Dust.withAlpha(.5 * (1 - u)), puff, Y + .03);
+  }
+}
+// Dust thrown sideways off the first four cells of the beam, both sides, drifting out and settling.
+function beamDust(key, L, age, tier) {
+  if (age < 0 || age > .9) return;
+  const sd = side(L.d), k = 1 + tier * .3;
+  for (let i = 0; i < 14; i++) {
+    const u = clamp(age / (.6 + .3 * rand(i + 90))); if (u >= 1) continue;
+    const along = .3 + rand(i + 100) * 3.8, dir = i % 2 ? 1 : -1, out = (.15 + .9 * (1 - Math.pow(1 - u, 2)) * (.5 + .5 * rand(i + 110))) * k;
+    const b = lift(move(L.start, L.d, along)), q = { x: b.x + sd.x * dir * out, z: b.z + sd.z * dir * out - .08 + u * .12 }, size = (.22 + .3 * u) * k;
+    sprite(q, size, size * .85, Dust.withAlpha(.45 * (1 - u) * (1 - u)), puff, Y + .03);
+  }
+}
+// The scorch a pierced pawn leaves: a dark streak on the floor from their cell 1.2 cells on along
+// the line, drawn in over .2 s, and it stays.
+function scorch(key, pos, d, age) {
+  if (age < 0) return;
+  const g = clamp(age / .2), deg = Math.atan2(d.z, d.x) / D2R;
+  sprite(move(pos, d, .2 + .5 * g), 1.2 * g, .38, Scorch.withAlpha(.55), soft, Floor + .019, deg);
+  sprite(move(pos, d, .1), .5 * g, .5 * g, Scorch.withAlpha(.4), soft, Floor + .0189);
 }
 
-// Der Freischütz bleeding through the corroded pawn: a black smoke silhouette over the body, smoke
-// tendrils off the head and around the feet, two blue eyes, a navy cape with gold trim.
-function abnormality(pos, who, sun, strength, s) {
-  const head = at(pos, 'head', who), top = at(pos, 'headTop', who), neck = at(pos, 'neck', who), chest = at(pos, 'chest', who), feet = at(pos, 'feet', who);
-  draw(disc, chest.x, pawnLayer + .01, chest.z - .17, .30, .45, 0, Smoke);                 // body
-  draw(disc, head.x, pawnLayer + .011, head.z, .23, .24, 0, Smoke);                        // head
-  for (let i = 0; i < 6; i++) {                                                             // tendrils off the head
-    const ph = (s * .6 + rand(i + 300)) % 1, x = top.x + (rand(i + 310) - .5) * .3 + Math.sin(s * 2 + i) * .04 * ph;
-    sprite({ x, z: top.z + .02 + ph * .6 }, .18 + ph * .26, .16 + ph * .24, Smoke.withAlpha(.95 * Math.sin(ph * Math.PI)), puff, pawnLayer + .04);
+// The corroded look, made for the game rather than the source: the pawn stays readable and the
+// weapon's magic shows on him. A dim contract circle spins slowly on the floor under his feet
+// (the shot circle's own drawing, flat, at a quarter speed), four dark violet veins run from the
+// chest over the body and pulse, the eyes glow blue, three thin wisps rise off the shoulders, and
+// the barrel is lit blue from chamber to muzzle.
+function corrodedLook(pos, who, gun, sun, strength, s) {
+  const head = at(pos, 'head', who), neck = at(pos, 'neck', who), chest = at(pos, 'chest', who), pulse = .7 + .3 * Math.sin(s * 3);
+  magicCircle('mb contract', pos, .6, 1, s * .25, 9, { x: 1, z: 0 }, { x: 0, z: 1 }, { x: 1, z: 0 }, false, sun, strength, Floor + .05, .55);
+  for (let i = 0; i < 4; i++) {                                                             // veins
+    const t = i / 4 * TAU + .6, reach = .2 + .1 * rand(i + 400), pts = [chest];
+    for (let k = 1; k <= 4; k++) {
+      const u = k / 4, off = (rand(i * 7 + k * 3) - .5) * reach * .5;
+      pts.push({ x: chest.x + Math.cos(t) * reach * u - Math.sin(t) * off, z: chest.z + Math.sin(t) * reach * u * .8 + Math.cos(t) * off });
+    }
+    line(`mb vein ${i}`, pts, .022, Vein.withAlpha(.9 * pulse), flat, pawnLayer + .03, 'end');
   }
-  for (let i = 0; i < 5; i++) {                                                             // legs trailing into smoke
-    const ph = (s * .5 + rand(i + 330)) % 1, x = feet.x + (rand(i + 340) - .5) * .5;
-    sprite({ x, z: feet.z - .04 + ph * .1 }, .24 + ph * .26, .16 + ph * .12, Smoke.withAlpha(.9 * Math.sin(ph * Math.PI)), puff, pawnLayer + .015);
-  }
-  draw(disc, neck.x, pawnLayer + .02, neck.z - .09, .37, .21, 0, Gold);                    // cape: gold trim under navy
-  draw(disc, neck.x, pawnLayer + .021, neck.z - .09, .34, .185, 0, Navy);
-  draw(disc, neck.x, pawnLayer + .022, neck.z - .01, .16, .05, 0, Gold);                   // clasp
   for (const dx of [-.07, .07]) {                                                           // eyes
-    sprite({ x: head.x + dx, z: head.z - .02 }, .1, .08, Eye.withAlpha(.9), glow, pawnLayer + .03);
-    draw(disc, head.x + dx, pawnLayer + .031, head.z - .02, .022, .018, 0, White);
+    sprite({ x: head.x + dx, z: head.z - .02 }, .1, .08, Eye.withAlpha(.9 * pulse), glow, pawnLayer + .031);
+    draw(disc, head.x + dx, pawnLayer + .032, head.z - .02, .02, .016, 0, White);
   }
-  sprite({ x: head.x + sun.x * .3, z: head.z - .55 + sun.z * .3 }, .9, .35, Body.withAlpha(strength * .5), soft, shadowLayer);
+  for (let i = 0; i < 3; i++) {                                                             // wisps
+    const ph = (s * .5 + rand(i + 300)) % 1, x = neck.x + (i - 1) * .16 + Math.sin(s * 2 + i) * .03;
+    sprite({ x, z: neck.z + .05 + ph * .4 }, .12 + ph * .1, .14 + ph * .12, Smoke.withAlpha(.35 * Math.sin(ph * Math.PI)), puff, pawnLayer + .04);
+  }
+  streak('mb barrel lit', gun.chamber, gun.muzzle, .07, Circle.withAlpha(.35 + .25 * pulse), whiteGlow, pawnLayer + .07, 3);   // the barrel lit
 }
 
 // A zigzag bolt from a point: n bends, reaching `reach` in direction t (radians), jittered by seed.
@@ -518,7 +524,7 @@ export default {
     shot: P('Shot number (7 = the seventh)', 1, 1, 7, 1, 'Rule'),
     aim: P('Aim (degrees)', 0, 0, 360, 5, 'Showcase'),
     actors: { label: 'Show the pawns and the wall', value: true, group: 'Showcase' },
-    corroded: { label: 'Corroded look (Der Freischütz bleeds through)', value: false, group: 'Showcase' },
+    corroded: { label: 'Corroded (the gun fires at the nearest pawn, any faction)', value: false, group: 'Showcase' },
     range: P('Range (cells)', 40, 5, 40, 1, 'Rule'),
     lead: P('Aim before the shot', .45, .1, 1.5, .05, 'Timing (s)'),
     hold: P('Show the result', 1.5, .3, 3, .1, 'Timing (s)'),
@@ -551,7 +557,7 @@ export default {
     const who = { body: 'average', sun, shadow: strength };
     const people = p.actors ? [
       { pos: place(Raider.along, Raider.across), colour: Enemy, tag: 'raider' },
-      { pos: place(Colonist.along, Colonist.across), colour: Ally, tag: 'colonist' },
+      { pos: p.corroded ? place(CorrodedAlly.along, CorrodedAlly.across) : place(Colonist.along, Colonist.across), colour: Ally, tag: 'colonist' },
       { pos: between, colour: Enemy, tag: 'between' },
       { pos: beloved, colour: Ally, tag: 'beloved' },
     ] : [];
@@ -559,12 +565,16 @@ export default {
     if (p.actors) for (let k = -Wall.halfWidth; k <= Wall.halfWidth; k++) { const c = place(Wall.along, k); wallCells.push({ x: o.x + Math.round(c.x - o.x), z: o.z + Math.round(c.z - o.z) }); }
 
     // The rifle's direction now: the aim, or turning to the beloved on the seventh.
+    // Corroded, the gun aims itself at the nearest living pawn, any faction (the colonist stand-in
+    // is placed nearer than the raider to show it). The seventh still goes to the beloved.
+    const nearest = p.corroded && people.length ? people.reduce((m, q) => Math.hypot(q.pos.x - o.x, q.pos.z - o.z) < Math.hypot(m.pos.x - o.x, m.pos.z - o.z) ? q : m) : null;
+    const aimDeg = nearest ? Math.atan2(nearest.pos.z - o.z, nearest.pos.x - o.x) / D2R : p.aim;
     const turn = seventh ? smooth((s - p.lead) / Swing) : 0;
-    const gunDeg = p.aim + turn * BelovedDeg;
+    const gunDeg = seventh ? p.aim + turn * BelovedDeg : aimDeg;
     const fired = s >= t.fire, age = fired ? s - t.fire : -1, flown = fired ? Math.min(p.range, age * Speed) : 0;
-    const L = shotLine(p, o, seventhDeg), hits = fired ? crossings(L, people, wallCells) : [];
+    const L = shotLine(p, o, seventhDeg, aimDeg), hits = fired ? crossings(L, people, wallCells) : [];
     const hitAge = h => s - (t.fire + h.d / Speed);
-    const tier = seventh ? 2 : p.shot >= 4 ? 1 : 0, u = freeAxis(L.d);
+    const tier = seventh ? 2 : p.shot >= 4 ? 1 : 0;
 
     // Floor first: the warning line to the beloved after shot six, the tan sweep, and the spatters.
     if (p.actors && p.shot >= Shots - 1 && (seventh ? s < t.fire : true)) {
@@ -574,18 +584,14 @@ export default {
       for (let d = .6; d < len - .4; d += .45, i++) line(`mb warn ${i}`, [{ x: o.x + ux * d, z: o.z + uz * d }, { x: o.x + ux * (d + .25), z: o.z + uz * (d + .25) }], .06, Warn.withAlpha(.6 * alpha), flat, Floor + .03, 'none');
       sprite(beloved, .9, .9, Warn.withAlpha(.25 * alpha), soft, Floor + .031);
     }
-    if (fired && age < 1.2) {          // the brush sweep along the floor from the shooter's feet
-      const g = clamp(age / .1), f = 1 - smooth((age - .5) / .7);
-      const sweep = [], reach = 3.4 * g;                                       // a curved brush stroke, wide at the feet, a point at the tip
-      for (let i = 0; i <= 12; i++) { const v = i / 12, along = .2 + reach * v, acr = -.35 * v * v; sweep.push({ x: o.x + L.d.x * along - L.d.z * acr, z: o.z + L.d.z * along + L.d.x * acr }); }
-      line('mb sweep', sweep, .75, Tan.withAlpha(.8 * f), flat, Floor + .032, 'end');
-      line('mb sweep edge', sweep.map(q => ({ x: q.x + L.d.z * .06, z: q.z - L.d.x * .06 })), .78, TanDark.withAlpha(.5 * f), flat, Floor + .0319, 'end');
-      line('mb sweep 2', sweep.slice(2, 10).map(q => ({ x: q.x - L.d.z * .12, z: q.z + L.d.x * .12 })), .12, TanDark.withAlpha(.4 * f), flat, Floor + .0321, 'both');
-      for (let k = 0; k < 3; k++) {                                              // the tip frays into bristles
-        const tip = sweep[12], acr = (k - 1) * .12;
-        streak(`mb sweep fray ${k}`, { x: tip.x - L.d.x * .3 - L.d.z * acr, z: tip.z - L.d.z * .3 + L.d.x * acr }, { x: tip.x + L.d.x * (.3 + .2 * k) - L.d.z * acr * 2, z: tip.z + L.d.z * (.3 + .2 * k) + L.d.x * acr * 2 }, .05, Tan.withAlpha(.8 * f), flat, Floor + .032, 3);
-      }
+    if (nearest && !seventh && s < t.fire) {   // corroded: the gun's own target, a violet floor ring on the nearest pawn and a dashed line to it
+      const dx = nearest.pos.x - o.x, dz = nearest.pos.z - o.z, len = Math.hypot(dx, dz), ux = dx / len, uz = dz / len, pulse = .6 + .3 * Math.sin(s * 5);
+      let i = 0;
+      for (let d = .6; d < len - .5; d += .4, i++) line(`mb corrupt ${i}`, [{ x: o.x + ux * d, z: o.z + uz * d }, { x: o.x + ux * (d + .2), z: o.z + uz * (d + .2) }], .05, Corrupt.withAlpha(.6), flat, Floor + .03, 'none');
+      circle(nearest.pos, .5, pulse, Floor + .031, Corrupt);
     }
+    if (fired) dust('mb recoil dust', o, age, aimDeg + 180, 40, 8, .3, 1.2, .8, tier);   // the recoil kicks dust back from the shooter's feet
+    for (const h of hits) if (h.kind === 'pawn') scorch(`mb scorch ${h.who.tag}`, h.who.pos, L.d, hitAge(h));
     for (const h of hits) if (h.kind === 'pawn') wound(`mb wound ${h.who.tag}`, h.who.pos, who, L.d, hitAge(h), tier, s);
 
     if (p.actors) walls('mb walls', o, wallCells, sun, strength);
@@ -603,10 +609,7 @@ export default {
         draw(disc, top.x + .06, Y + .15, z + .03, .08, .08, 0, Heart);
         band('mb heart', [{ x: top.x - .13, z: z + .02 }, { x: top.x, z: z - .14 }], [{ x: top.x + .13, z: z + .02 }, { x: top.x, z: z - .14 }], Heart, Y + .151);
       }
-      if (h) {                         // a parchment slab stands at the hit and thins to an oval
-        const life = paperLife(ha);
-        if (life) parchment(`mb slab ${q.tag}`, at(pos, 'chest', who), u, 1, -.1, .18, .6 * life.open, .3 * life.open, life.alpha * .9, life.thin, 40 + q.pos.x);
-      }
+      if (h) dust(`mb hit dust ${q.tag}`, pos, ha, L.deg, 180, 10, .2, .9, .7, tier);   // the hit throws dust out around their feet
     }
     // The shooter, the counter, and the rifle in front. The kick: the shooter rocks back along the
     // shot line, the rifle slides back in the hands and its barrel jumps up, then swings back down.
@@ -614,12 +617,12 @@ export default {
     const rock = fired ? RockBack * (bump(age / .3) * .7 + .3 * clamp(age / .1) * (1 - smooth((age - .3) / .5))) : 0;
     const stand = move(o, L.d, -rock);
     pawn(stand, { ...who, shirt: Holder });
-    if (p.corroded) abnormality(stand, who, sun, strength, s);
-    counter('mb counter', at(stand, 'headTop', who), p.shot, s);
+    counter('mb counter', at(stand, 'headTop', who), p.shot, s, p.corroded ? Corrupt : Beam);
     const kick = fired ? KickSlide * (bump(age / .12) * .75 + .25 * clamp(age / .06) * (1 - smooth((age - .12) / .5))) : 0;
     const tiltU = !fired ? 0 : age < KickUp ? Math.sin(age / KickUp * Math.PI / 2) : Math.max(0, Math.exp(-KickDamp * (age - KickUp)) * Math.cos(KickSwing * (age - KickUp)));
     const hand = move(stand, gd, GripAlong);
     const gun = rifle('mb rifle', hand, gunDeg, sun, strength, kick, KickTilt * tiltU);
+    if (p.corroded) corrodedLook(stand, who, gun, sun, strength, s);
 
     // Before the shot: the chamber glows and the magic circles open ahead of the muzzle, then slide
     // back to it. They follow the muzzle while the rifle turns, and close after the bullet has left.
@@ -642,16 +645,11 @@ export default {
     if (tier === 2 && open > 0) { circle(lift(o), 1.0 * open, .8 * open, Y + .037, Circle); sprite(lift(o), 2.4 * open, 2.4 * open, CircleDeep.withAlpha(.25 * open), glow, Y + .0365); }
 
     if (!fired) return;
-    // On the shot: the parchment brackets either side of the first circle, and cyan speed lines past it.
-    const gate = circles[0].c, rr = circles[0].r, life = paperLife(age);
-    if (life) {
-      parchment('mb bracket left', gate, u, -1, rr * 1.25, rr * .6, rr * 1.6 * life.open, .2 * life.open, life.alpha, life.thin, 1);
-      parchment('mb bracket right', gate, u, 1, rr * 1.15, rr * .4, rr * 1.15 * life.open, .16 * life.open, life.alpha, life.thin, 2);
-      if (tier >= 1) for (let k = 0; k < 2; k++) {                              // from shot four: wide paper columns further down the beam
-        const c = lift(move(L.start, L.d, 3.2 + k * 1.4 + rr));
-        parchment(`mb column ${k}`, c, u, k ? 1 : -1, .05, .22, (.7 + .2 * k) * life.open, .34 * life.open, life.alpha * .9, life.thin, 10 + k);
-      }
-    }
+    // On the shot: a dust ring on the floor spreads from under the first circle, dust is thrown off
+    // the first cells of the beam, and cyan speed lines fly past the circle.
+    const gate = circles[0].c, rr = circles[0].r;
+    shockRing('mb shock', { x: gate.x, z: gate.z - ChestLift }, age, tier);
+    beamDust('mb beam dust', L, age, tier);
     if (age < .3) for (let i = 0; i < 8; i++) {
       const v = age / .3, along = -.4 + rand(i + 800) * 1.4 + v * 1.6, acr = (rand(i + 810) - .5) * 1.8, len = .25 + rand(i + 820) * .4;
       const from = { x: gate.x + L.d.x * along - L.d.z * acr, z: gate.z + L.d.z * along + L.d.x * acr };
