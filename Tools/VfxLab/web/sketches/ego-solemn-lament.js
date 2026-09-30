@@ -53,9 +53,12 @@
 // Order, "corroded: the coffin" (cloud 4 s shown of the rule's 15):
 //   0.00  the coffin rises out of the floor behind the wielder over .5 s, dust at its base; the
 //         butterfly face fades in over the head; the guns hang down
-//   0.50  the lid swings open over .3 s, the inside lit white, white streaks rise off it
-//   0.60  36 butterflies pour out, .03 s apart, and circle the wielder 0.7-2.8 cells out at 0.3-1.4
-//         cells up; a pale floor ring at the true radius 3 and a dim floor inside it
+//   0.50  the lid swings open over .3 s, the inside lit white
+//   0.60  the opening (Skill 3): a white flash 3.2 cells wide with twelve rays, a white glow on the
+//         floor, twelve white beams shooting up out of the floor and off the coffin, white smoke
+//         puffs pushed out; 24 butterflies burst out through it within .12 s, the other 12 follow
+//         .05 s apart; they circle the wielder 0.7-2.8 cells out at 0.3-1.4 cells up; a pale floor
+//         ring at the true radius 3 and a dim floor inside it
 //   1.60  and every 1 s: one butterfly leaves the cloud for each pawn inside the ring and lands on
 //         it in .5 s (+1 stack); the coffin sends a new one out in its place. The pawn outside the
 //         ring gets none.
@@ -66,15 +69,17 @@
 //
 // Drawing: the shots, trails, crescents and hits are level shapes at chest height (lib/pawn.js
 // chest = .05 north of the cell centre), so they turn with the aim and need no per-facing method.
-// Aiming north the guns draw under the pawn layer (held in front of the body, away from the
-// viewer). The coffin stands facing the viewer at every aim (a fixed screen orientation, like
+// The guns are side views laid flat and turned to the aim, grip toward the viewer, mirrored when
+// aiming west, as RimWorld draws equipment; aiming north they draw under the pawn layer (held in
+// front of the body, away from the viewer). The coffin stands facing the viewer at every aim (a fixed screen orientation, like
 // Twin Maw's jaws): a front face .68 wide and 2.0 tall (1.2 on screen, a little over the pawn's
 // 1.17, as in the source), a thin top face .26 deep,
 // a white edge, a shadow along the sun from its base. It rises by drawing only the part above the
-// floor. A butterfly is three flat meshes built once: the wing fill (four fans; ink for the black
-// shot's, a faint pale film for the white shot's), a wide outline for the additive glow, and the
-// lines (outline strips, 7 + 5 veins per side with two rows of cross veins, antennae), then a
-// white-edged body dash. It is scaled across the body for the wing beat (3 beats/s flying, .7 at rest);
+// floor. A butterfly is four flat meshes built once: the wing fill (four fans; ink for the black
+// shot's, a faint pale film for the white shot's), a wide outline for the additive glow (white
+// shot's only), the veins (7 + 5 per side, three or four uneven cross veins per gap, most bent;
+// grey on the dark ones) and the edge (outline strips, antennae), then a white-edged body dash.
+// Resting butterflies draw over the hit effects and flying ones over those. It is scaled across the body for the wing beat (3 beats/s flying, .7 at rest);
 // flying ones fly in ground + height and get a small shadow. Resting butterflies sit on fixed
 // points of the body (a sunflower spread over the torso ellipse, then the head) and turn with the
 // pawn when it falls. Pawns are lib/pawn.js real-size stand-ins (average body).
@@ -104,14 +109,16 @@ const Radius = 3, CoffinTick = 1;
 const Speed = 60;                     // cells/s, the pistol round: 5 cells in .08 s
 const TrailLife = .25, FlyTime = .5, SwarmIn = .45, FallTime = .35, DiveTime = .5;
 const KickTilt = 28 * D2R, KickUp = .04, KickDamp = 9, KickSwing = 8, KickSlide = .05;
-const GunLen = .30, GunW = .075, HandAcross = .13, HandReach = .22;
+const GunLen = .32, GunW = .075, HandAcross = .13, HandReach = .22;
 const ChestLift = .05;                // lib/pawn.js: the chest is .05 north of the cell centre on screen
 const Ground = -.42;                   // a standing pawn's ground contact on screen (feet + .12, as its shadow)
 const ChestH = (ChestLift - Ground) / Lift;
 const lift = q => ({ x: q.x, z: q.z + ChestLift });
 const CoffinH = 2.0, CoffinDepth = .26, CoffinBack = { x: -.18, z: .32 };
 const Rise = .5, LidOpen = .3, Open = .6, ReturnTime = .7, LidClose = .2, Sink = .45;
-const CloudN = 36, TorsoSlots = 30, HeadSlots = 8;
+const CloudN = 36, CloudBurst = 24, TorsoSlots = 30, HeadSlots = 8;
+const cloudOut = i => i < CloudBurst ? Open + rand(i + 830) * .12 : Open + .15 + (i - CloudBurst) * .05;
+const cloudFly = i => i < CloudBurst ? .55 : .7;
 
 // ---- Butterflies ------------------------------------------------------------------------------
 // Lace butterflies, as the source draws them: a white outline and a web of white veins that splits
@@ -131,8 +138,9 @@ function scallop(w, a, b) {
   return out;
 }
 const Fore = scallop(ForeRaw, 5, 11), Hind = scallop(HindRaw, 2, 9);
-// Veins: straight from the root to these outline points, and two rows of cross veins between each
-// neighbouring pair at about 42 % and 72 % of the way (jittered), which makes the cells.
+// Veins: straight from the root to these outline points. In each gap between two neighbouring
+// veins, three or four cross veins at uneven heights, each end at its own height and most bent
+// at a middle point, so the cells come out uneven, like the source's leaf-skeleton lace.
 const ForeVeins = [2, 3, 5, 7, 9, 11, 13], HindVeins = [2, 4, 6, 8, 10];
 const Outline = .065, Vein = .04, HaloW = .17;   // line widths in unit size (x .15 cells at the default span)
 
@@ -155,14 +163,21 @@ function lineMesh(name, sides, { outline, veins, antennae }) {
   };
   for (const sgn of sides) {
     const mirror = w => w.map(([x, z]) => [sgn * x, z]);
-    ring(mirror(Fore), outline); ring(mirror(Hind), outline);
+    if (outline) { ring(mirror(Fore), outline); ring(mirror(Hind), outline); }
     if (veins) [[ForeRaw, ForeVeins, 1], [HindRaw, HindVeins, 2]].forEach(([w, ids, seed]) => {
       const root = [sgn * w[0][0], w[0][1]], tip = j => [sgn * w[ids[j]][0], w[ids[j]][1]];
       const along = (j, f) => { const t = tip(j); return [root[0] + (t[0] - root[0]) * f, root[1] + (t[1] - root[1]) * f]; };
       ids.forEach((_, j) => quad(along(j, .15), along(j, .98), veins));
-      for (let j = 0; j + 1 < ids.length; j++) for (const [f, row] of [[.42, 0], [.72, 1]]) {
-        const ja = (rand(seed * 97 + j * 7 + row) - .5) * .14, jb = (rand(seed * 89 + j * 5 + row + 40) - .5) * .14;
-        quad(along(j, f + ja), along(j + 1, f + jb), veins);
+      for (let j = 0; j + 1 < ids.length; j++) {
+        const n = 3 + (rand(seed * 31 + j) > .5 ? 1 : 0);
+        for (let k = 0; k < n; k++) {
+          const f = .28 + (k + .5) / n * .66, r1 = rand(seed * 97 + j * 7 + k), r2 = rand(seed * 89 + j * 5 + k + 40), r3 = rand(seed * 83 + j * 3 + k + 80);
+          const a = along(j, f + (r1 - .5) * .16), b = along(j + 1, f + (r2 - .5) * .16);
+          if (r3 < .35) { quad(a, b, veins); continue; }
+          const mx = (a[0] + b[0]) / 2, mz = (a[1] + b[1]) / 2, out = norm(mx - root[0], mz - root[1]), bend = (r3 - .67) * .12;
+          const mid = [mx + out[0] * bend, mz + out[1] * bend];
+          quad(a, mid, veins); quad(mid, b, veins);
+        }
       }
     });
     if (antennae) { quad([sgn * .03, .22], [sgn * .16, .5], antennae); quad([sgn * .15, .48], [sgn * .2, .56], antennae * 2.2); }
@@ -182,19 +197,22 @@ function fillMesh(name, sides) {
 const both = [1, -1];
 const Lines = lineMesh('sl lace', both, { outline: Outline, veins: Vein, antennae: Vein }), Halo = lineMesh('sl lace halo', both, { outline: HaloW });
 const Fill = fillMesh('sl lace fill', both);
+const Edge = lineMesh('sl lace edge', both, { outline: Outline, antennae: Vein }), Veins = lineMesh('sl lace veins', both, { veins: Vein });
 const LinesR = lineMesh('sl lace r', [1], { outline: Outline, veins: Vein, antennae: Vein }), LinesL = lineMesh('sl lace l', [-1], { outline: Outline, veins: Vein, antennae: Vein });
 const HaloR = lineMesh('sl lace halo r', [1], { outline: HaloW }), HaloL = lineMesh('sl lace halo l', [-1], { outline: HaloW });
 const FillR = fillMesh('sl lace fill r', [1]), FillL = fillMesh('sl lace fill l', [-1]);
 
-// heading: degrees the head points (0 east, 90 north). flap: 0..1 of the full span. dark: The
-// Departed (black shot), an ink fill; otherwise The Living (white shot), a faint pale film. The
-// lines are white on both, with a soft glow round the outline, and the body is a white-edged dash.
+// heading: degrees the head points (0 east, 90 north). flap: 0..1 of the full span.
+// The Living (white shot): a faint pale film, white edge and veins, a soft glow round the edge.
+// The Departed (dark, black shot): a near-opaque ink fill, a white edge, grey veins and no glow, so
+// it stays dark at normal zoom, where the lines would otherwise outweigh a small fill.
 function butterfly(q, size, heading, flap, dark, alpha, layer) {
   if (alpha <= .01) return;
   const rot = 90 - heading, sx = size * .5 * flap, sz = size * .5;
-  draw(Fill, q.x, layer, q.z, sx, sz, rot, dark ? Ink.withAlpha(.82 * alpha) : Pale.withAlpha(.22 * alpha));
-  draw(Halo, q.x, layer + .0002, q.z, sx, sz, rot, White.withAlpha(.14 * alpha), whiteGlow);
-  draw(Lines, q.x, layer + .0004, q.z, sx, sz, rot, White.withAlpha(.95 * alpha));
+  draw(Fill, q.x, layer, q.z, sx, sz, rot, dark ? Ink.withAlpha(.94 * alpha) : Pale.withAlpha(.22 * alpha));
+  if (!dark) draw(Halo, q.x, layer + .0002, q.z, sx, sz, rot, White.withAlpha(.14 * alpha), whiteGlow);
+  draw(Veins, q.x, layer + .0003, q.z, sx, sz, rot, (dark ? Ash : White).withAlpha((dark ? .75 : .95) * alpha));
+  draw(Edge, q.x, layer + .0004, q.z, sx, sz, rot, White.withAlpha((dark ? .85 : .95) * alpha));
   draw(disc, q.x, layer + .0006, q.z, size * .04, size * .17, rot, White.withAlpha(alpha));
   draw(disc, q.x, layer + .0007, q.z, size * .018, size * .13, rot, Soot.withAlpha(alpha));
 }
@@ -256,9 +274,9 @@ function markedPawn(key, M, s, who, size, sun, strength) {
       const heading = Math.atan2(q2.screen.z - q.screen.z, q2.screen.x - q.screen.x) / D2R;
       const fade = e.swarm ? clamp(u / .25) : 1;   // the swarm fades in where it appears
       butterflyShadow(q.g, Math.max(0, q.h), sz, sun, strength, fade);
-      butterfly(q.screen, sz, u > .85 ? lerp(heading, sl.heading, (u - .85) / .15) : heading, flapAt(s, 3, .15, i), e.dark, fade, Y + .12 + i * .0008);
+      butterfly(q.screen, sz, u > .85 ? lerp(heading, sl.heading, (u - .85) / .15) : heading, flapAt(s, 3, .15, i), e.dark, fade, Y + .14 + i * .0008);
     } else {
-      butterfly(sl, sz, sl.heading + 8 * Math.sin(s * 1.3 + i), flapAt(s, .7, .55, i), e.dark, 1, pawnLayer + .02 + i * .0008);
+      butterfly(sl, sz, sl.heading + 8 * Math.sin(s * 1.3 + i), flapAt(s, .7, .55, i), e.dark, 1, Y + .1 + i * .0008);   // over the hits, as the source draws them over the ink
     }
   });
   if (M.events.length && fall < .6) pips(M, counted, at(pos, 'headTop', who), 1 - fall / .6);
@@ -274,20 +292,36 @@ function pips(M, counted, top, alpha) {
 }
 
 // ---- The pair --------------------------------------------------------------------------------------
-// A pistol seen from above: grip, slide, a lit top edge, the muzzle. Level at chest height along d
-// from the hand's ground point; slide pushes it back, tilt (radians) swings the muzzle up (cos(tilt)
-// along d, Lift x sin(tilt) north) or, negative, down. The shadow stays flat along d.
+// A pistol as RimWorld draws a gun: its side view laid flat and turned to the aim, the grip hanging
+// on the side toward the viewer (mirrored when aiming west, as the game flips the sprite). Slide
+// .34 long and .065 high with a lit top edge, a barrel tip, a grip .12 long raked back, a trigger
+// guard; the black gun gets a grey outline so it reads on a dark coat. Level at chest height from
+// the hand's ground point (the top of the grip); slide pushes it back; tilt (radians) swings the
+// muzzle up (cos(tilt) along d, Lift x sin(tilt) north) or, negative, down. The shadow stays flat.
+const gunUp = u => u.x >= 0 ? { x: -u.z, z: u.x } : { x: u.z, z: -u.x };
+const MuzzleUp = .035;
+function muzzleAt(hand, d) { const q = lift(hand), up = gunUp(d); return { x: q.x + d.x * GunLen + up.x * MuzzleUp, z: q.z + d.z * GunLen + up.z * MuzzleUp }; }
 function pistol(key, hand, d, white, tilt, slide, layer, sun, strength) {
   const base = move(hand, d, -slide), q = lift(base);
   const dv = { x: d.x * Math.cos(tilt), z: d.z * Math.cos(tilt) + Lift * Math.sin(tilt) };
-  const len = Math.hypot(dv.x, dv.z), u = { x: dv.x / len, z: dv.z / len }, deg = Math.atan2(u.z, u.x) / D2R, L = GunLen * len;
+  const len = Math.hypot(dv.x, dv.z), u = { x: dv.x / len, z: dv.z / len }, up = gunUp(u);
+  const P = (a, b) => ({ x: q.x + u.x * a * len + up.x * b, z: q.z + u.z * a * len + up.z * b });
   const sh = { x: base.x + sun.x * ChestH + d.x * GunLen * .5, z: base.z + Ground + sun.z * ChestH + d.z * GunLen * .5 };
   sprite(sh, GunLen * Math.cos(tilt) + .08, GunW * 1.6, Ink.withAlpha(strength * .45), soft, shadowLayer, -Math.atan2(d.z, d.x) / D2R);
-  rect(`${key} grip`, move(q, u, L * .12), L * .3, GunW * 1.25, deg, white ? Ash : Ink, layer);
-  rect(`${key} body`, move(q, u, L * .55), L * .9, GunW, deg, white ? Pale : Ink, layer + .001);
-  rect(`${key} edge`, { x: q.x + u.x * L * .55, z: q.z + u.z * L * .55 + .018 }, L * .85, .014, deg, (white ? White : Ash).withAlpha(.9), layer + .002);
-  rect(`${key} tip`, move(q, u, L * .96), L * .08, GunW * .7, deg, white ? Ash : Soot, layer + .003);
-  return { muzzle: move(q, u, L), dir: u };
+  // Each part is four corners (along, up): bottom-back, top-back, bottom-front, top-front.
+  const parts = [
+    ['grip', [[-.075, -.115], [-.04, .005], [0, -.12], [.04, .005]], white ? Ash : Soot],
+    ['guard', [[.03, -.045], [.03, 0], [.1, -.045], [.1, 0]], white ? Ash : Soot],
+    ['slide', [[-.05, 0], [-.05, .065], [.29, 0], [.29, .065]], white ? Pale : Ink],
+    ['tip', [[.29, .012], [.29, .052], [GunLen, .012], [GunLen, .052]], white ? Ash : Soot],
+  ];
+  if (!white) parts.forEach(([name, c], i) => {    // the black gun's outline, .012 out from each part
+    const ca = (c[0][0] + c[3][0]) / 2, cb = (c[0][1] + c[3][1]) / 2, g = ([a, b]) => { const n = norm(a - ca, b - cb); return P(a + n[0] * .012, b + n[1] * .012); };
+    band(`${key} ${name} line`, [g(c[0]), g(c[2])], [g(c[1]), g(c[3])], Ash.withAlpha(.8), layer + i * .0002);
+  });
+  parts.forEach(([name, c, colour], i) => band(`${key} ${name}`, [P(...c[0]), P(...c[2])], [P(...c[1]), P(...c[3])], colour, layer + .001 + i * .0002));
+  band(`${key} edge`, [P(-.045, .05), P(.285, .05)], [P(-.045, .064), P(.285, .064)], (white ? White : Ash).withAlpha(.9), layer + .002);
+  return { muzzle: P(GunLen, MuzzleUp), dir: u };
 }
 // The barrel's kick after a shot: up in .04 s, then a damped swing back to level (about .3 s).
 const kickAt = age => age < 0 ? 0 : age < KickUp ? Math.sin(age / KickUp * Math.PI / 2) : Math.max(0, Math.exp(-KickDamp * (age - KickUp)) * Math.cos(KickSwing * (age - KickUp)));
@@ -506,13 +540,46 @@ function footDust(key, base, u) {
     sprite({ x: base.x + Math.cos(a) * r, z: base.z + Math.sin(a) * r * .5 + u * .12 }, sz, sz * .8, Dust.withAlpha(.4 * Math.sin(u * Math.PI)), puff, Y + .01);
   }
 }
-// Six white streaks rising off the open coffin for .4 s, as the Skill 3 frames show at the opening.
-function coffinStreaks(key, mouth, age) {
-  if (age < 0 || age > .4) return;
-  const u = age / .4;
-  for (let i = 0; i < 6; i++) {
-    const x = mouth.screen.x + (i - 2.5) * .08 + (rand(i + 520) - .5) * .06, z0 = mouth.screen.z + .15 + u * (.4 + .4 * rand(i + 530)), l = .5 + .7 * rand(i + 540);
-    streak(`${key} ${i}`, { x, z: z0 }, { x, z: z0 + l }, .05, White.withAlpha(.9 * (1 - u)), whiteGlow, Y + .08, 4);
+// The opening, as Skill 3 draws it (8.8-9.2 s): a white flash, white streaks shooting up, white
+// smoke puffs, and the butterflies bursting out through them. age is from Open.
+//   flash: a white glow 3.2 cells wide on the coffin's face, gone in .35 s, a bright core, twelve
+//     white rays out to 1-2 cells for .2 s, and a white glow on the floor round the foot for .6 s;
+//   streaks: from .08 s, twelve white beams 1.8 cells across (wider than the coffin, whose lit
+//     inside would hide them) shoot up out of the floor and past its top, each .8-1.6 cells long,
+//     rising 2.6 cells in .7 s, a white core .05 wide in a
+//     tall soft glow .24 wide;
+//   smoke: fourteen pale puffs pushed out from the coffin 0.6-1.6 cells over .8 s, growing .35 to
+//     1.0, thinning; four of them roll along the floor from the foot.
+function coffinOpening(key, base, mouth, age) {
+  if (age < 0 || age > .9) return;
+  const face = { x: base.x, z: base.z + CoffinH * .5 * Lift };
+  if (age < .35) {
+    const u = age / .35, g = Math.pow(1 - u, 1.5);
+    sprite(face, 3.2 * (.6 + .4 * u), 3.0 * (.6 + .4 * u), White.withAlpha(.85 * g), glow, Y + .075);
+    sprite(face, 1.2, 1.4, White.withAlpha(g), glow, Y + .076);
+  }
+  if (age < .2) {
+    const u = age / .2;
+    for (let i = 0; i < 12; i++) {
+      const t = i / 12 * TAU + rand(i + 540) * .3, l = (1 + rand(i + 550)) * (.4 + .6 * Math.sqrt(u));
+      streak(`${key} ray ${i}`, face, { x: face.x + Math.cos(t) * l, z: face.z + Math.sin(t) * l }, .06, White.withAlpha(.9 * (1 - u)), whiteGlow, Y + .077, 4);
+    }
+  }
+  if (age < .6) sprite(base, 3.0, 3.0, White.withAlpha(.45 * (1 - age / .6)), glow, Floor + .025);
+  for (let i = 0; i < 12; i++) {
+    const a = age - .08 - rand(i + 560) * .12; if (a < 0 || a > .7) continue;
+    const u = a / .7, x = base.x + (i / 11 - .5) * 1.8 + (rand(i + 570) - .5) * .08, len = .8 + .8 * rand(i + 580);
+    const bottom = base.z + (-.1 + 2.6 * Math.pow(u, .7)) * Lift, top = bottom + len * Lift * Math.min(1, u * 5), f = 1 - u * u;
+    const mid = { x, z: (bottom + top) / 2 };
+    sprite(mid, .24, (top - bottom) * 1.3 + .1, White.withAlpha(.45 * f), glow, Y + .078);
+    line(`${key} beam ${i}`, [{ x, z: bottom }, { x, z: top }], .05, White.withAlpha(f), flat, Y + .079, 'both');
+  }
+  for (let i = 0; i < 14; i++) {
+    const a = age - rand(i + 590) * .08; if (a < 0 || a > .8) continue;
+    const u = a / .8, e = 1 - Math.pow(1 - u, 3), low = i < 4;
+    const t = low ? (i < 2 ? Math.PI : 0) + (rand(i + 600) - .5) * .8 : rand(i + 610) * TAU, r = (.6 + rand(i + 620)) * e;
+    const from = low ? base : mouth.screen, sz = .35 + .65 * e;
+    sprite({ x: from.x + Math.cos(t) * r, z: from.z + Math.sin(t) * r * (low ? .3 : .8) + (low ? 0 : .2 * e) }, sz, sz * .85, Pale.withAlpha(.75 * Math.pow(1 - u, 1.2)), puff, Y + .07 + i * .0005);
   }
 }
 // The Abnormality's face over the corroded wielder's head: a big butterfly, left wings white, right
@@ -601,7 +668,7 @@ function drawBurst(s, p, o, who, sun, strength) {
   });
   for (const sh of B.shots) {
     const age = s - sh.t; if (age < 0) continue;
-    const g = guns[sh.white ? 0 : 1], m0 = lift(move(g.hand, g.gd, GunLen));
+    const g = guns[sh.white ? 0 : 1], m0 = muzzleAt(g.hand, g.gd);
     if (sh.white) {
       whiteMuzzle(`sl muzzle ${sh.k}`, m0, g.gd, g.hand, -1, age);
       shotTrail(`sl trail ${sh.k}`, m0, chest, age, true);
@@ -632,7 +699,7 @@ function drawCoffin(s, p, o, who, sun, strength) {
   // the last 1.2 s). The coffin sends that slot a new one .25 s later.
   const dives = [];
   let n = 0;
-  const ready = (i, T) => Open + i * .03 + .7 <= T && !dives.some(v => v.i === i && T - v.T < 1.2);
+  const ready = (i, T) => cloudOut(i) + cloudFly(i) <= T && !dives.some(v => v.i === i && T - v.T < 1.2);
   for (const T of C.ticks) for (const q of inside) {
     const M = q.M, count = M.events.length;
     if (M.downAt != null) continue;
@@ -664,7 +731,7 @@ function drawCoffin(s, p, o, who, sun, strength) {
   const lid = smooth(clamp((s - Rise) / LidOpen)) * (1 - smooth(clamp((s - C.closeAt) / LidClose)));
   const mouth = coffin('sl coffin', base, rise, lid, s, sun, strength);
   footDust('sl rise dust', base, riseU < 1 ? riseU : sinkU);
-  coffinStreaks('sl streaks', mouth, s - Rise - .1);
+  coffinOpening('sl opening', base, mouth, s - Open);
 
   // The pawns: the wielder (guns hanging down), the face if corroded, then everyone else.
   for (const q of people) markedPawn(`sl pawn ${q.colour === Ally ? 'ally' : q.pos.x}`, q.M, s, who, p.size, sun, strength);
@@ -676,11 +743,12 @@ function drawCoffin(s, p, o, who, sun, strength) {
   });
   if (!overclock) faceButterfly(at(o, 'head', who), s, smooth(clamp(s / .4)) * (1 - smooth(clamp((s - C.sinkAt) / Sink))));
 
-  // The cloud. Slot i leaves the coffin at Open + .03 i (or .25 s after its last dive), flies to its
-  // orbit in .7 s, circles, and at the end flies back into the coffin over .7 s.
+  // The cloud. On the flash 24 butterflies burst out within .12 s and fly to their orbits in .55 s,
+  // bowed out through the smoke; the other 12 follow .05 s apart and take .7 s. A slot sends a new
+  // one out .25 s after its last dive. At the end all fly back into the coffin over .7 s.
   for (let i = 0; i < CloudN; i++) {
     const mine = dives.filter(v => v.i === i && v.T <= s), last = mine.length ? mine[mine.length - 1].T : null;
-    const rel = last == null ? Open + i * .03 : last + .25, back = C.tEnd + .1 + rand(i + 800) * .15;
+    const rel = last == null ? cloudOut(i) : last + .25, dur = last == null ? cloudFly(i) : .7, back = C.tEnd + .1 + rand(i + 800) * .15;
     if (s < rel || s >= back + ReturnTime || rel >= back) continue;
     let q, heading, size = p.size, alpha = 1;
     if (s >= back) {
@@ -688,8 +756,9 @@ function drawCoffin(s, p, o, who, sun, strength) {
       q = flyAt(e, u, mouth); const q2 = flyAt(e, Math.min(1, u + .03), mouth);
       heading = Math.atan2(q2.screen.z - q.screen.z, q2.screen.x - q.screen.x) / D2R;
       size *= 1 - .5 * u; alpha = 1 - smooth(clamp((u - .7) / .3));
-    } else if (s < rel + .7) {
-      const u = (s - rel) / .7, to = orbit(i, rel + .7, o), e = { from: mouth, via: { x: (rand(i + 810) - .5) * .8, z: (rand(i + 820) - .5) * .8 }, arc: .6, seed: i };
+    } else if (s < rel + dur) {
+      const u = (s - rel) / dur, to = orbit(i, rel + dur, o), out = norm(to.g.x - mouth.g.x, to.g.z - mouth.g.z), wide = last == null && i < CloudBurst ? 1.1 : .4;
+      const e = { from: mouth, via: { x: out[0] * wide + (rand(i + 810) - .5) * .8, z: out[1] * wide + (rand(i + 820) - .5) * .8 }, arc: .6, seed: i };
       q = flyAt(e, u, to); const q2 = flyAt(e, Math.min(1, u + .03), to);
       heading = Math.atan2(q2.screen.z - q.screen.z, q2.screen.x - q.screen.x) / D2R;
       size *= .5 + .5 * clamp(u * 2);
@@ -697,7 +766,7 @@ function drawCoffin(s, p, o, who, sun, strength) {
       q = orbit(i, s, o); heading = q.heading;
     }
     butterflyShadow(q.g, Math.max(0, q.h), size, sun, strength, alpha);
-    butterfly(q.screen, size, heading, flapAt(s, 3, .15, i), i % 2 === 1, alpha, Y + .12 + i * .0008);
+    butterfly(q.screen, size, heading, flapAt(s, 3, .15, i), i % 2 === 1, alpha, Y + .14 + i * .0008);
   }
 }
 
