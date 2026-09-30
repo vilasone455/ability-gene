@@ -515,14 +515,7 @@ namespace RimArt
             var shieldBelt = (Apparel)ThingMaker.MakeThing(ThingDef.Named("Apparel_ShieldBelt"));
             raider.apparel.Wear(shieldBelt);
             CompShield shield = shieldBelt.TryGetComp<CompShield>();
-            PawnKindDef scyther = DefDatabase<PawnKindDef>.GetNamedSilentFail("Mech_Scyther");
-            Pawn mech = null;
-            if (scyther != null)
-            {
-                mech = PawnGenerator.GeneratePawn(scyther, Faction.OfMechanoids);
-                GenSpawn.Spawn(mech, c + new IntVec3(-1, 0, 1), t.map);
-                RimArtTestContext.Hold(mech);
-            }
+            Pawn mech = t.Mech(c + new IntVec3(-1, 0, 1));
             yield return 30;
             float shieldBefore = shield?.Energy ?? 0f;
             int injuries = Injuries(raider);

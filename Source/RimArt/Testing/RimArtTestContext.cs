@@ -107,6 +107,21 @@ namespace RimArt
             return pawn;
         }
 
+        /// <summary>A Scyther of the mechanoid faction at <paramref name="at"/>, held still; null, with a log line, when the game has no Mech_Scyther or mechanoid faction.</summary>
+        public Pawn Mech(IntVec3 at)
+        {
+            PawnKindDef scyther = DefDatabase<PawnKindDef>.GetNamedSilentFail("Mech_Scyther");
+            if (scyther == null || Faction.OfMechanoids == null)
+            {
+                Log("no Mech_Scyther or mechanoid faction: the mech check is skipped");
+                return null;
+            }
+            Pawn mech = PawnGenerator.GeneratePawn(new PawnGenerationRequest(scyther, Faction.OfMechanoids));
+            GenSpawn.Spawn(mech, at, map);
+            Hold(mech);
+            return mech;
+        }
+
         /// <summary>Starts a long Wait job so the pawn stands where it is.</summary>
         public static void Hold(Pawn pawn)
         {
