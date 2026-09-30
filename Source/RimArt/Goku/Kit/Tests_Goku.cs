@@ -114,14 +114,17 @@ namespace RimArt
             t.Log("fired at channelled " + cast.Channelled(t.Now).ToString("0.00") + " s; " + RimArtTestContext.Describe(host));
             if (!t.Check(cast.Firing, "the beam fired at full charge")) { EndHost(record); yield break; }
             t.Check(cast.Channelled(t.Now) >= 2.4f, "not before 2.5 s of channelling");
+            // The farthest cell the pushed pawn reaches: once it lands it walks off on a job of its own.
+            int e5FarX = e5From.x;
             for (int i = 0; i < 8; i++)
             {
                 yield return 15;
+                if (e5.Spawned) e5FarX = Math.Max(e5FarX, e5.Position.x);
                 t.Log(RimArtTestContext.Describe(e5) + " | " + RimArtTestContext.Describe(e10));
             }
             yield return 60;
             t.Check(t.Hurt(e5) && t.Hurt(e10), "the enemies at 5 and 10 cells down the lane were hit");
-            t.Check(e5.Dead || (e5.Spawned && e5.Position.x >= e5From.x + 1), "the enemy at 5 was pushed along the lane (" + e5From + " -> " + RimArtTestContext.Describe(e5) + ")");
+            t.Check(e5.Dead || e5FarX >= e5From.x + 1, "the enemy at 5 was pushed along the lane (" + e5From + " -> x " + e5FarX + "; now " + RimArtTestContext.Describe(e5) + ")");
             t.Check(t.Untouched(beside), "the enemy 3 cells across the lane was not hit");
             bool wallHit = walls.Any(wl => wl.Destroyed || wl.HitPoints < wl.MaxHitPoints);
             t.Check(wallHit, "the wall at 18 cells was hit (" + string.Join(", ", walls.Select(wl => wl.Destroyed ? "destroyed" : wl.HitPoints + "/" + wl.MaxHitPoints)) + ")");
