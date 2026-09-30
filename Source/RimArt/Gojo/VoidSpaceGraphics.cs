@@ -24,10 +24,12 @@ namespace RimArt
         }
 
         /// <summary>
-        /// The pocket map, as the sketch draws it: the space under the terrain and the fog group at the
-        /// void terrain's own height, which will need a see-through texture.
+        /// The pocket map: the whole void just over its terrain, as Unlimited Blade Works draws its world, so
+        /// the void floor's own texture is only a fallback: the back 0.001 over Terrain, the deep group up to
+        /// 0.141, the fog group from 0.15 to 0.183, all under TerrainScatter (0.366 over Terrain), so filth,
+        /// items and pawns stay on top. (The sketch put the space under a see-through terrain instead.)
         /// </summary>
-        public static readonly VoidLayers Pocket = new VoidLayers(AltitudeLayer.BelowTerrain.AltitudeFor(), AltitudeLayer.Terrain.AltitudeFor());
+        public static readonly VoidLayers Pocket = new VoidLayers(AltitudeLayer.Terrain.AltitudeFor() + 0.001f, AltitudeLayer.Terrain.AltitudeFor() + 0.15f);
 
         /// <summary>
         /// A home map, for the preview: over items and under lying pawns (the whole void ends 0.19 over

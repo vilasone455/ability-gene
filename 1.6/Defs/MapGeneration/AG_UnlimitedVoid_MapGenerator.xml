@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Unlimited Void: a 40 x 40 pocket map (mapSize on AG_GojoUnlimitedVoid) made for one cast and removed
+       after it. The void floor on every cell; MapComponent_UnlimitedVoid draws the space, the speed-line
+       opening and the black hole over it (Source/RimArt/Gojo/VoidSpaceGraphics.cs). Made only by the
+       ability. -->
+  <MapGeneratorDef>
+    <defName>AG_UnlimitedVoid</defName>
+    <label>unlimited void</label>
+    <isUnderground>true</isUnderground>
+    <ignoreAreaRevealedLetter>true</ignoreAreaRevealedLetter>
+    <disableCallAid>true</disableCallAid>
+    <!-- The game paints a grey frame beyond every map edge. Off here: the space runs on past the edge. -->
+    <disableMapClippers>true</disableMapClippers>
+    <pocketMapProperties>
+      <biome>AG_UnlimitedVoid</biome>
+      <temperature>21</temperature>
+    </pocketMapProperties>
+    <genSteps>
+      <li>AG_UnlimitedVoidSpace</li>
+    </genSteps>
+  </MapGeneratorDef>
+
+  <!-- One step, the void's body: the floor on every cell, roof, unseen white lights. -->
+  <GenStepDef>
+    <defName>AG_UnlimitedVoidSpace</defName>
+    <order>500</order>
+    <genStep Class="RimArt.GenStep_UnlimitedVoid">
+      <floor>AG_VoidFloor</floor>
+      <light>AG_VoidLight</light>
+      <lightSpacing>6</lightSpacing>
+    </genStep>
+  </GenStepDef>
+
+</Defs>

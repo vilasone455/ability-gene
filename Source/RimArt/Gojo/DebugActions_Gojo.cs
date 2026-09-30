@@ -4,13 +4,14 @@ using Verse;
 namespace RimArt
 {
     /// <summary>
-    /// Previews only. There is no ability, no pocket map and no def behind any of this: nobody is taken,
-    /// frozen or spared and no pawn is drawn. "unlimited void: open" plays the home-map side round the
-    /// chosen cell, Gojo's: the sphere closing over 9 cells, shrinking into the ball, the ball breaking.
+    /// Previews only (the ability is Source/RimArt/Gojo/Kit/Void): no pocket map and no def behind any of
+    /// this, nobody is taken, frozen or spared and no pawn is drawn. "unlimited void: open" plays the
+    /// home-map side round the chosen cell, Gojo's: the sphere closing over 9 cells, shrinking into the
+    /// ball, the ball breaking.
     /// "unlimited void: inside" plays the inside round the chosen cell, where Gojo lands: the white
     /// arrival, the speed-line opening with the camera pushing in on the vanishing point 7.5 cells north
     /// and back, the void and its black hole, the collapse to white. The void is drawn over the map's
-    /// ground (the real one will be a pocket map of its own).
+    /// ground (the ability draws it as its pocket map's look, <see cref="MapComponent_UnlimitedVoid"/>).
     /// </summary>
     public static class DebugActions_Gojo
     {
