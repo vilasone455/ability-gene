@@ -21,16 +21,45 @@ namespace RimArt
             return asked;
         }
 
+        /// <summary>
+        /// Makes a castle beside <paramref name="source"/>: for <paramref name="asked"/>'s seed and room count, or
+        /// with none a random one from the GenStep's ranges. Null if the game would not make it.
+        /// </summary>
+        private static Map Generate(Map source, (int seed, int rooms)? asked)
+        {
+            request = asked;
+            Map castle;
+            try
+            {
+                castle = PocketMapUtility.GeneratePocketMap(new IntVec3(CastleLayout.Size, 1, CastleLayout.Size),
+                    InfinityCastleDefOf.AG_InfinityCastle, null, source);
+            }
+            finally
+            {
+                request = null;
+            }
+            if (castle != null) castle.GetComponent<MapComponent_InfinityCastle>().source = source;
+            return castle;
+        }
+
+        /// <summary>
+        /// The ability's castle: a random seed and room count from the GenStep's ranges, made beside
+        /// <paramref name="source"/> and marked driven, and nothing else: no camera, no message. Null if the
+        /// game would not make it.
+        /// </summary>
+        public static Map Make(Map source)
+        {
+            Map castle = Generate(source, null);
+            if (castle != null) castle.GetComponent<MapComponent_InfinityCastle>().driven = true;
+            return castle;
+        }
+
         /// <summary>Makes the castle for this seed and room count beside <paramref name="source"/> and takes the camera to the dais.</summary>
         public static void Open(Map source, int seed, int rooms)
         {
-            request = (seed, rooms);
-            Map castle = PocketMapUtility.GeneratePocketMap(new IntVec3(CastleLayout.Size, 1, CastleLayout.Size),
-                InfinityCastleDefOf.AG_InfinityCastle, null, source);
-            request = null;
+            Map castle = Generate(source, (seed, rooms));
             if (castle == null) return;
             MapComponent_InfinityCastle component = castle.GetComponent<MapComponent_InfinityCastle>();
-            component.source = source;
             CameraJumper.TryJump(new GlobalTargetInfo(component.DaisCell, castle));
             Messages.Message($"Infinity Castle: seed {component.seed}, {component.rooms} rooms. Set the Castle sketch's seed and rooms to these to compare.",
                 MessageTypeDefOf.NeutralEvent, false);

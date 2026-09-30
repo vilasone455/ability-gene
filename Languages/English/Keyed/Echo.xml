@@ -56,6 +56,7 @@
   <AG_EchoCostTraitHas>{0}: already has it</AG_EchoCostTraitHas>
   <AG_EchoCostTraitReplace>Gains {0} (replaces {1})</AG_EchoCostTraitReplace>
   <AG_EchoCostGene>Gains the {0} gene, which works only in hero form</AG_EchoCostGene>
+  <AG_EchoCostGeneNote>Gains the {0} gene: {1}</AG_EchoCostGeneNote>
 
   <!-- Awakening -->
   <AG_EchoAwakenLabel>{0} can awaken</AG_EchoAwakenLabel>

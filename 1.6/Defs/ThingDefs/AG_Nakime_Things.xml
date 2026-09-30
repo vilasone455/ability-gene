@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Nakime's biwa: her hero weapon (the Echo's manifestWeapon, docs/hero-echo.md "Hero form"). It appears
+       in her hands when she manifests and vanishes when she reverts or lets go of it. Weak blunt melee
+       (about 9). No stuff, no recipe, no weaponTags (raiders never carry it), market value 0 (the Echo
+       requires it). The texture is a placeholder drawn by make_castle_textures.py. -->
+  <ThingDef ParentName="BaseWeapon">
+    <defName>AG_Biwa</defName>
+    <label>biwa</label>
+    <description>A lute with a pear-shaped body and a bent pegbox, played with a large plectrum. Each strum reshapes the Infinity Castle. As a weapon it is a poor club. Only Nakime plays it. It appears in her hands when she manifests and vanishes when she leaves.</description>
+    <graphicData>
+      <texPath>RimArt/InfinityCastle/Biwa</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.1</drawSize>
+    </graphicData>
+    <equippedAngleOffset>-45</equippedAngleOffset>
+    <techLevel>Medieval</techLevel>
+    <smeltable>false</smeltable>
+    <relicChance>0</relicChance>
+    <stackLimit>1</stackLimit>
+    <tradeability>None</tradeability>
+    <thingCategories>
+      <li>WeaponsMelee</li>
+    </thingCategories>
+    <weaponClasses>
+      <li>Melee</li>
+    </weaponClasses>
+    <statBases>
+      <MarketValue>0</MarketValue>
+      <Mass>2.5</Mass>
+      <MaxHitPoints>150</MaxHitPoints>
+      <Flammability>0</Flammability>
+      <DeteriorationRate>0</DeteriorationRate>
+      <Beauty>0</Beauty>
+    </statBases>
+    <tools>
+      <li>
+        <label>body</label>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>9</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+      <li>
+        <label>neck</label>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>7</power>
+        <cooldownTime>1.8</cooldownTime>
+        <chanceFactor>0.5</chanceFactor>
+      </li>
+    </tools>
+  </ThingDef>
+
+</Defs>

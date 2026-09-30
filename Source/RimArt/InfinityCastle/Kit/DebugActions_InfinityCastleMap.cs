@@ -28,7 +28,10 @@ namespace RimArt
         {
             MapComponent_InfinityCastle castle = Find.CurrentMap?.GetComponent<MapComponent_InfinityCastle>();
             if (castle == null || !castle.IsCastle) { Messages.Message("The map on screen is not a castle.", MessageTypeDefOf.RejectInput, false); return; }
-            castle.Release();
+            // Nakime's castle is released through her cast, which opens a door under everyone leaving.
+            InfinityCastleCast cast = castle.driven ? GameComponent_InfinityCastle.Instance?.ForCastle(castle.map) : null;
+            if (cast != null) cast.releaseOrdered = true;
+            else castle.Release();
         }
 
         [RimArtDebug("Infinity Castle", "castle map: close now", RimArtDebugKind.Now)]
@@ -37,6 +40,8 @@ namespace RimArt
             Map map = Find.CurrentMap;
             MapComponent_InfinityCastle castle = map?.GetComponent<MapComponent_InfinityCastle>();
             if (castle == null || !castle.IsCastle) { Messages.Message("The map on screen is not a castle.", MessageTypeDefOf.RejectInput, false); return; }
+            // The ability's castle holds pawns that must go home first: its cast closes it after the return.
+            if (castle.driven) { Messages.Message("Nakime's castle: use \"castle map: release\" or her Release.", MessageTypeDefOf.RejectInput, false); return; }
             InfinityCastleMap.CloseLater(map);
         }
 
