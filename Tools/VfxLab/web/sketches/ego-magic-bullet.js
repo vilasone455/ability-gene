@@ -20,7 +20,9 @@
 //          an inner ring and a centre sigil, all thin bright blue lines over a soft blue fill.
 //          Five or six blue sparks drift up around the muzzle and the shooter's head. Just before
 //          the shot the circle slides back to the muzzle and the bullet sits in it.
-//   Shot 1-3: a thin dim blue line with big white-violet lightning forks branching a cell off it.
+//   Shot 1-3: a thin dim blue line with a long white-violet lightning bolt running along it that
+//          swings up to half a cell to either side and throws short branches; the light sits at
+//          the circle, with short rays off it, not at the muzzle.
 //          Two tall tan parchment brackets stand either side of the circle (the left about 1.6
 //          pawn heights, the right smaller), a tan slab stands at the target, and a tan brush
 //          sweep runs along the floor from the shooter's feet. Short cyan speed lines fly past the
@@ -30,8 +32,9 @@
 //   Count 4-6: two or more circles stacked along the aim .48 cells apart, each 45 % bigger than the
 //          one before (the source's second circle is about 1.6x the first), the beam
 //          wider and blue-violet.
-//   The seventh: a cyan-white beam several times wider with a wide pale halo, a cyan burst at the
-//          circle, bigger forks, and orange streak lines flying on past the target.
+//   The seventh: a cyan-white beam several times wider with a wide pale halo carrying long
+//          streaks, a cyan burst at the circle, three bolts, and orange streak lines flying on
+//          past the target.
 //   Rifle: about nine times longer than wide (the icon is 200 x 23): black barrel, a gold filigree
 //          band around the chamber, a navy stock.
 //   Corroded: Der Freischütz himself bleeds through: the body a black smoke silhouette with
@@ -49,7 +52,7 @@
 //         the wall, the colonist behind it): stagger star, orange bolt, fire, blood, a floor
 //         spatter that stays; each hit pawn flinches .18 cells
 //   0.80  the bullet has reached the 40-cell range; each 2-cell piece of the beam fades over .6 s
-//         from when the bullet passed it; the circle closes; the parchment thins to outlines over
+//         from when the bullet passed it; the circle closes .35 s later; the parchment thins to outlines over
 //         .5 s and fades by 1.4 s; the result is held 1.5 s
 // Shot 7: at 0.45 the rifle swings from the aim to the beloved over .35 s (the shooter's arms turn
 //   it, not the player), five circles open on the new line, then it fires the wide beam the same
@@ -406,41 +409,65 @@ function punch(key, at0, d, age) {
   }
 }
 
-// The beam left behind the bullet, in 2-cell pieces that fade from when the bullet passed them.
-// tier 0 (shots 1-3): a thin dim blue line and big white-violet lightning forks a cell off it.
-// tier 1 (shots 4-6): wider, blue-violet, with a white core. tier 2 (the seventh): a cyan-white
-// core inside a wide pale halo, bigger forks.
-function beam(key, L, flown, age, width, life, s, tier) {
-  const sd = side(L.d), frame = Math.floor(s * 16);
+// The beam left behind the bullet, in 2-cell pieces that fade from when the bullet passed them,
+// drawn as the frames show it: a thin sharp core, a faint wide halo with long streaks drifting
+// along it, and one or two long jagged bolts that run the beam's length swinging up to Amp cells
+// to either side, with short branches, re-drawn every 1/16 s so they flicker. The bolts' bends are
+// indexed by position so the pieces join. tier 0 (shots 1-3): thin blue, one bolt. tier 1 (4-6):
+// wider, blue-violet, two bolts. tier 2 (the seventh): a cyan-white core in a wide pale halo, three.
+const BoltStep = .5;                  // cells between bends
+function beam(key, L, flown, age, width, life, s, tier, gate) {
+  const sd = side(L.d), frame = Math.floor(s * 16), bolts = 1 + tier, amp = [.4, .55, .7][tier];
+  const fadeAt = d => Math.exp(-Math.max(0, age - d / Speed) / life);
+  const body = [Beam, BeamViolet, Cyan][tier], halo = [BeamEdge, BeamViolet, Halo][tier];
+  const haloW = [2.4, 3.0, 4.5][tier], bodyW = [.8, 1.1, 1.6][tier], coreW = [.35, .4, .5][tier];
   for (let d0 = 0, i = 0; d0 < flown; d0 += Chunk, i++) {
-    const d1 = Math.min(flown, d0 + Chunk), passed = age - (d0 + d1) / 2 / Speed, fade = Math.exp(-Math.max(0, passed) / life);
+    const d1 = Math.min(flown, d0 + Chunk), fade = fadeAt((d0 + d1) / 2);
     if (fade < .02) continue;
     const from = lift(move(L.start, L.d, d0)), to = lift(move(L.start, L.d, d1));
-    if (tier === 0) {
-      line(`${key} edge ${i}`, [from, to], width * 2.2 * fade, BeamEdge.withAlpha(.35 * fade), whiteGlow, Y + .08, 'none');
-      line(`${key} mid ${i}`, [from, to], width * .8, Beam.withAlpha(.75 * fade), whiteGlow, Y + .081, 'none');
-    } else if (tier === 1) {
-      line(`${key} edge ${i}`, [from, to], width * 2.6 * fade, BeamViolet.withAlpha(.5 * fade), whiteGlow, Y + .08, 'none');
-      line(`${key} mid ${i}`, [from, to], width * 1.2, Beam.withAlpha(.8 * fade), whiteGlow, Y + .081, 'none');
-      line(`${key} core ${i}`, [from, to], width * .45, White.withAlpha(.95 * fade), whiteGlow, Y + .082, 'none');
-    } else {
-      line(`${key} halo ${i}`, [from, to], width * 3.2 * fade, Halo.withAlpha(.45 * fade), whiteGlow, Y + .079, 'none');
-      line(`${key} edge ${i}`, [from, to], width * 1.8, Beam.withAlpha(.7 * fade), whiteGlow, Y + .08, 'none');
-      line(`${key} mid ${i}`, [from, to], width * 1.0, Cyan.withAlpha(.95 * fade), whiteGlow, Y + .081, 'none');
-      line(`${key} core ${i}`, [from, to], width * .45, White.withAlpha(1 * fade), whiteGlow, Y + .082, 'none');
-    }
-    if (fade < .3) continue;
-    const forks = 2 + tier;
-    for (let j = 0; j < forks; j++) {  // lightning forks: a 6-bend branch a cell off the line, on for a few frames at a time
-      if (rand(i * 7 + j * 3 + frame) < .45) continue;
-      const u0 = rand(i * 11 + j + frame), base = lift(move(L.start, L.d, d0 + (d1 - d0) * u0)), dir = rand(i + j * 5 + Math.floor(s * 9)) > .5 ? 1 : -1;
-      const reach = (.6 + .8 * rand(i * 3 + j + frame)) * (1 + tier * .4), lean = (rand(i + j * 9 + frame) - .5) * 1.4;
-      const t = Math.atan2(sd.z * dir + L.d.z * lean, sd.x * dir + L.d.x * lean);
-      bolt(`${key} fork ${i} ${j}`, base, t, reach, 6, i * 31 + j * 7 + frame, .05 * (1 + tier * .3), White.withAlpha(.95 * fade), Violet.withAlpha(.5 * fade), Y + .083);
-      if (j === 0) {                   // a branch off the first fork's middle
-        const mid = { x: base.x + Math.cos(t) * reach * .45, z: base.z + Math.sin(t) * reach * .45 };
-        bolt(`${key} twig ${i} ${j}`, mid, t + (rand(i + frame) - .5) * 1.6, reach * .5, 4, i * 17 + frame, .035, White.withAlpha(.8 * fade), Violet.withAlpha(.4 * fade), Y + .083);
+    line(`${key} halo ${i}`, [from, to], width * haloW * (.6 + .4 * fade), halo.withAlpha(.22 * fade), whiteGlow, Y + .079, 'none');
+    line(`${key} body ${i}`, [from, to], width * bodyW, body.withAlpha(.7 * fade), whiteGlow, Y + .081, 'none');
+    line(`${key} core ${i}`, [from, to], width * coreW, (tier ? White : CircleBright).withAlpha(.9 * fade), whiteGlow, Y + .082, 'none');
+  }
+  for (let j = 0; j < 4 + tier * 3; j++) {   // streaks drifting along the halo at 6 cells/s
+    const len = 1 + rand(j + 700) * 2.5, d = ((rand(j + 710) * flown + age * 6) % Math.max(1, flown)), off = (rand(j + 720) - .5) * width * haloW;
+    if (d + len > flown) continue;
+    const f = fadeAt(d), a0 = lift(move(L.start, L.d, d));
+    streak(`${key} streak ${j}`, { x: a0.x + sd.x * off, z: a0.z + sd.z * off }, { x: a0.x + sd.x * off + L.d.x * len, z: a0.z + sd.z * off + L.d.z * len }, width * .5, halo.withAlpha(.35 * f), whiteGlow, Y + .080, 3);
+  }
+  const steps = Math.floor(flown / BoltStep);
+  for (let b = 0; b < bolts; b++) {    // the long bolts, in 4-cell pieces so each fades with its part of the beam
+    if (rand(b * 3 + frame) < .15) continue;                                   // a bolt drops out now and then
+    const at = n => {                                                          // bend n of bolt b this frame; n 0 is on the line at the start
+      const big = rand(n * 29 + b * 53 + frame * 3) > .7;                   // most bends small, three in ten a full swing
+      const off = n === 0 ? 0 : amp * (rand(n * 13 + b * 101 + frame * 7) - .5) * 2 * (big ? 1 : .3);
+      const q = lift(move(L.start, L.d, Math.min(flown, n * BoltStep)));
+      return { x: q.x + sd.x * off, z: q.z + sd.z * off };
+    };
+    for (let n0 = 0, piece = 0; n0 < steps; n0 += 8, piece++) {
+      const n1 = Math.min(steps, n0 + 8), f = Math.pow(fadeAt((n0 + n1) / 2 * BoltStep), 2.5);   // the bolts die faster than the beam
+      if (f < .2 || n1 - n0 < 2) continue;
+      const pts = [];
+      for (let n = n0; n <= n1; n++) pts.push(at(n));
+      line(`${key} bolt ${b} ${piece}`, pts, .045 + tier * .015, White.withAlpha(.95 * f), whiteGlow, Y + .084, 'none');
+      line(`${key} bolt glow ${b} ${piece}`, pts, .14 + tier * .05, Violet.withAlpha(.45 * f), whiteGlow, Y + .083, 'none');
+      if (rand(piece * 7 + b + frame) > .4) {                                  // a branch off one bend of this piece
+        const n = n0 + 1 + Math.floor(rand(piece * 11 + b * 5 + frame) * (n1 - n0 - 1)), base = at(n);
+        const t = Math.atan2(sd.z, sd.x) + (rand(n + frame) > .5 ? 0 : Math.PI) + (rand(n * 3 + frame) - .5) * 1.2;
+        bolt(`${key} branch ${b} ${piece}`, base, t, (.4 + .6 * rand(n * 5 + frame)) * (1 + tier * .4), 4, n * 17 + frame, .04, White.withAlpha(.9 * f), Violet.withAlpha(.4 * f), Y + .083);
       }
+    }
+  }
+  // The light sits at the circle, not the muzzle: a glow and short rays radiating from it, while the beam is up.
+  const up = 1 - smooth((age - flown / Speed - .15) / (life * .8)), size = [.7, 1.0, 1.7][tier];
+  if (up > 0) {
+    const pulse = .92 + .08 * Math.sin(s * 30);
+    sprite(gate, 2.0 * size * up * pulse, 1.8 * size * up * pulse, halo.withAlpha(.45 * up), glow, Y + .085);
+    sprite(gate, 1.0 * size * up, .9 * size * up, body.withAlpha(.85 * up), glow, Y + .086);
+    sprite(gate, .4 * size * up, .36 * size * up, White.withAlpha(up), glow, Y + .087);
+    for (let i = 0; i < 10; i++) {     // the rays: short, re-drawn every 1/16 s
+      const t = i / 10 * TAU + rand(i + frame) * .6, r0 = size * (.3 + .2 * rand(i * 3 + frame)), r1 = r0 + size * (.3 + .5 * rand(i * 5 + frame));
+      streak(`${key} ray ${i}`, { x: gate.x + Math.cos(t) * r0, z: gate.z + Math.sin(t) * r0 * .8 }, { x: gate.x + Math.cos(t) * r1, z: gate.z + Math.sin(t) * r1 * .8 }, .035, White.withAlpha(.8 * up), whiteGlow, Y + .088, 3);
     }
   }
 }
@@ -550,7 +577,7 @@ export default {
     chamberGlow('mb chamber', gun.chamber, gun.muzzle, head, charge, s);
     const openU = seventh ? clamp((s - p.lead - Swing * .5) / (Swing * .5 + .05)) : clamp(s / (p.lead * .4));
     const slideU = seventh ? clamp((s - p.lead - Swing * .8) / .15) : clamp((s - p.lead * .4) / (p.lead * .6));
-    const open = smooth(openU) * (fired ? 1 - smooth((age - .15) / CircleClose) : 1);
+    const open = smooth(openU) * (fired ? 1 - smooth((age - t.flight - .35) / CircleClose) : 1);   // stays while the beam is up, as in the hit frame
     const ahead = CircleFar + (CircleNear - CircleFar) * smooth(slideU);
     const n = CirclesFor[Math.min(Shots, Math.max(1, Math.round(p.shot))) - 1];
     const gateDir = fired ? L.d : gd;      // once fired the circles stay on the shot line, not the kicked barrel
@@ -576,19 +603,10 @@ export default {
       streak(`mb speed ${i}`, from, move(from, L.d, len), .03, Cyan.withAlpha(.9 * (1 - v)), whiteGlow, Y + .09, 3);
     }
 
-    // Muzzle flash, then the beam from the muzzle to the bullet, and the bullet itself.
+    // A small muzzle flash (the light is at the circle), the beam from the muzzle to the bullet, and the bullet.
     const mq = lift(move(hand, L.d, RifleLen * .72)), w = p.beamWidth * [1, 1.5, 2.2][tier];
-    if (age < .09) {
-      glint('mb flash', mq, .7 * (1 + age * 3), 1 - age / .09, Beam, L.deg);
-      streak('mb tongue', mq, move(mq, L.d, .7 + age * 3), .2 * (1 - age / .09), White.withAlpha(1 - age / .09), whiteGlow, Y + .12, 4);
-    }
-    if (tier === 2 && age < t.flight + .4) {   // the seventh: a cyan burst that sits at the circle while the beam is up
-      const f = 1 - smooth((age - t.flight) / .4), pulse = .9 + .1 * Math.sin(s * 30);
-      sprite(gate, 2.2 * f * pulse, 2.0 * f * pulse, Halo.withAlpha(.5 * f), glow, Y + .085);
-      sprite(gate, 1.1 * f, 1.0 * f, Cyan.withAlpha(.9 * f), glow, Y + .086);
-      sprite(gate, .5 * f, .45 * f, White.withAlpha(1 * f), glow, Y + .087);
-    }
-    beam('mb beam', L, flown, age, w, p.beamFade, s, tier);
+    if (age < .07) glint('mb flash', mq, .4, 1 - age / .07, Beam, L.deg);
+    beam('mb beam', L, flown, age, w, p.beamFade, s, tier, gate);
     if (flown < p.range) {
       const b = lift(move(L.start, L.d, flown));
       streak('mb bullet tail', move(b, L.d, -.9), b, w * 2.2, Beam.withAlpha(.9), whiteGlow, Y + .10, 6);
