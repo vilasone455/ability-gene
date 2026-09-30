@@ -112,4 +112,13 @@ namespace RimArt
         public AbilityDef ability;
         public float cost;
     }
+
+    /// <summary>
+    /// On an Echo's awaken gene that acts outside hero form: the cost line on the card and the letter says
+    /// what it does ("Gains the {gene} gene: {note}") instead of "works only in hero form".
+    /// </summary>
+    public class EchoGeneCostNote : DefModExtension
+    {
+        public string note;
+    }
 }

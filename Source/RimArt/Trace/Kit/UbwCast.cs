@@ -6,6 +6,7 @@ using UnityEngine;
 using Verse;
 using Verse.AI;
 using Verse.AI.Group;
+using static RimArt.CrossMapMove;
 using T = RimArt.UbwCastTiming;
 
 namespace RimArt
@@ -297,38 +298,7 @@ namespace RimArt
             UnlimitedBladeWorksMap.CloseLater(world);
         }
 
-        // ---- moving pawns -----------------------------------------------------------------------------------------
-
-        /// <summary>Takes a pawn off its map and puts it on another, keeping it drafted if it was.</summary>
-        private static void Move(Pawn p, IntVec3 cell, Map to)
-        {
-            bool drafted = p.Drafted;
-            Rot4 facing = p.Rotation;
-            p.DeSpawnOrDeselect();
-            GenSpawn.Spawn(p, cell, to, facing);
-            p.Notify_Teleported(true, true);
-            if (drafted && p.drafter != null && !p.Downed) p.drafter.Drafted = true;
-        }
-
-        /// <summary>The nearest cell to <paramref name="want"/> a pawn can stand on with no other pawn on it.</summary>
-        private static IntVec3 FreeCellNear(Map map, IntVec3 want)
-        {
-            want = new IntVec3(Mathf.Clamp(want.x, 1, map.Size.x - 2), 0, Mathf.Clamp(want.z, 1, map.Size.z - 2));
-            int cells = GenRadial.NumCellsInRadius(8f);
-            for (int i = 0; i < cells; i++)
-            {
-                IntVec3 c = want + GenRadial.RadialPattern[i];
-                if (c.InBounds(map) && c.Standable(map) && c.GetFirstPawn(map) == null) return c;
-            }
-            return CellFinder.StandableCellNear(want, map, 20f);
-        }
-
-        /// <summary>Hostile pawns fight on: an assault lord for each faction, with no fleeing and no kidnapping.</summary>
-        private static void Assault(List<Pawn> pawns, Map map)
-        {
-            foreach (IGrouping<Faction, Pawn> group in pawns.GroupBy(p => p.Faction))
-                LordMaker.MakeNewLord(group.Key, new LordJob_AssaultColony(group.Key, false, false, false, false, false), map, group);
-        }
+        // Moving pawns: Move, FreeCellNear and Assault are CrossMapMove's (Source/RimArt/Shared).
 
         // ---- the clock --------------------------------------------------------------------------------------------
 

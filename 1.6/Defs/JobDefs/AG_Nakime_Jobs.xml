@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- Nakime on the dais of the biwa room while her castle stands: she plays and does not move or attack.
+       Orders do not interrupt it (JobDriver_CastlePlay); it ends by itself at the return. -->
+  <JobDef>
+    <defName>AG_CastlePlay</defName>
+    <driverClass>RimArt.JobDriver_CastlePlay</driverClass>
+    <reportString>Playing the biwa.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <playerInterruptible>false</playerInterruptible>
+    <suspendable>false</suspendable>
+  </JobDef>
+</Defs>

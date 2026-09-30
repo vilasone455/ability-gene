@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Nakime's gene (docs/hero-echo.md "Nakime"). Echo-only: her Echo gives it on awakening (awakenGenes)
+       and she keeps it for life. It lists no abilities; Infinity Castle comes with hero form. Its one rule,
+       sunlight, works whether or not she is manifested (the user's choice, 2026-09-27): Gene_CastleOrgan
+       does not ask EchoUtility.GeneActive. The icon is vanilla's intense UV sensitivity. The name is a
+       placeholder (docs/infinity-castle-kit.md "Open"). Kept out of genepacks and random xenotypes. -->
+  <GeneDef MayRequire="Ludeon.RimWorld.Biotech">
+    <defName>AG_CastleOrgan</defName>
+    <label>castle organ</label>
+    <description>Nakime's tie to the Infinity Castle. Sunlight burns her, in hero form or not: outdoors while the sky is lit she takes about 4 burn damage a second, through her clothes, and goes down in about 20 seconds. Roofed cells and night are safe.</description>
+    <geneClass>RimArt.Gene_CastleOrgan</geneClass>
+    <iconPath>UI/Icons/Genes/Gene_IntenseUVSensitivity</iconPath>
+    <displayCategory>ResistanceAndWeakness</displayCategory>
+    <displayOrderInCategory>180</displayOrderInCategory>
+    <marketValueFactor>1.0</marketValueFactor>
+    <canGenerateInGeneSet>false</canGenerateInGeneSet>
+    <selectionWeight>0</selectionWeight>
+    <biostatMet>0</biostatMet>
+    <biostatCpx>2</biostatCpx>
+    <modExtensions>
+      <li Class="RimArt.CastleOrganExtension">
+        <burnDamage>4</burnDamage>
+        <checkSeconds>1</checkSeconds>
+        <armorPenetration>1</armorPenetration>
+        <messageSeconds>30</messageSeconds>
+      </li>
+      <li Class="RimArt.EchoGeneCostNote">
+        <note>sunlight burns them outdoors by day, in hero form or not</note>
+      </li>
+    </modExtensions>
+    <symbolPack>
+      <prefixSymbols>
+        <li><symbol>castle</symbol></li>
+        <li><symbol>biwa</symbol></li>
+      </prefixSymbols>
+      <suffixSymbols>
+        <li><symbol>hall</symbol></li>
+      </suffixSymbols>
+    </symbolPack>
+  </GeneDef>
+
+</Defs>
