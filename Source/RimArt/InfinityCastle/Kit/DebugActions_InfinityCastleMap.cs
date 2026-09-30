@@ -37,6 +37,8 @@ namespace RimArt
             Map map = Find.CurrentMap;
             MapComponent_InfinityCastle castle = map?.GetComponent<MapComponent_InfinityCastle>();
             if (castle == null || !castle.IsCastle) { Messages.Message("The map on screen is not a castle.", MessageTypeDefOf.RejectInput, false); return; }
+            // The ability's castle holds pawns that must go home first: its cast closes it after the return.
+            if (castle.driven) { Messages.Message("Nakime's castle: use \"castle map: release\" or her Release.", MessageTypeDefOf.RejectInput, false); return; }
             InfinityCastleMap.CloseLater(map);
         }
 

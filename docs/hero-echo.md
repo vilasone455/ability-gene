@@ -163,7 +163,7 @@ ThingDef), `emptyHands` (bool), `weaponReturnTicks` (default 600 = 10 s, placeho
 | Echo | Forced | In XML |
 |---|---|---|
 | Vergil | Yamato | not yet: no Yamato def (comes with the Vergil port) |
-| Nakime | biwa (weak blunt or none) | not yet: no Nakime Echo and no biwa def |
+| Nakime | biwa (`AG_Biwa`, blunt 9) | `manifestWeapon` set (`AG_Echo_Nakime.xml`) |
 | Goku | empty hands | `emptyHands` set |
 | Todo | empty hands | not yet: no Todo Echo |
 | everyone else, Sasuke included | nothing | |
@@ -213,6 +213,7 @@ Rules:
 | Goku | Melee 15, downed and recovered 3 times (`Trial_DownedRecovered`, counted from the moment the mod is loaded) | Gourmand | Solar Flare, Instant Transmission, Kamehameha, Spirit Bomb; Warp Kamehameha is a button during the Kamehameha hold, not a def | 12 | Solar Flare 3, Instant Transmission 2, Kamehameha 15, Spirit Bomb 30; Warp pays Instant Transmission's 2 and cooldown on top |
 | Todo (no subtitle) | Melee 14, 20 humanlikes downed (`PawnsDownedHumanlikes`) | Brawler + the anchor organ gene (awakenGenes) | stone, clap, double clap, Black Flash, provoke | 8 | stone 0, clap 0, double clap 0 (the organ's three claps are their limit), Black Flash 1, provoke 5; +0.5 move speed, black hair, wealth 6000, forced empty hands |
 | Minato ("Hero of the Yellow Flash") | Melee 12, Intellectual 10, 30 kills with a thrown kunai (`Trial_KillsWith` on AG_Kunai; `Projectile_Kunai` names the kunai as its weapon) | Kind | flying thunder god, flying thunder god: chain, guiding thunder, rasengan; sealing touch passive (AG_MinatoSeal); throw kunai stays on the belt | 10 | throw kunai 0 (belt charges), flying thunder god 2, chain 10, guiding thunder 5, rasengan 3; blond hair, the Hokage haori and forehead protector, no forced weapon, no kunai regeneration |
+| Nakime ("Player of the Endless Halls"; `AG_Echo_Nakime.xml`) | Artistic 12, Construction 10, 15 humanlike kills (`KillsHumanlikes`) | Night Owl + the castle organ gene (awakenGenes; sunlight burns her always) | Infinity Castle; inside it Shift, Drop, Seal / Open, Crush, Summon, Release | 12 | Infinity Castle 30, commands 0; black hair, wealth 6000, forced biwa, no costume |
 
 Pain's four come only from his Echo since his port (2026-09-28; Chibaku Tensei took Gravity Well's
 place the same day): the repulsion and attraction eyes grant nothing and are no longer quest rewards;
@@ -269,7 +270,7 @@ Agreed, not built (no EchoDef yet; the abilities do not exist):
 |---|---|---|---|---|---|---|
 | Obito ("Watcher Behind the Spiral Mask"; built 2026-09-28, see "Obito" below) | Melee 12, Intellectual 10, has a missing or artificial body part (`Trial_ArtificialPart`: any missing part or added part) | Depressive (Natural mood -2) | Kamui: Phase, Kamui: Warp, Kamui: Store, Wood Release | 12 | Phase 0 (its own 30 s pool), Warp 2, Store 1, Wood Release 2 | fold organ gene Echo-only: added on awakening (the dimension is generated then), abilities only while manifested |
 | Gojo ("Bearer of the Six Eyes") | Intellectual 14, 1 day spent downed in total (vanilla `TimeDowned` record; the Trial label shows hours), colony wealth 200,000 | The Strongest (new custom trait) | Infinity, Blue, Red, Unlimited Void (+ Hollow Purple combo) | 15 | Infinity 0 (its breath is the price), Blue 3, Red 3, Hollow Purple 20 (+ its own 1-day cooldown), Unlimited Void 30 | white hair; phase barrier implant Echo-only; no forced weapon |
-| Nakime ("Player of the Endless Halls") | Artistic 12, Construction 10, 15 humanlike kills (vanilla `KillsHumanlikes`) | Night Owl | Infinity Castle (commands: shift, drop, seal/open, crush, summon, release; passives castle sight, void rule) | 12 | Infinity Castle 30, commands 0 (the 1.5 s strum rhythm and crush's own 10 s cooldown limit them) | black hair; forced biwa; castle gene Echo-only, added on awakening; sunlight burns her always (the gene's rule, 4 per second outdoors by day), not only while manifested |
+| Nakime ("Player of the Endless Halls"; `AG_Echo_Nakime.xml`, built 2026-09-30, see "Nakime" below) | Artistic 12, Construction 10, 15 humanlike kills (vanilla `KillsHumanlikes`) | Night Owl | Infinity Castle (commands: shift, drop, seal/open, crush, summon, release; passives castle sight, void rule) | 12 | Infinity Castle 30, commands 0 (the 1.5 s strum rhythm and crush's own 10 s cooldown limit them) | black hair; forced biwa; castle gene Echo-only, added on awakening; sunlight burns her always (the gene's rule, 4 per second outdoors by day), not only while manifested |
 | Satō (`AG_Echo_Sato.xml`; built 2026-09-29, see "Satō" below) | Shooting 12, 30 kills, 500 damage taken | Ajin (new custom trait carrying the Reset passive) + Psychopath | Reset (passive), Black Ghost, The Game, Sever, Headshot Reset, Grenade Reset | 10 | Sever 0, Headshot Reset 0, Grenade Reset 5, Black Ghost 10, The Game 5 (a kill on the marked enemy refunds 15); every Reset while manifested costs by the piece he rises from (body or leg 20, arm 25, hand 40, finger or ear 60) | half pain while manifested; on revert the Ghost dissolves and the mark ends |
 
 Goku (built 2026-09-27, `Source/RimArt/Goku/Kit`): Kamehameha and Spirit Bomb are channels that hold the
@@ -592,6 +593,31 @@ anchors and Tear were agreed 2026-09-26):
     the anchors use the Reset pictures, The Game shows the vanilla target reticle on the mark, Grenade
     Reset is the vanilla explosion.
 
+Nakime (agreed 2026-09-27; numbers are placeholders; the castle's rules are in
+`docs/infinity-castle-kit.md`). Ported 2026-09-30 (`AG_Echo_Nakime.xml` with her hero-form hediff,
+`AG_Nakime_Abilities.xml`, `AG_Nakime_Gene.xml`, `AG_Nakime_Things.xml`, `AG_Nakime_Jobs.xml`; code in
+`Source/RimArt/InfinityCastle/Kit`; tests `-rimarttest=Nakime`). Rules settled while porting:
+- One ability, Infinity Castle (30 charge, 3 days). Its six commands are buttons after its own while
+  the castle stands and she is in it (the same pattern as Unlimited Blade Works' Close); they cost no
+  charge. Shift asks for a room, then a direction from a menu that shows each direction's slide
+  length. Drop asks for a pawn, then a room. Seal / Open asks for a door cell and does whichever
+  applies. Summon asks for a room, then a colonist from a menu. The room under the mouse is outlined
+  while choosing.
+- The castle organ (`AG_CastleOrgan`, name still a placeholder) holds only the sunlight rule. It does
+  not ask `EchoUtility.GeneActive`, so it burns her in hero form or not. Its card and letter line
+  comes from `EchoGeneCostNote` on the gene ("Gains the castle organ gene: sunlight burns them
+  outdoors by day, in hero form or not"), since the usual line says "works only in hero form".
+- The old gene-kit rules that the Echo replaces: no weapon ban outside hero form (the biwa is the
+  manifest weapon only), no gene-granted ability.
+- On the dais she plays (`AG_CastlePlay`, not player-interruptible): move orders are refused and
+  drafting does not end it. If the Host is downed, dies, leaves the castle or reverts (by hand or when
+  the pool runs dry), the castle is released.
+- She is held (stunned) from the strum until she sinks, as are the pawns taken. If she is downed,
+  gone or reverted before that, nobody moves and the charge and cooldown stay spent (as Unlimited
+  Blade Works after its release). If nobody is left to take at the strum, or the castle cannot be
+  made, the charge and cooldown come back.
+- No costume yet.
+
 Inumaki revisit (agreed 2026-09-27; numbers are placeholders; the built words are in
 `Source/RimArt/Larynx`, `AG_Larynx_Abilities.xml`):
 - Words: stop, drop, come and run stay as built. Kneel is replaced by crush (15 blunt + 1 s stun,
@@ -777,6 +803,13 @@ puff and the vanilla punch.
   ground kunai; the Rasengan walked up to, into a wall, and from range; the walk called off by a move
   order; 15 screenshots). Debug window kit
   "Minato": make Host with a kunai belt, stick his kunai in a pawn, seal a pawn, plant his kunai.
+- `-rimarttest=Nakime`: 10 scenarios (the Echo: organ on awakening, the cost line, ability and biwa only
+  in hero form; the take and Release with a downed enemy, an enemy out of reach and a colonist in reach
+  left behind, rooms of their own, the dais and the play job, 3 screenshots; eight of ten taken;
+  lords: a raid partly taken rejoins, a raid wholly taken leaves; Summon, Drop, Seal and Open, Shift
+  and Crush through the castle, the summoned colonist home again; downed in the castle, reverted in
+  the castle, downed before going in; a move order on the dais; sunlight outdoors and under a roof).
+  Debug window kit "Nakime": make Host (manifested, full charge), release her castle now, burn once.
 
 ## Not built
 
@@ -784,8 +817,8 @@ puff and the vanilla punch.
 - Costumes for the other Echoes (Vergil's coat, the Akatsuki cloak for Pain, Itachi and Obito,
   Obito's mask and Pain's piercings, Minato's, Sasuke's, Satō's and Gojo's are built), the other head pieces, eye overlays, a transform effect per Echo, a marker
   for manifested Hosts.
-- Pocket spaces closing on `PoolEmptied`, except Unlimited Blade Works: its world closes when the
-  caster loses the ability, which an empty pool causes by reverting every Host.
+- Pocket spaces closing on `PoolEmptied`, except Unlimited Blade Works and the Infinity Castle: they
+  close when the caster loses the ability, which an empty pool causes by reverting every Host.
 - Echoes for the other heroes; their kits have no mechanics yet.
 - Death setting to reopen a closed Echo after a season; per-Echo settings multipliers.
 - Save/load has not been tested by a game test.

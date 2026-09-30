@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Nakime's ability (docs/infinity-castle-kit.md, docs/hero-echo.md "Nakime"), granted by the Nakime Echo
+       while manifested (AG_Echo_Nakime.xml holds its charge cost). The strum at the end of the warm-up
+       begins an InfinityCastleCast (Source/RimArt/InfinityCastle/Kit); while the castle stands its six
+       commands follow its button. The castle's own numbers (Shift, Crush, the strum gap) are on the
+       AG_InfinityCastle MapGeneratorDef. Every number is a placeholder; the icon is a placeholder. -->
+  <AbilityDef>
+    <defName>AG_Nakime_InfinityCastle</defName>
+    <label>Infinity Castle</label>
+    <description>Target a cell up to 35 cells away; no line of sight needed. After a 1 s warm-up the biwa sounds and a door opens in the floor under each hostile pawn within 5.9 cells, nearest first, up to 8 pawns and a total body size of 8. Downed pawns stay. They drop into a castle of 30 to 45 rooms over a void, each in its own room, and Nakime follows to the dais of the biwa room.\n\nWhatever a pawn carries is dropped where it stood. Inside, enemies attack anyone they can reach. Nakime cannot walk or attack while she plays, and the enemies can reach her. Castle walls and doors cannot be broken, and she sees every room.\n\nThe castle stands 60 s, until Release, or until Nakime is downed or stops being Nakime. Then everyone goes back to the cell they came from; corpses and items come up round the target cell. Enemies rejoin their raid if it is still on the map, else they leave.\n\nWhile it stands she has six commands, each one strum of the biwa, at least 1.5 s apart and free: Shift, Drop, Seal / Open, Crush, Summon and Release.</description>
+    <iconPath>RimArt/InfinityCastle/IconInfinityCastle</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>180000</cooldownTicksRange>
+    <targetRequired>true</targetRequired>
+    <hostile>true</hostile>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>35</range>
+      <warmupTime>1</warmupTime>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetBuildings>false</canTargetBuildings>
+        <canTargetSelf>false</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityInfinityCastle">
+        <radius>5.9</radius>
+        <maxPawns>8</maxPawns>
+        <maxBodySize>8</maxBodySize>
+        <castleSeconds>60</castleSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

@@ -162,6 +162,8 @@ namespace RimArt
         public float doorUnder;
         /// <summary>Whether this was a strum (Drop): the rings from the dais and the room's flash.</summary>
         public bool strum;
+        /// <summary>Summon: the pawn came from the home map, so only the far room's door is drawn and the pawn stays hidden until it rises.</summary>
+        public bool summoned;
 
         public const float Sink = 0.4f, Rise = 0.55f;
         public float SinkStart => doorUnder + DoorThrough;
@@ -180,6 +182,7 @@ namespace RimArt
             Scribe_Values.Look(ref startAt, "startAt");
             Scribe_Values.Look(ref doorUnder, "doorUnder");
             Scribe_Values.Look(ref strum, "strum");
+            Scribe_Values.Look(ref summoned, "summoned");
             if (Scribe.mode == LoadSaveMode.PostLoadInit) startAt = -1000f;
         }
     }

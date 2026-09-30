@@ -1,11 +1,12 @@
-# Infinity Castle: the gene, the castle and its commands
+# Infinity Castle: Nakime, the castle and its commands
 
-Agreed in outline on 2026-09-23. Since 2026-09-24 `Source/RimArt/InfinityCastle` has the castle's
-pictures and its pocket map, with no mechanics (see "Port notes": nobody is taken, no commands, no
-gene). Every number below is a
-placeholder and will be an XML field (the ability's comp properties or the gene's
-`DefModExtension`), not a C# constant. The pictures are the sketches under **Infinity Castle** in
-the VFX lab (`Tools/VfxLab/web/sketches/infinity-castle-*.js`); the shared drawing and the room
+Agreed in outline on 2026-09-23. The castle's pictures and pocket map were ported on 2026-09-24 and
+the four room commands the same day (see "Port notes"). Since 2026-09-30 the whole kit is Nakime's
+hero kit in the Echo framework (`docs/hero-echo.md`, "Nakime"): the ability takes enemies in, the
+commands are her buttons, and she brings everyone back. Every number below is a placeholder and an
+XML field (the ability's comp properties, the castle map def's `InfinityCastleRules` or the gene's
+`CastleOrganExtension`), not a C# constant. The pictures are the sketches under **Infinity Castle**
+in the VFX lab (`Tools/VfxLab/web/sketches/infinity-castle-*.js`); the shared drawing and the room
 generator are in `Tools/VfxLab/web/sketches/lib/infinity-castle.js`. Each sketch header carries the
 same numbers as this page.
 
@@ -13,33 +14,29 @@ The source is Nakime from Demon Slayer: her biwa and the Infinity Castle.
 
 ## Source and roster row
 
-One source, as `REVAMP.md` requires.
+Since 2026-09-27 the source is the Nakime Echo (hero), not a gene kit.
 
 | Source | Kit | Abilities | Acquisition |
 |---|---|---|---|
-| Gene | **Castle organ** (name open) | Infinity Castle; inside it Shift, Drop, Seal/Open, Crush, Summon, Release | Acquire and implant the archite gene |
+| Nakime Echo | Infinity Castle, the castle organ gene, the biwa | Infinity Castle; inside it Shift, Drop, Seal/Open, Crush, Summon, Release | Meet her Trials at the resonance device and awaken |
 
-## The gene
+## The gene and the biwa
+
+The castle organ (`AG_CastleOrgan`, name open) is given by her Echo on awakening and kept for life.
+It lists no abilities and does nothing else but the sunlight rule.
 
 | Field | Value | Note |
 |---|---|---|
-| Archites | 2 | Fold organ: 1 |
-| Complexity | 8 | Fold organ: 7 |
-| Metabolism | 0 | The drawbacks are the price. It was -5 before they were added. Fold organ: -4 |
-| Grants | the bound biwa, the Infinity Castle ability | |
-| Sunlight | Outdoors in daylight: about 4 burn damage a second, checked once a second, downed in about 20 s. Roofed cells and night are safe. | Chosen over a hard indoor lock, which would need pathing patches and would stop her crossing between buildings at night |
-| No other weapons | She cannot equip any weapon but the biwa | Same hook as the Anchor organ's `banWeapons` (`EquipmentUtility.CanEquip`), with the biwa excepted |
+| Sunlight | Outdoors while the sky is lit (vanilla's InSunlight: unroofed, sky glow over 0.1): 4 burn damage a second through clothes, checked once a second, downed in about 20 s. Roofed cells, caravans and night are safe. In hero form or not. | Chosen over a hard indoor lock, which would need pathing patches and would stop her crossing between buildings at night |
+| Metabolism, complexity | 0, 2 | An Echo gene: the Echo is the price |
 
-Sketch: `infinity-castle-sunlight.js` (sunlight burn; the biwa coming back).
+The biwa (`AG_Biwa`) is her Echo's manifest weapon: it appears in her hands when she manifests,
+vanishes when she reverts or lets go of it and comes back 10 s later while she is still manifested.
+Blunt 9 (body) and 7 (neck). No stuff, no recipe, market value 0. Out of hero form she may hold any
+weapon (the old gene's weapon ban is gone).
 
-### The bound biwa
-
-- Appears in her hands. Destroyed when dropped (she is downed), given back when she is up again.
-- Not craftable and not tradeable, so no one-of-a-kind code is needed.
-- Weak blunt melee, about 9.
-
-A plain biwa item was rejected: it is dropped when downed, can be stolen, needs one-of-a-kind code,
-and invites swapping to a gun.
+Sketch: `infinity-castle-sunlight.js` (sunlight burn; the biwa coming back). Its picture is not
+ported: the burn shows as vanilla burns and a puff of smoke each second.
 
 ## Infinity Castle
 
@@ -52,9 +49,10 @@ Sketch: `infinity-castle-open.js` (the home map: taken in, brought back).
 | Taken | Hostile pawns within 5.9 cells of the cell, nearest first, up to 8 pawns and a total body size of 8. Downed hostiles are not taken. |
 | Carrier | Goes in after them |
 | Castle | A new 100 x 100 pocket map for each cast, roofed, removed afterwards |
-| Lasts | 60 s, or until Release, or until the carrier is downed |
-| Return | Every pawn back to the cell it was taken from; corpses and items come up around the target cell |
+| Lasts | 60 s of game time from the move in, or until Release, or until the carrier is downed, dies, leaves or reverts |
+| Return | Every pawn back to the cell it was taken from (a summoned colonist to where it was summoned from); corpses and items come up around the target cell |
 | Cooldown | 3 days |
+| Charge | 30 from the Echo pool; given back with the cooldown if nobody is left to take at the strum |
 
 During the warm-up a ring shows the 5.9-cell radius and an outline marks the floor under each pawn
 that will be taken. The strum opens a door in the floor under each of them and they drop in.
@@ -166,3 +164,38 @@ them), Door (move one pawn across the map; same job as the Anchor organ's rescue
 - The strum clip comes last, after the mechanics, like the other kits' clips.
 - The lab's `scene: false` sketch option was added for these sketches: they draw their own ground
   (the pocket map) instead of the lab's grass and trees.
+
+### The commands (2026-09-24)
+
+Shift (PR #36), Seal/Open (#37), Crush (#38) and Drop (#39), each confirmed in game through the debug
+window. The rules and pictures are in `MapComponent_InfinityCastle` and `InfinityCastleShift.cs`.
+
+### The ability, the cast and Nakime (2026-09-30)
+
+- `InfinityCastleCast` (one per cast, kept by `GameComponent_InfinityCastle`, the same shape as
+  Unlimited Blade Works' `UbwCast`). The strum at the end of the 1 s warm-up chooses the pawns and
+  makes the castle (`InfinityCastleMap.Make`, a random seed and room count). Everyone is held
+  (stunned) over their door. Each pawn is hidden once it has sunk, and when the carrier has sunk
+  everyone moves at once: each enemy to its own arrival room (`CastleLayout.ArrivalRooms`), Nakime
+  to the dais. Release (60 s, the button, downed, dead, gone or reverted) plays the castle's Release
+  over the real pawns. When the castle's fade is black, everyone goes home and the castle map is
+  removed.
+- Lords: each enemy leaves its lord with `Notify_PawnLost(ExitedMap)` before it moves, so a raid taken
+  whole ends its lord. At the return a pawn rejoins its old lord if that still exists on the home map,
+  else a pawn of another faction gets `LordJob_ExitMapBest` (jog). Inside, the hostile ones get
+  `LordJob_AssaultColony` per faction; pawns in a mental state keep it and get no lord.
+- The castle map's clock is real time and now runs whether or not the castle is on screen (it used to
+  stop while you looked at the home map). A castle the ability made is `driven`: its arrival doors
+  open under the real pawns (`Arrive`), its Release doors under whoever is leaving, and it holds at
+  black (`Faded`) for the cast to bring everyone home. The debug window's castle still plays the
+  sketch's arrival and closes itself; "castle map: close now" refuses a driven castle.
+- The home-map picture (`InfinityCastleOpenGraphics`) takes a `CastleOpenPlan`: the preview's is the
+  sketch's script, the ability's is built from the real pawns (door times from their distance to the
+  target cell). The same plan draws the warm-up from the Host's warm-up stance. With a real carrier
+  the shaft's dark also closes over her and lifts off her; the sketch drew its stand-in instead.
+- Summon (new): the colonist leaves the home map at once and comes up in the chosen room through a
+  floor door (a `CastleDrop` with `summoned` set); on the home map a floor door opens where it stood.
+- Not built: the Nakime costume, sounds (strum, slide, thud, bar, crush), the strum clip, the sunlight
+  picture, command icons beyond flat placeholders, pathing that keeps her indoors by day. The hitch
+  of generating the castle mid-fight and save/load while the castle stands have not been measured
+  or tested.

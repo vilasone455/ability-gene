@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Nakime (docs/hero-echo.md "Nakime", agreed 2026-09-27). In a file of its own so it merges cleanly next
+       to the other heroes' ports. Trials: Artistic 12 (the biwa player), Construction 10 (she reshapes the
+       castle), 15 humanlike kills (vanilla KillsHumanlikes). Her castle organ (AG_CastleOrgan) is Echo-only,
+       given on awakening and kept for life; its sunlight burn works in hero form or not. She holds the biwa
+       while manifested. Infinity Castle costs 30; its commands cost nothing (the 1.5 s strum rhythm and
+       Crush's own cooldown limit them). No costume yet. Every number is a placeholder. -->
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Nakime</defName>
+    <label>Nakime</label>
+    <subtitle>Player of the Endless Halls</subtitle>
+    <description>One strum of her biwa and the floor opens under her enemies; the next, the rooms they fell into move.</description>
+    <order>120</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Artistic</skill>
+        <level>12</level>
+      </li>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Construction</skill>
+        <level>10</level>
+      </li>
+      <li Class="RimArt.Trial_Record">
+        <record>KillsHumanlikes</record>
+        <count>15</count>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li><trait>NightOwl</trait></li>
+    </forcedTraits>
+    <awakenGenes>
+      <li MayRequire="Ludeon.RimWorld.Biotech">AG_CastleOrgan</li>
+    </awakenGenes>
+    <abilities>
+      <li>AG_Nakime_InfinityCastle</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Nakime</manifestHediff>
+    <manifestWeapon>AG_Biwa</manifestWeapon>
+    <upkeepPerHour>12</upkeepPerHour>
+    <castCosts>
+      <li><ability>AG_Nakime_InfinityCastle</ability><cost>30</cost></li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.08, 0.08, 0.1)</hairColor>
+  </RimArt.EchoDef>
+
+  <HediffDef ParentName="AG_EchoManifestBase">
+    <defName>AG_EchoManifest_Nakime</defName>
+    <label>hero form: Nakime</label>
+    <description>This Host has manifested Nakime. The Echo's ability is available, the biwa is in her hands and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <stages>
+      <li />
+    </stages>
+  </HediffDef>
+
+</Defs>

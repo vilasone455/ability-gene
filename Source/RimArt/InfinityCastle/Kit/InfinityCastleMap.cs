@@ -21,6 +21,31 @@ namespace RimArt
             return asked;
         }
 
+        /// <summary>
+        /// The ability's castle: a random seed and room count from the GenStep's ranges, made beside
+        /// <paramref name="source"/> and marked driven, and nothing else: no camera, no message. Null if the
+        /// game would not make it.
+        /// </summary>
+        public static Map Make(Map source)
+        {
+            request = null;
+            Map castle;
+            try
+            {
+                castle = PocketMapUtility.GeneratePocketMap(new IntVec3(CastleLayout.Size, 1, CastleLayout.Size),
+                    InfinityCastleDefOf.AG_InfinityCastle, null, source);
+            }
+            finally
+            {
+                request = null;
+            }
+            if (castle == null) return null;
+            MapComponent_InfinityCastle component = castle.GetComponent<MapComponent_InfinityCastle>();
+            component.source = source;
+            component.driven = true;
+            return castle;
+        }
+
         /// <summary>Makes the castle for this seed and room count beside <paramref name="source"/> and takes the camera to the dais.</summary>
         public static void Open(Map source, int seed, int rooms)
         {

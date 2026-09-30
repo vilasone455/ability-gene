@@ -46,8 +46,12 @@ namespace RimArt
         /// <param name="ambient">The clock the lanterns flicker and the depth rooms drift on; the preview passes <paramref name="s"/>.</param>
         /// <param name="batch">The castle's own baked rooms, when a command has changed it; null for the seed's castle.</param>
         /// <param name="skipRoom">A room drawn elsewhere this frame (sliding), left out with its lantern glows.</param>
+        /// <param name="arrivals">The live castle: where each pawn taken came up, in the order it did. Null plays the sketch's six enemies.</param>
+        /// <param name="leaving">The live castle: where each pawn leaving at Release stood when it began.</param>
+        /// <param name="carrierShaft">The carrier is a real pawn: the shaft's dark lifts off her and closes over her on the dais.</param>
         public static void Draw(CastleLayout castle, Vector2 corner, float s, float ambient, bool walk, in CastleLayers layers, CellRect? view,
-            CastleRoomGraphics.CastleBatch batch = null, int skipRoom = -1)
+            CastleRoomGraphics.CastleBatch batch = null, int skipRoom = -1, IList<Vector2> arrivals = null, IList<Vector2> leaving = null,
+            bool carrierShaft = false)
         {
             if (s < 0f || s >= T.Duration) return;
             Begin(new Vector2(corner.x + CastleLayout.Size / 2f, corner.y + CastleLayout.Size / 2f));
@@ -59,8 +63,27 @@ namespace RimArt
                 foreach (CastleRoom room in castle.Rooms)
                     RoomFlash(room, CastleRoomGraphics.CentreOf(corner, room), releaseAge - 0.05f - castle.Dist[room.Id] * 0.03f, layers.Wall);
 
+            // The live castle's doors: in where each pawn came up, out where each stood at Release.
+            if (arrivals != null)
+            {
+                for (int i = 0; i < arrivals.Count; i++)
+                {
+                    float inAge = s - T.EnemyLands(i);
+                    DoorAt(inAge, T.Rise * 0.75f, out float inAlpha, out float inOpen);
+                    if (s < T.Release) FloorDoor(arrivals[i], inOpen, inAlpha, s, layers.Door);
+                    if (inAge >= 0f && inAge < T.Rise + DoorThrough) Rising(arrivals[i], Clamp((inAge - DoorThrough) / T.Rise), layers);
+                }
+                for (int i = 0; leaving != null && i < leaving.Count; i++)
+                {
+                    float outAge = s - T.EnemyOut(i);
+                    DoorAt(outAge, T.Sink + 0.05f, out float outAlpha, out float outOpen);
+                    if (outAge >= -0.2f && outAge < DoorEnd(T.Sink + 0.05f)) FloorDoor(leaving[i], outOpen, outAlpha, s, layers.Door);
+                    if (outAge >= DoorThrough) Sinking(leaving[i], Clamp((outAge - DoorThrough) / T.Sink), layers);
+                }
+            }
+
             // The enemies' doors: in through the floor of their rooms, out wherever they are at Release.
-            List<CastleRoom> landing = castle.ArrivalRooms(T.Enemies);
+            List<CastleRoom> landing = arrivals != null ? new List<CastleRoom>() : castle.ArrivalRooms(T.Enemies);
             for (int i = 0; i < landing.Count; i++)
             {
                 CastleRoom room = landing[i];
@@ -82,8 +105,10 @@ namespace RimArt
             float casterIn = s - T.CasterLands, casterOut = s - T.CasterOut;
             DoorAt(casterIn, T.Rise * 0.75f, out float carrierInAlpha, out float carrierInOpen);
             if (casterIn >= -0.2f && casterIn < DoorEnd(T.Rise * 0.75f)) FloorDoor(seat, carrierInOpen, carrierInAlpha, s, layers.Door);
+            if (carrierShaft && casterIn >= 0f && casterIn < T.Rise + DoorThrough) Rising(seat, Clamp((casterIn - DoorThrough) / T.Rise), layers);
             DoorAt(casterOut, T.Sink + 0.05f, out float carrierOutAlpha, out float carrierOutOpen);
             if (casterOut >= -0.2f) FloorDoor(seat, carrierOutOpen, carrierOutAlpha, s, layers.Door);
+            if (carrierShaft && casterOut >= DoorThrough) Sinking(seat, Clamp((casterOut - DoorThrough) / T.Sink), layers);
             var (biwaX, biwaZ) = CastleLayout.BiwaOf((seatX, seatZ));
             Strum(new Vector2(corner.x + (float)biwaX, corner.y + (float)biwaZ), releaseAge, T.StrumReach, T.StrumLife, layers.Fx);
 
