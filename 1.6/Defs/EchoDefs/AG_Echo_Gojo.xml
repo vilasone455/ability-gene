@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Gojo (docs/hero-echo.md "Gojo"). Infinity is the built Phase Guard (AG_Recursion): its breath is its cost, so
+       it takes no charge, and the phase barrier implant no longer grants it. Hollow Purple is not cast from its
+       button: it fires when Red passes through an active Blue and Purple is ready, and pays its 20 then. Unlimited
+       Void takes 30. No psychic sensitivity anywhere in the entry (the user's rule). No forced weapon. -->
+  <RimArt.EchoDef ParentName="AG_EchoBase">
+    <defName>AG_Echo_Gojo</defName>
+    <label>Gojo</label>
+    <subtitle>Bearer of the Six Eyes</subtitle>
+    <description>Nothing reaches him unless he allows it.</description>
+    <order>35</order>
+    <trials>
+      <li Class="RimArt.Trial_Skill">
+        <skill>Intellectual</skill>
+        <level>14</level>
+      </li>
+      <!-- His near-death awakening: 24 hours spent downed over his life. -->
+      <li Class="RimArt.Trial_Record">
+        <record>TimeDowned</record>
+        <count>24</count>
+      </li>
+      <li Class="RimArt.Trial_ColonyWealth">
+        <wealth>200000</wealth>
+      </li>
+    </trials>
+    <forcedTraits>
+      <li>
+        <trait>AG_TheStrongest</trait>
+      </li>
+    </forcedTraits>
+    <abilities>
+      <li>AG_Recursion</li>
+      <li>AG_GojoBlue</li>
+      <li>AG_GojoRed</li>
+      <li>AG_GojoHollowPurple</li>
+      <li>AG_GojoUnlimitedVoid</li>
+    </abilities>
+    <manifestHediff>AG_EchoManifest_Gojo</manifestHediff>
+    <upkeepPerHour>15</upkeepPerHour>
+    <castCosts>
+      <li><ability>AG_Recursion</ability><cost>0</cost></li>
+      <li><ability>AG_GojoBlue</ability><cost>3</cost></li>
+      <li><ability>AG_GojoRed</ability><cost>3</cost></li>
+      <li><ability>AG_GojoHollowPurple</ability><cost>20</cost></li>
+      <li><ability>AG_GojoUnlimitedVoid</ability><cost>30</cost></li>
+    </castCosts>
+    <wealth>6000</wealth>
+    <hairColor>(0.95, 0.95, 0.97)</hairColor>
+  </RimArt.EchoDef>
+
+</Defs>

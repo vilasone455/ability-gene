@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- Self-cast. The membrane sits on the carrier's own surface, so there is nothing to aim at.
-       The cooldown is short on purpose: the real limit is how long a person can hold their
-       breath, which lives on the hediff's Breathing ramp, not here. -->
+  <!-- Gojo's Infinity (granted only by AG_Echo_Gojo since the Gojo port; the phase barrier implant grants nothing).
+       Self-cast: the field sits on his own surface, so there is nothing to aim at. The cooldown is short on
+       purpose: the real limit is how long he can hold his breath, which lives on the hediff's Breathing ramp.
+       The field numbers are on HediffCompProperties_Recursion in HediffDefs/AG_Membrane_Hediffs.xml. -->
   <AbilityDef>
     <defName>AG_Recursion</defName>
-    <label>phase guard</label>
-    <description>Raise the phase barrier, and everything moving toward the carrier begins halving the distance it has left without ever arriving - rounds hang short and blows miss by widening margins.\n\nThe barrier also holds back air, so the carrier stops breathing until it drops. Everything suspended by the field resumes immediately.</description>
+    <label>Infinity</label>
+    <description>Raise Infinity. Everything moving toward Gojo within 3.9 cells keeps halving the distance it has left and never arrives: a bullet or arrow hangs in the air and halves its gap every 6 seconds; a melee attacker's chance to connect halves every second; explosions, fire and other damage with no attacker behind it are cut to 15%.\n\nIt holds back air too, so Gojo stops breathing while it is up: after 14 seconds his breathing and consciousness start to drop, at about 32 seconds he usually goes down, and at 39 seconds he dies. Drop Infinity from its own button; every held round and blow resumes at once. Costs no charge. Cooldown 1 hour.</description>
     <iconPath>UI/Abilities/MechSmokepop</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>2500</cooldownTicksRange>

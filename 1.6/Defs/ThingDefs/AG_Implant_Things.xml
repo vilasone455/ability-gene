@@ -47,21 +47,17 @@
     </thingSetMakerTags>
   </ThingDef>
 
-  <!-- Archotech, and so deliberately not craftable. Vanilla ships no recipe for any
-       archotech part; they are quest rewards and deep-space trade only. The phase barrier
-       is the strongest thing in this list and it stays the one you cannot simply build. -->
+  <!-- Echo-only since the Gojo port (docs/hero-echo.md): the barrier grants no ability, is no longer a reward and
+       was never craftable (archotech). The def stays loadable for saves and pawns that hold one. -->
   <ThingDef ParentName="BodyPartArchotechBase">
     <defName>AG_PhaseBarrier</defName>
     <label>phase barrier</label>
-    <description>An archotech brain implant that halves the distance an incoming thing has left to travel, and then halves it again. Nothing that approaches the wearer ever finishes approaching.</description>
+    <description>An archotech brain implant. Its phase guard now belongs to Gojo's Echo, so it grants no ability. It can be recovered surgically and transferred.</description>
     <descriptionHyperlinks><RecipeDef>AG_InstallPhaseBarrier</RecipeDef></descriptionHyperlinks>
     <statBases>
       <MarketValue>3200</MarketValue>
       <Mass>0.3</Mass>
     </statBases>
-    <thingSetMakerTags>
-      <li>RewardStandardCore</li>
-    </thingSetMakerTags>
   </ThingDef>
 
 </Defs>

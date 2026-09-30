@@ -61,15 +61,31 @@ namespace RimArt
         }
     }
 
-    /// <summary>A vanilla record (Kills, DamageTaken, PeopleCaptured ...), counted over the pawn's whole life.</summary>
+    /// <summary>
+    /// A vanilla record (Kills, DamageTaken, PeopleCaptured ...), counted over the pawn's whole life. For a
+    /// time record (TimeDowned ...) count is in hours and the card shows hours; the record itself counts ticks.
+    /// </summary>
     public class Trial_Record : EchoTrial
     {
         public RecordDef record;
         public float count;
 
-        public override float Current(Pawn pawn) => pawn?.records?.GetValue(record) ?? 0f;
+        private bool InHours => record.type == RecordType.Time;
+
+        public override float Current(Pawn pawn)
+        {
+            float value = pawn?.records?.GetValue(record) ?? 0f;
+            return InHours ? value / GenDate.TicksPerHour : value;
+        }
+
         public override float Target => count;
-        protected override string DefaultLabel => record.LabelCap + " " + count.ToString("0");
+        protected override string DefaultLabel => InHours
+            ? "AG_EchoTrialHours".Translate(record.LabelCap, count.ToString("0")).ToString()
+            : record.LabelCap + " " + count.ToString("0");
+
+        public override string ProgressText(Pawn pawn) => InHours
+            ? "AG_EchoTrialHoursProgress".Translate(Current(pawn).ToString("0.#"), count.ToString("0")).ToString()
+            : base.ProgressText(pawn);
 
         public override IEnumerable<string> ConfigErrors()
         {

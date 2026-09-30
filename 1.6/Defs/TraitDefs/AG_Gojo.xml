@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Strongest: Gojo's Echo forces it on awakening (docs/hero-echo.md "Gojo"). It changes opinions and mood
+       only; the numbers are on the thoughts in ThoughtDefs/AG_Gojo_Thoughts.xml and the age limits in the
+       StrongestExtension below. Not rolled at random. -->
+  <TraitDef>
+    <defName>AG_TheStrongest</defName>
+    <commonality>0</commonality>
+    <commonalityFemale>0</commonalityFemale>
+    <allowOnHostileSpawn>false</allowOnHostileSpawn>
+    <degreeDatas>
+      <li>
+        <label>the Strongest</label>
+        <description>[PAWN_nameDef] knows [PAWN_pronoun] is the strongest there is, and it shows.\n\n+20 opinion of young colonists (children, and anyone under 30% of their race's life expectancy: 24 for a human); they have +10 opinion of [PAWN_objective].\n-20 opinion of old colonists (over 70% of life expectancy: 56 for a human); they have -10 opinion of [PAWN_objective].\n-6 mood while no other hero is awakened in the colony, +4 once another one is.</description>
+        <degree>0</degree>
+      </li>
+    </degreeDatas>
+    <modExtensions>
+      <li Class="RimArt.StrongestExtension">
+        <!-- Young: a child, or younger than this share of the race's life expectancy (0.3 x 80 = 24 for a human). -->
+        <youngShare>0.3</youngShare>
+        <!-- Old: an adult older than this share of the race's life expectancy (0.7 x 80 = 56 for a human). -->
+        <oldShare>0.7</oldShare>
+      </li>
+    </modExtensions>
+  </TraitDef>
+
+</Defs>
