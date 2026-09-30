@@ -22,8 +22,10 @@
 //         muzzle, a thin pale smoky line to the target, a white sunburst of thin spikes on the hit.
 //   Black shot: a black ink splash of jagged shards off the muzzle, a dark line, a black star of
 //         shards on the hit, a red spark and blood.
-//   Butterflies: lace butterflies (white edges, dark or pale wings) drift off the hit and settle;
-//         .26 cells across here, about a fifth of the pawn's height.
+//   Butterflies: lace butterflies drift off the hit and settle: line art, a white outline and a
+//         web of white veins cutting each wing into small irregular cells, see-through between the
+//         lines; big rounded forewings, smaller hindwings, scalloped edges. .3 cells across here,
+//         about a quarter of the pawn's height.
 //         Limbus splits Butterfly into The Living and The Departed; here the white shot's stacks
 //         are pale butterflies and the black shot's are dark ones, so the pips and the body show
 //         which gun put each one there.
@@ -66,8 +68,10 @@
 // Twin Maw's jaws): a front face .68 wide and 2.0 tall (1.2 on screen, a little over the pawn's
 // 1.17, as in the source), a thin top face .26 deep,
 // a white edge, a shadow along the sun from its base. It rises by drawing only the part above the
-// floor. Butterflies are one flat mesh (four wings, fan-triangulated) drawn three times (white
-// edge, fill, lace), scaled across the body for the wing beat (4 beats/s flying, .7 at rest);
+// floor. A butterfly is three flat meshes built once: the wing fill (four fans; ink for the black
+// shot's, a faint pale film for the white shot's), a wide outline for the additive glow, and the
+// lines (outline strips, 7 + 5 veins per side with two rows of cross veins, antennae), then a
+// white-edged body dash. It is scaled across the body for the wing beat (3 beats/s flying, .7 at rest);
 // flying ones fly in ground + height and get a small shadow. Resting butterflies sit on fixed
 // points of the body (a sunflower spread over the torso ellipse, then the head) and turn with the
 // pawn when it falls. Pawns are lib/pawn.js real-size stand-ins (average body).
@@ -107,31 +111,89 @@ const Rise = .5, LidOpen = .3, Open = .6, ReturnTime = .7, LidClose = .2, Sink =
 const CloudN = 36, TorsoSlots = 30, HeadSlots = 8;
 
 // ---- Butterflies ------------------------------------------------------------------------------
-// One wing pair in unit size (span about 2 across, body along +z). Each wing is fanned from its
-// root; both outlines were checked to be star-shaped from the root, so the fan is valid.
-const Fore = [[.06, .02], [.12, .22], [.34, .55], [.62, .78], [.90, .74], [.98, .52], [.80, .28], [.46, .08]];
-const Hind = [[.06, -.02], [.44, -.06], [.70, -.26], [.72, -.52], [.52, -.72], [.28, -.64], [.14, -.36]];
-function wingMesh(name, sides, k) {
+// Lace butterflies, as the source draws them: a white outline and a web of white veins that splits
+// each wing into small irregular cells, see-through between the lines. The forewing is the big
+// rounded one, the hindwing smaller; both outer edges are scalloped. Unit size: span about 2
+// across, body along +z (north = head). Each wing outline is star-shaped from its root (angles
+// checked), so its fill is a fan from the root.
+const ForeRaw = [[.05, .06], [.15, .30], [.32, .55], [.52, .74], [.72, .86], [.88, .88], [.97, .78], [.98, .62], [.93, .50], [.90, .38], [.82, .28], [.72, .20], [.52, .12], [.30, .05], [.12, .02]];
+const HindRaw = [[.05, -.02], [.25, -.02], [.48, -.08], [.66, -.20], [.74, -.36], [.70, -.52], [.58, -.66], [.42, -.74], [.28, -.70], [.17, -.56], [.10, -.36], [.06, -.16]];
+// The scallops: between outline points a..b a midpoint pulled 7 % toward the root.
+function scallop(w, a, b) {
+  const out = [], r = w[0];
+  w.forEach((q, i) => {
+    out.push(q);
+    if (i >= a && i < b) { const n = w[i + 1], mx = (q[0] + n[0]) / 2, mz = (q[1] + n[1]) / 2; out.push([r[0] + (mx - r[0]) * .93, r[1] + (mz - r[1]) * .93]); }
+  });
+  return out;
+}
+const Fore = scallop(ForeRaw, 5, 11), Hind = scallop(HindRaw, 2, 9);
+// Veins: straight from the root to these outline points, and two rows of cross veins between each
+// neighbouring pair at about 42 % and 72 % of the way (jittered), which makes the cells.
+const ForeVeins = [2, 3, 5, 7, 9, 11, 13], HindVeins = [2, 4, 6, 8, 10];
+const Outline = .065, Vein = .04, HaloW = .17;   // line widths in unit size (x .15 cells at the default span)
+
+function lineMesh(name, sides, { outline, veins, antennae }) {
+  const v = [], tri = [];
+  const quad = (a, b, w) => {
+    const dx = b[0] - a[0], dz = b[1] - a[1], l = Math.hypot(dx, dz) || 1, nx = -dz / l * w / 2, nz = dx / l * w / 2, n = v.length / 2;
+    v.push(a[0] + nx, a[1] + nz, a[0] - nx, a[1] - nz, b[0] - nx, b[1] - nz, b[0] + nx, b[1] + nz);
+    tri.push(n, n + 1, n + 2, n, n + 2, n + 3);
+  };
+  const ring = (pts, w) => {            // a closed outline with mitred corners (mitre capped at 2x)
+    const N = pts.length, base = v.length / 2;
+    for (let i = 0; i < N; i++) {
+      const p = pts[(i - 1 + N) % N], q = pts[i], r = pts[(i + 1) % N];
+      const n1 = norm(-(q[1] - p[1]), q[0] - p[0]), n2 = norm(-(r[1] - q[1]), r[0] - q[0]);
+      const m = norm(n1[0] + n2[0], n1[1] + n2[1]), k = w / 2 / Math.max(.5, m[0] * n1[0] + m[1] * n1[1]);
+      v.push(q[0] + m[0] * k, q[1] + m[1] * k, q[0] - m[0] * k, q[1] - m[1] * k);
+    }
+    for (let i = 0; i < N; i++) { const a = base + i * 2, b = base + ((i + 1) % N) * 2; tri.push(a, a + 1, b + 1, a, b + 1, b); }
+  };
+  for (const sgn of sides) {
+    const mirror = w => w.map(([x, z]) => [sgn * x, z]);
+    ring(mirror(Fore), outline); ring(mirror(Hind), outline);
+    if (veins) [[ForeRaw, ForeVeins, 1], [HindRaw, HindVeins, 2]].forEach(([w, ids, seed]) => {
+      const root = [sgn * w[0][0], w[0][1]], tip = j => [sgn * w[ids[j]][0], w[ids[j]][1]];
+      const along = (j, f) => { const t = tip(j); return [root[0] + (t[0] - root[0]) * f, root[1] + (t[1] - root[1]) * f]; };
+      ids.forEach((_, j) => quad(along(j, .15), along(j, .98), veins));
+      for (let j = 0; j + 1 < ids.length; j++) for (const [f, row] of [[.42, 0], [.72, 1]]) {
+        const ja = (rand(seed * 97 + j * 7 + row) - .5) * .14, jb = (rand(seed * 89 + j * 5 + row + 40) - .5) * .14;
+        quad(along(j, f + ja), along(j + 1, f + jb), veins);
+      }
+    });
+    if (antennae) { quad([sgn * .03, .22], [sgn * .16, .5], antennae); quad([sgn * .15, .48], [sgn * .2, .56], antennae * 2.2); }
+  }
+  const m = new Mesh(name); m.setFlat(v, tri); return m;
+}
+function norm(x, z) { const l = Math.hypot(x, z) || 1; return [x / l, z / l]; }
+function fillMesh(name, sides) {
   const v = [], tri = [];
   for (const sgn of sides) for (const wing of [Fore, Hind]) {
-    const cx = wing.reduce((a, q) => a + q[0], 0) / wing.length, cz = wing.reduce((a, q) => a + q[1], 0) / wing.length;
     const base = v.length / 2;
-    wing.forEach(([x, z]) => v.push(sgn * (cx + (x - cx) * k), cz + (z - cz) * k));
+    wing.forEach(([x, z]) => v.push(sgn * x, z));
     for (let i = 1; i < wing.length - 1; i++) tri.push(base, base + i, base + i + 1);
   }
   const m = new Mesh(name); m.setFlat(v, tri); return m;
 }
-const Wings = wingMesh('sl wings', [1, -1], 1), Fill = wingMesh('sl wings fill', [1, -1], .74), Lace = wingMesh('sl wings lace', [1, -1], .4);
-const WingR = wingMesh('sl wing r', [1], 1), FillR = wingMesh('sl fill r', [1], .74), WingL = wingMesh('sl wing l', [-1], 1), FillL = wingMesh('sl fill l', [-1], .74);
+const both = [1, -1];
+const Lines = lineMesh('sl lace', both, { outline: Outline, veins: Vein, antennae: Vein }), Halo = lineMesh('sl lace halo', both, { outline: HaloW });
+const Fill = fillMesh('sl lace fill', both);
+const LinesR = lineMesh('sl lace r', [1], { outline: Outline, veins: Vein, antennae: Vein }), LinesL = lineMesh('sl lace l', [-1], { outline: Outline, veins: Vein, antennae: Vein });
+const HaloR = lineMesh('sl lace halo r', [1], { outline: HaloW }), HaloL = lineMesh('sl lace halo l', [-1], { outline: HaloW });
+const FillR = fillMesh('sl lace fill r', [1]), FillL = fillMesh('sl lace fill l', [-1]);
 
-// heading: degrees the head points (0 east, 90 north). flap: 0..1 of the full span.
+// heading: degrees the head points (0 east, 90 north). flap: 0..1 of the full span. dark: The
+// Departed (black shot), an ink fill; otherwise The Living (white shot), a faint pale film. The
+// lines are white on both, with a soft glow round the outline, and the body is a white-edged dash.
 function butterfly(q, size, heading, flap, dark, alpha, layer) {
   if (alpha <= .01) return;
   const rot = 90 - heading, sx = size * .5 * flap, sz = size * .5;
-  draw(Wings, q.x, layer, q.z, sx, sz, rot, White.withAlpha(alpha));
-  draw(Fill, q.x, layer + .0002, q.z, sx, sz, rot, (dark ? Ink : Pale).withAlpha(alpha));
-  draw(Lace, q.x, layer + .0004, q.z, sx, sz, rot, Ash.withAlpha(alpha * (dark ? .6 : .45)));
-  draw(disc, q.x, layer + .0006, q.z, size * .045, size * .2, rot, Ink.withAlpha(alpha));
+  draw(Fill, q.x, layer, q.z, sx, sz, rot, dark ? Ink.withAlpha(.82 * alpha) : Pale.withAlpha(.22 * alpha));
+  draw(Halo, q.x, layer + .0002, q.z, sx, sz, rot, White.withAlpha(.14 * alpha), whiteGlow);
+  draw(Lines, q.x, layer + .0004, q.z, sx, sz, rot, White.withAlpha(.95 * alpha));
+  draw(disc, q.x, layer + .0006, q.z, size * .04, size * .17, rot, White.withAlpha(alpha));
+  draw(disc, q.x, layer + .0007, q.z, size * .018, size * .13, rot, Soot.withAlpha(alpha));
 }
 const flapAt = (s, rate, lo, i) => lo + (1 - lo) * Math.abs(Math.cos(Math.PI * rate * s + i * 1.7));
 function butterflyShadow(g, h, size, sun, strength, alpha = 1) {
@@ -191,7 +253,7 @@ function markedPawn(key, M, s, who, size, sun, strength) {
       const heading = Math.atan2(q2.screen.z - q.screen.z, q2.screen.x - q.screen.x) / D2R;
       const fade = e.swarm ? clamp(u / .25) : 1;   // the swarm fades in where it appears
       butterflyShadow(q.g, Math.max(0, q.h), sz, sun, strength, fade);
-      butterfly(q.screen, sz, u > .85 ? lerp(heading, sl.heading, (u - .85) / .15) : heading, flapAt(s, 4.5, .15, i), e.dark, fade, Y + .12 + i * .0008);
+      butterfly(q.screen, sz, u > .85 ? lerp(heading, sl.heading, (u - .85) / .15) : heading, flapAt(s, 3, .15, i), e.dark, fade, Y + .12 + i * .0008);
     } else {
       butterfly(sl, sz, sl.heading + 8 * Math.sin(s * 1.3 + i), flapAt(s, .7, .55, i), e.dark, 1, pawnLayer + .02 + i * .0008);
     }
@@ -351,9 +413,8 @@ function coffin(key, base, rise, lid, s, sun, strength) {
   band(`${key} lid in`, left(.065).map(hinge), right(.065).map(hinge), Ink, L + .008);
   if (vis > CoffinH * .3) {
     const e = hinge(pt(CoffinH * .66, 0));
-    draw(WingR, e.x, L + .009, e.z, .15 * squeeze, .15, 0, White.withAlpha(.85));
-    draw(WingL, e.x, L + .009, e.z, .15 * squeeze, .15, 0, White.withAlpha(.85));
-    draw(disc, e.x, L + .0095, e.z, .012, .05, 0, Ink);
+    draw(Lines, e.x, L + .009, e.z, .16 * squeeze, .16, 0, White.withAlpha(.85));
+    draw(disc, e.x, L + .0095, e.z, .018 * squeeze, .07, 0, White.withAlpha(.85));
   }
   return mouth;
 }
@@ -378,14 +439,17 @@ function coffinStreaks(key, mouth, age) {
 // wings black, beating slowly (.6 beats/s), a dim halo behind.
 function faceButterfly(head, s, alpha) {
   if (alpha <= 0) return;
-  const size = .62, flap = .75 + .25 * Math.abs(Math.cos(Math.PI * .6 * s)), sx = size * .5 * flap, sz = size * .5, L = pawnLayer + .04;
+  const size = .66, flap = .75 + .25 * Math.abs(Math.cos(Math.PI * .6 * s)), sx = size * .5 * flap, sz = size * .5, L = pawnLayer + .04;
   const q = { x: head.x, z: head.z + .02 * Math.sin(s * 2) };
   sprite(q, .9, .7, Smoke.withAlpha(.25 * alpha), glow, L - .001);
-  draw(WingL, q.x, L, q.z, sx, sz, 0, White.withAlpha(alpha));
-  draw(FillL, q.x, L + .0002, q.z, sx, sz, 0, Pale.withAlpha(alpha));
-  draw(WingR, q.x, L, q.z, sx, sz, 0, White.withAlpha(alpha));
-  draw(FillR, q.x, L + .0002, q.z, sx, sz, 0, Ink.withAlpha(alpha));
-  draw(disc, q.x, L + .0004, q.z, size * .04, size * .2, 0, Ink.withAlpha(alpha));
+  draw(FillL, q.x, L, q.z, sx, sz, 0, Pale.withAlpha(.55 * alpha));
+  draw(FillR, q.x, L, q.z, sx, sz, 0, Ink.withAlpha(.9 * alpha));
+  draw(HaloL, q.x, L + .0002, q.z, sx, sz, 0, White.withAlpha(.14 * alpha), whiteGlow);
+  draw(HaloR, q.x, L + .0002, q.z, sx, sz, 0, White.withAlpha(.14 * alpha), whiteGlow);
+  draw(LinesL, q.x, L + .0004, q.z, sx, sz, 0, White.withAlpha(alpha));
+  draw(LinesR, q.x, L + .0004, q.z, sx, sz, 0, White.withAlpha(alpha));
+  draw(disc, q.x, L + .0006, q.z, size * .04, size * .17, 0, White.withAlpha(alpha));
+  draw(disc, q.x, L + .0007, q.z, size * .018, size * .13, 0, Soot.withAlpha(alpha));
 }
 // One cloud butterfly's orbit round the wielder: 0.7-2.8 cells out (inside the radius-3 ring),
 // 0.3-1.4 up, most turning anticlockwise at .45-1.05 rad/s, bobbing .12.
@@ -553,7 +617,7 @@ function drawCoffin(s, p, o, who, sun, strength) {
       q = orbit(i, s, o); heading = q.heading;
     }
     butterflyShadow(q.g, Math.max(0, q.h), size, sun, strength, alpha);
-    butterfly(q.screen, size, heading, flapAt(s, 4, .15, i), i % 2 === 1, alpha, Y + .12 + i * .0008);
+    butterfly(q.screen, size, heading, flapAt(s, 3, .15, i), i % 2 === 1, alpha, Y + .12 + i * .0008);
   }
 }
 
@@ -571,7 +635,7 @@ export default {
     cloud: P('Coffin: seconds shown (rule 15, overclock 5)', 4, 1, 15, 1, 'Timing (s)'),
     lead: P('Draw and aim', .35, .1, 1, .05, 'Timing (s)'),
     hold: P('Show the result', 1.2, .3, 3, .1, 'Timing (s)'),
-    size: P('Butterfly span (cells)', .26, .1, .4, .01, 'Shape'),
+    size: P('Butterfly span (cells)', .3, .1, .5, .01, 'Shape'),
   },
   duration(p) { return isBurst(p) ? burstPlan(p).end : coffinPlan(p).end; },
   phases(p) {
