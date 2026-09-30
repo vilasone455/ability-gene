@@ -26,12 +26,13 @@
 //          swings up to half a cell to either side and throws short branches; the light sits at
 //          the circle, with short rays off it, not at the muzzle.
 //          The source frames put tan parchment brush marks around the circle and the target; those
-//          were tried and dropped (2026-09-30) as not fitting RimWorld. The shot's force is shown
-//          with the game's own stuff instead: a pale dust ring on the floor expanding 2.2 cells
-//          from under the circle in .45 s, dust thrown sideways off the first cells of the beam
-//          and back from the shooter's feet, and at each hit pawn a dust burst and a dark scorch
-//          streak 1.2 cells along the floor past them that stays. Short cyan speed lines fly past
-//          the circle. The rifle kicks up about 40 degrees, held one-handed, the shooter rocked back.
+//          were tried and dropped (2026-09-30) as not fitting RimWorld, and so was ground dust
+//          (the bullet flies at chest height and nothing touches the ground). The shot's force is
+//          in the air instead: a thin pale ring at chest height spreading 1.6 cells from the circle
+//          in .3 s, and a puff of gun smoke pushed from the muzzle along the line. Each hit pawn
+//          leaves a dark scorch streak 1.2 cells along the floor past them. Short cyan speed lines
+//          fly past the circle. The rifle kicks up about 40 degrees, held one-handed, the shooter
+//          rocked back.
 //   Hit:   the target lit yellow-white, a burst of thin yellow spikes and long rays, an orange
 //          lightning bolt arcing past it along the beam, orange sparks flung on forward, orange
 //          streak lines, a small burn. The brackets and slab thin to tan oval outlines and stay.
@@ -58,8 +59,8 @@
 //         the beam is left from the muzzle to the range with forks along it; it crosses the wall
 //         (a punched hole and dust that stay) and every pawn on the line (the raider in front of
 //         the wall, the colonist behind it): stagger star, orange bolt, fire, blood, a floor
-//         spatter and a scorch streak that stay; each hit pawn flinches .18 cells; the dust ring,
-//         the beam dust and the recoil dust are up and settle within .9 s
+//         spatter and a scorch streak that stay; each hit pawn flinches .18 cells; the air ring is
+//         gone in .3 s, the gun smoke in .5 s
 //   0.80  the bullet has reached the 40-cell range; each 2-cell piece of the beam fades over .6 s
 //         from when the bullet passed it; the circle closes .35 s later; the result is held 1.5 s
 // Shot 7: at 0.45 the rifle swings from the aim to the beloved over .35 s (the shooter's arms turn
@@ -78,7 +79,8 @@
 // is a circle in the (east, up) plane at every aim, a 1 : .6 ellipse with a fixed screen
 // orientation like Twin Maw's jaws; "lies flat" is a level ring. Up is drawn as .6 north. Standing
 // ones get a ground shadow along the sun, a lit top rim and a dark back rim .04 north for thickness.
-// Dust and the scorch are level puffs and floor sprites, so they need no per-facing work. The
+// The air ring, the smoke and the scorch are level circles, puffs and floor sprites, so they need
+// no per-facing work. The
 // rifle's kick is a real tilt: the muzzle end
 // goes cos(tilt) along the aim and Lift x sin(tilt) north, so facing east or west the barrel visibly
 // swings up, facing north or south it shortens. Pawns are lib/pawn.js real-size stand-ins (average
@@ -122,7 +124,7 @@ const BeamLife = .6, CircleClose = .25;
 const KickTilt = 40 * D2R, KickUp = .05;                     // the barrel jumps up 40 degrees in .05 s ...
 const KickDamp = 3.2, KickSwing = 2.9;                       // ... and comes down as a damped swing: 40 x e^(-3.2 t) cos(2.9 t), level again at .59 s
 const KickSlide = .16, RockBack = .09;                       // the rifle slides back .16 cells; the shooter rocks back .09
-const ShockRadius = 2.2, ShockTime = .45;                    // the dust ring from under the circle grows to this over this
+const ShockRadius = 1.6, ShockTime = .3;                     // the air ring from the circle grows to this over this
 const Shots = 7;
 const CirclesFor = [1, 1, 2, 2, 3, 4, 5];   // Limbus: circles per Magic Bullet count
 const CircleFar = 1.0, CircleNear = .4;     // the circle opens this far ahead of the muzzle and slides back to this before the shot
@@ -284,39 +286,24 @@ function gateAxes(mode, dir) {
   return { H: h, V: { x: -sl * dir.x, z: Lift * cl - sl * dir.z }, hTrue: h, stands: true };
 }
 
-// Dust: n puffs thrown from g in a fan of spread degrees around deg, from r0 to r1 cells out,
-// rising a little, over life seconds. tier scales it by 1 + .3 tier. The kit's Dust colour.
-function dust(key, g, age, deg, spread, n, r0, r1, life, tier) {
-  if (age < 0 || age > life) return;
-  const k = 1 + tier * .3;
-  for (let i = 0; i < n; i++) {
-    const u0 = age / (life * (.7 + .3 * rand(i + 40))), u = clamp(u0); if (u >= 1) continue;
-    const t = (deg + (rand(i + 50) - .5) * spread) * D2R, r = (r0 + (r1 - r0) * (1 - Math.pow(1 - u, 2)) * (.6 + .4 * rand(i + 60))) * k;
-    const q = { x: g.x + Math.cos(t) * r, z: g.z + Math.sin(t) * r + u * .15 }, size = (.25 + .45 * u) * k;
-    sprite(q, size, size * .85, Dust.withAlpha(.5 * (1 - u) * (1 - u)), puff, Y + .03);
-  }
-}
-// The shot's pressure on the ground: a pale ring on the floor spreading from under the first circle
-// to ShockRadius in ShockTime, thinning as it goes, with puffs riding its rim.
-function shockRing(key, g, age, tier) {
+// The shot's pressure, in the air where the bullet is: a thin pale ring at chest height spreading
+// from the first circle to ShockRadius in ShockTime and thinning as it goes. A level circle, so
+// it looks the same from every aim. No dust: nothing touches the ground.
+function shockRing(key, c, age, tier) {
   if (age < 0 || age > ShockTime) return;
-  const u = age / ShockTime, r = ShockRadius * (1 + .4 * tier) * (1 - Math.pow(1 - u, 2.2)), a = (1 - u) * .7;
-  for (let j = 0; j < 6; j++) circle(g, r * (1 - j * .025), a * (j < 2 ? .5 : .3), Floor + .03, j < 2 ? Pale : Dust);   // a soft band, pale at the front
-  sprite(g, r * 2.1, r * 2.1, Dust.withAlpha(.12 * (1 - u)), soft, Floor + .029);
-  for (let i = 0; i < 18; i++) {       // dust riding the rim
-    const t = i / 18 * TAU + rand(i + 70) * .4, rr = r * (.88 + .18 * rand(i + 80)), size = (.35 + .45 * u) * (.7 + .5 * rand(i + 85));
-    sprite({ x: g.x + Math.cos(t) * rr, z: g.z + Math.sin(t) * rr }, size, size * .85, Dust.withAlpha(.5 * (1 - u)), puff, Y + .03);
-  }
+  const u = age / ShockTime, r = ShockRadius * (1 + .3 * tier) * (1 - Math.pow(1 - u, 2.5)), a = (1 - u) * .6;
+  for (let j = 0; j < 4; j++) circle(c, r * (1 - j * .02), a * (j ? .3 : .6), Y + .035, j ? Halo : Pale);
+  sprite(c, r * 2.1, r * 2.1, Halo.withAlpha(.08 * (1 - u)), soft, Y + .034);
 }
-// Dust thrown sideways off the first four cells of the beam, both sides, drifting out and settling.
-function beamDust(key, L, age, tier) {
-  if (age < 0 || age > .9) return;
-  const sd = side(L.d), k = 1 + tier * .3;
-  for (let i = 0; i < 14; i++) {
-    const u = clamp(age / (.6 + .3 * rand(i + 90))); if (u >= 1) continue;
-    const along = .3 + rand(i + 100) * 3.8, dir = i % 2 ? 1 : -1, out = (.15 + .9 * (1 - Math.pow(1 - u, 2)) * (.5 + .5 * rand(i + 110))) * k;
-    const b = lift(move(L.start, L.d, along)), q = { x: b.x + sd.x * dir * out, z: b.z + sd.z * dir * out - .08 + u * .12 }, size = (.22 + .3 * u) * k;
-    sprite(q, size, size * .85, Dust.withAlpha(.45 * (1 - u) * (1 - u)), puff, Y + .03);
+// Gun smoke: a few thin pale puffs pushed from the muzzle along the line at chest height, out to
+// 2.5 cells in .35 s, thinning as they go.
+function muzzleSmoke(key, mq, d, age) {
+  if (age < 0 || age > .5) return;
+  for (let i = 0; i < 6; i++) {
+    const u = clamp(age / (.35 + .15 * rand(i + 90))); if (u >= 1) continue;
+    const along = .2 + 2.3 * (1 - Math.pow(1 - u, 2)) * (.6 + .4 * rand(i + 100)), acr = (rand(i + 110) - .5) * .35 * (1 + u);
+    const q = { x: mq.x + d.x * along - d.z * acr, z: mq.z + d.z * along + d.x * acr + u * .1 }, size = .18 + .3 * u;
+    sprite(q, size, size * .85, Pale.withAlpha(.3 * (1 - u) * (1 - u)), puff, Y + .03);
   }
 }
 // The scorch a pierced pawn leaves: a dark streak on the floor from their cell 1.2 cells on along
@@ -590,7 +577,6 @@ export default {
       for (let d = .6; d < len - .5; d += .4, i++) line(`mb corrupt ${i}`, [{ x: o.x + ux * d, z: o.z + uz * d }, { x: o.x + ux * (d + .2), z: o.z + uz * (d + .2) }], .05, Corrupt.withAlpha(.6), flat, Floor + .03, 'none');
       circle(nearest.pos, .5, pulse, Floor + .031, Corrupt);
     }
-    if (fired) dust('mb recoil dust', o, age, aimDeg + 180, 40, 8, .3, 1.2, .8, tier);   // the recoil kicks dust back from the shooter's feet
     for (const h of hits) if (h.kind === 'pawn') scorch(`mb scorch ${h.who.tag}`, h.who.pos, L.d, hitAge(h));
     for (const h of hits) if (h.kind === 'pawn') wound(`mb wound ${h.who.tag}`, h.who.pos, who, L.d, hitAge(h), tier, s);
 
@@ -609,7 +595,6 @@ export default {
         draw(disc, top.x + .06, Y + .15, z + .03, .08, .08, 0, Heart);
         band('mb heart', [{ x: top.x - .13, z: z + .02 }, { x: top.x, z: z - .14 }], [{ x: top.x + .13, z: z + .02 }, { x: top.x, z: z - .14 }], Heart, Y + .151);
       }
-      if (h) dust(`mb hit dust ${q.tag}`, pos, ha, L.deg, 180, 10, .2, .9, .7, tier);   // the hit throws dust out around their feet
     }
     // The shooter, the counter, and the rifle in front. The kick: the shooter rocks back along the
     // shot line, the rifle slides back in the hands and its barrel jumps up, then swings back down.
@@ -645,11 +630,11 @@ export default {
     if (tier === 2 && open > 0) { circle(lift(o), 1.0 * open, .8 * open, Y + .037, Circle); sprite(lift(o), 2.4 * open, 2.4 * open, CircleDeep.withAlpha(.25 * open), glow, Y + .0365); }
 
     if (!fired) return;
-    // On the shot: a dust ring on the floor spreads from under the first circle, dust is thrown off
-    // the first cells of the beam, and cyan speed lines fly past the circle.
+    // On the shot: a thin air ring spreads from the first circle, gun smoke is pushed from the
+    // muzzle along the line, and cyan speed lines fly past the circle.
     const gate = circles[0].c, rr = circles[0].r;
-    shockRing('mb shock', { x: gate.x, z: gate.z - ChestLift }, age, tier);
-    beamDust('mb beam dust', L, age, tier);
+    shockRing('mb shock', gate, age, tier);
+    muzzleSmoke('mb smoke', lift(move(hand, L.d, RifleLen * .72)), L.d, age);
     if (age < .3) for (let i = 0; i < 8; i++) {
       const v = age / .3, along = -.4 + rand(i + 800) * 1.4 + v * 1.6, acr = (rand(i + 810) - .5) * 1.8, len = .25 + rand(i + 820) * .4;
       const from = { x: gate.x + L.d.x * along - L.d.z * acr, z: gate.z + L.d.z * along + L.d.x * acr };
