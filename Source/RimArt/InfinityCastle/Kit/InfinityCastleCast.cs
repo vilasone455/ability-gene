@@ -252,7 +252,8 @@ namespace RimArt
                 CastleTaken t = enemies[i];
                 Pawn p = t.pawn;
                 t.from = p.Position;
-                p.carryTracker?.TryDropCarriedThing(p.Position, ThingPlaceMode.Near, out _);
+                // Only with something in hand: the game logs an error for a drop of nothing.
+                if (p.carryTracker?.CarriedThing != null) p.carryTracker.TryDropCarriedThing(p.Position, ThingPlaceMode.Near, out _);
                 t.lord = p.GetLord();
                 t.lord?.Notify_PawnLost(p, PawnLostCondition.ExitedMap);
                 CastleRoom room = rooms.Count > 0 ? rooms[i % rooms.Count] : component.Castle.Rooms[component.Castle.Rooms.Count - 1];

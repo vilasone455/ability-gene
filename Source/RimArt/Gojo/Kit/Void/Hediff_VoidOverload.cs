@@ -52,7 +52,8 @@ namespace RimArt
         public bool scarOwed;
         /// <summary>The overload when the pawn came out, and the game tick it came out on.</summary>
         private float fromSeverity;
-        private int fromTick = -1;
+        /// <summary>Unset is int.MinValue, not -1: a quicktest game starts near tick 0, so a test that moves this tick back 60 s makes it negative.</summary>
+        private int fromTick = int.MinValue;
 
         private static readonly HediffStage BuildingStage = new HediffStage();
         /// <summary>One stage per consciousness cap in hundredths, shared by every pawn.</summary>
@@ -131,7 +132,7 @@ namespace RimArt
                 if (pawn.IsHashIntervalTick(60) && GameComponent_UnlimitedVoid.Instance?.Holds(pawn) != true) Release(now);
                 return;
             }
-            if (fromTick < 0) Release(now);
+            if (fromTick == int.MinValue) Release(now);
             float want = Mathf.Max(0f, fromSeverity - (now - fromTick) / 60f * Props.recoveryPerSecond);
             if (want >= Severity) return;
             int before = CapHundredths;
@@ -167,7 +168,7 @@ namespace RimArt
             Scribe_Values.Look(ref building, "building", true);
             Scribe_Values.Look(ref scarOwed, "scarOwed");
             Scribe_Values.Look(ref fromSeverity, "fromSeverity");
-            Scribe_Values.Look(ref fromTick, "fromTick", -1);
+            Scribe_Values.Look(ref fromTick, "fromTick", int.MinValue);
         }
     }
 }

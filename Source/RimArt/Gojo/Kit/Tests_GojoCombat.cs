@@ -24,10 +24,14 @@ namespace RimArt
         private static MapComponent_GojoKit Kit(RimArtTestContext t) => t.map.GetComponent<MapComponent_GojoKit>();
         private static MapComponent_Gravity Wells(RimArtTestContext t) => t.map.GetComponent<MapComponent_Gravity>();
 
+        /// <summary>One faction for a test's raiders: raiders of two rival factions fight each other.</summary>
+        private static Faction raiders;
+
         private static void Setup(RimArtTestContext t)
         {
             Restore();
             t.Clear();
+            raiders = Find.FactionManager.RandomEnemyFaction(allowNonHumanlike: false);
             GameComponent_Gravity.Instance.ResetForTests();
             GameComponent_Echoes.Get.ResetForTests();
             Kit(t).ResetForTests();
@@ -46,7 +50,7 @@ namespace RimArt
         /// <summary>A drafted, unarmed colonist with Blue, Red and Hollow Purple given directly (not through the Echo).</summary>
         private static Pawn Gojo(RimArtTestContext t, IntVec3 at)
         {
-            Pawn pawn = t.Colonist(at);
+            Pawn pawn = t.Note(t.Colonist(at));
             pawn.equipment?.DestroyAllEquipment();
             pawn.drafter.FireAtWill = false;
             DropTraits(pawn);
@@ -59,7 +63,7 @@ namespace RimArt
         /// <summary>A hostile baseliner that stands still: unarmed and unclothed unless asked, no Wimp or Tough.</summary>
         private static Pawn Raider(RimArtTestContext t, IntVec3 at, bool geared = false)
         {
-            Faction faction = Find.FactionManager.RandomEnemyFaction(allowNonHumanlike: false);
+            Faction faction = raiders ?? Find.FactionManager.RandomEnemyFaction(allowNonHumanlike: false);
             var request = new PawnGenerationRequest(faction?.def.basicMemberKind ?? PawnKindDefOf.Villager, faction,
                 mustBeCapableOfViolence: true, dontGiveWeapon: !geared,
                 forcedXenotype: ModsConfig.BiotechActive ? XenotypeDefOf.Baseliner : null);
@@ -68,7 +72,8 @@ namespace RimArt
             RimArtTestContext.Hold(pawn);
             if (!geared) pawn.apparel?.DestroyAll();
             DropTraits(pawn);
-            return pawn;
+            // Noted: a generated raider often carries old scars, so "hurt" is measured from its health now.
+            return t.Note(pawn);
         }
 
         private static Thing Item(RimArtTestContext t, ThingDef def, int count, IntVec3 at)
@@ -79,9 +84,6 @@ namespace RimArt
         }
 
         private static float Injuries(Pawn pawn) => pawn.health.hediffSet.hediffs.OfType<Hediff_Injury>().Sum(h => h.Severity);
-        // Hurt: dead, injured or missing a part (a part a hit destroyed carries no injury).
-        private static bool Hurt(Pawn pawn) => pawn.Dead || pawn.health.hediffSet.hediffs.Any(h => h is Hediff_Injury || h is Hediff_MissingPart);
-        private static bool Untouched(Pawn pawn) => !Hurt(pawn);
         private static string Where(Pawn pawn, IntVec3 c) => pawn.Spawned ? (pawn.Position - c).ToString() : RimArtTestContext.Describe(pawn);
         private static Vector2 Flat(Vector3 v) => new Vector2(v.x, v.z);
 
@@ -145,8 +147,8 @@ namespace RimArt
             t.Check(Mathf.Abs(cast.burstDamage - expected) < 0.01f && cast.burstDamage >= 10f && cast.burstDamage <= 25f,
                 $"implosion {cast.burstDamage:0.#} blunt for {cast.eaten:0.#} mass (10-25)");
             t.Check(cast.burstHit.Contains(raider) && cast.burstHit.Contains(ally), "the raider and the ally took it");
-            t.Check(Untouched(far) && far.Position == farCell, "the raider 6 cells out was neither pulled nor hurt (" + Where(far, c) + ")");
-            t.Check(Untouched(gojo) && gojo.Position == gojoCell, "Gojo was never pulled or hurt");
+            t.Check(t.Untouched(far) && far.Position == farCell, "the raider 6 cells out was neither pulled nor hurt (" + Where(far, c) + ")");
+            t.Check(t.Untouched(gojo) && gojo.Position == gojoCell, "Gojo was never pulled or hurt");
             int cooldown = GameComponent_Gravity.Instance.Remaining(gojo, Blue);
             t.Check(cooldown > 1150 && cooldown <= 1200, "the cooldown runs 20 s from the close (" + cooldown + " ticks)");
             yield return t.ShotAs("blue-implosion", c, 8f);
@@ -184,7 +186,8 @@ namespace RimArt
             }
             t.Log($"bullet last seen at {last - c.ToVector3Shifted()} from the centre; farthest off its line {worst:0.000} cells; " + State(cast, c));
             t.Check(!registered, "the well never took the bullet's flight");
-            t.Check(worst < 0.05f, "it flew straight past the centre (" + worst.ToString("0.000") + " off)");
+            // Projectile.Launch scatters the destination by up to 0.3 cells; the well would bend it 2 cells into the centre.
+            t.Check(worst < 0.35f, "it flew straight past the centre (" + worst.ToString("0.000") + " off)");
             t.Check(cast.eaten < 0.001f, "nothing was eaten (" + cast.eaten + ")");
             cast.Finish(false);
         }
@@ -211,6 +214,7 @@ namespace RimArt
             RedShot shot = null;
             foreach (int w in WaitFor(() => (shot = Kit(t).Reds.FirstOrDefault(r => r.caster == gojo))?.Burst == true, 180)) yield return w;
             t.Log($"burst {t.Now - cast} ticks after the order (fire at {shot?.fireTick - cast}): " + Shot(shot));
+            t.Log("at the burst: " + RimArtTestContext.Describe(first) + " (" + first.Faction?.Name + ") | " + RimArtTestContext.Describe(beside) + " | " + RimArtTestContext.Describe(apart) + " (" + apart.Faction?.Name + ")");
             if (!t.Check(shot != null && shot.Burst && shot.hit?.pawn == first, "Red burst on the first pawn")) yield break;
             t.Check(Mathf.Abs(shot.burstAlong - 6f) < 0.2f, "at 6 cells (" + shot.burstAlong.ToString("0.00") + ")");
             foreach (int w in WaitFor(() => shot.hit.landed && shot.pushed.All(m => m.landed), 120)) yield return w;
@@ -218,13 +222,13 @@ namespace RimArt
             t.Log("thrown: " + RimArtTestContext.Describe(first) + ", injuries " + Injuries(first).ToString("0.#")
                 + "; beside: " + RimArtTestContext.Describe(beside) + ", injuries " + Injuries(beside).ToString("0.#"));
             t.Check(first.Position == c + new IntVec3(6, 0, 0), "the first pawn landed 6 cells on (" + Where(first, c) + ")");
-            t.Check(Mathf.Abs(shot.hit.damage - 9f) < 0.01f && Hurt(first), "it took 6 x 1.5 = 9 blunt (" + shot.hit.damage + " dealt as blunt, injuries " + Injuries(first).ToString("0.#") + ")");
+            t.Check(Mathf.Abs(shot.hit.damage - 9f) < 0.01f && t.Hurt(first), "it took 6 x 1.5 = 9 blunt (" + shot.hit.damage + " dealt as blunt, injuries " + Injuries(first).ToString("0.#") + ")");
             RedMove push = shot.pushed.FirstOrDefault(m => m.pawn == beside);
             t.Check(push != null && (Flat(beside.DrawPos) - besideFrom).magnitude > 1f
                 && (Flat(beside.DrawPos) - Flat(c.ToVector3Shifted())).magnitude > (besideFrom - Flat(c.ToVector3Shifted())).magnitude + 1f,
                 "the pawn beside the burst was pushed away from it (" + Where(beside, c) + ", " + (push?.cells ?? 0f).ToString("0.##") + " cells)");
-            t.Check(push != null && Mathf.Abs(push.damage - 8f) < 0.01f && Hurt(beside), "it took 8 blunt (injuries " + Injuries(beside).ToString("0.#") + ")");
-            t.Check(Untouched(apart) && apart.Position == apartCell, "a pawn 3 cells from the burst was not pushed (" + Where(apart, c) + ")");
+            t.Check(push != null && Mathf.Abs(push.damage - 8f) < 0.01f && t.Hurt(beside), "it took 8 blunt (injuries " + Injuries(beside).ToString("0.#") + ")");
+            t.Check(t.Untouched(apart) && apart.Position == apartCell, "a pawn 3 cells from the burst was not pushed (" + Where(apart, c) + ")");
             t.Check(!first.stances.stunner.Stunned && !beside.stances.stunner.Stunned, "no stun");
             t.Check(red.CooldownTicksRemaining > 0, "Red's cooldown runs (" + red.CooldownTicksRemaining + " ticks)");
             foreach (int w in WaitFor(() => gojo.CurJobDef != GojoKitDefOf.AG_CastGojoRed, 120)) yield return w;
@@ -252,7 +256,7 @@ namespace RimArt
             yield return 2;
             t.Log("thrown: " + RimArtTestContext.Describe(first) + ", injuries " + Injuries(first).ToString("0.#"));
             t.Check(shot.hit.walled && first.Position == c + new IntVec3(2, 0, 0), "it stopped at the wall's foot (" + Where(first, c) + ")");
-            t.Check(Mathf.Abs(shot.hit.damage - 13f) < 0.01f && Hurt(first), "13 blunt (" + shot.hit.damage + ", injuries " + Injuries(first).ToString("0.#") + ")");
+            t.Check(Mathf.Abs(shot.hit.damage - 13f) < 0.01f && t.Hurt(first), "13 blunt (" + shot.hit.damage + ", injuries " + Injuries(first).ToString("0.#") + ")");
             yield return t.ShotAs("red-slam", c + new IntVec3(1, 0, 0), 8f);
         }
 
@@ -277,7 +281,7 @@ namespace RimArt
             // Gojo's point is x -5.5 from the centre cell's corner; the wall's face is at x 4.
             t.Check(shot.Burst && shot.wallBurst && Mathf.Abs(shot.burstAlong - 9.4f) < 0.25f, "Red burst at the wall (" + shot.burstAlong.ToString("0.00") + " cells)");
             yield return 30;
-            t.Check(Untouched(behind) && behind.Position == cell, "the pawn behind the wall is untouched (" + Where(behind, c) + ")");
+            t.Check(t.Untouched(behind) && behind.Position == cell, "the pawn behind the wall is untouched (" + Where(behind, c) + ")");
         }
 
         // ---- Hollow Purple ------------------------------------------------------------------------------------------
@@ -404,7 +408,7 @@ namespace RimArt
             t.Check(erasedWound, "its wound is an erasure wound (" + string.Join(", ", sideRow.health.hediffSet.hediffs.Select(h => h.LabelCap + " " + h.Part?.Label)) + ")");
             float bleed = sideRow.Dead ? 0f : sideRow.health.hediffSet.hediffs.Where(h => h.def == GojoKitDefOf.AG_Erased || h is Hediff_MissingPart).Sum(h => h.BleedRate);
             t.Check(bleed == 0f, "no bleeding from it (" + bleed.ToString("0.###") + (sideRow.Dead ? ", dead" : "") + ")");
-            t.Check(Untouched(outside), "the raider 2 cells off the path is untouched");
+            t.Check(t.Untouched(outside), "the raider 2 cells off the path is untouched");
             if (boss != null)
             {
                 PurpleHit bossHit = run.hits.FirstOrDefault(h => h.pawn == boss);
@@ -426,7 +430,7 @@ namespace RimArt
             t.Check(map.terrainGrid.TerrainAt(rough) != GojoKitDefOf.AG_ErasedGround && map.terrainGrid.TerrainAt(c + new IntVec3(12, 0, 0)) != GojoKitDefOf.AG_ErasedGround,
                 "cells 2 cells off the path and past the end are not");
             t.Check(roofs.All(x => !x.Roofed(map)), "the roofs over the lane are gone, thick rock roof too");
-            t.Check(Untouched(gojo) && gojo.Spawned, "Gojo is unhurt");
+            t.Check(t.Untouched(gojo) && gojo.Spawned, "Gojo is unhurt");
             Restore();
             yield return t.ShotAs("purple-lane", c + new IntVec3(2, 0, 0), 12f);
         }
