@@ -108,7 +108,16 @@ Echo/Costume/GojoBlindfold_<facing>.png
     hook outward like flames, lavender toward the band; from behind, short lavender hair under the
     band. It hides the Host's own hair.
 
-`python3 make_costume_textures.py sato` (or `gojo`) makes only that hero's pieces.
+Echo/Costume/ShirouCasual_<Body>_<facing>.png
+    256 px, the same 5 body types x 3 facings (west is east mirrored): Shirou's everyday clothes from
+    the visual novel's sprite and Studio Deen's character sheet. A long-sleeved white baseball shirt
+    with navy raglan sleeves (the seam runs from the neckline to the armpit, so the shoulders are navy
+    too), a wide neckline with a navy rim, ribbed cuffs at the wrist, the hem loose over the hips;
+    slim indigo jeans and grey trainers with a white sole. The arms are not drawn, as on the other
+    costumes: the navy strip down each side is the sleeve. His auburn hair is the Echo's hair colour,
+    not a costume piece.
+
+`python3 make_costume_textures.py sato` (or `gojo`, `shirou`) makes only that hero's pieces.
 
 The costume is fitted to the vanilla body outlines in BODIES, measured from the game's
 Naked_<Body>_<facing> textures (outer edge of the black outline, every 2 rows, on the 128 px
@@ -3225,6 +3234,217 @@ def gojo_outfit():
     blindfold_back("GojoBlindfold_north.png")
 
 
+# ---- Shirou's casual clothes ----
+
+# From the visual novel's standing sprite (Takashi Takeuchi) and Studio Deen's front and back character
+# sheet: a long-sleeved baseball shirt, white with navy raglan sleeves (each sleeve runs up to the
+# neckline, so its seam goes diagonally from the neck to the armpit), a wide neckline with a navy rim,
+# the hem hanging loose over the hips; slim straight indigo jeans; grey trainers with a white sole. The
+# white and the blues are pushed toward blue so they do not read cream and teal in the game's warm light
+# (as Gojo's hair and Vergil's coat were).
+SH_SHIRT, SH_SHIRT_LIT, SH_SHIRT_DARK = (222, 226, 236), (246, 248, 252), (150, 158, 180)
+SH_FOLD = (190, 196, 214)
+SH_SLEEVE, SH_SLEEVE_LIT, SH_SLEEVE_DARK = (56, 64, 112), (90, 100, 152), (30, 34, 68)
+SH_JEANS, SH_JEANS_LIT, SH_JEANS_DARK = (36, 66, 124), (66, 104, 164), (18, 34, 74)
+SH_SHOE, SH_SHOE_LIT = (92, 96, 110), (156, 160, 172)
+SH_SOLE = (228, 230, 238)
+
+
+class Raglan:
+    """Heights the three facings share, from the sprite: the sleeves reach the wrist, which hangs at the
+    hip, and the shirt's hem is just below that, over the top of the jeans."""
+
+    def __init__(self, body):
+        top, h = body.top, body.height
+        self.armpit = top + 0.2 * h  # where the raglan seam meets the underarm seam
+        self.cuff = top + 0.63 * h
+        self.hem = top + 0.67 * h
+        self.shoe = body.bottom - 0.05 * h
+
+
+def sleeve_width(body):
+    return min(7.5, max(4.2, 0.15 * body.width))
+
+
+def soft_folds(image, folds, within):
+    """Folds as the sprite shades them: soft grey, not drawn lines."""
+    mask = inter(union(*folds), within).filter(ImageFilter.GaussianBlur(0.6 * U)).point(lambda v: v * 0.75)
+    paint(image, mask, SH_FOLD)
+
+
+def raglan_sleeves(body, lay, side, neck):
+    """South and north: both navy sleeves as one mask. On side s (-1 the viewer's left) the sleeve runs
+    from the neckline's corner neck(s) straight to the armpit, down the underarm seam to the cuff and out
+    past the costume's side; cut it to the shirt. Wider bodies have wider arms, so the sleeve widens
+    with the body, from 4.2 units on Thin to 7.5 on Male, Fat and Hulk."""
+    aw = sleeve_width(body)
+    masks = []
+    for s in (-1, 1):
+        def outer(y, s=s):
+            return side(y)[1 if s > 0 else 0] + s * 2
+
+        def inner(y, s=s):
+            return outer(y) - s * (aw + 2)
+        nx, ny = neck(s)
+        ys = steps(lay.armpit, lay.cuff)
+        masks.append(polygon([(nx, ny)] + [(inner(y), y) for y in ys] + [(outer(y), y) for y in reversed(ys)] +
+                             [(outer(body.top - 6), body.top - 6), (nx, body.top - 6)]))
+    return union(*masks)
+
+
+def sleeve_cuffs(image, lay, sleeves):
+    """The ribbed cuff at the end of each sleeve: a darker band with its top edge lit."""
+    rib = inter(band(lay.cuff - 1.6, lay.cuff), sleeves)
+    paint(image, rib, SH_SLEEVE_DARK)
+    paint(image, inter(band(lay.cuff - 1.6, lay.cuff - 1.2), sleeves), SH_SLEEVE)
+
+
+def shirou_legs(image, body, lay, legs, light=None, apart=True):
+    """The jeans from under the hem, a crease between the legs, a paler fade down the front of each
+    thigh, and the grey trainers with a white sole."""
+    c, w = body.centre, body.width
+    y, ry = (lay.hem + lay.shoe) / 2, 0.45 * (lay.shoe - lay.hem)
+    if apart:
+        fade = union(*(ellipse(c(y) + s * 0.2 * w, y, 0.05 * w, ry) for s in (-1, 1)))
+    else:
+        fade = ellipse(c(y) + 0.12 * w, y, 0.08 * w, ry)
+    fade = fade.filter(ImageFilter.GaussianBlur(1.2 * U)).point(lambda v: v * 0.4)
+    shade(image, legs, SH_JEANS_DARK, SH_JEANS, SH_JEANS_LIT, union(fade, light) if light is not None else fade,
+          reach=1.4)
+    if apart:
+        crotch = lay.hem + 0.1 * (body.bottom - lay.hem)
+        paint(image, inter(stroke([(c(crotch), crotch), (c(body.bottom), body.bottom)], 0.5), legs), SH_JEANS_DARK)
+    shoes = inter(legs, band(lay.shoe, 128))
+    paint(image, shoes, SH_SHOE)
+    paint(image, inter(band(lay.shoe, lay.shoe + 0.7), shoes), SH_SHOE_LIT)
+    paint(image, inter(band(body.bottom - 1.0, 128), shoes), SH_SOLE)
+    paint(image, inter(band(lay.shoe - 0.3, lay.shoe + 0.2), legs), SH_JEANS_DARK)
+
+
+def shirou_front(body, name):
+    """South: the white shirt hanging loose over the jeans, a wide neckline with a navy rim (mostly under
+    the head on a Thin body), the navy sleeves from the neckline down the sides to the cuffs at the hips,
+    two soft folds toward his left hip; the jeans and trainers below the hem."""
+    w, c, top, h = body.width, body.centre, body.top, body.height
+    lay = Raglan(body)
+    side = coat_sides(body, lay.hem, 0.6, 0.6)
+    nw, nd = 0.3 * w, 0.17 * h  # the neckline's half-width and depth
+    # Squarer than a half ellipse, as in the sprite.
+    neckline = [(c(top) + nw * math.sin(a), top - 1 + (nd + 1) * max(0.0, math.cos(a)) ** 0.6)
+                for a in steps(-math.pi / 2, math.pi / 2, 0.05)]
+    scoop = polygon(neckline + [(c(top) + nw, top - 6), (c(top) - nw, top - 6)])
+    shirt = minus(cloak_outline(side, top - 0.5, lay.hem), scoop)
+    gap = leg_gap(body)
+    legs = minus(inter(body_outline(body), band(lay.hem - 1, 128)), gap)
+    sleeves = inter(raglan_sleeves(body, lay, side, lambda s: (c(top) + s * nw, top - 1)), shirt)
+    white = minus(shirt, sleeves)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = inter(ramp(c(top) - w * 0.7, c(top) + w * 0.4, 150, 0), ellipse(c(top) - w * 0.3, top + 20, w * 0.45, 26)
+                  .filter(ImageFilter.GaussianBlur(6 * U)))
+    shirou_legs(image, body, lay, legs, light)
+    shade(image, shirt, SH_SHIRT_DARK, SH_SHIRT, SH_SHIRT_LIT, light, reach=2.4)
+    soft_folds(image, [wedge((c(top) + 0.3 * w, lay.hem - 0.04 * h), (c(top) - 0.12 * w, top + 0.36 * h), 2.2),
+                       wedge((c(top) + 0.28 * w, lay.hem - 0.13 * h), (c(top) + 0.02 * w, top + 0.3 * h), 1.5)],
+               shrink(white, 0.8))
+    shade(image, sleeves, SH_SLEEVE_DARK, SH_SLEEVE, SH_SLEEVE_LIT, light, reach=1.4)
+    # The raglan seams and the underarm seams, where the navy meets the white.
+    paint(image, inter(minus(grow(sleeves, 0.3), sleeves), white), SH_SHIRT_DARK)
+    sleeve_cuffs(image, lay, sleeves)
+    # The navy rim round the neckline, and the hem's seam.
+    paint(image, inter(minus(grow(scoop, 1.1), scoop), shirt), SH_SLEEVE)
+    paint(image, inter(band(lay.hem - 1.3, lay.hem - 0.9), shrink(white, 0.4)), SH_SHIRT_DARK)
+
+    finish(image, minus(union(shirt, legs), gap), name)
+
+
+def shirou_back(body, name):
+    """North: the plain white back between the two raglan seams, which run from the neckline to the
+    armpits, the navy sleeves over the shoulders and down the sides to the cuffs, a navy rim along the
+    low back neckline; the jeans and trainers below the hem. Drawn over the head facing north, as the
+    other costumes: the neckline sits at the foot of the neck, under the hair."""
+    w, c, top, h = body.width, body.centre, body.top, body.height
+    lay = Raglan(body)
+    side = coat_sides(body, lay.hem, 0.6, 0.6)
+    # The neckline from behind: sized to the neck, the same on every body type, dipping a little in the
+    # middle; the shoulders slope from its ends out to the sides.
+    cw = 9.5
+    rim = [(c(top) + cw * x, top + 1.6 + 1.0 * (1 - x * x)) for x in steps(-1, 1, 0.05)]
+    ys = steps(top + 9, lay.hem)
+    shirt = polygon(rim + [(side(y)[1], y) for y in ys] + [(side(y)[0], y) for y in reversed(ys)])
+    gap = leg_gap(body)
+    legs = minus(inter(body_outline(body), band(lay.hem - 1, 128)), gap)
+    sleeves = inter(raglan_sleeves(body, lay, side, lambda s: (c(top) + s * 0.45 * cw, top + 2.2)), shirt)
+    white = minus(shirt, sleeves)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = ellipse(c(top) - w * 0.15, top + 22, w * 0.42, 22).filter(ImageFilter.GaussianBlur(7 * U))
+    shirou_legs(image, body, lay, legs, light)
+    shade(image, shirt, SH_SHIRT_DARK, SH_SHIRT, SH_SHIRT_LIT, light, reach=2.4)
+    soft_folds(image, [wedge((c(top) + 0.26 * w, lay.hem - 0.05 * h), (c(top) - 0.05 * w, top + 0.4 * h), 1.8)],
+               shrink(white, 0.8))
+    shade(image, sleeves, SH_SLEEVE_DARK, SH_SLEEVE, SH_SLEEVE_LIT, light, reach=1.4)
+    paint(image, inter(minus(grow(sleeves, 0.3), sleeves), white), SH_SHIRT_DARK)
+    sleeve_cuffs(image, lay, sleeves)
+    paint(image, inter(stroke(rim, 2.0), shirt), SH_SLEEVE)
+    paint(image, inter(stroke([(x, y + 0.9) for x, y in rim], 0.35), shirt), SH_SLEEVE_DARK)
+    paint(image, inter(band(lay.hem - 1.3, lay.hem - 0.9), shrink(white, 0.4)), SH_SHIRT_DARK)
+
+    finish(image, minus(union(shirt, legs), gap), name)
+
+
+def shirou_side(body, name):
+    """East (facing right): the shirt from the back to the chest, loose at the hem; the navy sleeve down
+    the side to the cuff at the hip, its raglan seams running up in front of and behind the shoulder to
+    the neckline; the jeans and trainers below the hem. West is this mirrored by the game: the shirt is
+    the same on both sides."""
+    w, top, h = body.width, body.top, body.height
+    lay = Raglan(body)
+
+    def front(y):
+        return body.edges(y)[1] + PAD * 0.8 + 0.3 * smooth(body.waist, lay.hem, y)
+
+    def back(y):
+        return body.edges(y)[0] - PAD * 0.8 - 0.5 * smooth(body.waist, lay.hem, y)
+    ys = steps(top + 1, lay.hem)
+    shirt = polygon([(front(y), y) for y in ys] + [(back(y), y) for y in reversed(ys)])
+    legs = inter(body_outline(body), band(lay.hem - 1, 128))
+
+    # The arm hangs down the side, a little forward at the wrist, as on Gojo's jacket, and is thicker on
+    # wider bodies.
+    thick = min(1.8, max(1.0, w / 30))
+    arm = lambda y: body.centre(y) - 1.0 + 1.2 * smooth(top + 0.3 * h, lay.cuff, y)
+    spread = lambda y: (3.0 + 0.5 * smooth(top + 12, lay.cuff, y)) * thick
+    ays = steps(lay.armpit, lay.cuff)
+    neck = body.centre(top)
+    sleeve = inter(polygon([(neck + 3.2, top - 2), (arm(lay.armpit) + spread(lay.armpit), lay.armpit)] +
+                           [(arm(y) + spread(y), y) for y in ays] + [(arm(y) - spread(y), y) for y in reversed(ays)] +
+                           [(neck - 3.6, top - 2)]), shirt)
+    white = minus(shirt, sleeve)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = ramp(body.edges(top + 20)[0], body.edges(top + 20)[1] + 3, 0, 140)
+    shirou_legs(image, body, lay, legs, inter(light, legs), apart=False)
+    shade(image, shirt, SH_SHIRT_DARK, SH_SHIRT, SH_SHIRT_LIT, light, reach=2.4)
+    soft_folds(image, [wedge((front(lay.hem) - 1.2, lay.hem - 0.05 * h),
+                             (arm(lay.cuff) + spread(lay.cuff) + 1.0, top + 0.42 * h), 1.6)], shrink(white, 0.8))
+    shade(image, sleeve, SH_SLEEVE_DARK, SH_SLEEVE, SH_SLEEVE_LIT, light, reach=1.2)
+    paint(image, inter(minus(grow(sleeve, 0.3), sleeve), white), SH_SHIRT_DARK)
+    sleeve_cuffs(image, lay, sleeve)
+    # The navy rim along the top of the neckline, and the hem's seam.
+    paint(image, inter(band(top - 1, top + 2.1), shirt), SH_SLEEVE)
+    paint(image, inter(band(lay.hem - 1.3, lay.hem - 0.9), shrink(white, 0.4)), SH_SHIRT_DARK)
+
+    finish(image, union(shirt, legs), name)
+
+
+def shirou_outfit():
+    for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
+        shirou_front(Body(BODIES[(body, "south")]), f"ShirouCasual_{body}_south.png")
+        shirou_side(Body(BODIES[(body, "east")]), f"ShirouCasual_{body}_east.png")
+        shirou_back(Body(BODIES[(body, "north")]), f"ShirouCasual_{body}_north.png")
+
+
 def main():
     for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
         vergil_front(Body(BODIES[(body, "south")]), f"VergilCoat_{body}_south.png")
@@ -3257,14 +3477,17 @@ def main():
     sasuke_outfit()
     sato_outfit()
     gojo_outfit()
+    shirou_outfit()
 
 
 if __name__ == "__main__":
     import sys
-    # "sato" or "gojo" makes only that hero's costume; with no argument every costume is made.
+    # "sato", "gojo" or "shirou" makes only that hero's costume; with no argument every costume is made.
     if sys.argv[1:] == ["sato"]:
         sato_outfit()
     elif sys.argv[1:] == ["gojo"]:
         gojo_outfit()
+    elif sys.argv[1:] == ["shirou"]:
+        shirou_outfit()
     else:
         main()
