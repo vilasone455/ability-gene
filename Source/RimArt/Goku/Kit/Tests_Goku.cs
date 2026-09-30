@@ -4,6 +4,7 @@ using System.Linq;
 using RimWorld;
 using Verse;
 using Verse.AI;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -19,20 +20,13 @@ namespace RimArt
         private static GameComponent_Echoes Setup(RimArtTestContext t)
         {
             GameComponent_Goku.Instance.ResetForTests();
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = false;
-            return echoes;
+            return t.ClearEchoes();
         }
 
         /// <summary>A drafted colonist made Goku's Host and manifested, with a full pool.</summary>
-        private static Pawn Host(RimArtTestContext t, GameComponent_Echoes echoes, IntVec3 at, out EchoRecord record)
+        private static Pawn Host(RimArtTestContext t, IntVec3 at, out EchoRecord record)
         {
-            Pawn host = t.Colonist(at);
-            record = EchoUtility.ForceHost(Goku, host);
-            echoes.charge = 100f;
-            EchoUtility.Manifest(record);
+            Pawn host = t.Host(Goku, at, out record);
             host.drafter.Drafted = true;
             return host;
         }
@@ -45,30 +39,9 @@ namespace RimArt
             return pawn;
         }
 
-        private static Thing Wall(RimArtTestContext t, IntVec3 at)
-        {
-            Thing wall = ThingMaker.MakeThing(ThingDefOf.Wall, ThingDefOf.WoodLog);
-            wall.SetFaction(Faction.OfPlayer);
-            return GenSpawn.Spawn(wall, at, t.map);
-        }
-
         private static GokuCast CastOf(Pawn pawn) => GameComponent_Goku.Instance?.For(pawn);
 
-        private static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 5)
-        {
-            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
-        }
-
-        private static bool Hurt(Pawn pawn) => pawn.Dead || pawn.Downed || pawn.health.summaryHealth.SummaryHealthPercent < 0.999f;
-        private static bool Untouched(Pawn pawn) => !pawn.Dead && !pawn.Downed && pawn.health.summaryHealth.SummaryHealthPercent >= 0.999f;
-        private static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned == true;
         private static bool Blind(Pawn pawn) => pawn.health.hediffSet.HasHediff(GokuDefOf.AG_GokuFlashBlind);
-
-        private static void Finish(EchoRecord record)
-        {
-            EchoUtility.Revert(record, collapse: false);
-            EchoDevice.workingForTests = null;
-        }
 
         // ---- Solar Flare ------------------------------------------------------------------------------------------
 
@@ -77,10 +50,10 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             Pawn near = t.Enemy(t.center + new IntVec3(3, 0, 0), armed: false);
             Pawn ally = Ally(t, t.center + new IntVec3(0, 0, 2));
-            for (int z = -1; z <= 1; z++) Wall(t, t.center + new IntVec3(-2, 0, z));
+            for (int z = -1; z <= 1; z++) t.Wall(t.center + new IntVec3(-2, 0, z), ThingDefOf.WoodLog);
             Pawn covered = t.Enemy(t.center + new IntVec3(-4, 0, 0), armed: false);
             Pawn far = t.Enemy(t.center + new IntVec3(9, 0, 0), armed: false);
             yield return 2;
@@ -99,11 +72,11 @@ namespace RimArt
             t.Check(!Stunned(far) && !Blind(far), "the enemy 9 cells away is not");
             float spent = before - echoes.charge;
             t.Check(spent >= 3f && spent < 4f, "the pool paid 3 (" + spent.ToString("0.##") + " with upkeep)");
-            t.Check(Untouched(near), "no damage");
+            t.Check(t.Untouched(near), "no damage");
             yield return 215;
             t.Check(!Stunned(near), "the stun ended after 3.5 s (" + RimArtTestContext.Describe(near) + ")");
             t.Check(Blind(near), "still blind at 4 s");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Instant Transmission ---------------------------------------------------------------------------------
@@ -113,7 +86,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             // Undrafted and held: a drafted pawn punches an adjacent enemy, and a busy stance refuses the next cast.
             host.drafter.Drafted = false;
             RimArtTestContext.Hold(host);
@@ -160,7 +133,7 @@ namespace RimArt
             HealthUtility.DamageUntilDowned(ally, false);
             IntVec3 dest3 = t.center + new IntVec3(0, 0, 8);
             yield return 2;
-            if (!t.Check(ally.Downed, "the ally is downed")) { Finish(record); yield break; }
+            if (!t.Check(ally.Downed, "the ally is downed")) { EndHost(record); yield break; }
             t.Check(it.CanApplyOn((LocalTargetInfo)ally), "a downed ally is a valid first target");
             it.QueueCastingJob(ally, dest3);
             foreach (int w in WaitFor(() => host.Position == dest3, 90, 1)) yield return w;
@@ -169,7 +142,7 @@ namespace RimArt
             t.Check(host.Position == dest3, "Goku arrived at " + dest3);
             t.Check(ally.Spawned && ally.Position.AdjacentTo8WayOrInside(dest3) && ally.Position != dest3, "the downed ally landed beside him");
             t.Check(ally.Downed && !Stunned(ally), "the ally is still downed and not stunned");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Kamehameha -------------------------------------------------------------------------------------------
@@ -180,12 +153,12 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 from = t.center + new IntVec3(-11, 0, 0);
-            Pawn host = Host(t, echoes, from, out EchoRecord record);
+            Pawn host = Host(t, from, out EchoRecord record);
             Pawn e5 = t.Enemy(from + new IntVec3(5, 0, 0), armed: false);
             Pawn e10 = t.Enemy(from + new IntVec3(10, 0, 0), armed: false);
             Pawn beside = t.Enemy(from + new IntVec3(6, 0, 3), armed: false);
             var walls = new List<Thing>();
-            for (int z = -1; z <= 1; z++) walls.Add(Wall(t, from + new IntVec3(18, 0, z)));
+            for (int z = -1; z <= 1; z++) walls.Add(t.Wall(from + new IntVec3(18, 0, z), ThingDefOf.WoodLog));
             Pawn behind = t.Enemy(from + new IntVec3(22, 0, 0), armed: false);
             IntVec3 e5From = e5.Position;
             yield return 2;
@@ -194,17 +167,17 @@ namespace RimArt
             float before = echoes.charge;
             ability.QueueCastingJob(from + new IntVec3(21, 0, 0), LocalTargetInfo.Invalid);
             KamehamehaCast cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host) as KamehamehaCast) != null && cast.Channelling, 180)) yield return w;
-            if (!t.Check(cast != null && cast.Channelling, "the channel started (" + RimArtTestContext.Describe(host) + ")")) { Finish(record); yield break; }
+            foreach (int w in WaitFor(() => (cast = CastOf(host) as KamehamehaCast) != null && cast.Channelling, 180, 5)) yield return w;
+            if (!t.Check(cast != null && cast.Channelling, "the channel started (" + RimArtTestContext.Describe(host) + ")")) { EndHost(record); yield break; }
             float spent = before - echoes.charge;
             t.Check(spent >= 15f && spent < 16f, "the pool paid 15 (" + spent.ToString("0.##") + ")");
             t.Check(ability.GizmoDisabled(out string why), "the ability is disabled while channelling (" + why + ")");
             t.Check(host.CurJobDef == GokuDefOf.AG_GokuChannel, "the channel job runs");
 
             cast.fireOrdered = true;
-            foreach (int w in WaitFor(() => cast.Firing, 300)) yield return w;
+            foreach (int w in WaitFor(() => cast.Firing, 300, 5)) yield return w;
             t.Log("fired at channelled " + cast.Channelled(t.Now).ToString("0.00") + " s; " + RimArtTestContext.Describe(host));
-            if (!t.Check(cast.Firing, "the beam fired at full charge")) { Finish(record); yield break; }
+            if (!t.Check(cast.Firing, "the beam fired at full charge")) { EndHost(record); yield break; }
             t.Check(cast.Channelled(t.Now) >= 2.4f, "not before 2.5 s of channelling");
             for (int i = 0; i < 8; i++)
             {
@@ -212,17 +185,17 @@ namespace RimArt
                 t.Log(RimArtTestContext.Describe(e5) + " | " + RimArtTestContext.Describe(e10));
             }
             yield return 60;
-            t.Check(Hurt(e5) && Hurt(e10), "the enemies at 5 and 10 cells down the lane were hit");
+            t.Check(t.Hurt(e5) && t.Hurt(e10), "the enemies at 5 and 10 cells down the lane were hit");
             t.Check(e5.Dead || (e5.Spawned && e5.Position.x >= e5From.x + 1), "the enemy at 5 was pushed along the lane (" + e5From + " -> " + RimArtTestContext.Describe(e5) + ")");
-            t.Check(Untouched(beside), "the enemy 3 cells across the lane was not hit");
+            t.Check(t.Untouched(beside), "the enemy 3 cells across the lane was not hit");
             bool wallHit = walls.Any(wl => wl.Destroyed || wl.HitPoints < wl.MaxHitPoints);
             t.Check(wallHit, "the wall at 18 cells was hit (" + string.Join(", ", walls.Select(wl => wl.Destroyed ? "destroyed" : wl.HitPoints + "/" + wl.MaxHitPoints)) + ")");
-            t.Check(Untouched(behind), "the enemy behind the wall was not hit (" + RimArtTestContext.Describe(behind) + ")");
+            t.Check(t.Untouched(behind), "the enemy behind the wall was not hit (" + RimArtTestContext.Describe(behind) + ")");
             t.Check(host.Position == from, "Goku stood still (" + RimArtTestContext.Describe(host) + ")");
-            foreach (int w in WaitFor(() => CastOf(host) == null, 200)) yield return w;
+            foreach (int w in WaitFor(() => CastOf(host) == null, 200, 5)) yield return w;
             t.Check(CastOf(host) == null, "the cast let Goku go");
             t.Check(ability.CooldownTicksRemaining > 0, "the cooldown is spent");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Goku", "kamehameha 2 Cancel gives the charge and cooldown back; a stun during the channel spends them")]
@@ -230,15 +203,15 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             yield return 2;
             Ability ability = host.abilities.GetAbility(GokuDefOf.AG_GokuKamehameha);
 
             // Cancel.
             ability.QueueCastingJob(t.center + new IntVec3(10, 0, 0), LocalTargetInfo.Invalid);
             KamehamehaCast cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host) as KamehamehaCast) != null && cast.Channelling, 180)) yield return w;
-            if (!t.Check(cast != null && cast.Channelling, "the channel started")) { Finish(record); yield break; }
+            foreach (int w in WaitFor(() => (cast = CastOf(host) as KamehamehaCast) != null && cast.Channelling, 180, 5)) yield return w;
+            if (!t.Check(cast != null && cast.Channelling, "the channel started")) { EndHost(record); yield break; }
             float paidDown = echoes.charge;
             cast.Cancel(false);
             yield return 2;
@@ -250,15 +223,15 @@ namespace RimArt
             // A stun.
             ability.QueueCastingJob(t.center + new IntVec3(10, 0, 0), LocalTargetInfo.Invalid);
             cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host) as KamehamehaCast) != null && cast.Channelling, 180)) yield return w;
-            if (!t.Check(cast != null && cast.Channelling, "the second channel started")) { Finish(record); yield break; }
+            foreach (int w in WaitFor(() => (cast = CastOf(host) as KamehamehaCast) != null && cast.Channelling, 180, 5)) yield return w;
+            if (!t.Check(cast != null && cast.Channelling, "the second channel started")) { EndHost(record); yield break; }
             paidDown = echoes.charge;
             host.stances.stunner.StunFor(60, null, false);
             foreach (int w in WaitFor(() => cast.broken, 30, 1)) yield return w;
             t.Check(cast.broken && cast.spent, "the stun broke the channel and spent it (" + RimArtTestContext.Describe(host) + ")");
             t.Check(echoes.charge < paidDown + 1f, "the charge did not come back (" + echoes.charge.ToString("0.##") + ")");
             t.Check(ability.CooldownTicksRemaining > 0, "the cooldown stays spent");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Goku", "warp 1 at full charge Warp jumps to the cell, spends Instant Transmission, and fires from there", 2400)]
@@ -266,7 +239,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             IntVec3 landing = t.center + new IntVec3(-8, 0, -8), aim = t.center + new IntVec3(4, 0, -8);
             Pawn enemy = t.Enemy(t.center + new IntVec3(-2, 0, -8), armed: false);
             yield return 2;
@@ -274,10 +247,10 @@ namespace RimArt
             Ability it = host.abilities.GetAbility(GokuDefOf.AG_GokuInstantTransmission);
             ability.QueueCastingJob(t.center + new IntVec3(10, 0, 0), LocalTargetInfo.Invalid);
             KamehamehaCast cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host) as KamehamehaCast) != null && cast.Channelling, 180)) yield return w;
-            if (!t.Check(cast != null && cast.Channelling, "the channel started")) { Finish(record); yield break; }
+            foreach (int w in WaitFor(() => (cast = CastOf(host) as KamehamehaCast) != null && cast.Channelling, 180, 5)) yield return w;
+            if (!t.Check(cast != null && cast.Channelling, "the channel started")) { EndHost(record); yield break; }
             t.Check(cast.WarpDisabled(t.Now) != null, "Warp is disabled before full charge (" + cast.WarpDisabled(t.Now) + ")");
-            foreach (int w in WaitFor(() => cast.FullCharge(t.Now), 240)) yield return w;
+            foreach (int w in WaitFor(() => cast.FullCharge(t.Now), 240, 5)) yield return w;
             t.Check(cast.WarpDisabled(t.Now) == null, "Warp is enabled at full charge with Instant Transmission ready");
             float before = echoes.charge;
             t.Check(cast.Warp(landing, aim), "Warp accepted");
@@ -289,9 +262,9 @@ namespace RimArt
             float spent = before - echoes.charge;
             t.Check(spent >= 2f && spent < 3f, "the pool paid Instant Transmission's 2 (" + spent.ToString("0.##") + ")");
             yield return 150;
-            t.Check(Hurt(enemy), "the enemy in the new lane was hit (" + RimArtTestContext.Describe(enemy) + ")");
+            t.Check(t.Hurt(enemy), "the enemy in the new lane was hit (" + RimArtTestContext.Describe(enemy) + ")");
             t.Check(host.Position == landing, "Goku stayed on the landing cell (" + RimArtTestContext.Describe(host) + ")");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Spirit Bomb ------------------------------------------------------------------------------------------
@@ -301,14 +274,14 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             Pawn lender = Ally(t, t.center + new IntVec3(-2, 0, 0));
             IntVec3 target = t.center + new IntVec3(8, 0, 0);
             Pawn e1 = t.Enemy(target, armed: false);
             Pawn e2 = t.Enemy(target + new IntVec3(0, 0, 2), armed: false);
             // The ally stands under the dome but not next to an enemy, and the enemies are held still: a punch would spoil the "untouched" check.
             Pawn ally = Ally(t, target + new IntVec3(-2, 0, -2));
-            Thing wall = Wall(t, target + new IntVec3(1, 0, 1));
+            Thing wall = t.Wall(target + new IntVec3(1, 0, 1), ThingDefOf.WoodLog);
             Pawn far = t.Enemy(target + new IntVec3(0, 0, 6), armed: false);
             e1.stances.stunner.StunFor(900, null, false);
             e2.stances.stunner.StunFor(900, null, false);
@@ -319,8 +292,8 @@ namespace RimArt
             float before = echoes.charge;
             ability.QueueCastingJob(target, LocalTargetInfo.Invalid);
             SpiritBombCast cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host) as SpiritBombCast) != null && cast.Channelling, 180)) yield return w;
-            if (!t.Check(cast != null && cast.Channelling, "the channel started (" + RimArtTestContext.Describe(host) + ")")) { Finish(record); yield break; }
+            foreach (int w in WaitFor(() => (cast = CastOf(host) as SpiritBombCast) != null && cast.Channelling, 180, 5)) yield return w;
+            if (!t.Check(cast != null && cast.Channelling, "the channel started (" + RimArtTestContext.Describe(host) + ")")) { EndHost(record); yield break; }
             float spent = before - echoes.charge;
             t.Check(spent >= 30f && spent < 31f, "the pool paid 30 (" + spent.ToString("0.##") + ")");
             t.Check(!cast.CanThrow(t.Now), "Throw is not allowed before 3 s");
@@ -347,18 +320,18 @@ namespace RimArt
             t.Log("throwing at power " + cast.PowerNow(t.Now).ToString("0.0") + ", radius " + radius.ToString("0.00") + ", damage " + cast.DamageNow(t.Now).ToString("0"));
             cast.throwOrdered = true;
             foreach (int w in WaitFor(() => cast.Thrown, 30, 1)) yield return w;
-            if (!t.Check(cast.Thrown, "thrown")) { Finish(record); yield break; }
+            if (!t.Check(cast.Thrown, "thrown")) { EndHost(record); yield break; }
             t.Check(cast.RadiusNow(t.Now) >= 3f && cast.RadiusNow(t.Now) < 4f, "radius 2 + 0.25 x power (" + cast.RadiusNow(t.Now).ToString("0.00") + ")");
-            foreach (int w in WaitFor(() => CastOf(host) == null, 120)) yield return w;
+            foreach (int w in WaitFor(() => CastOf(host) == null, 120, 5)) yield return w;
             t.Check(CastOf(host) == null, "the throw let Goku go");
             yield return 300;
             t.Log(RimArtTestContext.Describe(e1) + " | " + RimArtTestContext.Describe(e2) + " | " + RimArtTestContext.Describe(far));
-            t.Check(Hurt(e1) && Hurt(e2), "the two hostiles under the dome were hit");
-            t.Check(Untouched(ally), "the ally under the dome was not (" + RimArtTestContext.Describe(ally) + ")");
+            t.Check(t.Hurt(e1) && t.Hurt(e2), "the two hostiles under the dome were hit");
+            t.Check(t.Untouched(ally), "the ally under the dome was not (" + RimArtTestContext.Describe(ally) + ")");
             t.Check(!wall.Destroyed && wall.HitPoints == wall.MaxHitPoints, "the wall under the dome was not");
-            t.Check(Untouched(far), "the hostile 6 cells from the centre was not");
+            t.Check(t.Untouched(far), "the hostile 6 cells from the centre was not");
             t.Check(ability.CooldownTicksRemaining > 0, "the cooldown is spent");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Goku", "spirit 2 Cancel before the throw gives 30 back; a stun ends it spent")]
@@ -366,13 +339,13 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             yield return 2;
             Ability ability = host.abilities.GetAbility(GokuDefOf.AG_GokuSpiritBomb);
             ability.QueueCastingJob(t.center + new IntVec3(8, 0, 0), LocalTargetInfo.Invalid);
             SpiritBombCast cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host) as SpiritBombCast) != null && cast.Channelling, 180)) yield return w;
-            if (!t.Check(cast != null && cast.Channelling, "the channel started")) { Finish(record); yield break; }
+            foreach (int w in WaitFor(() => (cast = CastOf(host) as SpiritBombCast) != null && cast.Channelling, 180, 5)) yield return w;
+            if (!t.Check(cast != null && cast.Channelling, "the channel started")) { EndHost(record); yield break; }
             float paidDown = echoes.charge;
             cast.Cancel(false);
             yield return 2;
@@ -381,15 +354,15 @@ namespace RimArt
 
             ability.QueueCastingJob(t.center + new IntVec3(8, 0, 0), LocalTargetInfo.Invalid);
             cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host) as SpiritBombCast) != null && cast.Channelling, 180)) yield return w;
-            if (!t.Check(cast != null && cast.Channelling, "the second channel started")) { Finish(record); yield break; }
+            foreach (int w in WaitFor(() => (cast = CastOf(host) as SpiritBombCast) != null && cast.Channelling, 180, 5)) yield return w;
+            if (!t.Check(cast != null && cast.Channelling, "the second channel started")) { EndHost(record); yield break; }
             paidDown = echoes.charge;
             host.stances.stunner.StunFor(60, null, false);
             foreach (int w in WaitFor(() => cast.broken, 30, 1)) yield return w;
             t.Check(cast.broken && cast.spent, "the stun ended it spent");
             t.Check(echoes.charge < paidDown + 1f, "the charge did not come back");
             t.Check(ability.CooldownTicksRemaining > 0, "the cooldown stays spent");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- the Trial --------------------------------------------------------------------------------------------
@@ -425,7 +398,7 @@ namespace RimArt
             t.Check(EchoUtility.Manifest(record), "manifested");
             yield return 2;
             t.Check(pawn.abilities.GetAbility(GokuDefOf.AG_GokuKamehameha) != null, "manifested Goku has Kamehameha");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Pawn height ------------------------------------------------------------------------------------------
@@ -440,7 +413,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = HeightShots.Plain(Host(t, echoes, t.center, out EchoRecord record), strip: false);
+            Pawn host = HeightShots.Plain(Host(t, t.center, out EchoRecord record), strip: false);
             Pawn near = HeightShots.Target(t, t.center + new IntVec3(3, 0, 0));
             IntVec3 camera = t.center + new IntVec3(2, 0, 0);
             yield return 2;
@@ -458,7 +431,7 @@ namespace RimArt
             foreach (int step in HeightShots.Cast(t, host, GokuDefOf.AG_GokuInstantTransmission, enemy, dest, camera, "goku transmission", enemy, 20, 33, 44, 80))
                 yield return step;
             yield return 30;
-            Finish(record);
+            EndHost(record);
         }
 
         /// <summary>
@@ -472,7 +445,7 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 from = t.center + new IntVec3(-3, 0, 0);
-            Pawn host = HeightShots.Plain(Host(t, echoes, from, out EchoRecord record), strip: false);
+            Pawn host = HeightShots.Plain(Host(t, from, out EchoRecord record), strip: false);
             Pawn e5 = HeightShots.Target(t, from + new IntVec3(5, 0, 0));
             IntVec3 camera = from + new IntVec3(3, 0, 0);
             yield return 2;
@@ -480,7 +453,7 @@ namespace RimArt
             kame.QueueCastingJob(from + new IntVec3(12, 0, 0), LocalTargetInfo.Invalid);
             KamehamehaCast beam = null;
             foreach (int w in WaitFor(() => (beam = CastOf(host) as KamehamehaCast) != null && beam.Channelling, 180, 1)) yield return w;
-            if (!t.Check(beam != null && beam.Channelling, "the channel started")) { Finish(record); yield break; }
+            if (!t.Check(beam != null && beam.Channelling, "the channel started")) { EndHost(record); yield break; }
             yield return 60;
             yield return HeightShots.Shoot(t, "goku kame charging", camera, host, e5);
             yield return 120;
@@ -491,7 +464,7 @@ namespace RimArt
             yield return HeightShots.Shoot(t, "goku kame fire", camera, host, e5);
             yield return 5;
             yield return HeightShots.Shoot(t, "goku kame hit", camera, host, e5);
-            foreach (int w in WaitFor(() => CastOf(host) == null, 300)) yield return w;
+            foreach (int w in WaitFor(() => CastOf(host) == null, 300, 5)) yield return w;
             if (e5.Spawned) e5.Destroy();
             yield return 10;
 
@@ -502,7 +475,7 @@ namespace RimArt
             bomb.QueueCastingJob(target, LocalTargetInfo.Invalid);
             SpiritBombCast cast = null;
             foreach (int w in WaitFor(() => (cast = CastOf(host) as SpiritBombCast) != null && cast.Channelling, 180, 1)) yield return w;
-            if (!t.Check(cast != null && cast.Channelling, "the Spirit Bomb channel started")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Channelling, "the Spirit Bomb channel started")) { EndHost(record); yield break; }
             Job lend = JobMaker.MakeJob(GokuDefOf.AG_GokuLend, host);
             lend.playerForced = true;
             lender.jobs.TryTakeOrderedJob(lend, JobTag.Misc);
@@ -518,7 +491,7 @@ namespace RimArt
                 yield return HeightShots.Shoot(t, "goku bomb shell " + at, target, spared);
             }
             yield return 100;
-            Finish(record);
+            EndHost(record);
         }
     }
 }

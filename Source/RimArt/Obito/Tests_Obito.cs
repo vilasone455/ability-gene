@@ -5,6 +5,7 @@ using RimWorld;
 using RimWorld.Planet;
 using Verse;
 using Verse.AI;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -18,45 +19,28 @@ namespace RimArt
     {
         private static EchoDef Obito => ObitoDefOf.AG_Echo_Obito;
 
-        private static GameComponent_Echoes Setup(RimArtTestContext t)
-        {
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = false;
-            startHealth.Clear();
-            return echoes;
-        }
-
         /// <summary>A colonist made Obito's Host and manifested, with a full pool, undrafted and standing still.</summary>
-        private static Pawn Host(RimArtTestContext t, GameComponent_Echoes echoes, IntVec3 at, out EchoRecord record, out Gene_Involute gene)
+        private static Pawn Host(RimArtTestContext t, IntVec3 at, out EchoRecord record, out Gene_Involute gene)
         {
-            Pawn host = t.Colonist(at);
-            record = EchoUtility.ForceHost(Obito, host);
-            echoes.charge = 100f;
-            EchoUtility.Manifest(record);
+            Pawn host = t.Host(Obito, at, out record);
             host.drafter.Drafted = false;
             RimArtTestContext.Hold(host);
-            Trait wimp = host.story?.traits?.GetTrait(TraitDefOf.Wimp);
-            if (wimp != null) host.story.traits.RemoveTrait(wimp);
+            NoWimp(host);
             gene = InvoluteUtility.GeneOf(host);
-            return Noted(host);
+            return Bare(host);
         }
 
         /// <summary>The revert, then the gene taken away so the test's dimension is closed.</summary>
         private static void Finish(Pawn host, EchoRecord record)
         {
-            if (record != null) EchoUtility.Revert(record, collapse: false);
+            EndHost(record);
             Gene_Involute gene = host?.genes?.GetFirstGeneOfType<Gene_Involute>();
             if (gene != null) host.genes.RemoveGene(gene);
-            EchoDevice.workingForTests = null;
         }
 
-        private static readonly Dictionary<Pawn, float> startHealth = new Dictionary<Pawn, float>();
-
-        private static Pawn Noted(Pawn pawn)
+        /// <summary>Takes off everything the pawn wears, so armour cannot turn a hit.</summary>
+        private static Pawn Bare(Pawn pawn)
         {
-            startHealth[pawn] = pawn.health.summaryHealth.SummaryHealthPercent;
             foreach (Apparel apparel in pawn.apparel?.WornApparel.ToList() ?? new List<Apparel>()) pawn.apparel.Remove(apparel);
             return pawn;
         }
@@ -64,9 +48,7 @@ namespace RimArt
         /// <summary>A hostile that stands still for the test: unarmed and stunned, so it starts no fist fight.</summary>
         private static Pawn Target(RimArtTestContext t, IntVec3 at, int stunTicks = 600)
         {
-            Pawn pawn = t.Enemy(at, armed: false);
-            pawn.stances.stunner.StunFor(stunTicks, null, false);
-            return Noted(pawn);
+            return t.Target(at, stunTicks);
         }
 
         private static Pawn Ally(RimArtTestContext t, IntVec3 at)
@@ -74,33 +56,18 @@ namespace RimArt
             Pawn pawn = t.Colonist(at);
             pawn.drafter.Drafted = true;
             pawn.drafter.FireAtWill = false;
-            return Noted(pawn);
+            return Bare(pawn);
         }
 
         private static int Injuries(Pawn pawn) => pawn.Dead ? 999 : pawn.health.hediffSet.hediffs.Count(h => h is Hediff_Injury || h is Hediff_MissingPart);
-        private static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned == true;
-
-        private static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 1)
-        {
-            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
-        }
-
-        private static void Face(Pawn pawn, Rot4 rot)
-        {
-            Job wait = JobMaker.MakeJob(JobDefOf.Wait_MaintainPosture, pawn.Position + rot.FacingCell * 3);
-            wait.expiryInterval = 600;
-            pawn.jobs.StartJob(wait, JobCondition.InterruptForced);
-            pawn.Rotation = rot;
-        }
-
         // ---- Kamui: Phase ----------------------------------------------------------------------------------------
 
         [RimArtTest("Obito", "phase 1 phased, rounds from a raider go into the dimension and do not hurt him; he cannot shoot, cast or carry; solid 0.25 s after the toggle (screenshots)")]
         private static IEnumerable<int> Phase(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes();
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record, out Gene_Involute gene);
+            Pawn host = Host(t, t.center, out EchoRecord record, out Gene_Involute gene);
             t.Check(gene != null, "Obito has the Kamui gene");
             if (gene == null) yield break;
             t.Check(gene.Volume != null, "the dimension was built on awakening");
@@ -119,7 +86,7 @@ namespace RimArt
             yield return t.ShotAs("phase-held", host.Position, 3f);
 
             Pawn shooter = t.Enemy(t.center + new IntVec3(7, 0, 0), armed: true);
-            Noted(shooter);
+            Bare(shooter);
             t.Equip(shooter, DefDatabase<ThingDef>.GetNamed("Gun_AssaultRifle"));
             // A sure shot, so the rounds find him instead of flying past: only rounds that hit go through him.
             SkillRecord shooting = shooter.skills?.GetSkill(SkillDefOf.Shooting);
@@ -158,9 +125,9 @@ namespace RimArt
         [RimArtTest("Obito", "phase 2 the pool runs out and he turns solid; an almost empty pool will not phase; it refills 1 s per 4 s solid")]
         private static IEnumerable<int> PhasePool(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes();
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record, out Gene_Involute gene);
+            Pawn host = Host(t, t.center, out EchoRecord record, out Gene_Involute gene);
             if (gene == null) yield break;
             gene.SetPoolSeconds(0.5f);
             gene.TogglePhase();
@@ -182,9 +149,9 @@ namespace RimArt
         [RimArtTest("Obito", "warp 1 in after the 1 s warm-up (2 charge), out at a picked cell after the 0.5 s mark; the cooldown starts at the exit (screenshots)")]
         private static IEnumerable<int> Warp(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes();
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record, out Gene_Involute gene);
+            Pawn host = Host(t, t.center, out EchoRecord record, out Gene_Involute gene);
             if (gene == null) yield break;
             Face(host, Rot4.South);
             yield return 3;
@@ -224,9 +191,9 @@ namespace RimArt
         [RimArtTest("Obito", "warp 2 a revert while he is inside puts him back where he went in")]
         private static IEnumerable<int> WarpRevert(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes();
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record, out Gene_Involute gene);
+            Pawn host = Host(t, t.center, out EchoRecord record, out Gene_Involute gene);
             if (gene == null) yield break;
             IntVec3 from = host.Position;
             gene.Enter();
@@ -242,9 +209,9 @@ namespace RimArt
         [RimArtTest("Obito", "store 1 absorb a raider by touch (1 charge) onto an island, held stunned; absorb a steel stack; release the raider within 6 cells, stunned 2 s (screenshots)")]
         private static IEnumerable<int> Store(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes();
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record, out Gene_Involute gene);
+            Pawn host = Host(t, t.center, out EchoRecord record, out Gene_Involute gene);
             if (gene == null) yield break;
             Pawn raider = Target(t, t.center + new IntVec3(1, 0, 0));
             Ability store = host.abilities.GetAbility(ObitoDefOf.AG_KamuiStore);
@@ -299,12 +266,12 @@ namespace RimArt
         [RimArtTest("Obito", "store 2 counter: a raider's knife goes through the phased Obito; solid, he absorbs it with no warm-up")]
         private static IEnumerable<int> Counter(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes();
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record, out Gene_Involute gene);
+            Pawn host = Host(t, t.center, out EchoRecord record, out Gene_Involute gene);
             if (gene == null) yield break;
             Pawn raider = t.Enemy(t.center + new IntVec3(1, 0, 0), armed: false);
-            Noted(raider);
+            Bare(raider);
             t.Equip(raider, DefDatabase<ThingDef>.GetNamed("MeleeWeapon_Knife"));
             // Drafted with fire at will off: he does not punch back, so no melee cooldown holds up the absorb.
             host.drafter.Drafted = true;
@@ -347,9 +314,9 @@ namespace RimArt
         [RimArtTest("Obito", "wood 1 the branches hit every pawn on the 10-cell line (an ally too), not one beside it, and stop at a wall (screenshots)")]
         private static IEnumerable<int> Wood(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes();
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record, out Gene_Involute gene);
+            Pawn host = Host(t, t.center, out EchoRecord record, out Gene_Involute gene);
             if (gene == null) yield break;
             Pawn near = Target(t, t.center + new IntVec3(2, 0, 0));
             Pawn ally = Ally(t, t.center + new IntVec3(4, 0, 0));
@@ -387,9 +354,9 @@ namespace RimArt
         [RimArtTest("Obito", "contents 1 on his death what he stored comes out where he lies and the dimension closes; the loss of the gene empties and closes it too")]
         private static IEnumerable<int> Contents(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes();
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record, out Gene_Involute gene);
+            Pawn host = Host(t, t.center, out EchoRecord record, out Gene_Involute gene);
             if (gene == null) yield break;
             Pawn raider = Target(t, t.center + new IntVec3(1, 0, 0));
             gene.Absorb(raider);
@@ -419,7 +386,7 @@ namespace RimArt
         [RimArtTest("Obito", "contents 2 off any map (a caravan) nothing stored is destroyed: the gene's loss, and his death, put it out on a home map and close the dimension")]
         private static IEnumerable<int> ContentsOffMap(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes();
             yield return 5;
             Map home = Find.AnyPlayerHomeMap;
 

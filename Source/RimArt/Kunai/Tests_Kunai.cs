@@ -22,8 +22,7 @@ namespace RimArt
             t.Check(one.Graphic?.path == "RimArt/Kunai/Kunai", "the kunai item uses the kunai texture (" + one.Graphic?.path + ")");
 
             // Stuck in a pawn: a light stab, then the kunai goes into that wound, as a hit does.
-            Pawn target = t.Enemy(c + new IntVec3(2, 0, 0), armed: false);
-            target.apparel?.DestroyAll();
+            Pawn target = t.Target(c + new IntVec3(2, 0, 0));
             var before = new HashSet<Hediff>(target.health.hediffSet.hediffs);
             target.TakeDamage(new DamageInfo(DamageDefOf.Stab, 3f, 1f, -1f, null, target.RaceProps.body.corePart));
             t.Check(KunaiEmbedding.TryEmbed(target, before), "a kunai is stuck in the target");

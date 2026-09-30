@@ -21,15 +21,9 @@ namespace RimArt
         /// <summary>A cleared arena with Itachi at the centre, awakened and (by default) manifested.</summary>
         private static Pawn Setup(RimArtTestContext t, bool manifest = true)
         {
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = false;
+            GameComponent_Echoes echoes = t.ClearEchoes();
             enemyFaction = Find.FactionManager.RandomEnemyFaction(allowNonHumanlike: false);
-            Pawn itachi = t.Colonist(t.center);
-            EchoRecord record = EchoUtility.ForceHost(Itachi, itachi);
-            echoes.charge = 100f;
-            if (manifest) EchoUtility.Manifest(record);
+            Pawn itachi = t.Host(Itachi, t.center, out EchoRecord record, manifest);
             return itachi;
         }
 
@@ -40,10 +34,7 @@ namespace RimArt
         /// <summary>An enemy of one faction for the whole scenario, so allies are allies. No armour.</summary>
         private static Pawn Enemy(RimArtTestContext t, int dx, int dz, bool armed = false)
         {
-            Pawn pawn = t.Enemy(t.center + new IntVec3(dx, 0, dz), armed);
-            if (enemyFaction != null && pawn.Faction != enemyFaction) pawn.SetFaction(enemyFaction);
-            pawn.apparel?.DestroyAll();
-            return pawn;
+            return t.Target(t.center + new IntVec3(dx, 0, dz), armed: armed, faction: enemyFaction);
         }
 
         private static Pawn Mech(RimArtTestContext t, int dx, int dz)

@@ -5,6 +5,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -19,65 +20,30 @@ namespace RimArt
 
         internal static GameComponent_Echoes Setup(RimArtTestContext t)
         {
-            startHealth.Clear();
             GameComponent_Pain.Instance.ResetForTests();
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = false;
-            return echoes;
+            return t.ClearEchoes();
         }
 
         /// <summary>A colonist made Pain's Host and manifested, with a full pool, unarmed, drafted with fire at will off.</summary>
-        internal static Pawn Host(RimArtTestContext t, GameComponent_Echoes echoes, IntVec3 at, out EchoRecord record)
+        internal static Pawn Host(RimArtTestContext t, IntVec3 at, out EchoRecord record)
         {
-            Pawn host = t.Colonist(at);
-            record = EchoUtility.ForceHost(Pain, host);
-            echoes.charge = 100f;
-            EchoUtility.Manifest(record);
+            Pawn host = t.Host(Pain, at, out record);
             host.equipment?.DestroyAllEquipment();
             host.drafter.Drafted = true;
             host.drafter.FireAtWill = false;
-            Trait wimp = host.story?.traits?.GetTrait(TraitDefOf.Wimp);
-            if (wimp != null) host.story.traits.RemoveTrait(wimp);
-            return Noted(host);
-        }
-
-        private static readonly Dictionary<Pawn, float> startHealth = new Dictionary<Pawn, float>();
-
-        private static Pawn Noted(Pawn pawn)
-        {
-            startHealth[pawn] = pawn.health.summaryHealth.SummaryHealthPercent;
-            return pawn;
+            NoWimp(host);
+            return t.Note(host);
         }
 
         /// <summary>A hostile that stands still: unarmed, no apparel (armour would turn a hit to nothing), stunned.</summary>
         internal static Pawn Target(RimArtTestContext t, IntVec3 at, int stunTicks = 900)
         {
-            Pawn pawn = t.Enemy(at, armed: false);
-            pawn.apparel?.DestroyAll();
-            Trait wimp = pawn.story?.traits?.GetTrait(TraitDefOf.Wimp);
-            if (wimp != null) pawn.story.traits.RemoveTrait(wimp);
-            pawn.stances.stunner.StunFor(stunTicks, null, false);
-            return Noted(pawn);
-        }
-
-        private static float Start(Pawn pawn) => startHealth.TryGetValue(pawn, out float h) ? h : 1f;
-        internal static bool Hurt(Pawn pawn) => pawn.Dead || pawn.Downed || pawn.health.summaryHealth.SummaryHealthPercent < Start(pawn) - 0.001f;
-        internal static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned == true;
-
-        internal static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 1)
-        {
-            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
+            Pawn pawn = t.Target(at, stunTicks);
+            NoWimp(pawn);
+            return t.Note(pawn);
         }
 
         internal static T Cast<T>(Pawn host) where T : PainCast => GameComponent_Pain.Instance?.Latest<T>(host);
-
-        internal static void Finish(EchoRecord record)
-        {
-            if (record != null && record.manifested) EchoUtility.Revert(record, collapse: false);
-            EchoDevice.workingForTests = null;
-        }
 
         internal static Ability Ready(RimArtTestContext t, Pawn host, AbilityDef def)
         {
@@ -103,11 +69,11 @@ namespace RimArt
             t.Check(Pain.upkeepPerHour == 15f, "upkeep 15 per hour");
             HediffDef repulsion = DefDatabase<HediffDef>.GetNamed("AG_RepulsionEye"), attraction = DefDatabase<HediffDef>.GetNamed("AG_AttractionEye");
             t.Check(repulsion.abilities.NullOrEmpty() && attraction.abilities.NullOrEmpty(), "the repulsion and attraction eyes grant no ability");
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             yield return 5;
             foreach (AbilityDef def in four) t.Check(host.abilities.GetAbility(def) != null, "Pain has " + def.label);
             t.Check(GameComponent_Shinra.HasEye(host), "Shinra Tensei counts him as able while manifested");
-            Finish(record);
+            EndHost(record);
             yield return 5;
             t.Check(four.All(def => host.abilities.GetAbility(def) == null), "revert takes the four abilities back");
             t.Check(!GameComponent_Shinra.HasEye(host), "and Shinra Tensei with them");
@@ -120,7 +86,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             ShinraPawnState s = GameComponent_Shinra.Instance.For(host);
             s.active = true;
             s.map = t.map;
@@ -149,7 +115,7 @@ namespace RimArt
             s.charge.ticks = 60;
             s.Release();
             t.Check(!s.active && Mathf.Abs(echoes.charge - 2f) < 0.01f, "with 2 charge the release cancels and takes nothing");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Pain", "shinra 2 the clip's body and hands are read each frame for the sleeves: hands on both sides, out past 0.3 at the burst (screenshots)")]
@@ -157,11 +123,11 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             yield return 5;
             if (!t.Check(GameComponent_Shinra.Instance.Start(host, false), "a hold starts ("
                     + (ShinraCastAnimation.Clip.Missing ?? GameComponent_Shinra.Instance.For(host).CannotStart() ?? "clip playing") + ")"))
-            { Finish(record); yield break; }
+            { EndHost(record); yield break; }
             ShinraPawnState s = GameComponent_Shinra.Instance.For(host);
             CastClips.Handle clip = s.animation;
             yield return 40;
@@ -180,7 +146,7 @@ namespace RimArt
                 + " s the hands are out " + Mathf.Abs(ha.x - b.x).ToString("0.00") + " / " + Mathf.Abs(hb.x - b.x).ToString("0.00"));
             yield return t.ShotAs("shinra sleeves burst", host.Position, 4f);
             s.Cancel();
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Pain", "shinra 3 one button: tap 2.5 cells (3 charge, 8 s); a hold let go early is the tap; 1 s 3 cells (5, 16 s); 2 s 4 cells (20 s), lifted off; pushed raiders drawn flying; cancel costs nothing (screenshots)", 3000)]
@@ -188,7 +154,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             ShinraPawnState s = GameComponent_Shinra.Instance.For(host);
             GameComponent_TapHold.testDriven = true;
             try
@@ -283,7 +249,7 @@ namespace RimArt
             {
                 GameComponent_TapHold.Cancel();
                 GameComponent_TapHold.testDriven = false;
-                Finish(record);
+                EndHost(record);
             }
         }
 
@@ -295,18 +261,18 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 from = t.center + new IntVec3(-4, 0, 0);
-            Pawn host = Host(t, echoes, from, out EchoRecord record);
+            Pawn host = Host(t, from, out EchoRecord record);
             // Stunned only through the warmup: after the grip the pull holds it, then the slam's own 2 s stun.
             Pawn raider = Target(t, from + new IntVec3(8, 0, 0), 40);
             yield return 5;
             Ability pull = Ready(t, host, PainDefOf.AG_PainBanshoTenin);
-            if (pull == null) { Finish(record); yield break; }
+            if (pull == null) { EndHost(record); yield break; }
             pull.QueueCastingJob(raider, LocalTargetInfo.Invalid);
             foreach (int step in WaitFor(() => Cast<BanshoCast>(host) != null && Cast<BanshoCast>(host).Seconds(t.Now) >= 0.5f, 60)) yield return step;
             yield return t.ShotAs("bansho warm-up");
             foreach (int step in WaitFor(() => Cast<BanshoCast>(host)?.Fired == true, 60)) yield return step;
             BanshoCast cast = Cast<BanshoCast>(host);
-            if (!t.Check(cast != null && cast.Fired, "the pull fired")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Fired, "the pull fired")) { EndHost(record); yield break; }
             t.Check(Mathf.Abs(echoes.charge - 97f) < 0.01f, "took 3 charge (" + echoes.charge.ToString("0.#") + ")");
             t.Check(PainKit.DevaGapLeft(host) > 4.5f, "the Shinra gap started at the grip");
             t.Check(PainKit.Unmovable(raider), "the carried raider cannot be moved by anything else");
@@ -316,7 +282,7 @@ namespace RimArt
             foreach (int step in WaitFor(() => cast.slammed, 120)) yield return step;
             IntVec3 front = from + new IntVec3(1, 0, 0);
             t.Check(raider.Position == front, "landed on the cell in front of Pain: " + At(raider) + " (want " + front + ")");
-            t.Check(Hurt(raider), "the slam hurt it");
+            t.Check(t.Hurt(raider), "the slam hurt it");
             t.Check(Stunned(raider), "stunned after the slam");
             t.Check(!cast.blocked && !cast.heavy, "not blocked, not dragged");
             yield return 20;
@@ -327,7 +293,7 @@ namespace RimArt
             t.Check(host.Position == from, "Pain did not move");
             foreach (int step in WaitFor(() => !Stunned(raider), 180)) yield return step;
             t.Check(!Stunned(raider), "the stun ends");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Pain", "bansho 2 a raider standing in the line stops it: both take 8 blunt and a 1 s stun, the target drops short of it (screenshot)")]
@@ -336,27 +302,27 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 from = t.center + new IntVec3(-4, 0, 0);
-            Pawn host = Host(t, echoes, from, out EchoRecord record);
+            Pawn host = Host(t, from, out EchoRecord record);
             Pawn raider = Target(t, from + new IntVec3(8, 0, 0));
             // Standing and unstunned, so it counts as a standing pawn in the line.
             Pawn wall = t.Enemy(from + new IntVec3(4, 0, 0), armed: false);
             wall.apparel?.DestroyAll();
-            Noted(wall);
+            t.Note(wall);
             yield return 5;
             Ability pull = Ready(t, host, PainDefOf.AG_PainBanshoTenin);
-            if (pull == null) { Finish(record); yield break; }
+            if (pull == null) { EndHost(record); yield break; }
             pull.QueueCastingJob(raider, LocalTargetInfo.Invalid);
             foreach (int step in WaitFor(() => Cast<BanshoCast>(host)?.landed == true, 120)) yield return step;
             BanshoCast cast = Cast<BanshoCast>(host);
-            if (!t.Check(cast != null && cast.landed, "the pull came to rest")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.landed, "the pull came to rest")) { EndHost(record); yield break; }
             t.Check(cast.blocked && cast.blocker == wall, "blocked by the raider in the line (" + cast.blocker + ")");
             t.Check(raider.Position.x > wall.Position.x, "the target dropped short of it: " + At(raider) + " vs " + At(wall));
-            t.Check(Hurt(raider) && Hurt(wall), "both hurt");
+            t.Check(t.Hurt(raider) && t.Hurt(wall), "both hurt");
             t.Check(Stunned(raider) && Stunned(wall), "both stunned");
             yield return 6;
             yield return t.ShotAs("bansho blocked");
             yield return HeightShots.Shoot(t, "pain height bansho blocked", wall.Position, raider, wall);
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Pain", "bansho 3 a thrumbo (body size 4) is dragged half the distance on the floor, no slam")]
@@ -365,25 +331,25 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 from = t.center + new IntVec3(-4, 0, 0);
-            Pawn host = Host(t, echoes, from, out EchoRecord record);
+            Pawn host = Host(t, from, out EchoRecord record);
             Pawn beast = PawnGenerator.GeneratePawn(PawnKindDef.Named("Thrumbo"), Find.FactionManager.RandomEnemyFaction(allowNonHumanlike: false));
             GenSpawn.Spawn(beast, from + new IntVec3(9, 0, 0), t.map);
             RimArtTestContext.Hold(beast);
             beast.stances.stunner.StunFor(900, null, false);
-            Noted(beast);
+            t.Note(beast);
             yield return 5;
             Ability pull = Ready(t, host, PainDefOf.AG_PainBanshoTenin);
-            if (pull == null) { Finish(record); yield break; }
+            if (pull == null) { EndHost(record); yield break; }
             pull.QueueCastingJob(beast, LocalTargetInfo.Invalid);
             foreach (int step in WaitFor(() => Cast<BanshoCast>(host)?.landed == true, 240)) yield return step;
             BanshoCast cast = Cast<BanshoCast>(host);
-            if (!t.Check(cast != null && cast.landed, "the drag came to rest")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.landed, "the drag came to rest")) { EndHost(record); yield break; }
             t.Check(cast.heavy, "dragged, not lifted");
             int gap = beast.Position.x - host.Position.x;
             t.Check(gap >= 4 && gap <= 6, "moved half the way: " + gap + " cells from Pain (from 9)");
             yield return 10;
-            t.Check(!Hurt(beast), "no slam");
-            Finish(record);
+            t.Check(!t.Hurt(beast), "no slam");
+            EndHost(record);
         }
 
         // ---- Black Receiver ----------------------------------------------------------------------------------------
@@ -394,13 +360,13 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 from = t.center + new IntVec3(-3, 0, 0);
-            Pawn host = Host(t, echoes, from, out EchoRecord record);
+            Pawn host = Host(t, from, out EchoRecord record);
             Pawn raider = Target(t, from + new IntVec3(6, 0, 0), 60);
             raider.abilities?.GainAbility(PainDefOf.AG_PainBanshoTenin);
             Pawn other = Target(t, from + new IntVec3(2, 0, 3));
             yield return 5;
             Ability rod = Ready(t, host, PainDefOf.AG_PainBlackReceiver);
-            if (rod == null) { Finish(record); yield break; }
+            if (rod == null) { EndHost(record); yield break; }
             t.Check(rod.RemainingCharges == 3, "3 charges");
             for (int n = 1; n <= 3; n++)
             {
@@ -425,7 +391,7 @@ namespace RimArt
             }
             t.Check(PainRods.Pinned(raider) && Stunned(raider), "three rods: pinned and held");
             t.Check(rod.RemainingCharges == 0, "no charges left (" + rod.RemainingCharges + ")");
-            t.Check(Hurt(raider), "the rods hurt it");
+            t.Check(t.Hurt(raider), "the rods hurt it");
             t.Check(BanshoProblem(host, raider) != null, "Banshō refuses the pinned pawn: " + BanshoProblem(host, raider));
 
             IntVec3 pinnedAt = raider.Position, otherAt = other.Position;
@@ -436,7 +402,7 @@ namespace RimArt
             yield return 20;
             yield return t.ShotAs("receiver pinned");
             t.Check(PainLooks.TryGet(raider, out PainLook look) && look.lying && look.facing == Rot4.South, "drawn lying on its back");
-            Finish(record);
+            EndHost(record);
         }
 
         private static string BanshoProblem(Pawn host, Pawn target) => CompAbilityEffect_BanshoTenin.Problem(host, target);
@@ -447,7 +413,7 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 from = t.center + new IntVec3(-3, 0, 0);
-            Pawn host = Host(t, echoes, from, out EchoRecord record);
+            Pawn host = Host(t, from, out EchoRecord record);
             Pawn raider = Target(t, from + new IntVec3(5, 0, 0));
             yield return 5;
             Hediff_PainRods rods = Hediff_PainRods.For(raider);
@@ -461,7 +427,7 @@ namespace RimArt
             oldest.landTick = t.Now - PainKit.ReceiverProps.RodTicks + 2;
             yield return 5;
             t.Check(rods.rods.Count == 2 && !PainRods.Pinned(raider), "the oldest broke at 8 s; the pin ended (" + rods.rods.Count + " left)");
-            Finish(record);
+            EndHost(record);
             yield return 3;
             t.Check(PainRods.Count(raider) == 0 && PainRods.Of(raider) == null, "leaving hero form broke every rod and removed the hediff");
         }
@@ -472,10 +438,10 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 from = t.center + new IntVec3(-3, 0, 0);
-            Pawn host = Host(t, echoes, from, out EchoRecord record);
+            Pawn host = Host(t, from, out EchoRecord record);
             yield return 5;
             Ability rod = Ready(t, host, PainDefOf.AG_PainBlackReceiver);
-            if (rod == null) { Finish(record); yield break; }
+            if (rod == null) { EndHost(record); yield break; }
             // Spawned and targeted on the same tick: a drafted pawn in a Wait job punches an adjacent hostile at
             // once, and the cast job cannot start while that melee cooldown lasts.
             Pawn near = Target(t, from + new IntVec3(1, 0, 0));
@@ -498,7 +464,7 @@ namespace RimArt
             rod.QueueCastingJob(far, LocalTargetInfo.Invalid);
             foreach (int step in WaitFor(() => PainRods.Count(inLine) + PainRods.Count(far) > 0, 90)) yield return step;
             t.Check(PainRods.Count(inLine) == 1 && PainRods.Count(far) == 0, "the pawn in the line took it (in line " + PainRods.Count(inLine) + ", behind " + PainRods.Count(far) + ")");
-            Finish(record);
+            EndHost(record);
         }
     }
 }

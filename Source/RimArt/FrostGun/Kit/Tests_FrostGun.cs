@@ -4,6 +4,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -29,12 +30,9 @@ namespace RimArt
 
         private static Pawn Target(RimArtTestContext t, IntVec3 at)
         {
-            Pawn enemy = t.Enemy(at, armed: false);
-            enemy.apparel?.DestroyAll();
+            Pawn enemy = t.Target(at);
             // A wimp goes down from a little pain, and a downed pawn cannot be frozen.
-            TraitDef wimpDef = DefDatabase<TraitDef>.GetNamedSilentFail("Wimp");
-            Trait wimp = wimpDef == null ? null : enemy.story?.traits?.GetTrait(wimpDef);
-            if (wimp != null) enemy.story.traits.RemoveTrait(wimp);
+            NoWimp(enemy);
             return enemy;
         }
 

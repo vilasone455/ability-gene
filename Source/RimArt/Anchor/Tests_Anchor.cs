@@ -132,13 +132,6 @@ namespace RimArt
             return sum;
         }
 
-        private static Pawn Target(RimArtTestContext t, IntVec3 at)
-        {
-            Pawn enemy = t.Enemy(at, armed: false);
-            enemy.apparel?.DestroyAll();
-            return enemy;
-        }
-
         /// <summary>Orders Black Flash and waits for the hit, tracing both pawns. The result is in <paramref name="hit"/>.</summary>
         private static IEnumerable<int> Punch(RimArtTestContext t, Pawn carrier, Pawn enemy, PunchResult hit)
         {
@@ -180,7 +173,7 @@ namespace RimArt
         {
             t.Clear();
             Pawn carrier = Carrier(t);
-            Pawn enemy = Target(t, t.center + new IntVec3(1, 0, 0));
+            Pawn enemy = t.Target(t.center + new IntVec3(1, 0, 0));
             var hit = new PunchResult();
             foreach (int step in Punch(t, carrier, enemy, hit)) yield return step;
             t.Check(hit.damage > 0f, "the punch hurt (" + hit.damage.ToString("F1") + ")");
@@ -207,7 +200,7 @@ namespace RimArt
         {
             t.Clear();
             Pawn carrier = Carrier(t);
-            Pawn enemy = Target(t, t.center + new IntVec3(3, 0, 0));
+            Pawn enemy = t.Target(t.center + new IntVec3(3, 0, 0));
             Gene_Anchors gene = AnchorUtility.GeneOf(carrier);
             AbilityDef clap = DefDatabase<AbilityDef>.GetNamed("AG_AnchorClap");
             Ability clapAbility = carrier.abilities.GetAbility(clap);
@@ -281,7 +274,7 @@ namespace RimArt
         {
             t.Clear();
             Pawn todo = Carrier(t);
-            Pawn enemy = Target(t, t.center + new IntVec3(1, 0, 0));
+            Pawn enemy = t.Target(t.center + new IntVec3(1, 0, 0));
             yield return 2;
             EchoDef echo = DebugActions_Todo.Echo;
             t.Check(echo.CastCost(Mark) == 0f && echo.CastCost(DefDatabase<AbilityDef>.GetNamed("AG_AnchorClap")) == 0f
@@ -318,7 +311,7 @@ namespace RimArt
             t.Clear();
             Pawn todo = Carrier(t);
             // Two cells off: an adjacent enemy fights the undrafted Todo, whose melee cooldown then holds the clap back.
-            Pawn enemy = Target(t, t.center + new IntVec3(2, 0, 0));
+            Pawn enemy = t.Target(t.center + new IntVec3(2, 0, 0));
             IntVec3 cell = t.center + new IntVec3(0, 0, 4);
             yield return 2;
 

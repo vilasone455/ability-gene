@@ -7,6 +7,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -31,8 +32,7 @@ namespace RimArt
 
         private static void NoWimp(Pawn pawn)
         {
-            Trait wimp = pawn.story?.traits?.GetTrait(TraitDefOf.Wimp);
-            if (wimp != null) pawn.story.traits.RemoveTrait(wimp);
+            NoWimp(pawn);
         }
 
         /// <summary>A drafted, unarmed, unclothed colonist with the ability granted directly (not through the Echo).</summary>
@@ -90,11 +90,6 @@ namespace RimArt
         private static string State(GravityCast cast) => $"{cast.clock.phase} tick {cast.clock.ticks}: eaten {cast.eaten:0.##}, "
             + $"radius {cast.Radius:0.00}, duration {cast.DurationTicks / 60f:0.00} s, left {cast.TicksLeft / 60f:0.00} s, "
             + $"centre ({cast.Centre.x - cast.origin.x:+0.00;-0.00}, {cast.Centre.z - cast.origin.z:+0.00;-0.00}) from the cast point";
-
-        private static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 1)
-        {
-            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
-        }
 
         // Overrides some balance fields for one test; Restore puts the XML values back.
         private static readonly Dictionary<string, float> saved = new Dictionary<string, float>();

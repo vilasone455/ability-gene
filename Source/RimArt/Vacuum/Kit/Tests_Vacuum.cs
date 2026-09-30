@@ -240,9 +240,8 @@ namespace RimArt
             vacuum.SetStomach(10f);
             Thing steel = Feed(vacuum, "Steel", 75);
             IntVec3 at = t.center + new IntVec3(6, 0, 0);
-            Pawn enemy = t.Enemy(at, armed: false);
             // No apparel: with armour penetration 0, any worn armour can deflect the hit to 0 at random.
-            enemy.apparel?.DestroyAll();
+            Pawn enemy = t.Target(at);
             yield return 2;
             var before = new HashSet<Hediff>(enemy.health.hediffSet.hediffs);
             float kg = vacuum.MouthKg;

@@ -12,15 +12,6 @@ namespace RimArt
         private static EchoDef Accelerator => DefDatabase<EchoDef>.GetNamed("AG_Echo_Accelerator");
         private static RecordDef TimeDowned => DefDatabase<RecordDef>.GetNamed("TimeDowned");
 
-        private static GameComponent_Echoes Setup(RimArtTestContext t)
-        {
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = null;
-            return echoes;
-        }
-
         private static Pawn Colonist(RimArtTestContext t, int dx, float ageYears = -1f)
         {
             Pawn pawn = t.Colonist(t.center + new IntVec3(dx, 0, 0));
@@ -37,7 +28,7 @@ namespace RimArt
         [RimArtTest("Gojo", "echo 1 the time-downed trial counts hours")]
         private static IEnumerable<int> TrialHours(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             Pawn pawn = Colonist(t, 0);
             Trial_Record trial = Gojo.trials.Find(x => x is Trial_Record) as Trial_Record;
             t.Check(trial != null && trial.record == TimeDowned, "Gojo has a TimeDowned trial");
@@ -57,7 +48,7 @@ namespace RimArt
         [RimArtTest("Gojo", "echo 2 The Strongest likes the young and dislikes the old")]
         private static IEnumerable<int> Opinions(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             Pawn gojo = Colonist(t, 0, 28f);
             EchoUtility.ForceHost(Gojo, gojo);
             t.Check(TheStrongest.Has(gojo), "awakening forced The Strongest");
@@ -89,7 +80,7 @@ namespace RimArt
         [RimArtTest("Gojo", "echo 3 The Strongest mood: alone -6, another Host +4")]
         private static IEnumerable<int> Mood(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             Pawn gojo = Colonist(t, 0);
             EchoUtility.ForceHost(Gojo, gojo);
             ThoughtDef alone = DefDatabase<ThoughtDef>.GetNamed("AG_StrongestAlone");
@@ -108,7 +99,7 @@ namespace RimArt
         [RimArtTest("Gojo", "echo 4 the Echo grants the five abilities, the phase barrier implant none")]
         private static IEnumerable<int> Abilities(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             Pawn gojo = Colonist(t, 0);
             EchoRecord record = EchoUtility.ForceHost(Gojo, gojo);
             echoes.charge = 100f;
