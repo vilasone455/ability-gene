@@ -78,7 +78,7 @@ namespace RimArt
             t.Check(pawn.story.traits.HasTrait(TraitDef.Named("NightOwl")), "Night Owl was given");
             string costs = string.Join(" / ", EchoUtility.CostLines(Nakime, pawn));
             t.Log("cost lines: " + costs);
-            t.Check(costs.Contains("sunlight"), "the gene's cost line says sunlight burns");
+            t.Check(costs.IndexOf("sunlight", StringComparison.OrdinalIgnoreCase) >= 0, "the gene's cost line says sunlight burns");
             t.Check(pawn.abilities.GetAbility(CastleAbility) == null, "no ability before manifesting");
 
             echoes.charge = 100f;

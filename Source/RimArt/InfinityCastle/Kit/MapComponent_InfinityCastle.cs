@@ -535,7 +535,7 @@ namespace RimArt
             if (shift != null && !shift.stopped) { why = "A room is still sliding."; return false; }
             if (StrumWait > 0f) { why = "The last strum is still sounding."; return false; }
             IntVec3 to = LandingIn(room);
-            pawn.carryTracker?.TryDropCarriedThing(pawn.Position, ThingPlaceMode.Near, out _);
+            if (pawn.carryTracker?.CarriedThing != null) pawn.carryTracker.TryDropCarriedThing(pawn.Position, ThingPlaceMode.Near, out _);
             // It leaves its map as if it walked off it: out of a ritual, a party or a forming caravan there, so
             // that lord neither gives it duties with home-map targets nor loses it later at the return.
             pawn.GetLord()?.Notify_PawnLost(pawn, PawnLostCondition.ExitedMap);
