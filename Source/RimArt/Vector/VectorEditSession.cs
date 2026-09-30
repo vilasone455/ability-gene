@@ -148,22 +148,9 @@ namespace RimArt
             for (int i = 0; i < things.Count; i++)
             {
                 Thing round = things[i];
-                if (round == null || round.Destroyed || !round.Spawned) continue;
-
+                // The rule Plasma's channel shares: bullets only, no arcs or blasts, nothing another effect holds.
+                if (!AcceleratorKit.Holdable(round)) continue;
                 RoundBackend backend = Rounds.For(round);
-                if (backend == null) continue;
-                if (backend == Rounds.Vanilla && !(round is Bullet)) continue;
-
-                ProjectileProperties props = round.def.projectile;
-                if (props == null || props.flyOverhead || props.explosionRadius > 0f) continue;
-
-                if (RecursionRegistry.CapturedCount > 0)
-                {
-                    HalvingProjectile held;
-                    if (RecursionRegistry.TryGetCapture(round, out held)) continue;
-                }
-
-                if (TimeBubbleRegistry.ActiveCount > 0 && TimeBubbleRegistry.IsFrozen(round)) continue;
 
                 IntVec3 cell = round.Position;
                 if (!cell.InBounds(map) || cell.Fogged(map)) continue;
@@ -262,6 +249,9 @@ namespace RimArt
             }
 
             int edited = 0;
+            float strain = VectorEditDefaults.StrainCostFor(changedGroups);
+            // The Apply picture (MapComponent_VectorApplies): each rewritten round's corner and trail.
+            MapComponent_VectorApplies.Applied picture = Map.GetComponent<MapComponent_VectorApplies>()?.Begin(Caster, strain);
             for (int i = 0; i < groups.Length; i++)
             {
                 VectorEditGroup group = groups[i];
@@ -274,12 +264,22 @@ namespace RimArt
 
                     member.Commit(group.Rotation, group.Force, Caster, Map);
                     edited++;
+                    if (picture != null)
+                    {
+                        Vector3 after = member.HeadingAfter(group.Rotation);
+                        picture.rounds.Add(new MapComponent_VectorApplies.Edited
+                        {
+                            round = member.Round, caught = new Vector2(member.Position.x, member.Position.z),
+                            before = new Vector2(member.Heading.x, member.Heading.z), after = new Vector2(after.x, after.z),
+                            last = new Vector2(member.Position.x, member.Position.z), force = group.Force, speedPerTick = member.BaseSpeed * group.Force,
+                        });
+                    }
                 }
             }
 
-            VectorStrain.Add(Caster, VectorEditDefaults.StrainCostFor(changedGroups));
+            VectorStrain.Add(Caster, strain);
 
-            if (ability != null) ability.StartCooldown(VectorEditDefaults.CooldownTicks);
+            if (ability != null) ability.StartCooldown(ability.def.cooldownTicksRange.RandomInRange);
 
             Messages.Message("AG_VectorEditApplied".Translate(Caster.LabelShort, edited),
                 Caster, MessageTypeDefOf.NeutralEvent, false);

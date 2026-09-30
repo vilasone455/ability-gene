@@ -31,23 +31,16 @@
         <trait>Abrasive</trait>
       </li>
     </forcedTraits>
+    <!-- Brain strain is his cost (AG_VectorStrain): none of the five costs Echo charge. -->
     <abilities>
       <li>AG_VectorReflection</li>
       <li>AG_VectorSurge</li>
       <li>AG_VectorShove</li>
+      <li>AG_VectorPlasma</li>
+      <li>AG_VectorFlick</li>
     </abilities>
     <manifestHediff>AG_EchoManifest_Accelerator</manifestHediff>
     <upkeepPerHour>12</upkeepPerHour>
-    <castCosts>
-      <li>
-        <ability>AG_VectorSurge</ability>
-        <cost>10</cost>
-      </li>
-      <li>
-        <ability>AG_VectorShove</ability>
-        <cost>8</cost>
-      </li>
-    </castCosts>
     <wealth>6000</wealth>
     <hairColor>(0.95, 0.95, 0.95)</hairColor>
   </RimArt.EchoDef>

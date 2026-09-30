@@ -202,7 +202,7 @@ Rules:
 
 | Echo | Trials | Cost | Abilities | Upkeep | Casts |
 |---|---|---|---|---|---|
-| Accelerator | Intellectual 12, Damage taken 300 | Abrasive | vector manipulation, reflex surge, vector shove | 12 | surge 10, shove 8 |
+| Accelerator | Intellectual 12, Damage taken 300 | Abrasive | vector manipulation, reflex surge, vector shove, Plasma, Vector Flick | 12 | 0 on all five (brain strain is his cost: manipulation 8/24/48/80 %, surge 10 %, shove 5 %, Plasma 45 %, Flick none) |
 | Pain (`AG_Echo_Pain.xml`) | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei, Banshō Ten'in, Black Receiver, Chibaku Tensei (replaced Gravity Well 2026-09-28) | 15 | Shinra 5 charged / 3 quick (tap/hold button, 2026-09-29), Banshō 3, Black Receiver 0 (its three charges), Chibaku Tensei 30 |
 | Inumaki | Social 10, not Psychopath | Kind | stop, drop, crush, come, run, explode | 8 | 0 each (the throat is his cost) |
 | Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | Judgement Cut, Yamato Dash, Summoned Swords, Judgement Cut End (the def grants none until the kit is ported) | 10 | Judgement Cut 3, Yamato Dash 2, Summoned Swords 10, Judgement Cut End 0 (Style is its limit) |
@@ -214,22 +214,36 @@ Rules:
 | Todo (no subtitle) | Melee 14, 20 humanlikes downed (`PawnsDownedHumanlikes`) | Brawler + the anchor organ gene (awakenGenes) | stone, clap, double clap, Black Flash, provoke | 8 | stone 0, clap 0, double clap 0 (the organ's three claps are their limit), Black Flash 1, provoke 5; +0.5 move speed, black hair, wealth 6000, forced empty hands |
 | Minato ("Hero of the Yellow Flash") | Melee 12, Intellectual 10, 30 kills with a thrown kunai (`Trial_KillsWith` on AG_Kunai; `Projectile_Kunai` names the kunai as its weapon) | Kind | flying thunder god, flying thunder god: chain, guiding thunder, rasengan; sealing touch passive (AG_MinatoSeal); throw kunai stays on the belt | 10 | throw kunai 0 (belt charges), flying thunder god 2, chain 10, guiding thunder 5, rasengan 3; blond hair, the Hokage haori and forehead protector, no forced weapon, no kunai regeneration |
 
-Accelerator reuses abilities that still come from his pre-hero item (the reflex booster implant).
-validate.py allows that second source only for those abilities (`SHARED_WITH_ECHO`) until the
-implant is made Echo-only. Pain's four come only from his Echo since his port (2026-09-28; Chibaku
-Tensei took Gravity Well's place the same day): the
-repulsion and attraction eyes grant nothing and are no longer quest rewards; their defs stay so saves
-that hold one still load. Inumaki's words have one source, his Echo:
-the Commanding Voice trait was removed when his kit was ported.
-Decided 2026-09-27: the reflex booster implant becomes Echo-only, like Todo's anchor organ; the
-repulsion eye and Commanding Voice became Echo-only later the same day. Accelerator keeps brain strain as his cost; his
-strain abilities (manipulation, surge, shove, Plasma) cost 0 charge, so `AG_Echo_Accelerator`'s
-castCosts (surge 10, shove 8) are to be removed at the port. Upkeep 12/h stays (his choker battery).
-Plasma is agreed; Uplift is dropped. Fifth ability, Vector Flick (agreed 2026-09-27, no sketch
-yet): he kicks a pebble off the ground at bullet speed; target a pawn within 24.9 cells with line of
-sight, warm-up 0.3 s, one projectile of 14 blunt at 30 % armour penetration, cooldown 2 s, no item
-used, no strain, 0 charge. Accelerator's v1 kit: vector manipulation, reflex surge, vector shove
-(the 2026-09-24 rework), Plasma, Vector Flick.
+Pain's four come only from his Echo since his port (2026-09-28; Chibaku Tensei took Gravity Well's
+place the same day): the repulsion and attraction eyes grant nothing and are no longer quest rewards;
+their defs stay so saves that hold one still load. Inumaki's words have one source, his Echo: the
+Commanding Voice trait was removed when his kit was ported. Accelerator's five come only from his Echo
+since his port (2026-09-29): the reflex booster implant grants nothing, cannot be crafted, is no longer
+a reward or given to generated pawns, and its defs stay so saves still load (`SHARED_WITH_ECHO` in
+validate.py is empty).
+
+Accelerator (ported 2026-09-29; rules in the `accelerator-*.js` sketch headers and the ability
+descriptions; numbers are XML fields on `AG_Vector_Abilities.xml`). Brain strain is his cost and his
+five abilities cost 0 charge; upkeep 12/h stays (his choker battery).
+- Vector manipulation and reflex surge: unchanged mechanics. Manipulation's strain costs moved to the
+  def (`CompProperties_VectorManipulation.strainCosts`); Apply now draws a corner, a star and a trail
+  per rewritten bullet, the strain ring and the reach flash.
+- Vector shove (2026-09-24 rework): touch an adjacent pawn or a loose stone chunk, corpse or weapon,
+  then pick a direction (vanilla's second pick). A pawn flies 8 cells / body size at 20 cells/s,
+  1.5 blunt per cell, +8 on a wall, stun 1 s; pawns in the path are knocked 1 cell aside, 8 blunt,
+  stun 0.5 s. A thing flies 12 cells and hits the first standing pawn or wall for 1 blunt per kg
+  (at most 40), then lands there. Force returned: a melee hit on him in the last second is added to
+  the first pawn struck, or to the thrown pawn if it strikes none (recorded by `HediffComp_ForceReturn`
+  on his hero form). Strain 5 %, cooldown 20 s.
+- Plasma: target a direction; a 3 s channel of its own (job `AG_VectorPlasmaChannel`, not the verb
+  warmup, which the aiming delay stat would scale). Bullets within 8 cells during the channel are
+  destroyed (the manipulation's rule: no mortar shells or explosives; not his own). Then a lane
+  1 x 15 cells: it stops at the first standing pawn or wall and bursts, radius 1.5, 50 Flame at 40 %
+  armour penetration, fires; he is not hurt by it. The wind's pull on items is picture only (decided
+  2026-09-29). Strain 45 % at the release; a stun, a downing or an order during the channel spends
+  the cooldown and no strain. Cooldown 90 s.
+- Vector Flick: a pawn within 24.9 cells in sight, warm-up 0.3 s, 14 blunt at 30 %, cooldown 2 s, no
+  strain. It always hits the target and pawns in between are not hit (decided 2026-09-29).
 
 Vergil (agreed 2026-09-27; numbers are placeholders; full rules in the four `vergil-*.js` sketch
 headers): forced Yamato on Manifest (its stats not set yet); +0.5 move speed.

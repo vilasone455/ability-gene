@@ -128,13 +128,17 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             EchoDevice.workingForTests = false;
             Pawn host = Colonist(t);
-            EchoRecord record = EchoUtility.ForceHost(Accelerator, host);
+            // Goku's Solar Flare: Accelerator's abilities cost no charge since his port (brain strain is his cost).
+            EchoDef goku = GokuDefOf.AG_Echo_Goku;
+            AbilityDef flare = GokuDefOf.AG_GokuSolarFlare;
+            EchoRecord record = EchoUtility.ForceHost(goku, host);
             echoes.charge = 100f;
             EchoUtility.Manifest(record);
             host.drafter.Drafted = true;
             yield return 2;
-            Ability shove = host.abilities.GetAbility(Shove);
-            float cost = Accelerator.CastCost(Shove);
+            Ability shove = host.abilities.GetAbility(flare);
+            float cost = goku.CastCost(flare);
+            t.Check(cost > 0f, "Solar Flare has a cast cost (" + cost + ")");
             echoes.charge = cost - 1f;
             t.Check(shove.GizmoDisabled(out string reason), "disabled with " + echoes.charge + " charge (" + reason + ")");
             bool result = true;

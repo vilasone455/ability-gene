@@ -1,5 +1,8 @@
-// Plasma — ability proposal for the Accelerator kit, not the game. Nothing in Source/RimArt draws
-// this yet. The kit's nuke: one large hit on one point, priced in brain strain.
+// Plasma — the Accelerator kit's nuke: one large hit on one point, priced in brain strain. Ported to
+// C# 2026-09-29 (Source/RimArt/Accelerator/Plasma*.cs, previews "Accelerator: plasma: ..."), played in
+// game by MapComponent_Plasma (Accelerator/Kit/PlasmaCast.cs): the channel is its own 3 s job, real
+// bullets are destroyed as they enter, the burst is a Flame explosion and the game's own fires take
+// over from the drawn ones after about 1 s. Numbers are AG_VectorPlasma's XML.
 //
 // What it is for (proposed 2026-09-24, agreed 2026-09-27; every number is a placeholder). Its
 // cost is the strain 0.45 below and 0 Echo charge: Accelerator keeps brain strain (2026-09-27).
@@ -28,12 +31,12 @@
 //         the pull; 30 wind lines spiral in from that ring to the hand; dust and small debris slide
 //         in along the floor and lift into the hand at the end; the ball at the hand starts large
 //         and faint (loose air) and shrinks as it brightens (compressed), and in the last 30% it is
-//         plasma: white core, violet shell, rays. The lane pulses once a second down its length.
+//         plasma: white core, pale blue shell, rays. The lane pulses once a second down its length.
 //         Each round that crosses the 8-cell ring turns pale and spirals into the hand over 1.3 s,
 //         about 1.25 turns, spinning faster as it gets close, and vanishes there with a flash; the
 //         ball swells 25% for 0.2 s.
 //   3.30  release: the arm thrusts, a white ring leaves the hand, dust is blown back behind
-//         Accelerator, camera shake. The head crosses the lane at 50 cells/s with a violet tail and
+//         Accelerator, camera shake. The head crosses the lane at 50 cells/s with a blue tail and
 //         speed lines; the floor lights under it.
 //   3.48  burst where it stops (cell 9 with the defaults): a flash, soft additive light out to the
 //         true radius in 0.2 s, a ring, 14 sparks thrown and falling, camera shake. Pawns in the

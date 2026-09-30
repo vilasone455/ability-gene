@@ -189,6 +189,28 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Accelerator", Prefix = "Accelerator: plasma", Component = typeof(MapComponent_PlasmaPreview), Clock = "seconds",
+                Phases = label => PlasmaPhases(label.Contains("wall"), label.Contains("broken")),
+            },
+            new Kit
+            {
+                Name = "Accelerator", Prefix = "Accelerator: vector shove", Component = typeof(MapComponent_VectorShovePreview), Clock = "seconds",
+                Phases = VectorShovePhases,
+            },
+            new Kit
+            {
+                // The sketch's markers (accelerator-vector-flick.js): Stand, then per kick Warm-up, Kick, Hit.
+                Name = "Accelerator", Prefix = "Accelerator: vector flick", Component = typeof(MapComponent_FlickApplyPreview), Clock = "seconds",
+                Phases = label => MapComponent_FlickApplyPreview.FlickPhases(label.Contains("three")).Select(p => new Phase(p.name, p.seconds)).ToArray(),
+            },
+            new Kit
+            {
+                // The sketch's markers (accelerator-vector-apply.js): Volley, Paused, Apply, Last round stops.
+                Name = "Accelerator", Prefix = "Accelerator: vector apply", Component = typeof(MapComponent_FlickApplyPreview), Clock = "seconds",
+                Phases = label => MapComponent_FlickApplyPreview.ApplyPhases(label.Contains("2 groups") ? 2 : 4).Select(p => new Phase(p.name, p.seconds)).ToArray(),
+            },
+            new Kit
+            {
                 Name = "Sasuke", Prefix = "Sasuke: raiko kusari", Component = typeof(MapComponent_RaikoKusariPreview), Clock = "seconds",
                 Phases = label => RaikoKusariPhases(label.Contains("ring") ? RaikoScenario.Ring
                     : label.Contains("drifting") ? RaikoScenario.DriftingNet
@@ -982,6 +1004,33 @@ namespace RimArt.VfxLab
             new Phase("Reach out", 0f), new Phase("Stone flares", StoneThrow.Place - StoneThrow.FlareLead),
             new Phase("Stone leaves the cell", StoneThrow.Place), new Phase("Caught", StoneThrow.CatchTime(StoneThrow.Place)),
         };
+
+        // The sketch's phases(): Stand, Channel, Release, Burst; the broken channel ends at the break.
+        private static Phase[] PlasmaPhases(bool wall, bool broken)
+        {
+            if (broken)
+                return new[] { new Phase("Stand", 0f), new Phase("Channel", Plasma.Lead), new Phase("Broken", Plasma.Lead + MapComponent_PlasmaPreview.BreakAt) };
+            return new[]
+            {
+                new Phase("Stand", 0f), new Phase("Channel", Plasma.Lead), new Phase("Release", Plasma.Lead + Plasma.Channel),
+                new Phase("Burst", MapComponent_PlasmaPreview.HitAt(wall)),
+            };
+        }
+
+        // accelerator-vector-shove.js's phases(): Stand, Mace hits (not for the chunk), Touch, Throw, Slam / Lands / Hit.
+        private static Phase[] VectorShovePhases(string label)
+        {
+            VectorShoveScene scene = label.Contains("chunk") ? VectorShoveScene.Chunk : label.Contains("line") ? VectorShoveScene.Line : VectorShoveScene.Wall;
+            float touch = MapComponent_VectorShovePreview.TouchAt(scene, label.Contains("window closed") ? VectorShove.ClosedReact : VectorShove.React);
+            float fly = touch + VectorShove.Touch, arrive = touch + VectorShove.Arrive(MapComponent_VectorShovePreview.Stop(scene));
+            if (scene == VectorShoveScene.Chunk)
+                return new[] { new Phase("Stand", 0f), new Phase("Touch", touch), new Phase("Throw", fly), new Phase("Hit", arrive) };
+            return new[]
+            {
+                new Phase("Stand", 0f), new Phase("Mace hits", VectorShove.Lead), new Phase("Touch", touch), new Phase("Throw", fly),
+                new Phase(scene == VectorShoveScene.Wall ? "Slam" : "Lands", arrive),
+            };
+        }
 
         private static Phase[] BlackFlashPhases(bool plain)
         {

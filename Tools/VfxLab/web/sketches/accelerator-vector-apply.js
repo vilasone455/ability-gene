@@ -1,6 +1,6 @@
-// Vector manipulation, the Apply moment — VFX proposal for the Accelerator kit, not the game.
-// Source/RimArt/Vector has the mechanic (VectorEditSession.Apply); it draws nothing when Apply is
-// pressed. This is what would be drawn then.
+// Vector manipulation, the Apply moment. Ported to C# 2026-09-29 (Source/RimArt/Accelerator/
+// VectorApply*.cs, previews "Accelerator: vector apply: ..."), drawn in game by MapComponent_VectorApplies
+// from what VectorEditSession.Apply records for each rewritten round.
 //
 // The mechanic, as built (numbers from VectorEditDefaults; placeholders for XML).
 //   Pressing the button pauses the game and catches every round that will pass within 12 cells in
