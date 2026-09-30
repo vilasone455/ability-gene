@@ -67,23 +67,62 @@ namespace RimArt
         // ---- Hollow Purple ----------------------------------------------------------------------------------------------
 
         /// <summary>
+        /// What a Red's walk needs to know about its Gojo's Blues, worked out once per tick rather than at every
+        /// 0.1-cell step: the Blues he has pulling now, whether Hollow Purple is ready, and Purple's numbers.
+        /// </summary>
+        public readonly struct BlueWatch
+        {
+            public readonly List<GravityCast> blues;
+            public readonly bool purpleReady;
+            public readonly CompProperties_GojoHollowPurple purple;
+
+            public BlueWatch(List<GravityCast> blues, bool purpleReady, CompProperties_GojoHollowPurple purple)
+            {
+                this.blues = blues;
+                this.purpleReady = purpleReady;
+                this.purple = purple;
+            }
+        }
+
+        private static CompProperties_GojoHollowPurple purpleProps;
+        private static CompProperties_GojoHollowPurple PurpleProps =>
+            purpleProps ??= GojoKit.Props<CompProperties_GojoHollowPurple>(GojoKitDefOf.AG_GojoHollowPurple);
+
+        /// <summary>
+        /// <paramref name="gojo"/>'s Blues pulling on this map now, and whether Purple is ready. The list is reused by
+        /// the next call: use the watch within the tick it was made for.
+        /// </summary>
+        public BlueWatch Watch(Pawn gojo)
+        {
+            blueBuffer.Clear();
+            MapComponent_Gravity gravity = map.GetComponent<MapComponent_Gravity>();
+            if (gravity != null)
+                foreach (GravityCast blue in gravity.Casts)
+                    if (blue.caster == gojo && blue.def == GojoKitDefOf.AG_GojoBlue && blue.Field) blueBuffer.Add(blue);
+            bool ready = blueBuffer.Count > 0 && PurpleReady(gojo, GojoKitDefOf.AG_GojoHollowPurple, out _, out _);
+            return new BlueWatch(blueBuffer, ready, PurpleProps);
+        }
+
+        private readonly List<GravityCast> blueBuffer = new List<GravityCast>();
+
+        /// <summary>
         /// Called at each step of a Red's flight. When the step is within Hollow Purple's blueRadius of the centre
         /// of an active Blue cast by the same Gojo: if Purple is ready (Gojo has it, off cooldown, the Echo pool can
         /// pay its charge) it is paid, its cooldown starts, the Blue closes at once with no implosion (letting go of
         /// what it held; its own cooldown starts), the Red is used up and Purple starts at the Blue's centre along
         /// Red's way. True then. Otherwise Red passes through.
         /// </summary>
-        public bool TryHollowPurple(RedShot shot, Vector2 at, float along, int now)
+        public bool TryHollowPurple(RedShot shot, Vector2 at, int now, in BlueWatch watch)
         {
-            MapComponent_Gravity gravity = map.GetComponent<MapComponent_Gravity>();
             AbilityDef def = GojoKitDefOf.AG_GojoHollowPurple;
-            var props = GojoKit.Props<CompProperties_GojoHollowPurple>(def);
-            if (gravity == null || props == null) return false;
-            foreach (GravityCast blue in gravity.Casts)
+            var props = watch.purple;
+            if (!watch.purpleReady || props == null) return false;
+            foreach (GravityCast blue in watch.blues)
             {
-                if (blue.caster != shot.caster || blue.def != GojoKitDefOf.AG_GojoBlue || !blue.Field) continue;
+                if (!blue.Field) continue;
                 Vector2 centre = GojoKit.Ground(blue.Centre);
                 if ((centre - at).magnitude > props.blueRadius) continue;
+                // Ready was worked out this tick; asked again once here, where the charge is taken.
                 if (!PurpleReady(shot.caster, def, out Ability purple, out float cost)) return false;
                 if (cost > 0f && !GameComponent_Echoes.Get.TrySpend(cost)) return false;
                 purple.StartCooldown(def.cooldownTicksRange.RandomInRange);
@@ -105,21 +144,12 @@ namespace RimArt
         /// While Hollow Purple is ready, Red flies through what is inside the pull of an active Blue that Gojo cast, so the
         /// pawns Blue has caught do not stop it short of the centre (the user's rule, 2026-09-30). Walls still stop it.
         /// </summary>
-        public bool PassesThroughBlue(RedShot shot, Vector2 at)
+        public static bool PassesThroughBlue(in BlueWatch watch, Vector2 at)
         {
-            MapComponent_Gravity gravity = map.GetComponent<MapComponent_Gravity>();
-            if (gravity == null) return false;
-            bool inPull = false;
-            foreach (GravityCast blue in gravity.Casts)
-            {
-                if (blue.caster != shot.caster || blue.def != GojoKitDefOf.AG_GojoBlue || !blue.Field) continue;
-                if ((GojoKit.Ground(blue.Centre) - at).magnitude <= blue.Radius)
-                {
-                    inPull = true;
-                    break;
-                }
-            }
-            return inPull && PurpleReady(shot.caster, GojoKitDefOf.AG_GojoHollowPurple, out _, out _);
+            if (!watch.purpleReady) return false;
+            foreach (GravityCast blue in watch.blues)
+                if (blue.Field && (GojoKit.Ground(blue.Centre) - at).magnitude <= blue.Radius) return true;
+            return false;
         }
 
         /// <summary>Gojo has Hollow Purple, it is off cooldown and the Echo pool (when he is a manifested Host) can pay it.</summary>
@@ -136,6 +166,7 @@ namespace RimArt
 
         public void ResetForTests()
         {
+            foreach (RedShot shot in reds) shot.PutDownItems(map);
             reds.Clear();
             purples.Clear();
         }
@@ -145,7 +176,11 @@ namespace RimArt
             if (reds.Count == 0 && purples.Count == 0) return;
             int now = Find.TickManager.TicksGame;
             for (int i = reds.Count - 1; i >= 0; i--)
-                if (i < reds.Count && !reds[i].Tick(this, now)) reds.RemoveAt(i);
+                if (i < reds.Count && !reds[i].Tick(this, now))
+                {
+                    reds[i].PutDownItems(map);
+                    reds.RemoveAt(i);
+                }
             for (int i = purples.Count - 1; i >= 0; i--)
                 if (!purples[i].Tick(map, now)) purples.RemoveAt(i);
         }
@@ -174,8 +209,9 @@ namespace RimArt
             {
                 reds ??= new List<RedShot>();
                 purples ??= new List<PurpleRun>();
-                // A shot that had not fired has no job left to fire it.
-                reds.RemoveAll(r => r == null || r.caster == null || !r.Fired);
+                // A shot that had not fired has no job left to fire it. A fired one is kept even if its Gojo did not
+                // load: it may be carrying an item off the map, which it puts down when it lands.
+                reds.RemoveAll(r => r == null || !r.Fired);
                 purples.RemoveAll(p => p == null);
             }
         }

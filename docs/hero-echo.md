@@ -446,28 +446,35 @@ Gojo, built 2026-09-30 (the port; Echo `AG_Echo_Gojo.xml`, abilities `AG_Gojo_Ab
 `AG_Gojo_Void.xml`, code in `Source/RimArt/Gojo/Kit` and `Source/RimArt/Gojo/Echo`, tests
 `-rimarttest=Gojo`; numbers are XML fields). Choices made in the port, beyond the rules above:
 - Echo: the downed Trial counts hours (`Trial_Record` shows a time record in hours; `count` 24).
+  Vanilla cannot add to a time record, so the debug "meet candidate's trials" sets it (`Trial_Record.Meet`).
   Infinity keeps its def (`AG_Recursion`) and is relabelled Infinity; the phase barrier implant grants
-  nothing and is no longer a reward. The Strongest counts humanlike pawns of Gojo's own faction.
+  nothing and is no longer a reward (the debug kit no longer lists it). The Strongest counts humanlike
+  pawns of Gojo's own faction.
 - Blue runs on the Gravity Well code with XML switches (Gravity Well itself is unchanged):
   `holdsCaster` false (no clip, Gojo stays free and can cast Red, no Implode or Cancel button; the well
   stays while Gojo is alive, on the map and has the ability), `bendsBullets` false (rounds are neither
   bent nor eaten), `openingSeconds` 0.45, `look` GojoBlue. Core 1 cell, implosion radius 2, full 25 at a
   mass of 120 (two people), no core damage; items and corpses in the core are crushed. Its button is
   disabled while it is open; the cooldown counts from when it closes. Only a Blue already pulling counts
-  for the combo, not one still opening.
+  for the combo, not one still opening. Blue and Gravity Well each have their own cooldown and their own
+  one-at-a-time rule (a Host with an attraction eye has both). Blue does not open if Gojo is downed,
+  stunned or in a mental state when the cell is picked.
 - Red: warm-up 0.6 s (the picture's arm and charge); Gojo stands with his arm out until 0.7 s after the
   burst. The target cell is fixed at the fire. It hits any pawn but Gojo (downed ones too) or loose thing
   (a haulable item or a corpse) in a cell its line enters; a wall is any cell a shot cannot pass (walls,
   rock, closed doors). Thrown 6 cells whatever the body size; pawns fly in Accelerator's
   `AG_VectorThrown` flyer and take the damage on landing; items and corpses take none. Only a wall, rock
   or closed door gives the +10. The push needs a clear line from the burst. Pawns pinned or pulled by
-  Pain's kit are not moved but still stop Red.
+  Pain's kit are not moved but still stop Red. A thrown item is off the map while it flies; if nothing
+  near its landing cell takes it, it is put on the cell itself, and a shot dropped early puts its items
+  down at once.
 - Hollow Purple: while Purple is ready, Red flies through anything inside an active Blue's 4-cell pull,
-  so the pawns Blue has caught do not stop it (the user's choice, 2026-09-30); walls still stop it.
+  so the pawns Blue has caught do not stop it (the user's choice, 2026-09-30); walls still stop it, and
+  are checked first, so Purple never forms through a wall beside Blue's centre.
   Purple is an AbilityDef that holds the 1-day cooldown and cannot be cast from its button; the combo
   pays its 20. Merge 0.35 s, growth 0.3 s, then travel. Erased pawns drop nothing (carried items, apparel,
-  weapon and inventory destroyed, corpse destroyed); a carried pawn is dropped first and met by the
-  sphere. Erasure damage (`AG_Erasure`) has no armour category and no blood; destroyed parts are not
+  weapon and inventory destroyed, corpse destroyed) and their race's death action does not run (a
+  boomalope does not explode); a carried pawn is dropped first and met by the sphere. Erasure damage (`AG_Erasure`) has no armour category and no blood; destroyed parts are not
   fresh, so they neither bleed nor hurt. Vanilla's colonist instant-kill protection still applies.
   Multi-cell buildings vanish whole if one cell is touched. Temporary water stays; other temporary
   terrain is removed; impassable ground and space stay. Erased ground: vanilla smooth stone texture
@@ -481,7 +488,10 @@ Gojo, built 2026-09-30 (the port; Echo `AG_Echo_Gojo.xml`, abilities `AG_Gojo_Ab
   domain (any of the 8 cells round Gojo); a spared pawn stays frozen and only its overload stops. The
   overload stops building at the end tick; the consciousness cap starts once everyone is back home, so
   nobody falls over while frozen; the scar is given when the overload has gone. The collapse lasts 0.7 s,
-  then everyone returns to the matching home cell or the nearest free one. Goodwill: -15 once per
+  then everyone returns to the matching home cell or the nearest free one (with no map to return to,
+  everyone waits in the void until there is one). Pawns of a faction hostile to the colony that act
+  (mechanoids) get an assault lord inside; a pawn hostile only through a mental state gets none. A lord
+  that will not take a pawn back leaves it to the leave-the-map rule. Goodwill: -15 once per
   non-hostile faction per cast, only if one of its pawns came out unspared. It cannot be cast on a
   pocket map. The pocket map is 40 x 40 of void floor (walkable, nothing built), thick roof, no fog; the
   ball on the home map is drawn only, not an object. Not ported: the specks into frozen heads, the

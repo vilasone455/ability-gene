@@ -203,7 +203,8 @@ namespace RimArt
 
         /// <summary>
         /// Erased: its apparel, weapon, inventory and what it carries are destroyed (a carried pawn is put down, for
-        /// the sphere to meet on its own), then it is killed by Gojo with no leavings, and its corpse vanishes.
+        /// the sphere to meet on its own), then it is killed by Gojo with no leavings and no death action (no
+        /// boomalope blast), and its corpse vanishes.
         /// </summary>
         private void Erase(Pawn pawn)
         {
@@ -392,7 +393,10 @@ namespace RimArt
         }
     }
 
-    /// <summary>While Hollow Purple erases a pawn, its death leaves nothing: no blood, no debris, no killed-leavings.</summary>
+    /// <summary>
+    /// While Hollow Purple erases a pawn, its death leaves nothing: no blood, no debris, no killed-leavings, and
+    /// (<see cref="Patch_GojoErasureDeathAction"/>) no death action.
+    /// </summary>
     [HarmonyPatch(typeof(GenLeaving), nameof(GenLeaving.DoLeavingsFor), new[] { typeof(Thing), typeof(Map), typeof(DestroyMode),
         typeof(CellRect), typeof(Predicate<IntVec3>), typeof(List<Thing>) })]
     public static class Patch_GojoErasureLeavings
@@ -400,5 +404,21 @@ namespace RimArt
         public static bool suppress;
 
         public static bool Prefix() => !suppress;
+    }
+
+    /// <summary>
+    /// While Hollow Purple erases a pawn, its race's death action does not run: a boomalope or boomrat does not
+    /// explode, nothing leaves a toxic cloud, nothing splits. Pawn.Kill reads RaceProps.DeathActionWorker and
+    /// calls its PawnDied; during the erasure that worker is one that does nothing.
+    /// </summary>
+    [HarmonyPatch(typeof(RaceProperties), nameof(RaceProperties.DeathActionWorker), MethodType.Getter)]
+    public static class Patch_GojoErasureDeathAction
+    {
+        private static readonly DeathActionWorker Nothing = new DeathActionWorker_Simple();
+
+        public static void Postfix(ref DeathActionWorker __result)
+        {
+            if (Patch_GojoErasureLeavings.suppress) __result = Nothing;
+        }
     }
 }

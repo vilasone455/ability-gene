@@ -54,8 +54,8 @@ namespace RimArt
             Pawn pawn = ability.pawn;
             if (pawn.abilities.AllAbilitiesForReading.FirstOrDefault(a => a.def == ability.def) != ability) yield break;
             var props = CompProperties_AbilityGravityWell.For(ability.def);
-            var cast = MapComponent_Gravity.On(pawn)?.For(pawn);
-            int remaining = GameComponent_Gravity.Instance.Remaining(pawn);
+            var cast = MapComponent_Gravity.On(pawn)?.For(pawn, ability.def);
+            int remaining = GameComponent_Gravity.Instance.Remaining(pawn, ability.def);
             // A well that leaves its caster free runs its time out: no Implode, no Cancel.
             bool holds = props.holdsCaster, implode = holds && cast?.Field == true;
             var button = new Command_Action
@@ -98,7 +98,7 @@ namespace RimArt
         public override IEnumerable<Gizmo> CompGetGizmosExtra()
         {
             if (parent.pawn.abilities.AllAbilitiesForReading.FirstOrDefault(a => a.def == parent.def) != parent) yield break;
-            var cast = MapComponent_Gravity.On(parent.pawn)?.For(parent.pawn);
+            var cast = MapComponent_Gravity.On(parent.pawn)?.For(parent.pawn, parent.def);
             if (cast?.Active == true) yield return new Gizmo_Gravity(cast);
         }
     }

@@ -152,7 +152,7 @@ namespace RimArt
             if (clock.activated)
             {
                 cooldownUntil = Find.TickManager.TicksGame + Props.CooldownTicks;
-                GameComponent_Gravity.Instance.Commit(caster, Props.CooldownTicks);
+                GameComponent_Gravity.Instance.Commit(caster, def, Props.CooldownTicks);
                 // Gravity Well: the recovery clip's 0.5 s. A free caster has no clip: the look's own tail
                 // after an implosion, nothing after a well that closed without one.
                 tailTicks = Props.holdsCaster ? 30 : burst ? GojoBlueLook.TailTicks(Props) : 0;

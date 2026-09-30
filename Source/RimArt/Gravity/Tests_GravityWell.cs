@@ -244,7 +244,7 @@ namespace RimArt
             t.Check(Mathf.Approximately(cast.burstDamage, 30f) && Mathf.Approximately(cast.burstRadius, 2.5f), "30 damage in 2.5 cells");
             t.Check(insides.All(Hurt), "the pawns 2-2.24 cells out were hurt");
             t.Check(!outsides.Any(Hurt), "the pawns 3 cells out were not");
-            int cooldown = GameComponent_Gravity.Instance.Remaining(caster);
+            int cooldown = GameComponent_Gravity.Instance.Remaining(caster, Well);
             t.Check(cooldown == 2398, $"cooldown 40 s ({cooldown} ticks left 2 ticks later)");
             yield return 40;
         }
@@ -399,7 +399,7 @@ namespace RimArt
                 // Upkeep may have taken one 60-tick step (0.36) in the 10 ticks.
                 t.Check(echoes.charge > before - 0.4f && echoes.charge <= before + 0.001f,
                     $"cancelled while opening: the 20 came back ({before:0.###} before, {echoes.charge:0.###} after)");
-                t.Check(GameComponent_Gravity.Instance.Remaining(host) == 0, "and no cooldown");
+                t.Check(GameComponent_Gravity.Instance.Remaining(host, Well) == 0, "and no cooldown");
                 yield return 40;
                 EchoUtility.Revert(record, collapse: false);
             }

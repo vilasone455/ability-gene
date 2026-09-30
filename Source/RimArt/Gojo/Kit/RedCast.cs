@@ -168,9 +168,10 @@ namespace RimArt
     /// Gojo's point, and flies straight at the target cell at <c>speed</c>. Each tick its path is walked in 0.1-cell
     /// steps; the first of these ends it:
     /// <list type="bullet">
+    /// <item>a cell no shot can pass over (a wall, rock, a closed door): it bursts there, nothing thrown. Checked
+    /// first, so Purple never forms through a wall that stands beside Blue.</item>
     /// <item>within Hollow Purple's <c>blueRadius</c> of the centre of an active Blue that Gojo cast, while Purple is
     /// ready and paid for: both are used up and <see cref="PurpleRun"/> starts (no burst). Not ready: Red passes on.</item>
-    /// <item>a cell no shot can pass over (a wall, rock, a closed door): it bursts there, nothing thrown.</item>
     /// <item>a cell holding a pawn (not Gojo) or a loose thing: it bursts at that thing (the one furthest back along
     /// the line, a pawn before a thing), which is thrown. Not inside an active Blue's pull while Purple is ready: there
     /// Red flies through (<see cref="MapComponent_GojoKit.PassesThroughBlue"/>).</item>
@@ -258,7 +259,7 @@ namespace RimArt
             Map map = kit.map;
             if (!Fired)
             {
-                Plan(kit, AimOrigin, AimDir(AimOrigin), 0f, GojoKit.Ground(target) - AimOrigin);
+                Plan(kit, kit.Watch(caster), AimOrigin, AimDir(AimOrigin), 0f, GojoKit.Ground(target) - AimOrigin);
                 // The cast job drops a shot whose warmup was called off; this is only a guard.
                 return now - startTick < 600;
             }
@@ -266,8 +267,9 @@ namespace RimArt
             if (used) return Holds(now);
             if (!Burst)
             {
-                Fly(kit, now);
-                if (!Burst && !used) Plan(kit, origin, dir, along, GojoKit.Ground(target) - origin);
+                MapComponent_GojoKit.BlueWatch watch = kit.Watch(caster);
+                Fly(kit, watch, now);
+                if (!Burst && !used) Plan(kit, watch, origin, dir, along, GojoKit.Ground(target) - origin);
             }
             if (!Burst) return true;
             TickMoves(map, now);
@@ -284,7 +286,7 @@ namespace RimArt
 
         // ---- flight ---------------------------------------------------------------------------------------------------
 
-        private void Fly(MapComponent_GojoKit kit, int now)
+        private void Fly(MapComponent_GojoKit kit, in MapComponent_GojoKit.BlueWatch watch, int now)
         {
             Map map = kit.map;
             float next = Mathf.Min(targetDist, R.Tip + (now - fireTick) / 60f * speed);
@@ -293,9 +295,9 @@ namespace RimArt
             while (true)
             {
                 Vector2 p = origin + dir * a;
-                if (kit.TryHollowPurple(this, p, a, now)) return;
                 IntVec3 c = GojoKit.Cell(p);
-                if (c != lastCell)
+                bool entered = c != lastCell;
+                if (entered)
                 {
                     lastCell = c;
                     if (!c.InBounds(map))
@@ -303,14 +305,19 @@ namespace RimArt
                         BurstAt(map, a, null, false, now);
                         return;
                     }
+                    // A wall stops Red before Blue can take it: Purple never forms through a wall beside Blue.
                     if (GojoKit.Wall(c, map))
                     {
                         // Just short of the face, so the burst point stays in the open cell.
                         BurstAt(map, Mathf.Max(0f, a - 0.1f), null, true, now);
                         return;
                     }
+                }
+                if (kit.TryHollowPurple(this, p, now, watch)) return;
+                if (entered)
+                {
                     float at = a;
-                    Thing first = kit.PassesThroughBlue(this, p) ? null : First(c, map, a, out at);
+                    Thing first = MapComponent_GojoKit.PassesThroughBlue(watch, p) ? null : First(c, map, a, out at);
                     if (first != null)
                     {
                         BurstAt(map, at, first, false, now);
@@ -355,7 +362,7 @@ namespace RimArt
         /// The picture's guess at the burst: the same walk as the flight from where Red is to the target, flying through
         /// Blue's pull as the flight does but not stopping at Blue itself.
         /// </summary>
-        private void Plan(MapComponent_GojoKit kit, Vector2 from, Vector2 way, float start, Vector2 toTarget)
+        private void Plan(MapComponent_GojoKit kit, in MapComponent_GojoKit.BlueWatch watch, Vector2 from, Vector2 way, float start, Vector2 toTarget)
         {
             Map map = kit.map;
             float end = toTarget.magnitude;
@@ -369,7 +376,7 @@ namespace RimArt
                 seen = c;
                 if (!c.InBounds(map)) { plannedDist = a; return; }
                 if (GojoKit.Wall(c, map)) { plannedDist = Mathf.Max(0f, a - 0.1f); return; }
-                if (kit.PassesThroughBlue(this, from + way * a)) continue;
+                if (MapComponent_GojoKit.PassesThroughBlue(watch, from + way * a)) continue;
                 List<Thing> things = c.GetThingList(map);
                 for (int i = 0; i < things.Count; i++)
                     if ((things[i] is Pawn p && p != caster && !p.Dead) || GojoKit.Loose(things[i]))
@@ -476,10 +483,28 @@ namespace RimArt
                 pawn.TakeDamage(new DamageInfo(DamageDefOf.Blunt, move.damage, 0f, GojoKit.Angle(move.way), caster));
                 return;
             }
+            PutDown(map, move);
+        }
+
+        /// <summary>Puts down at once every item still in flight, for a shot being dropped early: none is left off the map.</summary>
+        public void PutDownItems(Map map)
+        {
+            if (hit != null) PutDown(map, hit);
+            for (int i = 0; i < pushed.Count; i++) PutDown(map, pushed[i]);
+        }
+
+        /// <summary>
+        /// An item's landing: near its cell, or on the cell itself when nothing near will take it. The item is off
+        /// the map while it flies, so failing to place it would lose it.
+        /// </summary>
+        private static void PutDown(Map map, RedMove move)
+        {
             move.landed = true;
             Thing item = move.item;
             move.item = null;
-            if (item != null && !item.Destroyed) GenPlace.TryPlaceThing(item, move.land, map, ThingPlaceMode.Near);
+            if (item == null || item.Destroyed || item.Spawned) return;
+            if (!GenPlace.TryPlaceThing(item, move.land, map, ThingPlaceMode.Near))
+                GenSpawn.Spawn(item, move.land, map, WipeMode.VanishOrMoveAside);
         }
 
         /// <summary>Where a moving item is drawn: the picture's decelerating throw, or its push.</summary>

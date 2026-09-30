@@ -6,6 +6,7 @@ using UnityEngine;
 using Verse;
 using Verse.AI;
 using Verse.AI.Group;
+using static RimArt.CrossMapMove;
 using Open = RimArt.UnlimitedVoidOpenTiming;
 using Inside = RimArt.UnlimitedVoidInsideTiming;
 
@@ -92,6 +93,8 @@ namespace RimArt
         private bool shookOpen, shookBurst;
         /// <summary>The camera came home from the void's full white at the return, so the home map starts white too.</summary>
         private bool whiteHome;
+        /// <summary>The return found no map to go to and is waiting for one (said once). Not saved.</summary>
+        private bool waitingForMap;
 
         /// <summary>The frozen pawns' stun, renewed every tick (never StopStun, which would end other stuns).</summary>
         private const int StunRenew = 5;
@@ -286,14 +289,21 @@ namespace RimArt
 
         private void Return(int now)
         {
-            returnTick = now;
-            if (pocket == null || !Find.Maps.Contains(pocket)) return;
+            if (pocket == null || !Find.Maps.Contains(pocket))
+            {
+                returnTick = now;
+                return;
+            }
             Map to = home != null && Find.Maps.Contains(home) ? home : Find.AnyPlayerHomeMap;
             if (to == null)
             {
-                Messages.Message("Unlimited Void: there is no map to return to; the domain stays.", MessageTypeDefOf.NegativeEvent, false);
+                // The domain stays collapsed (white) with everyone in it; the cast asks again every tick, so they come
+                // out as soon as the colony has a map again, and the void is never left with no cast to close it.
+                if (!waitingForMap) Messages.Message("Unlimited Void: there is no map to return to; everyone waits in the void.", MessageTypeDefOf.NegativeEvent, false);
+                waitingForMap = true;
                 return;
             }
+            returnTick = now;
             IntVec3 anchor = to == home ? centre : to.Center, middle = Middle;
             bool watching = Find.CurrentMap == pocket;
             var selected = new HashSet<Pawn>(Find.Selector.SelectedPawns);
@@ -315,7 +325,8 @@ namespace RimArt
                 p.GetLord()?.RemovePawn(p);
                 Move(p, FreeCellNear(to, Matching(p.Position)), to);
                 moved.Add(p);
-                if (t.lord != null && to.lordManager.lords.Contains(t.lord)) t.lord.AddPawn(p);
+                // A lord whose toil now refuses new pawns would log an error and leave the pawn with no lord at all.
+                if (t.lord != null && to.lordManager.lords.Contains(t.lord) && t.lord.CanAddPawn(p)) t.lord.AddPawn(p);
                 else if (p.Faction != null && p.HostileTo(Faction.OfPlayer)) hostile.Add(p);
                 else if (t.lord != null && p.Faction != null && p.Faction != Faction.OfPlayer) leaving.Add(p);
             }
@@ -376,41 +387,7 @@ namespace RimArt
                 Faction.OfPlayer.TryAffectGoodwillWith(faction, change, true, true, HistoryEventDefOf.UsedHarmfulAbility);
         }
 
-        // ---- moving pawns (as UbwCast) ------------------------------------------------------------------------------
-
-        /// <summary>Takes a pawn off its map and puts it on another, keeping it drafted if it was.</summary>
-        private static void Move(Pawn p, IntVec3 cell, Map to)
-        {
-            bool drafted = p.Drafted;
-            Rot4 facing = p.Rotation;
-            p.DeSpawnOrDeselect();
-            GenSpawn.Spawn(p, cell, to, facing);
-            p.Notify_Teleported(true, true);
-            if (drafted && p.drafter != null && !p.Downed) p.drafter.Drafted = true;
-        }
-
-        private static IntVec3 ClampInside(Map map, IntVec3 want) =>
-            new IntVec3(Mathf.Clamp(want.x, 1, map.Size.x - 2), 0, Mathf.Clamp(want.z, 1, map.Size.z - 2));
-
-        /// <summary>The nearest cell to <paramref name="want"/> a pawn can stand on with no other pawn on it.</summary>
-        private static IntVec3 FreeCellNear(Map map, IntVec3 want)
-        {
-            want = ClampInside(map, want);
-            int cells = GenRadial.NumCellsInRadius(8f);
-            for (int i = 0; i < cells; i++)
-            {
-                IntVec3 c = want + GenRadial.RadialPattern[i];
-                if (c.InBounds(map) && c.Standable(map) && c.GetFirstPawn(map) == null) return c;
-            }
-            return CellFinder.StandableCellNear(want, map, 20f);
-        }
-
-        /// <summary>Hostile pawns that act (the unfrozen) fight on: an assault lord for each faction, no fleeing, no kidnapping.</summary>
-        private static void Assault(List<Pawn> pawns, Map map)
-        {
-            foreach (IGrouping<Faction, Pawn> group in pawns.GroupBy(p => p.Faction))
-                LordMaker.MakeNewLord(group.Key, new LordJob_AssaultColony(group.Key, false, false, false, false, false), map, group);
-        }
+        // Moving pawns: Move, ClampInside, FreeCellNear and Assault are CrossMapMove's (Source/RimArt/Shared).
 
         // ---- the clock --------------------------------------------------------------------------------------------
 

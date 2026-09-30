@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Reflection;
+using HarmonyLib;
 using RimWorld;
 using Verse;
 
@@ -86,6 +88,24 @@ namespace RimArt
         public override string ProgressText(Pawn pawn) => InHours
             ? "AG_EchoTrialHoursProgress".Translate(Current(pawn).ToString("0.#"), count.ToString("0")).ToString()
             : base.ProgressText(pawn);
+
+        private static readonly FieldInfo RecordsField = AccessTools.Field(typeof(Pawn_RecordsTracker), "records");
+
+        /// <summary>
+        /// Debug and tests: raises the pawn's record to what this trial asks. Vanilla only adds to Int and Float
+        /// records (Pawn_RecordsTracker.AddTo logs an error for a time record and adds nothing), so a time
+        /// record is set, in ticks.
+        /// </summary>
+        public void Meet(Pawn pawn)
+        {
+            if (pawn?.records == null || Current(pawn) >= count) return;
+            if (!InHours)
+            {
+                pawn.records.AddTo(record, count - Current(pawn));
+                return;
+            }
+            ((DefMap<RecordDef, float>)RecordsField.GetValue(pawn.records))[record] = count * GenDate.TicksPerHour;
+        }
 
         public override IEnumerable<string> ConfigErrors()
         {

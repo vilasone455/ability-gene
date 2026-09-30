@@ -158,7 +158,7 @@ namespace RimArt
             t.Check(cast.burstHit.Contains(raider) && cast.burstHit.Contains(ally), "the raider and the ally took it");
             t.Check(Untouched(far) && far.Position == farCell, "the raider 6 cells out was neither pulled nor hurt (" + Where(far, c) + ")");
             t.Check(Untouched(gojo) && gojo.Position == gojoCell, "Gojo was never pulled or hurt");
-            int cooldown = GameComponent_Gravity.Instance.Remaining(gojo);
+            int cooldown = GameComponent_Gravity.Instance.Remaining(gojo, Blue);
             t.Check(cooldown > 1150 && cooldown <= 1200, "the cooldown runs 20 s from the close (" + cooldown + " ticks)");
             yield return t.ShotAs("blue-implosion", c, 8f);
         }
@@ -370,7 +370,7 @@ namespace RimArt
             if (!t.Check(run != null, "Red met Blue and made Hollow Purple")) { Restore(); yield break; }
             t.Check(shot == null || (shot.used && !shot.Burst), "Red was used up with no burst");
             t.Check(!blue.Active && !blue.clock.imploded, "Blue closed at once without imploding");
-            t.Check(GameComponent_Gravity.Instance.Remaining(gojo) > 0, "Blue's cooldown started");
+            t.Check(GameComponent_Gravity.Instance.Remaining(gojo, Blue) > 0, "Blue's cooldown started");
             t.Check(purple.CooldownTicksRemaining > 59000, "Purple's cooldown started (" + purple.CooldownTicksRemaining + " ticks)");
             t.Check(red.CooldownTicksRemaining > 0, "Red's cooldown runs");
             t.Check((run.start - Flat(blue.Centre)).magnitude < 0.01f && Vector2.Dot(run.dir, Vector2.right) > 0.999f,
