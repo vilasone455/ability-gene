@@ -366,8 +366,10 @@ namespace RimArt
         public float maxPower = 60f;
         public float radiusBase = 2f;
         public float radiusPerPower = 0.15f;
-        public float damageBase = 20f;
-        public float damagePerPower = 6f;
+        /// <summary>Each hostile pawn under the dome takes hits hits of damageBase + damagePerPower x power (5 x 76 = 380 at 60 power).</summary>
+        public int hits = 5;
+        public float damageBase = 4f;
+        public float damagePerPower = 1.2f;
         public DamageDef damageDef;
         public float armorPenetration = 0f;
         public float flySeconds = 1.4f;

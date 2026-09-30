@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -77,7 +78,7 @@ namespace RimArt
 
             t.Check(cast.CanThrow(t.Now), "Throw is allowed after 3 s");
             float radius = cast.RadiusNow(t.Now);
-            t.Log("throwing at power " + cast.PowerNow(t.Now).ToString("0.0") + ", radius " + radius.ToString("0.00") + ", damage " + cast.DamageNow(t.Now).ToString("0"));
+            t.Log("throwing at power " + cast.PowerNow(t.Now).ToString("0.0") + ", radius " + radius.ToString("0.00") + ", 5 hits of " + cast.HitDamageNow(t.Now).ToString("0.0"));
             cast.throwOrdered = true;
             foreach (int w in WaitFor(() => cast.Thrown, 30, 1)) yield return w;
             if (!t.Check(cast.Thrown, "thrown")) { EndHost(record); yield break; }
@@ -88,6 +89,11 @@ namespace RimArt
             yield return 300;
             t.Log(RimArtTestContext.Describe(e1) + " | " + RimArtTestContext.Describe(e2) + " | " + RimArtTestContext.Describe(far));
             t.Check(t.Hurt(e1) && t.Hurt(e2), "the two hostiles under the dome were hit");
+            foreach (Pawn e in new[] { e1, e2 })
+                t.Log(e.LabelShort + ": " + cast.HitsOn(e) + " hits, " + e.health.hediffSet.hediffs.Count(h => h is Hediff_Injury) + " injuries, "
+                      + (e.Dead ? "dead" : "health " + e.health.summaryHealth.SummaryHealthPercent.ToStringPercent()));
+            t.Check((cast.HitsOn(e1) == 5 || e1.Dead) && (cast.HitsOn(e2) == 5 || e2.Dead), "each took 5 hits, or died on the way (" + cast.HitsOn(e1) + ", " + cast.HitsOn(e2) + ")");
+            t.Check(cast.HitsOn(far) == 0, "the hostile outside the radius took none");
             t.Check(t.Untouched(ally), "the ally under the dome was not (" + RimArtTestContext.Describe(ally) + ")");
             t.Check(!wall.Destroyed && wall.HitPoints == wall.MaxHitPoints, "the wall under the dome was not");
             t.Check(t.Untouched(far), "the hostile 6 cells from the centre was not");
@@ -145,8 +151,8 @@ namespace RimArt
             yield return 60;
             t.Check(Mathf.Abs(GokuLifeEnergy.Rest(host) - hostRest) < 0.005f, "Goku pays no Rest while it is full (" + hostRest.ToString("0.000") + " -> " + GokuLifeEnergy.Rest(host).ToString("0.000") + ")");
             t.Check(cast.power <= 60f, "and it stays at 60");
-            t.Check(Mathf.Abs(cast.RadiusNow(t.Now) - 11f) < 0.01f && Mathf.Abs(cast.DamageNow(t.Now) - 380f) < 0.5f,
-                "a full ball: radius 11, damage 380 (" + cast.RadiusNow(t.Now).ToString("0.00") + ", " + cast.DamageNow(t.Now).ToString("0") + ")");
+            t.Check(Mathf.Abs(cast.RadiusNow(t.Now) - 11f) < 0.01f && Mathf.Abs(cast.HitDamageNow(t.Now) - 76f) < 0.1f,
+                "a full ball: radius 11, 5 hits of 76 (" + cast.RadiusNow(t.Now).ToString("0.00") + ", " + cast.HitDamageNow(t.Now).ToString("0.0") + ")");
             cast.Cancel(false);
             EndHost(record);
         }

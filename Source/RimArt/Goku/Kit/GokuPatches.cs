@@ -123,7 +123,8 @@ namespace RimArt
             {
                 defaultLabel = "Throw (power " + cast.PowerNow(now).ToString("0") + "/" + props.maxPower.ToString("0") + ", radius " + cast.RadiusNow(now).ToString("0.0") + ")",
                 defaultDesc = "Throw the bomb at the target area now. It lands in " + props.flySeconds.ToString("0.0") + " s and deals "
-                              + cast.DamageNow(now).ToString("0") + " to every hostile pawn within " + cast.RadiusNow(now).ToString("0.0") + " cells.\n\n"
+                              + props.hits + " hits of " + cast.HitDamageNow(now).ToString("0") + " (" + (props.hits * cast.HitDamageNow(now)).ToString("0")
+                              + " in all) to every hostile pawn within " + cast.RadiusNow(now).ToString("0.0") + " cells.\n\n"
                               + (cast.Full ? "The ball is full." : "Growing " + cast.rateNow.ToString("0.00") + " power per second; " + cast.LenderCount + " lending.")
                               + "\nGoku gives " + SpiritBombCast.RateOf(cast.caster, true).ToString("0.00") + " per second (health x Rest, Rest "
                               + GokuLifeEnergy.Rest(cast.caster).ToStringPercent() + "; nothing below " + props.stopRest.ToStringPercent() + ").",

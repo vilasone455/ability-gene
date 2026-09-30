@@ -20,9 +20,10 @@ namespace RimArt
     ///   ball holds at most maxPower; when it is full the lenders stop and no more Rest is spent.
     ///   From full Rest one pawn gives about 23 power over 36 s. Each lender's stints are kept for
     ///   the picture, which draws a ribbon from each while it lends.
-    /// - The throw: the ball flies flySeconds and detonates. Radius radiusBase + radiusPerPower x power;
-    ///   damage damageBase + damagePerPower x power to every hostile pawn in the radius when the dome's
-    ///   front reaches it; nothing else is hurt.
+    /// - The throw: the ball flies flySeconds and detonates. Radius radiusBase + radiusPerPower x power.
+    ///   Every hostile pawn in the radius takes hits hits of damageBase + damagePerPower x power, the
+    ///   first when the dome's front reaches it and the rest evenly until the burst, each on a body
+    ///   part the game picks; nothing else is hurt.
     /// </summary>
     public sealed class SpiritBombCast : GokuCast
     {
@@ -40,7 +41,11 @@ namespace RimArt
         private List<Pawn> stintPawns = new List<Pawn>();
         private List<float> joinAt = new List<float>();
         private List<float> leaveAt = new List<float>();
-        private readonly List<Pawn> struckPawns = new List<Pawn>();
+        // Hostile pawns under the dome: who, when the front reached it on the plan's clock (Never once it
+        // takes no more hits), and how many hits have landed.
+        private List<Pawn> struckPawns = new List<Pawn>();
+        private List<float> struckAt = new List<float>();
+        private List<int> hitsLanded = new List<int>();
         private readonly List<Pawn> sparedPawns = new List<Pawn>();
         private Vector2[] lenderPos = new Vector2[0];
         private Vector2[] sparedPos = new Vector2[0];
@@ -67,7 +72,14 @@ namespace RimArt
         /// <summary>The power now, or at the throw once thrown.</summary>
         public float PowerNow(int now) => power;
         public float RadiusNow(int now) => P.radiusBase + P.radiusPerPower * PowerNow(now);
-        public float DamageNow(int now) => P.damageBase + P.damagePerPower * PowerNow(now);
+        /// <summary>The damage of one of the hits each hostile under the dome takes.</summary>
+        public float HitDamageNow(int now) => P.damageBase + P.damagePerPower * PowerNow(now);
+        /// <summary>How many hits have landed on <paramref name="pawn"/> under the dome.</summary>
+        public int HitsOn(Pawn pawn)
+        {
+            int i = struckPawns.IndexOf(pawn);
+            return i < 0 ? 0 : hitsLanded[i];
+        }
         public int LenderCount { get { int n = 0; for (int i = 0; i < leaveAt.Count; i++) if (leaveAt[i] < 0f) n++; return n; } }
 
         public SpiritBombCast() { }
@@ -184,6 +196,8 @@ namespace RimArt
             for (int i = 0; i < leaveAt.Count; i++) if (leaveAt[i] < 0f) leaveAt[i] = s;
             Rebuild();
             struckPawns.Clear();
+            struckAt.Clear();
+            hitsLanded.Clear();
             Walls();
             Spared(now);
             shakes = new List<GokuShake>();
@@ -224,26 +238,49 @@ namespace RimArt
 
         private static readonly List<Pawn> under = new List<Pawn>();
 
-        /// <summary>The damage: each hostile pawn under the dome takes it when the front reaches it.</summary>
+        /// <summary>
+        /// The damage. A hostile pawn joins when the dome's front reaches it; its hits land from then
+        /// to the burst, evenly spaced. A pawn that dies, leaves the map or leaves the radius takes no
+        /// more.
+        /// </summary>
         private void TickDome(float s)
         {
-            if (s < plan.Dome || s >= plan.Burst) return;
+            if (s < plan.Dome) return;
             float radius = Radius, damage = P.damageBase + P.damagePerPower * power;
-            under.Clear();
-            IReadOnlyList<Pawn> pawns = home.mapPawns.AllPawnsSpawned;
-            for (int i = 0; i < pawns.Count; i++)
+            if (s < plan.Burst)
             {
-                Pawn pawn = pawns[i];
-                if (pawn == caster || pawn.Dead || struckPawns.Contains(pawn) || !pawn.HostileTo(caster)) continue;
-                float d = pawn.Position.DistanceTo(target);
-                if (d <= radius && s >= plan.Passes(d)) under.Add(pawn);
+                under.Clear();
+                IReadOnlyList<Pawn> pawns = home.mapPawns.AllPawnsSpawned;
+                for (int i = 0; i < pawns.Count; i++)
+                {
+                    Pawn pawn = pawns[i];
+                    if (pawn == caster || pawn.Dead || struckPawns.Contains(pawn) || !pawn.HostileTo(caster)) continue;
+                    float d = pawn.Position.DistanceTo(target);
+                    if (d <= radius && s >= plan.Passes(d)) under.Add(pawn);
+                }
+                for (int i = 0; i < under.Count; i++)
+                {
+                    struckPawns.Add(under[i]);
+                    struckAt.Add(Mathf.Min(s, plan.Passes(under[i].Position.DistanceTo(target))));
+                    hitsLanded.Add(0);
+                }
+                under.Clear();
             }
-            for (int i = 0; i < under.Count; i++)
+            for (int i = 0; i < struckPawns.Count; i++)
             {
-                struckPawns.Add(under[i]);
-                under[i].TakeDamage(new DamageInfo(P.DamageDef, damage, P.armorPenetration, -1f, caster));
+                Pawn pawn = struckPawns[i];
+                float between = (plan.Burst - struckAt[i]) / Mathf.Max(1, P.hits);
+                while (hitsLanded[i] < P.hits && s >= struckAt[i] + hitsLanded[i] * between)
+                {
+                    if (pawn == null || pawn.Dead || !pawn.Spawned || pawn.Map != home || pawn.Position.DistanceTo(target) > radius)
+                    {
+                        struckAt[i] = T.Never;
+                        break;
+                    }
+                    hitsLanded[i]++;
+                    pawn.TakeDamage(new DamageInfo(P.DamageDef, damage, P.armorPenetration, -1f, caster));
+                }
             }
-            under.Clear();
         }
 
         // ---- the clock --------------------------------------------------------------------------------------------
@@ -323,11 +360,22 @@ namespace RimArt
             Scribe_Collections.Look(ref stintPawns, "stintPawns", LookMode.Reference);
             Scribe_Collections.Look(ref joinAt, "joinAt", LookMode.Value);
             Scribe_Collections.Look(ref leaveAt, "leaveAt", LookMode.Value);
+            Scribe_Collections.Look(ref struckPawns, "struckPawns", LookMode.Reference);
+            Scribe_Collections.Look(ref struckAt, "struckAt", LookMode.Value);
+            Scribe_Collections.Look(ref hitsLanded, "hitsLanded", LookMode.Value);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 if (stintPawns == null) stintPawns = new List<Pawn>();
                 if (joinAt == null) joinAt = new List<float>();
                 if (leaveAt == null) leaveAt = new List<float>();
+                if (struckPawns == null) struckPawns = new List<Pawn>();
+                if (struckAt == null) struckAt = new List<float>();
+                if (hitsLanded == null) hitsLanded = new List<int>();
+                // A struck pawn gone from the save loads as null and takes no more hits (TickDome); the three lists are kept the same length.
+                int struck = Mathf.Min(struckPawns.Count, Mathf.Min(struckAt.Count, hitsLanded.Count));
+                while (struckPawns.Count > struck) struckPawns.RemoveAt(struckPawns.Count - 1);
+                while (struckAt.Count > struck) struckAt.RemoveAt(struckAt.Count - 1);
+                while (hitsLanded.Count > struck) hitsLanded.RemoveAt(hitsLanded.Count - 1);
                 // A stint whose pawn is gone keeps its power but has no one to draw a ribbon from.
                 for (int i = stintPawns.Count - 1; i >= 0; i--)
                     if (stintPawns[i] == null) { stintPawns.RemoveAt(i); joinAt.RemoveAt(i); leaveAt.RemoveAt(i); }
