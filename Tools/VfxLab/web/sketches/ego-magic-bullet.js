@@ -27,7 +27,7 @@
 //          circle. The rifle kicks up about 30 degrees, held one-handed.
 //   Hit:   a yellow spiked stagger burst at the chest, an orange lightning bolt beside it, orange
 //          fire. The brackets and slab thin to tan oval outlines and stay a second.
-//   Count 4-6: two or more circles stacked along the aim, each bigger than the last, the beam
+//   Count 4-6: two or more circles stacked along the aim .48 cells apart, each 18 % bigger, the beam
 //          wider and blue-violet.
 //   The seventh: a cyan-white beam several times wider with a wide pale halo, a cyan burst at the
 //          circle, bigger forks, and orange streak lines flying on past the target.
@@ -59,8 +59,13 @@
 // Drawing: the bullet flies level at chest height (lib/pawn.js chest = .05 north of the cell centre),
 // so the beam is the ground line lifted north by that: every part of it is a level line, quad or
 // sprite and needs no per-facing method. The magic circles are vertical gates in the source; a gate
-// facing the aim collapses to a line for east and west, so they are drawn as level rings at chest
-// height that the bullet passes through the centre of (the projection rule: prefer a level circle).
+// facing the aim collapses to a line for east and west. The "Circle" dropdown picks the treatment:
+// "faces the aim" (default) is the true gate, a circle across the aim and up, its top leaned back
+// toward the shooter by an angle solved per aim so the face on screen is always the same size:
+// about 2 degrees facing south, 40 facing east or west, 64 facing north; "faces the viewer"
+// is a circle in the (east, up) plane at every aim, a 1 : .6 ellipse with a fixed screen
+// orientation like Twin Maw's jaws; "lies flat" is a level ring. Up is drawn as .6 north. Standing
+// ones get a ground shadow along the sun, a lit top rim and a dark back rim .04 north for thickness.
 // The parchment brackets are tall and thin, so they get the projection's free axis: they stand in
 // the plane of (u, up) where u is the aim when the aim is more east-west than north-south, else the
 // across direction; up is drawn as .6 north. Facing east or west that is the source's side view;
@@ -80,6 +85,7 @@ import { walls, WallTop } from './lib/paper-bomb.js';
 
 const clamp = Mathf.Clamp01, smooth = Mathf.Smooth, D2R = Mathf.Deg2Rad, TAU = Math.PI * 2;
 const disc = Meshes.disc(32, 'magic bullet disc');
+const ring = Meshes.band(.965, 1, 64, 'magic bullet ring');   // drawn with sx != sz for the standing ellipse
 const flat = MaterialPool.MatFrom('white', ShaderDatabase.Transparent);   // strips have no uv: white texture only
 const bump = x => (x >= 0 && x <= 1) ? Math.sin(x * Math.PI) : 0;
 const dirOf = deg => ({ x: Math.cos(deg * D2R), z: Math.sin(deg * D2R) });
@@ -194,19 +200,42 @@ function chamberGlow(key, c, muzzle, head, u, s) {
 
 // One magic circle, as the frames draw it: a soft blue fill and glow, an outer double ring, a ring
 // of rune ticks, a hexagram, an inner ring and a centre sigil, all thin bright lines, spinning.
-// Level at chest height; r is its radius on screen, open 0..1 its growth, k a seed for the spin.
-function magicCircle(key, c, r, open, s, k) {
+// Every point of it is c + H * r cos(t) + V * r sin(t): H and V are the circle's two axes on
+// screen, so the same drawing serves a flat ring (H east, V north), a ring standing up and facing
+// the viewer (V = north * Lift) and a gate facing the aim (H across the aim, V up leaned back
+// toward the shooter for east and west, see gateAxes). Rings and the fill are strips built from
+// those points. A standing one gets a ground shadow along the sun (hTrue is the real across
+// direction), a dark back rim .04 north and a lit top rim.
+function magicCircle(key, c, r, open, s, k, H, V, hTrue, stands, sun, strength) {
   if (open <= 0) return;
-  const rr = r * open, a = Math.min(1, open * 1.5), spin = s * (k % 2 ? .9 : -.7) + k;
-  const on = (t, rad) => ({ x: c.x + Math.cos(t) * rad, z: c.z + Math.sin(t) * rad });
-  sprite(c, rr * 3.0, rr * 3.0, CircleDeep.withAlpha(.35 * a), glow, Y + .04);
-  sprite(c, rr * 2.1, rr * 2.1, Circle.withAlpha(.32 * a), soft, Y + .0401);   // the translucent fill
-  circle(c, rr, 1.0 * a, Y + .041, CircleBright);
-  circle(c, rr * .955, .55 * a, Y + .041, Circle);
-  circle(c, rr * .80, .9 * a, Y + .041, Circle);
-  circle(c, rr * .62, .8 * a, Y + .041, CircleBright);
-  circle(c, rr * .36, .8 * a, Y + .041, CircleBright);
-  circle(c, rr * .30, .5 * a, Y + .041, Circle);
+  const rr = r * open, a = Math.min(1, open * 1.5), spin = s * (k % 2 ? .9 : -.7) + k, N = 48;
+  const on = (t, rad, q = c, h = H, v = V) => ({ x: q.x + h.x * rad * Math.cos(t) + v.x * rad * Math.sin(t), z: q.z + h.z * rad * Math.cos(t) + v.z * rad * Math.sin(t) });
+  const ringAt = (name, q, rad, alpha, layer, colour, thick = .03) => {
+    const inner = [], outer = [];
+    for (let i = 0; i <= N; i++) { const t = i / N * TAU; inner.push(on(t, rad - thick, q)); outer.push(on(t, rad, q)); }
+    band(`${key} ${name}`, inner, outer, colour.withAlpha(alpha), layer);
+  };
+  const discAt = (name, q, rad, alpha, layer, colour, h = H, v = V) => {
+    const inner = [], outer = [];
+    for (let i = 0; i <= N; i++) { const t = i / N * TAU; inner.push(q); outer.push(on(t, rad, q, h, v)); }
+    band(`${key} ${name}`, inner, outer, colour.withAlpha(alpha), layer);
+  };
+  const gw = 3 * rr * Math.hypot(H.x, V.x), gh = 3 * rr * Math.hypot(H.z, V.z);   // the glow sprite's box around the ellipse
+  if (stands) {
+    discAt('shadow', { x: c.x + sun.x * .5, z: c.z - ChestLift + sun.z * .5 }, rr, .9 * strength * a, shadowLayer, Body, hTrue, { x: 0, z: .25 });
+    const back = { x: c.x, z: c.z + .04 };
+    ringAt('back', back, rr, .7 * a, Y + .0405, CircleDeep, .04);
+    ringAt('back 2', back, rr * .80, .5 * a, Y + .0405, CircleDeep);
+  }
+  sprite(c, gw, gh, CircleDeep.withAlpha(.30 * a), glow, Y + .04);
+  discAt('fill', c, rr * .98, .28 * a, Y + .0401, Circle);                  // the translucent fill
+  ringAt('outer', c, rr, 1.0 * a, Y + .041, CircleBright, .035);
+  ringAt('outer 2', c, rr * .955, .55 * a, Y + .041, Circle, .02);
+  ringAt('rune', c, rr * .80, .9 * a, Y + .041, Circle);
+  ringAt('mid', c, rr * .62, .8 * a, Y + .041, CircleBright);
+  ringAt('inner', c, rr * .36, .8 * a, Y + .041, CircleBright);
+  ringAt('inner 2', c, rr * .30, .5 * a, Y + .041, Circle, .02);
+  if (stands) sprite(on(Math.PI / 2, rr * .88), gw * .4, rr * .3, White.withAlpha(.35 * a), glow, Y + .0411);   // the lit top rim
   const ticks = 36;                    // the rune ring between .80 and .955, every third tick long
   for (let i = 0; i < ticks; i++) {
     const t = spin + i / ticks * TAU, outer = rr * (i % 3 ? .90 : .955);
@@ -220,8 +249,8 @@ function magicCircle(key, c, r, open, s, k) {
   const sq = [];                       // the centre sigil: a square in the inner ring, a dot
   for (let i = 0; i <= 4; i++) sq.push(on(spin + i * TAU / 4 + Math.PI / 4, rr * .30));
   line(`${key} sigil`, sq, .022, CircleBright.withAlpha(.6 * a), whiteGlow, Y + .0415, 'none');
-  sprite(c, rr * .30, rr * .30, Circle.withAlpha(.5 * a), glow, Y + .0425);
-  sprite(c, rr * .10, rr * .10, White.withAlpha(.7 * a), glow, Y + .0426);
+  sprite(c, gw * .1, gh * .1, Circle.withAlpha(.5 * a), glow, Y + .0425);
+  sprite(c, gw * .035, gh * .035, White.withAlpha(.7 * a), glow, Y + .0426);
   for (let i = 0; i < 6; i++) {        // rune dots on the .71 ring, spinning the other way
     const g = on(-spin * .7 + i / 6 * TAU, rr * .71);
     sprite(g, .04, .036, White.withAlpha(.6 * a), glow, Y + .0425);
@@ -230,6 +259,22 @@ function magicCircle(key, c, r, open, s, k) {
     const ph = (s * 1.7 + rand(i + 200 + k)) % 1, t = rand(i + 210 + k) * TAU + s * .8;
     sprite(on(t, rr * (1 + ph * .3)), .07, .06, White.withAlpha(a * (1 - ph)), glow, Y + .043);
   }
+}
+// The circle's screen axes for the chosen mode. A gate facing the aim has H across the aim and V
+// up. For east and west H is pure north, which the projection would collapse, so the gate leans
+// back: its top tilts toward the shooter. The lean angle is solved per aim so the ellipse's face
+// on screen (|H x V|) is always GateFace, the value a 40-degree lean gives facing east: about 2
+// degrees facing south, 40 facing east or west, 64 facing north (where leaning toward the shooter
+// works against the lift, so it leans further). One formula for every aim, so nothing flips.
+const GateFace = Math.sin(40 * D2R);
+function gateAxes(mode, dir) {
+  const h = side(dir);
+  if (mode === 'lies flat') return { H: { x: 1, z: 0 }, V: { x: 0, z: 1 }, hTrue: { x: 1, z: 0 }, stands: false };
+  if (mode === 'faces the viewer') return { H: { x: 1, z: 0 }, V: { x: 0, z: Lift }, hTrue: { x: 1, z: 0 }, stands: true };
+  const k = Lift * dir.z;              // sin(lean) - k cos(lean) = GateFace, so lean = asin(GateFace / sqrt(1 + k^2)) + atan(k)
+  const lean = Math.min(80 * D2R, Math.max(0, Math.asin(Math.min(1, GateFace / Math.hypot(1, k))) + Math.atan(k)));
+  const cl = Math.cos(lean), sl = Math.sin(lean);
+  return { H: h, V: { x: -sl * dir.x, z: Lift * cl - sl * dir.z }, hTrue: h, stands: true };
 }
 
 // A parchment stroke: a tall arc standing in the plane (u, up) with its middle gap cells from c
@@ -412,6 +457,7 @@ export default {
     beamFade: P('Beam fade', BeamLife, .2, 2, .05, 'Timing (s)'),
     beamWidth: P('Beam width (cells)', .07, .03, .3, .01, 'Shape'),
     circleRadius: P('Magic circle radius (cells)', .55, .2, 1, .02, 'Shape'),
+    circleMode: { label: 'Circle', value: 'faces the aim', options: ['faces the aim', 'faces the viewer', 'lies flat'], group: 'Shape' },
   },
   duration(p) { return times(p).end; },
   phases(p) {
@@ -508,11 +554,11 @@ export default {
     const n = CirclesFor[Math.min(Shots, Math.max(1, Math.round(p.shot))) - 1];
     const gateDir = fired ? L.d : gd;      // once fired the circles stay on the shot line, not the kicked barrel
     const gateAt = move(fired ? move(lift(hand), L.d, RifleLen * .72) : gun.muzzle, gateDir, 0);
-    const circles = [];
+    const circles = [], ax = gateAxes(p.circleMode, gateDir);
     for (let i = 0; i < n; i++) {
-      const c = move(gateAt, gateDir, ahead + i * .32), r = p.circleRadius * (1 + i * .18);
+      const c = move(gateAt, gateDir, ahead + i * .48), r = p.circleRadius * (1 + i * .18);
       circles.push({ c, r });
-      magicCircle(`mb circle ${i}`, c, r, open * clamp(1 - i * .1), s, i + 1);
+      magicCircle(`mb circle ${i}`, c, r, open * clamp(1 - i * .1), s, i + 1, ax.H, ax.V, ax.hTrue, ax.stands, sun, strength);
     }
     if (tier === 2 && open > 0) { circle(lift(o), 1.0 * open, .8 * open, Y + .037, Circle); sprite(lift(o), 2.4 * open, 2.4 * open, CircleDeep.withAlpha(.25 * open), glow, Y + .0365); }
 
