@@ -29,10 +29,9 @@
 //          were tried and dropped (2026-09-30) as not fitting RimWorld, and so was ground dust
 //          (the bullet flies at chest height and nothing touches the ground). The shot's force is
 //          in the air instead: a thin pale ring at chest height spreading 1.6 cells from the circle
-//          in .3 s, and a puff of gun smoke pushed from the muzzle along the line. Each hit pawn
-//          leaves a dark scorch streak 1.2 cells along the floor past them. Short cyan speed lines
-//          fly past the circle. The rifle kicks up about 40 degrees, held one-handed, the shooter
-//          rocked back.
+//          in .3 s, and a puff of gun smoke pushed from the muzzle along the line. The only trace
+//          left on the ground is the hit pawns' blood. Short cyan speed lines fly past the circle.
+//          The rifle kicks up about 40 degrees, held one-handed, the shooter rocked back.
 //   Hit:   the target lit yellow-white, a burst of thin yellow spikes and long rays, an orange
 //          lightning bolt arcing past it along the beam, orange sparks flung on forward, orange
 //          streak lines, a small burn. The brackets and slab thin to tan oval outlines and stay.
@@ -59,7 +58,7 @@
 //         the beam is left from the muzzle to the range with forks along it; it crosses the wall
 //         (a punched hole and dust that stay) and every pawn on the line (the raider in front of
 //         the wall, the colonist behind it): stagger star, orange bolt, fire, blood, a floor
-//         spatter and a scorch streak that stay; each hit pawn flinches .18 cells; the air ring is
+//         spatter that stays; each hit pawn flinches .18 cells; the air ring is
 //         gone in .3 s, the gun smoke in .5 s
 //   0.80  the bullet has reached the 40-cell range; each 2-cell piece of the beam fades over .6 s
 //         from when the bullet passed it; the circle closes .35 s later; the result is held 1.5 s
@@ -79,8 +78,7 @@
 // is a circle in the (east, up) plane at every aim, a 1 : .6 ellipse with a fixed screen
 // orientation like Twin Maw's jaws; "lies flat" is a level ring. Up is drawn as .6 north. Standing
 // ones get a ground shadow along the sun, a lit top rim and a dark back rim .04 north for thickness.
-// The air ring, the smoke and the scorch are level circles, puffs and floor sprites, so they need
-// no per-facing work. The
+// The air ring and the smoke are a level circle and puffs, so they need no per-facing work. The
 // rifle's kick is a real tilt: the muzzle end
 // goes cos(tilt) along the aim and Lift x sin(tilt) north, so facing east or west the barrel visibly
 // swings up, facing north or south it shortens. Pawns are lib/pawn.js real-size stand-ins (average
@@ -105,12 +103,12 @@ const move = (q, d, k) => ({ x: q.x + d.x * k, z: q.z + d.z * k });
 const side = d => ({ x: -d.z, z: d.x });
 
 // Palette, from the frames: the circle bright blue over a deep blue fill, the beam blue, its forks
-// white over violet, the seventh cyan-white, the dust pale, the scorch near-black, the hit yellow and orange.
+// white over violet, the seventh cyan-white, the smoke pale, the hit yellow and orange.
 const White = new Color(1, 1, 1), Beam = new Color(.55, .80, 1), BeamEdge = new Color(.20, .45, 1);
 const Circle = new Color(.35, .62, 1), CircleBright = new Color(.50, .78, 1), CircleDeep = new Color(.12, .22, .80);
 const Cyan = new Color(.55, .96, 1), Halo = new Color(.65, .85, 1), Violet = new Color(.72, .62, 1);
 const Barrel = new Color(.07, .07, .09), BarrelLit = new Color(.30, .31, .36), Gold = new Color(.86, .68, .26), Navy = new Color(.11, .14, .38);
-const BeamViolet = new Color(.55, .45, 1), Scorch = new Color(.06, .05, .05), Pale = new Color(.92, .90, .84);
+const BeamViolet = new Color(.55, .45, 1), Pale = new Color(.92, .90, .84);
 const Smoke = new Color(.04, .03, .05), Eye = new Color(.45, .75, 1), Fire = new Color(1, .50, .12), FireCore = new Color(1, .90, .50);
 const Stagger = new Color(1, .85, .25), Bolt = new Color(1, .62, .18);
 const Warn = new Color(.75, .16, .10), Heart = new Color(.95, .45, .55);
@@ -306,15 +304,6 @@ function muzzleSmoke(key, mq, d, age) {
     sprite(q, size, size * .85, Pale.withAlpha(.3 * (1 - u) * (1 - u)), puff, Y + .03);
   }
 }
-// The scorch a pierced pawn leaves: a dark streak on the floor from their cell 1.2 cells on along
-// the line, drawn in over .2 s, and it stays.
-function scorch(key, pos, d, age) {
-  if (age < 0) return;
-  const g = clamp(age / .2), deg = Math.atan2(d.z, d.x) / D2R;
-  sprite(move(pos, d, .2 + .5 * g), 1.2 * g, .38, Scorch.withAlpha(.55), soft, Floor + .019, deg);
-  sprite(move(pos, d, .1), .5 * g, .5 * g, Scorch.withAlpha(.4), soft, Floor + .0189);
-}
-
 // The corroded look, made for the game rather than the source: the pawn stays readable and the
 // weapon's magic shows on him. A dim contract circle spins slowly on the floor under his feet
 // (the shot circle's own drawing, flat, at a quarter speed), four dark violet veins run from the
@@ -577,7 +566,6 @@ export default {
       for (let d = .6; d < len - .5; d += .4, i++) line(`mb corrupt ${i}`, [{ x: o.x + ux * d, z: o.z + uz * d }, { x: o.x + ux * (d + .2), z: o.z + uz * (d + .2) }], .05, Corrupt.withAlpha(.6), flat, Floor + .03, 'none');
       circle(nearest.pos, .5, pulse, Floor + .031, Corrupt);
     }
-    for (const h of hits) if (h.kind === 'pawn') scorch(`mb scorch ${h.who.tag}`, h.who.pos, L.d, hitAge(h));
     for (const h of hits) if (h.kind === 'pawn') wound(`mb wound ${h.who.tag}`, h.who.pos, who, L.d, hitAge(h), tier, s);
 
     if (p.actors) walls('mb walls', o, wallCells, sun, strength);
