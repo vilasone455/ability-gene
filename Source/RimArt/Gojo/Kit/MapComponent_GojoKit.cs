@@ -101,6 +101,27 @@ namespace RimArt
             return false;
         }
 
+        /// <summary>
+        /// While Hollow Purple is ready, Red flies through what is inside the pull of an active Blue that Gojo cast, so the
+        /// pawns Blue has caught do not stop it short of the centre (the user's rule, 2026-09-30). Walls still stop it.
+        /// </summary>
+        public bool PassesThroughBlue(RedShot shot, Vector2 at)
+        {
+            MapComponent_Gravity gravity = map.GetComponent<MapComponent_Gravity>();
+            if (gravity == null) return false;
+            bool inPull = false;
+            foreach (GravityCast blue in gravity.Casts)
+            {
+                if (blue.caster != shot.caster || blue.def != GojoKitDefOf.AG_GojoBlue || !blue.Field) continue;
+                if ((GojoKit.Ground(blue.Centre) - at).magnitude <= blue.Radius)
+                {
+                    inPull = true;
+                    break;
+                }
+            }
+            return inPull && PurpleReady(shot.caster, GojoKitDefOf.AG_GojoHollowPurple, out _, out _);
+        }
+
         /// <summary>Gojo has Hollow Purple, it is off cooldown and the Echo pool (when he is a manifested Host) can pay it.</summary>
         public static bool PurpleReady(Pawn gojo, AbilityDef def, out Ability purple, out float cost)
         {

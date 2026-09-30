@@ -428,7 +428,7 @@ Gojo (agreed 2026-09-27; numbers are placeholders):
   has -20 opinion of old colonists (past 70 %, 56 for a human) and they have -10 of him; -6 mood while
   no other Host is awakened in the colony, +4 once another is. No psychic sensitivity anywhere in his
   entry (the user's rule).
-- Costume (built 2026-09-30 on `AG_EchoManifest_Gojo`, a hero form hediff with no EchoDef yet): his
+- Costume (built 2026-09-30 on `AG_EchoManifest_Gojo`, his hero form hediff): his
   teacher's uniform from the anime's model sheets. Three pieces. The uniform on the body: a near-black
   zip-up jacket (violet highlights on the lit edges and folds, as the anime lights it) to the top of
   the thighs, the zip's flap a little to his left of the middle, slash pockets, black trousers and
@@ -441,6 +441,52 @@ Gojo (agreed 2026-09-27; numbers are placeholders):
   `coversFace` (Facial Animation's eyebrows are not drawn over it). The band's ends are on the vanilla
   head's outline, so on Facial Animation's narrower heads they stand about 2 units past the face.
   Textures: `python3 make_costume_textures.py gojo`. Test "costume 9".
+
+Gojo, built 2026-09-30 (the port; Echo `AG_Echo_Gojo.xml`, abilities `AG_Gojo_Abilities.xml` and
+`AG_Gojo_Void.xml`, code in `Source/RimArt/Gojo/Kit` and `Source/RimArt/Gojo/Echo`, tests
+`-rimarttest=Gojo`; numbers are XML fields). Choices made in the port, beyond the rules above:
+- Echo: the downed Trial counts hours (`Trial_Record` shows a time record in hours; `count` 24).
+  Infinity keeps its def (`AG_Recursion`) and is relabelled Infinity; the phase barrier implant grants
+  nothing and is no longer a reward. The Strongest counts humanlike pawns of Gojo's own faction.
+- Blue runs on the Gravity Well code with XML switches (Gravity Well itself is unchanged):
+  `holdsCaster` false (no clip, Gojo stays free and can cast Red, no Implode or Cancel button; the well
+  stays while Gojo is alive, on the map and has the ability), `bendsBullets` false (rounds are neither
+  bent nor eaten), `openingSeconds` 0.45, `look` GojoBlue. Core 1 cell, implosion radius 2, full 25 at a
+  mass of 120 (two people), no core damage; items and corpses in the core are crushed. Its button is
+  disabled while it is open; the cooldown counts from when it closes. Only a Blue already pulling counts
+  for the combo, not one still opening.
+- Red: warm-up 0.6 s (the picture's arm and charge); Gojo stands with his arm out until 0.7 s after the
+  burst. The target cell is fixed at the fire. It hits any pawn but Gojo (downed ones too) or loose thing
+  (a haulable item or a corpse) in a cell its line enters; a wall is any cell a shot cannot pass (walls,
+  rock, closed doors). Thrown 6 cells whatever the body size; pawns fly in Accelerator's
+  `AG_VectorThrown` flyer and take the damage on landing; items and corpses take none. Only a wall, rock
+  or closed door gives the +10. The push needs a clear line from the burst. Pawns pinned or pulled by
+  Pain's kit are not moved but still stop Red.
+- Hollow Purple: while Purple is ready, Red flies through anything inside an active Blue's 4-cell pull,
+  so the pawns Blue has caught do not stop it (the user's choice, 2026-09-30); walls still stop it.
+  Purple is an AbilityDef that holds the 1-day cooldown and cannot be cast from its button; the combo
+  pays its 20. Merge 0.35 s, growth 0.3 s, then travel. Erased pawns drop nothing (carried items, apparel,
+  weapon and inventory destroyed, corpse destroyed); a carried pawn is dropped first and met by the
+  sphere. Erasure damage (`AG_Erasure`) has no armour category and no blood; destroyed parts are not
+  fresh, so they neither bleed nor hurt. Vanilla's colonist instant-kill protection still applies.
+  Multi-cell buildings vanish whole if one cell is touched. Temporary water stays; other temporary
+  terrain is removed; impassable ground and space stay. Erased ground: vanilla smooth stone texture
+  tinted pale violet-grey, fertility 0.
+- Unlimited Void: the ability fires at the end of the 0.6 s sign; the dark sphere closes for 0.3 s
+  (the picture's timing) and the take happens then, measured from Gojo's cell at that moment. If Gojo
+  is downed or out of hero form in those 0.3 s nothing opens and the cost stays spent; if the pocket map
+  cannot be made the cost is refunded. Taken: every spawned living pawn in 9 cells, downed, prisoners,
+  animals and pawns in beds too; not pawns inside caskets, pods or flyers; a carried pawn goes with its
+  carrier and is not frozen. Frozen = a flesh race with a brain part. Touch time is added up over the
+  domain (any of the 8 cells round Gojo); a spared pawn stays frozen and only its overload stops. The
+  overload stops building at the end tick; the consciousness cap starts once everyone is back home, so
+  nobody falls over while frozen; the scar is given when the overload has gone. The collapse lasts 0.7 s,
+  then everyone returns to the matching home cell or the nearest free one. Goodwill: -15 once per
+  non-hostile faction per cast, only if one of its pawns came out unspared. It cannot be cast on a
+  pocket map. The pocket map is 40 x 40 of void floor (walkable, nothing built), thick roof, no fog; the
+  ball on the home map is drawn only, not an object. Not ported: the specks into frozen heads, the
+  violet mark on overloaded pawns, Gojo's reach and blow drawings, sounds; the dome picture stays 9 cells
+  if the radius changes in XML.
 
 Pain's Echo (agreed 2026-09-27): it grants all four abilities, Shinra Tensei, Gravity Well, Banshō
 Ten'in and Black Receiver (the last two once they are built; `AG_Echo_Pain` lists only Shinra today).

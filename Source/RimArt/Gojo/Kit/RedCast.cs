@@ -172,7 +172,8 @@ namespace RimArt
     /// ready and paid for: both are used up and <see cref="PurpleRun"/> starts (no burst). Not ready: Red passes on.</item>
     /// <item>a cell no shot can pass over (a wall, rock, a closed door): it bursts there, nothing thrown.</item>
     /// <item>a cell holding a pawn (not Gojo) or a loose thing: it bursts at that thing (the one furthest back along
-    /// the line, a pawn before a thing), which is thrown.</item>
+    /// the line, a pawn before a thing), which is thrown. Not inside an active Blue's pull while Purple is ready: there
+    /// Red flies through (<see cref="MapComponent_GojoKit.PassesThroughBlue"/>).</item>
     /// <item>the target cell's centre: it bursts there, nothing thrown.</item>
     /// </list>
     /// </summary>
@@ -257,7 +258,7 @@ namespace RimArt
             Map map = kit.map;
             if (!Fired)
             {
-                Plan(map, AimOrigin, AimDir(AimOrigin), 0f, GojoKit.Ground(target) - AimOrigin);
+                Plan(kit, AimOrigin, AimDir(AimOrigin), 0f, GojoKit.Ground(target) - AimOrigin);
                 // The cast job drops a shot whose warmup was called off; this is only a guard.
                 return now - startTick < 600;
             }
@@ -266,7 +267,7 @@ namespace RimArt
             if (!Burst)
             {
                 Fly(kit, now);
-                if (!Burst && !used) Plan(map, origin, dir, along, GojoKit.Ground(target) - origin);
+                if (!Burst && !used) Plan(kit, origin, dir, along, GojoKit.Ground(target) - origin);
             }
             if (!Burst) return true;
             TickMoves(map, now);
@@ -308,7 +309,8 @@ namespace RimArt
                         BurstAt(map, Mathf.Max(0f, a - 0.1f), null, true, now);
                         return;
                     }
-                    Thing first = First(c, map, a, out float at);
+                    float at = a;
+                    Thing first = kit.PassesThroughBlue(this, p) ? null : First(c, map, a, out at);
                     if (first != null)
                     {
                         BurstAt(map, at, first, false, now);
@@ -349,9 +351,13 @@ namespace RimArt
             return best;
         }
 
-        /// <summary>The picture's guess at the burst: the same walk as the flight, ignoring Blue, from where Red is to the target.</summary>
-        private void Plan(Map map, Vector2 from, Vector2 way, float start, Vector2 toTarget)
+        /// <summary>
+        /// The picture's guess at the burst: the same walk as the flight from where Red is to the target, flying through
+        /// Blue's pull as the flight does but not stopping at Blue itself.
+        /// </summary>
+        private void Plan(MapComponent_GojoKit kit, Vector2 from, Vector2 way, float start, Vector2 toTarget)
         {
+            Map map = kit.map;
             float end = toTarget.magnitude;
             plannedDist = end;
             plannedThing = false;
@@ -363,6 +369,7 @@ namespace RimArt
                 seen = c;
                 if (!c.InBounds(map)) { plannedDist = a; return; }
                 if (GojoKit.Wall(c, map)) { plannedDist = Mathf.Max(0f, a - 0.1f); return; }
+                if (kit.PassesThroughBlue(this, from + way * a)) continue;
                 List<Thing> things = c.GetThingList(map);
                 for (int i = 0; i < things.Count; i++)
                     if ((things[i] is Pawn p && p != caster && !p.Dead) || GojoKit.Loose(things[i]))

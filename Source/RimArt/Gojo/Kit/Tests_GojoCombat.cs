@@ -471,5 +471,28 @@ namespace RimArt
             foreach (int w in WaitFor(() => !blue.Active, 300)) yield return w;
             t.Check(blue.clock.imploded, "Blue then ran out and imploded as usual");
         }
+
+        [RimArtTest("Gojo", "purple 3 with Purple ready Red flies through a raider caught in Blue's pull and makes Purple", 1200)]
+        private static IEnumerable<int> PurpleThroughPull(RimArtTestContext t)
+        {
+            Setup(t);
+            yield return 2;
+            IntVec3 c = t.center;
+            Pawn gojo = Gojo(t, c + new IntVec3(-9, 0, 0));
+            IntVec3 centre = c + new IntVec3(-4, 0, 0);
+            Pawn caught = Raider(t, c + new IntVec3(-6, 0, 0));
+            yield return 5;
+            MapComponent_Gravity wells = Wells(t);
+            if (!t.Check(wells.Begin(gojo, centre, Blue), "Blue opened")) yield break;
+            GravityCast blue = wells.For(gojo);
+            yield return CompProperties_AbilityGravityWell.For(Blue).OpeningTicks + 40;
+            t.Log("before Red: caught raider " + Where(caught, c) + ", Blue: " + State(blue, c));
+            gojo.abilities.GetAbility(Red).QueueCastingJob(new LocalTargetInfo(centre), LocalTargetInfo.Invalid);
+            RedShot shot = null;
+            foreach (int w in WaitFor(() => (shot = Kit(t).Reds.FirstOrDefault(r => r.caster == gojo)) != null && (shot.Burst || shot.used), 180)) yield return w;
+            t.Log(Shot(shot) + "; caught raider " + Where(caught, c));
+            t.Check(shot != null && shot.used && !shot.Burst, "Red was not stopped by the caught raider and met Blue");
+            t.Check(Kit(t).Purples.Count == 1, "Hollow Purple formed");
+        }
     }
 }
