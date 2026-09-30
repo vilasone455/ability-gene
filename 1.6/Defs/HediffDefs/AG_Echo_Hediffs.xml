@@ -363,6 +363,66 @@
     </renderNodeProperties>
   </HediffDef>
 
+  <!-- Gojo's hero form. No EchoDef yet (his kit is not ported), so for now only the costume: his teacher's
+       uniform from the anime's model sheets. Three pieces:
+       - the near-black zip-up jacket to the top of the thighs, black trousers and boots, on the body; it
+         hides worn clothes and headgear and, facing north, goes over the head so its collar covers the
+         nape, as Minato's haori;
+       - the high, broad collar on the head (layer 64, as the Akatsuki collar), up to the jaw; its north
+         picture is empty because the jacket draws the collar from behind;
+       - the black blindfold over his brows and eyes with his white hair propped up above it, on the head
+         (63). It hides the Host's hair (hidesHair) and Facial Animation's eyebrows (coversFace).
+       Textures: make_costume_textures.py (python3 make_costume_textures.py gojo). -->
+  <HediffDef ParentName="AG_EchoManifestBase">
+    <defName>AG_EchoManifest_Gojo</defName>
+    <label>hero form: Gojo</label>
+    <description>This Host has manifested Gojo. The Echo's abilities are available and the colony's charge drains while the form lasts. Hero form fights and moves but does no colony work.</description>
+    <renderNodeProperties>
+      <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
+        <debugLabel>Gojo uniform</debugLabel>
+        <hideBodyApparel>true</hideBodyApparel>
+        <hideHeadgear>true</hideHeadgear>
+        <workerClass>RimArt.PawnRenderNodeWorker_EchoCostume</workerClass>
+        <parentTagDef>ApparelBody</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <texPath>RimArt/Echo/Costume/GojoUniform_Thin</texPath>
+        <bodyTypeGraphicPaths>
+          <Thin>RimArt/Echo/Costume/GojoUniform_Thin</Thin>
+          <Male>RimArt/Echo/Costume/GojoUniform_Male</Male>
+          <Female>RimArt/Echo/Costume/GojoUniform_Female</Female>
+          <Fat>RimArt/Echo/Costume/GojoUniform_Fat</Fat>
+          <Hulk>RimArt/Echo/Costume/GojoUniform_Hulk</Hulk>
+        </bodyTypeGraphicPaths>
+        <baseLayer>29</baseLayer>
+        <drawData>
+          <dataNorth>
+            <layer>89</layer>
+          </dataNorth>
+        </drawData>
+      </li>
+      <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
+        <debugLabel>Gojo collar</debugLabel>
+        <workerClass>RimArt.PawnRenderNodeWorker_EchoCostume</workerClass>
+        <parentTagDef>Head</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <texPath>RimArt/Echo/Costume/GojoCollar</texPath>
+        <narrowHeadScale>(0.84, 0.7)</narrowHeadScale>
+        <baseLayer>64</baseLayer>
+      </li>
+      <li Class="RimArt.PawnRenderNodeProperties_EchoCostume">
+        <debugLabel>Gojo blindfold</debugLabel>
+        <hidesHair>true</hidesHair>
+        <coversFace>true</coversFace>
+        <workerClass>RimArt.PawnRenderNodeWorker_EchoCostume</workerClass>
+        <parentTagDef>Head</parentTagDef>
+        <pawnType>HumanlikeOnly</pawnType>
+        <texPath>RimArt/Echo/Costume/GojoBlindfold</texPath>
+        <narrowHeadScale>(0.84, 0.7)</narrowHeadScale>
+        <baseLayer>63</baseLayer>
+      </li>
+    </renderNodeProperties>
+  </HediffDef>
+
   <HediffDef ParentName="AG_EchoManifestBase">
     <defName>AG_EchoManifest_Goku</defName>
     <label>hero form: Goku</label>

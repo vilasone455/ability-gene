@@ -1097,5 +1097,122 @@ namespace RimArt
                     t.Check(hair != null && hair.Worker.CanDrawNow(hair, parms), "trousers only after: the hair is drawn");
             }
         }
+
+        // Gojo has no EchoDef until his kit is ported, so the hero form hediff is added directly.
+        [RimArtTest("Echo", "costume 9 Gojo's hero form draws the uniform, the high collar and the blindfold with his hair, which hides the Host's hair and eyebrows; narrower on a narrow head (screenshots)")]
+        private static IEnumerable<int> GojoUniform(RimArtTestContext t)
+        {
+            Setup(t);
+            HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Gojo");
+            List<PawnRenderNodeProperties_EchoCostume> props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
+            if (!t.Check(props?.Count == 3, "the hero form has the uniform, the collar and the blindfold (" + (props?.Count ?? 0) + " costume nodes)"))
+                yield break;
+            PawnRenderNodeProperties_EchoCostume uniformProps = props[0], collarProps = props[1], blindfoldProps = props[2];
+            t.Check(uniformProps.hideBodyApparel && uniformProps.hideHeadgear, "the uniform hides body apparel and headgear");
+            t.Check(collarProps.parentTagDef == PawnRenderNodeTagDefOf.Head && blindfoldProps.parentTagDef == PawnRenderNodeTagDefOf.Head,
+                "the collar and the blindfold are on the head");
+            t.Check(blindfoldProps.hidesHair && blindfoldProps.coversFace, "the blindfold hides the hair and the eyebrows");
+            t.Check(!props.Any(p => p.onlyOverWornApparel), "every piece is drawn whether or not the Host wears clothes");
+            foreach (string facing in new[] { "south", "east", "north" })
+            {
+                foreach (BodyTypeGraphicData body in uniformProps.bodyTypeGraphicPaths)
+                    t.Check(ContentFinder<UnityEngine.Texture2D>.Get(body.texturePath + "_" + facing, false) != null,
+                        "uniform " + body.bodyType.defName + " " + facing + " texture loads");
+                foreach (PawnRenderNodeProperties_EchoCostume head in new[] { collarProps, blindfoldProps })
+                    t.Check(ContentFinder<UnityEngine.Texture2D>.Get(head.texPath + "_" + facing, false) != null,
+                        head.debugLabel + " " + facing + " texture loads");
+            }
+
+            // The first is dressed, with a hat and a pack, and has an average head; the second is naked with
+            // a narrow head. Both have an afro, the hair most likely to show round the blindfold's hair.
+            Pawn a = Colonist(t, -2), b = Colonist(t, 2);
+            foreach ((Pawn pawn, string head) in new[] { (a, "Male_AverageNormal"), (b, "Male_NarrowNormal") })
+            {
+                pawn.apparel.DestroyAll();
+                pawn.story.headType = DefDatabase<HeadTypeDef>.GetNamed(head);
+                pawn.story.hairDef = DefDatabase<HairDef>.GetNamed("Afro");
+                pawn.story.bodyType = BodyTypeDefOf.Thin;
+                if (pawn == a)
+                    foreach (string piece in new[] { "Apparel_BasicShirt", "Apparel_Pants", "Apparel_CowboyHat", "Apparel_SmokepopBelt" })
+                        Wear(pawn, piece);
+                pawn.health.AddHediff(form);
+                pawn.Drawer.renderer.SetAllGraphicsDirty();
+            }
+            yield return 2;
+
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                string who = pawn.story.headType.defName;
+                PawnDrawParms parms = TreeParms(pawn);
+                List<PawnRenderNode> nodes = CostumeNodes(pawn, form).ToList();
+                t.Check(nodes.Count == 3, who + ": the three pieces are in the render tree (" + nodes.Count + ")");
+                foreach (PawnRenderNode node in nodes)
+                    t.Check(node.Worker.CanDrawNow(node, parms), who + ": " + node.Props.debugLabel + " is drawn");
+                PawnRenderNode blindfold = nodes.FirstOrDefault(n => n.Props == blindfoldProps);
+                PawnRenderNode collar = nodes.FirstOrDefault(n => n.Props == collarProps);
+                PawnRenderNode hair = RenderNodes(pawn).FirstOrDefault(n => n.Props.debugLabel == "Hair");
+                t.Check(blindfold?.parent?.Props.tagDef == PawnRenderNodeTagDefOf.Head && collar?.parent?.Props.tagDef == PawnRenderNodeTagDefOf.Head,
+                    who + ": the blindfold and the collar hang on the head");
+                t.Check(hair != null && !hair.Worker.CanDrawNow(hair, parms), who + ": the Host's hair is hidden under Gojo's");
+                bool narrow = pawn.story.headType.narrow;
+                foreach ((Rot4 rot, float want) in new[] { (Rot4.South, narrow ? 0.84f : 1f), (Rot4.East, narrow ? 0.7f : 1f) })
+                {
+                    PawnDrawParms facing = PawnDrawParms.DefaultFor(pawn);
+                    facing.facing = rot;
+                    float got = blindfold == null ? 0f : blindfold.Worker.ScaleFor(blindfold, facing).x;
+                    t.Check(System.Math.Abs(got - want) < 0.001f,
+                        who + " facing " + rot.ToStringHuman() + ": blindfold width x" + got.ToString("0.###") + " (want " + want + ")");
+                }
+                // Facial Animation (when loaded) draws eyebrows at layer 100, over the blindfold, unless hidden.
+                PawnDrawParms south = PawnDrawParms.DefaultFor(pawn);
+                south.facing = Rot4.South;
+                List<PawnRenderNode> brows = RenderNodes(pawn)
+                    .Where(n => n.Props.debugLabel?.StartsWith(Patch_CanDrawNow_FaceCovered.BrowLabel) == true).ToList();
+                if (brows.Count == 0) t.Log(who + ": no Facial Animation eyebrow node (the mod is not loaded); eyebrow check skipped");
+                foreach (PawnRenderNode brow in brows)
+                    t.Check(!brow.Worker.CanDrawNow(brow, south), who + ": " + brow.Props.debugLabel + " is not drawn over the blindfold");
+                if (pawn == a)
+                {
+                    PawnRenderNode uniform = nodes.FirstOrDefault(n => n.Props == uniformProps);
+                    t.Check(uniform?.PrimaryGraphic?.path == "RimArt/Echo/Costume/GojoUniform_Thin",
+                        "the uniform is the Thin one (" + uniform?.PrimaryGraphic?.path + ")");
+                    CheckDrawn(t, pawn, who, ("Apparel_BasicShirt", false), ("Apparel_CowboyHat", false), ("Apparel_SmokepopBelt", true));
+                }
+            }
+            foreach (Rot4 rot in new[] { Rot4.South, Rot4.East, Rot4.North, Rot4.West })
+            {
+                Face(a, rot);
+                Face(b, rot);
+                yield return 20;
+                yield return t.ShotAs("gojo-" + rot.ToStringHuman().ToLowerInvariant());
+            }
+
+            // The form removed, nothing of Gojo is left: the hat hides the first Host's hair again, the
+            // second's is drawn.
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                pawn.health.RemoveHediff(pawn.health.hediffSet.GetFirstHediffOfDef(form));
+                pawn.Drawer.renderer.SetAllGraphicsDirty();
+            }
+            yield return 2;
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                string who = pawn.story.headType.defName + " after";
+                PawnDrawParms parms = TreeParms(pawn);
+                PawnRenderNode hair = RenderNodes(pawn).FirstOrDefault(n => n.Props.debugLabel == "Hair");
+                t.Check(!CostumeNodes(pawn, form).Any(), who + ": nothing of Gojo is drawn after the form is removed");
+                if (pawn == a)
+                {
+                    CheckDrawn(t, pawn, who, ("Apparel_BasicShirt", true), ("Apparel_CowboyHat", true));
+                    t.Check(hair != null && !hair.Worker.CanDrawNow(hair, parms), who + ": the cowboy hat hides the hair, as vanilla");
+                }
+                else
+                    t.Check(hair != null && hair.Worker.CanDrawNow(hair, parms), who + ": the hair is drawn");
+                PawnDrawParms south = PawnDrawParms.DefaultFor(pawn);
+                south.facing = Rot4.South;
+                foreach (PawnRenderNode brow in RenderNodes(pawn).Where(n => n.Props.debugLabel?.StartsWith(Patch_CanDrawNow_FaceCovered.BrowLabel) == true))
+                    t.Check(brow.Worker.CanDrawNow(brow, south), who + ": " + brow.Props.debugLabel + " is drawn again");
+            }
+        }
     }
 }
