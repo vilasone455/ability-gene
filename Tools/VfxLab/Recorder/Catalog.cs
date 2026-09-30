@@ -161,6 +161,28 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                // Before the "Gojo:" entry below: Kit.For takes the first prefix that matches.
+                Name = "Gojo", Prefix = "Gojo: red", Component = typeof(MapComponent_GojoRedPreview), Clock = "seconds",
+                Phases = GojoRedPhases,
+            },
+            new Kit
+            {
+                // Before "Gojo:", which would match it first. The sketch's markers (gojo-blue-v2.js): Point, Open, Hold, Rush, Burst.
+                Name = "Gojo", Prefix = "Gojo: blue", Component = typeof(MapComponent_GojoBluePreview), Clock = "seconds",
+                Phases = _ => new[]
+                {
+                    new Phase("Point", 0f), new Phase("Open", GojoBlue.OpenAt), new Phase("Hold", GojoBlue.FullAt),
+                    new Phase("Rush", GojoBlue.ImplodeAt(GojoBlue.Hold)), new Phase("Burst", GojoBlue.BurstAt(GojoBlue.Hold)),
+                },
+            },
+            new Kit
+            {
+                // Before "Gojo:" too. The sketch's markers (gojo-purple.js).
+                Name = "Gojo", Prefix = "Gojo: purple", Component = typeof(MapComponent_HollowPurplePreview), Clock = "seconds",
+                Phases = _ => HollowPurplePhases(),
+            },
+            new Kit
+            {
                 Name = "Gojo", Prefix = "Gojo:", Component = typeof(MapComponent_GojoPreview), Clock = "seconds",
                 Phases = label => label.Contains("inside") ? VoidInsidePhases() : VoidOpenPhases(),
             },
@@ -414,6 +436,17 @@ namespace RimArt.VfxLab
             new Phase("Ball hangs", UnlimitedVoidOpenTiming.HangAt),
             new Phase("Ball breaks", UnlimitedVoidOpenTiming.BurstAt),
         };
+
+        // The sketch's markers (gojo-purple.js phases()), the same for every scenario and aim.
+        private static Phase[] HollowPurplePhases()
+        {
+            HollowPurpleTimes t = HollowPurple.Default;
+            return new[]
+            {
+                new Phase("Blue", 0f), new Phase("Red", t.Fire), new Phase("Merge", t.Contact), new Phase("Ignite", t.Ignite),
+                new Phase("Travel", t.Move), new Phase("Fade", t.Stop), new Phase("After", t.Gone),
+            };
+        }
 
         private static Phase[] VoidInsidePhases() => new[]
         {
@@ -1030,6 +1063,20 @@ namespace RimArt.VfxLab
                 new Phase("Stand", 0f), new Phase("Mace hits", VectorShove.Lead), new Phase("Touch", touch), new Phase("Throw", fly),
                 new Phase(scene == VectorShoveScene.Wall ? "Slam" : "Lands", arrive),
             };
+        }
+
+        // gojo-red-v2.js's phases(): Point, Charge, Fire, Burst, then Slam (a wall) or Lands (in the open); none more for the empty cell.
+        private static Phase[] GojoRedPhases(string label)
+        {
+            GojoRedScene scene = label.Contains("empty") ? GojoRedScene.Empty : label.Contains("open") ? GojoRedScene.Open : GojoRedScene.Wall;
+            float arrive = MapComponent_GojoRedPreview.Arrive;
+            var phases = new List<Phase>
+            {
+                new Phase("Point", 0f), new Phase("Charge", GojoRed.Start), new Phase("Fire", GojoRed.Fire(GojoRed.Charge)), new Phase("Burst", arrive),
+            };
+            if (scene != GojoRedScene.Empty)
+                phases.Add(new Phase(MapComponent_GojoRedPreview.HitsWall(scene) ? "Slam" : "Lands", arrive + MapComponent_GojoRedPreview.Fly(scene)));
+            return phases.ToArray();
         }
 
         private static Phase[] BlackFlashPhases(bool plain)

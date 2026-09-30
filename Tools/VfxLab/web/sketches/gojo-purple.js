@@ -70,6 +70,9 @@
 // pass effect that cannot stay, because terrain has no depth. The dim is one quad over the camera's view
 // (ctx.view; in game Find.CameraDriver's rect). A lost part does not show on a pawn's sprite in game (only in its
 // health tab), so the side-row pawn is drawn whole and the glowing cut is the only sign on the map.
+// The white flash on a touched pawn is two white ovals drawn over it, not a tint of the stand-in, so it stays when the
+// "Stand-in pawns and props" checkbox hides Gojo's body, the raiders, the ally, the tree, the wall cells and the crate.
+// With it off the sketch shows what the C# port draws (Source/RimArt/Gojo/HollowPurple*.cs, "Gojo: purple" previews).
 import { Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../js/engine.js';
 import { draw, mesh } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
@@ -201,6 +204,14 @@ function cutGlow(key, pos, side, age) {
   line(key, [{ x: pos.x - .17, z }, { x: pos.x + .15, z }], .11 - .04 * u, (age < 1.6 ? lit : hot).withAlpha(.95 * (1 - u * u)), whiteGlow, pawnLayer + .01, 'both');
 }
 
+// The white flash on a pawn the sphere touches: the stand-in's body and head in white, drawn over the pawn (the port
+// draws the same two ovals over the real pawn), so it shows with the stand-ins hidden. lie for a pawn going down.
+function flash(pos, alpha, lie = false) {
+  if (alpha <= 0) return;
+  (lie ? [[0, .12, .32, .2], [.42, .14, .16, .17]] : [[0, .18, .22, .32], [0, .58, .16, .17]]).forEach(([cx, cz, rx, rz], k) =>
+    draw(disc, pos.x + cx, pawnLayer + .005 + k * .0005, pos.z + cz, rx, rz, 0, White.withAlpha(alpha)));
+}
+
 // The trench mark: one mesh, a half circle of radius R behind 'from' and a straight band to 'to', so
 // the rounded start is not drawn twice. dir is the path angle in radians.
 function capsule(key, from, to, R, dir, colour, layer) {
@@ -227,6 +238,7 @@ export default {
     trench: { label: 'Trench shading while it passes', value: true, group: 'Shape' },
     dim: P('World dim while it travels (0 to 1)', .35, 0, .7, .05, 'Shape'),
     rules: { label: 'Rule lines: centre row and lane edge (not in game)', value: false, group: 'Showcase' },
+    actors: { label: 'Stand-in pawns and props', value: true, group: 'Showcase' },
   },
   duration(p) { return times(p).end; },
   phases(p) {
@@ -346,8 +358,7 @@ export default {
     // --- the wall: 7 cells across the path; the middle 3 are erased; the cut faces glow ------------------------------
     if (!field(p)) WallCells.forEach(k => {
       const hit = hitAt(B + WallAt, k);
-      if (s < hit) wallCell(place(B + WallAt, k), p.aim);
-      else if (hit === Infinity) wallCell(place(B + WallAt, k), p.aim);
+      if (s < hit || hit === Infinity) { if (p.actors) wallCell(place(B + WallAt, k), p.aim); }
       else dissolve(`purple wall ${k}`, place(B + WallAt, k, .4), 1, s - hit, new Color(.5, .48, .46), P0, 14);
       // The cut face on the side toward the path glows for 1.5 s after the cut.
       const neighbourCut = WallCells.includes(k - Math.sign(k)) && hitAt(B + WallAt, k - Math.sign(k)) !== Infinity;
@@ -455,31 +466,33 @@ export default {
       if (g.kind === 'gojo') {
         const out = smooth(s / Raise) * (1 - smooth((s - t.contact - .3) / .3)), north = sa > .35, lit = Math.max(.4 * clamp((s - Start) / p.charge) * (s < t.fire + .3 ? 1 : 0), purpleLight(g.pos));
         if (north) pointingArm(place, p.aim, out, pawnLayer - .004);
-        caster(g.pos, sun, strength, { tint: s < t.fire + .3 ? Red : Violet, tintAmount: lit });
+        if (p.actors) caster(g.pos, sun, strength, { tint: s < t.fire + .3 ? Red : Violet, tintAmount: lit });
         if (!north) pointingArm(place, p.aim, out, pawnLayer + .016);
         return;
       }
       const age = s - g.hit;
       if (g.kind === 'tree' || g.kind === 'crate') {
         if (age < 0) {
+          if (!p.actors) return;
           if (g.kind === 'tree') { draw(disc, g.pos.x, pawnLayer, g.pos.z + .1, .08, .12, 0, Bark); draw(disc, g.pos.x, pawnLayer + .002, g.pos.z + .55, .42, .38, 0, Color.Lerp(Leaves, Violet, purpleLight(g.pos))); }
           else draw(MeshPool.plane10, g.pos.x, pawnLayer, g.pos.z + .1, .7, .6, -p.aim, Color.Lerp(Crate, Violet, purpleLight(g.pos)));
         } else dissolve(`purple ${g.kind} ${g.i}`, place(B + g.d, g.across, .5), .9, age, g.kind === 'tree' ? Leaves : Crate, P0, 16);
         return;
       }
       const colour = g.kind === 'ally' ? Ally : EnemyColour;
-      if (age < 0) { pawn(g.pos, colour, sun, strength, { tint: Violet, tintAmount: purpleLight(g.pos) }); return; }
+      if (age < 0) { if (p.actors) pawn(g.pos, colour, sun, strength, { tint: Violet, tintAmount: purpleLight(g.pos) }); return; }
       if (Math.abs(g.across) <= CentreRow) {
         // Centre row, erased: a white flash as the sphere touches him, then nothing. His specks go into the sphere;
         // no body, no gear, no burn is left.
-        if (age < .1) pawn(g.pos, colour, sun, strength, { alpha: 1 - age / .1, tint: White, tintAmount: .85 });
+        if (age < .1) { if (p.actors) pawn(g.pos, colour, sun, strength, { alpha: 1 - age / .1 }); flash(g.pos, .85 * (1 - age / .1)); }
         dissolve(`purple pawn ${g.i}`, place(B + g.d, g.across, .5), .7, age, colour, P0, 16);
         return;
       }
       // Side row, 60 erasure damage: a white flash, specks off the body, down; a cut glows on the edge facing the lane
       // (side +1 when the path runs north of him; on a path near north-south the lower edge stands in). No burn, no blood.
-      const flash = 1 - clamp(age / .2), tint = flash > 0 ? White : Violet, tintAmount = flash > 0 ? .8 * flash : purpleLight(g.pos);
-      pawn(g.pos, colour, sun, strength, { lie: age > .15, tint, tintAmount });
+      const white = 1 - clamp(age / .2);
+      if (p.actors) pawn(g.pos, colour, sun, strength, { lie: age > .15, tint: Violet, tintAmount: white > 0 ? 0 : purpleLight(g.pos) });
+      flash(g.pos, .8 * white, age > .15);
       if (age > .15) cutGlow(`purple pawn ${g.i} cut`, g.pos, -Math.sign(g.across) * ca > .3 ? 1 : -1, age - .15);
       dissolve(`purple pawn ${g.i}`, place(B + g.d, g.across, .5), .6, age, colour, P0, 10);
     });
