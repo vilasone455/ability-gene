@@ -78,17 +78,23 @@ namespace RimArt
     ///   stands beamSeconds and hits every pawn and building in the lane hits times, timed as the head
     ///   of the beam reaches each one; the first hit carries a pawn pushCells along the lane. Where it
     ///   ends it explodes (blastRadius, blastDamage) when the beam lets go.
-    /// - Warp: while Instant Transmission is ready and the pool can pay its cost, the caster vanishes,
-    ///   appears on the chosen cell 0.12 s later and fires along the chosen direction 0.3 s after the
-    ///   vanish began; Instant Transmission's cooldown starts.
+    /// - Warp: while Instant Transmission is ready and the pool can pay its cost, Instant
+    ///   Transmission's charge and cooldown are taken and the caster holds the ball for the lock's
+    ///   channel onto the chosen cell (<see cref="GokuTransmissionLock"/>, measured from the channel
+    ///   cell). Then it vanishes, appears on the cell 0.12 s later and fires along the chosen
+    ///   direction 0.3 s after the vanish began. Cancel before the jump gives Instant Transmission's
+    ///   charge and cooldown back too; a stun or a downing spends them.
     /// </summary>
     public sealed class KamehamehaCast : GokuCast
     {
         /// <summary>The cell the channel began on (the picture's Home), the firing cell (the channel cell until a warp), and the aim.</summary>
         public IntVec3 channelCell, from, aim;
         public bool fireOrdered;
+        /// <summary>When the warp's vanish starts: the Warp press plus the lock's channel. Before it the caster still holds the ball.</summary>
         public int warpTick = -1;
         public IntVec3 warpTo, warpAim;
+        /// <summary>Instant Transmission's charge the Warp took; given back on a Cancel before the jump.</summary>
+        public float warpPaid;
         public bool warp, jumped;
         public int fireTick = -1;
         /// <summary>The caster is free: the beam has let go.</summary>
@@ -116,6 +122,8 @@ namespace RimArt
 
         public bool Channelling => !broken && channelTick >= 0 && warpTick < 0 && fireTick < 0;
         public bool Warping => !broken && warpTick >= 0 && fireTick < 0;
+        /// <summary>Warp was pressed and the caster is still locking onto the cell, holding the ball.</summary>
+        public bool Locking(int now) => Warping && now < warpTick;
         public bool Firing => !broken && fireTick >= 0;
         public override bool Busy => !broken && !released;
         public override string BusyReason => Firing ? "Firing." : "Channelling a Kamehameha.";
@@ -204,15 +212,28 @@ namespace RimArt
                 Messages.Message("Not enough charge for Instant Transmission.", caster, MessageTypeDefOf.RejectInput, false);
                 return false;
             }
+            warpPaid = echoes != null ? WarpCost : 0f;
             Ability it = caster.abilities.GetAbility(GokuDefOf.AG_GokuInstantTransmission);
             it?.StartCooldown(it.def.cooldownTicksRange.RandomInRange);
             warp = true;
-            warpTick = now;
+            float lockSeconds = GokuTransmissionLock.Seconds(caster, from, cell, null, out _, out _);
+            warpTick = now + Mathf.RoundToInt(lockSeconds * 60f);
             warpTo = cell;
             warpAim = aimCell;
-            // The plan's Go is now: the vanish starts on this tick and the beam fires WarpTicks later.
-            plan = T.Plan(true, P.channelSeconds, P.beamSeconds, Seconds(now) + T.Vanish * 2f + T.Gap - T.Lead - P.channelSeconds);
+            // The plan's Go is warpTick: the vanish starts then and the beam fires WarpTicks later.
+            plan = T.Plan(true, P.channelSeconds, P.beamSeconds, Seconds(warpTick) + T.Vanish * 2f + T.Gap - T.Lead - P.channelSeconds);
             return true;
+        }
+
+        protected override void RefundMore()
+        {
+            if (!warp || jumped) return;
+            GameComponent_Echoes.Get?.Refund(warpPaid);
+            warpPaid = 0f;
+            Ability it = caster?.abilities?.GetAbility(GokuDefOf.AG_GokuInstantTransmission);
+            if (it != null) it.ResetCooldown();
+            // Reverted: the Echo took the ability and kept its cooldown for the next manifest.
+            else if (caster != null) GameComponent_Echoes.Get?.HostRecord(caster)?.grant.Forget(GokuDefOf.AG_GokuInstantTransmission);
         }
 
         private void Jump()
@@ -401,6 +422,7 @@ namespace RimArt
             Scribe_Values.Look(ref warpTick, "warpTick", -1);
             Scribe_Values.Look(ref warpTo, "warpTo");
             Scribe_Values.Look(ref warpAim, "warpAim");
+            Scribe_Values.Look(ref warpPaid, "warpPaid");
             Scribe_Values.Look(ref warp, "warp");
             Scribe_Values.Look(ref jumped, "jumped");
             Scribe_Values.Look(ref fireTick, "fireTick", -1);

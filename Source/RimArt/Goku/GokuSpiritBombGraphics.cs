@@ -104,7 +104,7 @@ namespace RimArt
             int cracks = t.Count(T.CrackCount.x, T.CrackCount.y), pillars = t.Count(T.PillarCount.x, T.PillarCount.y);
             int rocks = t.Count(T.RockCount.x, T.RockCount.y), burns = t.Count(T.StreakCount.x, T.StreakCount.y);
             float grindTime = t.Dome - t.Hit, cool = t.Gone - t.Open + T.Tail * 0.8f, whiteFrame = t.By(T.WhiteTime.x, T.WhiteTime.y);
-            float power = t.PowerAt(s), chargeNow = Mathf.Clamp01(power / T.FullPower), r = T.StartSize + t.SizePer * power, blast = t.Base + t.BlastPer * power;
+            float power = t.PowerAt(s), chargeNow = Mathf.Clamp01(power / t.Full), r = T.StartSize + t.SizePer * power, blast = t.Base + t.BlastPer * power;
             bool channelling = s >= t.Cast && s < t.Release;
             float formed = Smooth((s - t.Cast) / 0.5f);
             // Where the ball is at w of the way through its flight: ground position and height.

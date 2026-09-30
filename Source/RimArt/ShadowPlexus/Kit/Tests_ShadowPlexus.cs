@@ -412,12 +412,9 @@ namespace RimArt
             Pawn unheld = Enemy(t, 0, -5);
             yield return 1;
             t.Check(!bind.CanApplyOn((LocalTargetInfo)unheld), "a pawn that is not held is refused");
-            PawnKindDef scyther = DefDatabase<PawnKindDef>.GetNamedSilentFail("Mech_Scyther");
-            if (scyther != null && Faction.OfMechanoids != null)
+            Pawn mech = t.Mech(t.center + new IntVec3(0, 0, 5));
+            if (mech != null)
             {
-                Pawn mech = PawnGenerator.GeneratePawn(new PawnGenerationRequest(scyther, Faction.OfMechanoids));
-                GenSpawn.Spawn(mech, t.center + new IntVec3(0, 0, 5), t.map);
-                RimArtTestContext.Hold(mech);
                 yield return 1;
                 Cast(shikamaru, ShadowPlexusDefOf.AG_ShadowImitation, mech);
                 yield return 2;
@@ -426,7 +423,6 @@ namespace RimArt
                 plexus.ReleaseAll();
                 mech.Destroy();
             }
-            else t.Log("no Mech_Scyther or mechanoid faction: the mech check was skipped");
             yield return 2;
 
             Pawn third = Enemy(t, -5, 0);
