@@ -10,12 +10,16 @@ namespace RimArt
     /// One Spirit Bomb, from the channel to the scorch. The rules (docs/heroes.md; the numbers are
     /// <see cref="CompProperties_SpiritBomb"/> on the ability def):
     ///
-    /// - The caster stands and channels with no upper limit; Throw ends it after minChannelSeconds.
+    /// - The caster stands and channels with no time limit; Throw ends it after minChannelSeconds.
     ///   A stun, a downing or death ends it with nothing and the charge and cooldown stay spent;
     ///   Cancel, a move order or a revert gives them back.
-    /// - Power: 1 per second from the caster, lendPerSecond from every colonist in the lend job
-    ///   (<see cref="JobDriver_GokuLend"/>) while it lends. Each lender's stints are kept for the
-    ///   picture, which draws a ribbon from each while it lends.
+    /// - Power, added every tick: the caster gives casterPerSecond x ki and every colonist in the lend
+    ///   job (<see cref="JobDriver_GokuLend"/>) lendPerSecond x ki, where ki is life energy x Rest
+    ///   (<see cref="GokuLifeEnergy.Ki"/>). Giving costs restPerSecond of the giver's Rest bar, so
+    ///   the rate falls as it tires; below stopRest a pawn gives nothing and a lender stops. The
+    ///   ball holds at most maxPower; when it is full the lenders stop and no more Rest is spent.
+    ///   From full Rest one pawn gives about 23 power over 36 s. Each lender's stints are kept for
+    ///   the picture, which draws a ribbon from each while it lends.
     /// - The throw: the ball flies flySeconds and detonates. Radius radiusBase + radiusPerPower x power;
     ///   damage damageBase + damagePerPower x power to every hostile pawn in the radius when the dome's
     ///   front reaches it; nothing else is hurt.
@@ -27,8 +31,10 @@ namespace RimArt
         public int throwTick = -1;
         /// <summary>The caster is free: the ball has left its hands.</summary>
         public bool released;
-        /// <summary>The power at the throw.</summary>
+        /// <summary>The power now; after the throw, the power it was thrown with.</summary>
         public float power;
+        /// <summary>Power per second over the last tick, from everyone giving (for the buttons).</summary>
+        public float rateNow;
 
         // Lender stints: who, when it began and when it stopped (-1 while it lends), on the plan's clock.
         private List<Pawn> stintPawns = new List<Pawn>();
@@ -57,8 +63,9 @@ namespace RimArt
         protected override float Lead => T.Lead;
 
         public bool CanThrow(int now) => Channelling && Channelled(now) >= P.minChannelSeconds;
+        public bool Full => power >= P.maxPower - 0.001f;
         /// <summary>The power now, or at the throw once thrown.</summary>
-        public float PowerNow(int now) => Thrown ? power : plan.PowerAt(Seconds(now));
+        public float PowerNow(int now) => power;
         public float RadiusNow(int now) => P.radiusBase + P.radiusPerPower * PowerNow(now);
         public float DamageNow(int now) => P.damageBase + P.damagePerPower * PowerNow(now);
         public int LenderCount { get { int n = 0; for (int i = 0; i < leaveAt.Count; i++) if (leaveAt[i] < 0f) n++; return n; } }
@@ -94,7 +101,8 @@ namespace RimArt
                 joins[i] = joinAt[i];
                 leaves[i] = leaveAt[i] < 0f ? T.Never : leaveAt[i];
             }
-            plan = T.Plan(n, P.minChannelSeconds, P.flySeconds, P.domeHoldSeconds, P.pace, P.lendPerSecond, P.radiusPerPower, P.sizePerPower, P.radiusBase, joins, leaves);
+            plan = T.Plan(n, P.minChannelSeconds, P.flySeconds, P.domeHoldSeconds, P.pace, P.lendPerSecond, P.radiusPerPower, P.sizePerPower, P.radiusBase, joins, leaves,
+                P.maxPower, power);
             if (throwTick < 0) T.Release(ref plan, T.Never);
             else T.Release(ref plan, Seconds(throwTick));
             if (lenderPos.Length != n) lenderPos = new Vector2[n];
@@ -104,6 +112,37 @@ namespace RimArt
 
         public static bool IsLending(Pawn pawn, Pawn caster) =>
             pawn != null && pawn.Spawned && !pawn.Dead && !pawn.Downed && pawn.CurJobDef == GokuDefOf.AG_GokuLend && pawn.CurJob?.targetA.Thing == caster;
+
+        /// <summary>Below stopRest a pawn gives nothing: Goku's part stops growing, a lender stops lending.</summary>
+        public static bool TooTired(Pawn pawn) => GokuLifeEnergy.Rest(pawn) < P.stopRest;
+
+        /// <summary>Power per second <paramref name="pawn"/> would give now: the rate x its ki, 0 when too tired.</summary>
+        public static float RateOf(Pawn pawn, bool isCaster) =>
+            TooTired(pawn) ? 0f : (isCaster ? P.casterPerSecond : P.lendPerSecond) * GokuLifeEnergy.Ki(pawn);
+
+        /// <summary>One tick of giving: the caster and every lender add their rate and pay Rest for it, up to the cap.</summary>
+        private void Gather()
+        {
+            if (Full)
+            {
+                rateNow = 0f;
+                return;
+            }
+            float perSecond = Give(caster, true);
+            for (int i = 0; i < lendingNow.Count; i++) perSecond += Give(lendingNow[i], false);
+            rateNow = perSecond;
+            power = Mathf.Min(P.maxPower, power + perSecond / 60f);
+            plan.Live = power;
+        }
+
+        private static float Give(Pawn pawn, bool isCaster)
+        {
+            float rate = RateOf(pawn, isCaster);
+            if (rate <= 0f) return 0f;
+            Need_Rest rest = pawn.needs?.rest;
+            if (rest != null) rest.CurLevel -= P.restPerSecond / 60f;
+            return rate;
+        }
 
         private void UpdateLenders(int now)
         {
@@ -144,7 +183,6 @@ namespace RimArt
             float s = Seconds(now);
             for (int i = 0; i < leaveAt.Count; i++) if (leaveAt[i] < 0f) leaveAt[i] = s;
             Rebuild();
-            power = plan.PowerAt(s);
             struckPawns.Clear();
             Walls();
             Spared(now);
@@ -226,12 +264,13 @@ namespace RimArt
                     return false;
                 }
                 UpdateLenders(now);
+                Gather();
                 // A heavy bomb trembles the camera every 0.5 s, as the picture's shakes do.
                 int half = Mathf.FloorToInt(Channelled(now) * 2f);
                 if (half > lastTremble)
                 {
                     lastTremble = half;
-                    float c = plan.PowerAt(Seconds(now)) / T.FullPower;
+                    float c = power / plan.Full;
                     if (half > 0 && c > 0.5f && Find.CurrentMap == home) Find.CameraDriver.shaker.DoShake(0.012f + 0.02f * Mathf.Min(1f, c));
                 }
                 if (throwOrdered && CanThrow(now)) Throw(now);

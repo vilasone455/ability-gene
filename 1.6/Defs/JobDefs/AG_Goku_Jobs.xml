@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
-  <!-- Solar Flare and Instant Transmission: JobDriver_CastAbility that tells the picture when the
-       warmup begins. -->
+  <!-- Solar Flare: JobDriver_CastAbility that tells the picture when the warmup begins. -->
   <JobDef ParentName="CastAbilityOnThing">
     <defName>AG_CastGoku</defName>
     <driverClass>RimArt.JobDriver_CastGoku</driverClass>
     <neverShowWeapon>true</neverShowWeapon>
     <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+  <!-- Instant Transmission: the same driver, but its warmup is the lock channel (up to 12 s), so a
+       move order can interrupt it. Nothing is spent then; a stun or a downing spends the cooldown. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_GokuTransmit</defName>
+    <driverClass>RimArt.JobDriver_CastGoku</driverClass>
+    <reportString>Feeling for life energy.</reportString>
+    <neverShowWeapon>true</neverShowWeapon>
   </JobDef>
 
   <!-- Kamehameha and Spirit Bomb: the caster stands and channels until the cast lets it go. A move

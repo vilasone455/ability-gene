@@ -48,29 +48,29 @@
   </AbilityDef>
 
   <!-- Instant Transmission: two clicks. First a pawn next to Goku to take along (friend, enemy or
-       downed), or Goku himself to go alone; then the destination cell, anywhere on the map (the
-       destination comp's range 0 is no limit, and no line of sight is needed). The 0.5 s warmup is
-       the fingers at the forehead. -->
+       downed, never a mechanoid), or Goku himself to go alone; then the destination cell, anywhere
+       on the map (the destination comp's range 0 is no limit, and no line of sight is needed). The
+       warmup is the lock channel: Verb_GokuTransmission reads it from the comp's numbers below
+       (GokuTransmissionLock.cs), so the verb has no warmupTime. -->
   <AbilityDef ParentName="AG_GokuAbilityBase">
     <defName>AG_GokuInstantTransmission</defName>
     <label>instant transmission</label>
-    <description>Two fingers to the forehead, and Goku is somewhere else.\n\nFirst click a pawn next to Goku to take along (an ally, an enemy or someone downed), or Goku himself to go alone. Then click any standable cell on the map; no line of sight is needed. After 0.5 seconds Goku appears there and the passenger on the cell beside him, on the same side as before. A hostile passenger arrives stunned for 1.5 seconds.</description>
+    <description>Goku locks onto the life energy at a cell and teleports there.\n\nFirst click a pawn next to Goku to take along (an ally, an enemy or someone downed; not a mechanoid), or Goku himself to go alone. Then click any standable cell on the map; no line of sight is needed.\n\nGoku locks onto the strongest life energy within 4 cells of that cell: a pawn's overall health times its body size (at most 1). Mechanoids have none. The channel lasts (0.5 s + 0.01 s per cell of distance) x (1 + 3 x (1 - lock)), at most 12 s. A healthy pawn 20 cells away: 0.7 s. An empty cell 20 cells away: 2.8 s.\n\nGoku appears on the cell and the passenger on the cell beside him, on the same side as before. The passenger is not held: if it leaves his side during the channel, Goku goes alone. A hostile passenger arrives stunned for 1.5 seconds.\n\nThe charge is paid on the jump. A stun or a downing during the channel spends the cooldown; a move order spends nothing.</description>
     <iconPath>RimArt/Goku/IconInstantTransmission</iconPath>
-    <jobDef>AG_CastGoku</jobDef>
+    <jobDef>AG_GokuTransmit</jobDef>
     <cooldownTicksRange>3600</cooldownTicksRange>
     <targetRequired>true</targetRequired>
     <hostile>false</hostile>
     <verbProperties>
-      <verbClass>Verb_CastAbility</verbClass>
+      <verbClass>RimArt.Verb_GokuTransmission</verbClass>
       <range>1.5</range>
-      <warmupTime>0.5</warmupTime>
       <drawAimPie>false</drawAimPie>
       <requireLineOfSight>false</requireLineOfSight>
       <targetParams>
         <canTargetSelf>true</canTargetSelf>
         <canTargetPawns>true</canTargetPawns>
         <canTargetAnimals>true</canTargetAnimals>
-        <canTargetMechs>true</canTargetMechs>
+        <canTargetMechs>false</canTargetMechs>
         <canTargetLocations>false</canTargetLocations>
         <canTargetBuildings>false</canTargetBuildings>
         <canTargetItems>false</canTargetItems>
@@ -82,6 +82,11 @@
         <range>0</range>
         <requiresLineOfSight>false</requiresLineOfSight>
         <hostileStunSeconds>1.5</hostileStunSeconds>
+        <baseSeconds>0.5</baseSeconds>
+        <secondsPerCell>0.01</secondsPerCell>
+        <emptyFactor>3</emptyFactor>
+        <lockRadius>4</lockRadius>
+        <maxSeconds>12</maxSeconds>
       </li>
     </comps>
   </AbilityDef>
@@ -93,7 +98,7 @@
   <AbilityDef ParentName="AG_GokuAbilityBase">
     <defName>AG_GokuKamehameha</defName>
     <label>kamehameha</label>
-    <description>Target a direction. Goku channels for 2.5 seconds standing still, then holds the ball until you press Fire, or Warp.\n\nFire: a beam 3 cells wide runs 30 cells, or to the first wall. It lasts 1.2 seconds and hits 4 times for 20 burn each (50% armour penetration) on every pawn and building in the lane, friend or foe, pushing pawns 1.5 cells along it. Where the beam ends it explodes: radius 2.5, 40 damage to everything there; a wall that stopped it takes it first.\n\nWarp (while Instant Transmission is ready): pick a cell and a direction; Goku jumps there and fires at once. It spends Instant Transmission's charge and cooldown too.\n\nA stun or a downing cancels the channel and the charge and cooldown are spent. Cancel gives them back.</description>
+    <description>Target a direction. Goku channels for 2.5 seconds standing still, then holds the ball until you press Fire, or Warp.\n\nFire: a beam 3 cells wide runs 30 cells, or to the first wall. It lasts 1.2 seconds and hits 4 times for 20 burn each (50% armour penetration) on every pawn and building in the lane, friend or foe, pushing pawns 1.5 cells along it. Where the beam ends it explodes: radius 2.5, 40 damage to everything there; a wall that stopped it takes it first.\n\nWarp (while Instant Transmission is ready): pick a cell and a direction. Goku holds the ball while he locks onto the cell, as Instant Transmission does (same channel time), then jumps there and fires. It spends Instant Transmission's charge and cooldown too; Cancel before the jump gives both back.\n\nA stun or a downing cancels the channel and the charge and cooldown are spent. Cancel gives them back.</description>
     <iconPath>RimArt/Goku/IconKamehameha</iconPath>
     <cooldownTicksRange>7200</cooldownTicksRange>
     <targetRequired>true</targetRequired>
@@ -133,11 +138,12 @@
   </AbilityDef>
 
   <!-- Spirit Bomb: an area order up to 35 cells away. No warmup: casting queues the channel job and
-       SpiritBombCast counts the power, the lenders (AG_GokuLend) and the throw. -->
+       SpiritBombCast counts the power, the lenders (AG_GokuLend) and the throw. Power comes from ki
+       (life energy x Rest) and costs Rest; the ball stops at maxPower. -->
   <AbilityDef ParentName="AG_GokuAbilityBase">
     <defName>AG_GokuSpiritBomb</defName>
     <label>spirit bomb</label>
-    <description>Target an area up to 35 cells away. Goku raises both hands and channels with no upper limit; press Throw when you want (after at least 3 seconds).\n\nThe bomb has a power number: +1 per second from Goku, and +1 per second from every colonist who presses Lend energy (they stand still with a hand up until you throw or they stop). Blast radius 2 + 0.25 x power. Damage 20 + 6 x power to every hostile pawn in the radius, nothing else: colonists, allies, animals, neutrals and buildings take nothing.\n\nThe bomb flies for 1.4 seconds and does not miss. A stun or a downing ends the channel with nothing and the charge and cooldown are spent. Cancel gives them back.</description>
+    <description>Target an area up to 35 cells away. Goku raises both hands and gathers ki; press Throw when you want (after at least 3 seconds).\n\nEvery giver adds its ki per second: overall health x Rest (a healthy, rested pawn gives 1 per second). Goku gives, and so does every colonist who presses Lend energy (they stand still with a hand up). Giving costs 2% of the giver's Rest bar per second, so the rate falls as they tire; below 28% Rest (Tired) a pawn gives nothing and a lender stops. From full Rest one pawn gives about 23 power over 36 seconds. The ball holds at most 60 power.\n\nBlast radius 2 + 0.15 x power (11 cells when full). Damage 20 + 6 x power (380 when full) to every hostile pawn in the radius, nothing else: colonists, allies, animals, neutrals and buildings take nothing.\n\nThe bomb flies for 1.4 seconds and does not miss. A stun or a downing ends the channel with nothing and the charge and cooldown are spent; the Rest already given is gone. Cancel gives the charge and cooldown back.</description>
     <iconPath>RimArt/Goku/IconSpiritBomb</iconPath>
     <cooldownTicksRange>60000</cooldownTicksRange>
     <targetRequired>true</targetRequired>
@@ -161,9 +167,13 @@
     <comps>
       <li Class="RimArt.CompProperties_SpiritBomb">
         <minChannelSeconds>3</minChannelSeconds>
+        <casterPerSecond>1</casterPerSecond>
         <lendPerSecond>1</lendPerSecond>
+        <restPerSecond>0.02</restPerSecond>
+        <stopRest>0.28</stopRest>
+        <maxPower>60</maxPower>
         <radiusBase>2</radiusBase>
-        <radiusPerPower>0.25</radiusPerPower>
+        <radiusPerPower>0.15</radiusPerPower>
         <damageBase>20</damageBase>
         <damagePerPower>6</damagePerPower>
         <damageDef>Burn</damageDef>
@@ -171,7 +181,7 @@
         <flySeconds>1.4</flySeconds>
         <domeHoldSeconds>2</domeHoldSeconds>
         <pace>0.6</pace>
-        <sizePerPower>0.12</sizePerPower>
+        <sizePerPower>0.06</sizePerPower>
       </li>
     </comps>
   </AbilityDef>
