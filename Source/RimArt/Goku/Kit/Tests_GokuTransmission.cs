@@ -148,13 +148,17 @@ namespace RimArt
             t.Check(healthyS < emptyS, "healthy lock " + healthyS.ToString("0.00") + " s is shorter than empty " + emptyS.ToString("0.00") + " s at the same distance");
             t.Check(hurtS < mechS, "hurt lock " + hurtS.ToString("0.00") + " s is shorter than the mech/empty " + mechS.ToString("0.00") + " s at the same distance");
 
-            // Real jumps, measured from the order: onto the healthy colonist, then onto the empty cell.
+            // Real jumps, measured from the order: onto the healthy colonist, then onto the empty cell. Goku may have
+            // punched the mech that stood next to him for two ticks, and that melee cooldown holds the cast job.
+            foreach (int w in WaitFor(() => Free(host), 240, 2)) yield return w;
             int want = Expect(t, host, healthyCell, null, "jump onto the healthy colonist");
             int start = t.Now;
             it.QueueCastingJob(host, healthyCell);
             foreach (int w in WaitFor(() => host.Position == healthyCell, want + 60, 1)) yield return w;
             int took = t.Now - start;
-            t.Check(host.Position == healthyCell && Mathf.Abs(took - want) <= 5, "Goku arrived after " + took + " ticks (the lock says " + want + ")");
+            if (!t.Check(host.Position == healthyCell && Mathf.Abs(took - want) <= 5, "Goku arrived after " + took + " ticks (the lock says " + want + ")"))
+                t.Log("Goku " + Describe(host) + " wanted " + healthyCell + "; on that cell: " + (healthyCell.GetFirstPawn(t.map)?.LabelShort ?? "nobody")
+                    + "; healthy " + Describe(healthy) + "; hurt " + Describe(hurt) + "; mech " + (mech == null ? "none" : Describe(mech)));
             yield return 5;
             Hold(host);
             it.ResetCooldown();
