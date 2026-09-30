@@ -411,11 +411,18 @@ Gojo (agreed 2026-09-27; numbers are placeholders):
   the lane are removed (thick rock roof too), rock and ore are erased with no chunks. The scar is
   permanent (agreed 2026-09-29): it never grows back. Sketch: `gojo-purple.js`.
 - Unlimited Void: the pocket map (pictures on main, PR #34). Everyone within 9 cells is taken in,
-  keeping positions relative to Gojo; 10 s or Release, then back to the matching cells. Anyone not
-  spared is overloaded (consciousness capped at 10 % for 60 s, then void-scarred 2 days). Cooldown
-  2 days. Rules: allies are taken too; Gojo spares an ally by touching it during the domain, and one
-  touch spares it for the whole domain; androids and mechanoids are immune but still taken in and can
-  act inside; overloading neutrals costs goodwill with their faction.
+  keeping positions relative to Gojo; 10 s or Release, then back to the matching cells. Cooldown
+  2 days. Overload builds over time (agreed 2026-09-30): every untouched victim gains 10 % overload per
+  second frozen inside; on exit its consciousness is capped at 100 % minus its overload (never below
+  10 %), and the overload then falls 0.5 % per second until gone. Past 7 s frozen (overload over 70 %)
+  consciousness is under 30 %, so the pawn is downed until the overload falls back to 70 %; only a pawn
+  that went down is also void-scarred (consciousness -15 %, sight -20 %, 2 days). Examples: 1 s =
+  consciousness 90 % for 20 s; 3 s = 70 % for 60 s; 5 s = 50 % for 100 s; 8 s = downed 20 s, then
+  140 s recovering, then scarred; 10 s = consciousness 10 %, downed 60 s, then 140 s recovering, then
+  scarred. No damage. Rules: allies are taken too; Gojo spares a pawn by touching it during the
+  domain: its build-up stops and it keeps what it already has, so a late touch spares less; androids
+  and mechanoids are immune but still taken in and can act inside; overloading neutrals costs goodwill
+  with their faction.
 - Forced trait, The Strongest (new custom trait): Gojo has +20 opinion of young colonists (children
   and anyone under 30 % of the race's life expectancy, 24 for a human) and they have +10 of him; he
   has -20 opinion of old colonists (past 70 %, 56 for a human) and they have -10 of him; -6 mood while
