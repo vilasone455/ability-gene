@@ -68,6 +68,7 @@ namespace RimArt
         private readonly List<GravityCast> castBuffer = new List<GravityCast>();
 
         public IEnumerable<GravityCast> Casts => casts;
+        public IReadOnlyList<GravityMotion> Motions => motions;
         public MapComponent_Gravity(Map map) : base(map) { }
 
         // Any map: for starting a cast.
@@ -88,6 +89,14 @@ namespace RimArt
             for (int i = 0; i < casts.Count; i++)
                 if (casts[i].caster == pawn && casts[i].Busy) return casts[i];
             return null;
+        }
+
+        // The cast that holds this pawn in its clip: attacks and orders are refused while it lasts. A well
+        // that does not hold its caster (holdsCaster false) never does.
+        public GravityCast Holding(Pawn pawn)
+        {
+            GravityCast cast = For(pawn);
+            return cast != null && cast.Props.holdsCaster ? cast : null;
         }
 
         // Worked out once per tick.
@@ -129,11 +138,15 @@ namespace RimArt
                     pawn, MessageTypeDefOf.RejectInput, false);
                 return false;
             }
-            if (!GravityCastAnimation.Clip.TryStart(pawn, out var animation)) return false;
+            CastClips.Handle animation = null;
+            if (props.holdsCaster && !GravityCastAnimation.Clip.TryStart(pawn, out animation)) return false;
             if (cost > 0f) GameComponent_Echoes.Get.TrySpend(cost);
+            // A free caster turns to the cell and goes on with what he was doing.
+            if (!props.holdsCaster) pawn.rotationTracker.FaceCell(cell);
             Vector3 at = cell.ToVector3Shifted();
             casts.Add(new GravityCast { id = GameComponent_Gravity.Instance.NextId(), caster = pawn, def = def,
-                anchor = pawn.Position, origin = at, centre = at, map = map, animation = animation, paid = cost });
+                anchor = pawn.Position, origin = at, centre = at, map = map, animation = animation, paid = cost,
+                startTick = Find.TickManager.TicksGame });
             SetLive(true);
             Changed();
             return true;
@@ -187,7 +200,7 @@ namespace RimArt
             if (Owner(thing, position) == null) return null;
             if (!motionIndex.TryGetValue(thing, out var motion))
             {
-                motion = new GravityMotion { thing = thing, position = position, cell = thing.Position };
+                motion = new GravityMotion { thing = thing, position = position, start = position, cell = thing.Position };
                 motions.Add(motion); motionIndex.Add(thing, motion);
                 if (!(thing is Pawn)) thing.Map.mapDrawer.MapMeshDirty(thing.Position, MapMeshFlagDefOf.Things);
             }
@@ -338,7 +351,7 @@ namespace RimArt
                     if (!cast.Field) continue;
                     if (!cast.Valid) { cast.Finish(false); continue; }
                     EatCore(cast);
-                    if (cast.clock.ticks > 0 && cast.clock.ticks % 60 == 0)
+                    if (cast.clock.ticks > 0 && cast.clock.ticks % 60 == 0 && cast.Props.coreDamage > 0f)
                         DamagePawns(cast, cast.Props.coreRadius, cast.Props.coreDamage);
                     if (cast.clock.ticks >= cast.DurationTicks && cast.Active) cast.Finish(true);
                 }
@@ -364,7 +377,8 @@ namespace RimArt
         {
             if (Find.CurrentMap != map || (casts.Count == 0 && motions.Count == 0)) { GravityProjectiles.Draw(map); return; }
             foreach (var cast in casts)
-                if ((cast.Field || cast.tailTicks > 0) && !cast.Cell.Fogged(map))
+                if (cast.Props.look == GravityLook.GojoBlue) GojoBlueLook.Draw(this, cast);
+                else if ((cast.Field || cast.tailTicks > 0) && !cast.Cell.Fogged(map))
                     GravityGraphics.Draw(cast.Centre, cast.clock.ticks / 60f, cast.Growth, cast.Radius, cast.Props.coreRadius,
                         cast.Field ? cast.TicksLeft / (float)Mathf.Max(1, cast.DurationTicks) : -1f,
                         cast.Active ? 1f : cast.tailTicks / 30f, cast.clock.imploded, cast.burstRadius, map);
@@ -381,7 +395,8 @@ namespace RimArt
             if (Find.CurrentMap != map || casts.Count == 0) return;
             foreach (var cast in casts)
             {
-                if (!cast.Field || cast.Cell.Fogged(map)) continue;
+                // Gravity Well's timer; Gojo's Blue picture has none.
+                if (!cast.Field || cast.Props.look != GravityLook.Well || cast.Cell.Fogged(map)) continue;
                 Vector3 at = cast.Centre + new Vector3(0f, 0f, -(cast.Props.coreRadius + 0.35f));
                 Vector2 screen = Find.Camera.WorldToScreenPoint(at) / Prefs.UIScale;
                 screen.y = UI.screenHeight - screen.y;

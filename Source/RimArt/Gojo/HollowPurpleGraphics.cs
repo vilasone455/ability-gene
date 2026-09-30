@@ -54,6 +54,12 @@ namespace RimArt
         public HollowPurpleCut[] Cuts;
         /// <summary>Gojo's sleeve and skin colours, for the drawn pointing arm.</summary>
         public Color Sleeve, Skin;
+        /// <summary>
+        /// Where the pointing arm is drawn when Gojo does not stand on the path's line (in game Red can pass up to
+        /// Hollow Purple's blueRadius from Blue's centre, and <see cref="Feet"/> is then Blue's centre moved back
+        /// along the aim). Left at zero it is <see cref="Feet"/>, as in the previews.
+        /// </summary>
+        public Vector2 ArmAt;
     }
 
     /// <summary>
@@ -372,7 +378,7 @@ namespace RimArt
             }
 
             // --- Gojo's pointing arm, and what it touched: flash, cut, specks drawn into the sphere -----------------------------
-            GojoGraphics.PointingArm(feet, aim, T.ArmOut(t, s), chest, shot.Sleeve, shot.Skin);
+            GojoGraphics.PointingArm(shot.ArmAt == Vector2.zero ? feet : shot.ArmAt, aim, T.ArmOut(t, s), chest, shot.Sleeve, shot.Skin);
             if (shot.Touched != null)
                 foreach (HollowPurpleTouch touch in shot.Touched)
                 {

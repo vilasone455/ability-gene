@@ -5,11 +5,25 @@ using Verse;
 
 namespace RimArt
 {
+    /// <summary>What a well looks like: Pain's Gravity Well picture (<see cref="GravityGraphics"/>) or Gojo's Blue (<see cref="GojoBlueLook"/>).</summary>
+    public enum GravityLook { Well, GojoBlue }
+
     // All balance numbers of one well, read by the cast from its ability def. Gravity Well is Pain's;
     // another well can reuse the code with its own def: minRadius == maxRadius gives a fixed radius,
-    // secondsPerEaten 0 a fixed duration, driftSpeed 0 no drift.
+    // secondsPerEaten 0 a fixed duration, driftSpeed 0 no drift, bendsBullets false no bullet bending,
+    // holdsCaster false a caster who is free once the well is cast (Gojo's Blue).
     public class CompProperties_AbilityGravityWell : CompProperties_AbilityEffect
     {
+        // True: the caster stands in Melee Animation's gather clip for the whole well and the well closes
+        // when he stops (Gravity Well). False: no clip; the well runs its time on its own and the caster
+        // can act, move and cast; it closes early only if the caster dies, leaves the map or loses the
+        // ability. Such a well has no Implode and no Cancel button.
+        public bool holdsCaster = true;
+        // False: bullets and other rounds are neither bent nor eaten by this well.
+        public bool bendsBullets = true;
+        // Seconds from the cast to the pull (the opening). Gravity Well's 0.5 matches its gather clip.
+        public float openingSeconds = 0.5f;
+        public GravityLook look = GravityLook.Well;
         // Cells from the caster to the well's centre.
         public float range = 20f;
         // Pull radius in cells: minRadius with nothing eaten, linear up to maxRadius at fullMass eaten.
@@ -50,6 +64,7 @@ namespace RimArt
         public float Damage(float eaten) => Mathf.Lerp(minDamage, maxDamage, Growth(eaten));
         public float BurstRadius(float eaten) => Mathf.Lerp(minBurstRadius, maxBurstRadius, Growth(eaten));
         public int CooldownTicks => Mathf.RoundToInt(cooldownSeconds * 60f);
+        public int OpeningTicks => Mathf.Max(1, Mathf.RoundToInt(openingSeconds * 60f));
 
         public float Pull(float distance, float resistance, float radius) =>
             pullSpeed * GravityRules.Clamp((radius - distance) / Mathf.Max(0.01f, radius - coreRadius)) / Mathf.Max(1f, resistance);
