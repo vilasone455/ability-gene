@@ -206,7 +206,7 @@ Rules:
 | Pain (`AG_Echo_Pain.xml`) | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei, Banshō Ten'in, Black Receiver, Chibaku Tensei (replaced Gravity Well 2026-09-28) | 15 | Shinra 5 charged / 3 quick (tap/hold button, 2026-09-29), Banshō 3, Black Receiver 0 (its three charges), Chibaku Tensei 30 |
 | Inumaki | Social 10, not Psychopath | Kind | stop, drop, crush, come, run, explode | 8 | 0 each (the throat is his cost) |
 | Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | Judgement Cut, Yamato Dash, Summoned Swords, Judgement Cut End (the def grants none until the kit is ported) | 10 | Judgement Cut 3, Yamato Dash 2, Summoned Swords 10, Judgement Cut End 0 (Style is its limit) |
-| Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40 |
+| Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40; +0.4 move speed, auburn hair, wealth 6000, his everyday clothes (white shirt with navy raglan sleeves, indigo jeans, grey trainers; `python3 make_costume_textures.py shirou`, test "costume 10") |
 | Itachi ("Crow of the Crimson Eye") | Melee 12, Intellectual 12, Kills 30 | Sickly (Immunity -1) + the dispersal plexus gene (awakenGenes) | crow dispersal (Murder + automatic Scatter), carrion, false face, susanoo | 10 | crow abilities 0 (the plexus's 3 charges), false face 3, susanoo 20 |
 | Shikamaru | Intellectual 14, 5 people captured | Lazy | shadow imitation, shadow seam, shadow grasp, shadow double, shadow neck bind | 10 | imitation 3, seam 3, grasp 1, double 5, neck bind 2 |
 | Sasuke ("Avenger of the Crimson Eye") | Melee 14, Intellectual 10, 15 kills with the Fūma Shuriken | Pessimist | Amenoyodomi, Amenotejikara, Raikō Kusari, Amaterasu | 12 | Amenoyodomi 0, Amenotejikara 2, Raikō Kusari 8, Amaterasu 5 (+ Bleeding eye); +0.4 move speed, black hair, wealth 6000, no forced weapon, Fourth War outfit |
@@ -833,7 +833,11 @@ puff and the vanilla punch.
   head, the Host's hair hidden, the blindfold x0.84 / x0.7 on the narrow head, Facial Animation's
   eyebrows hidden when that mod is loaded, shirt and hat hidden, pack drawn; the form removed, nothing
   of it left, the hat hides the hair again and the eyebrows are drawn again; 4 screenshots).
-  `-rimarttest="Echo: costume"` runs costume 1-9.
+  "costume 10" (Shirou manifested through his Echo: one node on the body apparel, 15 textures load;
+  dressed with a cowboy hat and a pack: the Thin set drawn, the hair in Shirou's colour and drawn
+  (the hidden hat does not hide it), shirt and hat hidden, pack drawn; 4 screenshots; manifested
+  again naked: still drawn, 1 screenshot; after revert nothing of it left, shirt and hat drawn).
+  `-rimarttest="Echo: costume"` runs costume 1-10.
 - Debug window, kit "Itachi": make Host + manifest, false face (no cost, no cooldown), susanoo 12 s,
   weaken to 30 % health, totsuka stab the pawn under the mouse. Dispersal's "refill the plexus"
   and "shoot the carrier" still apply.
