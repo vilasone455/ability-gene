@@ -20,8 +20,9 @@
 //   Guns: one white pistol and one black pistol, one in each hand, arms out, firing in turn.
 //   White shot: a white crescent swept round the gun hand, a white flash with short spikes at the
 //         muzzle, a thin pale smoky line to the target, a white sunburst of thin spikes on the hit.
-//   Black shot: a black ink splash of jagged shards off the muzzle, a dark line, a black star of
-//         shards on the hit, a red spark and blood.
+//   Black shot: a black ink splash of jagged shards off the muzzle, a dark line; on the hit one
+//         solid black ink splat over the torso with a spiky edge, red streaks inside it, black
+//         droplets and slivers flung out, then it breaks into chunks that fly off; blood.
 //   Butterflies: lace butterflies drift off the hit and settle: line art, a white outline and a
 //         web of white veins cutting each wing into small irregular cells, see-through between the
 //         lines; big rounded forewings, smaller hindwings, scalloped edges. .3 cells across here,
@@ -40,8 +41,9 @@
 //   0.35  shot 1, white: crescent and muzzle flash, the line reaches the raider 5 cells off in
 //         .08 s, white sunburst; 2 pale butterflies loop off the chest and land on the body in .5 s;
 //         the white gun kicks up 28 degrees and settles in .3 s
-//   0.60  shot 2, black: ink splash, dark line, black star, blood thrown on, a floor spatter that
-//         stays, the raider flinches .07 cells; 1 dark butterfly lands
+//   0.60  shot 2, black: ink splash, dark line; on the hit a black ink splat over the chest in
+//         .06 s with red inside, breaking into flying chunks from .1 s, gone by .4 s; blood thrown
+//         on, a floor spatter that stays, the raider flinches .07 cells; 1 dark butterfly lands
 //   ...   one shot every .25 s, alternating. The raider sways more with each stack (consciousness).
 //         Ten pips over the head count the stacks, each in its butterfly's colour.
 //   1.93  shot 7 hits: stack 10, the cap. 20 more butterflies spiral in from 1-2 cells away over
@@ -357,19 +359,75 @@ function whiteHit(key, c, age) {
     sprite({ x: c.x + Math.cos(t) * v * age, z: c.z + Math.sin(t) * v * age }, .06, .06, White.withAlpha(f), glow, Y + .092);
   }
 }
-// Black hit: a dark blot and a star of twelve ink shards flung out for .32 s, a red spark, blood
-// thrown on along the shot, and a floor spatter behind the pawn that stays.
+// A black ink splat, unit radius: 64 points round the centre, a ragged edge of small teeth and,
+// about one point in five, a long sharp spike, so it reads as a splash and not a disc. Three
+// variants built once; each shot picks one and turns it.
+function splatMesh(name, seed) {
+  const N = 64, v = [0, 0], tri = [];
+  for (let i = 0; i < N; i++) {
+    const t = i / N * TAU;
+    let r = (.8 + .2 * rand(seed * 71 + i * 3)) * (i % 2 ? .88 : 1);
+    if (rand(seed * 131 + i) > .8) r += .35 + .55 * rand(seed * 53 + i);
+    v.push(Math.cos(t) * r, Math.sin(t) * r);
+  }
+  for (let i = 0; i < N; i++) tri.push(0, 1 + i, 1 + (i + 1) % N);
+  const m = new Mesh(name); m.setFlat(v, tri); return m;
+}
+const Splats = [1, 2, 3].map(k => splatMesh(`sl splat ${k}`, k));
+// A jagged ink sliver round q: four corners, long and pointed along rot (radians), narrow across.
+const SliverShape = [1.6, .45, .8, .4];
+function chunk(key, q, rot, size, seed, colour, layer) {
+  const pts = [0, 1, 2, 3].map(k => {
+    const t = rot + k * Math.PI / 2 + (rand(seed * 5 + k) - .5) * .5, r = size * SliverShape[k] * (.75 + .5 * rand(seed * 7 + k));
+    return { x: q.x + Math.cos(t) * r, z: q.z + Math.sin(t) * r };
+  });
+  band(key, [pts[0], pts[1]], [pts[3], pts[2]], colour, layer);
+}
+// Black hit, as the Limbus frames draw it: a solid black ink splat over the chest, out to .36
+// cells (spikes to .7) in .06 s, a shade lighter in the middle; red inside it (a glow and seven
+// thin streaks) for .16 s; three thin black slashes along the shot through the target for .15 s;
+// ten droplets flung out. From .1 s the ink breaks up: the splat shrinks away (it stays opaque,
+// it does not fade) and fourteen slivers come off its edge, fly 1.2-3.4 cells/s, turn and shrink,
+// all gone by .4 s. Then blood thrown on along the shot, and a floor spatter that stays.
+const InkHit = .4;
 function blackHit(key, c, pos, dir, age, seed) {
   if (age < 0) return;
   const aim = Math.atan2(dir.z, dir.x);
-  if (age < .32) {
-    const u = age / .32, grow = Math.sqrt(Math.min(1, age / .05)), f = 1 - u * u;
-    sprite(c, .75 * grow, .7 * grow, Ink.withAlpha(.7 * f), soft, Y + .09);
-    for (let i = 0; i < 12; i++) {
-      const t = i / 12 * TAU + rand(i + 200) * .4, l = (.25 + .38 * rand(i + 210)) * grow, d0 = .08 + age * (.6 + rand(i + 220)) + l * .35;
-      shard(`${key} star ${i}`, { x: c.x + Math.cos(t) * d0, z: c.z + Math.sin(t) * d0 * .9 }, t, l, l * (.2 + .15 * rand(i + 230)), Ink.withAlpha(.95 * f), Y + .091);
+  if (age < InkHit) {
+    const grow = 1 - Math.pow(1 - clamp(age / .06), 3), brk = clamp((age - .1) / (InkHit - .1));
+    const R = .36 * grow * (1 - Math.pow(brk, 1.5));
+    if (R > .01) {
+      draw(Splats[seed % 3], c.x, Y + .09, c.z, R, R, rand(seed + 300) * 360, Ink.withAlpha(.95));
+      sprite(c, R * 1.1, R, Soot.withAlpha(.4), soft, Y + .0902);
     }
-    if (age < .08) sprite(c, .3, .28, Red.withAlpha(.8 * (1 - age / .08)), glow, Y + .092);
+    if (age < .16) {
+      const f = 1 - age / .16;
+      sprite(c, .3 * grow, .28 * grow, Red.withAlpha(.6 * f), glow, Y + .0905);
+      for (let i = 0; i < 7; i++) {
+        const t = rand(seed * 7 + i + 310) * TAU, l = (.1 + .2 * rand(seed * 7 + i + 320)) * grow;
+        streak(`${key} red ${i}`, c, { x: c.x + Math.cos(t) * l, z: c.z + Math.sin(t) * l }, .035, Red.withAlpha(.95 * f), flat, Y + .0906, 3);
+      }
+    }
+    for (let i = 0; i < 14; i++) {
+      const a = age - .08 - rand(seed * 11 + i + 330) * .06; if (a < 0) continue;
+      const u = a / (InkHit - .08); if (u >= 1) continue;
+      const t = i / 14 * TAU + rand(seed * 13 + i + 340) * .4, v = 1.2 + 2.2 * rand(seed * 17 + i + 350), d0 = .28 + v * a;
+      const q = { x: c.x + Math.cos(t) * d0, z: c.z + Math.sin(t) * d0 * .9 - 1.5 * a * a };
+      chunk(`${key} chunk ${i}`, q, t + a * 3 * (rand(seed + i + 370) - .5), (.06 + .08 * rand(seed * 19 + i + 360)) * (1 - u), seed * 23 + i, Ink.withAlpha(.95), Y + .091);
+    }
+    for (let i = 0; i < 10; i++) {
+      const u = age / (.3 + .1 * rand(seed + i + 380)); if (u >= 1) continue;
+      const t = rand(seed * 29 + i + 390) * TAU, v = 2.5 + 3 * rand(seed * 31 + i + 400), r = .035 * (1 - u * u);
+      draw(disc, c.x + Math.cos(t) * v * age, Y + .0915, c.z + Math.sin(t) * v * age * .9 - 3 * age * age, r, r, 0, Ink);
+    }
+    if (age < .15) {
+      const f = 1 - age / .15;
+      for (let i = 0; i < 3; i++) {
+        const off = (rand(seed * 37 + i + 410) - .5) * .5, a0 = -.5 + age * 6 + rand(i + 420) * .3, len = .6 + .5 * rand(i + 430);
+        const from = { x: c.x + dir.x * a0 - dir.z * off, z: c.z + dir.z * a0 + dir.x * off };
+        streak(`${key} slash ${i}`, from, move(from, dir, len), .03, Ink.withAlpha(.9 * f), flat, Y + .0918, 4);
+      }
+    }
   }
   for (let i = 0; i < 6; i++) {
     const life = .22 + rand(i + 240) * .1, u = age / life; if (u > 1) continue;
