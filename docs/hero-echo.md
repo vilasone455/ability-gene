@@ -421,6 +421,19 @@ Gojo (agreed 2026-09-27; numbers are placeholders):
   has -20 opinion of old colonists (past 70 %, 56 for a human) and they have -10 of him; -6 mood while
   no other Host is awakened in the colony, +4 once another is. No psychic sensitivity anywhere in his
   entry (the user's rule).
+- Costume (built 2026-09-30 on `AG_EchoManifest_Gojo`, a hero form hediff with no EchoDef yet): his
+  teacher's uniform from the anime's model sheets. Three pieces. The uniform on the body: a near-black
+  zip-up jacket (violet highlights on the lit edges and folds, as the anime lights it) to the top of
+  the thighs, the zip's flap a little to his left of the middle, slash pockets, black trousers and
+  boots; no arms (a seam marks each sleeve down to the wrist); it hides worn clothes and headgear, and
+  facing north it goes over the head and draws the collar from behind. The high, broad collar on the
+  head (layer 64, as the Akatsuki collar), up to the jaw, just over the tip of the chin; its north
+  picture is empty. The blindfold on the head (layer 63): a wide black band over the brows and eyes
+  with his white hair propped up above it in nine broad flame-shaped locks, lavender toward the band,
+  short lavender hair under it at the back; it sets `hidesHair` (the Host's hair is not drawn) and
+  `coversFace` (Facial Animation's eyebrows are not drawn over it). The band's ends are on the vanilla
+  head's outline, so on Facial Animation's narrower heads they stand about 2 units past the face.
+  Textures: `python3 make_costume_textures.py gojo`. Test "costume 9".
 
 Pain's Echo (agreed 2026-09-27): it grants all four abilities, Shinra Tensei, Gravity Well, Banshō
 Ten'in and Black Receiver (the last two once they are built; `AG_Echo_Pain` lists only Shinra today).
@@ -725,7 +738,13 @@ puff and the vanilla punch.
   directly: two nodes, both set to `onlyOverWornApparel`, 18 textures load; a dressed Host with an
   afro, a cowboy hat and a pack: both drawn, the hair hidden under the cap, shirt and hat hidden, pack
   drawn; a naked Host: nothing drawn, the hair drawn; trousers on, both drawn; the form removed, nothing of it left and the cowboy hat hides the hair
-  again; 4 screenshots). `-rimarttest="Echo: costume"` runs costume 1-8.
+  again; 4 screenshots). "costume 9" (Gojo's hero form hediff added directly: three nodes, 21
+  textures load; a dressed Host with an average head, an afro, a cowboy hat and a pack, and a naked
+  Host with a narrow head and an afro: all three pieces drawn on both, the collar and blindfold on the
+  head, the Host's hair hidden, the blindfold x0.84 / x0.7 on the narrow head, Facial Animation's
+  eyebrows hidden when that mod is loaded, shirt and hat hidden, pack drawn; the form removed, nothing
+  of it left, the hat hides the hair again and the eyebrows are drawn again; 4 screenshots).
+  `-rimarttest="Echo: costume"` runs costume 1-9.
 - Debug window, kit "Itachi": make Host + manifest, false face (no cost, no cooldown), susanoo 12 s,
   weaken to 30 % health, totsuka stab the pawn under the mouse. Dispersal's "refill the plexus"
   and "shoot the carrier" still apply.
@@ -763,7 +782,7 @@ puff and the vanilla punch.
 
 - Meteor incident that brings the device (the device is researched and built for now).
 - Costumes for the other Echoes (Vergil's coat, the Akatsuki cloak for Pain, Itachi and Obito,
-  Obito's mask and Pain's piercings, Minato's, Sasuke's and Satō's are built), the other head pieces, eye overlays, a transform effect per Echo, a marker
+  Obito's mask and Pain's piercings, Minato's, Sasuke's, Satō's and Gojo's are built), the other head pieces, eye overlays, a transform effect per Echo, a marker
   for manifested Hosts.
 - Pocket spaces closing on `PoolEmptied`, except Unlimited Blade Works: its world closes when the
   caster loses the ability, which an empty pool causes by reverting every Host.
