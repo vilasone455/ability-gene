@@ -38,6 +38,11 @@ namespace RimArt
             return t.Note(host);
         }
 
+        /// <summary>Moving level and every hediff with its part, to see where a test pawn lost speed.</summary>
+        private static string Health(Pawn pawn) =>
+            "moving " + pawn.health.capacities.GetLevel(PawnCapacityDefOf.Moving).ToString("0.00") + ", hurt " + (pawn.health.summaryHealth.SummaryHealthPercent < 0.999f) + "; " +
+            string.Join(", ", pawn.health.hediffSet.hediffs.Select(h => h.LabelCap + (h.Part != null ? " (" + h.Part.Label + ")" : "")));
+
         private static TraceLibraryEntry Study(Pawn pawn, ThingDef def, ThingDef stuff, QualityCategory best)
         {
             var entry = new TraceLibraryEntry { blade = def.defName, stuff = stuff?.defName, best = best };
@@ -246,6 +251,7 @@ namespace RimArt
             Pawn host = Host(t, t.center, out EchoRecord record);
             t.Equip(host, LongSword);
             float speed = host.GetStatValue(StatDefOf.MoveSpeed), melee = host.GetStatValue(StatDefOf.MeleeDamageFactor);
+            var hediffsAtStart = new HashSet<Hediff>(host.health.hediffSet.hediffs);
             Ability ability = host.abilities.GetAbility(TraceDefOf.AG_Trace_Reinforcement);
             if (!t.Check(ability != null && ability.CanCast, "Shirou has Reinforcement (" + ability?.CanCast.Reason + ")")) { EndHost(record); yield break; }
             float before = echoes.charge;
@@ -267,21 +273,36 @@ namespace RimArt
             yield return 25;
             yield return t.ShotAs("reinforce-run", host.Position, 3f);
             foreach (int w in WaitFor(() => !host.pather.MovingNow, 120, 5)) yield return w;
+            t.Log("after the run: " + Health(host));
 
+            // A sure hit through the verb: an AttackMelee job lets Melee Animation start a duel, whose damage skips the
+            // slash hook, and the quicktest map is cold enough for hypothermia to slow the host within 20 s.
             Pawn foe = t.Note(t.Target(host.Position + new IntVec3(1, 0, 0), 900));
-            host.drafter.FireAtWill = true;
-            foreach (int w in WaitFor(() => GameComponent_Trace.Instance.HitsBy(host) > 0, 400)) yield return w;
+            yield return 2;
+            for (int attempt = 0; attempt < 3 && GameComponent_Trace.Instance.HitsBy(host) == 0; attempt++)
+            {
+                t.Strike(host, foe);
+                foreach (int w in WaitFor(() => GameComponent_Trace.Instance.HitsBy(host) > 0, 60, 2)) yield return w;
+            }
             t.Log("hits with the slash: " + GameComponent_Trace.Instance.HitsBy(host) + "; foe " + Describe(foe));
             t.Check(GameComponent_Trace.Instance.HitsBy(host) > 0, "a melee hit while reinforced got the slash");
+            t.Log("after the hit: " + Health(host));
             yield return 4;
             yield return t.ShotAs("reinforce-hit", host.Position, 3f);
             foe.Destroy();
-            host.drafter.FireAtWill = false;
 
             foreach (int w in WaitFor(() => !host.health.hediffSet.HasHediff(TraceDefOf.AG_TraceReinforced), 1400, 10)) yield return w;
             t.Log("buff gone after " + (t.Now - landed) + " ticks");
             t.Check(!host.health.hediffSet.HasHediff(TraceDefOf.AG_TraceReinforced) && t.Now - landed >= 1190, "the buff lasted 20 s");
-            t.Check(System.Math.Abs(host.GetStatValue(StatDefOf.MoveSpeed) - speed) < 0.01f, "move speed is back");
+            List<Hediff> added = host.health.hediffSet.hediffs.Where(h => !hediffsAtStart.Contains(h)).ToList();
+            if (added.Count > 0)
+            {
+                t.Log("removed before the measure (the map's cold, the foe's hits): " + string.Join(", ", added.Select(h => h.LabelCap)));
+                foreach (Hediff h in added) host.health.RemoveHediff(h);
+            }
+            float speedAfter = host.GetStatValue(StatDefOf.MoveSpeed);
+            if (!t.Check(System.Math.Abs(speedAfter - speed) < 0.01f, "move speed is back (" + speed.ToString("0.00") + " -> " + speedAfter.ToString("0.00") + ")"))
+                t.Log(Describe(host) + "; " + Health(host) + "\n" + StatDefOf.MoveSpeed.Worker.GetExplanationFull(StatRequest.For(host), ToStringNumberSense.Absolute, speedAfter));
             EndHost(record);
         }
 

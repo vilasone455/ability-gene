@@ -186,6 +186,21 @@ namespace RimArt
             return pawn;
         }
 
+        /// <summary>
+        /// One melee attack with <paramref name="attacker"/>'s weapon that cannot miss: a surprise attack skips the miss and
+        /// dodge rolls. It goes through Pawn_MeleeVerbs, not an AttackMelee job, so Melee Animation does not take it over
+        /// with a duel or an execution (those apply their own damage and skip Verb_MeleeAttackDamage hooks).
+        /// False, with a failed check, when the weapon has no melee verb.
+        /// </summary>
+        public bool Strike(Pawn attacker, Pawn target)
+        {
+            Verb verb = attacker.equipment?.PrimaryEq?.AllVerbs?.FirstOrDefault(v => v.IsMeleeAttack);
+            if (!Check(verb != null, attacker.LabelShort + " has a melee verb on the weapon")) return false;
+            bool started = attacker.meleeVerbs.TryMeleeAttack(target, verb, true);
+            Log(Now + " strike " + target.LabelShort + ": " + started + " | " + Describe(attacker));
+            return started;
+        }
+
         /// <summary>Removes Wimp: at 20 % pain it downs a pawn a test means to wound, which then drops its weapon.</summary>
         public static void NoWimp(Pawn pawn)
         {
