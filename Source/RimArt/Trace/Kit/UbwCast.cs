@@ -35,23 +35,6 @@ namespace RimArt
         }
     }
 
-    /// <summary>One pawn taken into the world: the cell it stood on and the lord it belonged to.</summary>
-    public sealed class UbwTaken : IExposable
-    {
-        public Pawn pawn;
-        public IntVec3 from;
-        public Lord lord;
-
-        public void ExposeData()
-        {
-            // A lord that has ended is saved nowhere, and a reference to it would not resolve on load.
-            if (Scribe.mode == LoadSaveMode.Saving && lord != null && (lord.Map == null || !lord.Map.lordManager.lords.Contains(lord))) lord = null;
-            Scribe_References.Look(ref pawn, "pawn", true);
-            Scribe_Values.Look(ref from, "from");
-            Scribe_References.Look(ref lord, "lord");
-        }
-    }
-
     /// <summary>
     /// One cast of Unlimited Blade Works, from the chant to the return. The rules (proposed 2026-09-24, taken
     /// as placeholders 2026-09-25; the numbers are <see cref="UbwRules"/> on the ability def):
@@ -71,8 +54,9 @@ namespace RimArt
     /// - The world stands worldSecondsByVerse[V] of game time, and ends early if the caster is downed, dies,
     ///   leaves or loses the ability, or on Close.
     /// - Then everyone alive goes back to the cell they were taken from (the nearest free cell), downed or
-    ///   not, and back into the lord they had if it still exists (else hostiles get a new assault lord);
-    ///   corpses and every item in the world drop round the cast point; the world is removed.
+    ///   not, and back into the lord they had if it still exists and takes them (else hostiles get a new
+    ///   assault lord); corpses and every item in the world drop round the cast point; the world is removed.
+    ///   With no map to return to, everyone waits in the world until there is one.
     ///
     /// The clocks: the home side runs on the chant's start tick (s in the cast picture's plan), the world on
     /// the take tick. The return is at the world's full white (the close plus <see cref="UbwWorldTiming.Close"/>);
@@ -95,8 +79,10 @@ namespace RimArt
         public bool closeOrdered, returned, broken, fizzled;
         /// <summary>The charge the Echo took when the ability fired; given back if the chant breaks.</summary>
         public float paid;
-        public List<UbwTaken> taken = new List<UbwTaken>();
+        public List<PocketGuest> taken = new List<PocketGuest>();
         private bool shookTaken, shookHome;
+        /// <summary>The return found no map to go to and is waiting for one (said once). Not saved.</summary>
+        private bool waitingForMap;
 
         /// <summary>The job has not started yet: the chant waits this long for it, then gives up.</summary>
         private const int QueueTimeout = 60;
@@ -199,32 +185,23 @@ namespace RimArt
             foreach (Pawn p in home.mapPawns.AllPawnsSpawned)
                 if (p != caster && !p.Dead && !p.Downed && (p.Position - centre).LengthHorizontalSquared <= r * r) pawns.Add(p);
 
-            bool watching = Find.CurrentMap == home;
-            var selected = new HashSet<Pawn>(Find.Selector.SelectedPawns);
+            var view = new FollowView(home);
             var component = world.GetComponent<MapComponent_UnlimitedBladeWorks>();
             IntVec3 middle = component.CentreCell;
             var keep = new List<IntVec3>();
             var hostile = new List<Pawn>();
             foreach (Pawn p in pawns)
             {
-                IntVec3 want = p == caster ? middle : middle + (p.Position - centre);
-                IntVec3 cell = FreeCellNear(world, want);
-                Lord lord = p.GetLord();
-                taken.Add(new UbwTaken { pawn = p, from = p.Position, lord = lord });
-                lord?.RemovePawn(p);
-                Move(p, cell, world);
+                var guest = new PocketGuest { pawn = p };
+                IntVec3 cell = guest.TakeTo(world, p == caster ? middle : middle + (p.Position - centre));
+                taken.Add(guest);
                 keep.Add(cell - middle);
                 if (p.Faction != null && p.HostileTo(Faction.OfPlayer)) hostile.Add(p);
             }
             component.Landed(keep, now);
             takenTick = now;
             Assault(hostile, world);
-
-            if (watching)
-            {
-                CameraJumper.TryJump(new GlobalTargetInfo(caster));
-                foreach (Pawn p in pawns) if (selected.Contains(p)) Find.Selector.Select(p, false, false);
-            }
+            view.Follow(new GlobalTargetInfo(caster), pawns);
             Messages.Message("Unlimited Blade Works: " + pawns.Count + " taken into the world for " + Rules.WorldSecondsFor(verse).ToString("0") + " s.",
                 caster, MessageTypeDefOf.NeutralEvent, false);
         }
@@ -243,62 +220,40 @@ namespace RimArt
 
         private void Return()
         {
-            returned = true;
-            if (world == null || !Find.Maps.Contains(world)) return;
-            Map to = home != null && Find.Maps.Contains(home) ? home : Find.AnyPlayerHomeMap;
-            if (to == null)
+            if (world == null || !Find.Maps.Contains(world))
             {
-                Messages.Message("Unlimited Blade Works: there is no map to return to; the world stays open.", MessageTypeDefOf.NegativeEvent, false);
+                returned = true;
                 return;
             }
+            Map to = PocketReturn.HomeOr(home);
+            if (to == null)
+            {
+                // Everyone waits in the world; the cast asks again every tick, so they come out as soon as the colony
+                // has a map again, and the world is never left with no cast to close it.
+                if (!waitingForMap) Messages.Message("Unlimited Blade Works: there is no map to return to; everyone waits in the world.", MessageTypeDefOf.NegativeEvent, false);
+                waitingForMap = true;
+                return;
+            }
+            returned = true;
             IntVec3 drop = to == home ? centre : to.Center;
-            bool watching = Find.CurrentMap == world;
-            var selected = new HashSet<Pawn>(Find.Selector.SelectedPawns);
-            var moved = new List<Pawn>();
-            var hostile = new List<Pawn>();
-            var leaving = new List<Pawn>();
+            var back = new PocketReturn(world, to, hostilesFight: true);
 
-            // Everyone alive, back where they stood. A pawn carried by another is inside its carrier and goes with it.
-            foreach (UbwTaken t in taken)
+            // Everyone taken, back where they stood; anyone else in the world by now, and every item, round the cast point.
+            foreach (PocketGuest t in taken)
             {
-                Pawn p = t.pawn;
-                if (p == null || p.Destroyed || p.Dead || !p.Spawned || p.Map != world) continue;
-                p.GetLord()?.RemovePawn(p);
-                Move(p, FreeCellNear(to, to == home ? t.from : drop), to);
-                moved.Add(p);
-                if (t.lord != null && to.lordManager.lords.Contains(t.lord)) t.lord.AddPawn(p);
-                else if (p.Faction != null && p.HostileTo(Faction.OfPlayer)) hostile.Add(p);
-                else if (t.lord != null && p.Faction != null && p.Faction != Faction.OfPlayer) leaving.Add(p);
+                if (!back.Here(t.pawn)) continue;
+                back.Bring(t.pawn, to == home ? t.from : drop);
+                back.Rejoin(t.pawn, t.lord);
             }
-            // Anyone else who is in the world by now, round the cast point.
-            foreach (Pawn p in world.mapPawns.AllPawnsSpawned.ToList())
+            foreach (Pawn p in back.Others())
             {
-                if (p.Dead) continue;
-                p.GetLord()?.RemovePawn(p);
-                Move(p, FreeCellNear(to, drop), to);
-                moved.Add(p);
-                if (p.Faction != null && p.HostileTo(Faction.OfPlayer)) hostile.Add(p);
+                back.Bring(p, drop);
+                back.NoLord(p);
             }
-            // Corpses, dropped weapons and everything else lying in the world, round the cast point.
-            foreach (Thing thing in world.listerThings.AllThings.ToList())
-            {
-                if (thing.Destroyed || !thing.Spawned || thing.def.category != ThingCategory.Item) continue;
-                thing.DeSpawn();
-                GenPlace.TryPlaceThing(thing, drop, to, ThingPlaceMode.Near);
-            }
-            Assault(hostile, to);
-            foreach (IGrouping<Faction, Pawn> group in leaving.GroupBy(p => p.Faction))
-                LordMaker.MakeNewLord(group.Key, new LordJob_ExitMapBest(LocomotionUrgency.Walk), to, group);
-
-            if (watching)
-            {
-                CameraJumper.TryJump(new GlobalTargetInfo(drop, to));
-                foreach (Pawn p in moved) if (selected.Contains(p)) Find.Selector.Select(p, false, false);
-            }
+            foreach (Thing thing in back.Items()) back.Place(thing, drop);
+            back.Finish(new GlobalTargetInfo(drop, to), LocomotionUrgency.Walk);
             UnlimitedBladeWorksMap.CloseLater(world);
         }
-
-        // Moving pawns: Move, FreeCellNear and Assault are CrossMapMove's (Source/RimArt/Shared).
 
         // ---- the clock --------------------------------------------------------------------------------------------
 
@@ -384,7 +339,7 @@ namespace RimArt
             Scribe_Collections.Look(ref taken, "taken", LookMode.Deep);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
-                if (taken == null) taken = new List<UbwTaken>();
+                if (taken == null) taken = new List<PocketGuest>();
                 shookTaken = shookHome = true;
             }
         }

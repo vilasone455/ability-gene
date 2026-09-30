@@ -122,20 +122,6 @@ namespace RimArt
             }
         }
 
-        /// <summary>The nearest cell to <paramref name="want"/> a pawn can stand on with no other pawn on it.</summary>
-        public static IntVec3 FreeCellNear(Map map, IntVec3 want)
-        {
-            if (map == null) return want;
-            want = new IntVec3(Mathf.Clamp(want.x, 0, map.Size.x - 1), 0, Mathf.Clamp(want.z, 0, map.Size.z - 1));
-            int cells = GenRadial.NumCellsInRadius(8f);
-            for (int i = 0; i < cells; i++)
-            {
-                IntVec3 c = want + GenRadial.RadialPattern[i];
-                if (c.InBounds(map) && c.Standable(map) && c.GetFirstPawn(map) == null) return c;
-            }
-            return CellFinder.StandableCellNear(want, map, 20f);
-        }
-
         /// <summary>
         /// What the volume does with what it was handed.
         ///

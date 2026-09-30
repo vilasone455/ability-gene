@@ -12,13 +12,9 @@ using Inside = RimArt.UnlimitedVoidInsideTiming;
 
 namespace RimArt
 {
-    /// <summary>One pawn taken into the domain: where it stood, its lord, and what the domain is doing to it.</summary>
-    public sealed class VoidTaken : IExposable
+    /// <summary>One pawn taken into the domain: where it stood and its lord (<see cref="PocketGuest"/>), and what the domain is doing to it.</summary>
+    public sealed class VoidTaken : PocketGuest
     {
-        public Pawn pawn;
-        /// <summary>The home-map cell it was taken from.</summary>
-        public IntVec3 from;
-        public Lord lord;
         /// <summary>Has a living brain: frozen for the whole domain and overloaded unless spared.</summary>
         public bool frozen;
         /// <summary>The overload it already had from an earlier domain when it was taken.</summary>
@@ -30,13 +26,9 @@ namespace RimArt
 
         public bool Spared => sparedTick >= 0;
 
-        public void ExposeData()
+        public override void ExposeData()
         {
-            // A lord that has ended is saved nowhere, and a reference to it would not resolve on load (as UbwTaken).
-            if (Scribe.mode == LoadSaveMode.Saving && lord != null && (lord.Map == null || !lord.Map.lordManager.lords.Contains(lord))) lord = null;
-            Scribe_References.Look(ref pawn, "pawn", true);
-            Scribe_Values.Look(ref from, "from");
-            Scribe_References.Look(ref lord, "lord");
+            base.ExposeData();
             Scribe_Values.Look(ref frozen, "frozen");
             Scribe_Values.Look(ref startOverload, "startOverload");
             Scribe_Values.Look(ref touchTicks, "touchTicks");
@@ -185,18 +177,16 @@ namespace RimArt
                 return;
             }
 
-            bool watching = Find.CurrentMap == home;
-            var selected = new HashSet<Pawn>(Find.Selector.SelectedPawns);
+            var view = new FollowView(home);
             IntVec3 middle = Middle;
             var hostile = new List<Pawn>();
             Move(caster, FreeCellNear(pocket, middle), pocket);
             int frozen = 0;
             foreach (Pawn p in pawns)
             {
-                var t = new VoidTaken { pawn = p, from = p.Position, lord = p.GetLord(), frozen = LivingBrain(p) };
-                t.lord?.RemovePawn(p);
+                var t = new VoidTaken { pawn = p, frozen = LivingBrain(p) };
+                t.TakeTo(pocket, middle + (p.Position - centre));
                 taken.Add(t);
-                Move(p, FreeCellNear(pocket, middle + (p.Position - centre)), pocket);
                 if (t.frozen)
                 {
                     frozen++;
@@ -213,10 +203,9 @@ namespace RimArt
             takeTick = now;
             Assault(hostile, pocket);
 
-            if (watching)
+            view.Follow(new GlobalTargetInfo(caster), pawns.Append(caster));
+            if (view.watching)
             {
-                CameraJumper.TryJump(new GlobalTargetInfo(caster));
-                foreach (Pawn p in pawns.Append(caster)) if (selected.Contains(p)) Find.Selector.Select(p, false, false);
                 push = new CameraMove(Inside.CameraEvents);
                 push.Begin();
             }
@@ -294,7 +283,7 @@ namespace RimArt
                 returnTick = now;
                 return;
             }
-            Map to = home != null && Find.Maps.Contains(home) ? home : Find.AnyPlayerHomeMap;
+            Map to = PocketReturn.HomeOr(home);
             if (to == null)
             {
                 // The domain stays collapsed (white) with everyone in it; the cast asks again every tick, so they come
@@ -305,64 +294,37 @@ namespace RimArt
             }
             returnTick = now;
             IntVec3 anchor = to == home ? centre : to.Center, middle = Middle;
-            bool watching = Find.CurrentMap == pocket;
-            var selected = new HashSet<Pawn>(Find.Selector.SelectedPawns);
-            var moved = new List<Pawn>();
-            var hostile = new List<Pawn>();
-            var leaving = new List<Pawn>();
             IntVec3 Matching(IntVec3 cell) => anchor + (cell - middle);
+            var back = new PocketReturn(pocket, to, hostilesFight: true);
 
             // Gojo, then everyone taken, then anyone else on the map, each at the home cell matching where it stands.
-            if (caster != null && !caster.Dead && caster.Spawned && caster.Map == pocket)
-            {
-                Move(caster, FreeCellNear(to, Matching(caster.Position)), to);
-                moved.Add(caster);
-            }
+            if (back.Here(caster)) back.Bring(caster, Matching(caster.Position));
             foreach (VoidTaken t in taken)
             {
-                Pawn p = t.pawn;
-                if (p == null || p.Destroyed || p.Dead || !p.Spawned || p.Map != pocket) continue;
-                p.GetLord()?.RemovePawn(p);
-                Move(p, FreeCellNear(to, Matching(p.Position)), to);
-                moved.Add(p);
-                // A lord whose toil now refuses new pawns would log an error and leave the pawn with no lord at all.
-                if (t.lord != null && to.lordManager.lords.Contains(t.lord) && t.lord.CanAddPawn(p)) t.lord.AddPawn(p);
-                else if (p.Faction != null && p.HostileTo(Faction.OfPlayer)) hostile.Add(p);
-                else if (t.lord != null && p.Faction != null && p.Faction != Faction.OfPlayer) leaving.Add(p);
+                if (!back.Here(t.pawn)) continue;
+                back.Bring(t.pawn, Matching(t.pawn.Position));
+                back.Rejoin(t.pawn, t.lord);
             }
-            foreach (Pawn p in pocket.mapPawns.AllPawnsSpawned.ToList())
+            foreach (Pawn p in back.Others())
             {
-                if (p.Dead) continue;
-                p.GetLord()?.RemovePawn(p);
-                Move(p, FreeCellNear(to, Matching(p.Position)), to);
-                moved.Add(p);
-                if (p.Faction != null && p.HostileTo(Faction.OfPlayer)) hostile.Add(p);
+                back.Bring(p, Matching(p.Position));
+                back.NoLord(p);
             }
             // Corpses, dropped weapons and everything else lying there, at the matching cells.
-            foreach (Thing thing in pocket.listerThings.AllThings.ToList())
-            {
-                if (thing.Destroyed || !thing.Spawned || thing.def.category != ThingCategory.Item) continue;
-                IntVec3 at = Matching(thing.Position);
-                thing.DeSpawn();
-                GenPlace.TryPlaceThing(thing, ClampInside(to, at), to, ThingPlaceMode.Near);
-            }
-            Assault(hostile, to);
-            foreach (IGrouping<Faction, Pawn> group in leaving.GroupBy(p => p.Faction))
-                LordMaker.MakeNewLord(group.Key, new LordJob_ExitMapBest(LocomotionUrgency.Walk), to, group);
-            // The cap applies once everyone is home, so a pawn it downs falls (and drops what it holds) on the home map.
-            foreach (VoidTaken t in taken)
-                if (t.frozen && t.pawn != null && !t.pawn.Dead && !t.pawn.Destroyed) OverloadHediff(t.pawn, false)?.Release(now);
-            CostGoodwill();
-
-            if (watching)
+            foreach (Thing thing in back.Items()) back.Place(thing, Matching(thing.Position));
+            if (back.view.watching)
             {
                 // A push still running (a Release in the first 3 s) gives the zoom back first, while the camera is on the void.
                 push?.Release();
                 whiteHome = true;
-                CameraJumper.TryJump(caster != null && caster.Spawned && caster.Map == to ? new GlobalTargetInfo(caster) : new GlobalTargetInfo(anchor, to));
-                foreach (Pawn p in moved) if (selected.Contains(p)) Find.Selector.Select(p, false, false);
             }
+            back.Finish(caster != null && caster.Spawned && caster.Map == to ? new GlobalTargetInfo(caster) : new GlobalTargetInfo(anchor, to),
+                LocomotionUrgency.Walk);
             push = null;
+            // The cap applies once everyone is home, so a pawn it downs falls (and drops what it holds) on the home map.
+            foreach (VoidTaken t in taken)
+                if (t.frozen && t.pawn != null && !t.pawn.Dead && !t.pawn.Destroyed) OverloadHediff(t.pawn, false)?.Release(now);
+            CostGoodwill();
             int overloaded = taken.Count(t => t.frozen && !t.Spared), spared = taken.Count(t => t.Spared);
             string ended = "Unlimited Void ended (" + (endReason ?? "time") + "): " + overloaded + " overloaded, " + spared + " spared.";
             if (caster != null && caster.Spawned) Messages.Message(ended, caster, MessageTypeDefOf.NeutralEvent, false);
@@ -386,8 +348,6 @@ namespace RimArt
             foreach (Faction faction in factions)
                 Faction.OfPlayer.TryAffectGoodwillWith(faction, change, true, true, HistoryEventDefOf.UsedHarmfulAbility);
         }
-
-        // Moving pawns: Move, ClampInside, FreeCellNear and Assault are CrossMapMove's (Source/RimArt/Shared).
 
         // ---- the clock --------------------------------------------------------------------------------------------
 

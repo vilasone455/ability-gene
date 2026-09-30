@@ -36,17 +36,18 @@ reads it directly). Agreed 2026-09-30. New code follows it; old code is changed 
 | `Shared/CastJobFail.cs` | `FailBeforeFired`: the fail condition for a cast job that holds the caster after it fires |
 | `Shared/Command_TapHold.cs` | One button: tap for the quick version, hold for the charged one |
 | `Shared/CrossMapMove.cs` | `Move`, `FreeCellNear`, `ClampInside`, `Assault`: pawns between a home map and a pocket map |
+| `Shared/PocketGuest.cs` | One pawn taken to a pocket map: its home cell and lord, `TakeTo`; kits extend it with their own state |
+| `Shared/PocketReturn.cs` | Everyone home from a pocket map: `Bring`, `Rejoin` (old lord if it takes the pawn), `NoLord`, `Items`, `Place`, `Finish` |
+| `Shared/FollowView.cs` | Camera follows pawns moved between maps and keeps them selected, if the player was watching |
 | `Shared/ItemAbilityGrant.cs` | Gives a held item's abilities to its holder, takes them back, keeps cooldowns |
 | `Shared/PawnFit.cs` | Fits a picture drawn on the lab's stand-in pawn to a real pawn's height |
 | `Shared/VfxDraw.cs` | Materials, meshes, sprites, strips and streaks every ported picture uses |
 | `Shared/VfxMath.cs` | The lab's `Smooth`, `Hash`, `Rand`, so a port matches its sketch |
 | `Echo/EchoUtility.cs` | Hero layer: `ForceHost`, `Awaken`, `Manifest`, `Revert`, `ManifestedWith` |
-| `Testing/RimArtTestContext.cs` | `Clear`, `Colonist`, `Enemy`, `Hold`, `Equip`, `Describe`, `Check`, `Log`, `ShotAs` |
+| `Testing/RimArtTestContext.cs` | `Clear`, `Colonist`, `Enemy` (optional faction), `Hold`, `Equip`, `Describe`, `Check`, `Log`, `ShotAs` |
 
 ### Known copies, not shared yet
 
-- Pocket-map take and return is written three times (`UbwCast`, `UnlimitedVoidCast`, `InfinityCastleCast`).
-  Being moved to `Shared/` now. Do not add a fourth.
 - Test setup (`Host`, `Target`, `Wall`, `WaitFor`, `Hurt`, `Finish`) is copied in 4 to 12 test files. Being
   moved to `Testing/` now. New tests add a missing helper there, not in their own file.
 - Each kit keeps its own list of running casts: 27 Map/GameComponents in 21 kits, 21 `JobDriver_Cast*`.

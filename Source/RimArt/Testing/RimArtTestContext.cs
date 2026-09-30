@@ -94,10 +94,10 @@ namespace RimArt
             return pawn;
         }
 
-        /// <summary>A hostile humanlike from an enemy faction, told to stand still.</summary>
-        public Pawn Enemy(IntVec3 at, bool armed = true)
+        /// <summary>A hostile humanlike from an enemy faction (<paramref name="faction"/>, else a random one), told to stand still.</summary>
+        public Pawn Enemy(IntVec3 at, bool armed = true, Faction faction = null)
         {
-            Faction faction = Find.FactionManager.RandomEnemyFaction(allowNonHumanlike: false);
+            faction = faction ?? Find.FactionManager.RandomEnemyFaction(allowNonHumanlike: false);
             PawnKindDef kind = faction?.def.basicMemberKind ?? PawnKindDefOf.Villager;
             var request = new PawnGenerationRequest(kind, faction, mustBeCapableOfViolence: true, dontGiveWeapon: !armed);
             Pawn pawn = PawnGenerator.GeneratePawn(request);
