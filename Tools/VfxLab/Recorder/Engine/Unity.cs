@@ -16,6 +16,11 @@ namespace UnityEngine
         public static Vector2 operator *(Vector2 a, float f) => new Vector2(a.x * f, a.y * f);
         public static Vector2 operator *(float f, Vector2 a) => new Vector2(a.x * f, a.y * f);
         public static Vector2 operator /(Vector2 a, float f) => new Vector2(a.x / f, a.y / f);
+        // Unity's: equal when the difference is under 1e-5 in length.
+        public static bool operator ==(Vector2 a, Vector2 b) { float dx = a.x - b.x, dy = a.y - b.y; return dx * dx + dy * dy < 9.99999944E-11f; }
+        public static bool operator !=(Vector2 a, Vector2 b) => !(a == b);
+        public override bool Equals(object other) => other is Vector2 v && x == v.x && y == v.y;
+        public override int GetHashCode() => x.GetHashCode() ^ (y.GetHashCode() << 2);
         public float sqrMagnitude => x * x + y * y;
         public float magnitude => Mathf.Sqrt(sqrMagnitude);
         public Vector2 normalized { get { float m = magnitude; return m > 1e-5f ? this / m : new Vector2(0f, 0f); } }

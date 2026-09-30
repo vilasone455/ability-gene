@@ -9,4 +9,13 @@
     <casualInterruptible>false</casualInterruptible>
     <suspendable>false</suspendable>
   </JobDef>
+
+  <!-- The cast job of Trace On and Reinforcement (RimArt.JobDriver_CastTrace): starts the picture with the job,
+       lets Trace On put away what the hand holds before the warmup, and holds the pawn a moment after the fire.
+       alwaysShowWeapon: an undrafted caster shows the weapon the picture is drawn on. -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastTrace</defName>
+    <driverClass>RimArt.JobDriver_CastTrace</driverClass>
+    <alwaysShowWeapon>true</alwaysShowWeapon>
+  </JobDef>
 </Defs>

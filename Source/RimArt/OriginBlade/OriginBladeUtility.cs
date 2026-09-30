@@ -43,6 +43,18 @@ namespace RimArt
             && pawn.skills.GetSkill(SkillDefOf.Melee).Level >= MeleeRequired
             && pawn.skills.GetSkill(SkillDefOf.Crafting).Level >= CraftingRequired;
 
+        /// <summary>
+        /// Whether a study of this blade would count: before awakening, a type not yet understood (while fewer than
+        /// five are); after it, a weapon and material new to the trace library, or a better quality of one.
+        /// </summary>
+        public static bool StudyAdds(Pawn pawn, Thing blade)
+        {
+            if (!CanStudy(pawn) || !IsBlade(blade?.def)) return false;
+            BladeStudyRecord record = Current.Game.GetComponent<GameComponent_BladeStudy>().RecordFor(pawn);
+            if (HasOrigin(pawn)) return TraceLibrary.Adds(record.library, blade);
+            return record.bladeTypes.Count < BladesRequired && !record.bladeTypes.Contains(blade.def.defName);
+        }
+
         /// <summary>Every requirement met and the trait not yet taken.</summary>
         public static bool ReadyToAwaken(Pawn pawn)
         {

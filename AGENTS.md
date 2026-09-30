@@ -32,6 +32,7 @@ reads it directly). Agreed 2026-09-30. New code follows it; old code is changed 
 
 | File | What it does |
 |---|---|
+| `Shared/BoundWeapon.cs` | Weapons that must never land (Echo hero weapons, Trace copies): one `TryDropEquipment` patch, `Register`, `Leave` |
 | `Shared/CastClips.cs` | Plays a kit's Melee Animation clips on one pawn; works without Melee Animation loaded |
 | `Shared/CastJobFail.cs` | `FailBeforeFired`: the fail condition for a cast job that holds the caster after it fires |
 | `Shared/Command_TapHold.cs` | One button: tap for the quick version, hold for the charged one |
@@ -44,7 +45,7 @@ reads it directly). Agreed 2026-09-30. New code follows it; old code is changed 
 | `Shared/VfxDraw.cs` | Materials, meshes, sprites, strips and streaks every ported picture uses |
 | `Shared/VfxMath.cs` | The lab's `Smooth`, `Hash`, `Rand`, so a port matches its sketch |
 | `Echo/EchoUtility.cs` | Hero layer: `ForceHost`, `Awaken`, `Manifest`, `Revert`, `ManifestedWith` |
-| `Testing/RimArtTestContext.cs` | `Clear`, `Colonist`, `Enemy`, `Mech`, `Hold`, `Equip`, `Describe`, `Check`, `Log`, `ShotAs`; kit tests: `WaitFor`, `ClearEchoes`, `Host`, `EndHost`, `Target`, `NoWimp`, `Note`/`Hurt`/`Untouched`, `Stunned`, `Wall`, `Face` |
+| `Testing/RimArtTestContext.cs` | `Clear`, `Colonist`, `Enemy`, `Mech`, `Hold`, `Equip`, `Describe`, `Check`, `Log`, `ShotAs`; kit tests: `WaitFor`, `ClearEchoes`, `Host`, `EndHost`, `Target`, `Strike`, `NoWimp`, `Note`/`Hurt`/`Untouched`, `Stunned`, `Wall`, `Face` |
 
 ### Known copies, not shared yet
 

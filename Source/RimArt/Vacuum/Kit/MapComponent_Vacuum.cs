@@ -397,12 +397,8 @@ namespace RimArt
             {
                 Pawn pawn = t.from;
                 if (pawn.Dead || pawn.equipment?.Primary != thing) return false;
-                // A Host's hero weapon is not loot: it vanishes instead of flying into the vacuum.
-                if (EchoWeapon.OwnerOf(thing) is EchoRecord owner)
-                {
-                    EchoWeapon.Vanish(owner, (ThingWithComps)thing);
-                    return false;
-                }
+                // A Host's hero weapon or a traced copy is not loot: it vanishes instead of flying into the vacuum.
+                if (BoundWeapon.Leave(thing)) return false;
                 pawn.equipment.Remove((ThingWithComps)thing);
                 return cast.vacuum.AddInbound(thing);
             }

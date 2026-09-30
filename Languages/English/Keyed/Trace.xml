@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <!-- Trace On and its library (Source/RimArt/Trace/Kit). -->
+  <AG_TraceNothingStudied>{0} has not studied a blade that can be traced.</AG_TraceNothingStudied>
+  <AG_TraceMissing>{0} is no longer in the game</AG_TraceMissing>
+  <AG_TracePersona>a persona {0} cannot be traced</AG_TracePersona>
+  <AG_TraceSpecial>the {0} has powers of its own and cannot be traced</AG_TraceSpecial>
+  <AG_TraceStudy>Study blade for Trace On: {0}</AG_TraceStudy>
+  <AG_TraceStudyKnown>already known at this quality or better</AG_TraceStudyKnown>
+  <AG_TraceLearned>{0} can now trace a {1}.</AG_TraceLearned>
+  <AG_TraceCopyValue>Traced copy: worth nothing</AG_TraceCopyValue>
+</LanguageData>
