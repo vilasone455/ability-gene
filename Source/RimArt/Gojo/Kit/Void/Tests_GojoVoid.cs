@@ -62,9 +62,11 @@ namespace RimArt
         }
 
         /// <summary>Casts the ability and waits until everyone is in the pocket map. Null if it never got there.</summary>
-        private static IEnumerable<int> CastAndTake(RimArtTestContext t, Pawn gojo, Action<UnlimitedVoidCast> got)
+        /// <summary>Casts the domain and waits for it to stand; <paramref name="queued"/> runs once the cast job is ordered, in the same tick.</summary>
+        private static IEnumerable<int> CastAndTake(RimArtTestContext t, Pawn gojo, Action<UnlimitedVoidCast> got, Action queued = null)
         {
             gojo.abilities.GetAbility(Void).QueueCastingJob(gojo, LocalTargetInfo.Invalid);
+            queued?.Invoke();
             UnlimitedVoidCast cast = null;
             foreach (int w in WaitFor(() => (cast = Casts.For(gojo)) != null && cast.Standing, 240, 1)) yield return w;
             got(cast != null && cast.Standing ? cast : null);
@@ -199,12 +201,14 @@ namespace RimArt
             {
                 Pawn gojo = Gojo(t);
                 Pawn near = Colonist(t, new IntVec3(1, 0, 0));
-                Pawn enemy = t.Enemy(t.center + new IntVec3(-1, 0, 0), armed: false);
                 Pawn far = Colonist(t, new IntVec3(5, 0, 0));
                 yield return 2;
 
+                // The enemy arrives once the cast job is running: a drafted Gojo punches an adjacent hostile from an idle
+                // job, and that melee cooldown ends a queued cast at once.
+                Pawn enemy = null;
                 UnlimitedVoidCast cast = null;
-                foreach (int w in CastAndTake(t, gojo, c => cast = c)) yield return w;
+                foreach (int w in CastAndTake(t, gojo, c => cast = c, () => enemy = t.Enemy(t.center + new IntVec3(-1, 0, 0), armed: false))) yield return w;
                 if (!t.Check(cast != null, "the domain opened")) yield break;
                 foreach (int w in WaitUntil(cast.takeTick + 30)) yield return w;
                 VoidTaken nearRecord = cast.Record(near), enemyRecord = cast.Record(enemy), farRecord = cast.Record(far);

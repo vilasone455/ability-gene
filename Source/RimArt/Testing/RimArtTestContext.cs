@@ -92,7 +92,7 @@ namespace RimArt
             Pawn pawn = PawnGenerator.GeneratePawn(request);
             GenSpawn.Spawn(pawn, at, map);
             pawn.drafter.Drafted = true;
-            return pawn;
+            return Note(pawn);
         }
 
         /// <summary>A hostile humanlike from an enemy faction (<paramref name="faction"/>, else a random one), told to stand still.</summary>
@@ -104,7 +104,7 @@ namespace RimArt
             Pawn pawn = PawnGenerator.GeneratePawn(request);
             GenSpawn.Spawn(pawn, at, map);
             Hold(pawn);
-            return pawn;
+            return Note(pawn);
         }
 
         /// <summary>A Scyther of the mechanoid faction at <paramref name="at"/>, held still; null, with a log line, when the game has no Mech_Scyther or mechanoid faction.</summary>
@@ -119,7 +119,7 @@ namespace RimArt
             Pawn mech = PawnGenerator.GeneratePawn(new PawnGenerationRequest(scyther, Faction.OfMechanoids));
             GenSpawn.Spawn(mech, at, map);
             Hold(mech);
-            return mech;
+            return Note(mech);
         }
 
         /// <summary>Starts a long Wait job so the pawn stands where it is.</summary>
@@ -210,7 +210,11 @@ namespace RimArt
 
         private readonly Dictionary<Pawn, float> startHealth = new Dictionary<Pawn, float>();
 
-        /// <summary>Notes the pawn's health now for <see cref="Hurt"/>; a pawn never noted counts from full health.</summary>
+        /// <summary>
+        /// Notes the pawn's health now for <see cref="Hurt"/>. <see cref="Colonist"/>, <see cref="Enemy"/> and <see cref="Mech"/>
+        /// note at spawn, because a generated pawn often carries an old scar or a missing part; a test that wounds a pawn
+        /// on purpose notes it again before the check. A pawn never noted counts from full health.
+        /// </summary>
         public Pawn Note(Pawn pawn)
         {
             startHealth[pawn] = pawn.health.summaryHealth.SummaryHealthPercent;
@@ -224,6 +228,13 @@ namespace RimArt
         public bool Untouched(Pawn pawn) => !Hurt(pawn);
 
         public static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned == true;
+
+        /// <summary>
+        /// Not stunned and not in a warmup or melee cooldown stance. A queued ability job ends at once while its caster is
+        /// in a melee Stance_Cooldown, and a drafted pawn punches an adjacent hostile by itself: wait for this before a
+        /// scripted cast.
+        /// </summary>
+        public static bool Free(Pawn pawn) => !Stunned(pawn) && !(pawn.stances?.curStance is Stance_Busy);
 
         /// <summary>A wall at <paramref name="at"/> made of <paramref name="stuff"/> (granite blocks if null), the player's unless <paramref name="owned"/> is false.</summary>
         public Thing Wall(IntVec3 at, ThingDef stuff = null, bool owned = true)

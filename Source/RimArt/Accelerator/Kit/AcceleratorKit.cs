@@ -94,7 +94,8 @@ namespace RimArt
     public class HediffComp_ForceReturn : HediffComp
     {
         public Pawn attacker;
-        public int tick = -1;
+        /// <summary>The game tick of the hit; unset is int.MinValue, since a test moves this back and a quicktest game starts near tick 0.</summary>
+        public int tick = int.MinValue;
         public float damage;
 
         public override void Notify_PawnPostApplyDamage(DamageInfo dinfo, float totalDamageDealt)
@@ -111,7 +112,7 @@ namespace RimArt
         /// <summary>The damage to return when <paramref name="target"/> hit him within <paramref name="window"/> ticks, else 0.</summary>
         public float Returned(Pawn target, int window)
         {
-            if (target == null || target != attacker || tick < 0) return 0f;
+            if (target == null || target != attacker || tick == int.MinValue) return 0f;
             return Find.TickManager.TicksGame - tick <= window ? damage : 0f;
         }
 
@@ -119,7 +120,7 @@ namespace RimArt
         {
             base.CompExposeData();
             Scribe_References.Look(ref attacker, "attacker");
-            Scribe_Values.Look(ref tick, "tick", -1);
+            Scribe_Values.Look(ref tick, "tick", int.MinValue);
             Scribe_Values.Look(ref damage, "damage");
         }
     }
