@@ -24,8 +24,11 @@
 //          swings up to half a cell to either side and throws short branches; the light sits at
 //          the circle, with short rays off it, not at the muzzle.
 //          Two tall tan parchment brackets stand either side of the circle (the left about 1.6
-//          pawn heights, the right smaller), a tan slab stands at the target, and a tan brush
-//          sweep runs along the floor from the shooter's feet. Short cyan speed lines fly past the
+//          pawn heights, the right smaller): opaque brush marks with frayed ends, fibre lines and
+//          a darker rim, that afterwards close into thin oval outlines. A wide tan slab stands at
+//          the target, and a curved tan brush sweep with a frayed tip runs along the floor from the
+//          shooter's feet. From shot four two wide paper columns stand further down the beam. Short
+//          cyan speed lines fly past the
 //          circle. The rifle kicks up about 30 degrees, held one-handed.
 //   Hit:   the target lit yellow-white, a burst of thin yellow spikes and long rays, an orange
 //          lightning bolt arcing past it along the beam, orange sparks flung on forward, orange
@@ -282,20 +285,36 @@ function gateAxes(mode, dir) {
   return { H: h, V: { x: -sl * dir.x, z: Lift * cl - sl * dir.z }, hTrue: h, stands: true };
 }
 
-// A parchment stroke: a tall arc standing in the plane (u, up) with its middle gap cells from c
-// on side sgn (+1 or -1), width W, half-height H (screen cells: up is already scaled), thick at
-// the middle and pointed at the ends. Drawn as one strip. thin 0..1 hollows it to an outline.
-function parchment(key, c, u, sgn, gap, W, H, thick, alpha, thin) {
+// A parchment stroke, as the frames draw them: a brush mark standing in the plane (u, up), an arc
+// of an ellipse with its middle gap cells from c on side sgn (+1 or -1), half-width W, half-height
+// H (screen cells: up is already scaled). Opaque tan, thickest a third of the way down, a darker
+// rim on its convex side, three faint fibre lines along it, wobbly edges and frayed ends. thin
+// 0..1 hollows it: the thickness drops to a line and the arc grows round into a closed oval, which
+// is what is left on screen in the hit frame. seed varies the wobble between strokes.
+function parchment(key, c, u, sgn, gap, W, H, thick, alpha, thin, seed = 0) {
   if (alpha <= 0) return;
-  const inner = [], outer = [], n = 18;
+  const n = 26, half = (80 + 100 * thin) * D2R, at = (uo, z) => ({ x: c.x + u.x * uo, z: c.z + u.z * uo + z });
+  const tkAt = t => Math.max(.018, thick * (.2 + .8 * Math.exp(-Math.pow((t - 25 * D2R) / (55 * D2R), 2))) * (1 - thin * .85));
+  const inner = [], outer = [], fibre = [[], [], []];
   for (let i = 0; i <= n; i++) {
-    const t = (-80 + 160 * i / n) * D2R, ct = Math.cos(t), st = Math.sin(t);
-    const uo = sgn * (gap + W * ct), z = H * st, tk = Math.max(.02, thick * ct * ct * (1 - thin * .85));
-    inner.push({ x: c.x + u.x * uo, z: c.z + u.z * uo + z });
-    outer.push({ x: c.x + u.x * (uo + sgn * tk), z: c.z + u.z * (uo + sgn * tk) + z });
+    const t = -half + 2 * half * i / n, ct = Math.cos(t), st = Math.sin(t);
+    const wob = (rand(seed + i * 7) - .5) * thick * .3 * (1 - thin), tk = tkAt(t) + wob;
+    const uo = sgn * (gap + W * ct), z = H * st;
+    inner.push(at(uo, z)); outer.push(at(uo + sgn * tk, z));
+    fibre.forEach((f, j) => f.push(at(uo + sgn * tk * (.3 + .22 * j), z)));
   }
-  band(`${key} face`, inner, outer, Tan.withAlpha(alpha), Y + .030);
-  band(`${key} edge`, outer.map((q, i) => ({ x: q.x + (q.x - inner[i].x) * .3, z: q.z + (q.z - inner[i].z) * .3 })), outer, TanDark.withAlpha(alpha * .8), Y + .0299);
+  band(`${key} face`, inner, outer, Tan.withAlpha(.95 * alpha), Y + .030);
+  band(`${key} edge`, outer.map((q, i) => ({ x: q.x + (q.x - inner[i].x) * .25, z: q.z + (q.z - inner[i].z) * .25 })), outer, TanDark.withAlpha(alpha * .85), Y + .0299);
+  if (thin < .9) fibre.forEach((f, j) => line(`${key} fibre ${j}`, f.slice(3, n - 2), .014, TanDark.withAlpha(.4 * alpha * (1 - thin)), flat, Y + .0301, 'both'));
+  if (thin < .9) for (const end of [0, 1]) {                                     // the frayed ends: three bristles past each end
+    const a = end ? inner[n] : inner[0], b = end ? inner[n - 2] : inner[2], dx = a.x - b.x, dz = a.z - b.z, len = Math.hypot(dx, dz) || 1;
+    for (let k = 0; k < 3; k++) {
+      const spread = (k - 1) * .35, reach = H * (.12 + .1 * rand(seed + k + end * 5)) * (1 - thin);
+      const dir = { x: (dx / len) + u.x * sgn * spread * .5, z: (dz / len) + spread * .2 };
+      const from = { x: a.x + u.x * sgn * tkAt(end ? half : -half) * (.2 + .3 * k), z: a.z };
+      streak(`${key} fray ${end} ${k}`, from, { x: from.x + dir.x * reach, z: from.z + dir.z * reach }, .035, Tan.withAlpha(.9 * alpha * (1 - thin)), flat, Y + .0302, 3);
+    }
+  }
 }
 // Its life: full in PaperOpen, thinning to an outline over PaperThin, gone by PaperLife.
 function paperLife(age) {
@@ -554,8 +573,15 @@ export default {
     }
     if (fired && age < 1.2) {          // the brush sweep along the floor from the shooter's feet
       const g = clamp(age / .1), f = 1 - smooth((age - .5) / .7);
-      line('mb sweep', [move(o, L.d, .2), move(o, L.d, .2 + 2.6 * g)], .6, Tan.withAlpha(.55 * f), flat, Floor + .032, 'end');
-      line('mb sweep 2', [{ x: o.x - across.x * .25 + L.d.x * .5, z: o.z - across.z * .25 + L.d.z * .5 }, move(o, L.d, .5 + 1.6 * g)], .3, TanDark.withAlpha(.35 * f), flat, Floor + .0321, 'end');
+      const sweep = [], reach = 3.4 * g;                                       // a curved brush stroke, wide at the feet, a point at the tip
+      for (let i = 0; i <= 12; i++) { const v = i / 12, along = .2 + reach * v, acr = -.35 * v * v; sweep.push({ x: o.x + L.d.x * along - L.d.z * acr, z: o.z + L.d.z * along + L.d.x * acr }); }
+      line('mb sweep', sweep, .75, Tan.withAlpha(.8 * f), flat, Floor + .032, 'end');
+      line('mb sweep edge', sweep.map(q => ({ x: q.x + L.d.z * .06, z: q.z - L.d.x * .06 })), .78, TanDark.withAlpha(.5 * f), flat, Floor + .0319, 'end');
+      line('mb sweep 2', sweep.slice(2, 10).map(q => ({ x: q.x - L.d.z * .12, z: q.z + L.d.x * .12 })), .12, TanDark.withAlpha(.4 * f), flat, Floor + .0321, 'both');
+      for (let k = 0; k < 3; k++) {                                              // the tip frays into bristles
+        const tip = sweep[12], acr = (k - 1) * .12;
+        streak(`mb sweep fray ${k}`, { x: tip.x - L.d.x * .3 - L.d.z * acr, z: tip.z - L.d.z * .3 + L.d.x * acr }, { x: tip.x + L.d.x * (.3 + .2 * k) - L.d.z * acr * 2, z: tip.z + L.d.z * (.3 + .2 * k) + L.d.x * acr * 2 }, .05, Tan.withAlpha(.8 * f), flat, Floor + .032, 3);
+      }
     }
     for (const h of hits) if (h.kind === 'pawn') wound(`mb wound ${h.who.tag}`, h.who.pos, who, L.d, hitAge(h), tier, s);
 
@@ -576,7 +602,7 @@ export default {
       }
       if (h) {                         // a parchment slab stands at the hit and thins to an oval
         const life = paperLife(ha);
-        if (life) parchment(`mb slab ${q.tag}`, at(pos, 'chest', who), u, 1, -.06, .12, .55 * life.open, .18 * life.open, life.alpha * .9, life.thin);
+        if (life) parchment(`mb slab ${q.tag}`, at(pos, 'chest', who), u, 1, -.1, .18, .6 * life.open, .3 * life.open, life.alpha * .9, life.thin, 40 + q.pos.x);
       }
     }
     // The shooter, the counter, and the rifle in front. The kick swings the barrel up.
@@ -612,8 +638,12 @@ export default {
     // On the shot: the parchment brackets either side of the first circle, and cyan speed lines past it.
     const gate = circles[0].c, rr = circles[0].r, life = paperLife(age);
     if (life) {
-      parchment('mb bracket left', gate, u, -1, rr * 1.25, rr * .6, rr * 1.6 * life.open, .16 * life.open, life.alpha, life.thin);
-      parchment('mb bracket right', gate, u, 1, rr * 1.15, rr * .4, rr * 1.15 * life.open, .13 * life.open, life.alpha, life.thin);
+      parchment('mb bracket left', gate, u, -1, rr * 1.25, rr * .6, rr * 1.6 * life.open, .2 * life.open, life.alpha, life.thin, 1);
+      parchment('mb bracket right', gate, u, 1, rr * 1.15, rr * .4, rr * 1.15 * life.open, .16 * life.open, life.alpha, life.thin, 2);
+      if (tier >= 1) for (let k = 0; k < 2; k++) {                              // from shot four: wide paper columns further down the beam
+        const c = lift(move(L.start, L.d, 3.2 + k * 1.4 + rr));
+        parchment(`mb column ${k}`, c, u, k ? 1 : -1, .05, .22, (.7 + .2 * k) * life.open, .34 * life.open, life.alpha * .9, life.thin, 10 + k);
+      }
     }
     if (age < .3) for (let i = 0; i < 8; i++) {
       const v = age / .3, along = -.4 + rand(i + 800) * 1.4 + v * 1.6, acr = (rand(i + 810) - .5) * 1.8, len = .25 + rand(i + 820) * .4;
