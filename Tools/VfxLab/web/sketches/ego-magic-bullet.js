@@ -27,7 +27,8 @@
 //          circle. The rifle kicks up about 30 degrees, held one-handed.
 //   Hit:   a yellow spiked stagger burst at the chest, an orange lightning bolt beside it, orange
 //          fire. The brackets and slab thin to tan oval outlines and stay a second.
-//   Count 4-6: two or more circles stacked along the aim .48 cells apart, each 18 % bigger, the beam
+//   Count 4-6: two or more circles stacked along the aim .48 cells apart, each 45 % bigger than the
+//          one before (the source's second circle is about 1.6x the first), the beam
 //          wider and blue-violet.
 //   The seventh: a cyan-white beam several times wider with a wide pale halo, a cyan burst at the
 //          circle, bigger forks, and orange streak lines flying on past the target.
@@ -556,7 +557,7 @@ export default {
     const gateAt = move(fired ? move(lift(hand), L.d, RifleLen * .72) : gun.muzzle, gateDir, 0);
     const circles = [], ax = gateAxes(p.circleMode, gateDir);
     for (let i = 0; i < n; i++) {
-      const c = move(gateAt, gateDir, ahead + i * .48), r = p.circleRadius * (1 + i * .18);
+      const c = move(gateAt, gateDir, ahead + i * .48), r = p.circleRadius * (1 + i * .45);
       circles.push({ c, r });
       magicCircle(`mb circle ${i}`, c, r, open * clamp(1 - i * .1), s, i + 1, ax.H, ax.V, ax.hTrue, ax.stands, sun, strength);
     }
