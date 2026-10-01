@@ -17,6 +17,21 @@ namespace RimArt
     {
         private static readonly Texture2D TraceIcon = ContentFinder<Texture2D>.Get("RimArt/Trace/IconTraceOn");
 
+        static UbwCommands()
+        {
+            // The previews play with the def's numbers.
+            UbwCommandNumbers.Provider = () =>
+            {
+                UbwRules r = UbwRules.Of;
+                return new UbwCommandNumbers
+                {
+                    fullOpenSwordSeconds = r.fullOpenSwordSeconds, fullOpenVolleySeconds = r.fullOpenVolleySeconds, fullOpenSpeed = r.fullOpenSpeed,
+                    pinSpeed = r.pinSpeed, pinSwords = r.pinSwords, drawSpeed = r.drawSpeed, interceptRiseSeconds = r.interceptRiseSeconds,
+                    interceptSpeed = r.interceptSpeed, interceptClearOfGun = r.interceptClearOfGun, interceptShortOfTarget = r.interceptShortOfTarget,
+                };
+            };
+        }
+
         private static string Cost(UbwRules rules, int swords) => (swords * rules.swordCostSeconds).ToString("0.#") + " s of the world";
 
         internal static IEnumerable<Command> Buttons(UbwCast cast, Ability ability)

@@ -16,11 +16,11 @@ Intercept).
 | Lab previews | RimArts debug window, Trace, "unlimited blade works: cast" / "world" | recorded by the lab; both play 2 cells north of the chosen cell, as the sketches do |
 | The real pocket map: 40 x 33 (the caster 20 cells from the east, west and south edges, 13 from the north), earth terrain, roof, unseen warm lights, the world drawn over it | `Source/RimArt/Trace/Kit/`, `1.6/Defs/*/AG_UnlimitedBladeWorks_*.xml` | written, not yet built or run |
 | The weapon atlas from the weapons' own textures (the lab's reference art never ships) | `Kit/UbwAtlasBuilder.cs` | written, not yet run |
-| The commands (Full Open, Pin, Draw, Arm, Intercept) | rules `Kit/UbwFullOpen.cs`, `UbwPin.cs`, `UbwDraw.cs`, `UbwArm.cs`, `UbwIntercept.cs`, `UbwSwordHit.cs`, `UbwFieldState.cs` (the field's taken and stuck swords), `UbwCommands.cs` (the buttons); pictures `UbwCommandTiming.cs`, `UbwCommandGraphics.cs`; the field baked in rows (`UbwFieldBake.Banded`) | ported 2026-10-01 from `trace-ubw-world-commands.js`; 6 game tests (`Kit/Tests_UbwCommands.cs`); pictures not looked at in game; not played by hand |
+| The commands (Full Open, Pin, Draw, Arm, Intercept) | rules `Kit/UbwFullOpen.cs`, `UbwPin.cs`, `UbwDraw.cs`, `UbwArm.cs`, `UbwIntercept.cs`, `UbwSwordHit.cs`, `UbwFieldState.cs` (the field's taken and stuck swords), `UbwCommands.cs` (the buttons); pictures `UbwCommandTiming.cs`, `UbwCommandGraphics.cs`; the field baked in rows (`UbwFieldBake.Banded`); previews `UbwCommandsPreview.cs` | ported 2026-10-01 from `trace-ubw-world-commands.js`; 7 game tests (`Kit/Tests_UbwCommands.cs`), which take stills of each command in the world and of each preview; the motion not watched; not played by hand |
 | World v4, the one the ability opens (level plates, a sword crest past the north edge, a side-view sky with seven gears, ridges and rows of swords behind it that pan slower than the map, smoke and embers over the crest) | `UbwCrest.cs`, `UbwCrestGraphics.cs`, `UbwBackdropGraphics.cs`, `UbwTerrain.cs`, `UbwTerrainGraphics.cs`; preview "world v4"; "world map: open" | ported 2026-10-01 from `trace-ubw-world-v4.js`, replacing v2; `Tests/Ubw` checks its plates, swords and crest profile against the sketch; the lab recording matches the sketch (0.3 % of pixels differ, the sketch's stand-ins); the sketch's opening white fade is not ported: with the reveal shot off (or not watched) the fire still runs out, as v1 |
 | The reveal shot: at the take, 4.6 s with the game paused, a camera at head height looks up at the sky and its gears, tilts down while the fire runs out to 130 cells and the swords rise ring by ring, cranes up and blends into the world v4's usual view; any key or click skips it | `UbwRevealTiming.cs`, `UbwRevealGraphics.cs`, `UbwRevealGround.cs`, `UbwRevealSky.cs`, `UbwShot.cs` (the frame as data); `Kit/UbwShotCamera.cs` (the camera), `Kit/UbwRevealWindow.cs` (pause, skip, UI, the world's clock, the pawns' portraits); setting in Options, Mod settings, RimArts; preview "reveal" | ported 2026-10-01 from `trace-ubw-reveal.js`; the lab replays the C# shot (the recorder records the camera and its 3D draws, at 12 frames a second) and it matches the sketch frame by frame (0.2 to 2.2 % of pixels differ: the turning parts are 1.15 s further on, as the game's world stands from 1.65 s); game test "reveal 1"; not run in game |
 | The close shot (tilting back up to the gears) | sketch only (`trace-ubw-close.js`) | not ported |
-| The ability: the chant, who is taken, the world's time, the return, the cooldown | `Kit/UbwCast.cs`, `GameComponent_UnlimitedBladeWorks.cs`, `CompAbilityEffect_UnlimitedBladeWorks.cs` (with the chant job and the Release/Close buttons), `1.6/Defs/AbilityDefs/AG_Trace_Abilities.xml` | written 2026-09-25; granted by the Shirou Echo since 2026-09-26; 6 game tests pass (`Kit/Tests_Ubw.cs`); not played by hand |
+| The ability: the chant, who is taken, the world's time, the return, the cooldown | `Kit/UbwCast.cs`, `GameComponent_UnlimitedBladeWorks.cs`, `CompAbilityEffect_UnlimitedBladeWorks.cs` (with the chant job and the Release/Close buttons), `1.6/Defs/AbilityDefs/AG_Trace_Abilities.xml` | written 2026-09-25; granted by the Shirou Echo since 2026-09-26; 7 game tests pass (`Kit/Tests_Ubw.cs`); not played by hand |
 
 ## The ability
 
@@ -72,8 +72,9 @@ placeholder and an XML field of `UbwRules` (`AG_Trace_Abilities.xml`).
   stuck in the ground; the layout itself is made again from the landing spots on first use, so the rules
   work with the world off screen and a loaded game shows the same holes. The field is baked in rows of 4
   cells (`UbwFieldBake.Banded`) and only the rows a command touched are built again, at most once a frame:
-  the whole v4 field (about 490 swords, 47,000 vertices, 14 non-empty rows) bakes in 7 to 14 ms, a row
-  is built again in 1.0 to 2.1 ms (dev log of the game tests, Mac, 2026-10-01).
+  the whole v4 field (about 490 swords, 47,000 vertices, 14 non-empty rows) bakes in 6 to 24 ms (most
+  near 9 ms), a changed row is built again in 1.3 to 6.1 ms (most near 1.5 ms; dev log of 30 bakes and
+  about 30 rebuilds in the game tests, Mac, 2026-10-01).
 
 1. **Full Open** (caster). Pick a pawn in the world. The charge starts at once: the caster stands still
    facing it (`AG_UbwFullOpen` job) and every `fullOpenSwordSeconds` (0.1 s) one sword pulls out of its
@@ -131,10 +132,10 @@ To try the ability: RimArts debug window, Echo, **make Host (no trials)** with S
 works: ready** clears its cooldown. The real way in: Kits, **Origin: Blade** on a colonist (the grant
 awakens it), build the resonance device and tune it to Shirou and that colonist.
 
-Game tests: `-quicktest -rimarttest=ubw`, 13 scenarios: 7 for the ability (the Trial, cast and return,
+Game tests: `-quicktest -rimarttest=ubw`, 14 scenarios: 7 for the ability (the Trial, cast and return,
 Stop chanting and a move order refund, revert during the chant, revert in the world, the reveal shot, empty
-pool in the world) and 6 for the commands (`-rimarttest="Ubw: commands"`: Full Open released, Full Open
-cancelled by a move order, Pin, Draw, Arm, Intercept), about 4 minutes in all.
+pool in the world) and 7 for the commands (`-rimarttest="Ubw: commands"`: Full Open released, Full Open
+cancelled by a move order, Pin, Draw, Arm, Intercept, the five previews), about 4 minutes in all.
 
 RimArts debug window, Trace, pictures and the empty map:
 
@@ -145,6 +146,11 @@ RimArts debug window, Trace, pictures and the empty map:
   **open (v1 flat)** makes it with the flat earth, to compare.
 - **unlimited blade works: reveal**: the reveal shot over the map on screen, through the cutscene camera, with the
   lab's stand-in pawns and without pausing; the camera is moved to the world's framing first.
+- **unlimited blade works: commands: full open**, **pin**, **draw**, **arm**, **intercept**: one command played on the
+  standing world v4 over the map on screen, with the sketch's stand-ins at the sketch's places and times (Full Open's
+  16 swords on a raider walking north, Pin on a raider walking in, Draw past two raiders on its lane and one off it,
+  Arm by an ally, Intercept of two shots and a rocket from 9 cells), the XML's speeds and counts. No pocket map, nobody
+  moved or hit.
 - **world map: close**: the white closes in behind the wall of fire, then the map is removed.
   **close now** removes it at once.
 
@@ -200,9 +206,10 @@ state, the refunds, and the world's removal):
   in (the sketch's close does the same).
 
 The commands (the game tests cover the rules: swords taken and stuck, the world's time spent, hits, Pin's
-downed state and its end, the copies, a shot stopped and one not; none of the pictures has been looked at):
+downed state and its end, the copies, a shot stopped and one not; their stills were looked at once: the hover, the
+volley, the stuck swords, the pins on a lying pawn, Draw's lane and spin, Intercept's break, and the five previews):
 
-- Every picture in game: a sword pulled out turning flat, the hover 1 cell up and its glint, the volley
+- Every picture in motion: a sword pulled out turning flat, the hover 1 cell up and its glint, the volley
   sticking past the target and quivering, the hand-over from the one-by-one stuck sword to the rebuilt
   row 0.6 s later (a small jump in lean is possible), Pin's swords on a lying pawn (placed from the game's
   downed body angle, the head along it; check they sit on the legs and sleeves for every facing), Draw's

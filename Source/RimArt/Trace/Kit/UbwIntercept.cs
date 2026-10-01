@@ -22,6 +22,8 @@ namespace RimArt
 
         public void ExposeData()
         {
+            // A shot already stopped is destroyed: no reference to save.
+            if (Scribe.mode == LoadSaveMode.Saving && shot != null && shot.Destroyed) shot = null;
             Scribe_References.Look(ref shot, "shot");
             Scribe_Values.Look(ref seed, "seed");
             Scribe_Values.Look(ref launch, "launch");

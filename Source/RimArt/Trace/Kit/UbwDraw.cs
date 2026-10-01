@@ -33,6 +33,7 @@ namespace RimArt
             Scribe_Values.Look(ref hand, "hand");
             Scribe_Values.Look(ref ended, "ended", int.MinValue);
             Scribe_Values.Look(ref caught, "caught");
+            if (Scribe.mode == LoadSaveMode.Saving) cut.RemoveAll(p => p == null || p.Destroyed);
             Scribe_Collections.Look(ref cut, "cut", LookMode.Reference);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
@@ -152,6 +153,8 @@ namespace RimArt
             ThingDef def = UbwSwordHit.WeaponOf(sw.W);
             if (def == null || caster.equipment == null) return;
             TraceCopies.ClearHands(caster);
+            // A hand that could not be emptied (no inventory, not spawned) keeps its weapon; AddEquipment would refuse.
+            if (caster.equipment.Primary != null) return;
             var copy = (ThingWithComps)ThingMaker.MakeThing(def, def.MadeFromStuff ? GenStuff.DefaultStuffFor(def) : null);
             copy.TryGetComp<CompQuality>()?.SetQuality(QualityOf(caster, def), null);
             TraceCopies.Give(caster, copy);

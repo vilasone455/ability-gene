@@ -19,10 +19,13 @@ namespace RimArt
         public float Strength;
         public Color Tint;
         public UbwWeaponSet Set;
+        /// <summary>The world's layers: its own map's (<see cref="UbwLayers.Pocket"/>) or a home map's for the previews.</summary>
+        public UbwLayers Layers;
 
-        public static UbwCommandLook For(Vector2 o, Vector2 sun, float strength) => new UbwCommandLook
+        public static UbwCommandLook For(Vector2 o, Vector2 sun, float strength, bool preview = false) => new UbwCommandLook
         {
             O = o, Sun = new UbwXZ(sun.x, sun.y), Strength = strength, Tint = Color.Lerp(White, UbwGraphics.Tint, (float)UbwField.Twilight), Set = UbwGraphics.Set,
+            Layers = preview ? UbwLayers.Preview : UbwLayers.Pocket,
         };
 
         /// <summary>A point in cells from the middle corner, on the map.</summary>
@@ -48,7 +51,10 @@ namespace RimArt
     internal static class UbwCommandGraphics
     {
         private static readonly Color DirtMid = new Color(0.36f, 0.27f, 0.18f), Dust = new Color(0.52f, 0.45f, 0.37f);
-        private static readonly float StuckLayer = UbwLayers.Pocket.Blades + 0.045f, PinLayer = AltitudeLayer.Pawn.AltitudeFor() + 0.05f;
+        private static readonly float PinLayer = AltitudeLayer.Pawn.AltitudeFor() + 0.05f;
+
+        /// <summary>A sword stuck in the ground or about to leave: over the baked field's rows (at most 20 x 0.002 over its blades), under the haze.</summary>
+        private static float StuckLayer(in UbwCommandLook k) => k.Layers.Blades + 0.045f;
 
         private static float AirLayer(UbwPose b) => Overhead + 0.01f + Mathf.Clamp((40f - (float)UbwBlade.OnScreen(UbwBlade.Middle(b)).Z) * 0.0002f, 0f, 0.02f);
 
@@ -74,7 +80,7 @@ namespace RimArt
                     if (Math.Abs(FaceLit[i] - lit) < Math.Abs(FaceLit[face] - lit)) face = i;
                 UbwFieldBake.PolyInto(blades, above, b, null, new Cell(FaceCol[face], row));
             }
-            Draw(shadows, k.O, UbwLayers.Pocket.FieldShadow, Fade(Black, 0.42f * k.Strength / 0.32f * alpha), k.Set.Atlas);
+            Draw(shadows, k.O, k.Layers.FieldShadow, Fade(Black, 0.42f * k.Strength / 0.32f * alpha), k.Set.Atlas);
             Draw(blades, k.O, altitude, Fade(k.Tint, alpha), k.Set.Atlas);
         }
 
@@ -104,7 +110,7 @@ namespace RimArt
             UbwFieldBake.MarksInto(marks, cut, seed, 5);
             UbwFieldBake.LipInto(lips, cut, -1, 0.026, seed, k.Sun);
             UbwFieldBake.LipInto(lips, cut, 1, 0.032, seed + 3, k.Sun);
-            Draw(marks, k.O, UbwLayers.Pocket.Marks, k.Tint, k.Set.Atlas);
+            Draw(marks, k.O, k.Layers.Marks, k.Tint, k.Set.Atlas);
             Draw(lips, k.O, altitude + 0.0025f, k.Tint, k.Set.Atlas);
         }
 
@@ -156,7 +162,7 @@ namespace RimArt
         // ---- the commands' swords -----------------------------------------------------------------------------------------
 
         /// <summary>A sword about to leave, still standing (its hole already baked under it), drawn just over the field.</summary>
-        internal static void Standing(in UbwCommandLook k, string key, UbwSword sw) => Blade(k, key, sw.Pose, StuckLayer, true);
+        internal static void Standing(in UbwCommandLook k, string key, UbwSword sw) => Blade(k, key, sw.Pose, StuckLayer(k), true);
 
         /// <summary>Full Open: a sword <paramref name="u"/> seconds after it began to lift, hovering aimed at <paramref name="foe"/>; a glint at its point as it is aimed.</summary>
         internal static void Gathering(in UbwCommandLook k, string key, UbwSword sw, double u, UbwXZ foe)
@@ -177,7 +183,7 @@ namespace RimArt
             if (air) Blade(k, key, b, AirLayer(b), false);
             else
             {
-                float layer = pinned ? PinLayer : StuckLayer;
+                float layer = pinned ? PinLayer : StuckLayer(k);
                 UbwCut cut = UbwBlade.CutOf(b, shot.Buried);
                 Plant(k, key, cut, sw.Seed + 500, layer);
                 BreakOut(k, cut, age, sw.Seed, shot.Dir);
@@ -190,7 +196,7 @@ namespace RimArt
         internal static void DropBack(in UbwCommandLook k, string key, UbwSword sw, UbwPose from, double u)
         {
             UbwPose b = UbwBlade.Blend(from, sw.Pose, T.Smooth(u));
-            Blade(k, key, b, u < 0.5 ? AirLayer(b) : StuckLayer, u >= 0.5);
+            Blade(k, key, b, u < 0.5 ? AirLayer(b) : StuckLayer(k), u >= 0.5);
         }
 
         /// <summary>
@@ -228,13 +234,21 @@ namespace RimArt
             Streak(pa - n, pb - n, 0.03f, Fade(TraceHot, 0.35f * alpha), whiteGlow, VfxDraw.Floor + 0.0088f, 2);
         }
 
-        /// <summary>Arm: <paramref name="age"/> seconds after the sword began to move toward the pawn whose middle is <paramref name="pawn"/>; nothing once it is held (the game draws the copy).</summary>
-        internal static void Arming(in UbwCommandLook k, string key, UbwSword sw, double age, UbwXZ pawn)
+        /// <summary>
+        /// Arm: <paramref name="age"/> seconds after the sword began to move toward the pawn whose middle is
+        /// <paramref name="pawn"/>. Once it is held the game draws the copy; <paramref name="drawHeld"/> (the preview's
+        /// stand-in) draws it flat at the hand instead.
+        /// </summary>
+        internal static void Arming(in UbwCommandLook k, string key, UbwSword sw, double age, UbwXZ pawn, bool drawHeld = false)
         {
             UbwPose b = T.Armed(sw, age, pawn, out bool held);
-            if (held) return;
-            Blade(k, key, b, AirLayer(b), age < T.PullTime);
+            if (held && !drawHeld) return;
+            Blade(k, key, b, held ? PinLayer - 0.04f : AirLayer(b), !held && age < T.PullTime);
         }
+
+        /// <summary>A copy held flat at the hand of a stand-in whose middle is <paramref name="pawn"/> (the preview's Draw catch).</summary>
+        internal static void Held(in UbwCommandLook k, string key, UbwSword sw, UbwXZ pawn) =>
+            Blade(k, key, UbwBlade.HeldCopy(sw.W, sw.Size * 0.85, pawn, T.HeldAngle), PinLayer - 0.04f, false);
 
         /// <summary>The traced glint on a copy that just reached a hand (Draw's catch, Arm), <paramref name="since"/> seconds after.</summary>
         internal static void Caught(in UbwCommandLook k, UbwXZ hand, double since) =>

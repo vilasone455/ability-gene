@@ -33,6 +33,23 @@ namespace RimArt
             }
         }
 
+        /// <summary>A close-up screenshot of the world at <paramref name="at"/>; the runner shoots the map on screen, so the world is put there first.</summary>
+        private static int Shot(RimArtTestContext t, UbwCast cast, string name, IntVec3 at)
+        {
+            if (Find.CurrentMap != cast.world) Current.Game.CurrentMap = cast.world;
+            return t.ShotAs("ubw " + name, at, 5f);
+        }
+
+        /// <summary>Waits until the world's opening fire has run out (UbwWorldTiming.Swept after the take), so a screenshot shows the swords, not the white.</summary>
+        private static IEnumerable<int> Opened(RimArtTestContext t, UbwCast cast) =>
+            WaitFor(() => (t.Now - cast.takenTick) / 60f >= UbwWorldTiming.Swept + 0.1f, 300, 5);
+
+        /// <summary>The next test starts on the map on screen: the home map again.</summary>
+        private static void Home(RimArtTestContext t)
+        {
+            if (Find.CurrentMap != t.map && Find.Maps.Contains(t.map)) Current.Game.CurrentMap = t.map;
+        }
+
         private static string Health(Pawn p) => p.Dead ? "dead" : p.health.summaryHealth.SummaryHealthPercent.ToString("0.##") + (p.Downed ? " DOWNED" : "");
 
         private static void LogField(RimArtTestContext t, UbwCast cast, string when)
@@ -72,12 +89,15 @@ namespace RimArt
             if (!t.Check(n == 8, "8 swords rose, one every 0.1 s (" + n + ")")) yield break;
             cast.fullOpen.Release(cast, t.Now);
             t.Check(!cast.fullOpen.Charging && cast.fullOpen.flying.Count == 8, "Release fired all 8");
+            yield return 8;
+            yield return Shot(t, cast, "full open volley", foe.PositionHeld);
             for (int i = 0; i < 12 && cast.fullOpen.flying.Count > 0; i++)
             {
                 yield return 10;
                 t.Log(t.Now + " foe " + Health(foe) + ", flying " + cast.fullOpen.flying.Count + ", struck " + cast.fullOpen.flying.Count(v => v.struck) + " | " + Describe(host));
             }
             foreach (int w in WaitFor(() => cast.fullOpen.flying.Count == 0, 300, 5)) yield return w;
+            yield return Shot(t, cast, "full open stuck", foe.PositionHeld);
             LogField(t, cast, "after the volley");
             float rebuild = inside.Rebake();
             t.Log("bake: " + MapComponent_UnlimitedBladeWorks.lastRebuildRows + " rows rebuilt in " + MapComponent_UnlimitedBladeWorks.lastRebuildMs.ToString("0.0") + " ms (this call " + rebuild.ToString("0.0") + " ms)");
@@ -90,6 +110,7 @@ namespace RimArt
             t.Check(host.CurJobDef != UbwDefOf.AG_UbwFullOpen, "the caster is free again");
             cast.closeOrdered = true;
             foreach (int w in WaitFor(() => cast.returned, 1200, 5)) yield return w;
+            Home(t);
             EndHost(record);
         }
 
@@ -111,8 +132,9 @@ namespace RimArt
             float spent = cast.spent;
 
             cast.fullOpen.Begin(cast, foe, t.Now);
-            foreach (int w in WaitFor(() => cast.fullOpen.hovering.Count >= 4 || !cast.fullOpen.Charging, 300, 1)) yield return w;
+            foreach (int w in WaitFor(() => cast.fullOpen.hovering.Count >= 7 || !cast.fullOpen.Charging, 300, 1)) yield return w;
             t.Log(t.Now + " " + cast.fullOpen.hovering.Count + " hovering | " + Describe(host));
+            yield return Shot(t, cast, "full open hover", foe.Position);
             host.jobs.TryTakeOrderedJob(JobMaker.MakeJob(JobDefOf.Goto, host.Position + new IntVec3(0, 0, -2)), JobTag.DraftedOrder);
             foreach (int w in WaitFor(() => !cast.fullOpen.Charging, 30, 1)) yield return w;
             t.Log(t.Now + " after the move order: dropping " + cast.fullOpen.dropping.Count + " | " + Describe(host));
@@ -126,6 +148,7 @@ namespace RimArt
             t.Check(t.Untouched(foe), "the target was not hit (" + Health(foe) + ")");
             cast.closeOrdered = true;
             foreach (int w in WaitFor(() => cast.returned, 1200, 5)) yield return w;
+            Home(t);
             EndHost(record);
         }
 
@@ -156,7 +179,8 @@ namespace RimArt
             Hediff pinned = foe.health.hediffSet.GetFirstHediffOfDef(UbwDefOf.AG_UbwPinned);
             t.Check(pinned != null, "pinned (AG_UbwPinned, " + (pinned?.TryGetComp<HediffComp_Disappears>()?.ticksToDisappear ?? 0) + " ticks)");
             foreach (int w in WaitFor(() => cast.pins.pins.Count > 0 && cast.pins.pins[0].swords.All(s => s.struck), 60, 1)) yield return w;
-            yield return 2;
+            yield return 20;
+            yield return Shot(t, cast, "pin", foe.Position);
             int cuts = foe.health.hediffSet.hediffs.Count(h => h is Hediff_Injury && h.def == HediffDefOf.Cut);
             t.Check(cuts >= 1 && t.Hurt(foe), "the swords cut it (" + cuts + " cuts, " + Health(foe) + ")");
             t.Check(Math.Abs(cast.spent - spent - 4 * Cost) < 0.01f, "4 x " + Cost + " s spent (" + (cast.spent - spent).ToString("0.##") + ")");
@@ -175,6 +199,7 @@ namespace RimArt
             t.Check(cast.Standing, "the world still stands (" + cast.WorldSecondsLeft(t.Now).ToString("0.0") + " s left)");
             cast.closeOrdered = true;
             foreach (int w in WaitFor(() => cast.returned, 1200, 5)) yield return w;
+            Home(t);
             EndHost(record);
         }
 
@@ -223,8 +248,12 @@ namespace RimArt
             t.Log("raider moved to " + lane + "; drawing " + pick.W.Name + " at " + g.ToString("F1") + " cells from the middle corner");
             ThingDef weapon = UbwSwordHit.WeaponOf(pick.W);
             t.Log("drawing " + pick.W.Name + " at " + pick.X.ToString("0.0") + ", " + pick.Z.ToString("0.0") + ": " + UbwSwordHit.Describe(weapon));
+            foreach (int w in Opened(t, cast)) yield return w;
+            Still(foe);
             float spent = cast.spent;
             cast.draws.Begin(cast, pick, t.Now);
+            yield return 16;
+            yield return Shot(t, cast, "draw", host.Position + new IntVec3(2, 0, 0));
             for (int i = 0; i < 10 && !cast.draws.flights[0].caught && cast.draws.flights[0].ended == int.MinValue; i++)
             {
                 yield return 5;
@@ -241,6 +270,7 @@ namespace RimArt
             yield return 40;
             LogPawns(t, host);
             t.Check(host.MapHeld == t.map && host.equipment.Primary == held && !held.Destroyed, "home, the caster still holds the copy (" + (host.equipment.Primary?.LabelCap ?? "nothing") + ")");
+            Home(t);
             EndHost(record);
         }
 
@@ -259,8 +289,11 @@ namespace RimArt
             UbwCast cast = run.cast;
             if (cast == null || !t.Check(ally.Map == cast.world, "the ally is in the world")) yield break;
             t.Check(UbwCommands.ArmButton(ally) != null && UbwCommands.ArmButton(host) == null, "the ally has the Arm button, the caster does not");
+            foreach (int w in Opened(t, cast)) yield return w;
             float spent = cast.spent;
             cast.arms.Begin(cast, ally, t.Now);
+            yield return 26;
+            yield return Shot(t, cast, "arm", ally.Position);
             for (int i = 0; i < 6; i++)
             {
                 yield return 10;
@@ -279,6 +312,7 @@ namespace RimArt
             LogPawns(t, ally);
             t.Check(copy == null || copy.Destroyed, "the copy broke when the world closed");
             t.Check(ally.MapHeld == t.map && ally.equipment.Primary == null, "the ally is home with empty hands (" + (ally.equipment.Primary?.LabelCap ?? "nothing") + ")");
+            Home(t);
             EndHost(record);
         }
 
@@ -301,7 +335,7 @@ namespace RimArt
             Still(near);
             t.Note(host);
             cast.intercept = true;
-            yield return 2;
+            foreach (int w in Opened(t, cast)) yield return w;
             LogPawns(t, host, far, near);
 
             ThingDef gun = DefDatabase<ThingDef>.GetNamed("Gun_Revolver");
@@ -314,6 +348,7 @@ namespace RimArt
                 if (i % 3 == 0) t.Log(t.Now + " shot at " + shot.ExactPosition.ToString("F1") + ", meets " + cast.intercepts.meets.Count);
             }
             UbwMeet meet = cast.intercepts.meets.FirstOrDefault(m => m.shot == shot);
+            if (meet != null) yield return Shot(t, cast, "intercept", (cast.Inside.Origin + meet.point).ToVector3().ToIntVec3());
             t.Log("stopped " + ((t.Now - fired) / 60f).ToString("0.00") + " s after the shot, " + (meet == null ? "no meeting" : meet.along.ToString("0.0") + " cells out"));
             t.Check(!shot.Spawned && meet != null && meet.done != int.MinValue, "the shot was met and ended");
             t.Check(Math.Abs(cast.spent - spent - Cost) < 0.01f, Cost + " s spent (" + (cast.spent - spent).ToString("0.##") + ")");
@@ -327,7 +362,25 @@ namespace RimArt
             LogPawns(t, host, far, near);
             cast.closeOrdered = true;
             foreach (int w in WaitFor(() => cast.returned, 1200, 5)) yield return w;
+            Home(t);
             EndHost(record);
+        }
+
+        [RimArtTest("Ubw", "commands 7 the five previews play over the home map without errors (screenshots)", 3000)]
+        private static IEnumerable<int> Previews(RimArtTestContext t)
+        {
+            Setup(t);
+            yield return 5;
+            var preview = t.map.GetComponent<MapComponent_UbwPreview>();
+            foreach (UbwCommandPreview command in Enum.GetValues(typeof(UbwCommandPreview)))
+            {
+                preview.Play(t.center, UbwPreview.Commands, command);
+                t.Check(preview.active, command + " plays");
+                yield return command == UbwCommandPreview.FullOpen ? 150 : command == UbwCommandPreview.Pin ? 80 : command == UbwCommandPreview.Intercept ? 50 : 45;
+                yield return t.ShotAs("ubw preview " + command, t.center + new IntVec3(0, 0, 2), 5f);
+                yield return 30;
+                preview.Stop();
+            }
         }
 
         /// <summary>

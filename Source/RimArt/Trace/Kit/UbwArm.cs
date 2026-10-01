@@ -78,6 +78,7 @@ namespace RimArt
                 ThingDef def = UbwSwordHit.WeaponOf(sw.W);
                 if (def == null) continue;
                 WeaponStow.Stow(pawn);
+                if (pawn.equipment.Primary != null) continue;
                 var copy = (ThingWithComps)ThingMaker.MakeThing(def, def.MadeFromStuff ? GenStuff.DefaultStuffFor(def) : null);
                 copy.TryGetComp<CompQuality>()?.SetQuality(QualityCategory.Normal, null);
                 TraceCopies.Give(pawn, copy, ubwArm: true);

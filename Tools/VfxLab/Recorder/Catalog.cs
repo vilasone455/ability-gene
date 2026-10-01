@@ -213,7 +213,7 @@ namespace RimArt.VfxLab
             new Kit
             {
                 Name = "Trace", Prefix = "Trace:", Component = typeof(MapComponent_UbwPreview), Clock = "seconds",
-                Phases = label => label.Contains("cast") ? UbwCastPhases() : label.Contains("reveal") ? UbwRevealPhases() : UbwWorldPhases(),
+                Phases = label => label.Contains("commands") ? UbwCommandPhases() : label.Contains("cast") ? UbwCastPhases() : label.Contains("reveal") ? UbwRevealPhases() : UbwWorldPhases(),
                 // The reveal shot rebuilds its gears, clouds, fire and rising swords every frame: 12 frames a second.
                 KeepEvery = label => label.Contains("reveal") ? 5 : 1,
             },
@@ -540,6 +540,13 @@ namespace RimArt.VfxLab
         {
             new Phase("White", 0f), new Phase("Sky and gears", UbwRevealTiming.White), new Phase("Tilt down, fire", 1.25f), new Phase("Crane up", 2.5f),
             new Phase("Blend", UbwRevealTiming.BlendFrom), new Phase("Hand-over", UbwRevealTiming.HandOver), new Phase("World", UbwRevealTiming.BarsOff + UbwRevealTiming.BarsFor),
+        };
+
+        /// <summary>The commands' previews share the sketch's order times: the order at 0.4 s, the first sword at 0.5 s.</summary>
+        private static Phase[] UbwCommandPhases() => new[]
+        {
+            new Phase("Order", 0.4f),
+            new Phase("Swords leave", 0.5f),
         };
 
         private static Phase[] UbwWorldPhases() => new[]
