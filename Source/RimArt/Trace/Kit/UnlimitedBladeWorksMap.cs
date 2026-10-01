@@ -13,26 +13,26 @@ namespace RimArt
     /// </summary>
     public static class UnlimitedBladeWorksMap
     {
-        /// <summary>The map is 40 x 40 with the caster in the middle (the sketches' MapHalf).</summary>
-        public const int Size = (int)UbwField.MapHalf * 2;
-        private static (List<IntVec3> keep, bool depth)? request;
+        /// <summary>The map is 40 x 33: the caster lands MapHalf (20) cells from the east, west and south edges and <see cref="UbwCrest.North"/> (13) from the north edge, so the world v4's crest past it is on screen at the usual zoom.</summary>
+        public const int Width = (int)UbwField.MapHalf * 2, Depth = (int)UbwField.MapHalf + UbwCrest.North;
+        private static (List<IntVec3> keep, bool crest)? request;
 
-        /// <summary>The landing spots asked for, in cells from the middle, and whether the world is the v2 one with depth, once: the GenStep reads them while it builds.</summary>
-        internal static (List<IntVec3> keep, bool depth)? TakeRequest()
+        /// <summary>The landing spots asked for, in cells from the caster's cell, and whether the world is v4 (else the flat v1), once: the GenStep reads them while it builds.</summary>
+        internal static (List<IntVec3> keep, bool crest)? TakeRequest()
         {
             var asked = request;
             request = null;
             return asked;
         }
 
-        /// <summary>Makes the world beside <paramref name="source"/> with no sword over these spots (cells from the middle), and nothing else: no camera, no message. <paramref name="depth"/>: the world v2, plates with height and a sky. Null if the game would not make it.</summary>
-        public static Map Make(Map source, List<IntVec3> keep, bool depth)
+        /// <summary>Makes the world beside <paramref name="source"/> with no sword over these spots (cells from the caster's cell), and nothing else: no camera, no message. <paramref name="crest"/>: the world v4 (plates, the sword crest, the sky behind it); false the flat v1. Null if the game would not make it.</summary>
+        public static Map Make(Map source, List<IntVec3> keep, bool crest)
         {
-            request = (keep, depth);
+            request = (keep, crest);
             Map world;
             try
             {
-                world = PocketMapUtility.GeneratePocketMap(new IntVec3(Size, 1, Size), UbwDefOf.AG_UnlimitedBladeWorks, null, source);
+                world = PocketMapUtility.GeneratePocketMap(new IntVec3(Width, 1, Depth), UbwDefOf.AG_UnlimitedBladeWorks, null, source);
             }
             finally
             {
@@ -43,10 +43,10 @@ namespace RimArt
             return world;
         }
 
-        /// <summary>The debug window's world: made with no one in it, and the camera taken to the middle.</summary>
-        public static void Open(Map source, List<IntVec3> keep, bool depth = false)
+        /// <summary>The debug window's world: made with no one in it, and the camera taken to the caster's cell.</summary>
+        public static void Open(Map source, List<IntVec3> keep, bool crest = true)
         {
-            Map world = Make(source, keep, depth);
+            Map world = Make(source, keep, crest);
             if (world == null) return;
             MapComponent_UnlimitedBladeWorks component = world.GetComponent<MapComponent_UnlimitedBladeWorks>();
             CameraJumper.TryJump(new GlobalTargetInfo(component.CentreCell, world));
@@ -68,7 +68,7 @@ namespace RimArt
             LongEventHandler.QueueLongEvent(() => Close(world), "AG_UnlimitedBladeWorksClosing", false, null);
 
         /// <summary>Open, as a long event, behind the game's own "generating map" screen.</summary>
-        public static void OpenLater(Map source, List<IntVec3> keep, bool depth = false) =>
-            LongEventHandler.QueueLongEvent(() => Open(source, keep, depth), "GeneratingMap", false, null);
+        public static void OpenLater(Map source, List<IntVec3> keep, bool crest = true) =>
+            LongEventHandler.QueueLongEvent(() => Open(source, keep, crest), "GeneratingMap", false, null);
     }
 }

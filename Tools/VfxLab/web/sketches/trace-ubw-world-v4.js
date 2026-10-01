@@ -1,5 +1,6 @@
-// Unlimited Blade Works: world v4, sword crest (pocket) — Trace kit experiment (2026-09-26), not agreed, not
-// the game. Options 1 + 4 of the sky options (2026-09-26): v3 ("world v3, horizon") bends the ground past the
+// Unlimited Blade Works: world v4, sword crest (pocket) — Trace kit (2026-09-26). Ported 2026-10-01 as the world
+// the ability opens (Source/RimArt/Trace/UbwCrest*.cs, UbwBackdropGraphics.cs), with the v1 fire still running
+// out at the start until the reveal shot is ported. Options 1 + 4 of the sky options (2026-09-26): v3 ("world v3, horizon") bends the ground past the
 // map edge into a horizon; the 2D games the user pointed at and Final Fantasy VI cut it instead. A ridge
 // ends the top-down ground and behind it hangs a picture drawn from the side that pans slower than the map,
 // and that picture keeps moving even when the camera is still (the Blackjack's clouds). lib/ubw-crest.js has

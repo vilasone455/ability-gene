@@ -7,19 +7,19 @@ namespace RimArt
     /// <summary>
     /// The real world, a pocket map of its own, with no ability or rule behind it: nobody is taken in.
     /// Spawn a pawn in it with the game's own debug tools to see it at scale. "world map: open" makes the
-    /// world beside the map on screen and plays the fire running out ("open (v2 depth)": the plate ground
-    /// with height and the sky); "world map: close" runs the white in and removes it; "world map: close
-    /// now" removes it at once.
+    /// world v4 beside the map on screen, as the ability does, and plays the fire running out ("open (v1
+    /// flat)": the flat earth with gear shadows); "world map: close" runs the white in and removes it;
+    /// "world map: close now" removes it at once.
     /// </summary>
     public static class DebugActions_UbwMap
     {
         [RimArtDebug("Trace", "world map: open", RimArtDebugKind.Now)]
-        public static void Open() => OpenWorld(false);
+        public static void Open() => OpenWorld(true);
 
-        [RimArtDebug("Trace", "world map: open (v2 depth)", RimArtDebugKind.Now)]
-        public static void OpenDepth() => OpenWorld(true);
+        [RimArtDebug("Trace", "world map: open (v1 flat)", RimArtDebugKind.Now)]
+        public static void OpenFlat() => OpenWorld(false);
 
-        private static void OpenWorld(bool depth)
+        private static void OpenWorld(bool crest)
         {
             Map source = Find.CurrentMap;
             if (source == null) return;
@@ -28,7 +28,7 @@ namespace RimArt
                 Messages.Message("Already in the world: close it first.", MessageTypeDefOf.RejectInput, false);
                 return;
             }
-            UnlimitedBladeWorksMap.OpenLater(source, new List<IntVec3> { IntVec3.Zero }, depth);
+            UnlimitedBladeWorksMap.OpenLater(source, new List<IntVec3> { IntVec3.Zero }, crest);
         }
 
         /// <summary>The ability's cooldown gone, to cast again at once. Origin: Blade grants the ability: Kits, "Origin: Blade".</summary>

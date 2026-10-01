@@ -23,10 +23,12 @@ namespace RimArt
     {
         /// <summary>Swords per cell on the map; the hill of swords' radius; how far the field goes on past the map edge; sword size (x image); the most lean, in degrees.</summary>
         public double Density, Hill, Beyond, Size, Lean;
+        /// <summary>The world v4 only: the map's north edge in cells from the caster (no sword north of it: the crest is there), and 0 to 1, how far the density follows a slow noise instead of staying even (bare patches, none on the hill).</summary>
+        public double North, Cluster;
 
-        public UbwFieldSettings(double density, double hill, double beyond, double size, double lean)
+        public UbwFieldSettings(double density, double hill, double beyond, double size, double lean, double north = double.PositiveInfinity, double cluster = 0)
         {
-            Density = density; Hill = hill; Beyond = beyond; Size = size; Lean = lean;
+            Density = density; Hill = hill; Beyond = beyond; Size = size; Lean = lean; North = north; Cluster = cluster;
         }
     }
 
@@ -39,11 +41,13 @@ namespace RimArt
     /// </summary>
     public static class UbwField
     {
-        /// <summary>The pocket map is 40 x 40 with the caster in the middle.</summary>
+        /// <summary>The pocket map reaches 20 cells east, west and south of the caster (north: 20 in the flat world v1, <see cref="UbwCrest.North"/> in v4).</summary>
         public const double MapHalf = 20;
         /// <summary>A jittered grid this many cells apart keeps the field even.</summary>
         public const double Step = 1.2;
         public static readonly UbwFieldSettings Look = new UbwFieldSettings(0.24, 5.5, 16, 1.3, 22);
+        /// <summary>The world v4's field: the look, ending at the map's north edge, clustered.</summary>
+        public static readonly UbwFieldSettings CrestLook = new UbwFieldSettings(Look.Density, Look.Hill, Look.Beyond, Look.Size, Look.Lean, UbwCrest.North, UbwCrest.Cluster);
         /// <summary>The rest of the world's look: the twilight light and the gear shadows' opacity.</summary>
         public const double Twilight = 0.8, GearShadow = 0.28;
 
@@ -55,12 +59,23 @@ namespace RimArt
         }
 
         /// <summary>
+        /// 0 to 1: the field's density at (x, z) against even, on a slow noise about 9 cells across (lib/ubw-pocket.js
+        /// clusterAt). The sketch asks for 0 to 2.2, but the clamp it calls (lib/trace.js clamp, Mathf.Clamp01) ignores
+        /// the bounds, so it only thins the field into bare patches; ported as the sketch draws it.
+        /// </summary>
+        public static double ClusterAt(double x, double z)
+        {
+            double v = (UbwTerrain.Fbm(x * .11 + 40, z * .11 + 40, 77, 2, 64) - .32) * 5;
+            return v < 0 ? 0 : v > 1 ? 1 : v;
+        }
+
+        /// <summary>
         /// Every sword of the world, relative to the caster, north first. Density is swords per cell on the
         /// map, doubling toward the top of the hill, 0.6 of it past the map edge. On the hill they lean out,
         /// down its slope. Every sword is its weapon's own size, give or take 10 %. keep: the landing spots;
         /// no sword is drawn over one. weapons: the set the mix picks from.
         /// </summary>
-        /// <param name="heightAt">The ground's height under a sword (the world v2's plates): the sword stands that much higher, drawn Lift cells further north per cell, and the list is ordered by that screen foot. Null for flat ground.</param>
+        /// <param name="heightAt">The ground's height under a sword (the plate ground): the sword stands that much higher, drawn Lift cells further north per cell, and the list is ordered by that screen foot. Null for flat ground.</param>
         public static List<UbwSword> Make(UbwFieldSettings o, IList<UbwXZ> keep, UbwWeapon[] weapons, Func<double, double, double> heightAt = null)
         {
             double reach = MapHalf + o.Beyond;
@@ -71,10 +86,12 @@ namespace RimArt
                 {
                     int seed = ++n;
                     double x = gx + (Rand(seed * 3 + 1) - .5) * Step * .9, z = gz + (Rand(seed * 5 + 2) - .5) * Step * .9;
+                    if (z > o.North) continue;
                     double d = Math.Sqrt(x * x + z * z);
                     bool far = Math.Max(Math.Abs(x), Math.Abs(z)) > MapHalf, onHill = d < o.Hill;
                     double want = o.Density * (far ? .6 : 1);
                     if (onHill) want *= 1 + 2 * (1 - d / o.Hill);
+                    else if (o.Cluster > 0) want *= 1 + (ClusterAt(x, z) - 1) * o.Cluster;
                     if (Rand(seed * 7 + 3) > want * Step * Step || d < 1) continue;
                     var sw = new UbwSword
                     {
