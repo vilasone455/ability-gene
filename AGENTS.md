@@ -41,7 +41,8 @@ reads it directly). Agreed 2026-09-30. New code follows it; old code is changed 
 | `Shared/PocketReturn.cs` | Everyone home from a pocket map: `Bring`, `Rejoin` (old lord if it takes the pawn), `NoLord`, `Items`, `Place`, `Finish` |
 | `Shared/FollowView.cs` | Camera follows pawns moved between maps and keeps them selected, if the player was watching |
 | `Shared/ItemAbilityGrant.cs` | Gives a held item's abilities to its holder, takes them back, keeps cooldowns |
-| `Shared/PawnFit.cs` | Fits a picture drawn on the lab's stand-in pawn to a real pawn's height |
+| `Shared/PawnBody.cs` | Head top, head, neck, chest, feet and ground contact of a real pawn above its DrawPos: the numbers of the lab's real-size stand-in (`lib/pawn.js`), used as they are |
+| `Shared/PawnFit.cs` | Fits a picture drawn on the lab's older 0.89-tall stand-in pawn to a real pawn's height |
 | `Shared/VfxDraw.cs` | Materials, meshes, sprites, strips and streaks every ported picture uses |
 | `Shared/VfxMath.cs` | The lab's `Smooth`, `Hash`, `Rand`, so a port matches its sketch |
 | `Shared/WeaponStow.cs` | `Stow`: empties a hand; a bound weapon goes to its owner (a copy breaks), any other to the inventory, else to the ground |

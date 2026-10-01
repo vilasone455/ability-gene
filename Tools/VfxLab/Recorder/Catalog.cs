@@ -190,6 +190,12 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                // Filed under the sketches' kit heading. The sketch's markers (ego-magic-bullet.js): Aim, Rifle turns (the seventh), the shot, Result.
+                Name = "E.G.O. weapons", Prefix = "E.G.O.: magic bullet", Component = typeof(MapComponent_EgoMagicBulletPreview), Clock = "seconds",
+                Phases = MagicBulletPhases,
+            },
+            new Kit
+            {
                 Name = "Infinity Castle", Prefix = "Infinity Castle:", Component = typeof(MapComponent_InfinityCastlePreview), Clock = "seconds",
                 Phases = label => label.Contains("open (take)") ? CastleTakePhases() : label.Contains("open (return)") ? CastleReturnPhases() : CastlePhases(),
             },
@@ -1127,6 +1133,19 @@ namespace RimArt.VfxLab
             };
             if (scene != GojoRedScene.Empty)
                 phases.Add(new Phase(MapComponent_GojoRedPreview.HitsWall(scene) ? "Slam" : "Lands", arrive + MapComponent_GojoRedPreview.Fly(scene)));
+            return phases.ToArray();
+        }
+
+        // ego-magic-bullet.js's phases(): Aim, Rifle turns (the seventh only), "Shot n" or "The seventh" at the shot, Result when the bullet reaches the range.
+        private static Phase[] MagicBulletPhases(string label)
+        {
+            bool seventh = label.Contains("seventh");
+            int shot = seventh ? EgoMagicBulletTiming.Shots : label.Contains("shot 4") ? 4 : label.Contains("shot 6") ? 6 : 1;
+            float fire = EgoMagicBulletTiming.Fire(EgoMagicBulletTiming.Lead, seventh);
+            var phases = new List<Phase> { new Phase("Aim", 0f) };
+            if (seventh) phases.Add(new Phase("Rifle turns", EgoMagicBulletTiming.Lead));
+            phases.Add(new Phase(seventh ? "The seventh" : "Shot " + shot, fire));
+            phases.Add(new Phase("Result", fire + EgoMagicBulletTiming.Flight(EgoMagicBulletTiming.Range)));
             return phases.ToArray();
         }
 

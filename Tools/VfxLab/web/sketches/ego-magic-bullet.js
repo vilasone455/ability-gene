@@ -1,4 +1,5 @@
-// Magic Bullet — E.G.O. weapon proposal, not the game. Nothing in Source/RimArt draws this yet.
+// Magic Bullet — E.G.O. weapon proposal. The pictures are ported to Source/RimArt/Ego/EgoMagicBullet* (previews
+// "E.G.O.: magic bullet: ..."); no weapon, ability or rule draws them yet.
 // Der Freischütz (Lobotomy Corporation, HE), the rifle whose seven bullets come from the devil.
 // The rules are docs/ego-weapons.md, "Weapon 1: Magic Bullet" (design agreed 2026-09-30, numbers
 // are placeholders and become XML fields on CompProperties_EgoWeapon):
