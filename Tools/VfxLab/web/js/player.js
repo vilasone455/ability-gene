@@ -33,7 +33,9 @@ export class RecordedSource {
     for (const [key, m] of Object.entries(json.meshes))
       this.meshes[key] = {
         name: m.name, version: 0,
-        v: Float32Array.from(m.v), uv: m.uv ? Float32Array.from(m.uv) : null, tri: Uint32Array.from(m.tri),
+        v: Float32Array.from(m.v ?? m.game), uv: m.uv ? Float32Array.from(m.uv) : null, tri: Uint32Array.from(m.tri),
+        // a cutscene's mesh (Recorder/Tap.cs): its 3D places and game positions, as Mesh.setXYZ + setGame
+        v3: m.v3 ? Float32Array.from(m.v3) : null, game: m.game ? Float32Array.from(m.game) : null,
       };
     this.events = [];
     for (const f of json.frames) for (const e of f.events ?? []) this.events.push({ ...e, t: f.t, clock: f.clock });
@@ -46,13 +48,33 @@ export class RecordedSource {
     const dx = origin.x - RecordedCell.x, dz = origin.z - RecordedCell.z;
     const calls = frame.calls.map((c) => {
       const mat = this.materials[c[1]];
-      return {
+      const call = {
         group: groupOf(mat), mesh: this.meshes[c[0]], mat,
         x: c[2] + dx, y: c[3], z: c[4] + dz, rot: c[5], sx: c[6], sz: c[7],
         r: c[8], g: c[9], b: c[10], a: c[11], age: c[12] ?? 0,
       };
+      // a cutscene's draw: its y scale and flags (1 where the game view draws it, 2 no depth write, 4 not depth tested)
+      if (c.length > 13) {
+        call.sy = c[13];
+        if (c[14] & 1) call.screen = true;
+        if (c[14] & 2) call.noWrite = true;
+        if (c[14] & 4) call.flat = c[3];
+      }
+      return call;
     });
-    return { calls, index, clock: frame.clock, frames: this.frames.length };
+    const overlays = (frame.overlays ?? []).map((o) => ({ ...o }));
+    return { calls, overlays, index, clock: frame.clock, frames: this.frames.length };
+  }
+
+  // A recorded cutscene's camera for time t (SKETCHING.md, "A 3D camera"), moved with the effect's cell; null for a
+  // recording without one.
+  cameraAt(t, origin) {
+    const index = this.still ? 0 : Math.max(0, Math.min(this.frames.length - 1, Math.round(t * this.fps) - 1));
+    const c = this.frames[index]?.camera;
+    if (!c) return null;
+    const dx = origin.x - RecordedCell.x, dz = origin.z - RecordedCell.z, game = { cx: c.cx + dx, cz: c.cz + dz, cellsTall: c.cellsTall };
+    if (c.flat) return { flat: true, game };
+    return { x: c.x + dx, y: c.y, z: c.z + dz, pitch: c.pitch, yaw: 0, fov: c.fov, near: c.near, far: c.far, blend: c.blend, game };
   }
 }
 

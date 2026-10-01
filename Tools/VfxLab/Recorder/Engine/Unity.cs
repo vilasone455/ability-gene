@@ -214,6 +214,12 @@ namespace UnityEngine
             triangleData = triangles.ToArray();
     }
 
+    public struct Rect
+    {
+        public float x, y, width, height;
+        public Rect(float x, float y, float width, float height) { this.x = x; this.y = y; this.width = width; this.height = height; }
+    }
+
     public class Transform
     {
         public Vector3 position;

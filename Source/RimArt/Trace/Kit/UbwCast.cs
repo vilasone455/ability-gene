@@ -50,6 +50,8 @@ namespace RimArt
     ///   from the caster, who lands 20 cells from its east, west and south edges and 13 from the north one
     ///   (the world v4's crest stands past it). Downed pawns stay. The moment is the full white of the
     ///   cast picture (<see cref="T.Plan.Taken"/>).
+    /// - If the player was watching, the reveal shot plays at the take (<see cref="UbwRevealWindow"/>, a setting):
+    ///   4.6 s with the game paused, any key skips it; the world's time starts when the game runs again.
     /// - Hostile pawns taken are put in an assault lord of their faction inside the world; the map edge is
     ///   the world's edge, nobody can leave.
     /// - The world stands worldSecondsByVerse[V] of game time, and ends early if the caster is downed, dies,
@@ -203,6 +205,8 @@ namespace RimArt
             takenTick = now;
             Assault(hostile, world);
             view.Follow(new GlobalTargetInfo(caster), pawns);
+            // The reveal shot, if the player was watching: the game waits, paused, until it ends or is skipped.
+            if (view.watching && UbwRevealWindow.Wanted) Find.WindowStack.Add(new UbwRevealWindow(world, pawns));
             Messages.Message("Unlimited Blade Works: " + pawns.Count + " taken into the world for " + Rules.WorldSecondsFor(verse).ToString("0") + " s.",
                 caster, MessageTypeDefOf.NeutralEvent, false);
         }

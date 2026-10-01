@@ -28,6 +28,8 @@ namespace RimArt.VfxLab
         /// walks up, and the port draws no stand-in): record them whole instead of as a still.
         /// </summary>
         public Func<string, bool> StartsStill = _ => false;
+        /// <summary>Keep one frame in this many: a cutscene that rebuilds big meshes every frame would make a recording too big to load.</summary>
+        public Func<string, int> KeepEvery = _ => 1;
 
         public static readonly Kit[] All =
         {
@@ -211,7 +213,9 @@ namespace RimArt.VfxLab
             new Kit
             {
                 Name = "Trace", Prefix = "Trace:", Component = typeof(MapComponent_UbwPreview), Clock = "seconds",
-                Phases = label => label.Contains("cast") ? UbwCastPhases() : UbwWorldPhases(),
+                Phases = label => label.Contains("cast") ? UbwCastPhases() : label.Contains("reveal") ? UbwRevealPhases() : UbwWorldPhases(),
+                // The reveal shot rebuilds its gears, clouds, fire and rising swords every frame: 12 frames a second.
+                KeepEvery = label => label.Contains("reveal") ? 5 : 1,
             },
             new Kit
             {
@@ -531,6 +535,12 @@ namespace RimArt.VfxLab
                 new Phase("Back", t.Home),
             };
         }
+
+        private static Phase[] UbwRevealPhases() => new[]
+        {
+            new Phase("White", 0f), new Phase("Sky and gears", UbwRevealTiming.White), new Phase("Tilt down, fire", 1.25f), new Phase("Crane up", 2.5f),
+            new Phase("Blend", UbwRevealTiming.BlendFrom), new Phase("Hand-over", UbwRevealTiming.HandOver), new Phase("World", UbwRevealTiming.BarsOff + UbwRevealTiming.BarsFor),
+        };
 
         private static Phase[] UbwWorldPhases() => new[]
         {

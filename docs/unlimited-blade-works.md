@@ -16,8 +16,9 @@ pictures, the map, and the ability (chant, take, world timer, return), granted b
 | The real pocket map: 40 x 33 (the caster 20 cells from the east, west and south edges, 13 from the north), earth terrain, roof, unseen warm lights, the world drawn over it | `Source/RimArt/Trace/Kit/`, `1.6/Defs/*/AG_UnlimitedBladeWorks_*.xml` | written, not yet built or run |
 | The weapon atlas from the weapons' own textures (the lab's reference art never ships) | `Kit/UbwAtlasBuilder.cs` | written, not yet run |
 | The commands (Full Open, Pin, Draw, Arm, Intercept) | sketches only | not ported |
-| World v4, the one the ability opens (level plates, a sword crest past the north edge, a side-view sky with seven gears, ridges and rows of swords behind it that pan slower than the map, smoke and embers over the crest) | `UbwCrest.cs`, `UbwCrestGraphics.cs`, `UbwBackdropGraphics.cs`, `UbwTerrain.cs`, `UbwTerrainGraphics.cs`; preview "world v4"; "world map: open" | ported 2026-10-01 from `trace-ubw-world-v4.js`, replacing v2; `Tests/Ubw` checks its plates, swords and crest profile against the sketch; the lab recording matches the sketch (0.3 % of pixels differ, the sketch's stand-ins); the sketch's opening white fade is not ported: the fire still runs out, as v1, until the reveal shot exists |
-| The reveal and close shots (a paused 3D camera tilting down from the sky to v4, and back up) | sketches only (`trace-ubw-reveal.js`, `trace-ubw-close.js`) | not ported |
+| World v4, the one the ability opens (level plates, a sword crest past the north edge, a side-view sky with seven gears, ridges and rows of swords behind it that pan slower than the map, smoke and embers over the crest) | `UbwCrest.cs`, `UbwCrestGraphics.cs`, `UbwBackdropGraphics.cs`, `UbwTerrain.cs`, `UbwTerrainGraphics.cs`; preview "world v4"; "world map: open" | ported 2026-10-01 from `trace-ubw-world-v4.js`, replacing v2; `Tests/Ubw` checks its plates, swords and crest profile against the sketch; the lab recording matches the sketch (0.3 % of pixels differ, the sketch's stand-ins); the sketch's opening white fade is not ported: with the reveal shot off (or not watched) the fire still runs out, as v1 |
+| The reveal shot: at the take, 4.6 s with the game paused, a camera at head height looks up at the sky and its gears, tilts down while the fire runs out to 130 cells and the swords rise ring by ring, cranes up and blends into the world v4's usual view; any key or click skips it | `UbwRevealTiming.cs`, `UbwRevealGraphics.cs`, `UbwRevealGround.cs`, `UbwRevealSky.cs`, `UbwShot.cs` (the frame as data); `Kit/UbwShotCamera.cs` (the camera), `Kit/UbwRevealWindow.cs` (pause, skip, UI, the world's clock, the pawns' portraits); setting in Options, Mod settings, RimArts; preview "reveal" | ported 2026-10-01 from `trace-ubw-reveal.js`; the lab replays the C# shot (the recorder records the camera and its 3D draws, at 12 frames a second) and it matches the sketch frame by frame (0.2 to 2.2 % of pixels differ: the turning parts are 1.15 s further on, as the game's world stands from 1.65 s); game test "reveal 1"; not run in game |
+| The close shot (tilting back up to the gears) | sketch only (`trace-ubw-close.js`) | not ported |
 | The ability: the chant, who is taken, the world's time, the return, the cooldown | `Kit/UbwCast.cs`, `GameComponent_UnlimitedBladeWorks.cs`, `CompAbilityEffect_UnlimitedBladeWorks.cs` (with the chant job and the Release/Close buttons), `1.6/Defs/AbilityDefs/AG_Trace_Abilities.xml` | written 2026-09-25; granted by the Shirou Echo since 2026-09-26; 6 game tests pass (`Kit/Tests_Ubw.cs`); not played by hand |
 
 ## The ability
@@ -69,6 +70,8 @@ RimArts debug window, Trace, pictures and the empty map:
 - **world map: open**: makes the world v4 beside the map on screen, as the ability does, and plays the fire
   running out. Nobody is taken; spawn a pawn in it with the game's own tools to see the swords at scale.
   **open (v1 flat)** makes it with the flat earth, to compare.
+- **unlimited blade works: reveal**: the reveal shot over the map on screen, through the cutscene camera, with the
+  lab's stand-in pawns and without pausing; the camera is moved to the world's framing first.
 - **world map: close**: the white closes in behind the wall of fire, then the map is removed.
   **close now** removes it at once.
 
@@ -110,6 +113,13 @@ state, the refunds, and the world's removal):
   stand a little off a raised plate; the backdrop follows `Find.Camera` (position and orthographic size),
   so check panning (it should open more sky going north), zooming out to 60 (the sky's top plane, the
   cover under the plates), and a pawn on the north row against the crest.
+- The reveal shot in game, none of it seen yet: the cutscene camera over the map camera (culling mask 0, drawing from
+  `OnPostRender` through a command buffer); every draw at one depth so the frame's far-to-near order decides what
+  covers what (the game's shaders may write depth); the blend's vertices placed on the CPU (about 120,000 a frame for
+  1.05 s; textures are not perspective-correct then); the window's pause, skip and screenshot mode; the hand-over at
+  4.2 s to the map camera at the same framing (watch for a jump); the portraits standing among the swords (2 cells
+  wide, cut at the feet); the fire's flames drawn over nearer swords (the lab hides them), and the camera's haze
+  falling on the pawns during the blend (in v4 they are over it).
 - v4 as sketched: the sketch's `clamp` is `Mathf.Clamp01`, so the field's clustering only thins it (no
   groves) and the sun stands at azimuth 1 degree, above the caster, not the 55 degrees the scene's shadows
   point from. The port does the same; changing either is a sketch change first.

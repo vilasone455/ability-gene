@@ -48,33 +48,39 @@ namespace RimArt
     [StaticConstructorOnStartup]
     internal static class UbwBackdropGraphics
     {
-        private static readonly Material skyMat = MaterialPool.MatFrom("RimArt/Trace/HorizonSky", ShaderDatabase.Transparent);
-        private static readonly Material groundMat = MaterialPool.MatFrom("RimArt/Trace/HorizonGround", ShaderDatabase.Transparent);
-        private static readonly Material depthMat = MaterialPool.MatFrom("RimArt/Trace/DepthHaze", ShaderDatabase.Transparent);
+        internal static readonly Material skyMat = MaterialPool.MatFrom("RimArt/Trace/HorizonSky", ShaderDatabase.Transparent);
+        internal static readonly Material groundMat = MaterialPool.MatFrom("RimArt/Trace/HorizonGround", ShaderDatabase.Transparent);
+        internal static readonly Material depthMat = MaterialPool.MatFrom("RimArt/Trace/DepthHaze", ShaderDatabase.Transparent);
 
         // The sketch's colours (lib/ubw-horizon.js, lib/ubw-crest.js).
-        private static readonly Color Glow = new Color(1f, 0.89f, 0.67f), Horizon = new Color(1f, 0.62f, 0.3f), Mid = new Color(0.86f, 0.36f, 0.2f), High = new Color(0.5f, 0.17f, 0.16f);
-        private static readonly Color Top = new Color(0.24f, 0.08f, 0.11f), SunFace = new Color(1f, 0.96f, 0.88f), SunWarm = new Color(1f, 0.75f, 0.45f);
-        private static readonly Color Silhouette = new Color(0.12f, 0.05f, 0.05f), Smog = new Color(0.27f, 0.09f, 0.09f), RimLight = new Color(1f, 0.67f, 0.35f);
-        private static readonly Color CloudDark = new Color(0.36f, 0.13f, 0.14f), CloudWarm = new Color(0.6f, 0.26f, 0.2f), CloudLit = new Color(1f, 0.77f, 0.47f);
-        private static readonly Color RidgeEarth = new Color(0.34f, 0.22f, 0.16f), HazeFar = new Color(0.93f, 0.61f, 0.36f), Steel = new Color(0.6f, 0.58f, 0.6f), Spark = new Color(1f, 0.7f, 0.38f);
-        private static readonly Color Fog = new Color(0.89f, 0.56f, 0.35f), Ash = new Color(0.27f, 0.21f, 0.2f);
+        internal static readonly Color Glow = new Color(1f, 0.89f, 0.67f), Horizon = new Color(1f, 0.62f, 0.3f), Mid = new Color(0.86f, 0.36f, 0.2f), High = new Color(0.5f, 0.17f, 0.16f);
+        internal static readonly Color Top = new Color(0.24f, 0.08f, 0.11f), SunFace = new Color(1f, 0.96f, 0.88f), SunWarm = new Color(1f, 0.75f, 0.45f);
+        internal static readonly Color Silhouette = new Color(0.12f, 0.05f, 0.05f), Smog = new Color(0.27f, 0.09f, 0.09f), RimLight = new Color(1f, 0.67f, 0.35f);
+        internal static readonly Color CloudDark = new Color(0.36f, 0.13f, 0.14f), CloudWarm = new Color(0.6f, 0.26f, 0.2f), CloudLit = new Color(1f, 0.77f, 0.47f);
+        internal static readonly Color RidgeEarth = new Color(0.34f, 0.22f, 0.16f), HazeFar = new Color(0.93f, 0.61f, 0.36f), Steel = new Color(0.6f, 0.58f, 0.6f), Spark = new Color(1f, 0.7f, 0.38f);
+        internal static readonly Color Fog = new Color(0.89f, 0.56f, 0.35f), Ash = new Color(0.27f, 0.21f, 0.2f);
         /// <summary>The crack floor (lib/ubw-terrain.js Base) and the backstop's colour (FarEarth toward Haze by 0.45): the cover under the plates.</summary>
-        private static readonly Color Base = new Color(0.07f, 0.045f, 0.035f), Backstop = new Color(0.568f, 0.368f, 0.318f);
-        private const float Step = 0.00005f, KA = (float)C.KA, KE = (float)C.KE;
+        internal static readonly Color Base = new Color(0.07f, 0.045f, 0.035f), Backstop = new Color(0.568f, 0.368f, 0.318f);
+        internal const float KA = (float)C.KA, KE = (float)C.KE;
+        private const float Step = 0.00005f;
 
         private static Mesh[] ridgeFill, ridgeRim, ridgeSwords, rows;
+        /// <summary>The baked layers, each round its own origin (x from the caster, z from its line): ridge r's fill, rim and swords (null for the mountains), row k's swords.</summary>
+        internal static Mesh RidgeFill(int r) { BakeLayers(); return ridgeFill[r]; }
+        internal static Mesh RidgeRim(int r) { BakeLayers(); return ridgeRim[r]; }
+        internal static Mesh RidgeSwords(int r) { BakeLayers(); return ridgeSwords[r]; }
+        internal static Mesh RowSwords(int k) { BakeLayers(); return rows[k]; }
         /// <summary>The gears far first (by haze), as the sketch sorts them.</summary>
         private static readonly int[] gearOrder = Enumerable.Range(0, C.Gears.Length).OrderByDescending(i => C.Gears[i].Haze).ToArray();
         private static readonly Dictionary<long, (Vector2[] v, int[] tri)> shapes = new Dictionary<long, (Vector2[], int[])>();
 
-        private static Color Mix(Color a, Color b, float t) => new Color(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1f);
+        internal static Color Mix(Color a, Color b, float t) => new Color(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, 1f);
         private static float Clamp01(float v) => v < 0f ? 0f : v > 1f ? 1f : v;
         private static float Hash(int x, int y, int seed) => (float)UbwTerrain.Hash(x, y, seed);
         private static float Wrap(float v, float n) => ((v % n) + n) % n - n / 2f;
 
         /// <summary>The sky's colour e degrees over the horizon: glow, orange, red, dusk red, the dark top.</summary>
-        private static Color SkyAt(float e)
+        internal static Color SkyAt(float e)
         {
             if (e < 6f) return Mix(Glow, Horizon, Clamp01(e / 6f));
             if (e < 16f) return Mix(Horizon, Mid, (e - 6f) / 10f);
@@ -135,7 +141,7 @@ namespace RimArt
         // ---- gears ------------------------------------------------------------------------------------------------
 
         /// <summary>A gear of radius 1 as rings and spokes: the toothed rim, then per type its spokes, inner ring and hub. The port of gearShape.</summary>
-        private static (Vector2[] v, int[] tri) GearShape(int type, int teeth)
+        internal static (Vector2[] v, int[] tri) GearShape(int type, int teeth)
         {
             long id = type * 1000L + teeth;
             if (shapes.TryGetValue(id, out var made)) return made;
@@ -227,29 +233,18 @@ namespace RimArt
             Sprite(sunAt, 30f * KE * 2f, 30f * KE * 2f, Fade(SunWarm, 0.38f), glow, L(2));
             Builder[] bodies = { Scratch("UBW clouds 0"), Scratch("UBW clouds 1"), Scratch("UBW clouds 2") };
             Builder[] lit = { Scratch("UBW cloud light 0"), Scratch("UBW cloud light 1"), Scratch("UBW cloud light 2") };
-            for (int i = 0; i < 20; i++)
+            foreach (Puff q in CloudPuffs(s, sunA))
             {
-                float a = (Hash(i, 1, 51) - 0.5f) * 180f + s * (0.35f + 0.7f * Hash(i, 2, 51)), e = 9f + Mathf.Pow(Hash(i, 3, 51), 0.8f) * 58f;
-                float near = Clamp01(1f - Mathf.Abs(a - sunA) / 80f) * Clamp01(1f - (e - 8f) / 50f);
-                int g = Mathf.Min(2, Mathf.FloorToInt(near * 3f)), n = 8 + Mathf.FloorToInt(Hash(i, 4, 51) * 6f);
-                for (int q = 0; q < n; q++)
-                {
-                    float da = (Hash(i * 16 + q, 5, 51) - 0.5f) * 18f, de = (Hash(i * 16 + q, 6, 51) - 0.35f) * 5f, r = 3.5f + Hash(i * 16 + q, 7, 51) * 5.5f;
-                    float x = SkyX(a + da, 0.04f), z = SkyZ(e + de), w = r * KE * 2.6f, h = r * KE * 2f;
-                    bodies[g].Quad(x, z, w, h, 0f);
-                    lit[g].Quad(x, z - 0.9f * KE - h * 0.12f, w * 0.8f, h * 0.75f, 0f);
-                }
+                float x = SkyX(q.A, 0.04f), z = SkyZ(q.E), w = q.R * KE * 2.6f, h = q.R * KE * 2f;
+                bodies[q.G].Quad(x, z, w, h, 0f);
+                lit[q.G].Quad(x, z - 0.9f * KE - h * 0.12f, w * 0.8f, h * 0.75f, 0f);
             }
             for (int g = 0; g < 3; g++) UbwGraphics.Draw(bodies[g], Vector2.zero, L(3) + g * 0.00001f, Fade(Mix(CloudDark, CloudWarm, g / 2f), 0.5f), soft);
             for (int g = 0; g < 3; g++) UbwGraphics.Draw(lit[g], Vector2.zero, L(4) + g * 0.00001f, Fade(CloudLit, 0.12f + 0.19f * g), glow);
             Sprite(sunAt, 8f * KE * 2f, 8f * KE * 2f, Fade(SunWarm, 0.6f), glow, L(5));
             Sprite(sunAt, 1.6f * KE * 2f, 1.6f * KE * 2f, Fade(SunFace, 0.97f), soft, L(6));
             Builder smog = Scratch("UBW smog");
-            for (int i = 0; i < 8; i++)
-            {
-                float a = (Hash(i, 1, 53) - 0.5f) * 170f + s * (0.8f + 1.4f * Hash(i, 2, 53)), e = 3f + i * 2.4f + Hash(i, 3, 53) * 2f;
-                smog.Quad(SkyX(a, 0.06f), SkyZ(e), (28f + 34f * Hash(i, 4, 53)) * KE * 2f, (0.8f + 1.2f * Hash(i, 5, 53)) * KE * 2f, 0f);
-            }
+            foreach (Puff q in SmogBands(s)) smog.Quad(SkyX(q.A, 0.06f), SkyZ(q.E), q.W * KE * 2f, q.H * KE * 2f, 0f);
             UbwGraphics.Draw(smog, Vector2.zero, L(7), Fade(Smog, 0.34f), soft);
 
             // The gears, the hazier (further) first: a warm rim toward the sun, then the body. Bigger turns slower.
@@ -306,37 +301,75 @@ namespace RimArt
             if (x1 > w1) Sprite(new Vector2((w1 + x1) / 2f, bottom + h2 / 2f), x1 - w1, h2, Backstop, solid, L(40));
         }
 
-        /// <summary>Three bands of smoke puffs over the crest's mean top (0.35, 0.9 and 1.5 cells up, far to near), drifting east at 0.3, 0.6 and 1 cells a second, each moving up and down by its own share of the pan.</summary>
-        private static void SmokeBands(Vector2 o, float s, in UbwView view, UbwCrestBake k, float altitude)
+        /// <summary>A thing of the sky in degrees: centre azimuth A and elevation E; R a cloud puff's radius and G how lit it is (0 to 2, by how near the sun); W, H a smog band's half sizes.</summary>
+        internal struct Puff
         {
-            float smoke = (float)C.Smoke;
-            if (smoke <= 0f) return;
+            public float A, E, R, W, H;
+            public int G;
+        }
+
+        private static readonly List<Puff> puffs = new List<Puff>(), bands = new List<Puff>();
+
+        /// <summary>The clouds' puffs at s: 20 clouds of 8 to 13 puffs drifting east, lit by how near the sun at azimuth sunA they are (lib/ubw-horizon.js cloudPuffs).</summary>
+        internal static List<Puff> CloudPuffs(float s, float sunA)
+        {
+            puffs.Clear();
+            for (int i = 0; i < 20; i++)
+            {
+                float a = (Hash(i, 1, 51) - 0.5f) * 180f + s * (0.35f + 0.7f * Hash(i, 2, 51)), e = 9f + Mathf.Pow(Hash(i, 3, 51), 0.8f) * 58f;
+                float near = Clamp01(1f - Mathf.Abs(a - sunA) / 80f) * Clamp01(1f - (e - 8f) / 50f);
+                int g = Mathf.Min(2, Mathf.FloorToInt(near * 3f)), n = 8 + Mathf.FloorToInt(Hash(i, 4, 51) * 6f);
+                for (int q = 0; q < n; q++)
+                    puffs.Add(new Puff { A = a + (Hash(i * 16 + q, 5, 51) - 0.5f) * 18f, E = e + (Hash(i * 16 + q, 6, 51) - 0.35f) * 5f, R = 3.5f + Hash(i * 16 + q, 7, 51) * 5.5f, G = g });
+            }
+            return puffs;
+        }
+
+        /// <summary>The smog's 8 bands at s, drifting east (lib/ubw-horizon.js smogBands).</summary>
+        internal static List<Puff> SmogBands(float s)
+        {
+            bands.Clear();
+            for (int i = 0; i < 8; i++)
+                bands.Add(new Puff { A = (Hash(i, 1, 53) - 0.5f) * 170f + s * (0.8f + 1.4f * Hash(i, 2, 53)), E = 3f + i * 2.4f + Hash(i, 3, 53) * 2f, W = 28f + 34f * Hash(i, 4, 53), H = 0.8f + 1.2f * Hash(i, 5, 53) });
+            return bands;
+        }
+
+        /// <summary>A screen quad: centre x, z and size w, h in cells.</summary>
+        internal struct Quad4
+        {
+            public float X, Z, W, H;
+        }
+
+        /// <summary>Band j's smoke puffs (bodies and their lit tops) at s: 7 each, 9 to 23 cells wide, drifting east, wrapping round the view.</summary>
+        internal static void SmokeQuads(Vector2 o, float s, in UbwView view, UbwCrestBake k, int j, List<Quad4> body, List<Quad4> top)
+        {
+            body.Clear();
+            top.Clear();
             float camX = view.Cx, dz = view.Cz - (o.y + (float)C.CamRef), W = 2f * view.HalfW + 10f + 30f, move = (float)C.HorizonMove;
             float Share(float p) => Mathf.Min(0.95f, p * (float)C.Parallax);
-            float[] P = { 0.35f, 0.5f, 0.7f }, V = { 0.3f, 0.6f, 1f }, Up = { 1.5f, 0.9f, 0.35f };
-            for (int j = 0; j < 3; j++)
+            float p = move + (1f - move) * SmokeP[j], z0 = o.y + k.North + k.MeanTop + SmokeUp[j] + (1f - Share(p)) * dz;
+            for (int i = 0; i < 7; i++)
             {
-                float p = move + (1f - move) * P[j], z0 = o.y + k.North + k.MeanTop + Up[j] + (1f - Share(p)) * dz;
-                Builder body = Scratch("UBW smoke " + j), top = Scratch("UBW smoke light " + j);
-                for (int i = 0; i < 7; i++)
-                {
-                    float w = 9f + 14f * Hash(i, j, 181), h = 0.5f + 0.7f * Hash(i, j, 182);
-                    // Across, the band's own share of the pan; up and down, the horizon's share added (as the sketch).
-                    float x = camX + Wrap(Hash(i, j, 183) * W + V[j] * s - Share(P[j]) * (camX - o.x), W), z = z0 + (Hash(i, j, 184) - 0.5f) * 0.8f + 0.15f * Mathf.Sin(s * 0.3f + i + j);
-                    body.Quad(x, z, w, h, 0f);
-                    top.Quad(x, z + h * 0.22f, w * 0.85f, h * 0.45f, 0f);
-                }
-                UbwGraphics.Draw(body, Vector2.zero, altitude + j * Step, Fade(Smog, smoke * (0.75f + 0.15f * j)), soft);
-                UbwGraphics.Draw(top, Vector2.zero, altitude + j * Step + 0.00001f, Fade(CloudLit, smoke * 0.22f), glow);
+                float w = 9f + 14f * Hash(i, j, 181), h = 0.5f + 0.7f * Hash(i, j, 182);
+                // Across, the band's own share of the pan; up and down, the horizon's share added (as the sketch).
+                float x = camX + Wrap(Hash(i, j, 183) * W + SmokeV[j] * s - Share(SmokeP[j]) * (camX - o.x), W), z = z0 + (Hash(i, j, 184) - 0.5f) * 0.8f + 0.15f * Mathf.Sin(s * 0.3f + i + j);
+                body.Add(new Quad4 { X = x, Z = z, W = w, H = h });
+                top.Add(new Quad4 { X = x, Z = z + h * 0.22f, W = w * 0.85f, H = h * 0.45f });
             }
         }
 
-        /// <summary><paramref name="count"/> embers rising from just under the crest's top into the sky, 3.5 to 5.5 s each, in four buckets by brightness.</summary>
-        private static void Updraft(Vector2 o, float s, in UbwView view, UbwCrestBake k, int count, float altitude)
+        /// <summary>The smoke bands' parallax, drift east (cells a second) and height over the crest's mean top, far to near.</summary>
+        private static readonly float[] SmokeP = { 0.35f, 0.5f, 0.7f }, SmokeV = { 0.3f, 0.6f, 1f }, SmokeUp = { 1.5f, 0.9f, 0.35f };
+
+        internal static Color SmokeColour(int j) => Fade(Smog, (float)C.Smoke * (0.75f + 0.15f * j));
+        internal static Color SmokeLight => Fade(CloudLit, (float)C.Smoke * 0.22f);
+        internal static Color UpdraftColour(int b) => Fade(Spark, 0.8f * (b + 1) / 4f);
+
+        /// <summary><paramref name="count"/> embers rising from just under the crest's top at s, in four lists by brightness.</summary>
+        internal static void UpdraftQuads(Vector2 o, float s, in UbwView view, UbwCrestBake k, int count, List<Quad4>[] buckets)
         {
-            if (count <= 0) return;
+            foreach (List<Quad4> b in buckets) b.Clear();
             float camX = view.Cx, W = 2f * view.HalfW + 10f + 8f;
-            Builder[] buckets = { Scratch("UBW updraft 0"), Scratch("UBW updraft 1"), Scratch("UBW updraft 2"), Scratch("UBW updraft 3") };
             for (int i = 0; i < count; i++)
             {
                 float T = 3.5f + 2f * Hash(i, 1, 161), t = s + Hash(i, 2, 161) * T;
@@ -345,48 +378,102 @@ namespace RimArt
                 float x = camX + Wrap(Hash(i + cycle * 97, 3, 161) * W - 0.8f * (camX - o.x), W) + 0.25f * Mathf.Sin(s * 0.9f + i) + age * (Hash(i, 4, 161) - 0.3f) * 0.5f;
                 float z = o.y + k.TopZ(x - o.x) - 0.35f + age * (0.8f + 0.7f * Hash(i, 5, 161)), a = Clamp01(age / 0.4f) * Clamp01((1f - age / T) / 0.45f);
                 float r = (0.08f + 0.14f * Hash(i, 6, 161)) * (1f + 0.3f * Mathf.Sin(s * 9f + i * 3));
-                if (a > 0.02f) buckets[Mathf.Min(3, Mathf.FloorToInt(a * 4f))].Quad(x, z, r * 2f, r * 2f, 0f);
+                if (a > 0.02f) buckets[Mathf.Min(3, Mathf.FloorToInt(a * 4f))].Add(new Quad4 { X = x, Z = z, W = r * 2f, H = r * 2f });
             }
-            for (int b = 0; b < 4; b++) UbwGraphics.Draw(buckets[b], Vector2.zero, altitude + b * 0.00001f, Fade(Spark, 0.8f * (b + 1) / 4f), glow);
+        }
+
+        private static readonly List<Quad4> smokeBody = new List<Quad4>(), smokeTop = new List<Quad4>();
+        private static readonly List<Quad4>[] updraftLists = { new List<Quad4>(), new List<Quad4>(), new List<Quad4>(), new List<Quad4>() };
+
+        /// <summary>Three bands of smoke puffs over the crest's mean top (0.35, 0.9 and 1.5 cells up, far to near), drifting east at 0.3, 0.6 and 1 cells a second, each moving up and down by its own share of the pan.</summary>
+        private static void SmokeBands(Vector2 o, float s, in UbwView view, UbwCrestBake k, float altitude)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                SmokeQuads(o, s, view, k, j, smokeBody, smokeTop);
+                Builder body = Scratch("UBW smoke " + j), top = Scratch("UBW smoke light " + j);
+                foreach (Quad4 q in smokeBody) body.Quad(q.X, q.Z, q.W, q.H, 0f);
+                foreach (Quad4 q in smokeTop) top.Quad(q.X, q.Z, q.W, q.H, 0f);
+                UbwGraphics.Draw(body, Vector2.zero, altitude + j * Step, SmokeColour(j), soft);
+                UbwGraphics.Draw(top, Vector2.zero, altitude + j * Step + 0.00001f, SmokeLight, glow);
+            }
+        }
+
+        /// <summary><paramref name="count"/> embers rising from just under the crest's top into the sky, 3.5 to 5.5 s each, in four buckets by brightness.</summary>
+        private static void Updraft(Vector2 o, float s, in UbwView view, UbwCrestBake k, int count, float altitude)
+        {
+            if (count <= 0) return;
+            UpdraftQuads(o, s, view, k, count, updraftLists);
+            for (int b = 0; b < 4; b++)
+            {
+                Builder bucket = Scratch("UBW updraft " + b);
+                foreach (Quad4 q in updraftLists[b]) bucket.Quad(q.X, q.Z, q.W, q.H, 0f);
+                UbwGraphics.Draw(bucket, Vector2.zero, altitude + b * 0.00001f, UpdraftColour(b), glow);
+            }
         }
 
         // ---- on the map and in front --------------------------------------------------------------------------------
 
-        /// <summary>Three gears' shadows sweeping the map, spoked, stretched 1.3 along the low sun, faint (opacity); kept south of the map edge, <paramref name="north"/> cells north of the caster.</summary>
+        /// <summary>Gear shadow i of three at s: its mesh (spoked, stretched 1.3 along the low sun), where it lies and its radius; kept south of the map edge, <paramref name="north"/> cells north of the caster.</summary>
+        internal static Mesh GearShadow(int i, Vector2 o, float s, Vector2 sun, int north, out Vector2 at, out float r)
+        {
+            r = 5f + i * 1.2f;
+            at = new Vector2(o.x + Mathf.Sin(s * 0.1f + i * 2.4f) * 10f - 4f + i * 12f, o.y + Mathf.Min(-8f + i * 7f, north - r * 1.4f));
+            return GearAt("UBW gear shadow " + i, 0, 14, s * 0.25f + i, 1f, Mathf.Atan2(sun.y, sun.x), 1.3f);
+        }
+
+        /// <summary>Three gears' shadows sweeping the map, faint (opacity).</summary>
         internal static void GearShadows(Vector2 o, float s, Vector2 sun, float opacity, int north, float altitude)
         {
             if (opacity <= 0f) return;
-            float along = Mathf.Atan2(sun.y, sun.x);
             for (int i = 0; i < 3; i++)
             {
-                float r = 5f + i * 1.2f, x = o.x + Mathf.Sin(s * 0.1f + i * 2.4f) * 10f - 4f + i * 12f, z = o.y + Mathf.Min(-8f + i * 7f, north - r * 1.4f);
-                Mesh gear = GearAt("UBW gear shadow " + i, 0, 14, s * 0.25f + i, 1f, along, 1.3f);
-                DrawMesh(gear, new Vector2(x, z), altitude + 0.001f + i * 0.0002f, r, r, 0f, Fade(Black, opacity), solid);
+                Mesh gear = GearShadow(i, o, s, sun, north, out Vector2 at, out float r);
+                DrawMesh(gear, at, altitude + 0.001f + i * 0.0002f, r, r, 0f, Fade(Black, opacity), solid);
             }
         }
 
-        /// <summary>The camera's haze: none at the bottom of the screen, up to <paramref name="most"/> at the top, up to the crest's mean top (<paramref name="top"/> cells north of the caster); over the ground and the swords, under the pawns.</summary>
+        /// <summary>The camera's haze as a screen quad: from the bottom of the screen up to the crest's mean top (<paramref name="top"/> cells north of the caster), and its opacity at the top for <paramref name="most"/>. False when none of it is on screen.</summary>
+        internal static bool DepthHazeQuad(Vector2 o, float top, in UbwView view, float most, out Quad4 quad, out float alpha)
+        {
+            float bottom = view.Cz - view.HalfH, upTo = Mathf.Min(view.Cz + view.HalfH, o.y + top), h = upTo - bottom;
+            quad = new Quad4 { X = view.Cx, Z = (upTo + bottom) / 2f, W = 2f * view.HalfW + 4f, H = h };
+            alpha = most * Mathf.Pow(Mathf.Max(0f, h) / (2f * view.HalfH), 1.7f);
+            return most > 0f && h > 0f;
+        }
+
+        /// <summary>The camera's haze: none at the bottom of the screen, up to <paramref name="most"/> at the top, up to the crest's mean top; over the ground and the swords, under the pawns.</summary>
         internal static void DepthHaze(Vector2 o, float top, in UbwView view, float most, float altitude)
         {
-            if (most <= 0f) return;
-            float bottom = view.Cz - view.HalfH, upTo = Mathf.Min(view.Cz + view.HalfH, o.y + top), h = upTo - bottom;
-            if (h <= 0f) return;
-            Sprite(new Vector2(view.Cx, (upTo + bottom) / 2f), 2f * view.HalfW + 4f, h, Fade(Fog, most * Mathf.Pow(h / (2f * view.HalfH), 1.7f)), depthMat, altitude);
+            if (!DepthHazeQuad(o, top, view, most, out Quad4 q, out float alpha)) return;
+            Sprite(new Vector2(q.X, q.Z), q.W, q.H, Fade(Fog, alpha), depthMat, altitude);
+        }
+
+        private static readonly List<Quad4> ashList = new List<Quad4>(), frontEmbers = new List<Quad4>();
+
+        /// <summary>The ash and the embers in front at s: 30 puffs fixed to the screen, moved 1.45 times the camera's pan, drifting up.</summary>
+        internal static void ForegroundQuads(Vector2 o, float s, in UbwView view, List<Quad4> ash, List<Quad4> embers)
+        {
+            ash.Clear();
+            embers.Clear();
+            float W = 2f * view.HalfW + 8f, H = 2f * view.HalfH + 8f;
+            for (int i = 0; i < 30; i++)
+            {
+                float x = view.Cx + Wrap(Hash(i, 1, 61) * W - 1.45f * (view.Cx - o.x) + s * (Hash(i, 2, 61) - 0.3f) * 1.2f, W);
+                float z = view.Cz + Wrap(Hash(i, 3, 61) * H - 1.45f * (view.Cz - o.y) + s * (0.5f + Hash(i, 4, 61) * 1.1f), H);
+                float r = (0.22f + 0.4f * Hash(i, 5, 61)) * (1f + 0.15f * Mathf.Sin(s * 2f + i));
+                (Hash(i, 6, 61) < 0.45f ? ash : embers).Add(new Quad4 { X = x, Z = z, W = r * 2f, H = r * 2f });
+            }
         }
 
         /// <summary>Ash and embers in front of everything: fixed to the screen, moved 1.45 times the camera's pan (so they read as nearer the camera than the ground), drifting up.</summary>
         internal static void Foreground(Vector2 o, float s, in UbwView view, float alpha)
         {
             if (alpha <= 0f) return;
-            float W = 2f * view.HalfW + 8f, H = 2f * view.HalfH + 8f;
+            ForegroundQuads(o, s, view, ashList, frontEmbers);
             Builder ash = Scratch("UBW ash"), embers = Scratch("UBW front embers");
-            for (int i = 0; i < 30; i++)
-            {
-                float x = view.Cx + Wrap(Hash(i, 1, 61) * W - 1.45f * (view.Cx - o.x) + s * (Hash(i, 2, 61) - 0.3f) * 1.2f, W);
-                float z = view.Cz + Wrap(Hash(i, 3, 61) * H - 1.45f * (view.Cz - o.y) + s * (0.5f + Hash(i, 4, 61) * 1.1f), H);
-                float r = (0.22f + 0.4f * Hash(i, 5, 61)) * (1f + 0.15f * Mathf.Sin(s * 2f + i));
-                (Hash(i, 6, 61) < 0.45f ? ash : embers).Quad(x, z, r * 2f, r * 2f, 0f);
-            }
+            foreach (Quad4 q in ashList) ash.Quad(q.X, q.Z, q.W, q.H, 0f);
+            foreach (Quad4 q in frontEmbers) embers.Quad(q.X, q.Z, q.W, q.H, 0f);
             UbwGraphics.Draw(ash, Vector2.zero, Overhead + 0.08f, Fade(Ash, 0.3f * alpha), soft);
             UbwGraphics.Draw(embers, Vector2.zero, Overhead + 0.081f, Fade(Spark, 0.34f * alpha), glow);
         }

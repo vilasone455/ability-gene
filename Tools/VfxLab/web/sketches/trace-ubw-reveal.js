@@ -1,4 +1,5 @@
-// Unlimited Blade Works: reveal shot (pocket) — Trace kit experiment (2026-09-26), not agreed, not the game.
+// Unlimited Blade Works: reveal shot (pocket) — Trace kit (2026-09-26). Ported 2026-10-01 (Source/RimArt/Trace/UbwReveal*.cs,
+// UbwShot.cs, Kit/UbwShotCamera.cs, Kit/UbwRevealWindow.cs); the recording "Trace: unlimited blade works: reveal" is it.
 // Part 1 of the sky plan (the user's challenge: see the sky and its gears, not only their shadows): the shot
 // that plays at the take, before the world of v4 ("world v4, sword crest") stands. The game is paused while it
 // plays and any key skips it. It changes no mechanic of the world (PR #65); it is only a picture.
@@ -18,8 +19,8 @@
 //   4.20       hand-over: the lab draws v4 itself from here (in game: the second camera turns off);
 //   4.15-4.55  the black bars leave; the world's timer starts.
 // Drawing: through the lab's 3D camera (camera() below, SKETCHING.md): a 3D copy of v4's world
-// (lib/ubw-reveal.js). In game: a second Unity camera, perspective, above the map camera, drawing that copy;
-// pawns as billboards; UI hidden; paused like the gravship cutscene; a mod setting to turn it off. Not ported.
+// (lib/ubw-reveal.js). In game: a second Unity camera above the map camera, drawing that copy far to near; the
+// blend done on the CPU; pawns as their portraits; UI hidden; paused like the gravship cutscene; a mod setting.
 import { Color, Overlay } from '../js/engine.js';
 import { P } from './lib/six-paths-impact.js';
 import { smooth, clamp } from './lib/trace.js';

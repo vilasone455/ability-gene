@@ -10,7 +10,8 @@ namespace RimArt
     /// the white, the ring burning while everyone is away, the return); "unlimited blade works: world"
     /// plays the inside over the map's ground (the white, the fire running out, the world standing, the
     /// white closing in) as the flat v1; "world v4" the same on the plate ground with the sword crest and
-    /// the sky behind it, the world the ability opens. The real world, a pocket map of its own, is under
+    /// the sky behind it, the world the ability opens; "reveal" the shot that opens it (a cutscene camera over
+    /// the map, the lab's stand-in pawns, the game not paused), handing over to v4 at 4.2 s. The real world, a pocket map of its own, is under
     /// Kit/: RimArts debug window, Trace, "world map: open" and "open (v1 flat)".
     /// </summary>
     public static class DebugActions_Ubw
@@ -24,6 +25,9 @@ namespace RimArt
         [RimArtDebug("Trace", "unlimited blade works: world v4")]
         public static void WorldV4() => Play(UbwPreview.WorldV4);
 
+        [RimArtDebug("Trace", "unlimited blade works: reveal")]
+        public static void Reveal() => Play(UbwPreview.Reveal);
+
         [RimArtDebug("Trace", "clear preview", RimArtDebugKind.Now)]
         public static void Clear() => Find.CurrentMap?.GetComponent<MapComponent_UbwPreview>()?.Stop();
 
@@ -31,7 +35,7 @@ namespace RimArt
             Find.CurrentMap.GetComponent<MapComponent_UbwPreview>().Play(UI.MouseCell(), play);
     }
 
-    public enum UbwPreview { Cast, World, WorldV4 }
+    public enum UbwPreview { Cast, World, WorldV4, Reveal }
 
     public sealed class MapComponent_UbwPreview : MapComponent
     {
@@ -47,7 +51,7 @@ namespace RimArt
             (UbwCastTiming.For(UbwCastTiming.Verse).Taken, UbwCastTiming.TakenShake),
             (UbwCastTiming.For(UbwCastTiming.Verse).Home, UbwCastTiming.HomeShake),
         };
-        private static readonly (float at, float value)[] WorldShakes = { (UbwWorldTiming.Start, UbwWorldTiming.StartShake) };
+        private static readonly (float at, float value)[] WorldShakes = { (UbwWorldTiming.Start, UbwWorldTiming.StartShake) }, NoShakes = { };
 
         public MapComponent_UbwPreview(Map map) : base(map) { }
 
@@ -58,8 +62,14 @@ namespace RimArt
             mode = play;
             seconds = 0f;
             shaken = 0;
-            duration = play == UbwPreview.Cast ? UbwCastTiming.Duration : UbwWorldTiming.Duration;
+            duration = play == UbwPreview.Cast ? UbwCastTiming.Duration : play == UbwPreview.Reveal ? UbwRevealTiming.End : UbwWorldTiming.Duration;
             active = true;
+            // The shot hands over to the world v4 at its usual framing: the camera goes there first.
+            if (play == UbwPreview.Reveal)
+            {
+                Vector3 c = at.ToVector3Shifted();
+                Find.CameraDriver.SetRootPosAndSize(new Vector3(c.x, 0f, c.z + UbwWorldGraphics.SceneNorth + UbwRevealTiming.GameNorth), UbwRevealTiming.CellsTall / 2f);
+            }
         }
 
         public void Stop() => active = false;
@@ -71,11 +81,12 @@ namespace RimArt
             // Unscaled: the preview runs at the same rate whether the game is paused or at 3x.
             seconds += Time.unscaledDeltaTime;
 
-            var shakes = mode == UbwPreview.Cast ? CastShakes : WorldShakes;
+            var shakes = mode == UbwPreview.Cast ? CastShakes : mode == UbwPreview.Reveal ? NoShakes : WorldShakes;
             while (shaken < shakes.Length && seconds >= shakes[shaken].at) Find.CameraDriver.shaker.DoShake(shakes[shaken++].value);
 
             Vector3 centre = cell.ToVector3Shifted();
             if (mode == UbwPreview.Cast) UbwCastGraphics.DrawPreview(centre, seconds, map);
+            else if (mode == UbwPreview.Reveal) UbwRevealGraphics.DrawPreview(centre, seconds, map);
             else UbwWorldGraphics.DrawPreview(centre, seconds, map, mode == UbwPreview.WorldV4);
             if (seconds >= duration) Stop();
         }
