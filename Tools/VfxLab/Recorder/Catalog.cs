@@ -210,6 +210,30 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                // The sketch's markers (ego-paradise-lost-v2.js), from the preview's script: per shot, or the corroded
+                // or overclocked state, its rings and its end; then the result.
+                Name = "E.G.O. weapons", Prefix = "E.G.O.: paradise lost", Component = typeof(MapComponent_EgoParadiseLostPreview), Clock = "seconds",
+                Phases = label =>
+                {
+                    var script = new EgoParadiseLostScript(label.Contains("outdoors") ? EgoParadiseLostScene.RoomHitOutdoors
+                        : label.Contains("room hit") ? EgoParadiseLostScene.RoomHit
+                        : label.Contains("overclock") ? EgoParadiseLostScene.Overclock : EgoParadiseLostScene.Corroded);
+                    var phases = new List<Phase>();
+                    if (script.Room)
+                        for (int i = 0; i < script.ShotList.Count; i++)
+                            phases.Add(new Phase($"Shot {i + 1} ({script.ShotList[i].Count} hit)", script.ShotList[i].At));
+                    else
+                    {
+                        phases.Add(new Phase(script.Scene == EgoParadiseLostScene.Overclock ? "Overclock" : "Corroded", 0f));
+                        for (int i = 0; i < script.RingTimes.Count; i++) phases.Add(new Phase($"Ring {i + 1}", script.RingTimes[i]));
+                        phases.Add(new Phase("Ends", script.ExitAt));
+                    }
+                    phases.Add(new Phase("Result", script.End - EgoParadiseLostScript.Hold));
+                    return phases.ToArray();
+                },
+            },
+            new Kit
+            {
                 Name = "Infinity Castle", Prefix = "Infinity Castle:", Component = typeof(MapComponent_InfinityCastlePreview), Clock = "seconds",
                 Phases = label => label.Contains("open (take)") ? CastleTakePhases() : label.Contains("open (return)") ? CastleReturnPhases() : CastlePhases(),
             },

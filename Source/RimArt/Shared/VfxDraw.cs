@@ -46,6 +46,37 @@ namespace RimArt
         /// <summary>Call once at the start of an effect's Draw with the effect's ground point.</summary>
         internal static void Begin(Vector2 ground) => anchor = ground;
 
+        /// <summary>While set, draws are kept here instead of drawn (<see cref="BeginBake"/>).</summary>
+        private static List<VfxBakedDraw> baking;
+
+        /// <summary>
+        /// Until <see cref="EndBake"/>, nothing is drawn: every draw is kept in <paramref name="into"/>, each strip in a
+        /// mesh of its own instead of one from the per-frame pool. For a picture that holds its shape and only turns or
+        /// moves as a whole: bake it once, then <see cref="DrawBaked"/> it every frame. What this saves is the strip
+        /// rebuild (new vertices and bounds for every strip every frame: about 590 a frame for Paradise Lost's
+        /// wings); the draw calls stay the same.
+        /// </summary>
+        internal static void BeginBake(List<VfxBakedDraw> into) => baking = into;
+
+        internal static void EndBake() => baking = null;
+
+        /// <summary>
+        /// Draws baked <paramref name="draws"/> again in their order, turned <paramref name="turn"/> degrees about
+        /// <paramref name="pivot"/> (clockwise seen from above, the sense of <see cref="DrawMesh"/>'s angle) and then
+        /// moved by <paramref name="offset"/>.
+        /// </summary>
+        internal static void DrawBaked(List<VfxBakedDraw> draws, Vector2 pivot, float turn, Vector2 offset)
+        {
+            float r = turn * Mathf.Deg2Rad, cos = Mathf.Cos(r), sin = Mathf.Sin(r);
+            for (int i = 0; i < draws.Count; i++)
+            {
+                VfxBakedDraw d = draws[i];
+                Vector2 v = d.At - pivot;
+                var at = new Vector2(pivot.x + v.x * cos + v.y * sin + offset.x, pivot.y - v.x * sin + v.y * cos + offset.y);
+                DrawMesh(d.Mesh, at, d.Altitude, d.Width, d.Depth, d.Angle + turn, d.Colour, d.Material);
+            }
+        }
+
         /// <summary>A scale about a ground point, applied to every draw between BeginScale and EndScale.</summary>
         private static bool scaled;
         private static Vector2 scaleAbout;
@@ -82,6 +113,11 @@ namespace RimArt
             Color colour, Material material)
         {
             if (colour.a <= 0.001f) return;
+            if (baking != null)
+            {
+                baking.Add(new VfxBakedDraw { Mesh = mesh, At = at, Altitude = altitude, Width = width, Depth = depth, Angle = angle, Colour = colour, Material = material });
+                return;
+            }
             properties.SetColor(ShaderPropertyIDs.Color, colour);
             if (scaled)
             {
@@ -115,7 +151,7 @@ namespace RimArt
         {
             if (colour.a <= 0.001f) return;
             for (int i = 0; i < a.Length; i++) { a[i] -= anchor; b[i] -= anchor; }
-            SixPathsStrip strip = Next(a.Length);
+            SixPathsStrip strip = baking != null ? new SixPathsStrip("RimArt baked strip " + a.Length, a.Length) : Next(a.Length);
             strip.Between(a, b);
             DrawMesh(strip.mesh, anchor, altitude, 1f, 1f, 0f, colour, material);
         }
@@ -202,4 +238,13 @@ namespace RimArt
         }
     }
 
+    /// <summary>One draw kept by <see cref="VfxDraw.BeginBake"/>: its mesh and how it was drawn.</summary>
+    internal struct VfxBakedDraw
+    {
+        public Mesh Mesh;
+        public Vector2 At;
+        public float Altitude, Width, Depth, Angle;
+        public Color Colour;
+        public Material Material;
+    }
 }
