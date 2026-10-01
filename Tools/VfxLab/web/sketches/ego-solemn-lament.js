@@ -1,4 +1,5 @@
-// Solemn Lament — E.G.O. weapon proposal, not the game. Nothing in Source/RimArt draws this yet.
+// Solemn Lament — E.G.O. weapon proposal. The pictures are ported to Source/RimArt/Ego/EgoSolemnLament* (previews
+// "E.G.O.: solemn lament: ..."); no weapon, ability or rule draws them yet.
 // Funeral of the Dead Butterflies (Lobotomy Corporation, WAW): the white and black pair of handguns.
 // The rules are docs/ego-weapons.md, "Weapon 2: Solemn Lament" (design agreed 2026-09-30, numbers
 // are placeholders and become XML fields on CompProperties_EgoWeapon):
@@ -263,9 +264,11 @@ function markedPawn(key, M, s, who, size, sun, strength) {
     if (a >= 0 && a < .25) { const k = .07 * bump(a / .25); fx += f.d.x * k; fz += f.d.z * k; }
   }
   const pos = { x: M.pos.x + fx, z: M.pos.z + fz };
-  sprite({ x: M.pos.x + sun.x * .5, z: M.pos.z + Ground + sun.z * .5 }, .94, .42, Ink.withAlpha(strength * (1 - fall)), soft, shadowLayer);
-  if (fall > 0) sprite({ x: M.pos.x + sun.x * .2, z: M.pos.z + sun.z * .2 }, 1.3, .42, Ink.withAlpha(strength * fall), soft, shadowLayer, turn + 90);
-  pawn(pos, { ...who, shirt: M.colour, downed: fall > 0, turn, shadow: 0 });
+  if (who.actors !== false) {
+    sprite({ x: M.pos.x + sun.x * .5, z: M.pos.z + Ground + sun.z * .5 }, .94, .42, Ink.withAlpha(strength * (1 - fall)), soft, shadowLayer);
+    if (fall > 0) sprite({ x: M.pos.x + sun.x * .2, z: M.pos.z + sun.z * .2 }, 1.3, .42, Ink.withAlpha(strength * fall), soft, shadowLayer, turn + 90);
+    pawn(pos, { ...who, shirt: M.colour, downed: fall > 0, turn, shadow: 0 });
+  }
 
   M.events.forEach((e, i) => {
     const age = s - e.launch; if (age < 0) return;
@@ -723,7 +726,7 @@ function drawBurst(s, p, o, who, sun, strength) {
   const lastOf = white => B.shots.filter(sh => sh.white === white && sh.t <= s).pop();
   const rockBack = B.shots.reduce((m, sh) => m + .025 * bump((s - sh.t) / .2), 0);
   const stand = move(o, d, -rockBack);
-  pawn(stand, { ...who, shirt: Holder });
+  if (who.actors !== false) pawn(stand, { ...who, shirt: Holder });
   const reach = .04 + (HandReach - .04) * drawU * (1 - .75 * lower);
   const hands = [move(move(stand, d, reach), acr, -HandAcross), move(move(stand, d, reach), acr, HandAcross)];   // right: white, left: black
   const gunLayer = d.z > .35 ? pawnLayer - .012 : pawnLayer + .06;
@@ -802,7 +805,7 @@ function drawCoffin(s, p, o, who, sun, strength) {
 
   // The pawns: the wielder (guns hanging down), the face if corroded, then everyone else.
   for (const q of people) markedPawn(`sl pawn ${q.colour === Ally ? 'ally' : q.pos.x}`, q.M, s, who, p.size, sun, strength);
-  pawn(o, { ...who, shirt: Holder });
+  if (who.actors !== false) pawn(o, { ...who, shirt: Holder });
   const d = dirOf(aimR), acr = side(d);
   [true, false].forEach((white, i) => {
     const hand = move(move(o, d, .04), acr, (i ? 1 : -1) * .2);
@@ -852,6 +855,7 @@ export default {
     lead: P('Draw and aim', .35, .1, 1, .05, 'Timing (s)'),
     hold: P('Show the result', 1.2, .3, 3, .1, 'Timing (s)'),
     size: P('Butterfly span (cells)', .3, .1, .5, .01, 'Shape'),
+    actors: { label: 'Stand-in pawns', value: true, group: 'Showcase' },
   },
   duration(p) { return isBurst(p) ? burstPlan(p).end : coffinPlan(p).end; },
   phases(p) {
@@ -877,7 +881,7 @@ export default {
   draw(s, p, { origin: o, scene }) {
     if (s < 0 || s >= (isBurst(p) ? burstPlan(p).end : coffinPlan(p).end)) return;
     const sun = scene?.shadowVector ?? { x: -.45, z: -.32 }, strength = scene?.sun?.strength ?? .32;
-    const who = { body: 'average', sun, shadow: strength };
+    const who = { body: 'average', sun, shadow: strength, actors: p.actors };
     if (isBurst(p)) drawBurst(s, p, o, who, sun, strength);
     else drawCoffin(s, p, o, who, sun, strength);
   },

@@ -196,6 +196,14 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                // The sketch's markers (ego-solemn-lament.js), from the preview's script, per mode.
+                Name = "E.G.O. weapons", Prefix = "E.G.O.: solemn lament", Component = typeof(MapComponent_EgoSolemnLamentPreview), Clock = "seconds",
+                Phases = label => MapComponent_EgoSolemnLamentPreview.Phases(label.Contains("overclock") ? EgoSolemnLamentScene.Overclock
+                        : label.Contains("coffin") ? EgoSolemnLamentScene.Corroded : EgoSolemnLamentScene.Burst)
+                    .Select(p => new Phase(p.name, p.seconds)).ToArray(),
+            },
+            new Kit
+            {
                 Name = "Infinity Castle", Prefix = "Infinity Castle:", Component = typeof(MapComponent_InfinityCastlePreview), Clock = "seconds",
                 Phases = label => label.Contains("open (take)") ? CastleTakePhases() : label.Contains("open (return)") ? CastleReturnPhases() : CastlePhases(),
             },
