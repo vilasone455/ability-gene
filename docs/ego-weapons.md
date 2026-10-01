@@ -5,7 +5,7 @@ Design agreed 2026-09-30, not built. Post-v1 (the 2026-10-20 list is full). Sour
 when built, an XML field on the weapon's `CompProperties_EgoWeapon`, never a C# constant.
 
 The purpose of the first piece is bait: a Project Moon weapon that a fan recognises from the
-Workshop thumbnail. Magic Bullet is that piece. Corrosion is designed once, shared, because three
+Workshop thumbnail. Magic Bullet is that piece. Corrosion is designed once, shared, because four
 E.G.O. weapons are planned and the code standard says a second use goes in `Shared/`.
 
 ## Terms
@@ -83,7 +83,7 @@ hostiles in range is empty.
 
 - Full transformation into the Abnormality (the Lobotomy lore version). A per-weapon boss form and
   a lot of work. The state gets a hook (`onFullCorrosion`, off by default) so a later weapon can
-  add it without touching the others.
+  add it without touching the others. Paradise Lost is the one that would (see Weapon 4).
 - Per-use mood drain on the weapon. One more field (`useMood`) if playtests show corrosion never
   fires in a happy colony.
 
@@ -202,7 +202,8 @@ Source, checked 2026-09-30 (Lobotomy) and 2026-10-01 (Ruina, Limbus):
 | The arm | While corroded or overclocked, the flesh takes the sword arm in stages: hand, forearm, arm and shoulder, face. Starts at 1; +1 per hit dealt, -1 per hit taken; all gone when the state ends. Each stage adds melee damage. | 4 stages, +15 % damage per stage | `armStages`, `stageDamage` |
 
 Corrosion: bands 50 / 100 / 100, requirement Melee 8, duration 40 s, interval 1.5 s, exhaustion
-3 h. Mimicry corrodes hardest because Nothing There is ALEPH; this is the one place tier shows.
+3 h. Mimicry corrodes hardest because Nothing There is ALEPH; tier shows only here and in
+Paradise Lost, the other ALEPH.
 Action: a swing at the nearest adjacent pawn, a 2-cell lunge if nobody is adjacent. Each hit
 dealt grows the arm a stage; each hit the wielder takes removes one, so the colony can wear it
 down. Overclock: 5 swings at hostiles only, the same arm, mood -20 for 1 day. Look: the arm as
@@ -218,11 +219,101 @@ change shape).
 
 Sketch: `Tools/VfxLab/web/sketches/ego-mimicry.js` (swings, grown swing, corroded, overclock).
 
+## Weapon 4: Paradise Lost
+
+WhiteNight, ALEPH Abnormality, ALEPH gear. Added 2026-10-01. The staff of the Abnormality that
+turns twelve employees into Apostles. The fourth and last weapon of the set: the crowd weapon
+next to a line gun, a debuff pair and a melee sword.
+
+Source, checked 2026-10-01:
+
+- Lobotomy: 22 to 28 Pale, fast (1.83), range 80, requires all four stats at level 5. A normal
+  attack hits every enemy in the room (and neutral units); damage per target falls with the
+  count: 22 to 28 on one target, 19 to 23 each on 2 to 5, 16 to 20 each on 6 or more. Each hit
+  restores 2 to 4 HP and SP to the wielder and slows the target 60 % for 0.5 s. The wielder gets
+  no HP or SP from department regeneration. Special attack, only while WhiteNight is in the
+  facility, 20 s cooldown: the staff vibrates and swings down, leaving a large black trail, 50 to
+  60 Pale, and a gold shield absorbs 100 damage for 10 s.
+- Lobotomy breach: WhiteNight turns twelve employees into Apostles. Every 60 s a red ring deals
+  40 Pale to every non-Apostle in the facility and revives downed Apostles.
+- Ruina: an E.G.O page of the Floor of Religion, cost 6, Synchronize. The user becomes WhiteNight
+  for 3 Scenes and every other ally becomes an Apostle (cannot be controlled or defeated; at 1 HP
+  it stops acting until the Synchronization ends). WhiteNight's pages support, they do not attack:
+  restore 1 Light, 1 Strength to the other allies, all allies recover 6 HP, recover 8 HP per enemy
+  present. The Apostles (Spear, Scythe, Staff, Guardian) do the fighting.
+- Limbus: no Paradise Lost E.G.O for a Sinner. Limbus has no ALEPH E.G.O for Sinners at all.
+
+| Rule | Mechanic | Placeholder | XML field |
+|---|---|---|---|
+| The room hit | Aim at one hostile in range; that pawn needs line of sight like any shot. Every hostile in that pawn's room takes the hit, seen or not. Outdoors, a radius around the aimed pawn instead. The damage ignores armor, which is how Pale is read here. Damage per pawn falls with the number hit. | range 30; 16 for 1 pawn, 12 each for 2 to 5, 9 each for 6 or more; outdoors radius 6; one shot every 2 s | `range`, `damageSingle`, `damageFew`, `damageMany`, `fewMax`, `outdoorRadius`, `shotInterval` |
+| The slow | Every pawn hit is slowed. | -60 % moving for 1 s | `slowFactor`, `slowSeconds` |
+| Sanity | Each hostile hit gives the wielder one stack of a mood thought. This is the SP half of Lobotomy's heal; the HP half is dropped, because Samehada and Mimicry already heal on hit. A crowd keeps the wielder above the corrosion bands; one target or an empty room does not. | +1 mood per hostile hit, up to +10, lasts 2 h | `sanityPerHit`, `sanityCap`, `sanityHours` |
+
+Corrosion: bands 50 / 100 / 100, requirement Shooting 10, duration 30 s, interval 6 s, exhaustion
+3 h. Action: WhiteNight's ring. No target: every pawn of any faction within the radius of the
+wielder takes armor-ignoring damage, colonists and animals included. Ring hits never give Sanity,
+so the ring cannot pay for itself. Overclock: 3 rings in 6 s, hostiles only, mood -20 for 1 day.
+
+| Corrosion field | Placeholder | XML field |
+|---|---|---|
+| Ring radius | 6 cells | `ringRadius` |
+| Ring damage | 12 | `ringDamage` |
+
+Left out: Lobotomy's special (black trail and gold shield; it needs WhiteNight present, and
+Overclock is this set's paid strong mode) and the no-regeneration cost (it balances the HP heal,
+which is dropped). Full corrosion is not in the first build, but if `onFullCorrosion` is ever
+used, this is the weapon: Ruina already has the form for a person, the wielder as WhiteNight and
+the colonists inside the ring as Apostles the player cannot control.
+
+### Looks
+
+Lobotomy for the staff and the normal hit, Ruina for the corroded look and the ring. The rule is
+the one Mimicry followed: the item from Lobotomy, the corroded look from the game that shows a
+person taken by it. Red thorns appear in all of them (Lobotomy's hit, the breach ring, Ruina's
+star), so the hit and the corroded look read as one weapon.
+
+| Scene | What | Link |
+|---|---|---|
+| The staff (Lobotomy) | Thin white shaft, a snake coiled round it, a red apple at the head, a small gold halo of thorns, a grey feathered wing at the base, a gold tip. At RimWorld zoom the apple and the halo carry it. | https://lobotomycorporation.wiki.gg/images/EGOWeaponParadiseLost.png |
+| Normal hit (Lobotomy) | Red, angular, branching thorns burst round the pawn hit, about 1.5x its height, about 0.6 s, then fade; a Pale damage number. The wielder is off-screen (range 80). | https://www.youtube.com/watch?v=3Upidd7ZLBE&t=762s |
+| Special, probably (Lobotomy) | A row of huge black curved shapes, like claws or feathers, sweeps across the foreground for about 0.2 s as the bigger hit lands. Not used. | https://www.youtube.com/watch?v=3Upidd7ZLBE&t=758s |
+| Breach (Lobotomy) | WhiteNight: a white sphere with one red eye inside layered grey-white wings, a gold halo, a glowing red ring of thorns behind. | https://lobotomycorporation.wiki.gg/wiki/WhiteNight |
+| Synchronized (Ruina) | White misty stage, blood streaks on the floor. WhiteNight above inside a red thorn star (a red circle with 8 long red spikes); the user inside a smaller star; the Apostles with white wings, red and white robes, spears, scythes and staffs. | https://www.youtube.com/watch?v=qVxyNQHWeuk&t=477s |
+| The big move (Ruina) | About 1.3 s: a white cross of light at WhiteNight, red curved slashes, a burst of thin red spikes outward, an expanding red ring, a full-screen pink-white flash. | https://www.youtube.com/watch?v=qVxyNQHWeuk&t=499s |
+| Realization sprite (Ruina) | A figure with six white wings streaked with blood, the gold thorn halo, a red heart held in both hands. | https://libraryofruina.wiki.gg/images/Paradise_Lost_Realization_Sprite.png |
+
+The picture, top-down:
+
+- Normal hit: red thorns rise out of the floor under every hostile hit, on the same tick, stand
+  about 0.6 s, sink back.
+- Corroded and overclocked: the red thorn star flat on the floor round the wielder, white wings
+  open behind the pawn, the gold thorn halo over the head.
+- Each ring: a short white cross flash on the wielder, red spikes shooting out along the floor,
+  the red ring spreading to `ringRadius`. Soft additive layers, the light rule.
+- No clips, like the other three.
+
+Sound, matched by clip name only, not listened to: Core `psychicpulse` and `psychic_shock_lance`
+for the hit and the ring; Royalty `psycast_psychic_pulse` with `MayRequire` and the Core clip as
+the fallback. The game has no choir or bell, so a holy layer is a synth chord (like the Spirit
+Bomb chord) or a CC0 file.
+
+Overlap: Inumaki's Cursed Speech reaches everyone who hears it and spreads through doorways, so it
+often catches the same pawns as a room; the per-count split, the armor-ignoring damage and Sanity
+separate it. Things rising from the floor at a pawn: Frost Gun's Flash Freeze (an ice block with
+spikes round one pawn) and Obito's Wood Release (two spikes through each pawn on a line). The red
+thorns differ in colour and shape and land on every hostile in a room at once; compare them side
+by side in the lab. No wings like these exist in the mod (only crows and butterflies).
+
+Sketch: `Tools/VfxLab/web/sketches/ego-paradise-lost.js` (room hit, room hit outdoors, corroded,
+overclock).
+
 ## Order
 
 1. Magic Bullet. Proves the shared system with the simplest action.
 2. Solemn Lament. The newest Limbus bait; needs the Butterfly hediff and the two-gun draw.
 3. Mimicry. Needs the mesh work and a balance pass against Samehada.
+4. Paradise Lost. Needs the room query and the ring; the corroded look (wings, thorn star) is the
+   most drawing of the four.
 
 Roland (the Black Silence) as an Echo hero kit is the other Project Moon candidate, separate from
 this page.
@@ -237,6 +328,10 @@ this page.
   finish them; "nearest living pawn" above does not say).
 - Mimicry: the grown blade is about 2.4 cells long and lands across 3 cells, but the rule hits one
   pawn. Either keep one target or hit every pawn under the blade.
+- Paradise Lost: RimWorld makes each door its own room, so the hit stops at doors and misses a
+  pawn standing in a doorway. Whether a large hall needs a cap on pawns hit.
+- Paradise Lost: the source requires all four stats; the requirement here is one skill
+  (Shooting 10). Whether to require a second skill.
 
 ## Sources
 
@@ -251,3 +346,8 @@ this page.
 - Library of Ruina Wiki, Floor Realization (Language): https://libraryofruina.wiki.gg/wiki/Floor_Realization_(Language)
 - Limbus Company Wiki, Corroded Inquisitors: https://limbuscompany.wiki.gg/wiki/Corroded_Inquisitors
 - Limbus Company Wiki, Proceeding Inquisitor (Instincts, skills): https://limbuscompany.wiki.gg/wiki/Proceeding_Inquisitor
+- Cogitopedia, WhiteNight (Lobotomy Corporation): https://projectmoon.miraheze.org/wiki/WhiteNight/Lobotomy_Corporation
+- Lobotomy Corporation Wiki, WhiteNight (weapon stats, breach): https://lobotomycorporation.wiki.gg/wiki/WhiteNight
+- Library of Ruina Wiki, E.G.O Pages (Paradise Lost and its Synchronize pages): https://libraryofruina.wiki.gg/wiki/E.G.O_Pages
+- YouTube, Lobotomy Corporation: All Weapons Overview (Paradise Lost at 12:36 to 12:51): https://www.youtube.com/watch?v=3Upidd7ZLBE
+- YouTube, Library of Ruina: All EGO Pages for Every Floor (Paradise Lost at 7:53 to 8:21): https://www.youtube.com/watch?v=qVxyNQHWeuk
