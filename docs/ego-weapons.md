@@ -180,26 +180,43 @@ Overlap: none. Nothing in the mod has a stacking non-lethal ranged debuff.
 
 Nothing There, ALEPH. The Red Mist's sword (Kali, in Lobotomy's story; Gebura in Ruina).
 
-Source, checked 2026-09-30:
+Source, checked 2026-09-30 (Lobotomy) and 2026-10-01 (Ruina, Limbus):
 
 - Lobotomy: 10 to 14 Red, fast (1.17), range 4, requires Fortitude 5 and level 5. Heals the
   wielder 25 % of damage dealt. 10 % chance per swing of a special attack: the blade enlarges and
   swings down for 40 to 90 Red. The Abnormality: a five-limbed thing that breaches as a fast
   beast, then an egg of muscle, then a red bipedal true form.
+- Ruina: Mimicry is an E.G.O page of the Floor of Language: cost 5, melee, one 19 to 35 Slash die,
+  heals HP equal to the damage dealt, 10 Bleed next Scene.
+- Limbus: no Mimicry E.G.O for a Sinner, but the corrosion itself is in the game. The Corroded
+  Inquisitors O-06-20-TE (Proceeding Inquisitor, Everything There of an Inquisitor) are
+  Mittelhammers taken by Mimicry: the right arm is a muscle bundle bigger than the body with an
+  eye, a toothed mouth and two curved bone blades, and the flesh runs over the face. Their
+  Instincts go up each turn they are not hit and down by 1 each time they are hit; Attack Power Up
+  and Protection scale with the count. The arm-stage rule below is taken from this.
 
 | Rule | Mechanic | Placeholder | XML field |
 |---|---|---|---|
-| The growing blade | Each swing has a chance to swell the blade for one heavy downswing. The mesh grows. | 10 % per swing, 3.5x damage, or every 8th hit if the roll feels bad | `growChance`, `growEveryHits`, `growDamageFactor` |
+| The grown swing | Each swing has a chance to swell the blade for one heavy downswing. The blade shrinks back afterwards: a length that stays is Samehada's picture. | 10 % per swing, 3.5x damage, 2x blade size, or every 8th hit if the roll feels bad | `growChance`, `growEveryHits`, `growDamageFactor` |
 | The heal | Lifesteal on hit. Small, because Samehada already owns the sword that feeds its holder. | 10 % of damage dealt | `healFraction` |
+| The arm | While corroded or overclocked, the flesh takes the sword arm in stages: hand, forearm, arm and shoulder, face. Starts at 1; +1 per hit dealt, -1 per hit taken; all gone when the state ends. Each stage adds melee damage. | 4 stages, +15 % damage per stage | `armStages`, `stageDamage` |
 
 Corrosion: bands 50 / 100 / 100, requirement Melee 8, duration 40 s, interval 1.5 s, exhaustion
 3 h. Mimicry corrodes hardest because Nothing There is ALEPH; this is the one place tier shows.
-Action: a swing at the nearest adjacent pawn, a 2-cell lunge if nobody is adjacent, and every hit
-while corroded grows the blade with no reset. Overclock: 5 swings at hostiles only, mood -20 for
-1 day. Look: red muscle creeping up the sword arm, the blade turned to flesh.
+Action: a swing at the nearest adjacent pawn, a 2-cell lunge if nobody is adjacent. Each hit
+dealt grows the arm a stage; each hit the wielder takes removes one, so the colony can wear it
+down. Overclock: 5 swings at hostiles only, the same arm, mood -20 for 1 day. Look: the arm as
+the Limbus Inquisitors have it, then flesh over the face with one eye and bared teeth.
 
-Overlap: Samehada on the heal, Vergil on the sword. The growing mesh is what separates it, and it
-is the mod's identity (code-drawn meshes that change shape) in one picture.
+Changed 2026-10-01: corroded hits used to grow the blade with no reset. Samehada already
+lengthens its blade per hit and heals its holder, so the growth moved to the arm, and hits taken
+take it back.
+
+Overlap: Samehada on the heal, Vergil on the sword. The arm that takes the wielder and the one
+swollen downswing are what separate it, and both are the mod's identity (code-drawn meshes that
+change shape).
+
+Sketch: `Tools/VfxLab/web/sketches/ego-mimicry.js` (swings, grown swing, corroded, overclock).
 
 ## Order
 
@@ -216,6 +233,10 @@ this page.
 - Whether `useMood` is needed (see Left out on purpose).
 - Whether a corroded pawn should be attackable by colonists without a hostility prompt, as Berserk
   pawns are.
+- Mimicry: whether the corroded swing skips downed pawns (the sketch skips them, so it does not
+  finish them; "nearest living pawn" above does not say).
+- Mimicry: the grown blade is about 2.4 cells long and lands across 3 cells, but the rule hits one
+  pawn. Either keep one target or hit every pawn under the blade.
 
 ## Sources
 
@@ -226,3 +247,7 @@ this page.
 - Cogitopedia, Funeral of the Dead Butterflies (Lobotomy Corporation): https://projectmoon.miraheze.org/wiki/The_Funeral_of_the_Dead_Butterflies/Lobotomy_Corporation
 - Limbus Company Wiki, Solemn Lament Yi Sang: https://limbuscompany.wiki.gg/wiki/Lobotomy_E.G.O::Solemn_Lament_Yi_Sang
 - Cogitopedia, Nothing There (Lobotomy Corporation): https://projectmoon.miraheze.org/wiki/Nothing_There/Lobotomy_Corporation
+- Library of Ruina Wiki, Mimicry (E.G.O page): https://libraryofruina.wiki.gg/wiki/Mimicry
+- Library of Ruina Wiki, Floor Realization (Language): https://libraryofruina.wiki.gg/wiki/Floor_Realization_(Language)
+- Limbus Company Wiki, Corroded Inquisitors: https://limbuscompany.wiki.gg/wiki/Corroded_Inquisitors
+- Limbus Company Wiki, Proceeding Inquisitor (Instincts, skills): https://limbuscompany.wiki.gg/wiki/Proceeding_Inquisitor
