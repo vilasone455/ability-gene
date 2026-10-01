@@ -20,7 +20,8 @@
 //   Guns: one white pistol and one black pistol, one in each hand, arms out, firing in turn.
 //   White shot: a white crescent swept round the gun hand, a ragged white blast thrown forward off
 //         the muzzle, a wide white-grey smoke band to the target that thins into a wispy line and
-//         hangs, white dashes flying on along it, a white sunburst of thin spikes on the hit.
+//         hangs, white dashes flying on along it; on the hit the black hit's shape in white: a
+//         solid white splat with grey cracks, breaking into see-through shards that fly out.
 //   Black shot: at the muzzle a black ink splat with a white glow behind it and a torn ink smear
 //         thrown along the shot (drips, slivers), a dark line; on the hit one solid black ink
 //         splat over the torso with a spiky edge, red streaks inside it, black droplets and slivers
@@ -42,7 +43,7 @@
 //   0.00  draw: the guns come up from the hips to the aim over .28 s, white in the right hand
 //   0.35  shot 1, white: crescent and a ragged white blast off the muzzle, the round reaches the
 //         raider 5 cells off in .08 s leaving a smoke band that thins and hangs until .8 s, white
-//         dashes fly on along it, white sunburst; 2 pale butterflies loop off the chest and land on the body in .5 s;
+//         dashes fly on along it, a white splat on the hit breaking into shards; 2 pale butterflies loop off the chest and land on the body in .5 s;
 //         the white gun kicks up 28 degrees and settles in .3 s
 //   0.60  shot 2, black: muzzle splat and ink smear, dark line; on the hit a black ink splat over the chest in
 //         .06 s with red inside, breaking into flying chunks from .1 s, gone by .4 s; blood thrown
@@ -449,19 +450,36 @@ function blackTrail(key, from, to, age) {
   line(`${key} core`, [from, head], .04 * w, Ink.withAlpha(.85 * fade), flat, Y + .051, 'none');
   if (u < 1) sprite(head, .12, .1, Ink.withAlpha(.95), soft, Y + .052);
 }
-// White hit: a white sunburst of sixteen thin spikes and a soft flash for .3 s, six sparks. No blood.
-function whiteHit(key, c, age) {
-  if (age < 0 || age > .3) return;
-  const u = age / .3, grow = Math.sqrt(Math.min(1, age / .05)), f = 1 - u * u;
-  sprite(c, .8 * grow, .75 * grow, White.withAlpha(.55 * f), glow, Y + .09);
-  sprite(c, .3 * grow, .28 * grow, White.withAlpha(.95 * f), glow, Y + .0901);
-  for (let i = 0; i < 16; i++) {
-    const t = i / 16 * TAU + rand(i + 100) * .3, l = (.25 + .4 * rand(i + 110)) * grow;
-    streak(`${key} spike ${i}`, c, { x: c.x + Math.cos(t) * l, z: c.z + Math.sin(t) * l * .9 }, .04 * (1 - u * .5), White.withAlpha(.95 * f), whiteGlow, Y + .091, 3);
+// White hit, as the Limbus frames draw it (Skill 1 2.95-3.0 s, Skill 2 3.5-3.56 s): the black hit's
+// shape in white. A solid white splat over the chest (the ink's shapes, picked and turned per shot),
+// out to .38 cells (spikes to .75) in .04 s, a white bloom round it, eight thin grey cracks from its
+// middle; from .05 s it shrinks away, opaque, gone by .25 s, and about fifteen see-through grey-white
+// shards of uneven width and length (a third of them pointed, some gaps), narrow at the middle and
+// wide at the tip, fly out from it to about 1.2 cells and thin out by .35 s; six white sparks. No blood: the white shot does no body damage. It is drawn after the
+// black hit's splat so a white hit on fresh ink still shows.
+const WhiteHit = .35;
+function whiteHit(key, c, age, seed) {
+  if (age < 0 || age > WhiteHit) return;
+  const grow = 1 - Math.pow(1 - clamp(age / .04), 3), R = .38 * grow * (1 - Math.pow(clamp((age - .05) / .2), 1.5)), turn = rand(seed + 900) * 360;
+  if (age < .2) sprite(c, 1.3 * grow, 1.2 * grow, White.withAlpha(.6 * (1 - age / .2)), glow, Y + .093);
+  for (let i = 0; i < 18; i++) {
+    const u = clamp((age - .03) / (WhiteHit - .03)); if (age < .03 || u >= 1 || rand(seed * 11 + i + 905) > .82) continue;
+    const t = i / 18 * TAU + (rand(seed * 13 + i + 910) - .5) * .5, r0 = .12 + .9 * Math.sqrt(u) * (.6 + .4 * rand(seed * 17 + i + 920));
+    const len = (.2 + .5 * rand(seed * 19 + i + 930)) * (.6 + .4 * u), wl = .03 + .14 * rand(seed * 23 + i + 940), wr = .03 + .14 * rand(seed * 29 + i + 950);
+    const dx = Math.cos(t), dz = Math.sin(t), nx = -dz, nz = dx, pointed = rand(seed * 41 + i + 955) > .65;
+    const p = (r, w) => ({ x: c.x + dx * r + nx * w, z: c.z + dz * r + nz * w }), tip = r0 + len * (pointed ? 1.25 : 1);
+    band(`${key} shard ${i}`, [p(r0, .02), pointed ? p(tip, 0) : p(r0 + len, wl)], [p(r0, -.02), pointed ? p(tip, 0) : p(r0 + len * (.8 + .3 * rand(seed * 43 + i + 958)), -wr)], Pale.withAlpha(.6 * Math.pow(1 - u, 1.2)), Y + .0935);
+  }
+  if (R > .01) {
+    draw(Splats[(seed + 1) % 3], c.x, Y + .094, c.z, R, R, turn, White);
+    for (let i = 0; i < 8; i++) {
+      const t = rand(seed * 31 + i + 960) * TAU, l = R * (.4 + .4 * rand(seed * 37 + i + 970));
+      streak(`${key} crack ${i}`, c, { x: c.x + Math.cos(t) * l, z: c.z + Math.sin(t) * l }, .02, Ash.withAlpha(.7), flat, Y + .0945, 3);
+    }
   }
   for (let i = 0; i < 6; i++) {
-    const t = rand(i + 120) * TAU, v = 1.5 + 2 * rand(i + 130);
-    sprite({ x: c.x + Math.cos(t) * v * age, z: c.z + Math.sin(t) * v * age }, .06, .06, White.withAlpha(f), glow, Y + .092);
+    const t = rand(i + 120 + seed) * TAU, v = 1.5 + 2 * rand(i + 130 + seed), f = 1 - age / WhiteHit;
+    sprite({ x: c.x + Math.cos(t) * v * age, z: c.z + Math.sin(t) * v * age }, .06, .06, White.withAlpha(f), glow, Y + .0948);
   }
 }
 // A black ink splat, unit radius: 64 points round the centre, a ragged edge of small teeth and,
@@ -721,7 +739,7 @@ function drawBurst(s, p, o, who, sun, strength) {
     if (sh.white) {
       whiteMuzzle(`sl muzzle ${sh.k}`, m0, g.gd, g.hand, -1, age, sh.k);
       whiteTrail(`sl trail ${sh.k}`, m0, chest, age, sh.k);
-      whiteHit(`sl hit ${sh.k}`, chest, s - sh.hit);
+      whiteHit(`sl hit ${sh.k}`, chest, s - sh.hit, sh.k);
     } else {
       blackMuzzle(`sl muzzle ${sh.k}`, m0, g.gd, age, sh.k);
       blackTrail(`sl trail ${sh.k}`, m0, chest, age);
