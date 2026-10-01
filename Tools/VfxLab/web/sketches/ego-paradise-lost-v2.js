@@ -7,8 +7,11 @@
 //         the pink-white flash at 60 % instead of 28 %, with a white core.
 //   Thorns: maroon instead of bright red, about 40 % thinner, every thorn with 2-3 branches; a blood
 //         spray of 10 drops (4 for the ring's small thorns) that land as spatter.
-//   Wings: six feathers a pair instead of five, 30 % longer and 30 % narrower, angled further down;
-//         blood along the whole feather (80 % of its width) and a dark clot near the tip on about 65 %.
+//   Wings (v2.1, after the user said the v2 wings read as thorn spikes): each of the three wings a
+//         side is a notched arm with 5 covert and 6 flight feathers hanging from it like
+//         shingles, instead of spokes from one point. Feathers are broad curved blades (a fifth
+//         as wide as long) with a centre line, vane strokes and 2-3 blood blotches darker
+//         toward the tip, stretched along it, and a dark red tip on about half. 66 feathers in all.
 //   Staff: the wing is a fan of scale feathers in three rows, about a third of the staff long; the
 //         snake winds the whole shaft in wide loops (3.5 turns).
 //
@@ -56,7 +59,7 @@
 // floor ring at the true radius shows .9 s). A raider behind the wielder, 7+ cells off, is missed.
 // Order, "corroded" (the rule's 30 s with a ring every 6 s, cut to 3 rings 2.5 s apart):
 //   0     the star grows on the floor round the wielder (ring .55 s, spikes after), the wings (three
-//         pairs of six long feathers, blood along them) open
+//         a side, arms with feathers hanging from them, blood blotches) open
 //         from folded along the back over .9 s, the halo lights over the head; a thin red ring at
 //         the true radius 6 stays while corroded (lab aid)
 //   .90   ring 1: a white cross of light on the wielder (up 7 cells and 4.8 cells each side at
@@ -122,7 +125,7 @@ const Gold = new Color(.96, .76, .26), GoldLit = new Color(1, .93, .62);
 const Shaft = new Color(.94, .93, .90), ShaftLine = new Color(.36, .35, .38), Snake = new Color(.80, .80, .78), Eye = new Color(.05, .05, .05);
 const Apple = new Color(.80, .07, .09), AppleLit = new Color(1, .48, .42), Stem = new Color(.28, .40, .20);
 const Feather = new Color(.97, .96, .95), FeatherLine = new Color(.48, .48, .54), FeatherShade = new Color(.78, .78, .84), Smear = new Color(.66, .04, .06);
-const WingGrey = new Color(.62, .62, .66), Star = new Color(.86, .07, .09), StarGlow = new Color(1, .22, .16);
+const WingBone = new Color(.90, .89, .88), WingGrey = new Color(.62, .62, .66), Star = new Color(.86, .07, .09), StarGlow = new Color(1, .22, .16);
 const White = new Color(1, 1, 1), CrossRed = new Color(1, .30, .24), Pink = new Color(1, .78, .86);
 const AllyRing = new Color(.45, .85, .45), PipOff = new Color(.22, .18, .10), RoomFloor = new Color(.52, .41, .29), Plank = new Color(.40, .31, .21);
 const Colonist = new Color(.36, .50, .62), DogFur = new Color(.55, .42, .30);
@@ -141,9 +144,10 @@ const Room = { x0: -2, x1: 6, z0: -3, z1: 3 };
 const RaiderSlots = [{ x: 4.2, z: -.6 }, { x: 5.4, z: 1.4 }, { x: 5.6, z: -2.2 }, { x: 3.6, z: 2.4 }, { x: 4.8, z: .6 }, { x: 5.8, z: -1.0 }, { x: 3.9, z: -2.4 }];
 // Wings: three pairs, screen angles (degrees from east, up = north) for a wing spreading east,
 // share of the wing span. Each pair has five feathers.
-// v2: angled further down, six feathers a pair, 30 % longer and narrower.
-const WingPairs = [{ base: 34, spread: 40, len: 1.0 }, { base: -2, spread: 30, len: 1.15 }, { base: -40, spread: 32, len: .9 }];
-const Feathers = 6, FeatherLong = 1.3;
+// Wings (v2.1): three arms a side at these screen angles (a wing spreading east) and shares of the
+// reach; each with 5 coverts and 6 flight feathers. Reach = the wing span slider x 1.25.
+const WingArms = [{ angle: 38, len: .5 }, { angle: 8, len: .55 }, { angle: -24, len: .45 }];
+const Coverts = 5, Flights = 6, WingReach = 1.25;
 // v2 staff wing: three rows of scale feathers at these distances from the root; the snake's loop width.
 const WingRows = [.13, .23, .33], SnakeLoop = .075;
 // v2 ring: the cross reaches 7 cells up and 4.8 cells each side; 40 spikes.
@@ -282,41 +286,79 @@ function star(key, c, amount) {
   }
 }
 
-// White wings streaked with blood (v2, the Ruina Realization sprite): three pairs of six long
-// narrow feathers, angled down, blood along their length. open 0..1 (folded down along the back at
-// 0). Facing south or north both wings spread to the sides; facing east or west they sweep back and
-// up, the near wing over the pawn and the far one behind it.
+// White wings streaked with blood, built as the Ruina Realization sprite draws them: three wings a
+// side, each a curved arm with notches along it, five short covert feathers along the arm and six
+// long flight feathers from its outer half, overlapping like shingles. A feather is a broad curved
+// blade (a fifth as wide as long, widest at 40 %, a thin quill at the base) with a grey line down the
+// middle, two grey strokes on the vane and two or three blood blotches, darker toward the tip.
+// open 0..1 (folded down along the back at 0). Facing south or north both sides spread out; facing
+// east or west they sweep back and up, the near side over the pawn and the far side behind it.
+// mir: +1 for a wing spreading east, -1 west, so the curve and the shaded side mirror with it.
+function feather(key, base, ang, Lf, broad, seed, layer, mir = 1) {
+  const fd = { x: Math.cos(ang * D2R), z: Math.sin(ang * D2R) }, fn = { x: -fd.z * mir, z: fd.x * mir }, bend = .08 * Lf;
+  const spine = u => add(add(base, fd, Lf * u), fn, bend * u * u);
+  const W = Lf * broad / 2;
+  const wf = u => W * (u < .4 ? Math.pow(Math.sin(Math.PI / 2 * u / .4), .8) : Math.pow((1 - u) / .6, .85)) + .003;
+  const pts = Array.from({ length: 9 }, (_, i) => spine(i / 8));
+  tube(`${key} line`, pts, u => wf(u) + .01, FeatherLine, layer);
+  tube(`${key} fill`, pts, wf, Feather, layer + .00002);
+  tube(`${key} shade`, pts, wf, FeatherShade.withAlpha(.55), layer + .00004, mir > 0 ? -1 : .15, mir > 0 ? -.15 : 1);
+  line(`${key} rachis`, Array.from({ length: 6 }, (_, i) => spine(.05 + .85 * i / 5)), .014, FeatherLine.withAlpha(.75), flatMat, layer + .00006, 'end');
+  for (let h = 0; h < 2; h++) {
+    const u = .35 + .25 * h, a = spine(u), b = add(spine(u + .1), fn, -wf(u + .1) * .85);
+    line(`${key} hatch ${h}`, [a, b], .01, FeatherLine.withAlpha(.5), flatMat, layer + .00007, 'none');
+  }
+  // Blood: smears stretched along the feather, each two overlapping ovals so the edge is uneven;
+  // on about half the feathers the tip is dipped dark red.
+  const blots = 2 + (rand(seed + 3) > .5 ? 1 : 0), rot = -degOf(fd);
+  for (let b = 0; b < blots; b++) {
+    const u = 1 - .7 * Math.pow(rand(seed + 10 + b), 1.5), c = add(spine(u), fn, (rand(seed + 20 + b) - .5) * .7 * wf(u));
+    const rx = W * (.9 + 1.0 * rand(seed + 30 + b)) * (.6 + .6 * u), rz = Math.min(wf(u) * .7, rx * .35);
+    const c2 = add(add(c, fd, rx * (.35 + .3 * rand(seed + 40 + b))), fn, (rand(seed + 50 + b) - .5) * rz);
+    draw(disc, c.x, layer + .00008 + b * .00001, c.z, rx, rz, rot, (u > .7 ? Clot : Smear).withAlpha(.78));
+    draw(disc, c2.x, layer + .000085 + b * .00001, c2.z, rx * .55, rz * .75, rot + 8 * (rand(seed + 60 + b) - .5), (u > .6 ? Clot : Smear).withAlpha(.7));
+  }
+  if (rand(seed + 7) > .5) {
+    const tp = Array.from({ length: 4 }, (_, i) => spine(.8 + .2 * i / 3));
+    tube(`${key} tip`, tp, u => wf(.8 + .2 * u) * .95, Clot.withAlpha(.7), layer + .00009);
+  }
+}
 function wings(key, pos, rot4, open, span, s, sun, strength) {
   if (open <= 0) return;
-  const sideView = rot4 === 0 || rot4 === 2, back = rot4 === 0 ? -1 : 1;
+  const sideView = rot4 === 0 || rot4 === 2, back = rot4 === 0 ? -1 : 1, R = span * WingReach;
   const root = { x: pos.x, z: pos.z + .14 };
   sprite({ x: pos.x + sun.x * 1.6, z: pos.z + Ground + sun.z * 1.6 }, (sideView ? 1.8 : 3.2) * span * open, 1.1 * open, Ink.withAlpha(strength * .25 * open), soft, shadowLayer);
   const list = sideView
     ? [{ sx: back, k: .82, layer: pawnLayer - .03, dx: .06 * back, dz: .1 }, { sx: back, k: 1, layer: pawnLayer + .03, dx: 0, dz: 0 }]
     : [-1, 1].map(sx => ({ sx, k: 1, layer: rot4 === 3 ? pawnLayer - .03 : pawnLayer + .03, dx: 0, dz: 0 }));
   list.forEach((W, wi) => {
-    const r0 = { x: root.x + W.dx, z: root.z + W.dz };
-    [2, 1, 0].forEach(pi => {
-      const pair = WingPairs[pi], e = smooth(open * 1.4 - pi * .15);
-      for (let j = 0; j < Feathers; j++) {
-        const target = pair.base + pair.spread * (j / (Feathers - 1) - .5) + (sideView ? 20 : 0);
-        const ang = lerp(-100, target, e) + 3 * Math.sin(s * 2.4 + pi + wi) * e;
-        const Lf = span * pair.len * FeatherLong * (.85 + .15 * rand(pi * 7 + j)) * lerp(.4, 1, e) * W.k * (sideView ? .85 : 1);
-        const dd = { x: Math.cos(ang * D2R) * W.sx, z: Math.sin(ang * D2R) }, start = add(r0, dd, .04 + .025 * j);
-        const spine = u => add(add(start, dd, Lf * u), { x: 0, z: 1 }, .05 * Lf * u * u);
-        const pts = Array.from({ length: 8 }, (_, i) => spine(i / 7));
-        const wf = u => .06 * Math.sin(Math.PI * Math.pow(u, .6)) * (1 - .3 * u) * Math.min(1, Lf + .3) + .003;
-        const L = W.layer + (2 - pi) * .002 + j * .0003;
-        tube(`${key} line ${wi} ${pi} ${j}`, pts, u => wf(u) + .011, FeatherLine, L);
-        tube(`${key} fill ${wi} ${pi} ${j}`, pts, wf, Feather, L + .00005);
-        tube(`${key} shade ${wi} ${pi} ${j}`, pts, wf, FeatherShade.withAlpha(.6), L + .0001, -1, -.3);
-        // Blood along the whole feather, and a dark clot near the tip on some.
-        const sp = Array.from({ length: 7 }, (_, i) => spine(.12 + .88 * i / 6));
-        tube(`${key} smear ${wi} ${pi} ${j}`, sp, u => .8 * wf(.12 + .88 * u) * (.7 + .3 * rand(pi * 31 + j * 3 + wi)), Smear.withAlpha(.7 + .25 * rand(pi * 17 + j + wi * 5)), L + .00015, -.5, .9);
-        if (rand(pi * 11 + j + wi * 3) > .35) {
-          const cp = Array.from({ length: 4 }, (_, i) => spine(.55 + .3 * i / 3));
-          tube(`${key} clot ${wi} ${pi} ${j}`, cp, u => .95 * wf(.55 + .3 * u), Clot.withAlpha(.9), L + .0002);
-        }
+    const r0 = { x: root.x + W.dx, z: root.z + W.dz }, sx = W.sx;
+    // A screen angle for a wing spreading east, mirrored for the west side.
+    const screen = deg => ({ x: Math.cos(deg * D2R) * sx, z: Math.sin(deg * D2R) });
+    const angOf = deg => degOf(screen(deg));
+    [2, 1, 0].forEach(ai => {                          // lower wing first, the upper one on top
+      const arm = WingArms[ai], e = smooth(open * 1.4 - ai * .15), k = W.k * (sideView ? .85 : 1) * lerp(.45, 1, e);
+      const th = lerp(-100, arm.angle + (sideView ? 20 : 0), e) + 3 * Math.sin(s * 2.4 + ai + wi) * e;
+      const d = screen(th), up = { x: -Math.sin(th * D2R) * sx, z: Math.cos(th * D2R) }, AL = R * arm.len * k;
+      const armAt = t => add(add(r0, d, AL * t), up, .12 * AL * Math.sin(Math.PI * t));
+      const L0 = W.layer + (2 - ai) * .006 + wi * .0001;
+      // Flight feathers from the outer half, outer first so the inner ones lie over them.
+      for (let j = Flights - 1; j >= 0; j--) {
+        const t = .45 + .55 * j / (Flights - 1), rel = lerp(70, 10, j / (Flights - 1)) * e;
+        feather(`${key} flight ${wi} ${ai} ${j}`, armAt(t), angOf(th - rel), R * .62 * k * (.8 + .25 * j / (Flights - 1)), .2, ai * 97 + j * 7 + wi * 300, L0 + (Flights - j) * .0002, sx);
+      }
+      // Coverts along the arm, over the flight feathers.
+      for (let j = Coverts - 1; j >= 0; j--) {
+        const t = .12 + .7 * j / (Coverts - 1), rel = lerp(62, 30, j / (Coverts - 1)) * e;
+        feather(`${key} covert ${wi} ${ai} ${j}`, armAt(t), angOf(th - rel), R * .28 * k * (.85 + .3 * j / (Coverts - 1)), .25, ai * 53 + j * 11 + wi * 500, L0 + .002 + (Coverts - j) * .0002, sx);
+      }
+      // The arm on top: a pale ridge with notches.
+      const ap = Array.from({ length: 9 }, (_, i) => armAt(i / 8));
+      tube(`${key} arm line ${wi} ${ai}`, ap, u => .045 * (1 - .5 * u) + .012, FeatherLine, L0 + .0035);
+      tube(`${key} arm ${wi} ${ai}`, ap, u => .045 * (1 - .5 * u), WingBone, L0 + .0036);
+      for (let n = 0; n < 6; n++) {
+        const t = .15 + .13 * n, c = armAt(t), w = .04 * (1 - .5 * t);
+        line(`${key} notch ${wi} ${ai} ${n}`, [add(c, up, w), add(c, up, -w)], .012, FeatherLine, flatMat, L0 + .0037, 'none');
       }
     });
   });
