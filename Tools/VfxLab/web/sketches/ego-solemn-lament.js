@@ -18,8 +18,9 @@
 // (limbuscompany.wiki.gg, Skill_1/2/3.mp4, looked at 2026-09-30). What the frames show and what the
 // sketch does with it:
 //   Guns: one white pistol and one black pistol, one in each hand, arms out, firing in turn.
-//   White shot: a white crescent swept round the gun hand, a white flash with short spikes at the
-//         muzzle, a thin pale smoky line to the target, a white sunburst of thin spikes on the hit.
+//   White shot: a white crescent swept round the gun hand, a ragged white blast thrown forward off
+//         the muzzle, a wide white-grey smoke band to the target that thins into a wispy line and
+//         hangs, white dashes flying on along it, a white sunburst of thin spikes on the hit.
 //   Black shot: at the muzzle a black ink splat with a white glow behind it and a torn ink smear
 //         thrown along the shot (drips, slivers), a dark line; on the hit one solid black ink
 //         splat over the torso with a spiky edge, red streaks inside it, black droplets and slivers
@@ -39,8 +40,9 @@
 //
 // Order, "burst" (default sliders):
 //   0.00  draw: the guns come up from the hips to the aim over .28 s, white in the right hand
-//   0.35  shot 1, white: crescent and muzzle flash, the line reaches the raider 5 cells off in
-//         .08 s, white sunburst; 2 pale butterflies loop off the chest and land on the body in .5 s;
+//   0.35  shot 1, white: crescent and a ragged white blast off the muzzle, the round reaches the
+//         raider 5 cells off in .08 s leaving a smoke band that thins and hangs until .8 s, white
+//         dashes fly on along it, white sunburst; 2 pale butterflies loop off the chest and land on the body in .5 s;
 //         the white gun kicks up 28 degrees and settles in .3 s
 //   0.60  shot 2, black: muzzle splat and ink smear, dark line; on the hit a black ink splat over the chest in
 //         .06 s with red inside, breaking into flying chunks from .1 s, gone by .4 s; blood thrown
@@ -326,11 +328,22 @@ function pistol(key, hand, d, white, tilt, slide, layer, sun, strength) {
 // The barrel's kick after a shot: up in .04 s, then a damped swing back to level (about .3 s).
 const kickAt = age => age < 0 ? 0 : age < KickUp ? Math.sin(age / KickUp * Math.PI / 2) : Math.max(0, Math.exp(-KickDamp * (age - KickUp)) * Math.cos(KickSwing * (age - KickUp)));
 
-// White shot at the muzzle: a flash with seven short spikes for .08 s, and the crescent: a white arc
-// swept round the gun hand on its outer side in .05 s, thick in the middle, gone in .18 s.
-function whiteMuzzle(key, m, dir, hand, out, age) {
+// White shot at the muzzle: a flash with seven short spikes for .08 s; the blast, a ragged white
+// splat (the ink's shapes, white) thrown forward, centred .3 ahead and stretched 2.6x along the
+// shot, out to .22 cells in .03 s and shrinking away by .15 s (Skill 1 2.93 s, Skill 2 3.48 s);
+// and the crescent: a white arc swept round the gun hand on its outer side in .05 s, thick in the
+// middle, gone in .18 s.
+function whiteMuzzle(key, m, dir, hand, out, age, seed) {
   if (age < 0 || age > .18) return;
   const f = 1 - age / .18, aim = Math.atan2(dir.z, dir.x);
+  if (age < .15) {
+    const R = .22 * (1 - Math.pow(1 - clamp(age / .03), 3)) * (1 - Math.pow(clamp((age - .04) / .11), 1.5));
+    if (R > .01) {
+      const c = move(m, dir, .3);
+      draw(Splats[(seed + 2) % 3], c.x, Y + .0605, c.z, R * 2.6, R * .8, -aim / D2R, White.withAlpha(.8), whiteGlow);
+      draw(Splats[seed % 3], c.x, Y + .0606, c.z, R * 1.7, R * .5, -aim / D2R, White.withAlpha(.95));
+    }
+  }
   if (age < .08) {
     const g = 1 - age / .08;
     sprite(m, .12 + .4 * g, .11 + .36 * g, White.withAlpha(.9 * g), glow, Y + .06);
@@ -386,19 +399,55 @@ function blackMuzzle(key, m, dir, age, seed) {
     chunk(`${key} sliver ${i}`, { x: m.x + Math.cos(t) * d0, z: m.z + Math.sin(t) * d0 }, t, .05 * (1 - u), seed * 73 + i, Ink.withAlpha(.95), Y + .064);
   }
 }
-// The round's line from the muzzle to the target: drawn out at Speed, then faded over TrailLife.
-function shotTrail(key, from, to, age, white) {
+// The white shot's line, as Skill 1 draws it (2.93-3.12 s): the round's bright core, then a wide
+// white-grey smoke band the whole way to the target that thins into a wispy line and hangs in the air,
+// with white dashes flying on along it and sparks drifting off.
+//   core: a white line .03 wide in a glow .12 wide, drawn out at Speed, gone .1 s after it arrives;
+//   smoke band: .18 cells wide (narrower in the first sixth, at the muzzle), ragged edges, thinning
+//     to .06 over .45 s after the round arrives and drifting sideways in two uneven waves, held,
+//     then gone between .45 and .8 s;
+//   dashes: fourteen white dashes .2-.6 long anywhere along it within .25 either side, flying on
+//     at 8-12 cells/s for .14-.3 s, starting in the first .12 s;
+//   sparks: eight white dots off the line, drifting up for .6 s.
+function whiteTrail(key, from, to, age, seed) {
+  if (age < 0 || age > .8) return;
+  const dist = Math.hypot(to.x - from.x, to.z - from.z), d = unit(from, to), acr = side(d), flight = dist / Speed;
+  const reach = clamp(age / flight), thin = clamp((age - flight) / .45), fade = 1 - smooth(clamp((age - .45) / .35));
+  const N = 24, a = [], b = [];
+  for (let i = 0; i <= N; i++) {
+    const u = i / N * reach, q = move(from, d, dist * u), off = .03 * thin * (Math.sin(i * .9 + age * 5 + seed) + .7 * Math.sin(i * 2.3 - age * 3 + seed * 2) + .5 * (rand(seed * 79 + i) - .5));
+    const w = (.09 - .06 * thin) * (.35 + .65 * Math.min(1, u * 6)) * (.75 + .25 * Math.sin(i * 1.7 + age * 4 + seed));
+    a.push(move(q, acr, off + w)); b.push(move(q, acr, off - w * (.7 + .3 * Math.sin(i * 2.3 + seed))));
+  }
+  band(`${key} smoke`, a, b, Smoke.withAlpha(.5 * fade * (1 - .35 * thin)), Y + .05);
+  const core = 1 - clamp((age - flight) / .1);
+  if (core > 0) {
+    const head = move(from, d, dist * reach);
+    line(`${key} halo`, [from, head], .12, White.withAlpha(.3 * core), whiteGlow, Y + .0505, 'none');
+    line(`${key} core`, [from, head], .03, White.withAlpha(.95 * core), whiteGlow, Y + .051, 'none');
+    if (reach < 1) sprite(head, .12, .1, White.withAlpha(.95), glow, Y + .052);
+  }
+  for (let i = 0; i < 14; i++) {
+    const a0 = age - rand(seed * 37 + i) * .12, life = .14 + .16 * rand(seed * 41 + i); if (a0 < 0 || a0 > life) continue;
+    const along = dist * (.05 + .85 * rand(seed * 43 + i)) + a0 * (8 + 4 * rand(seed * 47 + i)), len = .2 + .4 * rand(seed * 59 + i);
+    if (along > dist + .6) continue;
+    const p0 = move(move(from, d, along), acr, (rand(seed * 53 + i) - .5) * .5);
+    streak(`${key} dash ${i}`, p0, move(p0, d, len), .035, White.withAlpha(.95 * (1 - a0 / life)), whiteGlow, Y + .052, 3);
+  }
+  for (let i = 0; i < 8; i++) {
+    const a0 = age - .05 - rand(seed * 61 + i) * .1; if (a0 < 0 || a0 > .6) continue;
+    const q = move(move(from, d, dist * rand(seed * 67 + i)), acr, (rand(seed * 71 + i) - .5) * .6);
+    sprite({ x: q.x, z: q.z + .15 * a0 }, .05, .05, White.withAlpha(.9 * (1 - a0 / .6)), glow, Y + .053);
+  }
+}
+// The black shot's line from the muzzle to the target: drawn out at Speed, then faded over TrailLife.
+function blackTrail(key, from, to, age) {
   const flight = Math.hypot(to.x - from.x, to.z - from.z) / Speed, u = clamp(age / flight), fade = 1 - clamp((age - flight) / TrailLife);
   if (age < 0 || fade <= 0) return;
   const head = { x: lerp(from.x, to.x, u), z: lerp(from.z, to.z, u) }, w = .5 + .5 * fade;
-  if (white) {
-    line(`${key} halo`, [from, head], .14 * w, Smoke.withAlpha(.22 * fade), whiteGlow, Y + .05, 'none');
-    line(`${key} core`, [from, head], .035 * w, White.withAlpha(.85 * fade), whiteGlow, Y + .051, 'none');
-  } else {
-    line(`${key} halo`, [from, head], .15 * w, Soot.withAlpha(.3 * fade), flat, Y + .05, 'none');
-    line(`${key} core`, [from, head], .04 * w, Ink.withAlpha(.85 * fade), flat, Y + .051, 'none');
-  }
-  if (u < 1) sprite(head, .12, .1, (white ? White : Ink).withAlpha(.95), white ? glow : soft, Y + .052);
+  line(`${key} halo`, [from, head], .15 * w, Soot.withAlpha(.3 * fade), flat, Y + .05, 'none');
+  line(`${key} core`, [from, head], .04 * w, Ink.withAlpha(.85 * fade), flat, Y + .051, 'none');
+  if (u < 1) sprite(head, .12, .1, Ink.withAlpha(.95), soft, Y + .052);
 }
 // White hit: a white sunburst of sixteen thin spikes and a soft flash for .3 s, six sparks. No blood.
 function whiteHit(key, c, age) {
@@ -670,12 +719,12 @@ function drawBurst(s, p, o, who, sun, strength) {
     const age = s - sh.t; if (age < 0) continue;
     const g = guns[sh.white ? 0 : 1], m0 = muzzleAt(g.hand, g.gd);
     if (sh.white) {
-      whiteMuzzle(`sl muzzle ${sh.k}`, m0, g.gd, g.hand, -1, age);
-      shotTrail(`sl trail ${sh.k}`, m0, chest, age, true);
+      whiteMuzzle(`sl muzzle ${sh.k}`, m0, g.gd, g.hand, -1, age, sh.k);
+      whiteTrail(`sl trail ${sh.k}`, m0, chest, age, sh.k);
       whiteHit(`sl hit ${sh.k}`, chest, s - sh.hit);
     } else {
       blackMuzzle(`sl muzzle ${sh.k}`, m0, g.gd, age, sh.k);
-      shotTrail(`sl trail ${sh.k}`, m0, chest, age, false);
+      blackTrail(`sl trail ${sh.k}`, m0, chest, age);
       blackHit(`sl hit ${sh.k}`, chest, tpos, d, s - sh.hit, sh.k);
     }
   }
