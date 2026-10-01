@@ -59,9 +59,9 @@ namespace RimArt
         public readonly Mesh[] Back = new Mesh[2], Top = new Mesh[2];
         public int Vertices;
 
-        private static readonly Material faceMat = MaterialPool.MatFrom("RimArt/Trace/CrestFace", ShaderDatabase.Transparent);
-        private static readonly Color RimLight = new Color(1f, 0.67f, 0.35f), Silhouette = new Color(0.12f, 0.05f, 0.05f), HazeFar = new Color(0.93f, 0.61f, 0.36f);
-        private static readonly Color BackBody = Color.Lerp(Silhouette, HazeFar, 0.14f);
+        internal static readonly Material faceMat = MaterialPool.MatFrom("RimArt/Trace/CrestFace", ShaderDatabase.Transparent);
+        internal static readonly Color RimLight = new Color(1f, 0.67f, 0.35f), Silhouette = new Color(0.12f, 0.05f, 0.05f), HazeFar = new Color(0.93f, 0.61f, 0.36f);
+        internal static readonly Color BackBody = Color.Lerp(Silhouette, HazeFar, 0.14f);
         private static readonly Vector2 Flat = new Vector2(0.5f, 0.5f);
 
         /// <summary>The top on the screen at x (cells from the caster), in cells north of the caster.</summary>
@@ -193,7 +193,7 @@ namespace RimArt
         /// from upright (east positive). Type 0 a sword and 1 a greatsword, point in the ground (blade, guard, grip,
         /// pommel); 2 a spear, butt in the ground, head up. <paramref name="w"/> widens every piece (the rim copy).
         /// </summary>
-        private static void WeaponInto(Builder into, double fx, double fz, double len, double lean, int type, double w = 0)
+        internal static void WeaponInto(Builder into, double fx, double fz, double len, double lean, int type, double w = 0)
         {
             double dx = Math.Sin(lean), dz = Math.Cos(lean), ax = dz, az = -dx;
             Vector2 At(double d, double side = 0) => P(fx + dx * d + ax * side, fz + dz * d + az * side);

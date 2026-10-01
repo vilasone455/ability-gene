@@ -14,11 +14,14 @@ namespace RimArt
     /// earth tile in its shade, the hairline cracks on the map's plates, the lit lip along a crest that
     /// stands above its neighbour) and the shadows a raised edge casts along the sun into another. The
     /// port of bakeTerrain in Tools/VfxLab/web/sketches/lib/ubw-terrain.js. Built once per ground and sun.
+    /// Asked with <c>three</c>, it also keeps every vertex's 3D place (<see cref="Ground3"/>, <see cref="Shadows3"/>)
+    /// for the reveal shot's camera: each point drawn is the height rule on a place whose height is known.
     /// </summary>
     internal sealed class UbwTerrainBake
     {
         public UbwTerrain Terrain;
         public Mesh Ground, Shadows;
+        public UbwMesh3 Ground3, Shadows3;
         public int Vertices;
 
         /// <summary>The face gradient runs GradLen screen cells down from the crest, then the face is solid to the bottom. A plate takes a window of Tile cells of an earth tile (or its own size if bigger).</summary>
@@ -34,19 +37,32 @@ namespace RimArt
 
         private static Vector2 SwatchOf(int k) => new Vector2((k + 0.5f) * SwatchPx / Side, 1f - (SwatchY + SwatchPx / 2f) / Side);
 
-        public static UbwTerrainBake Build(UbwTerrain T, Vector2 sun)
+        public static UbwTerrainBake Build(UbwTerrain T, Vector2 sun, bool three = false)
         {
             var bake = new UbwTerrainBake { Terrain = T };
             var ground = new Builder("UBW terrain " + T.Seed);
             var shadows = new Builder("UBW terrain shadows " + T.Seed);
+            UbwBuilder3 ground3 = three ? new UbwBuilder3() : null, shadows3 = three ? new UbwBuilder3() : null;
             var pts = new List<Vector2>(4);
             var uvs = new List<Vector2>(4);
-            void Quad(Builder into, Vector2 a, Vector2 b, Vector2 c, Vector2 d, Vector2 ua, Vector2 ub, Vector2 uc, Vector2 ud)
+            var at3 = new List<Vector3>(4);
+            // A point drawn at p for a place y cells up: the height rule taken back off.
+            Vector3 Place(Vector2 q, float y) => new Vector3(q.x, y, q.y - y * Lift);
+            void Poly3(UbwBuilder3 into3, float ya, float yb, float yc, float yd)
+            {
+                if (into3 == null || pts.Count < 3) return;
+                at3.Clear();
+                for (int k = 0; k < pts.Count; k++) at3.Add(Place(pts[k], k == 0 ? ya : k == 1 ? yb : k == 2 ? yc : yd));
+                into3.Poly(at3, pts, uvs);
+            }
+            // Corners a, b at height ya, c, d at yc.
+            void Quad(Builder into, UbwBuilder3 into3, Vector2 a, Vector2 b, Vector2 c, Vector2 d, Vector2 ua, Vector2 ub, Vector2 uc, Vector2 ud, float ya, float yc)
             {
                 pts.Clear(); uvs.Clear();
                 pts.Add(a); pts.Add(b); pts.Add(c); pts.Add(d);
                 uvs.Add(ua); uvs.Add(ub); uvs.Add(uc); uvs.Add(ud);
                 into.Poly(pts, uvs);
+                Poly3(into3, ya, ya, yc, yc);
             }
             foreach (int i in T.PaintOrder())
             {
@@ -70,9 +86,10 @@ namespace RimArt
                     if (oz[k] < -0.02f)
                     {
                         float za = az + lift, zb = bz + lift;
-                        Quad(ground, new Vector2(ax, za), new Vector2(bx, zb), new Vector2(bx, zb - G), new Vector2(ax, za - G), GradTop, GradTop, GradBot, GradBot);
+                        float yG = (float)p.H - G / Lift;
+                        Quad(ground, ground3, new Vector2(ax, za), new Vector2(bx, zb), new Vector2(bx, zb - G), new Vector2(ax, za - G), GradTop, GradTop, GradBot, GradBot, (float)p.H, yG);
                         if (faceScreen > G)
-                            Quad(ground, new Vector2(ax, za - G), new Vector2(bx, zb - G), new Vector2(bx, zb - faceScreen), new Vector2(ax, za - faceScreen), SwFoot, SwFoot, SwFoot, SwFoot);
+                            Quad(ground, ground3, new Vector2(ax, za - G), new Vector2(bx, zb - G), new Vector2(bx, zb - faceScreen), new Vector2(ax, za - faceScreen), SwFoot, SwFoot, SwFoot, SwFoot, yG, (float)T.Bottom);
                     }
                     UbwPlate nb = a.Nb >= 0 ? T.Plates[a.Nb] : null;
                     if (nb == null) continue;
@@ -80,7 +97,7 @@ namespace RimArt
                     if (hd > 0.04f && ox[k] * sun.x + oz[k] * sun.y > 0f)
                     {
                         float lz = (float)(nb.H * UbwTerrain.Lift);
-                        Quad(shadows, new Vector2(ax, az + lz), new Vector2(bx, bz + lz), new Vector2(bx + sun.x * hd, bz + lz + sun.y * hd), new Vector2(ax + sun.x * hd, az + lz + sun.y * hd), Flat, Flat, Flat, Flat);
+                        Quad(shadows, shadows3, new Vector2(ax, az + lz), new Vector2(bx, bz + lz), new Vector2(bx + sun.x * hd, bz + lz + sun.y * hd), new Vector2(ax + sun.x * hd, az + lz + sun.y * hd), Flat, Flat, Flat, Flat, (float)nb.H, (float)nb.H);
                     }
                 }
                 // The top: a window of this plate's shade of the earth tile.
@@ -95,6 +112,13 @@ namespace RimArt
                     uvs.Add(new Vector2(u0 + (float)(q.X - p.MinX) / tile * TileUV, v0 + (float)(q.Z - p.MinZ) / tile * TileUV));
                 }
                 ground.Poly(pts, uvs);
+                float h = (float)p.H;
+                if (ground3 != null)
+                {
+                    at3.Clear();
+                    foreach (Vector2 q in pts) at3.Add(Place(q, h));
+                    ground3.Poly(at3, pts, uvs);
+                }
                 // Hairline cracks on the map's plates: short wandering lines from near the middle.
                 if (p.Tier == 0 && Math.Max(Math.Abs(T.Seeds[i].X), Math.Abs(T.Seeds[i].Z)) <= UbwField.MapHalf + 3)
                 {
@@ -117,7 +141,7 @@ namespace RimArt
                             float dx = b.x - a.x, dz = b.y - a.y, L = Mathf.Sqrt(dx * dx + dz * dz);
                             if (L == 0f) L = 1f;
                             float nx = -dz / L * HairW / 2f, nz = dx / L * HairW / 2f;
-                            Quad(ground, new Vector2(a.x + nx, a.y + nz), new Vector2(b.x + nx, b.y + nz), new Vector2(b.x - nx, b.y - nz), new Vector2(a.x - nx, a.y - nz), SwHair, SwHair, SwHair, SwHair);
+                            Quad(ground, ground3, new Vector2(a.x + nx, a.y + nz), new Vector2(b.x + nx, b.y + nz), new Vector2(b.x - nx, b.y - nz), new Vector2(a.x - nx, a.y - nz), SwHair, SwHair, SwHair, SwHair, h, h);
                         }
                     }
                 }
@@ -129,12 +153,17 @@ namespace RimArt
                     if (oz[k] >= -0.02f || nb == null || p.H - nb.H < LipMin) continue;
                     float w = LipW * (p.Tier != 0 ? 1.5f : 1f), ix = -ox[k] * w, iz = -oz[k] * w;
                     float ax = (float)a.X, az = (float)a.Z + lift, bx = (float)b.X, bz = (float)b.Z + lift;
-                    Quad(ground, new Vector2(ax, az), new Vector2(bx, bz), new Vector2(bx + ix, bz + iz), new Vector2(ax + ix, az + iz), SwLip, SwLip, SwLip, SwLip);
+                    Quad(ground, ground3, new Vector2(ax, az), new Vector2(bx, bz), new Vector2(bx + ix, bz + iz), new Vector2(ax + ix, az + iz), SwLip, SwLip, SwLip, SwLip, h, h);
                 }
             }
             bake.Ground = ground.Take("UBW terrain " + T.Seed);
             bake.Shadows = shadows.Take("UBW terrain shadows " + T.Seed);
             bake.Vertices = ground.Count + shadows.Count;
+            if (three)
+            {
+                bake.Ground3 = ground3.Take("UBW terrain 3d " + T.Seed);
+                bake.Shadows3 = shadows3.Take("UBW terrain shadows 3d " + T.Seed);
+            }
             return bake;
         }
 
@@ -167,7 +196,8 @@ namespace RimArt
         {
             string key = sun.x.ToString("0.000") + "," + sun.y.ToString("0.000");
             for (int i = 0; i < bakes.Count; i++) if (bakes[i].terrain == T && bakes[i].sun == key) return bakes[i].bake;
-            UbwTerrainBake bake = UbwTerrainBake.Build(T, sun);
+            // With the 3D places: the reveal shot draws the same bake.
+            UbwTerrainBake bake = UbwTerrainBake.Build(T, sun, true);
             bakes.Add((T, key, bake));
             if (bakes.Count > 3) bakes.RemoveAt(0);
             return bake;

@@ -18,9 +18,10 @@ namespace RimArt
         private static AbilityDef Ubw => UbwDefOf.AG_Trace_UnlimitedBladeWorks;
         private static TraitDef OriginBlade => DefDatabase<TraitDef>.GetNamed("AG_OriginBlade");
 
-        private static GameComponent_Echoes Setup(RimArtTestContext t)
+        private static GameComponent_Echoes Setup(RimArtTestContext t, bool reveal = false)
         {
             GameComponent_UnlimitedBladeWorks.Instance.ResetForTests();
+            UbwRevealWindow.offForTests = !reveal;
             return t.ClearEchoes();
         }
 
@@ -212,6 +213,40 @@ namespace RimArt
             t.Check(host.Map == t.map && ally.Map == t.map, "both are home");
             foreach (int w in WaitFor(() => !Find.Maps.Contains(world), 300, 5)) yield return w;
             t.Check(!Find.Maps.Contains(world), "the world was removed");
+            EchoDevice.workingForTests = null;
+        }
+
+        [RimArtTest("Ubw", "reveal 1 the shot plays at the take with the game paused, then the world stands its full time", 3000)]
+        private static IEnumerable<int> Reveal(RimArtTestContext t)
+        {
+            Setup(t, reveal: true);
+            yield return 5;
+            Pawn host = Host(t, out EchoRecord record);
+            yield return 2;
+            int before = UbwRevealWindow.opened;
+            host.abilities.GetAbility(Ubw).QueueCastingJob(host, LocalTargetInfo.Invalid);
+            UbwCast cast = null;
+            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180, 5)) yield return w;
+            if (!t.Check(cast != null && cast.Chanting, "the chant started")) yield break;
+            cast.AskRelease(t.Now);
+            float realBefore = UnityEngine.Time.realtimeSinceStartup;
+            foreach (int w in WaitFor(() => cast.Standing || cast.fizzled || cast.broken, 900, 5)) yield return w;
+            if (!t.Check(cast.Standing, "the world stands")) yield break;
+            // The shot paused the game at the take: the next step only ran once it had ended (4.6 s of real time).
+            foreach (int w in WaitFor(() => Find.WindowStack.WindowOfType<UbwRevealWindow>() == null, 600, 1)) yield return w;
+            float real = UnityEngine.Time.realtimeSinceStartup - realBefore, game = (t.Now - cast.takenTick) / 60f;
+            var inside = cast.world.GetComponent<MapComponent_UnlimitedBladeWorks>();
+            t.Log("shot ran " + UbwRevealWindow.lastRan.ToString("0.00") + " s, real " + real.ToString("0.0") + " s since the release, game " + game.ToString("0.00") + " s since the take, world clock " + inside.WorldSeconds.ToString("0.00"));
+            t.Check(UbwRevealWindow.opened == before + 1, "the shot opened once at the take");
+            t.Check(UbwRevealWindow.lastRan >= UbwRevealTiming.End - 0.05f, "it played to the end (" + UbwRevealWindow.lastRan.ToString("0.00") + " s)");
+            t.Check(game < 1f, "the game was paused while it played (" + game.ToString("0.00") + " s of game time since the take)");
+            t.Check(cast.WorldSecondsLeft(t.Now) > UbwRules.Of.WorldSecondsFor(1) - 1.5f, "the world's timer started after it (" + cast.WorldSecondsLeft(t.Now).ToString("0.0") + " s left)");
+            yield return 30;
+            t.Check(inside.WorldSeconds >= UbwWorldTiming.Swept, "the world stands, its fire already run out (clock " + inside.WorldSeconds.ToString("0.00") + ")");
+            cast.closeOrdered = true;
+            foreach (int w in WaitFor(() => cast.returned, 1200, 5)) yield return w;
+            t.Check(cast.returned && host.Map == t.map, "Close brings the caster home");
+            UbwRevealWindow.offForTests = true;
             EchoDevice.workingForTests = null;
         }
 

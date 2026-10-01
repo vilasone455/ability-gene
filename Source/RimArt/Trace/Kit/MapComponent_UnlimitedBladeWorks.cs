@@ -39,6 +39,8 @@ namespace RimArt
         private float seconds;
         /// <summary>When the close began on the world's clock, or -1 while it stands.</summary>
         private float closeAt = -1f;
+        /// <summary>Seconds added to the world's clock (game time since the take): the reveal shot's world time while it plays, then where it ended, so the world stands as the shot left it (the fire already run out).</summary>
+        private float offset;
         private bool closing, shaken;
         private UbwFieldBake bake;
         private UbwCrestWorld crestWorld;
@@ -54,8 +56,29 @@ namespace RimArt
 
         public bool IsWorld => world;
 
+        /// <summary>The world's clock as last drawn (seconds; the fire has run out at <see cref="UbwWorldTiming.Swept"/>).</summary>
+        public float WorldSeconds => seconds;
+
         /// <summary>Where the caster lands: the middle across, <see cref="UbwCrest.North"/> cells south of the north edge.</summary>
         public IntVec3 CentreCell => new IntVec3(map.Size.x / 2, 0, map.Size.z - UbwCrest.North);
+
+        /// <summary>The point the world is drawn round: the caster's cell's corner, as the sketches put it.</summary>
+        public Vector2 Origin => new Vector2(map.Size.x / 2f, map.Size.z - UbwCrest.North);
+
+        /// <summary>The reveal shot sets the world's clock to its own world time (seconds); the clock goes on from there.</summary>
+        public void RevealAt(float worldSeconds)
+        {
+            offset = worldSeconds - (driven && takenTick >= 0 ? UbwClock.Since(takenTick) : 0f);
+            shaken = true;
+        }
+
+        /// <summary>The world v4 for the reveal shot: these landing spots, the world's sun, this screen shape.</summary>
+        internal UbwRevealScene RevealScene(float aspect)
+        {
+            var spots = new UbwXZ[keep.Count];
+            for (int i = 0; i < keep.Count; i++) spots[i] = new UbwXZ(keep[i].x, keep[i].z);
+            return UbwRevealScene.For(spots, CrestSun, aspect);
+        }
 
         /// <summary>Where the spot <paramref name="i"/> of the landing spots is on this map.</summary>
         public IntVec3 LandingCell(int i) => i >= 0 && i < keep.Count ? CentreCell + keep[i] : CentreCell;
@@ -82,14 +105,15 @@ namespace RimArt
             takenTick = tick;
             closeAt = -1f;
             shaken = false;
+            offset = 0f;
             bake = null;
         }
 
-        /// <summary>The ability: the close begins at <paramref name="worldSeconds"/> on the world's clock, or when the fire has finished running out if that is later. Returns when it begins.</summary>
-        public float CloseAt(float worldSeconds)
+        /// <summary>The ability: the close begins at <paramref name="gameSeconds"/> of game time since the take, or when the fire has finished running out if that is later. Returns when it begins, in game time since the take.</summary>
+        public float CloseAt(float gameSeconds)
         {
-            if (closeAt < 0f) closeAt = Mathf.Max(worldSeconds, UbwWorldTiming.Swept);
-            return closeAt;
+            if (closeAt < 0f) closeAt = Mathf.Max(gameSeconds + offset, UbwWorldTiming.Swept);
+            return closeAt - offset;
         }
 
         /// <summary>Ends the world: the white closes in behind the wall of fire, then the map is removed.</summary>
@@ -104,7 +128,7 @@ namespace RimArt
         public override void MapComponentUpdate()
         {
             if (!world || Find.CurrentMap != map) return;
-            if (driven) seconds = takenTick < 0 ? 0f : UbwClock.Since(takenTick);
+            if (driven) seconds = (takenTick < 0 ? 0f : UbwClock.Since(takenTick)) + offset;
             else seconds += Time.unscaledDeltaTime;
             if (!shaken && seconds >= UbwWorldTiming.Start)
             {
@@ -146,6 +170,7 @@ namespace RimArt
             Scribe_Collections.Look(ref keep, "ubwKeep", LookMode.Value);
             Scribe_Values.Look(ref seconds, "ubwSeconds");
             Scribe_Values.Look(ref closeAt, "ubwCloseAt", -1f);
+            Scribe_Values.Look(ref offset, "ubwOffset");
             if (Scribe.mode == LoadSaveMode.PostLoadInit && keep == null) keep = new List<IntVec3>();
         }
     }

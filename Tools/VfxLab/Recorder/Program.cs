@@ -22,6 +22,9 @@ string outDir = args.SkipWhile(a => a != "--out").Skip(1).FirstOrDefault() ?? Fi
 var failures = new List<string>();
 var written = new List<object>();
 
+// A cutscene camera's frames (Unlimited Blade Works' reveal shot) land in the tap, as Graphics.DrawMesh does.
+UbwShot.Sink = Tap.Shot;
+
 var actions = typeof(SixPathsSlab).Assembly.GetTypes()
     .SelectMany(t => t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
     .Select(m => (method: m, attr: m.GetCustomAttribute<RimArtDebugAttribute>()))
@@ -36,7 +39,7 @@ foreach (var (method, label, kit) in actions)
     var recording = Record(method, label, kit);
     string file = $"{Slug(kit.Name)}/{Slug(label.Substring(kit.Prefix.Length))}.json";
     recording.Write(Path.Combine(outDir, file));
-    int calls = recording.frames.Sum(f => f.calls.Count);
+    int calls = recording.frames.Sum(f => f.calls.Count + f.draws.Count);
     Console.WriteLine($"  {label,-38} {recording.frames.Count,5} frames {recording.Seconds,6:0.00} s {calls,7} draws{(recording.still ? "  (still)" : "")}");
     if (calls == 0) failures.Add($"{label}: recorded no draw calls");
     written.Add(new
@@ -77,7 +80,8 @@ static Recording Record(MethodInfo method, string label, Kit kit)
     Time.unscaledDeltaTime = Time.deltaTime = 1f / Fps;
     method.Invoke(null, null);
 
-    var recording = new Recording { label = label, kit = kit.Name };
+    int every = Math.Max(1, kit.KeepEvery(label));
+    var recording = new Recording { label = label, kit = kit.Name, fps = Fps / every };
     var component = Find.CurrentMap.components.FirstOrDefault(c => kit.Component.IsInstanceOfType(c))
         ?? throw new InvalidOperationException($"{label}: the action did not create {kit.Component.Name}");
     FieldInfo active = Field(kit.Component, "active");
@@ -94,7 +98,8 @@ static Recording Record(MethodInfo method, string label, Kit kit)
         bool running = active == null || (bool)active.GetValue(component);
         float? seconds = clock == null ? null : (float)clock.GetValue(component);
         // A preview that switches itself off before drawing leaves an empty last frame; drop it.
-        if (!running && Tap.calls.Count == 0) break;
+        if (!running && Tap.calls.Count == 0 && Tap.shot == null) break;
+        if (running && i % every != every - 1) continue;
         // A frame is stamped with the time it shows, which is the clock after this update: the
         // previews advance before they draw, so the first frame shows 1/60 s, not 0.
         recording.Capture((i + 1) / Fps, seconds);

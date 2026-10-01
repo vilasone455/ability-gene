@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using RimArt;
 using UnityEngine;
 
 namespace RimArt.VfxLab
@@ -29,12 +30,17 @@ namespace RimArt.VfxLab
     {
         public static List<Call> calls = new();
         public static List<GameEvent> events = new();
+        /// <summary>The cutscene frame a preview handed to <see cref="UbwShot.Sink"/> this frame, read at end of frame as its meshes are.</summary>
+        internal static UbwShot shot;
 
         public static void BeginFrame()
         {
             calls = new List<Call>();
             events = new List<GameEvent>();
+            shot = null;
         }
+
+        internal static void Shot(UbwShot frame) => shot = frame;
 
         public static void Draw(Mesh mesh, Matrix4x4 matrix, Material material, MaterialPropertyBlock properties)
         {
@@ -55,11 +61,21 @@ namespace RimArt.VfxLab
             events.Add(new GameEvent { type = type, value = value, def = def });
     }
 
+    /// <summary>A cutscene frame's camera (or Flat: the map camera, at the game framing) and its boxes over the screen.</summary>
+    public sealed class Shot3
+    {
+        public bool flat;
+        public float x, y, z, pitch, fov, near, far, blend, cx, cz, cellsTall;
+        public readonly List<(Rect box, Color colour)> overlays = new();
+    }
+
     public sealed class Frame
     {
         public float wall;
         public float? clock;
         public readonly List<(string mesh, Call call)> calls = new();
+        public Shot3 shot;
+        internal readonly List<(string mesh, UbwDraw3 draw)> draws = new();
         public List<GameEvent> events;
         public int hash;
     }
@@ -69,6 +85,7 @@ namespace RimArt.VfxLab
         public string label, kit, slug;
         public readonly List<Frame> frames = new();
         public readonly Dictionary<string, (Vector3[] v, Vector2[] uv, int[] tri, string name)> meshes = new();
+        internal readonly Dictionary<string, (Vector3[] xyz, Vector2[] game, Vector2[] uv, int[] tri, string name)> meshes3 = new();
         public readonly Dictionary<int, Material> materials = new();
         public readonly List<(string name, float wall)> phases = new();
         public bool still;
@@ -96,9 +113,39 @@ namespace RimArt.VfxLab
                 hash.Add(call.matrix.rotation); hash.Add(call.matrix.scale.x); hash.Add(call.matrix.scale.z);
                 hash.Add(call.colour.r); hash.Add(call.colour.g); hash.Add(call.colour.b); hash.Add(call.colour.a);
             }
+            if (Tap.shot != null)
+            {
+                UbwShot s = Tap.shot;
+                frame.shot = new Shot3
+                {
+                    flat = s.Flat, x = s.Eye.x, y = s.Eye.y, z = s.Eye.z, pitch = s.Pitch, fov = s.Fov, near = s.Near, far = s.Far, blend = s.Blend,
+                    cx = s.GameCentre.x, cz = s.GameCentre.y, cellsTall = s.CellsTall,
+                };
+                frame.shot.overlays.AddRange(s.Overlays);
+                foreach (UbwDraw3 d in s.Draws)
+                {
+                    string key = d.Mesh.Name + "#" + ContentHash3(d.Mesh).ToString("x8");
+                    if (!meshes3.ContainsKey(key))
+                        meshes3[key] = ((Vector3[])d.Mesh.Xyz.Clone(), (Vector2[])d.Mesh.Game.Clone(), (Vector2[])d.Mesh.Uv.Clone(), (int[])d.Mesh.Tri.Clone(), d.Mesh.Name);
+                    materials[d.Material.id] = d.Material;
+                    frame.draws.Add((key, d));
+                    hash.Add(key);
+                }
+                hash.Add(s.Eye.x); hash.Add(s.Eye.y); hash.Add(s.Eye.z); hash.Add(s.Pitch); hash.Add(s.Blend); hash.Add(s.Overlays.Count);
+            }
             frame.hash = hash.ToHashCode();
             frames.Add(frame);
             return frame;
+        }
+
+        private static int ContentHash3(UbwMesh3 mesh)
+        {
+            var hash = new HashCode();
+            foreach (Vector3 v in mesh.Xyz) { hash.Add(v.x); hash.Add(v.y); hash.Add(v.z); }
+            foreach (Vector2 v in mesh.Game) { hash.Add(v.x); hash.Add(v.y); }
+            foreach (Vector2 v in mesh.Uv) { hash.Add(v.x); hash.Add(v.y); }
+            foreach (int i in mesh.Tri) hash.Add(i);
+            return hash.ToHashCode();
         }
 
         private static int ContentHash(Mesh mesh)
@@ -110,7 +157,9 @@ namespace RimArt.VfxLab
             return hash.ToHashCode();
         }
 
-        public float Seconds => frames.Count / 60f;
+        /// <summary>Frames a second kept (60 unless the kit keeps fewer).</summary>
+        public float fps = 60f;
+        public float Seconds => frames.Count / fps;
 
         public void Write(string path)
         {
@@ -121,7 +170,7 @@ namespace RimArt.VfxLab
             json.WriteString("label", label);
             json.WriteString("kit", kit);
             json.WriteString("source", "recorded");
-            json.WriteNumber("fps", 60);
+            Num(json, "fps", fps);
             json.WriteBoolean("still", still);
 
             json.WriteStartArray("phases");
@@ -169,6 +218,25 @@ namespace RimArt.VfxLab
                 json.WriteEndArray();
                 json.WriteEndObject();
             }
+            // A cutscene's meshes: v3 the 3D places, game the game positions (the lab's Mesh.setXYZ + setGame); the lab takes v from game.
+            foreach (var (key, mesh) in meshes3)
+            {
+                json.WriteStartObject(key);
+                json.WriteString("name", mesh.name);
+                json.WriteStartArray("v3");
+                foreach (Vector3 p in mesh.xyz) { Num(json, p.x); Num(json, p.y); Num(json, p.z); }
+                json.WriteEndArray();
+                json.WriteStartArray("game");
+                foreach (Vector2 p in mesh.game) { Num(json, p.x); Num(json, p.y); }
+                json.WriteEndArray();
+                json.WriteStartArray("uv");
+                foreach (Vector2 p in mesh.uv) { Num(json, p.x); Num(json, p.y); }
+                json.WriteEndArray();
+                json.WriteStartArray("tri");
+                foreach (int i in mesh.tri) json.WriteNumberValue(i);
+                json.WriteEndArray();
+                json.WriteEndObject();
+            }
             json.WriteEndObject();
 
             json.WriteStartArray("frames");
@@ -190,7 +258,41 @@ namespace RimArt.VfxLab
                     if (call.age.HasValue) Num(json, call.age.Value);
                     json.WriteEndArray();
                 }
+                // A cutscene's draws: [mesh, material, x, y, z, 0, 1, 1, r, g, b, a, 0, sy, flags]; flags 1 drawn where the game
+                // view draws it, 2 writes no depth, 4 never depth tested.
+                foreach (var (key, d) in frame.draws)
+                {
+                    json.WriteStartArray();
+                    json.WriteStringValue(key);
+                    json.WriteNumberValue(d.Material.id);
+                    Num(json, d.At.x); Num(json, d.At.y); Num(json, d.At.z);
+                    Num(json, 0f); Num(json, 1f); Num(json, 1f);
+                    Num(json, d.Colour.r); Num(json, d.Colour.g); Num(json, d.Colour.b); Num(json, d.Colour.a);
+                    Num(json, 0f);
+                    Num(json, d.Sy);
+                    json.WriteNumberValue((d.Screen ? 1 : 0) | (d.Depth == UbwDepth.NoWrite ? 2 : 0) | (d.Depth == UbwDepth.Over ? 4 : 0));
+                    json.WriteEndArray();
+                }
                 json.WriteEndArray();
+                if (frame.shot != null)
+                {
+                    Shot3 c = frame.shot;
+                    json.WriteStartObject("camera");
+                    json.WriteBoolean("flat", c.flat);
+                    Num(json, "x", c.x); Num(json, "y", c.y); Num(json, "z", c.z); Num(json, "pitch", c.pitch); Num(json, "fov", c.fov);
+                    Num(json, "near", c.near); Num(json, "far", c.far); Num(json, "blend", c.blend);
+                    Num(json, "cx", c.cx); Num(json, "cz", c.cz); Num(json, "cellsTall", c.cellsTall);
+                    json.WriteEndObject();
+                    json.WriteStartArray("overlays");
+                    foreach (var (box, colour) in c.overlays)
+                    {
+                        json.WriteStartObject();
+                        Num(json, "x", box.x); Num(json, "y", box.y); Num(json, "w", box.width); Num(json, "h", box.height);
+                        Num(json, "r", colour.r); Num(json, "g", colour.g); Num(json, "b", colour.b); Num(json, "a", colour.a);
+                        json.WriteEndObject();
+                    }
+                    json.WriteEndArray();
+                }
                 if (frame.events.Count > 0)
                 {
                     json.WriteStartArray("events");
