@@ -24,6 +24,15 @@ namespace RimArt
             return null;
         }
 
+        /// <summary>The cast whose world is this map and still stands, if any.</summary>
+        public UbwCast ForWorld(Map map)
+        {
+            if (map == null) return null;
+            for (int i = 0; i < casts.Count; i++)
+                if (casts[i].world == map && casts[i].Standing) return casts[i];
+            return null;
+        }
+
         /// <summary>The ability fired, <paramref name="paid"/> charge taken for it: the chant is queued and begins when its job starts.</summary>
         public void Queue(Pawn caster, float paid)
         {
@@ -35,6 +44,7 @@ namespace RimArt
         public void ResetForTests()
         {
             casts.Clear();
+            UbwIntercept.Live.Clear();
             foreach (Map map in Find.Maps)
                 if (map.GetComponent<MapComponent_UnlimitedBladeWorks>()?.IsWorld == true) UnlimitedBladeWorksMap.CloseLater(map);
         }
@@ -60,6 +70,10 @@ namespace RimArt
             int now = Find.TickManager.TicksGame;
             for (int i = casts.Count - 1; i >= 0; i--)
                 if (!casts[i].Tick(now)) casts.RemoveAt(i);
+            // The casts Intercept's projectile prefix looks at: on, or with a sword still on its way to a shot.
+            UbwIntercept.Live.Clear();
+            for (int i = 0; i < casts.Count; i++)
+                if (casts[i].Standing && (casts[i].intercept || casts[i].intercepts.Busy)) UbwIntercept.Live.Add(casts[i]);
         }
 
         public override void GameComponentUpdate()
@@ -67,7 +81,10 @@ namespace RimArt
             Map map = Find.CurrentMap;
             if (map == null) return;
             for (int i = 0; i < casts.Count; i++)
+            {
                 if (casts[i].home == map) casts[i].Draw();
+                else if (casts[i].world == map) casts[i].DrawCommands();
+            }
         }
 
         public override void ExposeData()

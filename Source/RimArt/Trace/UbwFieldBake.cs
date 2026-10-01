@@ -13,6 +13,11 @@ namespace RimArt
     /// the one atlas, in draw order, north first. The port of field, bladeInto, marksInto and lipInto in
     /// Tools/VfxLab/web/sketches/lib/ubw-pocket.js. Swords past the map edge get no lips or cracks. Built
     /// once per field and sun; a blades mesh that fills up hands over to the next, drawn a step higher.
+    /// A sword taken out by a command (<see cref="UbwSword.Hole"/>) leaves its hole: the marks and both lips, no blade.
+    ///
+    /// The world's own map bakes its field in rows (<see cref="Banded"/>): one bake per <see cref="BandDepth"/>
+    /// cells of screen foot, each row's blades a step higher than the row north of it, so when the commands take
+    /// swords out or stick them in, only the rows they touch are built again (<see cref="Rebuild"/>).
     /// </summary>
     internal sealed class UbwFieldBake
     {
@@ -21,11 +26,18 @@ namespace RimArt
         public Mesh Shadows, Marks;
         public readonly List<Mesh> Blades = new List<Mesh>();
         public int Vertices;
+        /// <summary>The rows of a banded field, north first (a null row is empty); null for a field baked whole.</summary>
+        public List<UbwFieldBake> Bands;
+        private Vector2 sun;
         private const int MostVertices = 60000;
+        /// <summary>A row of the banded field: this many cells of screen foot (Z + Lift), counted down from <see cref="BandTop"/>.</summary>
+        public const double BandDepth = 4, BandTop = 40;
+        /// <summary>Between rows: room for four blade meshes of <see cref="UbwLayers.BladeStep"/> each.</summary>
+        private const float BandStep = 0.002f;
 
         public static UbwFieldBake Build(List<UbwSword> swords, Vector2 sun, UbwWeaponSet set)
         {
-            var bake = new UbwFieldBake { Swords = swords, Set = set };
+            var bake = new UbwFieldBake { Swords = swords, Set = set, sun = sun };
             var shadows = new Builder("UBW field shadows");
             var marks = new Builder("UBW field marks");
             var blades = new Builder("UBW field blades");
@@ -41,7 +53,7 @@ namespace RimArt
                 int row = sw.W.Row;
                 MarksInto(marks, sw.Cut, sw.Seed, sw.Far ? 0 : 4);
                 if (!sw.Far) LipInto(blades, sw.Cut, -1, 0.026, sw.Seed, sunXZ);
-                BladeInto(shadows, blades, sw.Pose, sunXZ, row);
+                if (!sw.Hole) BladeInto(shadows, blades, sw.Pose, sunXZ, row);
                 if (!sw.Far) LipInto(blades, sw.Cut, 1, 0.032, sw.Seed + 3, sunXZ);
             }
             if (blades.Count > 0) bake.Blades.Add(blades.Take("UBW field blades " + bake.Blades.Count));
@@ -51,8 +63,60 @@ namespace RimArt
             return bake;
         }
 
+        /// <summary>The row a sword's screen foot falls in.</summary>
+        public static int BandOf(double foot) => Math.Max(0, (int)Math.Floor((BandTop - foot) / BandDepth));
+
+        /// <summary>The field baked in rows of <see cref="BandDepth"/> cells, north first.</summary>
+        public static UbwFieldBake Banded(List<UbwSword> swords, Vector2 sun, UbwWeaponSet set)
+        {
+            var bake = new UbwFieldBake { Swords = swords, Set = set, sun = sun, Bands = new List<UbwFieldBake>() };
+            bake.Rebuild(swords, null);
+            return bake;
+        }
+
+        /// <summary>
+        /// The banded field from <paramref name="swords"/> (north first) again, building only the rows in
+        /// <paramref name="rows"/> (all of them when null) and any row that became empty or stopped being empty. The
+        /// replaced rows' meshes are destroyed.
+        /// </summary>
+        public void Rebuild(List<UbwSword> swords, ICollection<int> rows)
+        {
+            Swords = swords;
+            var lists = new List<List<UbwSword>>();
+            foreach (UbwSword sw in swords)
+            {
+                int b = BandOf(sw.Z + sw.Lift);
+                while (lists.Count <= b) lists.Add(new List<UbwSword>());
+                lists[b].Add(sw);
+            }
+            while (Bands.Count < lists.Count) Bands.Add(null);
+            Vertices = 0;
+            for (int b = 0; b < Bands.Count; b++)
+            {
+                List<UbwSword> list = b < lists.Count && lists[b].Count > 0 ? lists[b] : null;
+                if (rows == null || rows.Contains(b) || (Bands[b] == null) != (list == null))
+                {
+                    Bands[b]?.Release();
+                    Bands[b] = list != null ? Build(list, sun, Set) : null;
+                }
+                if (Bands[b] != null) Vertices += Bands[b].Vertices;
+            }
+        }
+
+        /// <summary>Destroys this bake's meshes and its rows': only for a bake no cache shares.</summary>
+        public void Release()
+        {
+            if (Bands != null)
+                foreach (UbwFieldBake band in Bands) band?.Release();
+            if (Shadows != null) UnityEngine.Object.Destroy(Shadows);
+            if (Marks != null) UnityEngine.Object.Destroy(Marks);
+            foreach (Mesh m in Blades) UnityEngine.Object.Destroy(m);
+            Blades.Clear();
+            Shadows = Marks = null;
+        }
+
         /// <summary>Part of blade b's picture, a polygon in its own uv, from cell r of the atlas, projected on screen or along the sun. With <paramref name="three"/> (not for a shadow), also its 3D places, the sword standing <paramref name="h"/> cells up on its plate instead of drawn Lift h north.</summary>
-        private static void PolyInto(Builder b, List<UbwUV> poly, UbwPose pose, UbwXZ? sun, in Cell r, UbwV3? shift = null, UbwBuilder3 three = null, float h = 0f)
+        internal static void PolyInto(Builder b, List<UbwUV> poly, UbwPose pose, UbwXZ? sun, in Cell r, UbwV3? shift = null, UbwBuilder3 three = null, float h = 0f)
         {
             if (poly.Count < 3) return;
             var pts = new List<Vector2>(poly.Count);
@@ -99,7 +163,7 @@ namespace RimArt
         }
 
         /// <summary>A sword standing at rest: its shadow, both edges, the face lit one of three ways, the two dark bands low on the blade.</summary>
-        private static void BladeInto(Builder shadows, Builder blades, UbwPose pose, UbwXZ sun, int row, UbwBuilder3 three = null, float h = 0f)
+        internal static void BladeInto(Builder shadows, Builder blades, UbwPose pose, UbwXZ sun, int row, UbwBuilder3 three = null, float h = 0f)
         {
             List<UbwUV> above = UbwBlade.Clip(UbwBlade.Square, UbwBlade.HigherThan(pose, 0));
             PolyInto(shadows, above, pose, sun, new Cell(FaceCol[2], row));
@@ -121,7 +185,7 @@ namespace RimArt
             new Vector2((float)(cut.X + cut.D.X * along + cut.F.X * outward), (float)(cut.Z + cut.D.Z * along + cut.F.Z * outward));
 
         /// <summary>The mark a blade leaves where it goes in, flat on the floor: the contact shadow, cracks, the slit.</summary>
-        private static void MarksInto(Builder marks, in UbwCut cut, int seed, int cracks)
+        internal static void MarksInto(Builder marks, in UbwCut cut, int seed, int cracks)
         {
             double half = cut.Half;
             float rot = (float)(-Math.Atan2(cut.D.Z, cut.D.X) / UbwBlade.D2R);
@@ -148,7 +212,7 @@ namespace RimArt
         }
 
         /// <summary>A lip of earth pushed up along the slit (side 1 faces the camera), into the blades so the back lip goes under its own blade and the front lip over its foot.</summary>
-        private static void LipInto(Builder blades, in UbwCut cut, int side, double reach, int seed, UbwXZ sun)
+        internal static void LipInto(Builder blades, in UbwCut cut, int side, double reach, int seed, UbwXZ sun)
         {
             double half = cut.Half, fx = cut.F.X * side, fz = cut.F.Z * side;
             const int n = 9;
@@ -172,9 +236,19 @@ namespace RimArt
         /// <summary>The baked field with the caster at <paramref name="o"/>: shadows, ground marks, blades. tint colours the marks and blades.</summary>
         public void Draw(Vector2 o, in UbwLayers layers, float strength, Color tint)
         {
+            if (Bands == null)
+            {
+                DrawRow(o, layers, strength, tint, layers.Blades);
+                return;
+            }
+            for (int b = 0; b < Bands.Count; b++) Bands[b]?.DrawRow(o, layers, strength, tint, layers.Blades + b * BandStep);
+        }
+
+        private void DrawRow(Vector2 o, in UbwLayers layers, float strength, Color tint, float blades)
+        {
             DrawMesh(Shadows, o, layers.FieldShadow, 1f, 1f, 0f, Fade(Black, 0.42f * strength / 0.32f), Set.Atlas);
             DrawMesh(Marks, o, layers.Marks, 1f, 1f, 0f, tint, Set.Atlas);
-            for (int k = 0; k < Blades.Count; k++) DrawMesh(Blades[k], o, layers.Blades + k * layers.BladeStep, 1f, 1f, 0f, tint, Set.Atlas);
+            for (int k = 0; k < Blades.Count; k++) DrawMesh(Blades[k], o, blades + k * layers.BladeStep, 1f, 1f, 0f, tint, Set.Atlas);
         }
     }
 }

@@ -98,12 +98,7 @@ namespace RimArt
         {
             ThingWithComps held = pawn.equipment.Primary;
             if (held == null || held == record.heroWeapon) return;
-            if (pawn.inventory != null && pawn.equipment.TryTransferEquipmentToContainer(held, pawn.inventory.innerContainer))
-            {
-                if (record.storedWeapon == null) record.storedWeapon = held;
-                return;
-            }
-            if (pawn.SpawnedOrAnyParentSpawned) pawn.equipment.TryDropEquipment(held, out _, pawn.PositionHeld, forbid: false);
+            if (WeaponStow.Stow(pawn, held) == WeaponStow.Result.Inventory && record.storedWeapon == null) record.storedWeapon = held;
         }
 
         /// <summary>A fresh hero weapon in hand: default stuff and normal quality, never a roll.</summary>

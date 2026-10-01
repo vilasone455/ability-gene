@@ -101,6 +101,31 @@ namespace RimArt
             return Pose(w, w.Image * size, tip, a, new UbwV3(-dir.Z, 0, dir.X));
         }
 
+        /// <summary>
+        /// A blade stuck in the ground at g, its top leaning lean degrees toward `toward` (a unit direction on the floor),
+        /// flat side turned to the camera, `buried` cells of it underground (lib/trace.js stuck).
+        /// </summary>
+        public static UbwPose Stuck(UbwWeapon w, double size, UbwXZ g, UbwXZ toward, double lean, double buried)
+        {
+            double l = lean * D2R;
+            var a = new UbwV3(toward.X * Math.Sin(l), Math.Cos(l), toward.Z * Math.Sin(l));
+            return Pose(w, w.Image * size, TipUnder(g, a, buried), a, new UbwV3(1, 0, 0));
+        }
+
+        /// <summary>The middle of the blade, in 3D.</summary>
+        public static UbwV3 Middle(UbwPose b) => UbwV3.Plus(b.Tip, b.A, b.L / 2);
+
+        /// <summary>Pose b moved straight up by h cells.</summary>
+        public static UbwPose Raised(UbwPose b, double h) => Pose(b.W, b.Scale, new UbwV3(b.Tip.X, b.Tip.Y + h, b.Tip.Z), b.A, b.B);
+
+        /// <summary>Part way (u 0..1) from pose a to pose b of the same weapon, turning about the middle of the blade (the commands sketch's turn).</summary>
+        public static UbwPose TurnAbout(UbwPose a, UbwPose b, double u)
+        {
+            UbwV3 Mix(UbwV3 p, UbwV3 q) => new UbwV3(p.X + (q.X - p.X) * u, p.Y + (q.Y - p.Y) * u, p.Z + (q.Z - p.Z) * u);
+            UbwV3 axis = UbwV3.Unit(Mix(a.A, b.A)), across = UbwV3.Dot(a.B, b.B) < 0 ? UbwV3.Neg(b.B) : b.B;
+            return Pose(a.W, a.Scale, UbwV3.Plus(Mix(Middle(a), Middle(b)), axis, -a.L / 2), axis, Mix(a.B, across));
+        }
+
         /// <summary>Weapon w lying flat with its middle at the 3D point m, point along dir, the pommel pitch degrees above the point.</summary>
         public static UbwPose FlatAt(UbwWeapon w, double size, UbwV3 m, UbwXZ dir, double pitch = 0)
         {

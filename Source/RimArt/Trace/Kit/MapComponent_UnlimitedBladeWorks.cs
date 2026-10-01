@@ -42,8 +42,14 @@ namespace RimArt
         /// <summary>Seconds added to the world's clock (game time since the take): the reveal shot's world time while it plays, then where it ended, so the world stands as the shot left it (the fire already run out).</summary>
         private float offset;
         private bool closing, shaken;
+        /// <summary>The world's own field, baked in rows from <see cref="swords"/>; no cache shares it, so it is destroyed when replaced.</summary>
         private UbwFieldBake bake;
+        private int bakedVersion = -1;
+        private UbwFieldState swords = new UbwFieldState();
         private UbwCrestWorld crestWorld;
+        /// <summary>The first bake of a world and the latest row rebuild, in milliseconds, for the dev log and the game tests.</summary>
+        internal static float lastBakeMs, lastRebuildMs;
+        internal static int lastRebuildRows;
         /// <summary>The lab scene's shadow vector, made low as the sketch makes it (v4 its own way), and its shadow strength.</summary>
         private static readonly Vector2 SceneSun = new Vector2(-0.45f, -0.32f);
         private static readonly Vector2 FlatSun = SceneSun * UbwWorldTiming.DuskShadow, CrestSun = UbwCrestWorld.LowSun(SceneSun);
@@ -83,6 +89,71 @@ namespace RimArt
         /// <summary>Where the spot <paramref name="i"/> of the landing spots is on this map.</summary>
         public IntVec3 LandingCell(int i) => i >= 0 && i < keep.Count ? CentreCell + keep[i] : CentreCell;
 
+        /// <summary>The world's swords for the commands, laid out on first use with the numbers the bake uses, whether or not the world is on screen.</summary>
+        public UbwFieldState Field
+        {
+            get
+            {
+                if (!swords.Built) swords.Build(keep, crest);
+                return swords;
+            }
+        }
+
+        /// <summary>The world's fixed low sun (shadow cells per cell of height) and how dark its shadows are: what the field is baked under.</summary>
+        internal Vector2 Sun => crest ? CrestSun : FlatSun;
+        internal const float ShadowStrength = Strength;
+
+        /// <summary>A point on this map in cells from <see cref="Origin"/>, the frame the swords are in.</summary>
+        public Vector2 Local(Vector3 at) => new Vector2(at.x, at.z) - Origin;
+
+        /// <summary>A point in cells from <see cref="Origin"/> moved inside the map by half a cell or more.</summary>
+        public Vector2 ClampInside(Vector2 local)
+        {
+            Vector2 at = local + Origin;
+            return new Vector2(Mathf.Clamp(at.x, 0.5f, map.Size.x - 0.5f), Mathf.Clamp(at.y, 0.5f, map.Size.z - 0.5f)) - Origin;
+        }
+
+        /// <summary>
+        /// Bakes the field again if it changed since the last bake: the whole field in rows the first time, then only the
+        /// rows a command touched. Returns the milliseconds it took (0 if nothing changed); the dev log gets the first
+        /// bake and the first rebuilds.
+        /// </summary>
+        internal float Rebake()
+        {
+            UbwFieldState f = Field;
+            if (bake != null && bakedVersion == f.Version) return 0f;
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            Vector2 sun = crest ? CrestSun : FlatSun;
+            bool first = bake == null;
+            int rows;
+            if (first)
+            {
+                f.TakeChangedRows(UbwFieldBake.BandOf);
+                bake = UbwFieldBake.Banded(f.Swords, sun, UbwGraphics.Set);
+                rows = bake.Bands.Count;
+            }
+            else
+            {
+                HashSet<int> changed = f.TakeChangedRows(UbwFieldBake.BandOf);
+                bake.Rebuild(f.Swords, changed);
+                rows = changed.Count;
+            }
+            bakedVersion = f.Version;
+            float ms = (float)watch.Elapsed.TotalMilliseconds;
+            if (first) lastBakeMs = ms;
+            else
+            {
+                lastRebuildMs = ms;
+                lastRebuildRows = rows;
+            }
+            if (Prefs.DevMode && (first || logged++ < 3))
+                Log.Message("[RimArt] Unlimited Blade Works field " + (first ? "baked, " + rows + " rows of " + UbwFieldBake.BandDepth + " cells" : "rows rebuilt: " + rows)
+                            + ", " + f.Swords.Count + " swords, " + bake.Vertices + " vertices, " + ms.ToString("0.0") + " ms");
+            return ms;
+        }
+
+        private int logged;
+
         /// <summary>Called by the GenStep: this map is the world made for these landing spots.</summary>
         public void Begin(List<IntVec3> keepOffsets, bool crest = true)
         {
@@ -94,7 +165,16 @@ namespace RimArt
             closeAt = -1f;
             closing = false;
             shaken = false;
+            NewField();
+        }
+
+        /// <summary>A fresh field for new landing spots: the old bake's meshes are destroyed.</summary>
+        private void NewField()
+        {
+            bake?.Release();
             bake = null;
+            bakedVersion = -1;
+            swords = new UbwFieldState();
         }
 
         /// <summary>The ability: everyone has landed on these spots (cells from the middle) at this tick; the world's clock starts, and the field is baked again with no sword over them.</summary>
@@ -106,7 +186,7 @@ namespace RimArt
             closeAt = -1f;
             shaken = false;
             offset = 0f;
-            bake = null;
+            NewField();
         }
 
         /// <summary>The ability: the close begins at <paramref name="gameSeconds"/> of game time since the take, or when the fire has finished running out if that is later. Returns when it begins, in game time since the take.</summary>
@@ -137,13 +217,9 @@ namespace RimArt
             }
 
             Vector2 sun = crest ? CrestSun : FlatSun;
-            if (bake == null)
-            {
-                var spots = new UbwXZ[keep.Count];
-                for (int i = 0; i < keep.Count; i++) spots[i] = new UbwXZ(keep[i].x, keep[i].z);
-                crestWorld = crest ? UbwCrestWorld.For(sun) : null;
-                bake = UbwWorldGraphics.BakeFor(spots, sun, crestWorld?.Terrain.Terrain);
-            }
+            if (crest && crestWorld == null) crestWorld = UbwCrestWorld.For(sun);
+            // At most once a frame: the commands' changes since the last frame, in the rows they touched.
+            Rebake();
 
             // The caster's cell's corner, as the sketches put the world on a cell's corner.
             var centre = new Vector2(map.Size.x / 2f, map.Size.z - UbwCrest.North);
@@ -159,6 +235,13 @@ namespace RimArt
             UnlimitedBladeWorksMap.CloseLater(map);
         }
 
+        public override void MapRemoved()
+        {
+            base.MapRemoved();
+            bake?.Release();
+            bake = null;
+        }
+
         public override void ExposeData()
         {
             base.ExposeData();
@@ -171,7 +254,12 @@ namespace RimArt
             Scribe_Values.Look(ref seconds, "ubwSeconds");
             Scribe_Values.Look(ref closeAt, "ubwCloseAt", -1f);
             Scribe_Values.Look(ref offset, "ubwOffset");
-            if (Scribe.mode == LoadSaveMode.PostLoadInit && keep == null) keep = new List<IntVec3>();
+            Scribe_Deep.Look(ref swords, "ubwField");
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                if (keep == null) keep = new List<IntVec3>();
+                if (swords == null) swords = new UbwFieldState();
+            }
         }
     }
 }

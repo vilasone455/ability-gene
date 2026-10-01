@@ -83,6 +83,16 @@ namespace RimArt
         /// <summary>The charge the Echo took when the ability fired; given back if the chant breaks.</summary>
         public float paid;
         public List<PocketGuest> taken = new List<PocketGuest>();
+        /// <summary>Seconds of the world the commands have spent: swordCostSeconds for every sword taken out of the ground.</summary>
+        public float spent;
+        /// <summary>The Intercept toggle (<see cref="UbwIntercept"/>).</summary>
+        public bool intercept;
+        /// <summary>The commands used inside the world (docs/unlimited-blade-works.md, The commands).</summary>
+        public UbwFullOpen fullOpen = new UbwFullOpen();
+        public UbwPin pins = new UbwPin();
+        public UbwDraw draws = new UbwDraw();
+        public UbwArm arms = new UbwArm();
+        public UbwIntercept intercepts = new UbwIntercept();
         private bool shookTaken, shookHome;
         /// <summary>The return found no map to go to and is waiting for one (said once). Not saved.</summary>
         private bool waitingForMap;
@@ -107,7 +117,20 @@ namespace RimArt
         private float ReturnAt => closeAt < 0f ? Never : TakenAt + closeAt + UbwWorldTiming.Close;
         /// <summary>How long the home ring burns low after the white clears, so the fire runs back in and its white peaks at <see cref="ReturnAt"/>.</summary>
         private float Hold => closeAt < 0f ? Never : ReturnAt - (T.Flare + T.Back + T.FlashUp) - T.For(verse).Clear;
-        public float WorldSecondsLeft(int now) => takenTick < 0 ? Rules.WorldSecondsFor(verse) : Mathf.Max(0f, Rules.WorldSecondsFor(verse) - (now - takenTick) / 60f);
+        /// <summary>The world's time left: its length by verse less the game time since the take and the seconds the commands spent.</summary>
+        public float WorldSecondsLeft(int now) => takenTick < 0 ? Rules.WorldSecondsFor(verse) : Mathf.Max(0f, Rules.WorldSecondsFor(verse) - (now - takenTick) / 60f - spent);
+
+        /// <summary>The world's map component while the world exists.</summary>
+        public MapComponent_UnlimitedBladeWorks Inside => world != null && Find.Maps.Contains(world) ? world.GetComponent<MapComponent_UnlimitedBladeWorks>() : null;
+
+        /// <summary>The commands can be given: the world stands, its close has not begun or been ordered, and the caster is in it and fit.</summary>
+        public bool CommandsOpen => Standing && closeAt < 0f && !closeOrdered && CasterHolds();
+
+        /// <summary>Alive and spawned inside this cast's world.</summary>
+        public bool InWorld(Pawn pawn) => pawn != null && !pawn.Dead && pawn.Spawned && world != null && pawn.Map == world;
+
+        /// <summary>Takes swordCostSeconds off the world for each of <paramref name="swords"/> swords leaving the ground.</summary>
+        public void Spend(int swords) => spent += swords * Rules.swordCostSeconds;
 
         public UbwCast() { }
 
@@ -213,7 +236,7 @@ namespace RimArt
 
         // ---- the world stands, then closes -------------------------------------------------------------------------
 
-        private bool CasterHolds() => caster != null && !caster.Dead && !caster.Downed && caster.Spawned && caster.Map == world && Ability != null;
+        public bool CasterHolds() => caster != null && !caster.Dead && !caster.Downed && caster.Spawned && caster.Map == world && Ability != null;
 
         private void BeginClose(float w)
         {
@@ -240,6 +263,11 @@ namespace RimArt
                 return;
             }
             returned = true;
+            // The commands end with the world; Arm's copies break before anyone is moved, so none comes home.
+            arms.BreakAll(this);
+            fullOpen = new UbwFullOpen();
+            draws.flights.Clear();
+            intercepts.meets.Clear();
             IntVec3 drop = to == home ? centre : to.Center;
             var back = new PocketReturn(world, to, hostilesFight: true);
 
@@ -291,11 +319,41 @@ namespace RimArt
             if (Standing)
             {
                 float w = (now - takenTick) / 60f;
-                if (closeAt < 0f && (closeOrdered || w >= Rules.WorldSecondsFor(verse) || !CasterHolds())) BeginClose(w);
+                if (closeAt < 0f && (closeOrdered || w + spent >= Rules.WorldSecondsFor(verse) || !CasterHolds()))
+                {
+                    BeginClose(w);
+                    fullOpen.Cancel(this, now);
+                }
+                // Swords already on their way finish during the close; no new command can start.
+                TickCommands(now);
                 if (closeAt >= 0f && w >= closeAt + UbwWorldTiming.Close) Return();
                 return true;
             }
             return s < T.For(verse, T.Run, Hold).End;
+        }
+
+        private void TickCommands(int now)
+        {
+            if (Inside == null) return;
+            fullOpen.Tick(this, now);
+            pins.Tick(this, now);
+            draws.Tick(this, now);
+            arms.Tick(this, now);
+            intercepts.Tick(this, now);
+        }
+
+        /// <summary>The commands' swords on the world's map, when it is the map on screen.</summary>
+        public void DrawCommands()
+        {
+            MapComponent_UnlimitedBladeWorks inside = Inside;
+            if (inside == null || !Standing || !inside.Field.Built) return;
+            UbwCommandLook look = UbwCommandLook.For(inside.Origin, inside.Sun, MapComponent_UnlimitedBladeWorks.ShadowStrength);
+            VfxDraw.Begin(look.O);
+            fullOpen.Draw(this, inside, look);
+            pins.Draw(this, inside, look);
+            draws.Draw(this, inside, look);
+            arms.Draw(this, inside, look);
+            intercepts.Draw(inside, look);
         }
 
         // ---- the home side's picture --------------------------------------------------------------------------------
@@ -342,9 +400,21 @@ namespace RimArt
             Scribe_Values.Look(ref fizzled, "fizzled");
             Scribe_Values.Look(ref paid, "paid");
             Scribe_Collections.Look(ref taken, "taken", LookMode.Deep);
+            Scribe_Values.Look(ref spent, "spent");
+            Scribe_Values.Look(ref intercept, "intercept");
+            Scribe_Deep.Look(ref fullOpen, "fullOpen");
+            Scribe_Deep.Look(ref pins, "pins");
+            Scribe_Deep.Look(ref draws, "draws");
+            Scribe_Deep.Look(ref arms, "arms");
+            Scribe_Deep.Look(ref intercepts, "intercepts");
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 if (taken == null) taken = new List<PocketGuest>();
+                if (fullOpen == null) fullOpen = new UbwFullOpen();
+                if (pins == null) pins = new UbwPin();
+                if (draws == null) draws = new UbwDraw();
+                if (arms == null) arms = new UbwArm();
+                if (intercepts == null) intercepts = new UbwIntercept();
                 shookTaken = shookHome = true;
             }
         }

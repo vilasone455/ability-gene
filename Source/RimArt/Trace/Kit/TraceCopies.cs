@@ -10,11 +10,17 @@ namespace RimArt
     {
         public ThingWithComps thing;
         public Pawn holder;
+        /// <summary>
+        /// Given by Unlimited Blade Works' Arm to a colonist without Trace On: the Trace On rule of <see cref="TraceCopies.Check"/>
+        /// does not apply; the copy breaks when the world closes (<see cref="UbwArm.BreakAll"/>) or its holder is no longer in one.
+        /// </summary>
+        public bool ubwArm;
 
         public void ExposeData()
         {
             Scribe_References.Look(ref thing, "thing");
             Scribe_References.Look(ref holder, "holder");
+            Scribe_Values.Look(ref ubwArm, "ubwArm");
         }
     }
 
@@ -50,29 +56,19 @@ namespace RimArt
         /// <summary>Only melee weapons are looked up: the market value part asks this of every thing.</summary>
         public static bool IsCopy(Thing thing) => thing != null && thing.def.IsMeleeWeapon && GameComponent_Trace.Instance?.CopyOf(thing) != null;
 
-        /// <summary>Puts the copy in the pawn's empty hand and keeps it on the list.</summary>
-        public static void Give(Pawn pawn, ThingWithComps copy)
+        /// <summary>Puts the copy in the pawn's empty hand and keeps it on the list. <paramref name="ubwArm"/>: an Unlimited Blade Works Arm copy (<see cref="TraceCopy.ubwArm"/>).</summary>
+        public static void Give(Pawn pawn, ThingWithComps copy, bool ubwArm = false)
         {
             pawn.equipment.AddEquipment(copy);
-            GameComponent_Trace.Instance?.AddCopy(new TraceCopy { thing = copy, holder = pawn });
+            GameComponent_Trace.Instance?.AddCopy(new TraceCopy { thing = copy, holder = pawn, ubwArm = ubwArm });
         }
 
         /// <summary>
-        /// Empties the hand for a copy: a held copy breaks, a real weapon goes to the inventory (or to the ground when
-        /// there is no inventory). The cast job does this before the warmup; this catches a cast that skipped it.
+        /// Empties the hand for a copy (<see cref="WeaponStow"/>): a held copy breaks, a real weapon goes to the inventory
+        /// (or to the ground when there is no inventory). The cast job does this before the warmup; this catches a cast
+        /// that skipped it, and Unlimited Blade Works' Draw and Arm use it before the caught sword is put in the hand.
         /// </summary>
-        public static void ClearHands(Pawn pawn)
-        {
-            ThingWithComps held = pawn.equipment?.Primary;
-            if (held == null) return;
-            if (IsCopy(held))
-            {
-                Break(held, false);
-                return;
-            }
-            if (pawn.inventory != null && pawn.equipment.TryTransferEquipmentToContainer(held, pawn.inventory.innerContainer)) return;
-            if (pawn.SpawnedOrAnyParentSpawned) pawn.equipment.TryDropEquipment(held, out _, pawn.PositionHeld, forbid: false);
-        }
+        public static void ClearHands(Pawn pawn) => WeaponStow.Stow(pawn);
 
         /// <summary>
         /// The copy breaks into light where it is drawn (with <paramref name="fall"/>, it slips from the hand, turns in
@@ -93,7 +89,8 @@ namespace RimArt
 
         /// <summary>
         /// Every <see cref="CheckTicks"/>: a copy destroyed elsewhere is forgotten; one out of its holder's hand, with a
-        /// dead holder, or with a holder that no longer has Trace On (reverted) breaks.
+        /// dead holder, or with a holder that no longer has Trace On (reverted) breaks. An Arm copy breaks instead when its
+        /// holder is no longer inside an Unlimited Blade Works world.
         /// </summary>
         public static void Check(List<TraceCopy> copies)
         {
@@ -108,7 +105,10 @@ namespace RimArt
                 }
                 Pawn holder = c.holder;
                 bool inHand = holder?.equipment != null && holder.equipment.Contains(c.thing);
-                if (!inHand || holder.Dead || holder.abilities?.GetAbility(TraceDefOf.AG_Trace_On) == null)
+                bool allowed = c.ubwArm
+                    ? holder?.MapHeld?.GetComponent<MapComponent_UnlimitedBladeWorks>()?.IsWorld == true
+                    : holder?.abilities?.GetAbility(TraceDefOf.AG_Trace_On) != null;
+                if (!inHand || holder.Dead || !allowed)
                     Break(c.thing, inHand && holder.Downed);
             }
         }

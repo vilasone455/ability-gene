@@ -18,6 +18,12 @@ namespace RimArt
         /// <summary>The chant: the caster stands and says the verses until the release.</summary>
         public static JobDef AG_UbwChant;
 
+        /// <summary>Full Open charging: the caster stands still (<see cref="JobDriver_UbwFullOpen"/>).</summary>
+        public static JobDef AG_UbwFullOpen;
+
+        /// <summary>Pin's hold: Moving capped at 0, so the pawn counts as downed (<see cref="UbwPin"/>).</summary>
+        public static HediffDef AG_UbwPinned;
+
         static UbwDefOf()
         {
             DefOfHelper.EnsureInitializedInCtor(typeof(UbwDefOf));
