@@ -58,6 +58,8 @@
     <!-- Goku: drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/Goku/*.cs" LinkBase="Linked/Goku" />
     <Compile Include="../../../Source/RimArt/Vergil/*.cs" LinkBase="Linked/Vergil" />
+    <!-- Last Prism: the pictures, the preview's script and the previews only. The weapon's rules will go in LastPrism/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/LastPrism/*.cs" LinkBase="Linked/LastPrism" />
     <!-- Gojo: Unlimited Void's drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/Gojo/*.cs" LinkBase="Linked/Gojo" />
     <!-- Infinity Castle: the castle's drawing, its generator and the previews. The pocket map (GenStep, map component, defs) is in InfinityCastle/Kit, not linked here. -->

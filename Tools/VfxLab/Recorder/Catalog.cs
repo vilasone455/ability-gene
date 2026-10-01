@@ -163,6 +163,11 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Last Prism", Prefix = "Last Prism:", Component = typeof(MapComponent_LastPrismPreview), Clock = "seconds",
+                Phases = LastPrismPhases,
+            },
+            new Kit
+            {
                 // Before the "Gojo:" entry below: Kit.For takes the first prefix that matches.
                 Name = "Gojo", Prefix = "Gojo: red", Component = typeof(MapComponent_GojoRedPreview), Clock = "seconds",
                 Phases = GojoRedPhases,
@@ -1184,6 +1189,22 @@ namespace RimArt.VfxLab
             if (seventh) phases.Add(new Phase("Rifle turns", EgoMagicBulletTiming.Lead));
             phases.Add(new Phase(seventh ? "The seventh" : "Shot " + shot, fire));
             phases.Add(new Phase("Result", fire + EgoMagicBulletTiming.Flight(EgoMagicBulletTiming.Range)));
+            return phases.ToArray();
+        }
+
+        // last-prism.js's phases(): Hold, Fan (channel), Beams join, one marker per target down, then why the beam stopped,
+        // all read off the preview's script; one marker for each idle scenario.
+        private static Phase[] LastPrismPhases(string label)
+        {
+            if (label.Contains("charges")) return new[] { new Phase("In the sun (time x20)", 0f) };
+            if (label.Contains("roof")) return new[] { new Phase("Under a roof: no charge", 0f) };
+            int at = label.LastIndexOf("aim ", StringComparison.Ordinal);
+            float aim = at < 0 ? 0f : float.Parse(label.Substring(at + 4), System.Globalization.CultureInfo.InvariantCulture);
+            LastPrismScript r = LastPrismScript.For(label.Contains("runs dry") ? LastPrismScene.RunsDry : LastPrismScene.Fires, aim);
+            var phases = new List<Phase> { new Phase("Hold", 0f), new Phase("Fan (channel)", (float)LastPrismScript.Lead) };
+            if (r.Joins) phases.Add(new Phase("Beams join", (float)r.JoinAt));
+            for (int k = 0; k < r.Downs.Count; k++) phases.Add(new Phase($"Down {k + 1}, beam swings", (float)r.Downs[k]));
+            phases.Add(new Phase(r.Dried ? "Charge runs out" : "No target left", (float)r.ReleaseAt));
             return phases.ToArray();
         }
 

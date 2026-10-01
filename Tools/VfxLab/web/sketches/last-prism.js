@@ -1,4 +1,5 @@
-// Last Prism — weapon proposal, not the game. Nothing in Source/RimArt draws this yet.
+// Last Prism — weapon proposal. The pictures are ported to Source/RimArt/LastPrism/LastPrism* (previews
+// "Last Prism: ..."); no weapon, ability or rule draws them yet.
 // From Terraria's Last Prism (Moon Lord drop): a crystal prism held out in front that splits light
 // into six coloured beams, which narrow over a few seconds into one beam.
 //
@@ -73,7 +74,8 @@
 // the tip, so none covers it. Aiming north (sin > .3) beams, glow and prism draw under the pawn layer
 // so they pass behind the wielder's head. The meter over the wielder's head stands in for the gizmo, the bars over the others show damage taken against what downs them (a
 // sketch aid, not a game UI), and the roof cells stand in for the game's roof overlay. Pawns are
-// lib/pawn.js stand-ins (the mech a grey hulk); walls are the Paper Bomb kit's. The aim, the targets,
+// lib/pawn.js stand-ins (the mech a grey hulk); walls are the Paper Bomb kit's. "Show stand-ins" off hides the
+// pawns, walls, roof cells and damage bars, to compare with the C# recording ("Last Prism: ..."). The aim, the targets,
 // the walk and every hit are replayed from 0 at 60 steps a second (cached per parameter set), in
 // cells relative to the chosen cell, so the drawing and the damage use the same walls and beams.
 import { AltitudeLayer, Color, Mathf, MaterialPool, ShaderDatabase } from '../js/engine.js';
@@ -354,6 +356,7 @@ export default {
     scenario: { label: 'Scenario', value: 'fires', options: ['fires', 'runs dry', 'charges in the sun', 'under a roof'], group: 'Showcase' },
     aim: P('Aim (degrees, 0 east, 90 north)', 0, 0, 355, 5, 'Showcase'),
     walker: { label: 'The first target walks across the aim', value: true, group: 'Showcase' },
+    actors: { label: 'Show stand-ins (pawns, walls, roof, damage bars)', value: true, group: 'Showcase' },
     range: P('Range (cells)', 22, 10, 40, 1, 'Shape'),
     fan: P('Fan, each side of the aim (degrees)', 35, 10, 60, 1, 'Shape'),
     width: P('Joined beam width, the lane that is hit (cells)', 1, .5, 2, .1, 'Shape'),
@@ -400,14 +403,14 @@ export default {
     const lane = joined ? rayWall(tipG, theta, cells, p.range) : 0, laneBlocked = joined && lane < p.range - 1e-6;
 
     // --- the floor: roof overlay, the rainbow in sun, the target ring --------------------------------------------------
-    if (roofed) for (let ix = -3; ix <= 3; ix++) for (let iz = -2; iz <= 2; iz++)
+    if (roofed && p.actors) for (let ix = -3; ix <= 3; ix++) for (let iz = -2; iz <= 2; iz++)
       sprite({ x: o.x + ix, z: o.z + iz }, .92, .92, RoofTint.withAlpha(.2), flat, Y + .25);
     const fall = { x: midG.x + sun.x * PrismH, z: midG.z + sun.z * PrismH };
     sprite(fall, PrismLen * 1.2, PrismRad * 1.5, Body.withAlpha(strength * .35), soft, shadowLayer, -theta / D2R);
     if (!roofed && live === 0) rainbow(fall, sun, light, s);
     if (firing && s >= t.lead && s < t.release) ringAt(add(o, r.pos(r.targets[k], s)), .5, Warn.withAlpha(.7), Floor + .02);
 
-    if (firing) walls('last prism wall', o, cells, sun, strength);
+    if (firing && p.actors) walls('last prism wall', o, cells, sun, strength);
 
     // --- pawns, north first -------------------------------------------------------------------------------------------
     const people = firing ? r.people.map((c, j) => {
@@ -419,10 +422,11 @@ export default {
     const figures = [...people, { pos: caster, caster: true }].sort((m, n) => n.pos.z - m.pos.z);
     figures.forEach(g => {
       if (g.caster) {
-        pawn(g.pos, { shirt: Wielder, sun, shadow: strength });
+        if (p.actors) pawn(g.pos, { shirt: Wielder, sun, shadow: strength });
         prism(lifted(baseG), theta, roll(s, t, p), sun, prismLayer, roofed, joined ? live : u * live, s);
         return;
       }
+      if (!p.actors) return;
       const heat = g.inLane ? .75 + .2 * Math.sin(s * 40) : g.crossed.length ? .3 : 0;
       const shirt = g.c.mech ? MechGrey : g.c.ally ? Ally : Enemy, skin = g.c.mech ? MechHead : Skin;
       pawn(g.pos, { body: g.c.mech ? 'hulk' : 'average', shirt: Color.Lerp(shirt, White, heat), skin: Color.Lerp(skin, White, heat), sun, shadow: strength, downed: g.down });
