@@ -346,7 +346,7 @@ namespace RimArt
         public void DrawCommands()
         {
             MapComponent_UnlimitedBladeWorks inside = Inside;
-            if (inside == null || !Standing || !inside.Field.Built) return;
+            if (inside == null || !Standing) return;
             UbwCommandLook look = UbwCommandLook.For(inside.Origin, inside.Sun, MapComponent_UnlimitedBladeWorks.ShadowStrength);
             VfxDraw.Begin(look.O);
             fullOpen.Draw(this, inside, look);

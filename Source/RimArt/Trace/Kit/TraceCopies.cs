@@ -56,6 +56,15 @@ namespace RimArt
         /// <summary>Only melee weapons are looked up: the market value part asks this of every thing.</summary>
         public static bool IsCopy(Thing thing) => thing != null && thing.def.IsMeleeWeapon && GameComponent_Trace.Instance?.CopyOf(thing) != null;
 
+        /// <summary>A copy of <paramref name="def"/>, not yet anywhere: of <paramref name="stuff"/> (the def's default when null and it takes one) at <paramref name="quality"/>.</summary>
+        public static ThingWithComps Make(ThingDef def, QualityCategory quality, ThingDef stuff = null)
+        {
+            if (def.MadeFromStuff && stuff == null) stuff = GenStuff.DefaultStuffFor(def);
+            var copy = (ThingWithComps)ThingMaker.MakeThing(def, def.MadeFromStuff ? stuff : null);
+            copy.TryGetComp<CompQuality>()?.SetQuality(quality, null);
+            return copy;
+        }
+
         /// <summary>Puts the copy in the pawn's empty hand and keeps it on the list. <paramref name="ubwArm"/>: an Unlimited Blade Works Arm copy (<see cref="TraceCopy.ubwArm"/>).</summary>
         public static void Give(Pawn pawn, ThingWithComps copy, bool ubwArm = false)
         {

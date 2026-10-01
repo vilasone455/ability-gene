@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Verse.AI.Group;
+using static RimArt.UbwCommands;
 using T = RimArt.UbwCommandTiming;
 
 namespace RimArt
@@ -62,8 +64,6 @@ namespace RimArt
     {
         public List<UbwPinning> pins = new List<UbwPinning>();
 
-        private static int Ticks(double seconds) => Mathf.Max(0, Mathf.RoundToInt((float)(seconds * 60.0)));
-
         public void Begin(UbwCast cast, Pawn foe, int now)
         {
             MapComponent_UnlimitedBladeWorks inside = cast.Inside;
@@ -113,8 +113,24 @@ namespace RimArt
                     dinfo.SetBodyRegion(s.pin < 2 ? BodyPartHeight.Bottom : BodyPartHeight.Middle, BodyPartDepth.Outside);
                     p.target.TakeDamage(dinfo);
                 }
-                if (now > p.Last && !Pinned(p.target, cast)) pins.RemoveAt(i);
+                if (now > p.Last && !Pinned(p.target, cast))
+                {
+                    Rejoin(p.target, cast);
+                    pins.RemoveAt(i);
+                }
             }
+        }
+
+        /// <summary>
+        /// The pin is over. Going down took the pawn out of its lord (Pawn_HealthTracker.MakeDowned calls
+        /// Lord.Notify_PawnLost with PawnLostCondition.Incapped), so a hostile that gets up inside the world would stand
+        /// with no duty for the rest of it: it gets a new assault lord of its faction, as the take gave it. A pawn still
+        /// down from its wounds is left alone; the return puts everyone back into a lord at home.
+        /// </summary>
+        private static void Rejoin(Pawn pawn, UbwCast cast)
+        {
+            if (!cast.InWorld(pawn) || pawn.Downed || pawn.GetLord() != null) return;
+            CrossMapMove.Assault(new List<Pawn> { pawn }, cast.world);
         }
 
         /// <summary>Adds AG_UbwPinned for <paramref name="seconds"/>, or sets the time of the one it has.</summary>
@@ -149,6 +165,7 @@ namespace RimArt
         internal void Draw(UbwCast cast, MapComponent_UnlimitedBladeWorks inside, in UbwCommandLook k)
         {
             UbwFieldState field = inside.Field;
+            int slot = 0;
             foreach (UbwPinning p in pins)
             {
                 Pawn pawn = p.target;
@@ -171,7 +188,7 @@ namespace RimArt
                 {
                     UbwSword sw = field.BySeed(s.seed);
                     if (sw == null) continue;
-                    string key = "ubw pin " + s.seed;
+                    string key = "ubw pin " + slot++;
                     double t = UbwClock.Since(s.launch);
                     if (t < 0)
                     {

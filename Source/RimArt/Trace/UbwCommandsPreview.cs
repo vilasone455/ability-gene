@@ -357,10 +357,11 @@ namespace RimArt
 
         private static void DrawFullOpen(Plan p, in UbwCommandLook k, double s)
         {
+            int slot = 0;
             foreach (Job j in p.Jobs)
             {
                 if (s < j.Pull) continue;
-                string key = "ubw preview " + j.Sw.Seed;
+                string key = "ubw preview " + slot++;
                 if (s < j.Shot.Launch) UbwCommandGraphics.Gathering(k, key, j.Sw, s - j.Pull, MarkAt(p, s - T.TrackLag));
                 else
                 {
@@ -378,10 +379,11 @@ namespace RimArt
         {
             double beat = s > p.Last + 0.4 ? (s - p.Last - 0.4) % T.Jerk : -1;
             double jerk = beat >= 0 && beat < 0.22 ? 0.035 * Math.Sin(beat / 0.22 * Math.PI * 2) : 0;
+            int slot = 0;
             foreach (Job j in p.Jobs)
             {
                 if (s < j.Leaves) continue;
-                string key = "ubw preview " + j.Sw.Seed;
+                string key = "ubw preview " + slot++;
                 UbwCommandGraphics.Shot(k, key, j.Sw, j.Sw.Pose, j.Shot, s, jerk * 60, true);
                 UbwCommandGraphics.BreakOut(k, j.Sw.Cut, s - j.Leaves, j.Sw.Seed + 3);
             }
@@ -395,7 +397,7 @@ namespace RimArt
         {
             if (p.Jobs.Count == 0) return;
             Job j = p.Jobs[0];
-            string key = "ubw preview " + j.Sw.Seed;
+            const string key = "ubw preview draw";
             var hand = new UbwXZ(T.Hand.X, T.Hand.Z);
             if (s >= Order && s < p.Caught + 0.25)
             {
@@ -429,7 +431,7 @@ namespace RimArt
             {
                 Job j = p.Jobs[0];
                 if (s >= Order && s < Launch + 0.15) UbwCommandGraphics.Order(k, Helper, Home(j.Sw), 0.28, 1f - (float)T.Smooth((s - Launch) / 0.15));
-                if (s >= Launch) UbwCommandGraphics.Arming(k, "ubw preview " + j.Sw.Seed, j.Sw, s - Launch, Helper, drawHeld: true);
+                if (s >= Launch) UbwCommandGraphics.Arming(k, "ubw preview arm", j.Sw, s - Launch, Helper, drawHeld: true);
                 if (s >= j.Arrive) UbwCommandGraphics.Caught(k, new UbwXZ(Helper.X + T.Hand.X, Helper.Z + T.Hand.Z), s - j.Arrive);
             }
             StandIn(k, Helper, Ally, null);

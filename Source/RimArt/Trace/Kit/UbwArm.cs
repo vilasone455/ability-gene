@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using static RimArt.UbwCommands;
 using T = RimArt.UbwCommandTiming;
 
 namespace RimArt
@@ -14,7 +15,7 @@ namespace RimArt
         /// <summary>The copy is in the hand; the record stays a moment longer for the glint.</summary>
         public bool given;
 
-        public int Held => launch + Mathf.RoundToInt((float)((T.PullTime + T.ArcTime) * 60.0));
+        public int Held => launch + Ticks(T.PullTime + T.ArcTime);
 
         public void ExposeData()
         {
@@ -60,7 +61,7 @@ namespace RimArt
             if (sw == null) return;
             inside.Field.Take(sw);
             cast.Spend(1);
-            armings.Add(new UbwArming { pawn = pawn, seed = sw.Seed, order = now, launch = now + Mathf.RoundToInt((float)(T.Launch * 60.0)) });
+            armings.Add(new UbwArming { pawn = pawn, seed = sw.Seed, order = now, launch = now + Ticks(T.Launch) });
         }
 
         public void Tick(UbwCast cast, int now)
@@ -79,9 +80,7 @@ namespace RimArt
                 if (def == null) continue;
                 WeaponStow.Stow(pawn);
                 if (pawn.equipment.Primary != null) continue;
-                var copy = (ThingWithComps)ThingMaker.MakeThing(def, def.MadeFromStuff ? GenStuff.DefaultStuffFor(def) : null);
-                copy.TryGetComp<CompQuality>()?.SetQuality(QualityCategory.Normal, null);
-                TraceCopies.Give(pawn, copy, ubwArm: true);
+                TraceCopies.Give(pawn, TraceCopies.Make(def, QualityCategory.Normal), ubwArm: true);
             }
         }
 
@@ -98,11 +97,12 @@ namespace RimArt
         /// <summary>The order line from the colonist to the sword, the sword sliding up and arcing to the hand, the traced glint as it is held.</summary>
         internal void Draw(UbwCast cast, MapComponent_UnlimitedBladeWorks inside, in UbwCommandLook k)
         {
+            int slot = 0;
             foreach (UbwArming a in armings)
             {
                 UbwSword sw = inside.Field.BySeed(a.seed);
                 if (sw == null || !cast.InWorld(a.pawn)) continue;
-                string key = "ubw arm " + a.seed;
+                string key = "ubw arm " + slot++;
                 Vector2 m = inside.Local(a.pawn.DrawPos);
                 var mid = new UbwXZ(m.x, m.y);
                 double age = UbwClock.Since(a.launch);

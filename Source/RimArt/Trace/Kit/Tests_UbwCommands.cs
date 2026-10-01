@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using Verse.AI.Group;
 using static RimArt.RimArtTestContext;
 using static RimArt.Tests_Ubw;
 
@@ -12,7 +14,8 @@ namespace RimArt
 {
     /// <summary>
     /// Game tests for Unlimited Blade Works' commands inside the world (run with -quicktest -rimarttest=ubw): Full Open
-    /// released and cancelled, Pin, Draw, Arm and Intercept, with the world's time each one spends. Every pawn stands
+    /// released and cancelled, Pin, Draw, Arm, Intercept (a bullet, and a rocket that bursts clear of the caster), the field's
+    /// state through Scribe, with the world's time each one spends. Every pawn stands
     /// within the verse's radius of the caster before the take and lands at the same offset; hostiles are stunned in the
     /// world so their assault lord does not move them. The pawns' state is logged as the swords fly.
     /// </summary>
@@ -108,6 +111,25 @@ namespace RimArt
             t.Check(inside.Field.TakenCount - holes == 8, "8 holes in the field (" + (inside.Field.TakenCount - holes) + ")");
             t.Check(inside.Field.LandedCount - stuck == 8, "8 swords stuck in the ground past the target (" + (inside.Field.LandedCount - stuck) + ")");
             t.Check(host.CurJobDef != UbwDefOf.AG_UbwFullOpen, "the caster is free again");
+
+            // The field's state through Scribe, as a save carries it: the holes and the stuck swords come back after a load.
+            UbwFieldState state = inside.Field;
+            int landedSeed = state.Swords.Where(sw => !sw.Hole && sw.Seed >= UbwFieldState.FirstLandedSeed).Select(sw => sw.Seed).DefaultIfEmpty(-1).First();
+            string path = Path.Combine(Path.GetTempPath(), "rimart-ubw-field.xml");
+            Scribe.saver.InitSaving(path, "ubwFieldTest");
+            try { Scribe_Deep.Look(ref state, "field"); }
+            finally { Scribe.saver.FinalizeSaving(); }
+            UbwFieldState loaded = null;
+            Scribe.loader.InitLoading(path);
+            try { Scribe_Deep.Look(ref loaded, "field"); }
+            finally { Scribe.loader.FinalizeLoading(); }
+            inside.BuildField(loaded);
+            t.Log("scribe: " + loaded.TakenCount + " holes, " + loaded.LandedCount + " stuck, " + loaded.Swords.Count + " swords after the round trip");
+            t.Check(loaded.TakenCount == state.TakenCount && loaded.LandedCount == state.LandedCount && loaded.Swords.Count == state.Swords.Count,
+                "the field's holes and stuck swords round-trip through Scribe");
+            t.Check(landedSeed >= 0 && loaded.BySeed(landedSeed) != null && !loaded.BySeed(landedSeed).Hole, "a stuck sword is found again by its seed (" + landedSeed + ")");
+            string xml = Scribe.saver.DebugOutputFor(cast);
+            t.Check(xml.Contains("<fullOpen>") && xml.Contains("<spent>"), "the cast's commands write their save data (" + xml.Length + " chars)");
             cast.closeOrdered = true;
             foreach (int w in WaitFor(() => cast.returned, 1200, 5)) yield return w;
             Home(t);
@@ -196,6 +218,10 @@ namespace RimArt
             float upAt = (t.Now - order) / 60f;
             t.Log(t.Now + " " + Describe(foe) + " after " + upAt.ToString("0.0") + " s");
             t.Check(!foe.Dead && !foe.Downed && upAt >= 12f && upAt < 14f, "up again after 12 s (" + upAt.ToString("0.0") + " s)");
+            yield return 2;
+            Lord lord = foe.GetLord();
+            t.Log(t.Now + " lord: " + (lord == null ? "none" : lord.LordJob.GetType().Name + " with " + lord.ownedPawns.Count + " pawn(s)"));
+            t.Check(lord != null && lord.LordJob is LordJob_AssaultColony, "back in an assault lord (going down took it out of its old one)");
             t.Check(cast.Standing, "the world still stands (" + cast.WorldSecondsLeft(t.Now).ToString("0.0") + " s left)");
             cast.closeOrdered = true;
             foreach (int w in WaitFor(() => cast.returned, 1200, 5)) yield return w;
@@ -366,7 +392,73 @@ namespace RimArt
             EndHost(record);
         }
 
-        [RimArtTest("Ubw", "commands 7 the five previews play over the home map without errors (screenshots)", 3000)]
+        [RimArtTest("Ubw", "commands 7 Intercept rocket: a triple rocket from 11+ cells is met and bursts its radius clear of the caster", 3600)]
+        private static IEnumerable<int> InterceptRocket(RimArtTestContext t)
+        {
+            Setup(t);
+            yield return 5;
+            Pawn host = Host(t, out EchoRecord record);
+            Faction raiders = Find.FactionManager.RandomEnemyFaction(allowNonHumanlike: false);
+            Pawn far = t.Target(t.center + new IntVec3(11, 0, 0), bare: false, faction: raiders);
+            yield return 2;
+            var run = new Run();
+            foreach (int w in IntoWorld(t, host, run, verse: 3)) yield return w;
+            UbwCast cast = run.cast;
+            if (cast == null || !t.Check(far.Map == cast.world, "the raider was taken (11 cells: verse 3)")) yield break;
+            Still(far);
+            t.Note(host);
+            cast.intercept = true;
+            foreach (int w in Opened(t, cast)) yield return w;
+            MapComponent_UnlimitedBladeWorks inside = cast.Inside;
+            ThingDef gun = DefDatabase<ThingDef>.GetNamed("Gun_TripleRocket");
+            ProjectileProperties rocket = gun.Verbs[0].defaultProjectile.projectile;
+            float speed = rocket.SpeedTilesPerTick * 60f;
+
+            // A shooting spot 11 to 14 cells out from which some sword can meet the rocket in time, so the run does not hang on the field's layout.
+            var aim = new Vector2(host.DrawPos.x, host.DrawPos.z);
+            IntVec3 spot = IntVec3.Invalid;
+            float along = 0f, time = 0f;
+            for (int r = 11; r <= 14 && !spot.IsValid; r++)
+                for (int deg = 0; deg < 360 && !spot.IsValid; deg += 15)
+                {
+                    IntVec3 cell = host.Position + new IntVec3(Mathf.RoundToInt(r * Mathf.Cos(deg * Mathf.Deg2Rad)), 0, Mathf.RoundToInt(r * Mathf.Sin(deg * Mathf.Deg2Rad)));
+                    if (!cell.InBounds(cast.world) || !cell.Standable(cast.world)) continue;
+                    var o = new Vector2(cell.x + 0.5f, cell.z + 0.5f);
+                    if (UbwIntercept.Choose(inside, o, aim, aim, o, speed, rocket.explosionRadius, out along, out time) != null) spot = cell;
+                }
+            if (!t.Check(spot.IsValid, "a spot from which a sword can meet the rocket in time"))
+            {
+                cast.closeOrdered = true;
+                EndHost(record);
+                yield break;
+            }
+            far.Position = spot;
+            far.Notify_Teleported();
+            Still(far);
+            t.Log("shooter at " + spot + ", " + (spot - host.Position).LengthHorizontal.ToString("0.0") + " cells out; the rule meets the rocket " + along.ToString("0.0")
+                  + " cells from the gun, " + time.ToString("0.00") + " s out; speed " + speed.ToString("0") + " cells/s, blast radius " + rocket.explosionRadius);
+            float spent = cast.spent;
+            Projectile shot = Fire(far, host, gun);
+            for (int i = 0; i < 60 && shot.Spawned; i++)
+            {
+                yield return 1;
+                if (i % 3 == 0) t.Log(t.Now + " rocket at " + shot.ExactPosition.ToString("F1") + ", meets " + cast.intercepts.meets.Count);
+            }
+            UbwMeet meet = cast.intercepts.meets.FirstOrDefault(m => m.shot == shot);
+            if (meet != null) yield return Shot(t, cast, "intercept rocket", (inside.Origin + meet.point).ToVector3().ToIntVec3());
+            float shortOf = meet == null ? 0f : Vector2.Distance(inside.Origin + meet.point, aim);
+            t.Log("met " + (meet == null ? "nowhere" : shortOf.ToString("0.0") + " cells short of the caster, done " + (meet.done != int.MinValue)) + " | caster " + Health(host) + ", shooter " + Health(far));
+            t.Check(!shot.Spawned && meet != null && meet.done != int.MinValue, "the rocket was met and burst there");
+            t.Check(meet != null && shortOf >= UbwRules.Of.interceptShortOfTarget + rocket.explosionRadius - 0.05f, "the burst stayed its radius clear of the caster (" + shortOf.ToString("0.0") + " cells)");
+            t.Check(t.Untouched(host), "the caster was not hurt (" + Health(host) + ")");
+            t.Check(Math.Abs(cast.spent - spent - Cost) < 0.01f, Cost + " s spent (" + (cast.spent - spent).ToString("0.##") + ")");
+            cast.closeOrdered = true;
+            foreach (int w in WaitFor(() => cast.returned, 1200, 5)) yield return w;
+            Home(t);
+            EndHost(record);
+        }
+
+        [RimArtTest("Ubw", "commands 8 the five previews play over the home map without errors (screenshots)", 3000)]
         private static IEnumerable<int> Previews(RimArtTestContext t)
         {
             Setup(t);

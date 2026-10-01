@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using static RimArt.UbwCommands;
 using static RimArt.VfxMath;
 using T = RimArt.UbwCommandTiming;
 
@@ -56,8 +57,6 @@ namespace RimArt
         public List<UbwVolleySword> dropping = new List<UbwVolleySword>();
 
         public bool Charging => target != null;
-
-        private static int Ticks(double seconds) => Mathf.Max(0, Mathf.RoundToInt((float)(seconds * 60.0)));
 
         /// <summary>Starts the charge on <paramref name="foe"/>: the caster is held still from now on.</summary>
         public void Begin(UbwCast cast, Pawn foe, int now)
@@ -197,13 +196,16 @@ namespace RimArt
             v.toward = -dir;
         }
 
-        private static UbwXZ XZ(Vector2 v) => new UbwXZ(v.x, v.y);
-
-        /// <summary>The ring under the target while charging, the hovering swords, the volley in flight and stuck, the swords dropping back.</summary>
+        /// <summary>
+        /// The ring under the target while charging, the hovering swords, the volley in flight and stuck, the swords dropping
+        /// back. The scratch builders are keyed by the sword's place in its list this frame, not by its seed: UbwGraphics keeps
+        /// a builder and its mesh for every key it has ever seen.
+        /// </summary>
         internal void Draw(UbwCast cast, MapComponent_UnlimitedBladeWorks inside, in UbwCommandLook k)
         {
             UbwFieldState field = inside.Field;
             UbwXZ foe = default;
+            int slot = 0;
             if (Charging && cast.InWorld(target))
             {
                 foe = XZ(inside.Local(target.DrawPos));
@@ -213,13 +215,13 @@ namespace RimArt
             foreach (UbwVolleySword v in hovering)
             {
                 UbwSword sw = field.BySeed(v.seed);
-                if (sw != null) UbwCommandGraphics.Gathering(k, "ubw open " + v.seed, sw, UbwClock.Since(v.pulled), foe);
+                if (sw != null) UbwCommandGraphics.Gathering(k, "ubw hover " + slot++, sw, UbwClock.Since(v.pulled), foe);
             }
             foreach (UbwVolleySword v in flying)
             {
                 UbwSword sw = field.BySeed(v.seed);
                 if (sw == null) continue;
-                string key = "ubw open " + v.seed;
+                string key = "ubw volley " + slot++;
                 double s = UbwClock.Since(v.pulled);
                 if (v.arrive == 0)
                 {
@@ -243,7 +245,7 @@ namespace RimArt
                 UbwSword sw = field.BySeed(v.seed);
                 if (sw == null) continue;
                 UbwPose from = T.Gathered(sw, (v.dropped - v.pulled) / 60.0, XZ(v.foe), out _, out _);
-                UbwCommandGraphics.DropBack(k, "ubw open " + v.seed, sw, from, System.Math.Min(1.0, UbwClock.Since(v.dropped) / T.DropTime));
+                UbwCommandGraphics.DropBack(k, "ubw drop " + slot++, sw, from, System.Math.Min(1.0, UbwClock.Since(v.dropped) / T.DropTime));
             }
         }
 

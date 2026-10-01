@@ -99,6 +99,9 @@ namespace RimArt
             }
         }
 
+        /// <summary>For the game tests: lays <paramref name="state"/> out as this world's field (the same landing spots and ground).</summary>
+        internal void BuildField(UbwFieldState state) => state.Build(keep, crest);
+
         /// <summary>The world's fixed low sun (shadow cells per cell of height) and how dark its shadows are: what the field is baked under.</summary>
         internal Vector2 Sun => crest ? CrestSun : FlatSun;
         internal const float ShadowStrength = Strength;

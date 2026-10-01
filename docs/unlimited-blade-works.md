@@ -93,7 +93,8 @@ placeholder and an XML field of `UbwRules` (`AG_Trace_Abilities.xml`).
    death-on-downed roll is made. The others arrive 0.1 s apart once it has fallen and pin the other leg and
    both sleeves. Each sword does `pinDamage` (2) Cut. The pinning swords are gone from the field; they are
    drawn in the pawn, leaning 15 degrees out, 60 % deep, while it stays pinned and in the world. There is
-   no prisoner bed in the world, so a capture happens after the return, if the 12 s have not run out.
+   no prisoner bed in the world, so a capture happens after the return, if the 12 s have not run out. Going down takes a
+   pawn out of its lord (vanilla), so a hostile that gets up inside the world is put into a new assault lord.
 3. **Draw** (caster). Pick a sword: the one nearest the clicked cell within `drawPickRadius` (1.5 cells);
    the targeter draws a line to it and a ring at it. It tears out 0.1 s after the order, turns flat and flies
    to the caster's hand spinning at `drawSpeed` (22 cells/s), following him if he moves. Every pawn hostile
@@ -114,7 +115,8 @@ placeholder and an XML field of `UbwRules` (`AG_Trace_Abilities.xml`).
    line first (`interceptRiseSeconds` 0.1 s plus the distance at `interceptSpeed` 20 cells/s, no more than
    the shot needs to get there), the one nearest the line leaves the ground and meets it, no nearer than
    `interceptClearOfGun` (1.2 cells) to where it was fired and at least `interceptShortOfTarget` (1.5 cells)
-   short of where it was aimed. There a plain shot ends without hitting anything and an explosive one
+   short of the pawn it was aimed at (a miss lands past it) and of where it lands, an explosive its blast
+   radius further, so the burst does not reach the pawn. There a plain shot ends without hitting anything and an explosive one
    bursts; the sword breaks into light. Each stopped shot costs 0.5 s. A shot no sword can reach in time
    (fired from close by, or across bare ground) is not stopped and costs nothing. Only direct-flight rounds
    count, not mortar shells, and not a round Recursion holds. It is a prefix on `Projectile.TickInterval`,
@@ -123,7 +125,8 @@ placeholder and an XML field of `UbwRules` (`AG_Trace_Abilities.xml`).
 A sword's hit (`UbwSwordHit`): the weapon def the sword is a picture of (`UbwWeapon.Name` is the defName),
 its strongest Cut or Stab tool at default stuff and Normal quality (`Tool.AdjustedBaseMeleeDamageAmount`),
 armour penetration by `VerbProperties.AdjustedArmorPenetration`'s rule, the weapon named on the DamageInfo,
-the caster as instigator; no miss roll and no damage roll. A monosword's hit is Stab 25, AP 0.9.
+the caster as instigator; no miss roll and no damage roll. A monosword's hit is Stab 25, AP 0.9. A weapon with
+neither tool hits for `swordFallbackDamage` (10) Cut at `swordFallbackPenetration` (0.15).
 
 ## In game
 
@@ -132,10 +135,12 @@ To try the ability: RimArts debug window, Echo, **make Host (no trials)** with S
 works: ready** clears its cooldown. The real way in: Kits, **Origin: Blade** on a colonist (the grant
 awakens it), build the resonance device and tune it to Shirou and that colonist.
 
-Game tests: `-quicktest -rimarttest=ubw`, 14 scenarios: 7 for the ability (the Trial, cast and return,
+Game tests: `-quicktest -rimarttest=ubw`, 15 scenarios: 7 for the ability (the Trial, cast and return,
 Stop chanting and a move order refund, revert during the chant, revert in the world, the reveal shot, empty
-pool in the world) and 7 for the commands (`-rimarttest="Ubw: commands"`: Full Open released, Full Open
-cancelled by a move order, Pin, Draw, Arm, Intercept, the five previews), about 4 minutes in all.
+pool in the world) and 8 for the commands (`-rimarttest="Ubw: commands"`: Full Open released, with the field's
+state through Scribe and the cast's save data; Full Open cancelled by a move order; Pin, with the raider back in
+an assault lord when it gets up; Draw; Arm; Intercept of a revolver shot; Intercept of a triple rocket, met its
+blast radius clear of the caster; the five previews), about 4.5 minutes in all.
 
 RimArts debug window, Trace, pictures and the empty map:
 

@@ -42,7 +42,7 @@ namespace RimArt
         private int nextSeed = FirstLandedSeed;
 
         /// <summary>A stuck sword's seed starts here, past every seed of the laid-out field (a grid of at most 61 x 61).</summary>
-        private const int FirstLandedSeed = 100000;
+        internal const int FirstLandedSeed = 100000;
         /// <summary>A stuck sword is driven in this share of its length, as the sketch's stuck() with buried 0.2.</summary>
         private const double LandedSink = 0.2;
 

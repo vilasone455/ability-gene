@@ -32,6 +32,12 @@ namespace RimArt
             };
         }
 
+        /// <summary>Whole ticks of <paramref name="seconds"/> of game time, never negative.</summary>
+        internal static int Ticks(double seconds) => Mathf.Max(0, Mathf.RoundToInt((float)(seconds * 60.0)));
+
+        /// <summary>A point on the map plane as the blade geometry's (x, z).</summary>
+        internal static UbwXZ XZ(Vector2 v) => new UbwXZ(v.x, v.y);
+
         private static string Cost(UbwRules rules, int swords) => (swords * rules.swordCostSeconds).ToString("0.#") + " s of the world";
 
         internal static IEnumerable<Command> Buttons(UbwCast cast, Ability ability)

@@ -3,6 +3,7 @@ using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using static RimArt.UbwCommands;
 using T = RimArt.UbwCommandTiming;
 
 namespace RimArt
@@ -57,8 +58,6 @@ namespace RimArt
     public sealed class UbwDraw : IExposable
     {
         public List<UbwDrawFlight> flights = new List<UbwDrawFlight>();
-
-        private static int Ticks(double seconds) => Mathf.Max(0, Mathf.RoundToInt((float)(seconds * 60.0)));
 
         /// <summary>The usable sword the Draw button would take for a click at <paramref name="cell"/>, or null.</summary>
         public static UbwSword PickAt(UbwCast cast, IntVec3 cell)
@@ -155,9 +154,7 @@ namespace RimArt
             TraceCopies.ClearHands(caster);
             // A hand that could not be emptied (no inventory, not spawned) keeps its weapon; AddEquipment would refuse.
             if (caster.equipment.Primary != null) return;
-            var copy = (ThingWithComps)ThingMaker.MakeThing(def, def.MadeFromStuff ? GenStuff.DefaultStuffFor(def) : null);
-            copy.TryGetComp<CompQuality>()?.SetQuality(QualityOf(caster, def), null);
-            TraceCopies.Give(caster, copy);
+            TraceCopies.Give(caster, TraceCopies.Make(def, QualityOf(caster, def)));
         }
 
         /// <summary>Trace On's quality rule if the weapon is in the caster's library (its best entry of any stuff), else Normal.</summary>
@@ -168,8 +165,6 @@ namespace RimArt
                 if (e.blade == def.defName && (best == null || e.best > best.best)) best = e;
             return best != null ? TraceLibrary.CopyQuality(best, CompProperties_TraceOn.QualityBelow) : QualityCategory.Normal;
         }
-
-        private static UbwXZ XZ(Vector2 v) => new UbwXZ(v.x, v.y);
 
         /// <summary>The targeter's highlight for the Draw button: the sword a click there would take, and the line from the caster to it.</summary>
         internal static void Highlight(UbwCast cast, LocalTargetInfo target)
@@ -186,11 +181,12 @@ namespace RimArt
         internal void Draw(UbwCast cast, MapComponent_UnlimitedBladeWorks inside, in UbwCommandLook k)
         {
             float speed = UbwRules.Of.drawSpeed;
+            int slot = 0;
             foreach (UbwDrawFlight f in flights)
             {
                 UbwSword sw = inside.Field.BySeed(f.seed);
                 if (sw == null) continue;
-                string key = "ubw draw " + f.seed;
+                string key = "ubw draw " + slot++;
                 bool open = f.ended == int.MinValue;
                 Vector2 hand2 = open ? HandOf(cast, inside, f.hand) : f.hand;
                 UbwXZ hand = XZ(hand2), start = XZ(f.start);

@@ -8,7 +8,8 @@ namespace RimArt
     /// <summary>
     /// A sword of Unlimited Blade Works hitting as its own weapon (Full Open's volley, Draw's flight). The world's swords
     /// are pictures of weapon defs (<see cref="UbwWeapon.Name"/> is the ThingDef's defName, read by UbwAtlasBuilder); the
-    /// hit is that def's strongest Cut or Stab tool at its default stuff and Normal quality, with the caster as
+    /// hit is that def's strongest Cut or Stab tool at its default stuff and Normal quality (a weapon with neither:
+    /// UbwRules.swordFallbackDamage Cut at swordFallbackPenetration), with the caster as
     /// instigator and the weapon def named on the DamageInfo, as a melee hit has. There is no miss roll and no 0.8 to 1.2
     /// damage roll: the sword is already there.
     ///
@@ -42,7 +43,8 @@ namespace RimArt
         private static Blow BlowOf(ThingDef def)
         {
             if (def != null && blows.TryGetValue(def, out Blow known)) return known;
-            var blow = new Blow { Def = DamageDefOf.Cut, Amount = 10f, Penetration = 0.15f };
+            UbwRules rules = UbwRules.Of;
+            var blow = new Blow { Def = DamageDefOf.Cut, Amount = rules.swordFallbackDamage, Penetration = rules.swordFallbackPenetration };
             ThingDef stuff = def != null && def.MadeFromStuff ? GenStuff.DefaultStuffFor(def) : null;
             if (def?.tools != null)
             {

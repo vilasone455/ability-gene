@@ -62,8 +62,12 @@ namespace RimArt
         /// <summary>Intercept: a shot is met no nearer than this many cells to where it was fired from.</summary>
         public float interceptClearOfGun = 1.2f;
 
-        /// <summary>Intercept: a shot is met at least this many cells short of where it was aimed.</summary>
+        /// <summary>Intercept: a shot is met at least this many cells short of the pawn it was aimed at (an explosive its blast radius further).</summary>
         public float interceptShortOfTarget = 1.5f;
+
+        /// <summary>A sword hits as its weapon's strongest Cut or Stab tool; a weapon with neither hits for this much Cut, with this armour penetration.</summary>
+        public float swordFallbackDamage = 10f;
+        public float swordFallbackPenetration = 0.15f;
 
         private static readonly UbwRules fallback = new UbwRules();
 

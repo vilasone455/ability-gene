@@ -64,11 +64,16 @@
         <drawPickRadius>1.5</drawPickRadius>
         <drawSpeed>22</drawSpeed>
         <!-- Intercept: a sword meets a shot if it gets there first: 0.1 s to rise plus its distance at 20
-             cells/s, no nearer than 1.2 cells to the gun and at least 1.5 cells short of the target. -->
+             cells/s, no nearer than 1.2 cells to the gun and at least 1.5 cells short of the pawn it was aimed
+             at (an explosive its blast radius further, so the burst does not reach the pawn). -->
         <interceptRiseSeconds>0.1</interceptRiseSeconds>
         <interceptSpeed>20</interceptSpeed>
         <interceptClearOfGun>1.2</interceptClearOfGun>
         <interceptShortOfTarget>1.5</interceptShortOfTarget>
+        <!-- A sword hits as its weapon's strongest Cut or Stab tool (default stuff, Normal quality); a weapon with
+             neither hits for this much Cut at this armour penetration. -->
+        <swordFallbackDamage>10</swordFallbackDamage>
+        <swordFallbackPenetration>0.15</swordFallbackPenetration>
       </li>
     </modExtensions>
   </AbilityDef>
