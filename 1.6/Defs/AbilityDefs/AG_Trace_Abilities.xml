@@ -9,7 +9,7 @@
   <AbilityDef>
     <defName>AG_Trace_UnlimitedBladeWorks</defName>
     <label>unlimited blade works</label>
-    <description>Chant up to three verses of 2 seconds. Press Release during a verse and the world opens when that verse ends; after the third verse it opens by itself.\n\nEveryone standing within 6, 9 or 12 cells (by verses said), allies and enemies alike, is taken into a 40 x 40 world of swords for 20, 25 or 30 seconds. Downed pawns stay behind. Nobody can leave the world. It ends early on Close, or if the caster is downed, leaves it or stops being Shirou.\n\nThen everyone goes back to the cell they were taken from. Corpses and dropped items land round the cast point.\n\nStopping or breaking the chant before the release gives the cooldown and the charge back.</description>
+    <description>Chant up to three verses of 2 seconds. Press Release during a verse and the world opens when that verse ends; after the third verse it opens by itself.\n\nEveryone standing within 6, 9 or 12 cells (by verses said), allies and enemies alike, is taken into a 40 x 33 world of swords for 20, 25 or 30 seconds. Downed pawns stay behind. Nobody can leave the world. It ends early on Close, or if the caster is downed, leaves it or stops being Shirou.\n\nInside, the caster's commands use the world's own swords and cost no charge: every sword taken out of the ground takes 0.5 seconds off the world.\n- Full Open: pick a pawn. The caster stands still and one sword every 0.1 seconds rises and hovers aimed at it, up to 30. Release fires them all within 0.3 seconds; each hits as its own weapon and sticks in the ground past the target, standing again. Cancel or a move order drops them back.\n- Pin: the 4 swords nearest a pawn pin it to the ground for 12 seconds, 2 Cut each. It counts as downed and can be captured.\n- Draw: pick a sword. It flies to the caster at 22 cells a second and hits each hostile it passes once; the caster catches it as a traced copy.\n- Arm (on another colonist inside): the nearest sword flies to their hand as a traced copy that breaks when the world closes.\n- Intercept: while on, each enemy shot that a sword can reach first is stopped where they meet; an explosive bursts there.\n\nThen everyone goes back to the cell they were taken from. Corpses and dropped items land round the cast point.\n\nStopping or breaking the chant before the release gives the cooldown and the charge back.</description>
     <iconPath>RimArt/Trace/IconUnlimitedBladeWorks</iconPath>
     <category>AG_Genetic</category>
     <cooldownTicksRange>120000</cooldownTicksRange>
@@ -46,8 +46,34 @@
           <li>25</li>
           <li>30</li>
         </worldSecondsByVerse>
-        <!-- For the commands (Full Open, Pin, Draw, Arm, Intercept), which are not built yet. -->
+        <!-- The commands (Full Open, Pin, Draw, Arm, Intercept) cost no charge: every sword one takes out of
+             the ground takes this many seconds off the world, as it leaves. -->
         <swordCostSeconds>0.5</swordCostSeconds>
+        <!-- Full Open: one sword pulls out every 0.1 s while charging, nearest the target first, up to 30;
+             Release fires them all within 0.3 s at 16 cells/s. -->
+        <fullOpenSwordSeconds>0.1</fullOpenSwordSeconds>
+        <fullOpenSwords>30</fullOpenSwords>
+        <fullOpenVolleySeconds>0.3</fullOpenVolleySeconds>
+        <fullOpenSpeed>16</fullOpenSpeed>
+        <!-- Pin: the 4 swords nearest the target fly in at 16 cells/s, 2 Cut each, pinned for 12 s. -->
+        <pinSwords>4</pinSwords>
+        <pinDamage>2</pinDamage>
+        <pinSeconds>12</pinSeconds>
+        <pinSpeed>16</pinSpeed>
+        <!-- Draw: the sword nearest the clicked cell within 1.5 cells flies to the caster at 22 cells/s. -->
+        <drawPickRadius>1.5</drawPickRadius>
+        <drawSpeed>22</drawSpeed>
+        <!-- Intercept: a sword meets a shot if it gets there first: 0.1 s to rise plus its distance at 20
+             cells/s, no nearer than 1.2 cells to the gun and at least 1.5 cells short of the pawn it was aimed
+             at (an explosive its blast radius further, so the burst does not reach the pawn). -->
+        <interceptRiseSeconds>0.1</interceptRiseSeconds>
+        <interceptSpeed>20</interceptSpeed>
+        <interceptClearOfGun>1.2</interceptClearOfGun>
+        <interceptShortOfTarget>1.5</interceptShortOfTarget>
+        <!-- A sword hits as its weapon's strongest Cut or Stab tool (default stuff, Normal quality); a weapon with
+             neither hits for this much Cut at this armour penetration. -->
+        <swordFallbackDamage>10</swordFallbackDamage>
+        <swordFallbackPenetration>0.15</swordFallbackPenetration>
       </li>
     </modExtensions>
   </AbilityDef>

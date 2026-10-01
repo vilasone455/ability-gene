@@ -96,13 +96,7 @@ namespace RimArt
         }
 
         /// <summary>The lead is over: a real weapon being put away goes to the inventory (to the ground without one).</summary>
-        private void Stow(TraceCast cast)
-        {
-            ThingWithComps held = cast?.stowing;
-            if (held == null || pawn.equipment == null || !pawn.equipment.Contains(held)) return;
-            if (pawn.inventory != null && pawn.equipment.TryTransferEquipmentToContainer(held, pawn.inventory.innerContainer)) return;
-            if (pawn.Spawned) pawn.equipment.TryDropEquipment(held, out _, pawn.Position, forbid: false);
-        }
+        private void Stow(TraceCast cast) => WeaponStow.Stow(pawn, cast?.stowing);
 
         public override void ExposeData()
         {

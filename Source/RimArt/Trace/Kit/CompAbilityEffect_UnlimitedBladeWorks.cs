@@ -53,7 +53,7 @@ namespace RimArt
 
     /// <summary>
     /// The buttons of a cast in progress, after the ability's own: Release and Cancel while chanting, Close
-    /// while its world stands. Shinra Tensei adds its Charge/Release the same way.
+    /// and the commands (<see cref="UbwCommands"/>) while its world stands. Shinra Tensei adds its Charge/Release the same way.
     /// </summary>
     [HarmonyPatch(typeof(Ability), nameof(Ability.GetGizmos))]
     public static class Patch_UbwCommands
@@ -106,6 +106,7 @@ namespace RimArt
                     groupable = false,
                     action = () => cast.closeOrdered = true,
                 };
+                foreach (Command c in UbwCommands.Buttons(cast, ability)) yield return c;
             }
         }
     }

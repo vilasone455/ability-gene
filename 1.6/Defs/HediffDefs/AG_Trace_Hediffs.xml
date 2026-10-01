@@ -29,4 +29,33 @@
     </stages>
   </HediffDef>
 
+  <!-- Unlimited Blade Works' Pin (UbwPin): swords through the pawn's clothes hold it to the ground. Moving capped
+       at 0 makes vanilla count it as downed while awake, so it can be captured; it cannot crawl. The pin adds it
+       with no DamageInfo, so a non-player pawn gets no death-on-downed roll. UbwRules.pinSeconds sets how long it
+       lasts (the 720 ticks here are only the default). -->
+  <HediffDef>
+    <defName>AG_UbwPinned</defName>
+    <label>pinned</label>
+    <description>Swords from Unlimited Blade Works pin this pawn's clothes to the ground. It cannot move or crawl until they are gone.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.35, 1, 0.82)</defaultLabelColor>
+    <preventsCrawling>true</preventsCrawling>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>720</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <setMax>0</setMax>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
 </Defs>

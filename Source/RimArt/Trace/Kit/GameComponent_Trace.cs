@@ -75,6 +75,9 @@ namespace RimArt
 
         public void RemoveCopy(Thing thing) => copies.RemoveAll(c => c.thing == thing);
 
+        /// <summary>The Unlimited Blade Works Arm copies still held, as a new list (breaking one removes it from this component's).</summary>
+        public List<TraceCopy> ArmCopies() => copies.FindAll(c => c.ubwArm && c.thing != null && !c.thing.Destroyed);
+
         /// <summary>The copy in this pawn's hand, or null.</summary>
         public ThingWithComps HeldCopy(Pawn pawn)
         {

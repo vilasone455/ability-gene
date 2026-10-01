@@ -5,7 +5,7 @@
        Accelerator and Pain reuse abilities that already work in game; Inumaki's six words and Shikamaru's
        Shadow plexus are ported kits and only their Echoes grant them; Vergil has no
        abilities until his kit is ported and is here to exercise the kill-with-weapon trial.
-       Shirou has Reinforcement, Trace On and Unlimited Blade Works; UBW's commands are not built. -->
+       Shirou has Reinforcement, Trace On and Unlimited Blade Works, with its commands inside the world. -->
   <RimArt.EchoDef Name="AG_EchoBase" Abstract="True">
     <bodyType>Thin</bodyType>
   </RimArt.EchoDef>

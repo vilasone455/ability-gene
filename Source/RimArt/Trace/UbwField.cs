@@ -11,6 +11,8 @@ namespace RimArt
         public double X, Z, D, Lean, Dir, Turn, Sink, Size, Lift;
         /// <summary>Past the map edge: drawn without lips or cracks, and hazed.</summary>
         public bool Far;
+        /// <summary>Taken out of the ground by a command: only its hole is drawn (the marks and both lips), and no command can take it.</summary>
+        public bool Hole;
         public UbwWeapon W;
         /// <summary>Its standing pose, the top of its pommel and its cut on the floor, all relative to the caster.</summary>
         public UbwPose Pose;
@@ -106,13 +108,16 @@ namespace RimArt
                 }
             // North first, by the screen foot. OrderBy is stable, as the sketch's sort is.
             list = list.OrderByDescending(sw => sw.Z + sw.Lift).ToList();
-            foreach (UbwSword sw in list)
-            {
-                sw.Pose = UbwBlade.Upright(sw.W, sw.Size, new UbwXZ(sw.X, sw.Z + sw.Lift), sw.Lean, sw.Dir, sw.Turn, sw.Sink);
-                sw.Top = UbwBlade.PommelOf(sw.Pose).Y + .05;
-                sw.Cut = UbwBlade.CutOf(sw.Pose, sw.Sink);
-            }
+            foreach (UbwSword sw in list) Finish(sw);
             return list;
+        }
+
+        /// <summary>Sets a sword's standing pose, the top of its pommel and its cut from its place, lean, turn and sink.</summary>
+        public static void Finish(UbwSword sw)
+        {
+            sw.Pose = UbwBlade.Upright(sw.W, sw.Size, new UbwXZ(sw.X, sw.Z + sw.Lift), sw.Lean, sw.Dir, sw.Turn, sw.Sink);
+            sw.Top = UbwBlade.PommelOf(sw.Pose).Y + .05;
+            sw.Cut = UbwBlade.CutOf(sw.Pose, sw.Sink);
         }
 
         /// <summary>

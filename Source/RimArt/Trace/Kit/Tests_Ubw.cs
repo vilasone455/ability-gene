@@ -18,7 +18,7 @@ namespace RimArt
         private static AbilityDef Ubw => UbwDefOf.AG_Trace_UnlimitedBladeWorks;
         private static TraitDef OriginBlade => DefDatabase<TraitDef>.GetNamed("AG_OriginBlade");
 
-        private static GameComponent_Echoes Setup(RimArtTestContext t, bool reveal = false)
+        internal static GameComponent_Echoes Setup(RimArtTestContext t, bool reveal = false)
         {
             GameComponent_UnlimitedBladeWorks.Instance.ResetForTests();
             UbwRevealWindow.offForTests = !reveal;
@@ -26,19 +26,43 @@ namespace RimArt
         }
 
         /// <summary>A drafted colonist made Shirou's Host and manifested, with a full pool.</summary>
-        private static Pawn Host(RimArtTestContext t, out EchoRecord record)
+        internal static Pawn Host(RimArtTestContext t, out EchoRecord record)
         {
             Pawn host = t.Host(Shirou, t.center, out record);
             host.drafter.Drafted = true;
             return host;
         }
 
-        private static UbwCast CastOf(Pawn pawn) => GameComponent_UnlimitedBladeWorks.Instance?.For(pawn);
+        internal static UbwCast CastOf(Pawn pawn) => GameComponent_UnlimitedBladeWorks.Instance?.For(pawn);
 
-        private static void LogPawns(RimArtTestContext t, params Pawn[] pawns)
+        internal static void LogPawns(RimArtTestContext t, params Pawn[] pawns)
         {
             foreach (Pawn p in pawns)
                 t.Log(RimArtTestContext.Describe(p) + " map=" + (p.MapHeld == null ? "none" : p.MapHeld == t.map ? "home" : "world " + p.MapHeld.uniqueID));
+        }
+
+        /// <summary>The cast a test is in; <see cref="IntoWorld"/> sets it once the world stands.</summary>
+        internal sealed class Run
+        {
+            public UbwCast cast;
+        }
+
+        /// <summary>
+        /// The host casts, the chant starts, Release is asked in <paramref name="verse"/> (1: everyone within 6 cells is
+        /// taken, 2: within 9) and the world stands; <paramref name="run"/>.cast is set then, and stays null (with a failed
+        /// check) if it did not.
+        /// </summary>
+        internal static IEnumerable<int> IntoWorld(RimArtTestContext t, Pawn host, Run run, int verse = 1)
+        {
+            host.abilities.GetAbility(Ubw).QueueCastingJob(host, LocalTargetInfo.Invalid);
+            UbwCast cast = null;
+            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180, 5)) yield return w;
+            if (!t.Check(cast != null && cast.Chanting, "the chant started (" + RimArtTestContext.Describe(host) + ")")) yield break;
+            foreach (int w in WaitFor(() => cast.VerseAt(cast.Seconds(t.Now)) >= verse || !cast.Chanting, 600, 5)) yield return w;
+            cast.AskRelease(t.Now);
+            foreach (int w in WaitFor(() => cast.Standing || cast.fizzled || cast.broken, 900, 5)) yield return w;
+            if (!t.Check(cast.Standing && cast.verse == verse, "the world stands, opened after verse " + cast.verse)) yield break;
+            run.cast = cast;
         }
 
         [RimArtTest("Ubw", "trial 1 Origin: Blade grants nothing and is Shirou's Trial; manifested Shirou has the ability")]
@@ -195,13 +219,10 @@ namespace RimArt
             Pawn host = Host(t, out EchoRecord record);
             Pawn ally = t.Colonist(t.center + new IntVec3(0, 0, 3));
             yield return 2;
-            host.abilities.GetAbility(Ubw).QueueCastingJob(host, LocalTargetInfo.Invalid);
-            UbwCast cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180, 5)) yield return w;
-            if (!t.Check(cast != null && cast.Chanting, "the chant started")) yield break;
-            cast.AskRelease(t.Now);
-            foreach (int w in WaitFor(() => cast.Standing || cast.fizzled || cast.broken, 900, 5)) yield return w;
-            if (!t.Check(cast.Standing && ally.Map == cast.world, "the world stands with the ally in it")) yield break;
+            var run = new Run();
+            foreach (int w in IntoWorld(t, host, run)) yield return w;
+            UbwCast cast = run.cast;
+            if (cast == null || !t.Check(ally.Map == cast.world, "the ally is in the world")) yield break;
             Map world = cast.world;
 
             yield return 30;
@@ -257,13 +278,10 @@ namespace RimArt
             yield return 5;
             Pawn host = Host(t, out EchoRecord record);
             yield return 2;
-            host.abilities.GetAbility(Ubw).QueueCastingJob(host, LocalTargetInfo.Invalid);
-            UbwCast cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180, 5)) yield return w;
-            if (!t.Check(cast != null && cast.Chanting, "the chant started")) yield break;
-            cast.AskRelease(t.Now);
-            foreach (int w in WaitFor(() => cast.Standing || cast.fizzled || cast.broken, 900, 5)) yield return w;
-            if (!t.Check(cast.Standing, "the world stands")) yield break;
+            var run = new Run();
+            foreach (int w in IntoWorld(t, host, run)) yield return w;
+            UbwCast cast = run.cast;
+            if (cast == null) yield break;
             Map world = cast.world;
 
             echoes.charge = 0.05f;

@@ -87,9 +87,7 @@ namespace RimArt
         {
             ThingDef def = entry?.Blade;
             if (def == null) return null;
-            var copy = (ThingWithComps)ThingMaker.MakeThing(def, StuffFor(entry, def));
-            copy.TryGetComp<CompQuality>()?.SetQuality(CopyQuality(entry, below), null);
-            return copy;
+            return TraceCopies.Make(def, CopyQuality(entry, below), StuffFor(entry, def));
         }
 
         private static readonly Dictionary<ThingDef, bool> plain = new Dictionary<ThingDef, bool>();
