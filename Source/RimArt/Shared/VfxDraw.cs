@@ -120,6 +120,34 @@ namespace RimArt
             DrawMesh(strip.mesh, anchor, altitude, 1f, 1f, 0f, colour, material);
         }
 
+        /// <summary>
+        /// The lab's tube (lib/chain-sickle.js): a ribbon through the first <paramref name="count"/> of
+        /// <paramref name="pts"/>, <paramref name="halfWidths"/>[i] + <paramref name="add"/> cells to each side, from
+        /// <paramref name="lo"/> to <paramref name="hi"/> times that (-1 to 1 is the full width; 0.2 to 0.75 a lit
+        /// stripe on the left). Widths are measured across the line's own direction on screen, from the points
+        /// either side of each one.
+        /// </summary>
+        internal static void Tube(Vector2[] pts, float[] halfWidths, int count, Color colour, float altitude,
+            float lo = -1f, float hi = 1f, float add = 0f)
+        {
+            if (count < 2 || colour.a <= 0.001f) return;
+            int n = count - 1;
+            Sides(count, out Vector2[] a, out Vector2[] b);
+            for (int i = 0; i <= n; i++)
+            {
+                Vector2 pr = pts[Mathf.Max(0, i - 1)], nx = pts[Mathf.Min(n, i + 1)];
+                float dx = nx.x - pr.x, dz = nx.y - pr.y, length = Mathf.Sqrt(dx * dx + dz * dz);
+                if (length <= 0f) length = 1f;
+                dx /= length;
+                dz /= length;
+                float w = halfWidths[i] + add;
+                Vector2 q = pts[i];
+                a[i] = new Vector2(q.x - dz * w * lo, q.y + dx * w * lo);
+                b[i] = new Vector2(q.x - dz * w * hi, q.y + dx * w * hi);
+            }
+            Strip(a, b, colour, solid, altitude);
+        }
+
         private static SixPathsStrip Next(int points)
         {
             if (Time.frameCount != frame)
@@ -173,4 +201,5 @@ namespace RimArt
             return mesh;
         }
     }
+
 }

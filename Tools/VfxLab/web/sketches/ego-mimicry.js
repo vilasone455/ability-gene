@@ -1,4 +1,5 @@
-// Mimicry — E.G.O. weapon proposal, not the game. Nothing in Source/RimArt draws this yet.
+// Mimicry — E.G.O. weapon proposal. The pictures are ported to Source/RimArt/Ego/EgoMimicry* (previews
+// "E.G.O.: mimicry: ..."); no weapon, ability or rule draws them yet.
 // Nothing There (Lobotomy Corporation, ALEPH): the Red Mist's sword. The rules are
 // docs/ego-weapons.md, "Weapon 3: Mimicry" (design agreed 2026-09-30), with one change agreed
 // 2026-10-01: corrosion grows the arm, not the blade, because Samehada already lengthens its blade
@@ -66,6 +67,8 @@
 // "overclock (hostiles only)": the same arm, five swings 1 s apart at two raiders (the second after a
 // lunge); the ally standing next to the wielder is never chosen (a thin green ring marks it).
 // Lab aids: four stage pips under the wielder; a dashed red line to each chosen target.
+// "Stand-in pawns, props and lab aids" off leaves what the C# port draws (Source/RimArt/Ego/EgoMimicry*):
+// no pawns, afterimages, rifle, muzzle flash, tracer, green ring, pips or dashed lines.
 //
 // Drawing: the sword is Lobotomy's side view laid flat and turned to where the blade points, as
 // RimWorld draws equipment; mirrored when aiming west so the flesh stays on top. During a swing it
@@ -585,14 +588,14 @@ function drawFrame(s, p, o, sun, strength) {
     for (const h of q.hits) { const a = s - h.t; if (a >= 0 && a < .25) off = add(off, h.d, .07 * bump(a / .25)); }
     const pos = add(base, off), turn = (q.hits.length ? (q.hits[q.hits.length - 1].d.x >= 0 ? 90 : -90) : -90) * fall;
     if (q.downAt != null && s >= q.downAt) sprite({ x: base.x + .05, z: base.z - .05 }, 1.0 * smooth((s - q.downAt) / 1.2), .6 * smooth((s - q.downAt) / 1.2), Blood.withAlpha(.75), soft, Floor + .015);
-    if (q.skipped) circle(base, .42, .5, Floor + .04, AllyRing);
-    pawn(pos, { ...who, shirt: q.colour, downed: fall > 0, turn });
+    if (p.actors && q.skipped) circle(base, .42, .5, Floor + .04, AllyRing);
+    if (p.actors) pawn(pos, { ...who, shirt: q.colour, downed: fall > 0, turn });
     const chest = at(pos, 'chest', who);
     q.hits.forEach((h, j) => {
       const grown = PL.actions.some(a => a.kind === 'grown' && Math.abs(a.hit - h.t) < 1e-6);
       if (!grown) cut(`mim cut ${i} ${j}`, chest, base, h.d, side(h.d), s - h.t, i * 7 + j);
     });
-    if (q.shooter) {
+    if (p.actors && q.shooter) {
       const w = add(o, wielderAt(PL, s)), dd = unit2({ x: w.x - base.x, z: w.z - base.z });
       rifle(`mim rifle ${i}`, { x: base.x + dd.x * .25, z: base.z + dd.z * .25 + Ground, h: HandH }, degOf(dd), sun, strength, dd.z > .35 ? pawnLayer - .01 : Y + .06);
     }
@@ -608,18 +611,18 @@ function drawFrame(s, p, o, sun, strength) {
     const age = s - a.t;
     if (age >= 0 && age < LungeTime + .12) for (const [lag, al] of [[.06, .3], [.12, .15]]) {
       const ga = add(o, mix(a.from, a.to, smooth((age - lag) / LungeTime)));
-      if (age - lag > 0 && age - lag < LungeTime) pawn(ga, { ...who, shirt: Holder, alpha: al, shadow: 0 });
+      if (p.actors && age - lag > 0 && age - lag < LungeTime) pawn(ga, { ...who, shirt: Holder, alpha: al, shadow: 0 });
     }
     for (const [at0, u0] of [[a.from, age], [a.to, age - LungeTime]]) if (u0 >= 0 && u0 < .5) for (let i = 0; i < 5; i++) {
       const u = u0 / .5, c = add(o, at0), ang = i / 5 * TAU + rand(i + 330), r = .2 + .35 * u;
       sprite({ x: c.x + Math.cos(ang) * r, z: c.z + Ground + .1 + Math.sin(ang) * r * .4 + .1 * u }, .25 + .3 * u, .2 + .25 * u, Dust.withAlpha(.45 * Math.sin(u * Math.PI)), puff, Y + .008);
     }
   }
-  pawn(pos, { ...who, shirt: Holder });
-  if (armed) pips(pos, stage, aim, 1 - smooth((s - PL.exit - Exit) / .3));
+  if (p.actors) pawn(pos, { ...who, shirt: Holder });
+  if (p.actors && armed) pips(pos, stage, aim, 1 - smooth((s - PL.exit - Exit) / .3));
 
   // Targeting lines (lab aid): a dashed red line from the wielder to each chosen target.
-  if (armed) for (const a of PL.actions) {
+  if (p.actors && armed) for (const a of PL.actions) {
     const age = s - a.t; if (age < 0 || age > .45) continue;
     const from = at(add(o, a.from), 'chest', who), to = at(add(o, PL.people[a.target].off), 'chest', who), k = bump(age / .45);
     for (let j = 0; j < 8; j++) line(`mim aim ${a.t} ${j}`, [mix(from, to, j / 8 + .02), mix(from, to, j / 8 + .08)], .03, Streak.withAlpha(.7 * k), flatMat, Y + .1, 'none');
@@ -663,7 +666,7 @@ function drawFrame(s, p, o, sun, strength) {
     const age = s - sh.t; if (age < 0) continue;
     const sp = add(o, sh.from), wp = add(o, sh.at), dd = unit2({ x: wp.x - sp.x, z: wp.z - sp.z });
     const muzzle = add({ x: sp.x, z: sp.z + HandScreen }, dd, .62), hitP = { x: wp.x + hs.x * .2, z: wp.z + hs.z * .2 + .12 };
-    if (age < .06) {
+    if (p.actors && age < .06) {
       sprite(muzzle, .35, .3, Flash.withAlpha(1 - age / .06), glow, Y + .09);
       streak(`mim tracer`, muzzle, mix(muzzle, hitP, clamp(age / .05)), .05, Flash.withAlpha(.95), whiteGlow, Y + .09);
     }
@@ -685,6 +688,7 @@ export default {
   params: {
     mode: { label: 'Show', value: 'swings', options: ['swings', 'grown swing', 'corroded', 'overclock (hostiles only)'], group: 'Showcase' },
     aim: P('Aim (degrees)', 0, 0, 360, 5, 'Showcase'),
+    actors: { label: 'Stand-in pawns, props and lab aids', value: true, group: 'Showcase' },
     spacing: P('Swings: time between (s)', .9, .5, 2, .05, 'Rule'),
     corrodedInterval: P('Corroded: a swing every (s)', 1.5, .8, 3, .1, 'Rule'),
     overclockInterval: P('Overclock: a swing every (s)', 1.0, .5, 2, .1, 'Rule'),
