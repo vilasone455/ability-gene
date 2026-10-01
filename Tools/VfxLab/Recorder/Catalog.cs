@@ -204,6 +204,12 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                // E.G.O. Mimicry. The sketch's markers (ego-mimicry.js), from the preview's script.
+                Name = "E.G.O. weapons", Prefix = "E.G.O.: mimicry", Component = typeof(MapComponent_EgoMimicryPreview), Clock = "seconds",
+                Phases = EgoMimicryPhases,
+            },
+            new Kit
+            {
                 Name = "Infinity Castle", Prefix = "Infinity Castle:", Component = typeof(MapComponent_InfinityCastlePreview), Clock = "seconds",
                 Phases = label => label.Contains("open (take)") ? CastleTakePhases() : label.Contains("open (return)") ? CastleReturnPhases() : CastlePhases(),
             },
@@ -1250,6 +1256,38 @@ namespace RimArt.VfxLab
             phases.Add(new Phase("Grind", RasenganTiming.HitAt(teleports)));
             phases.Add(new Phase("Release / thrown", RasenganTiming.ReleaseAt(teleports)));
             phases.Add(new Phase(wall ? "Hits the wall" : "Lands", RasenganTiming.LandAt(teleports, wall)));
+            return phases.ToArray();
+        }
+
+        // ego-mimicry.js phases(): each swing; the grown swing's swell, raise, slam and shrink; the corroded and
+        // overclock actions (a lunge named), the shot taken and the end; then the result.
+        private static Phase[] EgoMimicryPhases(string label)
+        {
+            EgoMimicryMode mode = label.Contains("grown") ? EgoMimicryMode.Grown : label.Contains("corroded") ? EgoMimicryMode.Corroded
+                : label.Contains("overclock") ? EgoMimicryMode.Overclock : EgoMimicryMode.Swings;
+            var script = new EgoMimicryScript(mode, 0f);
+            var phases = new List<Phase>();
+            if (mode == EgoMimicryMode.Swings)
+                for (int i = 0; i < script.Actions.Length; i++) phases.Add(new Phase($"Swing {i + 1}", script.Actions[i].T));
+            else if (mode == EgoMimicryMode.Grown)
+            {
+                float g = script.Actions[1].Start;
+                phases.Add(new Phase("Swing", script.Actions[0].T));
+                phases.Add(new Phase("Swell", g));
+                phases.Add(new Phase("Raise", g + EgoMimicryTiming.RaiseAt));
+                phases.Add(new Phase("Slam", g + EgoMimicryTiming.SlamAt));
+                phases.Add(new Phase("Shrink", g + EgoMimicryTiming.RiseAt));
+            }
+            else
+            {
+                phases.Add(new Phase(mode == EgoMimicryMode.Corroded ? "Corroded" : "Overclock", 0f));
+                for (int i = 0; i < script.Actions.Length; i++)
+                    phases.Add(new Phase($"{(script.Actions[i].Lunge ? "Lunge, swing" : "Swing")} {i + 1}", script.Actions[i].T));
+                foreach (EgoMimicryShot sh in script.Shots) phases.Add(new Phase("Shot taken", sh.T));
+                phases.Add(new Phase("Ends", script.ExitAt));
+                phases.Sort((a, b) => a.Seconds.CompareTo(b.Seconds));
+            }
+            phases.Add(new Phase("Result", script.End - EgoMimicryScript.Hold));
             return phases.ToArray();
         }
 

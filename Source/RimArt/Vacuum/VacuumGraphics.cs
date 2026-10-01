@@ -134,29 +134,9 @@ namespace RimArt
         internal static void Rect(Vector2 at, float length, float width, float degrees, Color colour, float altitude) =>
             Sprite(at, length, width, colour, solid, altitude, -degrees);
 
-        /// <summary>
-        /// A ribbon through the first <paramref name="count"/> points of <paramref name="pts"/>, W[i]
-        /// cells to each side scaled by <paramref name="lo"/> and <paramref name="hi"/> (-1 and 1 is the
-        /// full width). Widths are measured across the line's own direction on screen.
-        /// </summary>
-        private static void Tube(Vector2[] pts, int count, Color colour, float altitude, float lo = -1f, float hi = 1f)
-        {
-            if (count < 2 || colour.a <= 0.001f) return;
-            int n = count - 1;
-            Sides(count, out Vector2[] a, out Vector2[] b);
-            for (int i = 0; i <= n; i++)
-            {
-                Vector2 pr = pts[Mathf.Max(0, i - 1)], nx = pts[Mathf.Min(n, i + 1)];
-                float dx = nx.x - pr.x, dz = nx.y - pr.y, L = Mathf.Sqrt(dx * dx + dz * dz);
-                if (L <= 0f) L = 1f;
-                dx /= L; dz /= L;
-                float w = W[i];
-                Vector2 q = pts[i];
-                a[i] = new Vector2(q.x - dz * w * lo, q.y + dx * w * lo);
-                b[i] = new Vector2(q.x - dz * w * hi, q.y + dx * w * hi);
-            }
-            Strip(a, b, colour, solid, altitude);
-        }
+        /// <summary><see cref="VfxDraw.Tube"/> with the half-widths in W.</summary>
+        private static void Tube(Vector2[] pts, int count, Color colour, float altitude, float lo = -1f, float hi = 1f) =>
+            VfxDraw.Tube(pts, W, count, colour, altitude, lo, hi);
 
         /// <summary>A band between the first <paramref name="count"/> points of A and C.</summary>
         private static void Band(int count, Color colour, float altitude)
