@@ -1,4 +1,5 @@
-// Paradise Lost v2 — E.G.O. weapon proposal, not the game. Nothing in Source/RimArt draws this yet.
+// Paradise Lost v2 — E.G.O. weapon proposal. The pictures are ported to Source/RimArt/Ego/EgoParadiseLost* (previews
+// "E.G.O.: paradise lost: ..."); no weapon, ability or rule draws them yet. v1 is not ported.
 // v2 (2026-10-01) is v1 (ego-paradise-lost.js, left as it was) brought closer to the source after a
 // side-by-side of the sketch with the Lobotomy and Ruina frames. The rules are unchanged. Changes:
 //   Ring: the cross is twice the size (7 cells up, 4.8 each side, twice as wide); 40 spikes along the
@@ -102,8 +103,9 @@ const disc = Meshes.disc(28, 'paradise disc');
 const flatMat = MaterialPool.MatFrom('white', ShaderDatabase.Transparent);
 const floorLayer = AltitudeLayer.Floor.AltitudeFor();
 // v2: the ring's glow, one soft disc that is clear in the middle and brightest just inside the rim
-// (alpha rises as ((r - .35) / .62)^2.2 and drops to 0 over the last 3 %). A lab texture: a port
-// needs it as a PNG (Textures/RimArt/Ego/RimGlow.png from the same formula).
+// (alpha rises as ((r - .35) / .62)^2.2 and drops to 0 over the last 3 %). A lab texture; the port draws
+// it without a PNG, as a ring mesh whose UVs read the shipped SoftDisc at the radius with this alpha
+// (EgoParadiseLostRingGraphics).
 registerLabTexture('lab/pl2-rim-glow', () => pixels(256, (u, v) => {
   const r = Math.hypot(u - .5, v - .5) * 2, inner = Math.pow(Math.min(1, Math.max(0, (r - .35) / .62)), 2.2);
   return [1, 1, 1, r <= .97 ? inner : Math.max(0, 1 - (r - .97) / .03)];
@@ -515,7 +517,7 @@ function drawFrame(s, p, o, sun, strength) {
   const armed = !room, look = armed ? smooth(s / Enter) * (1 - smooth((s - PL.exit) / Exit)) : 0;
 
   // The room: a plank floor and stone walls round it (not outdoors).
-  if (room && !isOutdoors(p)) {
+  if (p.actors && room && !isOutdoors(p)) {
     const a = { x: o.x + Room.x0 - .5, z: o.z + Room.z0 - .5 }, b = { x: o.x + Room.x1 + .5, z: o.z + Room.z1 + .5 };
     band('pl2 floor', [a, { x: b.x, z: a.z }], [{ x: a.x, z: b.z }, b], RoomFloor, floorLayer + .01);
     for (let z = Room.z0; z <= Room.z1 + 1; z++) line(`pl2 plank ${z}`, [{ x: a.x, z: o.z + z - .5 }, { x: b.x, z: o.z + z - .5 }], .03, Plank, flatMat, floorLayer + .011, 'none');
@@ -537,7 +539,7 @@ function drawFrame(s, p, o, sun, strength) {
   // Corroded: the star, the true radius, the rings.
   if (armed) {
     star('pl2 star', pos, look);
-    if (look > 0) ringAt(pos, p.ringRadius, Star.withAlpha(.45 * look), Floor + .04, false, flatMat);
+    if (p.actors && look > 0) ringAt(pos, p.ringRadius, Star.withAlpha(.45 * look), Floor + .04, false, flatMat);
     PL.rings.forEach((t, k) => ring(`pl2 ring ${k}`, pos, s - t, p.ringRadius, p.spread));
   }
 
@@ -547,28 +549,29 @@ function drawFrame(s, p, o, sun, strength) {
     let off = { x: 0, z: 0 };
     for (const h of q.hits) { const a = s - h.t; if (a >= 0 && a < .25) off = add(off, away, .07 * bump(a / .25)); }
     const g = add(g0, off);
-    if (q.skipped) ringAt(g0, .45, AllyRing.withAlpha(.7), Floor + .04, false, flatMat);
-    if (q.kind === 'dog') beast(g, .5, sun, strength, DogFur);
-    else pawn(g, { ...who, shirt: q.kind === 'raider' ? Enemy : Colonist });
+    if (p.actors && q.skipped) ringAt(g0, .45, AllyRing.withAlpha(.7), Floor + .04, false, flatMat);
+    if (p.actors && q.kind === 'dog') beast(g, .5, sun, strength, DogFur);
+    else if (p.actors) pawn(g, { ...who, shirt: q.kind === 'raider' ? Enemy : Colonist });
     q.hits.forEach((h, j) => {
       const age = s - h.t;
       if (room) {
         thorns(`pl2 thorns ${i} ${j}`, g0, age, i * 31 + j * 7, p.thornScale, p.thornLife, sun, strength);
-        if (age >= 0 && age < SlowSeconds) ringAt({ x: g0.x, z: g0.z + Ground + .05 }, lerp(.42, .28, age / SlowSeconds), StarGlow.withAlpha(.6 * (1 - age / SlowSeconds)), Floor + .055, false, flatMat);
+        if (p.actors && age >= 0 && age < SlowSeconds) ringAt({ x: g0.x, z: g0.z + Ground + .05 }, lerp(.42, .28, age / SlowSeconds), StarGlow.withAlpha(.6 * (1 - age / SlowSeconds)), Floor + .055, false, flatMat);
       } else thorns(`pl2 thorns ${i} ${j}`, g0, age, i * 31 + j * 7, .55, .3, sun, strength, 6);
     });
-    if (room && q.hostile) damageBar(`pl2 dmg ${i}`, g0, q.hits, s);
+    if (p.actors && room && q.hostile) damageBar(`pl2 dmg ${i}`, g0, q.hits, s);
   });
 
   // The wielder: wings behind or over, the pawn, the staff, the halo.
   wings('pl2 wings', pos, rot4, look, p.wingSpan, s, sun, strength);
-  pawn(pos, { ...who, shirt: Holder });
+  if (p.actors) pawn(pos, { ...who, shirt: Holder });
   const shot = PL.shots.filter(x => x.t <= s).pop(), flash = shot ? 1 - clamp((s - shot.t) / StaffFlash) : 0;
   const ringFlash = PL.rings.reduce((m, t) => Math.max(m, s >= t && s - t < .35 ? 1 - (s - t) / .35 : 0), 0);
   const st = staff('pl2 staff', pos, rot4, Math.max(flash, ringFlash), sun, strength);
   halo('pl2 halo', pos, look, s, who);
 
   // Lab aids: the aim line, the outdoor radius, the Sanity pips.
+  if (!p.actors) return;
   if (room) {
     for (const sh of PL.shots) {
       const age = s - sh.t;
@@ -588,6 +591,8 @@ export default {
   kit: 'E.G.O. weapons', label: 'Paradise Lost v2 (sketch)',
   params: {
     mode: { label: 'Show', value: 'room hit', options: ['room hit', 'room hit, outdoors', 'corroded', 'overclock (hostiles only)'], group: 'Showcase' },
+    // Off: only what the C# port draws (no stand-ins, room or lab aids), for comparing with the recording.
+    actors: { label: 'Stand-in pawns, room and lab aids', value: true, group: 'Showcase' },
     facing: P('Corroded: facing (degrees)', 270, 0, 360, 90, 'Showcase'),
     raiders: P('Room hit: raiders in the room', 3, 1, 7, 1, 'Showcase'),
     shotInterval: P('Room hit: a shot every (s)', 2.0, 1, 3, .1, 'Rule'),
