@@ -18,6 +18,7 @@
     <Compile Include="../../../Source/RimArt/Shared/VfxDraw.cs" Link="Linked/Shared/VfxDraw.cs" />
     <Compile Include="../../../Source/RimArt/Shared/VfxMath.cs" Link="Linked/Shared/VfxMath.cs" />
     <Compile Include="../../../Source/RimArt/Shared/PawnFit.cs" Link="Linked/Shared/PawnFit.cs" />
+    <Compile Include="../../../Source/RimArt/Shared/PawnBody.cs" Link="Linked/Shared/PawnBody.cs" />
     <!-- Six Paths -->
     <Compile Include="../../../Source/RimArt/Debug/RimArtDebugAttribute.cs" Link="Linked/Debug/RimArtDebugAttribute.cs" />
     <Compile Include="../../../Source/RimArt/SixPaths/*.cs" LinkBase="Linked/SixPaths" />
@@ -66,6 +67,8 @@
     <!-- Trace: Unlimited Blade Works' drawing, timing, field layout and previews. The pocket map (GenStep, map component, the atlas built from the weapons' textures, defs) is in Trace/Kit, not linked here. -->
     <Compile Include="../../../Source/RimArt/Trace/*.cs" LinkBase="Linked/Trace" />
     <Compile Include="../../../Source/RimArt/Todo/*.cs" LinkBase="Linked/Todo" />
+    <!-- E.G.O. weapons (Magic Bullet, Solemn Lament, Mimicry, Paradise Lost): the pictures, the previews' scripts and the previews. The rules will go in Ego/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/Ego/*.cs" LinkBase="Linked/Ego" />
     <!-- Sasuke's Rinnegan pictures (not Rinnegan/Kit, which is game code). -->
     <Compile Include="../../../Source/RimArt/Rinnegan/*.cs" LinkBase="Linked/Rinnegan" />
     <!-- Satō's Reset and Headshot Reset pictures (not Sato/Kit, which is game code). -->
