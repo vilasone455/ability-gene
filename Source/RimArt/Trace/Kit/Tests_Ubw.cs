@@ -98,6 +98,10 @@ namespace RimArt
             Map world = cast.world;
             t.Check(host.Map == world, "the caster is in the world");
             t.Check(near.Map == world, "the enemy 4 cells away was taken");
+            var inside = world.GetComponent<MapComponent_UnlimitedBladeWorks>();
+            t.Check(world.Size.x == 40 && world.Size.z == 33 && inside.crest, "the world is v4 on a 40 x 33 map (" + world.Size.x + " x " + world.Size.z + ")");
+            t.Check(host.Position == new IntVec3(20, 0, 20), "the caster landed 20 cells from the south edge and 13 from the north (" + host.Position + ")");
+            t.Check(near.Map != world || near.Position.DistanceTo(host.Position + new IntVec3(4, 0, 0)) <= 1.5f, "the enemy landed 4 cells east of the caster (" + near.Position + ")");
             t.Check(far.Map == t.map, "the enemy 10 cells away stayed");
             t.Check(near.GetLord()?.LordJob is LordJob_AssaultColony, "the taken enemy fights in the world");
             t.Check(host.abilities.GetAbility(Ubw).GizmoDisabled(out string why), "the ability is disabled while the world stands (" + why + ")");

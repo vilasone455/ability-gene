@@ -14,8 +14,15 @@ TerrainAtlas.png  1024 x 1024, the world v2's ground (lib/ubw-terrain.js lab/ubw
              cracks: the plates are those), the face gradient (crest colour at the top, foot colour at the
              bottom) in a column right of it, and swatches of 64 px along the bottom: the lit lip, the
              crest, the solid foot, the crack floor, a hairline crack
-Sky.png      64 x 64, the world v2's sky gradient (lib/ubw-sky.js lab/ubw-sky): orange horizon at the
-             bottom to dusk red at the top
+CrestFace.png  256 x 256, the world v4 crest's face (lib/ubw-crest.js lab/ubw-crest-face): the plates' earth
+             in shade, darker toward the foot, Voronoi cracks in the crack floor's colour, the lit rim along
+             the top; repeats across
+HorizonSky.png  128 x 128, the world v4's sky (lib/ubw-horizon.js lab/ubw-horizon-sky): the glow at the
+             horizon (bottom) through orange and red to the dark top, one row per 0.32 cells of the 41-cell band
+HorizonGround.png  256 x 256, the plain behind the crest from its foot (bottom) to the horizon (lab/ubw-horizon-
+             ground): crack floor, earth, then haze, with faint bands closer together toward the horizon
+DepthHaze.png  64 x 64, white, alpha 1 at the top falling to 0 at the bottom (lab/ubw-horizon-depth): the
+             camera's haze
 IconUnlimitedBladeWorks.png  128 x 128, the ability's icon: three swords standing in a ring of fire, drawn
              at 4x and scaled down, dark outlines as the Panoply icons have
 IconTraceOn.png  128 x 128, Trace On's icon: a sword whose grip half is steel and whose point half is still
@@ -132,7 +139,6 @@ def fade(u, v):
 ATLAS_SIDE, TILE_PX, GRAD_X0, GRAD_X1, GRAD_H, SWATCH_Y, SWATCH_PX = 1024, 384, 800, 832, 768, 900, 64
 SHADES = [(1, 1, 1), (.84, .82, .8), (1.12, 1.06, 1), (.95, .9, .86)]
 CREST, FOOT, LIP_LIT, BASE = (.32, .18, .12), (.11, .06, .045), (.66, .46, .32), (.07, .045, .035)
-HORIZON, MID, HIGH, TOP = (1, .62, .3), (.86, .36, .2), (.5, .17, .16), (.28, .1, .13)
 
 
 def mix(a, b, t):
@@ -172,10 +178,68 @@ def terrain_atlas():
     return image
 
 
-def sky(u, v):
-    h = 1 - v
-    c = mix(HORIZON, MID, h / .3) if h < .3 else mix(MID, HIGH, (h - .3) / .35) if h < .65 else mix(HIGH, TOP, (h - .65) / .35)
-    return c + (1,)
+# ---- the world v4's crest and the sky behind it ----------------------------------------------------------
+GLOW, HORIZON, MID, HIGH, TOP = (1, .89, .67), (1, .62, .3), (.86, .36, .2), (.5, .17, .16), (.24, .08, .11)
+FAR_EARTH, HAZE_FAR, RIM_LIGHT = (.4, .26, .19), (.93, .61, .36), (1, .67, .35)
+SKY_CELLS, KE = 40, .3
+
+
+def lerp(a, b, t):
+    return a + (b - a) * t
+
+
+def face_crack(u, v):
+    """Distance to the second-nearest of 3 x 2 jittered seeds minus the nearest, repeating across u."""
+    cols, rows = 3, 2
+    d1 = d2 = 9.0
+    for j in range(rows):
+        for i in range(-1, cols + 1):
+            w = ((i % cols) + cols) % cols
+            sx, sy = (i + .15 + .7 * hash01(w, j, 145)) / cols, (j + .15 + .7 * hash01(w, j, 146)) / rows
+            d = math.hypot((sx - u) * cols, (sy - v) * rows * 1.6)
+            if d < d1:
+                d2, d1 = d1, d
+            elif d < d2:
+                d2 = d
+    return d2 - d1
+
+
+def crest_face(u, v):
+    # v 0 is the top of the bank, 1 its foot.
+    n, grain, gully = fbm(u * 8, v * 3, 141, 4, 8), fbm(u * 48, v * 24, 143, 2, 48), fbm(u * 16, v * .8, 147, 2, 16)
+    earth = mix(EARTH_DARK, EARTH_LIT, .2 + .6 * n)
+    shade = lerp(.62, .4, v ** .9) * (.9 + .2 * gully) * (.94 + .12 * grain)
+    crack = face_crack(u, v)
+    line, lip = clamp(1 - crack / .07), clamp(1 - abs(crack - .1) / .04) * .25
+    c = [lerp(k * shade * (1 + lip), b, line) for k, b in zip(earth, BASE)]
+    rim = clamp(1 - v / .12) ** 2 * .55
+    return tuple(lerp(k, r * .75, rim) for k, r in zip(c, RIM_LIGHT)) + (1,)
+
+
+def sky_at(e):
+    if e < 6:
+        return mix(GLOW, HORIZON, clamp(e / 6))
+    if e < 16:
+        return mix(HORIZON, MID, (e - 6) / 10)
+    if e < 38:
+        return mix(MID, HIGH, (e - 16) / 22)
+    return mix(HIGH, TOP, clamp((e - 38) / 40))
+
+
+def horizon_sky(u, v):
+    return sky_at(((1 - v) * (SKY_CELLS + 1) - 1) / KE) + (1,)
+
+
+def horizon_ground(u, v):
+    t = 1 - v
+    c = mix(BASE, FAR_EARTH, t / .05) if t < .05 else mix(FAR_EARTH, HAZE_FAR, ((t - .05) / .95) ** 2.6)
+    band = fbm(u * 3, t ** .45 * 40, 83, 3, 64)
+    k = .88 + .24 * band * (1 - .6 * t)
+    return tuple(min(1, x * k) for x in c) + (1,)
+
+
+def depth_haze(u, v):
+    return (1, 1, 1, (1 - v) ** 1.7)
 
 
 # ---- the ability's icon ----------------------------------------------------------------------------------
@@ -322,7 +386,10 @@ def main():
     flat = tuple(byte((EARTH_DARK[i] + EARTH_LIT[i]) / 2 * .9) for i in range(3)) + (255,)
     Image.new("RGBA", (64, 64), flat).save(OUT / "Terrain.png")
     terrain_atlas().save(OUT / "TerrainAtlas.png")
-    pixels(64, sky).save(OUT / "Sky.png")
+    pixels(256, crest_face).save(OUT / "CrestFace.png")
+    pixels(128, horizon_sky).save(OUT / "HorizonSky.png")
+    pixels(256, horizon_ground).save(OUT / "HorizonGround.png")
+    pixels(64, depth_haze).save(OUT / "DepthHaze.png")
     icon().save(OUT / "IconUnlimitedBladeWorks.png")
     icon_trace_on().save(OUT / "IconTraceOn.png")
     icon_reinforcement().save(OUT / "IconReinforcement.png")

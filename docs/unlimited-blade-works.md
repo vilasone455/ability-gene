@@ -5,7 +5,7 @@ The Trace kit's ultimate, as a pocket map. The rules were proposed 2026-09-24 an
 pictures, the map, and the ability (chant, take, world timer, return), granted by the Shirou Echo
 (docs/hero-echo.md). Not built: the commands.
 
-## What exists (2026-09-25)
+## What exists (2026-10-01)
 
 | Piece | Where | State |
 |---|---|---|
@@ -13,10 +13,11 @@ pictures, the map, and the ability (chant, take, world timer, return), granted b
 | World picture: the white, the fire running out, the field of swords, gear shadows, embers, the white closing in | `Source/RimArt/Trace/UbwWorldGraphics.cs`, `UbwGraphics.cs` | ported, matches the sketch in the lab |
 | The standing field's layout and the blade geometry | `UbwField.cs`, `UbwBlade.cs`, `UbwWeapons.cs` | ported; `Tests/Ubw` checks 3,760 swords against the sketch's layout |
 | Lab previews | RimArts debug window, Trace, "unlimited blade works: cast" / "world" | recorded by the lab; both play 2 cells north of the chosen cell, as the sketches do |
-| The real pocket map: 40 x 40, earth terrain, roof, unseen warm lights, the world drawn over it | `Source/RimArt/Trace/Kit/`, `1.6/Defs/*/AG_UnlimitedBladeWorks_*.xml` | written, not yet built or run |
+| The real pocket map: 40 x 33 (the caster 20 cells from the east, west and south edges, 13 from the north), earth terrain, roof, unseen warm lights, the world drawn over it | `Source/RimArt/Trace/Kit/`, `1.6/Defs/*/AG_UnlimitedBladeWorks_*.xml` | written, not yet built or run |
 | The weapon atlas from the weapons' own textures (the lab's reference art never ships) | `Kit/UbwAtlasBuilder.cs` | written, not yet run |
 | The commands (Full Open, Pin, Draw, Arm, Intercept) | sketches only | not ported |
-| World v2 (plates with depth, tiers past the edge, the north sky with gears) | `UbwTerrain.cs`, `UbwTerrainGraphics.cs`; preview "world v2"; "world map: open (v2 depth)" | ported as a second world picture on the same field and timing; `Tests/Ubw` checks 1,327 plates against the sketch's ground; an experiment, not agreed |
+| World v4, the one the ability opens (level plates, a sword crest past the north edge, a side-view sky with seven gears, ridges and rows of swords behind it that pan slower than the map, smoke and embers over the crest) | `UbwCrest.cs`, `UbwCrestGraphics.cs`, `UbwBackdropGraphics.cs`, `UbwTerrain.cs`, `UbwTerrainGraphics.cs`; preview "world v4"; "world map: open" | ported 2026-10-01 from `trace-ubw-world-v4.js`, replacing v2; `Tests/Ubw` checks its plates, swords and crest profile against the sketch; the lab recording matches the sketch (0.3 % of pixels differ, the sketch's stand-ins); the sketch's opening white fade is not ported: the fire still runs out, as v1, until the reveal shot exists |
+| The reveal and close shots (a paused 3D camera tilting down from the sky to v4, and back up) | sketches only (`trace-ubw-reveal.js`, `trace-ubw-close.js`) | not ported |
 | The ability: the chant, who is taken, the world's time, the return, the cooldown | `Kit/UbwCast.cs`, `GameComponent_UnlimitedBladeWorks.cs`, `CompAbilityEffect_UnlimitedBladeWorks.cs` (with the chant job and the Release/Close buttons), `1.6/Defs/AbilityDefs/AG_Trace_Abilities.xml` | written 2026-09-25; granted by the Shirou Echo since 2026-09-26; 6 game tests pass (`Kit/Tests_Ubw.cs`); not played by hand |
 
 ## The ability
@@ -34,7 +35,7 @@ fires. Shirou's upkeep is 12 charge an hour while manifested.
 2. Released after verse V: the fire runs along the chant's lines, the ring closes, white. At full white
    everyone standing within 6 / 9 / 12 cells of the chant's cell is taken: allies, enemies, animals and
    the caster; downed pawns stay. Each lands at its offset from the caster, who lands in the middle of
-   the 40 x 40 world (v2 by default, `worldV2`). A caster downed or reverted between the release and
+   the 40 x 33 world v4, 20 cells from its east, west and south edges and 13 from the north one. A caster downed or reverted between the release and
    the white stops the world opening; the cooldown and charge stay spent.
 3. Hostile pawns get an assault lord of their faction in the world (no fleeing: the map edge is the
    world's edge). The home map keeps the low ring of fire, which blocks nothing.
@@ -63,10 +64,11 @@ move order refund, revert during the chant, revert in the world, empty pool in t
 
 RimArts debug window, Trace, pictures and the empty map:
 
-- **unlimited blade works: cast** and **world**: the pictures over the map on screen, no pocket map.
-- **world map: open**: makes the pocket map beside the map on screen and plays the fire running out.
-  Nobody is taken; spawn a pawn in it with the game's own tools to see the swords at scale.
-  **open (v2 depth)** makes it on the plate ground with the sky (seed 1, the sketch's), to compare.
+- **unlimited blade works: cast**, **world** (the flat v1) and **world v4**: the pictures over the map on
+  screen, no pocket map.
+- **world map: open**: makes the world v4 beside the map on screen, as the ability does, and plays the fire
+  running out. Nobody is taken; spawn a pawn in it with the game's own tools to see the swords at scale.
+  **open (v1 flat)** makes it with the flat earth, to compare.
 - **world map: close**: the white closes in behind the wall of fire, then the map is removed.
   **close now** removes it at once.
 
@@ -77,8 +79,9 @@ shadows use the sketch's fixed low sun.
 ## Textures
 
 `make_trace_textures.py` writes `Textures/RimArt/Trace/`: the flame, the earth tile, the fade gradient,
-the terrain fallback, and for v2 the terrain atlas (the earth tile in four shades, the face gradient, the
-swatches) and the sky gradient, from the lab's own formulas. The swords' pictures are not shipped: in the
+the terrain fallback, and for v4 the terrain atlas (the earth tile in four shades, the face gradient, the
+swatches), the crest's face, the sky gradient, the plain behind the crest and the camera's haze, from the
+lab's own formulas. The swords' pictures are not shipped: in the
 lab they are the local reference atlas of `make_trace_trial_textures.py` (git-excluded); in game
 `UbwAtlasBuilder` reads each weapon's texture at first use, measures its axis the way that script
 does, and builds the same atlas and the outline and silhouette textures for the trace look. Until an
@@ -101,8 +104,14 @@ state, the refunds, and the world's removal):
 - Draw order against real pawns: the haze at Building + 0.6 must sit under pawns and over the swords;
   the field's shadows at Shadows + 0.002 under a pawn's own shadow.
 - The weather tint and the glowers' colour: placeholders, to be tuned by eye.
-- The frame rate with about 930 swords baked (about 35 draws a frame while the world stands, about 65
-  for v2 with its sky, more while the fire runs out).
-- v2 in game: the plates on the walkable map step by 0.08 cells and the hill by 0.18, so a pawn's feet
-  stand a little off a raised plate; whether that reads; the sky's top plane (800 x 400 cells north of
-  the map) against the map's own edge at full zoom-out.
+- The frame rate: about 35 draws a frame for v1 while the world stands, about 80 for v4 (the gears,
+  clouds, smoke and embers are rebuilt each frame), more while the fire runs out.
+- v4 in game: the plates on the walkable map step by 0.08 cells and the hill by 0.18, so a pawn's feet
+  stand a little off a raised plate; the backdrop follows `Find.Camera` (position and orthographic size),
+  so check panning (it should open more sky going north), zooming out to 60 (the sky's top plane, the
+  cover under the plates), and a pawn on the north row against the crest.
+- v4 as sketched: the sketch's `clamp` is `Mathf.Clamp01`, so the field's clustering only thins it (no
+  groves) and the sun stands at azimuth 1 degree, above the caster, not the 55 degrees the scene's shadows
+  point from. The port does the same; changing either is a sketch change first.
+- The ash and embers in front of everything also draw over the white while the fire runs out and closes
+  in (the sketch's close does the same).

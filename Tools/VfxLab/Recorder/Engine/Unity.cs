@@ -214,7 +214,23 @@ namespace UnityEngine
             triangleData = triangles.ToArray();
     }
 
-    public class Camera : Object { }
+    public class Transform
+    {
+        public Vector3 position;
+    }
+
+    /// <summary>
+    /// The map camera, looking straight down. Only Unlimited Blade Works' world v4 reads it (its backdrop
+    /// moves with the camera), so it stands where that sketch assumes a camera when the lab gives it none:
+    /// 7 cells north of the world, which the preview puts 2 north of the recording cell (60, 60); a view 36
+    /// cells tall at 16:9.
+    /// </summary>
+    public class Camera : Object
+    {
+        public Transform transform = new Transform { position = new Vector3(60.5f, 15f, 69.5f) };
+        public float orthographicSize = 18f;
+        public float aspect = 16f / 9f;
+    }
 
     public static class Graphics
     {

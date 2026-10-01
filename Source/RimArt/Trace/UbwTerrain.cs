@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace RimArt
 {
-    /// <summary>The rules of the world v2's ground (lib/ubw-terrain.js Ground), plus the hill and the field's reach from the world's look.</summary>
+    /// <summary>The rules of the world's plate ground (lib/ubw-terrain.js Ground), plus the hill and the field's reach from the world's look.</summary>
     public struct UbwGround
     {
         /// <summary>Plate spacing on the map, on the hill and past the map; the share of map seeds dropped (bigger plates); the crack width.</summary>
@@ -17,6 +17,8 @@ namespace RimArt
         public int HillLevels;
         /// <summary>The hill of swords' radius and how far the field goes on past the map edge (the world's look).</summary>
         public double Hill, Beyond;
+        /// <summary>Where the plates end north, in cells from the caster, if not at the world's edge (NaN): the world v4 ends them under its crest.</summary>
+        public double NorthClip;
 
         /// <summary>The v2 sketch's defaults (2026-09-25, an experiment) with the world's hill and reach.</summary>
         public static readonly UbwGround Default = new UbwGround
@@ -24,8 +26,23 @@ namespace RimArt
             Plate = 3.2, HillPlate = 2.2, Outer = 5.5, Drop = 0.12, Gap = 0.14,
             TierStep = 1.2, Tiers = 3, SouthTiers = 3, Jitter = 1, RidgeBand = 6, RidgeMax = 5,
             HillStep = 0.18, PlateStep = 0.08, HillLevels = 3,
-            Hill = UbwField.Look.Hill, Beyond = UbwField.Look.Beyond,
+            Hill = UbwField.Look.Hill, Beyond = UbwField.Look.Beyond, NorthClip = double.NaN,
         };
+
+        /// <summary>
+        /// The world v4's ground (trace-ubw-world-v4.js): level plates everywhere (no tiers, no far ridge, nothing
+        /// below the map's level south), bigger past the map, ending under the crest's foot, <paramref name="north"/>
+        /// cells north of the caster plus the foot's widest.
+        /// </summary>
+        public static UbwGround Crest(int north)
+        {
+            UbwGround g = Default;
+            g.Outer = UbwCrest.OuterPlate;
+            g.TierStep = 0;
+            g.SouthTiers = 0;
+            g.NorthClip = north + UbwCrest.Foot + UbwCrest.Wobble;
+            return g;
+        }
     }
 
     /// <summary>A corner of a plate: the seed whose bisector made the edge that starts here (-1 for the world's edge), and how far that edge moved inward for the crack.</summary>
@@ -97,6 +114,30 @@ namespace RimArt
                 h = (h ^ (int)((uint)h >> 13)) * 1274126177;
                 return (uint)(h ^ (int)((uint)h >> 16)) / 4294967295.0;
             }
+        }
+
+        /// <summary>The lab's tileable value noise (standins.js noise), 0..1: the hash at the corners of each cell, smoothstepped.</summary>
+        public static double Noise(double x, double y, int period, int seed)
+        {
+            double xi = Math.Floor(x), yi = Math.Floor(y), xf = x - xi, yf = y - yi;
+            double sx = xf * xf * (3 - 2 * xf), sy = yf * yf * (3 - 2 * yf);
+            int i0 = (int)xi, j0 = (int)yi;
+            double At(int i, int j) => Hash(((i % period) + period) % period, ((j % period) + period) % period, seed);
+            double a = At(i0, j0), b = At(i0 + 1, j0), c = At(i0, j0 + 1), d = At(i0 + 1, j0 + 1);
+            return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy;
+        }
+
+        /// <summary>The lab's fbm (standins.js): octaves of <see cref="Noise"/>, each twice as fine and half as strong, 0..1.</summary>
+        public static double Fbm(double x, double y, int seed, int octaves = 4, int period = 8)
+        {
+            double v = 0, amp = .5, total = 0;
+            for (int o = 0; o < octaves; o++)
+            {
+                v += Noise(x * (1 << o), y * (1 << o), period * (1 << o), seed + o) * amp;
+                total += amp;
+                amp *= .5;
+            }
+            return v / total;
         }
 
         private static double Hypot(double x, double z) => Math.Sqrt(x * x + z * z);
@@ -237,11 +278,12 @@ namespace RimArt
                 poly = ClipBy(poly, s.X, s.Z, (n.X - s.X) / d, (n.Z - s.Z) / d, d / 2, j);
                 if (poly.Count < 3) return null;
             }
-            // The outermost plates end at the world's edge instead of running on to their search box.
+            // The outermost plates end at the world's edge instead of running on to their search box; north, at the
+            // clip if there is one.
             double[] nx = { 1, -1, 0, 0 }, nz = { 0, 0, 1, -1 };
             for (int k = 0; k < 4; k++)
             {
-                poly = ClipBy(poly, 0, 0, nx[k], nz[k], edgeAt, -1);
+                poly = ClipBy(poly, 0, 0, nx[k], nz[k], nz[k] > 0 && !double.IsNaN(o.NorthClip) ? o.NorthClip : edgeAt, -1);
                 if (poly.Count < 3) return null;
             }
             // Each edge's crack: wider past the map, and varying edge to edge, the same width seen from both plates.

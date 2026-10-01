@@ -24,7 +24,7 @@ namespace RimArt
         public override void Generate(Map map, GenStepParams parms)
         {
             if (map == null) return;
-            var asked = UnlimitedBladeWorksMap.TakeRequest() ?? (new List<IntVec3> { IntVec3.Zero }, false);
+            var asked = UnlimitedBladeWorksMap.TakeRequest() ?? (new List<IntVec3> { IntVec3.Zero }, true);
 
             RoofDef roof = RoofDefOf.RoofRockThick;
             foreach (IntVec3 cell in map.AllCells)
@@ -43,7 +43,7 @@ namespace RimArt
 
             // A pocket map generated behind the player's back would otherwise open fogged.
             map.fogGrid.ClearAllFog();
-            map.GetComponent<MapComponent_UnlimitedBladeWorks>().Begin(asked.keep, asked.depth);
+            map.GetComponent<MapComponent_UnlimitedBladeWorks>().Begin(asked.keep, asked.crest);
         }
     }
 }

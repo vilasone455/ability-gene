@@ -148,6 +148,7 @@ namespace Verse
     {
         public static Map CurrentMap;
         public static CameraDriver CameraDriver = new CameraDriver();
+        public static UnityEngine.Camera Camera = new UnityEngine.Camera();
     }
 
     public static class UI

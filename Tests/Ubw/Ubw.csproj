@@ -5,7 +5,9 @@
     <Compile Include="../../Source/RimArt/Trace/UbwBlade.cs" Link="UbwBlade.cs" />
     <Compile Include="../../Source/RimArt/Trace/UbwField.cs" Link="UbwField.cs" />
     <Compile Include="../../Source/RimArt/Trace/UbwTerrain.cs" Link="UbwTerrain.cs" />
+    <Compile Include="../../Source/RimArt/Trace/UbwCrest.cs" Link="UbwCrest.cs" />
     <None Include="fields.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="terrains.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="crest.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

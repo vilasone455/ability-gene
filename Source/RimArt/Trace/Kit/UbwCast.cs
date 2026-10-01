@@ -46,8 +46,9 @@ namespace RimArt
     ///   the pool runs dry). Without it the chant breaks, a released world does not open, and a standing
     ///   world closes, as if the caster were downed.
     /// - Released after verse V, everyone standing within radiusByVerse[V] of the cell the chant began on
-    ///   (allies, enemies, animals; the caster always) is taken into a 40 x 40 pocket map, each at its offset
-    ///   from the caster, who lands in the middle. Downed pawns stay. The moment is the full white of the
+    ///   (allies, enemies, animals; the caster always) is taken into a 40 x 33 pocket map, each at its offset
+    ///   from the caster, who lands 20 cells from its east, west and south edges and 13 from the north one
+    ///   (the world v4's crest stands past it). Downed pawns stay. The moment is the full white of the
     ///   cast picture (<see cref="T.Plan.Taken"/>).
     /// - Hostile pawns taken are put in an assault lord of their faction inside the world; the map edge is
     ///   the world's edge, nobody can leave.
@@ -157,7 +158,7 @@ namespace RimArt
         private void Release(int v)
         {
             verse = v;
-            world = UnlimitedBladeWorksMap.Make(home, new List<IntVec3> { IntVec3.Zero }, Rules.worldV2);
+            world = UnlimitedBladeWorksMap.Make(home, new List<IntVec3> { IntVec3.Zero }, true);
             if (world == null)
             {
                 verse = 0;

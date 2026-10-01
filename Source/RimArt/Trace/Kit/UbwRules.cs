@@ -20,9 +20,6 @@ namespace RimArt
         /// <summary>The world lasts this long by verse, counted from the moment everyone is taken.</summary>
         public List<float> worldSecondsByVerse = new List<float> { 20f, 25f, 30f };
 
-        /// <summary>The world the ability opens: true for v2 (plates with height, the north sky with gears), false for the flat v1. The debug window opens either.</summary>
-        public bool worldV2 = true;
-
         /// <summary>Every sword a command uses takes this long off the world. For the commands, which are not built yet.</summary>
         public float swordCostSeconds = 0.5f;
 

@@ -8,7 +8,8 @@ using RimArt;
 // Checks the C# layout of Unlimited Blade Works' standing field (Source/RimArt/Trace/UbwField.cs and
 // UbwBlade.cs) against fields.json, written from the sketches' own layout by dump-field.mjs: the same
 // settings and landing spots give the same swords, in the same order, with the same poses and cuts, in
-// game and in the lab. Run: dotnet run --project Tests/Ubw
+// game and in the lab; the same for the world v4 ground and crest against crest.json (dump-crest.mjs).
+// Run: dotnet run --project Tests/Ubw
 
 int failures = 0;
 void Check(bool condition, string message)
@@ -121,7 +122,75 @@ foreach (JsonElement expected in grounds.RootElement.GetProperty("terrains").Enu
             $"{at}: sword {i} (seed {lifted[i].Seed}) differs from the sketch's (seed {(int)wantSwords[i][0]}, lift {wantSwords[i][3]})");
 }
 
+// ---- the world v4: its ground ending under the crest, its field, the crest's profile, the backdrop's numbers ----
+using JsonDocument crestFixture = JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "crest.json")));
+JsonElement v4 = crestFixture.RootElement;
+int north = v4.GetProperty("north").GetInt32(), crestSamples = 0;
+double crestH = v4.GetProperty("H").GetDouble();
+Check(north == UbwCrest.North && crestH == UbwCrest.Height && v4.GetProperty("perCell").GetDouble() == UbwCrest.SwordsPerCell,
+    $"v4: the sketch's defaults (north {north}, crest {crestH}) differ from UbwCrest's");
+{
+    UbwTerrain T = UbwTerrain.Make(UbwGround.Crest(north), 1);
+    Check(Near(T.Rules.NorthClip, v4.GetProperty("rules").GetProperty("northClip").GetDouble()), "v4: the plates' north clip differs from the sketch's");
+    var want = v4.GetProperty("plates").EnumerateArray().ToList();
+    Check(T.Plates.Length == want.Count, $"v4: {T.Plates.Length} plates, the sketch has {want.Count}");
+    for (int i = 0; i < Math.Min(T.Plates.Length, want.Count); i++)
+    {
+        UbwPlate p = T.Plates[i];
+        bool kept = want[i].ValueKind != JsonValueKind.Null;
+        Check((p != null) == kept, $"v4: plate {i} is {(p == null ? "dropped" : "kept")}, the sketch {(kept ? "keeps" : "drops")} it");
+        if (p == null || !kept) continue;
+        plates++;
+        double[] e = Doubles(want[i]);
+        Check(NearAll(e, p.MinX, p.MaxX, p.MinZ, p.MaxZ, p.H, p.Tier, p.Poly.Count), $"v4: plate {i} differs from the sketch's");
+    }
+    Check(Near(T.Bottom, v4.GetProperty("bottom").GetDouble()), "v4: the ground's bottom differs from the sketch's");
+    terrains++;
+    List<UbwXZ> keep = v4.GetProperty("keep").EnumerateArray().Select(k => new UbwXZ(k.GetProperty("x").GetDouble(), k.GetProperty("z").GetDouble())).ToList();
+    List<UbwSword> mine = UbwField.Make(UbwField.CrestLook, keep, UbwWeapons.Lab, T.HeightAt);
+    var wantSwords = v4.GetProperty("swords").EnumerateArray().Select(Doubles).ToList();
+    Check(mine.Count == wantSwords.Count, $"v4: {mine.Count} swords, the sketch has {wantSwords.Count}");
+    for (int i = 0; i < Math.Min(mine.Count, wantSwords.Count); i++, swords++)
+        Check(mine[i].Seed == (int)wantSwords[i][0] && Near(mine[i].X, wantSwords[i][1]) && Near(mine[i].Z, wantSwords[i][2]) && Near(mine[i].Lift, wantSwords[i][3]),
+            $"v4: sword {i} (seed {mine[i].Seed}) differs from the sketch's (seed {(int)wantSwords[i][0]})");
+    fields++;
+
+    JsonElement c = v4.GetProperty("crest");
+    double[] xs = Doubles(c.GetProperty("xs")), foot = Doubles(c.GetProperty("foot")), ground = Doubles(c.GetProperty("ground")), top = Doubles(c.GetProperty("top"));
+    double[] cluster = Doubles(v4.GetProperty("cluster"));
+    for (int i = 0; i < xs.Length; i++, crestSamples++)
+    {
+        Check(Near(UbwCrest.FootOf(xs[i]), foot[i]) && Near(UbwCrest.GroundOf(xs[i]), ground[i]) && Near(UbwCrest.TopOf(xs[i], crestH), top[i]),
+            $"v4: the crest at x {xs[i]:0.##} (foot {UbwCrest.FootOf(xs[i])}, top {UbwCrest.TopOf(xs[i], crestH)}) differs from the sketch's (foot {foot[i]}, top {top[i]})");
+        Check(Near(UbwField.ClusterAt(xs[i], i % 41 - 20), cluster[i]), $"v4: clusterAt sample {i} differs from the sketch's");
+    }
+    // The sketch's means: the sum over the bake's 704 pieces, each at its west end.
+    int n = (int)Math.Round(2 * UbwCrest.Span / UbwCrest.Step);
+    double sumTop = 0, sumGround = 0;
+    for (int i = 0; i < n; i++)
+    {
+        double x = -UbwCrest.Span + i * UbwCrest.Step;
+        sumTop += north + UbwCrest.TopOf(x, crestH) - north;
+        sumGround += north + UbwCrest.GroundOf(x) - north;
+    }
+    Check(Near(sumTop / n, c.GetProperty("meanTop").GetDouble()) && Near(sumGround / n, c.GetProperty("meanGround").GetDouble()),
+        $"v4: the crest's mean top {sumTop / n} differs from the sketch's {c.GetProperty("meanTop").GetDouble()}");
+    var ridges = v4.GetProperty("ridges").EnumerateArray().Select(Doubles).ToList();
+    Check(ridges.Count == UbwCrest.Ridges.Length, $"v4: {UbwCrest.Ridges.Length} ridges, the sketch has {ridges.Count}");
+    for (int r = 0; r < Math.Min(ridges.Count, UbwCrest.Ridges.Length); r++)
+    {
+        UbwCrest.Ridge R = UbwCrest.Ridges[r];
+        Check(NearAll(ridges[r], R.Base, R.H, R.F, R.Ph, R.P, R.Haze, R.Swords, R.Tall), $"v4: ridge {r} differs from the sketch's");
+    }
+    var rows = v4.GetProperty("rows").EnumerateArray().Select(Doubles).ToList();
+    for (int q = 0; q < rows.Count; q++)
+    {
+        UbwCrest.Row R = UbwCrest.RowOf(q);
+        Check(NearAll(rows[q], R.D, R.P, R.Gap, R.Tall, R.Haze), $"v4: row {q} differs from the sketch's");
+    }
+}
+
 Console.WriteLine(failures == 0
-    ? $"OK: {fields} fields, {swords} swords identical to the sketch's layout; {terrains} terrains, {plates} plates identical to the sketch's ground"
-    : $"{failures} failures over {fields} fields, {swords} swords, {terrains} terrains, {plates} plates");
+    ? $"OK: {fields} fields, {swords} swords identical to the sketch's layout; {terrains} terrains, {plates} plates identical to the sketch's ground; {crestSamples} crest samples identical to the v4 sketch's"
+    : $"{failures} failures over {fields} fields, {swords} swords, {terrains} terrains, {plates} plates, {crestSamples} crest samples");
 return failures == 0 ? 0 : 1;

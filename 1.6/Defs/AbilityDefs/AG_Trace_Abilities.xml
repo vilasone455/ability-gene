@@ -46,8 +46,6 @@
           <li>25</li>
           <li>30</li>
         </worldSecondsByVerse>
-        <!-- v2: plates with height and the north sky with gears; false opens the flat v1. -->
-        <worldV2>true</worldV2>
         <!-- For the commands (Full Open, Pin, Draw, Arm, Intercept), which are not built yet. -->
         <swordCostSeconds>0.5</swordCostSeconds>
       </li>
