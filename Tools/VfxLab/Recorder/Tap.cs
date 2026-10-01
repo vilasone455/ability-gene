@@ -101,7 +101,16 @@ namespace RimArt.VfxLab
                 // Keyed by content, not by write count: a kit that rewrites identical vertices
                 // every frame still stores the shape once, and a frozen preview stays still.
                 if (!keys.TryGetValue(call.mesh, out string key))
-                    keys[call.mesh] = key = call.mesh.id + "#" + ContentHash(call.mesh).ToString("x8");
+                {
+                    // System.HashCode is seeded per process, so two shapes of one pooled mesh can share a hash in one
+                    // run and not the next; a key already holding another shape gets a suffix, or that frame would
+                    // replay the stored shape (seen once as one wrong strip in Sato's tear).
+                    string first = call.mesh.id + "#" + ContentHash(call.mesh).ToString("x8");
+                    key = first;
+                    for (int n = 1; meshes.TryGetValue(key, out var kept) && !Same(kept.v, kept.uv, kept.tri, call.mesh); n++)
+                        key = first + "-" + n;
+                    keys[call.mesh] = key;
+                }
                 if (!meshes.ContainsKey(key))
                     meshes[key] = ((Vector3[])call.mesh.vertices.Clone(), (Vector2[])call.mesh.uv?.Clone(),
                         (int[])call.mesh.triangles.Clone(), call.mesh.name);
@@ -124,7 +133,9 @@ namespace RimArt.VfxLab
                 frame.shot.overlays.AddRange(s.Overlays);
                 foreach (UbwDraw3 d in s.Draws)
                 {
-                    string key = d.Mesh.Name + "#" + ContentHash3(d.Mesh).ToString("x8");
+                    string first = d.Mesh.Name + "#" + ContentHash3(d.Mesh).ToString("x8"), key = first;
+                    for (int n = 1; meshes3.TryGetValue(key, out var kept) && !Same3(kept, d.Mesh); n++)
+                        key = first + "-" + n;
                     if (!meshes3.ContainsKey(key))
                         meshes3[key] = ((Vector3[])d.Mesh.Xyz.Clone(), (Vector2[])d.Mesh.Game.Clone(), (Vector2[])d.Mesh.Uv.Clone(), (int[])d.Mesh.Tri.Clone(), d.Mesh.Name);
                     materials[d.Material.id] = d.Material;
@@ -136,6 +147,30 @@ namespace RimArt.VfxLab
             frame.hash = hash.ToHashCode();
             frames.Add(frame);
             return frame;
+        }
+
+        private static bool Same(Vector3[] v, Vector2[] uv, int[] tri, Mesh mesh)
+        {
+            Vector3[] mv = mesh.vertices;
+            Vector2[] muv = mesh.uv;
+            if (v.Length != mv.Length || tri.Length != mesh.triangles.Length || (uv == null) != (muv == null)) return false;
+            for (int i = 0; i < v.Length; i++) if (v[i].x != mv[i].x || v[i].y != mv[i].y || v[i].z != mv[i].z) return false;
+            if (uv != null)
+            {
+                if (uv.Length != muv.Length) return false;
+                for (int i = 0; i < uv.Length; i++) if (uv[i].x != muv[i].x || uv[i].y != muv[i].y) return false;
+            }
+            return tri.AsSpan().SequenceEqual(mesh.triangles);
+        }
+
+        private static bool Same3((Vector3[] xyz, Vector2[] game, Vector2[] uv, int[] tri, string name) kept, UbwMesh3 mesh)
+        {
+            if (kept.xyz.Length != mesh.Xyz.Length || kept.game.Length != mesh.Game.Length || kept.uv.Length != mesh.Uv.Length) return false;
+            for (int i = 0; i < kept.xyz.Length; i++)
+                if (kept.xyz[i].x != mesh.Xyz[i].x || kept.xyz[i].y != mesh.Xyz[i].y || kept.xyz[i].z != mesh.Xyz[i].z) return false;
+            for (int i = 0; i < kept.game.Length; i++) if (kept.game[i].x != mesh.Game[i].x || kept.game[i].y != mesh.Game[i].y) return false;
+            for (int i = 0; i < kept.uv.Length; i++) if (kept.uv[i].x != mesh.Uv[i].x || kept.uv[i].y != mesh.Uv[i].y) return false;
+            return kept.tri.AsSpan().SequenceEqual(mesh.Tri);
         }
 
         private static int ContentHash3(UbwMesh3 mesh)

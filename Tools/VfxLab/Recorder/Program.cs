@@ -21,6 +21,7 @@ const float SafetySeconds = 120f;
 string outDir = args.SkipWhile(a => a != "--out").Skip(1).FirstOrDefault() ?? FindOut();
 var failures = new List<string>();
 var written = new List<object>();
+var files = new HashSet<string>();
 
 // A cutscene camera's frames (Unlimited Blade Works' reveal shot) land in the tap, as Graphics.DrawMesh does.
 UbwShot.Sink = Tap.Shot;
@@ -38,6 +39,11 @@ foreach (var (method, label, kit) in actions)
 {
     var recording = Record(method, label, kit);
     string file = $"{Slug(kit.Name)}/{Slug(label.Substring(kit.Prefix.Length))}.json";
+    // Kits that share a Name share a folder: "E.G.O.: magic bullet: corroded" and "E.G.O.: mimicry: corroded"
+    // both give corroded.json. The later one takes the last word group of its prefix in front ("mimicry-corroded").
+    if (files.Contains(file))
+        file = $"{Slug(kit.Name)}/{Slug(kit.Prefix.Split(':').Last())}-{Slug(label.Substring(kit.Prefix.Length))}.json";
+    if (!files.Add(file)) failures.Add($"{label}: {file} is already another preview's recording");
     recording.Write(Path.Combine(outDir, file));
     int calls = recording.frames.Sum(f => f.calls.Count + f.draws.Count);
     Console.WriteLine($"  {label,-38} {recording.frames.Count,5} frames {recording.Seconds,6:0.00} s {calls,7} draws{(recording.still ? "  (still)" : "")}");
