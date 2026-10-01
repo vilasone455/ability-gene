@@ -25,19 +25,22 @@
 //   Sketch rule, not yet agreed: downed pawns are not hit, as bullets fly over them.
 //
 // Order (defaults, scenario "fires"; times are what this sketch's simulation gives):
-//   0.00  the wielder holds the prism 0.42 cells ahead at chest height; it turns slowly, bobs,
-//         glints, and casts a small rainbow on the floor where its shadow falls; meter full (12)
-//   0.30  fan: the rainbow goes; six beams (red to violet) sweep a 35-degree fan every 1.8 s, each
+//   0.00  the wielder holds the prism at chest height, a pyramid 0.6 long with its tip pointing at the
+//         target and its base 0.3 in front of the wielder; it is still, bobs, glints, and casts a
+//         small rainbow on the floor where its shadow falls; meter full (12)
+//   0.30  fan: the rainbow goes; the prism starts rolling about its long axis (1 turn a second, rising
+//         to 2 at the join; its faces slide and shimmer pink and green); six beams (red to violet)
+//         leave from its tip and sweep a 35-degree fan every 1.8 s, each
 //         lighting the floor under it; opacity .2 to .45 over the first two thirds and to 1 in the
-//         last third while the sweep speeds up to one pass per 0.6 s and the prism spins up (Terraria's
-//         curve). A red ring marks the target, who walks across the aim. Every pawn a beam crosses
+//         last third while the sweep speeds up to one pass per 0.6 s (Terraria's curve). A red ring marks the target, who walks across the aim. Every pawn a beam crosses
 //         flickers in its colour and its damage bar fills (3 at a time): the target, the far raider
 //         behind him, the raider by the wall and the colonist standing in front. Beams that sweep over
 //         the wall stop on it, so the raider behind it takes nothing; the raider outside the fan takes
 //         nothing.
-//   3.30  join: white flash and ring at the prism, a pulse runs down the beam; one beam 1 cell wide:
+//   3.30  join: white flash and ring at the tip, a pulse runs down the beam; one beam 1 cell wide:
 //         a thin white core and pale sheath over six colour bands side by side (red on one edge to
-//         violet on the other), sparkles and flow lines, rainbow light on the floor.
+//         violet on the other), sparkles and flow lines, rainbow light on the floor. Terraria draws a
+//         white core with two drifting colour fringes instead; the bands were kept by choice (2026-10-01).
 //         At the join the fan has done 23 to the target, 15 to the far raider, 15 to the colonist and
 //         9 to the mech; nothing to the raider by the wall (the fan's edge), behind it or outside it.
 //   4.05  the target goes down; the ring jumps to the far raider and the beam swings to him
@@ -59,25 +62,34 @@
 // centre), so the fan lies over the ground and turns freely with the aim; no per-facing method.
 // Terraria's side-view fan becomes a fan over the floor, which is also the hit area. The beams are
 // soft additive strips (outer colour, lighter middle, thin white core) with rounded ends; a beam
-// that reaches its range tapers over the last 1.5 cells. Aiming north (sin > .3) the prism and the
-// beams draw under the pawn layer so they pass behind the wielder's head. The prism is a flat
-// triangle turned in the plane, faces lit by the scene's sun. The meter over the wielder's head
-// stands in for the gizmo, the bars over the others show damage taken against what downs them (a
+// that reaches its range tapers over the last 1.5 cells. The prism, from the Terraria sprite and demo GIF
+// (checked 2026-10-01): a pyramid lying level at chest height, tip at the target, base toward the
+// wielder, 0.6 long and about 0.6 across (.45 of a pawn's height, as the sprite is to the player). It
+// rolls about its long axis while firing, as the sprite's 5 frames do faster and faster. It is drawn
+// as a 3D pyramid each frame (corners in east, up, north; up drawn as Lift north), showing only the
+// faces turned to the viewer, so it turns with the aim and needs no per-facing method: aiming east or
+// west its outline stays a triangle and the faces slide, like the sprite. Faces: pale, lavender and
+// slate blue, lit by the scene's sun, a violet base, pale ridges, a navy outline. Every beam starts at
+// the tip, so none covers it. Aiming north (sin > .3) beams, glow and prism draw under the pawn layer
+// so they pass behind the wielder's head. The meter over the wielder's head stands in for the gizmo, the bars over the others show damage taken against what downs them (a
 // sketch aid, not a game UI), and the roof cells stand in for the game's roof overlay. Pawns are
 // lib/pawn.js stand-ins (the mech a grey hulk); walls are the Paper Bomb kit's. The aim, the targets,
 // the walk and every hit are replayed from 0 at 60 steps a second (cached per parameter set), in
 // cells relative to the chosen cell, so the drawing and the damage use the same walls and beams.
 import { AltitudeLayer, Color, Mathf, MaterialPool, ShaderDatabase } from '../js/engine.js';
-import { P, Body, Y, Floor, sprite, soft, glow, rand } from './lib/six-paths-impact.js';
+import { P, Body, Y, Floor, Lift, sprite, soft, glow, rand } from './lib/six-paths-impact.js';
 import { draw, mesh } from './lib/six-paths-solid.js';
-import { pawn, at, shadowLayer, pawnLayer, Skin } from './lib/pawn.js';
-import { Enemy, Ally } from './lib/chain-sickle.js';
+import { pawn, at, shadowLayer, Skin } from './lib/pawn.js';
+import { Enemy, Ally, rect } from './lib/chain-sickle.js';
 import { strip, streak, glint, ringAt, whiteGlow } from './lib/goku.js';
 import { walls } from './lib/paper-bomb.js';
 
 const clamp = Mathf.Clamp01, smooth = Mathf.Smooth, lerp = Mathf.Lerp, D2R = Mathf.Deg2Rad, TAU = Math.PI * 2;
 const flat = MaterialPool.MatFrom('white', ShaderDatabase.Transparent);
-const White = new Color(1, 1, 1), Crystal = new Color(.74, .93, 1), CrystalDeep = new Color(.22, .5, .82), CrystalEdge = new Color(.92, .98, 1);
+const White = new Color(1, 1, 1), Crystal = new Color(.74, .93, 1), CrystalEdge = new Color(.94, .95, 1);
+// The prism's faces, from the sprite: a pale white face, a lavender face, a slate-blue face, a violet base, a navy outline.
+const FacePale = new Color(.95, .95, 1), FaceLavender = new Color(.80, .70, .98), FaceSlate = new Color(.46, .56, .80);
+const FaceBase = new Color(.45, .32, .72), Navy = new Color(.12, .12, .34), FaceDark = new Color(.20, .18, .40);
 const Dull = new Color(.45, .5, .56), Sun = new Color(1, .82, .32), SunDim = new Color(.22, .18, .1), Warn = new Color(.85, .18, .12);
 const RoofTint = new Color(.55, .64, .82), Wielder = new Color(.30, .50, .62), Smoke = new Color(.32, .32, .34);
 const MechGrey = new Color(.52, .54, .58), MechHead = new Color(.36, .38, .42), Hurt = new Color(.95, .42, .15);
@@ -89,10 +101,12 @@ const PainShock = 43, MechDown = 150;                 // burn that downs an unar
 // Decided looks and timing of the picture.
 const Beams = 6, Lead = .3, Tail = 1.4, Fade = .25, Sputter = .35, JoinFlash = .3, ShowTime = 6;
 const SweepSlow = 1.8, SweepFast = .6;                // seconds per sweep of the fan: at the start, and in the last half
-const SpinIdle = .25, SpinFull = 2.5, SpinStop = 3;   // prism turns per second; how fast it winds down after
-const StartSide = .2, EndSide = .05;                  // cells across the aim where the beams leave the prism face
+const SpinStart = 1, SpinFull = 2, SpinStop = 3;      // prism turns per second about its long axis: channel start, joined; wind-down rate
+const StartSide = .1, EndSide = .03;                  // cells across the aim where the fan beams leave the tip
 const FanHalf = .16, HitReach = .3;                   // half width of a fan beam's outer glow; a pawn this close is crossed
-const PrismAhead = .42, PrismR = .2, PrismH = .98;   // cells ahead of the wielder, triangle radius, lab height (chest)
+// The prism: a pyramid 0.6 long with its base corners .35 from its long axis (about .6 across), the sprite's
+// 20 x 21 px against a 45 px player, so about .45 of a pawn's height. Its base is .3 in front of the wielder.
+const PrismLen = .6, PrismRad = .35, PrismGap = .3, PrismH = .98;   // PrismH: lab height of the chest, for its shadow
 const ChestLift = .05;                                // lib/pawn.js: the chest is .05 north of the cell centre on screen
 const Back = 7;                                       // the wielder stands this far behind the chosen cell
 // Pawns in the aim frame from the wielder: cells along, cells across. The target walks from +2 to -1
@@ -150,17 +164,18 @@ function sweep(s, lead, p) {
   return w0 * (s - lead) + (w1 - w0) * g;
 }
 // The six fan beams at time s: each swept by cos(phase + i/6 turn), narrowing with the charge.
-function fanBeams(s, p, lead, aim, prismG, cells) {
+function fanBeams(s, p, lead, aim, tip, cells) {
   const u = clamp((s - lead) / p.join), ph = sweep(s, lead, p), spread = p.fan * D2R * (1 - u), side = lerp(StartSide, EndSide, u);
   const dx = Math.cos(aim), dz = Math.sin(aim), out = [];
   for (let i = 0; i < Beams; i++) {
-    const c = Math.cos(ph + i * TAU / Beams), ang = aim + spread * c, start = { x: prismG.x - dz * side * c, z: prismG.z + dx * side * c };
+    const c = Math.cos(ph + i * TAU / Beams), ang = aim + spread * c, start = { x: tip.x - dz * side * c, z: tip.z + dx * side * c };
     const len = rayWall(start, ang, cells, p.range);
     out.push({ i, ang, start, len, blocked: len < p.range - 1e-6 });
   }
   return out;
 }
-const prismOf = (caster, aim) => ({ x: caster.x + Math.cos(aim) * PrismAhead, z: caster.z + Math.sin(aim) * PrismAhead });
+// The prism's tip on the ground under it: where every beam starts.
+const tipOf = (caster, aim) => { const d = PrismGap + PrismLen; return { x: caster.x + Math.cos(aim) * d, z: caster.z + Math.sin(aim) * d }; };
 
 // The whole fight, replayed from 0 at 60 steps a second in cells relative to the chosen cell: the aim,
 // who is the target, every hit and who goes down. The channel ends when the charge runs out or no enemy
@@ -183,7 +198,7 @@ function replay(p) {
   const hurt = (j, amount, s) => { const c = people[j]; c.total += amount; if (c.total >= c.tough && c.down === Infinity) c.down = s; };
   // The next target: an enemy standing, in range, with no wall in the way, needing the smallest turn.
   const pick = (s, aim) => {
-    const prism = prismOf(caster, aim);
+    const prism = tipOf(caster, aim);
     let best = -1, turn = Infinity;
     people.forEach((c, j) => {
       if (c.ally || c.down <= s) return;
@@ -206,7 +221,7 @@ function replay(p) {
     aim += Math.max(-step, Math.min(step, wrap(Math.atan2(tq.z - caster.z, tq.x - caster.x) - aim)));
     aims[k] = aim; targets[k] = target;
     if (s >= lead && s < release) {
-      const prism = prismOf(caster, aim);
+      const prism = tipOf(caster, aim);
       if (s < join) {
         const beams = fanBeams(s, p, lead, aim, prism, cells);
         people.forEach((c, j) => {
@@ -235,13 +250,16 @@ function times(p) {
   return { lead: r.lead, join: r.join, release: r.release, dried: r.dried, joins: r.join < r.release, end: r.release + (r.dried ? Sputter : Fade) + Tail };
 }
 
-// Prism turns so far: idle, spinning up with the charge squared, full while joined, winding down after.
-function spin(s, t, p) {
-  if (!t.lead) return SpinIdle * s;
-  const J = p.join, u = clamp((s - t.lead) / J), held = Math.min(s, t.release);
-  let g = J / 3 * u * u * u + Math.max(0, held - t.lead - J);
-  if (s > t.release) g += (1 - Math.exp(-SpinStop * (s - t.release))) / SpinStop;
-  return SpinIdle * s + (SpinFull - SpinIdle) * g;
+// Turns the prism has rolled about its long axis: still until the channel, then SpinStart a second rising
+// linearly to SpinFull as the beams narrow (Terraria's sprite frames go from every 4 ticks to every 2),
+// SpinFull while joined, winding down after the beam stops.
+function roll(s, t, p) {
+  if (!t.lead || s < t.lead) return 0;
+  const J = p.join, A = SpinStart, B = SpinFull, h = Math.min(s, t.release);
+  const until = x => { const u = clamp((x - t.lead) / J); return x <= t.join ? A * (x - t.lead) + (B - A) * J * u * u / 2 : A * J + (B - A) * J / 2 + B * (x - t.join); };
+  let turns = until(h);
+  if (s > t.release) { const v = A + (B - A) * clamp((t.release - t.lead) / J); turns += v * (1 - Math.exp(-SpinStop * (s - t.release))) / SpinStop; }
+  return turns;
 }
 
 // A soft beam layer from a along ang: rounded at the start, tapered over softEnd cells at the end,
@@ -258,17 +276,49 @@ function ray(key, a, ang, len, half, colour, layer, softEnd, i, s, off = null) {
 }
 const around = (c, ang, d) => ({ x: c.x + Math.cos(ang) * d, z: c.z + Math.sin(ang) * d });
 
-// The prism: a flat triangle turned in the plane, a pale edge, three faces lit by the sun.
-function prism(c, turns, sunAng, layer, dull) {
-  const corner = (k, R) => around(c, turns * TAU + k * TAU / 3, R);
-  const tri = (key, v0, v1, v2, colour) => { const m = mesh(key); m.setFlat([v0.x, v0.z, v1.x, v1.z, v2.x, v2.z], [0, 1, 2]); draw(m, 0, layer, 0, 1, 1, 0, colour, flat); };
-  tri('last prism edge', corner(0, PrismR * 1.22), corner(1, PrismR * 1.22), corner(2, PrismR * 1.22), (dull ? Dull : CrystalEdge).withAlpha(.95));
-  for (let k = 0; k < 3; k++) {
-    const face = turns * TAU + (k + .5) * TAU / 3, lit = .5 + .5 * Math.cos(face - sunAng);
-    const colour = Color.Lerp(CrystalDeep, Crystal, lit);
-    layer += .0005;
-    tri(`last prism face ${k}`, c, corner(k, PrismR), corner(k + 1, PrismR), (dull ? Color.Lerp(colour, Dull, .7) : colour).withAlpha(.92));
+// The prism: a pyramid lying level at chest height, base centre at base (a screen point), tip PrismLen along
+// the aim, rolled about that long axis by turns. Its five corners are placed in 3D (east, up, north) and
+// drawn with up as a shift north. A face shows when its outward normal points at the viewer, (0, 1, -Lift):
+// those faces never overlap, so no sorting. The three long faces keep the sprite's colours (pale, lavender,
+// slate blue) and are lit by the sun, so as it rolls the colours slide across the top as they do across the
+// sprite. While firing (power 0..1) they shimmer pink and green. Ridges between two shown faces are pale,
+// the outline is navy.
+function prism(base, aim, turns, sun, layer, dull, power, s) {
+  const ca = Math.cos(aim), sa = Math.sin(aim);
+  const at3 = (along, across, up) => ({ x: base.x + along * ca - across * sa, y: up, z: base.z + along * sa + across * ca });
+  const v = [0, 1, 2].map(k => { const a = turns * TAU + k * TAU / 3; return at3(0, PrismRad * Math.cos(a), PrismRad * Math.sin(a)); });
+  v.push(at3(PrismLen, 0, 0));
+  const mid = { x: (v[0].x + v[1].x + v[2].x + v[3].x) / 4, y: (v[0].y + v[1].y + v[2].y + v[3].y) / 4, z: (v[0].z + v[1].z + v[2].z + v[3].z) / 4 };
+  const screen = q => ({ x: q.x, z: q.z + q.y * Lift });
+  const sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
+  const sl = Math.hypot(sun.x, 1, sun.z), toSun = { x: -sun.x / sl, y: 1 / sl, z: -sun.z / sl };
+  const faces = [[3, 0, 1, FacePale], [3, 1, 2, FaceLavender], [3, 2, 0, FaceSlate], [0, 2, 1, FaceBase]];
+  const edges = new Map();
+  faces.forEach(([i, j, k, base], f) => {
+    const e1 = sub(v[j], v[i]), e2 = sub(v[k], v[i]);
+    let n = { x: e1.y * e2.z - e1.z * e2.y, y: e1.z * e2.x - e1.x * e2.z, z: e1.x * e2.y - e1.y * e2.x };
+    const c = { x: (v[i].x + v[j].x + v[k].x) / 3 - mid.x, y: (v[i].y + v[j].y + v[k].y) / 3 - mid.y, z: (v[i].z + v[j].z + v[k].z) / 3 - mid.z };
+    if (n.x * c.x + n.y * c.y + n.z * c.z < 0) n = { x: -n.x, y: -n.y, z: -n.z };
+    if (n.y - Lift * n.z <= 0) return;
+    const nl = Math.hypot(n.x, n.y, n.z), lit = Math.max(0, (n.x * toSun.x + n.y * toSun.y + n.z * toSun.z) / nl);
+    let colour = Color.Lerp(FaceDark, base, .45 + .55 * lit);
+    if (power > 0) colour = Color.Lerp(colour, hue(s * .9 + f / 3, .5), .3 * power);
+    if (dull) colour = Color.Lerp(colour, Dull, .7);
+    const pts = [v[i], v[j], v[k]].map(screen), m = mesh(`last prism face ${f}`);
+    m.setFlat(pts.flatMap(q => [q.x, q.z]), [0, 1, 2]);
+    draw(m, 0, layer + f * .0003, 0, 1, 1, 0, colour.withAlpha(.94), flat);
+    [[i, j], [j, k], [k, i]].forEach(([a, b]) => { const key = a < b ? `${a}${b}` : `${b}${a}`; edges.set(key, (edges.get(key) ?? 0) + 1); });
+  });
+  if (!dull) {
+    const c = screen(mid);
+    sprite(c, .5, .5, hue(s * .3, .6).withAlpha(.1 + .25 * power), glow, layer + .0015);
+    sprite(c, .18 + .12 * power, .18 + .12 * power, White.withAlpha(.15 + .35 * power), glow, layer + .0016);
   }
+  edges.forEach((count, key) => {
+    const a = screen(v[+key[0]]), b = screen(v[+key[1]]), ridge = count > 1;
+    rect(`last prism edge ${key}`, { x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 }, Math.hypot(b.x - a.x, b.z - a.z) + .02, ridge ? .02 : .03,
+      Math.atan2(b.z - a.z, b.x - a.x) / D2R, (ridge ? (dull ? Dull : CrystalEdge) : Navy).withAlpha(ridge ? .8 : .9), layer + .002 + (ridge ? 0 : .0005));
+  });
 }
 // The spectrum the prism throws on the floor in sun: six stripes red to violet, along the sun.
 function rainbow(c, sun, amount, s) {
@@ -327,14 +377,18 @@ export default {
     const t = times(p);
     if (s < 0 || s >= t.end) return;
     const sun = scene?.shadowVector ?? { x: -.45, z: -.32 }, strength = scene?.sun?.strength ?? .32, light = clamp(strength / .32);
-    const sunAng = Math.atan2(-sun.z, -sun.x), firing = shoots(p), roofed = p.scenario === 'under a roof';
+    const firing = shoots(p), roofed = p.scenario === 'under a roof';
     const r = firing ? replay(p) : null, k = r ? Math.min(r.aims.length - 1, Math.round(s / r.dt)) : 0;
     const caster = r ? add(o, r.caster) : o, cells = r ? r.cells.map(c => add(o, c)) : [];
     const theta = r ? r.aims[k] : p.aim * D2R;
     const dx = Math.cos(theta), dz = Math.sin(theta), north = Math.sin(theta) > .3;
     const bob = .025 * Math.sin(s * 2.4);
-    const prismG = prismOf(caster, theta), prismS = { x: prismG.x, z: prismG.z + ChestLift + bob };
-    const beamLayer = north ? AltitudeLayer.Projectile.AltitudeFor() : Y, prismLayer = north ? pawnLayer - .03 : pawnLayer + .06;
+    const lifted = q => ({ x: q.x, z: q.z + ChestLift + bob });
+    const baseG = { x: caster.x + dx * PrismGap, z: caster.z + dz * PrismGap }, midG = { x: baseG.x + dx * PrismLen / 2, z: baseG.z + dz * PrismLen / 2 };
+    const tipG = tipOf(caster, theta), tipS = lifted(tipG), midS = lifted(midG);
+    // Beams, then the glow round the tip, then the prism, so the beams come out of its tip. Aiming north all three sit
+    // under the pawn layer so they pass behind the wielder's head; glints (Y + .06) stay on top.
+    const beamLayer = north ? AltitudeLayer.Projectile.AltitudeFor() : Y, glowLayer = beamLayer + .035, prismLayer = beamLayer + .04;
 
     // State of the channel at this time.
     const u = firing ? clamp((s - t.lead) / p.join) : 0, after = firing ? s - t.release : -1, endFade = t.dried ? Sputter : Fade;
@@ -342,14 +396,15 @@ export default {
     const live = !firing || s < t.lead ? 0 : (after < 0 ? 1 : Math.max(0, 1 - after / endFade) * flicker) * clamp((s - t.lead) / .15);
     const shrink = after > 0 ? 1 - .5 * clamp(after / endFade) : 1, joined = firing && t.joins && s >= t.join;
     const opacity = u <= .66 ? lerp(.2, .45, u / .66) : lerp(.45, 1, (u - .66) / .34);
-    const beams = live > 0 ? fanBeams(s, p, t.lead, theta, prismG, cells).map(b => ({ ...b, colour: hue(b.i / Beams + s * .12) })) : [];
-    const lane = joined ? rayWall(prismG, theta, cells, p.range) : 0, laneBlocked = joined && lane < p.range - 1e-6;
+    const beams = live > 0 ? fanBeams(s, p, t.lead, theta, tipG, cells).map(b => ({ ...b, colour: hue(b.i / Beams + s * .12) })) : [];
+    const lane = joined ? rayWall(tipG, theta, cells, p.range) : 0, laneBlocked = joined && lane < p.range - 1e-6;
 
     // --- the floor: roof overlay, the rainbow in sun, the target ring --------------------------------------------------
     if (roofed) for (let ix = -3; ix <= 3; ix++) for (let iz = -2; iz <= 2; iz++)
       sprite({ x: o.x + ix, z: o.z + iz }, .92, .92, RoofTint.withAlpha(.2), flat, Y + .25);
-    sprite({ x: prismG.x + sun.x * PrismH, z: prismG.z + sun.z * PrismH }, .34, .2, Body.withAlpha(strength * .45), soft, shadowLayer);
-    if (!roofed && live === 0) rainbow({ x: prismG.x + sun.x * PrismH, z: prismG.z + sun.z * PrismH }, sun, light, s);
+    const fall = { x: midG.x + sun.x * PrismH, z: midG.z + sun.z * PrismH };
+    sprite(fall, PrismLen * 1.2, PrismRad * 1.5, Body.withAlpha(strength * .35), soft, shadowLayer, -theta / D2R);
+    if (!roofed && live === 0) rainbow(fall, sun, light, s);
     if (firing && s >= t.lead && s < t.release) ringAt(add(o, r.pos(r.targets[k], s)), .5, Warn.withAlpha(.7), Floor + .02);
 
     if (firing) walls('last prism wall', o, cells, sun, strength);
@@ -358,14 +413,14 @@ export default {
     const people = firing ? r.people.map((c, j) => {
       const pos = add(o, r.pos(j, s)), down = s >= c.down;
       const crossed = down || joined ? [] : beams.filter(b => onLine(pos, b.start, b.ang, b.len, HitReach));
-      const inLane = !down && joined && live > 0 && onLine(pos, prismG, theta, lane, p.width / 2);
+      const inLane = !down && joined && live > 0 && onLine(pos, tipG, theta, lane, p.width / 2);
       return { c, pos, down, crossed, inLane, j, share: c.dmg[k] / c.tough };
     }) : [];
     const figures = [...people, { pos: caster, caster: true }].sort((m, n) => n.pos.z - m.pos.z);
     figures.forEach(g => {
       if (g.caster) {
         pawn(g.pos, { shirt: Wielder, sun, shadow: strength });
-        prism(prismS, spin(s, t, p), sunAng, prismLayer, roofed);
+        prism(lifted(baseG), theta, roll(s, t, p), sun, prismLayer, roofed, joined ? live : u * live, s);
         return;
       }
       const heat = g.inLane ? .75 + .2 * Math.sin(s * 40) : g.crossed.length ? .3 : 0;
@@ -377,12 +432,12 @@ export default {
     // --- the prism: glints in sun, the glow as it charges ---------------------------------------------------------------
     if (!roofed && live === 0) {
       const v = (s * .8) % 1;
-      glint('last prism glint', { x: prismS.x + .05, z: prismS.z + .06 }, .2, .9 * bump(v / .25) * light, White, 20);
+      glint('last prism glint', { x: midS.x, z: midS.z + PrismRad * Lift * .8 }, .22, .9 * bump(v / .25) * light, White, 20);
     }
     if (live > 0) {
-      const size = .45 + .6 * u;
-      sprite(prismS, size, size, hue(s * .5).withAlpha((.35 + .4 * u) * live), glow, prismLayer + .01);
-      sprite(prismS, size * .45, size * .45, White.withAlpha((.4 + .5 * u) * live), glow, prismLayer + .011);
+      const size = .5 + .9 * u;
+      sprite(tipS, size, size, hue(s * .5).withAlpha((.35 + .4 * u) * live), glow, glowLayer);
+      sprite(tipS, size * .45, size * .45, White.withAlpha((.4 + .5 * u) * live), glow, glowLayer + .001);
     }
 
     // --- the fan -------------------------------------------------------------------------------------------------------
@@ -413,13 +468,14 @@ export default {
     // --- the joined beam ---------------------------------------------------------------------------------------------------
     if (joined && live > 0) {
       const inF = clamp((s - t.join) / .15) * live, W = p.width * shrink, L = lane, end = laneBlocked ? .2 : 1.8, tint = hue(s * .25, .55);
-      const a = { x: prismS.x, z: prismS.z }, pt = (d, across = 0) => ({ x: a.x + dx * d - dz * across, z: a.z + dz * d + dx * across });
-      const mid = { x: prismG.x + dx * L / 2, z: prismG.z + dz * L / 2 };
+      const a = tipS, pt = (d, across = 0) => ({ x: a.x + dx * d - dz * across, z: a.z + dz * d + dx * across });
+      const mid = { x: tipG.x + dx * L / 2, z: tipG.z + dz * L / 2 };
       sprite(mid, L, W * 2.4, tint.withAlpha(.12 * inF), glow, Floor + .012, -theta / D2R);
       sprite(mid, L, W * 1.1, White.withAlpha(.06 * inF), glow, Floor + .013, -theta / D2R);
       ray('last prism fused glow', a, theta, L, W / 2 * 1.15, pale(tint).withAlpha(.1 * inF), beamLayer + .02, end, 0, s);
       // The six beams, joined: six bands side by side across the beam, red on one edge to violet on the other,
       // each wobbling a little on its own. They overlap into white in the middle and keep their colour at the edges.
+      // (Terraria's joined beam is a white core with two drifting colour fringes; the user kept these bands, 2026-10-01.)
       for (let q = 0; q < Beams; q++) {
         const across = (q - 2.5) * W * .14;
         ray(`last prism band ${q}`, a, theta, L, W * .1, hue(q / Beams + .04 * Math.sin(s * .7), .95).withAlpha(.3 * inF), beamLayer + .021 + q * .0003, end, q, s,
@@ -443,15 +499,15 @@ export default {
         sprite(e, W * .7, W * .7, White.withAlpha(.85 * inF), glow, Y + .031);
       }
       const flare = 1 + .08 * Math.sin(s * 47);
-      sprite(prismS, W * 2.2 * flare, W * 2.2 * flare, tint.withAlpha(.45 * inF), glow, prismLayer + .012);
-      sprite(prismS, .6, .6, White.withAlpha(.9 * inF), glow, prismLayer + .013);
-      glint('last prism flare', { x: prismS.x, z: prismS.z }, .55, .8 * inF, White, s * 200);
+      sprite(tipS, W * 1.8 * flare, W * 1.8 * flare, tint.withAlpha(.45 * inF), glow, glowLayer + .002);
+      sprite(tipS, W * .8, W * .8, White.withAlpha(.85 * inF), glow, glowLayer + .003);
+      glint('last prism flare', tipS, .5, .6 * inF, White, s * 200);
     }
     if (firing && t.joins && s >= t.join && s < t.join + JoinFlash) {
       const v = (s - t.join) / JoinFlash;
-      sprite(prismS, 3.2, 3.2, White.withAlpha(.7 * (1 - v) * (1 - v)), glow, Y + .2);
-      ringAt(prismS, .25 + 1.8 * smooth(v), White.withAlpha(.8 * (1 - v)), Y + .21, false, whiteGlow);
-      ringAt(prismS, .15 + 1.2 * smooth(v), hue(s * .25).withAlpha(.7 * (1 - v)), Y + .211, false, whiteGlow);
+      sprite(tipS, 3.2, 3.2, White.withAlpha(.7 * (1 - v) * (1 - v)), glow, Y + .2);
+      ringAt(tipS, .25 + 1.8 * smooth(v), White.withAlpha(.8 * (1 - v)), Y + .21, false, whiteGlow);
+      ringAt(tipS, .15 + 1.2 * smooth(v), hue(s * .25).withAlpha(.7 * (1 - v)), Y + .211, false, whiteGlow);
     }
 
     // --- hits on pawns: a flicker in each crossing beam's colour, white and sparks in the joined beam, smoke once down -------
@@ -485,7 +541,7 @@ export default {
     } else if (!roofed) {
       level = Math.min(Store, StartLevel + s * light);
       const done = level % 1;
-      if (s > .1 && level < Store && done < .15) sprite(prismS, .9, .9, Sun.withAlpha(.55 * (1 - done / .15) * light), glow, prismLayer + .014);
+      if (s > .1 && level < Store && done < .15) sprite(midS, 1.2, 1.2, Sun.withAlpha(.55 * (1 - done / .15) * light), glow, glowLayer + .004);
     }
     meter(at(caster, 'headTop'), level, warn);
   },
