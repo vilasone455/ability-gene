@@ -54,6 +54,8 @@ namespace UnityEngine
         public static Vector3 operator *(float f, Vector3 a) => new Vector3(a.x * f, a.y * f, a.z * f);
         public static Vector3 operator /(Vector3 a, float f) => new Vector3(a.x / f, a.y / f, a.z / f);
         public static float Dot(Vector3 a, Vector3 b) => a.x * b.x + a.y * b.y + a.z * b.z;
+        public static Vector3 Cross(Vector3 lhs, Vector3 rhs) =>
+            new Vector3(lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z, lhs.x * rhs.y - lhs.y * rhs.x);
         public float sqrMagnitude => x * x + y * y + z * z;
         public float magnitude => Mathf.Sqrt(sqrMagnitude);
         public Vector3 normalized { get { float m = magnitude; return m > 1e-5f ? this / m : zero; } }
