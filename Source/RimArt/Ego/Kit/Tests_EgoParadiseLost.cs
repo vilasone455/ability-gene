@@ -32,6 +32,16 @@ namespace RimArt
 
         private static string States(params Pawn[] pawns) => string.Join(" | ", pawns.Select(State));
 
+        /// <summary>Where a pawn stands for the room hit: its cell, whether it shares a room with <paramref name="aimed"/>, downed, its job.</summary>
+        private static string Place(Pawn pawn, Thing aimed)
+        {
+            if (pawn.Dead || !pawn.Spawned) return pawn.LabelShort + (pawn.Dead ? " dead" : " not spawned");
+            var mine = EgoParadiseLost.RoomsOf(pawn, new List<Room>());
+            var theirs = EgoParadiseLost.RoomsOf(aimed, new List<Room>());
+            return pawn.LabelShort + " at " + pawn.Position + (mine.Any(theirs.Contains) ? " in the aimed room" : " NOT in the aimed room")
+                + (pawn.Downed ? ", DOWN" : "") + ", " + Describe(pawn).Substring(pawn.LabelShort.Length).Trim();
+        }
+
         /// <summary>One shot at <paramref name="target"/>: the warmup, then the shot.</summary>
         private static IEnumerable<int> Shoot(RimArtTestContext t, Pawn wielder, CompEgoParadiseLost staff, Thing target)
         {
@@ -52,13 +62,16 @@ namespace RimArt
             t.Room(c + new IntVec3(-4, 0, -3), c + new IntVec3(4, 0, 3), door: c + new IntVec3(3, 0, -4));
             Pawn wielder = t.Colonist(c + new IntVec3(-3, 0, 0));
             CompEgoParadiseLost staff = Arm(t, wielder);
-            Pawn aimed = t.Target(c + new IntVec3(3, 0, 0));
-            Pawn second = t.Target(c + new IntVec3(2, 0, 2), faction: aimed.Faction);
-            Pawn third = t.Target(c + new IntVec3(1, 0, -3), faction: aimed.Faction);
-            Pawn downed = t.Target(c + new IntVec3(-1, 0, -3), faction: aimed.Faction);
+            // Stunned for the whole test: a struck raider's Wait job gives way and it runs, and the one in the doorway
+            // walks out of the room before the second shot. None stands next to another pawn, so none punches first.
+            const int stun = 1800;
+            Pawn aimed = t.Target(c + new IntVec3(3, 0, 0), stun);
+            Pawn second = t.Target(c + new IntVec3(2, 0, 2), stun, faction: aimed.Faction);
+            Pawn third = t.Target(c + new IntVec3(1, 0, -3), stun, faction: aimed.Faction);
+            Pawn downed = t.Target(c + new IntVec3(-1, 0, -3), stun, faction: aimed.Faction);
             Pawn ally = t.Colonist(c + new IntVec3(0, 0, 3));
-            Pawn outside = t.Target(c + new IntVec3(7, 0, 0), faction: aimed.Faction);
-            Pawn doorway = t.Target(c + new IntVec3(3, 0, -4), faction: aimed.Faction);
+            Pawn outside = t.Target(c + new IntVec3(7, 0, 0), stun, faction: aimed.Faction);
+            Pawn doorway = t.Target(c + new IntVec3(3, 0, -4), stun, faction: aimed.Faction);
             t.Down(downed);
             yield return 2;
             Room room = aimed.GetRoom();
@@ -81,23 +94,31 @@ namespace RimArt
             t.Check(!t.Struck(downed), "the downed hostile in the room was not");
             t.Check(t.Untouched(ally), "the colonist in the room was not");
             t.Check(t.Untouched(outside), "the hostile behind the wall, in the next room, was not");
-            t.Check(EgoParadiseLost.Slowed(aimed) && EgoParadiseLost.Slowed(second) && EgoParadiseLost.Slowed(third) && EgoParadiseLost.Slowed(doorway)
-                && !EgoParadiseLost.Slowed(ally), "each pawn struck is slowed");
+            // A pawn the hit killed is not slowed (Slow skips the dead).
+            t.Check(new[] { aimed, second, third, doorway }.All(p => p.Dead || EgoParadiseLost.Slowed(p)) && !EgoParadiseLost.Slowed(ally), "each pawn struck is slowed");
             t.Check(EgoParadiseLost.Sanity(wielder) == 4, "Sanity +1 for each of the 4 hostiles (+" + EgoParadiseLost.Sanity(wielder) + ")");
             t.Check(wielder.MentalStateDef == null, "a wielder over the requirement at full mood does not corrode");
 
             yield return 70;
             t.Log(t.Now + " " + States(aimed, second, third));
-            t.Check(!EgoParadiseLost.Slowed(aimed) && !EgoParadiseLost.Slowed(second), "the slow is gone after 1 s");
+            t.Check(new[] { aimed, second }.All(p => p.Dead || !EgoParadiseLost.Slowed(p)), "the slow is gone after 1 s");
 
-            // Sanity grows with each shot and stops at the cap; each hit renews its 2 h. The second shot strikes the aimed
-            // pawn, downed or not, and the others still standing.
-            if (!t.Check(!aimed.Dead, "the aimed pawn lived through the first shot")) yield break;
-            int expected = Mathf.Min(10, 4 + 1 + new[] { second, third, doorway }.Count(p => !p.Dead && !p.Downed));
-            foreach (int wait in Shoot(t, wielder, staff, aimed)) yield return wait;
+            // Sanity grows with each shot and stops at the cap; each hit renews its 2 h. The second shot strikes the pawn it
+            // is aimed at, downed or not, and the others still standing. 12 to the head can kill (the brain has 10): then
+            // the second shot is aimed at the next one alive.
+            Pawn[] hostiles = { aimed, second, third, doorway };
+            Pawn again = new[] { aimed, second, third }.FirstOrDefault(p => !p.Dead);
+            if (!t.Check(again != null, "a pawn the first shot struck lived to be aimed at again")) yield break;
+            if (again != aimed) t.Log(aimed.LabelShort + " died of the first shot; the second is aimed at " + again.LabelShort);
+            int expected = Mathf.Min(10, 4 + 1 + hostiles.Count(p => p != again && !p.Dead && !p.Downed));
+            t.Log(t.Now + " before the second shot: " + string.Join(" | ", hostiles.Select(p => Place(p, again))));
+            int ordered = t.Now;
+            foreach (int wait in Shoot(t, wielder, staff, again)) yield return wait;
             var memory = (Thought_Memory)wielder.needs.mood.thoughts.memories.GetFirstMemoryOfDef(EgoDefOf.AG_EgoParadiseLostSanity);
             t.Log(t.Now + " second shot: " + States(aimed, second, third, doorway) + " | Sanity +" + EgoParadiseLost.Sanity(wielder) + ", "
                 + (memory == null ? "no memory" : memory.MoodOffset() + " mood, age " + memory.age + " of " + memory.DurationTicks + " ticks"));
+            t.Log("the second shot's thorns: " + string.Join(", ", Game.Thorns.Where(h => h.tick >= ordered && !h.ring).Select(h => h.thing.LabelShort))
+                + " | after it: " + string.Join(" | ", hostiles.Select(p => Place(p, again))));
             t.Check(EgoParadiseLost.Sanity(wielder) == expected, "the second shot added one for each hostile it struck (+" + EgoParadiseLost.Sanity(wielder) + ", expected +" + expected + ")");
             t.Check(memory != null && memory.age <= 150 && memory.DurationTicks == 5000 && Mathf.Approximately(memory.MoodOffset(), EgoParadiseLost.Sanity(wielder)),
                 "one memory, renewed (its age moves in 150-tick steps, and the shot can land on the wielder's step), lasting the def's 2 h, giving the mood shown");
@@ -240,7 +261,7 @@ namespace RimArt
                 }
                 yield return wait;
             }
-            bool stood = !a.Downed || !b.Downed;
+            bool stood = (!a.Dead && !a.Downed) || (!b.Dead && !b.Downed);
             t.Log("overclock over after " + (t.Now - start) + " ticks, " + radii.Count + " rings: " + States(a, b, ally, downed, far));
             t.Check(radii.Count >= 1 && radii.All(r => r == 6f), "every ring is 6 cells; Overclock rings do not grow (" + string.Join(", ", radii) + ")");
             t.Check(!stood || radii.Count == 3, "3 rings while a hostile stood in range (" + radii.Count + ")");

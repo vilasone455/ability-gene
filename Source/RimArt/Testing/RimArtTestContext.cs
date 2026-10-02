@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using HarmonyLib;
 using RimWorld;
 using Verse;
 using Verse.AI;
@@ -209,27 +210,39 @@ namespace RimArt
         }
 
         private readonly Dictionary<Pawn, float> startHealth = new Dictionary<Pawn, float>();
+        private readonly Dictionary<Pawn, HashSet<Hediff>> startWounds = new Dictionary<Pawn, HashSet<Hediff>>();
 
         /// <summary>
-        /// Notes the pawn's health now for <see cref="Hurt"/>. <see cref="Colonist"/>, <see cref="Enemy"/> and <see cref="Mech"/>
-        /// note at spawn, because a generated pawn often carries an old scar or a missing part; a test that wounds a pawn
-        /// on purpose notes it again before the check. A pawn never noted counts from full health.
+        /// Notes the pawn's health and wounds now for <see cref="Hurt"/>. <see cref="Colonist"/>, <see cref="Enemy"/> and
+        /// <see cref="Mech"/> note at spawn, because a generated pawn often carries an old scar or a missing part; a test that
+        /// wounds a pawn on purpose notes it again before the check. A pawn never noted counts from full health.
         /// </summary>
         public Pawn Note(Pawn pawn)
         {
             startHealth[pawn] = pawn.health.summaryHealth.SummaryHealthPercent;
+            startWounds[pawn] = new HashSet<Hediff>(pawn.health.hediffSet.hediffs.Where(Wound));
             return pawn;
         }
+
+        /// <summary>
+        /// An injury or a lost part. Summary health alone misses a hit that takes a small part off whole (a finger, a toe,
+        /// an ear): Hediff_MissingPart counts 0 for a part with no tags and no children that does not bleed.
+        /// </summary>
+        private static bool Wound(Hediff hediff) => hediff is Hediff_Injury || hediff is Hediff_MissingPart;
 
         /// <summary>Dead, downed, or below the health noted for it.</summary>
         public bool Hurt(Pawn pawn) => pawn.Downed || Struck(pawn);
 
         /// <summary>
-        /// Dead or below the health noted for it. Unlike <see cref="Hurt"/>, a pawn put down by <see cref="Down"/> counts only
-        /// once something hits it again; its wounds heal a little every 600 ticks, so health above the note is not a hit.
+        /// Dead, below the health noted for it, or with a <see cref="Wound"/> it did not have at the note. Unlike
+        /// <see cref="Hurt"/>, a pawn put down by <see cref="Down"/> counts only once something hits it again; its wounds heal
+        /// a little every 600 ticks, so health above the note is not a hit.
         /// </summary>
-        public bool Struck(Pawn pawn) =>
-            pawn.Dead || pawn.health.summaryHealth.SummaryHealthPercent < (startHealth.TryGetValue(pawn, out float h) ? h : 1f) - 0.001f;
+        public bool Struck(Pawn pawn)
+        {
+            if (pawn.Dead || pawn.health.summaryHealth.SummaryHealthPercent < (startHealth.TryGetValue(pawn, out float h) ? h : 1f) - 0.001f) return true;
+            return startWounds.TryGetValue(pawn, out HashSet<Hediff> had) && pawn.health.hediffSet.hediffs.Any(x => Wound(x) && !had.Contains(x));
+        }
 
         /// <summary>Downs <paramref name="pawn"/> with no bleeding wounds (so it stays down and alive) and notes its health then, for <see cref="Struck"/>.</summary>
         public Pawn Down(Pawn pawn)
@@ -239,6 +252,33 @@ namespace RimArt
         }
 
         public bool Untouched(Pawn pawn) => !Hurt(pawn);
+
+        private static readonly AccessTools.FieldRef<ThingWithComps, Dictionary<Type, ThingComp[]>> CompsByType =
+            AccessTools.FieldRefAccess<ThingWithComps, Dictionary<Type, ThingComp[]>>("compsByType");
+
+        /// <summary>Takes every hit for nothing, as armour that turns a hit to 0: ThingWithComps.PreApplyDamage asks the comps first.</summary>
+        private sealed class AbsorbAll : ThingComp
+        {
+            public override void PostPreApplyDamage(ref DamageInfo dinfo, out bool absorbed) => absorbed = true;
+        }
+
+        /// <summary>
+        /// From now on every hit on <paramref name="pawn"/> deals nothing (<see cref="Unshield"/> ends it); what a hit does
+        /// besides damage still happens. For a test that must keep a pawn alive through a weapon's damage.
+        /// </summary>
+        public static ThingComp Shield(Pawn pawn)
+        {
+            var comp = new AbsorbAll { parent = pawn, props = new CompProperties() };
+            pawn.AllComps.Add(comp);
+            CompsByType(pawn) = null;
+            return comp;
+        }
+
+        public static void Unshield(Pawn pawn, ThingComp comp)
+        {
+            pawn.AllComps.Remove(comp);
+            CompsByType(pawn) = null;
+        }
 
         public static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned == true;
 
