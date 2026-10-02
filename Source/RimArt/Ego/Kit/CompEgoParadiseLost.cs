@@ -38,6 +38,16 @@ namespace RimArt
         {
             compClass = typeof(CompEgoParadiseLost);
         }
+
+        /// <summary>
+        /// overclockRange is ringRadius, not a number of its own in the def: Overclock's button and job look for a hostile
+        /// within it, and each Overclock ring strikes within ringRadius, so the two must never differ.
+        /// </summary>
+        public override void ResolveReferences(ThingDef parentDef)
+        {
+            base.ResolveReferences(parentDef);
+            overclockRange = ringRadius;
+        }
     }
 
     /// <summary>

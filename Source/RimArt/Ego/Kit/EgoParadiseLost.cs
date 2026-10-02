@@ -15,32 +15,63 @@ namespace RimArt
     {
         private static readonly List<Thing> struck = new List<Thing>();
         private static readonly List<Pawn> ringed = new List<Pawn>();
+        private static readonly List<Room> hitRooms = new List<Room>(), pawnRooms = new List<Room>();
 
-        /// <summary>Outdoors for the room hit: no room, or the room touches the map edge (the open ground round every building).</summary>
-        public static bool Outdoors(Room room) => room == null || room.TouchesMapEdge;
+        /// <summary>
+        /// Outdoors for the room hit: no room, a room that touches the map edge (the open ground round every building), or
+        /// one Core counts as psychologically outdoors (300 or more unroofed cells), so a walled, unroofed base is not one
+        /// room the hit fills from wall to wall.
+        /// </summary>
+        public static bool Outdoors(Room room) => room == null || room.TouchesMapEdge || room.PsychologicallyOutdoors;
+
+        /// <summary>
+        /// The rooms <paramref name="thing"/> stands in, into <paramref name="into"/>: its own, or for one in a doorway (a door
+        /// cell is a room of its own) every room the door joins. None for a thing with no region (a wall).
+        /// </summary>
+        public static List<Room> RoomsOf(Thing thing, List<Room> into)
+        {
+            into.Clear();
+            Region region = thing.GetRegion(RegionType.Set_All);
+            if (region == null) return into;
+            if (region.type != RegionType.Portal)
+            {
+                if (region.Room != null) into.Add(region.Room);
+                return into;
+            }
+            foreach (Region next in region.Neighbors)
+                if (next.Room != null && !into.Contains(next.Room)) into.Add(next.Room);
+            return into;
+        }
 
         /// <summary>
         /// Who one room hit at <paramref name="aimed"/> strikes, into <paramref name="into"/>, the aimed thing first: every other
         /// hostile of the wielder's that is not downed and stands in the aimed thing's room; outdoors, in that same outdoor
-        /// room and within outdoorRadius cells of the aimed thing, so a wall still keeps them out. A thing with no room (a
+        /// room and within outdoorRadius cells of the aimed thing, so a wall still keeps them out. A pawn in a doorway stands
+        /// in every room the door joins (<see cref="RoomsOf"/>), and so does an aimed thing in one. A thing with no room (a
         /// wall) is struck alone. The aimed thing is struck whatever it is: the player chose it.
         /// </summary>
         public static List<Thing> Targets(Pawn wielder, Thing aimed, CompProperties_EgoParadiseLost p, List<Thing> into)
         {
             into.Clear();
             into.Add(aimed);
-            Room room = aimed.GetRoom();
-            if (room == null) return into;
-            bool outdoors = Outdoors(room);
+            if (RoomsOf(aimed, hitRooms).Count == 0) return into;
             IReadOnlyList<Pawn> pawns = aimed.Map.mapPawns.AllPawnsSpawned;
             for (int i = 0; i < pawns.Count; i++)
             {
                 Pawn pawn = pawns[i];
-                if (pawn == aimed || pawn == wielder || pawn.Dead || pawn.Downed || !pawn.HostileTo(wielder) || pawn.GetRoom() != room) continue;
-                if (outdoors && !pawn.Position.InHorDistOf(aimed.Position, p.outdoorRadius)) continue;
-                into.Add(pawn);
+                if (pawn == aimed || pawn == wielder || pawn.Dead || pawn.Downed || !pawn.HostileTo(wielder)) continue;
+                if (InHitRooms(pawn, aimed, p.outdoorRadius)) into.Add(pawn);
             }
             return into;
+        }
+
+        /// <summary>Whether <paramref name="pawn"/> stands in one of the hit's rooms: anywhere in one indoors, within <paramref name="radius"/> cells of the aimed thing outdoors.</summary>
+        private static bool InHitRooms(Pawn pawn, Thing aimed, float radius)
+        {
+            RoomsOf(pawn, pawnRooms);
+            for (int i = 0; i < pawnRooms.Count; i++)
+                if (hitRooms.Contains(pawnRooms[i]) && (!Outdoors(pawnRooms[i]) || pawn.Position.InHorDistOf(aimed.Position, radius))) return true;
+            return false;
         }
 
         /// <summary>
@@ -92,15 +123,7 @@ namespace RimArt
         public static int Ring(Pawn wielder, CompEgoParadiseLost staff, float radius, bool hostilesOnly)
         {
             CompProperties_EgoParadiseLost p = staff.Props;
-            ringed.Clear();
-            IReadOnlyList<Pawn> pawns = wielder.Map.mapPawns.AllPawnsSpawned;
-            for (int i = 0; i < pawns.Count; i++)
-            {
-                Pawn pawn = pawns[i];
-                if (pawn == wielder || pawn.Dead || !pawn.Position.InHorDistOf(wielder.Position, radius)) continue;
-                if (hostilesOnly && (pawn.Downed || !pawn.HostileTo(wielder))) continue;
-                ringed.Add(pawn);
-            }
+            EgoCorrosion.PawnsAround(wielder, radius, hostilesOnly, ringed);
             GameComponent_EgoParadiseLost.Instance?.Ring(wielder, radius, ringed, p.ringSound);
             ThingDef round = staff.PrimaryVerb.verbProps.defaultProjectile;
             float amount = p.ringDamage * staff.parent.GetStatValue(StatDefOf.RangedWeapon_DamageMultiplier);
@@ -126,12 +149,7 @@ namespace RimArt
         public static void Slow(Pawn pawn, float seconds)
         {
             if (seconds <= 0f || pawn.Dead || pawn.health == null) return;
-            int ticks = seconds.SecondsToTicks();
-            Hediff hediff = pawn.health.hediffSet.GetFirstHediffOfDef(EgoDefOf.AG_EgoParadiseLostSlow);
-            bool fresh = hediff == null;
-            if (fresh) hediff = pawn.health.AddHediff(EgoDefOf.AG_EgoParadiseLostSlow);
-            HediffComp_Disappears timer = hediff.TryGetComp<HediffComp_Disappears>();
-            timer?.SetDuration(fresh ? ticks : Math.Max(timer.ticksToDisappear, ticks));
+            EgoCorrosion.SetTimedHediff(pawn, EgoDefOf.AG_EgoParadiseLostSlow, seconds.SecondsToTicks());
         }
 
         public static bool Slowed(Pawn pawn) => pawn?.health?.hediffSet.HasHediff(EgoDefOf.AG_EgoParadiseLostSlow) == true;
@@ -148,22 +166,10 @@ namespace RimArt
         public static void GainSanity(Pawn wielder, CompProperties_EgoParadiseLost p, int hostiles)
         {
             if (hostiles <= 0 || p.sanityPerHit <= 0 || wielder.needs?.mood == null) return;
-            MemoryThoughtHandler memories = wielder.needs.mood.thoughts.memories;
             ThoughtDef def = EgoDefOf.AG_EgoParadiseLostSanity;
-            int ticks = Mathf.RoundToInt(p.sanityHours * GenDate.TicksPerHour);
-            var thought = memories.GetFirstMemoryOfDef(def) as Thought_Memory;
+            Thought_Memory thought = wielder.needs.mood.thoughts.memories.GetFirstMemoryOfDef(def);
             int mood = Math.Min(p.sanityCap, (thought?.moodOffset ?? 0) + p.sanityPerHit * hostiles);
-            if (thought != null)
-            {
-                thought.moodOffset = mood;
-                thought.durationTicksOverride = ticks;
-                thought.Renew();
-                return;
-            }
-            thought = (Thought_Memory)ThoughtMaker.MakeThought(def);
-            thought.moodOffset = mood;
-            thought.durationTicksOverride = ticks;
-            memories.TryGainMemory(thought);
+            EgoCorrosion.SetMemory(wielder, def, thought, mood, Mathf.RoundToInt(p.sanityHours * GenDate.TicksPerHour));
         }
     }
 }

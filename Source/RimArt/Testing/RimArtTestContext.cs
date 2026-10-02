@@ -222,8 +222,21 @@ namespace RimArt
         }
 
         /// <summary>Dead, downed, or below the health noted for it.</summary>
-        public bool Hurt(Pawn pawn) =>
-            pawn.Dead || pawn.Downed || pawn.health.summaryHealth.SummaryHealthPercent < (startHealth.TryGetValue(pawn, out float h) ? h : 1f) - 0.001f;
+        public bool Hurt(Pawn pawn) => pawn.Downed || Struck(pawn);
+
+        /// <summary>
+        /// Dead or below the health noted for it. Unlike <see cref="Hurt"/>, a pawn put down by <see cref="Down"/> counts only
+        /// once something hits it again; its wounds heal a little every 600 ticks, so health above the note is not a hit.
+        /// </summary>
+        public bool Struck(Pawn pawn) =>
+            pawn.Dead || pawn.health.summaryHealth.SummaryHealthPercent < (startHealth.TryGetValue(pawn, out float h) ? h : 1f) - 0.001f;
+
+        /// <summary>Downs <paramref name="pawn"/> with no bleeding wounds (so it stays down and alive) and notes its health then, for <see cref="Struck"/>.</summary>
+        public Pawn Down(Pawn pawn)
+        {
+            HealthUtility.DamageUntilDowned(pawn, allowBleedingWounds: false);
+            return Note(pawn);
+        }
 
         public bool Untouched(Pawn pawn) => !Hurt(pawn);
 
@@ -245,14 +258,21 @@ namespace RimArt
         }
 
         /// <summary>
-        /// A closed room with no door: <see cref="Wall"/>s on every cell round the floor from <paramref name="min"/> to
-        /// <paramref name="max"/> (both corners inside). Unroofed, so it is still a room of its own, not the outdoors.
+        /// A closed room: <see cref="Wall"/>s on every cell round the floor from <paramref name="min"/> to
+        /// <paramref name="max"/> (both corners inside), and an unowned wooden door instead of the wall at
+        /// <paramref name="door"/> when given. Unroofed, so it is a room of its own that does not touch the map edge; Core
+        /// counts one with 300 or more unroofed cells as psychologically outdoors.
         /// </summary>
-        public void Room(IntVec3 min, IntVec3 max, ThingDef stuff = null)
+        public void Room(IntVec3 min, IntVec3 max, ThingDef stuff = null, IntVec3? door = null)
         {
             for (int x = min.x - 1; x <= max.x + 1; x++)
                 for (int z = min.z - 1; z <= max.z + 1; z++)
-                    if (x < min.x || x > max.x || z < min.z || z > max.z) Wall(new IntVec3(x, 0, z), stuff);
+                {
+                    if (x >= min.x && x <= max.x && z >= min.z && z <= max.z) continue;
+                    var at = new IntVec3(x, 0, z);
+                    if (at == door) GenSpawn.Spawn(ThingMaker.MakeThing(ThingDefOf.Door, ThingDefOf.WoodLog), at, map);
+                    else Wall(at, stuff);
+                }
         }
 
         /// <summary>Undrafted and standing facing <paramref name="rot"/> for 10 s: a drafted idle pawn turns to face south every tick.</summary>

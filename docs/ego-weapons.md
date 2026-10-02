@@ -518,9 +518,9 @@ Rules and def 2026-10-02 (`AG_EgoParadiseLost` and its round in `1.6/Defs/ThingD
 | `EgoParadiseLost.cs` | who a room hit strikes, the damage by count, the room hit, the ring, the slow, Sanity |
 | `Verb_EgoParadiseLost.cs` | Core's shooting verb with the projectile replaced by the room hit |
 | `EgoParadiseLostCorrosion.cs` | WhiteNight's ring: grows while corroded, fixed and hostiles-only in Overclock |
-| `GameComponent_EgoParadiseLost.cs` | the pictures fed from the rules as they happen: thorns round each thing struck, the rings, each wielder's corroded look, the staff in every holder's hand |
+| `GameComponent_EgoParadiseLost.cs` | the pictures fed from the rules as they happen: thorns round each thing struck, the rings, each wielder's corroded look, the staff in every holder's hand (holders in `Shared/HeldWeaponHolders.cs`) |
 | `Patches_EgoParadiseLost.cs` | `HeldWeaponHide`: Core never draws the held staff |
-| `Tests_EgoParadiseLost.cs` | the room hit (split, slow, Sanity and its cap), outdoors, the corroded ring growing through walls, Overclock, the def's corrosion numbers, Pale against power armour, the holder set |
+| `Tests_EgoParadiseLost.cs` | the room hit (split, slow, Sanity and its cap, a hostile in the doorway), outdoors and in a walled yard of 300+ cells, the corroded ring growing through walls, Overclock, the def's corrosion numbers, Pale against power armour, the holder set |
 
 The texture (`Textures/RimArt/Ego/ParadiseLost.png`, `make_ego_textures.py`) is the picture's staff
 lying diagonally, apple to the upper right, at the size the picture draws it, with a 1 px outline.
@@ -532,10 +532,14 @@ Settled while building:
   (`AG_EgoParadiseLost_Round`, never spawned), so the info card shows it; `damageFew` and
   `damageMany` are on the comp. All three are times the weapon's ranged damage multiplier.
 - Pale is `AG_EgoPale`: no armour category, so `ArmorUtility.GetPostArmorDamage` returns the full
-  amount, and not ranged, so a shield belt does not stop it. Its injury is a stab.
-- Outdoors means the aimed thing's room touches the map edge. Outdoors the hit takes hostiles within
-  `outdoorRadius` of the aimed thing that are in the same outdoor room, so a wall still keeps a pawn
-  inside a building out.
+  amount, and not ranged, so a shield belt does not stop it. Its injury is a stab; a solid part (a
+  bone, a mechanoid's plating) cracks instead, as with Core's Stab.
+- Outdoors means the aimed thing's room touches the map edge or has 300 or more unroofed cells (Core's
+  `PsychologicallyOutdoors`), so a walled, unroofed base is not one room hit from wall to wall.
+  Outdoors the hit takes hostiles within `outdoorRadius` of the aimed thing that are in the same
+  outdoor room, so a wall still keeps a pawn inside a building out.
+- A door cell is a room of its own in Core. A pawn standing in a doorway counts as in every room the
+  door joins, and so does an aimed thing in one.
 - The room hit skips downed hostiles (other than the aimed one), so it does not finish raiders the
   player may want as prisoners. The aimed thing is always struck, whatever it is; a thing with no
   room (a wall) is struck alone.
@@ -553,7 +557,9 @@ Settled while building:
 - The state's end is checked every 30 ticks (so it can come up to 29 ticks before 30 s) and before
   that tick's firing, so it always comes before a fifth ring at 30 s: a corrosion is 4 rings, 6, 9,
   12, 15 cells.
-- Overclock: 3 rings 2 s apart, `overclockRange` 6 (the ring's radius).
+- Overclock: 3 rings 2 s apart. `overclockRange` is not in the def: the comp sets it to `ringRadius`
+  (6), the radius Overclock's rings strike, so the button and the rings never disagree.
+- The pictures after a load: the corroded look is not saved, so the state's next firing opens it again.
 - Core never draws the held staff. The picture draws it upright in the right hand wherever Core would
   show a held weapon (drafted, aiming), and while corroded or overclocking. The corroded look outlives
   the state by 1 s so the wings fold, and ends early when the wielder dies, as Solemn Lament's coffin.

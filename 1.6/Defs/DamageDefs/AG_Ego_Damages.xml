@@ -3,7 +3,8 @@
 
   <!-- Paradise Lost's Pale damage (docs/ego-weapons.md, Weapon 4): WhiteNight's thorns. No armorCategory, so
        ArmorUtility returns the full amount whatever the target wears; not isRanged, so a shield belt does not stop it.
-       The injury is a stab: the thorns rise out of the floor through the body. -->
+       The injury is a stab: the thorns rise out of the floor through the body. A solid part (a bone, a mechanoid's
+       plating) cracks instead, as Core's Stab and Bullet. -->
   <DamageDef>
     <defName>AG_EgoPale</defName>
     <label>pale thorns</label>
@@ -11,6 +12,7 @@
     <externalViolence>true</externalViolence>
     <deathMessage>{0} has been pierced by WhiteNight's thorns.</deathMessage>
     <hediff>Stab</hediff>
+    <hediffSolid>Crack</hediffSolid>
     <defaultDamage>16</defaultDamage>
   </DamageDef>
 

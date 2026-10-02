@@ -173,13 +173,11 @@ namespace RimArt
             Pawn ally = t.Colonist(t.center + new IntVec3(3, 0, 0));
             NoWimp(ally);
             Pawn downed = t.Target(t.center + new IntVec3(5, 0, 0));
-            HealthUtility.DamageUntilDowned(downed, allowBleedingWounds: false);
-            t.Note(downed);
+            t.Down(downed);
             for (int z = -3; z <= 3; z++) t.Wall(t.center + new IntVec3(8, 0, z));
             Pawn behind = t.Target(t.center + new IntVec3(11, 0, 0));
             Pawn beside = t.Target(t.center + new IntVec3(0, 0, -6));
             yield return 2;
-            float downedHealth = downed.health.summaryHealth.SummaryHealthPercent;
             // A spot in front of the wall: Fire needs line of sight to its target.
             foreach (int step in Fire(t, holder, t.center + new IntVec3(7, 0, 0))) yield return step;
             LastPrismCast cast = Prisms.FiringBy(holder);
@@ -199,7 +197,7 @@ namespace RimArt
             yield return 5;
             Trace(t, holder, prism, ally, downed, behind, beside);
             t.Check(t.Hurt(ally), "the ally in the lane was burnt");
-            t.Check(Mathf.Abs(downed.health.summaryHealth.SummaryHealthPercent - downedHealth) < 0.001f, "the downed enemy in the lane was passed over");
+            t.Check(!t.Struck(downed), "the downed enemy in the lane was passed over");
             t.Check(t.Untouched(behind), "the enemy behind the wall was not touched");
             t.Check(t.Untouched(beside), "the enemy 6 cells south, outside the fan, was not touched");
             t.Check(t.Untouched(holder), "the holder is not hurt");

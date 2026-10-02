@@ -32,19 +32,6 @@ namespace RimArt
 
         private static string States(params Pawn[] pawns) => string.Join(" | ", pawns.Select(State));
 
-        /// <summary>A pawn down with no bleeding wounds, its health noted after, so <see cref="NotStruck"/> can tell a later hit.</summary>
-        private static float Down(Pawn pawn)
-        {
-            HealthUtility.DamageUntilDowned(pawn, allowBleedingWounds: false);
-            return Health(pawn);
-        }
-
-        /// <summary>
-        /// A downed pawn no lower than the health noted when it went down (Hurt counts every downed pawn as hurt). Not equal:
-        /// its wounds heal a little every 600 ticks.
-        /// </summary>
-        private static bool NotStruck(Pawn pawn, float health) => !pawn.Dead && Health(pawn) >= health - 0.001f;
-
         /// <summary>One shot at <paramref name="target"/>: the warmup, then the shot.</summary>
         private static IEnumerable<int> Shoot(RimArtTestContext t, Pawn wielder, CompEgoParadiseLost staff, Thing target)
         {
@@ -62,7 +49,7 @@ namespace RimArt
             t.Clear();
             Game.Clear();
             IntVec3 c = t.center;
-            t.Room(c + new IntVec3(-4, 0, -3), c + new IntVec3(4, 0, 3));
+            t.Room(c + new IntVec3(-4, 0, -3), c + new IntVec3(4, 0, 3), door: c + new IntVec3(3, 0, -4));
             Pawn wielder = t.Colonist(c + new IntVec3(-3, 0, 0));
             CompEgoParadiseLost staff = Arm(t, wielder);
             Pawn aimed = t.Target(c + new IntVec3(3, 0, 0));
@@ -71,13 +58,14 @@ namespace RimArt
             Pawn downed = t.Target(c + new IntVec3(-1, 0, -3), faction: aimed.Faction);
             Pawn ally = t.Colonist(c + new IntVec3(0, 0, 3));
             Pawn outside = t.Target(c + new IntVec3(7, 0, 0), faction: aimed.Faction);
-            float downedHealth = Down(downed);
+            Pawn doorway = t.Target(c + new IntVec3(3, 0, -4), faction: aimed.Faction);
+            t.Down(downed);
             yield return 2;
             Room room = aimed.GetRoom();
             t.Log("room: " + room?.CellCount + " cells, touches the map edge " + room?.TouchesMapEdge + "; the wielder's the same " + (wielder.GetRoom() == room)
-                + ", the one outside the same " + (outside.GetRoom() == room));
+                + ", the one outside the same " + (outside.GetRoom() == room) + ", the one in the doorway the same " + (doorway.GetRoom() == room));
             if (!t.Check(room != null && !EgoParadiseLost.Outdoors(room) && outside.GetRoom() != room, "the walls make a room of their own")) yield break;
-            t.Log(States(aimed, second, third, downed, ally, outside));
+            t.Log(States(aimed, second, third, doorway, downed, ally, outside));
 
             ThingDef round = staff.PrimaryVerb.verbProps.defaultProjectile;
             t.Log("damage by count: 1 " + EgoParadiseLost.Damage(staff, round, 1) + ", 3 " + EgoParadiseLost.Damage(staff, round, 3) + ", 6 " + EgoParadiseLost.Damage(staff, round, 6));
@@ -85,16 +73,17 @@ namespace RimArt
                 "the def's damage: 16 to one, 12 each to 2-5, 9 each to 6 or more");
 
             foreach (int wait in Shoot(t, wielder, staff, aimed)) yield return wait;
-            t.Log(t.Now + " " + States(aimed, second, third, downed, ally, outside) + " | Sanity +" + EgoParadiseLost.Sanity(wielder));
-            t.Check(Game.Thorns.Count == 3 && Game.Thorns.All(h => h.thing == aimed || h.thing == second || h.thing == third),
-                "thorns rose round the aimed pawn and the two other standing hostiles (" + Game.Thorns.Count + ")");
-            t.Check(t.Hurt(aimed) && t.Hurt(second) && t.Hurt(third), "all three were struck");
-            t.Check(NotStruck(downed, downedHealth), "the downed hostile in the room was not");
+            t.Log(t.Now + " " + States(aimed, second, third, doorway, downed, ally, outside) + " | Sanity +" + EgoParadiseLost.Sanity(wielder));
+            t.Check(Game.Thorns.Count == 4 && Game.Thorns.All(h => h.thing == aimed || h.thing == second || h.thing == third || h.thing == doorway),
+                "thorns rose round the aimed pawn, the two other standing hostiles and the one in the doorway (" + Game.Thorns.Count + ")");
+            t.Check(t.Hurt(aimed) && t.Hurt(second) && t.Hurt(third), "all three in the room were struck");
+            t.Check(t.Hurt(doorway), "and the one in the doorway: a door cell is a room of its own, and it counts as in the room it opens on");
+            t.Check(!t.Struck(downed), "the downed hostile in the room was not");
             t.Check(t.Untouched(ally), "the colonist in the room was not");
             t.Check(t.Untouched(outside), "the hostile behind the wall, in the next room, was not");
-            t.Check(EgoParadiseLost.Slowed(aimed) && EgoParadiseLost.Slowed(second) && EgoParadiseLost.Slowed(third) && !EgoParadiseLost.Slowed(ally),
-                "each pawn struck is slowed");
-            t.Check(EgoParadiseLost.Sanity(wielder) == 3, "Sanity +1 for each of the 3 hostiles (+" + EgoParadiseLost.Sanity(wielder) + ")");
+            t.Check(EgoParadiseLost.Slowed(aimed) && EgoParadiseLost.Slowed(second) && EgoParadiseLost.Slowed(third) && EgoParadiseLost.Slowed(doorway)
+                && !EgoParadiseLost.Slowed(ally), "each pawn struck is slowed");
+            t.Check(EgoParadiseLost.Sanity(wielder) == 4, "Sanity +1 for each of the 4 hostiles (+" + EgoParadiseLost.Sanity(wielder) + ")");
             t.Check(wielder.MentalStateDef == null, "a wielder over the requirement at full mood does not corrode");
 
             yield return 70;
@@ -104,25 +93,32 @@ namespace RimArt
             // Sanity grows with each shot and stops at the cap; each hit renews its 2 h. The second shot strikes the aimed
             // pawn, downed or not, and the others still standing.
             if (!t.Check(!aimed.Dead, "the aimed pawn lived through the first shot")) yield break;
-            int expected = Mathf.Min(10, 3 + 1 + new[] { second, third }.Count(p => !p.Dead && !p.Downed));
+            int expected = Mathf.Min(10, 4 + 1 + new[] { second, third, doorway }.Count(p => !p.Dead && !p.Downed));
             foreach (int wait in Shoot(t, wielder, staff, aimed)) yield return wait;
             var memory = (Thought_Memory)wielder.needs.mood.thoughts.memories.GetFirstMemoryOfDef(EgoDefOf.AG_EgoParadiseLostSanity);
-            t.Log(t.Now + " second shot: " + States(aimed, second, third) + " | Sanity +" + EgoParadiseLost.Sanity(wielder) + ", "
+            t.Log(t.Now + " second shot: " + States(aimed, second, third, doorway) + " | Sanity +" + EgoParadiseLost.Sanity(wielder) + ", "
                 + (memory == null ? "no memory" : memory.MoodOffset() + " mood, age " + memory.age + " of " + memory.DurationTicks + " ticks"));
             t.Check(EgoParadiseLost.Sanity(wielder) == expected, "the second shot added one for each hostile it struck (+" + EgoParadiseLost.Sanity(wielder) + ", expected +" + expected + ")");
-            t.Check(memory != null && memory.age < 150 && memory.DurationTicks == 5000 && Mathf.Approximately(memory.MoodOffset(), EgoParadiseLost.Sanity(wielder)),
-                "one memory, renewed (its age moves in 150-tick steps), lasting the def's 2 h, giving the mood shown");
+            t.Check(memory != null && memory.age <= 150 && memory.DurationTicks == 5000 && Mathf.Approximately(memory.MoodOffset(), EgoParadiseLost.Sanity(wielder)),
+                "one memory, renewed (its age moves in 150-tick steps, and the shot can land on the wielder's step), lasting the def's 2 h, giving the mood shown");
             EgoParadiseLost.GainSanity(wielder, staff.Props, 20);
             t.Check(EgoParadiseLost.Sanity(wielder) == 10, "never past the cap of 10 (+" + EgoParadiseLost.Sanity(wielder) + ")");
             t.Check(wielder.needs.mood.thoughts.memories.Memories.Count(m => m.def == EgoDefOf.AG_EgoParadiseLostSanity) == 1, "still one memory");
         }
 
         [RimArtTest("Ego", "paradise lost: outdoors a shot strikes hostiles within 6 cells of the aimed one, not farther, not inside walls", 1200)]
-        public static IEnumerable<int> Outdoors(RimArtTestContext t)
+        public static IEnumerable<int> Outdoors(RimArtTestContext t) => OutdoorHit(t, walled: false);
+
+        [RimArtTest("Ego", "paradise lost: a walled, unroofed yard of 300+ cells counts as outdoors, so the 6-cell limit holds there too", 1200)]
+        public static IEnumerable<int> WalledYard(RimArtTestContext t) => OutdoorHit(t, walled: true);
+
+        /// <summary>The outdoor hit on open ground or, with <paramref name="walled"/>, in a 21 x 21 unroofed walled yard that does not touch the map edge.</summary>
+        private static IEnumerable<int> OutdoorHit(RimArtTestContext t, bool walled)
         {
             t.Clear();
             Game.Clear();
             IntVec3 c = t.center;
+            if (walled) t.Room(c + new IntVec3(-10, 0, -10), c + new IntVec3(10, 0, 10));
             t.Room(c + new IntVec3(-3, 0, 3), c + new IntVec3(-3, 0, 3));
             Pawn wielder = t.Colonist(c + new IntVec3(-8, 0, 0));
             CompEgoParadiseLost staff = Arm(t, wielder);
@@ -131,12 +127,15 @@ namespace RimArt
             Pawn far = t.Target(c + new IntVec3(7, 0, 0), faction: aimed.Faction);
             Pawn boxed = t.Target(c + new IntVec3(-3, 0, 3), faction: aimed.Faction);
             Pawn downed = t.Target(c + new IntVec3(2, 0, -2), faction: aimed.Faction);
-            float downedHealth = Down(downed);
+            t.Down(downed);
             yield return 2;
-            t.Log("aimed outdoors " + EgoParadiseLost.Outdoors(aimed.GetRoom()) + "; boxed in its own room " + (boxed.GetRoom() != aimed.GetRoom())
+            Room yard = aimed.GetRoom();
+            t.Log("aimed outdoors " + EgoParadiseLost.Outdoors(yard) + " (" + yard?.CellCount + " cells, " + yard?.OpenRoofCount + " unroofed, touches the map edge "
+                + yard?.TouchesMapEdge + "); boxed in its own room " + (boxed.GetRoom() != yard)
                 + ", " + boxed.Position.DistanceTo(aimed.Position).ToString("0.0") + " cells from the aimed one; near " + near.Position.DistanceTo(aimed.Position).ToString("0.0")
                 + ", far " + far.Position.DistanceTo(aimed.Position).ToString("0.0"));
-            if (!t.Check(EgoParadiseLost.Outdoors(aimed.GetRoom()) && boxed.GetRoom() != aimed.GetRoom(), "the aimed pawn is outdoors and the boxed one is not")) yield break;
+            if (!t.Check(EgoParadiseLost.Outdoors(yard) && yard.TouchesMapEdge == !walled && boxed.GetRoom() != yard,
+                walled ? "the walled yard counts as outdoors without touching the map edge, and the boxed one is not" : "the aimed pawn is outdoors and the boxed one is not")) yield break;
 
             foreach (int wait in Shoot(t, wielder, staff, aimed)) yield return wait;
             t.Log(t.Now + " " + States(aimed, near, far, boxed, downed) + " | Sanity +" + EgoParadiseLost.Sanity(wielder));
@@ -144,7 +143,7 @@ namespace RimArt
             t.Check(t.Hurt(aimed) && t.Hurt(near), "the aimed pawn and the one 4.5 cells from it");
             t.Check(t.Untouched(far), "not the one 7 cells off");
             t.Check(t.Untouched(boxed), "not the one 4.2 cells off behind walls");
-            t.Check(NotStruck(downed, downedHealth), "not the downed one");
+            t.Check(!t.Struck(downed), "not the downed one");
             t.Check(EgoParadiseLost.Sanity(wielder) == 2, "Sanity +2");
         }
 
@@ -162,7 +161,7 @@ namespace RimArt
             Pawn mid = t.Target(c + new IntVec3(0, 0, 8), faction: walled.Faction);
             Pawn downed = t.Target(c + new IntVec3(-11, 0, 0), faction: walled.Faction);
             Pawn corner = t.Target(c + new IntVec3(10, 0, 10), faction: walled.Faction);
-            float downedHealth = Down(downed);
+            t.Down(downed);
             yield return 2;
             t.Log("distances: ally 4, walled 5 (a wall between), mid 8, downed 11, corner " + corner.Position.DistanceTo(c).ToString("0.0"));
 
@@ -178,7 +177,7 @@ namespace RimArt
                     seen = staff.rings;
                     radii.Add(Game.Rings.Count > 0 ? Game.Rings[Game.Rings.Count - 1].radius : -1f);
                     foreach (Pawn p in all)
-                        if (!hurtAt.ContainsKey(p) && (p == downed ? !NotStruck(p, downedHealth) : t.Hurt(p))) hurtAt[p] = seen;
+                        if (!hurtAt.ContainsKey(p) && (p == downed ? t.Struck(p) : t.Hurt(p))) hurtAt[p] = seen;
                     t.Log("+" + (t.Now - start) + " ring " + seen + ", radius " + radii[radii.Count - 1] + ": " + States(all) + " | wielder at " + wielder.Position
                         + ", Sanity +" + EgoParadiseLost.Sanity(wielder));
                 }
@@ -220,7 +219,7 @@ namespace RimArt
             Pawn far = t.Target(c + new IntVec3(0, 0, 9), faction: a.Faction);
             NoWimp(a);
             NoWimp(b);
-            float downedHealth = Down(downed);
+            t.Down(downed);
             yield return 2;
 
             var command = new Command_EgoOverclock(staff, wielder);
@@ -247,7 +246,7 @@ namespace RimArt
             t.Check(!stood || radii.Count == 3, "3 rings while a hostile stood in range (" + radii.Count + ")");
             t.Check(t.Hurt(a) && t.Hurt(b), "both standing hostiles were struck");
             t.Check(t.Untouched(ally), "the colonist 3 cells off was not");
-            t.Check(NotStruck(downed, downedHealth), "the downed hostile was not");
+            t.Check(!t.Struck(downed), "the downed hostile was not");
             t.Check(t.Untouched(far), "the hostile 9 cells off was not");
             t.Check(staff.rings == 0, "Overclock does not count toward the corroded ring's growth");
             t.Check(looked, "the look was up during it");
@@ -292,7 +291,7 @@ namespace RimArt
             t.Check(Game.Holds(wielder), "the holder registered on equip");
             t.Check(!HeldWeaponHide.Shown(staff.parent), "Core does not draw the held staff");
             Game.Clear();
-            foreach (int wait in WaitFor(() => Game.Holds(wielder), GameComponent_EgoParadiseLost.RescanEvery + 2)) yield return wait;
+            foreach (int wait in WaitFor(() => Game.Holds(wielder), HeldWeaponHolders.RescanEvery + 2)) yield return wait;
             t.Check(Game.Holds(wielder), "a holder the component forgot (as after a load) is found again by the rescan");
             ThingWithComps held = wielder.equipment.Primary;
             wielder.equipment.TryDropEquipment(held, out ThingWithComps dropped, wielder.Position);

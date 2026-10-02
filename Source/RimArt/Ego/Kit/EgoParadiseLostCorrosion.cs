@@ -31,6 +31,9 @@ namespace RimArt
         public override void Fire(Pawn wielder, CompEgoWeapon weapon, Pawn target, bool hostilesOnly)
         {
             if (!(weapon is CompEgoParadiseLost staff) || !wielder.Spawned) return;
+            // The looks are not saved: after a load the state's next firing opens the look again.
+            GameComponent_EgoParadiseLost game = GameComponent_EgoParadiseLost.Instance;
+            if (game != null && game.LookOf(wielder) == null) game.BeginLook(wielder, hostilesOnly);
             float radius = hostilesOnly ? staff.Props.ringRadius : staff.NextRingRadius;
             if (!hostilesOnly) staff.rings++;
             EgoParadiseLost.Ring(wielder, staff, radius, hostilesOnly);

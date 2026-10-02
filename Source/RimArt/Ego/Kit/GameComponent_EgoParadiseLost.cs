@@ -13,21 +13,17 @@ namespace RimArt
     /// and the staff of every holder. Ticks them on game time and draws those on the map on screen. Nothing is saved: a
     /// save in the second a picture lasts loses it, and the next firing of a running corrosion starts a new look.
     ///
-    /// Who holds a staff is kept in <see cref="holders"/> (GameComponent_LastPrism's shape): the comp registers on equip
+    /// Who holds a staff is kept in <see cref="holders"/> (<see cref="HeldWeaponHolders"/>): the comp registers on equip
     /// and unequip, and a rescan once a second catches pawns that arrive already holding one and drops the dead.
     /// </summary>
     public sealed class GameComponent_EgoParadiseLost : GameComponent
     {
-        /// <summary>Ticks between rescans of who holds a staff.</summary>
-        public const int RescanEvery = 60;
-
         private readonly List<EgoParadiseLostThorns> thorns = new List<EgoParadiseLostThorns>();
         private readonly List<EgoParadiseLostRingCast> rings = new List<EgoParadiseLostRingCast>();
         private readonly List<EgoParadiseLostLook> looks = new List<EgoParadiseLostLook>();
         /// <summary>The tick of each wielder's last shot and last ring, for the staff's flash.</summary>
         private readonly Dictionary<Pawn, int> lastShot = new Dictionary<Pawn, int>(), lastRing = new Dictionary<Pawn, int>();
-        private readonly HashSet<Pawn> holders = new HashSet<Pawn>();
-        private readonly List<Pawn> holderList = new List<Pawn>();
+        private readonly HeldWeaponHolders holders = new HeldWeaponHolders(pawn => CompEgoParadiseLost.HeldBy(pawn) != null);
         private int seeds;
 
         public GameComponent_EgoParadiseLost(Game game) { }
@@ -39,16 +35,10 @@ namespace RimArt
         public IReadOnlyList<EgoParadiseLostLook> Looks => looks;
 
         /// <summary>The comp's Notify_Equipped: <paramref name="pawn"/> holds a staff from now.</summary>
-        public void Register(Pawn pawn)
-        {
-            if (pawn != null) holders.Add(pawn);
-        }
+        public void Register(Pawn pawn) => holders.Add(pawn);
 
         /// <summary>The comp's Notify_Unequipped.</summary>
-        public void Unregister(Pawn pawn)
-        {
-            if (pawn != null) holders.Remove(pawn);
-        }
+        public void Unregister(Pawn pawn) => holders.Remove(pawn);
 
         public bool Holds(Pawn pawn) => holders.Contains(pawn);
 
@@ -108,23 +98,10 @@ namespace RimArt
             holders.Clear();
         }
 
-        /// <summary>Every spawned pawn on any map holding a staff: equipment loaded with a save sends no Notify_Equipped.</summary>
-        private void Rescan()
-        {
-            holders.Clear();
-            List<Map> maps = Find.Maps;
-            for (int m = 0; m < maps.Count; m++)
-            {
-                IReadOnlyList<Pawn> pawns = maps[m].mapPawns.AllPawnsSpawned;
-                for (int i = 0; i < pawns.Count; i++)
-                    if (CompEgoParadiseLost.HeldBy(pawns[i]) != null) holders.Add(pawns[i]);
-            }
-        }
-
         public override void FinalizeInit()
         {
             base.FinalizeInit();
-            Rescan();
+            holders.Rescan();
         }
 
         public override void GameComponentTick()
@@ -136,8 +113,8 @@ namespace RimArt
                 if ((now - rings[i].tick) / 60f >= T.RingLength()) rings.RemoveAt(i);
             for (int i = looks.Count - 1; i >= 0; i--)
                 if (!looks[i].Tick(now)) looks.RemoveAt(i);
-            if (now % RescanEvery != 0) return;
-            Rescan();
+            if (now % HeldWeaponHolders.RescanEvery != 0) return;
+            holders.Rescan();
             Forget(lastShot, now);
             Forget(lastRing, now);
         }
@@ -168,8 +145,7 @@ namespace RimArt
             for (int i = 0; i < thorns.Count; i++)
                 if (thorns[i].map == map) thorns[i].Draw();
             // Copied first: a draw-time recache can unequip and change the set.
-            holderList.Clear();
-            holderList.AddRange(holders);
+            List<Pawn> holderList = holders.Copy();
             for (int i = 0; i < holderList.Count; i++)
             {
                 Pawn pawn = holderList[i];
