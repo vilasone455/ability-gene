@@ -95,6 +95,30 @@ namespace RimArt
             t.Check(HeldWeaponHide.Shown(gun.parent), "once the picture has gone Core draws it again");
         }
 
+        [RimArtTest("Ego", "magic bullet: a shot at a building hits it and every pawn on the line", 1200)]
+        public static IEnumerable<int> Building(RimArtTestContext t)
+        {
+            t.Clear();
+            GameComponent_EgoMagicBullet.Instance.Clear();
+            IntVec3 c = t.center;
+            Pawn shooter = t.Colonist(c + new IntVec3(-6, 0, 0));
+            CompEgoMagicBullet gun = Arm(t, shooter);
+            Thing wall = t.Wall(c, owned: false);
+            Pawn before = t.Target(c + new IntVec3(-3, 0, 0), stunTicks: 600);
+            Pawn behind = t.Target(c + new IntVec3(4, 0, 0), stunTicks: 600, faction: before.Faction);
+            int hp = wall.HitPoints;
+            t.Log("shooter " + shooter.Position + ", target wall " + wall.Position + " (" + hp + " hp), before " + before.Position + ", behind " + behind.Position);
+
+            var shot = new List<EgoMagicBulletCast>();
+            foreach (int wait in Shoot(t, shooter, gun, wall, shot)) yield return wait;
+            if (!t.Check(shot.Count == 1, "the shot at the wall went off")) yield break;
+            t.Log("wall " + (wall.Destroyed ? "destroyed" : wall.HitPoints + " / " + hp + " hp") + " | " + Health(before) + " | " + Health(behind));
+            t.Check(shot[0].struck == wall && (wall.Destroyed || wall.HitPoints < hp), "the wall it was aimed at took the damage");
+            t.Check(t.Hurt(before) && t.Hurt(behind), "the pawns in front of the wall and behind it were hit");
+            t.Check(shot[0].hits.Count(h => h.Wall) == 1, "the wall has one hole in the picture, not two");
+            t.Check(gun.count == 1, "the shot counted");
+        }
+
         [RimArtTest("Ego", "magic bullet: the seventh goes to the beloved, through everyone between, then the gun rests", 2400)]
         public static IEnumerable<int> Seventh(RimArtTestContext t)
         {

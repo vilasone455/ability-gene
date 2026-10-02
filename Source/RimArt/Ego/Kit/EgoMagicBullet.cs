@@ -117,10 +117,11 @@ namespace RimArt
         }
 
         /// <summary>
-        /// One pawn hit by the line: the round's damage def and armour penetration, <paramref name="amount"/> damage, from
-        /// the shooter with the weapon, logged as a ranged impact the way a bullet's is. Pawns behind it are hit as well.
+        /// One pawn hit by the line, or the target that is not a pawn: the round's damage def and armour penetration,
+        /// <paramref name="amount"/> damage, from the shooter with the weapon, logged as a ranged impact the way a bullet's
+        /// is. Pawns behind it are hit as well.
         /// </summary>
-        public static void Hit(Pawn shooter, ThingWithComps weapon, ThingDef round, Pawn victim, Pawn intended, float amount, Vector2 dir)
+        public static void Hit(Pawn shooter, ThingWithComps weapon, ThingDef round, Thing victim, Thing intended, float amount, Vector2 dir)
         {
             ProjectileProperties p = round.projectile;
             var entry = new BattleLogEntry_RangedImpact(shooter, victim, intended, weapon.def, round, null);
