@@ -18,13 +18,14 @@ namespace RimArt
     /// the red disc from <see cref="RingDelay"/> spreading for <see cref="Spread"/> s, then the pink-white
     /// flash for <see cref="FlashLife"/> s.
     ///
-    /// The balance numbers below are the sketch's placeholders. The rules PR reads them from the weapon's XML
-    /// (CompProperties_EgoWeapon); the one a picture must match, the ring's radius, then reaches the picture
-    /// through <see cref="EgoParadiseLostRingShot.Radius"/>. The rest is shape and timing of the picture.
+    /// The balance numbers below are the sketch's placeholders, read only by the preview. In game the rules
+    /// read the weapon's XML (CompProperties_EgoParadiseLost), and the one a picture must match, the ring's
+    /// radius, reaches it through <see cref="EgoParadiseLostRingShot.Radius"/>. The rest is shape and timing of
+    /// the picture.
     /// </summary>
     public static class EgoParadiseLostTiming
     {
-        // ---- Balance placeholders (XML later). The room hit: range 30, 16 damage to one pawn, 12 each to 2-5,
+        // ---- Balance placeholders (the preview's; the game's are in the weapon's XML). The room hit: range 30, 16 damage to one pawn, 12 each to 2-5,
         // 9 each to 6 or more, outdoors every hostile within 6 cells of the aimed one, a shot every 2 s.
         public const float Range = 30f, OutdoorRadius = 6f, ShotInterval = 2f;
         public const int DamageSingle = 16, DamageFew = 12, DamageMany = 9, FewMax = 5;

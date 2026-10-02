@@ -10,19 +10,15 @@ namespace RimArt
     /// game time, fills every prism every <see cref="ChargeEvery"/> ticks, and once a frame draws the beams and the
     /// idle prism of each holder on the map on screen.
     ///
-    /// Who holds a prism is kept in <see cref="holders"/> (MapComponent_Vacuum's shape), so a frame costs one pass over
-    /// the holders, not over every pawn on the map: the comp registers on equip and unequip, and a rescan of every map
-    /// once a second (<see cref="RescanEvery"/>) catches pawns that arrive already holding one and drops the dead.
+    /// Who holds a prism is kept in <see cref="holders"/> (<see cref="HeldWeaponHolders"/>): the comp registers on equip
+    /// and unequip, and a rescan of every map once a second catches pawns that arrive already holding one and drops the dead.
     /// </summary>
     public sealed class GameComponent_LastPrism : GameComponent
     {
         /// <summary>Ticks between charge steps: Core's rare tick. A step adds ChargeEvery/60 s x sky glow / sunSecondsPerBeamSecond.</summary>
         public const int ChargeEvery = 250;
-        /// <summary>Ticks between rescans of who holds a prism.</summary>
-        public const int RescanEvery = 60;
         private List<LastPrismCast> casts = new List<LastPrismCast>();
-        private readonly HashSet<Pawn> holders = new HashSet<Pawn>();
-        private readonly List<Pawn> holderList = new List<Pawn>();
+        private readonly HeldWeaponHolders holders = new HeldWeaponHolders(pawn => CompLastPrism.HeldBy(pawn) != null);
         private readonly HashSet<Pawn> drawn = new HashSet<Pawn>();
 
         public GameComponent_LastPrism(Game game) { }
@@ -124,34 +120,15 @@ namespace RimArt
         }
 
         /// <summary>The comp's Notify_Equipped: <paramref name="pawn"/> holds a prism from now.</summary>
-        public void Register(Pawn pawn)
-        {
-            if (pawn != null) holders.Add(pawn);
-        }
+        public void Register(Pawn pawn) => holders.Add(pawn);
 
         /// <summary>The comp's Notify_Unequipped.</summary>
-        public void Unregister(Pawn pawn)
-        {
-            if (pawn != null) holders.Remove(pawn);
-        }
-
-        /// <summary>Every spawned pawn on any map holding a prism: equipment loaded with a save sends no Notify_Equipped, and a pawn can arrive on a map already holding one.</summary>
-        private void Rescan()
-        {
-            holders.Clear();
-            List<Map> maps = Find.Maps;
-            for (int m = 0; m < maps.Count; m++)
-            {
-                IReadOnlyList<Pawn> pawns = maps[m].mapPawns.AllPawnsSpawned;
-                for (int i = 0; i < pawns.Count; i++)
-                    if (CompLastPrism.HeldBy(pawns[i]) != null) holders.Add(pawns[i]);
-            }
-        }
+        public void Unregister(Pawn pawn) => holders.Remove(pawn);
 
         public override void FinalizeInit()
         {
             base.FinalizeInit();
-            Rescan();
+            holders.Rescan();
         }
 
         public override void GameComponentTick()
@@ -159,7 +136,7 @@ namespace RimArt
             int now = Find.TickManager.TicksGame;
             for (int i = casts.Count - 1; i >= 0; i--)
                 if (i < casts.Count && !casts[i].Tick(now)) casts.RemoveAt(i);
-            if (now % RescanEvery == 0) Rescan();
+            if (now % HeldWeaponHolders.RescanEvery == 0) holders.Rescan();
             if (now % ChargeEvery == 0) ChargeAll(ChargeEvery / 60f);
         }
 
@@ -202,8 +179,7 @@ namespace RimArt
             // keeps Core from drawing the weapon's texture as well. Copied first: drawing never changes the set, but a
             // Notify_Unequipped from a draw-time recache would.
             int clockBase = Find.TickManager.TicksGame / 36000 * 36000;
-            holderList.Clear();
-            holderList.AddRange(holders);
+            List<Pawn> holderList = holders.Copy();
             for (int i = 0; i < holderList.Count; i++)
             {
                 Pawn pawn = holderList[i];

@@ -221,12 +221,53 @@ namespace RimArt
         public static void Exhaust(Pawn pawn, float hours)
         {
             if (hours <= 0f || pawn.health == null) return;
-            int ticks = Mathf.RoundToInt(hours * GenDate.TicksPerHour);
-            Hediff hediff = pawn.health.hediffSet.GetFirstHediffOfDef(EgoDefOf.AG_EgoExhausted);
+            SetTimedHediff(pawn, EgoDefOf.AG_EgoExhausted, Mathf.RoundToInt(hours * GenDate.TicksPerHour));
+        }
+
+        /// <summary>
+        /// <paramref name="def"/> (a hediff with HediffComp_Disappears) for <paramref name="ticks"/>: a new one is set to
+        /// exactly that, since its def's time is only a fallback, and one the pawn already has keeps the longer of the two.
+        /// </summary>
+        public static void SetTimedHediff(Pawn pawn, HediffDef def, int ticks)
+        {
+            Hediff hediff = pawn.health.hediffSet.GetFirstHediffOfDef(def);
             bool fresh = hediff == null;
-            if (fresh) hediff = pawn.health.AddHediff(EgoDefOf.AG_EgoExhausted);
+            if (fresh) hediff = pawn.health.AddHediff(def);
             HediffComp_Disappears timer = hediff.TryGetComp<HediffComp_Disappears>();
             timer?.SetDuration(fresh ? ticks : Math.Max(timer.ticksToDisappear, ticks));
+        }
+
+        /// <summary>
+        /// A memory of <paramref name="def"/> giving <paramref name="mood"/> (Thought_Memory.moodOffset) for
+        /// <paramref name="ticks"/>: <paramref name="existing"/> renewed with these numbers, or a new memory when it is null.
+        /// The def's stage mood and duration are fallbacks.
+        /// </summary>
+        public static void SetMemory(Pawn pawn, ThoughtDef def, Thought_Memory existing, int mood, int ticks)
+        {
+            Thought_Memory thought = existing ?? (Thought_Memory)ThoughtMaker.MakeThought(def);
+            thought.moodOffset = mood;
+            thought.durationTicksOverride = ticks;
+            if (existing != null) thought.Renew();
+            else pawn.needs.mood.thoughts.memories.TryGainMemory(thought);
+        }
+
+        /// <summary>
+        /// An area action's targets, into <paramref name="into"/>: every other living spawned pawn within
+        /// <paramref name="radius"/> cells of the wielder, any faction, downed ones too; with <paramref name="hostilesOnly"/>
+        /// (Overclock) only hostiles that are standing. A copy, so the action can kill from it while the map's list changes.
+        /// </summary>
+        public static List<Pawn> PawnsAround(Pawn wielder, float radius, bool hostilesOnly, List<Pawn> into)
+        {
+            into.Clear();
+            IReadOnlyList<Pawn> pawns = wielder.Map.mapPawns.AllPawnsSpawned;
+            for (int i = 0; i < pawns.Count; i++)
+            {
+                Pawn pawn = pawns[i];
+                if (pawn == wielder || pawn.Dead || !pawn.Position.InHorDistOf(wielder.Position, radius)) continue;
+                if (hostilesOnly && (pawn.Downed || !pawn.HostileTo(wielder))) continue;
+                into.Add(pawn);
+            }
+            return into;
         }
 
         /// <summary>
@@ -238,20 +279,9 @@ namespace RimArt
         {
             if (pawn.needs?.mood == null) return;
             ThoughtDef def = EgoDefOf.AG_EgoOverclocked;
-            int ticks = Mathf.RoundToInt(props.overclockMoodDays * GenDate.TicksPerDay);
             MemoryThoughtHandler memories = pawn.needs.mood.thoughts.memories;
-            Thought_Memory thought = memories.NumMemoriesOfDef(def) >= def.stackLimit ? memories.OldestMemoryOfDef(def) : null;
-            if (thought != null)
-            {
-                thought.moodOffset = props.overclockMood;
-                thought.durationTicksOverride = ticks;
-                thought.Renew();
-                return;
-            }
-            thought = (Thought_Memory)ThoughtMaker.MakeThought(def);
-            thought.moodOffset = props.overclockMood;
-            thought.durationTicksOverride = ticks;
-            memories.TryGainMemory(thought);
+            Thought_Memory oldest = memories.NumMemoriesOfDef(def) >= def.stackLimit ? memories.OldestMemoryOfDef(def) : null;
+            SetMemory(pawn, def, oldest, props.overclockMood, Mathf.RoundToInt(props.overclockMoodDays * GenDate.TicksPerDay));
         }
     }
 }

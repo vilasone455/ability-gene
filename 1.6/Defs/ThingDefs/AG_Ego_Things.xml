@@ -223,4 +223,124 @@
     </tools>
   </ThingDef>
 
+  <!-- Paradise Lost's round. Never spawned: Verb_EgoParadiseLost strikes the aimed thing and the hostiles in its room
+       itself. It carries the damage def (AG_EgoPale, which armour does not reduce) and the damage when a shot strikes one
+       thing; damageFew and damageMany on the weapon are the damage each when it strikes more. -->
+  <ThingDef ParentName="BaseBullet">
+    <defName>AG_EgoParadiseLost_Round</defName>
+    <label>thorns of WhiteNight</label>
+    <graphicData>
+      <texPath>Things/Projectile/Bullet_Small</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <projectile>
+      <damageDef>AG_EgoPale</damageDef>
+      <damageAmountBase>16</damageAmountBase>
+      <armorPenetrationBase>0</armorPenetrationBase>
+      <stoppingPower>0.5</stoppingPower>
+      <speed>100</speed>
+    </projectile>
+  </ThingDef>
+
+  <!-- Paradise Lost (WhiteNight, ALEPH): a staff. A shot every 2 s (warmup 1 + cooldown 1) at a thing in range 30 with
+       line of sight strikes it and every standing hostile in its room; outdoors (the room touches the map edge or has 300
+       or more unroofed cells), every standing hostile within 6 cells of it in the open. A doorway counts as each room
+       its door joins. 16 damage to one thing, 12 each to 2-5, 9 each to more; armour
+       takes nothing off (AG_EgoPale). Every pawn struck moves at 40 % speed for 1 s (AG_EgoParadiseLostSlow). Each
+       hostile struck gives the wielder +1 Sanity mood, up to +10, for 2 h after the last hit. Corroded, WhiteNight's
+       ring: every 6 s every pawn of any faction within the ring takes 12, through walls, and each ring is 3 cells wider
+       than the one before (6, 9, 12, 15). No overclockRange: the comp sets it to ringRadius, the radius Overclock's
+       rings strike. The comps are listed with Inherit="False" because
+       CompProperties_EgoParadiseLost is the weapon's CompEquippable (Sanity and Overclock are equipped gizmos). Core
+       never draws the held staff: the picture does (Patches_EgoParadiseLost). No quality and no art: E.G.O. gear is not
+       made. -->
+  <ThingDef ParentName="BaseGun">
+    <defName>AG_EgoParadiseLost</defName>
+    <label>Paradise Lost</label>
+    <description>A white staff with a snake wound round it, a red apple at its head under a gold halo of thorns, and a grey wing beside the apple: E.G.O. gear from WhiteNight.\n\nEvery 2 seconds the staff strikes a target it can see up to 30 tiles away, and every standing hostile in the target's room with it, seen or not. Outdoors, or in a room with 300 or more unroofed tiles, it strikes every standing hostile within 6 tiles of the target instead; walls still keep them out. A pawn in a doorway counts as in each room the door joins. One target takes 16 damage, 2 to 5 take 12 each, 6 or more take 9 each. Armour does not reduce it. Every pawn struck moves at 40% speed for 1 second.\n\nSanity: each hostile struck gives the wielder +1 mood, up to +10. It lasts 2 hours after the last hit.\n\nCorrosion: every shot may let the staff take its wielder. The chance is 50% below the wielder's minor break threshold and certain below the major one, one step worse under Shooting 10, and none above the minor threshold. For 30 seconds the wielder ignores orders and stands still while WhiteNight's ring fires every 6 seconds: every pawn within the ring (people, animals and mechanoids), of any faction, downed or not, takes 12 damage through walls. The first ring reaches 6 tiles and each one after reaches 3 tiles further: 6, 9, 12, 15. The ring gives no Sanity. Then the wielder is exhausted for 3 hours.\n\nOverclock: 3 rings of 6 tiles, one every 2 seconds, striking only standing hostiles. Costs 20 mood for 1 day.</description>
+    <graphicData>
+      <texPath>RimArt/Ego/ParadiseLost</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.5</drawSize>
+    </graphicData>
+    <soundInteract>Interact_ChargeLance</soundInteract>
+    <techLevel>Spacer</techLevel>
+    <smeltable>false</smeltable>
+    <relicChance>0</relicChance>
+    <weaponTags Inherit="False" />
+    <statBases>
+      <MarketValue>2000</MarketValue>
+      <Mass>2.5</Mass>
+      <MaxHitPoints>200</MaxHitPoints>
+      <Flammability>0</Flammability>
+      <DeteriorationRate>0.5</DeteriorationRate>
+      <AccuracyTouch>1</AccuracyTouch>
+      <AccuracyShort>1</AccuracyShort>
+      <AccuracyMedium>1</AccuracyMedium>
+      <AccuracyLong>1</AccuracyLong>
+      <RangedWeapon_Cooldown>1</RangedWeapon_Cooldown>
+    </statBases>
+    <verbs>
+      <li>
+        <verbClass>RimArt.Verb_EgoParadiseLost</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>AG_EgoParadiseLost_Round</defaultProjectile>
+        <warmupTime>1</warmupTime>
+        <range>30</range>
+        <burstShotCount>1</burstShotCount>
+        <soundCast>PsychicShockLanceCast</soundCast>
+        <muzzleFlashScale>0</muzzleFlashScale>
+      </li>
+    </verbs>
+    <comps Inherit="False">
+      <li Class="RimArt.CompProperties_EgoParadiseLost">
+        <actionClass>RimArt.EgoParadiseLostCorrosion</actionClass>
+        <corrosionMinor>0.5</corrosionMinor>
+        <corrosionMajor>1</corrosionMajor>
+        <corrosionExtreme>1</corrosionExtreme>
+        <requirementSkill>Shooting</requirementSkill>
+        <requirementLevel>10</requirementLevel>
+        <corrodedDuration>30</corrodedDuration>
+        <corrodedInterval>6</corrodedInterval>
+        <exhaustionHours>3</exhaustionHours>
+        <overclockCount>3</overclockCount>
+        <overclockInterval>2</overclockInterval>
+        <overclockMood>-20</overclockMood>
+        <overclockMoodDays>1</overclockMoodDays>
+        <damageFew>12</damageFew>
+        <damageMany>9</damageMany>
+        <fewMax>5</fewMax>
+        <outdoorRadius>6</outdoorRadius>
+        <slowSeconds>1</slowSeconds>
+        <sanityPerHit>1</sanityPerHit>
+        <sanityCap>10</sanityCap>
+        <sanityHours>2</sanityHours>
+        <ringRadius>6</ringRadius>
+        <ringGrowth>3</ringGrowth>
+        <ringDamage>12</ringDamage>
+        <ringSound>PsychicInsanityLanceCast</ringSound>
+      </li>
+      <li Class="CompProperties_Forbiddable"/>
+      <li Class="CompProperties_Styleable"/>
+    </comps>
+    <tools>
+      <li>
+        <label>shaft</label>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>9</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+      <li>
+        <label>gold tip</label>
+        <capacities>
+          <li>Stab</li>
+        </capacities>
+        <power>9</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
 </Defs>

@@ -36,17 +36,8 @@ namespace RimArt
             EgoSolemnLamentCoffinCast coffin = game.CoffinOf(wielder) ?? game.BeginCoffin(wielder, p.coffinRadius, hostilesOnly);
             int now = Find.TickManager.TicksGame, cap = EgoButterflyExtension.Of.cap;
             int limit = hostilesOnly ? cap : p.funeralStacks, funeral = hostilesOnly ? 0 : p.funeralStacks;
-            inCloud.Clear();
-            IReadOnlyList<Pawn> pawns = wielder.Map.mapPawns.AllPawnsSpawned;
-            for (int i = 0; i < pawns.Count; i++)
-            {
-                Pawn pawn = pawns[i];
-                if (pawn == wielder || pawn.Dead || !pawn.Position.InHorDistOf(wielder.Position, p.coffinRadius)) continue;
-                if (hostilesOnly && (pawn.Downed || !pawn.HostileTo(wielder))) continue;
-                inCloud.Add(pawn);
-            }
             // Copied first: a funeral kills a pawn and takes it off the map's list.
-            foreach (Pawn pawn in inCloud)
+            foreach (Pawn pawn in EgoCorrosion.PawnsAround(wielder, p.coffinRadius, hostilesOnly, inCloud))
             {
                 int had = EgoButterfly.Stacks(pawn), add = System.Math.Min(p.cloudStacks, limit - had);
                 if (add <= 0) continue;

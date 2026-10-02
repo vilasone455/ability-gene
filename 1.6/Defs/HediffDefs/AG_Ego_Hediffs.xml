@@ -56,4 +56,29 @@
     </modExtensions>
   </HediffDef>
 
+  <!-- Paradise Lost's slow (EgoParadiseLost.Slow): every pawn a shot or a ring strikes moves at 40 % speed. The 60
+       ticks below are only the fallback: the weapon's slowSeconds replaces them, and a pawn struck again keeps the
+       longer time. A MoveSpeed factor, not a Moving capacity cut, so it never downs a pawn that already limps. -->
+  <HediffDef>
+    <defName>AG_EgoParadiseLostSlow</defName>
+    <label>thorn-slowed</label>
+    <description>Struck by Paradise Lost's thorns. Moving at 40% speed for a moment.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>true</isBad>
+    <defaultLabelColor>(0.82, 0.18, 0.18)</defaultLabelColor>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>60~60</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <statFactors>
+          <MoveSpeed>0.4</MoveSpeed>
+        </statFactors>
+      </li>
+    </stages>
+  </HediffDef>
+
 </Defs>
