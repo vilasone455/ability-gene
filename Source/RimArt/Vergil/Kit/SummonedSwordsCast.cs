@@ -364,7 +364,7 @@ namespace RimArt
             if (!Shown(c, home)) return;
             Begin(c);
             PowerPoleGraphics.Sun(home, out Vector2 sun, out float shadow);
-            float between = angleTick >= 0 ? UbwClock.Since(angleTick) : 0f;
+            float between = angleTick >= 0 ? PictureClock.Since(angleTick) : 0f;
             float stopS = stopTick >= 0 ? T.Lead + (stopTick - startTick) / 60f : float.MaxValue;
             float sinceStop = s - stopS, left = 1f - Smooth(sinceStop / T.RingFade), R = RingRadius, formedAt = T.Lead + Form;
             int n = Slots;

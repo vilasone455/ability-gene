@@ -334,7 +334,7 @@ namespace RimArt
         public void Draw(Map map)
         {
             HollowPurpleTimes t = Times;
-            float s = t.Contact + UbwClock.Since(comboTick);
+            float s = t.Contact + PictureClock.Since(comboTick);
             Shake(t, s);
             touchArray ??= touches.ToArray();
             cutArray ??= cuts.ToArray();

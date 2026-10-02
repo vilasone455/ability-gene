@@ -382,7 +382,7 @@ namespace RimArt
                 Feet = new Vector2(feet.x, feet.z), Aim = c.AimDegrees,
                 Length = c.length, Width = c.width, Radius = c.burstRadius, Pull = c.catchRadius, BallSize = Plasma.BallSize,
                 Channel = c.channelTicks / 60f, Flight = c.flightSeconds, Stop = c.stop, Walled = c.walled, WallAt = c.wallAt,
-                Seconds = UbwClock.Since(c.startTick), Cancelled = c.cancelTick >= 0 ? (c.cancelTick - c.startTick) / 60f : -1f,
+                Seconds = PictureClock.Since(c.startTick), Cancelled = c.cancelTick >= 0 ? (c.cancelTick - c.startTick) / 60f : -1f,
                 Caught = caughtScratch, RealFires = true, Sleeve = AcceleratorKit.Sleeve(c.caster), Skin = AcceleratorKit.Skin(c.caster),
             }, map);
         }

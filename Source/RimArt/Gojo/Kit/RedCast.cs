@@ -535,7 +535,7 @@ namespace RimArt
         public void Draw(Map map)
         {
             if (used) return;
-            float s = UbwClock.Since(startTick);
+            float s = PictureClock.Since(startTick);
             Vector2 gojo = Fired ? origin : AimOrigin, way = Fired ? dir : AimDir(gojo);
             float age = s - Arrive;
             Shake(s, age);

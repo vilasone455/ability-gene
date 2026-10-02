@@ -64,7 +64,7 @@ namespace RimArt
         {
             Pawn caster = cast.caster;
             float top = AltitudeLayer.MoteOverhead.AltitudeFor() + .1f;
-            float fade = cast.aborted ? 1f - Mathf.Clamp01(UbwClock.Since(cast.abortTick) / ChibakuCast.FadeSeconds) : 1f;
+            float fade = cast.aborted ? 1f - Mathf.Clamp01(PictureClock.Since(cast.abortTick) / ChibakuCast.FadeSeconds) : 1f;
             if (fade <= 0f) return;
             if (cast.Fired && !cast.handed && s >= cast.LaunchAt)
                 ChibakuFlight(cast, Mathf.Clamp01((s - cast.LaunchAt) / Mathf.Max(.01f, cast.Arrive - cast.LaunchAt)), fade, top, s);
@@ -190,17 +190,17 @@ namespace RimArt
             Pawn pawn = rods.pawn;
             if (pawn == null || !pawn.Spawned || rods.rods.Count == 0) return;
             Map map = pawn.Map;
-            float flare = rods.flaredTick >= 0 ? BlackReceiverGraphics.Flare(UbwClock.Since(rods.flaredTick)) : 0f;
+            float flare = rods.flaredTick >= 0 ? BlackReceiverGraphics.Flare(PictureClock.Since(rods.flaredTick)) : 0f;
             bool faceDown = GameComponent_Pain.Instance.FaceDown(pawn, out Vector2 toPain);
             Vector2 stood = rods.StoodAt, lies = rods.LiesAt, feet = PainKit.Ground(pawn.DrawPos), away = rods.fallAway;
-            float sinceFree = rods.freedTick >= 0 ? UbwClock.Since(rods.freedTick) : float.MaxValue;
+            float sinceFree = rods.freedTick >= 0 ? PictureClock.Since(rods.freedTick) : float.MaxValue;
             foreach (PainRod rod in rods.rods)
             {
-                float age = UbwClock.Since(rod.landTick);
+                float age = PictureClock.Since(rod.landTick);
                 int i = rod.slot;
                 if (rods.Pinned)
                 {
-                    float since = UbwClock.Since(rods.pinnedTick);
+                    float since = PictureClock.Since(rods.pinnedTick);
                     if (since < BlackReceiverTiming.Fall)
                         BlackReceiverGraphics.Stuck(BlackReceiverTiming.FallPose(i, stood, lies, -away, since), i, age, -1f, age, flare, map);
                     else BlackReceiverGraphics.InLying(lies, away, i, age, -1f, map, flare);

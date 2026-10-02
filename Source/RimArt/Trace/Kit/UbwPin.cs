@@ -179,9 +179,9 @@ namespace RimArt
                     f = new UbwXZ(Mathf.Sin(a), Mathf.Cos(a));
                 }
                 var feet = new UbwXZ(mid.X - f.X * T.FeetBack, mid.Z - f.Z * T.FeetBack);
-                double ring = UbwClock.Since(p.order) / 0.5;
+                double ring = PictureClock.Since(p.order) / 0.5;
                 if (ring < 1.6) UbwCommandGraphics.TargetRing(k, mid, 0.55 * (0.6 + 0.4 * T.Smooth(System.Math.Min(1.0, ring))), (float)(0.6 * (1 - T.Smooth((ring - 0.6) / 1.0))));
-                double struggle = UbwClock.Since(p.Last) - 0.4, beat = struggle >= 0 ? struggle % T.Jerk : -1;
+                double struggle = PictureClock.Since(p.Last) - 0.4, beat = struggle >= 0 ? struggle % T.Jerk : -1;
                 double jerk = beat >= 0 && beat < 0.22 ? 0.035 * System.Math.Sin(beat / 0.22 * System.Math.PI * 2) : 0;
                 bool pinned = UbwPin.Pinned(pawn, cast);
                 foreach (UbwPinSword s in p.swords)
@@ -189,7 +189,7 @@ namespace RimArt
                     UbwSword sw = field.BySeed(s.seed);
                     if (sw == null) continue;
                     string key = "ubw pin " + slot++;
-                    double t = UbwClock.Since(s.launch);
+                    double t = PictureClock.Since(s.launch);
                     if (t < 0)
                     {
                         UbwCommandGraphics.Standing(k, key, sw);

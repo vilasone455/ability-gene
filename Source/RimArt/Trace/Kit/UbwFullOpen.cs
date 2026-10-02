@@ -209,20 +209,20 @@ namespace RimArt
             if (Charging && cast.InWorld(target))
             {
                 foe = XZ(inside.Local(target.DrawPos));
-                float s = UbwClock.Since(startTick);
+                float s = PictureClock.Since(startTick);
                 UbwCommandGraphics.TargetRing(k, foe, 0.42 + 0.04 * System.Math.Sin(s * 9f), 0.55f * Smooth(s / 0.3f));
             }
             foreach (UbwVolleySword v in hovering)
             {
                 UbwSword sw = field.BySeed(v.seed);
-                if (sw != null) UbwCommandGraphics.Gathering(k, "ubw hover " + slot++, sw, UbwClock.Since(v.pulled), foe);
+                if (sw != null) UbwCommandGraphics.Gathering(k, "ubw hover " + slot++, sw, PictureClock.Since(v.pulled), foe);
             }
             foreach (UbwVolleySword v in flying)
             {
                 UbwSword sw = field.BySeed(v.seed);
                 if (sw == null) continue;
                 string key = "ubw volley " + slot++;
-                double s = UbwClock.Since(v.pulled);
+                double s = PictureClock.Since(v.pulled);
                 if (v.arrive == 0)
                 {
                     // Released, waiting for its turn in the volley.
@@ -245,7 +245,7 @@ namespace RimArt
                 UbwSword sw = field.BySeed(v.seed);
                 if (sw == null) continue;
                 UbwPose from = T.Gathered(sw, (v.dropped - v.pulled) / 60.0, XZ(v.foe), out _, out _);
-                UbwCommandGraphics.DropBack(k, "ubw drop " + slot++, sw, from, System.Math.Min(1.0, UbwClock.Since(v.dropped) / T.DropTime));
+                UbwCommandGraphics.DropBack(k, "ubw drop " + slot++, sw, from, System.Math.Min(1.0, PictureClock.Since(v.dropped) / T.DropTime));
             }
         }
 

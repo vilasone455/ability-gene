@@ -28,7 +28,7 @@ namespace RimArt
         protected abstract float FireAt { get; }
 
         public float Seconds(int now) => Lead + (now - startTick) / 60f;
-        public float DrawSeconds => Lead + UbwClock.Since(startTick);
+        public float DrawSeconds => Lead + PictureClock.Since(startTick);
         public int TickAt(float seconds) => startTick + Mathf.RoundToInt((seconds - Lead) * 60f);
 
         /// <summary>The ability fired now: this tick becomes the sketch's fire time.</summary>

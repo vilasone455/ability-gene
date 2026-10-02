@@ -202,7 +202,7 @@ namespace RimArt
                     Launch = 0, Lift = T.InterceptLift, Fly = Mathf.Max(0.04f, (m.meet - m.launch) / 60f - (float)T.InterceptLift), Dir = dir, Meet = true,
                     Start = new UbwV3(sw.X + dir.X * 0.1, 0.4, sw.Z + dir.Z * 0.1), Hit = new UbwV3(point.X, T.HitHeight, point.Z),
                 };
-                UbwCommandGraphics.Meeting(k, "ubw meet " + slot++, sw, shot, UbwClock.Since(m.launch));
+                UbwCommandGraphics.Meeting(k, "ubw meet " + slot++, sw, shot, PictureClock.Since(m.launch));
             }
         }
 

@@ -12,30 +12,6 @@ using T = RimArt.UbwCastTiming;
 namespace RimArt
 {
     /// <summary>
-    /// Game time in seconds since a tick, for drawing: whole ticks plus the share of the next one that has
-    /// gone by in real time at the current speed, so a picture on game time moves smoothly between ticks
-    /// and stops when the game is paused. The rules never read this; they count whole ticks.
-    /// </summary>
-    internal static class UbwClock
-    {
-        private static int lastTick = -1;
-        private static float lastReal;
-
-        public static float Since(int tick)
-        {
-            TickManager ticks = Find.TickManager;
-            int now = ticks.TicksGame;
-            if (now != lastTick)
-            {
-                lastTick = now;
-                lastReal = Time.realtimeSinceStartup;
-            }
-            float share = ticks.Paused ? 0f : Mathf.Clamp((Time.realtimeSinceStartup - lastReal) * 60f * ticks.TickRateMultiplier, 0f, 0.99f);
-            return (now - tick + share) / 60f;
-        }
-    }
-
-    /// <summary>
     /// One cast of Unlimited Blade Works, from the chant to the return. The rules (proposed 2026-09-24, taken
     /// as placeholders 2026-09-25; the numbers are <see cref="UbwRules"/> on the ability def):
     ///
@@ -361,7 +337,7 @@ namespace RimArt
         public void Draw()
         {
             if (broken || fizzled || chantTick < 0 || home == null) return;
-            float s = UbwClock.Since(chantTick);
+            float s = PictureClock.Since(chantTick);
             var o = new Vector2(centre.x + 0.5f, centre.z + 0.5f);
             if (verse == 0)
             {

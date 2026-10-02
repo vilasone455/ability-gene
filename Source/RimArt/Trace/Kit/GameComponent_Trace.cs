@@ -230,7 +230,7 @@ namespace RimArt
             {
                 Break b = breaks[i];
                 if (b.map != map) continue;
-                float age = UbwClock.Since(b.tick);
+                float age = PictureClock.Since(b.tick);
                 string key = "trace break " + i;
                 if (b.fall) TraceOnGraphics.Falling(key, b.shape, b.pose, age, b.side, b.dust, b.altitude, false);
                 else TraceHandGraphics.Shatter(key, b.shape, b.pose, age / T.Break, 11, b.altitude);
@@ -239,7 +239,7 @@ namespace RimArt
 
         private void DrawReinforced(Map map)
         {
-            float clock = UbwClock.Since(0);
+            float clock = PictureClock.Since(0);
             foreach (Pawn pawn in reinforced)
             {
                 if (!pawn.Spawned || pawn.Map != map) continue;
@@ -254,18 +254,18 @@ namespace RimArt
                     TraceReinforcementGraphics.WeaponGlow("reinforce glow " + pawn.thingIDNumber, shape, pose, 1f, 99f, clock, 1f, altitude);
             }
             for (int i = 0; i < prints.Count; i++)
-                if (prints[i].map == map) TraceReinforcementGraphics.Footprint(prints[i].at, prints[i].heading, prints[i].k, UbwClock.Since(prints[i].tick));
+                if (prints[i].map == map) TraceReinforcementGraphics.Footprint(prints[i].at, prints[i].heading, prints[i].k, PictureClock.Since(prints[i].tick));
             for (int i = 0; i < hits.Count; i++)
             {
                 Hit h = hits[i];
                 if (h.foe.Map != map) continue;
-                TraceReinforcementGraphics.Slash("reinforce hit " + i, new Vector2(h.foe.DrawPos.x, h.foe.DrawPos.z), h.index, UbwClock.Since(h.tick), h.from);
+                TraceReinforcementGraphics.Slash("reinforce hit " + i, new Vector2(h.foe.DrawPos.x, h.foe.DrawPos.z), h.index, PictureClock.Since(h.tick), h.from);
             }
             for (int i = 0; i < ends.Count; i++)
             {
                 Pawn pawn = ends[i].pawn;
                 if (pawn.Map != map) continue;
-                float age = UbwClock.Since(ends[i].tick);
+                float age = PictureClock.Since(ends[i].tick);
                 ThingWithComps weapon = pawn.equipment?.Primary;
                 TraceShape shape = weapon != null ? TraceWeaponShapes.For(weapon) : null;
                 bool drawn = TraceHands.Pose(pawn, weapon, shape, false, out UbwPose pose, out float altitude);

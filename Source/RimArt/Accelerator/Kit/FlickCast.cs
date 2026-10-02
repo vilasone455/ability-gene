@@ -151,7 +151,7 @@ namespace RimArt
         {
             Vector2? target = null;
             if (f.target != null && f.target.Spawned && f.target.Map == map) target = new Vector2(f.target.DrawPos.x, f.target.DrawPos.z);
-            VectorFlickGraphics.Draw(Shot(f.caster, f.feet, f.aim, f.distance, f.warmup, f.speed, target, f.seed), f.warmup + UbwClock.Since(f.kickTick), map);
+            VectorFlickGraphics.Draw(Shot(f.caster, f.feet, f.aim, f.distance, f.warmup, f.speed, target, f.seed), f.warmup + PictureClock.Since(f.kickTick), map);
         }
 
         private static VectorFlickShot Shot(Pawn caster, Vector2 feet, Vector2 aim, float distance, float warmup, float speed, Vector2? target, int seed) =>
@@ -170,7 +170,7 @@ namespace RimArt
                 Pawn pawn = colonists[i];
                 if (!(pawn.stances?.curStance is Stance_Warmup warmup) || !(warmup.verb is Verb_CastAbility verb)) continue;
                 if (verb.ability?.def != AcceleratorDefOf.AG_VectorFlick || !(warmup.focusTarg.Thing is Pawn target) || !target.Spawned) continue;
-                float elapsed = UbwClock.Since(warmup.startedTick), total = (Find.TickManager.TicksGame - warmup.startedTick + warmup.ticksLeft) / 60f;
+                float elapsed = PictureClock.Since(warmup.startedTick), total = (Find.TickManager.TicksGame - warmup.startedTick + warmup.ticksLeft) / 60f;
                 Vector3 from = pawn.DrawPos, to = target.DrawPos;
                 var run = new Vector2(to.x - from.x, to.z - from.z);
                 float distance = run.magnitude;
@@ -263,7 +263,7 @@ namespace RimArt
                 };
             }
             VectorApplyGraphics.Draw(new VectorApplyShot { Feet = a.feet, Strain = a.strain, Reach = VectorEditDefaults.ScanRadiusCells, Rounds = scratch },
-                UbwClock.Since(a.tick), map);
+                PictureClock.Since(a.tick), map);
         }
 
         public override void MapComponentTick()

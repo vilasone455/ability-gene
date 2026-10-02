@@ -167,7 +167,7 @@ namespace RimArt
             int seed = pawn.thingIDNumber % 97;
             Add(pawn.MapHeld, stunSeconds, s =>
             {
-                if (pawn.Spawned) RaikoKusariGraphics.Struck(new Vector2(pawn.DrawPos.x, pawn.DrawPos.z), s, stunSeconds, seed, 0, UbwClock.Since(0));
+                if (pawn.Spawned) RaikoKusariGraphics.Struck(new Vector2(pawn.DrawPos.x, pawn.DrawPos.z), s, stunSeconds, seed, 0, PictureClock.Since(0));
             });
         }
 
@@ -206,7 +206,7 @@ namespace RimArt
             for (int i = pictures.Count - 1; i >= 0; i--)
             {
                 Picture picture = pictures[i];
-                float s = UbwClock.Since(picture.start);
+                float s = PictureClock.Since(picture.start);
                 if (s >= picture.duration || Find.Maps.IndexOf(picture.map) < 0)
                 {
                     pictures.RemoveAt(i);
@@ -231,7 +231,7 @@ namespace RimArt
                 ground = Ground(w),
                 deg = Degrees(w.heading),
                 turn = w.turned,
-                since = UbwClock.Since(w.caughtTick),
+                since = PictureClock.Since(w.caughtTick),
                 crept = w.crept,
                 speed = w.speed * share * 60f,
                 fullSpeed = w.speed * 60f,

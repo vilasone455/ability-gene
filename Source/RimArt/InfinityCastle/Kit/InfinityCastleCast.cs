@@ -482,9 +482,9 @@ namespace RimArt
             if (Taking || (inTick >= 0 && !returned))
             {
                 if (takePlan == null) return;
-                InfinityCastleOpenGraphics.Draw(Origin, takePlan, UbwClock.Since(startTick), home);
+                InfinityCastleOpenGraphics.Draw(Origin, takePlan, PictureClock.Since(startTick), home);
             }
-            else if (returnPlan != null) InfinityCastleOpenGraphics.Draw(Origin, returnPlan, UbwClock.Since(returnTick), home);
+            else if (returnPlan != null) InfinityCastleOpenGraphics.Draw(Origin, returnPlan, PictureClock.Since(returnTick), home);
             // Summon draws no door on the home map: the command is only given from the castle, so nobody sees it.
         }
 

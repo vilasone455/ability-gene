@@ -395,7 +395,7 @@ namespace RimArt
         public override void Draw()
         {
             if (broken || channelTick < 0 || home == null) return;
-            float s = T.Lead + UbwClock.Since(channelTick);
+            float s = T.Lead + PictureClock.Since(channelTick);
             KamehamehaPlan t = Firing || Warping ? plan : T.Plan(false, P.channelSeconds, P.beamSeconds, GokuSpiritBombTiming.Never);
             for (int i = 0; i < victims.Count; i++)
             {

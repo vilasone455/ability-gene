@@ -60,7 +60,7 @@ namespace RimArt
         public override void Draw()
         {
             if (home == null) return;
-            float s = GokuSolarFlareTiming.Lead + UbwClock.Since(startTick);
+            float s = GokuSolarFlareTiming.Lead + PictureClock.Since(startTick);
             for (int i = 0; i < pawns.Count; i++)
                 if (pawns[i].Spawned && pawns[i].Map == home) pos[i] = Vec(pawns[i].DrawPos);
             Vector2 o = fired ? Vec(centre) : (caster.Spawned ? Vec(caster.DrawPos) : Vec(centre));
@@ -131,7 +131,7 @@ namespace RimArt
         public override void Draw()
         {
             if (home == null) return;
-            float s = GokuInstantTransmissionTiming.Lead + UbwClock.Since(startTick);
+            float s = GokuInstantTransmissionTiming.Lead + PictureClock.Since(startTick);
             for (int i = 0; i < waiting.Count; i++)
                 if (waiting[i].Spawned && waiting[i].Map == home) waitingPos[i] = Vec(waiting[i].DrawPos);
             Vector2 a = Vec(from), b = Vec(dest), toward = b - a;

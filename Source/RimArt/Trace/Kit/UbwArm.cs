@@ -105,10 +105,10 @@ namespace RimArt
                 string key = "ubw arm " + slot++;
                 Vector2 m = inside.Local(a.pawn.DrawPos);
                 var mid = new UbwXZ(m.x, m.y);
-                double age = UbwClock.Since(a.launch);
+                double age = PictureClock.Since(a.launch);
                 if (age < 0.15)
                 {
-                    float order = age < 0 ? VfxMath.Smooth(UbwClock.Since(a.order) / 0.1f) : 1f - VfxMath.Smooth((float)age / 0.15f);
+                    float order = age < 0 ? VfxMath.Smooth(PictureClock.Since(a.order) / 0.1f) : 1f - VfxMath.Smooth((float)age / 0.15f);
                     UbwCommandGraphics.Order(k, mid, new UbwXZ(sw.X, sw.Z), 0.28, order);
                 }
                 if (!a.given)
@@ -116,7 +116,7 @@ namespace RimArt
                     if (age < 0) UbwCommandGraphics.Standing(k, key, sw);
                     else UbwCommandGraphics.Arming(k, key, sw, age, mid);
                 }
-                else UbwCommandGraphics.Caught(k, new UbwXZ(mid.X + T.Hand.X, mid.Z + T.Hand.Z), UbwClock.Since(a.Held));
+                else UbwCommandGraphics.Caught(k, new UbwXZ(mid.X + T.Hand.X, mid.Z + T.Hand.Z), PictureClock.Since(a.Held));
             }
         }
 
