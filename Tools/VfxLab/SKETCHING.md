@@ -349,8 +349,10 @@ outside this list needs a different plan, not a workaround in JavaScript.
 | Sound | Sound events show on the timeline and play nothing. |
 | Prove that it works in game | Only building the mod and checking it in RimWorld does that. |
 
-Also keep effects on the ground: new effects in this mod rise out of the floor, and designs that
-drop things from the sky have been rejected.
+Effects may come from the sky or from the ground: draw what the source does (Terraria's Star Wrath
+drops stars, Six Paths rods punch up out of the floor). The one check is overlap inside a kit: a new
+effect should not read as a copy of one the kit already has. Six Paths once turned down two
+designs that came down from above because its slam already does.
 
 ## 5. Textures
 
