@@ -28,8 +28,20 @@ namespace RimArt
         public float Open;
         /// <summary>Seconds since the last hit landed (the heal), or negative for none.</summary>
         public float FeedAge;
-        /// <summary>The hand's colour on the grip (the sketch's skin until the rules pass the pawn's).</summary>
+        /// <summary>The hand's colour on the grip: the pawn's skin in game, the sketch's in the previews.</summary>
         public Color Skin;
+        /// <summary>
+        /// Where the body faces: the arm's shoulder and the face over the head are placed for it, and the picture is mirrored
+        /// facing west (<see cref="EgoMimicryTiming.SignOf(Rot4)"/>), so hand and shoulder stay on the same side whatever the aim.
+        /// </summary>
+        public Rot4 Facing;
+        /// <summary>
+        /// The height the pawn's body is drawn at (its DrawPos.y): Core adds a random offset of up to 0.037 per pawn
+        /// (Pawn_DrawTracker.SeededYOffset) so pawns do not flicker over each other, and the pawn's own parts sit up to
+        /// 0.037 above it, so the arm, the face and a sword drawn under the pawn are placed from this. The previews pass
+        /// <see cref="EgoMimicryGraphics.PawnLayer"/>.
+        /// </summary>
+        public float Altitude;
     }
 
     /// <summary>
@@ -39,9 +51,10 @@ namespace RimArt
     /// sketch's.
     ///
     /// The sword lies level at hand height during a swing, so it turns freely with the aim; the grown swing's
-    /// raise is the one 3D motion, a 3D direction drawn with Lift. Aiming north the sword and the arm draw
-    /// under the pawn. The arm is drawn over the pawn as flat shapes from the south-facing stand-in for every
-    /// facing; facing east or west the shoulder sits on the upper chest.
+    /// raise is the one 3D motion, a 3D direction drawn with Lift. Pointing north the sword draws under the pawn,
+    /// and facing north the arm does. The arm and the face are placed for the body's facing: the shoulder on the
+    /// sword side (the viewer's left facing south, right facing north, the upper chest facing east or west), the
+    /// face's eye and grin turned to the side the pawn faces in profile.
     ///
     /// Not drawn (the sketch's stand-ins and lab aids): the pawns, the colonist's rifle and its shot (the game
     /// draws the real ones), the lunge's afterimages (stand-in pawns), the green ring under the skipped ally,
@@ -81,8 +94,8 @@ namespace RimArt
             if (!Shown(w.Pos, map)) return;
             Begin(w.Pos);
             PowerPoleGraphics.Sun(map, out Vector2 sun, out float strength);
-            Vector2 pos = w.Pos, d = T.Dir(w.Aim), hs = T.HandSide(w.Aim);
-            float sign = T.SignOf(w.Aim), stage = w.Stage, age = w.MoveAge;
+            Vector2 pos = w.Pos, d = T.Dir(w.Aim);
+            float sign = T.SignOf(w.Facing), stage = w.Stage, age = w.MoveAge;
             if (stage > 0f) Sprite(pos, 1.5f, 1.1f, Fade(RedStreak, 0.16f * Mathf.Clamp01(stage)), glow, Floor + 0.01f);
 
             var sword = new EgoMimicrySword
@@ -100,15 +113,15 @@ namespace RimArt
             }
             else if (w.Move == EgoMimicryMove.Grown && age >= 0f && age < T.GrownLength)
             {
-                T.GrownPose(age, pos, w.Aim, out sword.Hand, out sword.Blade, out sword.Size, out sword.Flip, out sword.Swell);
+                T.GrownPose(age, pos, w.Aim, out sword.Hand, out sword.Blade, out sword.Size, out sword.Flip, out sword.Swell, sign);
                 sword.Open = sword.Swell;
             }
             T.Feed(w.FeedAge, out sword.Blood, out sword.Pulse, out sword.PulseAt, out sword.EyePulse);
-            sword.Altitude = T.PointsNorth(sword.Blade) ? PawnLayer - 0.03f : Overhead + 0.05f;
+            sword.Altitude = T.PointsNorth(sword.Blade) ? w.Altitude - 0.03f : Overhead + 0.05f;
             Vector2 hand = EgoMimicrySwordGraphics.Draw(sword, s, sun, strength);
             // The heal reaches the wielder: a faint red glow on the chest while the green eye glows.
             if (sword.EyePulse > 0f) Sprite(new Vector2(pos.x, pos.y + PawnBody.Chest), 0.7f, 0.8f, Fade(HealRed, 0.3f * sword.EyePulse), glow, Overhead + 0.07f);
-            EgoMimicryArmGraphics.Draw(pos, hand, d, hs, stage, s, sun, strength);
+            EgoMimicryArmGraphics.Draw(pos, hand, d, w.Facing, w.Altitude, stage, s, sun, strength);
         }
 
         internal static void Disc(Vector2 at, float altitude, float width, float depth, float angle, Color colour) =>

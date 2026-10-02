@@ -23,6 +23,19 @@ namespace RimArt
         /// </summary>
         public virtual bool WalksToNearest => false;
 
+        /// <summary>
+        /// Whether <paramref name="target"/> can take a firing: the nearest-pawn rule, the corroded walk and Overclock's button
+        /// and job all skip a pawn that fails it, so they agree on whom the action reaches (Mimicry: a pawn it can walk to
+        /// while corroded, a hostile in melee reach in Overclock). Every pawn by default.
+        /// </summary>
+        public virtual bool CanTarget(Pawn wielder, CompEgoWeapon weapon, Pawn target, bool hostilesOnly) => true;
+
+        /// <summary>
+        /// True while the last firing is still going (Mimicry's lunge and swing): the corroded wielder stands, and a new
+        /// firing waits. Every other action's firing is over on its own tick.
+        /// </summary>
+        public virtual bool Busy(Pawn wielder, CompEgoWeapon weapon) => false;
+
         /// <summary>The corrosion (<paramref name="overclock"/> false) or an Overclock starts: before its first firing.</summary>
         public virtual void Begin(Pawn wielder, CompEgoWeapon weapon, bool overclock)
         {

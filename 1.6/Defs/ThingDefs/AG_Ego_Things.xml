@@ -343,4 +343,79 @@
     </tools>
   </ThingDef>
 
+  <!-- Mimicry (Nothing There, ALEPH). A melee sword: its one tool has the AG_EgoMimicryCut capacity, whose only maneuver is
+       RimArt.Verb_EgoMimicry, Core's cut with the hit moved to the swing's contact frame (0.22 s, the grown slam 0.7 s).
+       12 Cut every 1.2 s are the tool's power and cooldownTime (armour penetration Core's default from the power, 0.18).
+       The comps are listed with Inherit="False" because CompProperties_EgoMimicry is the weapon's CompEquippable (the
+       Overclock button is an equipped gizmo); Forbiddable and Styleable are BaseWeapon's own. overclockRange is not set
+       here: the comp sets it to melee reach (1.5 cells). Core never draws it held (HeldWeaponHide); the texture is the
+       ground and the icon. No quality and no art: E.G.O. gear is not made. -->
+  <ThingDef ParentName="BaseWeapon">
+    <defName>AG_EgoMimicry</defName>
+    <label>Mimicry</label>
+    <description>A greatsword of red muscle grown over a dark steel edge, with a green eye and a blue eye in the flesh and bone spikes along its back: E.G.O. gear from Nothing There.\n\nEach swing cuts for 12, one every 1.2 seconds. The hit lands as the blade crosses the target, a moment after the swing starts; a target that has stepped out of reach by then is missed. Each hit on a living creature heals the wielder's injuries by 10% of the damage it dealt. Scars and lost limbs do not heal, and mechanoids and buildings heal nothing.\n\nOne swing in 10 the blade swells to twice its size and slams down along a strip about 2.7 tiles long, for 3.5 times the damage, on every standing hostile under it (and on the target, whatever it is). It cannot miss or be dodged; armour still counts; walls and closed doors keep pawns behind them out. That swing takes 1.4 seconds.\n\nCorrosion: every swing may let the sword take its wielder. The chance is 50% below the wielder's minor break threshold and certain below the major one, one step worse under Melee 8, and none above the minor threshold. For 40 seconds the wielder ignores orders and hunts: it walks to the nearest pawn it can reach, of any faction and downed ones included, and every 1.5 seconds swings at it, lunging up to 2 tiles to get next to it first. Flesh takes the sword arm in 4 stages: it starts at the first, each damaging hit the wielder deals adds a stage, each damaging hit it takes removes one, and each stage adds 15% damage. Then the wielder is exhausted for 3 hours.\n\nOverclock: the wielder stands still and swings 5 times, one a second, at standing hostiles next to it, with the same arm. Costs 20 mood for 1 day.</description>
+    <graphicData>
+      <texPath>RimArt/Ego/Mimicry</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>1.5</drawSize>
+    </graphicData>
+    <techLevel>Spacer</techLevel>
+    <smeltable>false</smeltable>
+    <relicChance>0</relicChance>
+    <thingCategories>
+      <li>WeaponsMelee</li>
+    </thingCategories>
+    <weaponClasses>
+      <li>Melee</li>
+      <li>MeleePiercer</li>
+    </weaponClasses>
+    <statBases>
+      <MarketValue>2000</MarketValue>
+      <Mass>3</Mass>
+      <MaxHitPoints>200</MaxHitPoints>
+      <Flammability>0</Flammability>
+      <DeteriorationRate>0.5</DeteriorationRate>
+      <Beauty>0</Beauty>
+    </statBases>
+    <comps Inherit="False">
+      <li Class="RimArt.CompProperties_EgoMimicry">
+        <actionClass>RimArt.EgoMimicryCorrosion</actionClass>
+        <corrosionMinor>0.5</corrosionMinor>
+        <corrosionMajor>1</corrosionMajor>
+        <corrosionExtreme>1</corrosionExtreme>
+        <requirementSkill>Melee</requirementSkill>
+        <requirementLevel>8</requirementLevel>
+        <corrodedDuration>40</corrodedDuration>
+        <corrodedInterval>1.5</corrodedInterval>
+        <exhaustionHours>3</exhaustionHours>
+        <overclockCount>5</overclockCount>
+        <overclockInterval>1</overclockInterval>
+        <overclockMood>-20</overclockMood>
+        <overclockMoodDays>1</overclockMoodDays>
+        <growChance>0.1</growChance>
+        <growDamageFactor>3.5</growDamageFactor>
+        <growScale>2</growScale>
+        <growHalfWidth>0.35</growHalfWidth>
+        <healFraction>0.1</healFraction>
+        <armStart>1</armStart>
+        <armStages>4</armStages>
+        <stageDamage>0.15</stageDamage>
+        <lungeCells>2</lungeCells>
+        <slamSound>Pawn_Melee_BigBash_HitPawn</slamSound>
+      </li>
+      <li Class="CompProperties_Forbiddable"/>
+      <li Class="CompProperties_Styleable"/>
+    </comps>
+    <tools>
+      <li>
+        <label>blade</label>
+        <capacities>
+          <li>AG_EgoMimicryCut</li>
+        </capacities>
+        <power>12</power>
+        <cooldownTime>1.2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
 </Defs>

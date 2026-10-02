@@ -131,59 +131,75 @@ namespace RimArt
             }
         }
 
-        /// <summary>The nearest spawned pawn to the wielder on its map, any faction, downed or not; null when it is alone.</summary>
-        public static Pawn Nearest(Pawn wielder)
+        private struct Candidate
+        {
+            public Pawn pawn;
+            public float distance;
+            public int order;
+        }
+
+        private static readonly List<Candidate> candidates = new List<Candidate>();
+
+        /// <summary>Nearest first; of two at the same distance the later in the map's list, as the plain scan picks.</summary>
+        private static readonly Comparison<Candidate> ByDistance = (a, b) => a.distance != b.distance ? a.distance.CompareTo(b.distance) : b.order.CompareTo(a.order);
+
+        /// <summary>
+        /// The nearest spawned pawn to the wielder on its map, any faction, downed or not, that the weapon's action can
+        /// target (<see cref="EgoCorrosionAction.CanTarget"/>); null when there is none. Without a weapon every pawn counts.
+        /// </summary>
+        public static Pawn Nearest(Pawn wielder, CompEgoWeapon weapon = null)
         {
             if (!wielder.Spawned) return null;
-            float best = float.MaxValue;
-            Pawn nearest = null;
+            candidates.Clear();
             IReadOnlyList<Pawn> pawns = wielder.Map.mapPawns.AllPawnsSpawned;
             for (int i = 0; i < pawns.Count; i++)
             {
                 Pawn p = pawns[i];
                 if (p == wielder || p.Dead) continue;
-                float d = (p.Position - wielder.Position).LengthHorizontalSquared;
-                if (d <= best)
-                {
-                    best = d;
-                    nearest = p;
-                }
+                candidates.Add(new Candidate { pawn = p, distance = (p.Position - wielder.Position).LengthHorizontalSquared, order = i });
             }
-            return nearest;
+            return FirstTargetable(wielder, weapon, hostilesOnly: false);
         }
 
         /// <summary>
-        /// The nearest hostile pawn, not downed, within <paramref name="range"/> cells; null when there is none. Reads the
-        /// map's attack-target cache (hostile factions, aggro mental states, factionless humanlikes), not every pawn: the
-        /// Overclock button asks every frame the wielder is selected.
+        /// The nearest hostile pawn, not downed, within <paramref name="range"/> cells, that the weapon's action can target;
+        /// null when there is none. Reads the map's attack-target cache (hostile factions, aggro mental states, factionless
+        /// humanlikes), not every pawn: the Overclock button asks every frame the wielder is selected.
         /// </summary>
-        public static Pawn NearestHostile(Pawn wielder, float range)
+        public static Pawn NearestHostile(Pawn wielder, float range, CompEgoWeapon weapon = null)
         {
             if (!wielder.Spawned) return null;
-            float best = range * range;
-            Pawn nearest = null;
+            float most = range * range;
+            candidates.Clear();
             List<IAttackTarget> targets = wielder.Map.attackTargetsCache.GetPotentialTargetsFor(wielder);
             for (int i = 0; i < targets.Count; i++)
             {
                 if (!(targets[i].Thing is Pawn p) || p == wielder || p.Dead || p.Downed || !p.Spawned) continue;
                 float d = (p.Position - wielder.Position).LengthHorizontalSquared;
-                if (d <= best)
-                {
-                    best = d;
-                    nearest = p;
-                }
+                if (d <= most) candidates.Add(new Candidate { pawn = p, distance = d, order = i });
             }
-            return nearest;
+            return FirstTargetable(wielder, weapon, hostilesOnly: true);
         }
 
-        public static bool HostileInRange(Pawn wielder, float range) => NearestHostile(wielder, range) != null;
+        /// <summary>The nearest of <see cref="candidates"/> the action can target. The action is asked nearest first, so a costly check (a path) runs for few pawns.</summary>
+        private static Pawn FirstTargetable(Pawn wielder, CompEgoWeapon weapon, bool hostilesOnly)
+        {
+            if (candidates.Count == 0) return null;
+            candidates.Sort(ByDistance);
+            EgoCorrosionAction action = weapon?.Props.Action;
+            for (int i = 0; i < candidates.Count; i++)
+                if (action == null || action.CanTarget(wielder, weapon, candidates[i].pawn, hostilesOnly)) return candidates[i].pawn;
+            return null;
+        }
+
+        public static bool HostileInRange(Pawn wielder, float range, CompEgoWeapon weapon = null) => NearestHostile(wielder, range, weapon) != null;
 
         /// <summary>
         /// The target of one firing: the nearest pawn of any faction while corroded, the nearest hostile within
         /// overclockRange for Overclock (<paramref name="hostilesOnly"/>). Null when there is none.
         /// </summary>
         public static Pawn Target(Pawn wielder, CompEgoWeapon weapon, bool hostilesOnly) =>
-            hostilesOnly ? NearestHostile(wielder, weapon.Props.overclockRange) : Nearest(wielder);
+            hostilesOnly ? NearestHostile(wielder, weapon.Props.overclockRange, weapon) : Nearest(wielder, weapon);
 
         /// <summary>One firing at <see cref="Target"/>.</summary>
         public static bool Fire(Pawn wielder, CompEgoWeapon weapon, bool hostilesOnly) =>
@@ -191,12 +207,14 @@ namespace RimArt
 
         /// <summary>
         /// One firing of the weapon's action at <paramref name="target"/> (from <see cref="Target"/>). A targeted action
-        /// turns the wielder to it first and does not fire when it is null; an area action ignores it. Uses of the verb
-        /// the action makes do not roll.
+        /// turns the wielder to it first and does not fire when it is null; an area action ignores it. Nothing fires while
+        /// the action is still busy with the last firing (<see cref="EgoCorrosionAction.Busy"/>). Uses of the verb the
+        /// action makes do not roll. False when nothing fired.
         /// </summary>
         public static bool Fire(Pawn wielder, CompEgoWeapon weapon, Pawn target, bool hostilesOnly)
         {
             EgoCorrosionAction action = weapon.Props.Action;
+            if (action.Busy(wielder, weapon)) return false;
             if (action.TakesTarget)
             {
                 if (target == null) return false;
