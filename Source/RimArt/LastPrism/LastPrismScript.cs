@@ -14,7 +14,7 @@ namespace RimArt
     /// Positions are cells from the chosen cell's centre. The wielder stands <see cref="Back"/> cells behind it,
     /// facing the scenario's aim; the first target walks across the aim; a wall of three cells stands on the fan's
     /// right; every hit uses <see cref="LastPrismTiming"/>'s beams with the XML's range, burns and gaps
-    /// (<see cref="CompProperties_LastPrismFire"/>; the sketch's defaults are the same numbers). Pawns go down at
+    /// (<see cref="LastPrismNumbers"/>; the sketch's defaults are the same numbers). Pawns go down at
     /// <see cref="PainShock"/> burn (the mech at <see cref="MechDown"/>). When the target goes down the next one is
     /// the standing enemy in range with no wall in the way that needs the smallest turn; the channel ends when the
     /// charge runs out or no such enemy is left. The rules PR does this with real pawns, damage and line of sight.
@@ -42,8 +42,8 @@ namespace RimArt
 
         private static readonly Dictionary<(LastPrismScene, float), LastPrismScript> made = new Dictionary<(LastPrismScene, float), LastPrismScript>();
         /// <summary>The beam's numbers and the prism's store, from the defs.</summary>
-        private static CompProperties_LastPrismFire P => CompProperties_LastPrismFire.Of;
-        public static float Store => CompProperties_LastPrism.Of.store;
+        private static LastPrismNumbers P => LastPrismNumbers.Of;
+        public static float Store => LastPrismNumbers.Of.store;
 
         public readonly LastPrismScene Scene;
         /// <summary>The prism's aim at each step (radians, single precision as the sketch keeps it), and the target's index.</summary>
@@ -173,7 +173,7 @@ namespace RimArt
                 }
                 else
                 {
-                    double lane = Reach(tipX, tipZ, aim, P.Range);
+                    double lane = Reach(tipX, tipZ, aim, P.range);
                     for (int j = 0; j < Along.Length; j++)
                     {
                         if (DownAt[j] <= s || s - lastJoin[j] < P.joinedEverySeconds) continue;
@@ -196,7 +196,7 @@ namespace RimArt
             {
                 T.FanBeam(i, s, Lead, P.joinSeconds, P.fanDegrees, out double turn, out double shift);
                 double angle = aim + turn, x = tipX - Math.Sin(aim) * shift, z = tipZ + Math.Cos(aim) * shift;
-                if (T.OnLine(qx, qz, x, z, angle, Reach(x, z, angle, P.Range), P.fanReach)) return true;
+                if (T.OnLine(qx, qz, x, z, angle, Reach(x, z, angle, P.range), P.fanReach)) return true;
             }
             return false;
         }
@@ -218,7 +218,7 @@ namespace RimArt
                 if (Ally[j] || DownAt[j] <= s) continue;
                 Place(j, s, out double qx, out double qz);
                 double d = Math.Sqrt((qx - tipX) * (qx - tipX) + (qz - tipZ) * (qz - tipZ)), angle = Math.Atan2(qz - tipZ, qx - tipX);
-                if (d > P.Range || Reach(tipX, tipZ, angle, d) < d - 0.01) continue;
+                if (d > P.range || Reach(tipX, tipZ, angle, d) < d - 0.01) continue;
                 double turn = Math.Abs(T.Wrap(angle - aim));
                 if (turn < least)
                 {

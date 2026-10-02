@@ -224,6 +224,12 @@ node Tools/VfxLab/shoot.mjs "Six Paths: slam" 2.0 slam.png --b "Slam v2 (sketch)
 A kit is recordable if its preview draws from `MapComponentUpdate` on a clock it advances itself,
 as `MapComponent_ShinraVfx`, `MapComponent_GravityPreview` and `MapComponent_SixPathsPreview` do.
 
+The recorder links the picture folder (`<Kit>/`), never `<Kit>/Kit/`, so a preview must not name a rules
+type. A preview that reads its balance numbers from the defs reads them from a plain class on the picture
+side, as Last Prism does: `LastPrismNumbers` has the XML fields' names, Kit fills its `Of` from the defs at
+startup (`LastPrismNumbersFromDefs`), and `Recorder/Program.cs` fills it from the same def XML with
+`ModDefs.Fill`.
+
 ## Adding a sketch
 
 A full guide for someone new to the mod, including textures and what a sketch cannot do, is

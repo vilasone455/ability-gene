@@ -25,6 +25,9 @@ var files = new HashSet<string>();
 
 // A cutscene camera's frames (Unlimited Blade Works' reveal shot) land in the tap, as Graphics.DrawMesh does.
 UbwShot.Sink = Tap.Shot;
+// The Last Prism's previews read their balance numbers from the defs; in game Kit fills them at startup, here the
+// same XML does.
+LastPrismNumbers.Of = ModDefs.Fill(new LastPrismNumbers(), "AG_LastPrism_Fire", "AG_LastPrism");
 
 var actions = typeof(SixPathsSlab).Assembly.GetTypes()
     .SelectMany(t => t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
