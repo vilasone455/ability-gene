@@ -30,18 +30,32 @@ namespace RimArt
     /// <summary>One coffin (the corrosion action) as the picture needs it.</summary>
     public struct EgoSolemnLamentCoffin
     {
-        /// <summary>The corroded wielder's point, and the aim the hanging guns point along (degrees).</summary>
+        /// <summary>
+        /// The corroded wielder's point now, and the aim the hanging guns point along (degrees). The cloud circles
+        /// it and the floor ring is drawn round it, wherever it walks.
+        /// </summary>
         public Vector2 Wielder;
         public float Aim;
+        /// <summary>Where the wielder stood when the coffin rose: the coffin stays there, its foot CoffinBackX/Z off it.</summary>
+        public Vector2 Coffin;
         /// <summary>The cloud's radius in cells (balance, from the weapon's XML): the floor ring is drawn at it and the orbits scale with it.</summary>
         public float Radius;
-        /// <summary>Seconds the cloud stays out after the opening: the rule's 15, overclock 5; the preview shows 4.</summary>
+        /// <summary>Seconds the cloud stays out after the opening: the rule's 30, overclock 5; the preview shows 4.</summary>
         public float Cloud;
+        /// <summary>
+        /// Seconds the cloud takes back into the coffin from where the wielder stopped when it ended
+        /// (<see cref="EgoSolemnLamentTiming.FarFly"/>); never less than ReturnTime, 0.7. The lid closes after it.
+        /// </summary>
+        public float Home;
         /// <summary>Corroded: the Abnormality's face over the head. Overclock draws none.</summary>
         public bool Face;
-        /// <summary>The cloud butterflies that left for a pawn: slot and time, in the order they left.</summary>
+        /// <summary>
+        /// The cloud butterflies that left for a pawn: slot, time and how long that slot's new one then flies from
+        /// the coffin to the cloud (<see cref="EgoSolemnLamentTiming.FarFly"/> with the wielder's distance from the
+        /// coffin at the dive), in the order they left.
+        /// </summary>
         public List<int> DiveSlots;
-        public List<float> DiveTimes;
+        public List<float> DiveTimes, DiveFlys;
     }
 
     /// <summary>
@@ -56,9 +70,10 @@ namespace RimArt
     /// into chunks, blood and a floor spatter that stays). The butterflies, pips and the cap's swarm are
     /// <see cref="EgoSolemnLamentButterflies"/>; a white flash covers the body as the swarm lands.
     ///
-    /// The coffin: the floor ring at the true radius, the coffin rising behind the wielder with dust at its
-    /// foot, opening with a flash, rays, beams and smoke (<see cref="EgoSolemnLamentCoffinGraphics"/>), the guns
-    /// hanging down, the face over the head, and the cloud circling, diving and flying back in.
+    /// The coffin: the coffin rising behind the wielder with dust at its foot, opening with a flash, rays, beams
+    /// and smoke (<see cref="EgoSolemnLamentCoffinGraphics"/>), and staying there; round the wielder wherever it
+    /// walks, the floor ring at the true radius, the guns hanging down, the face over the head, and the cloud
+    /// circling and diving; new butterflies fly out of the coffin to the cloud, and at the end it flies back in.
     ///
     /// Level shapes at chest height and level circles, so they turn with the aim; the guns are side views laid
     /// flat (mirrored aiming west, under the pawn aiming north) and the coffin faces the viewer at every aim.
@@ -159,7 +174,7 @@ namespace RimArt
             Begin(c.Wielder);
             PowerPoleGraphics.Sun(map, out Vector2 sun, out float strength);
             Vector2 o = c.Wielder;
-            float closeAt = T.CloseAt(c.Cloud), sinkAt = T.SinkAt(c.Cloud);
+            float home = Mathf.Max(T.ReturnTime, c.Home), closeAt = T.CloseAt(c.Cloud, home), sinkAt = T.SinkAt(c.Cloud, home);
 
             // The floor: a pale ring at the true radius and a dim floor inside it while the coffin is open.
             float ringA = Smooth((s - T.Open) / 0.3f) * (1f - Smooth((s - closeAt) / 0.3f));
@@ -170,8 +185,8 @@ namespace RimArt
                 Circle(o, c.Radius * 0.985f, 0.3f * ringA, Floor + 0.0301f, Pale);
             }
 
-            // The coffin behind the wielder.
-            var foot = new Vector2(o.x + T.CoffinBackX, o.y + T.CoffinBackZ);
+            // The coffin where the wielder stood when it rose.
+            var foot = new Vector2(c.Coffin.x + T.CoffinBackX, c.Coffin.y + T.CoffinBackZ);
             float riseU = Mathf.Clamp01(s / T.Rise), sinkU = Mathf.Clamp01((s - sinkAt) / T.Sink);
             float rise = Smooth(riseU) * (1f - Smooth(sinkU));
             float lid = Smooth((s - T.Rise) / T.LidOpen) * (1f - Smooth((s - closeAt) / T.LidClose));
@@ -189,30 +204,37 @@ namespace RimArt
             if (c.Face)
                 EgoSolemnLamentButterflies.Face(new Vector2(o.x, o.y + PawnBody.Head), s, Smooth(s / 0.4f) * (1f - Smooth((s - sinkAt) / T.Sink)));
 
-            Cloud(c, s, o, mouth, sun, strength);
+            Cloud(c, s, o, home, mouth, sun, strength);
         }
 
         /// <summary>
-        /// The cloud. On the flash 24 butterflies burst out within 0.12 s and fly to their orbits in 0.55 s, bowed
-        /// out through the smoke; the other 12 follow 0.05 s apart and take 0.7 s. A slot that dove sends a new one
-        /// out 0.25 s later, which takes 0.7 s. At the end all fly back into the coffin over 0.7 s, shrinking.
+        /// The cloud, circling the wielder at <paramref name="o"/>. On the flash 24 butterflies burst out within 0.12 s
+        /// and fly to their orbits in 0.55 s, bowed out through the smoke; the other 12 follow 0.05 s apart and take
+        /// 0.7 s. A slot that dove sends a new one out of the coffin 0.25 s later, which takes its dive's DiveFlys s.
+        /// A flight out of the coffin aims at its orbit round where the wielder is now, so it bends after a walking
+        /// wielder and lands where the orbit is. At the end all fly back into the coffin over <paramref name="home"/>
+        /// s, shrinking.
         /// </summary>
-        private static void Cloud(in EgoSolemnLamentCoffin c, float s, Vector2 o, EgoSolemnLamentPoint mouth, Vector2 sun, float strength)
+        private static void Cloud(in EgoSolemnLamentCoffin c, float s, Vector2 o, float home, EgoSolemnLamentPoint mouth, Vector2 sun, float strength)
         {
             float cloudEnd = T.CloudEnd(c.Cloud);
             for (int i = 0; i < T.CloudN; i++)
             {
-                float last = -1f;
+                float last = -1f, lastFly = T.RefillFly;
                 for (int v = 0; v < c.DiveSlots.Count; v++)
-                    if (c.DiveSlots[v] == i && c.DiveTimes[v] <= s) last = c.DiveTimes[v];
+                    if (c.DiveSlots[v] == i && c.DiveTimes[v] <= s)
+                    {
+                        last = c.DiveTimes[v];
+                        lastFly = c.DiveFlys != null && v < c.DiveFlys.Count ? c.DiveFlys[v] : T.RefillFly;
+                    }
                 bool first = last < 0f;
-                float rel = first ? T.CloudOut(i) : last + T.Refill, dur = first ? T.CloudFly(i) : T.RefillFly, back = cloudEnd + 0.1f + Rand(i + 800) * 0.15f;
-                if (s < rel || s >= back + T.ReturnTime || rel >= back) continue;
+                float rel = first ? T.CloudOut(i) : last + T.Refill, dur = first ? T.CloudFly(i) : lastFly, back = cloudEnd + 0.1f + Rand(i + 800) * 0.15f;
+                if (s < rel || s >= back + home || rel >= back) continue;
                 float size = T.Span, alpha = 1f, heading;
                 EgoSolemnLamentPoint q;
                 if (s >= back)
                 {
-                    float u = (s - back) / T.ReturnTime;
+                    float u = (s - back) / home;
                     EgoSolemnLamentPoint from = T.Orbit(i, back, o, c.Radius);
                     q = T.FlyAt(from.Ground, from.Height, Vector2.zero, 0.3f, i, u, mouth.Ground, mouth.Height);
                     heading = Heading(q, T.FlyAt(from.Ground, from.Height, Vector2.zero, 0.3f, i, Mathf.Min(1f, u + 0.03f), mouth.Ground, mouth.Height));

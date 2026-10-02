@@ -204,7 +204,7 @@ namespace RimArt.VfxLab
                 // The sketch's markers (ego-solemn-lament.js), from the preview's script, per mode.
                 Name = "E.G.O. weapons", Prefix = "E.G.O.: solemn lament", Component = typeof(MapComponent_EgoSolemnLamentPreview), Clock = "seconds",
                 Phases = label => MapComponent_EgoSolemnLamentPreview.Phases(label.Contains("overclock") ? EgoSolemnLamentScene.Overclock
-                        : label.Contains("coffin") ? EgoSolemnLamentScene.Corroded : EgoSolemnLamentScene.Burst)
+                        : label.Contains("coffin") ? EgoSolemnLamentScene.Corroded : EgoSolemnLamentScene.Burst, AimOf(label))
                     .Select(p => new Phase(p.name, p.seconds)).ToArray(),
             },
             new Kit
@@ -1194,12 +1194,18 @@ namespace RimArt.VfxLab
 
         // last-prism.js's phases(): Hold, Fan (channel), Beams join, one marker per target down, then why the beam stopped,
         // all read off the preview's script; one marker for each idle scenario.
+        /// <summary>The degrees after the last "aim " in a preview's label (the previews end their labels with it), or 0.</summary>
+        private static float AimOf(string label)
+        {
+            int at = label.LastIndexOf("aim ", StringComparison.Ordinal);
+            return at < 0 ? 0f : float.Parse(label.Substring(at + 4), System.Globalization.CultureInfo.InvariantCulture);
+        }
+
         private static Phase[] LastPrismPhases(string label)
         {
             if (label.Contains("charges")) return new[] { new Phase("In the sun (time x20)", 0f) };
             if (label.Contains("roof")) return new[] { new Phase("Under a roof: no charge", 0f) };
-            int at = label.LastIndexOf("aim ", StringComparison.Ordinal);
-            float aim = at < 0 ? 0f : float.Parse(label.Substring(at + 4), System.Globalization.CultureInfo.InvariantCulture);
+            float aim = AimOf(label);
             LastPrismScript r = LastPrismScript.For(label.Contains("runs dry") ? LastPrismScene.RunsDry : LastPrismScene.Fires, aim);
             var phases = new List<Phase> { new Phase("Hold", 0f), new Phase("Fan (channel)", (float)LastPrismScript.Lead) };
             if (r.Joins) phases.Add(new Phase("Beams join", (float)r.JoinAt));

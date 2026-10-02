@@ -35,10 +35,11 @@ namespace RimArt
     ///
     /// The coffin (the corrosion action): it rises out of the floor behind the wielder over <see cref="Rise"/>
     /// s, opens over <see cref="LidOpen"/> s, and at <see cref="Open"/> a flash lets out <see cref="CloudN"/>
-    /// butterflies that circle inside the radius. Every <see cref="CloudTick"/> s one leaves the cloud for each
-    /// pawn inside and lands on it in <see cref="DiveTime"/> s. At the end the cloud flies back in over
-    /// <see cref="ReturnTime"/> s, the lid closes in <see cref="LidClose"/> s and the coffin sinks in
-    /// <see cref="Sink"/> s.
+    /// butterflies that circle inside the radius. Corroded, the wielder then walks to the nearest pawn and the
+    /// coffin stays where it rose; the cloud and the floor ring go with the wielder. Every <see cref="CloudTick"/>
+    /// s one leaves the cloud for each pawn inside and lands on it in <see cref="DiveTime"/> s, and the coffin
+    /// sends a new one to the cloud. At the end the cloud flies back in (<see cref="ReturnTime"/> s, longer from
+    /// further off), the lid closes in <see cref="LidClose"/> s and the coffin sinks in <see cref="Sink"/> s.
     ///
     /// The balance numbers (<see cref="Interval"/>, <see cref="WhiteStacks"/>, <see cref="BlackStacks"/>,
     /// <see cref="Cap"/>, <see cref="CloudRadius"/>, <see cref="CloudTick"/>) are the sketch's placeholders from
@@ -58,9 +59,9 @@ namespace RimArt
         public const float Interval = 0.25f, CloudRadius = 3f, CloudTick = 1f;
         public const int WhiteStacks = 2, BlackStacks = 1, Cap = 10;
 
-        // The preview's script, the sketch's showcase sliders: the target ScriptDist cells off, ScriptShots shots
-        // planned (the 7th reaches the cap), the result held ScriptHold s, the coffin's cloud ScriptCloud s of
-        // the rule's 15.
+        // The preview's script, the sketch's showcase sliders: the target ScriptDist cells off (corroded: the
+        // nearest pawn), ScriptShots shots planned (the 7th reaches the cap), the result held ScriptHold s, the
+        // coffin's cloud ScriptCloud s of the rule's 30.
         public const float ScriptDist = 5f, ScriptHold = 1.2f, ScriptCloud = 4f;
         public const int ScriptShots = 8;
 
@@ -91,7 +92,7 @@ namespace RimArt
 
         /// <summary>
         /// The coffin: 2.0 tall (1.2 on screen, a little over the pawn's 1.17), its top face CoffinDepth deep, its
-        /// foot CoffinBackX east and CoffinBackZ north of the wielder's cell centre.
+        /// foot CoffinBackX east and CoffinBackZ north of where the wielder stood when it rose.
         /// </summary>
         public const float CoffinH = 2f, CoffinDepth = 0.26f, CoffinBackX = -0.18f, CoffinBackZ = 0.32f;
         public const float Rise = 0.5f, LidOpen = 0.3f, Open = 0.6f, ReturnTime = 0.7f, LidClose = 0.2f, Sink = 0.45f;
@@ -100,8 +101,18 @@ namespace RimArt
         /// TorsoSlots resting places on the torso and HeadSlots round the head; the cap's swarm fills the rest.
         /// </summary>
         public const int CloudN = 36, CloudBurst = 24, TorsoSlots = 30, HeadSlots = 8;
-        /// <summary>A slot that dove is not picked again for this long, and is refilled from the coffin this long after.</summary>
-        public const float DiveRest = 1.2f, Refill = 0.25f, RefillFly = 0.7f;
+        /// <summary>
+        /// A slot that dove is refilled from the coffin Refill s later; the new one flies RefillFly s, or longer
+        /// from further off (<see cref="FarFly"/>). The slot is not picked again until DiveRest s after it landed.
+        /// </summary>
+        public const float Refill = 0.25f, RefillFly = 0.7f, DiveRest = 0.25f;
+        /// <summary>
+        /// The preview's corroded walk (docs/ego-weapons.md, changed 2026-10-02): from WalkFrom s the wielder walks
+        /// to the nearest pawn and stops Beside cells from it, eased at both ends, its speed peaking at WalkSpeed
+        /// cells/s (a pawn's base move speed). In game the walk is the pawn's own; the picture only follows it.
+        /// A butterfly flying between the coffin and a wielder further off flies at FarSpeed cells/s.
+        /// </summary>
+        public const float WalkFrom = Open + 0.2f, WalkSpeed = 4.6f, Beside = 1f, FarSpeed = 6f;
         /// <summary>The cloud's orbits as the sketch draws them for radius 3: 0.7 to 2.8 cells out, 0.3 to 1.4 up.</summary>
         public const float OrbitIn = 0.7f, OrbitSpread = 2.1f, OrbitFor = 3f;
         /// <summary>The face over the corroded wielder's head: its span (cells) and beats per second.</summary>
@@ -198,14 +209,21 @@ namespace RimArt
         /// <summary>The cloud's last second: it leaves for the coffin 0.1 s after (plus up to 0.15 s per butterfly).</summary>
         public static float CloudEnd(float cloud) => Open + cloud;
 
-        /// <summary>The lid starts to close (the cloud is back in).</summary>
-        public static float CloseAt(float cloud) => CloudEnd(cloud) + 0.1f + ReturnTime;
+        /// <summary>
+        /// How long a butterfly takes over <paramref name="distance"/> cells between the coffin and the cloud: at
+        /// <see cref="FarSpeed"/>, never less than <paramref name="least"/> (ReturnTime, RefillFly: 0.7 s, which
+        /// covers 4.2 cells).
+        /// </summary>
+        public static float FarFly(float distance, float least) => Mathf.Max(least, distance / FarSpeed);
+
+        /// <summary>The lid starts to close: the cloud is back in, <paramref name="home"/> s after it left (<see cref="FarFly"/>).</summary>
+        public static float CloseAt(float cloud, float home) => CloudEnd(cloud) + 0.1f + home;
 
         /// <summary>The coffin starts to sink.</summary>
-        public static float SinkAt(float cloud) => CloseAt(cloud) + LidClose;
+        public static float SinkAt(float cloud, float home) => CloseAt(cloud, home) + LidClose;
 
         /// <summary>The coffin's picture's length, holding the result <paramref name="hold"/> s.</summary>
-        public static float CoffinEnd(float cloud, float hold) => SinkAt(cloud) + Sink + hold;
+        public static float CoffinEnd(float cloud, float home, float hold) => SinkAt(cloud, home) + Sink + hold;
 
         /// <summary>When the cloud's <paramref name="k"/>-th stack falls (k from 1): every CloudTick s after the opening.</summary>
         public static float TickAt(int k, float tick) => Open + k * tick;

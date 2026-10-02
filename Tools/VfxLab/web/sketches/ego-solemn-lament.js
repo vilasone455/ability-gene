@@ -1,6 +1,7 @@
 // Solemn Lament — E.G.O. weapon proposal. The pictures are ported to Source/RimArt/Ego/EgoSolemnLament* (previews
 // "E.G.O.: solemn lament: ..."); no weapon, ability or rule draws them yet. The corroded walk
-// (2026-10-02: the wielder walks, the coffin stays) is in this sketch only, not in the port.
+// (2026-10-02: the wielder walks, the coffin stays) is ported too: EgoSolemnLamentCoffin takes the
+// wielder's point now and the coffin's point apart.
 // Funeral of the Dead Butterflies (Lobotomy Corporation, WAW): the white and black pair of handguns.
 // The rules are docs/ego-weapons.md, "Weapon 2: Solemn Lament" (design agreed 2026-09-30, numbers
 // are placeholders and become XML fields on CompProperties_EgoWeapon):
@@ -72,12 +73,13 @@
 //   0.80  the wielder walks along the aim to the nearest pawn (the ally, "Target distance" off) and
 //         stops 1 cell short of it: 4 cells in 1.3 s at the default, eased, peaking at 4.6 cells/s.
 //         The coffin stays open where it rose. The cloud, the ring and the dim floor go with the
-//         wielder; butterflies still flying out of the coffin fly to where their orbit will be.
+//         wielder; butterflies still flying out of the coffin bend after it, toward their orbit
+//         round where the wielder is at that moment.
 //         The ally and the raider beyond it are outside the ring at the start and inside on arrival.
 //   1.60  and every 1 s: one butterfly leaves the cloud for each pawn inside the ring round the
 //         wielder and lands on it in .5 s (+1 stack); .25 s later the coffin sends a new one out,
-//         which flies from the coffin to the cloud: .7 s, or 6 cells/s when the wielder is further
-//         than 4.2 cells from the coffin.
+//         which flies from the coffin to the cloud: .7 s, or 6 cells/s when the wielder was further
+//         than 4.2 cells from the coffin at the dive.
 //   4.60  the cloud flies back to the coffin (.7 s, or 6 cells/s from further off), the lid closes,
 //         the coffin sinks back into the floor over .45 s. The landed butterflies stay (the stacks
 //         stay).
@@ -710,11 +712,12 @@ function burstPlan(p) {
   return { shots, downAt, last, end: last + p.hold + (downAt == null ? .3 : .4) };
 }
 // walk: cells the wielder walks (0 in Overclock); walkTime: its eased walk, so the speed peaks at
-// WalkSpeed; home: the flight back from where the walk ends into the coffin.
+// WalkSpeed; home: the flight back into the coffin from where the wielder stopped when the cloud ended.
 function coffinPlan(p) {
-  const walk = isOverclock(p) ? 0 : Math.max(0, p.dist - Beside), walkTime = 1.5 * walk / WalkSpeed, d = dirOf(p.aim);
-  const home = Math.max(ReturnTime, Math.hypot(d.x * walk - CoffinBack.x, d.z * walk - CoffinBack.z) / FarSpeed);
-  const tEnd = Open + p.cloud, closeAt = tEnd + .1 + home, sinkAt = closeAt + LidClose;
+  const walk = isOverclock(p) ? 0 : Math.max(0, p.dist - Beside), walkTime = 1.5 * walk / WalkSpeed, d = dirOf(p.aim), tEnd = Open + p.cloud;
+  const walked = walk > 0 ? walk * smooth(clamp((tEnd + .1 - WalkFrom) / walkTime)) : 0;
+  const home = Math.max(ReturnTime, Math.hypot(d.x * walked - CoffinBack.x, d.z * walked - CoffinBack.z) / FarSpeed);
+  const closeAt = tEnd + .1 + home, sinkAt = closeAt + LidClose;
   const ticks = [];
   for (let k = 1; k <= Math.floor(p.cloud + 1e-6); k++) ticks.push(Open + k * CoffinTick);
   return { tEnd, closeAt, sinkAt, ticks, walk, walkTime, home, end: sinkAt + Sink + p.hold };
@@ -798,9 +801,10 @@ function drawCoffin(s, p, o, who, sun, strength) {
     { pos: move(move(o, d, C.walk), dirOf(aimR - 70), 2.6), colour: Enemy },
   ]).map((q, i) => ({ ...q, M: { pos: q.pos, colour: q.colour, cap: p.cap, seed: i * 2.1, events: [], flinches: [], downAt: null, fallTurn: q.pos.x >= o.x ? 90 : -90 } }));
   // A slot that dove gets a new butterfly .25 s later, flying from the coffin to the cloud round the
-  // wielder: .7 s, or at FarSpeed when the wielder is further off.
+  // wielder: .7 s, or at FarSpeed when the wielder was further off at the dive (the game knows only
+  // where the wielder is, not where it will be).
   const base = { x: o.x + CoffinBack.x, z: o.z + CoffinBack.z };
-  const refill = T => { const w = W(T + .25); return Math.max(.7, Math.hypot(w.x - base.x, w.z - base.z) / FarSpeed); };
+  const refill = T => { const w = W(T); return Math.max(.7, Math.hypot(w.x - base.x, w.z - base.z) / FarSpeed); };
   // Every tick one butterfly leaves the cloud for each pawn inside the ring round the wielder at that
   // moment: the first slot from (n x 11 + 3) mod 36 whose butterfly is circling (out of the coffin,
   // its refill landed .25 s ago). The coffin sends that slot a new one .25 s later.
@@ -852,8 +856,10 @@ function drawCoffin(s, p, o, who, sun, strength) {
 
   // The cloud, circling the wielder. On the flash 24 butterflies burst out within .12 s and fly to
   // their orbits in .55 s, bowed out through the smoke; the other 12 follow .05 s apart and take .7 s.
-  // A slot sends a new one out of the coffin .25 s after its last dive (refill). At the end all fly
-  // back into the coffin, .7 s or longer from further off (C.home).
+  // A slot sends a new one out of the coffin .25 s after its last dive (refill). A flight out of the
+  // coffin aims at its orbit round where the wielder is now, so it bends after a walking wielder and
+  // lands where the orbit is. At the end all fly back into the coffin, .7 s or longer from further off
+  // (C.home).
   for (let i = 0; i < CloudN; i++) {
     const mine = dives.filter(v => v.i === i && v.T <= s), last = mine.length ? mine[mine.length - 1].T : null;
     const rel = last == null ? cloudOut(i) : last + .25, dur = last == null ? cloudFly(i) : refill(last), back = C.tEnd + .1 + rand(i + 800) * .15;
@@ -865,7 +871,7 @@ function drawCoffin(s, p, o, who, sun, strength) {
       heading = Math.atan2(q2.screen.z - q.screen.z, q2.screen.x - q.screen.x) / D2R;
       size *= 1 - .5 * u; alpha = 1 - smooth(clamp((u - .7) / .3));
     } else if (s < rel + dur) {
-      const u = (s - rel) / dur, to = orbit(i, rel + dur, W(rel + dur)), out = norm(to.g.x - mouth.g.x, to.g.z - mouth.g.z), wide = last == null && i < CloudBurst ? 1.1 : .4;
+      const u = (s - rel) / dur, to = orbit(i, rel + dur, w), out = norm(to.g.x - mouth.g.x, to.g.z - mouth.g.z), wide = last == null && i < CloudBurst ? 1.1 : .4;
       const e = { from: mouth, via: { x: out[0] * wide + (rand(i + 810) - .5) * .8, z: out[1] * wide + (rand(i + 820) - .5) * .8 }, arc: .6, seed: i };
       q = flyAt(e, u, to); const q2 = flyAt(e, Math.min(1, u + .03), to);
       heading = Math.atan2(q2.screen.z - q.screen.z, q2.screen.x - q.screen.x) / D2R;

@@ -74,29 +74,38 @@ namespace RimArt
         }
 
         /// <summary>
-        /// The coffin's ticks: every <paramref name="tick"/> s from the opening, one cloud butterfly leaves for each
-        /// pawn inside (in <paramref name="inside"/> order) and lands on it in <see cref="EgoSolemnLamentTiming.DiveTime"/>
-        /// s. The slot is the first from (n x 11 + 3) mod 36 on whose butterfly is circling (out of the coffin and
-        /// not dived in the last 1.2 s), stepping by 5. A pawn at the cap goes down and takes no more. Each dive is
-        /// written to <paramref name="dives"/> as (slot, time) for the cloud to send a new one out.
+        /// The coffin's ticks: every <paramref name="tick"/> s from the opening, one cloud butterfly leaves for each of
+        /// the first <paramref name="count"/> <paramref name="people"/> whose Home is within <paramref name="radius"/>
+        /// of the wielder at that moment (<paramref name="wielderAt"/>), in that order, except those marked in
+        /// <paramref name="skip"/> (Overclock's ally), and lands on it in <see cref="EgoSolemnLamentTiming.DiveTime"/>
+        /// s. The slot is the first from (n x 11 + 3) mod 36 on whose butterfly is circling (out of the coffin, and
+        /// its last refill landed DiveRest s ago), stepping by 5. A pawn at the cap goes down and takes no more. Each
+        /// dive is written as (slot, time, refill flight): the refill flies from the coffin's foot at
+        /// <paramref name="foot"/> to the cloud in <see cref="EgoSolemnLamentTiming.FarFly"/> of the wielder's
+        /// distance from it at the dive.
         /// </summary>
-        public static void Dives(EgoSolemnLamentMark[] inside, int count, float cloud, float tick, Vector2 centre, float radius, List<int> diveSlots, List<float> diveTimes)
+        public static void Dives(EgoSolemnLamentMark[] people, bool[] skip, int count, float cloud, float tick, System.Func<float, Vector2> wielderAt,
+            Vector2 foot, float radius, List<int> diveSlots, List<float> diveTimes, List<float> diveFlys)
         {
             diveSlots.Clear();
             diveTimes.Clear();
+            diveFlys.Clear();
             int n = 0, ticks = EgoSolemnLamentTiming.Ticks(cloud, tick);
             for (int k = 1; k <= ticks; k++)
             {
                 float at = EgoSolemnLamentTiming.TickAt(k, tick);
+                Vector2 centre = wielderAt(at);
+                float refill = EgoSolemnLamentTiming.FarFly((centre - foot).magnitude, EgoSolemnLamentTiming.RefillFly);
                 for (int p = 0; p < count; p++)
                 {
-                    EgoSolemnLamentMark mark = inside[p];
-                    if (mark.Down) continue;
+                    EgoSolemnLamentMark mark = people[p];
+                    if (mark.Down || skip[p] || (mark.Home - centre).magnitude > radius) continue;
                     int i = (n++ * 11 + 3) % EgoSolemnLamentTiming.CloudN;
-                    for (int c = 0; c < EgoSolemnLamentTiming.CloudN && !Ready(i, at, diveSlots, diveTimes); c++) i = (i + 5) % EgoSolemnLamentTiming.CloudN;
+                    for (int c = 0; c < EgoSolemnLamentTiming.CloudN && !Ready(i, at, diveSlots, diveTimes, diveFlys); c++) i = (i + 5) % EgoSolemnLamentTiming.CloudN;
                     EgoSolemnLamentPoint from = EgoSolemnLamentTiming.Orbit(i, at, centre, radius);
                     diveSlots.Add(i);
                     diveTimes.Add(at);
+                    diveFlys.Add(refill);
                     int slot = mark.Flights.Count;
                     mark.Flights.Add(new EgoSolemnLamentFlight
                     {
@@ -108,12 +117,25 @@ namespace RimArt
             }
         }
 
-        private static bool Ready(int i, float at, List<int> slots, List<float> times)
+        private static bool Ready(int i, float at, List<int> slots, List<float> times, List<float> flys)
         {
             if (EgoSolemnLamentTiming.CloudOut(i) + EgoSolemnLamentTiming.CloudFly(i) > at) return false;
             for (int d = 0; d < slots.Count; d++)
-                if (slots[d] == i && at - times[d] < EgoSolemnLamentTiming.DiveRest) return false;
+                if (slots[d] == i && at - times[d] < EgoSolemnLamentTiming.Refill + flys[d] + EgoSolemnLamentTiming.DiveRest) return false;
             return true;
+        }
+
+        /// <summary>
+        /// The preview's corroded wielder at <paramref name="s"/>: from <see cref="EgoSolemnLamentTiming.WalkFrom"/> it
+        /// walks <paramref name="walk"/> cells from <paramref name="o"/> along <paramref name="d"/>, eased at both ends
+        /// over 1.5 x walk / WalkSpeed s (so its speed peaks at WalkSpeed), and stays where it got to 0.1 s after the
+        /// cloud ends. In game the wielder's DrawPos takes its place.
+        /// </summary>
+        public static Vector2 WielderAt(Vector2 o, Vector2 d, float walk, float cloud, float s)
+        {
+            if (walk <= 0f) return o;
+            float t = Mathf.Min(s, EgoSolemnLamentTiming.CloudEnd(cloud) + 0.1f);
+            return o + d * (walk * Smooth((t - EgoSolemnLamentTiming.WalkFrom) / (1.5f * walk / EgoSolemnLamentTiming.WalkSpeed)));
         }
 
         /// <summary>The script: the wielder rocks back 0.025 cells over 0.2 s with each shot.</summary>
