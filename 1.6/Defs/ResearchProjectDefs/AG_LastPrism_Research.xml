@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Last Prism: a spacer crystal made at the fabrication bench, so after Fabrication. It sits at 17.00/3.00,
+       right of Fabrication (16.00/3.00) in the free slot between Gunlink (17.00/1.80) and Bionics (17.00/3.60);
+       checked against Core and the DLCs' main-tab projects 2026-10-02, not against other mods. -->
+  <ResearchProjectDef>
+    <defName>AG_LastPrism</defName>
+    <label>last prism</label>
+    <description>Grow and cut the last prism: a crystal pyramid that stores sunlight and splits it into a beam.</description>
+    <baseCost>3000</baseCost>
+    <techLevel>Spacer</techLevel>
+    <prerequisites>
+      <li>Fabrication</li>
+    </prerequisites>
+    <researchViewX>17.00</researchViewX>
+    <researchViewY>3.00</researchViewY>
+  </ResearchProjectDef>
+
+</Defs>

@@ -39,6 +39,8 @@ reads it directly). Agreed 2026-09-30. New code follows it; old code is changed 
 | `Shared/CrossMapMove.cs` | `Move`, `FreeCellNear`, `ClampInside`, `Assault`: pawns between a home map and a pocket map |
 | `Shared/PocketGuest.cs` | One pawn taken to a pocket map: its home cell and lord, `TakeTo`; kits extend it with their own state |
 | `Shared/PocketReturn.cs` | Everyone home from a pocket map: `Bring`, `Rejoin` (old lord if it takes the pawn), `NoLord`, `Items`, `Place`, `Finish` |
+| `Shared/Gizmo_Meter.cs` | A weapon's meter in the command bar: label, value, bar, optional line and whole-unit ticks (Flame Gauntlet Heat, Last Prism sunlight) |
+| `Shared/HeldWeaponHide.cs` | One `DrawEquipmentAiming` prefix: `Register(def, whileHeldBy)` keeps Core from drawing a kit weapon its picture draws (Vacuum, Power Pole, Water Gun, Fuma, Last Prism) |
 | `Shared/FollowView.cs` | Camera follows pawns moved between maps and keeps them selected, if the player was watching |
 | `Shared/ItemAbilityGrant.cs` | Gives a held item's abilities to its holder, takes them back, keeps cooldowns |
 | `Shared/PawnBody.cs` | Head top, head, neck, chest, feet and ground contact of a real pawn above its DrawPos: the numbers of the lab's real-size stand-in (`lib/pawn.js`), used as they are |

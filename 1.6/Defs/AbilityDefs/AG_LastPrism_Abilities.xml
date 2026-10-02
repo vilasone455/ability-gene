@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Last Prism's beam, granted while the prism is equipped (CompLastPrism). The charge numbers are on the
+       weapon (AG_LastPrism); the beam's here. Placeholders from the sketch until it is played (agreed 2026-09-30).
+
+       The verb's range is the beam's range (22 cells from the prism's tip), and the picture reads it from here.
+       warmupTime 0.3 is the sketch's hold before the beams start. Then the cast job (JobDriver_CastLastPrism)
+       holds the wielder, facing the aim, until the beam stops: the charge runs out, the target is down with no
+       enemy left to turn to (never while it is held on a spot), Stop, a move order, or the prism is put away.
+       No cooldown: the charge is the limit, and the job spends 1 s of it per second of beam.
+
+       The about 43 burn that downs an unarmoured pawn (vanilla pain shock at 80 %, 0.01875 pain per burn point)
+       takes about 4 s of fan or 1.4 s of joined beam; one full charge downs about 4 pawns. -->
+  <AbilityDef>
+    <defName>AG_LastPrism_Fire</defName>
+    <label>fire last prism</label>
+    <description>Fire a beam at a person or a spot up to 22 tiles away. Six beams sweep a fan 35 degrees to each side for 3 seconds, 3 burn to anyone they cross (at most every 0.5 s), then join into one beam 1 tile wide, 8 burn to anyone in it (at most every 0.25 s each). It turns after its target at 45 degrees a second and hits friend and foe; walls stop it. When the target goes down it turns to the enemy nearest its aim and stops with none left; aimed at a spot it fires until stopped. Retarget and Stop show while it fires. Spends 1 second of the prism's charge per second; no cooldown.</description>
+    <iconPath>RimArt/LastPrism/IconFire</iconPath>
+    <category>AG_Genetic</category>
+    <jobDef>AG_CastLastPrism</jobDef>
+    <targetRequired>true</targetRequired>
+    <aiCanUse>false</aiCanUse>
+    <hostile>true</hostile>
+    <casterMustBeCapableOfViolence>true</casterMustBeCapableOfViolence>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <cooldownTicksRange>0</cooldownTicksRange>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>22</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_LastPrismFire">
+        <joinSeconds>3</joinSeconds>
+        <fanDegrees>35</fanDegrees>
+        <width>1</width>
+        <fanReach>0.3</fanReach>
+        <turnDegreesPerSecond>45</turnDegreesPerSecond>
+        <damageDef>Burn</damageDef>
+        <fanDamage>3</fanDamage>
+        <fanArmorPenetration>0.1</fanArmorPenetration>
+        <fanEverySeconds>0.5</fanEverySeconds>
+        <joinedDamage>8</joinedDamage>
+        <joinedArmorPenetration>0.45</joinedArmorPenetration>
+        <joinedEverySeconds>0.25</joinedEverySeconds>
+        <rejoinSeconds>1</rejoinSeconds>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>
