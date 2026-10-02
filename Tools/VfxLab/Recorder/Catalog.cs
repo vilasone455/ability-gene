@@ -204,6 +204,7 @@ namespace RimArt.VfxLab
                 // The sketch's markers (ego-solemn-lament.js), from the preview's script, per mode.
                 Name = "E.G.O. weapons", Prefix = "E.G.O.: solemn lament", Component = typeof(MapComponent_EgoSolemnLamentPreview), Clock = "seconds",
                 Phases = label => MapComponent_EgoSolemnLamentPreview.Phases(label.Contains("overclock") ? EgoSolemnLamentScene.Overclock
+                        : label.Contains("funeral") ? EgoSolemnLamentScene.Funeral
                         : label.Contains("coffin") ? EgoSolemnLamentScene.Corroded : EgoSolemnLamentScene.Burst, AimOf(label))
                     .Select(p => new Phase(p.name, p.seconds)).ToArray(),
             },

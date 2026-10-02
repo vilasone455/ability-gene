@@ -40,7 +40,7 @@ namespace RimArt
         public Vector2 Coffin;
         /// <summary>The cloud's radius in cells (balance, from the weapon's XML): the floor ring is drawn at it and the orbits scale with it.</summary>
         public float Radius;
-        /// <summary>Seconds the cloud stays out after the opening: the rule's 30, overclock 5; the preview shows 4.</summary>
+        /// <summary>Seconds the cloud stays out after the opening: the rule's 30, overclock 5; the preview shows 4 (the funeral 23).</summary>
         public float Cloud;
         /// <summary>
         /// Seconds the cloud takes back into the coffin from where the wielder stopped when it ended
@@ -188,7 +188,7 @@ namespace RimArt
             // The coffin where the wielder stood when it rose.
             var foot = new Vector2(c.Coffin.x + T.CoffinBackX, c.Coffin.y + T.CoffinBackZ);
             float riseU = Mathf.Clamp01(s / T.Rise), sinkU = Mathf.Clamp01((s - sinkAt) / T.Sink);
-            float rise = Smooth(riseU) * (1f - Smooth(sinkU));
+            float rise = T.CoffinRise(s, sinkAt);
             float lid = Smooth((s - T.Rise) / T.LidOpen) * (1f - Smooth((s - closeAt) / T.LidClose));
             EgoSolemnLamentPoint mouth = EgoSolemnLamentCoffinGraphics.Coffin(foot, rise, lid, sun, strength);
             EgoSolemnLamentCoffinGraphics.FootDust(foot, riseU < 1f ? riseU : sinkU);

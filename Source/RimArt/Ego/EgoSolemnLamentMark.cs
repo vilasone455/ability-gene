@@ -28,7 +28,8 @@ namespace RimArt
 
     /// <summary>
     /// A pawn taking Butterfly stacks, as the picture needs it: the butterflies flying to it and resting on it
-    /// (one per stack, in the order the stacks fall), the cap, and when it went down. In the previews the lab
+    /// (one per stack, in the order the stacks fall), the cap, and when it went down; for the funeral, when each
+    /// pale butterfly of the cover turns dark, when it died and the coffin's mouth the cover flies into. In the previews the lab
     /// sketch's script fills it once from the planned shots or the coffin's ticks; in game the weapon adds a
     /// flight per stack it puts on.
     ///
@@ -43,11 +44,19 @@ namespace RimArt
         public int Cap;
         /// <summary>When the cap was reached (the swarm comes in), or negative while it was not.</summary>
         public float DownAt = -1f;
+        /// <summary>The funeral: when the death count was reached (the cover lifts off into the coffin), or negative.</summary>
+        public float DeadAt = -1f;
+        /// <summary>The funeral: when the pale butterfly resting on each slot turns dark, or negative (<see cref="Darken"/>).</summary>
+        public readonly float[] TurnAt = new float[T.TorsoSlots + T.HeadSlots];
+        /// <summary>The funeral: the coffin's mouth now, where the cover flies when the pawn dies (<see cref="EgoSolemnLamentTiming.Mouth"/>).</summary>
+        public EgoSolemnLamentPoint Mouth;
         /// <summary>Degrees the body turns clockwise as it falls backward: 90 when the shots came from the west, -90 from the east.</summary>
         public float FallTurn;
         /// <summary>The script's sway phase.</summary>
         public float Seed;
         public readonly List<EgoSolemnLamentFlight> Flights = new List<EgoSolemnLamentFlight>();
+        /// <summary>The cover's pale slots in the order they turn dark, taken at the first stack past the cap.</summary>
+        private List<int> pale;
         private readonly List<float> flinchAt = new List<float>();
         private readonly List<Vector2> flinchWay = new List<Vector2>();
 
@@ -57,9 +66,31 @@ namespace RimArt
             Cap = cap;
             FallTurn = fallTurn;
             Seed = seed;
+            for (int i = 0; i < TurnAt.Length; i++) TurnAt[i] = -1f;
         }
 
         public bool Down => DownAt >= 0f;
+        public bool Dead => DeadAt >= 0f;
+
+        /// <summary>
+        /// The funeral, stack <paramref name="m"/> past the cap of the <paramref name="left"/> to the death count,
+        /// counted at <paramref name="at"/>: the m-th share of the cover's pale butterflies turns dark at that
+        /// moment. The order is fixed and shuffled (by Rand(slot + 5000)), so the cover darkens evenly. Returns
+        /// the slot the stack's own dark butterfly lands on: the first of that share.
+        /// </summary>
+        public int Darken(int m, int left, float at)
+        {
+            if (pale == null)
+            {
+                pale = new List<int>();
+                foreach (EgoSolemnLamentFlight f in Flights)
+                    if (!f.Dark && !pale.Contains(f.Slot)) pale.Add(f.Slot);
+                pale.Sort((a, b) => Rand(a + 5000).CompareTo(Rand(b + 5000)));
+            }
+            int n = pale.Count, r0 = (m - 1) * n / left, r1 = m * n / left;
+            for (int r = r0; r < r1; r++) TurnAt[pale[r]] = at;
+            return n > 0 ? pale[Mathf.Min(n - 1, r0)] : (Cap + m) % TurnAt.Length;
+        }
 
         /// <summary>Stacks counted by <paramref name="s"/>: flights that are not the swarm and whose stack has fallen.</summary>
         public int Counted(float s)

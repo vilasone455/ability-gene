@@ -55,14 +55,15 @@ namespace RimArt
     public static class EgoSolemnLamentTiming
     {
         // Balance, from the weapon's XML later: seconds between shots, Butterfly stacks a white and a black shot
-        // put on, the cap (the pawn goes down at it), the coffin's radius (cells) and seconds between its stacks.
+        // put on, the cap (the pawn goes down at it), the death count (the funeral: a downed pawn left in the
+        // corroded cloud dies at it), the coffin's radius (cells) and seconds between its stacks.
         public const float Interval = 0.25f, CloudRadius = 3f, CloudTick = 1f;
-        public const int WhiteStacks = 2, BlackStacks = 1, Cap = 10;
+        public const int WhiteStacks = 2, BlackStacks = 1, Cap = 10, Death = 20;
 
         // The preview's script, the sketch's showcase sliders: the target ScriptDist cells off (corroded: the
         // nearest pawn), ScriptShots shots planned (the 7th reaches the cap), the result held ScriptHold s, the
-        // coffin's cloud ScriptCloud s of the rule's 30.
-        public const float ScriptDist = 5f, ScriptHold = 1.2f, ScriptCloud = 4f;
+        // coffin's cloud ScriptCloud s of the rule's 30 (ScriptFuneralCloud for the funeral, long enough for two deaths).
+        public const float ScriptDist = 5f, ScriptHold = 1.2f, ScriptCloud = 4f, ScriptFuneralCloud = 23f;
         public const int ScriptShots = 8;
 
         /// <summary>The guns come up over Lead x 0.8 s; the first shot is at Lead s.</summary>
@@ -113,6 +114,13 @@ namespace RimArt
         /// A butterfly flying between the coffin and a wielder further off flies at FarSpeed cells/s.
         /// </summary>
         public const float WalkFrom = Open + 0.2f, WalkSpeed = 4.6f, Beside = 1f, FarSpeed = 6f;
+        /// <summary>
+        /// The funeral (docs/ego-weapons.md, changed 2026-10-02): past the cap each stack turns about a tenth of the
+        /// white butterflies on the downed body dark over TurnTime s; at the death count the whole cover lifts off
+        /// (each within 0.15 s, LiftTime s, 0.6 to 1.4 cells up, turning white) and flies into the coffin's mouth
+        /// at FarSpeed, never in under 0.7 s.
+        /// </summary>
+        public const float TurnTime = 0.3f, LiftTime = 0.6f;
         /// <summary>The cloud's orbits as the sketch draws them for radius 3: 0.7 to 2.8 cells out, 0.3 to 1.4 up.</summary>
         public const float OrbitIn = 0.7f, OrbitSpread = 2.1f, OrbitFor = 3f;
         /// <summary>The face over the corroded wielder's head: its span (cells) and beats per second.</summary>
@@ -215,6 +223,12 @@ namespace RimArt
         /// covers 4.2 cells).
         /// </summary>
         public static float FarFly(float distance, float least) => Mathf.Max(least, distance / FarSpeed);
+
+        /// <summary>How much of the coffin stands above the floor at <paramref name="s"/>: it rises over Rise s and sinks over Sink s from <paramref name="sinkAt"/>.</summary>
+        public static float CoffinRise(float s, float sinkAt) => Smooth(s / Rise) * (1f - Smooth((s - sinkAt) / Sink));
+
+        /// <summary>The coffin's mouth (the lit inside, 62 % up its height, where the butterflies come out and go back in) with its foot at <paramref name="foot"/> and <paramref name="rise"/> of it above the floor.</summary>
+        public static EgoSolemnLamentPoint Mouth(Vector2 foot, float rise) => new EgoSolemnLamentPoint(foot, Mathf.Max(0f, CoffinH * 0.62f - (1f - rise) * CoffinH));
 
         /// <summary>The lid starts to close: the cloud is back in, <paramref name="home"/> s after it left (<see cref="FarFly"/>).</summary>
         public static float CloseAt(float cloud, float home) => CloudEnd(cloud) + 0.1f + home;

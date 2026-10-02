@@ -40,7 +40,7 @@ namespace RimArt
             lid = open;
             hingeX = ground.x + T.CoffinHalf(T.CoffinH * 0.7f);
             float vis = T.CoffinH - sunk;
-            var mouth = new EgoSolemnLamentPoint(ground, Mathf.Max(0f, T.CoffinH * 0.62f - sunk));
+            EgoSolemnLamentPoint mouth = T.Mouth(ground, rise);
             if (rise <= 0f) return mouth;
             float w0 = T.CoffinHalf(sunk);
             Sides(2, out Vector2[] sa, out Vector2[] sb);

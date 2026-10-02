@@ -79,12 +79,17 @@ namespace RimArt
         /// of the wielder at that moment (<paramref name="wielderAt"/>), in that order, except those marked in
         /// <paramref name="skip"/> (Overclock's ally), and lands on it in <see cref="EgoSolemnLamentTiming.DiveTime"/>
         /// s. The slot is the first from (n x 11 + 3) mod 36 on whose butterfly is circling (out of the coffin, and
-        /// its last refill landed DiveRest s ago), stepping by 5. A pawn at the cap goes down and takes no more. Each
-        /// dive is written as (slot, time, refill flight): the refill flies from the coffin's foot at
-        /// <paramref name="foot"/> to the cloud in <see cref="EgoSolemnLamentTiming.FarFly"/> of the wielder's
-        /// distance from it at the dive.
+        /// its last refill landed DiveRest s ago), stepping by 5. Each dive is written as (slot, time, refill flight):
+        /// the refill flies from the coffin's foot at <paramref name="foot"/> to the cloud in
+        /// <see cref="EgoSolemnLamentTiming.FarFly"/> of the wielder's distance from it at the dive.
+        ///
+        /// Up to the cap each stack lands on the next slot of the body; at the cap the swarm covers the rest and
+        /// the pawn goes down. With a <paramref name="death"/> count (corroded: the funeral) a downed pawn keeps
+        /// taking stacks: each past the cap is a dark butterfly landing on a pale one of the cover, which turns a
+        /// share of the cover dark (<see cref="EgoSolemnLamentMark.Darken"/>), and at the death count the pawn is
+        /// dead and takes no more. With death 0 (Overclock) a downed pawn takes no more.
         /// </summary>
-        public static void Dives(EgoSolemnLamentMark[] people, bool[] skip, int count, float cloud, float tick, System.Func<float, Vector2> wielderAt,
+        public static void Dives(EgoSolemnLamentMark[] people, bool[] skip, int count, float cloud, float tick, int death, System.Func<float, Vector2> wielderAt,
             Vector2 foot, float radius, List<int> diveSlots, List<float> diveTimes, List<float> diveFlys)
         {
             diveSlots.Clear();
@@ -99,20 +104,22 @@ namespace RimArt
                 for (int p = 0; p < count; p++)
                 {
                     EgoSolemnLamentMark mark = people[p];
-                    if (mark.Down || skip[p] || (mark.Home - centre).magnitude > radius) continue;
+                    if (mark.Dead || (mark.Down && death <= 0) || skip[p] || (mark.Home - centre).magnitude > radius) continue;
                     int i = (n++ * 11 + 3) % EgoSolemnLamentTiming.CloudN;
                     for (int c = 0; c < EgoSolemnLamentTiming.CloudN && !Ready(i, at, diveSlots, diveTimes, diveFlys); c++) i = (i + 5) % EgoSolemnLamentTiming.CloudN;
                     EgoSolemnLamentPoint from = EgoSolemnLamentTiming.Orbit(i, at, centre, radius);
                     diveSlots.Add(i);
                     diveTimes.Add(at);
                     diveFlys.Add(refill);
-                    int slot = mark.Flights.Count;
+                    float lands = at + EgoSolemnLamentTiming.DiveTime;
+                    int had = mark.Counted(float.MaxValue), slot = had < mark.Cap ? had : mark.Darken(had + 1 - mark.Cap, death - mark.Cap, lands);
                     mark.Flights.Add(new EgoSolemnLamentFlight
                     {
-                        Count = at + EgoSolemnLamentTiming.DiveTime, Launch = at, Fly = EgoSolemnLamentTiming.DiveTime, Slot = slot, Dark = i % 2 == 1, Seed = i,
+                        Count = lands, Launch = at, Fly = EgoSolemnLamentTiming.DiveTime, Slot = slot, Dark = had >= mark.Cap || i % 2 == 1, Seed = i,
                         FromGround = from.Ground, FromHeight = from.Height, Via = Vector2.zero, Arc = 0.2f,
                     });
-                    if (slot + 1 >= mark.Cap) mark.Swarm(at + EgoSolemnLamentTiming.DiveTime);
+                    if (had + 1 == mark.Cap) mark.Swarm(lands);
+                    else if (had + 1 >= death && had >= mark.Cap) mark.DeadAt = lands;
                 }
             }
         }
