@@ -1,7 +1,8 @@
 # E.G.O. weapons and Corrosion
 
-Design agreed 2026-09-30. The Corrosion core is built (2026-10-02, see Code); Magic Bullet has its
-rules and def (2026-10-02, see Weapon 1, Built); the other three have pictures only. The corrosion of Solemn Lament, Mimicry and Paradise Lost changed 2026-10-02 (see the
+Design agreed 2026-09-30. The Corrosion core is built (2026-10-02, see Code); Magic Bullet and Solemn
+Lament have their rules and defs (2026-10-02, see each weapon's Built); Mimicry and Paradise Lost have
+pictures only. The corrosion of Solemn Lament, Mimicry and Paradise Lost changed 2026-10-02 (see the
 balance test under Rule 2). Post-v1 (the 2026-10-20 list is full). Source: Project Moon
 (Lobotomy Corporation, Library of Ruina, Limbus Company). Every number below is a placeholder and,
 when built, an XML field on the weapon's `CompProperties_EgoWeapon`, never a C# constant.
@@ -121,7 +122,7 @@ Built 2026-10-02 in `Source/RimArt/Ego/Kit/`:
 | `JobDriver_EgoOverclock.cs` | the Overclock job and `Command_EgoOverclock` |
 | `MapComponent_EgoCorrosion.cs` | calls each weapon's `DrawCorroded` for every corroded or overclocking pawn on the shown map; its tick corrodes the pawns whose roll passed once their burst is over |
 | `Tests_EgoCorrosion.cs` | `-rimarttest=ego`: bands and requirement, a burst corrodes (after its last shot) and the state fires at the nearest pawn then exhausts, going down ends it, the weapon leaving the hands ends it and Corrode never replaces a state, Overclock aims only at hostiles in range, never rolls (even when the action rolls itself), pays mood, and at three memories renews the oldest |
-| `Ego<Weapon>Corrosion.cs` (per weapon; Magic Bullet's written) | the action and the look |
+| `Ego<Weapon>Corrosion.cs` (per weapon; Magic Bullet's and Solemn Lament's written) | the action and the look |
 
 Defs: `AG_EgoCorroded` (MentalStateDefs/AG_Ego_MentalStates.xml), `AG_EgoExhausted`, `AG_EgoOverclocked`,
 `AG_EgoCorrodedHold`, `AG_EgoOverclock`, and the think node in `1.6/Patches/AG_Ego_ThinkTree.xml`.
@@ -149,10 +150,14 @@ Settled while building:
   ones.
 - A weapon whose attack does not go through a vanilla verb calls `EgoCorrosion.Roll` itself.
 
-Not built yet (2026-10-02), the walk: `EgoCorrosionAction` gets `WalksToNearest` (default false,
-hold). When true, `JobGiver_EgoCorroded` gives a job that goes to the nearest living pawn of any
-faction and stays next to it, instead of `AG_EgoCorrodedHold`. The firing stays in the state. One
-hook for Solemn Lament and Mimicry; Magic Bullet and Paradise Lost keep the hold.
+The walk, built with Solemn Lament (2026-10-02): `EgoCorrosionAction.WalksToNearest` (default false,
+hold). When true, `JobGiver_EgoCorroded` gives `AG_EgoCorrodedWalk` (`JobDriver_EgoCorrodedWalk`, to
+touching the target, asked again every second) toward the nearest living pawn of any faction, downed
+ones included, and the hold once next to it. The firing stays in the state. Magic Bullet and Paradise
+Lost keep the hold. The action also gets `Begin` and `End`, called when a corrosion or an Overclock
+starts and ends, for a picture that outlives single firings (Solemn Lament's coffin).
+`EgoRound.Hit` (a hit with a never-spawned round's damage, logged as a bullet's) is shared by Magic
+Bullet's line and Solemn Lament's black shot.
 
 Class names start with `Ego` (`EgoMimicry`, not `Mimicry`): `AG_Mimic` is already Vergil's decoy.
 
@@ -298,6 +303,43 @@ colony drafted everyone 3 cells away, and the pawns it downed were up again 10 t
 ended. The cloud now walks, lasts 30 s, and kills a downed pawn left in it.
 
 Overlap: none. Nothing in the mod has a stacking non-lethal ranged debuff.
+
+### Built
+
+Rules and def 2026-10-02 (`AG_EgoSolemnLament` in `1.6/Defs/ThingDefs/AG_Ego_Things.xml`, the
+`AG_EgoButterfly` hediff in `AG_Ego_Hediffs.xml`, code in `Ego/Kit/`). Not played; game tests
+`-rimarttest=ego: solemn lament` written, not run yet.
+
+| File | What |
+|---|---|
+| `CompEgoSolemnLament.cs` | `CompProperties_EgoSolemnLament` (`whiteStacks`, `blackStacks`, `ammo`, `reloadSeconds`, `coffinRadius`, `cloudStacks`, `funeralStacks`), which gun is next, the pool and its meter |
+| `EgoButterfly.cs` | `Hediff_EgoButterfly` (a stage per stack count, the fade), `EgoButterflyExtension` (`cap`, `consciousnessPerStack`, `fadeSeconds`), `EgoButterfly.Add` (the funeral's kill) |
+| `Verb_EgoSolemnLament.cs` | Core's shooting verb with the projectile replaced by a hit on the target |
+| `EgoSolemnLamentCorrosion.cs` | the coffin: walks, the cloud's stacks, the funeral; Overclock |
+| `EgoSolemnLamentBurstCast.cs`, `EgoSolemnLamentCoffinCast.cs`, `EgoSolemnLamentMarked.cs`, `GameComponent_EgoSolemnLament.cs` | the pictures fed from the rules as they happen: bursts, coffins, the butterflies on each pawn with stacks |
+| `Patches_EgoSolemnLament.cs` | `HeldWeaponHide` while a burst or a coffin draws the pair |
+| `Tests_EgoSolemnLament.cs` | the pair and the cap, the pool and the fade, the funeral, Overclock |
+
+The texture (`Textures/RimArt/Ego/SolemnLament.png`, `make_ego_textures.py`) is the picture's two
+pistols, white above and black below, at the size the picture draws them, with a 1 px outline.
+
+Settled while building:
+
+- A burst is 4 shots 0.25 s apart, white first; warmup 0.5 s, cooldown 1 s. The guns keep taking
+  turns across bursts: a burst cut short after an odd number of shots (its target died) starts the
+  next one black.
+- Every shot hits its target (accuracy 1); cover and range bands do not apply inside the 10 cells.
+  A target that is not a pawn takes only the black damage.
+- Stacks go on when the shot fires; the picture's butterflies land about 0.1 s later.
+- The cap downs through consciousness (the game's 30 % rule), not a separate rule. Stacks past the
+  cap take no more consciousness, or consciousness 0 would kill the pawn at 14 before the funeral.
+- A downed target at the cap still takes the black shot's damage; Butterfly from the guns never kills.
+- One stack fades every 10 s whatever the count; a new stack does not reset the timer.
+- The corroded walk goes to the nearest pawn, downed ones included (decided 2026-10-02): the cloud
+  stays on the first pawn it downs and the funeral follows unless someone carries it out.
+- Overclock: 5 firings 1 s apart, holding still, `overclockRange` 3 (the radius), standing hostiles
+  only, never past the cap.
+- The pictures are not saved: a save in a burst or a corrosion loses its picture, not its stacks.
 
 ## Weapon 3: Mimicry
 
@@ -473,10 +515,8 @@ this page.
   pawns are.
 - Mimicry: whether the corroded swing skips downed pawns (the sketch skips them, so it does not
   finish them; "nearest living pawn" above does not say).
-- Solemn Lament and Mimicry: whether the walk goes to downed pawns. The shared nearest rule counts
-  them, so the coffin stays on the first pawn it downs and the funeral is certain unless someone
-  carries the pawn out, and the hunter finishes whoever it downs. Walking to the nearest standing
-  pawn spreads the harm and lets the downed live.
+- Mimicry: whether the walk goes to downed pawns. Solemn Lament's does (decided 2026-10-02), and the
+  shared walk counts them; the hunter would finish whoever it downs.
 - Mimicry: the grown blade is about 2.4 cells long and lands across 3 cells, but the rule hits one
   pawn. Either keep one target or hit every pawn under the blade.
 - Paradise Lost: RimWorld makes each door its own room, so the hit stops at doors and misses a

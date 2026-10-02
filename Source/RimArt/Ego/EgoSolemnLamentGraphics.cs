@@ -9,7 +9,7 @@ namespace RimArt
 {
     /// <summary>
     /// One burst as the picture needs it. Points are DrawPos-style points on the map (cell centres in the
-    /// preview); the weapon will fill it from its shots.
+    /// preview); in game EgoSolemnLamentBurstCast fills it from the verb's shots.
     /// </summary>
     public struct EgoSolemnLamentBurst
     {

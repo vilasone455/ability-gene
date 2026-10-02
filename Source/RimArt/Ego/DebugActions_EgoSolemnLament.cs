@@ -6,7 +6,7 @@ using T = RimArt.EgoSolemnLamentTiming;
 namespace RimArt
 {
     /// <summary>
-    /// Previews only: there is no weapon, no def and no pawn rule behind any of this; nobody takes a stack, is
+    /// Previews only: the picture with no rule behind it (the weapon is AG_EgoSolemnLament, Ego/Kit); nobody takes a stack, is
     /// hurt or goes down, and no pawn is drawn. Each entry plays a Solemn Lament picture with the wielder on the
     /// chosen cell, which is the cell the lab's sketch (ego-solemn-lament.js) centres on, on the sketch's
     /// clock, so the recorder can compare the port with it.

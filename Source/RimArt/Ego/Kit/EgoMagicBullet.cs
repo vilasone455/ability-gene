@@ -6,8 +6,8 @@ using Verse;
 namespace RimArt
 {
     /// <summary>
-    /// Magic Bullet's rules with no clock (docs/ego-weapons.md, Weapon 1): whom the seventh goes to, what a line crosses,
-    /// and the damage it does. <see cref="EgoMagicBulletCast"/> calls them when a shot goes off.
+    /// Magic Bullet's rules with no clock (docs/ego-weapons.md, Weapon 1): whom the seventh goes to and what a line
+    /// crosses; the damage is <see cref="EgoRound.Hit"/>. <see cref="EgoMagicBulletCast"/> calls them when a shot goes off.
     /// </summary>
     public static class EgoMagicBullet
     {
@@ -114,20 +114,6 @@ namespace RimArt
                     alongs.Add(along);
                 }
             }
-        }
-
-        /// <summary>
-        /// One pawn hit by the line: the round's damage def and armour penetration, <paramref name="amount"/> damage, from
-        /// the shooter with the weapon, logged as a ranged impact the way a bullet's is. Pawns behind it are hit as well.
-        /// </summary>
-        public static void Hit(Pawn shooter, ThingWithComps weapon, ThingDef round, Pawn victim, Pawn intended, float amount, Vector2 dir)
-        {
-            ProjectileProperties p = round.projectile;
-            var entry = new BattleLogEntry_RangedImpact(shooter, victim, intended, weapon.def, round, null);
-            Find.BattleLog.Add(entry);
-            var dinfo = new DamageInfo(p.damageDef, amount, p.GetArmorPenetration(weapon), new Vector3(dir.x, 0f, dir.y).AngleFlat(),
-                shooter, null, weapon.def, DamageInfo.SourceCategory.ThingOrUnknown, intended);
-            victim.TakeDamage(dinfo).AssociateWithLog(entry);
         }
     }
 }

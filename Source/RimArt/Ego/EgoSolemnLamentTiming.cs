@@ -43,7 +43,7 @@ namespace RimArt
     ///
     /// The balance numbers (<see cref="Interval"/>, <see cref="WhiteStacks"/>, <see cref="BlackStacks"/>,
     /// <see cref="Cap"/>, <see cref="CloudRadius"/>, <see cref="CloudTick"/>) are the sketch's placeholders from
-    /// docs/ego-weapons.md: the weapon will read them from its XML. The picture takes them as data, not as
+    /// docs/ego-weapons.md, used by the previews; the weapon reads its own from its XML. The picture takes them as data, not as
     /// these constants: shot times and stacks per shot in each <see cref="EgoSolemnLamentShot"/>, the cap in
     /// <see cref="EgoSolemnLamentMark.Cap"/>, the radius in <see cref="EgoSolemnLamentCoffin.Radius"/> and the
     /// tick in the coffin's dive times. Only the preview's script reads the constants. The rest is shape and timing.

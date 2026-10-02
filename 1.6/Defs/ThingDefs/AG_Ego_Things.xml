@@ -118,4 +118,109 @@
     </tools>
   </ThingDef>
 
+  <!-- Solemn Lament's black round. Never spawned: Verb_EgoSolemnLament hits the target itself. It carries the black
+       shot's damage, armour penetration and the info card's numbers; the white shot does no harm. -->
+  <ThingDef ParentName="BaseBullet">
+    <defName>AG_EgoSolemnLament_Round</defName>
+    <label>departed round</label>
+    <graphicData>
+      <texPath>Things/Projectile/Bullet_Small</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <projectile>
+      <damageDef>Bullet</damageDef>
+      <damageAmountBase>9</damageAmountBase>
+      <armorPenetrationBase>0.14</armorPenetrationBase>
+      <stoppingPower>0.5</stoppingPower>
+      <speed>60</speed>
+    </projectile>
+  </ThingDef>
+
+  <!-- Solemn Lament (Funeral of the Dead Butterflies, WAW): one item, a white and a black pistol drawn together.
+       A burst of 4 shots 0.25 s apart (ticksBetweenBurstShots 15), the guns taking turns, white first and on
+       across bursts; every shot hits its target (accuracy 1). White: 2 Butterfly stacks, no harm. Black: 9 damage
+       and 1 stack. The guns never put on more than Butterfly's cap (10, on AG_EgoButterfly), so they down a pawn at
+       the cap and never kill it with stacks. 20 shots, then 3 s to reload. Corroded, the coffin: the wielder walks
+       to the nearest pawn and every pawn within 3 cells takes 1 stack a second, past the cap, and dies at 20. The
+       comps are listed with Inherit="False" because CompProperties_EgoSolemnLament is the weapon's CompEquippable
+       (the pool and Overclock are equipped gizmos). No quality and no art: E.G.O. gear is not made. -->
+  <ThingDef ParentName="BaseGun">
+    <defName>AG_EgoSolemnLament</defName>
+    <label>Solemn Lament</label>
+    <description>A pair of pistols, one white and one black: E.G.O. gear from the Funeral of the Dead Butterflies. The wielder holds both and they take turns, white first.\n\nEach pull of the trigger fires 4 shots, one every 0.25 seconds, at a target up to 10 tiles away. Every shot hits. A white shot does no harm and puts 2 Butterfly stacks on the target. A black shot does 9 damage and puts on 1 stack. The pair holds 20 shots and reloads for 3 seconds when empty.\n\nButterfly: each stack takes 7.5% consciousness, so an unhurt pawn goes down at 10 stacks, the cap. The guns never put on more than 10. One stack fades every 10 seconds.\n\nCorrosion: every shot may let the guns take their wielder. The chance is 25% below the wielder's minor break threshold, 75% below the major one and certain below the extreme one, one step worse under Shooting 4, and none above the minor threshold. A coffin rises where the wielder stands and a cloud of butterflies circles the wielder for 30 seconds. The wielder ignores orders and walks to the nearest person or animal, of any faction, downed or not, and stays beside them. Every second each pawn within 3 tiles of the wielder takes 1 stack, past the cap: a pawn left down in the cloud dies at 20 stacks. Then the wielder is exhausted for 2 hours.\n\nOverclock: the coffin for 5 seconds where the wielder stands. Each second every standing hostile within 3 tiles takes 1 stack, never past the cap. Costs 15 mood for 1 day.</description>
+    <graphicData>
+      <texPath>RimArt/Ego/SolemnLament</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.8</drawSize>
+    </graphicData>
+    <soundInteract>Interact_Autopistol</soundInteract>
+    <techLevel>Spacer</techLevel>
+    <smeltable>false</smeltable>
+    <relicChance>0</relicChance>
+    <weaponTags Inherit="False" />
+    <statBases>
+      <MarketValue>2000</MarketValue>
+      <Mass>2.2</Mass>
+      <MaxHitPoints>150</MaxHitPoints>
+      <Flammability>0</Flammability>
+      <DeteriorationRate>0.5</DeteriorationRate>
+      <AccuracyTouch>1</AccuracyTouch>
+      <AccuracyShort>1</AccuracyShort>
+      <AccuracyMedium>1</AccuracyMedium>
+      <AccuracyLong>1</AccuracyLong>
+      <RangedWeapon_Cooldown>1</RangedWeapon_Cooldown>
+    </statBases>
+    <verbs>
+      <li>
+        <verbClass>RimArt.Verb_EgoSolemnLament</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>AG_EgoSolemnLament_Round</defaultProjectile>
+        <warmupTime>0.5</warmupTime>
+        <range>10</range>
+        <burstShotCount>4</burstShotCount>
+        <ticksBetweenBurstShots>15</ticksBetweenBurstShots>
+        <soundCast>Shot_Autopistol</soundCast>
+        <soundCastTail>GunTail_Light</soundCastTail>
+        <muzzleFlashScale>0</muzzleFlashScale>
+      </li>
+    </verbs>
+    <comps Inherit="False">
+      <li Class="RimArt.CompProperties_EgoSolemnLament">
+        <actionClass>RimArt.EgoSolemnLamentCorrosion</actionClass>
+        <corrosionMinor>0.25</corrosionMinor>
+        <corrosionMajor>0.75</corrosionMajor>
+        <corrosionExtreme>1</corrosionExtreme>
+        <requirementSkill>Shooting</requirementSkill>
+        <requirementLevel>4</requirementLevel>
+        <corrodedDuration>30</corrodedDuration>
+        <corrodedInterval>1</corrodedInterval>
+        <exhaustionHours>2</exhaustionHours>
+        <overclockCount>5</overclockCount>
+        <overclockInterval>1</overclockInterval>
+        <overclockRange>3</overclockRange>
+        <overclockMood>-15</overclockMood>
+        <overclockMoodDays>1</overclockMoodDays>
+        <whiteStacks>2</whiteStacks>
+        <blackStacks>1</blackStacks>
+        <ammo>20</ammo>
+        <reloadSeconds>3</reloadSeconds>
+        <coffinRadius>3</coffinRadius>
+        <cloudStacks>1</cloudStacks>
+        <funeralStacks>20</funeralStacks>
+      </li>
+      <li Class="CompProperties_Forbiddable"/>
+      <li Class="CompProperties_Styleable"/>
+    </comps>
+    <tools>
+      <li>
+        <label>grip</label>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>8</power>
+        <cooldownTime>1.6</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
 </Defs>

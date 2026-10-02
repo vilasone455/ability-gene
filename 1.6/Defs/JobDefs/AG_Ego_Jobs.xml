@@ -10,6 +10,16 @@
     <alwaysShowWeapon>true</alwaysShowWeapon>
   </JobDef>
 
+  <!-- A corroded pawn whose weapon walks (EgoCorrosionAction.WalksToNearest) goes to the nearest pawn
+       (MentalState_EgoCorroded.cs): until touching it, asked again every second. -->
+  <JobDef>
+    <defName>AG_EgoCorrodedWalk</defName>
+    <driverClass>RimArt.JobDriver_EgoCorrodedWalk</driverClass>
+    <reportString>corroded, walking to TargetA.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <alwaysShowWeapon>true</alwaysShowWeapon>
+  </JobDef>
+
   <!-- Overclock (JobDriver_EgoOverclock.cs): stand and fire the weapon's corroded attack at hostiles. -->
   <JobDef>
     <defName>AG_EgoOverclock</defName>

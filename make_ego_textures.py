@@ -17,6 +17,13 @@ MagicBullet.png  128 px. The held and dropped Magic Bullet, drawn the way Core d
                  drawSize 1.55 the rifle does not change size when a shot's picture takes over from Core.
                  The picture still draws its own five bars in its own colours; only the length is shared.
                  A 1 px dark outline goes round the whole gun, so the thin gun reads on the ground.
+SolemnLament.png 128 px. The held and dropped pair, level, muzzles to the right: the picture's two pistols
+                 (EgoSolemnLamentShotGraphics.Pistol), part for part and in its colours. Each is a grip raked
+                 back, a trigger guard, a slide 0.34 cells long and a barrel tip, with a lit line along the top
+                 of the slide; the white gun is ash with a pale slide, the black gun soot with an ink slide and the
+                 picture's grey outline 0.012 cells out. The white gun sits above, the black one below and 0.06
+                 cells ahead, as a hand holds a pair. At the def's drawSize 0.8 each gun is the 0.32 cells long the
+                 picture draws it. A 1 px dark outline goes round both.
 """
 from pathlib import Path
 
@@ -153,5 +160,78 @@ def magic_bullet():
     print("wrote", OUT / "MagicBullet.png")
 
 
+# EgoSolemnLamentGraphics' colours.
+SL_WHITE = rgb(1.0, 1.0, 1.0, 0.9)
+SL_PALE = rgb(0.90, 0.90, 0.93)
+SL_ASH = rgb(0.50, 0.50, 0.55)
+SL_ASH_LINE = rgb(0.50, 0.50, 0.55, 0.9)
+SL_ASH_OUTLINE = rgb(0.50, 0.50, 0.55, 0.8)
+SL_INK = rgb(0.05, 0.05, 0.06)
+SL_SOOT = rgb(0.16, 0.16, 0.18)
+
+# EgoSolemnLamentShotGraphics.Parts: four corners (along, up) in cells each, bottom-back, top-back, bottom-front,
+# top-front: the grip, the trigger guard, the slide, the barrel tip.
+SL_PARTS = [
+    (-0.075, -0.115, -0.04, 0.005, 0.0, -0.12, 0.04, 0.005),
+    (0.03, -0.045, 0.03, 0.0, 0.1, -0.045, 0.1, 0.0),
+    (-0.05, 0.0, -0.05, 0.065, 0.29, 0.0, 0.29, 0.065),
+    (0.29, 0.012, 0.29, 0.052, 0.32, 0.012, 0.32, 0.052),
+]
+SL_DRAW_SIZE = 0.8
+
+
+def solemn_lament():
+    size = 128
+    s = size * SCALE
+    per_cell = s / SL_DRAW_SIZE
+    image = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    mask = Image.new("L", (s, s), 0)
+    d, md = ImageDraw.Draw(image), ImageDraw.Draw(mask)
+    # The pair's extent: the white gun from -0.075 to 0.32 along and -0.12 to 0.065 up, the black one 0.06 ahead and 0.11 down.
+    off_along, off_up = 0.06, -0.11
+    lo_a, hi_a, lo_u, hi_u = -0.075, 0.32 + off_along, -0.12 + off_up, 0.065
+    cx, cy = (lo_a + hi_a) / 2, (lo_u + hi_u) / 2
+
+    def at(a, u, da, du):
+        return (s / 2 + (a + da - cx) * per_cell, s / 2 - (u + du - cy) * per_cell)
+
+    def quad(c, da, du, colour, grow=0.0):
+        pts = [(c[0], c[1]), (c[4], c[5]), (c[6], c[7]), (c[2], c[3])]
+        if grow:
+            ma, mu = (c[0] + c[6]) / 2, (c[1] + c[7]) / 2
+            out = []
+            for a, u in pts:
+                na, nu = a - ma, u - mu
+                n = (na * na + nu * nu) ** 0.5 or 1.0
+                out.append((a + na / n * grow, u + nu / n * grow))
+            pts = out
+        xy = [at(a, u, da, du) for a, u in pts]
+        d.polygon(xy, fill=colour)
+        md.polygon(xy, fill=255)
+
+    def pistol(white, da, du):
+        if not white:
+            for c in SL_PARTS:
+                quad(c, da, du, SL_ASH_OUTLINE, grow=0.012)
+        for i, c in enumerate(SL_PARTS):
+            colour = (SL_PALE if white else SL_INK) if i == 2 else (SL_ASH if white else SL_SOOT)
+            quad(c, da, du, colour)
+        quad((-0.045, 0.05, -0.045, 0.064, 0.285, 0.05, 0.285, 0.064), da, du, SL_WHITE if white else SL_ASH_LINE)
+
+    # The black gun first, so the white one lies over it where they meet.
+    pistol(False, off_along, off_up)
+    pistol(True, 0.0, 0.0)
+
+    grown = mask.filter(ImageFilter.MaxFilter(2 * OUTLINE_PX * SCALE + 1))
+    base = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    base.paste(Image.new("RGBA", (s, s), INK), (0, 0), grown)
+    image = Image.alpha_composite(base, image)
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    image.resize((size, size), Image.LANCZOS).save(OUT / "SolemnLament.png")
+    print("wrote", OUT / "SolemnLament.png")
+
+
 if __name__ == "__main__":
     magic_bullet()
+    solemn_lament()
