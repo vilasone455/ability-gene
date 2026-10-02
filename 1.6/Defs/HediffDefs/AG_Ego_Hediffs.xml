@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- After Corrosion ends (EgoCorrosion.Exhaust). The 5000 ticks below are only the fallback: the weapon's
+       exhaustionHours replaces them when the hediff is added. The consciousness cap is a placeholder; the doc gives
+       no number for it. -->
+  <HediffDef>
+    <defName>AG_EgoExhausted</defName>
+    <label>corrosion exhaustion</label>
+    <description>An E.G.O. weapon's corrosion has just ended. Consciousness is capped at 80% and moving is halved until it wears off. How long it lasts is set by the weapon.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>true</isBad>
+    <defaultLabelColor>(0.62, 0.30, 0.90)</defaultLabelColor>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>5000~5000</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <setMax>0.8</setMax>
+          </li>
+          <li>
+            <capacity>Moving</capacity>
+            <postFactor>0.5</postFactor>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

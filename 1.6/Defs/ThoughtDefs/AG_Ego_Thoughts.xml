@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Overclock's cost (EgoCorrosion.PayOverclock). The stage's mood is 0 on purpose: each memory carries its
+       weapon's overclockMood and overclockMoodDays (Thought_Memory.moodOffset, durationTicksOverride). Up to three
+       stack, at 0.75 for each one after the first. -->
+  <ThoughtDef>
+    <defName>AG_EgoOverclocked</defName>
+    <thoughtClass>Thought_Memory</thoughtClass>
+    <durationDays>1</durationDays>
+    <stackLimit>3</stackLimit>
+    <stackedEffectMultiplier>0.75</stackedEffectMultiplier>
+    <stages>
+      <li>
+        <label>overclocked an E.G.O. weapon</label>
+        <description>I used an E.G.O. weapon's corroded attack on purpose.</description>
+        <baseMoodEffect>0</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
+
+</Defs>
