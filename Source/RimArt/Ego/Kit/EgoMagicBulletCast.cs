@@ -203,11 +203,14 @@ namespace RimArt
             float s = PictureClock.Since(startTick);
             if (!Fired) s = Mathf.Min(s, T.Fire(lead, Seventh) - 0.001f);
             bool standing = shooter.Spawned && shooter.Map == map && !shooter.Dead;
-            Vector2 stand = standing ? Ground(shooter.DrawPos) : from;
+            Vector3 at = standing ? shooter.DrawPos : default;
+            Vector2 stand = standing ? Ground(at) : from;
             EgoMagicBulletGraphics.Draw(new EgoMagicBulletShot
             {
                 Shooter = Fired ? from : stand, Stand = lineOnly || !standing ? from : stand, Aim = aim, SeventhAim = seventhAim, Shot = shot,
                 Lead = lead, Range = range, Corroded = corroded, Hits = hits, HitCount = hits.Length, LineOnly = lineOnly || !standing,
+                // Only the rifle and the corroded look use it, and they are not drawn once the shooter is gone.
+                Altitude = standing ? at.y : EgoMagicBulletGraphics.PawnLayer,
             }, s, map);
         }
 

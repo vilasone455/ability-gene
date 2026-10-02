@@ -62,10 +62,11 @@ namespace RimArt
 
         /// <summary>
         /// Draws baked <paramref name="draws"/> again in their order, turned <paramref name="turn"/> degrees about
-        /// <paramref name="pivot"/> (clockwise seen from above, the sense of <see cref="DrawMesh"/>'s angle) and then
-        /// moved by <paramref name="offset"/>.
+        /// <paramref name="pivot"/> (clockwise seen from above, the sense of <see cref="DrawMesh"/>'s angle), then
+        /// moved by <paramref name="offset"/> and raised by <paramref name="rise"/> (for a picture baked once and
+        /// drawn on pawns at different heights).
         /// </summary>
-        internal static void DrawBaked(List<VfxBakedDraw> draws, Vector2 pivot, float turn, Vector2 offset)
+        internal static void DrawBaked(List<VfxBakedDraw> draws, Vector2 pivot, float turn, Vector2 offset, float rise = 0f)
         {
             float r = turn * Mathf.Deg2Rad, cos = Mathf.Cos(r), sin = Mathf.Sin(r);
             for (int i = 0; i < draws.Count; i++)
@@ -73,7 +74,7 @@ namespace RimArt
                 VfxBakedDraw d = draws[i];
                 Vector2 v = d.At - pivot;
                 var at = new Vector2(pivot.x + v.x * cos + v.y * sin + offset.x, pivot.y - v.x * sin + v.y * cos + offset.y);
-                DrawMesh(d.Mesh, at, d.Altitude, d.Width, d.Depth, d.Angle + turn, d.Colour, d.Material);
+                DrawMesh(d.Mesh, at, d.Altitude + rise, d.Width, d.Depth, d.Angle + turn, d.Colour, d.Material);
             }
         }
 

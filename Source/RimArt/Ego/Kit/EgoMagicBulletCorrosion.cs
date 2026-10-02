@@ -26,10 +26,11 @@ namespace RimArt
             GameComponent_EgoMagicBullet game = GameComponent_EgoMagicBullet.Instance;
             if (game == null || game.Drawing(wielder)) return;
             Pawn aim = overclock ? EgoCorrosion.NearestHostile(wielder, gun.Props.overclockRange) : EgoCorrosion.Nearest(wielder);
-            Vector2 stand = EgoMagicBulletCast.Ground(wielder.DrawPos);
+            Vector3 at = wielder.DrawPos;
+            Vector2 stand = EgoMagicBulletCast.Ground(at);
             float deg = aim != null ? EgoMagicBulletCast.Degrees(EgoMagicBulletCast.Ground(aim.DrawPos) - stand) : 90f - wielder.Rotation.AsAngle;
             int shot = overclock ? Mathf.Min(gun.NextShot, EgoMagicBulletTiming.Shots - 1) : gun.NextShot;
-            EgoMagicBulletGraphics.DrawHeld(stand, deg, shot, true, seconds, wielder.Map);
+            EgoMagicBulletGraphics.DrawHeld(stand, at.y, deg, shot, true, seconds, wielder.Map);
         }
     }
 }

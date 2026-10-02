@@ -46,6 +46,11 @@ namespace RimArt
         /// only what its line left (circles, beam, bullet, hits). Nothing at all before it has fired.
         /// </summary>
         public bool LineOnly;
+        /// <summary>
+        /// The height the shooter's body is drawn at, its DrawPos.y: the rifle and the corroded look go
+        /// <see cref="PawnBody.Over"/> above it, over the pawn's own parts. The preview passes <see cref="EgoMagicBulletGraphics.PawnLayer"/>.
+        /// </summary>
+        public float Altitude;
     }
 
     /// <summary>
@@ -61,7 +66,8 @@ namespace RimArt
     /// the wide cyan-white beam. Corroded adds the look in EgoMagicBulletCircleGraphics.Corroded.
     ///
     /// The beam, bullet, air ring and smoke are level lines, quads and circles at chest height; the circles are
-    /// gates facing the aim (EgoMagicBulletCircleGraphics.GateAxes), so nothing has a per-facing method.
+    /// gates facing the aim (EgoMagicBulletCircleGraphics.GateAxes), so nothing has a per-facing method. The rifle and
+    /// the corroded look on the shooter are drawn from its own height (<see cref="EgoMagicBulletShot.Altitude"/>).
     ///
     /// Not drawn (the sketch's stand-ins and lab aids): every pawn's body and shadow, the hit pawns' flinch, the
     /// wall cells, the beloved's heart, the red dashed warning line to the beloved after shot six and the violet
@@ -84,7 +90,7 @@ namespace RimArt
 
         internal static readonly Material Puff = MaterialPool.MatFrom("RimArt/SixPaths/Puff", ShaderDatabase.Transparent);
         internal static readonly float PawnLayer = AltitudeLayer.Pawn.AltitudeFor(), ShadowLayer = AltitudeLayer.Shadows.AltitudeFor();
-        /// <summary>A layer above every wall top, for the punched hole: the Paper Bomb sketches' WallTop.</summary>
+        /// <summary>A layer above every wall top, for the punched hole: the Paper Bomb sketches' WallTop. A wall has no seeded height, so it stays fixed.</summary>
         internal static readonly float WallTop = PawnLayer + 0.05f;
         internal const float Tau = 6.2831855f;
 
@@ -121,8 +127,8 @@ namespace RimArt
             if (!shot.LineOnly)
             {
                 Counter(headTop, shot.Shot, s, shot.Corroded ? Corrupt : Beam);
-                Rifle(hand, gunDeg, sun, strength, T.Kick(age), T.Tilt(age), out Vector2 chamber, out muzzle);
-                if (shot.Corroded) EgoMagicBulletCircleGraphics.Corroded(stand, chamber, muzzle, sun, strength, s);
+                Rifle(hand, gunDeg, shot.Altitude, sun, strength, T.Kick(age), T.Tilt(age), out Vector2 chamber, out muzzle);
+                if (shot.Corroded) EgoMagicBulletCircleGraphics.Corroded(stand, chamber, muzzle, shot.Altitude, sun, strength, s);
                 ChamberGlow(chamber, muzzle, headTop, T.ChamberGlow(s, fire), s);
             }
             else if (!fired) return;
@@ -171,16 +177,17 @@ namespace RimArt
         /// <summary>
         /// The rifle held level along <paramref name="aimDeg"/> with no shot up: the count (pip <paramref name="shot"/> lit
         /// as the next) and, when <paramref name="corroded"/>, the corroded look. Drawn while the weapon has its wielder
-        /// between shots, so the rifle and the look do not go out in the gaps. <paramref name="s"/> drives the pulses.
+        /// between shots, so the rifle and the look do not go out in the gaps. <paramref name="s"/> drives the pulses;
+        /// <paramref name="body"/> is the wielder's DrawPos.y.
         /// </summary>
-        public static void DrawHeld(Vector2 stand, float aimDeg, int shot, bool corroded, float s, Map map)
+        public static void DrawHeld(Vector2 stand, float body, float aimDeg, int shot, bool corroded, float s, Map map)
         {
             if (!Shown(stand, map)) return;
             Begin(stand);
             PowerPoleGraphics.Sun(map, out Vector2 sun, out float strength);
             Counter(new Vector2(stand.x, stand.y + PawnBody.HeadTop), shot, s, corroded ? Corrupt : Beam);
-            Rifle(stand + Turn(aimDeg) * T.GripAlong, aimDeg, sun, strength, 0f, 0f, out Vector2 chamber, out Vector2 muzzle);
-            if (corroded) EgoMagicBulletCircleGraphics.Corroded(stand, chamber, muzzle, sun, strength, s);
+            Rifle(stand + Turn(aimDeg) * T.GripAlong, aimDeg, body, sun, strength, 0f, 0f, out Vector2 chamber, out Vector2 muzzle);
+            if (corroded) EgoMagicBulletCircleGraphics.Corroded(stand, chamber, muzzle, body, sun, strength, s);
         }
 
         /// <summary>
@@ -205,13 +212,13 @@ namespace RimArt
 
         /// <summary>
         /// The rifle, level at chest height along <paramref name="deg"/> from the hand's ground point and drawn over
-        /// the pawn. <paramref name="kick"/> slides it back; <paramref name="tilt"/> (degrees) swings the muzzle up:
+        /// the pawn: 0.03 over the corroded look's veins, from the pawn's height <paramref name="body"/>. <paramref name="kick"/> slides it back; <paramref name="tilt"/> (degrees) swings the muzzle up:
         /// cos(tilt) along the aim and Lift x sin(tilt) north, so facing east or west the barrel visibly rises and
         /// facing north or south it shortens. Its shadow stays flat along the aim.
         /// </summary>
-        private static void Rifle(Vector2 hand, float deg, Vector2 sun, float strength, float kick, float tilt, out Vector2 chamber, out Vector2 muzzle)
+        private static void Rifle(Vector2 hand, float deg, float body, Vector2 sun, float strength, float kick, float tilt, out Vector2 chamber, out Vector2 muzzle)
         {
-            float layer = PawnLayer + 0.06f, tr = tilt * Mathf.Deg2Rad, ct = Mathf.Cos(tr);
+            float layer = body + PawnBody.Over + 0.03f, tr = tilt * Mathf.Deg2Rad, ct = Mathf.Cos(tr);
             Vector2 a = Turn(deg), b = hand - a * kick, q = AtChest(b), sd = b + sun * 0.9f;
             var dv = new Vector2(a.x * ct, a.y * ct + T.Lift * Mathf.Sin(tr));
             float len = dv.magnitude, sdeg = Mathf.Atan2(dv.y, dv.x) * Mathf.Rad2Deg, L = T.RifleLen * len;

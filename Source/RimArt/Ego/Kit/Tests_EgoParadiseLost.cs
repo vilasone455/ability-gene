@@ -320,5 +320,31 @@ namespace RimArt
             t.Log(t.Now + " dropped: " + (dropped?.LabelShort ?? "nothing") + " at " + dropped?.Position);
             t.Check(!Game.Holds(wielder), "dropped, the pawn no longer holds it");
         }
+
+        /// <summary>
+        /// The corroded look (star, wings, halo) and the staff on three wielders Core draws at a low, a middle and a high
+        /// height: the wings, the halo and the staff are placed from each pawn's own DrawPos.y, so the ones over a pawn show
+        /// over it and the ones behind stay behind on every one of them. Close shots of each while the wings open (30 ticks,
+        /// rebuilt every frame) and once open (150, baked), before the first ring (about 360 ticks in) strikes the others.
+        /// </summary>
+        [RimArtTest("Ego", "paradise lost: height, the corroded look and the staff on pawns drawn low, middle and high (screenshots)", 900)]
+        public static IEnumerable<int> Height(RimArtTestContext t)
+        {
+            t.Clear();
+            Game.Clear();
+            IntVec3 c = t.center;
+            Pawn[] wielders = HeightShots.Spread(t, c + new IntVec3(-5, 0, 0), c, c + new IntVec3(5, 0, 0));
+            if (!t.Check(wielders.All(w => w != null), "a colonist for each height")) yield break;
+            foreach (Pawn wielder in wielders)
+                t.Check(EgoCorrosion.Corrode(wielder, Arm(t, wielder)), wielder.LabelShort + " corroded");
+            int start = t.Now;
+            foreach (int at in new[] { 30, 150 })
+            {
+                if (start + at > t.Now) yield return start + at - t.Now;
+                foreach (Pawn wielder in wielders) yield return HeightShots.Shoot(t, "paradise lost height " + wielder.LabelShort + " " + at, wielder.Position, wielder);
+            }
+            t.Check(Game.Rings.Count == 0 && wielders.All(w => t.Untouched(w)), "no ring yet: nobody was struck");
+            t.Check(wielders.All(w => Game.LookOf(w) != null), "each wielder's look is up");
+        }
     }
 }

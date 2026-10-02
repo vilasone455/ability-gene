@@ -13,5 +13,16 @@ namespace RimArt
     public static class PawnBody
     {
         public const float HeadTop = 0.63f, Head = 0.41f, Neck = 0.20f, Chest = 0.05f, Feet = -0.54f, Ground = -0.42f;
+
+        /// <summary>
+        /// Draw heights against a real pawn's own height, its DrawPos.y. Core gives every pawn a seeded offset of up to
+        /// +/-0.0366 on that height (Pawn_DrawTracker.SeededYOffset) and draws each part (body, head, hair, apparel, the
+        /// held weapon) Clamp(layer, -10, 100) x 0.000366 above it (PawnRenderUtility.AltitudeForLayer): from -0.0037 to
+        /// +0.0366. A picture over the pawn starts <see cref="Over"/> above its DrawPos.y; one behind it starts at
+        /// <see cref="Under"/> or lower and keeps its own stack of layers under -0.005. Placed from
+        /// AltitudeLayer.Pawn.AltitudeFor() instead, a picture at +0.03 to +0.07 is hidden under some pawns' heads and
+        /// one at -0.03 drawn over others' bodies. The previews have no real pawn and pass AltitudeLayer.Pawn.
+        /// </summary>
+        public const float Over = 0.038f, Under = -0.02f;
     }
 }

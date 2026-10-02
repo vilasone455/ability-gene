@@ -20,7 +20,9 @@ namespace RimArt
     /// <c>look</c> runs 0 to 1 as corrosion starts (the circle grows over the first 60 %, the spikes after a
     /// quarter, the wings open from folded along the back) and back to 0 as it ends. The star and the halo are
     /// level circles and need no per-facing work; the wings have one. The star and the halo sit on the cell
-    /// centre and the real head top (+0.63, lib/pawn.js), so nothing goes through PawnFit.
+    /// centre and the real head top (+0.63, lib/pawn.js), so nothing goes through PawnFit. The wings and the halo
+    /// are drawn from the wielder's own height (its DrawPos.y): the halo 0.03 over <see cref="PawnBody.Over"/>, over
+    /// the wings in front.
     ///
     /// Not drawn (lab aids): the thin red ring at the ring's true radius that stays while corroded, and the
     /// Sanity pips under the feet (a gizmo in game).
@@ -40,22 +42,24 @@ namespace RimArt
         /// </summary>
         internal static bool Rebuild;
 
-        // The fully grown star's spikes and halo's spikes, and the centre each was baked at.
+        // The fully grown star's spikes and halo's spikes, the centre each was baked at and the halo's height.
         private static List<VfxBakedDraw> starSpikes, haloSpikes;
         private static Vector2 starAt, haloAt;
+        private static float haloLayer;
 
         /// <summary>
-        /// The star, the wings and the halo of a pawn at <paramref name="wielder"/> (its DrawPos) facing
-        /// <paramref name="facing"/>. <paramref name="seconds"/> is any running clock; it turns the halo and sways the wings.
+        /// The star, the wings and the halo of a pawn at <paramref name="wielder"/> (its DrawPos, <paramref name="body"/>
+        /// its y) facing <paramref name="facing"/>. <paramref name="seconds"/> is any running clock; it turns the halo and
+        /// sways the wings.
         /// </summary>
-        public static void Draw(Vector2 wielder, Rot4 facing, float look, float seconds, Map map)
+        public static void Draw(Vector2 wielder, float body, Rot4 facing, float look, float seconds, Map map)
         {
             if (look <= 0f || !Shown(wielder, map)) return;
             Begin(wielder);
             PowerPoleGraphics.Sun(map, out Vector2 sun, out float strength);
             ThornStar(wielder, look);
-            EgoParadiseLostWingsGraphics.Draw(wielder, facing, look, seconds, sun, strength);
-            Halo(wielder, look, seconds);
+            EgoParadiseLostWingsGraphics.Draw(wielder, body, facing, look, seconds, sun, strength);
+            Halo(wielder, body, look, seconds);
         }
 
         // The red thorn star flat on the floor round the wielder.
@@ -97,10 +101,10 @@ namespace RimArt
         }
 
         // The gold thorn halo over the head: a level circle with twelve spikes, turning slowly.
-        private static void Halo(Vector2 pos, float amount, float seconds)
+        private static void Halo(Vector2 pos, float body, float amount, float seconds)
         {
             var c = new Vector2(pos.x, pos.y + PawnBody.HeadTop + HaloOver);
-            float r = 0.2f * T.EaseOut(amount), L = PawnLayer + 0.05f;
+            float r = 0.2f * T.EaseOut(amount), L = body + PawnBody.Over + 0.03f;
             Sprite(c, 0.9f * amount, 0.7f * amount, Fade(Gold, 0.35f * amount), glow, L - 0.001f);
             PaperBombGraphics.RingAt(c, r, Fade(Gold, amount), L, false, solid);
             if (amount < 1f || Rebuild)
@@ -112,9 +116,10 @@ namespace RimArt
             {
                 haloSpikes = Bake(() => HaloSpikes(c, r, 1f, 0f, L));
                 haloAt = c;
+                haloLayer = L;
             }
             // Turn() goes counter-clockwise and DrawMesh clockwise, hence the minus.
-            DrawBaked(haloSpikes, haloAt, -seconds * 12f, c - haloAt);
+            DrawBaked(haloSpikes, haloAt, -seconds * 12f, c - haloAt, L - haloLayer);
         }
 
         // The halo's 12 spikes, the first at turn degrees.
