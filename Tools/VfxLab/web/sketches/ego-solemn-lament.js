@@ -16,7 +16,8 @@
 //         radius 3 takes 1 stack per second, any faction, the wielder excluded. 30 s, interval 1 s.
 //         The wielder walks to the nearest pawn of any faction and stays next to it; the coffin
 //         stays where it rose and the cloud and its ring go with the wielder (changed 2026-10-02,
-//         PR #153). The funeral: a downed pawn left in the cloud dies at 20 stacks (not drawn).
+//         PR #153). The funeral: a downed pawn left in the cloud keeps taking stacks and dies at 20
+//         (drawn in "corroded: the funeral"; not ported).
 //         Overclock: the same coffin for 5 s, hostiles only (allies inside are skipped), mood -15.
 //         Overclock does not walk.
 //   Rule sliders (stacks per shot, cap, interval) are there for the balance pass: with the doc's
@@ -84,9 +85,24 @@
 //         the coffin sinks back into the floor over .45 s. The landed butterflies stay (the stacks
 //         stay).
 // "overclock": the wielder holds; the same without the face and with the ally skipped (no pips,
-// nothing lands); its own layout: an ally and a raider inside the ring, a raider outside.
-// A cloud of 10 s or more reaches the cap and the pawns inside go down as in the burst; the wielder
-// stays beside the downed ally (open in the doc: whether the walk goes to downed pawns).
+// nothing lands); its own layout: an ally and a raider inside the ring, a raider outside. It stops at
+// the cap: a downed pawn takes no more.
+// Order, "corroded: the funeral" (the corroded layout with a 23 s cloud; the cloud slider is not used).
+// Source: Lobotomy's Funeral kills an employee whose sanity it empties: "covered in butterflies, then
+// fall to the ground with their eyes closed" (Cogitopedia); its lore says the dead become "beautiful
+// beings with small wings". Down is the first half here; the lift is the death.
+//   11.10  the ally's 10th stack: the swarm covers it and it falls, as in the burst. The cover is about
+//          half white, half dark. The wielder stays beside it (open in the doc: whether the walk goes
+//          to downed pawns).
+//   12.10  and every 1 s: a dark butterfly dives from the cloud onto a white one of the cover, and with
+//          it about a tenth of the cover's white butterflies turn dark over .3 s, so by stack 19 the
+//          cover is nearly all dark: the countdown, and the cue to carry the pawn out.
+//   21.10  stack 20: dead. A pale flash on the body (.3 s); the whole cover (38 butterflies plus the
+//          divers) lifts off within .15 s, rises .6-1.4 cells over .6 s turning white, then flies into
+//          the coffin's open mouth at 6 cells/s (never under .7 s), shrinking and fading in. The body is
+//          left bare.
+//   12.10 / 22.10  the raider goes down and dies the same way, 1 s after the ally.
+//   23.70  the cloud flies home, the lid closes on the dead pawns' butterflies, the coffin sinks.
 //
 // Drawing: the shots, trails, crescents and hits are level shapes at chest height (lib/pawn.js
 // chest = .05 north of the cell centre), so they turn with the aim and need no per-facing method.
@@ -145,6 +161,11 @@ const cloudFly = i => i < CloudBurst ? .55 : .7;
 // base move speed). The coffin stays where it rose. Overclock never walks. A butterfly flying between
 // the coffin and a wielder further off flies at FarSpeed, never in less than the near time (.7 s).
 const WalkFrom = Open + .2, WalkSpeed = 4.6, Beside = 1, FarSpeed = 6;
+// The funeral (doc, changed 2026-10-02): a downed pawn left in the cloud keeps taking stacks. Each one past
+// the cap turns about a tenth of the white butterflies on its body dark over TurnTime s; at the death count
+// the whole cover lifts off (LiftTime s, .6-1.4 cells up, turning white) and flies into the coffin's mouth
+// at FarSpeed, never in under .7 s. FuneralCloud: the funeral showcase's cloud, long enough for two deaths.
+const TurnTime = .3, LiftTime = .6, FuneralCloud = 23;
 
 // ---- Butterflies ------------------------------------------------------------------------------
 // Lace butterflies, as the source draws them: a white outline and a web of white veins that splits
@@ -232,13 +253,14 @@ const FillR = fillMesh('sl lace fill r', [1]), FillL = fillMesh('sl lace fill l'
 // The Living (white shot): a faint pale film, white edge and veins, a soft glow round the edge.
 // The Departed (dark, black shot): a near-opaque ink fill, a white edge, grey veins and no glow, so
 // it stays dark at normal zoom, where the lines would otherwise outweigh a small fill.
+// dark is true/false, or 0..1 for one turning (the funeral's cover going dark, the lift going white).
 function butterfly(q, size, heading, flap, dark, alpha, layer) {
   if (alpha <= .01) return;
-  const rot = 90 - heading, sx = size * .5 * flap, sz = size * .5;
-  draw(Fill, q.x, layer, q.z, sx, sz, rot, dark ? Ink.withAlpha(.94 * alpha) : Pale.withAlpha(.22 * alpha));
-  if (!dark) draw(Halo, q.x, layer + .0002, q.z, sx, sz, rot, White.withAlpha(.14 * alpha), whiteGlow);
-  draw(Veins, q.x, layer + .0003, q.z, sx, sz, rot, (dark ? Ash : White).withAlpha((dark ? .75 : .95) * alpha));
-  draw(Edge, q.x, layer + .0004, q.z, sx, sz, rot, White.withAlpha((dark ? .85 : .95) * alpha));
+  const k = +dark, rot = 90 - heading, sx = size * .5 * flap, sz = size * .5;
+  draw(Fill, q.x, layer, q.z, sx, sz, rot, Color.Lerp(Pale.withAlpha(.22 * alpha), Ink.withAlpha(.94 * alpha), k));
+  if (k < 1) draw(Halo, q.x, layer + .0002, q.z, sx, sz, rot, White.withAlpha(.14 * alpha * (1 - k)), whiteGlow);
+  draw(Veins, q.x, layer + .0003, q.z, sx, sz, rot, Color.Lerp(White.withAlpha(.95 * alpha), Ash.withAlpha(.75 * alpha), k));
+  draw(Edge, q.x, layer + .0004, q.z, sx, sz, rot, White.withAlpha(lerp(.95, .85, k) * alpha));
   draw(disc, q.x, layer + .0006, q.z, size * .04, size * .17, rot, White.withAlpha(alpha));
   draw(disc, q.x, layer + .0007, q.z, size * .018, size * .13, rot, Soot.withAlpha(alpha));
 }
@@ -272,9 +294,10 @@ function flyAt(e, u, to) {
 }
 
 // ---- A pawn that takes stacks --------------------------------------------------------------------
-// M: { pos, colour, cap, seed, events, flinches, downAt, fallTurn }. An event is one butterfly:
-// { t: when the stack counts, launch, fly, slot, dark, from, via, arc, seed, swarm }.
-// Swarm events are the knockdown's cover, not stacks.
+// M: { pos, colour, cap, seed, events, flinches, downAt, fallTurn }, and for the funeral deadAt (when
+// it died), turnAt (slot -> when the pale butterfly there turns dark) and mouth (the coffin's mouth the
+// cover flies into). An event is one butterfly: { t: when the stack counts, launch, fly, slot, dark,
+// from, via, arc, seed, swarm }. Swarm events are the knockdown's cover, not stacks.
 function markedPawn(key, M, s, who, size, sun, strength) {
   const fall = M.downAt == null ? 0 : smooth((s - M.downAt - SwarmIn * .5) / FallTime);
   const turn = M.fallTurn * fall;
@@ -296,6 +319,9 @@ function markedPawn(key, M, s, who, size, sun, strength) {
     const age = s - e.launch; if (age < 0) return;
     const sl = slotAt(pos, e.slot, turn), gz = lerp(M.pos.z + Ground, sl.z, fall);
     const to = { g: { x: sl.x, z: gz }, h: (sl.z - gz) / Lift }, sz = size * (e.swarm ? .9 : 1);
+    const turnAt = M.turnAt?.[e.slot], dk = e.dark ? 1 : turnAt != null ? clamp((s - turnAt) / TurnTime) : 0;
+    const lifted = M.deadAt != null ? s - M.deadAt - rand(i + 5100) * .15 : -1;
+    if (lifted >= 0) { liftOff(M, i, lifted, to, sz, dk, sun, strength); return; }
     const u = age / e.fly;
     if (u < 1) {
       const q = flyAt(e, u, to), q2 = flyAt(e, Math.min(1, u + .03), to);
@@ -304,10 +330,35 @@ function markedPawn(key, M, s, who, size, sun, strength) {
       butterflyShadow(q.g, Math.max(0, q.h), sz, sun, strength, fade);
       butterfly(q.screen, sz, u > .85 ? lerp(heading, sl.heading, (u - .85) / .15) : heading, flapAt(s, 3, .15, i), e.dark, fade, Y + .14 + i * .0008);
     } else {
-      butterfly(sl, sz, sl.heading + 8 * Math.sin(s * 1.3 + i), flapAt(s, .7, .55, i), e.dark, 1, Y + .1 + i * .0008);   // over the hits, as the source draws them over the ink
+      butterfly(sl, sz, sl.heading + 8 * Math.sin(s * 1.3 + i), flapAt(s, .7, .55, i), dk, 1, Y + .1 + i * .0008);   // over the hits, as the source draws them over the ink
     }
   });
   if (M.events.length && fall < .6) pips(M, counted, at(pos, 'headTop', who), 1 - fall / .6);
+  if (M.deadAt != null) {             // the funeral: a pale flash on the body as the cover lifts
+    const a = s - M.deadAt;
+    if (a >= 0 && a < .3) sprite(slotAt(pos, 0, turn), 1.3, 1.1, Pale.withAlpha(.5 * (1 - a / .3)), glow, Y + .13);
+  }
+}
+// The funeral's lift, a seconds after butterfly i's start: it rises from where it rests (rest) .6-1.4
+// cells over LiftTime s, drifting up to .3 cells, turning from its darkness (dark) to white; then it flies
+// into the coffin's mouth at FarSpeed (never under .7 s), shrinking to half and fading at the end, as the
+// cloud flies home. Gone after that: the coffin keeps it.
+function liftOff(M, i, a, rest, size, dark, sun, strength) {
+  const top = { g: { x: rest.g.x + (rand(i + 5300) - .5) * .6, z: rest.g.z + (rand(i + 5310) - .5) * .6 }, h: rest.h + .6 + .8 * rand(i + 5200) };
+  let q, q2, sz = size, alpha = 1;
+  if (a < LiftTime) {
+    const e = { from: rest, via: { x: 0, z: 0 }, arc: 0, seed: i + 5400 }, u = a / LiftTime;
+    q = flyAt(e, u, top); q2 = flyAt(e, Math.min(1, u + .03), top);
+  } else {
+    const fly = Math.max(ReturnTime, Math.hypot(M.mouth.g.x - top.g.x, M.mouth.g.z - top.g.z) / FarSpeed), u = (a - LiftTime) / fly;
+    if (u >= 1) return;
+    const e = { from: top, via: { x: (rand(i + 5500) - .5) * 1.2, z: (rand(i + 5510) - .5) * 1.2 }, arc: .4, seed: i + 5600 };
+    q = flyAt(e, u, M.mouth); q2 = flyAt(e, Math.min(1, u + .03), M.mouth);
+    sz *= 1 - .5 * u; alpha = 1 - smooth(clamp((u - .7) / .3));
+  }
+  const heading = Math.atan2(q2.screen.z - q.screen.z, q2.screen.x - q.screen.x) / D2R;
+  butterflyShadow(q.g, Math.max(0, q.h), sz, sun, strength, alpha);
+  butterfly(q.screen, sz, heading, flapAt(a, 3, .15, i), dark * (1 - smooth(a / LiftTime)), alpha, Y + .14 + i * .0008);
 }
 // The stack count over the head: cap pips, each filled in the colour of the butterfly that made it.
 function pips(M, counted, top, alpha) {
@@ -714,18 +765,21 @@ function burstPlan(p) {
 // walk: cells the wielder walks (0 in Overclock); walkTime: its eased walk, so the speed peaks at
 // WalkSpeed; home: the flight back into the coffin from where the wielder stopped when the cloud ended.
 function coffinPlan(p) {
-  const walk = isOverclock(p) ? 0 : Math.max(0, p.dist - Beside), walkTime = 1.5 * walk / WalkSpeed, d = dirOf(p.aim), tEnd = Open + p.cloud;
+  const walk = isOverclock(p) ? 0 : Math.max(0, p.dist - Beside), walkTime = 1.5 * walk / WalkSpeed, d = dirOf(p.aim), tEnd = Open + cloudOf(p);
   const walked = walk > 0 ? walk * smooth(clamp((tEnd + .1 - WalkFrom) / walkTime)) : 0;
   const home = Math.max(ReturnTime, Math.hypot(d.x * walked - CoffinBack.x, d.z * walked - CoffinBack.z) / FarSpeed);
   const closeAt = tEnd + .1 + home, sinkAt = closeAt + LidClose;
   const ticks = [];
-  for (let k = 1; k <= Math.floor(p.cloud + 1e-6); k++) ticks.push(Open + k * CoffinTick);
+  for (let k = 1; k <= Math.floor(cloudOf(p) + 1e-6); k++) ticks.push(Open + k * CoffinTick);
   return { tEnd, closeAt, sinkAt, ticks, walk, walkTime, home, end: sinkAt + Sink + p.hold };
 }
 // Where the wielder is at s: walking from WalkFrom, stopped where it got to when the cloud ends.
 const wielderAt = (C, o, d, s) => C.walk <= 0 ? o : move(o, d, C.walk * smooth(clamp((Math.min(s, C.tEnd + .1) - WalkFrom) / C.walkTime)));
 const isBurst = p => p.mode === 'burst';
 const isOverclock = p => p.mode.startsWith('overclock');
+const isFuneral = p => p.mode === 'corroded: the funeral';
+const cloudOf = p => isFuneral(p) ? FuneralCloud : p.cloud;
+const deathOf = p => Math.max(p.death, p.cap + 1);
 
 // ---- Drawing ----------------------------------------------------------------------------------------
 function drawBurst(s, p, o, who, sun, strength) {
@@ -784,8 +838,10 @@ function drawBurst(s, p, o, who, sun, strength) {
   }
 }
 
-function drawCoffin(s, p, o, who, sun, strength) {
-  const C = coffinPlan(p), overclock = isOverclock(p), aimR = p.aim, d = dirOf(aimR), acr = side(d);
+// The coffin's scene: the plan, the walk, the people and every dive, worked out from the clip's start
+// (the drawing and the timeline both read it).
+function coffinScene(p, o) {
+  const C = coffinPlan(p), overclock = isOverclock(p), aimR = p.aim, d = dirOf(aimR), acr = side(d), death = deathOf(p);
   const W = t => wielderAt(C, o, d, t);
   const polar = (deg, r) => move(o, dirOf(aimR + deg), r);
   // Corroded: the ally is the nearest pawn, "Target distance" off along the aim, and the walk ends
@@ -799,7 +855,8 @@ function drawCoffin(s, p, o, who, sun, strength) {
   ] : [
     { pos: polar(0, p.dist), colour: Ally, ally: true },
     { pos: move(move(o, d, C.walk), dirOf(aimR - 70), 2.6), colour: Enemy },
-  ]).map((q, i) => ({ ...q, M: { pos: q.pos, colour: q.colour, cap: p.cap, seed: i * 2.1, events: [], flinches: [], downAt: null, fallTurn: q.pos.x >= o.x ? 90 : -90 } }));
+  ]).map((q, i) => ({ ...q, M: { pos: q.pos, colour: q.colour, cap: p.cap, seed: i * 2.1, events: [], flinches: [], downAt: null, fallTurn: q.pos.x >= o.x ? 90 : -90,
+    stacks: 0, deadAt: null, turnAt: null, pale: [] } }));
   // A slot that dove gets a new butterfly .25 s later, flying from the coffin to the cloud round the
   // wielder: .7 s, or at FarSpeed when the wielder was further off at the dive (the game knows only
   // where the wielder is, not where it will be).
@@ -808,25 +865,46 @@ function drawCoffin(s, p, o, who, sun, strength) {
   // Every tick one butterfly leaves the cloud for each pawn inside the ring round the wielder at that
   // moment: the first slot from (n x 11 + 3) mod 36 whose butterfly is circling (out of the coffin,
   // its refill landed .25 s ago). The coffin sends that slot a new one .25 s later.
+  // Up to the cap each stack lands on the next free slot of the body; at the cap the swarm covers the
+  // rest and the pawn goes down. Corroded, a downed pawn keeps taking stacks (the funeral): stack m past
+  // the cap is a dark butterfly landing on a white one of the cover, and with it the m-th tenth (of the
+  // stacks left to the death count) of the cover's white butterflies, in a fixed shuffled order, turn
+  // dark. At the death count the pawn is dead and takes no more. Overclock stops at the cap.
   const dives = [];
   let n = 0;
   const ready = (i, T) => cloudOut(i) + cloudFly(i) <= T && !dives.some(v => v.i === i && T - v.T < .5 + refill(v.T));
   for (const T of C.ticks) for (const q of people) {
-    const M = q.M, count = M.events.length, c = W(T);
-    if (M.downAt != null || (overclock && q.ally) || Math.hypot(q.pos.x - c.x, q.pos.z - c.z) > Radius) continue;
+    const M = q.M, c = W(T);
+    if (M.deadAt != null || (overclock && (q.ally || M.downAt != null)) || Math.hypot(q.pos.x - c.x, q.pos.z - c.z) > Radius) continue;
     let i = (n++ * 11 + 3) % CloudN;
     for (let k = 0; k < CloudN && !ready(i, T); k++) i = (i + 5) % CloudN;
-    const from = orbit(i, T, c);
+    const from = orbit(i, T, c), tc = T + DiveTime;
     dives.push({ i, T });
-    M.events.push({ t: T + DiveTime, launch: T, fly: DiveTime, slot: count, dark: i % 2 === 1, seed: i, from: { g: from.g, h: from.h }, via: { x: 0, z: 0 }, arc: .2 });
-    if (count + 1 >= p.cap) {
-      M.downAt = T + DiveTime;
-      for (let k = p.cap; k < TorsoSlots + HeadSlots; k++) {
-        const a = rand(k + 700) * TAU, r = 1.1 + .7 * rand(k + 710), g = { x: M.pos.x + Math.cos(a) * r, z: M.pos.z + Ground + Math.sin(a) * r };
-        M.events.push({ t: M.downAt, launch: M.downAt + rand(k + 720) * .15, fly: SwarmIn, slot: k, dark: k % 2 === 1, seed: k, swarm: true, from: { g, h: .4 + rand(k + 730) }, via: { x: -Math.sin(a) * .6, z: Math.cos(a) * .6 }, arc: .15 });
+    M.stacks++;
+    const dive = { t: tc, launch: T, fly: DiveTime, seed: i, from: { g: from.g, h: from.h }, via: { x: 0, z: 0 }, arc: .2 };
+    if (M.stacks <= p.cap) {
+      M.events.push({ ...dive, slot: M.stacks - 1, dark: i % 2 === 1 });
+      if (M.stacks === p.cap) {
+        M.downAt = tc;
+        for (let k = p.cap; k < TorsoSlots + HeadSlots; k++) {
+          const a = rand(k + 700) * TAU, r = 1.1 + .7 * rand(k + 710), g = { x: M.pos.x + Math.cos(a) * r, z: M.pos.z + Ground + Math.sin(a) * r };
+          M.events.push({ t: M.downAt, launch: M.downAt + rand(k + 720) * .15, fly: SwarmIn, slot: k, dark: k % 2 === 1, seed: k, swarm: true, from: { g, h: .4 + rand(k + 730) }, via: { x: -Math.sin(a) * .6, z: Math.cos(a) * .6 }, arc: .15 });
+        }
+        M.pale = [...new Set(M.events.filter(e => !e.dark).map(e => e.slot))].sort((a, b) => rand(a + 5000) - rand(b + 5000));
+        M.turnAt = {};
       }
+    } else {
+      const m = M.stacks - p.cap, N = death - p.cap, P = M.pale.length, r0 = Math.floor((m - 1) * P / N), r1 = Math.floor(m * P / N);
+      for (let r = r0; r < r1; r++) M.turnAt[M.pale[r]] = tc;
+      M.events.push({ ...dive, slot: P ? M.pale[Math.min(P - 1, r0)] : M.stacks % (TorsoSlots + HeadSlots), dark: true });
+      if (M.stacks >= death) M.deadAt = tc;
     }
   }
+  return { C, overclock, d, acr, W, people, base, refill, dives };
+}
+
+function drawCoffin(s, p, o, who, sun, strength) {
+  const { C, overclock, d, acr, W, people, base, refill, dives } = coffinScene(p, o);
 
   // The floor: a pale ring at the true radius and a dim floor inside it while the coffin is open,
   // round the wielder wherever it walks.
@@ -846,6 +924,7 @@ function drawCoffin(s, p, o, who, sun, strength) {
   coffinOpening('sl opening', base, mouth, s - Open);
 
   // The pawns: the wielder (guns hanging down), the face if corroded, then everyone else.
+  for (const q of people) q.M.mouth = mouth;
   for (const q of people) markedPawn(`sl pawn ${q.colour === Ally ? 'ally' : q.pos.x}`, q.M, s, who, p.size, sun, strength);
   if (who.actors !== false) pawn(w, { ...who, shirt: Holder });
   [true, false].forEach((white, i) => {
@@ -887,7 +966,7 @@ function drawCoffin(s, p, o, who, sun, strength) {
 export default {
   kit: 'E.G.O. weapons', label: 'Solemn Lament (sketch)',
   params: {
-    mode: { label: 'Show', value: 'burst', options: ['burst', 'corroded: the coffin', 'overclock: the coffin, hostiles only'], group: 'Showcase' },
+    mode: { label: 'Show', value: 'burst', options: ['burst', 'corroded: the coffin', 'corroded: the funeral', 'overclock: the coffin, hostiles only'], group: 'Showcase' },
     aim: P('Aim (degrees)', 0, 0, 360, 5, 'Showcase'),
     dist: P('Target distance (cells); corroded: the nearest pawn', 5, 2, 10, .5, 'Showcase'),
     shots: P('Shots in the burst (ammo 20)', 8, 1, 20, 1, 'Rule'),
@@ -895,7 +974,8 @@ export default {
     whiteStacks: P('White shot: stacks', 2, 0, 5, 1, 'Rule'),
     blackStacks: P('Black shot: stacks', 1, 0, 5, 1, 'Rule'),
     cap: P('Stack cap (down at)', 10, 2, 20, 1, 'Rule'),
-    cloud: P('Coffin: seconds shown (rule 30, overclock 5)', 4, 1, 30, 1, 'Timing (s)'),
+    death: P('Funeral: dead at (stacks)', 20, 11, 40, 1, 'Rule'),
+    cloud: P('Coffin: seconds shown (rule 30, overclock 5; the funeral 23)', 4, 1, 30, 1, 'Timing (s)'),
     lead: P('Draw and aim', .35, .1, 1, .05, 'Timing (s)'),
     hold: P('Show the result', 1.2, .3, 3, .1, 'Timing (s)'),
     size: P('Butterfly span (cells)', .3, .1, .5, .01, 'Shape'),
@@ -913,6 +993,9 @@ export default {
     const C = coffinPlan(p), out = [{ name: 'Coffin rises', t: 0 }, { name: 'Opens', t: Rise }];
     if (C.walk > 0) out.push({ name: 'Walks', t: WalkFrom });
     if (C.ticks.length) out.push({ name: 'Stack 1', t: C.ticks[0] });
+    const S = coffinScene(p, { x: 0, z: 0 }), first = key => S.people.map(q => q.M[key]).filter(t => t != null).sort((a, b) => a - b)[0];
+    if (first('downAt') != null) out.push({ name: `Stack ${p.cap}: down`, t: first('downAt') });
+    if (first('deadAt') != null) out.push({ name: `Stack ${deathOf(p)}: dead`, t: first('deadAt') });
     out.push({ name: 'Returns', t: C.tEnd + .1 }, { name: 'Result', t: C.sinkAt + Sink });
     return out;
   },
