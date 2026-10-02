@@ -106,7 +106,7 @@ namespace RimArt
             float look = script.Look(s);
 
             watch.Restart();
-            EgoParadiseLostCorrodedGraphics.Draw(wielder, face, look, s, map);
+            EgoParadiseLostCorrodedGraphics.Draw(wielder, EgoParadiseLostGraphics.PawnLayer, face, look, s, map);
             watch.Stop();
             Measure(look, watch.Elapsed.TotalMilliseconds);
             foreach (float t in script.RingTimes)
@@ -116,9 +116,9 @@ namespace RimArt
                 EgoParadiseLostPerson q = script.People[i];
                 Vector2 at = wielder + EgoParadiseLostScript.PosAt(q, s);
                 for (int j = 0; j < q.Hits.Count; j++)
-                    EgoParadiseLostThornGraphics.Draw(at, s - q.Hits[j], i * 31 + j * 7, !script.Room, map);
+                    EgoParadiseLostThornGraphics.Draw(at, EgoParadiseLostGraphics.PawnLayer, s - q.Hits[j], i * 31 + j * 7, !script.Room, map);
             }
-            EgoParadiseLostStaffGraphics.Draw(wielder, face, script.Flash(s), map);
+            EgoParadiseLostStaffGraphics.Draw(wielder, EgoParadiseLostGraphics.PawnLayer, face, script.Flash(s), map);
 
             if (seconds >= script.End)
             {

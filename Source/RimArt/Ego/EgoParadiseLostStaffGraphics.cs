@@ -18,7 +18,9 @@ namespace RimArt
     ///
     /// Upright, so it is a line north on screen for every facing. Only its place changes: at the right hand,
     /// 0.27 cells out facing north or south, 0.22 out and 0.2 ahead facing east or west (the front edge of the
-    /// body, clear of the face). A staff north of the pawn's centre (facing north or west) draws under the pawn.
+    /// body, clear of the face). A staff north of the pawn's centre (facing north or west) draws under the pawn,
+    /// from <see cref="PawnBody.Under"/>; one south of it over the pawn, from <see cref="PawnBody.Over"/>, both against
+    /// the pawn's own height (its DrawPos.y).
     /// The fan opens to the east except facing south, where the right hand is on the west.
     /// </summary>
     [StaticConstructorOnStartup]
@@ -28,16 +30,19 @@ namespace RimArt
         /// <summary>Points along the snake.</summary>
         private const int Coil = 57;
 
-        /// <summary>The staff held by a pawn at <paramref name="wielder"/> (its DrawPos) facing <paramref name="facing"/>.</summary>
-        public static void Draw(Vector2 wielder, Rot4 facing, float flash, Map map)
+        /// <summary>
+        /// The staff held by a pawn at <paramref name="wielder"/> (its DrawPos, <paramref name="body"/> its y) facing
+        /// <paramref name="facing"/>.
+        /// </summary>
+        public static void Draw(Vector2 wielder, float body, Rot4 facing, float flash, Map map)
         {
             if (!Shown(wielder, map)) return;
             Begin(wielder);
             PowerPoleGraphics.Sun(map, out Vector2 sun, out float strength);
-            Draw(wielder, facing, flash, sun, strength);
+            Draw(wielder, body, facing, flash, sun, strength);
         }
 
-        private static void Draw(Vector2 pos, Rot4 facing, float flash, Vector2 sun, float strength)
+        private static void Draw(Vector2 pos, float body, Rot4 facing, float flash, Vector2 sun, float strength)
         {
             // Ahead and to the right, exact so the side is never decided by a rounding error.
             Vector2 d = facing == Rot4.East ? new Vector2(1f, 0f) : facing == Rot4.North ? new Vector2(0f, 1f) : facing == Rot4.West ? new Vector2(-1f, 0f) : new Vector2(0f, -1f);
@@ -45,7 +50,7 @@ namespace RimArt
             bool sideways = facing.IsHorizontal;
             Vector2 g = pos + right * (sideways ? 0.22f : 0.27f) + d * (sideways ? 0.2f : 0.08f);
             bool behind = g.y > pos.y + 0.02f;
-            float L = behind ? PawnLayer - 0.02f : PawnLayer + 0.02f, out1 = right.x >= 0f ? 1f : -1f;
+            float L = body + (behind ? PawnBody.Under : PawnBody.Over), out1 = right.x >= 0f ? 1f : -1f;
             Vector2 at = Scr(g, 0f), top = Scr(g, T.StaffH);
 
             Line2(Shd(g, 0f, sun), Shd(g, T.StaffH, sun), 0.07f, Fade(RedInk, strength * 0.5f), solid, ShadowLayer, Taper.End);

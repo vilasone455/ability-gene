@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using RimWorld;
+using UnityEngine;
 using Verse;
 using Verse.AI;
 
@@ -76,6 +77,43 @@ namespace RimArt
 
         /// <summary>A plain hostile target (<see cref="Plain"/>) facing south, told to stand still.</summary>
         public static Pawn Target(RimArtTestContext t, IntVec3 at, bool armed = false) => Plain(t.Enemy(at, armed), Rot4.South);
+
+        /// <summary>
+        /// Three plain colonists (<see cref="Plain"/>) at <paramref name="low"/>, <paramref name="mid"/> and <paramref name="high"/>,
+        /// drawn at a low, a middle and a high height. Core adds a seeded offset of up to +/-0.0366 to each pawn's DrawPos.y
+        /// (Pawn_DrawTracker.SeededYOffset, from its thingIDNumber), so a picture placed from AltitudeLayer.Pawn instead of the
+        /// pawn's own height looks right on some pawns and not others. Up to 40 colonists are made; the first with an offset
+        /// at or below -0.025, within 0.006 of 0 and at or above +0.025 are kept, the rest destroyed. A slot no colonist
+        /// filled is null. Each kept pawn's offset is logged.
+        /// </summary>
+        public static Pawn[] Spread(RimArtTestContext t, IntVec3 low, IntVec3 mid, IntVec3 high)
+        {
+            var kept = new Pawn[3];
+            IntVec3[] cells = { low, mid, high };
+            for (int n = 0; n < 40 && (kept[0] == null || kept[1] == null || kept[2] == null); n++)
+            {
+                Pawn pawn = t.Colonist(mid);
+                float y = pawn.Drawer.SeededYOffset;
+                int slot = y <= -0.025f ? 0 : Mathf.Abs(y) <= 0.006f ? 1 : y >= 0.025f ? 2 : -1;
+                if (slot < 0 || kept[slot] != null)
+                {
+                    pawn.Destroy();
+                    continue;
+                }
+                kept[slot] = pawn;
+                pawn.Position = cells[slot];
+                pawn.Notify_Teleported();
+            }
+            for (int i = 0; i < 3; i++)
+                if (kept[i] != null)
+                {
+                    Plain(kept[i], Rot4.South);
+                    t.Log((i == 0 ? "low" : i == 1 ? "middle" : "high") + ": " + kept[i].LabelShort + " (id " + kept[i].thingIDNumber + ") at "
+                        + kept[i].Position + ", seeded offset " + kept[i].Drawer.SeededYOffset.ToString("+0.0000;-0.0000") + ", DrawPos.y "
+                        + kept[i].DrawPos.y.ToString("0.0000") + " (pawn layer " + AltitudeLayer.Pawn.AltitudeFor().ToString("0.0000") + ")");
+                }
+            return kept;
+        }
 
         /// <summary>A shot now, with a line giving the camera cell and where the pawns stand.</summary>
         public static int Shoot(RimArtTestContext t, string name, IntVec3 camera, params Pawn[] pawns)

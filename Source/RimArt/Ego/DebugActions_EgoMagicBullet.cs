@@ -139,6 +139,7 @@ namespace RimArt
             {
                 Shooter = o, Stand = o - line * T.Rock(seconds - fire), Aim = aim, SeventhAim = seventhAim, Shot = scene.Shot,
                 Lead = T.Lead, Range = T.Range, Corroded = scene.Corroded, Hits = hits, HitCount = hitCount,
+                Altitude = EgoMagicBulletGraphics.PawnLayer,
             }, seconds, map);
             if (seconds >= Duration(scene)) active = false;
         }

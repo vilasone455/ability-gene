@@ -149,8 +149,9 @@ namespace RimArt
             for (int i = 0; i < holderList.Count; i++)
             {
                 Pawn pawn = holderList[i];
-                if (pawn.Spawned && pawn.Map == map && ShowsStaff(pawn))
-                    EgoParadiseLostStaffGraphics.Draw(Ground(pawn.DrawPos), pawn.Rotation, Flash(pawn), map);
+                if (!pawn.Spawned || pawn.Map != map || !ShowsStaff(pawn)) continue;
+                Vector3 at = pawn.DrawPos;
+                EgoParadiseLostStaffGraphics.Draw(Ground(at), at.y, pawn.Rotation, Flash(pawn), map);
             }
         }
 
@@ -193,7 +194,8 @@ namespace RimArt
 
     /// <summary>
     /// The thorns round one thing struck, rising <see cref="delay"/> s after the firing. They stand where the thing is and
-    /// stay where it was last seen once it has died or left.
+    /// stay where it was last seen once it has died or left. Round a pawn they are placed from its own draw height; round
+    /// a wall or a turret, which has none of a pawn's seeded height, from the pawn layer.
     /// </summary>
     public sealed class EgoParadiseLostThorns
     {
@@ -203,6 +205,7 @@ namespace RimArt
         public readonly float delay;
         public readonly bool ring;
         private Vector2 at;
+        private float body;
 
         public EgoParadiseLostThorns(Thing thing, int tick, float delay, int seed, bool ring)
         {
@@ -212,22 +215,29 @@ namespace RimArt
             this.seed = seed;
             this.ring = ring;
             map = thing.Map;
-            at = GameComponent_EgoParadiseLost.Ground(thing.DrawPos);
+            Keep();
         }
 
         private bool Here => thing.Spawned && thing.Map == map;
 
+        private void Keep()
+        {
+            Vector3 drawn = thing.DrawPos;
+            at = GameComponent_EgoParadiseLost.Ground(drawn);
+            body = thing is Pawn ? drawn.y : EgoParadiseLostGraphics.PawnLayer;
+        }
+
         /// <summary>One game tick; false once the thorns and their marks are gone.</summary>
         public bool Tick(int now)
         {
-            if (Here) at = GameComponent_EgoParadiseLost.Ground(thing.DrawPos);
+            if (Here) Keep();
             return (now - tick) / 60f - delay < T.HitGone(ring ? T.RingThornLife : T.ThornLife);
         }
 
         public void Draw()
         {
-            Vector2 pos = Here ? GameComponent_EgoParadiseLost.Ground(thing.DrawPos) : at;
-            EgoParadiseLostThornGraphics.Draw(pos, PictureClock.Since(tick) - delay, seed, ring, map);
+            if (Here) Keep();
+            EgoParadiseLostThornGraphics.Draw(at, body, PictureClock.Since(tick) - delay, seed, ring, map);
         }
     }
 
@@ -248,6 +258,7 @@ namespace RimArt
         /// <summary>The tick the corrosion or Overclock ended, -1 while it runs.</summary>
         public int endTick = -1;
         private Vector2 at;
+        private float body = EgoParadiseLostGraphics.PawnLayer;
         private Rot4 facing = Rot4.South;
 
         public bool Running => endTick < 0;
@@ -262,21 +273,25 @@ namespace RimArt
         public bool Tick(int now)
         {
             bool here = wielder.Spawned && wielder.Map == map;
-            if (here)
-            {
-                at = GameComponent_EgoParadiseLost.Ground(wielder.DrawPos);
-                facing = wielder.Rotation;
-            }
+            if (here) Keep();
             if (Running && (!here || !(wielder.MentalState is MentalState_EgoCorroded || wielder.jobs?.curDriver is JobDriver_EgoOverclock))) End();
             return Running || (now - startTick) / 60f < ExitAt + T.Exit;
         }
 
+        /// <summary>Where the wielder is drawn now, its height and facing; the look stays there once it has left.</summary>
+        private void Keep()
+        {
+            Vector3 drawn = wielder.DrawPos;
+            at = GameComponent_EgoParadiseLost.Ground(drawn);
+            body = drawn.y;
+            facing = wielder.Rotation;
+        }
+
         public void Draw()
         {
-            bool here = wielder.Spawned && wielder.Map == map;
+            if (wielder.Spawned && wielder.Map == map) Keep();
             float s = PictureClock.Since(startTick);
-            EgoParadiseLostCorrodedGraphics.Draw(here ? GameComponent_EgoParadiseLost.Ground(wielder.DrawPos) : at, here ? wielder.Rotation : facing,
-                T.Look(s, ExitAt), s, map);
+            EgoParadiseLostCorrodedGraphics.Draw(at, body, facing, T.Look(s, ExitAt), s, map);
         }
     }
 }

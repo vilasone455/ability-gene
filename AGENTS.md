@@ -44,10 +44,10 @@ reads it directly). Agreed 2026-09-30. New code follows it; old code is changed 
 | `Shared/HeldWeaponHide.cs` | One `DrawEquipmentAiming` prefix: `Register(def, whileHeldBy)` keeps Core from drawing a kit weapon its picture draws (Vacuum, Power Pole, Water Gun, Fuma, Last Prism, Yamato) |
 | `Shared/FollowView.cs` | Camera follows pawns moved between maps and keeps them selected, if the player was watching |
 | `Shared/ItemAbilityGrant.cs` | Gives a held item's abilities to its holder, takes them back, keeps cooldowns |
-| `Shared/PawnBody.cs` | Head top, head, neck, chest, feet and ground contact of a real pawn above its DrawPos: the numbers of the lab's real-size stand-in (`lib/pawn.js`), used as they are |
+| `Shared/PawnBody.cs` | Head top, head, neck, chest, feet and ground contact of a real pawn above its DrawPos: the numbers of the lab's real-size stand-in (`lib/pawn.js`), used as they are. `Over`/`Under`: draw heights over and behind a real pawn, added to its own DrawPos.y (Core gives each pawn a random height of up to +/-0.0366), never to `AltitudeLayer.Pawn` |
 | `Shared/PawnFit.cs` | Fits a picture drawn on the lab's older 0.89-tall stand-in pawn to a real pawn's height |
 | `Shared/PictureClock.cs` | `Since(tick)`: game seconds since a tick for drawing, smoothed between ticks at the current speed, held still while paused; rules count whole ticks instead |
-| `Shared/VfxDraw.cs` | Materials, meshes, sprites, strips, streaks and the lab's `Tube` (a ribbon with a width per point) every ported picture uses; `BeginBake`/`DrawBaked` keep a picture that only turns or moves instead of rebuilding its strips every frame |
+| `Shared/VfxDraw.cs` | Materials, meshes, sprites, strips, streaks and the lab's `Tube` (a ribbon with a width per point) every ported picture uses; `BeginBake`/`DrawBaked` keep a picture that only turns, moves or changes height instead of rebuilding its strips every frame |
 | `Shared/VfxMath.cs` | The lab's `Smooth`, `Hash`, `Rand`, so a port matches its sketch |
 | `Shared/WeaponStow.cs` | `Stow`: empties a hand; a bound weapon goes to its owner (a copy breaks), any other to the inventory, else to the ground |
 | `Echo/EchoUtility.cs` | Hero layer: `ForceHost`, `Awaken`, `Manifest`, `Revert`, `ManifestedWith` |

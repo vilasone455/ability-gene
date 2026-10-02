@@ -21,7 +21,8 @@ namespace RimArt
     /// A per-facing method, because the span collapses onto the height axis facing east or west: facing south or
     /// north both sides spread east and west, behind the pawn facing south and over it facing north; facing east
     /// or west both sweep back and 20 degrees up, the near side over the pawn and the far side behind it at 82 %,
-    /// shifted 0.06 back and 0.1 up.
+    /// shifted 0.06 back and 0.1 up. Over and behind are against the pawn's own height (its DrawPos.y): behind from
+    /// <see cref="PawnBody.Under"/> - 0.01, over from <see cref="PawnBody.Over"/> + 0.01, clear of the staff in front.
     ///
     /// Once a wing is fully open its shape holds and the sway only turns it about its root, so it is baked once per
     /// facing (<see cref="VfxDraw.BeginBake"/>, about 100 meshes a wing, the same for every pawn) and drawn turned
@@ -31,16 +32,17 @@ namespace RimArt
     [StaticConstructorOnStartup]
     public static class EgoParadiseLostWingsGraphics
     {
-        // The fully open wings, per facing (Rot4.AsInt) and wing (side x 3 + arm), and the root each was baked at.
+        // The fully open wings, per facing (Rot4.AsInt) and wing (side x 3 + arm), and the root and height each was baked at.
         private static readonly List<VfxBakedDraw>[,] baked = new List<VfxBakedDraw>[4, 6];
         private static readonly Vector2[,] bakedRoot = new Vector2[4, 6];
+        private static readonly float[,] bakedLayer = new float[4, 6];
 
         /// <summary>
-        /// The wings of a pawn at <paramref name="pos"/> (its DrawPos) facing <paramref name="facing"/>,
-        /// <paramref name="open"/> 0 (folded, not drawn) to 1; <paramref name="seconds"/> drives the sway.
-        /// Called by EgoParadiseLostCorrodedGraphics after VfxDraw.Begin.
+        /// The wings of a pawn at <paramref name="pos"/> (its DrawPos, <paramref name="body"/> its y) facing
+        /// <paramref name="facing"/>, <paramref name="open"/> 0 (folded, not drawn) to 1; <paramref name="seconds"/>
+        /// drives the sway. Called by EgoParadiseLostCorrodedGraphics after VfxDraw.Begin.
         /// </summary>
-        internal static void Draw(Vector2 pos, Rot4 facing, float open, float seconds, Vector2 sun, float strength)
+        internal static void Draw(Vector2 pos, float body, Rot4 facing, float open, float seconds, Vector2 sun, float strength)
         {
             if (open <= 0f) return;
             bool sideView = facing.IsHorizontal;
@@ -48,13 +50,15 @@ namespace RimArt
             var root = new Vector2(pos.x, pos.y + 0.14f);
             Sprite(new Vector2(pos.x + sun.x * 1.6f, pos.y + PawnBody.Ground + sun.y * 1.6f), (sideView ? 1.8f : 3.2f) * T.WingSpan * open, 1.1f * open,
                 Fade(RedInk, strength * 0.25f * open), soft, ShadowLayer);
+            // A wing's own layers stack 0.016 up from its layer, so the one behind stays under the pawn's lowest part.
+            float under = body + PawnBody.Under - 0.01f, over = body + PawnBody.Over + 0.01f;
             if (sideView)
             {
-                Wing(root + new Vector2(0.06f * back, 0.1f), back, 0.82f, PawnLayer - 0.03f, 0, open, seconds, R, facing);
-                Wing(root, back, 1f, PawnLayer + 0.03f, 1, open, seconds, R, facing);
+                Wing(root + new Vector2(0.06f * back, 0.1f), back, 0.82f, under, 0, open, seconds, R, facing);
+                Wing(root, back, 1f, over, 1, open, seconds, R, facing);
                 return;
             }
-            float layer = facing == Rot4.South ? PawnLayer - 0.03f : PawnLayer + 0.03f;
+            float layer = facing == Rot4.South ? under : over;
             Wing(root, -1f, 1f, layer, 0, open, seconds, R, facing);
             Wing(root, 1f, 1f, layer, 1, open, seconds, R, facing);
         }
@@ -82,10 +86,11 @@ namespace RimArt
                     finally { EndBake(); }
                     baked[f, w] = into;
                     bakedRoot[f, w] = r0;
+                    bakedLayer[f, w] = layer;
                 }
                 // The sway adds to th, which turns a wing spreading east (sx 1) counter-clockwise on screen and one
                 // spreading west clockwise; DrawMesh turns clockwise, hence -sx.
-                DrawBaked(baked[f, w], bakedRoot[f, w], -sx * sway, r0 - bakedRoot[f, w]);
+                DrawBaked(baked[f, w], bakedRoot[f, w], -sx * sway, r0 - bakedRoot[f, w], layer - bakedLayer[f, w]);
             }
         }
 

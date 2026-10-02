@@ -141,14 +141,15 @@ namespace RimArt
         /// alpha) turns on the floor under his feet, four dark violet veins run 0.2 to 0.3 cells from the chest and
         /// pulse, the eyes glow blue, three thin wisps rise 0.4 cells off the shoulders, and the barrel is lit blue
         /// from chamber to muzzle. <paramref name="stand"/> is the pawn's drawn point; the eyes are placed for a
-        /// pawn facing south.
+        /// pawn facing south. Everything on the pawn starts <see cref="PawnBody.Over"/> above <paramref name="body"/>,
+        /// its DrawPos.y, so no pawn's head or hair covers it.
         /// </summary>
-        internal static void Corroded(Vector2 stand, Vector2 chamber, Vector2 muzzle, Vector2 sun, float strength, float s)
+        internal static void Corroded(Vector2 stand, Vector2 chamber, Vector2 muzzle, float body, Vector2 sun, float strength, float s)
         {
             var head = new Vector2(stand.x, stand.y + PawnBody.Head);
             var neck = new Vector2(stand.x, stand.y + PawnBody.Neck);
             var chest = new Vector2(stand.x, stand.y + PawnBody.Chest);
-            float pulse = 0.7f + 0.3f * Mathf.Sin(s * 3f);
+            float pulse = 0.7f + 0.3f * Mathf.Sin(s * 3f), over = body + PawnBody.Over;
             Draw(stand, 0.6f, 1f, s * 0.25f, 9, Vector2.right, Vector2.up, Vector2.right, false, sun, strength, Floor + 0.05f, 0.55f);
             for (int i = 0; i < 4; i++)
             {
@@ -160,21 +161,21 @@ namespace RimArt
                     float u = k / 4f, off = (Rand(i * 7 + k * 3) - 0.5f) * reach * 0.5f;
                     pts[k] = new Vector2(chest.x + Mathf.Cos(t) * reach * u - Mathf.Sin(t) * off, chest.y + Mathf.Sin(t) * reach * u * 0.8f + Mathf.Cos(t) * off);
                 }
-                GokuGraphics.Line(pts, 0.022f, Fade(Vein, 0.9f * pulse), solid, PawnLayer + 0.03f, Taper.End);
+                GokuGraphics.Line(pts, 0.022f, Fade(Vein, 0.9f * pulse), solid, over, Taper.End);
             }
             for (int i = 0; i < 2; i++)
             {
                 var eye = new Vector2(head.x + (i == 0 ? -0.07f : 0.07f), head.y - 0.02f);
-                Sprite(eye, 0.1f, 0.08f, Fade(Eye, 0.9f * pulse), glow, PawnLayer + 0.031f);
-                DrawMesh(disc, eye, PawnLayer + 0.032f, 0.02f, 0.016f, 0f, White, solid);
+                Sprite(eye, 0.1f, 0.08f, Fade(Eye, 0.9f * pulse), glow, over + 0.001f);
+                DrawMesh(disc, eye, over + 0.002f, 0.02f, 0.016f, 0f, White, solid);
             }
             for (int i = 0; i < 3; i++)
             {
                 float ph = (s * 0.5f + Rand(i + 300)) % 1f, x = neck.x + (i - 1) * 0.16f + Mathf.Sin(s * 2f + i) * 0.03f;
                 Sprite(new Vector2(x, neck.y + 0.05f + ph * 0.4f), 0.12f + ph * 0.1f, 0.14f + ph * 0.12f,
-                    Fade(Smoke, 0.35f * Mathf.Sin(ph * Mathf.PI)), Puff, PawnLayer + 0.04f);
+                    Fade(Smoke, 0.35f * Mathf.Sin(ph * Mathf.PI)), Puff, over + 0.01f);
             }
-            Streak(chamber, muzzle, 0.07f, Fade(CircleBlue, 0.35f + 0.25f * pulse), whiteGlow, PawnLayer + 0.07f, 3);
+            Streak(chamber, muzzle, 0.07f, Fade(CircleBlue, 0.35f + 0.25f * pulse), whiteGlow, over + 0.04f, 3);
         }
     }
 }

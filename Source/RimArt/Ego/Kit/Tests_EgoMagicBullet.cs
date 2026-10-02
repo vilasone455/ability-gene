@@ -263,5 +263,29 @@ namespace RimArt
             t.Check(gun.count == 6 && !gun.CoolingDown, "Overclock did not move the count: the next shot is still the seventh");
             t.Check(shooter.needs.mood.thoughts.memories.GetFirstMemoryOfDef(EgoDefOf.AG_EgoOverclocked) != null, "the Overclock cost was paid");
         }
+
+        /// <summary>
+        /// The corroded look (veins, eyes, wisps, the lit rifle) on three wielders Core draws at a low, a middle and a high
+        /// height: it is placed from each pawn's own DrawPos.y, so it shows over every one of them. Close shots of each before
+        /// the first corroded firing (about 200 ticks in), when they would shoot each other.
+        /// </summary>
+        [RimArtTest("Ego", "magic bullet: height, the corroded look over pawns drawn low, middle and high (screenshots)", 900)]
+        public static IEnumerable<int> Height(RimArtTestContext t)
+        {
+            t.Clear();
+            GameComponent_EgoMagicBullet.Instance.Clear();
+            IntVec3 c = t.center;
+            Pawn[] wielders = HeightShots.Spread(t, c + new IntVec3(-3, 0, 0), c, c + new IntVec3(3, 0, 0));
+            if (!t.Check(wielders.All(w => w != null), "a colonist for each height")) yield break;
+            foreach (Pawn wielder in wielders)
+                t.Check(EgoCorrosion.Corrode(wielder, Arm(t, wielder)), wielder.LabelShort + " corroded");
+            int start = t.Now;
+            foreach (int at in new[] { 30, 120 })
+            {
+                if (start + at > t.Now) yield return start + at - t.Now;
+                foreach (Pawn wielder in wielders) yield return HeightShots.Shoot(t, "magic bullet height " + wielder.LabelShort + " " + at, wielder.Position, wielder);
+            }
+            t.Check(GameComponent_EgoMagicBullet.Instance.Casts.Count == 0, "no corroded firing yet: the shots show the held look");
+        }
     }
 }
