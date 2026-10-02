@@ -23,9 +23,6 @@ Every kit in the mod, how to get it, and what each ability does.
 | [Shirou — The Faker](#shirou--the-faker) | Hero | Reinforcement, Trace on, Unlimited blade works | - |
 | [Todo](#todo) | Hero | Stone, Clap, Double clap, Black flash, Provoke | - |
 | [Vergil — Son of the Dark Knight](#vergil--son-of-the-dark-knight) | Hero | Judgement cut, Yamato dash, Summoned swords, Judgement cut end | - |
-| [Corrosive glands](#corrosive-glands) | Gene | Disarm spit | Biotech DLC |
-| [Hypermetabolic glands](#hypermetabolic-glands) | Gene | Metabolic overdrive | Biotech DLC |
-| [Pain debt](#pain-debt) | Trait | Wound debt | - |
 | [Neural accelerator](#neural-accelerator) | Implant | Time alter: double accel, Time alter: square accel, Time alter: stagnate | - |
 | [Drone control rig](#drone-control-rig) | Wearable | Deploy toy car | - |
 | [Kunai belt](#kunai-belt) | Wearable | Throw kunai | - |
@@ -51,8 +48,6 @@ Every kit in the mod, how to get it, and what each ability does.
 | [Magic Bullet](#magic-bullet) | E.G.O. weapon | Attack, Corrosion, Overclock | - |
 | [Paradise Lost](#paradise-lost) | E.G.O. weapon | Attack, Sanity, Corrosion, Overclock | - |
 | [Solemn Lament](#solemn-lament) | E.G.O. weapon | Attack, Butterfly, Corrosion, Overclock | - |
-| [Arcing](#arcing) | Weapon trait | Arc | Unique Melee Weapons, Melee Animation |
-| [Resonant](#resonant) | Weapon trait | Resonance | Unique Melee Weapons |
 
 ## Heroes
 
@@ -904,72 +899,6 @@ It costs no Echo charge.
 **Cooldown:** 1 second | **Range:** self | **Cast time:** 1 second
 
 
-## Genes
-
-### Corrosive glands
-
-Glands behind the carrier's jaw hold a contact acid strong enough to ruin a grip in under a second. Spat accurately, it makes a person drop whatever they are carrying without doing them any real harm.
-
-The obvious use is taking a dangerous weapon off a raider you would rather recruit than bury.
-
-**Needs:** Biotech DLC
-
-**How to get it**
-
-- Found in genepacks. Put it in a xenogerm at a gene assembler and implant it.
-- Gene stats: Complexity 1, Metabolism -2.
-
-#### Disarm spit
-
-Spit a glob of contact-acid at whatever the target is holding. The acid eats through a sling, a stock or a set of fingers well enough to make them let go, and the weapon lands out of easy reach.
-
-The target is otherwise unharmed, which is the point — this takes a threat off the field without taking the body off it.
-
-**Cooldown:** 8 hours (in-game) per charge | **Charges:** 2 | **Range:** 12.9 cells | **Cast time:** 1 second
-
-
-### Hypermetabolic glands
-
-The carrier's metabolism has no upper governor. On command they burn food reserves straight into tissue repair, closing wounds at a rate that would take an ordinary body days.
-
-The body does not care whether it can afford this, and on serious injuries it will run its owner into starvation.
-
-**Needs:** Biotech DLC
-
-**How to get it**
-
-- Found in genepacks. Put it in a xenogerm at a gene assembler and implant it.
-- Gene stats: Complexity 2, Metabolism -3.
-
-#### Metabolic overdrive
-
-Unclamp the carrier's metabolic governor. Wounds close at a rate you can watch, paid for directly out of the body's food reserves.
-
-It runs until the wounds are gone or the reserves are — so using it on a badly mangled colonist will leave them starving.
-
-**Cooldown:** 1 day (in-game) | **Range:** self | **Cast time:** 1 second | **Duration:** 2.9 hours (in-game)
-
-
-## Traits
-
-### Pain debt
-
-This person can push through injuries by sheer willpower, deferring the full impact of wounds until the fight is over.
-
-**How to get it**
-
-- A trait that can appear on new colonists and other generated pawns.
-- Cannot be on the same pawn as: wimp.
-
-#### Wound debt
-
-Push through every wound for twenty seconds, taking no immediate damage, bleeding or pain.
-
-Nothing is prevented: when the resolve breaks, every wound lands in the same instant. The debt can be settled early while the pawn is in cover and near a doctor.
-
-**Cooldown:** 12 hours (in-game) | **Range:** self
-
-
 ## Implants
 
 ### Neural accelerator
@@ -1665,45 +1594,3 @@ Every shot may let the guns take their wielder. The chance is 25% below the wiel
 #### Overclock
 
 The coffin for 5 seconds where the wielder stands. Each second every standing hostile within 3 tiles takes 1 stack, never past the cap. Costs 15 mood for 1 day.
-
-
-## Weapon traits
-
-### Arcing
-
-The blade was forged for the chain. On command the wielder crosses to one enemy mid-strike, then to whoever stands nearest, up to three in a single arc. The blow is real and lands with whatever the weapon is worth.
-
-**Needs:** Unique Melee Weapons, Melee Animation
-
-**How to get it**
-
-- A weapon trait that can roll on unique bladed weapons.
-- Equip a weapon with this trait to get the ability.
-
-#### Arc
-
-Point at one enemy: the carrier is gone and standing at that person's shoulder mid-strike, then does the same to whoever is nearest to them, and once more after that. The blow is real, thrown with whatever they are holding, and it can finish the person it lands on.
-
-Nothing about the chain is chosen after the cast, and stopping that fast leaves the carrier jarred and worse at everything - paid per person hit, not per cast.
-
-**Cooldown:** 12 hours (in-game) | **Range:** 24.9 cells | **Cast time:** 0.5 seconds
-
-
-### Resonant
-
-The blade holds a note. On command, strikes set the part they hit ringing for a few seconds — a second blow on the same part while the note is live tears it off the body. The wielder's own frame rings on the same terms.
-
-**Needs:** Unique Melee Weapons
-
-**How to get it**
-
-- A weapon trait that can roll on unique melee weapons.
-- Equip a weapon with this trait to get the ability.
-
-#### Resonance
-
-Set the weapon ringing for thirty seconds: every melee blow leaves the struck part resonating for about five seconds, and a second blow on the same part takes it off the body. Only limbs and extremities can hold the note.
-
-The resonance passes through the weapon into its wielder, leaving their own frame vulnerable on the same terms.
-
-**Cooldown:** 1 hour (in-game) | **Range:** self

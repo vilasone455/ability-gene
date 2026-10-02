@@ -9,9 +9,9 @@ parts, materials - are read from the game's own Data folder; without it the scri
 to splitting the defName into words, which reads worse but is still not an ID.
 
 Kits are found the same way validate.py check 8 finds acquisition sources: a gene, trait,
-implant, apparel, held weapon or weapon trait that lists abilities. Throwable weapons with a
-command of their own (frost bomb, mimic beacon) and the Fūma Shuriken, whose throw is a C#
-command, are added as weapon kits. E.G.O. weapons have no abilities: their attack is the
+implant, apparel, held weapon or weapon trait that lists abilities, minus the LEGACY ones.
+Throwable weapons with a command of their own (frost bomb, mimic beacon) and the Fūma
+Shuriken, whose throw is a C# command, are added as weapon kits. E.G.O. weapons have no abilities: their attack is the
 weapon's verb and the rest is C#, so their page is cut from the def's description, whose
 "Corrosion: ..." style paragraphs become sections.
 
@@ -55,6 +55,9 @@ NOTES = {
         "bulk and melee stats, but the throw keeps its own flight instead of CE ammunition or ballistics.",
     ],
 }
+# The early generic kits, shelved 2026-09-24: their defs still load, but the mod is the heroes, the weapons
+# and the belts, so the wiki leaves them out. Keyed by the defName of the gene, trait or weapon trait.
+LEGACY = {"AG_CorrosiveGlands", "AG_HypermetabolicGlands", "AG_PainDebt", "AG_WeaponArc", "AG_WeaponResonance"}
 MOD_NAMES = {
     "Ludeon.RimWorld.Biotech": "Biotech DLC",
     "Ludeon.RimWorld.Royalty": "Royalty DLC",
@@ -272,6 +275,8 @@ def add_kit(kind, name, desc, how, ability_names, source_el):
                  "abilities": [a for a in ability_names], "mods": mods_needed(source_el)})
 
 for tag, name in mod_keys:
+    if name in LEGACY:
+        continue
     el = get(tag, name)
     if tag == "GeneDef" and el.findall("abilities/li"):
         arc = int(text_of(el, "biostatArc") or 0)
