@@ -1,7 +1,7 @@
 # E.G.O. weapons and Corrosion
 
-Design agreed 2026-09-30. The Corrosion core is built (2026-10-02, see Code); no weapon has rules or
-a def yet. The corrosion of Solemn Lament, Mimicry and Paradise Lost changed 2026-10-02 (see the
+Design agreed 2026-09-30. The Corrosion core is built (2026-10-02, see Code); Magic Bullet has its
+rules and def (2026-10-02, see Weapon 1, Built); the other three have pictures only. The corrosion of Solemn Lament, Mimicry and Paradise Lost changed 2026-10-02 (see the
 balance test under Rule 2). Post-v1 (the 2026-10-20 list is full). Source: Project Moon
 (Lobotomy Corporation, Library of Ruina, Limbus Company). Every number below is a placeholder and,
 when built, an XML field on the weapon's `CompProperties_EgoWeapon`, never a C# constant.
@@ -121,7 +121,7 @@ Built 2026-10-02 in `Source/RimArt/Ego/Kit/`:
 | `JobDriver_EgoOverclock.cs` | the Overclock job and `Command_EgoOverclock` |
 | `MapComponent_EgoCorrosion.cs` | calls each weapon's `DrawCorroded` for every corroded or overclocking pawn on the shown map; its tick corrodes the pawns whose roll passed once their burst is over |
 | `Tests_EgoCorrosion.cs` | `-rimarttest=ego`: bands and requirement, a burst corrodes (after its last shot) and the state fires at the nearest pawn then exhausts, going down ends it, the weapon leaving the hands ends it and Corrode never replaces a state, Overclock aims only at hostiles in range, never rolls (even when the action rolls itself), pays mood, and at three memories renews the oldest |
-| `Ego<Weapon>Corrosion.cs` (per weapon, not written) | the action and the look |
+| `Ego<Weapon>Corrosion.cs` (per weapon; Magic Bullet's written) | the action and the look |
 
 Defs: `AG_EgoCorroded` (MentalStateDefs/AG_Ego_MentalStates.xml), `AG_EgoExhausted`, `AG_EgoOverclocked`,
 `AG_EgoCorrodedHold`, `AG_EgoOverclock`, and the think node in `1.6/Patches/AG_Ego_ThinkTree.xml`.
@@ -202,6 +202,46 @@ Picture: a black streak through walls, the seventh red. No clips.
 
 Overlap: none. Bank Shot is ricochet, Coil and Frost are damage types. Nothing here has a shot
 that ignores line of sight or a weapon that turns on its owner.
+
+### Built
+
+Rules and def 2026-10-02 (`AG_EgoMagicBullet` in `1.6/Defs/ThingDefs/AG_Ego_Things.xml`, code in
+`Ego/Kit/`). Not played; game tests `-rimarttest=ego: magic bullet` written, not run yet.
+
+| File | What |
+|---|---|
+| `CompEgoMagicBullet.cs` | `CompProperties_EgoMagicBullet` (`seventhDamage`, `seventhCooldown`, `actionAim`), the count on the gun (saved with it), and the counter in the command bar |
+| `EgoMagicBullet.cs` | `Beloved` (the seventh's target), `Crosses` / `Crossed` (who the line hits), `Walls` (holes for the picture), `Hit` |
+| `Verb_EgoMagicBullet.cs` | Core's shooting verb with the projectile replaced by the line; unavailable while the gun rests |
+| `EgoMagicBulletCast.cs`, `GameComponent_EgoMagicBullet.cs` | one shot from its aim to the end of its picture; the tick and the draw |
+| `EgoMagicBulletCorrosion.cs` | the corroded action and the held look between shots |
+| `Patches_EgoMagicBullet.cs` | `HeldWeaponHide` while the picture draws the rifle |
+| `Tests_EgoMagicBullet.cs` | the line through a wall, the seventh to the lover, its fallbacks, the count on the gun, corroded and Overclock |
+
+The texture (`Textures/RimArt/Ego/MagicBullet.png`, from `make_ego_textures.py`) is the picture's
+rifle part for part, at the size the picture draws it, with a 1 px outline.
+
+Settled while building:
+
+- The line's range is the verb's `range` (40) and a shot's damage is the round's
+  (`AG_EgoMagicBullet_Round`, 18, armour penetration 0.3), so the info card shows them. The round is
+  never spawned. Warmup 1.5 s, cooldown 2 s.
+- The line runs from the shooter's cell centre through the target's centre. It hits every pawn whose
+  cell it passes through (a corner graze does not count), downed pawns included, nearest first. All
+  damage lands on the shot's tick; the picture's bullet takes 0.33 s to cross 40 cells.
+- The seventh's line ends at the beloved: pawns behind them are not hit. With nobody (no other
+  person above 0, no bonded animal) it hits the shooter. A tie at the top goes to a bonded animal if
+  there is one, else to the nearest of the tied.
+- The seventh can be fired by a corroded gun: corroded firings count. Overclock does not count and
+  never fires the seventh, so its "allies are never hit" holds; its lines pass through non-hostiles.
+- The 20 s rest after the seventh stops everything: shots, corroded firings and Overclock.
+- On six the counter names the seventh's target, and a selected wielder shows a red line to them.
+  While aiming, the verb draws the line the shot will take.
+- A corroded or Overclock firing aims 0.45 s (`actionAim`) before it goes off, so the picture's aim
+  plays. Shots in flight are not saved: a save in the 3 s of a picture loses the picture.
+
+Not built: the hunter's coat and hat, the longer rifle and the smoke (the picture's corroded look
+is the contract circle, veins and eyes). How a colony gets the gun is open (see Open).
 
 ## Weapon 2: Solemn Lament
 
@@ -425,6 +465,8 @@ this page.
 
 ## Open
 
+- How a colony gets an E.G.O. weapon. None can be made, bought or found yet; tests and the debug
+  spawner are the only way.
 - All numbers, after a balance pass against Bank Shot, Coil and Samehada in game.
 - Whether `useMood` is needed (see Left out on purpose).
 - Whether a corroded pawn should be attackable by colonists without a hostility prompt, as Berserk
