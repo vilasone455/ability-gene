@@ -234,7 +234,7 @@ namespace RimArt
         {
             if (caster == null || !caster.Spawned || (Fired && caster.Map != home)) return;
             Map map = caster.Map;
-            float s = UbwClock.Since(startTick);
+            float s = PictureClock.Since(startTick);
             CompProperties_LastPrismFire p = Props;
             CompLastPrism comp = Comp;
             if (walls == null) walls = (from, radians, max) => Reach(caster?.Map, from, radians, max);

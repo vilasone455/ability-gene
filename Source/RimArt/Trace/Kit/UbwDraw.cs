@@ -192,10 +192,10 @@ namespace RimArt
                 UbwXZ hand = XZ(hand2), start = XZ(f.start);
                 var from3 = new UbwV3(f.start.x, T.DrawHeight, f.start.y);
                 var to3 = new UbwV3(hand.X, T.HandHeight, hand.Z);
-                float length = (hand2 - f.start).magnitude, flying = UbwClock.Since(f.flying);
-                double t = UbwClock.Since(f.launch), sinceOrder = UbwClock.Since(f.order);
+                float length = (hand2 - f.start).magnitude, flying = PictureClock.Since(f.flying);
+                double t = PictureClock.Since(f.launch), sinceOrder = PictureClock.Since(f.order);
 
-                float lane = open ? VfxMath.Smooth((float)sinceOrder / 0.1f) : 1f - VfxMath.Smooth(UbwClock.Since(f.ended) / 0.25f);
+                float lane = open ? VfxMath.Smooth((float)sinceOrder / 0.1f) : 1f - VfxMath.Smooth(PictureClock.Since(f.ended) / 0.25f);
                 UbwCommandGraphics.Lane(k, start, hand, sw.W.Length * sw.W.Image * sw.Size / 2, lane);
                 if (t < 0.15)
                 {
@@ -207,10 +207,10 @@ namespace RimArt
                     if (t < 0) UbwCommandGraphics.Standing(k, key, sw);
                     else UbwCommandGraphics.Drawing(k, key, sw, t, from3, to3, Share(flying, speed, length), lag => Share(flying - (float)lag, speed, length));
                 }
-                else if (f.caught) UbwCommandGraphics.Caught(k, hand, UbwClock.Since(f.ended));
-                else UbwCommandGraphics.Shatter(k, key, T.Spinning(sw, from3, to3, 1, flying), UbwClock.Since(f.ended) / T.Shatter, sw.Seed, VfxDraw.Overhead + 0.01f);
+                else if (f.caught) UbwCommandGraphics.Caught(k, hand, PictureClock.Since(f.ended));
+                else UbwCommandGraphics.Shatter(k, key, T.Spinning(sw, from3, to3, 1, flying), PictureClock.Since(f.ended) / T.Shatter, sw.Seed, VfxDraw.Overhead + 0.01f);
                 if (f.lastCut != int.MinValue)
-                    UbwCommandGraphics.Spark(k, new UbwV3(f.lastCutAt.x, T.HitHeight + 0.1, f.lastCutAt.y), UbwClock.Since(f.lastCut), 0.15, 0.34f, Color.white);
+                    UbwCommandGraphics.Spark(k, new UbwV3(f.lastCutAt.x, T.HitHeight + 0.1, f.lastCutAt.y), PictureClock.Since(f.lastCut), 0.15, 0.34f, Color.white);
             }
         }
 

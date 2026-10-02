@@ -120,7 +120,7 @@ namespace RimArt
                 }
                 if (pawn.Map != map) continue;
                 float total = Mathf.Max(1, now - stance.startedTick + stance.ticksLeft) / 60f;
-                float s = Open.CastAt + Open.Warm * Mathf.Clamp01(UbwClock.Since(stance.startedTick) / total);
+                float s = Open.CastAt + Open.Warm * Mathf.Clamp01(PictureClock.Since(stance.startedTick) / total);
                 Vector3 at = pawn.DrawPos;
                 UnlimitedVoidOpenGraphics.Draw(new Vector2(at.x, at.z), Mathf.Min(s, Open.OpenAt - 0.001f), map);
             }

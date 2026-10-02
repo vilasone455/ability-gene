@@ -36,8 +36,8 @@ namespace RimArt
         /// <summary>The picture's clock for this cast now, or below 0 when nothing is to be drawn.</summary>
         public static float Seconds(GravityCast cast)
         {
-            if (cast.Active) return T.FullAt - cast.Props.openingSeconds + UbwClock.Since(cast.startTick);
-            if (cast.clock.imploded && cast.endTick >= 0) return T.BurstAt(Hold(cast)) + UbwClock.Since(cast.endTick);
+            if (cast.Active) return T.FullAt - cast.Props.openingSeconds + PictureClock.Since(cast.startTick);
+            if (cast.clock.imploded && cast.endTick >= 0) return T.BurstAt(Hold(cast)) + PictureClock.Since(cast.endTick);
             return -1f;
         }
 

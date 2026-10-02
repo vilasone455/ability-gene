@@ -52,7 +52,7 @@ fires. Shirou's upkeep is 12 charge an hour while manifested.
    removed. On the home map the fire runs back in along the lines and its white peaks on the same tick.
 
 Both sides run on game time, so pausing stops them; the pictures move smoothly between ticks
-(`UbwClock`). Saving and loading keeps a cast at any step (the game component saves the casts; the world
+(`PictureClock`). Saving and loading keeps a cast at any step (the game component saves the casts; the world
 map saves its own clock).
 
 ## The commands

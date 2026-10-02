@@ -40,7 +40,7 @@ namespace RimArt
         public bool TraceOn => def == TraceDefOf.AG_Trace_On;
         public bool Fired => fireTick >= 0;
         public float LitAt => lead + cast;
-        public float Seconds => UbwClock.Since(startTick);
+        public float Seconds => PictureClock.Since(startTick);
 
         public void MarkFired(int now)
         {

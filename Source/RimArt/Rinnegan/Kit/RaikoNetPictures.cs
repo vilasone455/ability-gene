@@ -43,7 +43,7 @@ namespace RimArt
                 Pawn pawn = pawns[i];
                 if (!(pawn.stances?.curStance is Stance_Warmup warmup) || !(warmup.verb is Verb_CastAbility cast)
                     || cast.ability?.def != SasukeDefOf.AG_SasukeRaikoKusari) continue;
-                float age = UbwClock.Since(warmup.startedTick);
+                float age = PictureClock.Since(warmup.startedTick);
                 Vector2 caster = At(pawn.DrawPos);
                 G.Charge(T.Hand(caster, Aim(pawn, rinnegan)), caster, age, T.Charge, age);
             }
@@ -66,7 +66,7 @@ namespace RimArt
             for (int i = ended.Count - 1; i >= 0; i--)
             {
                 RaikoNet net = ended[i];
-                if (net.endedTick < 0 || Find.Maps.IndexOf(net.map) < 0 || UbwClock.Since(net.endedTick) > Linger(net))
+                if (net.endedTick < 0 || Find.Maps.IndexOf(net.map) < 0 || PictureClock.Since(net.endedTick) > Linger(net))
                 {
                     ended.RemoveAt(i);
                     continue;
@@ -103,7 +103,7 @@ namespace RimArt
         {
             int count = net.corners.Count, links = net.LinkCount;
             if (count < 2 || links <= 0) return;
-            float age = UbwClock.Since(net.startTick), clock = age + T.Charge;
+            float age = PictureClock.Since(net.startTick), clock = age + T.Charge;
             float netEnd = net.endedTick >= 0 ? (net.endedTick - net.startTick) / 60f : float.PositiveInfinity;
 
             var grounds = new Vector2[count];
@@ -187,7 +187,7 @@ namespace RimArt
             }
 
             // Caught pawns: the crackle while held and fading after, the scorch under them.
-            float sinceEnd = net.endedTick >= 0 ? UbwClock.Since(net.endedTick) : -1f;
+            float sinceEnd = net.endedTick >= 0 ? PictureClock.Since(net.endedTick) : -1f;
             float scorchAlpha = sinceEnd < ScorchStay ? 1f : 1f - Mathf.Clamp01((sinceEnd - ScorchStay) / ScorchFade);
             int mechTicks = SasukeKit.NetProps.mechStunTicks;
             for (int p = 0; p < net.caught.Count && p < net.caughtTicks.Count; p++)
@@ -197,7 +197,7 @@ namespace RimArt
                 if (p < net.caughtAt.Count) G.Scorch(At(net.caughtAt[p]), Mathf.Min(age, netEnd) - caughtAt, scorchAlpha);
                 if (pawn == null || !pawn.Spawned || pawn.Map != net.map) continue;
                 Vector2 at = At(pawn.DrawPos);
-                if (sinceEnd < T.FadeOut) G.Caught(at, UbwClock.Since(net.caughtTicks[p]), sinceEnd, pawn.thingIDNumber % 97, clock);
+                if (sinceEnd < T.FadeOut) G.Caught(at, PictureClock.Since(net.caughtTicks[p]), sinceEnd, pawn.thingIDNumber % 97, clock);
                 if (sinceEnd >= 0f && pawn.RaceProps.IsMechanoid && sinceEnd < mechTicks / 60f) G.Emp(at, sinceEnd, clock);
             }
         }
@@ -208,7 +208,7 @@ namespace RimArt
         public static void DrawFlights(Map map, GameComponent_Rinnegan rinnegan)
         {
             IReadOnlyList<FlyingOn> flying = rinnegan.Flying;
-            float clock = UbwClock.Since(0);
+            float clock = PictureClock.Since(0);
             for (int i = 0; i < flying.Count; i++)
             {
                 FlyingOn f = flying[i];

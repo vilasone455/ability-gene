@@ -79,7 +79,7 @@ namespace RimArt
     /// Unlimited Void on its own pocket map: draws the inside picture (<see cref="UnlimitedVoidInsideGraphics"/>)
     /// as the map's look at <see cref="VoidLayers.Pocket"/>, over the terrain and under everything on it, round
     /// the middle where Gojo lands; plays the camera push the cast started; and draws the spared pawns' blue ring.
-    /// The clock is game time since the take (<see cref="UbwClock"/>), so it stops when the game is paused; the
+    /// The clock is game time since the take (<see cref="PictureClock"/>), so it stops when the game is paused; the
     /// collapse starts when the cast ends the domain. Every map has one of these (vanilla makes every
     /// MapComponent everywhere); it does nothing unless its map is a void and the map on screen.
     /// </summary>
@@ -101,7 +101,7 @@ namespace RimArt
             float s, hold = float.PositiveInfinity;
             if (cast != null && cast.takeTick >= 0)
             {
-                s = UbwClock.Since(cast.takeTick);
+                s = PictureClock.Since(cast.takeTick);
                 if (cast.endTick >= 0) hold = (cast.endTick - cast.takeTick) / 60f;
             }
             else s = seconds += Time.unscaledDeltaTime;
@@ -130,7 +130,7 @@ namespace RimArt
                 if (!t.Spared || t.pawn == null || !t.pawn.Spawned || t.pawn.Map != map) continue;
                 Vector3 at = t.pawn.DrawPos;
                 var pos = new Vector2(at.x, at.z);
-                float age = UbwClock.Since(t.sparedTick);
+                float age = PictureClock.Since(t.sparedTick);
                 if (age < 0.5f)
                 {
                     float f = age / 0.5f;

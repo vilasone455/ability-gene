@@ -209,7 +209,7 @@ namespace RimArt
                 Pawn pawn = holderList[i];
                 if (!pawn.Spawned || pawn.Map != map || drawn.Contains(pawn) || !PawnRenderUtility.CarryWeaponOpenly(pawn)) continue;
                 CompLastPrism comp = CompLastPrism.HeldBy(pawn);
-                if (comp != null) DrawIdle(pawn, comp, map, UbwClock.Since(clockBase));
+                if (comp != null) DrawIdle(pawn, comp, map, PictureClock.Since(clockBase));
             }
         }
 

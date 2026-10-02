@@ -20,7 +20,7 @@ namespace RimArt
     /// is the map on screen.
     ///
     /// A world the ability made is <see cref="driven"/>: its clock is game time since everyone was taken
-    /// (<see cref="UbwClock"/>), so it stops when the game is paused and keeps step with the home map's ring,
+    /// (<see cref="PictureClock"/>), so it stops when the game is paused and keeps step with the home map's ring,
     /// the close is set by the cast (<see cref="CloseAt"/>), and the cast, not this, moves everyone home and
     /// removes the map.
     /// </summary>
@@ -74,7 +74,7 @@ namespace RimArt
         /// <summary>The reveal shot sets the world's clock to its own world time (seconds); the clock goes on from there.</summary>
         public void RevealAt(float worldSeconds)
         {
-            offset = worldSeconds - (driven && takenTick >= 0 ? UbwClock.Since(takenTick) : 0f);
+            offset = worldSeconds - (driven && takenTick >= 0 ? PictureClock.Since(takenTick) : 0f);
             shaken = true;
         }
 
@@ -211,7 +211,7 @@ namespace RimArt
         public override void MapComponentUpdate()
         {
             if (!world || Find.CurrentMap != map) return;
-            if (driven) seconds = (takenTick < 0 ? 0f : UbwClock.Since(takenTick)) + offset;
+            if (driven) seconds = (takenTick < 0 ? 0f : PictureClock.Since(takenTick)) + offset;
             else seconds += Time.unscaledDeltaTime;
             if (!shaken && seconds >= UbwWorldTiming.Start)
             {

@@ -330,7 +330,7 @@ namespace RimArt
         public override void Draw()
         {
             if (broken || channelTick < 0 || home == null) return;
-            float s = T.Lead + UbwClock.Since(channelTick);
+            float s = T.Lead + PictureClock.Since(channelTick);
             for (int i = 0; i < lenderPos.Length; i++)
             {
                 Pawn p = stintPawns[i];

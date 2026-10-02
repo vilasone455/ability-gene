@@ -387,7 +387,7 @@ namespace RimArt
             var o = new Vector2(centre.x + 0.5f, centre.z + 0.5f);
             if (returnTick >= 0)
             {
-                float age = UbwClock.Since(returnTick);
+                float age = PictureClock.Since(returnTick);
                 UnlimitedVoidOpenGraphics.Draw(o, Open.BurstAt + age, home);
                 if (whiteHome) GojoGraphics.WhiteView(1f - VfxMath.Smooth(age / ReturnWhite));
                 if (!shookBurst && age >= Open.BurstShakeDelay)
@@ -401,9 +401,9 @@ namespace RimArt
             {
                 // Only as the barrier closes: a player who looks at the home map later gets no shake.
                 shookOpen = true;
-                if (UbwClock.Since(applyTick) < ShakeLate) Find.CameraDriver.shaker.DoShake(Open.OpenShake);
+                if (PictureClock.Since(applyTick) < ShakeLate) Find.CameraDriver.shaker.DoShake(Open.OpenShake);
             }
-            float s = Open.OpenAt + UbwClock.Since(applyTick);
+            float s = Open.OpenAt + PictureClock.Since(applyTick);
             // Past the picture's own hang (and its fading ring) the ball is drawn on its own for as long as the domain stands.
             if (s < Open.HangAt + Open.HangFor * 0.5f) UnlimitedVoidOpenGraphics.Draw(o, s, home);
             else if (VfxDraw.Shown(o, home))

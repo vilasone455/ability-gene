@@ -484,7 +484,7 @@ namespace RimArt
 
         private void Draw(ShovePlan plan)
         {
-            float s = UbwClock.Since(plan.startTick);
+            float s = PictureClock.Since(plan.startTick);
             Vector3 origin = plan.start.ToVector3Shifted();
             Vector2 start = Ground(origin);
             float face = 0f, stop = plan.travel;
@@ -539,7 +539,7 @@ namespace RimArt
             for (int i = hits.Count - 1; i >= 0; i--)
             {
                 Hit hit = hits[i];
-                float age = UbwClock.Since(hit.tick);
+                float age = PictureClock.Since(hit.tick);
                 if (age > VectorShove.Window || hit.accelerator == null || !hit.accelerator.Spawned || hit.accelerator.Map != map)
                 {
                     if (now - hit.tick > 120) hits.RemoveAt(i);
