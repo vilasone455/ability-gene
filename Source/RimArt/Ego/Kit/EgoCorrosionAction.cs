@@ -17,6 +17,23 @@ namespace RimArt
         public virtual bool TakesTarget => true;
 
         /// <summary>
+        /// True when the corroded wielder walks to the nearest living pawn of any faction, downed ones included, and stays
+        /// next to it (<see cref="JobDriver_EgoCorrodedWalk"/>): Solemn Lament's coffin, Mimicry. False holds the cell.
+        /// Overclock never walks.
+        /// </summary>
+        public virtual bool WalksToNearest => false;
+
+        /// <summary>The corrosion (<paramref name="overclock"/> false) or an Overclock starts: before its first firing.</summary>
+        public virtual void Begin(Pawn wielder, CompEgoWeapon weapon, bool overclock)
+        {
+        }
+
+        /// <summary>The corrosion or the Overclock is over, however it ended (time, downed, the weapon dropped, cancelled).</summary>
+        public virtual void End(Pawn wielder, CompEgoWeapon weapon, bool overclock)
+        {
+        }
+
+        /// <summary>
         /// One firing. <paramref name="target"/> is the nearest living pawn of any faction while corroded, the nearest
         /// hostile within overclockRange while overclocking, and null when <see cref="TakesTarget"/> is false. With
         /// <paramref name="hostilesOnly"/> (Overclock) an area action must skip every pawn not hostile to the wielder.

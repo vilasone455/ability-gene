@@ -17,6 +17,8 @@ namespace RimArt
         private int fired;
         private int nextFireTick;
         private int channelStartTick;
+        /// <summary>The channel started, so the action's End is owed when the job finishes.</summary>
+        private bool began;
 
         public int Fired => fired;
 
@@ -42,6 +44,9 @@ namespace RimArt
                 pawn.pather.StopDead();
                 channelStartTick = Find.TickManager.TicksGame;
                 nextFireTick = channelStartTick;
+                CompEgoWeapon weapon = Weapon;
+                weapon?.Props.Action.Begin(pawn, weapon, overclock: true);
+                began = true;
             };
             channel.tickAction = () =>
             {
@@ -61,8 +66,9 @@ namespace RimArt
             channel.defaultCompleteMode = ToilCompleteMode.Never;
             AddFinishAction(condition =>
             {
-                CompProperties_EgoWeapon props = (Ordered ?? Weapon)?.Props;
-                if (fired > 0 && props != null) EgoCorrosion.PayOverclock(pawn, props);
+                CompEgoWeapon weapon = Ordered ?? Weapon;
+                if (began && weapon != null) weapon.Props.Action.End(pawn, weapon, overclock: true);
+                if (fired > 0 && weapon != null) EgoCorrosion.PayOverclock(pawn, weapon.Props);
             });
             yield return channel;
         }
@@ -73,6 +79,7 @@ namespace RimArt
             Scribe_Values.Look(ref fired, "fired");
             Scribe_Values.Look(ref nextFireTick, "nextFireTick");
             Scribe_Values.Look(ref channelStartTick, "channelStartTick");
+            Scribe_Values.Look(ref began, "began");
         }
     }
 

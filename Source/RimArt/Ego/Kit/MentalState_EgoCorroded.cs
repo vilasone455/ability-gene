@@ -40,6 +40,13 @@ namespace RimArt
             nextFireTick = startTick + starting.Props.IntervalTicks;
         }
 
+        public override void PostStart(string reason)
+        {
+            base.PostStart(reason);
+            CompEgoWeapon comp = Comp;
+            comp?.Props.Action.Begin(pawn, comp, overclock: false);
+        }
+
         public override void MentalStateTick(int delta)
         {
             base.MentalStateTick(delta);
@@ -59,7 +66,9 @@ namespace RimArt
         {
             base.PostEnd();
             CompEgoWeapon comp = Comp;
-            if (!pawn.Dead && comp != null) EgoCorrosion.Exhaust(pawn, comp.Props.exhaustionHours);
+            if (comp == null) return;
+            comp.Props.Action.End(pawn, comp, overclock: false);
+            if (!pawn.Dead) EgoCorrosion.Exhaust(pawn, comp.Props.exhaustionHours);
         }
 
         public override string InspectLine
@@ -83,11 +92,30 @@ namespace RimArt
         }
     }
 
-    /// <summary>The corroded pawn's only job: stand. The firing belongs to the state.</summary>
+    /// <summary>
+    /// The corroded pawn's job: stand, or with a weapon whose action <see cref="EgoCorrosionAction.WalksToNearest"/>, walk
+    /// to the nearest living pawn of any faction (downed ones too) and stand next to it. The firing belongs to the state.
+    /// </summary>
     public class JobGiver_EgoCorroded : ThinkNode_JobGiver
     {
-        protected override Job TryGiveJob(Pawn pawn) =>
-            pawn.MentalState is MentalState_EgoCorroded ? JobMaker.MakeJob(EgoDefOf.AG_EgoCorrodedHold) : null;
+        protected override Job TryGiveJob(Pawn pawn)
+        {
+            if (!(pawn.MentalState is MentalState_EgoCorroded state)) return null;
+            if (state.Comp?.Props.Action.WalksToNearest == true)
+            {
+                Pawn nearest = EgoCorrosion.Nearest(pawn);
+                if (nearest != null && !pawn.Position.AdjacentTo8WayOrInside(nearest.Position)
+                    && pawn.CanReach(nearest, PathEndMode.Touch, Danger.Deadly))
+                {
+                    Job walk = JobMaker.MakeJob(EgoDefOf.AG_EgoCorrodedWalk, nearest);
+                    // Asked again every second, so the walk turns to whoever is nearest now.
+                    walk.expiryInterval = 60;
+                    walk.checkOverrideOnExpire = true;
+                    return walk;
+                }
+            }
+            return JobMaker.MakeJob(EgoDefOf.AG_EgoCorrodedHold);
+        }
     }
 
     /// <summary>
@@ -106,6 +134,29 @@ namespace RimArt
             hold.defaultDuration = 120;
             hold.handlingFacing = true;
             yield return hold;
+        }
+    }
+
+    /// <summary>
+    /// Walks to the pawn in job.targetA until touching it. Not vanilla Goto, which ends on the target's cell. A walking
+    /// pawn that steps next to its target holds the next time the think tree asks (<see cref="JobGiver_EgoCorroded"/>);
+    /// the job expires every second so the target can change. The hold job's stand stops the pawn there.
+    /// </summary>
+    public class JobDriver_EgoCorrodedWalk : JobDriver
+    {
+        public override bool TryMakePreToilReservations(bool errorOnFailed) => true;
+
+        /// <summary>
+        /// A new walk from the think tree replaces this one only when it goes to another pawn. On expiry the game keeps the
+        /// current job when the new one has the same def, comes from the same job giver and this returns true (the default),
+        /// so without it the pawn would walk on to the first pawn it picked.
+        /// </summary>
+        public override bool IsContinuation(Job j) => j.targetA == job.targetA;
+
+        protected override IEnumerable<Toil> MakeNewToils()
+        {
+            this.FailOnDespawnedOrNull(TargetIndex.A);
+            yield return Toils_Goto.GotoThing(TargetIndex.A, PathEndMode.Touch);
         }
     }
 }

@@ -124,7 +124,8 @@ namespace RimArt
             }
         }
 
-        private static bool Ready(int i, float at, List<int> slots, List<float> times, List<float> flys)
+        /// <summary>Whether cloud butterfly <paramref name="i"/> is circling at <paramref name="at"/>: out of the coffin, and its last refill landed DiveRest s ago.</summary>
+        internal static bool Ready(int i, float at, List<int> slots, List<float> times, List<float> flys)
         {
             if (EgoSolemnLamentTiming.CloudOut(i) + EgoSolemnLamentTiming.CloudFly(i) > at) return false;
             for (int d = 0; d < slots.Count; d++)

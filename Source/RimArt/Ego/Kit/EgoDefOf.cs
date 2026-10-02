@@ -11,7 +11,10 @@ namespace RimArt
         public static ThoughtDef AG_EgoOverclocked;
         public static JobDef AG_EgoCorrodedHold;
         public static JobDef AG_EgoOverclock;
+        public static JobDef AG_EgoCorrodedWalk;
         public static ThingDef AG_EgoMagicBullet;
+        public static ThingDef AG_EgoSolemnLament;
+        public static HediffDef AG_EgoButterfly;
 
         static EgoDefOf()
         {

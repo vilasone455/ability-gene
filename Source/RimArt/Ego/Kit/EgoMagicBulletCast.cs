@@ -161,8 +161,8 @@ namespace RimArt
             }
 
             for (int i = 0; i < victims.Count; i++)
-                if (!victims[i].Dead) EgoMagicBullet.Hit(shooter, weapon, round, victims[i], intended, amount, dir);
-            if (struck != null && !struck.Destroyed) EgoMagicBullet.Hit(shooter, weapon, round, struck, struck, amount, dir);
+                if (!victims[i].Dead) EgoRound.Hit(shooter, weapon, round, victims[i], intended, amount, dir);
+            if (struck != null && !struck.Destroyed) EgoRound.Hit(shooter, weapon, round, struck, struck, amount, dir);
             if (Counts) gun.Counted(seventh);
             // A shot the player ordered gets the verb's sound from Core; an action's firing has no verb use.
             if (verb == null && shooter.Spawned) gun.PrimaryVerb.verbProps.soundCast?.PlayOneShot(new TargetInfo(shooter.Position, map));
