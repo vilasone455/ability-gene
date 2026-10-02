@@ -1,7 +1,8 @@
 # E.G.O. weapons and Corrosion
 
 Design agreed 2026-09-30. The Corrosion core is built (2026-10-02, see Code); no weapon has rules or
-a def yet. Post-v1 (the 2026-10-20 list is full). Source: Project Moon
+a def yet. The corrosion of Solemn Lament, Mimicry and Paradise Lost changed 2026-10-02 (see the
+balance test under Rule 2). Post-v1 (the 2026-10-20 list is full). Source: Project Moon
 (Lobotomy Corporation, Library of Ruina, Limbus Company). Every number below is a placeholder and,
 when built, an XML field on the weapon's `CompProperties_EgoWeapon`, never a C# constant.
 
@@ -54,6 +55,9 @@ A `MentalStateDef` (`AG_EgoCorroded`), the same system as Berserk, so the game h
 orders" and shows it on the pawn.
 
 - Control: ignores orders, drafting, jobs. Faction, stats, gear, relations, skills are unchanged.
+- Movement: the pawn holds its cell, unless the weapon's action says it walks. A walking pawn goes
+  to the nearest living pawn of any faction and stays next to it (Solemn Lament, Mimicry). Overclock
+  never walks: the player starts it where the hostiles are.
 - Every `corrodedInterval` the weapon's corrosion action fires at the nearest living pawn on the
   map, any faction. Nearest, not enemy: a raider, a friend, the dog.
 - Any per-weapon counter (Magic Bullet's seven) keeps running while corroded.
@@ -63,6 +67,20 @@ orders" and shows it on the pawn.
   consequence; no extra thought.
 - Look: the Abnormality bleeds through, drawn over the pawn as VFX quads, the Vergil pose trick.
   Each weapon supplies its own. No Melee Animation clips.
+
+Balance test (2026-10-02): moving everyone out of reach must not be a free answer to a corrosion.
+Each one has to cost the colony something when it gets away from it.
+
+| Weapon | Why stepping away does not end it | What getting away costs |
+|---|---|---|
+| Magic Bullet | the line reaches 40 cells through walls | nothing gets away; down the wielder or take the hits |
+| Solemn Lament | the cloud walks with the wielder | outrunning it, carrying the downed out through it, or downing the wielder |
+| Mimicry | the wielder hunts the nearest pawn | shooting your own colonist (each hit shrinks the arm) or downing them |
+| Paradise Lost | the ring grows 3 cells per firing | clearing most of a base, carrying out everyone who cannot walk, or downing your best shooter |
+
+Before the change, the other three held still with a reach of 3 to 6 cells and were answered by
+drafting everyone a few cells away; Solemn Lament's could not kill and Mimicry's mostly hit the
+enemy it was already fighting.
 
 ### Rule 3, Overclock
 
@@ -78,6 +96,7 @@ hostiles in range is empty.
 
 - The corrosion action: what one firing of the corroded weapon is (`IEgoCorrosionAction.Fire(pawn,
   target)`), and whether it takes a target at all (Solemn Lament's is an area on the pawn).
+- Whether the corroded pawn holds or walks to the nearest pawn.
 - The look: what draws over the pawn while corroded.
 - Its own numbers for the three rules. A WAW gun and an ALEPH sword do not corrode the same.
 
@@ -129,6 +148,11 @@ Settled while building:
 - Overclock aims at hostiles that are not downed; Corrosion aims at the nearest pawn including downed
   ones.
 - A weapon whose attack does not go through a vanilla verb calls `EgoCorrosion.Roll` itself.
+
+Not built yet (2026-10-02), the walk: `EgoCorrosionAction` gets `WalksToNearest` (default false,
+hold). When true, `JobGiver_EgoCorroded` gives a job that goes to the nearest living pawn of any
+faction and stays next to it, instead of `AG_EgoCorrodedHold`. The firing stays in the state. One
+hook for Solemn Lament and Mimicry; Magic Bullet and Paradise Lost keep the hold.
 
 Class names start with `Ego` (`EgoMimicry`, not `Mimicry`): `AG_Mimic` is already Vergil's decoy.
 
@@ -197,17 +221,41 @@ Source, checked 2026-09-30:
 | Rule | Mechanic | Placeholder | XML field |
 |---|---|---|---|
 | The pair | One weapon item that draws two guns and alternates its own shots. White shot: no body damage, Butterfly stacks. Black shot: damage plus one stack. | range 10, black 9 dmg, white 2 stacks, black 1 stack, 0.25 s between shots | `range`, `blackDamage`, `whiteStacks`, `blackStacks`, `shotInterval` |
-| Butterfly | A stacking hediff. Each stack lowers consciousness. At the cap the pawn goes down covered in butterflies. Stacks fade. | cap 10, -8 % consciousness per stack, -1 stack per 10 s | `butterflyCap`, `butterflyConsciousness`, `butterflyFade` |
+| Butterfly | A stacking hediff. Each stack lowers consciousness. At the cap the pawn goes down covered in butterflies. Stacks fade. The guns never push past the cap, so they never kill; only the corroded coffin does (see Corrosion). | cap 10, -7.5 % consciousness per stack, -1 stack per 10 s | `butterflyCap`, `butterflyConsciousness`, `butterflyFade` |
+
+The game downs a pawn under 30 % consciousness (`PawnCapacitiesHandler.CanBeAwake`). At -7.5 % an
+unhurt pawn goes down at 10 stacks (25 %) and stands at 9 (32.5 %), so the cap is the down point.
+At the first placeholder, -8 %, it went down at 9 and the cap never mattered. A pawn already hurt
+goes down sooner.
 | Ammo | A pool, reload on empty. | 20 shots, reload 3 s | `ammo`, `reloadSeconds` |
 
 No dual-wield mod dependency. The alternating fire is the weapon's own rule. If a dual-wield mod
 is loaded the item can be flagged one-handed so it pairs; that is a compat line, not the design.
 
-Corrosion: bands 25 / 75 / 100, requirement Shooting 4, duration 15 s, interval 1 s, exhaustion
-2 h. Action: the coffin. A butterfly cloud on the corroded pawn; every pawn within radius 3 takes
-1 stack per second. No target: it is an area, so the nearest rule does not apply. Overclock: the
-coffin for 5 s at hostiles only (allies inside the radius are skipped), mood -15 for 1 day.
-Look: a monochrome butterfly over the head, the Abnormality's face.
+Corrosion: bands 25 / 75 / 100, requirement Shooting 4, duration 30 s, interval 1 s, exhaustion
+2 h. Action: the coffin. A butterfly cloud on the corroded pawn; every other pawn within radius 3
+takes 1 stack per second. The wielder takes none, or they would go down at 10 s and end the state.
+The action takes no target, but the pawn walks: it goes to the nearest pawn of any faction and the
+cloud goes with it.
+
+The funeral: a pawn already down inside the cloud keeps taking stacks past the cap, and at 20
+stacks it dies covered in butterflies (Lobotomy: killed employees are covered in butterflies before
+they fall). A pawn caught from the start goes down at about 10 s and dies at about 20 s. Carrying
+it out takes a rescuer into the cloud, where the rescuer takes stacks too. Stacks past the cap fade
+like the others once the pawn is out.
+
+| Corrosion field | Placeholder | XML field |
+|---|---|---|
+| Coffin radius | 3 cells | `coffinRadius` |
+| Death | 20 stacks | `funeralStacks` |
+
+Overclock: the coffin for 5 s at hostiles only (allies inside the radius are skipped), mood -15 for
+1 day. It holds still and stays under the cap: at most 5 stacks, so it never downs or kills by
+itself. Look: a monochrome butterfly over the head, the Abnormality's face.
+
+Changed 2026-10-02: the coffin used to stay where the wielder stood, last 15 s and never kill. The
+colony drafted everyone 3 cells away, and the pawns it downed were up again 10 to 20 s after it
+ended. The cloud now walks, lasts 30 s, and kills a downed pawn left in it.
 
 Overlap: none. Nothing in the mod has a stacking non-lethal ranged debuff.
 
@@ -239,14 +287,23 @@ Source, checked 2026-09-30 (Lobotomy) and 2026-10-01 (Ruina, Limbus):
 Corrosion: bands 50 / 100 / 100, requirement Melee 8, duration 40 s, interval 1.5 s, exhaustion
 3 h. Mimicry corrodes hardest because Nothing There is ALEPH; tier shows only here and in
 Paradise Lost, the other ALEPH.
-Action: a swing at the nearest adjacent pawn, a 2-cell lunge if nobody is adjacent. Each hit
+Action: the wielder hunts. It walks to the nearest pawn of any faction, like a Berserk pawn, and
+every 1.5 s swings at it when adjacent, or lunges 2 cells at it when it is within 2 cells. Each hit
 dealt grows the arm a stage; each hit the wielder takes removes one, so the colony can wear it
-down. Overclock: 5 swings at hostiles only, the same arm, mood -20 for 1 day. Look: the arm as
-the Limbus Inquisitors have it, then flesh over the face with one eye and bared teeth.
+down by shooting its own colonist, and downing them ends the state. Nothing There's breach form is
+a fast beast that hunts, so the walk is the source's. Overclock: 5 swings at hostiles only, the
+same arm, mood -20 for 1 day; it holds still like every Overclock, so the player starts it next to
+the hostiles. Look: the arm as the Limbus Inquisitors have it, then flesh over the face with one
+eye and bared teeth.
 
 Changed 2026-10-01: corroded hits used to grow the blade with no reset. Samehada already
 lengthens its blade per hit and heals its holder, so the growth moved to the arm, and hits taken
 take it back.
+
+Changed 2026-10-02: the corroded wielder used to hold its cell and reach about 3 cells (a swing
+plus the lunge). It usually corrodes mid-melee, so it kept hitting the enemy next to it with a
+stronger arm, and drafting colonists 3 cells away answered it. The arm's "hit taken" rule never
+came into play, because nobody had to fight a pawn that stood still. Now it hunts.
 
 Overlap: Samehada on the heal, Vergil on the sword. The arm that takes the wielder and the one
 swollen downswing are what separate it, and both are the mod's identity (code-drawn meshes that
@@ -287,12 +344,22 @@ Source, checked 2026-10-01:
 Corrosion: bands 50 / 100 / 100, requirement Shooting 10, duration 30 s, interval 6 s, exhaustion
 3 h. Action: WhiteNight's ring. No target: every pawn of any faction within the radius of the
 wielder takes armor-ignoring damage, colonists and animals included. Ring hits never give Sanity,
-so the ring cannot pay for itself. Overclock: 3 rings in 6 s, hostiles only, mood -20 for 1 day.
+so the ring cannot pay for itself. The wielder holds its cell (WhiteNight hovers, it does not
+chase), and each ring is 3 cells wider than the one before: 6, 9, 12, 15 cells at 6, 12, 18,
+24 s, and 18 if a fifth fires before the state ends at 30 s. Lobotomy's ring covers the whole
+facility; the growing ring ends up covering most of a base. Overclock: 3 rings in 6 s, hostiles
+only, mood -20 for 1 day. Overclock rings stay at `ringRadius` and do not grow: the growth is the
+cost of losing control.
 
 | Corrosion field | Placeholder | XML field |
 |---|---|---|
-| Ring radius | 6 cells | `ringRadius` |
+| Ring radius (first ring) | 6 cells | `ringRadius` |
+| Ring growth per ring | 3 cells | `ringGrowth` |
 | Ring damage | 12 | `ringDamage` |
+
+Changed 2026-10-02: every ring used to be 6 cells. The first came 6 s after the state started, and
+6 cells is about 1.5 s of walking, so a paused player moved everyone out before it fired. Only pawns
+that cannot walk (downed, asleep, in bed, prisoners, penned animals) were at risk.
 
 Left out: Lobotomy's special (black trail and gold shield; it needs WhiteNight present, and
 Overclock is this set's paid strong mode) and the no-regeneration cost (it balances the HP heal,
@@ -324,7 +391,10 @@ The picture, top-down:
 - Corroded and overclocked: the red thorn star flat on the floor round the wielder, white wings
   open behind the pawn, the gold thorn halo over the head.
 - Each ring: a short white cross flash on the wielder, red spikes shooting out along the floor,
-  the red ring spreading to `ringRadius`. Soft additive layers, the light rule.
+  the red ring spreading to that ring's radius (`ringRadius` plus `ringGrowth` per earlier ring
+  while corroded, `ringRadius` in Overclock). Soft additive layers, the light rule. The C# picture
+  already takes a radius per ring (`EgoParadiseLostRingShot.Radius`); the preview passes the fixed
+  6 cells.
 - No clips, like the other three.
 
 Sound, matched by clip name only, not listened to: Core `psychicpulse` and `psychic_shock_lance`
@@ -361,6 +431,10 @@ this page.
   pawns are.
 - Mimicry: whether the corroded swing skips downed pawns (the sketch skips them, so it does not
   finish them; "nearest living pawn" above does not say).
+- Solemn Lament and Mimicry: whether the walk goes to downed pawns. The shared nearest rule counts
+  them, so the coffin stays on the first pawn it downs and the funeral is certain unless someone
+  carries the pawn out, and the hunter finishes whoever it downs. Walking to the nearest standing
+  pawn spreads the harm and lets the downed live.
 - Mimicry: the grown blade is about 2.4 cells long and lands across 3 cells, but the rule hits one
   pawn. Either keep one target or hit every pawn under the blade.
 - Paradise Lost: RimWorld makes each door its own room, so the hit stops at doors and misses a
