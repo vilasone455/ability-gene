@@ -81,7 +81,8 @@ namespace RimArt
 
         /// <summary>
         /// Once per shot or swing that went off: Verb.TryCastNextBurstShot calls it through ThingWithComps after
-        /// TryCastShot succeeds. A weapon whose attack skips the verb calls <see cref="EgoCorrosion.Roll"/> itself.
+        /// TryCastShot succeeds. A roll that passes corrodes the pawn after the burst, not inside this call. A weapon whose
+        /// attack skips the verb calls <see cref="EgoCorrosion.Roll"/> itself.
         /// </summary>
         public override void Notify_UsedWeapon(Pawn pawn)
         {

@@ -14,6 +14,23 @@ namespace RimArt
     /// </summary>
     public static class EgoCorrosion
     {
+        private struct Pending
+        {
+            public Pawn pawn;
+            public CompEgoWeapon weapon;
+        }
+
+        /// <summary>
+        /// Uses that passed the roll and wait for the pawn's verb to finish its burst (<see cref="Tick"/>). The roll runs
+        /// inside Verb.TryCastNextBurstShot; starting the state there would stop the attack job while the verb goes on
+        /// bursting at the old target and then calls the ended job's castCompleteCallback. Not saved: an entry lives a
+        /// few ticks.
+        /// </summary>
+        private static readonly List<Pending> pending = new List<Pending>();
+
+        /// <summary>True while a weapon's action fires, so a use the action itself makes through the verb never rolls (Overclock, the corroded firing).</summary>
+        private static bool firing;
+
         /// <summary>
         /// The wielder's mood band now: 0 above the minor break threshold, 1 minor to major, 2 major to extreme, 3 below
         /// extreme. The thresholds are the pawn's own, so Neurotic, Sanguine and the like move the risk, and the player can
@@ -53,19 +70,52 @@ namespace RimArt
         }
 
         /// <summary>
-        /// Rule 1, one use of the weapon. A pawn already in a mental state of any kind (corroded, berserk, a False Face)
-        /// does not roll, so the roll never replaces another state.
+        /// Rule 1, one use of the weapon. True when the roll passed; the pawn is then corroded once its verb has finished
+        /// the burst (<see cref="Tick"/>), the same tick for a single shot. A pawn already in a mental state of any kind
+        /// (corroded, berserk, a False Face) does not roll, and neither does a use the weapon's own action makes.
         /// </summary>
         public static bool Roll(Pawn pawn, CompEgoWeapon weapon)
         {
-            if (pawn == null || pawn.Dead || pawn.Downed || pawn.InMentalState || pawn.mindState == null) return false;
+            if (firing || pawn == null || pawn.mindState == null || pawn.Dead || pawn.Downed || pawn.InMentalState) return false;
             float chance = Chance(pawn, weapon.Props);
-            return chance > 0f && Rand.Chance(chance) && Corrode(pawn, weapon);
+            if (chance <= 0f || !Rand.Chance(chance)) return false;
+            for (int i = 0; i < pending.Count; i++)
+                if (pending[i].pawn == pawn) return true;
+            pending.Add(new Pending { pawn = pawn, weapon = weapon });
+            return true;
         }
 
-        /// <summary>Rule 2: the weapon takes its wielder. False when the game refuses the state (asleep, tutorial).</summary>
+        /// <summary>
+        /// Every tick from <see cref="MapComponent_EgoCorrosion"/> (MapPostTick, after the pawns): corrodes each pending
+        /// pawn on <paramref name="map"/> whose verb is no longer bursting. A pawn that went down, died, left the map or
+        /// put the weapon away in the meantime is dropped.
+        /// </summary>
+        public static void Tick(Map map)
+        {
+            for (int i = pending.Count - 1; i >= 0; i--)
+            {
+                Pending p = pending[i];
+                if (p.pawn.Dead || p.pawn.Downed || !p.pawn.Spawned || p.pawn.equipment?.Primary != p.weapon.parent)
+                {
+                    pending.RemoveAt(i);
+                    continue;
+                }
+                if (p.pawn.Map != map) continue;
+                Verb verb = p.weapon.PrimaryVerb;
+                if (verb != null && verb.Bursting) continue;
+                pending.RemoveAt(i);
+                Corrode(p.pawn, p.weapon);
+            }
+        }
+
+        /// <summary>
+        /// Rule 2: the weapon takes its wielder. False when the pawn is already in a mental state of any kind (the game
+        /// would end that state first; corrosion never replaces Berserk or a False Face) or the game refuses the state
+        /// (asleep, tutorial).
+        /// </summary>
         public static bool Corrode(Pawn pawn, CompEgoWeapon weapon)
         {
+            if (pawn.Dead || pawn.mindState == null || pawn.InMentalState) return false;
             CompProperties_EgoWeapon props = weapon.Props;
             string reason = weapon.parent.LabelCap + ": fires every " + props.corrodedInterval.ToString("0.#") + " s for "
                 + props.corrodedDuration.ToString("0.#") + " s.";
@@ -82,24 +132,16 @@ namespace RimArt
         }
 
         /// <summary>The nearest spawned pawn to the wielder on its map, any faction, downed or not; null when it is alone.</summary>
-        public static Pawn Nearest(Pawn wielder) => NearestWhere(wielder, float.MaxValue, p => true);
-
-        /// <summary>The nearest hostile pawn, not downed, within <paramref name="range"/> cells; null when there is none.</summary>
-        public static Pawn NearestHostile(Pawn wielder, float range) =>
-            NearestWhere(wielder, range, p => !p.Downed && p.HostileTo(wielder));
-
-        public static bool HostileInRange(Pawn wielder, float range) => NearestHostile(wielder, range) != null;
-
-        private static Pawn NearestWhere(Pawn wielder, float range, Predicate<Pawn> ok)
+        public static Pawn Nearest(Pawn wielder)
         {
             if (!wielder.Spawned) return null;
-            float best = range >= float.MaxValue ? float.MaxValue : range * range;
+            float best = float.MaxValue;
             Pawn nearest = null;
             IReadOnlyList<Pawn> pawns = wielder.Map.mapPawns.AllPawnsSpawned;
             for (int i = 0; i < pawns.Count; i++)
             {
                 Pawn p = pawns[i];
-                if (p == wielder || p.Dead || !ok(p)) continue;
+                if (p == wielder || p.Dead) continue;
                 float d = (p.Position - wielder.Position).LengthHorizontalSquared;
                 if (d <= best)
                 {
@@ -111,20 +153,64 @@ namespace RimArt
         }
 
         /// <summary>
-        /// One firing of the weapon's action. A targeted action turns the wielder to its target first and does not fire
-        /// when there is none. <paramref name="hostilesOnly"/> is Overclock.
+        /// The nearest hostile pawn, not downed, within <paramref name="range"/> cells; null when there is none. Reads the
+        /// map's attack-target cache (hostile factions, aggro mental states, factionless humanlikes), not every pawn: the
+        /// Overclock button asks every frame the wielder is selected.
         /// </summary>
-        public static bool Fire(Pawn wielder, CompEgoWeapon weapon, bool hostilesOnly)
+        public static Pawn NearestHostile(Pawn wielder, float range)
+        {
+            if (!wielder.Spawned) return null;
+            float best = range * range;
+            Pawn nearest = null;
+            List<IAttackTarget> targets = wielder.Map.attackTargetsCache.GetPotentialTargetsFor(wielder);
+            for (int i = 0; i < targets.Count; i++)
+            {
+                if (!(targets[i].Thing is Pawn p) || p == wielder || p.Dead || p.Downed || !p.Spawned) continue;
+                float d = (p.Position - wielder.Position).LengthHorizontalSquared;
+                if (d <= best)
+                {
+                    best = d;
+                    nearest = p;
+                }
+            }
+            return nearest;
+        }
+
+        public static bool HostileInRange(Pawn wielder, float range) => NearestHostile(wielder, range) != null;
+
+        /// <summary>
+        /// The target of one firing: the nearest pawn of any faction while corroded, the nearest hostile within
+        /// overclockRange for Overclock (<paramref name="hostilesOnly"/>). Null when there is none.
+        /// </summary>
+        public static Pawn Target(Pawn wielder, CompEgoWeapon weapon, bool hostilesOnly) =>
+            hostilesOnly ? NearestHostile(wielder, weapon.Props.overclockRange) : Nearest(wielder);
+
+        /// <summary>One firing at <see cref="Target"/>.</summary>
+        public static bool Fire(Pawn wielder, CompEgoWeapon weapon, bool hostilesOnly) =>
+            Fire(wielder, weapon, Target(wielder, weapon, hostilesOnly), hostilesOnly);
+
+        /// <summary>
+        /// One firing of the weapon's action at <paramref name="target"/> (from <see cref="Target"/>). A targeted action
+        /// turns the wielder to it first and does not fire when it is null; an area action ignores it. Uses of the verb
+        /// the action makes do not roll.
+        /// </summary>
+        public static bool Fire(Pawn wielder, CompEgoWeapon weapon, Pawn target, bool hostilesOnly)
         {
             EgoCorrosionAction action = weapon.Props.Action;
-            Pawn target = null;
             if (action.TakesTarget)
             {
-                target = hostilesOnly ? NearestHostile(wielder, weapon.Props.overclockRange) : Nearest(wielder);
                 if (target == null) return false;
                 wielder.rotationTracker.FaceTarget(target);
             }
-            action.Fire(wielder, weapon, target, hostilesOnly);
+            firing = true;
+            try
+            {
+                action.Fire(wielder, weapon, target, hostilesOnly);
+            }
+            finally
+            {
+                firing = false;
+            }
             return true;
         }
 
@@ -140,22 +226,32 @@ namespace RimArt
             bool fresh = hediff == null;
             if (fresh) hediff = pawn.health.AddHediff(EgoDefOf.AG_EgoExhausted);
             HediffComp_Disappears timer = hediff.TryGetComp<HediffComp_Disappears>();
-            if (timer == null) return;
-            timer.ticksToDisappear = fresh ? ticks : Math.Max(timer.ticksToDisappear, ticks);
-            timer.disappearsAfterTicks = fresh ? ticks : Math.Max(timer.disappearsAfterTicks, timer.ticksToDisappear);
+            timer?.SetDuration(fresh ? ticks : Math.Max(timer.ticksToDisappear, ticks));
         }
 
         /// <summary>
         /// Rule 3's cost: AG_EgoOverclocked with the weapon's mood and days. The def's stage is 0; the offset is the
-        /// memory's own (Thought_Memory.moodOffset), so each weapon sets its cost.
+        /// memory's own (Thought_Memory.moodOffset), so each weapon sets its cost. At the def's stack limit the game would
+        /// only renew the oldest memory and keep its numbers, so that memory is renewed here with this weapon's instead.
         /// </summary>
         public static void PayOverclock(Pawn pawn, CompProperties_EgoWeapon props)
         {
             if (pawn.needs?.mood == null) return;
-            var thought = (Thought_Memory)ThoughtMaker.MakeThought(EgoDefOf.AG_EgoOverclocked);
+            ThoughtDef def = EgoDefOf.AG_EgoOverclocked;
+            int ticks = Mathf.RoundToInt(props.overclockMoodDays * GenDate.TicksPerDay);
+            MemoryThoughtHandler memories = pawn.needs.mood.thoughts.memories;
+            Thought_Memory thought = memories.NumMemoriesOfDef(def) >= def.stackLimit ? memories.OldestMemoryOfDef(def) : null;
+            if (thought != null)
+            {
+                thought.moodOffset = props.overclockMood;
+                thought.durationTicksOverride = ticks;
+                thought.Renew();
+                return;
+            }
+            thought = (Thought_Memory)ThoughtMaker.MakeThought(def);
             thought.moodOffset = props.overclockMood;
-            thought.durationTicksOverride = Mathf.RoundToInt(props.overclockMoodDays * GenDate.TicksPerDay);
-            pawn.needs.mood.thoughts.memories.TryGainMemory(thought);
+            thought.durationTicksOverride = ticks;
+            memories.TryGainMemory(thought);
         }
     }
 }

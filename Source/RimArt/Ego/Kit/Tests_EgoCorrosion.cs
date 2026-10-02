@@ -40,13 +40,14 @@ namespace RimArt
         };
 
         /// <summary>
-        /// An autopistol in <paramref name="pawn"/>'s hands whose CompEquippable is replaced by a CompEgoWeapon with
-        /// <paramref name="props"/>. ThingWithComps caches its comps by type at creation, so the cache is cleared and
-        /// GetComp falls back to the list, where the new comp answers for CompEquippable too.
+        /// A vanilla gun (an autopistol unless <paramref name="weaponDef"/> says otherwise) in <paramref name="pawn"/>'s
+        /// hands whose CompEquippable is replaced by a CompEgoWeapon with <paramref name="props"/>. ThingWithComps caches
+        /// its comps by type at creation, so the cache is cleared and GetComp falls back to the list, where the new comp
+        /// answers for CompEquippable too.
         /// </summary>
-        private static CompEgoWeapon Arm(Pawn pawn, CompProperties_EgoWeapon props)
+        private static CompEgoWeapon Arm(Pawn pawn, CompProperties_EgoWeapon props, string weaponDef = "Gun_Autopistol")
         {
-            var gun = (ThingWithComps)ThingMaker.MakeThing(ThingDef.Named("Gun_Autopistol"));
+            var gun = (ThingWithComps)ThingMaker.MakeThing(ThingDef.Named(weaponDef));
             var comp = new CompEgoWeapon { parent = gun };
             comp.Initialize(props);
             List<ThingComp> comps = gun.AllComps;
@@ -103,23 +104,32 @@ namespace RimArt
             yield return 1;
         }
 
-        [RimArtTest("Ego", "corrosion: a shot corrodes; it fires at the nearest pawn, then exhaustion", 2400)]
+        [RimArtTest("Ego", "corrosion: a shot corrodes after its burst; it fires at the nearest pawn, then exhaustion", 2400)]
         public static IEnumerable<int> ShotCorrodes(RimArtTestContext t)
         {
             t.Clear();
             Pawn shooter = t.Colonist(t.center);
             Pawn friend = t.Colonist(t.center + new IntVec3(2, 0, 0));
             Pawn enemy = t.Target(t.center + new IntVec3(-8, 0, 0));
-            CompEgoWeapon gun = Arm(shooter, Props());
+            // A machine pistol: a burst of 3, so the state must wait for the burst to end instead of starting on shot 1.
+            CompEgoWeapon gun = Arm(shooter, Props(), "Gun_MachinePistol");
             EgoTestAction fired = Action(gun);
             fired.firings.Clear();
-            t.Log("shooter " + Mood(shooter) + ", band " + EgoCorrosion.Band(shooter) + ", chance " + EgoCorrosion.Chance(shooter, gun.Props));
+            t.Log("shooter " + Mood(shooter) + ", band " + EgoCorrosion.Band(shooter) + ", chance " + EgoCorrosion.Chance(shooter, gun.Props)
+                + "; burst " + gun.PrimaryVerb.verbProps.burstShotCount);
 
             shooter.jobs.TryTakeOrderedJob(JobMaker.MakeJob(JobDefOf.AttackStatic, enemy), JobTag.Misc);
-            foreach (int wait in WaitFor(() => shooter.MentalState is MentalState_EgoCorroded, 600)) yield return wait;
+            int burstTicks = 0;
+            foreach (int wait in WaitFor(() => shooter.MentalState is MentalState_EgoCorroded, 600))
+            {
+                if (gun.PrimaryVerb.Bursting) burstTicks++;
+                yield return wait;
+            }
             int start = t.Now;
-            t.Log(start + " " + Describe(shooter) + " | state " + (shooter.MentalStateDef?.defName ?? "none"));
-            if (!t.Check(shooter.MentalState is MentalState_EgoCorroded, "the first shot corroded the shooter")) yield break;
+            t.Log(start + " " + Describe(shooter) + " | state " + (shooter.MentalStateDef?.defName ?? "none") + " | ticks mid-burst before it: "
+                + burstTicks + ", bursting now " + gun.PrimaryVerb.Bursting);
+            if (!t.Check(shooter.MentalState is MentalState_EgoCorroded, "the first burst corroded the shooter")) yield break;
+            t.Check(burstTicks > 0 && !gun.PrimaryVerb.Bursting, "the state started after the burst ended, not between its shots");
             var state = (MentalState_EgoCorroded)shooter.MentalState;
             t.Check(state.weapon == gun.parent, "the state knows its weapon");
             t.Check(!shooter.Drafted, "undrafted");
@@ -151,6 +161,33 @@ namespace RimArt
             int left = ExhaustionTicks(shooter);
             t.Check(left > 4800 && left <= 5000, "exhausted for the weapon's 2 h (" + left + " ticks left)");
             t.Check(t.Untouched(friend), "the test action hurts no one");
+        }
+
+        [RimArtTest("Ego", "corrosion: the weapon leaving the hands ends it; Corrode never replaces a state", 600)]
+        public static IEnumerable<int> DroppedEnds(RimArtTestContext t)
+        {
+            t.Clear();
+            Pawn pawn = t.Colonist(t.center);
+            CompProperties_EgoWeapon props = Props();
+            props.corrodedDuration = 60f;
+            CompEgoWeapon gun = Arm(pawn, props);
+
+            t.Check(EgoCorrosion.Corrode(pawn, gun), "Corrode started the state");
+            yield return 30;
+            t.Log(t.Now + " " + Describe(pawn) + " | state " + (pawn.MentalStateDef?.defName ?? "none"));
+            t.Check(pawn.InMentalState, "still corroded after 0.5 s of a 60 s state");
+            var state = pawn.MentalState as MentalState_EgoCorroded;
+            t.Check(!EgoCorrosion.Corrode(pawn, gun), "Corrode on a pawn already in a mental state does nothing");
+            t.Check(state != null && pawn.MentalState == state, "and the state it had is still the same one");
+
+            bool dropped = pawn.equipment.TryDropEquipment(gun.parent, out ThingWithComps _, pawn.Position);
+            yield return 2;
+            t.Log(t.Now + " " + Describe(pawn) + " | state " + (pawn.MentalStateDef?.defName ?? "none") + " | primary "
+                + (pawn.equipment.Primary?.LabelShort ?? "none"));
+            t.Check(dropped && pawn.equipment.Primary == null, "the weapon was dropped");
+            t.Check(!pawn.InMentalState, "the weapon leaving the hands ended the state");
+            int left = ExhaustionTicks(pawn);
+            t.Check(left > 4800 && left <= 5000, "exhausted for the weapon's 2 h (" + left + " ticks left)");
         }
 
         [RimArtTest("Ego", "corrosion: going down ends it", 1200)]
@@ -195,6 +232,9 @@ namespace RimArt
             CompEgoWeapon gun = Arm(wielder, Props());
             EgoTestAction fired = Action(gun);
             fired.firings.Clear();
+            // The action rolls on every firing, as an action that shoots through the weapon's verb would.
+            fired.rollInsideFire = true;
+            fired.rollsPassed = 0;
 
             t.Check(gun.CompGetEquippedGizmosExtra().OfType<Command_EgoOverclock>().Any(), "the wielder has the Overclock button");
             t.Check(new Command_EgoOverclock(gun, wielder).Disabled, "Overclock is off with no hostile within 10 cells (an ally 1 cell away)");
@@ -218,7 +258,8 @@ namespace RimArt
             t.Check(fired.firings.Count > 0 && fired.firings[0].target == near, "the first firing aimed at the nearest hostile");
             int span = fired.firings.Count == 3 ? fired.firings[2].tick - fired.firings[0].tick : -1;
             t.Check(span >= 58 && span <= 62, "one firing every 0.5 s (first to third: " + span + " ticks)");
-            t.Check(!wielder.InMentalState, "Overclock never rolls Corrosion (every chance is 1 in this test)");
+            t.Check(fired.rollsPassed == 0 && !wielder.InMentalState,
+                "Overclock never rolls Corrosion: the action's own rolls (every chance is 1) all came back false, " + fired.rollsPassed + " passed");
             Thought_Memory cost = wielder.needs.mood.thoughts.memories.GetFirstMemoryOfDef(EgoDefOf.AG_EgoOverclocked);
             t.Log("thought: " + (cost == null ? "none" : cost.LabelCap + ", " + cost.MoodOffset() + " mood, " + cost.DurationTicks + " ticks"));
             t.Check(cost != null && Mathf.Approximately(cost.MoodOffset(), -12f), "AG_EgoOverclocked at the weapon's -12 mood");
@@ -238,12 +279,28 @@ namespace RimArt
             t.Check(fired.firings.Count == 1, "one firing before the hostiles left");
             t.Check(wielder.CurJobDef != EgoDefOf.AG_EgoOverclock, "it ended with no hostile in range");
             t.Check(wielder.needs.mood.thoughts.memories.NumMemoriesOfDef(EgoDefOf.AG_EgoOverclocked) == 2, "the second Overclock paid too (2 memories)");
+
+            // At the stack limit (3) the fourth payment renews the oldest memory with the paying weapon's numbers.
+            MemoryThoughtHandler memories = wielder.needs.mood.thoughts.memories;
+            EgoCorrosion.PayOverclock(wielder, gun.Props);
+            CompProperties_EgoWeapon other = Props();
+            other.overclockMood = -20;
+            other.overclockMoodDays = 1f;
+            Thought_Memory oldest = memories.OldestMemoryOfDef(EgoDefOf.AG_EgoOverclocked);
+            EgoCorrosion.PayOverclock(wielder, other);
+            int count = memories.NumMemoriesOfDef(EgoDefOf.AG_EgoOverclocked);
+            t.Log("after 4 payments: " + count + " memories; the oldest now " + oldest.MoodOffset() + " mood, " + oldest.DurationTicks + " ticks, age " + oldest.age);
+            t.Check(count == 3, "the stack stays at 3");
+            t.Check(Mathf.Approximately(oldest.MoodOffset(), -20f) && oldest.DurationTicks == 60000 && oldest.age == 0,
+                "the fourth payment renewed the oldest memory with the new weapon's -20 mood and 1 day");
         }
     }
 
     /// <summary>
     /// The test weapon's corroded attack: records each firing (tick, target, hostiles-only) and does nothing else, so no
-    /// pawn is hurt.
+    /// pawn is hurt. With <see cref="rollInsideFire"/> it also rolls Corrosion on each firing, as a real action that
+    /// shoots through the weapon's verb would through Notify_UsedWeapon; <see cref="rollsPassed"/> counts the rolls that
+    /// came back true.
     /// </summary>
     public class EgoTestAction : EgoCorrosionAction
     {
@@ -255,8 +312,13 @@ namespace RimArt
         }
 
         public readonly List<Firing> firings = new List<Firing>();
+        public bool rollInsideFire;
+        public int rollsPassed;
 
-        public override void Fire(Pawn wielder, CompEgoWeapon weapon, Pawn target, bool hostilesOnly) =>
+        public override void Fire(Pawn wielder, CompEgoWeapon weapon, Pawn target, bool hostilesOnly)
+        {
             firings.Add(new Firing { tick = Find.TickManager.TicksGame, target = target, hostilesOnly = hostilesOnly });
+            if (rollInsideFire && EgoCorrosion.Roll(wielder, weapon)) rollsPassed++;
+        }
     }
 }

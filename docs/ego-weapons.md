@@ -100,8 +100,8 @@ Built 2026-10-02 in `Source/RimArt/Ego/Kit/`:
 | `EgoCorrosionAction.cs` | what a weapon supplies: `Fire(wielder, weapon, target, hostilesOnly)`, `TakesTarget` (false for an area), `DrawCorroded` (the look) |
 | `MentalState_EgoCorroded.cs` | the state, its think-tree job giver and the hold job (not vanilla Wait, whose auto-attack would punch adjacent hostiles) |
 | `JobDriver_EgoOverclock.cs` | the Overclock job and `Command_EgoOverclock` |
-| `MapComponent_EgoCorrosion.cs` | calls each weapon's `DrawCorroded` for every corroded or overclocking pawn on the shown map |
-| `Tests_EgoCorrosion.cs` | `-rimarttest=ego`: bands and requirement, a shot corrodes and the state fires at the nearest pawn then exhausts, going down ends it, Overclock aims only at hostiles in range, never rolls, and pays mood |
+| `MapComponent_EgoCorrosion.cs` | calls each weapon's `DrawCorroded` for every corroded or overclocking pawn on the shown map; its tick corrodes the pawns whose roll passed once their burst is over |
+| `Tests_EgoCorrosion.cs` | `-rimarttest=ego`: bands and requirement, a burst corrodes (after its last shot) and the state fires at the nearest pawn then exhausts, going down ends it, the weapon leaving the hands ends it and Corrode never replaces a state, Overclock aims only at hostiles in range, never rolls (even when the action rolls itself), pays mood, and at three memories renews the oldest |
 | `Ego<Weapon>Corrosion.cs` (per weapon, not written) | the action and the look |
 
 Defs: `AG_EgoCorroded` (MentalStateDefs/AG_Ego_MentalStates.xml), `AG_EgoExhausted`, `AG_EgoOverclocked`,
@@ -110,7 +110,15 @@ Defs: `AG_EgoCorroded` (MentalStateDefs/AG_Ego_MentalStates.xml), `AG_EgoExhaust
 Settled while building:
 
 - The action is an abstract class, not an interface: `DrawCorroded` has an empty default.
-- A pawn already in any mental state does not roll, so corrosion never replaces Berserk or False Face.
+- A pawn already in any mental state does not roll, and `Corrode` refuses one, so corrosion never
+  replaces Berserk or False Face whoever calls it.
+- A roll that passes corrodes the pawn once its verb has finished the burst (the same tick for a
+  single shot), not inside the shot: the roll runs inside `Verb.TryCastNextBurstShot`, and starting
+  the state there would stop the attack job while the burst goes on at the old target.
+- Uses of the verb made by the weapon's own action never roll (a flag while the action fires), so
+  Overclock and the corroded firing cannot corrode even when the action shoots through the verb.
+- At three `AG_EgoOverclocked` memories the fourth payment renews the oldest with the paying weapon's
+  mood and days; the game alone would renew it and keep the old numbers.
 - The first corroded firing comes one `corrodedInterval` after the start; Overclock's first fires at
   once and the job ends one `overclockInterval` after the last.
 - The state also ends when the weapon leaves the pawn's hands, and on sleep (like downed).

@@ -6,12 +6,18 @@ namespace RimArt
     /// <summary>
     /// Draws each weapon's corroded look (<see cref="EgoCorrosionAction.DrawCorroded"/>) over every pawn on the shown map
     /// that is corroded or overclocking. It scans the spawned pawns each frame instead of keeping a list, so nothing has
-    /// to be rebuilt after a load.
+    /// to be rebuilt after a load. Its tick corrodes the pawns whose roll passed once their burst is over
+    /// (<see cref="EgoCorrosion.Tick"/>).
     /// </summary>
     public class MapComponent_EgoCorrosion : MapComponent
     {
         public MapComponent_EgoCorrosion(Map map) : base(map)
         {
+        }
+
+        public override void MapComponentTick()
+        {
+            EgoCorrosion.Tick(map);
         }
 
         public override void MapComponentUpdate()
