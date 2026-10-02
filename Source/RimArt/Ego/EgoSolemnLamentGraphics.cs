@@ -50,6 +50,12 @@ namespace RimArt
         /// <summary>Corroded: the Abnormality's face over the head. Overclock draws none.</summary>
         public bool Face;
         /// <summary>
+        /// In game, the corrosion or Overclock is over and the wielder is free to walk off: the hanging guns and the face
+        /// are not drawn (Core draws the weapon again) while the cloud flies home and the coffin sinks. The previews leave it
+        /// false, as the sketch, whose wielder stands still to the end.
+        /// </summary>
+        public bool Freed;
+        /// <summary>
         /// The cloud butterflies that left for a pawn: slot, time and how long that slot's new one then flies from
         /// the coffin to the cloud (<see cref="EgoSolemnLamentTiming.FarFly"/> with the wielder's distance from the
         /// coffin at the dive), in the order they left.
@@ -196,12 +202,12 @@ namespace RimArt
 
             // The guns hang down, tipped 55 degrees, 0.2 either side.
             Vector2 d = Dir(c.Aim), across = Left(d);
-            for (int i = 0; i < 2; i++)
+            for (int i = 0; i < 2 && !c.Freed; i++)
             {
                 Vector2 hand = o + d * 0.04f + across * (i == 1 ? 0.2f : -0.2f);
                 EgoSolemnLamentShotGraphics.Pistol(hand, d, i == 0, -55f * Mathf.Deg2Rad, 0f, PawnLayer + 0.06f + i * 0.004f, sun, strength);
             }
-            if (c.Face)
+            if (c.Face && !c.Freed)
                 EgoSolemnLamentButterflies.Face(new Vector2(o.x, o.y + PawnBody.Head), s, Smooth(s / 0.4f) * (1f - Smooth((s - sinkAt) / T.Sink)));
 
             Cloud(c, s, o, home, mouth, sun, strength);

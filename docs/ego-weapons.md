@@ -322,7 +322,7 @@ Rules and def 2026-10-02 (`AG_EgoSolemnLament` in `1.6/Defs/ThingDefs/AG_Ego_Thi
 | `EgoSolemnLamentCorrosion.cs` | the coffin: walks, the cloud's stacks, the funeral; Overclock |
 | `EgoSolemnLamentBurstCast.cs`, `EgoSolemnLamentCoffinCast.cs`, `EgoSolemnLamentMarked.cs`, `GameComponent_EgoSolemnLament.cs` | the pictures fed from the rules as they happen: bursts, coffins, the butterflies on each pawn with stacks |
 | `Patches_EgoSolemnLament.cs` | `HeldWeaponHide` while a burst or a coffin draws the pair |
-| `Tests_EgoSolemnLament.cs` | the pair and the cap, the pool and the fade, the funeral, Overclock |
+| `Tests_EgoSolemnLament.cs` | the pair and the cap, the pool and the fade, the funeral, the walk turning to a nearer pawn, a wielder killed outright, Overclock |
 
 The texture (`Textures/RimArt/Ego/SolemnLament.png`, `make_ego_textures.py`) is the picture's two
 pistols, white above and black below, at the size the picture draws them, with a 1 px outline.
@@ -341,6 +341,13 @@ Settled while building:
 - One stack fades every 10 s whatever the count; a new stack does not reset the timer.
 - The corroded walk goes to the nearest pawn, downed ones included (decided 2026-10-02): the cloud
   stays on the first pawn it downs and the funeral follows unless someone carries it out.
+- The walk asks again every second and turns to whoever is nearest then. `JobDriver_EgoCorrodedWalk`
+  overrides `IsContinuation`: without it the game keeps a walk to the first pawn it picked, because
+  the new job has the same def and comes from the same job giver.
+- The coffin also ends when its wielder dies, leaves the map, or is neither corroded nor
+  overclocking. `Pawn.Kill` does not end a mental state, so a wielder killed without going down first
+  never reaches the state's end. Once the coffin has ended, its picture draws no guns and no face,
+  and Core draws the weapon on the pawn again while the cloud flies home and the coffin sinks.
 - Overclock: 5 firings 1 s apart, holding still, `overclockRange` 3 (the radius), standing hostiles
   only, never past the cap.
 - The pictures are not saved: a save in a burst or a corrosion loses its picture, not its stacks.

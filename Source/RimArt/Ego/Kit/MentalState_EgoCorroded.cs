@@ -146,6 +146,13 @@ namespace RimArt
     {
         public override bool TryMakePreToilReservations(bool errorOnFailed) => true;
 
+        /// <summary>
+        /// A new walk from the think tree replaces this one only when it goes to another pawn. On expiry the game keeps the
+        /// current job when the new one has the same def, comes from the same job giver and this returns true (the default),
+        /// so without it the pawn would walk on to the first pawn it picked.
+        /// </summary>
+        public override bool IsContinuation(Job j) => j.targetA == job.targetA;
+
         protected override IEnumerable<Toil> MakeNewToils()
         {
             this.FailOnDespawnedOrNull(TargetIndex.A);

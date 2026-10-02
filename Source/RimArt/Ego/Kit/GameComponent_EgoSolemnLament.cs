@@ -74,13 +74,16 @@ namespace RimArt
 
         public void EndCoffin(Pawn wielder) => CoffinOf(wielder)?.End();
 
-        /// <summary>Whether a burst or a coffin of <paramref name="pawn"/>'s is up, drawing its guns.</summary>
+        /// <summary>
+        /// Whether a burst or a running coffin of <paramref name="pawn"/>'s is up, drawing its guns. A coffin that has ended
+        /// and is sinking draws no guns, so Core draws them on the pawn again.
+        /// </summary>
         public bool Drawing(Pawn pawn)
         {
             for (int i = 0; i < bursts.Count; i++)
                 if (bursts[i].shooter == pawn) return true;
             for (int i = 0; i < coffins.Count; i++)
-                if (coffins[i].wielder == pawn) return true;
+                if (coffins[i].wielder == pawn && coffins[i].Running) return true;
             return false;
         }
 

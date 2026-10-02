@@ -23,7 +23,7 @@ namespace RimArt
         public int startTick;
         /// <summary>The tick the corrosion or Overclock ended, -1 while it runs.</summary>
         public int endTick = -1;
-        /// <summary>Where the wielder stood when the coffin rose, and where it was when the cloud ended.</summary>
+        /// <summary>Where the wielder stood when the coffin rose, and where it was last seen on the map: when the cloud ended.</summary>
         public Vector2 coffin, endAt;
         private float endAim;
         private int dives;
@@ -57,8 +57,21 @@ namespace RimArt
             endTick = Find.TickManager.TicksGame;
         }
 
-        /// <summary>One game tick; false once the coffin has sunk.</summary>
-        public bool Tick(int now) => Running || Seconds(now) < T.CoffinEnd(Cloud, Home, 0f);
+        /// <summary>
+        /// One game tick; false once the coffin has sunk. A running coffin also ends here when its wielder has died or left
+        /// the map, or is neither corroded nor overclocking. Pawn.Kill does not end a mental state, so a wielder killed
+        /// without going down first never gets the state's PostEnd, which is what ends the coffin otherwise.
+        /// </summary>
+        public bool Tick(int now)
+        {
+            if (Running)
+            {
+                bool here = wielder.Spawned && wielder.Map == map;
+                if (here) endAt = EgoSolemnLamentMarked.Ground(wielder.DrawPos);
+                if (!here || !(wielder.MentalState is MentalState_EgoCorroded || wielder.jobs?.curDriver is JobDriver_EgoOverclock)) End();
+            }
+            return Running || Seconds(now) < T.CoffinEnd(Cloud, Home, 0f);
+        }
 
         /// <summary>
         /// A stack the cloud puts on at <paramref name="tick"/>: a circling butterfly leaves for the pawn, picked as the
@@ -89,7 +102,7 @@ namespace RimArt
         {
             EgoSolemnLamentGraphics.DrawCoffin(new EgoSolemnLamentCoffin
             {
-                Wielder = Centre, Aim = Aim, Coffin = coffin, Radius = radius, Cloud = Cloud, Home = Home, Face = !overclock,
+                Wielder = Centre, Aim = Aim, Coffin = coffin, Radius = radius, Cloud = Cloud, Home = Home, Face = !overclock, Freed = !Running,
                 DiveSlots = diveSlots, DiveTimes = diveTimes, DiveFlys = diveFlys,
             }, PictureClock.Since(startTick), map);
         }

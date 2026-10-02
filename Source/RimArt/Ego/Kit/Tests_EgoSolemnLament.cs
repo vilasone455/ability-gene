@@ -89,8 +89,9 @@ namespace RimArt
             yield return 70;
             foreach (int wait in Burst(t, shooter, gun, target, shots)) yield return wait;
             t.Log(t.Now + " burst 3 over: " + State(target));
-            t.Check(Stacks(target) == 10, "the guns never put on more than the cap");
-            t.Check(!target.Dead, "and Butterfly did not kill it");
+            // Burst 3's black shots still wound the downed pawn and can kill it; stacks at the cap cannot.
+            if (target.Dead) t.Log("the target died of the black shots' wounds, not of Butterfly");
+            t.Check(Stacks(target) == 10, "the guns never put on more than the cap, so Butterfly cannot kill it");
         }
 
         [RimArtTest("Ego", "solemn lament: the pool runs dry, the pair reloads, and stacks fade", 1800)]
@@ -166,6 +167,65 @@ namespace RimArt
             t.Check(t.Untouched(far) && Stacks(far) == 0, "the enemy 11 cells off was not in the cloud");
             t.Check(Game.MarkOf(downed)?.mark.Dead == true, "the picture's mark has the funeral (the cover lifts off)");
             wielder.MentalState?.RecoverFromState();
+        }
+
+        [RimArtTest("Ego", "solemn lament: corroded, the walk turns to a pawn that comes nearer", 1800)]
+        public static IEnumerable<int> WalkTurns(RimArtTestContext t)
+        {
+            t.Clear();
+            Game.Clear();
+            IntVec3 c = t.center;
+            Pawn wielder = t.Colonist(c);
+            CompEgoSolemnLament gun = Arm(t, wielder);
+            IntVec3 farCell = c + new IntVec3(18, 0, 0);
+            if (!farCell.InBounds(t.map) || !farCell.Standable(t.map)) farCell = c + new IntVec3(12, 0, 0);
+            Pawn far = t.Target(farCell, stunTicks: 1800);
+            t.Check(EgoCorrosion.Corrode(wielder, gun), "Corrode started the state");
+            foreach (int wait in WaitFor(() => wielder.CurJobDef == EgoDefOf.AG_EgoCorrodedWalk, 300)) yield return wait;
+            t.Log(t.Now + " " + Describe(wielder) + " -> " + (wielder.CurJob?.targetA.Thing?.LabelShort ?? "none") + ", far at " + far.Position);
+            if (!t.Check(wielder.CurJob?.targetA.Thing == far, "the wielder walks to the only other pawn")) yield break;
+
+            // A pawn just ahead of the wielder and 3 cells to the side: nearer than the one it walks to for the rest of the walk.
+            Pawn near = t.Target(wielder.Position + new IntVec3(2, 0, 3), stunTicks: 1800, faction: far.Faction);
+            int start = t.Now;
+            bool Turned() => wielder.CurJob?.targetA.Thing == near
+                || (wielder.CurJobDef == EgoDefOf.AG_EgoCorrodedHold && wielder.Position.AdjacentTo8WayOrInside(near.Position));
+            foreach (int wait in WaitFor(Turned, 180))
+            {
+                if ((t.Now - start) % 30 == 0)
+                    t.Log("+" + (t.Now - start) + " " + Describe(wielder) + " -> " + (wielder.CurJob?.targetA.Thing?.LabelShort ?? "none")
+                        + "; far " + wielder.Position.DistanceTo(far.Position).ToString("0.0") + ", near " + wielder.Position.DistanceTo(near.Position).ToString("0.0"));
+                yield return wait;
+            }
+            t.Log("+" + (t.Now - start) + " " + Describe(wielder) + " -> " + (wielder.CurJob?.targetA.Thing?.LabelShort ?? "none"));
+            t.Check(Turned(), "within the 1 s expiry (and the pawn's hash tick) the walk turned to the nearer pawn (" + (t.Now - start) + " ticks)");
+            wielder.MentalState?.RecoverFromState();
+        }
+
+        [RimArtTest("Ego", "solemn lament: a corroded wielder killed outright ends its coffin", 1200)]
+        public static IEnumerable<int> CoffinOnDeath(RimArtTestContext t)
+        {
+            t.Clear();
+            Game.Clear();
+            IntVec3 c = t.center;
+            Pawn wielder = t.Colonist(c);
+            CompEgoSolemnLament gun = Arm(t, wielder);
+            t.Target(c + new IntVec3(8, 0, 0), stunTicks: 1200);
+            t.Check(EgoCorrosion.Corrode(wielder, gun), "Corrode started the state");
+            yield return 90;
+            EgoSolemnLamentCoffinCast coffin = Game.CoffinOf(wielder);
+            t.Log(t.Now + " " + Describe(wielder) + " | coffin " + (coffin == null ? "none" : coffin.Running ? "running" : "ended"));
+            if (!t.Check(coffin != null && coffin.Running, "the coffin rose with the corrosion")) yield break;
+
+            wielder.Kill(null);
+            yield return 2;
+            t.Log(t.Now + " killed outright: dead " + wielder.Dead + ", the state still set on the corpse " + (wielder.MentalState is MentalState_EgoCorroded)
+                + " | coffin " + (coffin.Running ? "running" : "ended") + ", drawing the guns " + Game.Drawing(wielder));
+            t.Check(!coffin.Running && Game.CoffinOf(wielder) == null, "the coffin ended on its next tick, though the state's PostEnd never came");
+            t.Check(!Game.Drawing(wielder), "it no longer counts as drawing the wielder's guns");
+            int ended = t.Now;
+            foreach (int wait in WaitFor(() => !Game.Coffins.Contains(coffin), 600)) yield return wait;
+            t.Check(!Game.Coffins.Contains(coffin), "it sank and was dropped " + (t.Now - ended) + " ticks later");
         }
 
         [RimArtTest("Ego", "solemn lament: Overclock stacks standing hostiles only, never past the cap", 1800)]
