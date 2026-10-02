@@ -85,6 +85,7 @@ import { pawn, at, shadowLayer, Skin } from './lib/pawn.js';
 import { Enemy, Ally, rect } from './lib/chain-sickle.js';
 import { strip, streak, glint, ringAt, whiteGlow } from './lib/goku.js';
 import { walls } from './lib/paper-bomb.js';
+import { hue, rayWall, damageBar } from './lib/terraria.js';
 
 const clamp = Mathf.Clamp01, smooth = Mathf.Smooth, lerp = Mathf.Lerp, D2R = Mathf.Deg2Rad, TAU = Math.PI * 2;
 const flat = MaterialPool.MatFrom('white', ShaderDatabase.Transparent);
@@ -94,7 +95,7 @@ const FacePale = new Color(.95, .95, 1), FaceLavender = new Color(.80, .70, .98)
 const FaceBase = new Color(.45, .32, .72), Navy = new Color(.12, .12, .34), FaceDark = new Color(.20, .18, .40);
 const Dull = new Color(.45, .5, .56), Sun = new Color(1, .82, .32), SunDim = new Color(.22, .18, .1), Warn = new Color(.85, .18, .12);
 const RoofTint = new Color(.55, .64, .82), Wielder = new Color(.30, .50, .62), Smoke = new Color(.32, .32, .34);
-const MechGrey = new Color(.52, .54, .58), MechHead = new Color(.36, .38, .42), Hurt = new Color(.95, .42, .15);
+const MechGrey = new Color(.52, .54, .58), MechHead = new Color(.36, .38, .42);
 // The rule's numbers (XML fields in the port).
 const Store = 12, DryStore = 4, StartLevel = 3;       // seconds of beam: full, the "runs dry" start, the charging start
 const Turn = 45;                                      // degrees per second the prism turns after its target
@@ -127,11 +128,6 @@ const WalkTime = 6.3, WallAt = 10, WallAcross = [-3, -4, -5];
 const shoots = p => p.scenario === 'fires' || p.scenario === 'runs dry';
 const bump = x => (x >= 0 && x <= 1) ? Math.sin(x * Math.PI) : 0;
 const wrap = x => x - TAU * Math.round(x / TAU);
-function hue(h, sat = .72) {
-  h = ((h % 1) + 1) % 1;
-  const k = n => { const q = (n + h * 6) % 6; return 1 - sat * Math.max(0, Math.min(q, 4 - q, 1)); };
-  return new Color(k(5), k(3), k(1));
-}
 const pale = c => Color.Lerp(c, White, .45);
 const add = (a, b) => ({ x: a.x + b.x, z: a.z + b.z });
 
@@ -139,23 +135,6 @@ const add = (a, b) => ({ x: a.x + b.x, z: a.z + b.z });
 function onLine(q, a, ang, len, reach) {
   const dx = Math.cos(ang), dz = Math.sin(ang), rx = q.x - a.x, rz = q.z - a.z, along = rx * dx + rz * dz;
   return along > 0 && along < len && Math.abs(rz * dx - rx * dz) <= reach;
-}
-// Cells from a along ang to the first wall cell, or max.
-function rayWall(a, ang, cells, max) {
-  const d = [Math.cos(ang), Math.sin(ang)], o = [a.x, a.z];
-  let best = max;
-  for (const c of cells) {
-    const lo = [c.x - .5, c.z - .5], hi = [c.x + .5, c.z + .5];
-    let t0 = -Infinity, t1 = Infinity;
-    for (let k = 0; k < 2; k++) {
-      if (Math.abs(d[k]) < 1e-9) { if (o[k] < lo[k] || o[k] > hi[k]) t0 = Infinity; continue; }
-      let ta = (lo[k] - o[k]) / d[k], tb = (hi[k] - o[k]) / d[k];
-      if (ta > tb) [ta, tb] = [tb, ta];
-      t0 = Math.max(t0, ta); t1 = Math.min(t1, tb);
-    }
-    if (t0 <= t1 && t0 > 0 && t0 < best) best = t0;
-  }
-  return best;
 }
 
 // Fan sweep phase (radians): one pass per SweepSlow, speeding up to one per SweepFast over the second
@@ -341,13 +320,6 @@ function meter(head, level, warn) {
     sprite({ x, z }, w, h, SunDim, flat, Y + .302);
     if (fill > 0) sprite({ x: x - w / 2 + w * fill / 2, z }, w * fill, h, Sun, flat, Y + .303);
   }
-}
-// Damage taken against what downs the pawn: a sketch aid over the head, shown once hit.
-function damageBar(head, share) {
-  if (share <= 0) return;
-  const w = .56, h = .065, z = head.z + .2, fill = Math.min(1, share);
-  sprite({ x: head.x, z }, w + .04, h + .04, Body.withAlpha(.75), flat, Y + .29);
-  sprite({ x: head.x - w / 2 + w * fill / 2, z }, w * fill, h, Hurt, flat, Y + .291);
 }
 
 export default {
