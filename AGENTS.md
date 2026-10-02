@@ -40,10 +40,12 @@ reads it directly). Agreed 2026-09-30. New code follows it; old code is changed 
 | `Shared/PocketGuest.cs` | One pawn taken to a pocket map: its home cell and lord, `TakeTo`; kits extend it with their own state |
 | `Shared/PocketReturn.cs` | Everyone home from a pocket map: `Bring`, `Rejoin` (old lord if it takes the pawn), `NoLord`, `Items`, `Place`, `Finish` |
 | `Shared/Gizmo_Meter.cs` | A weapon's meter in the command bar: label, value, bar, optional line and whole-unit ticks (Flame Gauntlet Heat, Last Prism sunlight) |
-| `Shared/HeldWeaponHolders.cs` | Who holds one kit weapon on every map for a GameComponent that draws it: `Add`/`Remove` from the comp's equip calls, `Rescan` once a second and after a load, `Copy` for a draw loop (Last Prism, Paradise Lost) |
-| `Shared/HeldWeaponHide.cs` | One `DrawEquipmentAiming` prefix: `Register(def, whileHeldBy)` keeps Core from drawing a kit weapon its picture draws (Vacuum, Power Pole, Water Gun, Fuma, Last Prism, Yamato) |
+| `Shared/HeldWeaponHolders.cs` | Who holds one kit weapon on every map for a GameComponent that draws it: `Add`/`Remove` from the comp's equip calls, `Rescan` once a second and after a load, `Copy` for a draw loop (Last Prism, Paradise Lost, Mimicry) |
+| `Shared/HeldWeaponHide.cs` | One `DrawEquipmentAiming` prefix: `Register(def, whileHeldBy)` keeps Core from drawing a kit weapon its picture draws (Vacuum, Power Pole, Water Gun, Fuma, Last Prism, Yamato, Paradise Lost, Mimicry) |
+| `Shared/InjuryHeal.cs` | `Heal(pawn, amount)`: hit points off the injuries that are not scars, in the health tab's order, as Core's regeneration spreads them (Samehada's Feed and Fusion, Mimicry's lifesteal) |
 | `Shared/FollowView.cs` | Camera follows pawns moved between maps and keeps them selected, if the player was watching |
 | `Shared/ItemAbilityGrant.cs` | Gives a held item's abilities to its holder, takes them back, keeps cooldowns |
+| `Shared/PawnDash.cs` | A short dash: the pawn drawn along a straight line while its cell changes once, on arrival. `Keep` every tick of it (runs are not saved), `Arrive` (optionally refusing a cell someone stands on), `Stop`; one `DrawPos` postfix (Yamato Dash, Mimicry's lunge) |
 | `Shared/PawnBody.cs` | Head top, head, neck, chest, feet and ground contact of a real pawn above its DrawPos: the numbers of the lab's real-size stand-in (`lib/pawn.js`), used as they are |
 | `Shared/PawnFit.cs` | Fits a picture drawn on the lab's older 0.89-tall stand-in pawn to a real pawn's height |
 | `Shared/PictureClock.cs` | `Since(tick)`: game seconds since a tick for drawing, smoothed between ticks at the current speed, held still while paused; rules count whole ticks instead |
@@ -51,17 +53,17 @@ reads it directly). Agreed 2026-09-30. New code follows it; old code is changed 
 | `Shared/VfxMath.cs` | The lab's `Smooth`, `Hash`, `Rand`, so a port matches its sketch |
 | `Shared/WeaponStow.cs` | `Stow`: empties a hand; a bound weapon goes to its owner (a copy breaks), any other to the inventory, else to the ground |
 | `Echo/EchoUtility.cs` | Hero layer: `ForceHost`, `Awaken`, `Manifest`, `Revert`, `ManifestedWith` |
-| `Testing/RimArtTestContext.cs` | `Clear`, `Colonist`, `Enemy`, `Mech`, `Hold`, `Equip`, `Describe`, `Check`, `Log`, `ShotAs`; kit tests: `WaitFor`, `ClearEchoes`, `Host`, `EndHost`, `Target`, `Strike`, `NoWimp`, `Note`/`Hurt`/`Untouched`, `Down`/`Struck` (a downed pawn hit again), `Stunned`, `Free`, `Wall`, `Room` (optional door), `Face` |
+| `Testing/RimArtTestContext.cs` | `Clear`, `Colonist`, `Enemy`, `Mech`, `Hold`, `Equip`, `Describe`, `Check`, `Log`, `ShotAs`; kit tests: `WaitFor`, `ClearEchoes`, `Host`, `EndHost`, `Target`, `Strike`, `NoWimp`, `Note`/`Hurt`/`Untouched` (health or a new wound since the note), `Down`/`Struck` (a downed pawn hit again), `Shield`/`Unshield` (hits deal nothing), `Stunned`, `Free`, `Wall`, `Room` (optional door), `Face` |
 
 ### Known copies, not shared yet
 
 - Each kit keeps its own list of running casts: 27 Map/GameComponents in 21 kits, 21 `JobDriver_Cast*`.
   One shared base is planned after v1 (2026-10-20). Until then a new kit copies the Vergil shape
   (`VergilCast`, `GameComponent_Vergil`, `JobDriver_CastVergil`) instead of making a new one.
-- Throwing a pawn into a wall is written separately in Gojo Red, Accelerator's shove, Shinra and Banshō.
+- Throwing a pawn into a wall is written separately in Gojo Red, Accelerator's shove, Shinra and Banshō. The next
+  kit that needs it extracts it.
 - Older MapComponents keep their own list of who holds the kit's weapon (Vacuum, Bubble Pipe, Flame Gauntlet, Frost Gun,
   Nezuko Box). `Shared/HeldWeaponHolders.cs` is the shared version; move one to it when its kit is next changed.
-  The next kit that needs it extracts it.
 
 ## Numbers
 

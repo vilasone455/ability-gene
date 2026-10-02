@@ -53,13 +53,15 @@ namespace RimArt
                 CompEgoWeapon weapon = Weapon;
                 if (weapon == null || Find.TickManager.TicksGame < nextFireTick) return;
                 CompProperties_EgoWeapon props = weapon.Props;
-                Pawn target = EgoCorrosion.NearestHostile(pawn, props.overclockRange);
+                Pawn target = EgoCorrosion.NearestHostile(pawn, props.overclockRange, weapon);
                 if (fired >= props.overclockCount || target == null)
                 {
                     EndJobWith(JobCondition.Succeeded);
                     return;
                 }
-                if (EgoCorrosion.Fire(pawn, weapon, target, hostilesOnly: true)) fired++;
+                // A firing the action is still busy with (Mimicry's swing) holds the next one back a tick at a time.
+                if (!EgoCorrosion.Fire(pawn, weapon, target, hostilesOnly: true)) return;
+                fired++;
                 nextFireTick = Find.TickManager.TicksGame + props.OverclockIntervalTicks;
             };
             channel.handlingFacing = true;
@@ -100,7 +102,7 @@ namespace RimArt
             icon = weapon.parent.def.uiIcon;
             action = () => wielder.jobs.TryTakeOrderedJob(JobMaker.MakeJob(EgoDefOf.AG_EgoOverclock, weapon.parent), JobTag.Misc);
             if (wielder.CurJobDef == EgoDefOf.AG_EgoOverclock) Disable("Already overclocking.");
-            else if (!EgoCorrosion.HostileInRange(wielder, p.overclockRange)) Disable("No hostile within " + p.overclockRange.ToString("0.#") + " cells.");
+            else if (!EgoCorrosion.HostileInRange(wielder, p.overclockRange, weapon)) Disable("No hostile within " + p.overclockRange.ToString("0.#") + " cells.");
         }
     }
 }

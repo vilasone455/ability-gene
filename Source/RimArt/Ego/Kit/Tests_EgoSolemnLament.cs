@@ -10,7 +10,7 @@ namespace RimArt
 {
     /// <summary>
     /// Game tests of Solemn Lament (docs/ego-weapons.md, Weapon 2) with the real def, filter <c>ego: solemn lament</c>. The
-    /// shooter's mood is set to full, so above the minor break line no shot rolls Corrosion. Bursts are started on the verb
+    /// shooter's mood is set to full and its Shooting to 12, over the def's 4, so no shot rolls Corrosion. Bursts are started on the verb
     /// itself (one warmup, one burst), not with an attack job, which would keep shooting.
     /// </summary>
     public static class Tests_EgoSolemnLament
@@ -20,6 +20,7 @@ namespace RimArt
             t.Equip(shooter, EgoDefOf.AG_EgoSolemnLament);
             shooter.drafter.FireAtWill = false;
             shooter.needs.mood.CurLevel = 1f;
+            shooter.skills.GetSkill(SkillDefOf.Shooting).Level = 12;
             return CompEgoSolemnLament.HeldBy(shooter);
         }
 
@@ -27,10 +28,26 @@ namespace RimArt
 
         private static int Stacks(Pawn pawn) => EgoButterfly.Stacks(pawn);
 
-        private static bool Injured(Pawn pawn) => pawn.health.hediffSet.hediffs.Any(h => h is Hediff_Injury);
+        /// <summary>
+        /// A hostile at full consciousness: its hediffs removed, no Wimp, and clothed against the cold map. Butterfly's numbers
+        /// are for an unhurt pawn: 9 stacks leave 32.5 %, just over Core's 30 %, and a raider's old wound (pain, a scarred
+        /// lung) or shivering (-5 %) takes enough to keep it down at 9.
+        /// </summary>
+        private static Pawn Unhurt(RimArtTestContext t, IntVec3 at, Faction faction = null)
+        {
+            Pawn pawn = t.Target(at, bare: false, faction: faction);
+            NoWimp(pawn);
+            pawn.health.RemoveAllHediffs();
+            return t.Note(pawn);
+        }
 
+        /// <summary>
+        /// Stacks, consciousness and health. A wound shows as health below the note taken at spawn (<see cref="RimArtTestContext.Struck"/>):
+        /// a generated raider often already carries an old injury. Butterfly lowers consciousness, not health.
+        /// </summary>
         private static string State(Pawn pawn) => pawn.LabelShort + " " + (pawn.Dead ? "dead" : Stacks(pawn) + " stacks, consciousness "
-            + pawn.health.capacities.GetLevel(PawnCapacityDefOf.Consciousness).ToStringPercent() + (Injured(pawn) ? ", injured" : "") + (pawn.Downed ? ", DOWN" : ""));
+            + pawn.health.capacities.GetLevel(PawnCapacityDefOf.Consciousness).ToStringPercent() + ", health "
+            + pawn.health.summaryHealth.SummaryHealthPercent.ToStringPercent() + (pawn.Downed ? ", DOWN" : ""));
 
         /// <summary>One burst at <paramref name="target"/>: the warmup, then shots until the verb stops bursting. Logs every shot.</summary>
         private static IEnumerable<int> Burst(RimArtTestContext t, Pawn shooter, CompEgoSolemnLament gun, LocalTargetInfo target, List<string> shots)
@@ -71,10 +88,13 @@ namespace RimArt
             gun.PrimaryVerb.TryStartCastOn(target);
             foreach (int wait in WaitFor(() => Game.Bursts.Any(b => b.ShotCount >= 1), 120)) yield return wait;
             t.Log(t.Now + " after shot 1: " + State(target));
-            t.Check(Stacks(target) == 2 && !Injured(target), "shot 1 is white: 2 stacks, no wound");
+            t.Check(Stacks(target) == 2 && !t.Struck(target), "shot 1 is white: 2 stacks, no wound");
             foreach (int wait in WaitFor(() => Game.Bursts.Any(b => b.ShotCount >= 2), 60)) yield return wait;
             t.Log(t.Now + " after shot 2: " + State(target));
-            t.Check(Stacks(target) == 3 && Injured(target), "shot 2 is black: 1 more stack and a wound");
+            t.Check(Stacks(target) == 3 && t.Struck(target), "shot 2 is black: 1 more stack and a wound");
+            // From here the black shots' damage is absorbed and only the stacks are under test. A black shot can kill a
+            // pawn near the cap: a brain wound or pain takes the consciousness Butterfly leaves (9 stacks leave 32.5 %).
+            Shield(target);
             foreach (int wait in WaitFor(() => !gun.PrimaryVerb.Bursting, 120)) yield return wait;
             t.Log(t.Now + " burst 1 over: " + State(target) + ", ammo " + gun.Ammo);
             t.Check(Stacks(target) == 6 && gun.Ammo == 16, "a burst of 4 put on 2 + 1 + 2 + 1 = 6 stacks and spent 4 rounds");
@@ -89,9 +109,7 @@ namespace RimArt
             yield return 70;
             foreach (int wait in Burst(t, shooter, gun, target, shots)) yield return wait;
             t.Log(t.Now + " burst 3 over: " + State(target));
-            // Burst 3's black shots still wound the downed pawn and can kill it; stacks at the cap cannot.
-            if (target.Dead) t.Log("the target died of the black shots' wounds, not of Butterfly");
-            t.Check(Stacks(target) == 10, "the guns never put on more than the cap, so Butterfly cannot kill it");
+            t.Check(!target.Dead && Stacks(target) == 10, "the guns never put on more than the cap, so Butterfly cannot kill it");
         }
 
         [RimArtTest("Ego", "solemn lament: the pool runs dry, the pair reloads, and stacks fade", 1800)]
@@ -115,8 +133,8 @@ namespace RimArt
             t.Check(gun.Ammo == 20, "reloaded to 20 (" + gun.Ammo + ")");
 
             // Fade: 10 stacks down the pawn; one fades every 10 s, and at 9 it stands again.
-            Pawn faded = t.Target(t.center + new IntVec3(0, 0, -4));
-            NoWimp(faded);
+            Pawn faded = Unhurt(t, t.center + new IntVec3(0, 0, -4));
+            t.Log("before the stacks: " + State(faded));
             EgoButterfly.Add(faded, 10, EgoButterflyExtension.Of.cap);
             yield return 2;
             t.Log(t.Now + " " + State(faded));
@@ -238,10 +256,10 @@ namespace RimArt
             CompEgoSolemnLament gun = Arm(t, wielder);
             Pawn ally = t.Colonist(c + new IntVec3(0, 0, 2));
             Pawn fresh = t.Target(c + new IntVec3(2, 0, 0));
-            Pawn nearCap = t.Target(c + new IntVec3(-2, 0, 0), faction: fresh.Faction);
+            // At full consciousness, so it stands at 9 and Overclock (standing hostiles only) takes it to the cap.
+            Pawn nearCap = Unhurt(t, c + new IntVec3(-2, 0, 0), fresh.Faction);
             Pawn down = t.Target(c + new IntVec3(0, 0, -2), faction: fresh.Faction);
             NoWimp(fresh);
-            NoWimp(nearCap);
             EgoButterfly.Add(nearCap, 8, EgoButterflyExtension.Of.cap);
             HealthUtility.DamageUntilDowned(down, allowBleedingWounds: false);
             t.Log(State(fresh) + " | " + State(nearCap) + " | " + State(down) + " | " + State(ally));

@@ -80,14 +80,20 @@ namespace RimArt
         public static CompEgoWeapon HeldBy(Pawn pawn) => pawn?.equipment?.Primary?.GetComp<CompEgoWeapon>();
 
         /// <summary>
+        /// False for a weapon that rolls Corrosion itself instead of in <see cref="Notify_UsedWeapon"/>: Mimicry's swing
+        /// lands a fraction of a second after the verb fires, and it rolls once the swing has hit or missed.
+        /// </summary>
+        protected virtual bool RollsWhenUsed => true;
+
+        /// <summary>
         /// Once per shot or swing that went off: Verb.TryCastNextBurstShot calls it through ThingWithComps after
-        /// TryCastShot succeeds. A roll that passes corrodes the pawn after the burst, not inside this call. A weapon whose
-        /// attack skips the verb calls <see cref="EgoCorrosion.Roll"/> itself.
+        /// TryCastShot succeeds (for a melee verb only when the hit landed). A roll that passes corrodes the pawn after the
+        /// burst, not inside this call. A weapon whose attack skips the verb calls <see cref="EgoCorrosion.Roll"/> itself.
         /// </summary>
         public override void Notify_UsedWeapon(Pawn pawn)
         {
             base.Notify_UsedWeapon(pawn);
-            EgoCorrosion.Roll(pawn, this);
+            if (RollsWhenUsed) EgoCorrosion.Roll(pawn, this);
         }
 
         public override IEnumerable<Gizmo> CompGetEquippedGizmosExtra()

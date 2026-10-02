@@ -56,12 +56,14 @@ namespace RimArt
     /// are cells from the wielder's starting point, turned with the aim.
     ///
     /// Swings: three swings <see cref="Spacing"/> s apart at a raider 1 cell off. Grown swing: a swing, then the
-    /// grown swing at 1.2 s; the raider goes down. Corroded: an ally next to the wielder, a raider 3 cells off, a
-    /// colonist with a rifle behind; four actions 1.5 s apart at the nearest standing pawn of any faction (downed
-    /// pawns are skipped), a 2-cell lunge when nobody is within <see cref="EgoMimicryTiming.Adjacent"/>; each hit
-    /// adds an arm stage, the colonist's shot 0.75 s after the third hit takes one off. Overclock: five actions 1 s
-    /// apart at hostiles only; the ally next to the wielder is never chosen. The state ends 0.6 intervals after
-    /// the last hit and the arm recedes in 1 s.
+    /// grown swing at 1.2 s; the raider goes down. Corroded (the rules' hunt): an ally 2 cells off, a raider behind
+    /// it, a colonist with a rifle behind the wielder; four actions 1.5 s apart at the nearest pawn of any faction,
+    /// downed ones included, with a lunge of up to 2 cells first when nobody is within
+    /// <see cref="EgoMimicryTiming.Adjacent"/>: the wielder lunges at the ally, downs it with the second hit and keeps
+    /// cutting it. Each hit adds an arm stage; the colonist's shot 0.75 s after the third hit takes one off.
+    /// Overclock: five actions 1 s apart, standing still, at standing hostiles within reach only: the ally next to the
+    /// wielder and the raider 3 cells off are never chosen; the first raider goes down at its third hit and the
+    /// second takes the rest. The state ends 0.6 intervals after the last hit and the arm recedes in 1 s.
     /// </summary>
     public sealed class EgoMimicryScript
     {
@@ -120,14 +122,15 @@ namespace RimArt
                 bool corroded = mode == EgoMimicryMode.Corroded;
                 if (corroded)
                 {
-                    Person(F(0f, 1f), 2, false);
-                    Person(F(3f, 0.3f), 2, true);
+                    Person(F(1.9f, 0.6f), 2, false);
+                    Person(F(3.6f, -0.4f), 2, true);
                     Person(F(-3f, -1.6f), 99, false, shooter: true);
                 }
                 else
                 {
                     Person(F(0f, 1f), 2, false);
                     Person(F(1f, -0.25f), 3, true);
+                    Person(F(-0.3f, -1.05f), 2, true);
                     Person(F(3.1f, -0.6f), 2, true);
                 }
                 float every = corroded ? T.CorrodedInterval : T.OverclockInterval;
@@ -138,20 +141,20 @@ namespace RimArt
                 for (int k = 0; k < n; k++)
                 {
                     float t = T.Enter + k * every;
-                    // The nearest standing pawn (of any faction when corroded, hostile when overclocked).
+                    // Corroded: the nearest pawn of any faction, downed ones too. Overclock: the nearest standing hostile in reach.
                     int pick = -1;
                     float best = float.MaxValue;
                     for (int i = 0; i < people.Count; i++)
                     {
                         EgoMimicryPerson q = people[i];
-                        if (q.DownAt >= 0f && q.DownAt <= t) continue;
-                        if (!corroded && !q.Hostile) continue;
                         float dist = (q.Off - w).magnitude;
+                        if (!corroded && (!q.Hostile || (q.DownAt >= 0f && q.DownAt <= t) || dist > T.Adjacent)) continue;
                         if (dist < best) { best = dist; pick = i; }
                     }
+                    if (pick < 0) break;
                     EgoMimicryPerson target = people[pick];
                     Vector2 v = target.Off - w, u = T.Unit(v);
-                    float lunge = best > T.Adjacent ? Mathf.Min(T.LungeCells, best - 1f) : 0f;
+                    float lunge = corroded && best > T.Adjacent ? Mathf.Min(T.LungeCells, best - 1f) : 0f;
                     Vector2 to = w + u * lunge;
                     float start = t + (lunge > 0f ? T.LungeTime : 0f), hit = start + T.HitAt;
                     actions.Add(new EgoMimicryAction { T = t, Start = start, Hit = hit, Aim = T.DegOf(u), Target = pick, From = w, To = to, Lunge = lunge > 0f });
@@ -168,7 +171,7 @@ namespace RimArt
                         stages.Add(new EgoMimicryStageStep { T = st + 0.05f, To = stage, Dur = T.StageShrink });
                     }
                 }
-                ExitAt = actions[n - 1].Hit + 0.6f * every;
+                ExitAt = actions[actions.Count - 1].Hit + 0.6f * every;
                 stages.Add(new EgoMimicryStageStep { T = ExitAt, To = 0f, Dur = T.Exit });
                 End = ExitAt + T.Exit + Hold;
             }

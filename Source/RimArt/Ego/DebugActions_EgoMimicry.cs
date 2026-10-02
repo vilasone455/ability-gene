@@ -6,11 +6,14 @@ using T = RimArt.EgoMimicryTiming;
 namespace RimArt
 {
     /// <summary>
-    /// Previews only: there is no weapon, no ability, no def and no rule behind any of this; nobody is hurt,
-    /// healed or corroded and no pawn is drawn. Each entry plays a Mimicry showcase with the wielder on the
-    /// chosen cell (the sketch's origin), on the sketch's clock, so the recorder can compare the port with
-    /// Tools/VfxLab/web/sketches/ego-mimicry.js. The aims check the facings: the swing and the arm sit on the
-    /// hand side, mirrored aiming west, and aiming north they draw under the pawn.
+    /// Previews only: no weapon or rule is behind any of this (the sword is AG_EgoMimicry, its rules are in Ego/Kit);
+    /// nobody is hurt, healed or corroded and no pawn is drawn. Each entry plays a Mimicry showcase with the wielder on
+    /// the chosen cell (the sketch's origin), on the sketch's clock, so the recorder can compare the port with
+    /// Tools/VfxLab/web/sketches/ego-mimicry.js. The aims check the facings: the swing sits on the hand side, mirrored
+    /// facing west, the arm and face are placed for the facing the aim turns a pawn to, and facing north the arm draws
+    /// under the pawn. The corroded and Overclock showcases follow the rules: the hunt keeps cutting a pawn it downed,
+    /// Overclock stands still and swings only at standing hostiles in reach. At aim 120 the picture is no longer
+    /// mirrored (the pawn faces north), where the sketch mirrors it.
     /// </summary>
     public static class DebugActions_EgoMimicry
     {
@@ -124,18 +127,21 @@ namespace RimArt
                 }
                 if (a.Grown)
                 {
-                    T.SlamFootprint(o + a.From, a.Aim, T.GrownScale, out Vector2 p0, out Vector2 p1);
+                    T.SlamFootprint(o + a.From, a.Aim, T.GrownScale, out Vector2 p0, out Vector2 p1, T.SignOf(T.FacingOf(a.Aim)));
                     EgoMimicryStrikeGraphics.Slam(p0, p1, T.Dir(a.Aim), s - a.Start - T.SlamAt, EgoMimicryStrikeGraphics.SlamSeed, map);
                 }
             }
             foreach (EgoMimicryShot sh in script.Shots)
-                EgoMimicryStrikeGraphics.Torn(o + sh.At, o + sh.From, T.HandSide(sh.Aim), s - sh.HitT, map);
+                EgoMimicryStrikeGraphics.Torn(o + sh.At, o + sh.From, T.HandSide(sh.Aim, T.SignOf(T.FacingOf(sh.Aim))), s - sh.HitT, map);
 
             int act = script.ActionAt(s);
+            float aim = act >= 0 ? script.Actions[act].Aim : script.Aim;
             EgoMimicryGraphics.DrawWielder(new EgoMimicryWielder
             {
                 Pos = o + script.WielderAt(s),
-                Aim = act >= 0 ? script.Actions[act].Aim : script.Aim,
+                Aim = aim,
+                Facing = T.FacingOf(aim),
+                Altitude = EgoMimicryGraphics.PawnLayer,
                 Move = act < 0 ? EgoMimicryMove.Rest : script.Actions[act].Grown ? EgoMimicryMove.Grown : EgoMimicryMove.Swing,
                 MoveAge = act >= 0 ? s - script.Actions[act].Start : -1f,
                 Stage = script.Armed ? script.StageAt(s) : 0f,

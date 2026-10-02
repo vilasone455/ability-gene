@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Verse;
 using static RimArt.VfxMath;
 
 namespace RimArt
@@ -34,8 +35,9 @@ namespace RimArt
         public const float HealFraction = 0.1f, GrowChance = 0.1f, GrowDamageFactor = 3.5f, StageDamage = 0.15f;
         public const int GrowEveryHits = 8, ArmStages = 4;
         // Corrosion (the shared E.G.O. system): one action every 1.5 s for 40 s (the preview cuts it to 8.7 s);
-        // Overclock: 5 actions 1 s apart at hostiles only. A pawn nearer than Adjacent cells is swung at where
-        // it stands; anyone further is reached by a lunge of up to LungeCells first.
+        // Overclock: 5 actions 1 s apart at standing hostiles in reach only, standing still. A pawn nearer than
+        // Adjacent cells is swung at where it stands; while corroded, anyone further is reached by a lunge of up
+        // to LungeCells first. The rules read their numbers from CompProperties_EgoMimicry, not these.
         public const float CorrodedInterval = 1.5f, OverclockInterval = 1f, LungeCells = 2f, Adjacent = 1.6f;
         public const int CorrodedActions = 4, OverclockActions = 5;
 
@@ -120,14 +122,27 @@ namespace RimArt
             return new Vector3(d.x, 0f, d.y);
         }
 
-        /// <summary>-1 when aiming west of north-south: the picture is mirrored so the flesh stays on top.</summary>
+        /// <summary>-1 when aiming west of north-south: the picture is mirrored so the flesh stays on top (the sketch's rule).</summary>
         public static float SignOf(float aim) => Mathf.Cos(aim * Mathf.Deg2Rad) < -1e-6f ? -1f : 1f;
 
-        /// <summary>The hand side: right of the aim, mirrored when aiming west.</summary>
-        public static Vector2 HandSide(float aim)
+        /// <summary>
+        /// The mirror for a pawn facing <paramref name="facing"/>: -1 facing west, as Core mirrors a west-facing pawn and its
+        /// weapon, else 1. A pawn facing north at a target a little west of north keeps the sword in its right hand, where
+        /// <see cref="SignOf"/> would mirror it.
+        /// </summary>
+        public static float SignOf(Rot4 facing) => facing == Rot4.West ? -1f : 1f;
+
+        /// <summary>The aim straight ahead of a pawn facing <paramref name="facing"/>: 0 east, 90 north, 180 west, 270 south.</summary>
+        public static float AimOf(Rot4 facing) => facing == Rot4.East ? 0f : facing == Rot4.North ? 90f : facing == Rot4.West ? 180f : 270f;
+
+        /// <summary>The facing a pawn aiming <paramref name="aim"/> degrees turns to (Core's flat angles run clockwise from north).</summary>
+        public static Rot4 FacingOf(float aim) => Rot4.FromAngleFlat(90f - aim);
+
+        /// <summary>The hand side: right of the aim, mirrored when <paramref name="sign"/> is -1 (0 takes <see cref="SignOf(float)"/>).</summary>
+        public static Vector2 HandSide(float aim, float sign = 0f)
         {
             Vector2 s = Side(Dir(aim));
-            return s * -SignOf(aim);
+            return s * -(sign != 0f ? sign : SignOf(aim));
         }
 
         /// <summary>The blade's angle from the aim on the hand side, <paramref name="age"/> s into a swing (before the start it rests).</summary>
@@ -176,17 +191,18 @@ namespace RimArt
         /// on screen instead of a line along the screen's vertical axis.
         /// </summary>
         public static void GrownPose(float age, Vector2 pos, float aim, out Vector3 hand, out Vector3 blade, out float size,
-            out float flip, out float swell)
+            out float flip, out float swell, float sign = 0f)
         {
-            Vector2 d = Dir(aim), hs = HandSide(aim);
-            float sign = SignOf(aim), lean = 0.2f + 0.8f * Mathf.Abs(Mathf.Sin(aim * Mathf.Deg2Rad));
+            if (sign == 0f) sign = SignOf(aim);
+            Vector2 d = Dir(aim), hs = HandSide(aim, sign);
+            float lean = 0.2f + 0.8f * Mathf.Abs(Mathf.Sin(aim * Mathf.Deg2Rad));
             Vector3 R = Level(aim + sign * Rest);
             Vector3 T = Unit(new Vector3(hs.x * 0.45f * lean - d.x * 0.55f, 0.8f, hs.y * 0.45f * lean - d.y * 0.55f));
             Vector3 B = SlamDir(aim);
             Vector3 hRest = HandAt(pos, aim + sign * Rest, sign);
             Vector2 top = pos + d * 0.05f + hs * 0.1f;
             var hTop = new Vector3(top.x, TopH, top.y);
-            Vector3 hLow = LowHand(pos, aim);
+            Vector3 hLow = LowHand(pos, aim, sign);
             // The edge leads the cut: which side of the raised blade faces the slam's motion on screen.
             Vector2 Ts = Unit(new Vector2(T.x, T.z + T.y * Lift)), Bs = new Vector2(B.x, B.z + B.y * Lift), n = Side(Ts);
             float slamFlip = n.x * (Bs.x - Ts.x) + n.y * (Bs.y - Ts.y) > 0f ? -1f : 1f;
@@ -232,19 +248,21 @@ namespace RimArt
         }
 
         /// <summary>The hands at the bottom of the slam: 0.35 cells along the aim, 0.05 to the hand side, <see cref="LowH"/> up.</summary>
-        public static Vector3 LowHand(Vector2 pos, float aim)
+        public static Vector3 LowHand(Vector2 pos, float aim, float sign = 0f)
         {
-            Vector2 q = pos + Dir(aim) * 0.35f + HandSide(aim) * 0.05f;
+            Vector2 q = pos + Dir(aim) * 0.35f + HandSide(aim, sign) * 0.05f;
             return new Vector3(q.x, LowH, q.y);
         }
 
         /// <summary>
         /// The grown blade's footprint on the floor, as points in the DrawPos frame (the floor is at z + Ground):
-        /// from 0.1 past the guard to the tip at <paramref name="scale"/> x the blade.
+        /// from 0.1 past the guard to the tip at <paramref name="scale"/> x the blade. The rules read the same points as map
+        /// coordinates (x, z) for who is under the blade: at the default size 2 the strip runs from 0.67 to 2.71 cells along
+        /// the aim.
         /// </summary>
-        public static void SlamFootprint(Vector2 pos, float aim, float scale, out Vector2 from, out Vector2 to)
+        public static void SlamFootprint(Vector2 pos, float aim, float scale, out Vector2 from, out Vector2 to, float sign = 0f)
         {
-            Vector3 low = LowHand(pos, aim), B = SlamDir(aim);
+            Vector3 low = LowHand(pos, aim, sign), B = SlamDir(aim);
             from = new Vector2(low.x + B.x * (GuardA + 0.1f), low.z + B.z * (GuardA + 0.1f));
             float tip = GuardA + Blade * scale;
             to = new Vector2(low.x + B.x * tip, low.z + B.z * tip);

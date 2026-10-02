@@ -18,7 +18,6 @@ namespace RimArt
             AccessTools.MethodDelegate<Func<Verb_MeleeAttack, LocalTargetInfo, DamageWorker.DamageResult>>(
                 AccessTools.Method(typeof(Verb_MeleeAttack), "ApplyMeleeDamageToTarget"));
 
-        private static List<Hediff_Injury> Injuries = new List<Hediff_Injury>();
         private static readonly List<Pawn> Swept = new List<Pawn>();
 
         /// <summary>
@@ -31,7 +30,7 @@ namespace RimArt
             if (holder == null || blade == null || target?.RaceProps == null || !target.RaceProps.IsFlesh) return false;
             CompProperties_Samehada p = blade.Props;
             if (!target.Dead && target.health != null) AddDrained(target, p);
-            Heal(holder, p.healPerHit);
+            InjuryHeal.Heal(holder, p.healPerHit);
             bool full = blade.Charges >= p.maxCharges;
             int gained = blade.Fed();
             Map map = holder.MapHeld;
@@ -58,28 +57,6 @@ namespace RimArt
         {
             Hediff drained = pawn?.health?.hediffSet?.GetFirstHediffOfDef(SamehadaDefOf.AG_SamehadaDrained);
             return drained == null ? 0 : Mathf.RoundToInt(drained.Severity);
-        }
-
-        /// <summary>
-        /// Heals <paramref name="amount"/> hit points off the pawn's injuries that are not scars, in the
-        /// order the health tab lists them, as Core's regeneration (Pawn_HealthTracker) spreads its amount.
-        /// </summary>
-        public static float Heal(Pawn pawn, float amount)
-        {
-            if (pawn?.health?.hediffSet == null || amount <= 0f) return 0f;
-            Injuries.Clear();
-            pawn.health.hediffSet.GetHediffs(ref Injuries, h => !h.IsPermanent());
-            float healed = 0f;
-            for (int i = 0; i < Injuries.Count && amount > 0f; i++)
-            {
-                Hediff_Injury injury = Injuries[i];
-                float part = Mathf.Min(amount, injury.Severity);
-                if (part <= 0f) continue;
-                injury.Heal(part);
-                amount -= part;
-                healed += part;
-            }
-            return healed;
         }
 
         /// <summary>

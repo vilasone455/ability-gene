@@ -110,7 +110,9 @@ namespace RimArt
             t.Clear();
             Pawn shooter = t.Colonist(t.center);
             Pawn friend = t.Colonist(t.center + new IntVec3(2, 0, 0));
-            Pawn enemy = t.Target(t.center + new IntVec3(-8, 0, 0));
+            // Stunned: the burst hits it, and a raider hit leaves its Wait job for a Goto; walking up, it would become the
+            // nearest pawn the state fires at.
+            Pawn enemy = t.Target(t.center + new IntVec3(-8, 0, 0), stunTicks: 1800);
             // A machine pistol: a burst of 3, so the state must wait for the burst to end instead of starting on shot 1.
             CompEgoWeapon gun = Arm(shooter, Props(), "Gun_MachinePistol");
             EgoTestAction fired = Action(gun);
@@ -141,7 +143,8 @@ namespace RimArt
                 if (t.Now - lastLog >= 30)
                 {
                     lastLog = t.Now;
-                    t.Log((t.Now - start) + " " + Describe(shooter) + " | firings " + fired.firings.Count);
+                    t.Log((t.Now - start) + " " + Describe(shooter) + ", health " + shooter.health.summaryHealth.SummaryHealthPercent.ToStringPercent()
+                        + " | firings " + fired.firings.Count + " | enemy " + Describe(enemy));
                 }
                 yield return wait;
             }
@@ -180,12 +183,15 @@ namespace RimArt
             t.Check(!EgoCorrosion.Corrode(pawn, gun), "Corrode on a pawn already in a mental state does nothing");
             t.Check(state != null && pawn.MentalState == state, "and the state it had is still the same one");
 
+            // The state looks for its weapon in MentalStateTick, which runs on the pawn's interval tick: every tick on
+            // screen when zoomed in, at most every 15 ticks (Thing.MaxTickIntervalRate) when the camera is elsewhere.
             bool dropped = pawn.equipment.TryDropEquipment(gun.parent, out ThingWithComps _, pawn.Position);
-            yield return 2;
+            int droppedAt = t.Now;
+            foreach (int wait in WaitFor(() => !pawn.InMentalState, 16)) yield return wait;
             t.Log(t.Now + " " + Describe(pawn) + " | state " + (pawn.MentalStateDef?.defName ?? "none") + " | primary "
-                + (pawn.equipment.Primary?.LabelShort ?? "none"));
+                + (pawn.equipment.Primary?.LabelShort ?? "none") + " | " + (t.Now - droppedAt) + " ticks after the drop");
             t.Check(dropped && pawn.equipment.Primary == null, "the weapon was dropped");
-            t.Check(!pawn.InMentalState, "the weapon leaving the hands ended the state");
+            t.Check(!pawn.InMentalState, "the weapon leaving the hands ended the state by the pawn's next interval tick (" + (t.Now - droppedAt) + " ticks)");
             int left = ExhaustionTicks(pawn);
             t.Check(left > 4800 && left <= 5000, "exhausted for the weapon's 2 h (" + left + " ticks left)");
         }
