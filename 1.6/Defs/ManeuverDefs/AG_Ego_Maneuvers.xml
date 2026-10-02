@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Mimicry's cut (docs/ego-weapons.md, Weapon 3). A tool gets a verb for every maneuver whose requiredCapacity is one of
+       its capacities, so a second maneuver on Core's Cut would give every bladed weapon Mimicry's verb. The sword's tool
+       has this capacity instead, and this maneuver is the only one that needs it. The verb is Core's cut with the hit
+       moved to the swing's contact frame (RimArt.Verb_EgoMimicry); damage, logs and armour are Cut's. -->
+  <ToolCapacityDef>
+    <defName>AG_EgoMimicryCut</defName>
+    <label>cut</label>
+  </ToolCapacityDef>
+
+  <ManeuverDef>
+    <defName>AG_EgoMimicrySlash</defName>
+    <requiredCapacity>AG_EgoMimicryCut</requiredCapacity>
+    <verb>
+      <verbClass>RimArt.Verb_EgoMimicry</verbClass>
+      <meleeDamageDef>Cut</meleeDamageDef>
+    </verb>
+    <logEntryDef>MeleeAttack</logEntryDef>
+    <combatLogRulesHit>Maneuver_Slash_MeleeHit</combatLogRulesHit>
+    <combatLogRulesDeflect>Maneuver_Slash_MeleeDeflect</combatLogRulesDeflect>
+    <combatLogRulesMiss>Maneuver_Slash_MeleeMiss</combatLogRulesMiss>
+    <combatLogRulesDodge>Maneuver_Slash_MeleeDodge</combatLogRulesDodge>
+  </ManeuverDef>
+
+</Defs>

@@ -9,7 +9,8 @@ namespace RimArt
 {
     /// <summary>
     /// Game tests of Magic Bullet (docs/ego-weapons.md, Weapon 1) with the real def, filter <c>ego: magic bullet</c>. The
-    /// shooter's mood is set to full, so above the minor break line no shot rolls Corrosion. Shots are started on the verb
+    /// shooter's mood is set to full and its Shooting to 12, over the def's 6, so no shot rolls Corrosion (under the
+    /// requirement a shot at full mood rolls one band worse, 25 %). Shots are started on the verb
     /// itself (one warmup, one shot), not with an attack job, which would keep shooting. Pawns that must have no opinion
     /// of anyone (the seventh's checks) are animals.
     /// </summary>
@@ -20,11 +21,15 @@ namespace RimArt
             t.Equip(shooter, EgoDefOf.AG_EgoMagicBullet);
             shooter.drafter.FireAtWill = false;
             shooter.needs.mood.CurLevel = 1f;
+            shooter.skills.GetSkill(SkillDefOf.Shooting).Level = 12;
             return CompEgoMagicBullet.HeldBy(shooter);
         }
 
-        /// <summary>An animal with no faction and no opinions, held still: something on the line that is not a person.</summary>
-        private static Pawn Animal(RimArtTestContext t, IntVec3 at, string kind = "Boar")
+        /// <summary>
+        /// An animal with no faction and no opinions, held still: something on the line that is not a person. Core's boar
+        /// is WildBoar; there is no kind named Boar.
+        /// </summary>
+        private static Pawn Animal(RimArtTestContext t, IntVec3 at, string kind = "WildBoar")
         {
             Pawn pawn = PawnGenerator.GeneratePawn(PawnKindDef.Named(kind));
             GenSpawn.Spawn(pawn, at, t.map);
@@ -115,7 +120,14 @@ namespace RimArt
             t.Log("wall " + (wall.Destroyed ? "destroyed" : wall.HitPoints + " / " + hp + " hp") + " | " + Health(before) + " | " + Health(behind));
             t.Check(shot[0].struck == wall && (wall.Destroyed || wall.HitPoints < hp), "the wall it was aimed at took the damage");
             t.Check(t.Hurt(before) && t.Hurt(behind), "the pawns in front of the wall and behind it were hit");
-            t.Check(shot[0].hits.Count(h => h.Wall) == 1, "the wall has one hole in the picture, not two");
+            // The line runs the full 40 cells, past the cleared arena, so the map's own rock can add holes further along.
+            List<EgoMagicBulletHit> holes = shot[0].hits.Where(h => h.Wall).ToList();
+            t.Log("holes: " + string.Join(", ", holes.Select(h =>
+            {
+                var cell = new IntVec3(Mathf.FloorToInt(h.At.x), 0, Mathf.FloorToInt(h.At.y));
+                return cell + " " + (cell.InBounds(t.map) ? cell.GetEdifice(t.map)?.def.defName ?? "nothing" : "off the map");
+            })));
+            t.Check(holes.Count(h => Mathf.Abs(h.At.x - (c.x + 0.5f)) < 0.5f) == 1, "the wall it was aimed at has one hole in the picture, not two");
             t.Check(gun.count == 1, "the shot counted");
         }
 
@@ -190,13 +202,16 @@ namespace RimArt
             t.Check(shot.Count == 1 && shot[0].Seventh && shot[0].victims.SequenceEqual(new[] { shooter }), "the seventh with nobody to love hit the shooter");
             t.Check(t.Hurt(shooter) && t.Untouched(dog) && t.Untouched(aimed), "the shooter was hurt; the dog and the boar were not");
 
-            // The count is the gun's: dropped and picked up by another colonist, it is unchanged.
+            // The count is the gun's: dropped and picked up by another colonist, it is unchanged. The seventh's 18 can kill
+            // the shooter (a hit to the brain), and a pawn that dies drops its gun.
             gun.cooldownUntilTick = t.Now;
             gun.count = 4;
             Pawn other = t.Colonist(c + new IntVec3(0, 0, -3));
-            bool dropped = shooter.equipment.TryDropEquipment(gun.parent, out ThingWithComps lying, shooter.Position);
+            ThingWithComps lying = gun.parent;
+            bool dropped = lying.Spawned || shooter.equipment.TryDropEquipment(lying, out lying, shooter.Position);
             yield return 2;
-            lying.DeSpawn();
+            t.Log("the rifle " + (lying.Spawned ? "lies at " + lying.Position : "is not on the map") + (shooter.Dead ? " (the shooter died of the seventh)" : ""));
+            if (lying.Spawned) lying.DeSpawn();
             other.equipment.AddEquipment(lying);
             CompEgoMagicBullet now = CompEgoMagicBullet.HeldBy(other);
             t.Log("dropped " + dropped + "; " + other.LabelShort + " holds " + (now?.parent.LabelShort ?? "nothing") + ", count " + now?.count);
@@ -243,6 +258,8 @@ namespace RimArt
             command.action();
             int fired = 0;
             var seen = new HashSet<EgoMagicBulletCast>();
+            // Hostility by faction: a pawn the line killed is no longer HostileTo anyone by the time the test sees the line.
+            bool Hostile(Pawn v) => v.Faction != null && v.Faction.HostileTo(shooter.Faction);
             start = t.Now;
             foreach (int wait in WaitFor(() => shooter.CurJobDef != EgoDefOf.AG_EgoOverclock, 600))
             {
@@ -250,16 +267,18 @@ namespace RimArt
                     if (cast.shooter == shooter && cast.Fired && seen.Add(cast))
                     {
                         fired++;
-                        t.Log("+" + (cast.fireTick - start) + " overclock line, shot " + cast.shot + ": hit " + string.Join(", ", cast.victims.Select(v => v.LabelShort))
-                            + " | " + Health(enemy));
+                        t.Log("+" + (cast.fireTick - start) + " overclock line, shot " + cast.shot + (cast.Seventh ? " (the seventh)" : "") + ": hit "
+                            + string.Join(", ", cast.victims.Select(v => v.LabelShort + (Hostile(v) ? " (hostile)" : " (not hostile)"))) + " | " + Health(enemy));
                     }
                 yield return wait;
             }
             t.Log("overclock ended after " + (t.Now - start) + " ticks, " + fired + " lines | " + Health(onLine) + " | " + Health(enemy) + " | count " + gun.count);
             t.Check(fired >= 1, "Overclock fired");
-            t.Check(t.Untouched(onLine) && t.Untouched(ally), "the colonist on the line and the one beside were not hit");
+            // The ally took the corroded shot above and may be down or dead from it: Struck counts only what came after the note.
+            t.Check(t.Untouched(onLine) && (ally.Dead || !t.Struck(ally)), "the colonist on the line and the one beside were not hit");
             t.Check(t.Hurt(enemy), "the hostile was");
-            t.Check(seen.All(s => !s.Seventh && s.victims.All(v => v.HostileTo(shooter))), "no line was the seventh, and every pawn hit was hostile");
+            t.Check(seen.All(s => !s.Seventh), "no line was the seventh");
+            t.Check(seen.All(s => s.victims.All(Hostile)), "every pawn hit was of a hostile faction");
             t.Check(gun.count == 6 && !gun.CoolingDown, "Overclock did not move the count: the next shot is still the seventh");
             t.Check(shooter.needs.mood.thoughts.memories.GetFirstMemoryOfDef(EgoDefOf.AG_EgoOverclocked) != null, "the Overclock cost was paid");
         }

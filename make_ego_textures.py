@@ -31,6 +31,15 @@ ParadiseLost.png 128 px. The dropped staff and its icon, lying diagonally with t
                  head at the apple, the fan of 4, 6 and 8 scale feathers beside the apple on the outer side, the gold
                  halo of 10 thorns above it, the red apple with its lit spot and stem. At the def's drawSize 1.5 the
                  whole staff fits across the diagonal. A 1 px dark outline goes round it.
+Mimicry.png      128 px. The dropped sword and its icon, lying diagonally with the point to the upper right: the picture's
+                 sword (EgoMimicrySwordGraphics) at size 1, part for part and in its colours, flesh side up. The black grip
+                 with its lit line, red ring and end cap; the dark steel edge curving up into the point with its lit line;
+                 the red muscle over the back half (thickest at the hilt, where its bulb wraps the blade) with its dark
+                 underside band, lit ridge and four fibres, and three strands running on along the back; three bone spikes
+                 on the back and two under the flesh; the big green-iris eye near the hilt and the small blue-iris eye
+                 mid-blade; the sketch's black outlines 0.014 cells round steel and flesh. The sword is 1.41 cells from the
+                 end cap to the point, the length the picture draws it, so at the def's drawSize 1.5 it fits across the
+                 diagonal. A 1 px dark outline goes round it.
 """
 import math
 from pathlib import Path
@@ -354,7 +363,152 @@ def paradise_lost():
     print("wrote", OUT / "ParadiseLost.png")
 
 
+MI_DRAW_SIZE = 1.5
+MI_FLESH = rgb(0.60, 0.07, 0.06)
+MI_FLESH_LIT = rgb(0.88, 0.24, 0.17, 0.85)
+MI_FIBRE_BAND = rgb(0.30, 0.02, 0.03, 0.35)
+MI_FIBRE = rgb(0.30, 0.02, 0.03, 0.75)
+MI_STEEL = rgb(0.23, 0.21, 0.23)
+MI_STEEL_LIT = rgb(0.66, 0.64, 0.68, 0.85)
+MI_OUTLINE = rgb(0.06, 0.02, 0.02)
+MI_BONE = rgb(0.86, 0.80, 0.66)
+MI_BONE_LIT = rgb(0.97, 0.94, 0.85, 0.8)
+MI_GRIP = rgb(0.08, 0.07, 0.08)
+MI_GRIP_LIT = rgb(0.30, 0.29, 0.31)
+MI_GRIP_RING = rgb(0.78, 0.12, 0.10)
+MI_SCLERA = rgb(0.97, 0.94, 0.91)
+MI_IRIS_GREEN = rgb(0.22, 0.72, 0.42)
+MI_IRIS_BLUE = rgb(0.24, 0.40, 0.85)
+MI_PUPIL = rgb(0.03, 0.02, 0.02)
+# EgoMimicrySwordGraphics: (u along the blade from the guard, v across, + the back) and EgoMimicryTiming's grip.
+MI_EDGE = [(0, -0.12), (0.2, -0.125), (0.5, -0.088), (0.77, -0.04), (0.92, 0.02), (1, 0.065)]
+MI_BACK = [(0, 0.02), (0.5, 0.05), (0.8, 0.08), (0.93, 0.08), (1, 0.065)]
+MI_TOP = [(0, 0.03), (0.04, 0.1), (0.12, 0.135), (0.25, 0.13), (0.42, 0.118), (0.58, 0.1), (0.7, 0.085), (0.78, 0.075)]
+MI_BULB = [(0, -0.05), (0.04, -0.14), (0.1, -0.145), (0.2, -0.095)]
+MI_FLESH_END = 0.78
+MI_BLADE, MI_POMMEL, MI_GUARD = 1.09, -0.06, 0.22
+
+
+def mimicry():
+    size = 128
+    s = size * SCALE
+    per_cell = s / MI_DRAW_SIZE
+    big = 2 * s
+    image = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    mask = Image.new("L", (big, big), 0)
+    d, md = ImageDraw.Draw(image), ImageDraw.Draw(mask)
+    dx, dy = math.cos(math.radians(45)), math.sin(math.radians(45))
+    nx, ny = -dy, dx  # left of the blade: the back, the flesh side, up on the picture
+
+    def pl(points, u):
+        if u <= points[0][0]:
+            return points[0][1]
+        for (u0, v0), (u1, v1) in zip(points, points[1:]):
+            if u <= u1:
+                return v0 + (v1 - v0) * (u - u0) / (u1 - u0)
+        return points[-1][1]
+
+    def smooth(t):
+        t = min(1.0, max(0.0, t))
+        return t * t * (3 - 2 * t)
+
+    edge = lambda u: pl(MI_EDGE, u)
+    back = lambda u: pl(MI_BACK, u)
+    top = lambda u: pl(MI_TOP, u)
+
+    def low(u):
+        a = edge(u) + 0.03 + (back(u) - 0.012 - edge(u) - 0.03) * smooth((u - 0.3) / 0.35)
+        return min(a, pl(MI_BULB, u) if u < 0.2 else 9.0)
+
+    def pt(a, v):
+        """A point <a> cells along the sword from the hand and <v> across, on the canvas; the hand sits 0.6 cells before the middle."""
+        x, y = (a - 0.6) * dx + v * nx, (a - 0.6) * dy + v * ny
+        return (big / 2 + x * per_cell, big / 2 - y * per_cell)
+
+    def bp(u, v):
+        return pt(MI_GUARD + u * MI_BLADE, v)
+
+    def poly(points, colour):
+        d.polygon(points, fill=colour)
+        md.polygon(points, fill=255)
+
+    def band(us, lo, hi, colour):
+        """A strip along the blade from lo(u) to hi(u)."""
+        poly([bp(u, lo(u)) for u in us] + [bp(u, hi(u)) for u in reversed(us)], colour)
+
+    def line(points, width, colour):
+        w = max(1, round(width * per_cell))
+        d.line(points, fill=colour, width=w, joint="curve")
+        md.line(points, fill=255, width=w, joint="curve")
+
+    def disc(c, rx, ry, colour):
+        """An ellipse round canvas point <c>, rx along the blade and ry across, turned with it."""
+        poly([(c[0] + (math.cos(t) * rx * dx + math.sin(t) * ry * nx) * per_cell,
+               c[1] - (math.cos(t) * rx * dy + math.sin(t) * ry * ny) * per_cell)
+              for t in (i / 24 * 2 * math.pi for i in range(24))], colour)
+
+    steel = [i / 18 for i in range(19)]
+    flesh = [i / 14 * MI_FLESH_END for i in range(15)]
+
+    # The grip: the black rod, its lit line, the red ring at the guard, the end cap.
+    poly([pt(MI_POMMEL, -0.024), pt(MI_GUARD, -0.024), pt(MI_GUARD, 0.024), pt(MI_POMMEL, 0.024)], MI_GRIP)
+    poly([pt(MI_POMMEL + 0.02, 0.006), pt(MI_GUARD - 0.03, 0.006), pt(MI_GUARD - 0.03, 0.016), pt(MI_POMMEL + 0.02, 0.016)], MI_GRIP_LIT)
+    poly([pt(MI_GUARD - 0.035, -0.036), pt(MI_GUARD + 0.005, -0.036), pt(MI_GUARD + 0.005, 0.036), pt(MI_GUARD - 0.035, 0.036)], MI_GRIP_RING)
+    disc(pt(MI_POMMEL, 0.0), 0.038, 0.034, MI_GRIP)
+
+    # The outlines, then the steel and its lit line, then the flesh and its bands.
+    band(steel, lambda u: edge(u) - 0.014, lambda u: back(u) + 0.014, MI_OUTLINE)
+    band(flesh, lambda u: low(u) - 0.014, lambda u: top(u) + 0.014, MI_OUTLINE)
+    band(steel, edge, back, MI_STEEL)
+    band(steel[2:], lambda u: edge(u) + 0.006, lambda u: edge(u) + 0.02, MI_STEEL_LIT)
+    band(flesh, low, top, MI_FLESH)
+    band(flesh, low, lambda u: low(u) + (top(u) - low(u)) * 0.3, MI_FIBRE_BAND)
+    ridge = [u for u in flesh if 0.04 <= u <= 0.72]
+    band(ridge, lambda u: top(u) - 0.03, lambda u: top(u) - 0.01, MI_FLESH_LIT)
+    for i in range(4):
+        fr, u0, u1 = 0.22 + i * 0.17, 0.03 + 0.03 * i, MI_FLESH_END - 0.04 - 0.05 * i
+        us = [u0 + (u1 - u0) * j / 10 for j in range(11)]
+        line([bp(u, low(u) + (top(u) - low(u)) * fr + 0.006 * math.sin(u * 40 + i * 2)) for u in us], 0.012, MI_FIBRE)
+    for i in range(3):
+        u0, u1 = MI_FLESH_END - 0.1 + i * 0.02, MI_FLESH_END + 0.05 + 0.04 * i
+        um = (u0 + u1) / 2
+        line([bp(u0, back(u0) + 0.03 - i * 0.01), bp(um, back(um) + 0.018 - i * 0.006), bp(u1, back(u1) + 0.004)], 0.022, MI_FLESH)
+
+    # The bone spikes: three on the back, two small ones under the flesh near the hilt.
+    def spike(u, base, length, lean, sgn):
+        du = 0.022 / MI_BLADE
+        apex_u, apex_v = u + lean * length / MI_BLADE, base + sgn * length
+        poly([bp(u - du * 1.6, base), bp(u + du * 1.6, base), bp(apex_u, apex_v + sgn * 0.016)], MI_OUTLINE)
+        poly([bp(u - du, base), bp(u + du, base), bp(apex_u, apex_v)], MI_BONE)
+        poly([bp(u - du * 0.2, base), bp(u + du * 0.7, base), bp(apex_u, apex_v - sgn * 0.01)], MI_BONE_LIT)
+    for u, length, lean in ((0.13, 0.065, 0.25), (0.2, 0.115, 0.35), (0.27, 0.07, 0.3)):
+        spike(u, top(u) - 0.01, length, lean, 1)
+    for u, length, lean in ((0.2, 0.045, 0.2), (0.36, 0.04, 0.25)):
+        spike(u, low(u) + 0.01, length, lean, -1)
+
+    # The eyes, half open as the sword rests: the big green one near the hilt, the small blue one mid-blade.
+    for u, v, rx, rz, iris, ir in ((0.22, 0.02, 0.06, 0.045, MI_IRIS_GREEN, 0.024), (0.5, 0.054, 0.032, 0.024, MI_IRIS_BLUE, 0.013)):
+        c = bp(u, v)
+        disc(c, rx + 0.012, rz + 0.012, MI_OUTLINE)
+        disc(c, rx, rz, MI_SCLERA)
+        disc(c, ir, ir, iris)
+        disc(c, ir * 0.45, ir * 0.45, MI_PUPIL)
+
+    grown = mask.filter(ImageFilter.MaxFilter(2 * OUTLINE_PX * SCALE + 1))
+    base = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    base.paste(Image.new("RGBA", (big, big), INK), (0, 0), grown)
+    image = Image.alpha_composite(base, image)
+    x0, y0, x1, y1 = grown.getbbox()
+    cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+    image = image.crop((cx - s // 2, cy - s // 2, cx + s // 2, cy + s // 2))
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    image.resize((size, size), Image.LANCZOS).save(OUT / "Mimicry.png")
+    print("wrote", OUT / "Mimicry.png")
+
+
 if __name__ == "__main__":
     magic_bullet()
     solemn_lament()
     paradise_lost()
+    mimicry()

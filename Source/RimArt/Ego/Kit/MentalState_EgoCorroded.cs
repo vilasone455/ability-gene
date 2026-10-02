@@ -94,16 +94,23 @@ namespace RimArt
 
     /// <summary>
     /// The corroded pawn's job: stand, or with a weapon whose action <see cref="EgoCorrosionAction.WalksToNearest"/>, walk
-    /// to the nearest living pawn of any faction (downed ones too) and stand next to it. The firing belongs to the state.
+    /// to the nearest living pawn of any faction (downed ones too) that the action can target, and stand next to it. While
+    /// the action is busy with a firing (Mimicry's lunge and swing) it stands. The firing belongs to the state.
     /// </summary>
     public class JobGiver_EgoCorroded : ThinkNode_JobGiver
     {
+        /// <summary>Ticks between asks while busy, and while standing next to the pawn a walking action follows.</summary>
+        private const int BusyRecheck = 6, FollowRecheck = 60;
+
         protected override Job TryGiveJob(Pawn pawn)
         {
             if (!(pawn.MentalState is MentalState_EgoCorroded state)) return null;
-            if (state.Comp?.Props.Action.WalksToNearest == true)
+            CompEgoWeapon comp = state.Comp;
+            EgoCorrosionAction action = comp?.Props.Action;
+            if (action != null && action.Busy(pawn, comp)) return Hold(BusyRecheck);
+            if (action?.WalksToNearest == true)
             {
-                Pawn nearest = EgoCorrosion.Nearest(pawn);
+                Pawn nearest = EgoCorrosion.Nearest(pawn, comp);
                 if (nearest != null && !pawn.Position.AdjacentTo8WayOrInside(nearest.Position)
                     && pawn.CanReach(nearest, PathEndMode.Touch, Danger.Deadly))
                 {
@@ -113,8 +120,19 @@ namespace RimArt
                     walk.checkOverrideOnExpire = true;
                     return walk;
                 }
+                // Next to it: asked again every second as well, so the pawn follows a target that steps away.
+                return Hold(FollowRecheck);
             }
             return JobMaker.MakeJob(EgoDefOf.AG_EgoCorrodedHold);
+        }
+
+        /// <summary>The hold, asked again after <paramref name="recheck"/> ticks; the same hold given again keeps running.</summary>
+        private static Job Hold(int recheck)
+        {
+            Job hold = JobMaker.MakeJob(EgoDefOf.AG_EgoCorrodedHold);
+            hold.expiryInterval = recheck;
+            hold.checkOverrideOnExpire = true;
+            return hold;
         }
     }
 

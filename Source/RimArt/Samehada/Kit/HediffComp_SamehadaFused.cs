@@ -4,7 +4,7 @@ namespace RimArt
 {
     public class HediffCompProperties_SamehadaFused : HediffCompProperties
     {
-        /// <summary>Hit points healed off the fused pawn's injuries each second (SamehadaFeeding.Heal).</summary>
+        /// <summary>Hit points healed off the fused pawn's injuries each second (InjuryHeal.Heal).</summary>
         public float hpPerSecond = 2f;
 
         public HediffCompProperties_SamehadaFused()
@@ -29,7 +29,7 @@ namespace RimArt
             base.CompPostTick(ref severityAdjustment);
             if (++ticks < 60) return;
             ticks = 0;
-            SamehadaFeeding.Heal(Pawn, Props.hpPerSecond);
+            InjuryHeal.Heal(Pawn, Props.hpPerSecond);
         }
 
         public override void CompPostPostRemoved()
