@@ -221,7 +221,7 @@ Rules and def 2026-10-02 (`AG_EgoMagicBullet` in `1.6/Defs/ThingDefs/AG_Ego_Thin
 | `EgoMagicBulletCast.cs`, `GameComponent_EgoMagicBullet.cs` | one shot from its aim to the end of its picture; the tick and the draw |
 | `EgoMagicBulletCorrosion.cs` | the corroded action and the held look between shots |
 | `Patches_EgoMagicBullet.cs` | `HeldWeaponHide` while the picture draws the rifle |
-| `Tests_EgoMagicBullet.cs` | the line through a wall, the seventh to the lover, its fallbacks, the count on the gun, corroded and Overclock |
+| `Tests_EgoMagicBullet.cs` | the line through a wall, a shot at a building, the seventh to the lover, its fallbacks, the count on the gun, corroded and Overclock |
 
 The texture (`Textures/RimArt/Ego/MagicBullet.png`, from `make_ego_textures.py`) is the picture's
 rifle part for part, at the size the picture draws it, with a 1 px outline.
@@ -234,6 +234,10 @@ Settled while building:
 - The line runs from the shooter's cell centre through the target's centre. It hits every pawn whose
   cell it passes through (a corner graze does not count), downed pawns included, nearest first. All
   damage lands on the shot's tick; the picture's bullet takes 0.33 s to cross 40 cells.
+- A shot aimed at something that is not a pawn (a turret, a mortar, a building, a wall) hits it too,
+  for the same damage. Other buildings on the line are not hit; walls in its way get the picture's
+  holes only. Without this a drafted colonist firing at will at an enemy turret did nothing and still
+  counted toward the seventh.
 - The seventh's line ends at the beloved: pawns behind them are not hit. With nobody (no other
   person above 0, no bonded animal) it hits the shooter. A tie at the top goes to a bonded animal if
   there is one, else to the nearest of the tied.

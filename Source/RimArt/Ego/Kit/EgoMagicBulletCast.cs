@@ -14,7 +14,8 @@ namespace RimArt
     /// actionAim and goes off on its own tick. When it goes off, everything happens at once (the damage does not wait for
     /// the bullet the picture flies at 120 cells/s): the line runs from the shooter's cell centre through the target's
     /// centre to the verb's range, or on the seventh to the beloved and no further, and hits every pawn whose cell it
-    /// passes. Not saved: a save in the 3 s of a picture loses the picture, and an action firing that had not gone off.
+    /// passes. A target that is not a pawn (a turret, a building, a wall) is hit too; other things on the line are not.
+    /// Not saved: a save in the 3 s of a picture loses the picture, and an action firing that had not gone off.
     /// </summary>
     public sealed class EgoMagicBulletCast
     {
@@ -45,6 +46,11 @@ namespace RimArt
         public EgoMagicBulletHit[] hits = new EgoMagicBulletHit[0];
         /// <summary>Who the line hit, nearest first, for tests and the log.</summary>
         public readonly List<Pawn> victims = new List<Pawn>();
+        /// <summary>
+        /// The target when it is not a pawn, hit after the pawns: without it a shot at a turret or a building would do
+        /// nothing and still count toward the seventh. Null on the seventh and for a pawn or a cell.
+        /// </summary>
+        public Thing struck;
         /// <summary>Set each frame: a newer shot by the same shooter draws the rifle.</summary>
         public bool lineOnly;
 
@@ -113,7 +119,8 @@ namespace RimArt
             map = shooter.Map;
             Vector2 o = EgoMagicBullet.Centre(shooter.Position);
             Pawn beloved = seventh ? EgoMagicBullet.Beloved(shooter) : null;
-            Pawn intended = seventh ? beloved : target.Pawn;
+            Thing intended = seventh ? beloved : target.Thing;
+            struck = !seventh && target.Thing != null && !(target.Thing is Pawn) && target.Thing.Spawned && target.Thing.Map == map ? target.Thing : null;
             Vector2 to = seventh ? EgoMagicBullet.Centre(beloved.Position)
                 : EgoMagicBullet.Centre(target.HasThing ? target.Thing.Position : target.Cell);
             Vector2 dir = (to - o).sqrMagnitude > 0.01f ? (to - o).normalized : VfxDraw.Turn(aim);
@@ -140,14 +147,22 @@ namespace RimArt
             var cells = new List<IntVec3>();
             var wallAlongs = new List<float>();
             EgoMagicBullet.Walls(map, o, dir, length, cells, wallAlongs);
-            hits = new EgoMagicBulletHit[victims.Count + cells.Count];
+            // A struck wall is already one of the punched cells; a turret or a building that does not fill its cell gets a hole of its own.
+            bool punchStruck = struck != null && !cells.Contains(struck.Position);
+            hits = new EgoMagicBulletHit[victims.Count + cells.Count + (punchStruck ? 1 : 0)];
             for (int i = 0; i < victims.Count; i++)
                 hits[i] = new EgoMagicBulletHit { At = Ground(victims[i].DrawPos), Along = alongs[i] - T.MuzzleAlong };
             for (int i = 0; i < cells.Count; i++)
                 hits[victims.Count + i] = new EgoMagicBulletHit { At = o + dir * wallAlongs[i], Along = wallAlongs[i] - T.MuzzleAlong, Wall = true };
+            if (punchStruck)
+            {
+                float along = Vector2.Dot(EgoMagicBullet.Centre(struck.Position) - o, dir);
+                hits[hits.Length - 1] = new EgoMagicBulletHit { At = o + dir * along, Along = along - T.MuzzleAlong, Wall = true };
+            }
 
             for (int i = 0; i < victims.Count; i++)
                 if (!victims[i].Dead) EgoRound.Hit(shooter, weapon, round, victims[i], intended, amount, dir);
+            if (struck != null && !struck.Destroyed) EgoRound.Hit(shooter, weapon, round, struck, struck, amount, dir);
             if (Counts) gun.Counted(seventh);
             // A shot the player ordered gets the verb's sound from Core; an action's firing has no verb use.
             if (verb == null && shooter.Spawned) gun.PrimaryVerb.verbProps.soundCast?.PlayOneShot(new TargetInfo(shooter.Position, map));

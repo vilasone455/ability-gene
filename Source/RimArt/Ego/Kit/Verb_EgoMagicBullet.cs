@@ -7,7 +7,7 @@ namespace RimArt
     /// <summary>
     /// Magic Bullet's shot: Core's shooting verb (warmup, cooldown, skill gain, the battle log's "fired at", the Corrosion
     /// roll through Notify_UsedWeapon) with the projectile replaced by <see cref="EgoMagicBulletCast"/>'s line, which never
-    /// misses, ignores cover and walls, and hits every pawn on it. The def sets requireLineOfSight false, so a target behind
+    /// misses, ignores cover and walls, and hits every pawn on it, and the target when it is not a pawn. The def sets requireLineOfSight false, so a target behind
     /// a wall can be ordered; drafted pawns still only fire by themselves at what they see. The verb's defaultProjectile
     /// (AG_EgoMagicBullet_Round) is never spawned: it carries the damage, the armour penetration and the info card's
     /// numbers. After the seventh the verb is unavailable for the cooldown, so the wielder falls back to melee.
