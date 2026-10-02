@@ -15,12 +15,13 @@ namespace RimArt
     /// the whole arm swollen about as wide as the body (0.5 cells at mid-arm), a shoulder bulge, a mouth with
     /// two rows of white teeth on the upper arm, two long bone blades rising and curving out with their
     /// shadows, five tendrils hanging; stage 4 flesh up the neck and over the face, one round eye and a
-    /// lipless grin (aiming north the back of the head: the eye but no teeth). Fractional stages grow each part.
+    /// lipless grin (facing north the back of the head: the eye but no teeth). Fractional stages grow each part.
     ///
-    /// Drawn over the pawn as flat shapes placed on the south-facing stand-in for every facing (the Vergil pose
-    /// trick); aiming north the arm draws under the pawn. The shoulder's across offset goes on the screen's x
-    /// only, so facing east or west it sits on the upper chest instead of sliding down to mid-body (height and
-    /// north share the screen's vertical axis). Neck and head are the average body's (lib/pawn.js).
+    /// Drawn over the pawn as flat shapes (the Vergil pose trick), placed for the body's facing: the shoulder on the
+    /// sword side (the viewer's left facing south, right facing north), and facing north the arm draws under the
+    /// pawn. The shoulder's across offset goes on the screen's x only, so facing east or west it sits on the upper
+    /// chest instead of sliding down to mid-body (height and north share the screen's vertical axis). In profile
+    /// the face's eye and grin sit toward the side the pawn faces. Neck and head are the average body's (lib/pawn.js).
     /// </summary>
     [StaticConstructorOnStartup]
     internal static class EgoMimicryArmGraphics
@@ -47,17 +48,21 @@ namespace RimArt
 
         /// <summary>
         /// The arm at <paramref name="stage"/> (nothing below 1), from the hand on screen <paramref name="hand"/> to the
-        /// shoulder of the wielder at <paramref name="pos"/>, aiming <paramref name="d"/> with the hand side <paramref name="hs"/>.
+        /// shoulder of the wielder at <paramref name="pos"/>, aiming <paramref name="d"/>, its body facing <paramref name="facing"/>
+        /// and drawn at height <paramref name="body"/>. The pawn's own parts reach 0.037 above its body (Core's layer 100), so
+        /// the arm sits 0.038 over it, the face 0.042, and facing north the arm goes 0.02 under it.
         /// </summary>
-        internal static void Draw(Vector2 pos, Vector2 hand, Vector2 d, Vector2 hs, float stage, float s, Vector2 sun, float strength)
+        internal static void Draw(Vector2 pos, Vector2 hand, Vector2 d, Rot4 facing, float body, float stage, float s, Vector2 sun, float strength)
         {
             f2 = Mathf.Clamp01(stage - 1f);
             f3 = Mathf.Clamp01(stage - 2f);
             float f4 = Mathf.Clamp01(stage - 3f);
             if (f2 <= 0f) return;
             clock = s;
-            bool north = d.y > 0.5f;
-            float L = north ? PawnLayer - 0.02f : PawnLayer + 0.03f;
+            bool north = facing == Rot4.North;
+            // The body's sword side, from its facing rather than the aim: a diagonal swing does not move the shoulder.
+            Vector2 hs = T.HandSide(T.AimOf(facing), T.SignOf(facing));
+            float L = north ? body - 0.02f : body + 0.038f;
             H = hand;
             S = new Vector2(pos.x + hs.x * 0.22f, pos.y + 0.15f + hs.y * 0.06f);
             E = new Vector2((S.x + H.x) / 2f + hs.x * 0.08f, (S.y + H.y) / 2f + hs.y * 0.04f - 0.05f);
@@ -96,7 +101,7 @@ namespace RimArt
                 Disc(c, L + 0.0026f, r * 0.18f, r * 0.18f * o, 0f, Pupil);
             }
             if (f3 > 0f) Swollen(pos, d, hs, L, sun, strength);
-            if (f4 > 0f) Face(pos, hs, f4, north);
+            if (f4 > 0f) Face(pos, hs, f4, facing, body + 0.042f);
         }
 
         /// <summary>Stage 3: the mouth on the outer side of the upper arm, the tendrils and the two bone blades.</summary>
@@ -153,11 +158,15 @@ namespace RimArt
             }
         }
 
-        /// <summary>Stage 4: flesh up the neck and over the head, one round eye, and (not from behind) a grin of teeth.</summary>
-        private static void Face(Vector2 pos, Vector2 hs, float f4, bool north)
+        /// <summary>
+        /// Stage 4: flesh up the neck and over the head, one round eye, and (not from behind) a grin of teeth. Facing east or
+        /// west the eye and a narrower grin sit 0.08 and 0.07 cells toward the side the pawn faces, where its face is.
+        /// </summary>
+        private static void Face(Vector2 pos, Vector2 hs, float f4, Rot4 facing, float FL)
         {
+            bool north = facing == Rot4.North;
+            float profile = facing == Rot4.East ? 1f : facing == Rot4.West ? -1f : 0f;
             Vector2 neck = new Vector2(pos.x, pos.y + PawnBody.Neck), head = new Vector2(pos.x, pos.y + PawnBody.Head);
-            float FL = PawnLayer + 0.045f;
             Neck[0] = S;
             Neck[1] = Vector2.LerpUnclamped(S, neck, 0.6f);
             Neck[2] = neck;
@@ -182,13 +191,13 @@ namespace RimArt
             }
             if (f4 <= 0.4f) return;
             float o = Smooth((f4 - 0.4f) / 0.4f), r = 0.065f;
-            Vector2 e = c + hs * 0.05f + new Vector2(0f, 0.03f);
+            Vector2 e = profile != 0f ? c + new Vector2(0.08f * profile, 0.03f) : c + hs * 0.05f + new Vector2(0f, 0.03f);
             Disc(e, FL + 0.001f, r + 0.012f, r * o + 0.012f, 0f, Outline);
             Disc(e, FL + 0.0012f, r, r * o, 0f, Sclera);
             Disc(e, FL + 0.0014f, r * 0.3f, r * 0.3f * o, 0f, Pupil);
             if (north) return;
-            var m = new Vector2(c.x, c.y - 0.09f);
-            float mw = 0.12f * o, mh = 0.04f * o;
+            var m = new Vector2(c.x + 0.07f * profile, c.y - 0.09f);
+            float mw = (profile != 0f ? 0.07f : 0.12f) * o, mh = 0.04f * o;
             Disc(m, FL + 0.0016f, mw + 0.01f, mh + 0.01f, 0f, Outline);
             Disc(m, FL + 0.0017f, mw, mh, 0f, Mouth);
             for (int i = 0; i < 7; i++)

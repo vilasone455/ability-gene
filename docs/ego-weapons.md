@@ -1,8 +1,7 @@
 # E.G.O. weapons and Corrosion
 
-Design agreed 2026-09-30. The Corrosion core is built (2026-10-02, see Code); Magic Bullet, Solemn
-Lament and Paradise Lost have their rules and defs (2026-10-02, see each weapon's Built); Mimicry has
-pictures only. The corrosion of Solemn Lament, Mimicry and Paradise Lost changed 2026-10-02 (see the
+Design agreed 2026-09-30. The Corrosion core is built (2026-10-02, see Code); all four weapons have
+their rules and defs (2026-10-02, see each weapon's Built). The corrosion of Solemn Lament, Mimicry and Paradise Lost changed 2026-10-02 (see the
 balance test under Rule 2). Post-v1 (the 2026-10-20 list is full). Source: Project Moon
 (Lobotomy Corporation, Library of Ruina, Limbus Company). Every number below is a placeholder and,
 when built, an XML field on the weapon's `CompProperties_EgoWeapon`, never a C# constant.
@@ -122,7 +121,7 @@ Built 2026-10-02 in `Source/RimArt/Ego/Kit/`:
 | `JobDriver_EgoOverclock.cs` | the Overclock job and `Command_EgoOverclock` |
 | `MapComponent_EgoCorrosion.cs` | calls each weapon's `DrawCorroded` for every corroded or overclocking pawn on the shown map; its tick corrodes the pawns whose roll passed once their burst is over |
 | `Tests_EgoCorrosion.cs` | `-rimarttest=ego`: bands and requirement, a burst corrodes (after its last shot) and the state fires at the nearest pawn then exhausts, going down ends it, the weapon leaving the hands ends it and Corrode never replaces a state, Overclock aims only at hostiles in range, never rolls (even when the action rolls itself), pays mood, and at three memories renews the oldest |
-| `Ego<Weapon>Corrosion.cs` (per weapon; Magic Bullet's, Solemn Lament's and Paradise Lost's written) | the action and the look |
+| `Ego<Weapon>Corrosion.cs` (per weapon, all four written) | the action and the look |
 
 Defs: `AG_EgoCorroded` (MentalStateDefs/AG_Ego_MentalStates.xml), `AG_EgoExhausted`, `AG_EgoOverclocked`,
 `AG_EgoCorrodedHold`, `AG_EgoOverclock`, and the think node in `1.6/Patches/AG_Ego_ThinkTree.xml`.
@@ -158,6 +157,15 @@ Lost keep the hold. The action also gets `Begin` and `End`, called when a corros
 starts and ends, for a picture that outlives single firings (Solemn Lament's coffin).
 `EgoRound.Hit` (a hit with a never-spawned round's damage, logged as a bullet's) is shared by Magic
 Bullet's line and Solemn Lament's black shot.
+
+Two hooks, built with Mimicry (2026-10-02), both off by default so the other three weapons are unchanged:
+`EgoCorrosionAction.CanTarget(wielder, weapon, target, hostilesOnly)` is asked by the nearest-pawn rule
+(`EgoCorrosion.Nearest`, `NearestHostile`, `HostileInRange` with the weapon), so the corroded walk, the firing
+and Overclock's button and job agree on whom the action can reach; `Busy(wielder, weapon)` is true while the last
+firing is still going, and then the corroded wielder holds and a new firing waits (`EgoCorrosion.Fire` returns
+false, and Overclock tries again on the next tick instead of counting it). The hold given to a walking action
+is asked again every second, as the walk is, so the wielder follows a pawn that steps away instead of standing
+for the hold's 2 s. `CompEgoWeapon.RollsWhenUsed` (default true) lets a weapon roll Corrosion itself.
 
 Class names start with `Ego` (`EgoMimicry`, not `Mimicry`): `AG_Mimic` is already Vergil's decoy.
 
@@ -404,6 +412,77 @@ change shape).
 
 Sketch: `Tools/VfxLab/web/sketches/ego-mimicry.js` (swings, grown swing, corroded, overclock).
 
+### Built
+
+Rules and def 2026-10-02 (`AG_EgoMimicry` in `1.6/Defs/ThingDefs/AG_Ego_Things.xml`, its tool capacity and
+maneuver in `ManeuverDefs/AG_Ego_Maneuvers.xml`, code in `Ego/Kit/`). Not played; game tests
+`-rimarttest=ego: mimicry` (see the PR for the run).
+
+| Rule | Settled |
+|---|---|
+| Ordinary swing | 12 Cut every 1.2 s (the tool's power and cooldownTime); Core's hit and dodge rolls and armour |
+| Grown swing | 10 % per ordinary swing, chosen when the swing starts; 3.5x damage, blade size 2; strikes every standing hostile under the blade (and the swing's target, whatever it is) once at the slam, no hit or dodge roll, armour applies |
+| Lifesteal | 10 % of the damage a hit dealt to a flesh pawn, off injuries that are not scars |
+| Arm | starts at 1 when a corrosion or Overclock starts; +1 per damaging hit dealt, -1 per damaging hit taken, 0 to 4; +15 % damage per stage; gone the moment the state ends |
+| Corrosion | bands 50 / 100 / 100 %, Melee 8, 40 s, a firing every 1.5 s, 3 h exhausted |
+| Hunt | walks to the nearest living pawn it can reach, any faction, downed ones included; at a firing it swings if in reach, else lunges up to 2 cells to a free cell next to it first, else the walk goes on |
+| Overclock | 5 swings 1 s apart at the nearest standing hostile in reach, standing still, never a lunge; -20 mood for 1 day |
+
+| File | What |
+|---|---|
+| `CompEgoMimicry.cs` | `CompProperties_EgoMimicry` (`growChance`, `growDamageFactor`, `growScale`, `growHalfWidth`, `healFraction`, `armStart`, `armStages`, `stageDamage`, `lungeCells`, `slamSound`; `overclockRange` set to melee reach, 1.5), the arm's stage (saved with the sword) |
+| `Verb_EgoMimicry.cs` | Core's cut with the hit moved to the contact frame: starts a swing; at contact runs Core's melee attack with the damage scaled by the arm; the slam |
+| `EgoMimicryCast.cs`, `GameComponent_EgoMimicry.cs`, `EgoMimicryLook.cs` | one swing from its start (and lunge) to the end of its picture, saved with whether it has landed; every swing, the look of each wielder (arm, eyes, heal), the marks, the sword in every holder's hand |
+| `EgoMimicry.cs` | melee reach, the lunge's landing cell and clear line, who is under the grown blade, what a landed hit does, the stage lost to a hit taken |
+| `EgoMimicryCorrosion.cs` | the hunt and Overclock |
+| `Patches_EgoMimicry.cs` | `HeldWeaponHide` (Core never draws the held sword), the stage lost on `Pawn.PostApplyDamage` |
+| `Tests_EgoMimicry*.cs` | the contact frame, heal and roll; the grown slam; the arm; the hunt; the lunge; Overclock; save and load, breaking off; the def; screenshots |
+
+The texture (`Textures/RimArt/Ego/Mimicry.png`, `make_ego_textures.py`) is the picture's sword at size 1, lying
+diagonally, point to the upper right, flesh side up, with a 1 px outline.
+
+Settled while building:
+
+- The sword's only tool has its own capacity, `AG_EgoMimicryCut`, whose only maneuver is `AG_EgoMimicrySlash`
+  (`Verb_EgoMimicry`). A tool gets a verb for every maneuver that needs one of its capacities, so a second
+  maneuver on Core's Cut would have given every bladed weapon this verb.
+- Core's melee attack lands on the tick it fires. Here the verb starts a swing on that tick and the hit comes at
+  the picture's contact frame: 13 ticks (0.22 s) for a swing, 42 ticks (0.7 s) for the slam. Core then runs its
+  own attack (`Verb_MeleeAttack.TryCastShot`: hit, dodge, sound, battle log, stagger) for the hit; it refuses a
+  pawn in a busy stance, and the swing's own melee cooldown is one, so the stance is set aside for that call.
+- A target that has left melee reach by the contact frame is missed: no damage, no heal. Missed, dodged and
+  absorbed hits give no stage and no heal.
+- The grown swing keeps the wielder in its melee cooldown until the blade has shrunk back: 84 ticks (1.4 s)
+  instead of the tool's 72. A swing is refused while the wielder's last one has not landed or shrunk back, so
+  swings never overlap.
+- The grown blade's strip is the picture's footprint read as map coordinates: from 0.67 to 2.71 cells along the
+  aim at size 2, 0.35 cells to each side. A pawn whose cell touches it is under the blade; the wielder must see the
+  cell from its own, so walls and closed doors keep pawns behind them out. Downed hostiles other than the swing's
+  target are skipped, as Paradise Lost's room hit skips them, so it does not finish raiders the player may want
+  as prisoners. A swing aimed at a building strikes the building alone, with no lifesteal.
+- Corrosion is rolled once per ordinary swing once it has hit or missed (Core's own roll in `Notify_UsedWeapon`
+  comes only on a landed melee hit), never once per pawn under the grown blade. Corroded and Overclock swings
+  never roll, and never grow the blade.
+- The lunge takes 0.2 s: the wielder is drawn along the line (`Shared/PawnDash.cs`) and its cell changes once,
+  on arrival, if the landing cell is still standable and nobody stands there; otherwise it stays and the swing
+  misses out of reach. The line must be clear: no wall or closed door, and a diagonal step needs both corner cells
+  open, as in Core's pathing. The landing cell is the shortest lunge, then the cell nearest the target.
+- A swing that has not landed is broken off, with no damage and no roll, when the wielder dies, goes down, is
+  stunned or leaves the map, when the sword leaves its hands, or when its corrosion or Overclock ends.
+- Saved: the arm's stage on the sword, and every swing with whether it has landed, so a swing saved before its
+  contact frame lands after the load and one saved after never lands again. The pictures (arm, eyes, marks) start
+  again from the saved stage after a load.
+- The picture draws the sword wherever Core would show a held weapon (drafted, attacking), during every swing, and
+  while corroded or overclocking; the arm recedes over 1 s after the state ends. The arm and face are placed for
+  the body's facing, and the picture is mirrored only facing west, as Core mirrors a west-facing pawn. They are
+  placed from the pawn's own draw height: Core gives every pawn a random height offset of up to 0.037
+  (`Pawn_DrawTracker.SeededYOffset`) and its own parts sit up to 0.037 above that, so a fixed pawn layer hid the
+  arm and face on some pawns. Magic Bullet's corroded veins and Paradise Lost's halo use a fixed layer still.
+- Melee Animation has no tweak data for the sword, so it never animates its swings.
+
+Answered 2026-10-02: the hunt goes to downed pawns and keeps cutting them; the grown blade hits every hostile
+under it.
+
 ## Weapon 4: Paradise Lost
 
 WhiteNight, ALEPH Abnormality, ALEPH gear. Added 2026-10-01. The staff of the Abnormality that
@@ -586,12 +665,6 @@ this page.
 - Whether `useMood` is needed (see Left out on purpose).
 - Whether a corroded pawn should be attackable by colonists without a hostility prompt, as Berserk
   pawns are.
-- Mimicry: whether the corroded swing skips downed pawns (the sketch skips them, so it does not
-  finish them; "nearest living pawn" above does not say).
-- Mimicry: whether the walk goes to downed pawns. Solemn Lament's does (decided 2026-10-02), and the
-  shared walk counts them; the hunter would finish whoever it downs.
-- Mimicry: the grown blade is about 2.4 cells long and lands across 3 cells, but the rule hits one
-  pawn. Either keep one target or hit every pawn under the blade.
 - Paradise Lost: RimWorld makes each door its own room, so the hit stops at doors and misses a
   pawn standing in a doorway. Whether a large hall needs a cap on pawns hit.
 - Paradise Lost: the source requires all four stats; the requirement here is one skill

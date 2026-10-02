@@ -75,14 +75,17 @@ namespace RimArt
         /// A normal hit on a pawn <paramref name="age"/> s ago: the slash across <paramref name="chest"/> along the
         /// swing's direction at contact <paramref name="along"/>, the red cut, and six blood drops thrown from the
         /// chest along the aim <paramref name="d"/> that land round <paramref name="foot"/> (the pawn's DrawPos) and stay.
+        /// <paramref name="pawnAltitude"/> is the struck pawn's DrawPos.y in game; the previews leave it to the pawn layer.
         /// </summary>
-        public static void Cut(Vector2 chest, Vector2 foot, Vector2 d, Vector2 along, float age, int seed, Map map)
+        public static void Cut(Vector2 chest, Vector2 foot, Vector2 d, Vector2 along, float age, int seed, Map map, float pawnAltitude = float.NaN)
         {
             if (age < 0f || !Shown(foot, map)) return;
             Begin(foot);
             if (age < 0.12f)
                 Streak(chest - along * 0.3f + d * 0.05f, chest + along * 0.3f - d * 0.05f, 0.09f * (1f - age / 0.12f) + 0.02f, White, whiteGlow, Overhead + 0.09f);
-            if (age < 0.6f) Streak(chest - along * 0.2f, chest + along * 0.2f, 0.04f, Fade(RedStreak, 1f - age / 0.6f), solid, PawnLayer + 0.05f);
+            // Over the struck pawn's own parts (up to 0.037 above its body), which sits at its own height in game.
+            if (age < 0.6f) Streak(chest - along * 0.2f, chest + along * 0.2f, 0.04f, Fade(RedStreak, 1f - age / 0.6f), solid,
+                (float.IsNaN(pawnAltitude) ? PawnLayer : pawnAltitude) + 0.05f);
             for (int i = 0; i < 6; i++)
             {
                 float r = Rand(seed * 13 + i), up = 1f + Rand(seed * 19 + i);

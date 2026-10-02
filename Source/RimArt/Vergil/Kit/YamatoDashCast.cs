@@ -106,6 +106,7 @@ namespace RimArt
             along.Clear();
             Map map = caster.Map;
             if (map == null) return;
+            KeepDash();
             CompProperties_YamatoDash props = Props;
             Vector2 a = new Vector2(from.x, from.z), line = Line;
             float length = line.magnitude;
@@ -132,21 +133,26 @@ namespace RimArt
         {
             if (!Fired) return now - startTick < 600;
             DashTimes times = Times;
+            // Kept every tick of the dash, so a cast loaded mid-dash draws him moving again (the runs are not saved).
+            if (!arrived && !aborted && now < TickAt(times.ArriveAt)) KeepDash();
             if (!arrived && now >= TickAt(times.ArriveAt)) Arrive();
             if (!clicked && now >= TickAt(times.ClickAt)) Click();
             return Seconds(now) < times.Duration;
         }
 
-        /// <summary>The dash is over: the cell changes, once.</summary>
+        /// <summary>He is drawn along the line, at one speed, from the launch to the arrival (<see cref="PawnDash"/>).</summary>
+        private void KeepDash()
+        {
+            DashTimes times = Times;
+            int launch = TickAt(times.LaunchAt);
+            PawnDash.Keep(caster, from, dest, launch, Mathf.Max(1, TickAt(times.ArriveAt) - launch), eased: false);
+        }
+
+        /// <summary>The dash is over: the cell changes, once (<see cref="PawnDash.Arrive"/>).</summary>
         private void Arrive()
         {
             arrived = true;
-            if (caster == null || !caster.Spawned || caster.Map != home || caster.Dead || caster.Downed) return;
-            if (dest.InBounds(home) && dest.Standable(home) && dest != caster.Position)
-            {
-                caster.Position = dest;
-                caster.Notify_Teleported(false, true);
-            }
+            PawnDash.Arrive(caster, home, dest, needEmpty: false);
         }
 
         /// <summary>The blade clicks home: every mark takes its cut.</summary>
@@ -166,6 +172,7 @@ namespace RimArt
         /// <summary>Downed or killed mid-dash: nothing resolves. He stays where the game left him.</summary>
         public override void JobEnded(int now)
         {
+            PawnDash.Stop(caster);
             arrived = clicked = aborted = true;
             marks.Clear();
             along.Clear();
@@ -187,16 +194,11 @@ namespace RimArt
             look.aim = Aim;
             look.blade = s < times.LaunchAt ? 0f : s < times.ArriveAt ? VfxMath.Smooth(travel / 0.18f) : 1f - VfxMath.Smooth((finish - 0.2f) / 0.8f);
             look.hot = dashing ? 0.85f : 0.25f * (1f - finish);
+            // His drawn position along the line is PawnDash's, kept from Tick.
             if (dashing)
             {
                 look.tint = VergilGraphics.Ice;
                 look.tintAmount = 0.45f;
-                if (!arrived)
-                {
-                    Vector3 a = from.ToVector3Shifted(), b = dest.ToVector3Shifted();
-                    look.moved = true;
-                    look.drawAt = Vector3.Lerp(a, b, travel);
-                }
             }
 
             // Marked pawns turn a little blue once he has passed them, until the click.

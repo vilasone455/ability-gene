@@ -19,6 +19,7 @@ namespace RimArt
         public static HediffDef AG_EgoParadiseLostSlow;
         public static ThoughtDef AG_EgoParadiseLostSanity;
         public static DamageDef AG_EgoPale;
+        public static ThingDef AG_EgoMimicry;
 
         static EgoDefOf()
         {
