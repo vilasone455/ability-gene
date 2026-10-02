@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Corrosion (Source/RimArt/Ego/Kit/MentalState_EgoCorroded.cs, docs/ego-weapons.md rule 2): an E.G.O.
+       weapon has its wielder. Started only by the weapon's roll, forced, so there is no MentalBreakDef. How long
+       it lasts and how often the weapon fires are the weapon's own (CompProperties_EgoWeapon); the state ends
+       itself through forceRecoverAfterTicks, so the recovery times here are a day and never come first. Not Aggro:
+       the corroded pawn is hostile to no one by itself. The think node that holds the pawn is in 1.6/Patches. -->
+  <MentalStateDef>
+    <defName>AG_EgoCorroded</defName>
+    <label>corroded</label>
+    <stateClass>RimArt.MentalState_EgoCorroded</stateClass>
+    <category>Misc</category>
+    <minTicksBeforeRecovery>60000</minTicksBeforeRecovery>
+    <maxTicksBeforeRecovery>60000</maxTicksBeforeRecovery>
+    <recoverFromDowned>true</recoverFromDowned>
+    <recoverFromSleep>true</recoverFromSleep>
+    <stopsJobs>true</stopsJobs>
+    <blockNormalThoughts>true</blockNormalThoughts>
+    <blockRandomInteraction>true</blockRandomInteraction>
+    <allowBeatfire>false</allowBeatfire>
+    <nameColor>(0.62, 0.30, 0.90)</nameColor>
+    <beginLetterLabel>corroded</beginLetterLabel>
+    <beginLetter>{0} is corroded: [PAWN_possessive] E.G.O. weapon has taken over.\n\nUntil the corrosion ends, [PAWN_pronoun] ignores orders and the weapon fires at the nearest pawn, of any faction.</beginLetter>
+    <beginLetterDef>ThreatSmall</beginLetterDef>
+    <recoveryMessage>{0} is no longer corroded.</recoveryMessage>
+    <baseInspectLine>Mental state: Corroded</baseInspectLine>
+  </MentalStateDef>
+
+</Defs>

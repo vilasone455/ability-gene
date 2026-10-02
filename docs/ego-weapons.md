@@ -1,12 +1,14 @@
 # E.G.O. weapons and Corrosion
 
-Design agreed 2026-09-30, not built. Post-v1 (the 2026-10-20 list is full). Source: Project Moon
+Design agreed 2026-09-30. The Corrosion core is built (2026-10-02, see Code); no weapon has rules or
+a def yet. Post-v1 (the 2026-10-20 list is full). Source: Project Moon
 (Lobotomy Corporation, Library of Ruina, Limbus Company). Every number below is a placeholder and,
 when built, an XML field on the weapon's `CompProperties_EgoWeapon`, never a C# constant.
 
 The purpose of the first piece is bait: a Project Moon weapon that a fan recognises from the
 Workshop thumbnail. Magic Bullet is that piece. Corrosion is designed once, shared, because four
-E.G.O. weapons are planned and the code standard says a second use goes in `Shared/`.
+E.G.O. weapons are planned. All four live in `Source/RimArt/Ego/`, so the shared rules sit in
+`Ego/Kit/`, not `Shared/` (which is for code used by two or more kits).
 
 ## Terms
 
@@ -89,11 +91,36 @@ hostiles in range is empty.
 
 ### Code
 
+Built 2026-10-02 in `Source/RimArt/Ego/Kit/`:
+
 | File | What |
 |---|---|
-| `Shared/EgoCorrosion.cs` | the roll, entering the state, `MentalState_EgoCorroded`, `Command_EgoOverclock`, `CompProperties_EgoWeapon` |
-| `Shared/Tests_EgoCorrosion.cs` | mood bands, requirement shift, state ends on down, exhaustion applied, Overclock never hits allies |
-| `<Weapon>/Kit/<Weapon>Corrosion.cs` | the action and the look |
+| `CompEgoWeapon.cs` | `CompProperties_EgoWeapon` (every number above, plus `actionClass` and `overclockRange`) and `CompEgoWeapon`, the weapon's CompEquippable: rolls in `Notify_UsedWeapon` (once per shot or swing that went off) and gives the Overclock button |
+| `EgoCorrosion.cs` | the band, the requirement shift, the roll, `Corrode`, the nearest pawn / nearest hostile, `Fire`, `Exhaust`, `PayOverclock` |
+| `EgoCorrosionAction.cs` | what a weapon supplies: `Fire(wielder, weapon, target, hostilesOnly)`, `TakesTarget` (false for an area), `DrawCorroded` (the look) |
+| `MentalState_EgoCorroded.cs` | the state, its think-tree job giver and the hold job (not vanilla Wait, whose auto-attack would punch adjacent hostiles) |
+| `JobDriver_EgoOverclock.cs` | the Overclock job and `Command_EgoOverclock` |
+| `MapComponent_EgoCorrosion.cs` | calls each weapon's `DrawCorroded` for every corroded or overclocking pawn on the shown map |
+| `Tests_EgoCorrosion.cs` | `-rimarttest=ego`: bands and requirement, a shot corrodes and the state fires at the nearest pawn then exhausts, going down ends it, Overclock aims only at hostiles in range, never rolls, and pays mood |
+| `Ego<Weapon>Corrosion.cs` (per weapon, not written) | the action and the look |
+
+Defs: `AG_EgoCorroded` (MentalStateDefs/AG_Ego_MentalStates.xml), `AG_EgoExhausted`, `AG_EgoOverclocked`,
+`AG_EgoCorrodedHold`, `AG_EgoOverclock`, and the think node in `1.6/Patches/AG_Ego_ThinkTree.xml`.
+
+Settled while building:
+
+- The action is an abstract class, not an interface: `DrawCorroded` has an empty default.
+- A pawn already in any mental state does not roll, so corrosion never replaces Berserk or False Face.
+- The first corroded firing comes one `corrodedInterval` after the start; Overclock's first fires at
+  once and the job ends one `overclockInterval` after the last.
+- The state also ends when the weapon leaves the pawn's hands, and on sleep (like downed).
+- Exhaustion caps consciousness at 80 % (placeholder in the hediff def). A second corrosion keeps the
+  longer of the two exhaustion times.
+- The Overclock thought stacks up to 3 at 0.75 each after the first; its mood and days are the
+  weapon's (`Thought_Memory.moodOffset`, `durationTicksOverride`), not the def's.
+- Overclock aims at hostiles that are not downed; Corrosion aims at the nearest pawn including downed
+  ones.
+- A weapon whose attack does not go through a vanilla verb calls `EgoCorrosion.Roll` itself.
 
 Class names start with `Ego` (`EgoMimicry`, not `Mimicry`): `AG_Mimic` is already Vergil's decoy.
 
