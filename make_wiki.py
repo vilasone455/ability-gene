@@ -420,20 +420,27 @@ for tag, name in mod_keys:
         paras = paragraphs(text_of(el, "description"))
         heads = [re.match(r"([A-Z][\w ]{0,20}): (.+)", p, re.S) for p in paras]
         verb = el.find("verbs/li")
-        facts = [("Cooldown", ticks(float(text_of(el, "statBases/RangedWeapon_Cooldown")) * 60)),
-                 ("Range", number(float(text_of(verb, "range"))) + " cells"),
-                 ("Cast time", ticks(float(text_of(verb, "warmupTime")) * 60))]
-        burst = int(text_of(verb, "burstShotCount") or 1)
-        if burst > 1:
-            # Not ticks(): it rounds to 0.1 s, and the gap is often 0.25 s.
-            gap = number(round(int(text_of(verb, "ticksBetweenBurstShots") or 0) / 60, 2))
-            facts.append(("Burst", str(burst) + " shots, " + gap + " seconds apart"))
+        if verb is not None:
+            facts = [("Cooldown", ticks(float(text_of(el, "statBases/RangedWeapon_Cooldown")) * 60)),
+                     ("Range", number(float(text_of(verb, "range"))) + " cells"),
+                     ("Cast time", ticks(float(text_of(verb, "warmupTime")) * 60))]
+            burst = int(text_of(verb, "burstShotCount") or 1)
+            if burst > 1:
+                # Not ticks(): it rounds to 0.1 s, and the gap is often 0.25 s.
+                gap = number(round(int(text_of(verb, "ticksBetweenBurstShots") or 0) / 60, 2))
+                facts.append(("Burst", str(burst) + " shots, " + gap + " seconds apart"))
+            attacks, details = "a ranged weapon; it attacks like any gun", [melee_line(el)]
+        else:
+            # A melee E.G.O. weapon (Mimicry) has no verb: its attack is its one tool's swing.
+            tool = el.find("tools/li")
+            facts = [("Damage", text_of(tool, "power") + " " + label("ToolCapacityDef", text_of(tool, "capacities/li"))),
+                     ("Cooldown", ticks(float(text_of(tool, "cooldownTime")) * 60))]
+            attacks, details = "a melee weapon; it attacks like any blade", []
         parts = [{"name": "Attack", "paras": [p for p, m in zip(paras[1:], heads[1:]) if not m], "facts": facts}]
         parts += [{"name": m.group(1), "paras": [cap(m.group(2))], "facts": []} for m in heads if m]
-        how = craft_lines(el) + ["Equip it as a ranged weapon; it attacks like any gun. A colonist holding it also "
-                                 "gets the Overclock button."]
+        how = craft_lines(el) + ["Equip it as " + attacks + ". A colonist holding it also gets the Overclock button."]
         kits.append({"type": "E.G.O. weapon", "name": text_of(el, "label"), "desc": paras[0], "how": how,
-                     "details": [melee_line(el)], "mods": mods_needed(el), "abilities": [], "parts": parts})
+                     "details": details, "mods": mods_needed(el), "abilities": [], "parts": parts})
 
 kits.sort(key=lambda k: (TYPE_ORDER.index(k["type"]), k["name"].lower()))
 

@@ -46,6 +46,7 @@ Every kit in the mod, how to get it, and what each ability does.
 | [Vacuum](#vacuum) | Weapon | Suck, Spit, Digest | - |
 | [Water gun](#water-gun) | Weapon | Stream shot, Hydro pump | - |
 | [Magic Bullet](#magic-bullet) | E.G.O. weapon | Attack, Corrosion, Overclock | - |
+| [Mimicry](#mimicry) | E.G.O. weapon | Attack, Corrosion, Overclock | - |
 | [Paradise Lost](#paradise-lost) | E.G.O. weapon | Attack, Sanity, Corrosion, Overclock | - |
 | [Solemn Lament](#solemn-lament) | E.G.O. weapon | Attack, Butterfly, Corrosion, Overclock | - |
 
@@ -1530,6 +1531,32 @@ Every shot may let the gun take its wielder. The chance is 25% below the wielder
 #### Overclock
 
 The wielder fires 6 lines, one a second, at the nearest hostile within 40 tiles. Only hostiles are hit and the count does not move. Costs 15 mood for 1 day.
+
+
+### Mimicry
+
+A greatsword of red muscle grown over a dark steel edge, with a green eye and a blue eye in the flesh and bone spikes along its back: E.G.O. gear from Nothing There.
+
+**How to get it**
+
+- Cannot be crafted.
+- Equip it as a melee weapon; it attacks like any blade. A colonist holding it also gets the Overclock button.
+
+#### Attack
+
+Each swing cuts for 12, one every 1.2 seconds. The hit lands as the blade crosses the target, a moment after the swing starts; a target that has stepped out of reach by then is missed. Each hit on a living creature heals the wielder's injuries by 10% of the damage it dealt. Scars and lost limbs do not heal, and mechanoids and buildings heal nothing.
+
+One swing in 10 the blade swells to twice its size and slams down along a strip about 2.7 tiles long, for 3.5 times the damage, on every standing hostile under it (and on the target, whatever it is). It cannot miss or be dodged; armour still counts; walls and closed doors keep pawns behind them out. That swing takes 1.4 seconds.
+
+**Damage:** 12 cut | **Cooldown:** 1.2 seconds
+
+#### Corrosion
+
+Every swing may let the sword take its wielder. The chance is 50% below the wielder's minor break threshold and certain below the major one, one step worse under Melee 8, and none above the minor threshold. For 40 seconds the wielder ignores orders and hunts: it walks to the nearest pawn it can reach, of any faction and downed ones included, and every 1.5 seconds swings at it, lunging up to 2 tiles to get next to it first. Flesh takes the sword arm in 4 stages: it starts at the first, each damaging hit the wielder deals adds a stage, each damaging hit it takes removes one, and each stage adds 15% damage. Then the wielder is exhausted for 3 hours.
+
+#### Overclock
+
+The wielder stands still and swings 5 times, one a second, at standing hostiles next to it, with the same arm. Costs 20 mood for 1 day.
 
 
 ### Paradise Lost
