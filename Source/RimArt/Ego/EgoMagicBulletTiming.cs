@@ -14,7 +14,7 @@ namespace RimArt
     /// the picture ends <see cref="Tail"/> (0.5 s) after that: 2.78 s for shots 1 to 6, 3.13 s for the seventh.
     ///
     /// The balance numbers (<see cref="Range"/>, <see cref="Shots"/>, <see cref="Lead"/>) are the sketch's
-    /// placeholders: the weapon will read them from its XML and pass range and aim time in
+    /// placeholders, used by the previews: the weapon passes its own range and aim time from its XML in
     /// <see cref="EgoMagicBulletShot"/>. Damage (18, the seventh 30) and the seventh's 20 s cooldown are rules
     /// the picture does not draw, so they are not here. The rest is shape and timing.
     ///

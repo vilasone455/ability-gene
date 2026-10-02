@@ -41,6 +41,11 @@ namespace RimArt
         /// <summary>What the line crosses, the first <see cref="HitCount"/> of <see cref="Hits"/>, in any order.</summary>
         public EgoMagicBulletHit[] Hits;
         public int HitCount;
+        /// <summary>
+        /// A newer shot by the same shooter is up: it draws the rifle, the count and the corroded look, and this one draws
+        /// only what its line left (circles, beam, bullet, hits). Nothing at all before it has fired.
+        /// </summary>
+        public bool LineOnly;
     }
 
     /// <summary>
@@ -112,11 +117,15 @@ namespace RimArt
             // --- the shooter: the count, the rifle with its kick, the corroded look, the chamber glow ---
             float gunDeg = T.GunDegrees(s, shot.Lead, shot.Aim, seventh, shot.SeventhAim);
             Vector2 gd = Turn(gunDeg), stand = shot.Stand, headTop = new Vector2(stand.x, stand.y + PawnBody.HeadTop);
-            Counter(headTop, shot.Shot, s, shot.Corroded ? Corrupt : Beam);
-            Vector2 hand = stand + gd * T.GripAlong;
-            Rifle(hand, gunDeg, sun, strength, T.Kick(age), T.Tilt(age), out Vector2 chamber, out Vector2 muzzle);
-            if (shot.Corroded) EgoMagicBulletCircleGraphics.Corroded(stand, chamber, muzzle, sun, strength, s);
-            ChamberGlow(chamber, muzzle, headTop, T.ChamberGlow(s, fire), s);
+            Vector2 hand = stand + gd * T.GripAlong, muzzle = default;
+            if (!shot.LineOnly)
+            {
+                Counter(headTop, shot.Shot, s, shot.Corroded ? Corrupt : Beam);
+                Rifle(hand, gunDeg, sun, strength, T.Kick(age), T.Tilt(age), out Vector2 chamber, out muzzle);
+                if (shot.Corroded) EgoMagicBulletCircleGraphics.Corroded(stand, chamber, muzzle, sun, strength, s);
+                ChamberGlow(chamber, muzzle, headTop, T.ChamberGlow(s, fire), s);
+            }
+            else if (!fired) return;
 
             // --- the magic circles: open ahead of the muzzle, slide back to it, stay on the shot line once fired ---
             float open = T.Open(s, shot.Lead, seventh, shot.Range), ahead = T.Ahead(s, shot.Lead, seventh);
@@ -157,6 +166,21 @@ namespace RimArt
                 // The small dark tip the source bullet has.
                 Sprite(b + d * 0.06f, 0.07f, 0.05f, Fade(Smoke, 0.9f), soft, Overhead + 0.116f, lineDeg);
             }
+        }
+
+        /// <summary>
+        /// The rifle held level along <paramref name="aimDeg"/> with no shot up: the count (pip <paramref name="shot"/> lit
+        /// as the next) and, when <paramref name="corroded"/>, the corroded look. Drawn while the weapon has its wielder
+        /// between shots, so the rifle and the look do not go out in the gaps. <paramref name="s"/> drives the pulses.
+        /// </summary>
+        public static void DrawHeld(Vector2 stand, float aimDeg, int shot, bool corroded, float s, Map map)
+        {
+            if (!Shown(stand, map)) return;
+            Begin(stand);
+            PowerPoleGraphics.Sun(map, out Vector2 sun, out float strength);
+            Counter(new Vector2(stand.x, stand.y + PawnBody.HeadTop), shot, s, corroded ? Corrupt : Beam);
+            Rifle(stand + Turn(aimDeg) * T.GripAlong, aimDeg, sun, strength, 0f, 0f, out Vector2 chamber, out Vector2 muzzle);
+            if (corroded) EgoMagicBulletCircleGraphics.Corroded(stand, chamber, muzzle, sun, strength, s);
         }
 
         /// <summary>

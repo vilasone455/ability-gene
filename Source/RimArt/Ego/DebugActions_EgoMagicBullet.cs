@@ -5,8 +5,8 @@ using T = RimArt.EgoMagicBulletTiming;
 namespace RimArt
 {
     /// <summary>
-    /// Previews only: there is no weapon, no def and no rule behind any of this; nobody is hit and no pawn or
-    /// wall is drawn. Each entry plays the Magic Bullet picture with the shooter on the chosen cell, on the
+    /// Previews only: the picture with no rule behind it (the weapon is AG_EgoMagicBullet, Ego/Kit); nobody is hit
+    /// and no pawn or wall is drawn. Each entry plays the Magic Bullet picture with the shooter on the chosen cell, on the
     /// sketch's clock, so the recorder can compare the port with ego-magic-bullet.js. The plain entries use the
     /// sketch's stand-ins (a raider 2.5 cells out, three wall cells at 4, a colonist at 6.5; on the seventh's
     /// line a raider at 2.8 and the beloved at 5.5) to place the hits; "empty line" ones have nobody on the
