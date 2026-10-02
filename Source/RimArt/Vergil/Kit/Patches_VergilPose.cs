@@ -180,11 +180,11 @@ namespace RimArt
         }
     }
 
-    /// <summary>Yamato is never drawn by the game: <see cref="YamatoDraw"/> draws it (sheathed, in hand or kneeling).</summary>
-    [HarmonyPatch(typeof(PawnRenderUtility), nameof(PawnRenderUtility.DrawEquipmentAiming))]
-    static class Patch_PawnRenderUtility_HideYamato
+    /// <summary>Yamato is never drawn by the game (<see cref="HeldWeaponHide"/>): <see cref="YamatoDraw"/> draws it (sheathed, in hand or kneeling).</summary>
+    [StaticConstructorOnStartup]
+    static class Patches_VergilYamato
     {
-        static bool Prefix(Thing eq) => eq?.def != VergilDefOf.AG_Yamato;
+        static Patches_VergilYamato() => HeldWeaponHide.Register(VergilDefOf.AG_Yamato, _ => true);
     }
 
     /// <summary>

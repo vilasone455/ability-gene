@@ -19,6 +19,11 @@ namespace RimArt
         {
             compClass = typeof(CompLastPrism);
         }
+
+        private static CompProperties_LastPrism of;
+
+        /// <summary>The weapon def's comp, found once: the store for the previews' meter.</summary>
+        public static CompProperties_LastPrism Of => of ?? (of = LastPrismDefOf.AG_LastPrism.GetCompProperties<CompProperties_LastPrism>() ?? new CompProperties_LastPrism());
     }
 
     /// <summary>
@@ -84,12 +89,15 @@ namespace RimArt
         {
             base.Notify_Equipped(pawn);
             grant.Give(pawn, Props.abilities);
+            GameComponent_LastPrism.Instance?.Register(pawn);
         }
 
         public override void Notify_Unequipped(Pawn pawn)
         {
             base.Notify_Unequipped(pawn);
-            GameComponent_LastPrism.Instance?.Stop(pawn);
+            GameComponent_LastPrism prisms = GameComponent_LastPrism.Instance;
+            prisms?.Stop(pawn);
+            prisms?.Unregister(pawn);
             grant.Take(pawn, Props.abilities, this);
         }
 
@@ -143,7 +151,7 @@ namespace RimArt
             return new Command_Target
             {
                 defaultLabel = "Retarget",
-                defaultDesc = "Turn the beam to another person or a spot within " + range.ToString("0") + " tiles, at " + cast.Props.turnDegreesPerSecond.ToString("0")
+                defaultDesc = "Turn the beam to another standing person or a spot within " + range.ToString("0") + " tiles, at " + cast.Props.turnDegreesPerSecond.ToString("0")
                               + " degrees a second. The joined beam stays joined. On a spot it holds there and keeps firing until stopped or out of charge.",
                 icon = RetargetIcon,
                 groupable = false,
@@ -151,7 +159,10 @@ namespace RimArt
                 {
                     canTargetLocations = true, canTargetPawns = true, canTargetAnimals = true, canTargetMechs = true, canTargetBuildings = false,
                     canTargetItems = false, mapObjectTargetsMustBeAutoAttackable = false,
-                    validator = t => t.IsValid && cast.caster != null && t.Cell.InBounds(cast.caster.Map) && t.Cell.DistanceTo(cast.caster.Position) <= range && t.Thing != cast.caster,
+                    // The caster can die or leave while the targeter is open (the cast releases, the delegate stays): no Map then.
+                    validator = t => t.IsValid && cast.Firing && cast.caster != null && cast.caster.Spawned && t.Cell.InBounds(cast.caster.Map)
+                                     && t.Cell.DistanceTo(cast.caster.Position) <= range && t.Thing != cast.caster
+                                     && !(t.Thing is Pawn pawn && (pawn.Dead || pawn.Downed)),
                 },
                 action = t => cast.Retarget(t),
             };

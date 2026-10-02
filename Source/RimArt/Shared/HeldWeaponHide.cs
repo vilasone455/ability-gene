@@ -8,7 +8,7 @@ namespace RimArt
     /// <summary>
     /// Kit weapons whose picture draws them instead of Core: Core's held-weapon drawing (PawnRenderUtility.DrawEquipmentAiming)
     /// is skipped for a registered def while its condition holds for the holder (a cast's picture draws the vacuum's wand, the
-    /// pole, the water gun, the Fuma's pieces; the Last Prism's picture always draws the prism). A kit registers from a
+    /// pole, the water gun, the Fuma's pieces; the Last Prism's and Yamato's pictures always draw them). A kit registers from a
     /// [StaticConstructorOnStartup] class, after the defs are loaded. One Harmony prefix for all of them.
     /// </summary>
     public static class HeldWeaponHide

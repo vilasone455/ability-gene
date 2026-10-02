@@ -28,6 +28,7 @@ namespace RimArt
         public bool unitTicks;
         /// <summary>The value's text; null shows the whole units, "7 / 12".</summary>
         public Func<string> valueLabel;
+        /// <summary>The tooltip, built only while the mouse is over the meter (a TipSignal with a getter).</summary>
         public Func<string> tip;
 
         public Gizmo_Meter(string label, Func<float> value, float max, Texture2D fill)
@@ -62,7 +63,7 @@ namespace RimArt
                 float at = bar.x + bar.width * Mathf.Clamp01(mark / max);
                 GUI.DrawTexture(new Rect(at - 1f, bar.y - 2f, 2f, bar.height + 4f), markTex);
             }
-            if (tip != null) TooltipHandler.TipRegion(rect, tip());
+            if (tip != null) TooltipHandler.TipRegion(rect, new TipSignal(tip, label.GetHashCode()));
             return new GizmoResult(GizmoState.Clear);
         }
     }

@@ -9,12 +9,20 @@ namespace RimArt
     /// Every Last Prism beam in the game (GameComponent_Vergil's shape) and the prisms' charging: ticks the beams on
     /// game time, fills every prism every <see cref="ChargeEvery"/> ticks, and once a frame draws the beams and the
     /// idle prism of each holder on the map on screen.
+    ///
+    /// Who holds a prism is kept in <see cref="holders"/> (MapComponent_Vacuum's shape), so a frame costs one pass over
+    /// the holders, not over every pawn on the map: the comp registers on equip and unequip, and a rescan of every map
+    /// once a second (<see cref="RescanEvery"/>) catches pawns that arrive already holding one and drops the dead.
     /// </summary>
     public sealed class GameComponent_LastPrism : GameComponent
     {
         /// <summary>Ticks between charge steps: Core's rare tick. A step adds ChargeEvery/60 s x sky glow / sunSecondsPerBeamSecond.</summary>
         public const int ChargeEvery = 250;
+        /// <summary>Ticks between rescans of who holds a prism.</summary>
+        public const int RescanEvery = 60;
         private List<LastPrismCast> casts = new List<LastPrismCast>();
+        private readonly HashSet<Pawn> holders = new HashSet<Pawn>();
+        private readonly List<Pawn> holderList = new List<Pawn>();
         private readonly HashSet<Pawn> drawn = new HashSet<Pawn>();
 
         public GameComponent_LastPrism(Game game) { }
@@ -108,19 +116,55 @@ namespace RimArt
             };
         }
 
-        /// <summary>For game tests: drops every beam.</summary>
-        public void ResetForTests() => casts.Clear();
+        /// <summary>For game tests: drops every beam and forgets every holder (the test's pawns are gone; its new ones register as they equip).</summary>
+        public void ResetForTests()
+        {
+            casts.Clear();
+            holders.Clear();
+        }
+
+        /// <summary>The comp's Notify_Equipped: <paramref name="pawn"/> holds a prism from now.</summary>
+        public void Register(Pawn pawn)
+        {
+            if (pawn != null) holders.Add(pawn);
+        }
+
+        /// <summary>The comp's Notify_Unequipped.</summary>
+        public void Unregister(Pawn pawn)
+        {
+            if (pawn != null) holders.Remove(pawn);
+        }
+
+        /// <summary>Every spawned pawn on any map holding a prism: equipment loaded with a save sends no Notify_Equipped, and a pawn can arrive on a map already holding one.</summary>
+        private void Rescan()
+        {
+            holders.Clear();
+            List<Map> maps = Find.Maps;
+            for (int m = 0; m < maps.Count; m++)
+            {
+                IReadOnlyList<Pawn> pawns = maps[m].mapPawns.AllPawnsSpawned;
+                for (int i = 0; i < pawns.Count; i++)
+                    if (CompLastPrism.HeldBy(pawns[i]) != null) holders.Add(pawns[i]);
+            }
+        }
+
+        public override void FinalizeInit()
+        {
+            base.FinalizeInit();
+            Rescan();
+        }
 
         public override void GameComponentTick()
         {
             int now = Find.TickManager.TicksGame;
             for (int i = casts.Count - 1; i >= 0; i--)
                 if (i < casts.Count && !casts[i].Tick(now)) casts.RemoveAt(i);
+            if (now % RescanEvery == 0) Rescan();
             if (now % ChargeEvery == 0) ChargeAll(ChargeEvery / 60f);
         }
 
         /// <summary>
-        /// One charge step for every prism on every map: lying on the ground (spawned) or in a spawned pawn's hands and
+        /// One charge step for every prism on every map: lying on the ground (spawned) or in a spawned holder's hands and
         /// not firing. A prism in an inventory, being carried, in a container or on a caravan is on none of these lists,
         /// so it does not fill.
         /// </summary>
@@ -132,14 +176,13 @@ namespace RimArt
                 Map map = maps[m];
                 List<Thing> lying = map.listerThings.ThingsOfDef(LastPrismDefOf.AG_LastPrism);
                 for (int i = 0; i < lying.Count; i++) lying[i].TryGetComp<CompLastPrism>()?.Charge(map, lying[i].Position, seconds);
-                IReadOnlyList<Pawn> pawns = map.mapPawns.AllPawnsSpawned;
-                for (int i = 0; i < pawns.Count; i++)
-                {
-                    CompLastPrism comp = CompLastPrism.HeldBy(pawns[i]);
-                    if (comp == null) continue;
-                    if (FiringBy(pawns[i]) != null) comp.chargingNow = false;
-                    else comp.Charge(map, pawns[i].Position, seconds);
-                }
+            }
+            foreach (Pawn pawn in holders)
+            {
+                CompLastPrism comp = pawn.Spawned ? CompLastPrism.HeldBy(pawn) : null;
+                if (comp == null) continue;
+                if (FiringBy(pawn) != null) comp.chargingNow = false;
+                else comp.Charge(pawn.Map, pawn.Position, seconds);
             }
         }
 
@@ -156,15 +199,17 @@ namespace RimArt
                 drawn.Add(cast.caster);
             }
             // Idle holders: the prism at the chest wherever Core would show a held weapon (drafted, aiming); the patch
-            // keeps Core from drawing the weapon's texture as well.
+            // keeps Core from drawing the weapon's texture as well. Copied first: drawing never changes the set, but a
+            // Notify_Unequipped from a draw-time recache would.
             int clockBase = Find.TickManager.TicksGame / 36000 * 36000;
-            IReadOnlyList<Pawn> pawns = map.mapPawns.AllPawnsSpawned;
-            for (int i = 0; i < pawns.Count; i++)
+            holderList.Clear();
+            holderList.AddRange(holders);
+            for (int i = 0; i < holderList.Count; i++)
             {
-                Pawn pawn = pawns[i];
+                Pawn pawn = holderList[i];
+                if (!pawn.Spawned || pawn.Map != map || drawn.Contains(pawn) || !PawnRenderUtility.CarryWeaponOpenly(pawn)) continue;
                 CompLastPrism comp = CompLastPrism.HeldBy(pawn);
-                if (comp == null || drawn.Contains(pawn) || !PawnRenderUtility.CarryWeaponOpenly(pawn)) continue;
-                DrawIdle(pawn, comp, map, UbwClock.Since(clockBase));
+                if (comp != null) DrawIdle(pawn, comp, map, UbwClock.Since(clockBase));
             }
         }
 

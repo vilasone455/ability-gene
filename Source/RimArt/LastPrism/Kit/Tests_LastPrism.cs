@@ -166,7 +166,7 @@ namespace RimArt
             yield return 5;
         }
 
-        [RimArtTest("Last Prism", "fire 4 walls, allies and the downed")]
+        [RimArtTest("Last Prism", "fire 4 walls, allies, the downed, retarget on the downed")]
         private static IEnumerable<int> WallsAlliesDowned(RimArtTestContext t)
         {
             Pawn holder = Holder(t, 12f, out CompLastPrism prism);
@@ -190,6 +190,11 @@ namespace RimArt
                 if (i == 12) yield return t.ShotAs("prism-wall", t.center + new IntVec3(5, 0, 0), 9f);
                 yield return 30;
             }
+            // Retarget on the downed enemy: held as its cell, so the beam neither swings to another enemy nor stops.
+            cast.Retarget(downed);
+            yield return 30;
+            Trace(t, holder, prism, ally, downed, behind, beside);
+            t.Check(cast.Firing && !cast.target.HasThing && cast.target.Cell == downed.Position, "Retarget on a downed pawn holds the beam on its cell (target " + cast.target + ")");
             Prisms.Stop(holder);
             yield return 5;
             Trace(t, holder, prism, ally, downed, behind, beside);

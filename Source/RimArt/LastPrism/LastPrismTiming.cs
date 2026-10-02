@@ -8,30 +8,22 @@ namespace RimArt
     /// (Tools/VfxLab/web/sketches/last-prism.js). Seconds in, numbers out, no drawing and no map.
     ///
     /// The picture's clock runs while the prism is held. The caller says when a channel started: six
-    /// beams leave the prism's tip in a level fan up to <see cref="Fan"/> degrees either side of the aim
-    /// and sweep across each other (<see cref="Sweep"/>); over <see cref="Join"/> s the fan narrows and
-    /// the beams join into one beam <see cref="Width"/> cells wide. When the beam stops it fades over
+    /// beams leave the prism's tip in a level fan up to the fan angle either side of the aim and sweep
+    /// across each other (<see cref="Sweep"/>); over the join time the fan narrows and the beams join
+    /// into one beam a lane wide. When the beam stops it fades over
     /// <see cref="Fade"/> s, or flickers out over <see cref="Sputter"/> s when the charge ran out. The
     /// prism rolls about its long axis while firing (<see cref="Roll"/>).
     ///
-    /// The balance numbers (<see cref="Range"/>, <see cref="Store"/>, <see cref="Join"/>, <see cref="Fan"/>,
-    /// <see cref="Width"/>, <see cref="HitReach"/>, <see cref="Turn"/> and the burns) are the sketch's
-    /// placeholders: the rules PR reads them from the weapon's XML and passes them in
-    /// <see cref="LastPrismShot"/>. The rest is shape and timing of the picture.
+    /// The balance numbers (range, store, the join time, the fan's angle, the beam's width, the hit reach, the
+    /// turn rate and the burns) are XML fields on AG_LastPrism_Fire and AG_LastPrism (<see cref="CompProperties_LastPrismFire"/>,
+    /// <see cref="CompProperties_LastPrism"/>): the rules, the picture (through <see cref="LastPrismShot"/>) and the
+    /// previews all read them from there. Here is only the shape and timing of the picture.
     ///
     /// The beam geometry is in double, as the sketch's is, because <see cref="LastPrismScript"/> decides
     /// who is hit with it and must down the same pawns on the same frame as the sketch.
     /// </summary>
     public static class LastPrismTiming
     {
-        // Balance, from the weapon's XML later (agreed 2026-09-30, not played): range (cells), seconds of beam the
-        // prism holds, seconds until the six beams join, the fan's half angle (degrees), the joined beam's width,
-        // which is the lane it hits (cells), how close to a fan beam's line a pawn is crossed (cells), and how fast
-        // the prism turns after its target (degrees/s).
-        public const float Range = 22f, Store = 12f, Join = 3f, Fan = 35f, Width = 1f, HitReach = 0.3f, Turn = 45f;
-        // Balance: burn per fan hit and the least gap between two on one pawn (s); the same for the joined beam.
-        public const float FanHit = 3f, FanEvery = 0.5f, JoinHit = 8f, JoinEvery = 0.25f;
-
         public const int Beams = 6;
         /// <summary>After the beam stops: it fades over Fade s, or flickers out over Sputter s when the charge ran out. The join's white flash and ring last JoinFlash s.</summary>
         public const float Fade = 0.25f, Sputter = 0.35f, JoinFlash = 0.3f;

@@ -48,10 +48,9 @@ namespace RimArt
         private bool shaken;
         private LastPrismWalls walls;
 
-        private static CompProperties_LastPrismFire props;
         private static readonly List<Pawn> candidates = new List<Pawn>();
 
-        public CompProperties_LastPrismFire Props => props ?? (props = CompProperties_LastPrismFire.Of);
+        public CompProperties_LastPrismFire Props => CompProperties_LastPrismFire.Of;
         public CompLastPrism Comp => prism?.GetComp<CompLastPrism>();
         public bool Fired => channelTick >= 0;
         public bool Firing => Fired && releaseTick < 0;
@@ -66,14 +65,18 @@ namespace RimArt
 
         private Vector2 Wielder => Ground(caster.DrawPos);
 
-        /// <summary>The beams start now, aimed straight at the target as the sketch's are; joined at once when the last beam from this prism stopped within rejoinSeconds.</summary>
+        /// <summary>
+        /// The beams start now, aimed straight at the target as the sketch's are. They start joined when this cast's
+        /// warmup began (<see cref="startTick"/>: the tick Fire was pressed) within rejoinSeconds of the last beam from
+        /// this prism stopping; measured from the fire tick the warmup would eat 0.3 s of the window.
+        /// </summary>
         public void MarkFired(int now)
         {
             if (Fired) return;
             home = caster.Map;
             channelTick = now;
             CompLastPrism comp = Comp;
-            if (comp != null && now - comp.lastReleaseTick <= Ticks(Props.rejoinSeconds))
+            if (comp != null && startTick - comp.lastReleaseTick <= Ticks(Props.rejoinSeconds))
             {
                 channelTick = now - Ticks(Props.joinSeconds);
                 shaken = true;
@@ -81,11 +84,15 @@ namespace RimArt
             aim = Toward(Wielder, Point(target), aim);
         }
 
-        /// <summary>Retarget: the beam turns toward <paramref name="to"/> from where it points now, joined or not.</summary>
+        /// <summary>
+        /// Retarget: the beam turns toward <paramref name="to"/> from where it points now, joined or not. A standing pawn
+        /// is followed; a downed or dead one, or anything else, is held as its cell (<see cref="Gone"/> would otherwise
+        /// drop a downed pawn on the next tick and swing the beam elsewhere or stop it).
+        /// </summary>
         public void Retarget(LocalTargetInfo to)
         {
             if (!Firing || !to.IsValid) return;
-            target = to.Thing is Pawn pawn ? new LocalTargetInfo(pawn) : new LocalTargetInfo(to.Cell);
+            target = to.Thing is Pawn pawn && !pawn.Dead && !pawn.Downed ? new LocalTargetInfo(pawn) : new LocalTargetInfo(to.Cell);
         }
 
         public void Release(int now, bool ranDry)

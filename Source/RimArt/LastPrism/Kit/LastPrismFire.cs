@@ -27,7 +27,7 @@ namespace RimArt
         public float joinedDamage = 8f;
         public float joinedArmorPenetration = 0.45f;
         public float joinedEverySeconds = 0.25f;
-        /// <summary>A beam started this soon after the last one from the same prism stopped starts joined: the fan only comes back after a pause.</summary>
+        /// <summary>Fire pressed this soon after the last beam from the same prism stopped starts joined: the fan only comes back after a pause.</summary>
         public float rejoinSeconds = 1f;
 
         public CompProperties_LastPrismFire()
@@ -38,8 +38,11 @@ namespace RimArt
         /// <summary>The ability's range, which is the beam's: one number in the XML for the targeting, the hits and the picture.</summary>
         public float Range => LastPrismDefOf.AG_LastPrism_Fire.verbProperties.range;
 
-        public static CompProperties_LastPrismFire Of => LastPrismDefOf.AG_LastPrism_Fire.comps.Find(c => c is CompProperties_LastPrismFire) as CompProperties_LastPrismFire
-                                                         ?? new CompProperties_LastPrismFire();
+        private static CompProperties_LastPrismFire of;
+
+        /// <summary>The def's comp, found once: the beam's numbers for the rules, the picture and the previews.</summary>
+        public static CompProperties_LastPrismFire Of => of ?? (of = LastPrismDefOf.AG_LastPrism_Fire.comps.Find(c => c is CompProperties_LastPrismFire) as CompProperties_LastPrismFire
+                                                                      ?? new CompProperties_LastPrismFire());
     }
 
     /// <summary>

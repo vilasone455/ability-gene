@@ -1,6 +1,5 @@
 using UnityEngine;
 using Verse;
-using T = RimArt.LastPrismTiming;
 
 namespace RimArt
 {
@@ -49,7 +48,7 @@ namespace RimArt
     }
 
     /// <summary>
-    /// Plays the Last Prism on the sketch's clock with the sketch's defaults. The fight is <see cref="LastPrismScript"/>'s:
+    /// Plays the Last Prism on the sketch's clock with the defs' numbers (the sketch's defaults). The fight is <see cref="LastPrismScript"/>'s:
     /// each frame takes the prism's aim, the target, where the pawns stand and when they went down from it, and stops
     /// the beams at its wall cells. The sketch's meter over the wielder's head is drawn too (<see cref="LastPrismGraphics.DrawMeter"/>),
     /// standing in for the weapon's button. Under a roof is the scenario's, not the map's.
@@ -97,11 +96,12 @@ namespace RimArt
             Vector3 centre = cell.ToVector3Shifted();
             origin = new Vector2(centre.x, centre.z);
             float light = LastPrismGraphics.Light(map);
+            CompProperties_LastPrismFire p = CompProperties_LastPrismFire.Of;
             var shot = new LastPrismShot
             {
-                Wielder = origin, Aim = aim, Join = T.Join, Fan = T.Fan, Range = T.Range, Width = T.Width, HitReach = T.HitReach,
+                Wielder = origin, Aim = aim, Join = p.joinSeconds, Fan = p.fanDegrees, Range = p.Range, Width = p.width, HitReach = p.fanReach,
                 Walls = walls, Pawns = pawns, Roofed = scene == LastPrismScene.Roofed, Charging = scene == LastPrismScene.Charges,
-                Level = script.Level(s, light), Store = T.Store,
+                Level = script.Level(s, light), Store = LastPrismScript.Store,
             };
             if (LastPrismScript.Shoots(scene))
             {
@@ -124,7 +124,7 @@ namespace RimArt
                 }
             }
             LastPrismGraphics.Draw(shot, s, map);
-            LastPrismGraphics.DrawMeter(shot.Wielder, shot.Level, T.Store, script.Warn(s));
+            LastPrismGraphics.DrawMeter(shot.Wielder, shot.Level, shot.Store, script.Warn(s));
         }
 
         // The script's wall cells, placed round the chosen cell.
