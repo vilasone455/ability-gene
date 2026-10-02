@@ -13,7 +13,8 @@ namespace RimArt
     /// second, so the previews and the recordings aim, hit and down the same pawns on the same frames as the sketch.
     /// Positions are cells from the chosen cell's centre. The wielder stands <see cref="Back"/> cells behind it,
     /// facing the scenario's aim; the first target walks across the aim; a wall of three cells stands on the fan's
-    /// right; every hit uses <see cref="LastPrismTiming"/>'s beams, burns and gaps. Pawns go down at
+    /// right; every hit uses <see cref="LastPrismTiming"/>'s beams with the XML's range, burns and gaps
+    /// (<see cref="CompProperties_LastPrismFire"/>; the sketch's defaults are the same numbers). Pawns go down at
     /// <see cref="PainShock"/> burn (the mech at <see cref="MechDown"/>). When the target goes down the next one is
     /// the standing enemy in range with no wall in the way that needs the smallest turn; the channel ends when the
     /// charge runs out or no such enemy is left. The rules PR does this with real pawns, damage and line of sight.
@@ -40,6 +41,9 @@ namespace RimArt
         public static int Count => Along.Length;
 
         private static readonly Dictionary<(LastPrismScene, float), LastPrismScript> made = new Dictionary<(LastPrismScene, float), LastPrismScript>();
+        /// <summary>The beam's numbers and the prism's store, from the defs.</summary>
+        private static CompProperties_LastPrismFire P => CompProperties_LastPrismFire.Of;
+        public static float Store => CompProperties_LastPrism.Of.store;
 
         public readonly LastPrismScene Scene;
         /// <summary>The prism's aim at each step (radians, single precision as the sketch keeps it), and the target's index.</summary>
@@ -90,8 +94,8 @@ namespace RimArt
         public float Level(double s, float light)
         {
             if (Scene == LastPrismScene.Roofed) return StartLevel;
-            if (Scene == LastPrismScene.Charges) return Mathf.Min(T.Store, StartLevel + (float)s * light);
-            double store = Scene == LastPrismScene.RunsDry ? DryStore : T.Store;
+            if (Scene == LastPrismScene.Charges) return Mathf.Min(Store, StartLevel + (float)s * light);
+            double store = Scene == LastPrismScene.RunsDry ? DryStore : Store;
             return (float)Math.Max(0, store - Math.Max(0, Math.Min(s - Lead, ReleaseAt - Lead)));
         }
 
@@ -117,8 +121,8 @@ namespace RimArt
                 WallZ[w] = Math.Floor(z + 0.5);
             }
             for (int j = 0; j < DownAt.Length; j++) DownAt[j] = double.PositiveInfinity;
-            JoinAt = Lead + T.Join;
-            DryAt = Lead + (scene == LastPrismScene.RunsDry ? DryStore : T.Store);
+            JoinAt = Lead + P.joinSeconds;
+            DryAt = Lead + (scene == LastPrismScene.RunsDry ? DryStore : Store);
             int n = (int)Math.Ceiling((DryAt + T.Sputter + Tail + 0.5) / Step);
             Aims = new float[n + 1];
             Targets = new int[n + 1];
@@ -150,7 +154,7 @@ namespace RimArt
                     }
                 }
                 Place(target, s, out tx, out tz);
-                double step = T.Turn * (Math.PI / 180.0) * Step;
+                double step = P.turnDegreesPerSecond * (Math.PI / 180.0) * Step;
                 aim += Math.Max(-step, Math.Min(step, T.Wrap(Math.Atan2(tz - casterZ, tx - casterX) - aim)));
                 Aims[k] = (float)aim;
                 Targets[k] = target;
@@ -160,23 +164,23 @@ namespace RimArt
                 {
                     for (int j = 0; j < Along.Length; j++)
                     {
-                        if (DownAt[j] <= s || s - lastFan[j] < T.FanEvery) continue;
+                        if (DownAt[j] <= s || s - lastFan[j] < P.fanEverySeconds) continue;
                         Place(j, s, out double qx, out double qz);
                         if (!Crossed(qx, qz, s, aim, tipX, tipZ)) continue;
                         lastFan[j] = s;
-                        Hurt(j, T.FanHit, s, total);
+                        Hurt(j, P.fanDamage, s, total);
                     }
                 }
                 else
                 {
-                    double lane = Reach(tipX, tipZ, aim, T.Range);
+                    double lane = Reach(tipX, tipZ, aim, P.Range);
                     for (int j = 0; j < Along.Length; j++)
                     {
-                        if (DownAt[j] <= s || s - lastJoin[j] < T.JoinEvery) continue;
+                        if (DownAt[j] <= s || s - lastJoin[j] < P.joinedEverySeconds) continue;
                         Place(j, s, out double qx, out double qz);
-                        if (!T.OnLine(qx, qz, tipX, tipZ, aim, lane, T.Width / 2.0)) continue;
+                        if (!T.OnLine(qx, qz, tipX, tipZ, aim, lane, P.width / 2.0)) continue;
                         lastJoin[j] = s;
-                        Hurt(j, T.JoinHit, s, total);
+                        Hurt(j, P.joinedDamage, s, total);
                     }
                 }
             }
@@ -190,9 +194,9 @@ namespace RimArt
         {
             for (int i = 0; i < T.Beams; i++)
             {
-                T.FanBeam(i, s, Lead, T.Join, T.Fan, out double turn, out double shift);
+                T.FanBeam(i, s, Lead, P.joinSeconds, P.fanDegrees, out double turn, out double shift);
                 double angle = aim + turn, x = tipX - Math.Sin(aim) * shift, z = tipZ + Math.Cos(aim) * shift;
-                if (T.OnLine(qx, qz, x, z, angle, Reach(x, z, angle, T.Range), T.HitReach)) return true;
+                if (T.OnLine(qx, qz, x, z, angle, Reach(x, z, angle, P.Range), P.fanReach)) return true;
             }
             return false;
         }
@@ -214,7 +218,7 @@ namespace RimArt
                 if (Ally[j] || DownAt[j] <= s) continue;
                 Place(j, s, out double qx, out double qz);
                 double d = Math.Sqrt((qx - tipX) * (qx - tipX) + (qz - tipZ) * (qz - tipZ)), angle = Math.Atan2(qz - tipZ, qx - tipX);
-                if (d > T.Range || Reach(tipX, tipZ, angle, d) < d - 0.01) continue;
+                if (d > P.Range || Reach(tipX, tipZ, angle, d) < d - 0.01) continue;
                 double turn = Math.Abs(T.Wrap(angle - aim));
                 if (turn < least)
                 {

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Last Prism (Terraria): a crystal pyramid held in front of the chest that fires a beam. Rules agreed
+       2026-09-30 and 2026-10-02; the numbers are placeholders from the sketch (Tools/VfxLab/web/sketches/
+       last-prism.js) until it is played. The charge numbers are here, the beam's on AG_LastPrism_Fire.
+
+       Ammo is stored sunlight: the prism holds 12 s of beam and fills 1 s per 20 s of full sun, scaled by the
+       map's sky glow (the solar generator's number), every 250 ticks. Only while held (equipped) or lying on an
+       unroofed cell of a map that is not a pocket map, and not while it fires. Not in an inventory or on a
+       caravan. Sun lamps do not count: they light the glow grid, not the sky. A new prism comes full, as a new water gun does.
+
+       The parent is BaseWeapon with no shooting verb: Fire is its attack, a drafted pawn never starts it by
+       itself, and in melee it is a weak bash. The comps are listed with Inherit="False" because
+       CompProperties_LastPrism is the weapon's CompEquippable: Core asks only the CompEquippable for a held
+       weapon's extra buttons (Pawn_EquipmentTracker.GetGizmos), and the meter, Retarget and Stop are those.
+       BaseWeapon's other two comps are repeated here; if BaseWeapon gains one, add it. No weaponTags, so raiders
+       never carry it. -->
+  <ThingDef ParentName="BaseWeapon">
+    <defName>AG_LastPrism</defName>
+    <label>last prism</label>
+    <description>A crystal pyramid that splits stored sunlight into a beam. Held in front of the chest, it points its tip at the target and fires six coloured beams in a fan 35 degrees to each side, which sweep and narrow for 3 seconds and then join into one beam 1 tile wide. Range 22 tiles; walls stop the beams.\n\nFan: 3 burn damage to anyone a beam crosses, at most once every 0.5 seconds. Joined beam: 8 burn damage to anyone in it, at most once every 0.25 seconds each (32 a second). It burns friend and foe alike, and passes over the downed.\n\nWhile it fires the wielder stands still. Retarget turns the beam toward another person or a spot at 45 degrees a second without breaking the joined beam; on a spot it keeps firing until stopped. When its target goes down it turns to the enemy nearest its aim; with none left it stops. Stop ends it.\n\nIt holds 12 seconds of beam and has no cooldown. It fills only in sunlight: held or lying on open ground, 1 second of beam per 20 seconds of full sun, less at dawn and dusk, none at night, under a roof, in a pocket dimension, while firing or in a bag. Sun lamps do not fill it.</description>
+    <graphicData>
+      <texPath>RimArt/LastPrism/LastPrism</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.8</drawSize>
+    </graphicData>
+    <techLevel>Spacer</techLevel>
+    <smeltable>false</smeltable>
+    <relicChance>0</relicChance>
+    <stackLimit>1</stackLimit>
+    <thingCategories>
+      <li>WeaponsMelee</li>
+    </thingCategories>
+    <weaponClasses>
+      <li>Melee</li>
+    </weaponClasses>
+    <tradeability>All</tradeability>
+    <statBases>
+      <MarketValue>1800</MarketValue>
+      <Mass>1.5</Mass>
+      <MaxHitPoints>150</MaxHitPoints>
+      <Flammability>0</Flammability>
+      <DeteriorationRate>1</DeteriorationRate>
+      <Beauty>4</Beauty>
+    </statBases>
+    <comps Inherit="False">
+      <li Class="RimArt.CompProperties_LastPrism">
+        <store>12</store>
+        <sunSecondsPerBeamSecond>20</sunSecondsPerBeamSecond>
+        <abilities>
+          <li>AG_LastPrism_Fire</li>
+        </abilities>
+      </li>
+      <li Class="CompProperties_Forbiddable"/>
+      <li Class="CompProperties_Styleable"/>
+    </comps>
+    <tools>
+      <li>
+        <label>prism</label>
+        <capacities><li>Blunt</li></capacities>
+        <power>7</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+
+</Defs>
