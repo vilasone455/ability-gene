@@ -244,6 +244,17 @@ namespace RimArt
             return GenSpawn.Spawn(wall, at, map);
         }
 
+        /// <summary>
+        /// A closed room with no door: <see cref="Wall"/>s on every cell round the floor from <paramref name="min"/> to
+        /// <paramref name="max"/> (both corners inside). Unroofed, so it is still a room of its own, not the outdoors.
+        /// </summary>
+        public void Room(IntVec3 min, IntVec3 max, ThingDef stuff = null)
+        {
+            for (int x = min.x - 1; x <= max.x + 1; x++)
+                for (int z = min.z - 1; z <= max.z + 1; z++)
+                    if (x < min.x || x > max.x || z < min.z || z > max.z) Wall(new IntVec3(x, 0, z), stuff);
+        }
+
         /// <summary>Undrafted and standing facing <paramref name="rot"/> for 10 s: a drafted idle pawn turns to face south every tick.</summary>
         public static void Face(Pawn pawn, Rot4 rot)
         {

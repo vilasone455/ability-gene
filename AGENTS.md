@@ -50,7 +50,7 @@ reads it directly). Agreed 2026-09-30. New code follows it; old code is changed 
 | `Shared/VfxMath.cs` | The lab's `Smooth`, `Hash`, `Rand`, so a port matches its sketch |
 | `Shared/WeaponStow.cs` | `Stow`: empties a hand; a bound weapon goes to its owner (a copy breaks), any other to the inventory, else to the ground |
 | `Echo/EchoUtility.cs` | Hero layer: `ForceHost`, `Awaken`, `Manifest`, `Revert`, `ManifestedWith` |
-| `Testing/RimArtTestContext.cs` | `Clear`, `Colonist`, `Enemy`, `Mech`, `Hold`, `Equip`, `Describe`, `Check`, `Log`, `ShotAs`; kit tests: `WaitFor`, `ClearEchoes`, `Host`, `EndHost`, `Target`, `Strike`, `NoWimp`, `Note`/`Hurt`/`Untouched`, `Stunned`, `Free`, `Wall`, `Face` |
+| `Testing/RimArtTestContext.cs` | `Clear`, `Colonist`, `Enemy`, `Mech`, `Hold`, `Equip`, `Describe`, `Check`, `Log`, `ShotAs`; kit tests: `WaitFor`, `ClearEchoes`, `Host`, `EndHost`, `Target`, `Strike`, `NoWimp`, `Note`/`Hurt`/`Untouched`, `Stunned`, `Free`, `Wall`, `Room`, `Face` |
 
 ### Known copies, not shared yet
 

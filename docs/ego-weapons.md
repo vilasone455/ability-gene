@@ -1,7 +1,7 @@
 # E.G.O. weapons and Corrosion
 
-Design agreed 2026-09-30. The Corrosion core is built (2026-10-02, see Code); Magic Bullet and Solemn
-Lament have their rules and defs (2026-10-02, see each weapon's Built); Mimicry and Paradise Lost have
+Design agreed 2026-09-30. The Corrosion core is built (2026-10-02, see Code); Magic Bullet, Solemn
+Lament and Paradise Lost have their rules and defs (2026-10-02, see each weapon's Built); Mimicry has
 pictures only. The corrosion of Solemn Lament, Mimicry and Paradise Lost changed 2026-10-02 (see the
 balance test under Rule 2). Post-v1 (the 2026-10-20 list is full). Source: Project Moon
 (Lobotomy Corporation, Library of Ruina, Limbus Company). Every number below is a placeholder and,
@@ -122,7 +122,7 @@ Built 2026-10-02 in `Source/RimArt/Ego/Kit/`:
 | `JobDriver_EgoOverclock.cs` | the Overclock job and `Command_EgoOverclock` |
 | `MapComponent_EgoCorrosion.cs` | calls each weapon's `DrawCorroded` for every corroded or overclocking pawn on the shown map; its tick corrodes the pawns whose roll passed once their burst is over |
 | `Tests_EgoCorrosion.cs` | `-rimarttest=ego`: bands and requirement, a burst corrodes (after its last shot) and the state fires at the nearest pawn then exhausts, going down ends it, the weapon leaving the hands ends it and Corrode never replaces a state, Overclock aims only at hostiles in range, never rolls (even when the action rolls itself), pays mood, and at three memories renews the oldest |
-| `Ego<Weapon>Corrosion.cs` (per weapon; Magic Bullet's and Solemn Lament's written) | the action and the look |
+| `Ego<Weapon>Corrosion.cs` (per weapon; Magic Bullet's, Solemn Lament's and Paradise Lost's written) | the action and the look |
 
 Defs: `AG_EgoCorroded` (MentalStateDefs/AG_Ego_MentalStates.xml), `AG_EgoExhausted`, `AG_EgoOverclocked`,
 `AG_EgoCorrodedHold`, `AG_EgoOverclock`, and the think node in `1.6/Patches/AG_Ego_ThinkTree.xml`.
@@ -504,6 +504,62 @@ by side in the lab. No wings like these exist in the mod (only crows and butterf
 
 Sketch: `Tools/VfxLab/web/sketches/ego-paradise-lost.js` (room hit, room hit outdoors, corroded,
 overclock).
+
+### Built
+
+Rules and def 2026-10-02 (`AG_EgoParadiseLost` and its round in `1.6/Defs/ThingDefs/AG_Ego_Things.xml`,
+`AG_EgoPale` in `DamageDefs/AG_Ego_Damages.xml`, the `AG_EgoParadiseLostSlow` hediff, the
+`AG_EgoParadiseLostSanity` thought, code in `Ego/Kit/`). Not played; game tests
+`-rimarttest=ego: paradise lost` written, not run yet.
+
+| File | What |
+|---|---|
+| `CompEgoParadiseLost.cs` | `CompProperties_EgoParadiseLost` (`damageFew`, `damageMany`, `fewMax`, `outdoorRadius`, `slowSeconds`, `sanityPerHit`, `sanityCap`, `sanityHours`, `ringRadius`, `ringGrowth`, `ringDamage`, `ringSound`), the corrosion's ring count, the Sanity meter |
+| `EgoParadiseLost.cs` | who a room hit strikes, the damage by count, the room hit, the ring, the slow, Sanity |
+| `Verb_EgoParadiseLost.cs` | Core's shooting verb with the projectile replaced by the room hit |
+| `EgoParadiseLostCorrosion.cs` | WhiteNight's ring: grows while corroded, fixed and hostiles-only in Overclock |
+| `GameComponent_EgoParadiseLost.cs` | the pictures fed from the rules as they happen: thorns round each thing struck, the rings, each wielder's corroded look, the staff in every holder's hand |
+| `Patches_EgoParadiseLost.cs` | `HeldWeaponHide`: Core never draws the held staff |
+| `Tests_EgoParadiseLost.cs` | the room hit (split, slow, Sanity and its cap), outdoors, the corroded ring growing through walls, Overclock, the def's corrosion numbers, Pale against power armour, the holder set |
+
+The texture (`Textures/RimArt/Ego/ParadiseLost.png`, `make_ego_textures.py`) is the picture's staff
+lying diagonally, apple to the upper right, at the size the picture draws it, with a 1 px outline.
+
+Settled while building:
+
+- A shot every 2 s is the verb's warmup 1 s plus the weapon's `RangedWeapon_Cooldown` 1 s. The
+  range (30) is the verb's. The damage to a single target (16) is the round's
+  (`AG_EgoParadiseLost_Round`, never spawned), so the info card shows it; `damageFew` and
+  `damageMany` are on the comp. All three are times the weapon's ranged damage multiplier.
+- Pale is `AG_EgoPale`: no armour category, so `ArmorUtility.GetPostArmorDamage` returns the full
+  amount, and not ranged, so a shield belt does not stop it. Its injury is a stab.
+- Outdoors means the aimed thing's room touches the map edge. Outdoors the hit takes hostiles within
+  `outdoorRadius` of the aimed thing that are in the same outdoor room, so a wall still keeps a pawn
+  inside a building out.
+- The room hit skips downed hostiles (other than the aimed one), so it does not finish raiders the
+  player may want as prisoners. The aimed thing is always struck, whatever it is; a thing with no
+  room (a wall) is struck alone.
+- The aimed thing needs line of sight when the shot goes off, not only at the order.
+- Damage lands on the firing tick. The ring's picture raises each pawn's thorns as its edge passes
+  (up to 0.62 s later), so the health bar can move before the thorns rise.
+- The slow is a `MoveSpeed` factor of 0.4 on the hediff, not a Moving capacity cut: a cut could
+  push a limping pawn under the 15 % Moving that downs it. A pawn struck again keeps the longer time.
+- Sanity is one memory, not stacked ones: each hostile struck raises its mood by `sanityPerHit` up
+  to `sanityCap`, and each hit renews it for `sanityHours`. So all of it lasts 2 h after the last
+  hit, and the mood tab shows one line. The ring never gives Sanity, Overclock's included.
+- The corroded ring strikes every pawn within the radius, through walls, downed ones included; the
+  count of rings is on the weapon and starts again at each corrosion. Overclock's rings strike only
+  standing hostiles and do not count.
+- The state's end is checked every 30 ticks (so it can come up to 29 ticks before 30 s) and before
+  that tick's firing, so it always comes before a fifth ring at 30 s: a corrosion is 4 rings, 6, 9,
+  12, 15 cells.
+- Overclock: 3 rings 2 s apart, `overclockRange` 6 (the ring's radius).
+- Core never draws the held staff. The picture draws it upright in the right hand wherever Core would
+  show a held weapon (drafted, aiming), and while corroded or overclocking. The corroded look outlives
+  the state by 1 s so the wings fold, and ends early when the wielder dies, as Solemn Lament's coffin.
+- Sounds, matched by name only, not listened to: Core `PsychicShockLanceCast` for the shot,
+  `PsychicInsanityLanceCast` for the ring (`ringSound`).
+- The pictures are not saved: a save in a picture's second loses the picture, not the damage.
 
 ## Order
 

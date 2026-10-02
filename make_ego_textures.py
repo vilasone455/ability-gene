@@ -24,7 +24,15 @@ SolemnLament.png 128 px. The held and dropped pair, level, muzzles to the right:
                  picture's grey outline 0.012 cells out. The white gun sits above, the black one below and 0.06
                  cells ahead, as a hand holds a pair. At the def's drawSize 0.8 each gun is the 0.32 cells long the
                  picture draws it. A 1 px dark outline goes round both.
+ParadiseLost.png 128 px. The dropped staff and its icon, lying diagonally with the apple to the upper right: the
+                 picture's staff (EgoParadiseLostStaffGraphics), part for part and in its colours, at the size the
+                 picture draws it upright (2.2 lab cells x Lift 0.6 = 1.32 cells from the gold tip to the halo). The
+                 white shaft with its grey outline and lit stripe, the gold tip, the snake in 3.5 loops with its
+                 head at the apple, the fan of 4, 6 and 8 scale feathers beside the apple on the outer side, the gold
+                 halo of 10 thorns above it, the red apple with its lit spot and stem. At the def's drawSize 1.5 the
+                 whole staff fits across the diagonal. A 1 px dark outline goes round it.
 """
+import math
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter
@@ -232,6 +240,121 @@ def solemn_lament():
     print("wrote", OUT / "SolemnLament.png")
 
 
+# EgoParadiseLostGraphics' colours.
+PL_SHAFT = rgb(0.94, 0.93, 0.90)
+PL_SHAFT_LINE = rgb(0.36, 0.35, 0.38)
+PL_SNAKE = rgb(0.80, 0.80, 0.78)
+PL_EYE = rgb(0.05, 0.05, 0.05)
+PL_GOLD = rgb(0.96, 0.76, 0.26)
+PL_APPLE = rgb(0.80, 0.07, 0.09)
+PL_APPLE_LIT = rgb(1.0, 0.48, 0.42)
+PL_RED_INK = rgb(0.07, 0.02, 0.03)
+PL_STEM = rgb(0.28, 0.40, 0.20)
+PL_FEATHER = (0.97, 0.96, 0.95)
+PL_WING_GREY = (0.62, 0.62, 0.66)
+PL_DRAW_SIZE = 1.5
+PL_LIFT = 0.6  # EgoParadiseLostTiming.Lift: a lab cell up is 0.6 cells north on screen
+PL_TILT = -45.0  # degrees the upright staff is turned: the apple ends up to the upper right
+
+
+def lerp_colour(a, b, t):
+    return rgb(*(x + (y - x) * t for x, y in zip(a, b)))
+
+
+def paradise_lost():
+    size = 128
+    s = size * SCALE
+    per_cell = s / PL_DRAW_SIZE
+    # Drawn on a canvas twice as wide round the gold tip, then cut out round what was drawn, so the staff is centred.
+    big = 2 * s
+    image = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    mask = Image.new("L", (big, big), 0)
+    d, md = ImageDraw.Draw(image), ImageDraw.Draw(mask)
+    ca, sa = math.cos(math.radians(PL_TILT)), math.sin(math.radians(PL_TILT))
+
+    def at(x, y):
+        """An upright staff point, <x> cells right of the shaft and <y> cells up from the gold tip, turned."""
+        rx, ry = x * ca - y * sa, x * sa + y * ca
+        return (big / 2 + rx * per_cell, big / 2 - ry * per_cell)
+
+    def poly(points, colour):
+        xy = [at(x, y) for x, y in points]
+        d.polygon(xy, fill=colour)
+        md.polygon(xy, fill=255)
+
+    def line(points, width, colour):
+        xy = [at(x, y) for x, y in points]
+        w = max(1, round(width * per_cell))
+        d.line(xy, fill=colour, width=w, joint="curve")
+        md.line(xy, fill=255, width=w, joint="curve")
+
+    def disc(x, y, rx, ry, colour):
+        poly([(x + rx * math.cos(a / 24 * 2 * math.pi), y + ry * math.sin(a / 24 * 2 * math.pi)) for a in range(24)], colour)
+
+    top = 2.2 * PL_LIFT
+    # The gold tip, then the shaft with its outline and a lit stripe.
+    poly([(-0.03, 0.07), (0.03, 0.07), (0.0, -0.05)], PL_GOLD)
+    poly([(-0.042, 0.0), (0.042, 0.0), (0.042, top), (-0.042, top)], PL_SHAFT_LINE)
+    poly([(-0.028, 0.0), (0.028, 0.0), (0.028, top), (-0.028, top)], PL_SHAFT)
+    poly([(0.006, 0.0), (0.022, 0.0), (0.022, top), (0.006, top)], rgb(1.0, 1.0, 1.0, 0.7))
+
+    # The snake: 3.5 wide loops down the whole shaft, its head at the apple.
+    def snake_x(u):
+        return 0.075 * math.sin(u * 3.5 * 2 * math.pi + 0.6)
+    coil = [(snake_x(i / 56), (0.12 + (2.0 - 0.12) * i / 56) * PL_LIFT) for i in range(57)]
+    line(coil, 0.056, PL_SHAFT_LINE)
+    line(coil, 0.036, PL_SNAKE)
+    hx, hy = snake_x(1.0) + 0.03, 2.04 * PL_LIFT
+    disc(hx, hy, 0.048, 0.034, PL_SHAFT_LINE)
+    disc(hx, hy, 0.039, 0.026, PL_SNAKE)
+    disc(hx + 0.014, hy + 0.006, 0.009, 0.009, PL_EYE)
+
+    # The fan of scale feathers beside the apple, outer rows first: 4, 6 and 8 feathers from 100 degrees down to 15 up.
+    root = (0.03, 1.98 * PL_LIFT)
+    for r in (2, 1, 0):
+        n, reach, fl = 4 + 2 * r, (0.13, 0.23, 0.33)[r], 0.1 + 0.025 * r
+        tone = lerp_colour(PL_WING_GREY, PL_FEATHER, 0.25 + 0.35 * r)
+        for j in range(n):
+            a = math.radians(-100 + 115 * j / (n - 1))
+            dx, dy = math.cos(a), math.sin(a)
+            nx, ny = -dy, dx
+            bx, by = root[0] + dx * (reach - fl * 0.6), root[1] + dy * (reach - fl * 0.6)
+            mx, my = bx + dx * fl * 0.5, by + dy * fl * 0.5
+            ex, ey = bx + dx * fl, by + dy * fl
+            for grow, colour in ((0.012, PL_SHAFT_LINE), (0.0, tone)):
+                w = 0.042 + grow
+                poly([(bx - dx * grow, by - dy * grow), (mx + nx * w, my + ny * w), (ex + dx * grow, ey + dy * grow), (mx - nx * w, my - ny * w)], colour)
+
+    # The gold halo of 10 thorns round the shaft above the apple, then the apple with its lit spot and stem.
+    halo = 2.3 * PL_LIFT
+    for i in range(10):
+        a = math.radians(i * 36 + 8)
+        dx, dy = math.cos(a), math.sin(a)
+        nx, ny = -dy, dx
+        bx, by = dx * 0.12, halo + dy * 0.12
+        poly([(bx + nx * 0.018, by + ny * 0.018), (bx - nx * 0.018, by - ny * 0.018), (dx * 0.2, halo + dy * 0.2)], PL_GOLD)
+    ring = [(0.13 * math.cos(a / 32 * 2 * math.pi), halo + 0.13 * math.sin(a / 32 * 2 * math.pi)) for a in range(33)]
+    line(ring, 0.03, PL_GOLD)
+    apple = 2.12 * PL_LIFT
+    disc(0.0, apple, 0.088, 0.082, PL_RED_INK)
+    disc(0.0, apple, 0.075, 0.07, PL_APPLE)
+    disc(-0.025, apple + 0.025, 0.025, 0.02, PL_APPLE_LIT)
+    line([(0.0, apple + 0.06), (0.02, apple + 0.11)], 0.018, PL_STEM)
+
+    grown = mask.filter(ImageFilter.MaxFilter(2 * OUTLINE_PX * SCALE + 1))
+    base = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    base.paste(Image.new("RGBA", (big, big), INK), (0, 0), grown)
+    image = Image.alpha_composite(base, image)
+    x0, y0, x1, y1 = grown.getbbox()
+    cx, cy = (x0 + x1) // 2, (y0 + y1) // 2
+    image = image.crop((cx - s // 2, cy - s // 2, cx + s // 2, cy + s // 2))
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    image.resize((size, size), Image.LANCZOS).save(OUT / "ParadiseLost.png")
+    print("wrote", OUT / "ParadiseLost.png")
+
+
 if __name__ == "__main__":
     magic_bullet()
     solemn_lament()
+    paradise_lost()
