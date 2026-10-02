@@ -8,45 +8,51 @@ Every kit in the mod, how to get it, and what each ability does.
 
 | Kit | Type | Abilities | Needs |
 |---|---|---|---|
-| [Accelerator — One Who Turns All Vectors](#accelerator--one-who-turns-all-vectors) | Hero | Vector manipulation, Reflex surge, Vector shove | - |
-| [Inumaki — Voice That Must Not Speak](#inumaki--voice-that-must-not-speak) | Hero | Stop, Drop, Kneel, Come, Run | - |
-| [Pain — Judge of the Rippled Eye](#pain--judge-of-the-rippled-eye) | Hero | Shinra Tensei | - |
-| [Shirou — The Faker](#shirou--the-faker) | Hero | Unlimited blade works | - |
-| [Anchor organ](#anchor-organ) | Gene | Mark, Clap, Double clap | Biotech DLC |
+| [Accelerator — One Who Turns All Vectors](#accelerator--one-who-turns-all-vectors) | Hero | Vector manipulation, Reflex surge, Vector shove, Plasma, Vector flick | - |
+| [Gojo — Bearer of the Six Eyes](#gojo--bearer-of-the-six-eyes) | Hero | Infinity, Lapse: Blue, Reversal: Red, Hollow Purple, Unlimited void | - |
+| [Goku — Heir of the Monkey King](#goku--heir-of-the-monkey-king) | Hero | Solar flare, Instant transmission, Kamehameha, Spirit bomb | - |
+| [Inumaki — Voice That Must Not Speak](#inumaki--voice-that-must-not-speak) | Hero | Stop, Drop, Crush, Come, Run, Explode | - |
+| [Itachi — Crow of the Crimson Eye](#itachi--crow-of-the-crimson-eye) | Hero | Crow dispersal, Carrion, False face, Susanoo | - |
+| [Minato — Hero of the Yellow Flash](#minato--hero-of-the-yellow-flash) | Hero | Flying thunder god, Flying thunder god: chain, Guiding thunder, Rasengan | - |
+| [Nakime — Player of the Endless Halls](#nakime--player-of-the-endless-halls) | Hero | Infinity Castle | - |
+| [Obito — Watcher Behind the Spiral Mask](#obito--watcher-behind-the-spiral-mask) | Hero | Kamui: phase, Kamui: warp, Kamui: store, Wood Release: cutting technique | - |
+| [Pain — Judge of the Rippled Eye](#pain--judge-of-the-rippled-eye) | Hero | Shinra Tensei, Banshō Ten'in, Black Receiver, Chibaku Tensei | - |
+| [Sasuke — Avenger of the Crimson Eye](#sasuke--avenger-of-the-crimson-eye) | Hero | Amenoyodomi, Amenotejikara, Raikō Kusari, Amaterasu | - |
+| [Satō](#satō) | Hero | Sever, Headshot reset, Grenade reset, Black ghost, The game | - |
+| [Shikamaru — Strategist of the Binding Shadow](#shikamaru--strategist-of-the-binding-shadow) | Hero | Shadow imitation, Shadow seam, Shadow grasp, Shadow double, Shadow neck bind | - |
+| [Shirou — The Faker](#shirou--the-faker) | Hero | Reinforcement, Trace on, Unlimited blade works | - |
+| [Todo](#todo) | Hero | Stone, Clap, Double clap, Black flash, Provoke | - |
+| [Vergil — Son of the Dark Knight](#vergil--son-of-the-dark-knight) | Hero | Judgement cut, Yamato dash, Summoned swords, Judgement cut end | - |
 | [Corrosive glands](#corrosive-glands) | Gene | Disarm spit | Biotech DLC |
-| [Dispersal plexus](#dispersal-plexus) | Gene | Murder, Carrion | Biotech DLC |
 | [Hypermetabolic glands](#hypermetabolic-glands) | Gene | Metabolic overdrive | Biotech DLC |
-| [Fold organ](#fold-organ) | Archite gene | Vent, Fold, Swallow, Post, Collapse | Biotech DLC |
-| [Combat presence](#combat-presence) | Trait | Provoke | - |
-| [Commanding voice](#commanding-voice) | Trait | Stop, Drop, Kneel, Come, Run | - |
 | [Pain debt](#pain-debt) | Trait | Wound debt | - |
-| [Attraction eye](#attraction-eye) | Implant | Gravity Well | - |
 | [Neural accelerator](#neural-accelerator) | Implant | Time alter: double accel, Time alter: square accel, Time alter: stagnate | - |
-| [Phase barrier](#phase-barrier) | Implant | Phase guard | - |
-| [Reflex booster](#reflex-booster) | Implant | Reflex surge, Vector manipulation, Vector shove | - |
-| [Repulsion eye](#repulsion-eye) | Implant | Shinra Tensei | - |
-| [Bank shot pistol](#bank-shot-pistol) | Wearable | Bank shot | - |
-| [Bubble pipe](#bubble-pipe) | Wearable | Drifting burst, Eye pop | - |
-| [Chain sickle](#chain-sickle) | Wearable | Snag, Stake | - |
-| [Coil gun](#coil-gun) | Wearable | Chain arc | - |
 | [Drone control rig](#drone-control-rig) | Wearable | Deploy toy car | - |
-| [Flame gauntlet](#flame-gauntlet) | Wearable | Devour, Release | - |
-| [Frost rifle](#frost-rifle) | Wearable | Flash freeze | - |
 | [Kunai belt](#kunai-belt) | Wearable | Throw kunai | - |
 | [Makibishi pouch](#makibishi-pouch) | Wearable | Scatter makibishi | - |
-| [Power Pole](#power-pole) | Wearable | Extend thrust, Sweep, Vault strike | - |
 | [Retrieval hook belt](#retrieval-hook-belt) | Wearable | Retrieval hook | - |
-| [Samehada](#samehada) | Wearable | Shark skin, Fusion | - |
 | [Sleeper box](#sleeper-box) | Wearable | Go in | - |
 | [Stasis belt](#stasis-belt) | Wearable | Stasis field | - |
-| [Tag scroll](#tag-scroll) | Wearable | Tag throw, Tag line, Paper shroud, Detonate tag line | - |
-| [Vacuum](#vacuum) | Wearable | Suck, Spit, Digest | - |
-| [Water gun](#water-gun) | Wearable | Stream shot, Hydro pump | - |
+| [Bank shot pistol](#bank-shot-pistol) | Weapon | Bank shot | - |
+| [Bubble pipe](#bubble-pipe) | Weapon | Drifting burst, Eye pop | - |
+| [Chain sickle](#chain-sickle) | Weapon | Snag, Stake | - |
+| [Coil gun](#coil-gun) | Weapon | Chain arc | - |
+| [Flame gauntlet](#flame-gauntlet) | Weapon | Devour, Release | - |
+| [Frost bomb](#frost-bomb) | Weapon | Throw frost bomb | - |
+| [Frost rifle](#frost-rifle) | Weapon | Flash freeze | - |
+| [Fūma Shuriken](#fūma-shuriken) | Weapon | Throw Fūma Shuriken | - |
+| [Last prism](#last-prism) | Weapon | Fire last prism | - |
+| [Mimic beacon](#mimic-beacon) | Weapon | Throw mimic beacon | - |
+| [Power Pole](#power-pole) | Weapon | Extend thrust, Sweep, Vault strike | - |
+| [Samehada](#samehada) | Weapon | Shark skin, Fusion | - |
+| [Tag scroll](#tag-scroll) | Weapon | Tag throw, Tag line, Paper shroud, Detonate tag line | - |
+| [Vacuum](#vacuum) | Weapon | Suck, Spit, Digest | - |
+| [Water gun](#water-gun) | Weapon | Stream shot, Hydro pump | - |
+| [Magic Bullet](#magic-bullet) | E.G.O. weapon | Attack, Corrosion, Overclock | - |
+| [Paradise Lost](#paradise-lost) | E.G.O. weapon | Attack, Sanity, Corrosion, Overclock | - |
+| [Solemn Lament](#solemn-lament) | E.G.O. weapon | Attack, Butterfly, Corrosion, Overclock | - |
 | [Arcing](#arcing) | Weapon trait | Arc | Unique Melee Weapons, Melee Animation |
 | [Resonant](#resonant) | Weapon trait | Resonance | Unique Melee Weapons |
-| [Frost bomb](#frost-bomb) | Weapon | Throw frost bomb | - |
-| [Fūma Shuriken](#fūma-shuriken) | Weapon | Throw Fūma Shuriken | - |
-| [Mimic beacon](#mimic-beacon) | Weapon | Throw mimic beacon | - |
 
 ## Heroes
 
@@ -61,32 +67,192 @@ Nothing that touches him keeps its direction.
 - Trial: damage taken 300.
 - Awakening gives the trait abrasive, replacing any trait it conflicts with.
 - The abilities are there only while the Host is manifested (hero form). Hero form drains 12 of the colony's charge an hour.
-- Reflex surge costs 10 charge a cast.
-- Vector shove costs 8 charge a cast.
 
 #### Vector manipulation
 
-Stop the world and take hold of every round about to pass within twelve cells of the carrier, then sort them into as many as four groups and turn each group where you want it. An edited round starts again from where it was caught with twenty cells of travel multiplied by the force spent on it, and moves and lands at that same multiple. A round is caught a third of a second before it arrives however fast it is flying, so reflex surge is usually what buys the time to press this.
+Pause the game and take hold of every bullet that will pass within 12 cells of Accelerator in the next 0.35 seconds. Sort them into up to 4 groups and give each group a turn (-180 to 180 degrees) and a force (x0.25, x0.5, x1 or x2). Apply rewrites every bullet in a changed group from where it was caught: new heading, speed and damage times the force, and 20 cells of travel times the force. Bullets in no group fly on as they were. Mortar shells and rockets cannot be caught.
 
-The bill comes in brain strain when you apply an edit, steeply: one group is routine, four at once is most of what the carrier has. Filling the bar overloads the booster and puts them on the floor.
+Brain strain on Apply: 8% for one changed group, 24% for two, 48% for three, 80% for four. Cooldown 5 seconds. Reflex surge slows the world so there is time to press this.
 
 **Cooldown:** 5 seconds | **Range:** self
 
 #### Reflex surge
 
-Drive the booster's own clock up until the world appears to crawl. For five seconds of game time everything outside the carrier's head runs at a quarter rate, which is about twenty seconds of yours - long enough to watch a burst cross the room and decide what to do about it.
+For 5 seconds of game time the game runs at a quarter of its speed (about 20 real seconds), whatever speed button is pressed. Nothing moves further or hits harder, Accelerator included; it only gives time to watch and to use vector manipulation.
 
-It buys time and nothing else: nobody moves further, nothing hits harder, and the carrier is slowed with everyone else. Ends early from the gizmo on the hediff, and costs a little brain strain to open.
+Costs 10% brain strain. Ends early from the button on its hediff. Cooldown 30 seconds.
 
 **Cooldown:** 30 seconds | **Range:** self
 
 #### Vector shove
 
-Take hold of one body's momentum and spend all of it throwing them away from the carrier. Damage scales with the distance travelled, and a great deal more if something solid stops them early.
+Touch an adjacent pawn or loose thing, then pick a direction.
 
-Heavier bodies move less; this is for breaking a melee grip and introducing people to walls, not for damage.
+A pawn is thrown 8 cells (divided by its body size) at 20 cells per second. It takes 1.5 blunt damage per cell travelled and is stunned for 1 second. A wall ends the throw early and adds 8 blunt. Every pawn in the path is knocked 1 cell aside, takes 8 blunt and is stunned for 0.5 seconds; the thrown pawn keeps going.
 
-**Cooldown:** 20 seconds | **Range:** 12.9 cells | **Cast time:** 0.5 seconds
+A stone chunk, corpse or weapon on the ground is thrown 12 cells and hits the first pawn or wall in its path for 1 blunt per kg of its mass (at most 40); it lands there.
+
+Force returned: if the target hit Accelerator in melee within the last second, that hit's damage is added as blunt to the first pawn the thrown pawn strikes, or to the thrown pawn itself if it strikes none. It does not undo the hit Accelerator took.
+
+Costs 5% brain strain. Cooldown 20 seconds.
+
+**Cooldown:** 20 seconds | **Range:** 1.9 cells
+
+#### Plasma
+
+Target a direction. Accelerator stands still for 3 seconds and compresses the air at one hand into plasma. While he channels, every bullet that comes within 8 cells of him is bent into his hand and destroyed (mortar shells and rockets are not caught).
+
+Then the plasma goes down a lane 1 cell wide and up to 15 cells long and stops at the first standing pawn or wall. It bursts there: radius 1.5 cells, 50 heat damage at 40% armour penetration, and fires start. Pawns further down the lane are not hit. Accelerator is not hurt by his own burst.
+
+Costs 45% brain strain when released. A stun, a downing or an order during the channel cancels it: the cooldown is spent, the strain is not. Cooldown 90 seconds.
+
+**Cooldown:** 2.2 hours (in-game) | **Range:** 30 cells
+
+#### Vector flick
+
+Target a pawn within 24.9 cells in line of sight. Accelerator flicks a pebble up off the floor and kicks it at 42 cells per second. It always hits the target for 14 blunt damage at 30% armour penetration; pawns in between are not hit.
+
+Warm-up 0.3 seconds. No brain strain. Cooldown 2 seconds.
+
+**Cooldown:** 2 seconds | **Range:** 24.9 cells | **Cast time:** 0.3 seconds
+
+
+### Gojo — Bearer of the Six Eyes
+
+Nothing reaches him unless he allows it.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Gojo and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Gojo can have one Host.
+- Trial: intellectual 14.
+- Trial: time downed 24.
+- Awakening gives the trait the Strongest, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 15 of the colony's charge an hour.
+- Infinity costs 0 charge a cast.
+- Lapse: blue costs 3 charge a cast.
+- Reversal: red costs 3 charge a cast.
+- Hollow purple costs 20 charge a cast.
+- Unlimited void costs 30 charge a cast.
+
+#### Infinity
+
+Raise Infinity. Everything moving toward Gojo within 3.9 cells keeps halving the distance it has left and never arrives: a bullet or arrow hangs in the air and halves its gap every 6 seconds; a melee attacker's chance to connect halves every second; explosions, fire and other damage with no attacker behind it are cut to 15%.
+
+It holds back air too, so Gojo stops breathing while it is up: after 14 seconds his breathing and consciousness start to drop, at about 32 seconds he usually goes down, and at 39 seconds he dies. Drop Infinity from its own button; every held round and blow resumes at once. Costs no charge. Cooldown 1 hour.
+
+**Cooldown:** 1 hour (in-game) | **Range:** self
+
+#### Lapse: Blue
+
+Gojo opens Blue at a cell up to 15 cells away (a clear walking line). It opens in 0.45 seconds, then for 3 seconds pulls every pawn, allies too, and loose items and corpses within 4 cells toward its centre: 6 cells per second at the edge of its 1-cell core, falling to nothing at 4 cells, divided by body size over 1. Gojo himself is never pulled. Pawns that reach the core are held there; items and corpses there are crushed (destroyed).
+
+Then it implodes: 10 to 25 blunt damage within 2 cells, by the mass that reached its core (25 at 120, two people). It does not grow, move or bend bullets.
+
+Gojo is free while it holds and can cast Red: Red passing within 1 cell of its centre makes Hollow Purple when Purple is ready.
+
+Cooldown 20 seconds, counted from when Blue closes.
+
+**Range:** self
+
+#### Reversal: Red
+
+Gojo charges Red at his finger for 0.6 seconds, then fires it at a cell up to 20 cells away (line of sight). It flies at 20 cells per second.
+
+The first pawn or loose thing (an item, chunk or corpse) in its path, friend or foe, is thrown 6 cells along Red's direction. A thrown pawn takes 1.5 blunt damage per cell it travels, and 10 more if a wall stops it. Every other pawn and loose thing within 1.5 cells of the burst is pushed 2 cells straight away from it; a pushed pawn takes 8 blunt. A wall in the way ends Red there; with nothing hit it bursts at the cell. No stun. Gojo is never hit by his own Red.
+
+Red passing within 1 cell of the centre of Gojo's active Blue makes Hollow Purple when Purple is ready; while Purple is ready, Red flies through anything inside that Blue's 4-cell pull, so the pawns Blue has caught do not stop it. Otherwise it passes through Blue as a plain Red.
+
+Cooldown 10 seconds.
+
+**Cooldown:** 10 seconds | **Range:** 20 cells | **Cast time:** 0.6 seconds
+
+#### Hollow Purple
+
+A combo, not cast from this button. When Gojo's Red passes within 1 cell of the centre of his active Blue while Hollow Purple is ready (on the way, Red flies through anything inside Blue's pull), both are used up (Blue ends at once without imploding and lets go of what it held) and Hollow Purple forms at Blue's centre. 0.65 seconds later it travels in Red's direction at 6 cells per second, for 30 cells or to the edge of the map, radius 1.5.
+
+It erases what it touches, friend or foe. A pawn whose cell centre is within 0.5 cells of its path is erased: it dies and leaves nothing, no corpse, apparel, weapon or inventory, and the kill is Gojo's. Mechanoids and large animals too; bosses are not erased. Every other pawn it touches, and a boss, takes 60 erasure damage that ignores armour; a body part it destroys does not bleed. Walls, buildings, rock, ore, plants and items vanish, with no drops, refund or chunks.
+
+Every cell within 1.5 cells of its path becomes Erased ground for good: built floors are removed with no refund and the roof is removed, thick rock roof too. Water stays water.
+
+If Hollow Purple is on cooldown, or Gojo's Echo charge cannot pay it, Red passes through Blue as a normal Red.
+
+Cooldown 1 day.
+
+**Cooldown:** 1 day (in-game) | **Range:** self
+
+#### Unlimited void
+
+Gojo makes the hand sign (0.6 seconds). The barrier closes over him in 0.3 seconds and everyone within 9 cells but Gojo, walls or not, friend or foe, standing or downed, is taken with him into a pocket map, each at the same offset from him. The domain lasts 10 seconds, or until Release, or until Gojo is downed, leaves hero form or the Echo pool empties. Then everyone comes out at the matching cell of the home map.
+
+Everyone taken with a living brain is frozen for the whole domain. Mechanoids and other pawns without one act normally. Gojo acts freely.
+
+A frozen pawn gains 10% void overload per second. A pawn not hostile to Gojo that stands next to him for 0.3 seconds in all is spared: its overload stops where it is. Hostile pawns are never spared.
+
+On exit, consciousness is capped at 100% minus the overload, never below 10%; the overload then falls 0.5% per second. Over 70% overload (7 seconds frozen) the pawn is downed until it falls back to 70%, and is void-scarred once it has gone: consciousness -15% and sight -20% for 2 days. No damage.
+
+Each non-hostile faction with a pawn that comes out unspared loses 15 goodwill. Cannot be cast from a pocket map.
+
+**Cooldown:** 2 days (in-game) | **Range:** self | **Cast time:** 0.6 seconds
+
+
+### Goku — Heir of the Monkey King
+
+He gets back up, and hits harder each time.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Goku and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Goku can have one Host.
+- Trial: melee 15.
+- Awakening gives the trait gourmand, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 12 of the colony's charge an hour.
+- Solar flare costs 3 charge a cast.
+- Instant transmission costs 2 charge a cast.
+- Kamehameha costs 15 charge a cast.
+- Spirit bomb costs 30 charge a cast.
+
+#### Solar flare
+
+Goku raises his hands to his face and lets out a blinding flash. Every pawn within 6.9 cells that can see him, except his own faction, is stunned for 3.5 seconds and flash-blinded: sight -80% for 20 seconds. No damage. A pawn behind a wall is not affected.
+
+**Cooldown:** 1.1 hours (in-game) | **Range:** self | **Cast time:** 0.2 seconds
+
+#### Instant transmission
+
+Goku locks onto the life energy at a cell and teleports there.
+
+First click a pawn next to Goku to take along (an ally, an enemy or someone downed; not a mechanoid), or Goku himself to go alone. Then click any standable cell on the map; no line of sight is needed.
+
+Goku locks onto the strongest life energy within 4 cells of that cell: a pawn's overall health times its body size (at most 1). Mechanoids have none. The channel lasts (0.5 s + 0.01 s per cell of distance) x (1 + 3 x (1 - lock)), at most 12 s. A healthy pawn 20 cells away: 0.7 s. An empty cell 20 cells away: 2.8 s.
+
+Goku appears on the cell and the passenger on the cell beside him, on the same side as before. The passenger is not held: if it leaves his side during the channel, Goku goes alone. A hostile passenger arrives stunned for 1.5 seconds.
+
+The charge is paid on the jump. A stun or a downing during the channel spends the cooldown; a move order spends nothing.
+
+**Cooldown:** 1.4 hours (in-game) | **Range:** 1.5 cells
+
+#### Kamehameha
+
+Target a direction. Goku channels for 2.5 seconds standing still, then holds the ball until you press Fire, or Warp.
+
+Fire: a beam 3 cells wide runs 30 cells, or to the first wall. It lasts 1.2 seconds and hits 4 times for 20 burn each (50% armour penetration) on every pawn and building in the lane, friend or foe, pushing pawns 1.5 cells along it. Where the beam ends it explodes: radius 2.5, 40 damage to everything there; a wall that stopped it takes it first.
+
+Warp (while Instant Transmission is ready): pick a cell and a direction. Goku holds the ball while he locks onto the cell, as Instant Transmission does (same channel time), then jumps there and fires. It spends Instant Transmission's charge and cooldown too; Cancel before the jump gives both back.
+
+A stun or a downing cancels the channel and the charge and cooldown are spent. Cancel gives them back.
+
+**Cooldown:** 2.9 hours (in-game) | **Range:** 40.9 cells
+
+#### Spirit bomb
+
+Target an area up to 35 cells away. Goku raises both hands and gathers ki; press Throw when you want (after at least 3 seconds).
+
+Every giver adds its ki per second: overall health x Rest (a healthy, rested pawn gives 1 per second). Goku gives, and so does every colonist who presses Lend energy (they stand still with a hand up). Giving costs 2% of the giver's Rest bar per second, so the rate falls as they tire; below 28% Rest (Tired) a pawn gives nothing and a lender stops. From full Rest one pawn gives about 23 power over 36 seconds. The ball holds at most 60 power.
+
+Blast radius 2 + 0.15 x power (11 cells when full). Every hostile pawn in the radius takes 5 burn hits of 4 + 1.2 x power (5 x 76 = 380 when full), the first when the blast reaches it and the rest while the dome stands, each on a body part the game picks; nothing else is hurt: colonists, allies, animals, neutrals and buildings take nothing.
+
+The bomb flies for 1.4 seconds and does not miss. A stun or a downing ends the channel with nothing and the charge and cooldown are spent; the Rest already given is gone. Cancel gives the charge and cooldown back.
+
+**Cooldown:** 1 day (in-game) | **Range:** 35.9 cells
 
 
 ### Inumaki — Voice That Must Not Speak
@@ -100,51 +266,229 @@ He speaks rarely, and the word is law.
 - Trial: does not have psychopath.
 - Awakening gives the trait kind, replacing any trait it conflicts with.
 - The abilities are there only while the Host is manifested (hero form). Hero form drains 8 of the colony's charge an hour.
-- Stop costs 5 charge a cast.
-- Drop costs 5 charge a cast.
-- Kneel costs 5 charge a cast.
-- Come costs 5 charge a cast.
-- Run costs 5 charge a cast.
 
 #### Stop
 
-One word, and whoever hears it stands still for three seconds. They are not stunned and they are not yours - they keep their weapon, their target and their intentions, and pick all three back up the moment it wears off.
+Everyone who hears it stands still for 3 seconds, then goes back to what they were doing. They keep their weapon and target.
 
-Cheap to say, because it asks for nothing but a pause.
+Throat: 3 % per listener at speak volume.
 
-**Cooldown:** 10 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
+**Cooldown:** 10 seconds | **Range:** 0.9 cells | **Cast time:** 0.4 seconds
 
 #### Drop
 
-Whoever hears it stops, takes half a second, and opens their hand. The weapon lands at their feet rather than thrown clear, and they are free to pick it straight back up.
+Everyone who hears it and holds a weapon stops and drops it at their feet (about half a second). They can pick it back up.
 
-What this buys is the half second, the stoop, and whatever your guns do in between - which, said to the one carrying the launcher, is enough.
+Throat: 5.5 % per listener at speak volume. Unarmed pawns do not count.
 
-**Cooldown:** 20 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
+**Cooldown:** 20 seconds | **Range:** 0.9 cells | **Cast time:** 0.4 seconds
 
-#### Kneel
+#### Crush
 
-Whoever hears it goes to the ground and stays there for three seconds. Prone is not downed: they can still shoot, but anyone shooting at them is shooting at a smaller thing.
+Everyone who hears it takes 15 blunt damage and is stunned for 1 second.
 
-Worth saying to somebody running, close to worthless said to somebody already in cover, and expensive either way.
+Throat: 9 % per listener at speak volume.
 
-**Cooldown:** 30 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
+**Cooldown:** 30 seconds | **Range:** 0.9 cells | **Cast time:** 0.4 seconds
 
 #### Come
 
-Whoever hears it walks to the speaker, once, and then remembers what they were doing.
+Everyone who hears it walks to Inumaki, then goes back to what they were doing.
 
-Calling an armed hostile to your own position is as bad an idea as it sounds; the version that is not is pulling one raider off a wall, out of cover, or away from the colonist they had chosen.
+Throat: 7 % per listener at speak volume.
 
-**Cooldown:** 30 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
+**Cooldown:** 30 seconds | **Range:** 0.9 cells | **Cast time:** 0.4 seconds
 
 #### Run
 
-Whoever hears it turns and runs from the speaker. They stop when they are far enough, work out that nothing is chasing them, and come back - what you bought is the walk back.
+Everyone who hears it runs up to 24 cells away from Inumaki, then goes back to what they were doing.
 
-Expensive for the same reason kneel is, and the best thing in the list to say to something about to reach a colonist.
+Throat: 9 % per listener at speak volume.
 
-**Cooldown:** 30 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
+**Cooldown:** 30 seconds | **Range:** 0.9 cells | **Cast time:** 0.4 seconds
+
+#### Explode
+
+An explosion goes off on everyone who hears it: 35 bomb damage in radius 1.5. It also hits anyone standing next to a listener, allies included, but not Inumaki.
+
+Throat: 35 % per listener at speak volume. Cooldown 1 day.
+
+**Cooldown:** 1 day (in-game) | **Range:** 0.9 cells | **Cast time:** 0.4 seconds
+
+
+### Itachi — Crow of the Crimson Eye
+
+He is never where the blow lands, and what looks at him sees what he chooses.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Itachi and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Itachi can have one Host.
+- Trial: melee 12.
+- Trial: intellectual 12.
+- Trial: kills 30.
+- Awakening gives the trait super-immune, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 10 of the colony's charge an hour.
+- False face costs 3 charge a cast.
+- Susanoo costs 20 charge a cast.
+
+#### Crow dispersal
+
+Disperse into a flock of crows and fly up to 35 cells to a chosen spot, crossing walls, water, fire and enemies without line of sight. The destination must be revealed and able to hold a standing pawn. Itachi lands ready to act, for one of the plexus's three shared charges.
+
+The other half is automatic: while the Scatter toggle is on, a hit of 6 or more damage from a live attacker is cancelled and he re-forms 5 to 10 cells away, for a charge and a little blood. Neither works while the Susanoo stands.
+
+**Cooldown:** 10 seconds | **Range:** 34.9 cells | **Cast time:** 0.2 seconds
+
+#### Carrion
+
+Send a flock of crows to strip a fresh corpse within 10 cells, then carry back what they took. Bleeding closes, lost blood returns, and a carrier with a Hemogen reserve refills part of it.
+
+The corpse is consumed along with one charge, and only one flock can be feeding at a time.
+
+**Cooldown:** 1 second | **Range:** 10 cells | **Cast time:** 0.2 seconds
+
+#### False face
+
+Every enemy within 15 cells whose attention is on Itachi sees its nearest ally as him and attacks it, for up to 10 seconds. The illusion breaks for a victim that takes damage, when its false Itachi goes down, or when Itachi goes down. Mechanoids and animals are not fooled.
+
+**Cooldown:** 1.1 hours (in-game) | **Range:** 0.9 cells | **Cast time:** 0.5 seconds
+
+#### Susanoo
+
+Raise the Susanoo for 12 seconds. The Yata Mirror turns every hit from outside; the Totsuka Blade, a command while it stands, stabs a target within 4 cells every 3 seconds for 30 damage, and seals instead a target that is downed or at 30 % health or less: it is taken off the map as a kill, leaving its gear and no corpse. One seal per Susanoo; mechanoids are never sealed. Itachi walks at half speed and cannot use Crow Dispersal while it stands. When it ends his consciousness drops by 30 % for 6 hours and he loses blood.
+
+**Cooldown:** 1 day (in-game) | **Range:** 0.9 cells | **Cast time:** 1 second | **Duration:** 12 seconds
+
+
+### Minato — Hero of the Yellow Flash
+
+Wherever his kunai lands, he is already there.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Minato and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Minato can have one Host.
+- Trial: melee 12.
+- Trial: intellectual 10.
+- Trial: 30 kills with a thrown kunai.
+- Awakening gives the trait kind, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 10 of the colony's charge an hour.
+- Flying thunder god costs 2 charge a cast.
+- Flying thunder god: chain costs 10 charge a cast.
+- Guiding thunder costs 5 charge a cast.
+- Rasengan costs 3 charge a cast.
+
+#### Flying thunder god
+
+Minato jumps to one of his marks up to 29.9 tiles away. No line of sight is needed. A mark is his kunai stuck in a pawn, a pawn carrying his seal (sealing touch), or his kunai lying on the ground.
+
+Pawn: he appears in the free cell behind it and cuts at once with his melee attack at 150% damage. The cut cannot miss. The kunai stays in. An ally is not cut.
+
+Kunai on the ground: he appears on it and picks it up. It goes into his kunai belt (and loses its seal there); what the belt has no room for goes into his inventory.
+
+**Cooldown:** 20 seconds | **Range:** 29.9 cells
+
+#### Flying thunder god: chain
+
+Minato jumps to every marked enemy within 29.9 tiles, nearest first, up to 5, one jump every 0.24 seconds. At each he appears in the free cell behind the enemy and cuts once with his melee attack at 100% damage. The cuts cannot miss. He stays at the last one.
+
+Needs at least 2 marked enemies that are standing. A marked enemy carries his kunai or his seal. One that dies or goes down before its turn is skipped.
+
+**Cooldown:** 1.4 hours (in-game) | **Range:** self
+
+#### Guiding thunder
+
+Choose one of Minato's marks up to 29.9 tiles away. For 6 seconds a barrier stands 1.3 tiles round him, and every shot that would hit him comes out at that mark instead.
+
+Mark in a pawn: the shot hits that pawn with its own damage, even a shot the pawn fired itself. If the pawn dies, the shots land where it fell.\nKunai on the ground: the shot lands on that tile and hits whoever stands there.\nGrenades and shells that come down inside the barrier go off at the mark.
+
+Minato cannot move or attack while it holds. It ends early after 12 shots, or when the kunai on the ground is picked up. It does not stop melee.
+
+**Cooldown:** 1.1 hours (in-game) | **Range:** 29.9 cells
+
+#### Rasengan
+
+Minato forms a ball of spinning chakra over 0.6 seconds, then drives it into the target: 30 blunt damage, 40% armor penetration. The target is thrown 3 tiles away from him and stunned for 2 seconds. If something solid stops it sooner it takes 10 more damage.
+
+A target carrying his kunai or his seal can be up to 29.9 tiles away: he forms the ball where he stands, jumps behind the target and strikes, so it is thrown back toward where he came from. Any other target he walks up to first; if it steps away while the ball forms, the ball is lost.
+
+**Cooldown:** 30 seconds | **Range:** 29.9 cells | **Cast time:** 0.6 seconds
+
+
+### Nakime — Player of the Endless Halls
+
+One strum of her biwa and the floor opens under her enemies; the next, the rooms they fell into move.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Nakime and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Nakime can have one Host.
+- Trial: artistic 12.
+- Trial: construction 10.
+- Trial: kills (humanlikes) 15.
+- Awakening gives the trait night owl, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 12 of the colony's charge an hour.
+- Infinity castle costs 30 charge a cast.
+
+#### Infinity Castle
+
+Target a cell up to 35 cells away; no line of sight needed. After a 1 s warm-up the biwa sounds and a door opens in the floor under each hostile pawn within 5.9 cells, nearest first, up to 8 pawns and a total body size of 8. Downed pawns stay. They drop into a castle of 30 to 45 rooms over a void, each in its own room, and Nakime follows to the dais of the biwa room.
+
+Whatever a pawn carries is dropped where it stood. Inside, enemies attack anyone they can reach. Nakime cannot walk or attack while she plays, and the enemies can reach her. Castle walls and doors cannot be broken, and she sees every room.
+
+The castle stands 60 s, until Release, or until Nakime is downed or stops being Nakime. Then everyone goes back to the cell they came from; corpses and items come up round the target cell. Enemies rejoin their raid if it is still on the map, else they leave.
+
+While it stands she has six commands, each one strum of the biwa, at least 1.5 s apart and free: Shift, Drop, Seal / Open, Crush, Summon and Release.
+
+**Cooldown:** 3 days (in-game) | **Range:** 35 cells | **Cast time:** 1 second
+
+
+### Obito — Watcher Behind the Spiral Mask
+
+What strikes him passes into another world, and so does whoever he touches.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Obito and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Obito can have one Host.
+- Trial: melee 12.
+- Trial: intellectual 10.
+- Awakening gives the trait sanguine, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 12 of the colony's charge an hour.
+- Kamui: warp costs 2 charge a cast.
+- Kamui: store costs 1 charge a cast.
+- Wood release: cutting technique costs 2 charge a cast.
+
+#### Kamui: phase
+
+Obito becomes intangible. Every hit on him goes through him into his Kamui dimension: rounds fly on inside it, anything else lands on a random spot there. While phased he cannot attack, carry or use his other abilities.
+
+Phase spends his own pool of 30 seconds, which refills 1 second for every 4 seconds he is solid. Turning solid again takes 0.25 seconds. Costs no charge.
+
+**Range:** self
+
+#### Kamui: warp
+
+Obito winds himself into his right eye and is inside his Kamui dimension after 1 second.
+
+From inside, use it again to pick any revealed spot on the map he left. A swirl marks the spot for half a second, then he comes out of it. The 15-second cooldown starts when he comes out; going in costs 2 charge, coming out is free.
+
+**Cooldown:** 15 seconds | **Range:** self | **Cast time:** 1 second
+
+#### Kamui: store
+
+Absorb: Obito touches a person or animal no larger than a megaspider, or one item stack, and it winds into his right eye and into his Kamui dimension. It takes 0.4 seconds, or none on an enemy whose attack went through him in the last 5 seconds. Enemies held inside stay stunned; allies stay awake.
+
+Release: put a stored thing back out on any spot within 6 cells in sight. An enemy comes out stunned for 2 seconds.
+
+Absorb costs 1 charge and has a 15-second cooldown; release is free, with a 5-second cooldown.
+
+**Cooldown:** 15 seconds | **Range:** self | **Cast time:** 0.4 seconds
+
+#### Wood Release: cutting technique
+
+Branches burst from Obito's right arm and race out in a straight line for 10 cells, skewering every pawn on it, allies included: 15 stab damage each, 30% armour penetration. The line stops at a wall. The branches crumble at once and pin no one.
+
+Warm-up 0.5 seconds. Two charges, each back 10 seconds after use. Costs 2 charge.
+
+**Cooldown:** 10 seconds per charge | **Charges:** 2 | **Range:** 10.9 cells | **Cast time:** 0.5 seconds
 
 
 ### Pain — Judge of the Rippled Eye
@@ -158,13 +502,237 @@ He pulls and pushes the world at will.
 - Trial: kills 25.
 - Awakening gives the trait iron-willed, replacing any trait it conflicts with.
 - The abilities are there only while the Host is manifested (hero form). Hero form drains 15 of the colony's charge an hour.
-- Shinra tensei costs 20 charge a cast.
+- Shinra tensei costs 5 charge a cast.
+- Banshō ten'in costs 3 charge a cast.
+- Black receiver costs 0 charge a cast.
+- Chibaku tensei costs 30 charge a cast.
 
 #### Shinra Tensei
 
-Charge for up to three seconds of power, then release a four-cell repulsion wave. Pushes allies and enemies, deals blunt damage only on collision, and briefly redirects incoming direct fire. Release commits a twenty-second cooldown.
+A repulsion wave around the caster. Tap for a quick 2.5-cell push; hold to charge and let go for a 3-cell wave after one second or a 4-cell wave after two. Pushes allies and enemies, deals blunt damage only when a pawn hits a wall, and briefly turns incoming direct fire.
 
 **Range:** self
+
+#### Banshō Ten'in
+
+Pain pulls one hostile pawn or animal up to 12 cells away (line of sight) to the cell in front of him. The target slides toward him, is lifted and flies at 20 cells per second over low cover. On arrival he pushes it face-down: 15 blunt, stunned 2 seconds.
+
+A standing pawn in the line stops it: both take 8 blunt and are stunned 1 second, and the target drops where it stopped.
+
+Body size over 2: dragged along the floor half the distance at 35% of the speed, with no slam and no stun.
+
+Not downed pawns, and not a pawn pinned by Black Receiver. Shinra Tensei and Banshō Ten'in share a 5 second gap: after either one, the other waits 5 seconds. Both wait while a Chibaku Tensei ball holds.
+
+**Cooldown:** 15 seconds | **Range:** 12 cells | **Cast time:** 0.4 seconds
+
+#### Black Receiver
+
+Pain throws a chakra rod at one hostile pawn or animal up to 12 cells away (line of sight). The rod flies at 30 cells per second and the first pawn in the line takes it. At 1.5 cells or less he stabs instead, with the same effect. A berserk colonist counts as hostile.
+
+Each rod in a pawn: 5 sharp; it cannot use abilities or psycasts; moving and manipulation x0.75 per rod. Three rods: pinned. It cannot move, shoot or melee, and Shinra Tensei, Banshō Ten'in and Chibaku Tensei do not move it.
+
+Each rod lasts 8 seconds. At most 3 in one pawn; a 4th replaces the oldest. Every rod breaks when Pain is downed, killed or leaves hero form.
+
+Three charges, one back every 10 seconds.
+
+**Cooldown:** 10 seconds per charge | **Charges:** 3 | **Range:** 12 cells | **Cast time:** 0.3 seconds
+
+#### Chibaku Tensei
+
+Pain sends a black core to a cell up to 25 cells away (line of sight). He forms it between his cupped hands and throws it straight up; it climbs over the cell at 14 cells per second and comes down to stop 5 cells above it.
+
+For 3 seconds it tears up the ground within 6 cells and pulls in every pawn standing on it, of any faction, colonists and animals included, with the items and corpses on it. Plants and filth on the torn ground are destroyed; trees are torn out and gone. It forms a ball of rock that holds 12 seconds: pawns inside cannot act or be targeted. Then the ball bursts and every pawn falls out. When it lands it takes 2 blunt for each second it was held plus 8 for the fall, and is stunned 2.5 seconds. Damage comes in hits of up to 8 and can kill. Items land unhurt.
+
+Ground under a roof, a building or a built floor stays, and so do the pawns and items on it. Pain and pawns pinned by Black Receiver are never pulled. Pulled soil becomes stony soil, and 6 to 10 rock chunks of the map's stone land round the crater.
+
+Pain stands holding his palms together until the ball has formed (about 4 to 6 seconds). While the ball holds, Shinra Tensei and Banshō Ten'in cannot be used. Once it has formed, a Release button lets it go early: it bursts 0.4 seconds later, and those inside take the crush only for the seconds they were held. If Pain is downed, killed, leaves the map or leaves hero form, the ball bursts at once (or as soon as it has formed). One ball per map. Cooldown 1 day.
+
+**Cooldown:** 1 day (in-game) | **Range:** 25 cells | **Cast time:** 0.8 seconds
+
+
+### Sasuke — Avenger of the Crimson Eye
+
+His Rinnegan holds his thrown weapons in the air, trades places with anything it sees, runs lightning between them and sets black flames that nothing puts out.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Sasuke and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Sasuke can have one Host.
+- Trial: melee 14.
+- Trial: intellectual 10.
+- Trial: 15 kills with a Fūma Shuriken.
+- Awakening gives the trait sanguine, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 12 of the colony's charge an hour.
+- Amenoyodomi costs 0 charge a cast.
+- Amenotejikara costs 2 charge a cast.
+- Raikō kusari costs 8 charge a cast.
+- Amaterasu costs 5 charge a cast.
+
+#### Amenoyodomi
+
+A toggle with three states: off, hang and drift. Click to go to the next state.
+
+While it is on, throw kunai can target a ground cell. The kunai flies there and stops in the air over the cell. A throw at a pawn is a normal throw. A Fūma Shuriken throw cuts its whole line as usual and stops at the end instead of dropping. At most 5 weapons are held; a 6th throw is a normal throw.
+
+Hang: held weapons move on along their heading at 1% of their flight speed (a kunai 0.24 cells per second). Drift: 10%. Held weapons touch nothing.
+
+Let go: every held weapon flies on at full speed along its heading, up to its range from where it hung (kunai 14.9 cells, Fūma 12). A kunai hits the first pawn on its line, allies included. The Fūma cuts every pawn on its line.
+
+A held weapon drops to the floor after 60 seconds, at a wall or the map edge, when Amenoyodomi is turned off, or when Sasuke is downed, asleep, dead or leaves the map.
+
+Kunai supply: while Sasuke is manifested, his worn kunai belt regains 1 kunai every 5 seconds up to its 6. A regained kunai is conjured: it vanishes when it comes to rest on the floor or is pulled out of a pawn. The Fūma is not refilled.
+
+**Range:** self
+
+#### Amenotejikara
+
+Pick two targets; they change places at once.
+
+Targets: Sasuke, any pawn up to body size 2, an item on the ground, or a weapon held by Amenoyodomi (click where it hangs). One of the two must be Sasuke, an item or a held weapon: two other pawns cannot be swapped. Both within 12 cells, in sight.
+
+A pawn cannot be put on a cell it cannot stand on; the swap then fails. A held weapon keeps its heading.
+
+**Cooldown:** 3 seconds | **Range:** 12.9 cells
+
+#### Raikō Kusari
+
+A Chidori runs through the weapons Amenoyodomi is holding and strings them into a net. Needs 2 or more held weapons within 12 cells.
+
+The weapons are linked in the order they were thrown, one link per pair thrown one after the other, up to 6 cells each. With 3 or more, if the last is within 6 cells of the first, the chain closes into a ring. A link that stretches past 6 cells snaps; the net ends when its last link is gone.
+
+After 0.6 seconds of charge the net lasts 8 seconds, or until Amenoyodomi lets the weapons go. A pawn on a line when it forms, or that walks into one, is paralysed until the net ends and takes 3 burn damage per second. Sasuke is immune; colonists are caught too. Mechanoids stay stunned 3 seconds after it ends. A shield belt that touches a line breaks. Bullets pass through.
+
+Letting go ends the net and the weapons fly on charged: a kunai stuns whoever it hits for 2 seconds, and the Fūma stuns every pawn it cuts for 2 seconds.
+
+**Cooldown:** 30 seconds | **Range:** self | **Cast time:** 0.6 seconds
+
+#### Amaterasu
+
+Black flames light where Sasuke looks. Target one pawn, or the weapons Amenoyodomi is holding (click where one hangs). 12 cells, in sight.
+
+On a pawn: 4 burn damage per second for 20 seconds. Rain, water and firefoam do not put it out. It spreads to an adjacent pawn at 10% per second, carrying the time that is left; allies can catch it, Sasuke never does.
+
+On held weapons: every weapon Amenoyodomi holds is lit and burns in the air until it is let go. A burning kunai that hits a pawn sets it alight; one that misses burns on the cell it lands on for 20 seconds, and a pawn that steps there catches. The Fūma sets every pawn it cuts alight, lands burning and cannot be picked up until the fire is out.
+
+The flames never spread to the floor or to buildings. Release (a second button) puts out all of Sasuke's black flames at once.
+
+Cost: Bleeding eye for 60 seconds (sight -50%). Casting again while it is on blinds Sasuke for 10 seconds.
+
+**Cooldown:** 1.4 hours (in-game) | **Range:** 12.9 cells | **Cast time:** 0.5 seconds
+
+
+### Satō
+
+Death is only a reset, and the war is a game he means to win.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Satō and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Satō can have one Host.
+- Trial: shooting 12.
+- Trial: kills 30.
+- Trial: damage taken 500.
+- Awakening gives the trait Ajin and psychopath, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 10 of the colony's charge an hour.
+- Grenade reset costs 5 charge a cast.
+- Black ghost costs 10 charge a cast.
+- The game costs 5 charge a cast.
+
+#### Sever
+
+Satō cuts off a part of his own body and throws it: a leg, an arm, a hand, a finger or an ear. It lands as an anchor. If his body is destroyed he rises at his biggest anchor, and the Black Ghost can be summoned at any of them.
+
+Up to 6 cells. At most 2 anchors: throwing a third makes the oldest crumble. An anchor rots after 3 days. The stump bleeds; a Reset grows the part back. With both ears cut off he is deaf.
+
+**Cooldown:** 10 seconds | **Range:** 6.9 cells | **Cast time:** 0.3 seconds
+
+#### Headshot reset
+
+Satō puts a pistol to his temple and fires. He plays dead for 6 seconds, then rises where he fell with every wound healed and every cut-off part grown back. His gear stays on him and his anchors stay where they are.
+
+The Reset takes the body's rise cost (20 charge), so the button is greyed while the pool holds less. Raiders take him for downed while he lies there. Destroying the body in those seconds sends him to his biggest anchor.
+
+**Cooldown:** 1.4 hours (in-game) | **Range:** self | **Cast time:** 0.6 seconds
+
+#### Grenade reset
+
+Satō pulls the pin and holds on. The blast hurts everyone within 3 cells, allies included, and destroys his body: he rises at his biggest anchor, naked, or where he stood if he has none. His gear lies where he blew up.
+
+50 bomb damage, radius 3.
+
+**Cooldown:** 1.4 hours (in-game) | **Range:** self | **Cast time:** 0.5 seconds
+
+#### Black ghost
+
+Black matter pours out of Satō and stands up as his IBM, next to him or at one of his anchors within 30 cells. It fights on its own round where it formed and takes orders: go here, attack, and once per summon tear an arm or a leg off an enemy next to it. It takes half damage.
+
+It lasts by the piece it formed at: next to him or at a leg 45 seconds, an arm 35, a hand 20, a finger or an ear 10. It dissolves when he reverts.
+
+**Cooldown:** 2.9 hours (in-game) | **Range:** 30.9 cells | **Cast time:** 0.5 seconds
+
+#### The game
+
+Satō picks the next player to lose. The marked enemy takes 30% more damage from his shots for 30 seconds. If it dies while marked, to anyone, the pool gets 15 charge back.
+
+One mark at a time.
+
+**Cooldown:** 1.1 hours (in-game) | **Range:** 29.9 cells | **Cast time:** 0.3 seconds
+
+
+### Shikamaru — Strategist of the Binding Shadow
+
+Where his shadow reaches, nothing moves but by his leave.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Shikamaru and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Shikamaru can have one Host.
+- Trial: intellectual 14.
+- Trial: people captured 5.
+- Awakening gives the trait industrious, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 10 of the colony's charge an hour.
+- Shadow imitation costs 3 charge a cast.
+- Shadow seam costs 3 charge a cast.
+- Shadow grasp costs 1 charge a cast.
+- Shadow double costs 5 charge a cast.
+- Shadow neck bind costs 2 charge a cast.
+
+#### Shadow imitation
+
+The shadow runs out over the ground to one person, animal or mech and holds it. For 15 seconds it cannot act, and every cell Shikamaru steps drags it one cell the same way (a wall or another pawn stops that step).
+
+Reach 19.9 cells times the light where he stands: half in daylight, full next to a lamp or a fire, nothing in the dark. The line breaks when a pawn crosses it, a cell under it goes dark, or smoke covers it. 1 second cast, 20 second cooldown.
+
+**Cooldown:** 20 seconds | **Range:** unlimited | **Cast time:** 1 second
+
+#### Shadow seam
+
+Sew two things together: any two pawns or loose items within reach, both standing in light. For 20 seconds they cannot get more than 4 cells apart. Whoever moves drags the other; when both pull, the larger body wins (an item never wins).
+
+Reach 15.9 cells times the light where he stands. The seam runs between the two and breaks like every shadow line: a pawn crossing it, a dark cell under it, smoke over it. 0.8 second cast, 30 second cooldown.
+
+**Cooldown:** 30 seconds | **Range:** unlimited | **Cast time:** 0.8 seconds
+
+#### Shadow grasp
+
+A hand of shadow slides a loose item, a weapon on the ground, a corpse or a downed body over the ground to a chosen cell: 12 cells a second for an item, 6 for a body. It is not teleported. A pawn standing on the path stops it in that pawn's cell; a wall or another item stops it before.
+
+Both the thing and the cell must be within 24.9 cells times the light where he stands. A thrown grenade is in the air, not on the ground, and cannot be picked. 0.5 second cast, 15 second cooldown.
+
+**Cooldown:** 15 seconds | **Range:** unlimited | **Cast time:** 0.5 seconds
+
+#### Shadow double
+
+His shadow goes to a lit cell within 24.9 cells and stands there for 20 seconds. While it stands, shadow imitation, seam and grasp are cast from its cell and use its light, so he can stay in the dark. It copies his steps one for one; a wall stops it. It is not a pawn and cannot be hit.
+
+It ends early when its cell goes dark or when a pawn crosses the line between it and him. That one line may cross dark cells. 1 second cast, 60 second cooldown.
+
+**Cooldown:** 1.4 hours (in-game) | **Range:** unlimited | **Cast time:** 1 second
+
+#### Shadow neck bind
+
+Only on a pawn he holds with shadow imitation or has sewn with shadow seam: two hands of shadow crawl along the line, climb the body (2.1 seconds) and close on the throat. He channels for up to 8 seconds standing still. Suffocation rises 12.5 % a second; at 100 % the target falls unconscious for 2 minutes, not dead. If the line breaks, he moves or is given another order, the hands fall off and the suffocation drains at 5 % a second.
+
+Mechanoids have no throat. 45 second cooldown.
+
+**Cooldown:** 1.1 hours (in-game) | **Range:** unlimited
 
 
 ### Shirou — The Faker
@@ -181,13 +749,36 @@ Every blade he has seen, he can make again.
 - (Origin: Blade) When all requirements are met a letter offers **Awaken** or **Not yet**. Declining is free; the Origin: Blade button can awaken the pawn later.
 - (Origin: Blade) Awakening removes all psylink levels and psycasts, and the pawn can never use ranged weapons again.
 - The abilities are there only while the Host is manifested (hero form). Hero form drains 12 of the colony's charge an hour.
+- Trace on costs 10 charge a cast.
 - Unlimited blade works costs 40 charge a cast.
+
+#### Reinforcement
+
+Shirou strengthens his body and the weapon in his hand.
+
+Cast time 0.5 seconds. For 20 seconds he moves 30% faster and deals 40% more melee damage.
+
+**Cooldown:** 1.1 hours (in-game) | **Range:** self | **Cast time:** 0.5 seconds
+
+#### Trace on
+
+Pick a blade Shirou has studied. After a 0.6 second cast a copy of it is in his hand: the same weapon and material, one quality level below the best one of it he studied.
+
+A real weapon in his hand goes to his inventory first; a copy in his hand breaks. A copy breaks when it leaves his hand (dropped, disarmed, downed, another weapon equipped) and when he stops being Shirou. It cannot be hauled, sold or given away, and it is worth nothing.
+
+Weapons with powers of their own cannot be traced: persona weapons, weapons that grant abilities (Samehada, Chain Sickle, Fūma Shuriken) and a hero's own weapon (Yamato).
+
+A colonist with Origin: Blade can study more blades: select them and right-click a blade on the ground. A weapon or material not studied yet, or a better quality, is added to the list.
+
+**Cooldown:** 5 seconds | **Range:** self | **Cast time:** 0.6 seconds
 
 #### Unlimited blade works
 
 Chant up to three verses of 2 seconds. Press Release during a verse and the world opens when that verse ends; after the third verse it opens by itself.
 
-Everyone standing within 6, 9 or 12 cells (by verses said), allies and enemies alike, is taken into a 40 x 40 world of swords for 20, 25 or 30 seconds. Downed pawns stay behind. Nobody can leave the world. It ends early on Close, or if the caster is downed, leaves it or stops being Shirou.
+Everyone standing within 6, 9 or 12 cells (by verses said), allies and enemies alike, is taken into a 40 x 33 world of swords for 20, 25 or 30 seconds. Downed pawns stay behind. Nobody can leave the world. It ends early on Close, or if the caster is downed, leaves it or stops being Shirou.
+
+Inside, the caster's commands use the world's own swords and cost no charge: every sword taken out of the ground takes 0.5 seconds off the world.\n- Full Open: pick a pawn. The caster stands still and one sword every 0.1 seconds rises and hovers aimed at it, up to 30. Release fires them all within 0.3 seconds; each hits as its own weapon and sticks in the ground past the target, standing again. Cancel or a move order drops them back.\n- Pin: the 4 swords nearest a pawn pin it to the ground for 12 seconds, 2 Cut each. It counts as downed and can be captured.\n- Draw: pick a sword. It flies to the caster at 22 cells a second and hits each hostile it passes once; the caster catches it as a traced copy.\n- Arm (on another colonist inside): the nearest sword flies to their hand as a traced copy that breaks when the world closes.\n- Intercept: while on, each enemy shot that a sword can reach first is stopped where they meet; an explosive bursts there.
 
 Then everyone goes back to the cell they were taken from. Corpses and dropped items land round the cast point.
 
@@ -196,45 +787,124 @@ Stopping or breaking the chant before the release gives the cooldown and the cha
 **Cooldown:** 2 days (in-game) | **Range:** self | **Cast time:** 0.2 seconds
 
 
-## Genes
+### Todo
 
-### Anchor organ
-
-Clap to change places with anyone in sight nearby, or clap twice to make two others change places. Stones thrown onto the ground can be clapped with from anywhere on the map, without line of sight.
-
-Three claps at a time, growing back one every 10 seconds. The clap takes both hands, so this carrier never carries a weapon.
-
-**Needs:** Biotech DLC
+He claps, and whoever he chose is standing somewhere else.
 
 **How to get it**
 
-- Found in genepacks. Put it in a xenogerm at a gene assembler and implant it.
-- Gene stats: Complexity 4, Metabolism -2.
+- Research the resonance device and build it. In its tab, tune it to Todo and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Todo can have one Host.
+- Trial: melee 14.
+- Trial: enemies downed (humanlikes) 20.
+- Awakening gives the trait brawler, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 8 of the colony's charge an hour.
+- Black flash costs 1 charge a cast.
+- Provoke costs 5 charge a cast.
 
-#### Mark
+#### Stone
 
-Throw a stone onto a patch of ground. A clap can reach the stone from anywhere on the map, without line of sight. Up to three stones at once; throwing at one of your own stones takes it back.
+Todo throws a stone charged with his cursed energy onto a patch of ground. A clap can reach the stone from anywhere on the map, without line of sight. Up to three stones at once; throwing at one of his own stones takes it back.
 
-Stones fade after about a day. They lie on the ground forbidden, so nobody hauls them away.
+Stones fade after about a day and stay on the map when Todo leaves hero form. They lie on the ground forbidden, so nobody hauls them away.
 
 **Cooldown:** 10 seconds | **Range:** 9.9 cells | **Cast time:** 0.5 seconds
 
 #### Clap
 
-Clap once and change places with a living person or animal in sight within 15 cells, or with one of your stones anywhere on the map. A stone lands where you stood, so a second clap brings you back. A hostile that is swapped loses track of where it is for a moment.
+Todo claps once and changes places with a living person or animal in sight within 15 cells, or with one of his stones anywhere on the map. A stone lands where he stood, so a second clap brings him back. A hostile that is swapped loses track of where it is for a moment.
 
-Uses one of three claps, which grow back one every 10 seconds. A stone more than 25 cells away needs all three and is used up. Both hands have to be empty.
+Uses one of three claps, which grow back one every 10 seconds. A stone more than 25 cells away needs all three and is used up.
 
 **Cooldown:** 0 seconds | **Range:** unlimited | **Cast time:** 0.3 seconds
 
 #### Double clap
 
-Clap twice and two others change places: people or animals in sight within 15 cells, or your stones anywhere on the map. The carrier does not move - this is how a raider ends up in your killbox without anyone standing in it.
+Todo claps twice and two others change places: people or animals in sight within 15 cells, or his stones anywhere on the map. Todo does not move - this is how a raider ends up in your killbox without anyone standing in it.
 
-At least one end has to be a person or animal. Uses one of the three shared claps; a stone more than 25 cells away needs all three and is used up. Both hands have to be empty.
+At least one end has to be a person or animal. Uses one of the three shared claps; a stone more than 25 cells away needs all three and is used up.
 
 **Cooldown:** 0 seconds | **Range:** unlimited | **Cast time:** 0.5 seconds
 
+#### Black flash
+
+A bare-handed punch. Within 3 seconds of a clap that moved someone, it is a Black Flash: 2.5 times the damage, the target is stunned for 1 second, and Todo is in the zone for 10 seconds (+15% melee hit chance). One Black Flash per clap.
+
+Outside that window it is an ordinary punch.
+
+**Cooldown:** 6 seconds | **Range:** self | **Cast time:** 0.2 seconds
+
+#### Provoke
+
+Todo calls out every hostile within range, making them drop what they were doing and come for him.
+
+He braces for the response, gaining protection while the challenge holds.
+
+**Cooldown:** 2.2 hours (in-game) | **Range:** self | **Cast time:** 0.5 seconds | **Duration:** 20 seconds
+
+
+### Vergil — Son of the Dark Knight
+
+His sword cuts from farther than he stands.
+
+**How to get it**
+
+- Research the resonance device and build it. In its tab, tune it to Vergil and one adult colonist, meet the Trials below, then accept **Awaken**. The colony has room for a few heroes (2, then 4 and 6 with more resonance research), and Vergil can have one Host.
+- Trial: melee 16.
+- Trial: 20 kills with a longsword.
+- Trial: does not have wimp.
+- Awakening gives the trait bloodlust, replacing any trait it conflicts with.
+- The abilities are there only while the Host is manifested (hero form). Hero form drains 10 of the colony's charge an hour.
+- Judgement cut costs 3 charge a cast.
+- Yamato dash costs 2 charge a cast.
+- Summoned swords costs 10 charge a cast.
+- Judgement cut end costs 0 charge a cast.
+
+#### Judgement cut
+
+Vergil draws and sheathes faster than the eye, and space splits where he looks.
+
+Target a cell within 18 cells in sight. After 0.6 seconds a sphere of cuts opens there, radius 1.9. Every pawn inside, allies included, takes 5 hits of 7 cut damage (50% armour penetration) over half a second.
+
+Style: +4 for each hostile pawn it hits.
+
+**Cooldown:** 12 seconds | **Range:** 18.9 cells | **Cast time:** 0.6 seconds
+
+#### Yamato dash
+
+Vergil crosses the ground in an instant, blade out, and the cuts land only when he sheathes.
+
+Target a standable cell up to 8 cells away along a straight, open path. After 0.35 seconds he dashes there in 0.15 seconds. Every hostile within the 1-cell-wide path is marked as he passes. 0.4 seconds after he stops, the blade clicks home and every mark takes 24 cut damage (40% armour penetration). Allies are never marked.
+
+Style: +3 for each mark.
+
+**Cooldown:** 8 seconds | **Range:** 8.9 cells | **Cast time:** 0.3 seconds
+
+#### Summoned swords
+
+Eight blades of blue light circle Vergil for 20 seconds while he fights on.
+
+Fire (the default): every second one blade flies at the nearest hostile within 12 cells in sight that holds fewer than 4 blades: 9 stab damage (30% armour penetration). The blade stays in the target for 3 seconds, and each blade in a pawn slows it by 15%, up to 60%. A fired slot fills again after 2.4 seconds.
+
+Spin: the ring widens and speeds up. Every 0.9 seconds each hostile within 1.6 cells takes 5 cut damage (20% armour penetration). No blades are thrown.
+
+The mode can be switched while the swords are out. When the time is up every blade breaks, the ones stuck in pawns too.
+
+Style: +1 for each hit.
+
+**Cooldown:** 1.1 hours (in-game) | **Range:** self | **Cast time:** 0.5 seconds
+
+#### Judgement cut end
+
+Vergil vanishes, and everything around him is cut at once.
+
+Needs Style rank S and spends all of it. After a 1 second warmup every hostile within 10 cells that he can see is marked and stunned, and he is gone for 1.5 seconds: he cannot be targeted, and every projectile within 10 cells is destroyed. He comes back kneeling on the same cell and sheathes over 0.8 seconds. On the click the cuts land: Style / 5 cuts (12 at rank S, 20 at a full meter) of 10 cut damage each, dealt one at a time round the marked pawns, nearest first, so one pawn can take all of them. Hostile or unowned buildings within 10 cells in sight take 60 damage each; they do not use up cuts.
+
+It costs no Echo charge.
+
+**Cooldown:** 1 second | **Range:** self | **Cast time:** 1 second
+
+
+## Genes
 
 ### Corrosive glands
 
@@ -256,36 +926,6 @@ Spit a glob of contact-acid at whatever the target is holding. The acid eats thr
 The target is otherwise unharmed, which is the point — this takes a threat off the field without taking the body off it.
 
 **Cooldown:** 8 hours (in-game) per charge | **Charges:** 2 | **Range:** 12.9 cells | **Cast time:** 1 second
-
-
-### Dispersal plexus
-
-A body that can come apart into crows. Automatic Scatter cancels an incoming hit of 6 or more damage and reforms the carrier a few cells away; Murder is deliberate flight to a chosen spot; Carrion sends the flock to strip a corpse and bring the recovery back.
-
-All three share three charges, one regrowing each game hour, and every Scatter costs blood as well as a charge.
-
-**Needs:** Biotech DLC
-
-**How to get it**
-
-- Found in genepacks. Put it in a xenogerm at a gene assembler and implant it.
-- Gene stats: Complexity 5, Metabolism -3.
-
-#### Murder
-
-Disperse into a flock of crows and fly up to 35 cells to a chosen spot, crossing walls, water, fire and enemies without line of sight. The destination must be revealed and able to hold a standing pawn.
-
-The carrier lands ready to act, for one of the plexus's three shared charges.
-
-**Cooldown:** 10 seconds | **Range:** 34.9 cells | **Cast time:** 0.2 seconds
-
-#### Carrion
-
-Send a flock of crows to strip a fresh corpse within 10 cells, then carry back what they took. Bleeding closes, lost blood returns, and a carrier with a Hemogen reserve refills part of it.
-
-The corpse is consumed along with one charge, and only one flock can be feeding at a time.
-
-**Cooldown:** 1 second | **Range:** 10 cells | **Cast time:** 0.2 seconds
 
 
 ### Hypermetabolic glands
@@ -310,133 +950,7 @@ It runs until the wounds are gone or the reserves are — so using it on a badly
 **Cooldown:** 1 day (in-game) | **Range:** self | **Cast time:** 1 second | **Duration:** 2.9 hours (in-game)
 
 
-## Archite genes
-
-### Fold organ
-
-One part of the carrier's body - rolled when the gene lands, named on their health tab - is not entirely there, and they are permanently worse at whatever that part did. Connected, anything striking that part arrives inside a room that is not anywhere instead of landing on them.
-
-They can step through it, put people through it, store things in it, and end the whole volume with everything still inside.
-
-**Needs:** Biotech DLC
-
-**How to get it**
-
-- Found in genepacks. Put it in a xenogerm at a gene assembler and implant it.
-- This is an archite gene: the xenogerm needs an archite capsule.
-- Gene stats: Complexity 7, Metabolism -4, Archites 1.
-
-#### Vent
-
-Connect the hole. For half a minute anything striking the part it sits in arrives inside the volume instead of landing on the carrier - a share of incoming fire rather than a shield, since RimWorld picks where a blow lands by body coverage.
-
-While it is connected the carrier can fold through it, put people through it, and post things into it.
-
-**Cooldown:** 1 hour (in-game) | **Range:** self | **Cast time:** 0.5 seconds
-
-#### Fold
-
-Step through the hole and out of the world, leaving a visible aperture where the carrier was standing. Cast again from inside to return to it, carrying one item or one downed person.
-
-Anything fired into the aperture arrives inside the volume, still travelling; collapse is what closes it.
-
-**Cooldown:** 1 hour (in-game) | **Range:** self | **Cast time:** 1 second
-
-#### Swallow
-
-Put someone into the volume - a raider in the carrier's face, or a colonist bleeding out across the field. They are neither hurt nor healed by it, only somewhere else.
-
-The hole is hand-sized, so a person barely fits and nothing larger than a megaspider does; someone who went in downed can be carried out, but someone who walked in on their own feet cannot be picked up at all.
-
-**Cooldown:** 3 hours (in-game) | **Range:** 9.9 cells | **Cast time:** 3 seconds
-
-#### Post
-
-Push an item through the hole - medicine, food, a minified bed - and it stays in the volume until somebody carries it back out by hand. Works through the hole on the carrier's body while connected, or through a standing aperture from anywhere on the map.
-
-This is what makes the volume somewhere to take a wounded colonist rather than a hole to die in.
-
-**Cooldown:** 20 seconds | **Range:** 15.9 cells | **Cast time:** 0.5 seconds
-
-#### Collapse
-
-End the volume. Everything in it goes - what was stored, what was built, whoever was put in there, and every round the hole has ever taken.
-
-A new fold opens a new empty room, so swallowing something and then collapsing kills it outright, at the cost of the carrier's entire dimension.
-
-**Cooldown:** 1 day (in-game) | **Range:** self | **Cast time:** 3 seconds
-
-
 ## Traits
-
-### Combat presence
-
-This person commands attention on the battlefield. Hostiles find it hard to ignore them.
-
-**How to get it**
-
-- A trait that can appear on new colonists and other generated pawns.
-- Cannot be on the same pawn as: wimp.
-
-#### Provoke
-
-Command the attention of every hostile within range, making them drop what they were doing and come for the speaker.
-
-The speaker braces for the response, gaining protection while the challenge holds.
-
-**Cooldown:** 12 hours (in-game) | **Range:** self | **Cast time:** 0.5 seconds | **Duration:** 20 seconds
-
-
-### Commanding voice
-
-This person has a voice that demands obedience. They can issue short, sharp commands that compel targets to act — stop, drop their weapon, kneel, come closer, or run.
-
-**How to get it**
-
-- A trait that can appear on new colonists and other generated pawns.
-- Cannot be on the same pawn as: wimp.
-- The pawn must be capable of violence.
-
-#### Stop
-
-One word, and whoever hears it stands still for three seconds. They are not stunned and they are not yours - they keep their weapon, their target and their intentions, and pick all three back up the moment it wears off.
-
-Cheap to say, because it asks for nothing but a pause.
-
-**Cooldown:** 10 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
-
-#### Drop
-
-Whoever hears it stops, takes half a second, and opens their hand. The weapon lands at their feet rather than thrown clear, and they are free to pick it straight back up.
-
-What this buys is the half second, the stoop, and whatever your guns do in between - which, said to the one carrying the launcher, is enough.
-
-**Cooldown:** 20 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
-
-#### Kneel
-
-Whoever hears it goes to the ground and stays there for three seconds. Prone is not downed: they can still shoot, but anyone shooting at them is shooting at a smaller thing.
-
-Worth saying to somebody running, close to worthless said to somebody already in cover, and expensive either way.
-
-**Cooldown:** 30 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
-
-#### Come
-
-Whoever hears it walks to the speaker, once, and then remembers what they were doing.
-
-Calling an armed hostile to your own position is as bad an idea as it sounds; the version that is not is pulling one raider off a wall, out of cover, or away from the colonist they had chosen.
-
-**Cooldown:** 30 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
-
-#### Run
-
-Whoever hears it turns and runs from the speaker. They stop when they are far enough, work out that nothing is chasing them, and come back - what you bought is the walk back.
-
-Expensive for the same reason kneel is, and the best thing in the list to say to something about to reach a colonist.
-
-**Cooldown:** 30 seconds | **Range:** 16.9 cells | **Cast time:** 0.4 seconds
-
 
 ### Pain debt
 
@@ -457,25 +971,6 @@ Nothing is prevented: when the resolve breaks, every wound lands in the same ins
 
 
 ## Implants
-
-### Attraction eye
-
-An uncraftable artificial eye that supplies normal sight and lets its bearer channel a gravity well and implode gathered mass. It can be recovered surgically and transferred.
-
-**How to get it**
-
-- Cannot be crafted.
-- Can be given as a quest reward.
-- Can be bought from traders.
-- Install it by surgery in the eye. Needs Medicine skill 8. Uses the item and 2 medicine.
-- Can be removed by surgery and given to another colonist.
-
-#### Gravity Well
-
-Channel a fixed gravity well that pulls pawns and loose objects and bends ordinary bullets. Implode for 15–45 blunt damage based on mass currently in its core. Allies are affected. Requires Melee Animation.
-
-**Range:** self
-
 
 ### Neural accelerator
 
@@ -513,190 +1008,7 @@ Slowing down causes no temporal strain.
 **Cooldown:** 6 hours (in-game) | **Range:** self
 
 
-### Phase barrier
-
-An archotech brain implant that halves the distance an incoming thing has left to travel, and then halves it again. Nothing that approaches the wearer ever finishes approaching.
-
-**How to get it**
-
-- Cannot be crafted.
-- Can be given as a quest reward.
-- Can be bought from traders.
-- Install it by surgery in the brain. Needs Medicine skill 8. Uses the item and 2 medicine.
-
-#### Phase guard
-
-Raise the phase barrier, and everything moving toward the carrier begins halving the distance it has left without ever arriving - rounds hang short and blows miss by widening margins.
-
-The barrier also holds back air, so the carrier stops breathing until it drops. Everything suspended by the field resumes immediately.
-
-**Cooldown:** 1 hour (in-game) | **Range:** self
-
-
-### Reflex booster
-
-A spinal implant that reads and redirects momentum before its user can consciously react. It can run its carrier's clock ahead of the world's, take hold of the rounds flying near them, or throw an attacker away.
-
-**How to get it**
-
-- Craft it at a machining table after researching **prosthetics** (which needs machining). Needs Crafting skill 5. Costs steel ×35 and component ×6.
-- Can be given as a quest reward.
-- Can be bought from traders.
-- Install it by surgery in the spine. Needs Medicine skill 5. Uses the item and 2 medicine.
-
-#### Reflex surge
-
-Drive the booster's own clock up until the world appears to crawl. For five seconds of game time everything outside the carrier's head runs at a quarter rate, which is about twenty seconds of yours - long enough to watch a burst cross the room and decide what to do about it.
-
-It buys time and nothing else: nobody moves further, nothing hits harder, and the carrier is slowed with everyone else. Ends early from the gizmo on the hediff, and costs a little brain strain to open.
-
-**Cooldown:** 30 seconds | **Range:** self
-
-#### Vector manipulation
-
-Stop the world and take hold of every round about to pass within twelve cells of the carrier, then sort them into as many as four groups and turn each group where you want it. An edited round starts again from where it was caught with twenty cells of travel multiplied by the force spent on it, and moves and lands at that same multiple. A round is caught a third of a second before it arrives however fast it is flying, so reflex surge is usually what buys the time to press this.
-
-The bill comes in brain strain when you apply an edit, steeply: one group is routine, four at once is most of what the carrier has. Filling the bar overloads the booster and puts them on the floor.
-
-**Cooldown:** 5 seconds | **Range:** self
-
-#### Vector shove
-
-Take hold of one body's momentum and spend all of it throwing them away from the carrier. Damage scales with the distance travelled, and a great deal more if something solid stops them early.
-
-Heavier bodies move less; this is for breaking a melee grip and introducing people to walls, not for damage.
-
-**Cooldown:** 20 seconds | **Range:** 12.9 cells | **Cast time:** 0.5 seconds
-
-
-### Repulsion eye
-
-An uncraftable artificial eye that supplies normal sight and lets its bearer charge an outward repulsion wave. It can be recovered surgically and transferred.
-
-**How to get it**
-
-- Cannot be crafted.
-- Can be given as a quest reward.
-- Can be bought from traders.
-- Install it by surgery in the eye. Needs Medicine skill 8. Uses the item and 2 medicine.
-- Can be removed by surgery and given to another colonist.
-
-#### Shinra Tensei
-
-Charge for up to three seconds of power, then release a four-cell repulsion wave. Pushes allies and enemies, deals blunt damage only on collision, and briefly redirects incoming direct fire. Release commits a twenty-second cooldown.
-
-**Range:** self
-
-
 ## Wearables
-
-### Bank shot pistol
-
-A heavy pistol whose bullets bounce off walls.
-
-Normal fire works like a revolver: 12 damage, range 20, 1.2 seconds between shots. A bullet that misses and hits a wall bounces off it once and can still hit someone on the rebound.
-
-While it is equipped, the wielder can use Bank Shot: charge the gun for 1.5 seconds and fire at a wall. The bullet bounces off up to 3 walls, then embeds in the next. It hits the first standing pawn it crosses, ally or enemy, for 18 damage plus 6 for every bounce, and needs no line of sight to that pawn. The whole path is shown while aiming.
-
-**How to get it**
-
-- Craft it at a machining table after researching **ricochet rounds** (which needs gunsmithing). Needs Crafting skill 5. Costs steel ×40 and component ×3.
-- Can be bought from traders.
-- Wear it to use the ability. Taking it off removes the ability.
-
-#### Bank shot
-
-Charge the pistol for 1.5 seconds, then fire toward a tile, usually a wall. The bullet bounces off walls and closed doors, up to 3 times, and embeds in the next wall it meets. It stops at the first standing pawn it crosses, ally or enemy: 18 sharp damage, plus 6 for every bounce before the hit (18, 24, 30, 36).
-
-It flies 30 tiles at most, bounces included, and needs no line of sight to the pawn it hits. The whole path is drawn while aiming.
-
-**Cooldown:** 4 seconds | **Range:** 29.9 cells | **Cast time:** 1.5 seconds
-
-
-### Bubble pipe
-
-A bamboo blowpipe and a small jar of soap solution on a strap, worn at the hip. The jar holds 10 blows.
-
-While it is equipped, the wielder can use Drifting Burst and Eye Pop. Drifting Burst blows 6 bubbles that drift toward the target and burst on the first pawn to touch them, the wielder's allies included. Eye Pop bursts one bubble on a pawn's face and leaves soap in its eyes for a few seconds.
-
-The jar refills, 1 blow per second, while the wielder stands on or next to water. In melee the pipe is a weak blunt poke.
-
-**How to get it**
-
-- Cannot be crafted.
-- Wear it to use the ability. Taking it off removes the ability.
-
-#### Drifting burst
-
-Blow 6 soap bubbles toward a tile. They leave the pipe one after another and drift that way at 0.7 tiles per second, fanning out over 50 degrees and floating at about half a tile up, for 8 seconds.
-
-The first pawn other than the wielder to touch a bubble pops it: 5 blunt damage and a 1 second stagger to every pawn within 0.8 tiles, allies included. A bubble that drifts into a wall pops harmlessly, and bubbles nobody touched pop harmlessly after 8 seconds.
-
-Uses 2 blows of soap.
-
-**Cooldown:** 10 seconds | **Range:** 6.9 cells | **Cast time:** 0.5 seconds
-
-#### Eye pop
-
-Blow one soap bubble at a pawn up to 8 tiles away. It always reaches the face and bursts there: soap in the eyes for 5 seconds. Shooting accuracy -30%, melee hit chance halved, move speed -30%. No damage.
-
-Uses 1 blow of soap. Needs line of sight.
-
-**Cooldown:** 8 seconds | **Range:** 8.9 cells | **Cast time:** 0.5 seconds
-
-
-### Chain sickle
-
-A kusarigama: a hand sickle joined by a 7-tile chain to an iron weight. In melee it is a sickle.
-
-While it is equipped, the wielder can use Snag and Stake. Snag spins the weight up and throws it at a hostile pawn or wild animal up to 7 tiles away: 4 blunt damage, the chain wraps the body, and the wielder reels the target in. How far and how fast depends on weight: the wielder's carrying capacity against the target's mass plus everything it carries. A 75 kg carrier pulls a 65 kg tribal 5 tiles; a target over 2.5 times the carrying capacity does not move, and drags the wielder 2 tiles toward it instead.
-
-The chain stays on for 10 seconds. Stake, on the snagged pawn, drives the weight into the floor: the pawn drops its weapon and cannot move or attack for up to 6 seconds, while the wielder stays within 7 tiles. The sickle does 50% more damage to a staked pawn. Stake does not work on a pawn too heavy to pull.
-
-**How to get it**
-
-- Cannot be crafted.
-- Wear it to use the ability. Taking it off removes the ability.
-
-#### Snag
-
-Spin the weight up and throw it at a hostile pawn or wild animal up to 7 tiles away. It always lands: 4 blunt damage, and the chain wraps the body. Then reel it in. The weight ratio is the wielder's carrying capacity over the target's mass plus everything it carries: the target is pulled 5 tiles x the ratio (at most 5) over 1 second / the ratio (at most 2). A wall or another pawn stops it early, and it stops next to the wielder. Below a ratio of 0.4 the target does not move and the wielder is dragged 2 tiles toward it over 1 second.
-
-The target stays snagged for 10 seconds, or until one of the two is more than 7 tiles from the other. Stake needs a snagged pawn. Needs line of sight.
-
-**Cooldown:** 20 seconds | **Range:** 7.9 cells | **Cast time:** 0.5 seconds
-
-#### Stake
-
-Yank the chain on the snagged pawn: the coil tightens on its chest and the weight is driven into the floor by its feet. It drops the weapon it holds and cannot move, shoot or fight in melee for 6 seconds x the weight ratio (at most 6), while the wielder stays within 7 tiles. The sickle does 50% more damage to a staked pawn. The snag ends with the pin.
-
-Not possible on a pawn too heavy to pull (weight ratio under 0.4).
-
-**Cooldown:** 30 seconds | **Range:** 7.9 cells | **Cast time:** 0.3 seconds
-
-
-### Coil gun
-
-A rifle that throws its rounds with magnetic coils, fed from a battery in the stock.
-
-Normal fire: a burst of 2 electric bolts, 9 damage each, range 26. Mechanoids take 1.5 times the damage. Normal fire uses no charge.
-
-While it is equipped, the wielder can use Chain Arc: a bolt at a hostile pawn that jumps on to up to 3 more hostile pawns, each within 3 tiles of the last one hit, for 12 damage each. A soaked pawn takes 1.5 times the damage and the jump from it reaches 6 tiles. Uses 5 of the gun's 20 charge.
-
-The gun's battery does not refill on its own: standing within 1.5 tiles of a charged battery recharges it by 1 a second, taking 10 Wd of the battery's stored energy for each.
-
-**How to get it**
-
-- Craft it at a machining table after researching **coil gun** (which needs microelectronics). Needs Crafting skill 6. Costs steel ×60, plasteel ×20 and component ×4.
-- Can be bought from traders.
-- Wear it to use the ability. Taking it off removes the ability.
-
-#### Chain arc
-
-Fire a bolt of lightning at a hostile pawn up to 26 tiles away. It jumps on to the nearest hostile pawn within 3 tiles of the last one hit, up to 3 more times; allies and downed pawns are skipped. Each pawn hit takes 12 electrical burn damage, 1.5 times as much if it is a mechanoid or soaked. From a soaked pawn the next jump reaches 6 tiles. Uses 5 of the gun's battery. Needs line of sight.
-
-**Cooldown:** 20 seconds | **Range:** 25.9 cells | **Cast time:** 0.5 seconds
-
 
 ### Drone control rig
 
@@ -717,59 +1029,6 @@ Assemble and place a remote demolition drone just in front of you.
 The drone does nothing until somebody takes control of it. Controlling it costs the operator everything else: while driving they cannot move, shoot or work. It can be detonated on command, and detonates by itself if the operator is downed or killed while driving.
 
 **Cooldown:** 6 hours (in-game) | **Range:** self | **Cast time:** 0.8 seconds
-
-
-### Flame gauntlet
-
-A blackened iron gauntlet with brass seams and vents at the elbow, worn on one arm and used as the weapon. It eats fire and spits it back. In melee it is an iron fist.
-
-While it is equipped, the wielder can use Devour and Release, and cannot catch fire or be hurt by it.
-
-Devour pulls every fire within 3 tiles of a spot into the open palm, burning colonists included, and turns it into heat: 1 per burning tile, 2 per burning person, up to 20. Release spends heat as a cone of fire 6 tiles long and 3 wide, 1 heat per tile, at least 5. Every fire hit the wielder shrugs off adds 1 heat. Heat drains by 1 every 30 seconds.
-
-At 15 heat or more the wielder overheats: 20% slower, 20% clumsier, and the gauntlet arm takes a burn every 5 seconds until the heat is spent.
-
-Right-click chemfuel to feed it: 1 chemfuel gives 2 heat, up to 14.
-
-**How to get it**
-
-- Cannot be crafted.
-- Wear it to use the ability. Taking it off removes the ability.
-
-#### Devour
-
-Open the gauntlet's palm at a spot up to 10 tiles away and pull in every fire within 3 tiles of it: burning tiles and burning people, colonists included. Each fire goes out and flies into the palm: 1 heat per tile, 2 per person, nearest first. What the gauntlet has no room for is left burning. Cannot be used at a full gauntlet. Needs line of sight.
-
-**Cooldown:** 6 seconds | **Range:** 10.9 cells | **Cast time:** 0.3 seconds
-
-#### Release
-
-Spend the gauntlet's heat as a cone of fire toward a spot: 6 tiles long, 1 tile wide next to the wielder and 3 wide after, 16 tiles. The fire runs along the ground from the fist outward and sets every tile it reaches alight, and anyone standing there. Each tile costs 1 heat, nearest first, so with less heat the cone is shorter. Needs at least 5 heat. The wielder is immune to the fire. Walls stop it.
-
-**Cooldown:** 10 seconds | **Range:** 6.9 cells | **Cast time:** 0.3 seconds
-
-
-### Frost rifle
-
-A rifle that fires bolts of supercooled gas from a coolant tank under the barrel.
-
-Normal fire: 7 cold damage per bolt, range 22, one shot every 2 seconds. Each hit chills a creature: 10% slower per stack, up to 3 stacks, for 10 seconds, renewed by every hit. Normal fire uses no coolant.
-
-While it is equipped, the wielder can use Flash Freeze (10 coolant, 30 s cooldown): a beam that freezes one soaked or 3-times-chilled creature solid in ice for 5 seconds. It cannot move or act. The next hit it takes shatters the ice for 15 more damage.
-
-The 30-unit tank refills 0.1 a second while the rifle is held, and 2 a second while the wielder stands somewhere below 0 °C.
-
-**How to get it**
-
-- Craft it at a machining table after researching **frost rifle** (which needs cryogenic munitions). Needs Crafting skill 6. Costs steel ×70 and component ×5.
-- Can be bought from traders.
-- Wear it to use the ability. Taking it off removes the ability.
-
-#### Flash freeze
-
-Charge the rifle and fire a freezing beam at one creature in sight that is soaked or chilled 3 times. It is frozen solid in ice for 5 seconds: it cannot move or act. The next hit it takes shatters the ice for 15 more damage; otherwise it thaws. Freezing uses up the soaking or the chill. Uses 10 coolant.
-
-**Cooldown:** 30 seconds | **Range:** 22.9 cells | **Cast time:** 0.8 seconds
 
 
 ### Kunai belt
@@ -820,48 +1079,6 @@ Each time anyone walks onto a spiked cell they have a 35% chance to step on a sp
 **Cooldown:** 2 seconds | **Range:** 9.9 cells | **Cast time:** 0.5 seconds
 
 
-### Power Pole
-
-A red staff a little over one tile long. On command it extends to many times its length in a fraction of a second and retracts just as fast. It does not bend, does not wear, and nobody knows how to make another.
-
-In melee it is an ordinary blunt weapon with a reach of 1 tile. While it is equipped, the wielder can use Extend Thrust, Sweep and Vault Strike. The long reach exists only in those three abilities. All three hit allies as well as enemies.
-
-It cannot be crafted. It turns up as a quest reward or with exotic goods traders.
-
-**How to get it**
-
-- Cannot be crafted.
-- Can be given as a quest reward.
-- Can be bought from traders.
-- Wear it to use the ability. Taking it off removes the ability.
-
-#### Extend thrust
-
-Extend the pole in a straight line toward a tile up to 12 tiles away. It stops at the first pawn on the line, ally or enemy: 22 blunt damage, 30% armor penetration. The pole keeps extending and pushes that pawn 3 tiles further, then retracts. The pawn is staggered. Large pawns are pushed less far.
-
-If a wall or other solid object stops the push early, the pawn takes 10 more blunt damage. Needs line of sight. Does nothing to buildings.
-
-**Cooldown:** 8 seconds | **Range:** 12.9 cells | **Cast time:** 0.3 seconds
-
-#### Sweep
-
-Extend the pole to 4 tiles and swing it through the half-circle in front of the wielder, from left to right. Every pawn in that area, ally or enemy, takes 12 blunt damage with 18% armor penetration and is staggered.
-
-The pole shortens to pass a wall and lengthens again after it. A pawn standing behind a wall is not hit.
-
-**Cooldown:** 20 seconds | **Range:** 4.9 cells | **Cast time:** 0.3 seconds
-
-#### Vault strike
-
-Plant the pole and let it push the wielder into the air, over walls and over other pawns, toward a pawn or tile up to 10 tiles away. No line of sight is needed. Just before landing, the wielder swings the extended pole down onto the target tile.
-
-A pawn on that tile takes 20 blunt damage with 30% armor penetration and is stunned for 1.5 seconds. Every other pawn within 1.5 tiles is staggered. The wielder lands next to the target. If the tile is empty, the strike only staggers.
-
-The wielder cannot be attacked in melee while in the air. There must be a free tile next to the target to land on.
-
-**Cooldown:** 18 seconds | **Range:** 10.9 cells | **Cast time:** 0.3 seconds
-
-
 ### Retrieval hook belt
 
 A belt-mounted launcher that fires a padded net on a tether and reels the target in.
@@ -886,32 +1103,6 @@ The wearer must stand still until the target arrives. Moving, being downed or re
 Dragging an injured person worsens one wound by up to 1 severity and removes its bandage. It will not kill them or destroy the part.
 
 **Range:** 15 cells | **Cast time:** 0.5 seconds
-
-
-### Samehada
-
-A greatsword covered in living shark skin, wrapped in bandages. It is heavy and slow, and it feeds on what it cuts.
-
-Feed: every melee hit on a living creature drains it. The target is Drained for 20 seconds (10% less consciousness and 10% slower per stack, up to 3 stacks), the wielder heals 4 hit points, and the blade takes a charge, up to 5. Each charge adds 2 damage to the blade's hits. The blade loses a charge every 60 seconds without a hit. Mechanoids and other creatures without flesh give nothing.
-
-While it is equipped, the wielder can use Shark Skin and Fusion, which spend charges.
-
-**How to get it**
-
-- Cannot be crafted.
-- Wear it to use the ability. Taking it off removes the ability.
-
-#### Shark skin
-
-Spend 2 of the blade's charges to tear its bandage off. For 10 seconds the scales stand up and every melee attack with it also hits every hostile in the 3 tiles in front of the wielder: the tile attacked and the two beside it. Each one hit is fed on, so a sweep through several enemies puts charges back. Needs at least 2 charges.
-
-**Cooldown:** 30 seconds | **Range:** self | **Cast time:** 0.2 seconds
-
-#### Fusion
-
-Spend all 5 of the blade's charges to fuse with it for 15 seconds. The wielder takes on a shark's hide, fin and gills, moves 30% faster and regenerates 2 hit points a second. The blade stays in hand and keeps feeding. When the fusion ends the blade has no charges. Needs 5 charges.
-
-**Cooldown:** 40 seconds | **Range:** self | **Cast time:** 0.2 seconds
 
 
 ### Sleeper box
@@ -959,6 +1150,323 @@ What you buy is time for everyone standing outside it.
 **Cooldown:** 5 days (in-game) | **Range:** self | **Cast time:** 1 second
 
 
+## Weapons
+
+### Bank shot pistol
+
+A heavy pistol whose bullets bounce off walls.
+
+Normal fire works like a revolver: 12 damage, range 20, 1.2 seconds between shots. A bullet that misses and hits a wall bounces off it once and can still hit someone on the rebound.
+
+While it is equipped, the wielder can use Bank Shot: charge the gun for 1.5 seconds and fire at a wall. The bullet bounces off up to 3 walls, then embeds in the next. It hits the first standing pawn it crosses, ally or enemy, for 18 damage plus 6 for every bounce, and needs no line of sight to that pawn. The whole path is shown while aiming.
+
+**How to get it**
+
+- Craft it at a machining table after researching **ricochet rounds** (which needs gunsmithing). Needs Crafting skill 5. Costs steel ×40 and component ×3.
+- Can be bought from traders.
+- Equip it as a weapon to use the ability. Unequipping it removes it; cooldowns carry over.
+
+#### Bank shot
+
+Charge the pistol for 1.5 seconds, then fire toward a tile, usually a wall. The bullet bounces off walls and closed doors, up to 3 times, and embeds in the next wall it meets. It stops at the first standing pawn it crosses, ally or enemy: 18 sharp damage, plus 6 for every bounce before the hit (18, 24, 30, 36).
+
+It flies 30 tiles at most, bounces included, and needs no line of sight to the pawn it hits. The whole path is drawn while aiming.
+
+**Cooldown:** 4 seconds | **Range:** 29.9 cells | **Cast time:** 1.5 seconds
+
+
+### Bubble pipe
+
+A bamboo blowpipe and a small jar of soap solution on a strap, worn at the hip. The jar holds 10 blows.
+
+While it is equipped, the wielder can use Drifting Burst and Eye Pop. Drifting Burst blows 6 bubbles that drift toward the target and burst on the first pawn to touch them, the wielder's allies included. Eye Pop bursts one bubble on a pawn's face and leaves soap in its eyes for a few seconds.
+
+The jar refills, 1 blow per second, while the wielder stands on or next to water. In melee the pipe is a weak blunt poke.
+
+**How to get it**
+
+- Cannot be crafted.
+- Equip it as a weapon to use its abilities. Unequipping it removes them; cooldowns carry over.
+
+#### Drifting burst
+
+Blow 6 soap bubbles toward a tile. They leave the pipe one after another and drift that way at 0.7 tiles per second, fanning out over 50 degrees and floating at about half a tile up, for 8 seconds.
+
+The first pawn other than the wielder to touch a bubble pops it: 5 blunt damage and a 1 second stagger to every pawn within 0.8 tiles, allies included. A bubble that drifts into a wall pops harmlessly, and bubbles nobody touched pop harmlessly after 8 seconds.
+
+Uses 2 blows of soap.
+
+**Cooldown:** 10 seconds | **Range:** 6.9 cells | **Cast time:** 0.5 seconds
+
+#### Eye pop
+
+Blow one soap bubble at a pawn up to 8 tiles away. It always reaches the face and bursts there: soap in the eyes for 5 seconds. Shooting accuracy -30%, melee hit chance halved, move speed -30%. No damage.
+
+Uses 1 blow of soap. Needs line of sight.
+
+**Cooldown:** 8 seconds | **Range:** 8.9 cells | **Cast time:** 0.5 seconds
+
+
+### Chain sickle
+
+A kusarigama: a hand sickle joined by a 7-tile chain to an iron weight. In melee it is a sickle.
+
+While it is equipped, the wielder can use Snag and Stake. Snag spins the weight up and throws it at a hostile pawn or wild animal up to 7 tiles away: 4 blunt damage, the chain wraps the body, and the wielder reels the target in. How far and how fast depends on weight: the wielder's carrying capacity against the target's mass plus everything it carries. A 75 kg carrier pulls a 65 kg tribal 5 tiles; a target over 2.5 times the carrying capacity does not move, and drags the wielder 2 tiles toward it instead.
+
+The chain stays on for 10 seconds. Stake, on the snagged pawn, drives the weight into the floor: the pawn drops its weapon and cannot move or attack for up to 6 seconds, while the wielder stays within 7 tiles. The sickle does 50% more damage to a staked pawn. Stake does not work on a pawn too heavy to pull.
+
+**How to get it**
+
+- Cannot be crafted.
+- Equip it as a weapon to use its abilities. Unequipping it removes them; cooldowns carry over.
+
+#### Snag
+
+Spin the weight up and throw it at a hostile pawn or wild animal up to 7 tiles away. It always lands: 4 blunt damage, and the chain wraps the body. Then reel it in. The weight ratio is the wielder's carrying capacity over the target's mass plus everything it carries: the target is pulled 5 tiles x the ratio (at most 5) over 1 second / the ratio (at most 2). A wall or another pawn stops it early, and it stops next to the wielder. Below a ratio of 0.4 the target does not move and the wielder is dragged 2 tiles toward it over 1 second.
+
+The target stays snagged for 10 seconds, or until one of the two is more than 7 tiles from the other. Stake needs a snagged pawn. Needs line of sight.
+
+**Cooldown:** 20 seconds | **Range:** 7.9 cells | **Cast time:** 0.5 seconds
+
+#### Stake
+
+Yank the chain on the snagged pawn: the coil tightens on its chest and the weight is driven into the floor by its feet. It drops the weapon it holds and cannot move, shoot or fight in melee for 6 seconds x the weight ratio (at most 6), while the wielder stays within 7 tiles. The sickle does 50% more damage to a staked pawn. The snag ends with the pin.
+
+Not possible on a pawn too heavy to pull (weight ratio under 0.4).
+
+**Cooldown:** 30 seconds | **Range:** 7.9 cells | **Cast time:** 0.3 seconds
+
+
+### Coil gun
+
+A rifle that throws its rounds with magnetic coils, fed from a battery in the stock.
+
+Normal fire: a burst of 2 electric bolts, 9 damage each, range 26. Mechanoids take 1.5 times the damage. Normal fire uses no charge.
+
+While it is equipped, the wielder can use Chain Arc: a bolt at a hostile pawn that jumps on to up to 3 more hostile pawns, each within 3 tiles of the last one hit, for 12 damage each. A soaked pawn takes 1.5 times the damage and the jump from it reaches 6 tiles. Uses 5 of the gun's 20 charge.
+
+The gun's battery does not refill on its own: standing within 1.5 tiles of a charged battery recharges it by 1 a second, taking 10 Wd of the battery's stored energy for each.
+
+**How to get it**
+
+- Craft it at a machining table after researching **coil gun** (which needs microelectronics). Needs Crafting skill 6. Costs steel ×60, plasteel ×20 and component ×4.
+- Can be bought from traders.
+- Equip it as a weapon to use the ability. Unequipping it removes it; cooldowns carry over.
+
+#### Chain arc
+
+Fire a bolt of lightning at a hostile pawn up to 26 tiles away. It jumps on to the nearest hostile pawn within 3 tiles of the last one hit, up to 3 more times; allies and downed pawns are skipped. Each pawn hit takes 12 electrical burn damage, 1.5 times as much if it is a mechanoid or soaked. From a soaked pawn the next jump reaches 6 tiles. Uses 5 of the gun's battery. Needs line of sight.
+
+**Cooldown:** 20 seconds | **Range:** 25.9 cells | **Cast time:** 0.5 seconds
+
+
+### Flame gauntlet
+
+A blackened iron gauntlet with brass seams and vents at the elbow, worn on one arm and used as the weapon. It eats fire and spits it back. In melee it is an iron fist.
+
+While it is equipped, the wielder can use Devour and Release, and cannot catch fire or be hurt by it.
+
+Devour pulls every fire within 3 tiles of a spot into the open palm, burning colonists included, and turns it into heat: 1 per burning tile, 2 per burning person, up to 20. Release spends heat as a cone of fire 6 tiles long and 3 wide, 1 heat per tile, at least 5. Every fire hit the wielder shrugs off adds 1 heat. Heat drains by 1 every 30 seconds.
+
+At 15 heat or more the wielder overheats: 20% slower, 20% clumsier, and the gauntlet arm takes a burn every 5 seconds until the heat is spent.
+
+Right-click chemfuel to feed it: 1 chemfuel gives 2 heat, up to 14.
+
+**How to get it**
+
+- Cannot be crafted.
+- Equip it as a weapon to use its abilities. Unequipping it removes them; cooldowns carry over.
+
+#### Devour
+
+Open the gauntlet's palm at a spot up to 10 tiles away and pull in every fire within 3 tiles of it: burning tiles and burning people, colonists included. Each fire goes out and flies into the palm: 1 heat per tile, 2 per person, nearest first. What the gauntlet has no room for is left burning. Cannot be used at a full gauntlet. Needs line of sight.
+
+**Cooldown:** 6 seconds | **Range:** 10.9 cells | **Cast time:** 0.3 seconds
+
+#### Release
+
+Spend the gauntlet's heat as a cone of fire toward a spot: 6 tiles long, 1 tile wide next to the wielder and 3 wide after, 16 tiles. The fire runs along the ground from the fist outward and sets every tile it reaches alight, and anyone standing there. Each tile costs 1 heat, nearest first, so with less heat the cone is shorter. Needs at least 5 heat. The wielder is immune to the fire. Walls stop it.
+
+**Cooldown:** 10 seconds | **Range:** 6.9 cells | **Cast time:** 0.3 seconds
+
+
+### Frost bomb
+
+A cryogenic charge in a throwable tube. It bursts into a small freezing cloud: everything caught in it stops moving and cannot fight for a few seconds, then thaws back to normal on its own.
+
+It does not choose sides. Your own people freeze in it exactly as well as the people you threw it at, and frozen targets can still be shot. The compressor rebuilds the charge between throws, so the tube is never used up.
+
+**How to get it**
+
+- Craft it at a machining table after researching **cryogenic munitions** (which needs machining). Needs Crafting skill 5. Costs steel ×20, component ×2 and chemfuel ×40.
+- Can be bought from traders.
+- Equip it as a weapon; the throw is a button on the pawn.
+
+#### Throw frost bomb
+
+**Cooldown:** 6 seconds | **Range:** 12.9 cells | **Cast time:** 0.8 seconds
+
+
+### Frost rifle
+
+A rifle that fires bolts of supercooled gas from a coolant tank under the barrel.
+
+Normal fire: 7 cold damage per bolt, range 22, one shot every 2 seconds. Each hit chills a creature: 10% slower per stack, up to 3 stacks, for 10 seconds, renewed by every hit. Normal fire uses no coolant.
+
+While it is equipped, the wielder can use Flash Freeze (10 coolant, 30 s cooldown): a beam that freezes one soaked or 3-times-chilled creature solid in ice for 5 seconds. It cannot move or act. The next hit it takes shatters the ice for 15 more damage.
+
+The 30-unit tank refills 0.1 a second while the rifle is held, and 2 a second while the wielder stands somewhere below 0 °C.
+
+**How to get it**
+
+- Craft it at a machining table after researching **frost rifle** (which needs cryogenic munitions). Needs Crafting skill 6. Costs steel ×70 and component ×5.
+- Can be bought from traders.
+- Equip it as a weapon to use the ability. Unequipping it removes it; cooldowns carry over.
+
+#### Flash freeze
+
+Charge the rifle and fire a freezing beam at one creature in sight that is soaked or chilled 3 times. It is frozen solid in ice for 5 seconds: it cannot move or act. The next hit it takes shatters the ice for 15 more damage; otherwise it thaws. Freezing uses up the soaking or the chill. Uses 10 coolant.
+
+**Cooldown:** 30 seconds | **Range:** 22.9 cells | **Cast time:** 0.8 seconds
+
+
+### Fūma Shuriken
+
+A massive folding shuriken. Four curved steel blades pivot around a central grip ring, stacking together for carrying and fanning open for combat.
+
+Use it for melee slashes, or order a throw at a ground cell up to 12 tiles away. The spinning blade cuts through every pawn in its path, including allies: 30 cut damage and 20% armor penetration, losing 20% damage per pawn down to a minimum of 8. Walls and closed doors stop it.
+
+Throwing leaves you unarmed. The same weapon lands on the ground with its quality and condition intact. Retrieve and equip it to use it again; a retrieval hook can pull it closer. Warmup 0.8 seconds; throw cooldown 4 seconds.
+
+**How to get it**
+
+- Craft it at a electric smithy or fueled smithy after researching **smithing**. Needs Crafting skill 6. Costs steel ×80.
+- Can be bought from traders.
+- Equip it as a melee weapon; the throw is a button on the pawn.
+
+**Details**
+
+- Melee: 14 cut damage, 20% armor penetration, 2 seconds cooldown; quality applies.
+- Throw damage: 30/24/19/15/12/10/8 to the 1st, 2nd, 3rd... pawn in the path, then 8 to every pawn after that. 20% armor penetration.
+- Flies at 14.4 cells per second.
+- Choose a landing cell with the throw button while drafted. There is no accuracy roll; it flies along the highlighted line.
+- Each pawn is hit once. Allies, downed pawns, animals and mechanoids can all be hit.
+- Walls and closed doors stop it; low cover and open doors let it through. Personal shields can absorb the damage; area projectile shields stop the flight.
+- Throwing leaves the pawn unarmed. The same weapon lands with its quality and condition intact. Use Equip to pick it up, or pull it closer with the retrieval hook first. Giving it to another pawn does not reset the throw cooldown.
+- With Melee Animation the throw plays an unfolding animation. With Combat Extended it gets bulk and melee stats, but the throw keeps its own flight instead of CE ammunition or ballistics.
+
+#### Throw Fūma Shuriken
+
+**Cooldown:** 4 seconds | **Range:** 12 cells | **Cast time:** 0.8 seconds
+
+
+### Last prism
+
+A crystal pyramid that splits stored sunlight into a beam. Held in front of the chest, it points its tip at the target and fires six coloured beams in a fan 35 degrees to each side, which sweep and narrow for 3 seconds and then join into one beam 1 tile wide. Range 22 tiles; walls stop the beams.
+
+Fan: 3 burn damage to anyone a beam crosses, at most once every 0.5 seconds. Joined beam: 8 burn damage to anyone in it, at most once every 0.25 seconds each (32 a second). It burns friend and foe alike, and passes over the downed.
+
+While it fires the wielder stands still. Retarget turns the beam toward another person or a spot at 45 degrees a second without breaking the joined beam; on a spot it keeps firing until stopped. When its target goes down it turns to the enemy nearest its aim; with none left it stops. Stop ends it.
+
+It holds 12 seconds of beam and has no cooldown. It fills only in sunlight: held or lying on open ground, 1 second of beam per 20 seconds of full sun, less at dawn and dusk, none at night, under a roof, in a pocket dimension, while firing or in a bag. Sun lamps do not fill it.
+
+**How to get it**
+
+- Cannot be crafted.
+- Equip it as a weapon to use the ability. Unequipping it removes it; cooldowns carry over.
+
+#### Fire last prism
+
+Fire a beam at a person or a spot up to 22 tiles away. Six beams sweep a fan 35 degrees to each side for 3 seconds, 3 burn to anyone they cross (at most every 0.5 s), then join into one beam 1 tile wide, 8 burn to anyone in it (at most every 0.25 s each). It turns after its target at 45 degrees a second and hits friend and foe; walls stop it. When the target goes down it turns to the enemy nearest its aim and stops with none left; aimed at a spot it fires until stopped. Retarget and Stop show while it fires. Spends 1 second of the prism's charge per second; no cooldown.
+
+**Cooldown:** 0 seconds | **Range:** 22 cells | **Cast time:** 0.3 seconds
+
+
+### Mimic beacon
+
+A throwable projector that reads whoever threw it and stands a copy of them where it lands. The copy cannot move, act or fight. What it can do is look like the better target, and most people shoot at it.
+
+It is a projection, not a shield: the light stops nothing, and the projector fails when it is shot to pieces or when its charge runs out about twenty seconds later. Either way nothing is left on the ground. The emitter rebuilds its charge between throws, so the device is never used up.
+
+**How to get it**
+
+- Craft it at a machining table after researching **holographic projection** (which needs machining and microelectronics). Needs Crafting skill 6. Costs steel ×40, component ×4 and gold ×10.
+- Can be bought from traders.
+- Equip it as a weapon; the throw is a button on the pawn.
+
+#### Throw mimic beacon
+
+**Cooldown:** 8 seconds | **Range:** 12.9 cells | **Cast time:** 0.8 seconds
+
+
+### Power Pole
+
+A red staff a little over one tile long. On command it extends to many times its length in a fraction of a second and retracts just as fast. It does not bend, does not wear, and nobody knows how to make another.
+
+In melee it is an ordinary blunt weapon with a reach of 1 tile. While it is equipped, the wielder can use Extend Thrust, Sweep and Vault Strike. The long reach exists only in those three abilities. All three hit allies as well as enemies.
+
+It cannot be crafted. It turns up as a quest reward or with exotic goods traders.
+
+**How to get it**
+
+- Cannot be crafted.
+- Can be given as a quest reward.
+- Can be bought from traders.
+- Equip it as a weapon to use its abilities. Unequipping it removes them; cooldowns carry over.
+
+#### Extend thrust
+
+Extend the pole in a straight line toward a tile up to 12 tiles away. It stops at the first pawn on the line, ally or enemy: 22 blunt damage, 30% armor penetration. The pole keeps extending and pushes that pawn 3 tiles further, then retracts. The pawn is staggered. Large pawns are pushed less far.
+
+If a wall or other solid object stops the push early, the pawn takes 10 more blunt damage. Needs line of sight. Does nothing to buildings.
+
+**Cooldown:** 8 seconds | **Range:** 12.9 cells | **Cast time:** 0.3 seconds
+
+#### Sweep
+
+Extend the pole to 4 tiles and swing it through the half-circle in front of the wielder, from left to right. Every pawn in that area, ally or enemy, takes 12 blunt damage with 18% armor penetration and is staggered.
+
+The pole shortens to pass a wall and lengthens again after it. A pawn standing behind a wall is not hit.
+
+**Cooldown:** 20 seconds | **Range:** 4.9 cells | **Cast time:** 0.3 seconds
+
+#### Vault strike
+
+Plant the pole and let it push the wielder into the air, over walls and over other pawns, toward a pawn or tile up to 10 tiles away. No line of sight is needed. Just before landing, the wielder swings the extended pole down onto the target tile.
+
+A pawn on that tile takes 20 blunt damage with 30% armor penetration and is stunned for 1.5 seconds. Every other pawn within 1.5 tiles is staggered. The wielder lands next to the target. If the tile is empty, the strike only staggers.
+
+The wielder cannot be attacked in melee while in the air. There must be a free tile next to the target to land on.
+
+**Cooldown:** 18 seconds | **Range:** 10.9 cells | **Cast time:** 0.3 seconds
+
+
+### Samehada
+
+A greatsword covered in living shark skin, wrapped in bandages. It is heavy and slow, and it feeds on what it cuts.
+
+Feed: every melee hit on a living creature drains it. The target is Drained for 20 seconds (10% less consciousness and 10% slower per stack, up to 3 stacks), the wielder heals 4 hit points, and the blade takes a charge, up to 5. Each charge adds 2 damage to the blade's hits. The blade loses a charge every 60 seconds without a hit. Mechanoids and other creatures without flesh give nothing.
+
+While it is equipped, the wielder can use Shark Skin and Fusion, which spend charges.
+
+**How to get it**
+
+- Cannot be crafted.
+- Equip it as a weapon to use its abilities. Unequipping it removes them; cooldowns carry over.
+
+#### Shark skin
+
+Spend 2 of the blade's charges to tear its bandage off. For 10 seconds the scales stand up and every melee attack with it also hits every hostile in the 3 tiles in front of the wielder: the tile attacked and the two beside it. Each one hit is fed on, so a sweep through several enemies puts charges back. Needs at least 2 charges.
+
+**Cooldown:** 30 seconds | **Range:** self | **Cast time:** 0.2 seconds
+
+#### Fusion
+
+Spend all 5 of the blade's charges to fuse with it for 15 seconds. The wielder takes on a shark's hide, fin and gills, moves 30% faster and regenerates 2 hit points a second. The blade stays in hand and keeps feeding. When the fusion ends the blade has no charges. Needs 5 charges.
+
+**Cooldown:** 40 seconds | **Range:** self | **Cast time:** 0.2 seconds
+
+
 ### Tag scroll
 
 A roll of up to 20 explosive tags wound on a wooden rod, held in one hand while the other takes tags off it.
@@ -970,7 +1478,7 @@ Reload it with explosive tags: the wielder reloads on their own when the scroll 
 **How to get it**
 
 - Cannot be crafted.
-- Wear it to use the ability. Taking it off removes the ability.
+- Equip it as a weapon to use its abilities. Unequipping it removes them; cooldowns carry over.
 
 #### Tag throw
 
@@ -1016,7 +1524,7 @@ The mouth holds only the last thing swallowed; anything older is in the stomach 
 **How to get it**
 
 - Cannot be crafted.
-- Wear it to use the ability. Taking it off removes the ability.
+- Equip it as a weapon to use its abilities. Unequipping it removes them; cooldowns carry over.
 
 #### Suck
 
@@ -1048,7 +1556,7 @@ The bag refills 10 units a second while the wielder stands on or next to water, 
 **How to get it**
 
 - Cannot be crafted.
-- Wear it to use the ability. Taking it off removes the ability.
+- Equip it as a weapon to use its abilities. Unequipping it removes them; cooldowns carry over.
 
 #### Stream shot
 
@@ -1061,6 +1569,102 @@ Fire one jet of water at a pawn or a tile up to 20 tiles away. It always lands. 
 Pump the bag up to pressure and blast a cone of water 5 tiles long and 3 wide at its end toward a tile. Every pawn in the cone that the wielder can see, allies included, takes 8 blunt damage, is pushed 3 tiles away from the gun, knocked down for 2 seconds and soaked for 60 seconds. Fire in the cone is put out. Uses 10 units of water.
 
 **Cooldown:** 12 seconds | **Range:** 5.9 cells | **Cast time:** 0.6 seconds
+
+
+## E.G.O. weapons
+
+### Magic Bullet
+
+A long black rifle with a gold band round the chamber: E.G.O. gear from Der Freischütz.
+
+**How to get it**
+
+- Cannot be crafted.
+- Equip it as a ranged weapon; it attacks like any gun. A colonist holding it also gets the Overclock button.
+
+**Details**
+
+- Melee: stock 9 blunt damage, 2 seconds cooldown; barrel 9 blunt damage, 2 seconds cooldown.
+
+#### Attack
+
+Each shot is a straight line 40 tiles long. It goes through walls and cover, never misses, and hits every pawn on it, allies and the downed included, for 18 damage. A building or turret it is aimed at takes the damage too.
+
+The gun counts its shots, and the count stays with the gun when it is dropped. The seventh shot cannot be aimed: it goes to the pawn on the map the shooter has the highest opinion of (if there is a tie or nobody, a bonded animal; if none, the shooter), hitting everyone between for 30 damage. After it the gun does not fire for 20 seconds. On the sixth shot the counter names the pawn the seventh will hit.
+
+**Cooldown:** 2 seconds | **Range:** 40 cells | **Cast time:** 1.5 seconds
+
+#### Corrosion
+
+Every shot may let the gun take its wielder. The chance is 25% below the wielder's minor break threshold, 75% below the major one and certain below the extreme one, one step worse under Shooting 6, and none above the minor threshold. A corroded wielder ignores orders for 30 seconds while the gun fires a line at the nearest pawn of any faction every 3 seconds, then is exhausted for 2 hours. These shots count toward the seventh.
+
+#### Overclock
+
+The wielder fires 6 lines, one a second, at the nearest hostile within 40 tiles. Only hostiles are hit and the count does not move. Costs 15 mood for 1 day.
+
+
+### Paradise Lost
+
+A white staff with a snake wound round it, a red apple at its head under a gold halo of thorns, and a grey wing beside the apple: E.G.O. gear from WhiteNight.
+
+**How to get it**
+
+- Cannot be crafted.
+- Equip it as a ranged weapon; it attacks like any gun. A colonist holding it also gets the Overclock button.
+
+**Details**
+
+- Melee: shaft 9 blunt damage, 2 seconds cooldown; gold tip 9 stab damage, 2 seconds cooldown.
+
+#### Attack
+
+Every 2 seconds the staff strikes a target it can see up to 30 tiles away, and every standing hostile in the target's room with it, seen or not. Outdoors, or in a room with 300 or more unroofed tiles, it strikes every standing hostile within 6 tiles of the target instead; walls still keep them out. A pawn in a doorway counts as in each room the door joins. One target takes 16 damage, 2 to 5 take 12 each, 6 or more take 9 each. Armour does not reduce it. Every pawn struck moves at 40% speed for 1 second.
+
+**Cooldown:** 1 second | **Range:** 30 cells | **Cast time:** 1 second
+
+#### Sanity
+
+Each hostile struck gives the wielder +1 mood, up to +10. It lasts 2 hours after the last hit.
+
+#### Corrosion
+
+Every shot may let the staff take its wielder. The chance is 50% below the wielder's minor break threshold and certain below the major one, one step worse under Shooting 10, and none above the minor threshold. For 30 seconds the wielder ignores orders and stands still while WhiteNight's ring fires every 6 seconds: every pawn within the ring (people, animals and mechanoids), of any faction, downed or not, takes 12 damage through walls. The first ring reaches 6 tiles and each one after reaches 3 tiles further: 6, 9, 12, 15. The ring gives no Sanity. Then the wielder is exhausted for 3 hours.
+
+#### Overclock
+
+3 rings of 6 tiles, one every 2 seconds, striking only standing hostiles. Costs 20 mood for 1 day.
+
+
+### Solemn Lament
+
+A pair of pistols, one white and one black: E.G.O. gear from the Funeral of the Dead Butterflies. The wielder holds both and they take turns, white first.
+
+**How to get it**
+
+- Cannot be crafted.
+- Equip it as a ranged weapon; it attacks like any gun. A colonist holding it also gets the Overclock button.
+
+**Details**
+
+- Melee: 8 blunt damage, 1.6 seconds cooldown.
+
+#### Attack
+
+Each pull of the trigger fires 4 shots, one every 0.25 seconds, at a target up to 10 tiles away. Every shot hits. A white shot does no harm and puts 2 Butterfly stacks on the target. A black shot does 9 damage and puts on 1 stack. The pair holds 20 shots and reloads for 3 seconds when empty.
+
+**Cooldown:** 1 second | **Range:** 10 cells | **Cast time:** 0.5 seconds | **Burst:** 4 shots, 0.25 seconds apart
+
+#### Butterfly
+
+Each stack takes 7.5% consciousness, so an unhurt pawn goes down at 10 stacks, the cap. The guns never put on more than 10. One stack fades every 10 seconds.
+
+#### Corrosion
+
+Every shot may let the guns take their wielder. The chance is 25% below the wielder's minor break threshold, 75% below the major one and certain below the extreme one, one step worse under Shooting 4, and none above the minor threshold. A coffin rises where the wielder stands and a cloud of butterflies circles the wielder for 30 seconds. The wielder ignores orders and walks to the nearest person or animal, of any faction, downed or not, and stays beside them. Every second each pawn within 3 tiles of the wielder takes 1 stack, past the cap: a pawn left down in the cloud dies at 20 stacks. Then the wielder is exhausted for 2 hours.
+
+#### Overclock
+
+The coffin for 5 seconds where the wielder stands. Each second every standing hostile within 3 tiles takes 1 stack, never past the cap. Costs 15 mood for 1 day.
 
 
 ## Weapon traits
@@ -1103,69 +1707,3 @@ Set the weapon ringing for thirty seconds: every melee blow leaves the struck pa
 The resonance passes through the weapon into its wielder, leaving their own frame vulnerable on the same terms.
 
 **Cooldown:** 1 hour (in-game) | **Range:** self
-
-
-## Weapons
-
-### Frost bomb
-
-A cryogenic charge in a throwable tube. It bursts into a small freezing cloud: everything caught in it stops moving and cannot fight for a few seconds, then thaws back to normal on its own.
-
-It does not choose sides. Your own people freeze in it exactly as well as the people you threw it at, and frozen targets can still be shot. The compressor rebuilds the charge between throws, so the tube is never used up.
-
-**How to get it**
-
-- Craft it at a machining table after researching **cryogenic munitions** (which needs machining). Needs Crafting skill 5. Costs steel ×20, component ×2 and chemfuel ×40.
-- Can be bought from traders.
-- Equip it as a weapon; the throw is a button on the pawn.
-
-#### Throw frost bomb
-
-**Cooldown:** 6 seconds | **Range:** 12.9 cells | **Cast time:** 0.8 seconds
-
-
-### Fūma Shuriken
-
-A massive folding shuriken. Four curved steel blades pivot around a central grip ring, stacking together for carrying and fanning open for combat.
-
-Use it for melee slashes, or order a throw at a ground cell up to 12 tiles away. The spinning blade cuts through every pawn in its path, including allies: 30 cut damage and 20% armor penetration, losing 20% damage per pawn down to a minimum of 8. Walls and closed doors stop it.
-
-Throwing leaves you unarmed. The same weapon lands on the ground with its quality and condition intact. Retrieve and equip it to use it again; a retrieval hook can pull it closer. Warmup 0.8 seconds; throw cooldown 4 seconds.
-
-**How to get it**
-
-- Craft it at a electric smithy or fueled smithy after researching **smithing**. Needs Crafting skill 6. Costs steel ×80.
-- Can be bought from traders.
-- Equip it as a melee weapon; the throw is a button on the pawn.
-
-**Details**
-
-- Melee: 14 cut damage, 20% armor penetration, 2 seconds cooldown; quality applies.
-- Throw damage: 30/24/19/15/12/10/8 to the 1st, 2nd, 3rd... pawn in the path, then 8 to every pawn after that. 20% armor penetration.
-- Flies at 14.4 cells per second.
-- Choose a landing cell with the throw button while drafted. There is no accuracy roll; it flies along the highlighted line.
-- Each pawn is hit once. Allies, downed pawns, animals and mechanoids can all be hit.
-- Walls and closed doors stop it; low cover and open doors let it through. Personal shields can absorb the damage; area projectile shields stop the flight.
-- Throwing leaves the pawn unarmed. The same weapon lands with its quality and condition intact. Use Equip to pick it up, or pull it closer with the retrieval hook first. Giving it to another pawn does not reset the throw cooldown.
-- With Melee Animation the throw plays an unfolding animation. With Combat Extended it gets bulk and melee stats, but the throw keeps its own flight instead of CE ammunition or ballistics.
-
-#### Throw Fūma Shuriken
-
-**Cooldown:** 4 seconds | **Range:** 12 cells | **Cast time:** 0.8 seconds
-
-
-### Mimic beacon
-
-A throwable projector that reads whoever threw it and stands a copy of them where it lands. The copy cannot move, act or fight. What it can do is look like the better target, and most people shoot at it.
-
-It is a projection, not a shield: the light stops nothing, and the projector fails when it is shot to pieces or when its charge runs out about twenty seconds later. Either way nothing is left on the ground. The emitter rebuilds its charge between throws, so the device is never used up.
-
-**How to get it**
-
-- Craft it at a machining table after researching **holographic projection** (which needs machining and microelectronics). Needs Crafting skill 6. Costs steel ×40, component ×4 and gold ×10.
-- Can be bought from traders.
-- Equip it as a weapon; the throw is a button on the pawn.
-
-#### Throw mimic beacon
-
-**Cooldown:** 8 seconds | **Range:** 12.9 cells | **Cast time:** 0.8 seconds

@@ -9,9 +9,11 @@ parts, materials - are read from the game's own Data folder; without it the scri
 to splitting the defName into words, which reads worse but is still not an ID.
 
 Kits are found the same way validate.py check 8 finds acquisition sources: a gene, trait,
-implant, apparel or weapon trait that lists abilities. Throwable weapons with a command of
-their own (frost bomb, mimic beacon) and the Fūma Shuriken, whose throw is a C# command, are
-added as weapon kits.
+implant, apparel, held weapon or weapon trait that lists abilities. Throwable weapons with a
+command of their own (frost bomb, mimic beacon) and the Fūma Shuriken, whose throw is a C#
+command, are added as weapon kits. E.G.O. weapons have no abilities: their attack is the
+weapon's verb and the rest is C#, so their page is cut from the def's description, whose
+"Corrosion: ..." style paragraphs become sections.
 
 Usage: python3 make_wiki.py [path/to/RimWorld/Data] [-o docs/wiki.md]
 """
@@ -65,7 +67,7 @@ MOD_NAMES = {
 }
 # Weapon categories that live in other mods, so their labels are not in the game's Data folder.
 CATEGORY_NAMES = {"UMW_Melee": "unique melee weapons", "UMW_Bladed": "unique bladed weapons"}
-TYPE_ORDER = ["Hero", "Gene", "Archite gene", "Trait", "Implant", "Wearable", "Weapon trait", "Weapon"]
+TYPE_ORDER = ["Hero", "Gene", "Archite gene", "Trait", "Implant", "Wearable", "Weapon", "E.G.O. weapon", "Weapon trait"]
 
 
 # ---------------------------------------------------------------- loading and inheritance
@@ -151,6 +153,9 @@ def label(tag, name):
 
 def text_of(el, path):
     return (el.findtext(path) or "").strip()
+
+def cap(s):
+    return s[:1].upper() + s[1:]
 
 def paragraphs(desc):
     return [p.strip() for p in re.split(r"(?:\\n|\n)\s*(?:\\n|\n)", desc.strip()) if p.strip()]
@@ -245,6 +250,18 @@ def craft_lines(thing):
         lines.append("Can be bought from traders.")
     return lines
 
+def melee_line(thing):
+    """The weapon's melee attacks; a weapon with several names each one."""
+    hits = []
+    for tool in thing.findall("tools/li"):
+        hit = text_of(tool, "power") + " " + text_of(tool, "capacities/li").lower() + " damage, "
+        if text_of(tool, "armorPenetration"):
+            hit += number(float(text_of(tool, "armorPenetration")) * 100) + "% armor penetration, "
+        hit += ticks(float(text_of(tool, "cooldownTime")) * 60) + " cooldown"
+        hits.append((text_of(tool, "label") + " " if len(thing.findall("tools/li")) > 1 else "") + hit)
+    return ("Melee: " + "; ".join(hits)
+            + ("; quality applies." if thing.find("comps/li[compClass='CompQuality']") is not None else "."))
+
 
 # ---------------------------------------------------------------- kits
 
@@ -309,9 +326,17 @@ for tag, name in mod_keys:
                 how, [li.text.strip() for li in el.findall("abilities/li")], el)
 
     elif tag == "ThingDef" and el.findall("comps/li/abilities/li"):
-        how = craft_lines(el) + ["Wear it to use the ability. Taking it off removes the ability."]
-        add_kit("Wearable", text_of(el, "label"), text_of(el, "description"), how,
-                [li.text.strip() for li in el.findall("comps/li/abilities/li")], el)
+        abilities = [li.text.strip() for li in el.findall("comps/li/abilities/li")]
+        if el.find("apparel") is not None:
+            how = craft_lines(el) + ["Wear it to use the ability. Taking it off removes the ability."]
+            add_kit("Wearable", text_of(el, "label"), text_of(el, "description"), how, abilities, el)
+        else:
+            # Held weapons: Shared/ItemAbilityGrant (the chain sickle has its own copy) gives the abilities while
+            # equipped and keeps their cooldowns on the item.
+            them = "them" if len(abilities) > 1 else "it"
+            how = craft_lines(el) + ["Equip it as a weapon to use " + ("its abilities" if them == "them" else "the ability")
+                                     + ". Unequipping it removes " + them + "; cooldowns carry over."]
+            add_kit("Weapon", text_of(el, "label"), text_of(el, "description"), how, abilities, el)
 
     elif tag == "RimArt.EchoDef" and el.findall("abilities/li"):
         hero = text_of(el, "label")
@@ -366,11 +391,7 @@ for tag, name in mod_keys:
         const = lambda n: re.search(r"const \w+ " + n + r" = ([\d.]+)", rules).group(1).rstrip("f")
         gizmo = re.search(r'defaultLabel = "([^"]+)"', open("Source/RimArt/Fuma/FumaWeapon.cs").read()).group(1)
         how = craft_lines(el) + ["Equip it as a melee weapon; the throw is a button on the pawn."]
-        tool = el.find("tools/li")
-        melee = ("Melee: " + text_of(tool, "power") + " " + text_of(tool, "capacities/li").lower() + " damage, "
-                 + number(float(text_of(tool, "armorPenetration")) * 100) + "% armor penetration, "
-                 + ticks(float(text_of(tool, "cooldownTime")) * 60) + " cooldown"
-                 + ("; quality applies." if el.find("comps/li[compClass='CompQuality']") is not None else "."))
+        melee = melee_line(el)
         # Mirrors FumaRules.Damage: 30 × 0.8^hits, never below 8.
         hits = []
         while not hits or hits[-1] > 8:
@@ -387,6 +408,27 @@ for tag, name in mod_keys:
                      "how": how, "details": details, "mods": mods_needed(el), "abilities": [],
                      "verb": {"name": gizmo, "cooldown": str(int(const("CooldownTicks")) / 60),
                               "range": const("Range"), "warmup": str(int(const("WarmupTicks")) / 60)}})
+
+    elif tag == "ThingDef" and any(li.get("Class", "").startswith("RimArt.CompProperties_Ego") for li in el.findall("comps/li")):
+        # The description opens with what the weapon looks like, then its attack, then one "Name: ..." paragraph
+        # per part (Butterfly, Sanity, Corrosion, Overclock). The attack gets the verb's numbers.
+        paras = paragraphs(text_of(el, "description"))
+        heads = [re.match(r"([A-Z][\w ]{0,20}): (.+)", p, re.S) for p in paras]
+        verb = el.find("verbs/li")
+        facts = [("Cooldown", ticks(float(text_of(el, "statBases/RangedWeapon_Cooldown")) * 60)),
+                 ("Range", number(float(text_of(verb, "range"))) + " cells"),
+                 ("Cast time", ticks(float(text_of(verb, "warmupTime")) * 60))]
+        burst = int(text_of(verb, "burstShotCount") or 1)
+        if burst > 1:
+            # Not ticks(): it rounds to 0.1 s, and the gap is often 0.25 s.
+            gap = number(round(int(text_of(verb, "ticksBetweenBurstShots") or 0) / 60, 2))
+            facts.append(("Burst", str(burst) + " shots, " + gap + " seconds apart"))
+        parts = [{"name": "Attack", "paras": [p for p, m in zip(paras[1:], heads[1:]) if not m], "facts": facts}]
+        parts += [{"name": m.group(1), "paras": [cap(m.group(2))], "facts": []} for m in heads if m]
+        how = craft_lines(el) + ["Equip it as a ranged weapon; it attacks like any gun. A colonist holding it also "
+                                 "gets the Overclock button."]
+        kits.append({"type": "E.G.O. weapon", "name": text_of(el, "label"), "desc": paras[0], "how": how,
+                     "details": [melee_line(el)], "mods": mods_needed(el), "abilities": [], "parts": parts})
 
 kits.sort(key=lambda k: (TYPE_ORDER.index(k["type"]), k["name"].lower()))
 
@@ -416,9 +458,6 @@ def ability_facts(el):
         facts.append(("Duration", ticks(float(dur) * 60)))
     return facts
 
-def cap(s):
-    return s[:1].upper() + s[1:]
-
 def anchor(s):
     return re.sub(r"[^\w -]", "", s.lower()).replace(" ", "-")
 
@@ -429,7 +468,8 @@ out = ["<!-- Generated by make_wiki.py from the mod files. Edit the mod, then re
                                for d in ET.parse("About/About.xml").getroot().findall("modDependencies/li")), "",
        "| Kit | Type | Abilities | Needs |", "|---|---|---|---|"]
 for k in kits:
-    names = [label("AbilityDef", a) for a in k["abilities"]] or [k["verb"]["name"]]
+    names = ([label("AbilityDef", a) for a in k["abilities"]] or [p["name"] for p in k.get("parts", [])]
+             or [k["verb"]["name"]])
     out.append("| [" + cap(k["name"]) + "](#" + anchor(k["name"]) + ") | " + k["type"] + " | "
                + ", ".join(cap(n) for n in names) + " | " + (", ".join(k["mods"]) or "-") + " |")
 
@@ -456,6 +496,11 @@ for k in kits:
         out += ["#### " + cap(v["name"]), "", " | ".join("**" + a + ":** " + b for a, b in facts), ""]
         continue
 
+    for part in k.get("parts", []):
+        out += ["#### " + part["name"], ""] + [p + "\n" for p in part["paras"]]
+        if part["facts"]:
+            out += [" | ".join("**" + a + ":** " + b for a, b in part["facts"]), ""]
+
     for a in k["abilities"]:
         el = get("AbilityDef", a)
         if el is None:
@@ -473,4 +518,4 @@ os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
 with open(args.out, "w") as f:
     f.write("\n".join(out).rstrip() + "\n")
 print("wrote " + args.out + ": " + str(len(kits)) + " kits, "
-      + str(sum(len(k["abilities"]) or 1 for k in kits)) + " abilities")
+      + str(sum(len(k["abilities"]) or len(k.get("parts", [])) or 1 for k in kits)) + " abilities")
