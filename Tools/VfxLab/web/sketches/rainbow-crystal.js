@@ -55,19 +55,17 @@
 //
 // Drawing: the crystal is a 3D diamond (four sides) placed in east, up, north and drawn with up as a
 // shift north (Lift), showing only the faces turned to the viewer, so it is the same from every
-// direction; no per-facing method. The projectile is sprites, not meshes: four white textures generated in
-// this file (lab/rc-trail 256 px: two feathered strands over a glow, brightening toward the head; lab/rc-trail-core
-// 256 px: the white core line; lab/rc-star 128 px: the four-point star, long ray upright; lab/rc-plus 64 px: the +
-// sparkle), coloured per draw, additive (MoteGlow). A trail is two quads stretched from its tail to its head; a star
-// is a halo plus two star quads. A port moves the formulas into make_rainbow_crystal_textures.py and loads PNGs from
-// Textures/RimArt/RainbowCrystal/ (not written yet). Meshes stay where the shape is the point: the crystal's faces,
-// its outline, the shards and the floor rings. Pawns are lib/pawn.js stand-ins, the staff in the wielder's hand is a
+// direction; no per-facing method. The projectile is sprites, not meshes: four white PNGs in
+// Textures/RimArt/RainbowCrystal/ made by make_rainbow_crystal_textures.py (Trail 256 px: two feathered strands
+// over a glow, brightening toward the head; TrailCore 256 px: the white core line; Star 128 px: the four-point
+// star, long ray upright; Plus 64 px: the + sparkle), coloured per draw, additive (MoteGlow). A trail is two quads
+// stretched from its tail to its head; a star is a halo plus two star quads. A port uses the same texture paths.
+// Meshes stay where the shape is the point: the crystal's faces, its outline, the shards and the floor rings. Pawns are lib/pawn.js stand-ins, the staff in the wielder's hand is a
 // stand-in for its texture, walls are the Paper Bomb kit's. "Show stand-ins" off hides pawns, walls,
 // the staff, the target ring and the damage bars. The fight is replayed from 0 at 60 steps a second
 // (cached per parameter set), so the drawing and the damage use the same positions. In "raid" the crystal
 // stands 8 cells behind the chosen cell, so the camera's centre is on the fight.
 import { Color, Mathf, MaterialPool, ShaderDatabase } from '../js/engine.js';
-import { registerLabTexture, pixels, fbm } from '../js/standins.js';
 import { P, Body, Y, Floor, Lift, sprite, soft, glow, rand, circle } from './lib/six-paths-impact.js';
 import { draw, mesh } from './lib/six-paths-solid.js';
 import { pawn, at, shadowLayer, Skin } from './lib/pawn.js';
@@ -105,35 +103,10 @@ const Crowd = [
 const WallCells = [[6, -2], [6, -3], [6, -4]], WielderAt = { x: -4, z: -3 };
 const Back = 8;                                       // the crystal stands this many cells behind the chosen cell
 
-// The sprites: white textures with the shape in alpha, coloured per draw. Generated here (lab-only paths) while
-// the look is tuned; a port writes the same formulas to PNGs under Textures/RimArt/RainbowCrystal/.
-const gauss = (x, w) => Math.exp(-(x * x) / (2 * w * w));
-const inside = (x, a, b) => Mathf.Clamp01(x / a) * Mathf.Clamp01((1 - x) / b);   // 0 at both edges of 0..1
-// The trail, tail on the left (u 0) to head on the right (u 1): two feathered strands that draw in toward the
-// head over a soft glow, brightening toward the head.
-registerLabTexture('lab/rc-trail', () => pixels(256, (u, v) => {
-  const y = v - .5, pull = .45 + .55 * (1 - u);
-  let a = .45 * gauss(y, .17) + .35 * gauss(y, .04);
-  [-1, 1].forEach((side, k) => { a += .95 * gauss(y - side * .22 * pull, .022 + .02 * (1 - u)) * (.45 + .55 * fbm(u * 10, k * 4 + .5, 31 + k, 3, 10)); });
-  return [1, 1, 1, Mathf.Clamp01(a * Math.pow(u, 1.5) * inside(u, .02, .04) * inside(v, .04, .04))];
-}));
-// The trail's white core: a thin line, brightest at the head.
-registerLabTexture('lab/rc-trail-core', () => pixels(256, (u, v) =>
-  [1, 1, 1, Mathf.Clamp01(1.2 * gauss(v - .5, .07) * u * u * inside(u, .02, .03))]));
-// The four-point star, as the Terraria explosion sprite: a long upright ray, a shorter level one, a bright core, a halo.
-registerLabTexture('lab/rc-star', () => pixels(128, (u, v) => {
-  const x = u - .5, y = v - .5, r = Math.hypot(x, y);
-  const ray = (along, across, len) => gauss(across, .006 + .026 * Mathf.Clamp01(1 - Math.abs(along) / len)) * Math.pow(Mathf.Clamp01(1 - Math.abs(along) / len), 1.5);
-  const a = Math.max(ray(y, x, .48), ray(x, y, .3), gauss(r, .045)) + .3 * gauss(r, .14);
-  return [1, 1, 1, Mathf.Clamp01(a * Mathf.Clamp01((.5 - Math.max(Math.abs(x), Math.abs(y))) / .02))];
-}));
-// The + sparkle: two crossed bars with soft ends and a bright middle.
-registerLabTexture('lab/rc-plus', () => pixels(64, (u, v) => {
-  const x = u - .5, y = v - .5, bar = (along, across) => gauss(across, .045) * Mathf.Clamp01(1 - Math.abs(along) / .42);
-  return [1, 1, 1, Mathf.Clamp01(1.2 * Math.max(bar(x, y), bar(y, x)) + .5 * gauss(Math.hypot(x, y), .08))];
-}));
-const trailMat = MaterialPool.MatFrom('lab/rc-trail', ShaderDatabase.MoteGlow), coreMat = MaterialPool.MatFrom('lab/rc-trail-core', ShaderDatabase.MoteGlow);
-const starMat = MaterialPool.MatFrom('lab/rc-star', ShaderDatabase.MoteGlow), plusMat = MaterialPool.MatFrom('lab/rc-plus', ShaderDatabase.MoteGlow);
+// The sprites: white textures with the shape in alpha, coloured per draw, drawn additive. Made by
+// make_rainbow_crystal_textures.py (the formulas and what each picture is are in its docstring).
+const trailMat = MaterialPool.MatFrom('RimArt/RainbowCrystal/Trail', ShaderDatabase.MoteGlow), coreMat = MaterialPool.MatFrom('RimArt/RainbowCrystal/TrailCore', ShaderDatabase.MoteGlow);
+const starMat = MaterialPool.MatFrom('RimArt/RainbowCrystal/Star', ShaderDatabase.MoteGlow), plusMat = MaterialPool.MatFrom('RimArt/RainbowCrystal/Plus', ShaderDatabase.MoteGlow);
 
 const bump = x => (x >= 0 && x <= 1) ? Math.sin(x * Math.PI) : 0;
 const add = (a, b) => ({ x: a.x + b.x, z: a.z + b.z });
