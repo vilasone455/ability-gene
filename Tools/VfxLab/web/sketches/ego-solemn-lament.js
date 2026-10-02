@@ -17,7 +17,8 @@
 //         The wielder walks to the nearest pawn of any faction and stays next to it; the coffin
 //         stays where it rose and the cloud and its ring go with the wielder (changed 2026-10-02,
 //         PR #153). The funeral: a downed pawn left in the cloud keeps taking stacks and dies at 20
-//         (drawn in "corroded: the funeral"; not ported).
+//         (drawn in "corroded: the funeral"; ported: EgoSolemnLamentMark.Darken and DeadAt, the lift in
+//         EgoSolemnLamentButterflies.DrawMark, preview "solemn lament: corroded, the funeral").
 //         Overclock: the same coffin for 5 s, hostiles only (allies inside are skipped), mood -15.
 //         Overclock does not walk.
 //   Rule sliders (stacks per shot, cap, interval) are there for the balance pass: with the doc's

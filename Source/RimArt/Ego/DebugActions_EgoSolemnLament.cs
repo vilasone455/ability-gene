@@ -31,6 +31,9 @@ namespace RimArt
         [RimArtDebug("E.G.O.", "solemn lament: corroded, the coffin, aim 200")]
         public static void Coffin200() => Play(EgoSolemnLamentScene.Corroded, 200f);
 
+        [RimArtDebug("E.G.O.", "solemn lament: corroded, the funeral")]
+        public static void Funeral() => Play(EgoSolemnLamentScene.Funeral, 0f);
+
         [RimArtDebug("E.G.O.", "solemn lament: overclock, the coffin, hostiles only")]
         public static void Overclock() => Play(EgoSolemnLamentScene.Overclock, 0f);
 
@@ -45,13 +48,17 @@ namespace RimArt
             Find.CurrentMap.GetComponent<MapComponent_EgoSolemnLamentPreview>().Play(UI.MouseCell(), scene, aim);
     }
 
-    /// <summary>The sketch's three modes: the burst at a raider, the corroded coffin, the overclocked coffin (hostiles only, no face).</summary>
-    public enum EgoSolemnLamentScene { Burst, Corroded, Overclock }
+    /// <summary>
+    /// The sketch's modes: the burst at a raider, the corroded coffin, the corroded coffin long enough for the
+    /// funeral (both pawns go down and die), the overclocked coffin (hostiles only, no face).
+    /// </summary>
+    public enum EgoSolemnLamentScene { Burst, Corroded, Funeral, Overclock }
 
     /// <summary>
     /// Plays Solemn Lament on the sketch's clock with the sketch's defaults. The script is built on Play by
     /// <see cref="EgoSolemnLamentScript"/>: the burst's eight planned shots at a raider 5 cells off (it stops at
-    /// the 7th, which reaches the cap), or the coffin's 4 s of cloud. Corroded, the wielder walks along the aim to
+    /// the 7th, which reaches the cap), or the coffin's 4 s of cloud (23 s for the funeral, where both pawns go
+    /// down at the cap and die at the death count). Corroded, the wielder walks along the aim to
     /// the nearest pawn, an ally 5 cells off, and stops 1 cell short (<see cref="EgoSolemnLamentScript.WielderAt"/>);
     /// a raider stands 2.6 cells from where the walk ends at -70 degrees from the aim, so both are outside the
     /// radius at the start and inside on arrival; the coffin stays on the chosen cell. Overclock holds, with an
@@ -90,18 +97,24 @@ namespace RimArt
         }
 
         /// <summary>Cells the preview's wielder walks: corroded, to 1 cell short of the ally ScriptDist off; Overclock holds.</summary>
-        private static float Walk(EgoSolemnLamentScene scene) => scene == EgoSolemnLamentScene.Corroded ? Mathf.Max(0f, T.ScriptDist - T.Beside) : 0f;
+        private static float Walk(EgoSolemnLamentScene scene) => scene == EgoSolemnLamentScene.Overclock ? 0f : Mathf.Max(0f, T.ScriptDist - T.Beside);
+
+        /// <summary>Seconds of cloud the preview shows.</summary>
+        private static float Cloud(EgoSolemnLamentScene scene) => scene == EgoSolemnLamentScene.Funeral ? T.ScriptFuneralCloud : T.ScriptCloud;
+
+        /// <summary>The death count: corroded, a downed pawn keeps taking stacks up to it; Overclock stops at the cap (0).</summary>
+        private static int Death(EgoSolemnLamentScene scene) => scene == EgoSolemnLamentScene.Overclock ? 0 : Mathf.Max(T.Death, T.Cap + 1);
 
         /// <summary>The cloud's flight back into the coffin from where the preview's wielder stopped.</summary>
         private static float Home(EgoSolemnLamentScene scene, float aim)
         {
-            Vector2 stop = EgoSolemnLamentScript.WielderAt(Vector2.zero, EgoSolemnLamentGraphics.Dir(aim), Walk(scene), T.ScriptCloud, float.MaxValue);
+            Vector2 stop = EgoSolemnLamentScript.WielderAt(Vector2.zero, EgoSolemnLamentGraphics.Dir(aim), Walk(scene), Cloud(scene), float.MaxValue);
             return T.FarFly((stop - new Vector2(T.CoffinBackX, T.CoffinBackZ)).magnitude, T.ReturnTime);
         }
 
         public static float Duration(EgoSolemnLamentScene scene, float aim)
         {
-            if (scene != EgoSolemnLamentScene.Burst) return T.CoffinEnd(T.ScriptCloud, Home(scene, aim), T.ScriptHold);
+            if (scene != EgoSolemnLamentScene.Burst) return T.CoffinEnd(Cloud(scene), Home(scene, aim), T.ScriptHold);
             BurstPlan(new EgoSolemnLamentShot[T.ScriptShots], out float down, out float lastHit);
             return lastHit + T.ScriptHold + (down < 0f ? 0.3f : 0.4f);
         }
@@ -124,9 +137,20 @@ namespace RimArt
             phases.Add(("Coffin rises", 0f));
             phases.Add(("Opens", T.Rise));
             if (Walk(scene) > 0f) phases.Add(("Walks", T.WalkFrom));
-            if (T.Ticks(T.ScriptCloud, T.CloudTick) > 0) phases.Add(("Stack 1", T.TickAt(1, T.CloudTick)));
-            phases.Add(("Returns", T.CloudEnd(T.ScriptCloud) + 0.1f));
-            phases.Add(("Result", T.SinkAt(T.ScriptCloud, Home(scene, aim)) + T.Sink));
+            float cloud = Cloud(scene);
+            if (T.Ticks(cloud, T.CloudTick) > 0) phases.Add(("Stack 1", T.TickAt(1, T.CloudTick)));
+            var marks = new EgoSolemnLamentMark[3];
+            int count = Build(scene, aim, Vector2.zero, marks, new bool[3], new List<int>(), new List<float>(), new List<float>());
+            float firstDown = float.MaxValue, firstDead = float.MaxValue;
+            for (int i = 0; i < count; i++)
+            {
+                if (marks[i].Down) firstDown = Mathf.Min(firstDown, marks[i].DownAt);
+                if (marks[i].Dead) firstDead = Mathf.Min(firstDead, marks[i].DeadAt);
+            }
+            if (firstDown < float.MaxValue) phases.Add(($"Stack {T.Cap}: down", firstDown));
+            if (firstDead < float.MaxValue) phases.Add(($"Stack {Death(scene)}: dead", firstDead));
+            phases.Add(("Returns", T.CloudEnd(cloud) + 0.1f));
+            phases.Add(("Result", T.SinkAt(cloud, Home(scene, aim)) + T.Sink));
             return phases.ToArray();
         }
 
@@ -151,27 +175,40 @@ namespace RimArt
             {
                 walk = Walk(play);
                 home = Home(play, degrees);
-                if (play == EgoSolemnLamentScene.Corroded)
-                {
-                    peopleCount = 2;
-                    Mark(0, o + d * T.ScriptDist, o, false);
-                    Mark(1, o + d * walk + EgoSolemnLamentGraphics.Dir(aim + RaiderTurn) * RaiderOff, o, false);
-                }
-                else
-                {
-                    peopleCount = PeopleTurn.Length;
-                    for (int i = 0; i < peopleCount; i++)
-                        Mark(i, o + EgoSolemnLamentGraphics.Dir(aim + PeopleTurn[i]) * PeopleDist[i], o, PeopleAlly[i]);
-                }
-                float w = walk;
-                EgoSolemnLamentScript.Dives(people, skip, peopleCount, T.ScriptCloud, T.CloudTick, t => EgoSolemnLamentScript.WielderAt(o, d, w, T.ScriptCloud, t),
-                    new Vector2(o.x + T.CoffinBackX, o.y + T.CoffinBackZ), T.CloudRadius, diveSlots, diveTimes, diveFlys);
+                peopleCount = Build(play, degrees, o, people, skip, diveSlots, diveTimes, diveFlys);
             }
             active = true;
         }
 
+        /// <summary>
+        /// The coffin scenes' people and dives with the wielder's cell at <paramref name="o"/>: corroded, the ally the
+        /// walk ends beside and the raider beyond it; Overclock, its three. Returns how many people there are.
+        /// </summary>
+        private static int Build(EgoSolemnLamentScene play, float aim, Vector2 o, EgoSolemnLamentMark[] people, bool[] skip,
+            List<int> diveSlots, List<float> diveTimes, List<float> diveFlys)
+        {
+            Vector2 d = EgoSolemnLamentGraphics.Dir(aim);
+            float walk = Walk(play), cloud = Cloud(play);
+            int count;
+            if (play == EgoSolemnLamentScene.Overclock)
+            {
+                count = PeopleTurn.Length;
+                for (int i = 0; i < count; i++)
+                    Mark(people, skip, i, o + EgoSolemnLamentGraphics.Dir(aim + PeopleTurn[i]) * PeopleDist[i], o, PeopleAlly[i]);
+            }
+            else
+            {
+                count = 2;
+                Mark(people, skip, 0, o + d * T.ScriptDist, o, false);
+                Mark(people, skip, 1, o + d * walk + EgoSolemnLamentGraphics.Dir(aim + RaiderTurn) * RaiderOff, o, false);
+            }
+            EgoSolemnLamentScript.Dives(people, skip, count, cloud, T.CloudTick, Death(play), t => EgoSolemnLamentScript.WielderAt(o, d, walk, cloud, t),
+                new Vector2(o.x + T.CoffinBackX, o.y + T.CoffinBackZ), T.CloudRadius, diveSlots, diveTimes, diveFlys);
+            return count;
+        }
+
         /// <summary>Stand-in <paramref name="i"/> at <paramref name="home"/>; it falls away from the wielder's cell; Overclock skips it if <paramref name="skipped"/>.</summary>
-        private void Mark(int i, Vector2 home, Vector2 o, bool skipped)
+        private static void Mark(EgoSolemnLamentMark[] people, bool[] skip, int i, Vector2 home, Vector2 o, bool skipped)
         {
             people[i] = new EgoSolemnLamentMark(home, T.Cap, home.x >= o.x ? 90f : -90f, i * 2.1f);
             skip[i] = skipped;
@@ -223,15 +260,20 @@ namespace RimArt
                     shaken = 1;
                     Find.CameraDriver.shaker.DoShake(0.03f);
                 }
+                float cloud = Cloud(scene);
+                // The funeral's cover flies into the coffin's mouth as it is now.
+                EgoSolemnLamentPoint mouth = T.Mouth(new Vector2(o.x + T.CoffinBackX, o.y + T.CoffinBackZ),
+                    T.CoffinRise(s, T.SinkAt(cloud, Mathf.Max(T.ReturnTime, home))));
                 for (int i = 0; i < peopleCount; i++)
                 {
                     float fall = people[i].Fall(s);
+                    people[i].Mouth = mouth;
                     EgoSolemnLamentButterflies.DrawMark(people[i], s, people[i].Now(s), fall, people[i].FallTurn * fall, T.Span, map, i * 0.00001f);
                 }
                 EgoSolemnLamentGraphics.DrawCoffin(new EgoSolemnLamentCoffin
                 {
-                    Wielder = EgoSolemnLamentScript.WielderAt(o, EgoSolemnLamentGraphics.Dir(aim), walk, T.ScriptCloud, s), Aim = aim, Coffin = o,
-                    Radius = T.CloudRadius, Cloud = T.ScriptCloud, Home = home, Face = scene == EgoSolemnLamentScene.Corroded,
+                    Wielder = EgoSolemnLamentScript.WielderAt(o, EgoSolemnLamentGraphics.Dir(aim), walk, cloud, s), Aim = aim, Coffin = o,
+                    Radius = T.CloudRadius, Cloud = cloud, Home = home, Face = scene != EgoSolemnLamentScene.Overclock,
                     DiveSlots = diveSlots, DiveTimes = diveTimes, DiveFlys = diveFlys,
                 }, s, map);
             }

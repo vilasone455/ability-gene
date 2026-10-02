@@ -59,14 +59,21 @@ namespace RimArt
         /// toward <paramref name="heading"/> degrees (0 east, 90 north), its wings at <paramref name="flap"/> of
         /// the full span (the beat scales it across the body).
         /// </summary>
-        internal static void Butterfly(Vector2 q, float size, float heading, float flap, bool dark, float alpha, float layer)
+        internal static void Butterfly(Vector2 q, float size, float heading, float flap, bool dark, float alpha, float layer) =>
+            Butterfly(q, size, heading, flap, dark ? 1f : 0f, alpha, layer);
+
+        /// <summary>
+        /// The same with <paramref name="dark"/> 0 (pale) to 1 (dark) for one that turns: the funeral's cover going
+        /// dark, the lift going white. Fill, veins and edge blend between the two; the glow fades out as it darkens.
+        /// </summary>
+        internal static void Butterfly(Vector2 q, float size, float heading, float flap, float dark, float alpha, float layer)
         {
             if (alpha <= 0.01f) return;
             float rot = 90f - heading, sx = size * 0.5f * flap, sz = size * 0.5f;
-            DrawMesh(Fill, q, layer, sx, sz, rot, dark ? Fade(G.Ink, 0.94f * alpha) : Fade(G.Pale, 0.22f * alpha), solid);
-            if (!dark) DrawMesh(Halo, q, layer + 0.0002f, sx, sz, rot, Fade(G.White, 0.14f * alpha), whiteGlow);
-            DrawMesh(Veins, q, layer + 0.0003f, sx, sz, rot, Fade(dark ? G.Ash : G.White, (dark ? 0.75f : 0.95f) * alpha), solid);
-            DrawMesh(Edge, q, layer + 0.0004f, sx, sz, rot, Fade(G.White, (dark ? 0.85f : 0.95f) * alpha), solid);
+            DrawMesh(Fill, q, layer, sx, sz, rot, Color.Lerp(Fade(G.Pale, 0.22f * alpha), Fade(G.Ink, 0.94f * alpha), dark), solid);
+            if (dark < 1f) DrawMesh(Halo, q, layer + 0.0002f, sx, sz, rot, Fade(G.White, 0.14f * alpha * (1f - dark)), whiteGlow);
+            DrawMesh(Veins, q, layer + 0.0003f, sx, sz, rot, Color.Lerp(Fade(G.White, 0.95f * alpha), Fade(G.Ash, 0.75f * alpha), dark), solid);
+            DrawMesh(Edge, q, layer + 0.0004f, sx, sz, rot, Fade(G.White, Mathf.Lerp(0.95f, 0.85f, dark) * alpha), solid);
             DrawMesh(disc, q, layer + 0.0006f, size * 0.04f, size * 0.17f, rot, Fade(G.White, alpha), solid);
             DrawMesh(disc, q, layer + 0.0007f, size * 0.018f, size * 0.13f, rot, Fade(G.Soot, alpha), solid);
         }
@@ -81,6 +88,9 @@ namespace RimArt
         /// turned: resting butterflies sit on fixed points of the body and turn with it. A flying one lands in
         /// its flight time, eased out, and turns to its resting heading over the last 15 %; resting ones beat
         /// 0.7 times a second and draw over the hits, flying ones over those. The pips fade as the pawn falls.
+        /// The funeral: a resting pale butterfly turns dark over TurnTime s from its slot's <see cref="EgoSolemnLamentMark.TurnAt"/>;
+        /// once the pawn is dead each butterfly lifts off within 0.15 s (<see cref="LiftOff"/>) and a pale flash
+        /// covers the body for 0.3 s.
         /// <paramref name="shift"/> raises this pawn's pieces a little over another's at the same index.
         /// </summary>
         public static void DrawMark(EgoSolemnLamentMark mark, float s, Vector2 pos, float fall, float turn, float span, Map map, float shift = 0f)
@@ -95,7 +105,14 @@ namespace RimArt
                 Vector2 slot = T.SlotAt(pos, e.Slot, turn, out float slotHeading);
                 float gz = Mathf.Lerp(mark.Home.y + PawnBody.Ground, slot.y, fall), size = span * (e.Swarm ? 0.9f : 1f), u = age / e.Fly;
                 var toGround = new Vector2(slot.x, gz);
-                float toHeight = (slot.y - gz) / G.Lift;
+                float toHeight = (slot.y - gz) / G.Lift, turnAt = mark.TurnAt[e.Slot];
+                float dark = e.Dark ? 1f : turnAt >= 0f ? Mathf.Clamp01((s - turnAt) / T.TurnTime) : 0f;
+                float lifted = mark.Dead ? s - mark.DeadAt - Rand(i + 5100) * 0.15f : -1f;
+                if (lifted >= 0f)
+                {
+                    LiftOff(mark, i, lifted, toGround, toHeight, size, dark, sun, strength, Overhead + 0.14f + i * 0.0008f + shift);
+                    continue;
+                }
                 if (u < 1f)
                 {
                     EgoSolemnLamentPoint q = T.FlyAt(e.FromGround, e.FromHeight, e.Via, e.Arc, e.Seed, u, toGround, toHeight);
@@ -106,9 +123,48 @@ namespace RimArt
                         Overhead + 0.14f + i * 0.0008f + shift);
                 }
                 else
-                    Butterfly(slot, size, slotHeading + 8f * Mathf.Sin(s * 1.3f + i), T.FlapAt(s, 0.7f, 0.55f, i), e.Dark, 1f, Overhead + 0.1f + i * 0.0008f + shift);
+                    Butterfly(slot, size, slotHeading + 8f * Mathf.Sin(s * 1.3f + i), T.FlapAt(s, 0.7f, 0.55f, i), dark, 1f, Overhead + 0.1f + i * 0.0008f + shift);
             }
             if (mark.Flights.Count > 0 && fall < 0.6f) Pips(mark, s, new Vector2(pos.x, pos.y + PawnBody.HeadTop), 1f - fall / 0.6f, Overhead + 0.2f + shift);
+            if (mark.Dead)
+            {
+                float a = s - mark.DeadAt;
+                if (a >= 0f && a < 0.3f) Sprite(T.SlotAt(pos, 0, turn, out _), 1.3f, 1.1f, Fade(G.Pale, 0.5f * (1f - a / 0.3f)), glow, Overhead + 0.13f + shift);
+            }
+        }
+
+        /// <summary>
+        /// The funeral's lift, <paramref name="a"/> s after butterfly <paramref name="i"/> starts it: it rises from
+        /// where it rests 0.6 to 1.4 cells over <see cref="EgoSolemnLamentTiming.LiftTime"/> s, drifting up to 0.3
+        /// cells, turning from its <paramref name="dark"/> to white; then it flies into the coffin's mouth
+        /// (<see cref="EgoSolemnLamentMark.Mouth"/>) at FarSpeed, never in under 0.7 s, shrinking to half and fading
+        /// at the end, as the cloud flies home. After that it is gone: the coffin keeps it.
+        /// </summary>
+        private static void LiftOff(EgoSolemnLamentMark mark, int i, float a, Vector2 restGround, float restHeight, float size, float dark,
+            Vector2 sun, float strength, float layer)
+        {
+            var topGround = new Vector2(restGround.x + (Rand(i + 5300) - 0.5f) * 0.6f, restGround.y + (Rand(i + 5310) - 0.5f) * 0.6f);
+            float topHeight = restHeight + 0.6f + 0.8f * Rand(i + 5200), alpha = 1f;
+            EgoSolemnLamentPoint q, next;
+            if (a < T.LiftTime)
+            {
+                float u = a / T.LiftTime;
+                q = T.FlyAt(restGround, restHeight, Vector2.zero, 0f, i + 5400, u, topGround, topHeight);
+                next = T.FlyAt(restGround, restHeight, Vector2.zero, 0f, i + 5400, Mathf.Min(1f, u + 0.03f), topGround, topHeight);
+            }
+            else
+            {
+                EgoSolemnLamentPoint mouth = mark.Mouth;
+                float fly = T.FarFly((mouth.Ground - topGround).magnitude, T.ReturnTime), u = (a - T.LiftTime) / fly;
+                if (u >= 1f) return;
+                var via = new Vector2((Rand(i + 5500) - 0.5f) * 1.2f, (Rand(i + 5510) - 0.5f) * 1.2f);
+                q = T.FlyAt(topGround, topHeight, via, 0.4f, i + 5600, u, mouth.Ground, mouth.Height);
+                next = T.FlyAt(topGround, topHeight, via, 0.4f, i + 5600, Mathf.Min(1f, u + 0.03f), mouth.Ground, mouth.Height);
+                size *= 1f - 0.5f * u;
+                alpha = 1f - Smooth((u - 0.7f) / 0.3f);
+            }
+            Shadow(q.Ground, Mathf.Max(0f, q.Height), size, sun, strength, alpha);
+            Butterfly(q.Screen, size, G.Heading(q, next), T.FlapAt(a, 3f, 0.15f, i), dark * (1f - Smooth(a / T.LiftTime)), alpha, layer);
         }
 
         /// <summary>The stack count 0.2 over the head top: one pip per stack of the cap, 0.1 apart at most, each filled in the colour of the butterfly that made it.</summary>
