@@ -96,10 +96,10 @@ namespace RimArt
             Vector3 centre = cell.ToVector3Shifted();
             origin = new Vector2(centre.x, centre.z);
             float light = LastPrismGraphics.Light(map);
-            CompProperties_LastPrismFire p = CompProperties_LastPrismFire.Of;
+            LastPrismNumbers p = LastPrismNumbers.Of;
             var shot = new LastPrismShot
             {
-                Wielder = origin, Aim = aim, Join = p.joinSeconds, Fan = p.fanDegrees, Range = p.Range, Width = p.width, HitReach = p.fanReach,
+                Wielder = origin, Aim = aim, Join = p.joinSeconds, Fan = p.fanDegrees, Range = p.range, Width = p.width, HitReach = p.fanReach,
                 Walls = walls, Pawns = pawns, Roofed = scene == LastPrismScene.Roofed, Charging = scene == LastPrismScene.Charges,
                 Level = script.Level(s, light), Store = LastPrismScript.Store,
             };

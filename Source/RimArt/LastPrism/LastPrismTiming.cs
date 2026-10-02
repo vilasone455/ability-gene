@@ -15,9 +15,9 @@ namespace RimArt
     /// prism rolls about its long axis while firing (<see cref="Roll"/>).
     ///
     /// The balance numbers (range, store, the join time, the fan's angle, the beam's width, the hit reach, the
-    /// turn rate and the burns) are XML fields on AG_LastPrism_Fire and AG_LastPrism (<see cref="CompProperties_LastPrismFire"/>,
-    /// <see cref="CompProperties_LastPrism"/>): the rules, the picture (through <see cref="LastPrismShot"/>) and the
-    /// previews all read them from there. Here is only the shape and timing of the picture.
+    /// turn rate and the burns) are XML fields on AG_LastPrism_Fire and AG_LastPrism (CompProperties_LastPrismFire,
+    /// CompProperties_LastPrism): the rules read them there, the picture through <see cref="LastPrismShot"/>, and the
+    /// previews through <see cref="LastPrismNumbers"/>. Here is only the shape and timing of the picture.
     ///
     /// The beam geometry is in double, as the sketch's is, because <see cref="LastPrismScript"/> decides
     /// who is hit with it and must down the same pawns on the same frame as the sketch.
