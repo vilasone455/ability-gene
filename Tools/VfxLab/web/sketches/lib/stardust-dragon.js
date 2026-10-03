@@ -26,11 +26,12 @@ import { rect } from './chain-sickle.js';
 const clamp01 = Mathf.Clamp01, D2R = Mathf.Deg2Rad;
 export const ArtOf = { head: 48, body1: 48, body2: 48, tail: 64 };   // Terraria px across a piece's texture
 export const Shift = { head: 0, body1: 0, body2: 0, tail: -14 };     // px along the line of flight from the piece's centre to its texture's
+const DrawScale = { head: 1.15, body1: 1, body2: 1, tail: 1 };       // the head drawn a little bigger, so it reads at a normal zoom
 const Tex = 256;
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
 // Terraria's palette (the dragon, the Stardust Cell and Guardian share it).
 const Cream = hex('#fffcc8'), GoldLight = hex('#ffdc7f'), Gold = hex('#ffb400'), GoldDark = hex('#b97d2e'), Outline = hex('#5d3a1e');
-const Ice = hex('#c4f7ff'), BlueLight = hex('#88e2ff'), Cyan = hex('#23c8fe'), Blue = hex('#0e9ae6'), Deep = hex('#066aff');
+const Ice = hex('#c4f7ff'), BlueLight = hex('#88e2ff'), Cyan = hex('#23c8fe'), BlueMid = hex('#16adfe'), Blue = hex('#0e9ae6'), Deep = hex('#066aff');
 export const IceColour = new Color(...Ice), CyanColour = new Color(...Cyan), LightColour = new Color(.75, .85, 1);   // Ice Torch light, (0.75, 0.85, 1.4) clamped
 
 // --- distance functions, in Terraria px; negative inside ------------------------------------------------------------
@@ -83,7 +84,7 @@ function banded(P, f, p, look, edge) {
   P.over(Math.max(f(p), -up(.7)), line);
 }
 const GoldLook = [Outline, GoldDark, Gold, GoldLight, Cream];
-const BlueLook = [Deep, Deep, Blue, Cyan, BlueLight];
+const BlueLook = [Deep, Blue, BlueMid, Cyan, BlueLight];
 const PlateLook = [Deep, Cyan, BlueLight, Ice, Ice];
 
 // --- the pieces: shapes in Terraria px, x toward the head, y toward the spine; the spine line is y = 3.5 --------------
@@ -95,9 +96,9 @@ const Ribs = [-16 / 3, 0, 16 / 3];       // three ribs per 16 px of body, so the
 const SpikeShape = [[7.5, 5], [1.5, 6.5], [-8, 20]];
 const Comb = Ribs.map(x => [[x + .4, 8], [x + 2.6, 8], [x - .6, 12.8]]);   // body 2: the rib tips stand up as three small spikes
 function body(P, p, spike) {
-  const belly = q => box(q, [0, -5], [10.5, 4.4], 2);             // 21 px long, so neighbouring bellies overlap into one strip
+  const belly = q => box(q, [0, -5.6], [10.5, 5.2], 2);           // 21 px long, so neighbouring bellies overlap into one strip
   banded(P, belly, p, BlueLook, .9);
-  for (const x of [-4, 4]) banded(P, q => box(q, [x, -5.3], [2.7, 2.7], 1), p, PlateLook, 0);
+  for (const x of [-4, 4]) banded(P, q => box(q, [x, -6], [2.9, 3.1], 1), p, PlateLook, 0);
   const ribs = Ribs.map(x => q => capsule(q, [x + 1.4, 9], [x - 1.4, -4.6], 1.25));   // they stop halfway down the belly
   const gold = union(q => capsule(q, [-10, Spine], [10, Spine], 3), ...ribs, ...(spike ? [q => poly(q, SpikeShape)] : Comb.map(c => q => poly(q, c))));
   banded(P, gold, p, GoldLook, 1.1);
@@ -176,14 +177,26 @@ const plane10Flip = (() => {
 })();
 const White = new Color(1, 1, 1);
 
-// One piece at screen point c, flying at rot (radians anticlockwise from east), flip -1 when flying west; cells is
-// the size of one Terraria pixel on screen (px x the dragon's scale); alpha 0..1 (the summon and end fades).
-export function piece(kind, c, rot, flip, cells, alpha, layer) {
+// One piece at screen point c, flying at rot (radians anticlockwise from east), flip -1 when it is mirrored (flying
+// west); since: seconds since it last mirrored, for the roll; cells is the size of one Terraria pixel on screen (px
+// x the dragon's scale); alpha 0..1 (the summon and end fades). The roll: a piece that has just mirrored squeezes
+// flat across its line of flight and opens out again on its new side over Roll seconds, so a turn past north or
+// south rolls down the body instead of snapping piece by piece (Terraria snaps).
+export const Roll = .16;
+export function piece(kind, c, rot, flip, since, cells, alpha, layer) {
   if (alpha <= 0) return;
-  const deg = rot / D2R, mesh = flip < 0 ? plane10Flip : MeshPool.plane10, angle = flip < 0 ? 180 - deg : -deg;
-  const size = ArtOf[kind] * cells, shift = Shift[kind] * cells, x = c.x + Math.cos(rot) * shift, z = c.z + Math.sin(rot) * shift;
-  draw(mesh, x, layer, z, size, size, angle, White.withAlpha(.5 * alpha), Mats[kind].normal);
-  draw(mesh, x, layer + .0002, z, size, size, angle, White.withAlpha(.5 * alpha), Mats[kind].glow);
+  const u = clamp01(since / Roll), side = u < .5 ? -flip : flip, across = Math.max(.06, Math.abs(Math.cos(Math.PI * u)));
+  const deg = rot / D2R, mesh = side < 0 ? plane10Flip : MeshPool.plane10, angle = side < 0 ? 180 - deg : -deg;
+  const size = ArtOf[kind] * cells * DrawScale[kind], shift = Shift[kind] * cells, x = c.x + Math.cos(rot) * shift, z = c.z + Math.sin(rot) * shift;
+  draw(mesh, x, layer, z, size, size * across, angle, White.withAlpha(.5 * alpha), Mats[kind].normal);
+  draw(mesh, x, layer + .0002, z, size, size * across, angle, White.withAlpha(.5 * alpha), Mats[kind].glow);
+}
+// The soft cyan glow under a piece, so the dragon reads as light at a normal zoom (not Terraria's: its blue glows
+// only through the half-additive blend). Drawn below every piece.
+export function aura(c, rot, cells, alpha, layer) {
+  if (alpha <= 0) return;
+  sprite(c, 30 * cells, 20 * cells, CyanColour.withAlpha(.2 * alpha), glow, layer, -rot / D2R);
+  sprite(c, 48 * cells, 34 * cells, CyanColour.withAlpha(.07 * alpha), glow, layer - .0002, -rot / D2R);
 }
 
 // One Ice Torch dust at age (seconds) of life: it swells over the first 0.1 s and shrinks away; faint is the

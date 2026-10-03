@@ -10,10 +10,13 @@ export const Tick = 1 / 60;
 // Head, attacking: speed added along the line to the target, px/tick², by distance; braking while it moves
 // away; it stops adding speed within Coast x the target's hit box diagonal, so it flies through and overshoots.
 const AttackAccel = [.6, .9, 1.2], AttackNear = [600, 300], AttackTop = 30, Brake = .8, BrakeDot = .25, Coast = .75;
-// Not Terraria's: while it brakes it is also pulled sideways by this share of its speed-up, toward the side it is
-// already drifting to. Terraria's targets walk and fall, so its passes come back on curves; a pawn standing still
-// would make the head reverse on its own line and fold the body back on itself.
-export const LoopPull = .35;              // .5 and more circles a pawn standing still without passing through it
+// Not Terraria's: past the target the head coasts on Overshoot px before it brakes, and while it moves away it is
+// pulled sideways by LoopPull of its speed-up, toward the side it is already drifting to, so each pass ends in a loop
+// clear of the target. Terraria's targets walk and fall, so its passes come back on curves; a pawn standing still
+// would make the head reverse on its own line, right at the pawn, and fold the body back on itself. Checked over 16
+// layouts (2026-10-03): every pawn still goes down; a pull of .7 or a brake weaker than Terraria's .8 makes the head
+// orbit a pawn that stands still without passing through it.
+const Overshoot = 54, LoopPull = .55;
 // Head, idle: speed added toward the wielder on each axis separately, px/tick², by distance; dead zones
 // across and up and down; slows inside Settle; a pull north (Terraria's up) while it is slow north-south.
 const IdleAccel = [.2, .12, .06], IdleNear = [200, 140], DeadX = 20, DeadZ = 10, Settle = 100, IdleDamp = .96, DampAbove = 2;
@@ -26,6 +29,7 @@ const PawnHalf = 9;                       // px: half a humanoid's width, added 
 const FadeStep = 42 / 255;                // a summoned piece goes from invisible to full in 7 ticks; ending mirrors it
 const DustChance = 1 / 30, FadeDust = 2;  // per piece per tick; dust per tick while a piece fades
 const DustSpeed = 2;                      // px/tick: Dust.NewDust gives each dust up to this much drift on each axis
+const FlipSlack = Math.sin(10 * Math.PI / 180);   // a piece mirrors once its heading is 10 degrees past north or south (Terraria: at 0)
 const ShootSpeed = 10;                    // px/tick: the staff's "velocity 10", the head's speed when it is summoned
 
 const clamp01 = x => Math.max(0, Math.min(1, x));
@@ -43,7 +47,7 @@ export function simulate(setup) {
   const pairs0 = rules.firstPairs ?? 1, MaxIds = 2 + 2 * (pairs0 + rules.maxCasts - 1);   // ids per step: head, tail and every body pair
   const toPx = q => ({ x: q.x / px, z: q.z / px });
   const W = n + 1, X = new Float32Array(W * MaxIds), Z = new Float32Array(W * MaxIds), R = new Float32Array(W * MaxIds);
-  const A = new Float32Array(W * MaxIds), F = new Int8Array(W * MaxIds), order = new Int8Array(W * MaxIds), count = new Uint8Array(W);
+  const A = new Float32Array(W * MaxIds), F = new Int8Array(W * MaxIds), FT = new Float32Array(W * MaxIds), order = new Int8Array(W * MaxIds), count = new Uint8Array(W);
   const scaleAt = new Float32Array(W), targets = new Int8Array(W).fill(-1), live = new Uint8Array(W);
   const people = setup.people.map(c => ({ ...c, total: 0, last: -Infinity, down: Infinity, dmg: new Float32Array(W), hits: [] }));
   const where = (j, s) => people[j].at(Math.min(s, people[j].down));
@@ -51,13 +55,15 @@ export function simulate(setup) {
   let chain = [], out = false, ending = false, lifeEnd = Infinity, casts = 0, pairs = 0, endAt = Infinity, goneAt = Infinity;
   let vx = 0, vz = 0, target = -1;
   const dust = [], hits = [], downs = [], events = [];
-  const turn = 1 - Math.pow(1 - Follow, pace), loop = setup.loopPull ?? LoopPull;
+  const turn = 1 - Math.pow(1 - Follow, pace);
 
   const addDust = (s, x, z, k, id, faint) => {
     const r = (q) => hash(k, id * 13 + q, 4407);
     dust.push({ t: s, x: x * px, z: z * px, vx: (r(1) * 2 - 1) * DustSpeed, vz: (r(2) * 2 - 1) * DustSpeed, faint, seed: k * 131 + id * 7 + dust.length });
   };
-  const spawn = (id, at, rot) => { pieces[id] = { x: at.x, z: at.z, rot, flip: Math.cos(rot) < 0 ? -1 : 1, alpha: 0, fading: 1, px: at.x, pz: at.z }; };
+  const spawn = (id, at, rot) => { pieces[id] = { x: at.x, z: at.z, rot, flip: Math.cos(rot) < 0 ? -1 : 1, flipAt: -99, alpha: 0, fading: 1, px: at.x, pz: at.z }; };
+  // Terraria mirrors a piece by the sign of its x heading, so the gold stays north; here with a little slack.
+  const mirror = (m, s) => { const c = Math.cos(m.rot); if (m.flip * c < -FlipSlack) { m.flip = -m.flip; m.flipAt = s; } };
 
   for (let k = 0; k <= n; k++) {
     const s = t0 + k * dt, w = toPx(setup.wielder(s));
@@ -109,12 +115,14 @@ export function simulate(setup) {
       if (target >= 0) {
         const q = toPx(where(target, s)), gx = q.x - h.x, gz = q.z - h.z, d = Math.hypot(gx, gz);
         const a = d < AttackNear[1] ? AttackAccel[2] : d < AttackNear[0] ? AttackAccel[1] : AttackAccel[0];
-        if (d > TargetDiag * Coast) {
+        const away = vx * gx + vz * gz < 0;
+        if (d > TargetDiag * Coast && !(away && d < Overshoot)) {
           vx += gx / d * a * pace; vz += gz / d * a * pace;
-          if (vx * gx + vz * gz < BrakeDot) {
+          const along = vx * gx + vz * gz;
+          if (along < BrakeDot) {
             const f = Math.pow(Brake, pace), side = Math.sign(vz * gx - vx * gz) || 1;   // which side of the line it drifts to
             vx *= f; vz *= f;
-            vx += -gz / d * side * a * loop * pace; vz += gx / d * side * a * loop * pace;
+            if (along < 0) { vx += -gz / d * side * a * LoopPull * pace; vz += gx / d * side * a * LoopPull * pace; }
           }
         }
         const v = Math.hypot(vx, vz); if (v > AttackTop) { vx *= AttackTop / v; vz *= AttackTop / v; }
@@ -130,7 +138,7 @@ export function simulate(setup) {
       }
       chain.forEach(id => { pieces[id].px = pieces[id].x; pieces[id].pz = pieces[id].z; });
       h.x += vx * pace; h.z += vz * pace;
-      if (vx || vz) { h.rot = Math.atan2(vz, vx); h.flip = vx < 0 ? -1 : 1; }
+      if (vx || vz) { h.rot = Math.atan2(vz, vx); mirror(h, s); }
       // The body: each piece turns toward its parent's angle by a share of the gap, then sits Gap behind it.
       for (let i = 1; i < chain.length; i++) {
         const P = pieces[chain[i - 1]], M = pieces[chain[i]];
@@ -140,7 +148,7 @@ export function simulate(setup) {
           [ux, uz] = [ux * c - uz * sn, ux * sn + uz * c];
         }
         const L = Math.hypot(ux, uz);
-        if (L > 1e-6) { M.rot = Math.atan2(uz, ux); M.x = P.x - ux / L * Gap * scale; M.z = P.z - uz / L * Gap * scale; M.flip = ux < 0 ? -1 : 1; }
+        if (L > 1e-6) { M.rot = Math.atan2(uz, ux); M.x = P.x - ux / L * Gap * scale; M.z = P.z - uz / L * Gap * scale; mirror(M, s); }
       }
       // Fades and dust.
       chain.forEach(id => {
@@ -175,12 +183,12 @@ export function simulate(setup) {
     count[k] = chain.length; scaleAt[k] = scale; targets[k] = out && !ending ? target : -1; live[k] = out ? 1 : 0;
     chain.forEach((id, i) => {
       const o = k * MaxIds + id, m = pieces[id];
-      X[o] = m.x * px; Z[o] = m.z * px; R[o] = m.rot; A[o] = m.alpha; F[o] = m.flip; order[k * MaxIds + i] = id;
+      X[o] = m.x * px; Z[o] = m.z * px; R[o] = m.rot; A[o] = m.alpha; F[o] = m.flip; FT[o] = m.flipAt; order[k * MaxIds + i] = id;
     });
     people.forEach(c => { c.dmg[k] = c.total; });
   }
   const step = s => Math.max(0, Math.min(n, Math.round((s - t0) / dt)));
-  return { dt, t0, t1, n, step, ids: MaxIds, X, Z, R, A, F, order, count, scale: scaleAt, targets, live, people, where, dust, hits, downs, events, endAt, goneAt, px };
+  return { dt, t0, t1, n, step, ids: MaxIds, X, Z, R, A, F, FT, order, count, scale: scaleAt, targets, live, people, where, dust, hits, downs, events, endAt, goneAt, px };
 }
 
 // The live dust at time s: dust is born in time order, so a binary search finds the first one young enough.
