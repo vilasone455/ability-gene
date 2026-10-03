@@ -5,7 +5,7 @@
        Accelerator and Pain reuse abilities that already work in game; Inumaki's six words and Shikamaru's
        Shadow plexus are ported kits and only their Echoes grant them; Vergil has no
        abilities until his kit is ported and is here to exercise the kill-with-weapon trial.
-       Shirou's one ability so far is Unlimited Blade Works, not yet played by hand. -->
+       Shirou has Reinforcement, Trace On and Unlimited Blade Works, with its commands inside the world. -->
   <RimArt.EchoDef Name="AG_EchoBase" Abstract="True">
     <bodyType>Thin</bodyType>
   </RimArt.EchoDef>
@@ -31,23 +31,16 @@
         <trait>Abrasive</trait>
       </li>
     </forcedTraits>
+    <!-- Brain strain is his cost (AG_VectorStrain): none of the five costs Echo charge. -->
     <abilities>
       <li>AG_VectorReflection</li>
       <li>AG_VectorSurge</li>
       <li>AG_VectorShove</li>
+      <li>AG_VectorPlasma</li>
+      <li>AG_VectorFlick</li>
     </abilities>
     <manifestHediff>AG_EchoManifest_Accelerator</manifestHediff>
     <upkeepPerHour>12</upkeepPerHour>
-    <castCosts>
-      <li>
-        <ability>AG_VectorSurge</ability>
-        <cost>10</cost>
-      </li>
-      <li>
-        <ability>AG_VectorShove</ability>
-        <cost>8</cost>
-      </li>
-    </castCosts>
     <wealth>6000</wealth>
     <hairColor>(0.95, 0.95, 0.95)</hairColor>
   </RimArt.EchoDef>
@@ -237,7 +230,9 @@
 
   <!-- Shirou: the way in is Origin: Blade (Melee 14, Crafting 12, five blades studied, then awakened),
        so the Trial is the trait itself. No forced trait: awakening Origin: Blade already cost psycasts
-       and ranged weapons for life. Unlimited Blade Works also keeps its own 2-day cooldown. -->
+       and ranged weapons for life. His three magics (AG_Trace_Abilities.xml): Reinforcement (no charge),
+       Trace On (copies of the blades he studied; Origin: Blade's study keeps filling its list after
+       awakening) and Unlimited Blade Works, which also keeps its own 2-day cooldown. -->
   <RimArt.EchoDef ParentName="AG_EchoBase">
     <defName>AG_Echo_Shirou</defName>
     <label>Shirou</label>
@@ -250,11 +245,18 @@
       </li>
     </trials>
     <abilities>
+      <li>AG_Trace_Reinforcement</li>
+      <li>AG_Trace_On</li>
       <li>AG_Trace_UnlimitedBladeWorks</li>
     </abilities>
     <manifestHediff>AG_EchoManifest_Shirou</manifestHediff>
     <upkeepPerHour>12</upkeepPerHour>
+    <!-- Reinforcement costs no charge. -->
     <castCosts>
+      <li>
+        <ability>AG_Trace_On</ability>
+        <cost>10</cost>
+      </li>
       <li>
         <ability>AG_Trace_UnlimitedBladeWorks</ability>
         <cost>40</cost>

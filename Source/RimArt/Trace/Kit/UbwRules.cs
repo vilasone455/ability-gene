@@ -20,11 +20,54 @@ namespace RimArt
         /// <summary>The world lasts this long by verse, counted from the moment everyone is taken.</summary>
         public List<float> worldSecondsByVerse = new List<float> { 20f, 25f, 30f };
 
-        /// <summary>The world the ability opens: true for v2 (plates with height, the north sky with gears), false for the flat v1. The debug window opens either.</summary>
-        public bool worldV2 = true;
-
-        /// <summary>Every sword a command uses takes this long off the world. For the commands, which are not built yet.</summary>
+        /// <summary>Every sword a command takes out of the ground takes this long off the world, as it leaves. The commands cost no charge.</summary>
         public float swordCostSeconds = 0.5f;
+
+        /// <summary>Full Open: while charging, one sword pulls out of the ground this often, nearest the target first.</summary>
+        public float fullOpenSwordSeconds = 0.1f;
+
+        /// <summary>Full Open: the most swords hovering at once; the rest wait.</summary>
+        public int fullOpenSwords = 30;
+
+        /// <summary>Full Open: Release fires the hovering swords one after another within this long.</summary>
+        public float fullOpenVolleySeconds = 0.3f;
+
+        /// <summary>Full Open: a fired sword flies this many cells a second.</summary>
+        public float fullOpenSpeed = 16f;
+
+        /// <summary>Pin: this many swords, the nearest to the target, fly in and pin it.</summary>
+        public int pinSwords = 4;
+
+        /// <summary>Pin: Cut damage of each pinning sword.</summary>
+        public float pinDamage = 2f;
+
+        /// <summary>Pin: how long the target stays pinned (AG_UbwPinned caps Moving at 0, so it counts as downed).</summary>
+        public float pinSeconds = 12f;
+
+        /// <summary>Pin: a pinning sword flies this many cells a second.</summary>
+        public float pinSpeed = 16f;
+
+        /// <summary>Draw: the sword taken is the one nearest the clicked cell within this many cells.</summary>
+        public float drawPickRadius = 1.5f;
+
+        /// <summary>Draw: the sword flies to the caster this many cells a second.</summary>
+        public float drawSpeed = 22f;
+
+        /// <summary>Intercept: a sword needs this long to leave the ground and turn onto the shot's path.</summary>
+        public float interceptRiseSeconds = 0.1f;
+
+        /// <summary>Intercept: a sword flies to the meeting point this many cells a second.</summary>
+        public float interceptSpeed = 20f;
+
+        /// <summary>Intercept: a shot is met no nearer than this many cells to where it was fired from.</summary>
+        public float interceptClearOfGun = 1.2f;
+
+        /// <summary>Intercept: a shot is met at least this many cells short of the pawn it was aimed at (an explosive its blast radius further).</summary>
+        public float interceptShortOfTarget = 1.5f;
+
+        /// <summary>A sword hits as its weapon's strongest Cut or Stab tool; a weapon with neither hits for this much Cut, with this armour penetration.</summary>
+        public float swordFallbackDamage = 10f;
+        public float swordFallbackPenetration = 0.15f;
 
         private static readonly UbwRules fallback = new UbwRules();
 

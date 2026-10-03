@@ -13,12 +13,11 @@
 
   <AG_StrainInjury>{0}'s temporal strain tore something in their {1}. The damage is permanent.</AG_StrainInjury>
 
-  <AG_RecursionUp>{0} raised the phase barrier. Nothing will reach them - and they have stopped breathing.</AG_RecursionUp>
-  <AG_RecursionCollapsed>{0}'s phase barrier dropped. Everything that was on its way resumed at once.</AG_RecursionCollapsed>
-  <AG_RecursionCloseLabel>Drop barrier</AG_RecursionCloseLabel>
-  <AG_RecursionCloseDesc>Drop the phase barrier and start breathing again. Every suspended round and unfinished blow resumes immediately.</AG_RecursionCloseDesc>
+  <AG_RecursionUp>{0} raised Infinity. Nothing moving toward them arrives, and they have stopped breathing.</AG_RecursionUp>
+  <AG_RecursionCollapsed>{0}'s Infinity dropped. Everything that was on its way resumed at once.</AG_RecursionCollapsed>
+  <AG_RecursionCloseLabel>Drop Infinity</AG_RecursionCloseLabel>
+  <AG_RecursionCloseDesc>Drop Infinity and start breathing again. Every held round and unfinished blow resumes at once.</AG_RecursionCloseDesc>
 
-  <AG_ShoveNeedsPawn>Must target a person, animal or mech.</AG_ShoveNeedsPawn>
 
   <AG_VectorEditNothing>Nothing is flying within reach of {0}.</AG_VectorEditNothing>
   <AG_VectorEditCaught>{0}'s reflex booster caught {1} rounds in flight.</AG_VectorEditCaught>

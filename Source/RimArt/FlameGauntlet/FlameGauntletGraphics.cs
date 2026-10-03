@@ -49,6 +49,10 @@ namespace RimArt
 
         /// <summary>Hand height, cells.</summary>
         internal const float HandH = 0.5f;
+        /// <summary>The raised hand's height as drawn: HandH in the lab, fitted to a real pawn in game (PawnFit, +0.06 on screen).</summary>
+        internal static float Hand => PawnFit.H(HandH);
+        /// <summary>The hand's height off the floor for its shadow: a real pawn's hand is higher.</summary>
+        internal static float HandShadow => HandH * PawnFit.Body;
         /// <summary>The forearm plate, elbow to wrist, and its width.</summary>
         internal const float ForearmLen = 0.42f, ForearmW = 0.15f;
         internal const float Lift = SixPathsHeight.Lift;
@@ -160,11 +164,11 @@ namespace RimArt
         internal static void BurningPawn(Vector2 pos, float s, float amount = 1f, int seed = 5)
         {
             if (amount <= 0f) return;
-            Sprite(new Vector2(pos.x, pos.y + 0.3f), 0.9f * amount + 0.2f, 1.0f * amount + 0.2f, Fade(Flame, 0.30f * amount), glow, PawnLayer + 0.02f);
+            Sprite(new Vector2(pos.x, pos.y + PawnFit.Y(0.3f)), 0.9f * amount + 0.2f, 1.0f * amount + 0.2f, Fade(Flame, 0.30f * amount), glow, PawnLayer + 0.02f);
             for (int i = 0; i < PawnSpots.Length; i++)
             {
                 Vector3 q = PawnSpots[i];
-                Tongue(new Vector2(pos.x + q.x, pos.y + q.y), q.z * amount, 0.11f * (0.5f + 0.5f * amount), s, seed * 3 + i, 1f, PawnLayer + 0.03f + i * 0.001f);
+                Tongue(PawnFit.At(pos, q.x, q.y), q.z * amount, 0.11f * (0.5f + 0.5f * amount), s, seed * 3 + i, 1f, PawnLayer + 0.03f + i * 0.001f);
             }
         }
 
@@ -219,8 +223,8 @@ namespace RimArt
         internal static FlameGauntletPose Gauntlet(Vector2 hand, float degrees, float heat, float maxHeat, float overheatAt, float s,
             Vector2 sun, float strength, float open = 0f, float lean = 0f, float alpha = 1f)
         {
-            FlameGauntletPose g = Pose(Raised(hand, HandH), degrees);
-            Vector2 p = g.Hand, d = g.D, sd = hand + sun * HandH;
+            FlameGauntletPose g = Pose(Raised(hand, Hand), degrees);
+            Vector2 p = g.Hand, d = g.D, sd = hand + sun * HandShadow;
             float layer = g.Layer;
 
             // Shadow: forearm and fist in one dark tone on the floor.
@@ -329,14 +333,15 @@ namespace RimArt
         internal static void Overheating(Vector2 pos, float s, float over, int ticks = 0, float flash = 0f)
         {
             if (over <= 0f && ticks <= 0) return;
-            if (over > 0f) Circle(new Vector2(pos.x, pos.y + 0.1f), 0.36f + 0.03f * Mathf.Sin(s * 6f), 0.35f * over, PawnLayer + 0.03f, Hot);
+            // On the body: fitted to a real pawn in game (PawnFit).
+            if (over > 0f) Circle(PawnFit.At(pos, 0f, 0.1f), (0.36f + 0.03f * Mathf.Sin(s * 6f)) * PawnFit.Body, 0.35f * over, PawnLayer + 0.03f, Hot);
             for (int i = 0; i < ticks; i++)
             {
-                var c = new Vector2(pos.x + 0.16f + (Rand(i + 700) - 0.5f) * 0.06f, pos.y + 0.36f + (Rand(i + 710) - 0.5f) * 0.06f);
+                Vector2 c = PawnFit.At(pos, 0.16f, 0.36f) + new Vector2((Rand(i + 700) - 0.5f) * 0.06f, (Rand(i + 710) - 0.5f) * 0.06f);
                 Disc(c, PawnLayer + 0.012f, 0.045f, 0.04f, Fade(Char, 0.9f));
                 Disc(c, PawnLayer + 0.013f, 0.025f, 0.022f, Fade(Ember, 0.9f));
             }
-            if (flash > 0f) Sprite(new Vector2(pos.x + 0.16f, pos.y + 0.36f), 0.35f, 0.3f, Fade(Hot, 0.8f * flash), glow, PawnLayer + 0.04f);
+            if (flash > 0f) Sprite(PawnFit.At(pos, 0.16f, 0.36f), 0.35f, 0.3f, Fade(Hot, 0.8f * flash), glow, PawnLayer + 0.04f);
         }
 
         /// <summary>
@@ -348,7 +353,7 @@ namespace RimArt
         {
             int count = ChainSickleGraphics.Round(maxHeat);
             bool above = Mathf.Sin(aimDegrees * Mathf.Deg2Rad) < -0.5f;
-            float z = feet.y + (above ? 1.15f : -0.55f);
+            float z = feet.y + PawnFit.Y(above ? 1.15f : -0.55f);
             const float step = 0.085f, w = 0.06f;
             float x0 = feet.x - step * (count - 1) / 2f;
             for (int i = 0; i < count; i++)
@@ -436,7 +441,7 @@ namespace RimArt
 
         private static Vector2 JetAt(Vector2 root, Vector2 land, Vector2 side, float u, float k)
         {
-            float h = HandH * (1f - u * u);
+            float h = Hand * (1f - u * u);
             return new Vector2(Mathf.Lerp(root.x, land.x, u) + side.x * k * u, Mathf.Lerp(root.y, land.y, u) + side.y * k * u + h * Lift);
         }
 

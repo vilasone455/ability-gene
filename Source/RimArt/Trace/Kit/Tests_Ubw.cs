@@ -4,6 +4,7 @@ using RimWorld;
 using Verse;
 using Verse.AI;
 using Verse.AI.Group;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -17,38 +18,51 @@ namespace RimArt
         private static AbilityDef Ubw => UbwDefOf.AG_Trace_UnlimitedBladeWorks;
         private static TraitDef OriginBlade => DefDatabase<TraitDef>.GetNamed("AG_OriginBlade");
 
-        private static GameComponent_Echoes Setup(RimArtTestContext t)
+        internal static GameComponent_Echoes Setup(RimArtTestContext t, bool reveal = false)
         {
             GameComponent_UnlimitedBladeWorks.Instance.ResetForTests();
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = false;
-            return echoes;
+            UbwRevealWindow.offForTests = !reveal;
+            return t.ClearEchoes();
         }
 
         /// <summary>A drafted colonist made Shirou's Host and manifested, with a full pool.</summary>
-        private static Pawn Host(RimArtTestContext t, GameComponent_Echoes echoes, out EchoRecord record)
+        internal static Pawn Host(RimArtTestContext t, out EchoRecord record)
         {
-            Pawn host = t.Colonist(t.center);
-            record = EchoUtility.ForceHost(Shirou, host);
-            echoes.charge = 100f;
-            EchoUtility.Manifest(record);
+            Pawn host = t.Host(Shirou, t.center, out record);
             host.drafter.Drafted = true;
             return host;
         }
 
-        private static UbwCast CastOf(Pawn pawn) => GameComponent_UnlimitedBladeWorks.Instance?.For(pawn);
+        internal static UbwCast CastOf(Pawn pawn) => GameComponent_UnlimitedBladeWorks.Instance?.For(pawn);
 
-        private static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 5)
-        {
-            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
-        }
-
-        private static void LogPawns(RimArtTestContext t, params Pawn[] pawns)
+        internal static void LogPawns(RimArtTestContext t, params Pawn[] pawns)
         {
             foreach (Pawn p in pawns)
                 t.Log(RimArtTestContext.Describe(p) + " map=" + (p.MapHeld == null ? "none" : p.MapHeld == t.map ? "home" : "world " + p.MapHeld.uniqueID));
+        }
+
+        /// <summary>The cast a test is in; <see cref="IntoWorld"/> sets it once the world stands.</summary>
+        internal sealed class Run
+        {
+            public UbwCast cast;
+        }
+
+        /// <summary>
+        /// The host casts, the chant starts, Release is asked in <paramref name="verse"/> (1: everyone within 6 cells is
+        /// taken, 2: within 9) and the world stands; <paramref name="run"/>.cast is set then, and stays null (with a failed
+        /// check) if it did not.
+        /// </summary>
+        internal static IEnumerable<int> IntoWorld(RimArtTestContext t, Pawn host, Run run, int verse = 1)
+        {
+            host.abilities.GetAbility(Ubw).QueueCastingJob(host, LocalTargetInfo.Invalid);
+            UbwCast cast = null;
+            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180, 5)) yield return w;
+            if (!t.Check(cast != null && cast.Chanting, "the chant started (" + RimArtTestContext.Describe(host) + ")")) yield break;
+            foreach (int w in WaitFor(() => cast.VerseAt(cast.Seconds(t.Now)) >= verse || !cast.Chanting, 600, 5)) yield return w;
+            cast.AskRelease(t.Now);
+            foreach (int w in WaitFor(() => cast.Standing || cast.fizzled || cast.broken, 900, 5)) yield return w;
+            if (!t.Check(cast.Standing && cast.verse == verse, "the world stands, opened after verse " + cast.verse)) yield break;
+            run.cast = cast;
         }
 
         [RimArtTest("Ubw", "trial 1 Origin: Blade grants nothing and is Shirou's Trial; manifested Shirou has the ability")]
@@ -86,7 +100,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, out EchoRecord record);
+            Pawn host = Host(t, out EchoRecord record);
             Pawn near = t.Enemy(t.center + new IntVec3(4, 0, 0), armed: false);
             Pawn far = t.Enemy(t.center + new IntVec3(-10, 0, 0), armed: false);
             IntVec3 hostFrom = host.Position, nearFrom = near.Position;
@@ -95,7 +109,7 @@ namespace RimArt
             float before = echoes.charge;
             host.abilities.GetAbility(Ubw).QueueCastingJob(host, LocalTargetInfo.Invalid);
             UbwCast cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180)) yield return w;
+            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180, 5)) yield return w;
             if (!t.Check(cast != null && cast.Chanting, "the chant started (" + RimArtTestContext.Describe(host) + ")")) yield break;
             float spent = before - echoes.charge;
             t.Check(spent >= 40f && spent < 41f, "the pool paid 40 (" + spent.ToString("0.##") + " with upkeep)");
@@ -103,25 +117,29 @@ namespace RimArt
 
             cast.AskRelease(t.Now);
             t.Check(cast.releaseAfter == 1, "Release asked in verse 1");
-            foreach (int w in WaitFor(() => cast.Standing || cast.fizzled || cast.broken, 900)) yield return w;
+            foreach (int w in WaitFor(() => cast.Standing || cast.fizzled || cast.broken, 900, 5)) yield return w;
             LogPawns(t, host, near, far);
             if (!t.Check(cast.Standing, "the world stands")) yield break;
             Map world = cast.world;
             t.Check(host.Map == world, "the caster is in the world");
             t.Check(near.Map == world, "the enemy 4 cells away was taken");
+            var inside = world.GetComponent<MapComponent_UnlimitedBladeWorks>();
+            t.Check(world.Size.x == 40 && world.Size.z == 33 && inside.crest, "the world is v4 on a 40 x 33 map (" + world.Size.x + " x " + world.Size.z + ")");
+            t.Check(host.Position == new IntVec3(20, 0, 20), "the caster landed 20 cells from the south edge and 13 from the north (" + host.Position + ")");
+            t.Check(near.Map != world || near.Position.DistanceTo(host.Position + new IntVec3(4, 0, 0)) <= 1.5f, "the enemy landed 4 cells east of the caster (" + near.Position + ")");
             t.Check(far.Map == t.map, "the enemy 10 cells away stayed");
             t.Check(near.GetLord()?.LordJob is LordJob_AssaultColony, "the taken enemy fights in the world");
             t.Check(host.abilities.GetAbility(Ubw).GizmoDisabled(out string why), "the ability is disabled while the world stands (" + why + ")");
 
             yield return 60;
             cast.closeOrdered = true;
-            foreach (int w in WaitFor(() => cast.returned, 1200)) yield return w;
+            foreach (int w in WaitFor(() => cast.returned, 1200, 5)) yield return w;
             LogPawns(t, host, near, far);
             if (!t.Check(cast.returned, "everyone returned")) yield break;
             t.Check(host.Map == t.map && host.Position.DistanceTo(hostFrom) <= 2f, "the caster is back where it stood (" + hostFrom + ")");
             t.Check(near.Dead || (near.MapHeld == t.map && near.Position.DistanceTo(nearFrom) <= 2f), "the enemy is back where it stood (" + nearFrom + ")");
             t.Check(host.Drafted, "the caster is still drafted");
-            foreach (int w in WaitFor(() => !Find.Maps.Contains(world), 300)) yield return w;
+            foreach (int w in WaitFor(() => !Find.Maps.Contains(world), 300, 5)) yield return w;
             t.Check(!Find.Maps.Contains(world), "the world was removed");
             t.Check(host.abilities.GetAbility(Ubw).CooldownTicksRemaining > 0, "the cooldown is spent");
             EchoUtility.Revert(record, collapse: false);
@@ -133,14 +151,14 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, out EchoRecord record);
+            Pawn host = Host(t, out EchoRecord record);
             Ability ability = host.abilities.GetAbility(Ubw);
             yield return 2;
 
             // Stop chanting (the button's action).
             ability.QueueCastingJob(host, LocalTargetInfo.Invalid);
             UbwCast cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180)) yield return w;
+            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180, 5)) yield return w;
             if (!t.Check(cast != null && cast.Chanting, "the chant started")) yield break;
             float paidDown = echoes.charge;
             cast.Break(null);
@@ -154,7 +172,7 @@ namespace RimArt
             // A move order.
             ability.QueueCastingJob(host, LocalTargetInfo.Invalid);
             cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180)) yield return w;
+            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180, 5)) yield return w;
             if (!t.Check(cast != null && cast.Chanting, "the second chant started")) yield break;
             paidDown = echoes.charge;
             host.jobs.TryTakeOrderedJob(JobMaker.MakeJob(JobDefOf.Goto, host.Position + new IntVec3(0, 0, 3)), JobTag.DraftedOrder);
@@ -171,11 +189,11 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, out EchoRecord record);
+            Pawn host = Host(t, out EchoRecord record);
             yield return 2;
             host.abilities.GetAbility(Ubw).QueueCastingJob(host, LocalTargetInfo.Invalid);
             UbwCast cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180)) yield return w;
+            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180, 5)) yield return w;
             if (!t.Check(cast != null && cast.Chanting, "the chant started")) yield break;
             float paidDown = echoes.charge;
 
@@ -198,27 +216,58 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, out EchoRecord record);
+            Pawn host = Host(t, out EchoRecord record);
             Pawn ally = t.Colonist(t.center + new IntVec3(0, 0, 3));
             yield return 2;
-            host.abilities.GetAbility(Ubw).QueueCastingJob(host, LocalTargetInfo.Invalid);
-            UbwCast cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180)) yield return w;
-            if (!t.Check(cast != null && cast.Chanting, "the chant started")) yield break;
-            cast.AskRelease(t.Now);
-            foreach (int w in WaitFor(() => cast.Standing || cast.fizzled || cast.broken, 900)) yield return w;
-            if (!t.Check(cast.Standing && ally.Map == cast.world, "the world stands with the ally in it")) yield break;
+            var run = new Run();
+            foreach (int w in IntoWorld(t, host, run)) yield return w;
+            UbwCast cast = run.cast;
+            if (cast == null || !t.Check(ally.Map == cast.world, "the ally is in the world")) yield break;
             Map world = cast.world;
 
             yield return 30;
             EchoUtility.Revert(record, collapse: false);
-            foreach (int w in WaitFor(() => cast.returned, 1200)) yield return w;
+            foreach (int w in WaitFor(() => cast.returned, 1200, 5)) yield return w;
             LogPawns(t, host, ally);
             t.Check(cast.returned, "the world closed and everyone returned");
             t.Check(cast.WorldSecondsLeft(t.Now) > 5f, "it closed early (" + cast.WorldSecondsLeft(t.Now).ToString("0.#") + " s were left)");
             t.Check(host.Map == t.map && ally.Map == t.map, "both are home");
-            foreach (int w in WaitFor(() => !Find.Maps.Contains(world), 300)) yield return w;
+            foreach (int w in WaitFor(() => !Find.Maps.Contains(world), 300, 5)) yield return w;
             t.Check(!Find.Maps.Contains(world), "the world was removed");
+            EchoDevice.workingForTests = null;
+        }
+
+        [RimArtTest("Ubw", "reveal 1 the shot plays at the take with the game paused, then the world stands its full time", 3000)]
+        private static IEnumerable<int> Reveal(RimArtTestContext t)
+        {
+            Setup(t, reveal: true);
+            yield return 5;
+            Pawn host = Host(t, out EchoRecord record);
+            yield return 2;
+            int before = UbwRevealWindow.opened;
+            host.abilities.GetAbility(Ubw).QueueCastingJob(host, LocalTargetInfo.Invalid);
+            UbwCast cast = null;
+            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180, 5)) yield return w;
+            if (!t.Check(cast != null && cast.Chanting, "the chant started")) yield break;
+            cast.AskRelease(t.Now);
+            float realBefore = UnityEngine.Time.realtimeSinceStartup;
+            foreach (int w in WaitFor(() => cast.Standing || cast.fizzled || cast.broken, 900, 5)) yield return w;
+            if (!t.Check(cast.Standing, "the world stands")) yield break;
+            // The shot paused the game at the take: the next step only ran once it had ended (4.6 s of real time).
+            foreach (int w in WaitFor(() => Find.WindowStack.WindowOfType<UbwRevealWindow>() == null, 600, 1)) yield return w;
+            float real = UnityEngine.Time.realtimeSinceStartup - realBefore, game = (t.Now - cast.takenTick) / 60f;
+            var inside = cast.world.GetComponent<MapComponent_UnlimitedBladeWorks>();
+            t.Log("shot ran " + UbwRevealWindow.lastRan.ToString("0.00") + " s, real " + real.ToString("0.0") + " s since the release, game " + game.ToString("0.00") + " s since the take, world clock " + inside.WorldSeconds.ToString("0.00"));
+            t.Check(UbwRevealWindow.opened == before + 1, "the shot opened once at the take");
+            t.Check(UbwRevealWindow.lastRan >= UbwRevealTiming.End - 0.05f, "it played to the end (" + UbwRevealWindow.lastRan.ToString("0.00") + " s)");
+            t.Check(game < 1f, "the game was paused while it played (" + game.ToString("0.00") + " s of game time since the take)");
+            t.Check(cast.WorldSecondsLeft(t.Now) > UbwRules.Of.WorldSecondsFor(1) - 1.5f, "the world's timer started after it (" + cast.WorldSecondsLeft(t.Now).ToString("0.0") + " s left)");
+            yield return 30;
+            t.Check(inside.WorldSeconds >= UbwWorldTiming.Swept, "the world stands, its fire already run out (clock " + inside.WorldSeconds.ToString("0.00") + ")");
+            cast.closeOrdered = true;
+            foreach (int w in WaitFor(() => cast.returned, 1200, 5)) yield return w;
+            t.Check(cast.returned && host.Map == t.map, "Close brings the caster home");
+            UbwRevealWindow.offForTests = true;
             EchoDevice.workingForTests = null;
         }
 
@@ -227,24 +276,21 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, out EchoRecord record);
+            Pawn host = Host(t, out EchoRecord record);
             yield return 2;
-            host.abilities.GetAbility(Ubw).QueueCastingJob(host, LocalTargetInfo.Invalid);
-            UbwCast cast = null;
-            foreach (int w in WaitFor(() => (cast = CastOf(host)) != null && cast.Chanting, 180)) yield return w;
-            if (!t.Check(cast != null && cast.Chanting, "the chant started")) yield break;
-            cast.AskRelease(t.Now);
-            foreach (int w in WaitFor(() => cast.Standing || cast.fizzled || cast.broken, 900)) yield return w;
-            if (!t.Check(cast.Standing, "the world stands")) yield break;
+            var run = new Run();
+            foreach (int w in IntoWorld(t, host, run)) yield return w;
+            UbwCast cast = run.cast;
+            if (cast == null) yield break;
             Map world = cast.world;
 
             echoes.charge = 0.05f;
-            foreach (int w in WaitFor(() => cast.returned, 1500)) yield return w;
+            foreach (int w in WaitFor(() => cast.returned, 1500, 5)) yield return w;
             LogPawns(t, host);
             t.Check(!record.manifested, "Shirou reverted");
             t.Check(cast.returned, "the world closed and the Host returned");
             t.Check(host.MapHeld == t.map, "the Host is home");
-            foreach (int w in WaitFor(() => !Find.Maps.Contains(world), 300)) yield return w;
+            foreach (int w in WaitFor(() => !Find.Maps.Contains(world), 300, 5)) yield return w;
             t.Check(!Find.Maps.Contains(world), "the world was removed");
             EchoDevice.workingForTests = null;
         }

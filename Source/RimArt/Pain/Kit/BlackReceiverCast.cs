@@ -420,13 +420,13 @@ namespace RimArt
             float turn, back;
             if (Pinned)
             {
-                float since = UbwClock.Since(pinnedTick);
+                float since = PictureClock.Since(pinnedTick);
                 turn = BlackReceiverTiming.FallShare(since);
                 back = BlackReceiverTiming.FallBack(since);
             }
             else if (freedTick >= 0)
             {
-                float since = UbwClock.Since(freedTick);
+                float since = PictureClock.Since(freedTick);
                 if (since >= BlackReceiverTiming.GetUp) return;
                 turn = 1f - BlackReceiverTiming.RiseShare(since);
                 back = BlackReceiverTiming.KnockBack * turn;

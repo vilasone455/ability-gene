@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -21,17 +22,6 @@ namespace RimArt
             t.Log("wearer " + RimArtTestContext.Describe(wearer) + " abilities "
                 + (wearer.abilities?.abilities == null ? "null" : string.Join(",", wearer.abilities.abilities.Select(a => a.def.defName))));
             return wearer;
-        }
-
-        /// <summary>Turns the pawn and keeps it turned: undrafted, a wait job facing a cell 3 away in that direction.</summary>
-        private static void Face(Pawn pawn, Rot4 rot)
-        {
-            // Pawn_RotationTracker turns a drafted pawn that stands idle to face south.
-            if (pawn.drafter != null) pawn.drafter.Drafted = false;
-            Verse.AI.Job wait = JobMaker.MakeJob(JobDefOf.Wait_MaintainPosture, pawn.Position + rot.FacingCell * 3);
-            wait.expiryInterval = 600;
-            pawn.jobs.StartJob(wait, Verse.AI.JobCondition.InterruptForced);
-            pawn.Rotation = rot;
         }
 
         private static string Where(Pawn pawn) => RimArtTestContext.Describe(pawn);

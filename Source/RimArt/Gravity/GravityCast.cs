@@ -10,6 +10,8 @@ namespace RimArt
     public sealed class GravityCast : IExposable
     {
         public int id, cooldownUntil, tailTicks;
+        // The tick it was cast and the tick it closed (-1 while open), for a look that runs on its own clock.
+        public int startTick, endTick = -1;
         public Pawn caster;
         public Map map;
         public AbilityDef def;
@@ -61,11 +63,16 @@ namespace RimArt
                 return valid;
             }
         }
-        private bool ComputeValid() => caster != null && caster.Spawned && caster.Map == map && !caster.Dead
-            && !caster.Downed && !caster.InMentalState && !caster.stances.stunner.Stunned
-            && caster.Position == anchor && GravityAcquisition.HasAbility(caster, def)
-            && caster.CurJobDef?.defName == "AM_InAnimation"
-            && GravityMovement.Clear(map, anchor, Cell);
+        private bool ComputeValid()
+        {
+            if (!Props.holdsCaster)
+                return caster != null && !caster.Dead && caster.MapHeld == map && GravityAcquisition.HasAbility(caster, def);
+            return caster != null && caster.Spawned && caster.Map == map && !caster.Dead
+                && !caster.Downed && !caster.InMentalState && !caster.stances.stunner.Stunned
+                && caster.Position == anchor && GravityAcquisition.HasAbility(caster, def)
+                && caster.CurJobDef?.defName == "AM_InAnimation"
+                && GravityMovement.Clear(map, anchor, Cell);
+        }
 
         // GravityMovement.Clear from the centre's cell, kept per cell until the centre changes cell
         // or ClearRefreshTicks pass.
@@ -117,10 +124,10 @@ namespace RimArt
                 return;
             }
             if (!Valid) { Finish(false); return; }
-            if (animation == null || !animation.Seek(clock.phase == GravityPhase.Opening
-                ? clock.ticks / 60f : 0.5f + 0.15f * Growth))
+            if (Props.holdsCaster && (animation == null || !animation.Seek(clock.phase == GravityPhase.Opening
+                ? clock.ticks / 60f : 0.5f + 0.15f * Growth)))
             { Finish(false); return; }
-            clock.Tick(DurationTicks);
+            clock.Tick(DurationTicks, Props.OpeningTicks);
             if (Field)
             {
                 if (sound == null || sound.Ended)
@@ -139,13 +146,16 @@ namespace RimArt
         {
             if (!Active) return;
             bool burst = clock.Finish(implode);
+            endTick = Find.TickManager.TicksGame;
             var component = map?.GetComponent<MapComponent_Gravity>();
             component?.Changed();
             if (clock.activated)
             {
                 cooldownUntil = Find.TickManager.TicksGame + Props.CooldownTicks;
-                GameComponent_Gravity.Instance.Commit(caster, Props.CooldownTicks);
-                tailTicks = 30;
+                GameComponent_Gravity.Instance.Commit(caster, def, Props.CooldownTicks);
+                // Gravity Well: the recovery clip's 0.5 s. A free caster has no clip: the look's own tail
+                // after an implosion, nothing after a well that closed without one.
+                tailTicks = Props.holdsCaster ? 30 : burst ? GojoBlueLook.TailTicks(Props) : 0;
             }
             else if (paid > 0f)
             {
@@ -189,6 +199,8 @@ namespace RimArt
             Scribe_Values.Look(ref clock.imploded, "imploded");
             Scribe_Values.Look(ref cooldownUntil, "cooldownUntil");
             Scribe_Values.Look(ref tailTicks, "tailTicks");
+            Scribe_Values.Look(ref startTick, "startTick");
+            Scribe_Values.Look(ref endTick, "endTick", -1);
             Scribe_Values.Look(ref eaten, "eaten");
             Scribe_Collections.Look(ref eatenPawns, "eatenPawns", LookMode.Value);
             Scribe_Values.Look(ref paid, "paid");
@@ -201,7 +213,8 @@ namespace RimArt
                 if (centre == Vector3.zero && cell.IsValid) centre = cell.ToVector3Shifted();
                 if (origin == Vector3.zero) origin = centre;
                 eatenPawns ??= new List<int>();
-                restore = Active || (tailTicks > 0 && clock.imploded);
+                // Only a well that holds its caster has a clip to restore.
+                restore = Props.holdsCaster && (Active || (tailTicks > 0 && clock.imploded));
             }
         }
     }

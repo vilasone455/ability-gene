@@ -39,6 +39,8 @@
   <AG_EchoTrialNo>no</AG_EchoTrialNo>
   <AG_EchoTrialNot>Not {0}</AG_EchoTrialNot>
   <AG_EchoTrialWealth>Colony wealth {0}</AG_EchoTrialWealth>
+  <AG_EchoTrialHours>{0} {1} h</AG_EchoTrialHours>
+  <AG_EchoTrialHoursProgress>{0} h / {1} h</AG_EchoTrialHoursProgress>
   <AG_EchoTrialKillsWith>{0} kills with a {1}</AG_EchoTrialKillsWith>
   <AG_EchoTrialDownedRecovered>Downed and recovered {0} times</AG_EchoTrialDownedRecovered>
   <AG_EchoMeleeWeapon>melee weapon</AG_EchoMeleeWeapon>
@@ -54,6 +56,7 @@
   <AG_EchoCostTraitHas>{0}: already has it</AG_EchoCostTraitHas>
   <AG_EchoCostTraitReplace>Gains {0} (replaces {1})</AG_EchoCostTraitReplace>
   <AG_EchoCostGene>Gains the {0} gene, which works only in hero form</AG_EchoCostGene>
+  <AG_EchoCostGeneNote>Gains the {0} gene: {1}</AG_EchoCostGeneNote>
 
   <!-- Awakening -->
   <AG_EchoAwakenLabel>{0} can awaken</AG_EchoAwakenLabel>

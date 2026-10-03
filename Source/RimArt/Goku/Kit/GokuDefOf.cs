@@ -11,8 +11,10 @@ namespace RimArt
         public static AbilityDef AG_GokuKamehameha;
         public static AbilityDef AG_GokuSpiritBomb;
 
-        /// <summary>Solar Flare's and Instant Transmission's cast job: it starts the picture with the warmup.</summary>
+        /// <summary>Solar Flare's cast job: it starts the picture with the warmup.</summary>
         public static JobDef AG_CastGoku;
+        /// <summary>Instant Transmission's cast job: the same driver, interruptible by a move order during the lock channel.</summary>
+        public static JobDef AG_GokuTransmit;
         /// <summary>The Kamehameha and Spirit Bomb channel: the caster stands until the cast lets it go.</summary>
         public static JobDef AG_GokuChannel;
         /// <summary>A colonist lending energy to a Spirit Bomb.</summary>

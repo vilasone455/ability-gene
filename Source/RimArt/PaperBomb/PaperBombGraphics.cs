@@ -68,6 +68,20 @@ namespace RimArt
 
         internal static Vector2 Up(Vector2 ground, float height) => PowerPoleGraphics.Raised(ground, height);
 
+        /// <summary>
+        /// Where a Paper Bomb clip (make_paper_bomb_anim.py) puts the pawn's hand, as an offset on the ground from its
+        /// feet: <paramref name="reach"/> along the aim and <paramref name="side"/> across it (negative is the throwing
+        /// side, the pawn's right); the clip's lift goes on top as screen height. A pawn aiming east or west is seen
+        /// from the side, where the clip (east, mirrored for west) draws the throwing side's offset straight down the
+        /// screen and has no off side. In game the tags start from this hand, not the sketch's (PawnFit.On).
+        /// </summary>
+        internal static Vector2 ClipHand(Vector2 toward, float reach, float side)
+        {
+            bool sideView = Mathf.Abs(toward.x) >= Mathf.Abs(toward.y);
+            Vector2 across = sideView ? new Vector2(0f, Mathf.Min(side, 0f)) : new Vector2(-toward.y, toward.x) * side;
+            return toward * reach + across;
+        }
+
         /// <summary>A ring round a point, about 0.07 cells thick, or up to 0.45 with <paramref name="wide"/>. Round on screen whatever the aim.</summary>
         internal static void RingAt(Vector2 at, float radius, Color colour, float altitude, bool wide = false, Material material = null)
         {

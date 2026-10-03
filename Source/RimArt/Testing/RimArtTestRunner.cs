@@ -12,6 +12,7 @@ namespace RimArt
     /// <summary>
     /// Runs the <see cref="RimArtTestAttribute"/> tests when the game is started with
     /// <c>-quicktest -rimarttest=&lt;filter&gt;</c>, writes the results file, and quits the game.
+    /// The filter is the start of "kit: label", several of them separated by commas, or <c>all</c>.
     ///
     /// Results go to <c>&lt;save data folder&gt;/RimArtTests/results.txt</c> (on the Mac
     /// ~/Library/Application Support/RimWorld/RimArtTests), written line by line so a crash still
@@ -66,10 +67,12 @@ namespace RimArt
             results = new StreamWriter(Path.Combine(folder, "results.txt")) { AutoFlush = true };
 
             bool all = string.Equals(filter, "all", StringComparison.OrdinalIgnoreCase);
+            // Several filters separated by commas run every test that matches any of them.
+            string[] filters = filter.Split(',').Select(f => f.Trim()).Where(f => f.Length > 0).ToArray();
             tests = GenTypes.AllTypes
                 .SelectMany(t => t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic))
                 .Select(m => (test: m.GetCustomAttribute<RimArtTestAttribute>(), method: m))
-                .Where(x => x.test != null && (all || x.test.FullLabel.StartsWith(filter, StringComparison.OrdinalIgnoreCase)))
+                .Where(x => x.test != null && (all || filters.Any(f => x.test.FullLabel.StartsWith(f, StringComparison.OrdinalIgnoreCase))))
                 .OrderBy(x => x.test.FullLabel)
                 .ToList();
             Write("RimArt tests, filter \"" + filter + "\": " + tests.Count + " found");

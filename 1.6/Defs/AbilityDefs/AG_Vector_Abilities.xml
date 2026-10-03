@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
 
+  <!-- Accelerator's five abilities (docs/hero-echo.md; full rules in the Tools/VfxLab/web/sketches/
+       accelerator-*.js headers), granted by the Accelerator Echo while manifested. The reflex booster
+       implant grants none of them since the port. Brain strain (AG_VectorStrain) is his cost: the
+       strain abilities cost 0 Echo charge. Every balance number is a field here; the C# in
+       Source/RimArt/Vector and Source/RimArt/Accelerator/Kit holds only shape and logic. The defNames
+       keep the implant era's AG_Vector prefix so saves still find them. The icons are placeholders
+       (make_accelerator_textures.py). -->
+
+  <AbilityDef Name="AG_AcceleratorAbilityBase" Abstract="True">
+    <category>AG_Genetic</category>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+  </AbilityDef>
+
   <!-- The defName is still AG_VectorReflection. The ability it names has been replaced
        outright, but it is the key a saved reflex booster's ability list is written under, so
        renaming it would silently take the ability off every carrier in every existing save.
@@ -8,22 +25,16 @@
        No jobDef and no targetRequired: the gizmo class arms the booster, or opens the editor
        in the frame it is clicked when there is already something to catch. A walk and a warmup
        would spend the fraction of a second the rounds are in the air. -->
-  <AbilityDef>
+  <AbilityDef ParentName="AG_AcceleratorAbilityBase">
     <defName>AG_VectorReflection</defName>
     <label>vector manipulation</label>
-    <description>Stop the world and take hold of every round about to pass within twelve cells of the carrier, then sort them into as many as four groups and turn each group where you want it. An edited round starts again from where it was caught with twenty cells of travel multiplied by the force spent on it, and moves and lands at that same multiple. A round is caught a third of a second before it arrives however fast it is flying, so reflex surge is usually what buys the time to press this.\n\nThe bill comes in brain strain when you apply an edit, steeply: one group is routine, four at once is most of what the carrier has. Filling the bar overloads the booster and puts them on the floor.</description>
-    <iconPath>UI/Abilities/PiercingSpine</iconPath>
-    <category>AG_Genetic</category>
+    <description>Pause the game and take hold of every bullet that will pass within 12 cells of Accelerator in the next 0.35 seconds. Sort them into up to 4 groups and give each group a turn (-180 to 180 degrees) and a force (x0.25, x0.5, x1 or x2). Apply rewrites every bullet in a changed group from where it was caught: new heading, speed and damage times the force, and 20 cells of travel times the force. Bullets in no group fly on as they were. Mortar shells and rockets cannot be caught.\n\nBrain strain on Apply: 8% for one changed group, 24% for two, 48% for three, 80% for four. Cooldown 5 seconds. Reflex surge slows the world so there is time to press this.</description>
+    <iconPath>RimArt/Accelerator/IconManipulation</iconPath>
     <gizmoClass>RimArt.Command_VectorEdit</gizmoClass>
     <cooldownTicksRange>300</cooldownTicksRange>
     <targetRequired>false</targetRequired>
     <hostile>false</hostile>
-    <aiCanUse>false</aiCanUse>
-    <groupAbility>false</groupAbility>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
-    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
-    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
-    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
     <verbProperties>
       <verbClass>Verb_CastAbility</verbClass>
       <range>-1</range>
@@ -37,6 +48,15 @@
       <li Class="CompProperties_AbilityRequiresCapacity">
         <capacity>Consciousness</capacity>
       </li>
+      <!-- Strain added by one Apply, by how many groups it changed (1, 2, 3, 4). -->
+      <li Class="RimArt.CompProperties_VectorManipulation">
+        <strainCosts>
+          <li>0.08</li>
+          <li>0.24</li>
+          <li>0.48</li>
+          <li>0.80</li>
+        </strainCosts>
+      </li>
     </comps>
   </AbilityDef>
 
@@ -47,20 +67,15 @@
 
        Nothing in the simulation changes while it is up - it is the world's real-time rate that
        drops, not any in-game relationship - so the cost is small and the duration is short. -->
-  <AbilityDef>
+  <AbilityDef ParentName="AG_AcceleratorAbilityBase">
     <defName>AG_VectorSurge</defName>
     <label>reflex surge</label>
-    <description>Drive the booster's own clock up until the world appears to crawl. For five seconds of game time everything outside the carrier's head runs at a quarter rate, which is about twenty seconds of yours - long enough to watch a burst cross the room and decide what to do about it.\n\nIt buys time and nothing else: nobody moves further, nothing hits harder, and the carrier is slowed with everyone else. Ends early from the gizmo on the hediff, and costs a little brain strain to open.</description>
-    <iconPath>UI/Icons/Genes/Gene_QuickMovespeed</iconPath>
-    <category>AG_Genetic</category>
+    <description>For 5 seconds of game time the game runs at a quarter of its speed (about 20 real seconds), whatever speed button is pressed. Nothing moves further or hits harder, Accelerator included; it only gives time to watch and to use vector manipulation.\n\nCosts 10% brain strain. Ends early from the button on its hediff. Cooldown 30 seconds.</description>
+    <iconPath>RimArt/Accelerator/IconSurge</iconPath>
     <cooldownTicksRange>1800</cooldownTicksRange>
     <targetRequired>false</targetRequired>
     <hostile>false</hostile>
-    <aiCanUse>false</aiCanUse>
     <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
-    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
-    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
-    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
     <verbProperties>
       <verbClass>Verb_CastAbility</verbClass>
       <range>-1</range>
@@ -82,35 +97,138 @@
     </comps>
   </AbilityDef>
 
-  <AbilityDef>
+  <!-- Vector shove, reworked 2026-09-24 (accelerator-vector-shove.js). Touch range and no warmup;
+       the direction is a second pick, the way the Skip psycast picks a place
+       (CompAbilityEffect_WithDest, destination Selected). -->
+  <AbilityDef ParentName="AG_AcceleratorAbilityBase">
     <defName>AG_VectorShove</defName>
     <label>vector shove</label>
-    <description>Take hold of one body's momentum and spend all of it throwing them away from the carrier. Damage scales with the distance travelled, and a great deal more if something solid stops them early.\n\nHeavier bodies move less; this is for breaking a melee grip and introducing people to walls, not for damage.</description>
-    <iconPath>UI/Abilities/Longjump</iconPath>
-    <category>AG_Genetic</category>
+    <description>Touch an adjacent pawn or loose thing, then pick a direction.\n\nA pawn is thrown 8 cells (divided by its body size) at 20 cells per second. It takes 1.5 blunt damage per cell travelled and is stunned for 1 second. A wall ends the throw early and adds 8 blunt. Every pawn in the path is knocked 1 cell aside, takes 8 blunt and is stunned for 0.5 seconds; the thrown pawn keeps going.\n\nA stone chunk, corpse or weapon on the ground is thrown 12 cells and hits the first pawn or wall in its path for 1 blunt per kg of its mass (at most 40); it lands there.\n\nForce returned: if the target hit Accelerator in melee within the last second, that hit's damage is added as blunt to the first pawn the thrown pawn strikes, or to the thrown pawn itself if it strikes none. It does not undo the hit Accelerator took.\n\nCosts 5% brain strain. Cooldown 20 seconds.</description>
+    <iconPath>RimArt/Accelerator/IconShove</iconPath>
     <cooldownTicksRange>1200</cooldownTicksRange>
-    <aiCanUse>true</aiCanUse>
-    <sendMessageOnCooldownComplete>false</sendMessageOnCooldownComplete>
+    <hostile>true</hostile>
     <verbProperties>
       <verbClass>Verb_CastAbility</verbClass>
-      <range>12.9</range>
-      <warmupTime>0.5</warmupTime>
+      <range>1.9</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
       <targetParams>
         <canTargetSelf>false</canTargetSelf>
         <canTargetPawns>true</canTargetPawns>
         <canTargetAnimals>true</canTargetAnimals>
-        <canTargetBuildings>false</canTargetBuildings>
         <canTargetMechs>true</canTargetMechs>
+        <canTargetItems>true</canTargetItems>
+        <canTargetCorpses>true</canTargetCorpses>
+        <canTargetBuildings>false</canTargetBuildings>
       </targetParams>
     </verbProperties>
     <comps>
       <li Class="RimArt.CompProperties_AbilityVectorShove">
-        <pushCells>6</pushCells>
-        <stunTicks>60</stunTicks>
+        <destination>Selected</destination>
+        <requiresLineOfSight>false</requiresLineOfSight>
+        <range>0</range>
+        <pawnCells>8</pawnCells>
+        <scaleByBodySize>true</scaleByBodySize>
+        <cellsPerSecond>20</cellsPerSecond>
         <damagePerCell>1.5</damagePerCell>
         <slamDamage>8</slamDamage>
-        <scaleByBodySize>true</scaleByBodySize>
+        <stunTicks>60</stunTicks>
+        <knockCells>1</knockCells>
+        <knockDamage>8</knockDamage>
+        <knockStunTicks>30</knockStunTicks>
+        <thingCells>12</thingCells>
+        <damagePerKg>1</damagePerKg>
+        <maxThingDamage>40</maxThingDamage>
+        <forceReturnTicks>60</forceReturnTicks>
+        <strainCost>0.05</strainCost>
         <goodwillImpact>-15</goodwillImpact>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Consciousness</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Plasma (accelerator-plasma.js). The channel is its own job (JobDef AG_VectorPlasmaChannel), not the
+       verb's warmup: a warmup is scaled by the pawn's aiming delay, and the channel is a fixed 3 s
+       shield. The job is abilityCasting, so a broken channel still spends the cooldown. -->
+  <AbilityDef ParentName="AG_AcceleratorAbilityBase">
+    <defName>AG_VectorPlasma</defName>
+    <label>plasma</label>
+    <description>Target a direction. Accelerator stands still for 3 seconds and compresses the air at one hand into plasma. While he channels, every bullet that comes within 8 cells of him is bent into his hand and destroyed (mortar shells and rockets are not caught).\n\nThen the plasma goes down a lane 1 cell wide and up to 15 cells long and stops at the first standing pawn or wall. It bursts there: radius 1.5 cells, 50 heat damage at 40% armour penetration, and fires start. Pawns further down the lane are not hit. Accelerator is not hurt by his own burst.\n\nCosts 45% brain strain when released. A stun, a downing or an order during the channel cancels it: the cooldown is spent, the strain is not. Cooldown 90 seconds.</description>
+    <iconPath>RimArt/Accelerator/IconPlasma</iconPath>
+    <jobDef>AG_VectorPlasmaChannel</jobDef>
+    <cooldownTicksRange>5400</cooldownTicksRange>
+    <hostile>true</hostile>
+    <targetRequired>true</targetRequired>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>30</range>
+      <warmupTime>0</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>true</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>true</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_VectorPlasma">
+        <channelTicks>180</channelTicks>
+        <catchRadius>8</catchRadius>
+        <length>15</length>
+        <width>1</width>
+        <flightSeconds>0.3</flightSeconds>
+        <burstRadius>1.5</burstRadius>
+        <damage>50</damage>
+        <armorPenetration>0.4</armorPenetration>
+        <chanceToStartFire>1</chanceToStartFire>
+        <strainCost>0.45</strainCost>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Consciousness</capacity>
+      </li>
+    </comps>
+  </AbilityDef>
+
+  <!-- Vector Flick (accelerator-vector-flick.js). The kit's plain damage ability: no strain, no
+       charge. Decided at the port (2026-09-29): it always hits the target; pawns in between are not
+       hit. The pebble comes out of the floor, so no item is used. -->
+  <AbilityDef ParentName="AG_AcceleratorAbilityBase">
+    <defName>AG_VectorFlick</defName>
+    <label>vector flick</label>
+    <description>Target a pawn within 24.9 cells in line of sight. Accelerator flicks a pebble up off the floor and kicks it at 42 cells per second. It always hits the target for 14 blunt damage at 30% armour penetration; pawns in between are not hit.\n\nWarm-up 0.3 seconds. No brain strain. Cooldown 2 seconds.</description>
+    <iconPath>RimArt/Accelerator/IconFlick</iconPath>
+    <cooldownTicksRange>120</cooldownTicksRange>
+    <hostile>true</hostile>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>24.9</range>
+      <warmupTime>0.3</warmupTime>
+      <drawAimPie>true</drawAimPie>
+      <requireLineOfSight>true</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>false</canTargetSelf>
+        <canTargetLocations>false</canTargetLocations>
+        <canTargetPawns>true</canTargetPawns>
+        <canTargetAnimals>true</canTargetAnimals>
+        <canTargetMechs>true</canTargetMechs>
+        <canTargetBuildings>false</canTargetBuildings>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_VectorFlick">
+        <damage>14</damage>
+        <armorPenetration>0.3</armorPenetration>
+        <cellsPerSecond>42</cellsPerSecond>
+      </li>
+      <li Class="CompProperties_AbilityRequiresCapacity">
+        <capacity>Consciousness</capacity>
       </li>
     </comps>
   </AbilityDef>

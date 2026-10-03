@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Unlimited Void's only weather. As in the castle and Unlimited Blade Works, the four sky slots are the
+       same so nothing changes over a day, and every cell is under thick roof, so the light is all the unseen
+       lights'. The colours are vanilla Clear's day with saturation 1, so the space keeps the colours it was
+       judged in (the preview over a daytime home map). -->
+  <WeatherDef>
+    <defName>AG_UnlimitedVoid</defName>
+    <label>void</label>
+    <description>Unlimited Void's pocket map has no weather.</description>
+    <repeatable>true</repeatable>
+    <favorability>Neutral</favorability>
+    <perceivePriority>0</perceivePriority>
+    <windSpeedFactor>0</windSpeedFactor>
+    <windSpeedOffset>0</windSpeedOffset>
+    <rainRate>0</rainRate>
+    <snowRate>0</snowRate>
+    <durationRange>20000~40000</durationRange>
+    <skyColorsDay>
+      <sky>(1, 1, 1)</sky>
+      <shadow>(0.718, 0.745, 0.757)</shadow>
+      <overlay>(1, 1, 1)</overlay>
+      <saturation>1.0</saturation>
+    </skyColorsDay>
+    <skyColorsDusk>
+      <sky>(1, 1, 1)</sky>
+      <shadow>(0.718, 0.745, 0.757)</shadow>
+      <overlay>(1, 1, 1)</overlay>
+      <saturation>1.0</saturation>
+    </skyColorsDusk>
+    <skyColorsNightEdge>
+      <sky>(1, 1, 1)</sky>
+      <shadow>(0.718, 0.745, 0.757)</shadow>
+      <overlay>(1, 1, 1)</overlay>
+      <saturation>1.0</saturation>
+    </skyColorsNightEdge>
+    <skyColorsNightMid>
+      <sky>(1, 1, 1)</sky>
+      <shadow>(0.718, 0.745, 0.757)</shadow>
+      <overlay>(1, 1, 1)</overlay>
+      <saturation>1.0</saturation>
+    </skyColorsNightMid>
+  </WeatherDef>
+
+</Defs>

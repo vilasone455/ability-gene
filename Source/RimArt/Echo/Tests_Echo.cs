@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
 using Verse;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -12,15 +13,6 @@ namespace RimArt
         private static EchoDef Vergil => DefDatabase<EchoDef>.GetNamed("AG_Echo_Vergil");
         private static EchoDef Goku => DefDatabase<EchoDef>.GetNamed("AG_Echo_Goku");
         private static AbilityDef Shove => DefDatabase<AbilityDef>.GetNamed("AG_VectorShove");
-
-        private static GameComponent_Echoes Setup(RimArtTestContext t)
-        {
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = null;
-            return echoes;
-        }
 
         private static Pawn Colonist(RimArtTestContext t, int dx = 0)
         {
@@ -33,7 +25,7 @@ namespace RimArt
         [RimArtTest("Echo", "pool 1 a working device refills and a manifested Host drains")]
         private static IEnumerable<int> PoolRefillDrain(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoDevice.workingForTests = true;
             echoes.charge = 10f;
             yield return GameComponent_Echoes.PoolInterval * 5;
@@ -57,7 +49,7 @@ namespace RimArt
         [RimArtTest("Echo", "pool 2 an empty pool reverts every Host and collapses them")]
         private static IEnumerable<int> PoolEmpty(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoDevice.workingForTests = false;
             Pawn a = Colonist(t, -2), b = Colonist(t, 2);
             EchoRecord ra = EchoUtility.ForceHost(Accelerator, a);
@@ -81,7 +73,7 @@ namespace RimArt
         [RimArtTest("Echo", "manifest 1 hero form grants abilities, blocks work, sets the body and hair; revert restores")]
         private static IEnumerable<int> ManifestRevert(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             Pawn host = Colonist(t);
             BodyTypeDef body = host.story.bodyType;
             UnityEngine.Color hair = host.story.HairColor;
@@ -110,7 +102,7 @@ namespace RimArt
         [RimArtTest("Echo", "manifest 2 removing the hero form hediff from outside reverts the Echo")]
         private static IEnumerable<int> HediffRemoved(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             Pawn host = Colonist(t);
             EchoRecord record = EchoUtility.ForceHost(Accelerator, host);
             echoes.charge = 100f;
@@ -125,16 +117,20 @@ namespace RimArt
         [RimArtTest("Echo", "cast 1 a cast cost disables the ability when short and is paid when it fires")]
         private static IEnumerable<int> CastCost(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoDevice.workingForTests = false;
             Pawn host = Colonist(t);
-            EchoRecord record = EchoUtility.ForceHost(Accelerator, host);
+            // Goku's Solar Flare: Accelerator's abilities cost no charge since his port (brain strain is his cost).
+            EchoDef goku = GokuDefOf.AG_Echo_Goku;
+            AbilityDef flare = GokuDefOf.AG_GokuSolarFlare;
+            EchoRecord record = EchoUtility.ForceHost(goku, host);
             echoes.charge = 100f;
             EchoUtility.Manifest(record);
             host.drafter.Drafted = true;
             yield return 2;
-            Ability shove = host.abilities.GetAbility(Shove);
-            float cost = Accelerator.CastCost(Shove);
+            Ability shove = host.abilities.GetAbility(flare);
+            float cost = goku.CastCost(flare);
+            t.Check(cost > 0f, "Solar Flare has a cast cost (" + cost + ")");
             echoes.charge = cost - 1f;
             t.Check(shove.GizmoDisabled(out string reason), "disabled with " + echoes.charge + " charge (" + reason + ")");
             bool result = true;
@@ -151,7 +147,7 @@ namespace RimArt
         [RimArtTest("Echo", "awaken 1 met trials send the letter; awakening gives the trait and replaces a conflicting one")]
         private static IEnumerable<int> Awaken(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             Pawn pawn = Colonist(t);
             TraitDef kind = DefDatabase<TraitDef>.GetNamed("Kind"), abrasive = DefDatabase<TraitDef>.GetNamed("Abrasive");
             foreach (Trait trait in pawn.story.traits.allTraits.ToList())
@@ -181,7 +177,7 @@ namespace RimArt
         [RimArtTest("Echo", "cap 1 awakening is refused when the hero cap is reached")]
         private static IEnumerable<int> Cap(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             int cap = echoes.HeroCap;
             List<EchoDef> defs = EchoUtility.AllEchoes.ToList();
             t.Log("hero cap " + cap + ", echoes " + defs.Count);
@@ -203,7 +199,7 @@ namespace RimArt
             foreach (EchoTrial trial in defs[cap].trials)
             {
                 if (trial is Trial_Skill skill) extra.skills.GetSkill(skill.skill).Level = skill.level;
-                else if (trial is Trial_Record rec) extra.records.AddTo(rec.record, rec.count);
+                else if (trial is Trial_Record rec) rec.Meet(extra);
             }
             yield return 2;
             bool met = EchoUtility.TrialsMet(record);
@@ -216,7 +212,7 @@ namespace RimArt
         [RimArtTest("Echo", "deeds 1 a longsword kill counts for Vergil's trial")]
         private static IEnumerable<int> LongswordKill(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             Pawn killer = Colonist(t);
             ThingDef longsword = DefDatabase<ThingDef>.GetNamed("MeleeWeapon_LongSword");
             killer.equipment.AddEquipment((ThingWithComps)ThingMaker.MakeThing(longsword, GenStuff.DefaultStuffFor(longsword)));
@@ -239,7 +235,7 @@ namespace RimArt
         [RimArtTest("Echo", "ui 1 device tab and Host gizmos")]
         private static IEnumerable<int> Ui(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoDevice.workingForTests = true;
             Thing device = ThingMaker.MakeThing(EchoDefOf.AG_EchoDevice);
             device.SetFaction(Faction.OfPlayer);
@@ -275,7 +271,7 @@ namespace RimArt
         [RimArtTest("Echo", "dev 1 the god-mode Meet trials command completes Vergil's trials and sends the letter")]
         private static IEnumerable<int> DevMeetTrials(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             Pawn pawn = null;
             for (int tries = 0; tries < 10 && pawn == null; tries++)
             {
@@ -340,7 +336,7 @@ namespace RimArt
         [RimArtTest("Echo", "weapon 1 empty hands: the held weapon waits in the inventory, equip is refused, revert hands it back")]
         private static IEnumerable<int> WeaponEmptyHands(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             Pawn host = Colonist(t);
             t.Equip(host, Longsword);
             ThingWithComps sword = host.equipment.Primary;
@@ -370,7 +366,7 @@ namespace RimArt
         [RimArtTest("Echo", "weapon 2 forced weapon: manifest puts it in hand, equip is refused, revert destroys it and hands back the old one")]
         private static IEnumerable<int> WeaponForced(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoRecord record = ForcedWeaponHost(t, echoes, out Pawn host, out ThingDef before);
             ThingWithComps sword = host.inventory.innerContainer.OfType<ThingWithComps>().FirstOrDefault(w => w.def == Longsword);
             yield return 2;
@@ -393,7 +389,7 @@ namespace RimArt
         [RimArtTest("Echo", "weapon 3 a dropped hero weapon vanishes and returns after the return time, not while downed")]
         private static IEnumerable<int> WeaponReturns(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoRecord record = ForcedWeaponHost(t, echoes, out Pawn host, out ThingDef before);
             ThingWithComps sword = host.inventory.innerContainer.OfType<ThingWithComps>().FirstOrDefault(w => w.def == Longsword);
             yield return 2;
@@ -432,7 +428,7 @@ namespace RimArt
         [RimArtTest("Echo", "weapon 4 a Host who dies leaves no hero weapon behind")]
         private static IEnumerable<int> WeaponDeath(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             // A second colonist keeps the colony alive, so the death does not end the game.
             Colonist(t, 4);
             EchoRecord record = ForcedWeaponHost(t, echoes, out Pawn host, out ThingDef before);
@@ -493,21 +489,10 @@ namespace RimArt
             pawn.apparel.Wear((Apparel)ThingMaker.MakeThing(def, def.MadeFromStuff ? GenStuff.DefaultStuffFor(def) : null));
         }
 
-        /// <summary>Turns the pawn and keeps it turned: undrafted, a wait job facing a cell 3 away.</summary>
-        private static void Face(Pawn pawn, Rot4 rot)
-        {
-            // Pawn_RotationTracker turns a drafted pawn that stands idle to face south.
-            pawn.drafter.Drafted = false;
-            Verse.AI.Job wait = JobMaker.MakeJob(JobDefOf.Wait_MaintainPosture, pawn.Position + rot.FacingCell * 3);
-            wait.expiryInterval = 600;
-            pawn.jobs.StartJob(wait, Verse.AI.JobCondition.InterruptForced);
-            pawn.Rotation = rot;
-        }
-
         [RimArtTest("Echo", "costume 1 Vergil's coat is drawn in hero form, hides worn clothes, armour and headgear but not belts, and goes on revert (screenshots)")]
         private static IEnumerable<int> VergilCoat(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             Pawn host = Colonist(t);
             foreach (string piece in new[] { "Apparel_BasicShirt", "Apparel_Pants", "Apparel_SmokepopBelt" }) Wear(host, piece);
             t.Equip(host, DefDatabase<ThingDef>.GetNamed("MeleeWeapon_LongSword"));
@@ -579,7 +564,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 2 the Akatsuki cloak is shared: Pain's and Itachi's hero forms draw the cloak on the body and the collar on the head, hide worn clothes and hats, and go on revert (screenshots)")]
         private static IEnumerable<int> AkatsukiCloak(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoDef pain = DefDatabase<EchoDef>.GetNamed("AG_Echo_Pain");
             EchoDef itachi = DefDatabase<EchoDef>.GetNamed("AG_Echo_Itachi");
             foreach (EchoDef echo in new[] { pain, itachi })
@@ -648,7 +633,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 4 Pain's piercings are on the head over the beard and face parts and under the hair, narrower on a narrow head (close-up screenshots)")]
         private static IEnumerable<int> PainPiercings(RimArtTestContext t)
         {
-            GameComponent_Echoes echoes = Setup(t);
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
             EchoDef pain = DefDatabase<EchoDef>.GetNamed("AG_Echo_Pain");
             HediffDef form = pain.manifestHediff;
             var props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
@@ -703,7 +688,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 3 Obito's hero form draws the cloak, the collar and the spiral mask, the mask on the head between the hair and the collar and narrower on a narrow head (screenshots)")]
         private static IEnumerable<int> ObitoMask(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Obito");
             var props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
             t.Check(props?.Count == 3, "the hero form has the cloak, the collar and the mask (" + (props?.Count ?? 0) + " costume nodes)");
@@ -785,7 +770,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 5 Minato's hero form draws the haori on the body and the forehead protector on the head over the hair, hides worn clothes and hats but not belts, narrower on a narrow head (screenshots)")]
         private static IEnumerable<int> MinatoHaori(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Minato");
             var props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
             t.Check(props?.Count == 2, "the hero form has the haori and the forehead protector (" + (props?.Count ?? 0) + " costume nodes)");
@@ -869,7 +854,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 6 Sasuke's hero form draws the war outfit with its own west picture, hides worn clothes and hats but not belts (screenshots)")]
         private static IEnumerable<int> SasukeOutfit(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Sasuke");
             var props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
             t.Check(props?.Count == 1, "the hero form has one costume node (" + (props?.Count ?? 0) + ")");
@@ -933,7 +918,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 7 a costume set to onlyOverWornApparel is not drawn on a naked Host and hides nothing; trousers bring it back, a belt does not (screenshots)")]
         private static IEnumerable<int> OnlyOverWornApparel(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             int flagged = DefDatabase<HediffDef>.AllDefsListForReading
                 .Where(d => d.defName != "AG_EchoManifest_Sato" && d.HasDefinedGraphicProperties)
                 .SelectMany(d => d.RenderNodeProperties.OfType<PawnRenderNodeProperties_EchoCostume>())
@@ -1007,7 +992,7 @@ namespace RimArt
         [RimArtTest("Echo", "costume 8 Satō's hero form draws the combat outfit and the flat cap, which hides the hair; nothing of it on a naked Host (screenshots)")]
         private static IEnumerable<int> SatoCombat(RimArtTestContext t)
         {
-            Setup(t);
+            t.ClearEchoes(null);
             HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Sato");
             List<PawnRenderNodeProperties_EchoCostume> props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
             if (!t.Check(props?.Count == 2, "the hero form has the outfit and the cap (" + (props?.Count ?? 0) + " costume nodes)"))
@@ -1092,6 +1077,185 @@ namespace RimArt
                 else
                     t.Check(hair != null && hair.Worker.CanDrawNow(hair, parms), "trousers only after: the hair is drawn");
             }
+        }
+
+        // Gojo has no EchoDef until his kit is ported, so the hero form hediff is added directly.
+        [RimArtTest("Echo", "costume 9 Gojo's hero form draws the uniform, the high collar and the blindfold with his hair, which hides the Host's hair and eyebrows; narrower on a narrow head (screenshots)")]
+        private static IEnumerable<int> GojoUniform(RimArtTestContext t)
+        {
+            t.ClearEchoes(null);
+            HediffDef form = DefDatabase<HediffDef>.GetNamed("AG_EchoManifest_Gojo");
+            List<PawnRenderNodeProperties_EchoCostume> props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
+            if (!t.Check(props?.Count == 3, "the hero form has the uniform, the collar and the blindfold (" + (props?.Count ?? 0) + " costume nodes)"))
+                yield break;
+            PawnRenderNodeProperties_EchoCostume uniformProps = props[0], collarProps = props[1], blindfoldProps = props[2];
+            t.Check(uniformProps.hideBodyApparel && uniformProps.hideHeadgear, "the uniform hides body apparel and headgear");
+            t.Check(collarProps.parentTagDef == PawnRenderNodeTagDefOf.Head && blindfoldProps.parentTagDef == PawnRenderNodeTagDefOf.Head,
+                "the collar and the blindfold are on the head");
+            t.Check(blindfoldProps.hidesHair && blindfoldProps.coversFace, "the blindfold hides the hair and the eyebrows");
+            t.Check(!props.Any(p => p.onlyOverWornApparel), "every piece is drawn whether or not the Host wears clothes");
+            foreach (string facing in new[] { "south", "east", "north" })
+            {
+                foreach (BodyTypeGraphicData body in uniformProps.bodyTypeGraphicPaths)
+                    t.Check(ContentFinder<UnityEngine.Texture2D>.Get(body.texturePath + "_" + facing, false) != null,
+                        "uniform " + body.bodyType.defName + " " + facing + " texture loads");
+                foreach (PawnRenderNodeProperties_EchoCostume head in new[] { collarProps, blindfoldProps })
+                    t.Check(ContentFinder<UnityEngine.Texture2D>.Get(head.texPath + "_" + facing, false) != null,
+                        head.debugLabel + " " + facing + " texture loads");
+            }
+
+            // The first is dressed, with a hat and a pack, and has an average head; the second is naked with
+            // a narrow head. Both have an afro, the hair most likely to show round the blindfold's hair.
+            Pawn a = Colonist(t, -2), b = Colonist(t, 2);
+            foreach ((Pawn pawn, string head) in new[] { (a, "Male_AverageNormal"), (b, "Male_NarrowNormal") })
+            {
+                pawn.apparel.DestroyAll();
+                pawn.story.headType = DefDatabase<HeadTypeDef>.GetNamed(head);
+                pawn.story.hairDef = DefDatabase<HairDef>.GetNamed("Afro");
+                pawn.story.bodyType = BodyTypeDefOf.Thin;
+                if (pawn == a)
+                    foreach (string piece in new[] { "Apparel_BasicShirt", "Apparel_Pants", "Apparel_CowboyHat", "Apparel_SmokepopBelt" })
+                        Wear(pawn, piece);
+                pawn.health.AddHediff(form);
+                pawn.Drawer.renderer.SetAllGraphicsDirty();
+            }
+            yield return 2;
+
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                string who = pawn.story.headType.defName;
+                PawnDrawParms parms = TreeParms(pawn);
+                List<PawnRenderNode> nodes = CostumeNodes(pawn, form).ToList();
+                t.Check(nodes.Count == 3, who + ": the three pieces are in the render tree (" + nodes.Count + ")");
+                foreach (PawnRenderNode node in nodes)
+                    t.Check(node.Worker.CanDrawNow(node, parms), who + ": " + node.Props.debugLabel + " is drawn");
+                PawnRenderNode blindfold = nodes.FirstOrDefault(n => n.Props == blindfoldProps);
+                PawnRenderNode collar = nodes.FirstOrDefault(n => n.Props == collarProps);
+                PawnRenderNode hair = RenderNodes(pawn).FirstOrDefault(n => n.Props.debugLabel == "Hair");
+                t.Check(blindfold?.parent?.Props.tagDef == PawnRenderNodeTagDefOf.Head && collar?.parent?.Props.tagDef == PawnRenderNodeTagDefOf.Head,
+                    who + ": the blindfold and the collar hang on the head");
+                t.Check(hair != null && !hair.Worker.CanDrawNow(hair, parms), who + ": the Host's hair is hidden under Gojo's");
+                bool narrow = pawn.story.headType.narrow;
+                foreach ((Rot4 rot, float want) in new[] { (Rot4.South, narrow ? 0.84f : 1f), (Rot4.East, narrow ? 0.7f : 1f) })
+                {
+                    PawnDrawParms facing = PawnDrawParms.DefaultFor(pawn);
+                    facing.facing = rot;
+                    float got = blindfold == null ? 0f : blindfold.Worker.ScaleFor(blindfold, facing).x;
+                    t.Check(System.Math.Abs(got - want) < 0.001f,
+                        who + " facing " + rot.ToStringHuman() + ": blindfold width x" + got.ToString("0.###") + " (want " + want + ")");
+                }
+                // Facial Animation (when loaded) draws eyebrows at layer 100, over the blindfold, unless hidden.
+                PawnDrawParms south = PawnDrawParms.DefaultFor(pawn);
+                south.facing = Rot4.South;
+                List<PawnRenderNode> brows = RenderNodes(pawn)
+                    .Where(n => n.Props.debugLabel?.StartsWith(Patch_CanDrawNow_FaceCovered.BrowLabel) == true).ToList();
+                if (brows.Count == 0) t.Log(who + ": no Facial Animation eyebrow node (the mod is not loaded); eyebrow check skipped");
+                foreach (PawnRenderNode brow in brows)
+                    t.Check(!brow.Worker.CanDrawNow(brow, south), who + ": " + brow.Props.debugLabel + " is not drawn over the blindfold");
+                if (pawn == a)
+                {
+                    PawnRenderNode uniform = nodes.FirstOrDefault(n => n.Props == uniformProps);
+                    t.Check(uniform?.PrimaryGraphic?.path == "RimArt/Echo/Costume/GojoUniform_Thin",
+                        "the uniform is the Thin one (" + uniform?.PrimaryGraphic?.path + ")");
+                    CheckDrawn(t, pawn, who, ("Apparel_BasicShirt", false), ("Apparel_CowboyHat", false), ("Apparel_SmokepopBelt", true));
+                }
+            }
+            foreach (Rot4 rot in new[] { Rot4.South, Rot4.East, Rot4.North, Rot4.West })
+            {
+                Face(a, rot);
+                Face(b, rot);
+                yield return 20;
+                yield return t.ShotAs("gojo-" + rot.ToStringHuman().ToLowerInvariant());
+            }
+
+            // The form removed, nothing of Gojo is left: the hat hides the first Host's hair again, the
+            // second's is drawn.
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                pawn.health.RemoveHediff(pawn.health.hediffSet.GetFirstHediffOfDef(form));
+                pawn.Drawer.renderer.SetAllGraphicsDirty();
+            }
+            yield return 2;
+            foreach (Pawn pawn in new[] { a, b })
+            {
+                string who = pawn.story.headType.defName + " after";
+                PawnDrawParms parms = TreeParms(pawn);
+                PawnRenderNode hair = RenderNodes(pawn).FirstOrDefault(n => n.Props.debugLabel == "Hair");
+                t.Check(!CostumeNodes(pawn, form).Any(), who + ": nothing of Gojo is drawn after the form is removed");
+                if (pawn == a)
+                {
+                    CheckDrawn(t, pawn, who, ("Apparel_BasicShirt", true), ("Apparel_CowboyHat", true));
+                    t.Check(hair != null && !hair.Worker.CanDrawNow(hair, parms), who + ": the cowboy hat hides the hair, as vanilla");
+                }
+                else
+                    t.Check(hair != null && hair.Worker.CanDrawNow(hair, parms), who + ": the hair is drawn");
+                PawnDrawParms south = PawnDrawParms.DefaultFor(pawn);
+                south.facing = Rot4.South;
+                foreach (PawnRenderNode brow in RenderNodes(pawn).Where(n => n.Props.debugLabel?.StartsWith(Patch_CanDrawNow_FaceCovered.BrowLabel) == true))
+                    t.Check(brow.Worker.CanDrawNow(brow, south), who + ": " + brow.Props.debugLabel + " is drawn again");
+            }
+        }
+
+        [RimArtTest("Echo", "costume 10 Shirou's hero form draws the raglan shirt, jeans and trainers over worn clothes and on a naked Host, hides the shirt and hat but not the belt, and goes on revert (screenshots)")]
+        private static IEnumerable<int> ShirouCasual(RimArtTestContext t)
+        {
+            GameComponent_Echoes echoes = t.ClearEchoes(null);
+            EchoDef shirou = DefDatabase<EchoDef>.GetNamed("AG_Echo_Shirou");
+            HediffDef form = shirou.manifestHediff;
+            List<PawnRenderNodeProperties_EchoCostume> props = form.RenderNodeProperties?.OfType<PawnRenderNodeProperties_EchoCostume>().ToList();
+            if (!t.Check(props?.Count == 1 && props[0].bodyTypeGraphicPaths != null,
+                    "the hero form has one costume node with body types (" + (props?.Count ?? 0) + " nodes)"))
+                yield break;
+            PawnRenderNodeProperties_EchoCostume clothes = props[0];
+            t.Check(clothes.parentTagDef == PawnRenderNodeTagDefOf.ApparelBody, "the clothes hang on the body apparel node");
+            t.Check(clothes.hideBodyApparel && clothes.hideHeadgear, "the clothes hide body apparel and headgear");
+            t.Check(!clothes.onlyOverWornApparel, "the clothes are drawn whether or not the Host wears clothes");
+            foreach (string facing in new[] { "south", "east", "north" })
+                foreach (BodyTypeGraphicData body in clothes.bodyTypeGraphicPaths)
+                    t.Check(ContentFinder<UnityEngine.Texture2D>.Get(body.texturePath + "_" + facing, false) != null,
+                        body.bodyType.defName + " " + facing + " texture loads");
+
+            Pawn host = Colonist(t);
+            host.apparel.DestroyAll();
+            foreach (string piece in new[] { "Apparel_BasicShirt", "Apparel_Pants", "Apparel_CowboyHat", "Apparel_SmokepopBelt" })
+                Wear(host, piece);
+            EchoRecord record = EchoUtility.ForceHost(shirou, host);
+            echoes.charge = 100f;
+            t.Check(EchoUtility.Manifest(record), "manifested dressed");
+            yield return 2;
+            PawnRenderNode node = CostumeNodes(host, form).FirstOrDefault();
+            t.Check(node?.PrimaryGraphic?.path == "RimArt/Echo/Costume/ShirouCasual_" + host.story.bodyType.defName,
+                "the clothes are the " + host.story.bodyType.defName + " set (" + node?.PrimaryGraphic?.path + ")");
+            t.Check(node != null && node.Worker.CanDrawNow(node, TreeParms(host)), "the clothes are drawn");
+            t.Check(host.story.HairColor == shirou.hairColor, "the hair has Shirou's colour (" + host.story.HairColor + ")");
+            CheckDrawn(t, host, "dressed", ("Apparel_BasicShirt", false), ("Apparel_CowboyHat", false), ("Apparel_SmokepopBelt", true));
+            PawnRenderNode hair = RenderNodes(host).FirstOrDefault(n => n.Props.debugLabel == "Hair");
+            t.Check(hair != null && hair.Worker.CanDrawNow(hair, TreeParms(host)), "the hat is hidden, so the hair is drawn");
+            foreach (Rot4 rot in new[] { Rot4.South, Rot4.East, Rot4.North, Rot4.West })
+            {
+                Face(host, rot);
+                yield return 20;
+                yield return t.ShotAs("shirou-" + rot.ToStringHuman().ToLowerInvariant());
+            }
+
+            // Naked: the clothes are still drawn (Shirou has no reason to show the Host's own body).
+            EchoUtility.Revert(record, collapse: false);
+            host.apparel.DestroyAll();
+            echoes.charge = 100f;
+            t.Check(EchoUtility.Manifest(record), "manifested naked");
+            yield return 2;
+            node = CostumeNodes(host, form).FirstOrDefault();
+            t.Check(node != null && node.Worker.CanDrawNow(node, TreeParms(host)), "naked: the clothes are drawn");
+            Face(host, Rot4.South);
+            yield return 20;
+            yield return t.ShotAs("shirou-naked-south");
+
+            EchoUtility.Revert(record, collapse: false);
+            foreach (string piece in new[] { "Apparel_BasicShirt", "Apparel_CowboyHat" })
+                Wear(host, piece);
+            yield return 2;
+            t.Check(!CostumeNodes(host, form).Any(), "nothing of Shirou is drawn after revert");
+            CheckDrawn(t, host, "after revert", ("Apparel_BasicShirt", true), ("Apparel_CowboyHat", true));
         }
     }
 }

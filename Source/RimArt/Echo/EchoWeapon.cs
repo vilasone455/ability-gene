@@ -98,12 +98,7 @@ namespace RimArt
         {
             ThingWithComps held = pawn.equipment.Primary;
             if (held == null || held == record.heroWeapon) return;
-            if (pawn.inventory != null && pawn.equipment.TryTransferEquipmentToContainer(held, pawn.inventory.innerContainer))
-            {
-                if (record.storedWeapon == null) record.storedWeapon = held;
-                return;
-            }
-            if (pawn.SpawnedOrAnyParentSpawned) pawn.equipment.TryDropEquipment(held, out _, pawn.PositionHeld, forbid: false);
+            if (WeaponStow.Stow(pawn, held) == WeaponStow.Result.Inventory && record.storedWeapon == null) record.storedWeapon = held;
         }
 
         /// <summary>A fresh hero weapon in hand: default stuff and normal quality, never a roll.</summary>
@@ -151,19 +146,20 @@ namespace RimArt
 
     /// <summary>
     /// Every vanilla drop (the drop order, downing, death, Disarm, Chain Sickle's Stake, Inumaki's
-    /// "drop") comes here: the hero weapon vanishes instead of landing.
+    /// "drop") comes to <see cref="BoundWeapon"/>: the hero weapon vanishes instead of landing.
     /// </summary>
-    [HarmonyPatch(typeof(Pawn_EquipmentTracker), nameof(Pawn_EquipmentTracker.TryDropEquipment))]
-    static class Patch_TryDropEquipment_EchoWeapon
+    [StaticConstructorOnStartup]
+    static class EchoWeaponBound
     {
-        static bool Prefix(ThingWithComps eq, out ThingWithComps resultingEq, ref bool __result)
+        static EchoWeaponBound()
         {
-            resultingEq = null;
-            EchoRecord record = EchoWeapon.OwnerOf(eq);
-            if (record == null) return true;
-            EchoWeapon.Vanish(record, eq);
-            __result = true;
-            return false;
+            BoundWeapon.Register(eq =>
+            {
+                EchoRecord record = EchoWeapon.OwnerOf(eq);
+                if (record == null) return false;
+                EchoWeapon.Vanish(record, eq);
+                return true;
+            });
         }
     }
 

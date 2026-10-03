@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using HarmonyLib;
 using RimWorld;
 using Verse;
 using Verse.AI;
@@ -91,19 +93,34 @@ namespace RimArt
             Pawn pawn = PawnGenerator.GeneratePawn(request);
             GenSpawn.Spawn(pawn, at, map);
             pawn.drafter.Drafted = true;
-            return pawn;
+            return Note(pawn);
         }
 
-        /// <summary>A hostile humanlike from an enemy faction, told to stand still.</summary>
-        public Pawn Enemy(IntVec3 at, bool armed = true)
+        /// <summary>A hostile humanlike from an enemy faction (<paramref name="faction"/>, else a random one), told to stand still.</summary>
+        public Pawn Enemy(IntVec3 at, bool armed = true, Faction faction = null)
         {
-            Faction faction = Find.FactionManager.RandomEnemyFaction(allowNonHumanlike: false);
+            faction = faction ?? Find.FactionManager.RandomEnemyFaction(allowNonHumanlike: false);
             PawnKindDef kind = faction?.def.basicMemberKind ?? PawnKindDefOf.Villager;
             var request = new PawnGenerationRequest(kind, faction, mustBeCapableOfViolence: true, dontGiveWeapon: !armed);
             Pawn pawn = PawnGenerator.GeneratePawn(request);
             GenSpawn.Spawn(pawn, at, map);
             Hold(pawn);
-            return pawn;
+            return Note(pawn);
+        }
+
+        /// <summary>A Scyther of the mechanoid faction at <paramref name="at"/>, held still; null, with a log line, when the game has no Mech_Scyther or mechanoid faction.</summary>
+        public Pawn Mech(IntVec3 at)
+        {
+            PawnKindDef scyther = DefDatabase<PawnKindDef>.GetNamedSilentFail("Mech_Scyther");
+            if (scyther == null || Faction.OfMechanoids == null)
+            {
+                Log("no Mech_Scyther or mechanoid faction: the mech check is skipped");
+                return null;
+            }
+            Pawn mech = PawnGenerator.GeneratePawn(new PawnGenerationRequest(scyther, Faction.OfMechanoids));
+            GenSpawn.Spawn(mech, at, map);
+            Hold(mech);
+            return Note(mech);
         }
 
         /// <summary>Starts a long Wait job so the pawn stands where it is.</summary>
@@ -118,6 +135,194 @@ namespace RimArt
             if (pawn.equipment.Primary != null) pawn.equipment.DestroyEquipment(pawn.equipment.Primary);
             pawn.equipment.AddEquipment((ThingWithComps)ThingMaker.MakeThing(weapon,
                 weapon.MadeFromStuff ? GenStuff.DefaultStuffFor(weapon) : null));
+        }
+
+        // ---- kit test setup (AGENTS.md: shared here, not copied into each Tests_ file) ----------------------------
+
+        /// <summary>Waits <paramref name="step"/> ticks at a time until <paramref name="done"/>, at most <paramref name="maxTicks"/>.</summary>
+        public static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 1)
+        {
+            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
+        }
+
+        /// <summary>
+        /// <see cref="Clear"/>, then no Hosts and an empty pool. <paramref name="device"/> stands in for the resonance
+        /// device (tests have no power grid): false none works, true one does, null the real search.
+        /// </summary>
+        public GameComponent_Echoes ClearEchoes(bool? device = false)
+        {
+            Clear();
+            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
+            echoes.ResetForTests();
+            EchoDevice.workingForTests = device;
+            return echoes;
+        }
+
+        /// <summary>A colonist at <paramref name="at"/> made the Host of <paramref name="echo"/>, the pool at 100, in hero form unless <paramref name="manifest"/> is false.</summary>
+        public Pawn Host(EchoDef echo, IntVec3 at, out EchoRecord record, bool manifest = true)
+        {
+            Pawn host = Colonist(at);
+            record = EchoUtility.ForceHost(echo, host);
+            GameComponent_Echoes.Get.charge = 100f;
+            if (manifest) EchoUtility.Manifest(record);
+            return host;
+        }
+
+        /// <summary>The end of a test with a Host: out of hero form (no collapse), and the device back to the real search.</summary>
+        public static void EndHost(EchoRecord record)
+        {
+            if (record != null) EchoUtility.Revert(record, collapse: false);
+            EchoDevice.workingForTests = null;
+        }
+
+        /// <summary>
+        /// An enemy at <paramref name="at"/> (<see cref="Enemy"/>), unarmed unless <paramref name="armed"/>, stunned for
+        /// <paramref name="stunTicks"/>. <paramref name="bare"/>: its apparel destroyed, so armour cannot turn a hit to 0.
+        /// </summary>
+        public Pawn Target(IntVec3 at, int stunTicks = 0, bool bare = true, bool armed = false, Faction faction = null)
+        {
+            Pawn pawn = Enemy(at, armed, faction);
+            if (bare) pawn.apparel?.DestroyAll();
+            if (stunTicks > 0) pawn.stances.stunner.StunFor(stunTicks, null, false);
+            return pawn;
+        }
+
+        /// <summary>
+        /// One melee attack with <paramref name="attacker"/>'s weapon that cannot miss: a surprise attack skips the miss and
+        /// dodge rolls. It goes through Pawn_MeleeVerbs, not an AttackMelee job, so Melee Animation does not take it over
+        /// with a duel or an execution (those apply their own damage and skip Verb_MeleeAttackDamage hooks).
+        /// False, with a failed check, when the weapon has no melee verb.
+        /// </summary>
+        public bool Strike(Pawn attacker, Pawn target)
+        {
+            Verb verb = attacker.equipment?.PrimaryEq?.AllVerbs?.FirstOrDefault(v => v.IsMeleeAttack);
+            if (!Check(verb != null, attacker.LabelShort + " has a melee verb on the weapon")) return false;
+            bool started = attacker.meleeVerbs.TryMeleeAttack(target, verb, true);
+            Log(Now + " strike " + target.LabelShort + ": " + started + " | " + Describe(attacker));
+            return started;
+        }
+
+        /// <summary>Removes Wimp: at 20 % pain it downs a pawn a test means to wound, which then drops its weapon.</summary>
+        public static void NoWimp(Pawn pawn)
+        {
+            Trait wimp = pawn.story?.traits?.GetTrait(TraitDefOf.Wimp);
+            if (wimp != null) pawn.story.traits.RemoveTrait(wimp);
+        }
+
+        private readonly Dictionary<Pawn, float> startHealth = new Dictionary<Pawn, float>();
+        private readonly Dictionary<Pawn, HashSet<Hediff>> startWounds = new Dictionary<Pawn, HashSet<Hediff>>();
+
+        /// <summary>
+        /// Notes the pawn's health and wounds now for <see cref="Hurt"/>. <see cref="Colonist"/>, <see cref="Enemy"/> and
+        /// <see cref="Mech"/> note at spawn, because a generated pawn often carries an old scar or a missing part; a test that
+        /// wounds a pawn on purpose notes it again before the check. A pawn never noted counts from full health.
+        /// </summary>
+        public Pawn Note(Pawn pawn)
+        {
+            startHealth[pawn] = pawn.health.summaryHealth.SummaryHealthPercent;
+            startWounds[pawn] = new HashSet<Hediff>(pawn.health.hediffSet.hediffs.Where(Wound));
+            return pawn;
+        }
+
+        /// <summary>
+        /// An injury or a lost part. Summary health alone misses a hit that takes a small part off whole (a finger, a toe,
+        /// an ear): Hediff_MissingPart counts 0 for a part with no tags and no children that does not bleed.
+        /// </summary>
+        private static bool Wound(Hediff hediff) => hediff is Hediff_Injury || hediff is Hediff_MissingPart;
+
+        /// <summary>Dead, downed, or below the health noted for it.</summary>
+        public bool Hurt(Pawn pawn) => pawn.Downed || Struck(pawn);
+
+        /// <summary>
+        /// Dead, below the health noted for it, or with a <see cref="Wound"/> it did not have at the note. Unlike
+        /// <see cref="Hurt"/>, a pawn put down by <see cref="Down"/> counts only once something hits it again; its wounds heal
+        /// a little every 600 ticks, so health above the note is not a hit.
+        /// </summary>
+        public bool Struck(Pawn pawn)
+        {
+            if (pawn.Dead || pawn.health.summaryHealth.SummaryHealthPercent < (startHealth.TryGetValue(pawn, out float h) ? h : 1f) - 0.001f) return true;
+            return startWounds.TryGetValue(pawn, out HashSet<Hediff> had) && pawn.health.hediffSet.hediffs.Any(x => Wound(x) && !had.Contains(x));
+        }
+
+        /// <summary>Downs <paramref name="pawn"/> with no bleeding wounds (so it stays down and alive) and notes its health then, for <see cref="Struck"/>.</summary>
+        public Pawn Down(Pawn pawn)
+        {
+            HealthUtility.DamageUntilDowned(pawn, allowBleedingWounds: false);
+            return Note(pawn);
+        }
+
+        public bool Untouched(Pawn pawn) => !Hurt(pawn);
+
+        private static readonly AccessTools.FieldRef<ThingWithComps, Dictionary<Type, ThingComp[]>> CompsByType =
+            AccessTools.FieldRefAccess<ThingWithComps, Dictionary<Type, ThingComp[]>>("compsByType");
+
+        /// <summary>Takes every hit for nothing, as armour that turns a hit to 0: ThingWithComps.PreApplyDamage asks the comps first.</summary>
+        private sealed class AbsorbAll : ThingComp
+        {
+            public override void PostPreApplyDamage(ref DamageInfo dinfo, out bool absorbed) => absorbed = true;
+        }
+
+        /// <summary>
+        /// From now on every hit on <paramref name="pawn"/> deals nothing (<see cref="Unshield"/> ends it); what a hit does
+        /// besides damage still happens. For a test that must keep a pawn alive through a weapon's damage.
+        /// </summary>
+        public static ThingComp Shield(Pawn pawn)
+        {
+            var comp = new AbsorbAll { parent = pawn, props = new CompProperties() };
+            pawn.AllComps.Add(comp);
+            CompsByType(pawn) = null;
+            return comp;
+        }
+
+        public static void Unshield(Pawn pawn, ThingComp comp)
+        {
+            pawn.AllComps.Remove(comp);
+            CompsByType(pawn) = null;
+        }
+
+        public static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned == true;
+
+        /// <summary>
+        /// Not stunned and not in a warmup or melee cooldown stance. A queued ability job ends at once while its caster is
+        /// in a melee Stance_Cooldown, and a drafted pawn punches an adjacent hostile by itself: wait for this before a
+        /// scripted cast.
+        /// </summary>
+        public static bool Free(Pawn pawn) => !Stunned(pawn) && !(pawn.stances?.curStance is Stance_Busy);
+
+        /// <summary>A wall at <paramref name="at"/> made of <paramref name="stuff"/> (granite blocks if null), the player's unless <paramref name="owned"/> is false.</summary>
+        public Thing Wall(IntVec3 at, ThingDef stuff = null, bool owned = true)
+        {
+            Thing wall = ThingMaker.MakeThing(ThingDefOf.Wall, stuff ?? ThingDefOf.BlocksGranite);
+            if (owned) wall.SetFaction(Faction.OfPlayer);
+            return GenSpawn.Spawn(wall, at, map);
+        }
+
+        /// <summary>
+        /// A closed room: <see cref="Wall"/>s on every cell round the floor from <paramref name="min"/> to
+        /// <paramref name="max"/> (both corners inside), and an unowned wooden door instead of the wall at
+        /// <paramref name="door"/> when given. Unroofed, so it is a room of its own that does not touch the map edge; Core
+        /// counts one with 300 or more unroofed cells as psychologically outdoors.
+        /// </summary>
+        public void Room(IntVec3 min, IntVec3 max, ThingDef stuff = null, IntVec3? door = null)
+        {
+            for (int x = min.x - 1; x <= max.x + 1; x++)
+                for (int z = min.z - 1; z <= max.z + 1; z++)
+                {
+                    if (x >= min.x && x <= max.x && z >= min.z && z <= max.z) continue;
+                    var at = new IntVec3(x, 0, z);
+                    if (at == door) GenSpawn.Spawn(ThingMaker.MakeThing(ThingDefOf.Door, ThingDefOf.WoodLog), at, map);
+                    else Wall(at, stuff);
+                }
+        }
+
+        /// <summary>Undrafted and standing facing <paramref name="rot"/> for 10 s: a drafted idle pawn turns to face south every tick.</summary>
+        public static void Face(Pawn pawn, Rot4 rot)
+        {
+            if (pawn.drafter != null) pawn.drafter.Drafted = false;
+            Job wait = JobMaker.MakeJob(JobDefOf.Wait_MaintainPosture, pawn.Position + rot.FacingCell * 3);
+            wait.expiryInterval = 600;
+            pawn.jobs.StartJob(wait, JobCondition.InterruptForced);
+            pawn.Rotation = rot;
         }
 
         /// <summary>One line on a pawn: where it is, its job and toil, stance, stun, and whether it is inside a flyer.</summary>

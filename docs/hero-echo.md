@@ -163,7 +163,7 @@ ThingDef), `emptyHands` (bool), `weaponReturnTicks` (default 600 = 10 s, placeho
 | Echo | Forced | In XML |
 |---|---|---|
 | Vergil | Yamato | not yet: no Yamato def (comes with the Vergil port) |
-| Nakime | biwa (weak blunt or none) | not yet: no Nakime Echo and no biwa def |
+| Nakime | biwa (`AG_Biwa`, blunt 9) | `manifestWeapon` set (`AG_Echo_Nakime.xml`) |
 | Goku | empty hands | `emptyHands` set |
 | Todo | empty hands | not yet: no Todo Echo |
 | everyone else, Sasuke included | nothing | |
@@ -181,9 +181,10 @@ Rules:
   in `statBases` (a config error otherwise).
 - If it leaves the hand it is destroyed instead of dropping and returns after `weaponReturnTicks`
   while still manifested and not downed. Every vanilla drop goes through the
-  `Pawn_EquipmentTracker.TryDropEquipment` patch: downing, death, Disarm, Chain Sickle Stake,
-  Inumaki's "drop". Vacuum Suck removes weapons its own way and has its own check. Any other path is
-  caught by the pool interval check.
+  `Pawn_EquipmentTracker.TryDropEquipment` patch in `Shared/BoundWeapon.cs` (shared with Shirou's
+  traced copies): downing, death, Disarm, Chain Sickle Stake, Inumaki's "drop". Vacuum Suck removes
+  weapons its own way and asks `BoundWeapon.Leave` first. Any other path is caught by the pool
+  interval check.
 - Downing drops the whole inventory (vanilla), so the stored weapon lands on the ground, forbidden,
   and revert does not pick it up.
 - Tests: `-rimarttest=echo`, "weapon 1" to "weapon 4" (the forced-weapon tests lend Vergil a
@@ -202,34 +203,49 @@ Rules:
 
 | Echo | Trials | Cost | Abilities | Upkeep | Casts |
 |---|---|---|---|---|---|
-| Accelerator | Intellectual 12, Damage taken 300 | Abrasive | vector manipulation, reflex surge, vector shove | 12 | surge 10, shove 8 |
+| Accelerator | Intellectual 12, Damage taken 300 | Abrasive | vector manipulation, reflex surge, vector shove, Plasma, Vector Flick | 12 | 0 on all five (brain strain is his cost: manipulation 8/24/48/80 %, surge 10 %, shove 5 %, Plasma 45 %, Flick none) |
 | Pain (`AG_Echo_Pain.xml`) | Intellectual 10, Kills 25 | Iron-willed | Shinra Tensei, Banshō Ten'in, Black Receiver, Chibaku Tensei (replaced Gravity Well 2026-09-28) | 15 | Shinra 5 charged / 3 quick (tap/hold button, 2026-09-29), Banshō 3, Black Receiver 0 (its three charges), Chibaku Tensei 30 |
 | Inumaki | Social 10, not Psychopath | Kind | stop, drop, crush, come, run, explode | 8 | 0 each (the throat is his cost) |
 | Vergil | Melee 16, 20 longsword kills, not Wimp | Bloodlust | Judgement Cut, Yamato Dash, Summoned Swords, Judgement Cut End (the def grants none until the kit is ported) | 10 | Judgement Cut 3, Yamato Dash 2, Summoned Swords 10, Judgement Cut End 0 (Style is its limit) |
-| Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Unlimited Blade Works | 12 | 40 |
+| Shirou | has Origin: Blade | none (Origin: Blade's awakening already cost psycasts and ranged weapons) | Reinforcement, Trace On, Unlimited Blade Works (with Full Open, Pin, Draw, Arm and Intercept inside its world) | 12 | Reinforcement 0, Trace On 10, UBW 40; +0.4 move speed, auburn hair, wealth 6000, his everyday clothes (white shirt with navy raglan sleeves, indigo jeans, grey trainers; `python3 make_costume_textures.py shirou`, test "costume 10") |
 | Itachi ("Crow of the Crimson Eye") | Melee 12, Intellectual 12, Kills 30 | Sickly (Immunity -1) + the dispersal plexus gene (awakenGenes) | crow dispersal (Murder + automatic Scatter), carrion, false face, susanoo | 10 | crow abilities 0 (the plexus's 3 charges), false face 3, susanoo 20 |
 | Shikamaru | Intellectual 14, 5 people captured | Lazy | shadow imitation, shadow seam, shadow grasp, shadow double, shadow neck bind | 10 | imitation 3, seam 3, grasp 1, double 5, neck bind 2 |
 | Sasuke ("Avenger of the Crimson Eye") | Melee 14, Intellectual 10, 15 kills with the Fūma Shuriken | Pessimist | Amenoyodomi, Amenotejikara, Raikō Kusari, Amaterasu | 12 | Amenoyodomi 0, Amenotejikara 2, Raikō Kusari 8, Amaterasu 5 (+ Bleeding eye); +0.4 move speed, black hair, wealth 6000, no forced weapon, Fourth War outfit |
 | Goku | Melee 15, downed and recovered 3 times (`Trial_DownedRecovered`, counted from the moment the mod is loaded) | Gourmand | Solar Flare, Instant Transmission, Kamehameha, Spirit Bomb; Warp Kamehameha is a button during the Kamehameha hold, not a def | 12 | Solar Flare 3, Instant Transmission 2, Kamehameha 15, Spirit Bomb 30; Warp pays Instant Transmission's 2 and cooldown on top |
 | Todo (no subtitle) | Melee 14, 20 humanlikes downed (`PawnsDownedHumanlikes`) | Brawler + the anchor organ gene (awakenGenes) | stone, clap, double clap, Black Flash, provoke | 8 | stone 0, clap 0, double clap 0 (the organ's three claps are their limit), Black Flash 1, provoke 5; +0.5 move speed, black hair, wealth 6000, forced empty hands |
 | Minato ("Hero of the Yellow Flash") | Melee 12, Intellectual 10, 30 kills with a thrown kunai (`Trial_KillsWith` on AG_Kunai; `Projectile_Kunai` names the kunai as its weapon) | Kind | flying thunder god, flying thunder god: chain, guiding thunder, rasengan; sealing touch passive (AG_MinatoSeal); throw kunai stays on the belt | 10 | throw kunai 0 (belt charges), flying thunder god 2, chain 10, guiding thunder 5, rasengan 3; blond hair, the Hokage haori and forehead protector, no forced weapon, no kunai regeneration |
+| Nakime ("Player of the Endless Halls"; `AG_Echo_Nakime.xml`) | Artistic 12, Construction 10, 15 humanlike kills (`KillsHumanlikes`) | Night Owl + the castle organ gene (awakenGenes; sunlight burns her always) | Infinity Castle; inside it Shift, Drop, Seal / Open, Crush, Summon, Release | 12 | Infinity Castle 30, commands 0; black hair, wealth 6000, forced biwa, no costume |
 
-Accelerator reuses abilities that still come from his pre-hero item (the reflex booster implant).
-validate.py allows that second source only for those abilities (`SHARED_WITH_ECHO`) until the
-implant is made Echo-only. Pain's four come only from his Echo since his port (2026-09-28; Chibaku
-Tensei took Gravity Well's place the same day): the
-repulsion and attraction eyes grant nothing and are no longer quest rewards; their defs stay so saves
-that hold one still load. Inumaki's words have one source, his Echo:
-the Commanding Voice trait was removed when his kit was ported.
-Decided 2026-09-27: the reflex booster implant becomes Echo-only, like Todo's anchor organ; the
-repulsion eye and Commanding Voice became Echo-only later the same day. Accelerator keeps brain strain as his cost; his
-strain abilities (manipulation, surge, shove, Plasma) cost 0 charge, so `AG_Echo_Accelerator`'s
-castCosts (surge 10, shove 8) are to be removed at the port. Upkeep 12/h stays (his choker battery).
-Plasma is agreed; Uplift is dropped. Fifth ability, Vector Flick (agreed 2026-09-27, no sketch
-yet): he kicks a pebble off the ground at bullet speed; target a pawn within 24.9 cells with line of
-sight, warm-up 0.3 s, one projectile of 14 blunt at 30 % armour penetration, cooldown 2 s, no item
-used, no strain, 0 charge. Accelerator's v1 kit: vector manipulation, reflex surge, vector shove
-(the 2026-09-24 rework), Plasma, Vector Flick.
+Pain's four come only from his Echo since his port (2026-09-28; Chibaku Tensei took Gravity Well's
+place the same day): the repulsion and attraction eyes grant nothing and are no longer quest rewards;
+their defs stay so saves that hold one still load. Inumaki's words have one source, his Echo: the
+Commanding Voice trait was removed when his kit was ported. Accelerator's five come only from his Echo
+since his port (2026-09-29): the reflex booster implant grants nothing, cannot be crafted, is no longer
+a reward or given to generated pawns, and its defs stay so saves still load (`SHARED_WITH_ECHO` in
+validate.py is empty).
+
+Accelerator (ported 2026-09-29; rules in the `accelerator-*.js` sketch headers and the ability
+descriptions; numbers are XML fields on `AG_Vector_Abilities.xml`). Brain strain is his cost and his
+five abilities cost 0 charge; upkeep 12/h stays (his choker battery).
+- Vector manipulation and reflex surge: unchanged mechanics. Manipulation's strain costs moved to the
+  def (`CompProperties_VectorManipulation.strainCosts`); Apply now draws a corner, a star and a trail
+  per rewritten bullet, the strain ring and the reach flash.
+- Vector shove (2026-09-24 rework): touch an adjacent pawn or a loose stone chunk, corpse or weapon,
+  then pick a direction (vanilla's second pick). A pawn flies 8 cells / body size at 20 cells/s,
+  1.5 blunt per cell, +8 on a wall, stun 1 s; pawns in the path are knocked 1 cell aside, 8 blunt,
+  stun 0.5 s. A thing flies 12 cells and hits the first standing pawn or wall for 1 blunt per kg
+  (at most 40), then lands there. Force returned: a melee hit on him in the last second is added to
+  the first pawn struck, or to the thrown pawn if it strikes none (recorded by `HediffComp_ForceReturn`
+  on his hero form). Strain 5 %, cooldown 20 s.
+- Plasma: target a direction; a 3 s channel of its own (job `AG_VectorPlasmaChannel`, not the verb
+  warmup, which the aiming delay stat would scale). Bullets within 8 cells during the channel are
+  destroyed (the manipulation's rule: no mortar shells or explosives; not his own). Then a lane
+  1 x 15 cells: it stops at the first standing pawn or wall and bursts, radius 1.5, 50 Flame at 40 %
+  armour penetration, fires; he is not hurt by it. The wind's pull on items is picture only (decided
+  2026-09-29). Strain 45 % at the release; a stun, a downing or an order during the channel spends
+  the cooldown and no strain. Cooldown 90 s.
+- Vector Flick: a pawn within 24.9 cells in sight, warm-up 0.3 s, 14 blunt at 30 %, cooldown 2 s, no
+  strain. It always hits the target and pawns in between are not hit (decided 2026-09-29).
 
 Vergil (agreed 2026-09-27; numbers are placeholders; full rules in the four `vergil-*.js` sketch
 headers): forced Yamato on Manifest (its stats not set yet); +0.5 move speed.
@@ -255,7 +271,7 @@ Agreed, not built (no EchoDef yet; the abilities do not exist):
 |---|---|---|---|---|---|---|
 | Obito ("Watcher Behind the Spiral Mask"; built 2026-09-28, see "Obito" below) | Melee 12, Intellectual 10, has a missing or artificial body part (`Trial_ArtificialPart`: any missing part or added part) | Depressive (Natural mood -2) | Kamui: Phase, Kamui: Warp, Kamui: Store, Wood Release | 12 | Phase 0 (its own 30 s pool), Warp 2, Store 1, Wood Release 2 | fold organ gene Echo-only: added on awakening (the dimension is generated then), abilities only while manifested |
 | Gojo ("Bearer of the Six Eyes") | Intellectual 14, 1 day spent downed in total (vanilla `TimeDowned` record; the Trial label shows hours), colony wealth 200,000 | The Strongest (new custom trait) | Infinity, Blue, Red, Unlimited Void (+ Hollow Purple combo) | 15 | Infinity 0 (its breath is the price), Blue 3, Red 3, Hollow Purple 20 (+ its own 1-day cooldown), Unlimited Void 30 | white hair; phase barrier implant Echo-only; no forced weapon |
-| Nakime ("Player of the Endless Halls") | Artistic 12, Construction 10, 15 humanlike kills (vanilla `KillsHumanlikes`) | Night Owl | Infinity Castle (commands: shift, drop, seal/open, crush, summon, release; passives castle sight, void rule) | 12 | Infinity Castle 30, commands 0 (the 1.5 s strum rhythm and crush's own 10 s cooldown limit them) | black hair; forced biwa; castle gene Echo-only, added on awakening; sunlight burns her always (the gene's rule, 4 per second outdoors by day), not only while manifested |
+| Nakime ("Player of the Endless Halls"; `AG_Echo_Nakime.xml`, built 2026-09-30, see "Nakime" below) | Artistic 12, Construction 10, 15 humanlike kills (vanilla `KillsHumanlikes`) | Night Owl | Infinity Castle (commands: shift, drop, seal/open, crush, summon, release; passives castle sight, void rule) | 12 | Infinity Castle 30, commands 0 (the 1.5 s strum rhythm and crush's own 10 s cooldown limit them) | black hair; forced biwa; castle gene Echo-only, added on awakening; sunlight burns her always (the gene's rule, 4 per second outdoors by day), not only while manifested |
 | Satō (`AG_Echo_Sato.xml`; built 2026-09-29, see "Satō" below) | Shooting 12, 30 kills, 500 damage taken | Ajin (new custom trait carrying the Reset passive) + Psychopath | Reset (passive), Black Ghost, The Game, Sever, Headshot Reset, Grenade Reset | 10 | Sever 0, Headshot Reset 0, Grenade Reset 5, Black Ghost 10, The Game 5 (a kill on the marked enemy refunds 15); every Reset while manifested costs by the piece he rises from (body or leg 20, arm 25, hand 40, finger or ear 60) | half pain while manifested; on revert the Ghost dissolves and the mark ends |
 
 Goku (built 2026-09-27, `Source/RimArt/Goku/Kit`): Kamehameha and Spirit Bomb are channels that hold the
@@ -397,16 +413,92 @@ Gojo (agreed 2026-09-27; numbers are placeholders):
   the lane are removed (thick rock roof too), rock and ore are erased with no chunks. The scar is
   permanent (agreed 2026-09-29): it never grows back. Sketch: `gojo-purple.js`.
 - Unlimited Void: the pocket map (pictures on main, PR #34). Everyone within 9 cells is taken in,
-  keeping positions relative to Gojo; 10 s or Release, then back to the matching cells. Anyone not
-  spared is overloaded (consciousness capped at 10 % for 60 s, then void-scarred 2 days). Cooldown
-  2 days. Rules: allies are taken too; Gojo spares an ally by touching it during the domain, and one
-  touch spares it for the whole domain; androids and mechanoids are immune but still taken in and can
-  act inside; overloading neutrals costs goodwill with their faction.
+  keeping positions relative to Gojo; 10 s or Release, then back to the matching cells. Cooldown
+  2 days. Overload builds over time (agreed 2026-09-30): every untouched victim gains 10 % overload per
+  second frozen inside; on exit its consciousness is capped at 100 % minus its overload (never below
+  10 %), and the overload then falls 0.5 % per second until gone. Past 7 s frozen (overload over 70 %)
+  consciousness is under 30 %, so the pawn is downed until the overload falls back to 70 %; only a pawn
+  that went down is also void-scarred (consciousness -15 %, sight -20 %, 2 days). Examples: 1 s =
+  consciousness 90 % for 20 s; 3 s = 70 % for 60 s; 5 s = 50 % for 100 s; 8 s = downed 20 s, then
+  140 s recovering, then scarred; 10 s = consciousness 10 %, downed 60 s, then 140 s recovering, then
+  scarred. No damage. Rules: allies are taken too; Gojo spares a pawn by touching it during the
+  domain: its build-up stops and it keeps what it already has, so a late touch spares less; androids
+  and mechanoids are immune but still taken in and can act inside; overloading neutrals costs goodwill
+  with their faction.
 - Forced trait, The Strongest (new custom trait): Gojo has +20 opinion of young colonists (children
   and anyone under 30 % of the race's life expectancy, 24 for a human) and they have +10 of him; he
   has -20 opinion of old colonists (past 70 %, 56 for a human) and they have -10 of him; -6 mood while
   no other Host is awakened in the colony, +4 once another is. No psychic sensitivity anywhere in his
   entry (the user's rule).
+- Costume (built 2026-09-30 on `AG_EchoManifest_Gojo`, his hero form hediff): his
+  teacher's uniform from the anime's model sheets. Three pieces. The uniform on the body: a near-black
+  zip-up jacket (violet highlights on the lit edges and folds, as the anime lights it) to the top of
+  the thighs, the zip's flap a little to his left of the middle, slash pockets, black trousers and
+  boots; no arms (a seam marks each sleeve down to the wrist); it hides worn clothes and headgear, and
+  facing north it goes over the head and draws the collar from behind. The high, broad collar on the
+  head (layer 64, as the Akatsuki collar), up to the jaw, just over the tip of the chin; its north
+  picture is empty. The blindfold on the head (layer 63): a wide black band over the brows and eyes
+  with his white hair propped up above it in nine broad flame-shaped locks, lavender toward the band,
+  short lavender hair under it at the back; it sets `hidesHair` (the Host's hair is not drawn) and
+  `coversFace` (Facial Animation's eyebrows are not drawn over it). The band's ends are on the vanilla
+  head's outline, so on Facial Animation's narrower heads they stand about 2 units past the face.
+  Textures: `python3 make_costume_textures.py gojo`. Test "costume 9".
+
+Gojo, built 2026-09-30 (the port; Echo `AG_Echo_Gojo.xml`, abilities `AG_Gojo_Abilities.xml` and
+`AG_Gojo_Void.xml`, code in `Source/RimArt/Gojo/Kit` and `Source/RimArt/Gojo/Echo`, tests
+`-rimarttest=Gojo`; numbers are XML fields). Choices made in the port, beyond the rules above:
+- Echo: the downed Trial counts hours (`Trial_Record` shows a time record in hours; `count` 24).
+  Vanilla cannot add to a time record, so the debug "meet candidate's trials" sets it (`Trial_Record.Meet`).
+  Infinity keeps its def (`AG_Recursion`) and is relabelled Infinity; the phase barrier implant grants
+  nothing and is no longer a reward (the debug kit no longer lists it). The Strongest counts humanlike
+  pawns of Gojo's own faction.
+- Blue runs on the Gravity Well code with XML switches (Gravity Well itself is unchanged):
+  `holdsCaster` false (no clip, Gojo stays free and can cast Red, no Implode or Cancel button; the well
+  stays while Gojo is alive, on the map and has the ability), `bendsBullets` false (rounds are neither
+  bent nor eaten), `openingSeconds` 0.45, `look` GojoBlue. Core 1 cell, implosion radius 2, full 25 at a
+  mass of 120 (two people), no core damage; items and corpses in the core are crushed. Its button is
+  disabled while it is open; the cooldown counts from when it closes. Only a Blue already pulling counts
+  for the combo, not one still opening. Blue and Gravity Well each have their own cooldown and their own
+  one-at-a-time rule (a Host with an attraction eye has both). Blue does not open if Gojo is downed,
+  stunned or in a mental state when the cell is picked.
+- Red: warm-up 0.6 s (the picture's arm and charge); Gojo stands with his arm out until 0.7 s after the
+  burst. The target cell is fixed at the fire. It hits any pawn but Gojo (downed ones too) or loose thing
+  (a haulable item or a corpse) in a cell its line enters; a wall is any cell a shot cannot pass (walls,
+  rock, closed doors). Thrown 6 cells whatever the body size; pawns fly in Accelerator's
+  `AG_VectorThrown` flyer and take the damage on landing; items and corpses take none. Only a wall, rock
+  or closed door gives the +10. The push needs a clear line from the burst. Pawns pinned or pulled by
+  Pain's kit are not moved but still stop Red. A thrown item is off the map while it flies; if nothing
+  near its landing cell takes it, it is put on the cell itself, and a shot dropped early puts its items
+  down at once.
+- Hollow Purple: while Purple is ready, Red flies through anything inside an active Blue's 4-cell pull,
+  so the pawns Blue has caught do not stop it (the user's choice, 2026-09-30); walls still stop it, and
+  are checked first, so Purple never forms through a wall beside Blue's centre.
+  Purple is an AbilityDef that holds the 1-day cooldown and cannot be cast from its button; the combo
+  pays its 20. Merge 0.35 s, growth 0.3 s, then travel. Erased pawns drop nothing (carried items, apparel,
+  weapon and inventory destroyed, corpse destroyed) and their race's death action does not run (a
+  boomalope does not explode); a carried pawn is dropped first and met by the sphere. Erasure damage (`AG_Erasure`) has no armour category and no blood; destroyed parts are not
+  fresh, so they neither bleed nor hurt. Vanilla's colonist instant-kill protection still applies.
+  Multi-cell buildings vanish whole if one cell is touched. Temporary water stays; other temporary
+  terrain is removed; impassable ground and space stay. Erased ground: vanilla smooth stone texture
+  tinted pale violet-grey, fertility 0.
+- Unlimited Void: the ability fires at the end of the 0.6 s sign; the dark sphere closes for 0.3 s
+  (the picture's timing) and the take happens then, measured from Gojo's cell at that moment. If Gojo
+  is downed or out of hero form in those 0.3 s nothing opens and the cost stays spent; if the pocket map
+  cannot be made the cost is refunded. Taken: every spawned living pawn in 9 cells, downed, prisoners,
+  animals and pawns in beds too; not pawns inside caskets, pods or flyers; a carried pawn goes with its
+  carrier and is not frozen. Frozen = a flesh race with a brain part. Touch time is added up over the
+  domain (any of the 8 cells round Gojo); a spared pawn stays frozen and only its overload stops. The
+  overload stops building at the end tick; the consciousness cap starts once everyone is back home, so
+  nobody falls over while frozen; the scar is given when the overload has gone. The collapse lasts 0.7 s,
+  then everyone returns to the matching home cell or the nearest free one (with no map to return to,
+  everyone waits in the void until there is one). Pawns of a faction hostile to the colony that act
+  (mechanoids) get an assault lord inside; a pawn hostile only through a mental state gets none. A lord
+  that will not take a pawn back leaves it to the leave-the-map rule. Goodwill: -15 once per
+  non-hostile faction per cast, only if one of its pawns came out unspared. It cannot be cast on a
+  pocket map. The pocket map is 40 x 40 of void floor (walkable, nothing built), thick roof, no fog; the
+  ball on the home map is drawn only, not an object. Not ported: the specks into frozen heads, the
+  violet mark on overloaded pawns, Gojo's reach and blow drawings, sounds; the dome picture stays 9 cells
+  if the radius changes in XML.
 
 Pain's Echo (agreed 2026-09-27): it grants all four abilities, Shinra Tensei, Gravity Well, Banshō
 Ten'in and Black Receiver (the last two once they are built; `AG_Echo_Pain` lists only Shinra today).
@@ -565,6 +657,31 @@ anchors and Tear were agreed 2026-09-26):
     the anchors use the Reset pictures, The Game shows the vanilla target reticle on the mark, Grenade
     Reset is the vanilla explosion.
 
+Nakime (agreed 2026-09-27; numbers are placeholders; the castle's rules are in
+`docs/infinity-castle-kit.md`). Ported 2026-09-30 (`AG_Echo_Nakime.xml` with her hero-form hediff,
+`AG_Nakime_Abilities.xml`, `AG_Nakime_Gene.xml`, `AG_Nakime_Things.xml`, `AG_Nakime_Jobs.xml`; code in
+`Source/RimArt/InfinityCastle/Kit`; tests `-rimarttest=Nakime`). Rules settled while porting:
+- One ability, Infinity Castle (30 charge, 3 days). Its six commands are buttons after its own while
+  the castle stands and she is in it (the same pattern as Unlimited Blade Works' Close); they cost no
+  charge. Shift asks for a room, then a direction from a menu that shows each direction's slide
+  length. Drop asks for a pawn, then a room. Seal / Open asks for a door cell and does whichever
+  applies. Summon asks for a room, then a colonist from a menu. The room under the mouse is outlined
+  while choosing.
+- The castle organ (`AG_CastleOrgan`, name still a placeholder) holds only the sunlight rule. It does
+  not ask `EchoUtility.GeneActive`, so it burns her in hero form or not. Its card and letter line
+  comes from `EchoGeneCostNote` on the gene ("Gains the castle organ gene: sunlight burns them
+  outdoors by day, in hero form or not"), since the usual line says "works only in hero form".
+- The old gene-kit rules that the Echo replaces: no weapon ban outside hero form (the biwa is the
+  manifest weapon only), no gene-granted ability.
+- On the dais she plays (`AG_CastlePlay`, not player-interruptible): move orders are refused and
+  drafting does not end it. If the Host is downed, dies, leaves the castle or reverts (by hand or when
+  the pool runs dry), the castle is released.
+- She is held (stunned) from the strum until she sinks, as are the pawns taken. If she is downed,
+  gone or reverted before that, nobody moves and the charge and cooldown stay spent (as Unlimited
+  Blade Works after its release). If nobody is left to take at the strum, or the castle cannot be
+  made, the charge and cooldown come back.
+- No costume yet.
+
 Inumaki revisit (agreed 2026-09-27; numbers are placeholders; the built words are in
 `Source/RimArt/Larynx`, `AG_Larynx_Abilities.xml`):
 - Words: stop, drop, come and run stay as built. Kneel is replaced by crush (15 blunt + 1 s stun,
@@ -686,6 +803,42 @@ C# (`Source/RimArt/Todo/`): Boogie Woogie for the claps, the stone throw for the
 for the punch. The magician's cards stay in the code for a later hero. Sounds are the old clap and
 puff and the vanilla punch.
 
+Shirou (Reinforcement and Trace On ported 2026-09-30, `Source/RimArt/Trace/Kit`; rules in the
+`trace-reinforcement.js` and `trace-on.js` sketch headers and docs/heroes.md; numbers are XML fields
+on `AG_Trace_Abilities.xml` and `AG_Trace_Hediffs.xml`; Unlimited Blade Works is
+docs/unlimited-blade-works.md). His three magics come only from his Echo.
+- Reinforcement: self, 0.5 s cast, then 20 s of move speed x1.3 and melee damage x1.4 (vanilla
+  give-hediff comp, `AG_TraceReinforced`). 0 charge, cooldown 45 s. The picture: a ring at the feet,
+  the circuit running out over the body (narrower facing east or west) and back in when the buff ends,
+  the held weapon's outline lit from the grip and then pulsing, footprints and heel streaks while
+  moving, a slash on every melee hit that lands.
+- Trace On: the button lists the trace library. The library is Origin: Blade's study record: every
+  blade studied, by weapon and material, with the best quality studied. Studying stays open after
+  awakening and then only adds to the library (a new weapon or material, or a better quality; the
+  right-click option says "Study blade for Trace On"). Saves from before load the five studied types
+  as default material at normal quality. The copy is the studied weapon in its material,
+  `qualityBelow` (1) below the best studied, never under awful. 0.6 s cast, 10 charge, cooldown 5 s.
+  The cast job first empties the hand: a held copy breaks and the warmup starts 0.1 s later; a real
+  weapon is drawn sliding to the hip for 0.25 s and then goes to the inventory (it stays there if the
+  cast is called off afterwards). Weapons with powers of their own cannot be traced (greyed out in the
+  menu with the reason; they still count as studied types for Origin: Blade): persona weapons (the
+  copy would bond and grieve when it breaks), weapons that grant abilities (vanilla's equippable
+  ability, or any comp from this mod: Samehada, Chain Sickle, Fūma Shuriken; they keep their cooldowns
+  on the item, so every fresh copy would bring them back ready) and an Echo's manifest weapon (Yamato).
+- Copies (`TraceCopies`): a copy exists only in the hand that traced it. It breaks into light when it
+  leaves the hand by any path (drop order, disarm, another weapon equipped, downed or killed: it turns
+  in the air first; Vacuum Suck) through `Shared/BoundWeapon.cs`, and within 30 ticks when it left by
+  another path or its holder no longer has Trace On (revert, empty pool). Market value 0.
+- Pictures on real pawns: the game's own weapon plane is read in a `DrawEquipmentAiming` prefix
+  (`TraceHands`), so the wire, steel and glow land on the drawn weapon; the texture's tip, pommel,
+  width table, outline and silhouette are read from its alpha (`TraceWeaponShapes`, shared with UBW's
+  atlas). During the warmup the weapon is carried, not aimed at the caster itself. The cast job
+  shows the weapon while an undrafted pawn casts and holds the pawn 0.3 s (Trace On) or 0.1 s
+  (Reinforcement) after the fire.
+- Tests: `-rimarttest=trace` (library, trace into an empty hand, over a real weapon and over a copy,
+  copies breaking, Reinforcement with a hit, four facings of both pictures). Previews: debug window
+  kit "Trace", "trace on: ..." and "reinforcement: run and hit".
+
 ## Debug and tests
 
 - Debug window, kit "Echo": spawn device, fill charge, charge to 1, finish device research, make
@@ -711,7 +864,17 @@ puff and the vanilla punch.
   directly: two nodes, both set to `onlyOverWornApparel`, 18 textures load; a dressed Host with an
   afro, a cowboy hat and a pack: both drawn, the hair hidden under the cap, shirt and hat hidden, pack
   drawn; a naked Host: nothing drawn, the hair drawn; trousers on, both drawn; the form removed, nothing of it left and the cowboy hat hides the hair
-  again; 4 screenshots). `-rimarttest="Echo: costume"` runs costume 1-8.
+  again; 4 screenshots). "costume 9" (Gojo's hero form hediff added directly: three nodes, 21
+  textures load; a dressed Host with an average head, an afro, a cowboy hat and a pack, and a naked
+  Host with a narrow head and an afro: all three pieces drawn on both, the collar and blindfold on the
+  head, the Host's hair hidden, the blindfold x0.84 / x0.7 on the narrow head, Facial Animation's
+  eyebrows hidden when that mod is loaded, shirt and hat hidden, pack drawn; the form removed, nothing
+  of it left, the hat hides the hair again and the eyebrows are drawn again; 4 screenshots).
+  "costume 10" (Shirou manifested through his Echo: one node on the body apparel, 15 textures load;
+  dressed with a cowboy hat and a pack: the Thin set drawn, the hair in Shirou's colour and drawn
+  (the hidden hat does not hide it), shirt and hat hidden, pack drawn; 4 screenshots; manifested
+  again naked: still drawn, 1 screenshot; after revert nothing of it left, shirt and hat drawn).
+  `-rimarttest="Echo: costume"` runs costume 1-10.
 - Debug window, kit "Itachi": make Host + manifest, false face (no cost, no cooldown), susanoo 12 s,
   weaken to 30 % health, totsuka stab the pawn under the mouse. Dispersal's "refill the plexus"
   and "shoot the carrier" still apply.
@@ -744,15 +907,22 @@ puff and the vanilla punch.
   ground kunai; the Rasengan walked up to, into a wall, and from range; the walk called off by a move
   order; 15 screenshots). Debug window kit
   "Minato": make Host with a kunai belt, stick his kunai in a pawn, seal a pawn, plant his kunai.
+- `-rimarttest=Nakime`: 10 scenarios (the Echo: organ on awakening, the cost line, ability and biwa only
+  in hero form; the take and Release with a downed enemy, an enemy out of reach and a colonist in reach
+  left behind, rooms of their own, the dais and the play job, 3 screenshots; eight of ten taken;
+  lords: a raid partly taken rejoins, a raid wholly taken leaves; Summon, Drop, Seal and Open, Shift
+  and Crush through the castle, the summoned colonist home again; downed in the castle, reverted in
+  the castle, downed before going in; a move order on the dais; sunlight outdoors and under a roof).
+  Debug window kit "Nakime": make Host (manifested, full charge), release her castle now, burn once.
 
 ## Not built
 
 - Meteor incident that brings the device (the device is researched and built for now).
 - Costumes for the other Echoes (Vergil's coat, the Akatsuki cloak for Pain, Itachi and Obito,
-  Obito's mask and Pain's piercings, Minato's, Sasuke's and Satō's are built), the other head pieces, eye overlays, a transform effect per Echo, a marker
+  Obito's mask and Pain's piercings, Minato's, Sasuke's, Satō's and Gojo's are built), the other head pieces, eye overlays, a transform effect per Echo, a marker
   for manifested Hosts.
-- Pocket spaces closing on `PoolEmptied`, except Unlimited Blade Works: its world closes when the
-  caster loses the ability, which an empty pool causes by reverting every Host.
+- Pocket spaces closing on `PoolEmptied`, except Unlimited Blade Works and the Infinity Castle: they
+  close when the caster loses the ability, which an empty pool causes by reverting every Host.
 - Echoes for the other heroes; their kits have no mechanics yet.
 - Death setting to reopen a closed Echo after a season; per-Echo settings multipliers.
 - Save/load has not been tested by a game test.

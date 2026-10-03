@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Red's cast job: JobDriver_CastAbility that starts Red's picture when the warmup begins and, after the fire
+       tick, keeps Gojo standing with his arm out until the picture lowers it (Source/RimArt/Gojo/Kit/RedCast.cs). -->
+  <JobDef ParentName="CastAbilityOnThing">
+    <defName>AG_CastGojoRed</defName>
+    <driverClass>RimArt.JobDriver_CastGojoRed</driverClass>
+    <playerInterruptible>false</playerInterruptible>
+  </JobDef>
+
+</Defs>

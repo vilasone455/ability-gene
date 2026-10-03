@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Unlimited Void, Gojo's ultimate (docs/hero-echo.md, "Unlimited Void: the pocket map"; full rules in the
+       headers of Tools/VfxLab/web/sketches/gojo-unlimited-void-inside.js and -open.js). Granted by the Gojo
+       Echo (AG_Echo_Gojo, cast cost 30 charge, paid when the ability fires, so a sign called off costs
+       nothing). Every balance number is a field here or on the AG_VoidOverload / AG_VoidScarred hediffs; the C#
+       in Source/RimArt/Gojo/Kit/Void holds only shape and logic. The 0.3 s the barrier takes to close and the
+       0.7 s collapse at the end are the pictures' own timings. -->
+  <AbilityDef>
+    <defName>AG_GojoUnlimitedVoid</defName>
+    <label>unlimited void</label>
+    <description>Gojo makes the hand sign (0.6 seconds). The barrier closes over him in 0.3 seconds and everyone within 9 cells but Gojo, walls or not, friend or foe, standing or downed, is taken with him into a pocket map, each at the same offset from him. The domain lasts 10 seconds, or until Release, or until Gojo is downed, leaves hero form or the Echo pool empties. Then everyone comes out at the matching cell of the home map.\n\nEveryone taken with a living brain is frozen for the whole domain. Mechanoids and other pawns without one act normally. Gojo acts freely.\n\nA frozen pawn gains 10% void overload per second. A pawn not hostile to Gojo that stands next to him for 0.3 seconds in all is spared: its overload stops where it is. Hostile pawns are never spared.\n\nOn exit, consciousness is capped at 100% minus the overload, never below 10%; the overload then falls 0.5% per second. Over 70% overload (7 seconds frozen) the pawn is downed until it falls back to 70%, and is void-scarred once it has gone: consciousness -15% and sight -20% for 2 days. No damage.\n\nEach non-hostile faction with a pawn that comes out unspared loses 15 goodwill. Cannot be cast from a pocket map.</description>
+    <iconPath>RimArt/Gojo/IconVoid</iconPath>
+    <category>AG_Genetic</category>
+    <cooldownTicksRange>120000</cooldownTicksRange>
+    <targetRequired>false</targetRequired>
+    <hostile>false</hostile>
+    <aiCanUse>false</aiCanUse>
+    <groupAbility>false</groupAbility>
+    <casterMustBeCapableOfViolence>false</casterMustBeCapableOfViolence>
+    <displayGizmoWhileUndrafted>true</displayGizmoWhileUndrafted>
+    <disableGizmoWhileUndrafted>false</disableGizmoWhileUndrafted>
+    <sendMessageOnCooldownComplete>true</sendMessageOnCooldownComplete>
+    <verbProperties>
+      <verbClass>Verb_CastAbility</verbClass>
+      <range>-1</range>
+      <!-- The hand sign. -->
+      <warmupTime>0.6</warmupTime>
+      <drawAimPie>false</drawAimPie>
+      <requireLineOfSight>false</requireLineOfSight>
+      <targetParams>
+        <canTargetSelf>true</canTargetSelf>
+      </targetParams>
+    </verbProperties>
+    <comps>
+      <li Class="RimArt.CompProperties_AbilityUnlimitedVoid">
+        <radius>9</radius>
+        <domainSeconds>10</domainSeconds>
+        <mapSize>40</mapSize>
+        <overloadPerSecond>0.1</overloadPerSecond>
+        <touchSeconds>0.3</touchSeconds>
+        <!-- Vanilla Stun's -15, once per faction per cast. -->
+        <neutralGoodwill>-15</neutralGoodwill>
+      </li>
+    </comps>
+  </AbilityDef>
+
+</Defs>

@@ -37,17 +37,13 @@ namespace RimArt
         public bool gone;
         public Color tint = Color.white;
         public float tintAmount;
-        /// <summary>The dash: where the pawn is drawn while its cell has not changed yet.</summary>
-        public bool moved;
-        public Vector3 drawAt;
 
         public void Reset()
         {
             hand = blade = aim = hot = crouch = kneel = sheathe = tintAmount = 0f;
-            gone = moved = false;
+            gone = false;
             kneelPicture = null;
             tint = Color.white;
-            drawAt = Vector3.zero;
         }
 
         /// <summary>The body is drawn differently from a plain standing pawn: the atlas cache must be skipped.</summary>

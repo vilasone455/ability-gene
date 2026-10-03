@@ -9,8 +9,8 @@ namespace RimArt
 {
     /// <summary>
     /// The buttons of a cast in progress, after the ability's own: Fire, Warp and Cancel while a
-    /// Kamehameha channels; Throw and Cancel while a Spirit Bomb does. Unlimited Blade Works adds its
-    /// Release the same way.
+    /// Kamehameha channels, Cancel alone while its Warp locks onto the landing cell; Throw and Cancel
+    /// while a Spirit Bomb channels. Unlimited Blade Works adds its Release the same way.
     /// </summary>
     [HarmonyPatch(typeof(Ability), nameof(Ability.GetGizmos))]
     public static class Patch_GokuCommands
@@ -24,8 +24,14 @@ namespace RimArt
         private static IEnumerable<Command> Kamehameha(IEnumerable<Command> own, Ability ability)
         {
             foreach (Command c in own) yield return c;
-            if (!(GameComponent_Goku.Instance?.For(ability.pawn) is KamehamehaCast cast) || !cast.Channelling) yield break;
+            if (!(GameComponent_Goku.Instance?.For(ability.pawn) is KamehamehaCast cast)) yield break;
             int now = Find.TickManager.TicksGame;
+            if (cast.Locking(now))
+            {
+                yield return Cancel(cast, "Let the ki go before the jump. No charge or cooldown is spent, Instant Transmission's included.");
+                yield break;
+            }
+            if (!cast.Channelling) yield break;
             Texture2D icon = ability.def.uiIcon;
             bool full = cast.FullCharge(now);
 
@@ -43,7 +49,7 @@ namespace RimArt
             var warp = new Command_Action
             {
                 defaultLabel = "Warp Kamehameha",
-                defaultDesc = "Instant Transmission with the ball charged: pick a cell to appear on, then a direction, and Goku jumps and fires at once. Spends Instant Transmission's charge (" + cast.WarpCost.ToString("0") + ") and cooldown too.",
+                defaultDesc = "Instant Transmission with the ball charged: pick a cell to appear on, then a direction. Goku holds the ball while he locks onto the cell (Instant Transmission's channel time), then jumps and fires. Spends Instant Transmission's charge (" + cast.WarpCost.ToString("0") + ") and cooldown too.",
                 icon = GokuDefOf.AG_GokuInstantTransmission.uiIcon,
                 groupable = false,
                 action = () => BeginWarp(cast),
@@ -53,15 +59,17 @@ namespace RimArt
             else if (cast.fireOrdered) warp.Disable("Firing at full charge.");
             yield return warp;
 
-            yield return new Command_Action
-            {
-                defaultLabel = "Cancel",
-                defaultDesc = "Let the ki go. No charge or cooldown is spent.",
-                icon = TexCommand.ClearPrioritizedWork,
-                groupable = false,
-                action = () => cast.Cancel(false),
-            };
+            yield return Cancel(cast, "Let the ki go. No charge or cooldown is spent.");
         }
+
+        private static Command_Action Cancel(GokuCast cast, string desc) => new Command_Action
+        {
+            defaultLabel = "Cancel",
+            defaultDesc = desc,
+            icon = TexCommand.ClearPrioritizedWork,
+            groupable = false,
+            action = () => cast.Cancel(false),
+        };
 
         /// <summary>
         /// Two picks: the cell to appear on, then the direction. The targeter clears itself after a
@@ -97,7 +105,11 @@ namespace RimArt
                     target => target.IsValid && target.Cell != at,
                     pawn, null, GokuDefOf.AG_GokuKamehameha.uiIcon, true, null,
                     target => GenDraw.DrawTargetHighlight(at)));
-            }, pawn, null, GokuDefOf.AG_GokuInstantTransmission.uiIcon);
+            },
+            target => { if (target.IsValid) GokuTransmissionLock.DrawLock(pawn, target.Cell, null); },
+            target => target.IsValid && cast.ValidWarpCell(target.Cell, out _),
+            pawn, null, GokuDefOf.AG_GokuInstantTransmission.uiIcon, true,
+            target => { if (target.IsValid && target.Cell.InBounds(pawn.Map)) Widgets.MouseAttachedLabel(GokuTransmissionLock.Label(pawn, cast.ChannelCell, target.Cell, null)); });
         }
 
         private static IEnumerable<Command> SpiritBomb(IEnumerable<Command> own, Ability ability)
@@ -109,10 +121,13 @@ namespace RimArt
 
             var throwIt = new Command_Action
             {
-                defaultLabel = "Throw (power " + cast.PowerNow(now).ToString("0") + ", radius " + cast.RadiusNow(now).ToString("0.0") + ")",
+                defaultLabel = "Throw (power " + cast.PowerNow(now).ToString("0") + "/" + props.maxPower.ToString("0") + ", radius " + cast.RadiusNow(now).ToString("0.0") + ")",
                 defaultDesc = "Throw the bomb at the target area now. It lands in " + props.flySeconds.ToString("0.0") + " s and deals "
-                              + cast.DamageNow(now).ToString("0") + " to every hostile pawn within " + cast.RadiusNow(now).ToString("0.0") + " cells. "
-                              + cast.LenderCount + " lending.",
+                              + props.hits + " hits of " + cast.HitDamageNow(now).ToString("0") + " (" + (props.hits * cast.HitDamageNow(now)).ToString("0")
+                              + " in all) to every hostile pawn within " + cast.RadiusNow(now).ToString("0.0") + " cells.\n\n"
+                              + (cast.Full ? "The ball is full." : "Growing " + cast.rateNow.ToString("0.00") + " power per second; " + cast.LenderCount + " lending.")
+                              + "\nGoku gives " + SpiritBombCast.RateOf(cast.caster, true).ToString("0.00") + " per second (health x Rest, Rest "
+                              + GokuLifeEnergy.Rest(cast.caster).ToStringPercent() + "; nothing below " + props.stopRest.ToStringPercent() + ").",
                 icon = ability.def.uiIcon,
                 groupable = false,
                 action = () => cast.throwOrdered = true,
@@ -121,14 +136,24 @@ namespace RimArt
             else if (cast.throwOrdered) throwIt.Disable("Throwing.");
             yield return throwIt;
 
-            yield return new Command_Action
-            {
-                defaultLabel = "Cancel",
-                defaultDesc = "Let the energy go. No charge or cooldown is spent.",
-                icon = TexCommand.ClearPrioritizedWork,
-                groupable = false,
-                action = () => cast.Cancel(false),
-            };
+            yield return Cancel(cast, "Let the energy go. No charge or cooldown is spent.");
+        }
+    }
+
+    /// <summary>
+    /// While Instant Transmission's destination is picked: the lock radius round the cell under the
+    /// mouse and a highlight on the pawn Goku would lock onto. The destination comp's DrawHighlight
+    /// is not virtual.
+    /// </summary>
+    [HarmonyPatch(typeof(CompAbilityEffect_WithDest), nameof(CompAbilityEffect_WithDest.DrawHighlight))]
+    public static class Patch_CompAbilityEffect_WithDest_DrawHighlight_GokuLock
+    {
+        public static void Postfix(CompAbilityEffect_WithDest __instance, LocalTargetInfo target)
+        {
+            if (!(__instance is CompAbilityEffect_InstantTransmission it) || !target.IsValid) return;
+            Pawn caster = it.parent.pawn;
+            if (caster?.Map == null || !target.Cell.InBounds(caster.Map)) return;
+            GokuTransmissionLock.DrawLock(caster, target.Cell, it.Passenger);
         }
     }
 
@@ -160,10 +185,15 @@ namespace RimArt
                 };
                 yield break;
             }
-            yield return new Command_Action
+            CompProperties_SpiritBomb props = GokuBusy.Props<CompProperties_SpiritBomb>(GokuDefOf.AG_GokuSpiritBomb);
+            var lend = new Command_Action
             {
-                defaultLabel = "Lend energy",
-                defaultDesc = "Stand still with a hand up and give " + caster.LabelShortCap + "'s Spirit Bomb 1 power per second until the throw, or until Stop lending.",
+                defaultLabel = "Lend energy (+" + SpiritBombCast.RateOf(pawn, false).ToString("0.00") + "/s)",
+                defaultDesc = "Stand still with a hand up and give " + caster.LabelShortCap + "'s Spirit Bomb your ki: "
+                              + SpiritBombCast.RateOf(pawn, false).ToString("0.00") + " power per second now (health "
+                              + pawn.health.summaryHealth.SummaryHealthPercent.ToStringPercent() + " x Rest " + GokuLifeEnergy.Rest(pawn).ToStringPercent() + ").\n\n"
+                              + "Each second costs " + props.restPerSecond.ToStringPercent() + " of the Rest bar, so the rate falls as you tire. "
+                              + "Lending stops at " + props.stopRest.ToStringPercent() + " Rest, when the ball is full, at the throw, or on Stop lending.",
                 icon = icon,
                 groupable = true,
                 action = () =>
@@ -173,6 +203,9 @@ namespace RimArt
                     pawn.jobs.TryTakeOrderedJob(job, pawn.Drafted ? JobTag.DraftedOrder : JobTag.Misc);
                 },
             };
+            if (bomb.Full) lend.Disable("The Spirit Bomb is full.");
+            else if (SpiritBombCast.TooTired(pawn)) lend.Disable("Too tired: Rest " + GokuLifeEnergy.Rest(pawn).ToStringPercent() + ", lending needs " + props.stopRest.ToStringPercent() + ".");
+            yield return lend;
         }
     }
 }

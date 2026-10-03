@@ -14,20 +14,21 @@ namespace RimArt
     /// paused, as the castle's do.
     ///
     /// The sun is the sketch's low dusk sun, fixed: the map is roofed and lit by unseen lights, so the
-    /// game's own sun says nothing here. Every map has one of these (vanilla makes every MapComponent
+    /// game's own sun says nothing here. The world v4 (<see cref="crest"/>) hangs its backdrop on the
+    /// camera, so it is drawn for wherever the player looks. Every map has one of these (vanilla makes every MapComponent
     /// everywhere); it does nothing unless its map is a world (<see cref="world"/> is set by the GenStep) and
     /// is the map on screen.
     ///
     /// A world the ability made is <see cref="driven"/>: its clock is game time since everyone was taken
-    /// (<see cref="UbwClock"/>), so it stops when the game is paused and keeps step with the home map's ring,
+    /// (<see cref="PictureClock"/>), so it stops when the game is paused and keeps step with the home map's ring,
     /// the close is set by the cast (<see cref="CloseAt"/>), and the cast, not this, moves everyone home and
     /// removes the map.
     /// </summary>
     public sealed class MapComponent_UnlimitedBladeWorks : MapComponent
     {
         public bool world;
-        /// <summary>The world v2: the plate ground with height and the sky, instead of the flat earth.</summary>
-        public bool depth;
+        /// <summary>The world v4: the plate ground, the sword crest past the north edge and the sky behind it, instead of the flat earth (v1).</summary>
+        public bool crest;
         public Map source;
         /// <summary>Made by the ability: the cast runs the clock, the close and the removal.</summary>
         public bool driven;
@@ -38,11 +39,20 @@ namespace RimArt
         private float seconds;
         /// <summary>When the close began on the world's clock, or -1 while it stands.</summary>
         private float closeAt = -1f;
+        /// <summary>Seconds added to the world's clock (game time since the take): the reveal shot's world time while it plays, then where it ended, so the world stands as the shot left it (the fire already run out).</summary>
+        private float offset;
         private bool closing, shaken;
+        /// <summary>The world's own field, baked in rows from <see cref="swords"/>; no cache shares it, so it is destroyed when replaced.</summary>
         private UbwFieldBake bake;
-        private UbwTerrainBake terrain;
-        /// <summary>The lab scene's shadow vector, made low as the sketch makes it, and its shadow strength.</summary>
-        private static readonly Vector2 Sun = new Vector2(-0.45f, -0.32f) * UbwWorldTiming.DuskShadow;
+        private int bakedVersion = -1;
+        private UbwFieldState swords = new UbwFieldState();
+        private UbwCrestWorld crestWorld;
+        /// <summary>The first bake of a world and the latest row rebuild, in milliseconds, for the dev log and the game tests.</summary>
+        internal static float lastBakeMs, lastRebuildMs;
+        internal static int lastRebuildRows;
+        /// <summary>The lab scene's shadow vector, made low as the sketch makes it (v4 its own way), and its shadow strength.</summary>
+        private static readonly Vector2 SceneSun = new Vector2(-0.45f, -0.32f);
+        private static readonly Vector2 FlatSun = SceneSun * UbwWorldTiming.DuskShadow, CrestSun = UbwCrestWorld.LowSun(SceneSun);
         private const float Strength = 0.32f;
         /// <summary>Under everything, for the far corners at full zoom-out (the generator def turns the grey map-edge frame off).</summary>
         private const float Backstop = 700f;
@@ -52,24 +62,122 @@ namespace RimArt
 
         public bool IsWorld => world;
 
-        /// <summary>The middle of the map, where the caster lands.</summary>
-        public IntVec3 CentreCell => new IntVec3(map.Size.x / 2, 0, map.Size.z / 2);
+        /// <summary>The world's clock as last drawn (seconds; the fire has run out at <see cref="UbwWorldTiming.Swept"/>).</summary>
+        public float WorldSeconds => seconds;
+
+        /// <summary>Where the caster lands: the middle across, <see cref="UbwCrest.North"/> cells south of the north edge.</summary>
+        public IntVec3 CentreCell => new IntVec3(map.Size.x / 2, 0, map.Size.z - UbwCrest.North);
+
+        /// <summary>The point the world is drawn round: the caster's cell's corner, as the sketches put it.</summary>
+        public Vector2 Origin => new Vector2(map.Size.x / 2f, map.Size.z - UbwCrest.North);
+
+        /// <summary>The reveal shot sets the world's clock to its own world time (seconds); the clock goes on from there.</summary>
+        public void RevealAt(float worldSeconds)
+        {
+            offset = worldSeconds - (driven && takenTick >= 0 ? PictureClock.Since(takenTick) : 0f);
+            shaken = true;
+        }
+
+        /// <summary>The world v4 for the reveal shot: these landing spots, the world's sun, this screen shape.</summary>
+        internal UbwRevealScene RevealScene(float aspect)
+        {
+            var spots = new UbwXZ[keep.Count];
+            for (int i = 0; i < keep.Count; i++) spots[i] = new UbwXZ(keep[i].x, keep[i].z);
+            return UbwRevealScene.For(spots, CrestSun, aspect);
+        }
 
         /// <summary>Where the spot <paramref name="i"/> of the landing spots is on this map.</summary>
         public IntVec3 LandingCell(int i) => i >= 0 && i < keep.Count ? CentreCell + keep[i] : CentreCell;
 
+        /// <summary>The world's swords for the commands, laid out on first use with the numbers the bake uses, whether or not the world is on screen.</summary>
+        public UbwFieldState Field
+        {
+            get
+            {
+                if (!swords.Built) swords.Build(keep, crest);
+                return swords;
+            }
+        }
+
+        /// <summary>For the game tests: lays <paramref name="state"/> out as this world's field (the same landing spots and ground).</summary>
+        internal void BuildField(UbwFieldState state) => state.Build(keep, crest);
+
+        /// <summary>The world's fixed low sun (shadow cells per cell of height) and how dark its shadows are: what the field is baked under.</summary>
+        internal Vector2 Sun => crest ? CrestSun : FlatSun;
+        internal const float ShadowStrength = Strength;
+
+        /// <summary>A point on this map in cells from <see cref="Origin"/>, the frame the swords are in.</summary>
+        public Vector2 Local(Vector3 at) => new Vector2(at.x, at.z) - Origin;
+
+        /// <summary>A point in cells from <see cref="Origin"/> moved inside the map by half a cell or more.</summary>
+        public Vector2 ClampInside(Vector2 local)
+        {
+            Vector2 at = local + Origin;
+            return new Vector2(Mathf.Clamp(at.x, 0.5f, map.Size.x - 0.5f), Mathf.Clamp(at.y, 0.5f, map.Size.z - 0.5f)) - Origin;
+        }
+
+        /// <summary>
+        /// Bakes the field again if it changed since the last bake: the whole field in rows the first time, then only the
+        /// rows a command touched. Returns the milliseconds it took (0 if nothing changed); the dev log gets the first
+        /// bake and the first rebuilds.
+        /// </summary>
+        internal float Rebake()
+        {
+            UbwFieldState f = Field;
+            if (bake != null && bakedVersion == f.Version) return 0f;
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            Vector2 sun = crest ? CrestSun : FlatSun;
+            bool first = bake == null;
+            int rows;
+            if (first)
+            {
+                f.TakeChangedRows(UbwFieldBake.BandOf);
+                bake = UbwFieldBake.Banded(f.Swords, sun, UbwGraphics.Set);
+                rows = bake.Bands.Count;
+            }
+            else
+            {
+                HashSet<int> changed = f.TakeChangedRows(UbwFieldBake.BandOf);
+                bake.Rebuild(f.Swords, changed);
+                rows = changed.Count;
+            }
+            bakedVersion = f.Version;
+            float ms = (float)watch.Elapsed.TotalMilliseconds;
+            if (first) lastBakeMs = ms;
+            else
+            {
+                lastRebuildMs = ms;
+                lastRebuildRows = rows;
+            }
+            if (Prefs.DevMode && (first || logged++ < 3))
+                Log.Message("[RimArt] Unlimited Blade Works field " + (first ? "baked, " + rows + " rows of " + UbwFieldBake.BandDepth + " cells" : "rows rebuilt: " + rows)
+                            + ", " + f.Swords.Count + " swords, " + bake.Vertices + " vertices, " + ms.ToString("0.0") + " ms");
+            return ms;
+        }
+
+        private int logged;
+
         /// <summary>Called by the GenStep: this map is the world made for these landing spots.</summary>
-        public void Begin(List<IntVec3> keepOffsets, bool depth = false)
+        public void Begin(List<IntVec3> keepOffsets, bool crest = true)
         {
             world = true;
-            this.depth = depth;
-            terrain = null;
+            this.crest = crest;
+            crestWorld = null;
             keep = keepOffsets ?? new List<IntVec3>();
             seconds = 0f;
             closeAt = -1f;
             closing = false;
             shaken = false;
+            NewField();
+        }
+
+        /// <summary>A fresh field for new landing spots: the old bake's meshes are destroyed.</summary>
+        private void NewField()
+        {
+            bake?.Release();
             bake = null;
+            bakedVersion = -1;
+            swords = new UbwFieldState();
         }
 
         /// <summary>The ability: everyone has landed on these spots (cells from the middle) at this tick; the world's clock starts, and the field is baked again with no sword over them.</summary>
@@ -80,14 +188,15 @@ namespace RimArt
             takenTick = tick;
             closeAt = -1f;
             shaken = false;
-            bake = null;
+            offset = 0f;
+            NewField();
         }
 
-        /// <summary>The ability: the close begins at <paramref name="worldSeconds"/> on the world's clock, or when the fire has finished running out if that is later. Returns when it begins.</summary>
-        public float CloseAt(float worldSeconds)
+        /// <summary>The ability: the close begins at <paramref name="gameSeconds"/> of game time since the take, or when the fire has finished running out if that is later. Returns when it begins, in game time since the take.</summary>
+        public float CloseAt(float gameSeconds)
         {
-            if (closeAt < 0f) closeAt = Mathf.Max(worldSeconds, UbwWorldTiming.Swept);
-            return closeAt;
+            if (closeAt < 0f) closeAt = Mathf.Max(gameSeconds + offset, UbwWorldTiming.Swept);
+            return closeAt - offset;
         }
 
         /// <summary>Ends the world: the white closes in behind the wall of fire, then the map is removed.</summary>
@@ -102,7 +211,7 @@ namespace RimArt
         public override void MapComponentUpdate()
         {
             if (!world || Find.CurrentMap != map) return;
-            if (driven) seconds = takenTick < 0 ? 0f : UbwClock.Since(takenTick);
+            if (driven) seconds = (takenTick < 0 ? 0f : PictureClock.Since(takenTick)) + offset;
             else seconds += Time.unscaledDeltaTime;
             if (!shaken && seconds >= UbwWorldTiming.Start)
             {
@@ -110,18 +219,15 @@ namespace RimArt
                 shaken = true;
             }
 
-            if (bake == null)
-            {
-                var spots = new UbwXZ[keep.Count];
-                for (int i = 0; i < keep.Count; i++) spots[i] = new UbwXZ(keep[i].x, keep[i].z);
-                UbwTerrain ground = depth ? UbwTerrainGraphics.For(1) : null;
-                bake = UbwWorldGraphics.BakeFor(spots, Sun, ground);
-                terrain = ground != null ? UbwTerrainGraphics.BakeFor(ground, Sun) : null;
-            }
+            Vector2 sun = crest ? CrestSun : FlatSun;
+            if (crest && crestWorld == null) crestWorld = UbwCrestWorld.For(sun);
+            // At most once a frame: the commands' changes since the last frame, in the rows they touched.
+            Rebake();
 
-            var centre = new Vector2(map.Size.x / 2f, map.Size.z / 2f);
+            // The caster's cell's corner, as the sketches put the world on a cell's corner.
+            var centre = new Vector2(map.Size.x / 2f, map.Size.z - UbwCrest.North);
             Sprite(centre, Backstop, Backstop, Far, solid, UbwLayers.Pocket.Back - 0.0005f);
-            UbwWorldGraphics.Draw(centre, bake, seconds, CloseAtOrNever, UbwLayers.Pocket, Sun, Strength, map, terrain);
+            UbwWorldGraphics.Draw(centre, bake, seconds, CloseAtOrNever, UbwLayers.Pocket, sun, Strength, map, crestWorld);
 
             // Past the end of the close: white until the map is gone, and the map goes.
             float end = CloseAtOrNever + UbwWorldTiming.Close + 0.35f;
@@ -132,18 +238,31 @@ namespace RimArt
             UnlimitedBladeWorksMap.CloseLater(map);
         }
 
+        public override void MapRemoved()
+        {
+            base.MapRemoved();
+            bake?.Release();
+            bake = null;
+        }
+
         public override void ExposeData()
         {
             base.ExposeData();
             Scribe_Values.Look(ref world, "ubwWorld");
-            Scribe_Values.Look(ref depth, "ubwDepth");
+            Scribe_Values.Look(ref crest, "ubwCrest", true);
             Scribe_References.Look(ref source, "ubwSource");
             Scribe_Values.Look(ref driven, "ubwDriven");
             Scribe_Values.Look(ref takenTick, "ubwTakenTick", -1);
             Scribe_Collections.Look(ref keep, "ubwKeep", LookMode.Value);
             Scribe_Values.Look(ref seconds, "ubwSeconds");
             Scribe_Values.Look(ref closeAt, "ubwCloseAt", -1f);
-            if (Scribe.mode == LoadSaveMode.PostLoadInit && keep == null) keep = new List<IntVec3>();
+            Scribe_Values.Look(ref offset, "ubwOffset");
+            Scribe_Deep.Look(ref swords, "ubwField");
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                if (keep == null) keep = new List<IntVec3>();
+                if (swords == null) swords = new UbwFieldState();
+            }
         }
     }
 }

@@ -5,15 +5,10 @@ using Verse;
 namespace RimArt
 {
     // While a cast's picture draws the gun raised, Core's held gun is not drawn as well.
-    [HarmonyPatch(typeof(PawnRenderUtility), nameof(PawnRenderUtility.DrawEquipmentAiming))]
-    public static class Patch_WaterGun_EquipmentDrawing
+    [StaticConstructorOnStartup]
+    public static class Patches_WaterGun
     {
-        public static bool Prefix(Thing eq)
-        {
-            if (eq.def != WaterGunDefOf.AG_WaterGun) return true;
-            Pawn pawn = (eq.ParentHolder as Pawn_EquipmentTracker)?.pawn;
-            return !MapComponent_WaterGun.IsCasting(pawn);
-        }
+        static Patches_WaterGun() => HeldWeaponHide.Register(WaterGunDefOf.AG_WaterGun, MapComponent_WaterGun.IsCasting);
     }
 
     // A Soaked pawn cannot catch fire. TryAttachFire asks this before attaching, and so does fire

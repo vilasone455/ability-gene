@@ -5,6 +5,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -19,28 +20,19 @@ namespace RimArt
 
         private static GameComponent_Echoes Setup(RimArtTestContext t)
         {
-            startHealth.Clear();
             GameComponent_Vergil.Instance.ResetForTests();
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = false;
-            return echoes;
+            return t.ClearEchoes();
         }
 
         /// <summary>A colonist made Vergil's Host and manifested, with a full pool, undrafted and standing still.</summary>
-        private static Pawn Host(RimArtTestContext t, GameComponent_Echoes echoes, IntVec3 at, out EchoRecord record)
+        private static Pawn Host(RimArtTestContext t, IntVec3 at, out EchoRecord record)
         {
-            Pawn host = t.Colonist(at);
-            record = EchoUtility.ForceHost(Vergil, host);
-            echoes.charge = 100f;
-            EchoUtility.Manifest(record);
+            Pawn host = t.Host(Vergil, at, out record);
             // Undrafted and held: a drafted pawn attacks an adjacent enemy, and a busy stance refuses the next cast.
             host.drafter.Drafted = false;
             RimArtTestContext.Hold(host);
-            Trait wimp = host.story?.traits?.GetTrait(TraitDefOf.Wimp);
-            if (wimp != null) host.story.traits.RemoveTrait(wimp);
-            return Noted(host);
+            NoWimp(host);
+            return t.Note(host);
         }
 
         private static Pawn Ally(RimArtTestContext t, IntVec3 at)
@@ -49,61 +41,18 @@ namespace RimArt
             Pawn pawn = t.Colonist(at);
             pawn.drafter.Drafted = true;
             pawn.drafter.FireAtWill = false;
-            return Noted(pawn);
-        }
-
-        private static Thing Wall(RimArtTestContext t, IntVec3 at, Faction faction)
-        {
-            Thing wall = ThingMaker.MakeThing(ThingDefOf.Wall, ThingDefOf.WoodLog);
-            if (faction != null) wall.SetFaction(faction);
-            return GenSpawn.Spawn(wall, at, t.map);
-        }
-
-        /// <summary>Turns the pawn and keeps it turned: undrafted, a wait job facing a cell 3 away.</summary>
-        private static void Face(Pawn pawn, Rot4 rot)
-        {
-            pawn.drafter.Drafted = false;
-            Job wait = JobMaker.MakeJob(JobDefOf.Wait_MaintainPosture, pawn.Position + rot.FacingCell * 3);
-            wait.expiryInterval = 600;
-            pawn.jobs.StartJob(wait, JobCondition.InterruptForced);
-            pawn.Rotation = rot;
-        }
-
-        /// <summary>Each test pawn's health when it was placed: generated pawns can carry old scars.</summary>
-        private static readonly Dictionary<Pawn, float> startHealth = new Dictionary<Pawn, float>();
-
-        private static Pawn Noted(Pawn pawn)
-        {
-            startHealth[pawn] = pawn.health.summaryHealth.SummaryHealthPercent;
-            return pawn;
+            return t.Note(pawn);
         }
 
         /// <summary>A hostile that stands still for the test: unarmed and stunned, so it starts no fist fight.</summary>
         private static Pawn Target(RimArtTestContext t, IntVec3 at, int stunTicks = 600)
         {
-            Pawn pawn = t.Enemy(at, armed: false);
-            pawn.stances.stunner.StunFor(stunTicks, null, false);
-            return Noted(pawn);
+            return t.Note(t.Target(at, stunTicks, bare: false));
         }
 
-        private static float Start(Pawn pawn) => startHealth.TryGetValue(pawn, out float h) ? h : 1f;
-        private static bool Hurt(Pawn pawn) => pawn.Dead || pawn.Downed || pawn.health.summaryHealth.SummaryHealthPercent < Start(pawn) - 0.001f;
-        private static bool Untouched(Pawn pawn) => !pawn.Dead && !pawn.Downed && pawn.health.summaryHealth.SummaryHealthPercent >= Start(pawn) - 0.001f;
-        private static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned == true;
         private static int Injuries(Pawn pawn) => pawn.Dead ? 999 : pawn.health.hediffSet.hediffs.Count(h => h is Hediff_Injury || h is Hediff_MissingPart);
 
-        private static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 1)
-        {
-            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
-        }
-
         private static T Cast<T>(Pawn host) where T : VergilCast => GameComponent_Vergil.Instance?.Latest<T>(host);
-
-        private static void Finish(EchoRecord record)
-        {
-            EchoUtility.Revert(record, collapse: false);
-            EchoDevice.workingForTests = null;
-        }
 
         // ---- Yamato ------------------------------------------------------------------------------------------------
 
@@ -112,7 +61,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             yield return 5;
             t.Check(host.equipment.Primary?.def == VergilDefOf.AG_Yamato, "Yamato is in hand (" + host.equipment.Primary?.LabelCap + ")");
             foreach (AbilityDef def in new[] { VergilDefOf.AG_VergilJudgementCut, VergilDefOf.AG_VergilYamatoDash, VergilDefOf.AG_VergilSummonedSwords, VergilDefOf.AG_VergilJudgementCutEnd })
@@ -131,7 +80,7 @@ namespace RimArt
             yield return 3;
             yield return t.ShotAs("yamato-drafted", host.Position, 3f);
             ThingWithComps yamato = host.equipment.Primary;
-            Finish(record);
+            EndHost(record);
             yield return 5;
             t.Check(yamato == null || yamato.Destroyed, "Yamato is gone after the revert");
         }
@@ -144,7 +93,7 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 target = t.center + new IntVec3(3, 0, 0);
-            Pawn host = Host(t, echoes, t.center + new IntVec3(-5, 0, 0), out EchoRecord record);
+            Pawn host = Host(t, t.center + new IntVec3(-5, 0, 0), out EchoRecord record);
             Pawn e1 = Target(t, target + new IntVec3(1, 0, 0));
             Pawn e2 = Target(t, target + new IntVec3(-1, 0, -1));
             Pawn e3 = Target(t, target + new IntVec3(0, 0, 1));
@@ -152,7 +101,7 @@ namespace RimArt
             Pawn outside = Target(t, target + new IntVec3(3, 0, 0));
             yield return 2;
             Ability cut = host.abilities.GetAbility(VergilDefOf.AG_VergilJudgementCut);
-            if (!t.Check(cut != null && cut.CanCast, "Vergil can cast Judgement Cut (" + cut?.CanCast.Reason + ")")) { Finish(record); yield break; }
+            if (!t.Check(cut != null && cut.CanCast, "Vergil can cast Judgement Cut (" + cut?.CanCast.Reason + ")")) { EndHost(record); yield break; }
             float before = echoes.charge;
             cut.QueueCastingJob(target, LocalTargetInfo.Invalid);
             t.Check(host.CurJobDef == VergilDefOf.AG_CastVergil, "the Vergil cast job started (" + host.CurJobDef?.defName + ")");
@@ -161,20 +110,20 @@ namespace RimArt
             yield return t.ShotAs("cut-warmup-hand", host.Position, 3f);
             JudgementCutCast cast = null;
             foreach (int w in WaitFor(() => (cast = Cast<JudgementCutCast>(host)) != null && cast.Fired, 60)) yield return w;
-            if (!t.Check(cast != null && cast.Fired, "the cut fired")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Fired, "the cut fired")) { EndHost(record); yield break; }
             yield return 12;
             yield return t.ShotAs("cut-sphere", target, 5f);
             yield return 30;
             foreach (Pawn p in new[] { e1, e2, e3, ally, outside }) t.Log(RimArtTestContext.Describe(p) + " injuries=" + Injuries(p));
-            t.Check(Hurt(e1) && Hurt(e2) && Hurt(e3), "the three enemies inside are cut");
-            t.Check(Hurt(ally), "the ally inside is cut too");
-            t.Check(Untouched(outside), "the enemy 3 cells from the centre is not");
-            t.Check(Untouched(host), "Vergil is not");
+            t.Check(t.Hurt(e1) && t.Hurt(e2) && t.Hurt(e3), "the three enemies inside are cut");
+            t.Check(t.Hurt(ally), "the ally inside is cut too");
+            t.Check(t.Untouched(outside), "the enemy 3 cells from the centre is not");
+            t.Check(t.Untouched(host), "Vergil is not");
             float style = VergilStyle.Of(host);
             t.Check(Mathf.Abs(style - 12f) < 0.01f, "Style is 12 (3 hostiles x 4): " + style.ToString("0.##"));
             float spent = before - echoes.charge;
             t.Check(spent >= 3f && spent < 4f, "the pool paid 3 (" + spent.ToString("0.##") + " with upkeep)");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Yamato Dash -------------------------------------------------------------------------------------------
@@ -185,20 +134,20 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 from = t.center + new IntVec3(-4, 0, 0), dest = t.center + new IntVec3(3, 0, 0);
-            Pawn host = Host(t, echoes, from, out EchoRecord record);
+            Pawn host = Host(t, from, out EchoRecord record);
             Pawn m1 = Target(t, t.center + new IntVec3(-2, 0, 0));
             Pawn m2 = Target(t, t.center + new IntVec3(2, 0, 0));
             Pawn ally = Ally(t, t.center);
             Pawn off = Target(t, t.center + new IntVec3(0, 0, 2));
             // A blocked line is refused.
-            Wall(t, t.center + new IntVec3(-4, 0, -2), Faction.OfPlayer);
+            t.Wall(t.center + new IntVec3(-4, 0, -2), ThingDefOf.WoodLog);
             yield return 2;
             string blocked = CompAbilityEffect_YamatoDash.Problem(host, t.center + new IntVec3(-4, 0, -4));
             t.Check(blocked != null, "a dash through a wall is refused (" + blocked + ")");
             t.Check(CompAbilityEffect_YamatoDash.Problem(host, dest) == null, "the open line to " + dest + " is allowed");
 
             Ability dash = host.abilities.GetAbility(VergilDefOf.AG_VergilYamatoDash);
-            if (!t.Check(dash != null && dash.CanCast, "Vergil can cast Yamato Dash (" + dash?.CanCast.Reason + ")")) { Finish(record); yield break; }
+            if (!t.Check(dash != null && dash.CanCast, "Vergil can cast Yamato Dash (" + dash?.CanCast.Reason + ")")) { EndHost(record); yield break; }
             float before = echoes.charge;
             dash.QueueCastingJob(dest, LocalTargetInfo.Invalid);
             // A screenshot pauses the game, but the ticks already due in that frame still run, so it is taken
@@ -207,7 +156,7 @@ namespace RimArt
             yield return t.ShotAs("dash-prepare-crouch", host.Position, 3f);
             YamatoDashCast cast = null;
             foreach (int w in WaitFor(() => (cast = Cast<YamatoDashCast>(host)) != null && cast.Fired, 60)) yield return w;
-            if (!t.Check(cast != null && cast.Fired, "the dash fired")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Fired, "the dash fired")) { EndHost(record); yield break; }
             int fired = cast.fireTick, ghostsBefore = VergilGhost.Drawn;
             t.Log("fire tick seen " + (t.Now - fired) + " ticks late");
             if (t.Now < fired + 4) yield return fired + 4 - t.Now;
@@ -221,24 +170,24 @@ namespace RimArt
             foreach (int w in WaitFor(() => host.Position == dest, 20)) yield return w;
             t.Log("arrived by fire + " + (t.Now - fired) + " ticks: " + RimArtTestContext.Describe(host));
             t.Check(host.Position == dest, "he arrived at " + dest);
-            t.Check(Untouched(m1) && Untouched(m2), "the marks are not cut before the click");
+            t.Check(t.Untouched(m1) && t.Untouched(m2), "the marks are not cut before the click");
             yield return 8;
             yield return t.ShotAs("dash-sheathe", host.Position, 3f);
             t.Check(host.CurJobDef == VergilDefOf.AG_CastVergil, "the job holds him for the sheathe (" + RimArtTestContext.Describe(host) + ")");
-            t.Check(Untouched(m1) && Untouched(m2), "still not cut just before the click (fire + " + (t.Now - fired) + ")");
+            t.Check(t.Untouched(m1) && t.Untouched(m2), "still not cut just before the click (fire + " + (t.Now - fired) + ")");
             if (t.Now < fired + 35) yield return fired + 35 - t.Now;
             t.Log("checked at fire + " + (t.Now - fired) + " ticks (the click is due at 33)");
             foreach (Pawn p in new[] { m1, m2, ally, off }) t.Log(RimArtTestContext.Describe(p) + " injuries=" + Injuries(p));
-            t.Check(Hurt(m1) && Hurt(m2), "both enemies on the path are cut on the click");
-            t.Check(Untouched(ally), "the ally on the path is not");
-            t.Check(Untouched(off), "the enemy 2 cells off the path is not");
+            t.Check(t.Hurt(m1) && t.Hurt(m2), "both enemies on the path are cut on the click");
+            t.Check(t.Untouched(ally), "the ally on the path is not");
+            t.Check(t.Untouched(off), "the enemy 2 cells off the path is not");
             float style = VergilStyle.Of(host);
             t.Check(Mathf.Abs(style - 6f) < 0.01f, "Style is 6 (2 marks x 3): " + style.ToString("0.##"));
             float spent = before - echoes.charge;
             t.Check(spent >= 2f && spent < 3f, "the pool paid 2 (" + spent.ToString("0.##") + ")");
             yield return 20;
             t.Check(host.CurJobDef != VergilDefOf.AG_CastVergil, "the job let him go after the click (" + RimArtTestContext.Describe(host) + ")");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Summoned Swords ---------------------------------------------------------------------------------------
@@ -251,20 +200,20 @@ namespace RimArt
             float seconds = props.seconds;
             props.seconds = 7f;   // the test does not wait out 20 s
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             Pawn near = Target(t, t.center + new IntVec3(5, 0, 1), 1200);
             Pawn other = Target(t, t.center + new IntVec3(-2, 0, -7), 1200);
             Pawn far = Target(t, t.center + new IntVec3(0, 0, 13), 1200);
             yield return 2;
             Ability swords = host.abilities.GetAbility(VergilDefOf.AG_VergilSummonedSwords);
-            if (!t.Check(swords != null && swords.CanCast, "Vergil can cast Summoned Swords (" + swords?.CanCast.Reason + ")")) { props.seconds = seconds; Finish(record); yield break; }
+            if (!t.Check(swords != null && swords.CanCast, "Vergil can cast Summoned Swords (" + swords?.CanCast.Reason + ")")) { props.seconds = seconds; EndHost(record); yield break; }
             float before = echoes.charge;
             swords.QueueCastingJob(host, LocalTargetInfo.Invalid);
             yield return 20;
             yield return t.ShotAs("swords-rising", host.Position, 3f);
             SummonedSwordsCast cast = null;
             foreach (int w in WaitFor(() => (cast = Cast<SummonedSwordsCast>(host)) != null && cast.Fired, 60)) yield return w;
-            if (!t.Check(cast != null && cast.Fired, "the swords formed")) { props.seconds = seconds; Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Fired, "the swords formed")) { props.seconds = seconds; EndHost(record); yield break; }
             float spent = before - echoes.charge;
             t.Check(spent >= 10f && spent < 11f, "the pool paid 10 (" + spent.ToString("0.##") + ")");
             yield return 2;
@@ -277,10 +226,10 @@ namespace RimArt
             HediffDef pin = VergilDefOf.AG_VergilSwordPinned;
             t.Log(RimArtTestContext.Describe(near) + " injuries=" + Injuries(near) + " pinned=" + near.health.hediffSet.GetFirstHediffOfDef(pin)?.Severity);
             t.Log(RimArtTestContext.Describe(other) + " injuries=" + Injuries(other) + " pinned=" + other.health.hediffSet.GetFirstHediffOfDef(pin)?.Severity);
-            t.Check(Hurt(near), "the nearest enemy was hit");
+            t.Check(t.Hurt(near), "the nearest enemy was hit");
             t.Check(near.health.hediffSet.HasHediff(pin), "a blade is stuck in it (the slow)");
             yield return t.ShotAs("swords-stuck", near.Position, 4f);
-            t.Check(Untouched(far), "the enemy 13 cells away is out of range");
+            t.Check(t.Untouched(far), "the enemy 13 cells away is out of range");
 
             // Spin: an enemy right next to him is cut every 0.9 s; nothing more is thrown.
             cast.spin = true;
@@ -301,9 +250,9 @@ namespace RimArt
             yield return 5;
             t.Check(!cast.Out(t.Now), "the swords broke after " + props.seconds + " s");
             t.Check(!near.health.hediffSet.HasHediff(pin) && !other.health.hediffSet.HasHediff(pin), "no blade is left stuck in anyone");
-            t.Check(Untouched(far), "the far enemy was never hit");
+            t.Check(t.Untouched(far), "the far enemy was never hit");
             props.seconds = seconds;
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Judgement Cut End -------------------------------------------------------------------------------------
@@ -313,20 +262,20 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
-            Pawn near = Noted(t.Enemy(t.center + new IntVec3(2, 0, 0), armed: false));
-            Pawn mid = Noted(t.Enemy(t.center + new IntVec3(0, 0, 6), armed: false));
-            for (int z = -1; z <= 1; z++) Wall(t, t.center + new IntVec3(-3, 0, z), Faction.OfPlayer);
-            Pawn behind = Noted(t.Enemy(t.center + new IntVec3(-5, 0, 0), armed: false));
-            Pawn outside = Noted(t.Enemy(t.center + new IntVec3(11, 0, 0), armed: false));
+            Pawn host = Host(t, t.center, out EchoRecord record);
+            Pawn near = t.Note(t.Enemy(t.center + new IntVec3(2, 0, 0), armed: false));
+            Pawn mid = t.Note(t.Enemy(t.center + new IntVec3(0, 0, 6), armed: false));
+            for (int z = -1; z <= 1; z++) t.Wall(t.center + new IntVec3(-3, 0, z), ThingDefOf.WoodLog);
+            Pawn behind = t.Note(t.Enemy(t.center + new IntVec3(-5, 0, 0), armed: false));
+            Pawn outside = t.Note(t.Enemy(t.center + new IntVec3(11, 0, 0), armed: false));
             Pawn ally = Ally(t, t.center + new IntVec3(0, 0, -2));
-            Thing unowned = Wall(t, t.center + new IntVec3(4, 0, 4), null);
-            Thing own = Wall(t, t.center + new IntVec3(-4, 0, 4), Faction.OfPlayer);
+            Thing unowned = t.Wall(t.center + new IntVec3(4, 0, 4), ThingDefOf.WoodLog, owned: false);
+            Thing own = t.Wall(t.center + new IntVec3(-4, 0, 4), ThingDefOf.WoodLog);
             int unownedHp = unowned.HitPoints, ownHp = own.HitPoints;
             yield return 2;
 
             Ability end = host.abilities.GetAbility(VergilDefOf.AG_VergilJudgementCutEnd);
-            if (!t.Check(end != null, "Vergil has Judgement Cut End")) { Finish(record); yield break; }
+            if (!t.Check(end != null, "Vergil has Judgement Cut End")) { EndHost(record); yield break; }
             t.Check(end.GizmoDisabled(out string reason), "disabled at Style 0 (" + reason + ")");
             VergilStyle.Set(host, 100f);
             t.Check(!end.GizmoDisabled(out reason), "enabled at Style 100 (" + reason + ")");
@@ -336,7 +285,7 @@ namespace RimArt
             yield return t.ShotAs("end-warmup-hand", host.Position, 3f);
             JudgementCutEndCast cast = null;
             foreach (int w in WaitFor(() => (cast = Cast<JudgementCutEndCast>(host)) != null && cast.Fired, 60)) yield return w;
-            if (!t.Check(cast != null && cast.Fired, "he vanished")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Fired, "he vanished")) { EndHost(record); yield break; }
             int fired = t.Now, ghostsBefore = VergilGhost.Drawn;
             yield return 2;
             t.Check(host.health.hediffSet.HasHediff(VergilDefOf.AG_VergilGone) && host.IsPsychologicallyInvisible(), "he is gone: invisible to others");
@@ -377,8 +326,8 @@ namespace RimArt
             yield return 4;
             yield return t.ShotAs("end-click", t.center, 10f);
             foreach (Pawn p in new[] { near, mid, behind, outside, ally }) t.Log(RimArtTestContext.Describe(p) + " injuries=" + Injuries(p));
-            t.Check(Hurt(near) && Hurt(mid), "both marked enemies are cut");
-            t.Check(Untouched(behind) && Untouched(outside) && Untouched(ally), "the enemy behind the wall, the one outside and the ally are not");
+            t.Check(t.Hurt(near) && t.Hurt(mid), "both marked enemies are cut");
+            t.Check(t.Untouched(behind) && t.Untouched(outside) && t.Untouched(ally), "the enemy behind the wall, the one outside and the ally are not");
             t.Log("unowned wall " + unownedHp + " -> " + (unowned.Destroyed ? "destroyed" : unowned.HitPoints.ToString()) + ", own wall " + ownHp + " -> " + own.HitPoints);
             t.Check(unowned.Destroyed || unownedHp - unowned.HitPoints >= 59, "the unowned wall in sight took 60");
             t.Check(!own.Destroyed && own.HitPoints == ownHp, "his own colony's wall did not");
@@ -386,7 +335,7 @@ namespace RimArt
             t.Check(host.CurJobDef == VergilDefOf.AG_CastVergil, "still kneeling just after the click (" + RimArtTestContext.Describe(host) + ")");
             yield return 60;
             t.Check(host.CurJobDef != VergilDefOf.AG_CastVergil, "then he stands and the job lets him go (" + RimArtTestContext.Describe(host) + ")");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Style -------------------------------------------------------------------------------------------------
@@ -396,7 +345,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             Pawn enemy = t.Enemy(t.center + new IntVec3(3, 0, 0), armed: false);
             yield return 2;
             VergilStyleExtension rules = VergilStyle.Rules;
@@ -414,7 +363,7 @@ namespace RimArt
             yield return 60;
             float drained = VergilStyle.Of(host);
             t.Check(drained < 28.5f && drained > 25.5f, "after 10 s without a hit it drains about 5 a second: " + drained.ToString("0.##"));
-            Finish(record);
+            EndHost(record);
             yield return VergilStyle.TickInterval + 1;
             t.Check(VergilStyle.Of(host) < 0.01f, "empty after the revert (" + VergilStyle.Of(host).ToString("0.##") + ")");
         }

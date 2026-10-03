@@ -121,7 +121,7 @@ namespace RimArt
             {
                 if (GameComponent_Rinnegan.Instance?.HeldFor(w.shot) == null) return;
                 G.HeldFlames(w.IsFuma, RinneganPictures.Ground(w), RinneganPictures.Degrees(w.heading), w.turned,
-                    UbwClock.Since(litTick), s, seed);
+                    PictureClock.Since(litTick), s, seed);
             });
         }
 
@@ -164,7 +164,7 @@ namespace RimArt
                 Pawn pawn = pawns[i];
                 if (pawn.stances?.curStance is Stance_Warmup warmup && warmup.verb is Verb_CastAbility cast
                     && cast.ability?.def == SasukeDefOf.AG_SasukeAmaterasu)
-                    G.Gaze(Eye(pawn), UbwClock.Since(warmup.startedTick), cast.verbProps.warmupTime);
+                    G.Gaze(Eye(pawn), PictureClock.Since(warmup.startedTick), cast.verbProps.warmupTime);
                 Hediff bleeding = pawn.health.hediffSet.GetFirstHediffOfDef(SasukeDefOf.AG_BleedingEye);
                 // Seen from behind there is no eye to bleed from.
                 if (bleeding != null && pawn.Rotation != Rot4.North) G.Blood(Eye(pawn), bleeding.ageTicks / 60f);
@@ -189,7 +189,7 @@ namespace RimArt
                 Pawn pawn = flame.Pawn;
                 if (pawn == null || !pawn.Spawned || pawn.Map != map || pawn.Dead || flame.ticksLeft <= 0) continue;
                 Vector2 feet = VergilKit.Ground(pawn.DrawPos);
-                float age = T.FireAge(UbwClock.Since(flame.lit), flame.how), sinceOut = -flame.ticksLeft / 60f;
+                float age = T.FireAge(PictureClock.Since(flame.lit), flame.how), sinceOut = -flame.ticksLeft / 60f;
                 float scale = Scale(pawn);
                 G.Pawn(feet, age, sinceOut, flame.how, pawn.thingIDNumber, VergilKit.Ground(flame.from), scale);
                 G.PawnStain(feet, age, sinceOut, pawn.thingIDNumber, scale);
@@ -197,14 +197,14 @@ namespace RimArt
             for (int i = pawnsOut.Count - 1; i >= 0; i--)
             {
                 PawnOut o = pawnsOut[i];
-                float sinceOut = UbwClock.Since(o.outTick);
+                float sinceOut = PictureClock.Since(o.outTick);
                 if (sinceOut >= T.StainDuration || Find.Maps.IndexOf(o.map) < 0)
                 {
                     pawnsOut.RemoveAt(i);
                     continue;
                 }
                 if (o.map != map) continue;
-                float age = T.FireAge(UbwClock.Since(o.lit), o.how);
+                float age = T.FireAge(PictureClock.Since(o.lit), o.how);
                 // A pawn that caught again burns under its new flame; only the stain of the old one is left.
                 bool burning = Amaterasu.Burning(o.pawn);
                 if (!burning && sinceOut < T.OutDuration && o.pawn.Spawned && o.pawn.Map == map)
@@ -222,7 +222,7 @@ namespace RimArt
             {
                 HeldWeapon w = lit[i];
                 G.HeldFlames(w.IsFuma, RinneganPictures.Ground(w), RinneganPictures.Degrees(w.heading), w.turned,
-                    UbwClock.Since(w.litTick), float.NegativeInfinity, w.shot.thingIDNumber, i);
+                    PictureClock.Since(w.litTick), float.NegativeInfinity, w.shot.thingIDNumber, i);
             }
         }
 
@@ -237,7 +237,7 @@ namespace RimArt
                 Vector2 ground = Ground(f.shot.ExactPosition);
                 Vector3 heading = Rounds.Vanilla.Heading(f.shot);
                 float deg = Mathf.Atan2(heading.z, heading.x) * Mathf.Rad2Deg;
-                float age = UbwClock.Since(f.litTick), flown = UbwClock.Since(f.letGoTick);
+                float age = PictureClock.Since(f.litTick), flown = PictureClock.Since(f.letGoTick);
                 float speed = f.shot.def.projectile.SpeedTilesPerTick * 60f;
                 bool fuma = f.shot is Projectile_Fuma;
                 int seed = f.shot.thingIDNumber;
@@ -248,14 +248,14 @@ namespace RimArt
             for (int i = stopped.Count - 1; i >= 0; i--)
             {
                 Stopped s = stopped[i];
-                float after = UbwClock.Since(s.stopTick);
+                float after = PictureClock.Since(s.stopTick);
                 if (after > 0.5f || Find.Maps.IndexOf(s.map) < 0)
                 {
                     stopped.RemoveAt(i);
                     continue;
                 }
                 if (s.map != map) continue;
-                G.Tail(s.stop, s.deg, s.speed, s.flown, after, UbwClock.Since(s.litTick), float.NegativeInfinity, s.seed);
+                G.Tail(s.stop, s.deg, s.speed, s.flown, after, PictureClock.Since(s.litTick), float.NegativeInfinity, s.seed);
                 G.PathFlecks(s.from, s.deg, s.speed, s.flown, s.flown + after, s.seed);
             }
         }
@@ -274,8 +274,8 @@ namespace RimArt
                 if (fire.map != map) continue;
                 bool fuma = fire.weapon != null;
                 Vector2 ground = FloorPoint(fire);
-                float age = UbwClock.Since(fire.startTick), sinceOut = -(fire.endTick - now) / 60f;
-                float litAge = fire.litTick >= 0 ? UbwClock.Since(fire.litTick) : -1f;
+                float age = PictureClock.Since(fire.startTick), sinceOut = -(fire.endTick - now) / 60f;
+                float litAge = fire.litTick >= 0 ? PictureClock.Since(fire.litTick) : -1f;
                 int seed = Seed(fire.cell);
                 if (fire.conjuredKunai) G.Lying(false, ground, fire.deg, 0f);
                 G.OnFloor(fuma, ground, fire.turn, age, sinceOut, seed, litAge);
@@ -284,14 +284,14 @@ namespace RimArt
             for (int i = floorsOut.Count - 1; i >= 0; i--)
             {
                 FloorOut o = floorsOut[i];
-                float sinceOut = UbwClock.Since(o.outTick);
+                float sinceOut = PictureClock.Since(o.outTick);
                 if (sinceOut >= T.StainDuration || Find.Maps.IndexOf(o.map) < 0)
                 {
                     floorsOut.RemoveAt(i);
                     continue;
                 }
                 if (o.map != map) continue;
-                float age = UbwClock.Since(o.start), litAge = o.litTick >= 0 ? UbwClock.Since(o.litTick) : -1f;
+                float age = PictureClock.Since(o.start), litAge = o.litTick >= 0 ? PictureClock.Since(o.litTick) : -1f;
                 if (sinceOut < T.OutDuration) G.OnFloor(o.fuma, o.ground, o.turn, age, sinceOut, o.seed, litAge);
                 G.WeaponStain(o.fuma, o.ground, age, sinceOut, o.seed);
             }

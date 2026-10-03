@@ -28,6 +28,21 @@ namespace RimArt
 
         public Vector2 Cast(Vector2 at, float along, float across, float h = 0f) =>
             new Vector2(at.x + along * ca - across * sa + sun.x * h, at.y + along * sa + across * ca + sun.y * h);
+
+        /// <summary>How far north of the pawn a point <paramref name="along"/>, <paramref name="across"/> lies.</summary>
+        public float Depth(float along, float across) => along * sa + across * ca;
+
+        /// <summary>
+        /// A point on the caster's body, for the hose coiled at the hip. In the lab it is <see cref="Place"/>. On a
+        /// real pawn (<see cref="PawnFit"/>) the height is fitted, and the north-south part of the offset is left
+        /// out: a pawn sprite is flat, so the hip of a pawn aiming east or west stays at its hip instead of
+        /// moving up or down the screen. That part only decides front or behind (<see cref="Depth"/>).
+        /// </summary>
+        public Vector2 OnBody(Vector2 at, float along, float across, float h)
+        {
+            Vector2 p = Place(at, along, across, PawnFit.H(h));
+            return PawnFit.On ? new Vector2(p.x, p.y - Depth(along, across)) : p;
+        }
     }
 
     /// <summary>How the weapon is posed in one frame: see <see cref="VacuumGraphics.Weapon"/>.</summary>
@@ -119,29 +134,9 @@ namespace RimArt
         internal static void Rect(Vector2 at, float length, float width, float degrees, Color colour, float altitude) =>
             Sprite(at, length, width, colour, solid, altitude, -degrees);
 
-        /// <summary>
-        /// A ribbon through the first <paramref name="count"/> points of <paramref name="pts"/>, W[i]
-        /// cells to each side scaled by <paramref name="lo"/> and <paramref name="hi"/> (-1 and 1 is the
-        /// full width). Widths are measured across the line's own direction on screen.
-        /// </summary>
-        private static void Tube(Vector2[] pts, int count, Color colour, float altitude, float lo = -1f, float hi = 1f)
-        {
-            if (count < 2 || colour.a <= 0.001f) return;
-            int n = count - 1;
-            Sides(count, out Vector2[] a, out Vector2[] b);
-            for (int i = 0; i <= n; i++)
-            {
-                Vector2 pr = pts[Mathf.Max(0, i - 1)], nx = pts[Mathf.Min(n, i + 1)];
-                float dx = nx.x - pr.x, dz = nx.y - pr.y, L = Mathf.Sqrt(dx * dx + dz * dz);
-                if (L <= 0f) L = 1f;
-                dx /= L; dz /= L;
-                float w = W[i];
-                Vector2 q = pts[i];
-                a[i] = new Vector2(q.x - dz * w * lo, q.y + dx * w * lo);
-                b[i] = new Vector2(q.x - dz * w * hi, q.y + dx * w * hi);
-            }
-            Strip(a, b, colour, solid, altitude);
-        }
+        /// <summary><see cref="VfxDraw.Tube"/> with the half-widths in W.</summary>
+        private static void Tube(Vector2[] pts, int count, Color colour, float altitude, float lo = -1f, float hi = 1f) =>
+            VfxDraw.Tube(pts, W, count, colour, altitude, lo, hi);
 
         /// <summary>A band between the first <paramref name="count"/> points of A and C.</summary>
         private static void Band(int count, Color colour, float altitude)
@@ -254,11 +249,12 @@ namespace RimArt
             }
 
             // The wand (aim frame: along, across, height) between its rest and its lifted pose.
-            float wa0 = Lerp(0.10f, NozzleBack, lift), wa1 = Lerp(-0.26f, 0f, lift), wa2 = Lerp(0.55f, HandH, lift);   // the grip
-            float wb0 = Lerp(0.62f, NozzleTip, lift), wb1 = Lerp(-0.42f, 0f, lift), wb2 = Lerp(0.04f, HandH, lift);    // the head
+            // Heights in the hands are fitted to a real pawn in game (PawnFit); the head at rest is on the floor.
+            float wa0 = Lerp(0.10f, NozzleBack, lift), wa1 = Lerp(-0.26f, 0f, lift), wa2 = Lerp(PawnFit.H(0.55f), PawnFit.H(HandH), lift);   // the grip
+            float wb0 = Lerp(0.62f, NozzleTip, lift), wb1 = Lerp(-0.42f, 0f, lift), wb2 = Lerp(0.04f, PawnFit.H(HandH), lift);    // the head
             // The hose: a curve from the grip (u = 0) to the canister's top (u = 1). While the canister
             // rises or sinks only the first `present` share of it exists.
-            float p10 = (NozzleBack + CanAlong) / 2f - 0.1f, p11 = CanAcross * 0.55f + pose.Slack, p12 = HandH + 0.35f + pose.Slack * 0.3f;
+            float p10 = (NozzleBack + CanAlong) / 2f - 0.1f, p11 = CanAcross * 0.55f + pose.Slack, p12 = PawnFit.H(HandH + 0.35f + pose.Slack * 0.3f);
             const int N = 30;
             int M = Mathf.Max(2, Mathf.FloorToInt(N * present + 0.5f));
             if (present > 0f)
@@ -285,8 +281,9 @@ namespace RimArt
             {
                 const float c0 = -0.10f, c1 = 0.42f, c2 = 0.20f;
                 float r0 = 0.22f * (1f - lift), cw = HoseW * 0.7f;
-                Vector2 coilC = f.Place(caster, c0, c1, c2);
-                float CL = coilC.y > caster.y + 0.05f ? PawnLayer - 0.03f : Y;
+                // The loops are drawn round the coil's centre at the hip, which is fitted on a real pawn.
+                Vector2 coilC = f.Place(caster, c0, c1, c2), shift = f.OnBody(caster, c0, c1, c2) - coilC;
+                float CL = (PawnFit.On ? f.Depth(c0, c1) > 0.05f : coilC.y > caster.y + 0.05f) ? PawnLayer - 0.03f : Y;
                 // Where the coil draws at Y it shares altitudes with the hose under it and the wand over it:
                 // the first loop goes a hair above the hose, the second a hair below the wand, the run
                 // above the first loop's outline, the order the sketch drew them in.
@@ -296,7 +293,7 @@ namespace RimArt
                     for (int i = 0; i <= 26; i++)
                     {
                         float th = i / 26f * Mathf.PI * 2f, r = r0 * (1f - loop * 0.30f - 0.06f * i / 26f);
-                        P[i] = f.Place(caster, c0 + Mathf.Cos(th) * r, c1 + Mathf.Sin(th) * r * 0.85f, c2 + loop * 0.06f);
+                        P[i] = f.Place(caster, c0 + Mathf.Cos(th) * r, c1 + Mathf.Sin(th) * r * 0.85f, c2 + loop * 0.06f) + shift;
                     }
                     float nudge = atY ? (loop == 0 ? 0.0003f : -0.0003f) : 0f;
                     for (int i = 0; i <= 26; i++) W[i] = cw + 0.02f;
@@ -306,8 +303,8 @@ namespace RimArt
                     Tube(P, 27, HoseLit, CL + 0.004f + loop * 0.006f + nudge, 0.1f, 0.55f);
                 }
                 P[0] = f.Place(caster, wa0, wa1, wa2);
-                P[1] = f.Place(caster, Lerp(0.02f, NozzleBack - 0.1f, lift), Lerp(0.04f, 0.12f, lift), 0.5f);
-                P[2] = f.Place(caster, c0 + r0, c1 - r0 * 0.3f, c2);
+                P[1] = f.Place(caster, Lerp(0.02f, NozzleBack - 0.1f, lift), Lerp(0.04f, 0.12f, lift), PawnFit.H(0.5f));
+                P[2] = f.Place(caster, c0 + r0, c1 - r0 * 0.3f, c2) + shift;
                 W[0] = W[1] = W[2] = HoseW + 0.025f;
                 Tube(P, 3, HoseDark, CL - 0.002f);
                 W[0] = W[1] = W[2] = HoseW;
@@ -339,7 +336,7 @@ namespace RimArt
             return new VacuumParts
             {
                 C = Cn, R = R, H = H, Top = top, Layer = canLayer,
-                TipG = f.Place(caster, NozzleTip, 0f), TipS = f.Place(caster, NozzleTip, 0f, HandH),
+                TipG = f.Place(caster, NozzleTip, 0f), TipS = f.Place(caster, NozzleTip, 0f, PawnFit.H(HandH)),
             };
         }
 
@@ -397,7 +394,7 @@ namespace RimArt
             for (int i = 0; i < 3; i++)
             {
                 float turn = s * 5f + i * 2.094f;
-                Sprite(new Vector2(at.x + Mathf.Cos(turn) * 0.2f, at.y + 0.86f + Mathf.Sin(turn) * 0.06f), 0.08f, 0.08f, Fade(Pale, 0.9f * fade), soft, Y + 0.03f + i * 0.0001f);
+                Sprite(new Vector2(at.x + Mathf.Cos(turn) * 0.2f, at.y + PawnFit.Y(0.86f) + Mathf.Sin(turn) * 0.06f), 0.08f, 0.08f, Fade(Pale, 0.9f * fade), soft, Y + 0.03f + i * 0.0001f);
             }
         }
     }

@@ -1,7 +1,8 @@
 # Pawn height: handoff for lowering on-pawn pictures in game
 
 Written 2026-09-29 after the Satō port. The next conversation fixes the ported pictures that sit too high on
-real pawns, and decides what to do with the lab's pawn stand-in. Nothing below is built yet.
+real pawns, and decides what to do with the lab's pawn stand-in. The in-game fix is done: see "Result" at
+the end. The lab stand-in is not done yet.
 
 ## The problem
 
@@ -175,3 +176,47 @@ starting option 1.
 3. Power Pole: regenerate the Melee Animation clips so the real hands follow the lowered pole.
 4. What to do with the lab stand-in (options 1-3 above), and whether to do it before or after the in-game
    fix.
+
+## Result (2026-09-29, branch fix/pawn-height)
+
+Decisions: the fit; one PR with a commit per kit; Power Pole's clips regenerated; lab stand-in option 3
+(a shared real-size stand-in for new sketches only), after this, in its own PR.
+
+- `Shared/PawnFit.cs` is the switch. A kit's game code draws its pictures between `PawnFit.Begin()` and
+  `PawnFit.End()`; the picture code puts heights on a pawn through `PawnFit.Y` (on-screen) or `PawnFit.H`
+  (lab heights), body sizes through `PawnFit.Body`, and body points through `PawnFit.At`. Outside
+  Begin/End they return the sketch's numbers, so the recorder and the in-game previews are unchanged. Floor
+  things at a pawn's cell (rings, cones, lanes, outlines, dust) are not fitted.
+- Worn gear and side-held hands: the north-south part of an offset on the body is depth, not height, on
+  a real pawn (`OnBody` in the Bubble Pipe, Water Gun and Vacuum frames, `ChainSickleFrame.Hand`). A jar at
+  the hip of a pawn facing east stays at the hip instead of going to the knees.
+- Exceptions, where a real pawn's own point was already right: Bubble Pipe's raised pipe at the mouth and
+  Eye Pop's face target; Flame Gauntlet's resting heat
+  between casts (it sits on the game's own gauntlet texture); the vault in the air (Power Pole); Samehada's
+  blade and shark form (already right).
+- Each kit has a "height" game test with close shots (`-rimarttest="<kit>: height"`, several filters can be
+  given with commas). Before/after crops were compared for all 12.
+
+- Paper Bomb's clips were not fitted like Power Pole's: most of their hands already sit on a real body
+  (facing south: rest at the chest, cocked overhead), and the fit sent them to the feet. Only the east clip
+  (mirrored for west) was wrong: the rig showed the off side's offset as height, so the braced off hand
+  and the roll sat at the neck. `make_paper_bomb_anim.py` now drops the off side's offset there
+  (`sideways()`); in game the pin, the strip's hand end and each fan tag leave from the clip's hand
+  (`PaperBombGraphics.ClipHand` and the `Clip*` numbers in the three timing classes; change them with the
+  clips). `-rimarttest="Paper Bomb: height 2"` shoots the clips' hands facing east and south.
+
+Left open: Bank Shot's muzzle is 0.35 short of the real pistol's muzzle along the aim. A pawn whose warmup
+is shortened (Trigger-happy) releases Paper Bomb's tag before the fixed-length clip does. The small list
+(Pain, Rinnegan) and the preview-only list were not touched.
+
+Pain, afterwards (branch fix/pain-height): Shinra Tensei's pushed pawns draw their drag mark, landing dust
+and wall flash from the pawn's ground point (`PainKit.Ground`, the 0.3 shift) in `ShinraFlight.Draw`, 0.3
+lower than from the cell centres; the dust still starts about 0.2 above the feet, the shift's usual
+leftover. Banshō's landed target uses `LyingGround` while it lies face-down, so its stars sit over the
+lying head (0.22 higher). The blocker's stars go 0.22 higher (`PainPictures.StarsUp`, passed as
+`BanshoView.blockStarsUp`, 0 in the lab), from +0.54 inside the head to +0.76. Close shots:
+`-rimarttest="Pain: shinra 3,Pain: bansho 1,Pain: bansho 2"`, files named "pain height ...". Still left:
+the Rinnegan eye glint (0.1 low) and the drawn arm (0.15 low). Also seen: when Banshō is blocked, the
+target is not drawn face-down in game (`LiesFaceDown` excludes blocked), but its stars still use the
+lying-head spot, so they sit at chest height between the two pawns.
+

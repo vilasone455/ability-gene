@@ -349,6 +349,28 @@ for defname, rec in things_by_defname.items():
     fail("config error", rec["file"], defname + " is smeltable but has no costList, costStuffCount or"
          + " smeltProducts -- the game says it does not give anything for smelting")
 
+# "has a recipeMaker but no costList or costStuffCount" (ThingDef.ConfigErrors). Found in game for
+# AG_ReflexBooster when it was moved to BodyPartProstheticBase to stop it being craftable: that vanilla
+# parent carries a recipeMaker of its own. A def with such a parent turns it off with
+# <recipeMaker IsNull="True" />. The vanilla abstracts below are the ones with a recipeMaker (read from
+# Core and the DLCs, 2026-09-29); any other vanilla parent is taken to have none.
+VANILLA_RECIPEMAKER_PARENTS = {
+    "BodyPartBionicBase", "BodyPartBionicImperialBase", "BodyPartProstheticBase",
+    "BodyPartProstheticImperialBase", "BodyPartProstheticMakeableBase",
+}
+
+for defname, rec in things_by_defname.items():
+    chain = _chain(rec)
+    maker = next((r["el"].find("recipeMaker") for r in chain if r["el"].find("recipeMaker") is not None), None)
+    if maker is not None:
+        if maker.get("IsNull", "").lower() == "true": continue
+    elif not (chain[-1]["parent"] in VANILLA_RECIPEMAKER_PARENTS):
+        continue
+    if any(r["el"].find(tag) is not None for r in chain for tag in ("costList", "costStuffCount")):
+        continue
+    fail("config error", rec["file"], defname + " has a recipeMaker (" + ("its own" if maker is not None else "from " + chain[-1]["parent"])
+         + ") but no costList or costStuffCount -- the game refuses it; set <recipeMaker IsNull=\"True\" /> if it is not craftable")
+
 # 6c. "PrioritizeNewest is not supported with sustainers." SoundDef.priorityMode defaults to
 #    PrioritizeNewest, so a sustainer that says nothing about priority is refused at load. Found
 #    in the game log for AG_GravityHum after build, validator and API checks were all clean.
@@ -451,9 +473,7 @@ RETIRED = {"AG_Panoply_Rain", "AG_Panoply_Loose", "AG_Panoply_Grasp", "AG_Gravit
 # Hero abilities that still have their pre-hero source (an implant, a gene or a trait) while the
 # Echo that uses them is being built. Each is to lose one source once it is decided whether the
 # old item stays in the game; until then two sources are expected, and only these two.
-SHARED_WITH_ECHO = {
-    "AG_VectorReflection", "AG_VectorSurge", "AG_VectorShove",
-}
+SHARED_WITH_ECHO = set()
 
 for ability, f in sorted(ability_defs.items()):
     sources = grants.get(ability, set())

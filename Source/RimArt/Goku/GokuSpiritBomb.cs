@@ -7,7 +7,7 @@ namespace RimArt
     /// <summary>
     /// When the parts of one Spirit Bomb happen, in seconds from the start of the preview, and the
     /// power behind it. Every size follows the power; the weight of the impact follows
-    /// <see cref="Charge"/>, the power at the throw over 30.
+    /// <see cref="Charge"/>, the power at the throw over <see cref="Full"/>.
     /// </summary>
     public struct SpiritBombPlan
     {
@@ -22,6 +22,14 @@ namespace RimArt
         public float Hold;
         /// <summary>The blast radius at power 0.</summary>
         public float Base;
+        /// <summary>The power of a full bomb: the ability's cap in the game, 30 in the sketch.</summary>
+        public float Full;
+        /// <summary>
+        /// The game's power, added up tick by tick from what each pawn gives (their rates change as
+        /// they tire). When it is 0 or more, <see cref="PowerAt"/> returns it; negative means the
+        /// sketch's fixed rates. Only the present matters: after the throw it is the power at the throw.
+        /// </summary>
+        public float Live;
         /// <summary>
         /// When each lender joins and stops, on this plan's clock: the game's live lenders. Null means
         /// the sketch's schedule (joins <see cref="GokuSpiritBombTiming.FirstLender"/> after the cast
@@ -39,9 +47,10 @@ namespace RimArt
         /// <summary>When lender <paramref name="i"/> stops: when it left, or the throw.</summary>
         public float Leaves(int i) => Mathf.Min(LeaveAt != null ? LeaveAt[i] : Release, Release);
 
-        /// <summary>Power at <paramref name="s"/>: 1 per second from the caster plus <see cref="Lend"/> per second from each lender while it lends.</summary>
+        /// <summary>Power at <paramref name="s"/>: <see cref="Live"/> in the game; in the sketch 1 per second from the caster plus <see cref="Lend"/> per second from each lender while it lends.</summary>
         public float PowerAt(float s)
         {
+            if (Live >= 0f) return Live;
             float now = Mathf.Min(s, Release), power = Mathf.Max(0f, now - Cast);
             for (int i = 0; i < Lenders; i++) power += Mathf.Max(0f, Mathf.Min(now, Leaves(i)) - Joins(i)) * Lend;
             return power;
@@ -94,10 +103,11 @@ namespace RimArt
     /// <summary>
     /// Timing of Spirit Bomb: seconds in, numbers out, no drawing and no map. The port of
     /// Tools/VfxLab/web/sketches/goku-spirit-bomb.js; the constants are that sketch's defaults. There
-    /// is no ability behind it yet. The rule (user's draft, placeholders): a channel with no upper
+    /// is no ability behind it yet. The sketch's rule (the first draft): a channel with no upper
     /// limit (minimum 3 s); 1 power per second from the caster and 1 from each colonist that lends;
     /// blast radius 2 + 0.25 x power; damage only to hostile pawns; the bomb flies 1.4 s. The ability
-    /// is in Kit/SpiritBombCast.cs; it feeds the plan its live lenders and the throw time.
+    /// (Kit/SpiritBombCast.cs) has its own rates and a cap; it feeds the plan its live power
+    /// (<see cref="SpiritBombPlan.Live"/>), its cap (<see cref="SpiritBombPlan.Full"/>), the lenders and the throw time.
     /// </summary>
     public static class GokuSpiritBombTiming
     {
@@ -145,12 +155,13 @@ namespace RimArt
 
         /// <param name="joinAt">The game's live lenders: when each joined and stopped, on the plan's clock (null: the sketch's schedule).</param>
         public static SpiritBombPlan Plan(int lenders, float channel = ScriptChannel, float fly = ScriptFly, float hold = ScriptHold, float pace = ScriptPace,
-            float lend = ScriptLend, float blastPer = ScriptBlastPer, float sizePer = ScriptSizePer, float baseRadius = BaseRadius, float[] joinAt = null, float[] leaveAt = null)
+            float lend = ScriptLend, float blastPer = ScriptBlastPer, float sizePer = ScriptSizePer, float baseRadius = BaseRadius, float[] joinAt = null, float[] leaveAt = null,
+            float full = FullPower, float live = -1f)
         {
             var plan = new SpiritBombPlan
             {
                 Cast = Lead, Lenders = lenders, Lend = lend, BlastPer = blastPer, SizePer = sizePer, FlyTime = fly, Pace = pace, Hold = hold, Base = baseRadius,
-                JoinAt = joinAt, LeaveAt = leaveAt,
+                JoinAt = joinAt, LeaveAt = leaveAt, Full = full, Live = live,
             };
             Release(ref plan, plan.Cast + channel);
             return plan;
@@ -160,7 +171,7 @@ namespace RimArt
         public static void Release(ref SpiritBombPlan plan, float release)
         {
             plan.Release = release;
-            plan.Charge = Mathf.Clamp01(plan.PowerAt(plan.Release) / FullPower);
+            plan.Charge = Mathf.Clamp01(plan.PowerAt(plan.Release) / plan.Full);
             plan.Fly = plan.Release + Swing;
             plan.Hit = plan.Fly + plan.FlyTime;
             plan.Dome = plan.Hit + plan.By(GrindTime.x, GrindTime.y);
@@ -201,7 +212,7 @@ namespace RimArt
             float big = plan.By(Shake.x, Shake.y);
             for (int k = 1; plan.Cast + k * 0.5f < plan.Release - 1e-4f; k++)
             {
-                float at = plan.Cast + k * 0.5f, c = plan.PowerAt(at) / FullPower;
+                float at = plan.Cast + k * 0.5f, c = plan.PowerAt(at) / plan.Full;
                 if (c > 0.5f) list.Add(new GokuShake(at, 0.012f + 0.02f * Mathf.Min(1f, c)));
             }
             for (int k = 0; plan.Hit + k * 0.1f < plan.Dome - 0.01f; k++)

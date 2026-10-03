@@ -19,14 +19,8 @@ namespace RimArt
         /// </summary>
         private static Pawn Setup(RimArtTestContext t, WordVolume volume = WordVolume.Speak)
         {
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = false;
-            Pawn inumaki = t.Colonist(t.center);
-            EchoRecord record = EchoUtility.ForceHost(Inumaki, inumaki);
-            echoes.charge = 100f;
-            EchoUtility.Manifest(record);
+            GameComponent_Echoes echoes = t.ClearEchoes();
+            Pawn inumaki = t.Host(Inumaki, t.center, out EchoRecord record);
             if (volume != WordVolume.Speak) SetVolume(inumaki, volume);
             return inumaki;
         }
@@ -53,10 +47,8 @@ namespace RimArt
 
         private static Pawn Enemy(RimArtTestContext t, int dx, int dz, bool armed = false)
         {
-            Pawn pawn = t.Enemy(t.center + new IntVec3(dx, 0, dz), armed);
             // Armour is not under test; random apparel could deflect a hit.
-            pawn.apparel?.DestroyAll();
-            return pawn;
+            return t.Target(t.center + new IntVec3(dx, 0, dz), armed: armed);
         }
 
         private static Pawn Colonist(RimArtTestContext t, int dx, int dz)

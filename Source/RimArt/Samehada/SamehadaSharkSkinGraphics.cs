@@ -96,7 +96,7 @@ namespace RimArt
                 float rock = hitAge < 0.35f ? T.Rock * CS.Bump(hitAge / 0.35f) : 0f;
                 float dir = Mathf.Atan2(spots[i].y, spots[i].x);
                 Vector2 pos = Ground(caster, aim, spots[i].x + Mathf.Cos(dir) * rock, spots[i].y + Mathf.Sin(dir) * rock);
-                var chest = new Vector2(pos.x, pos.y + ChestH * Lift);
+                var chest = new Vector2(pos.x, pos.y + PawnFit.H(ChestH) * Lift);
                 Bite(chest, aim + dir * Mathf.Rad2Deg, hitAge);
                 if (hitAge < T.Drain)
                 {

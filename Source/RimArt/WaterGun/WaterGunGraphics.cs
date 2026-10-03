@@ -28,6 +28,21 @@ namespace RimArt
 
         public Vector2 Cast(Vector2 at, float along, float across, float h = 0f) =>
             new Vector2(at.x + along * ca - across * sa + sun.x * h, at.y + along * sa + across * ca + sun.y * h);
+
+        /// <summary>How far north of the pawn a point <paramref name="along"/>, <paramref name="across"/> lies.</summary>
+        public float Depth(float along, float across) => along * sa + across * ca;
+
+        /// <summary>
+        /// A point on the caster's body, for the worn bag and its straps. In the lab it is <see cref="Place"/>. On a
+        /// real pawn (<see cref="PawnFit"/>) the height is fitted, and the north-south part of the offset is left
+        /// out: a pawn sprite is flat, so a bag on the back of a pawn aiming north or south stays at its back
+        /// instead of sliding to its knees or over its head. That part only decides front or behind (<see cref="Depth"/>).
+        /// </summary>
+        public Vector2 OnBody(Vector2 at, float along, float across, float h)
+        {
+            Vector2 p = Place(at, along, across, PawnFit.H(h));
+            return PawnFit.On ? new Vector2(p.x, p.y - Depth(along, across)) : p;
+        }
     }
 
     /// <summary>How the weapon is posed in one frame: see <see cref="WaterGunGraphics.Weapon"/>.</summary>
@@ -138,14 +153,14 @@ namespace RimArt
             Sprite(new Vector2(at.x - 0.1f * size, at.y + 0.08f * size), 0.4f * size * g, 0.18f * size * g, Fade(WaterLit, alpha * 0.5f), soft, Floor + 0.04f);
         }
 
-        /// <summary>Drips falling from a soaked pawn: three drops on a loop from body height to the floor.</summary>
+        /// <summary>Drips falling from a soaked pawn: three drops on a loop from body height to the floor (fitted to a real pawn, PawnFit).</summary>
         internal static void Drips(Vector2 at, float age, float fade, int seed = 0)
         {
             if (age < 0f || fade <= 0f) return;
             for (int i = 0; i < 3; i++)
             {
                 float u = (age * 1.8f + Rand(i + seed + 800)) % 1f, x = at.x + (Rand(i + seed + 810) - 0.5f) * 0.4f, h = 0.45f * (1f - u * u);
-                Sprite(new Vector2(x, at.y + 0.1f + h * SixPathsHeight.Lift), 0.07f, 0.11f, Fade(WaterLit, 0.9f * fade * (1f - u * 0.5f)), soft, Y + 0.03f + i * 0.0001f);
+                Sprite(new Vector2(x, at.y + PawnFit.Y(0.1f + h * SixPathsHeight.Lift)), 0.07f, 0.11f, Fade(WaterLit, 0.9f * fade * (1f - u * 0.5f)), soft, Y + 0.03f + i * 0.0001f);
             }
         }
 
@@ -157,7 +172,7 @@ namespace RimArt
             {
                 float u = Mathf.Clamp01((age - i * 0.06f) / (life * 0.8f));
                 if (u <= 0f || u >= 1f) continue;
-                float x = at.x + (Rand(i + seed + 700) - 0.5f) * 0.5f, z = at.y + 0.3f + (0.2f + u * 1.1f) * SixPathsHeight.Lift;
+                float x = at.x + (Rand(i + seed + 700) - 0.5f) * 0.5f, z = at.y + PawnFit.Y(0.3f + 0.2f * SixPathsHeight.Lift) + u * 1.1f * SixPathsHeight.Lift;
                 Sprite(new Vector2(x, z), 0.3f + u * 0.5f, 0.25f + u * 0.45f, Fade(Steam, Sin01(u) * 0.6f), PowerPoleGraphics.puff, Y + 0.05f + i * 0.0001f);
             }
         }
@@ -370,10 +385,10 @@ namespace RimArt
         {
             float level = Mathf.Clamp01(units / BagCap);
             float R = BagR * (1f - 0.12f * squeeze), H = BagH * (1f + 0.06f * squeeze);
-            Vector2 B = f.Place(feet, BagAlong, BagAcross, BagBase);
-            bool behind = B.y > feet.y + 0.06f;
+            Vector2 B = f.OnBody(feet, BagAlong, BagAcross, BagBase);
+            bool behind = PawnFit.On ? f.Depth(BagAlong, BagAcross) > 0.05f : B.y > feet.y + 0.06f;
             float bagLayer = behind ? PawnLayer - 0.03f : Y + 0.001f;
-            Sprite(f.Cast(feet, BagAlong, BagAcross, BagBase + H * 0.5f), R * 2.6f, R * 1.5f, Fade(Body, strength * 0.6f), soft, ShadowLayer);
+            Sprite(f.Cast(feet, BagAlong, BagAcross, (BagBase + H * 0.5f) * PawnFit.Body), R * 2.6f, R * 1.5f, Fade(Body, strength * 0.6f), soft, ShadowLayer);
             float wl = level * H, bob = slosh * 0.02f * Mathf.Sin(s * 11f);
             if (level > 0f)
             {
@@ -399,15 +414,22 @@ namespace RimArt
             for (int k = 0; k < 2; k++)
             {
                 float sx = k == 0 ? -1f : 1f;
-                P[0] = f.Place(feet, BagAlong + 0.05f, BagAcross + sx * R * 0.6f, BagBase + H * 0.9f);
-                P[1] = f.Place(feet, -0.05f, sx * 0.21f, 0.62f);
-                P[2] = f.Place(feet, 0.10f, sx * 0.17f, 0.40f);
+                P[0] = OnBag(f, B, 0.05f, sx * R * 0.6f, H * 0.9f);
+                P[1] = f.OnBody(feet, -0.05f, sx * 0.21f * PawnFit.Body, 0.62f);
+                P[2] = f.OnBody(feet, 0.10f, sx * 0.17f * PawnFit.Body, 0.40f);
                 W[0] = W[1] = W[2] = 0.03f;
                 Tube(3, GunDark, (behind ? Y + 0.001f : bagLayer + 0.012f) + k * 0.0001f);
             }
             // Cap on top: a small dark disc.
             Disc(new Vector2(B.x + R * 0.35f, B.y + H * SixPathsHeight.Lift + 0.02f), bagLayer + 0.011f, 0.05f, 0.05f, 0f, GunDark);
             return H;
+        }
+
+        /// <summary>A point on the bag, from its base <paramref name="B"/>: the bag keeps its size on a real pawn.</summary>
+        private static Vector2 OnBag(in WaterGunFrame f, Vector2 B, float along, float across, float h)
+        {
+            Vector2 p = f.Place(B, along, across, h);
+            return PawnFit.On ? new Vector2(p.x, p.y - f.Depth(along, across)) : p;
         }
 
         /// <summary>The south half of a level circle round <paramref name="B"/>, at heights h0 (A) and h1 (C).</summary>
@@ -429,9 +451,10 @@ namespace RimArt
         internal static Vector2 Weapon(in WaterGunFrame f, Vector2 feet, float s, in WaterGunPose pose, float strength, bool draw = true)
         {
             float lift = Smooth(pose.Raise);
+            // Heights in the hands are fitted to a real pawn in game (PawnFit); the shadows fall from the real heights.
             float ga0 = Mathf.Lerp(0.02f, GripAlong, lift) - pose.Recoil, ga1 = Mathf.Lerp(-0.22f, 0f, lift), ga2 = Mathf.Lerp(0.38f, HandH, lift);
             float gb0 = Mathf.Lerp(0.42f, MuzzleAlong, lift) - pose.Recoil, gb1 = Mathf.Lerp(-0.34f, 0f, lift), gb2 = Mathf.Lerp(0.16f, HandH, lift);
-            Vector2 ga = f.Place(feet, ga0, ga1, ga2), gb = f.Place(feet, gb0, gb1, gb2);
+            Vector2 ga = f.Place(feet, ga0, ga1, PawnFit.H(ga2)), gb = f.Place(feet, gb0, gb1, PawnFit.H(gb2));
             if (!draw) return gb;
 
             float H = Bag(f, feet, s, pose.Units, pose.Slosh, pose.Squeeze, strength);
@@ -439,8 +462,8 @@ namespace RimArt
             float gunDeg = Mathf.Atan2(gb.y - ga.y, gb.x - ga.x) * Mathf.Rad2Deg;
             float len = (gb - ga).magnitude;
             float gunLayer = Y + 0.014f;
-            P[0] = f.Cast(feet, ga0, ga1, ga2);
-            P[1] = f.Cast(feet, gb0, gb1, gb2);
+            P[0] = f.Cast(feet, ga0, ga1, ga2 * PawnFit.Body);
+            P[1] = f.Cast(feet, gb0, gb1, gb2 * PawnFit.Body);
             W[0] = W[1] = 0.09f;
             Tube(2, Fade(Body, strength * 0.7f), ShadowLayer + 0.0001f);
             // Body (rear 60 %), pump grip below it, nozzle (front 40 %).
@@ -458,13 +481,14 @@ namespace RimArt
             Rect(nozzle, len * 0.40f, 0.06f, gunDeg, Steel, gunLayer + 0.0025f);
             Disc(gb, gunLayer + 0.006f, 0.04f, 0.04f, 0f, WaterDark);   // the bore
 
-            // The hose from the bag's top over the shoulder to the grip: a quadratic curve of 19 points.
-            float p00 = BagAlong, p01 = BagAcross, p02 = BagBase + H;
-            float p10 = (BagAlong + ga0) / 2f - 0.05f, p11 = BagAcross * 0.5f + 0.12f, p12 = HandH + 0.3f;
+            // The hose from the bag's top over the shoulder to the grip: a quadratic curve of 19 points, worked
+            // out between drawn points (the same curve as in the frame, which maps points linearly).
+            Vector2 h0 = OnBag(f, f.OnBody(feet, BagAlong, BagAcross, BagBase), 0f, 0f, H);
+            Vector2 h1 = f.OnBody(feet, (BagAlong + ga0) / 2f - 0.05f, BagAcross * 0.5f + 0.12f, HandH + 0.3f);
             for (int i = 0; i <= 18; i++)
             {
                 float u = i / 18f, w0 = (1f - u) * (1f - u), w1 = 2f * (1f - u) * u, w2 = u * u;
-                P[i] = f.Place(feet, w0 * p00 + w1 * p10 + w2 * ga0, w0 * p01 + w1 * p11 + w2 * ga1, w0 * p02 + w1 * p12 + w2 * ga2);
+                P[i] = w0 * h0 + w1 * h1 + w2 * ga;
             }
             for (int i = 0; i <= 18; i++) W[i] = HoseW + 0.02f;
             Tube(19, GunDark, Y + 0.008f);

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- The Last Prism's cast job: the warmup, then the wielder stands facing the aim while the beam fires
+       (JobDriver_CastLastPrism). neverShowWeapon: the picture draws the prism. playerInterruptible: a move or
+       draft order ends the beam, as Stop does. -->
+  <JobDef>
+    <defName>AG_CastLastPrism</defName>
+    <driverClass>RimArt.JobDriver_CastLastPrism</driverClass>
+    <reportString>firing the last prism.</reportString>
+    <neverShowWeapon>true</neverShowWeapon>
+    <playerInterruptible>true</playerInterruptible>
+  </JobDef>
+
+</Defs>

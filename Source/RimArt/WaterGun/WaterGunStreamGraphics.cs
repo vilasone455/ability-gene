@@ -59,7 +59,7 @@ namespace RimArt
 
             // The jet: its head flies from the muzzle to the target over the flight, its tail leaves the
             // muzzle Jet seconds later, so a short mass of water crosses the gap and ends in the splash.
-            float contactH = shot.OnPawn ? 0.38f / SixPathsHeight.Lift : 0.15f;
+            float contactH = shot.OnPawn ? PawnFit.H(0.38f / SixPathsHeight.Lift) : 0.15f;
             Vector2 target = f.Place(shot.Target, 0f, 0f, contactH);
             float u0 = Mathf.Clamp01((s - fire - T.Jet) / flight), u1 = Mathf.Clamp01((s - fire) / flight);
             if (fired && u0 < 1f)

@@ -165,26 +165,11 @@ namespace RimArt
         static bool Prefix(Pawn ___pawn) => !(VergilLooks.TryGet(___pawn, out VergilLook look) && look.gone);
     }
 
-    /// <summary>
-    /// Yamato Dash: during the 0.15 s dash the pawn is drawn along the line while its cell changes only on
-    /// arrival (one Notify_Teleported, the RetrievalPull pattern), so the map sections are not dirtied every tick.
-    /// </summary>
-    [HarmonyPatch(typeof(Pawn_DrawTracker), nameof(Pawn_DrawTracker.DrawPos), MethodType.Getter)]
-    static class Patch_PawnDrawTracker_VergilDash
+    /// <summary>Yamato is never drawn by the game (<see cref="HeldWeaponHide"/>): <see cref="YamatoDraw"/> draws it (sheathed, in hand or kneeling).</summary>
+    [StaticConstructorOnStartup]
+    static class Patches_VergilYamato
     {
-        static void Postfix(Pawn ___pawn, ref Vector3 __result)
-        {
-            if (!VergilLooks.TryGet(___pawn, out VergilLook look) || !look.moved) return;
-            __result.x = look.drawAt.x;
-            __result.z = look.drawAt.z;
-        }
-    }
-
-    /// <summary>Yamato is never drawn by the game: <see cref="YamatoDraw"/> draws it (sheathed, in hand or kneeling).</summary>
-    [HarmonyPatch(typeof(PawnRenderUtility), nameof(PawnRenderUtility.DrawEquipmentAiming))]
-    static class Patch_PawnRenderUtility_HideYamato
-    {
-        static bool Prefix(Thing eq) => eq?.def != VergilDefOf.AG_Yamato;
+        static Patches_VergilYamato() => HeldWeaponHide.Register(VergilDefOf.AG_Yamato, _ => true);
     }
 
     /// <summary>

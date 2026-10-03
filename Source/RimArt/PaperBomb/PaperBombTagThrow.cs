@@ -16,6 +16,11 @@ namespace RimArt
         public const float Release = 0.3f;
         public const float Fly = 0.45f, Aftermath = 2.2f;
         public const float HandOut = 0.35f, HandHeight = 0.45f, Arc = 0.8f, Power = 1.2f;
+        /// <summary>
+        /// The RimArt_TagThrow clip's hand at the release (0.30 s): reach with the body's lean, side, and screen lift
+        /// (make_paper_bomb_anim.py). In game the pin leaves from it (PaperBombGraphics.ClipHand).
+        /// </summary>
+        public const float ClipReach = 0.22f, ClipSide = -0.17f, ClipLift = 0.43f;
         /// <summary>Tag scale in the air and stuck on a body.</summary>
         public const float FlyLong = 0.62f, CarriedLong = 0.5f;
         /// <summary>A wall is hit on the near edge of its top, this far short of the cell's middle, one cell up.</summary>
@@ -30,7 +35,7 @@ namespace RimArt
         public static float Duration(float fuse) => BurstAt(fuse) + Aftermath;
 
         public static float StuckHeight(TagThrowTarget target) =>
-            target == TagThrowTarget.Pawn ? PawnHeight : target == TagThrowTarget.Wall ? WallHeight : 0f;
+            target == TagThrowTarget.Pawn ? PawnFit.H(PawnHeight) : target == TagThrowTarget.Wall ? WallHeight : 0f;
 
         /// <summary>The preview's carrier: walks up to the target cell until the tag lands, then on toward its group.</summary>
         public static float ScriptCarrierAlong(float seconds)

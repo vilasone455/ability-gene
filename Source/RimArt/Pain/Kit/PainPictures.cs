@@ -34,8 +34,9 @@ namespace RimArt
                     view.target = Ground(cast.CentreAt(cast.AlongAt(s)));
                     view.height = cast.HeightAt(s);
                 }
-                else view.target = PainKit.Ground(target.DrawPos);
+                else view.target = cast.LiesFaceDown(Find.TickManager.TicksGame) ? LyingGround(target.DrawPos) : PainKit.Ground(target.DrawPos);
                 if (cast.blocker != null && cast.blocker.Spawned) view.block = PainKit.Ground(cast.blocker.DrawPos);
+                view.blockStarsUp = StarsUp;
             }
             else
             {
@@ -63,7 +64,7 @@ namespace RimArt
         {
             Pawn caster = cast.caster;
             float top = AltitudeLayer.MoteOverhead.AltitudeFor() + .1f;
-            float fade = cast.aborted ? 1f - Mathf.Clamp01(UbwClock.Since(cast.abortTick) / ChibakuCast.FadeSeconds) : 1f;
+            float fade = cast.aborted ? 1f - Mathf.Clamp01(PictureClock.Since(cast.abortTick) / ChibakuCast.FadeSeconds) : 1f;
             if (fade <= 0f) return;
             if (cast.Fired && !cast.handed && s >= cast.LaunchAt)
                 ChibakuFlight(cast, Mathf.Clamp01((s - cast.LaunchAt) / Mathf.Max(.01f, cast.Arrive - cast.LaunchAt)), fade, top, s);
@@ -120,6 +121,13 @@ namespace RimArt
         /// </summary>
         public static Vector2 LyingGround(Vector3 drawPos) => new Vector2(drawPos.x, drawPos.z - LyingBodyZ);
         public const float LyingBodyZ = 0.08f;
+
+        /// <summary>
+        /// Stun stars over a standing real pawn go this much higher than the sketch puts them. The sketch draws them 0.84
+        /// above the ground point, which the 0.3 feet shift puts at +0.54 from the DrawPos, inside a real head (top
+        /// +0.63); fitted to a real pawn (<see cref="PawnFit.FitY"/>) they belong at 1.3 x 0.84 - 0.33 = +0.76.
+        /// </summary>
+        public const float StarsUp = 0.22f;
 
         /// <summary>A camera shake from the sketch, only when it happens on the map on screen.</summary>
         public static void Shake(Map map, float size)
@@ -182,17 +190,17 @@ namespace RimArt
             Pawn pawn = rods.pawn;
             if (pawn == null || !pawn.Spawned || rods.rods.Count == 0) return;
             Map map = pawn.Map;
-            float flare = rods.flaredTick >= 0 ? BlackReceiverGraphics.Flare(UbwClock.Since(rods.flaredTick)) : 0f;
+            float flare = rods.flaredTick >= 0 ? BlackReceiverGraphics.Flare(PictureClock.Since(rods.flaredTick)) : 0f;
             bool faceDown = GameComponent_Pain.Instance.FaceDown(pawn, out Vector2 toPain);
             Vector2 stood = rods.StoodAt, lies = rods.LiesAt, feet = PainKit.Ground(pawn.DrawPos), away = rods.fallAway;
-            float sinceFree = rods.freedTick >= 0 ? UbwClock.Since(rods.freedTick) : float.MaxValue;
+            float sinceFree = rods.freedTick >= 0 ? PictureClock.Since(rods.freedTick) : float.MaxValue;
             foreach (PainRod rod in rods.rods)
             {
-                float age = UbwClock.Since(rod.landTick);
+                float age = PictureClock.Since(rod.landTick);
                 int i = rod.slot;
                 if (rods.Pinned)
                 {
-                    float since = UbwClock.Since(rods.pinnedTick);
+                    float since = PictureClock.Since(rods.pinnedTick);
                     if (since < BlackReceiverTiming.Fall)
                         BlackReceiverGraphics.Stuck(BlackReceiverTiming.FallPose(i, stood, lies, -away, since), i, age, -1f, age, flare, map);
                     else BlackReceiverGraphics.InLying(lies, away, i, age, -1f, map, flare);

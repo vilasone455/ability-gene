@@ -144,6 +144,18 @@ TAG_FAN = {
 
 STYLES = [TAG_THROW, TAG_FLICK, TAG_FAN]
 
+# A pawn facing east or west is a flat side view: an offset across the chest to the off side is depth
+# there, not height. The rig shows the side offset as screen height in those clips (the off side is
+# north), which put the braced off hand and the roll at the neck of a real pawn and the hand at the
+# roll or the off shoulder as high. So in the east clip (mirrored for west) the off side's offset is
+# dropped from the poses and from the braced hand. The throwing side's offset stays: it lowers the hand
+# to the hip at rest and to the chest over the strip, as a real pawn holds it. The pictures start the
+# tags from these hands in game (PaperBombTagThrowTiming.ClipHand and its kin; change them together).
+
+
+def sideways(style):
+    return {**style, "poses": [(t, f, min(s, 0.0), lift) for t, f, s, lift in style["poses"]]}
+
 # (seconds, half-span, lift, splay, body bob, contact), as in make_clap_anim.py.
 TAG_SEAL = {
     "name": "RimArt_TagSeal",
@@ -173,13 +185,17 @@ def scroll(parent_id, x, y, z, angle, scale=0.46):
 
 
 def build(style, name, direction, turn):
-    clip = throw.build(style, name, direction, turn)
+    side_view = direction in (1, 3)
+    clip = throw.build(sideways(style) if side_view else style, name, direction, turn)
     # The throw generator stamps the time it ran, which rewrites every clip on every deploy.
     clip["ExportTimeUTC"] = STAMP
     item = next(p for p in clip["Parts"] if p["CustomName"] == "Grenade")
     item["Curves"]["GameObject.m_IsActive"] = throw.curve(held_active(style), smooth=False)
-    # The roll sits in the off hand, one draw step under it so the fingers cover the rod.
     off = next(p for p in clip["Parts"] if p["CustomName"] == "HandB")["DefaultValues"]
+    if side_view:
+        # The braced hand's 0.17 across the chest is depth in a side view (see sideways()).
+        off["Transform.m_LocalPosition.z"] = 0.0
+    # The roll sits in the off hand, one draw step under it so the fingers cover the rod.
     clip["Parts"].append(scroll(1001, off["Transform.m_LocalPosition.x"], off["Transform.m_LocalPosition.y"] - 0.004,
                                 off["Transform.m_LocalPosition.z"], -turn))
     return clip

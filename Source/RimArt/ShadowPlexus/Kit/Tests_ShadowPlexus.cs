@@ -3,6 +3,7 @@ using System.Linq;
 using RimWorld;
 using Verse;
 using Verse.AI;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -20,16 +21,10 @@ namespace RimArt
         /// <summary>A cleared arena lit everywhere, with a manifested, drafted Shikamaru at the centre.</summary>
         private static Pawn Setup(RimArtTestContext t)
         {
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = false;
+            GameComponent_Echoes echoes = t.ClearEchoes();
             ShadowLight.levelForTests = _ => 1f;
             Plexus(t)?.ReleaseAll();
-            Pawn shikamaru = t.Colonist(t.center);
-            EchoRecord record = EchoUtility.ForceHost(ShadowPlexusDefOf.AG_Echo_Shikamaru, shikamaru);
-            echoes.charge = 100f;
-            EchoUtility.Manifest(record);
+            Pawn shikamaru = t.Host(ShadowPlexusDefOf.AG_Echo_Shikamaru, t.center, out EchoRecord record);
             return shikamaru;
         }
 
@@ -57,9 +52,7 @@ namespace RimArt
 
         private static Pawn Enemy(RimArtTestContext t, int dx, int dz)
         {
-            Pawn pawn = t.Enemy(t.center + new IntVec3(dx, 0, dz), armed: false);
-            pawn.apparel?.DestroyAll();
-            return pawn;
+            return t.Target(t.center + new IntVec3(dx, 0, dz));
         }
 
         private static Thing Steel(RimArtTestContext t, int dx, int dz) =>
@@ -71,8 +64,6 @@ namespace RimArt
             pawn.Position += delta;
             pawn.Notify_Teleported(false, false);
         }
-
-        private static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned ?? false;
 
         private static Hediff Choked(Pawn pawn) => pawn.health.hediffSet.GetFirstHediffOfDef(ShadowPlexusDefOf.AG_ShadowChoked);
 
@@ -421,12 +412,9 @@ namespace RimArt
             Pawn unheld = Enemy(t, 0, -5);
             yield return 1;
             t.Check(!bind.CanApplyOn((LocalTargetInfo)unheld), "a pawn that is not held is refused");
-            PawnKindDef scyther = DefDatabase<PawnKindDef>.GetNamedSilentFail("Mech_Scyther");
-            if (scyther != null && Faction.OfMechanoids != null)
+            Pawn mech = t.Mech(t.center + new IntVec3(0, 0, 5));
+            if (mech != null)
             {
-                Pawn mech = PawnGenerator.GeneratePawn(new PawnGenerationRequest(scyther, Faction.OfMechanoids));
-                GenSpawn.Spawn(mech, t.center + new IntVec3(0, 0, 5), t.map);
-                RimArtTestContext.Hold(mech);
                 yield return 1;
                 Cast(shikamaru, ShadowPlexusDefOf.AG_ShadowImitation, mech);
                 yield return 2;
@@ -435,7 +423,6 @@ namespace RimArt
                 plexus.ReleaseAll();
                 mech.Destroy();
             }
-            else t.Log("no Mech_Scyther or mechanoid faction: the mech check was skipped");
             yield return 2;
 
             Pawn third = Enemy(t, -5, 0);
@@ -475,6 +462,28 @@ namespace RimArt
             Cast(shikamaru, ShadowPlexusDefOf.AG_ShadowImitation, enemy);
             yield return 2;
             t.Check(echoes.charge == 47f, "3 paid at the fire (" + echoes.charge + ")");
+            TearDown();
+        }
+
+        // ------------------------------------------------------------------ pawn height
+
+        /// <summary>
+        /// Close shots for the pawn height fit: the shadow double standing 3 cells east of Shikamaru, next
+        /// to a real enemy one cell further on, so its silhouette can be set against two real pawns.
+        /// </summary>
+        [RimArtTest("Shadow Plexus", "height 1 the double stands the size of a real pawn (screenshots)")]
+        private static IEnumerable<int> HeightDouble(RimArtTestContext t)
+        {
+            Pawn shikamaru = HeightShots.Plain(Setup(t), strip: false);
+            IntVec3 spot = t.center + East * 3;
+            Pawn enemy = HeightShots.Target(t, t.center + East * 4);
+            enemy.stances.stunner.StunFor(600, null, false);
+            yield return 2;
+            Cast(shikamaru, ShadowPlexusDefOf.AG_ShadowDouble, spot);
+            yield return 10;
+            yield return HeightShots.Shoot(t, "shadow double rising", t.center + East * 2, shikamaru, enemy);
+            yield return 30;
+            yield return HeightShots.Shoot(t, "shadow double standing", t.center + East * 2, shikamaru, enemy);
             TearDown();
         }
     }

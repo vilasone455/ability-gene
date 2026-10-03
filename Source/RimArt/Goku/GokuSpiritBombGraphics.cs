@@ -104,7 +104,7 @@ namespace RimArt
             int cracks = t.Count(T.CrackCount.x, T.CrackCount.y), pillars = t.Count(T.PillarCount.x, T.PillarCount.y);
             int rocks = t.Count(T.RockCount.x, T.RockCount.y), burns = t.Count(T.StreakCount.x, T.StreakCount.y);
             float grindTime = t.Dome - t.Hit, cool = t.Gone - t.Open + T.Tail * 0.8f, whiteFrame = t.By(T.WhiteTime.x, T.WhiteTime.y);
-            float power = t.PowerAt(s), chargeNow = Mathf.Clamp01(power / T.FullPower), r = T.StartSize + t.SizePer * power, blast = t.Base + t.BlastPer * power;
+            float power = t.PowerAt(s), chargeNow = Mathf.Clamp01(power / t.Full), r = T.StartSize + t.SizePer * power, blast = t.Base + t.BlastPer * power;
             bool channelling = s >= t.Cast && s < t.Release;
             float formed = Smooth((s - t.Cast) / 0.5f);
             // Where the ball is at w of the way through its flight: ground position and height.
@@ -260,9 +260,11 @@ namespace RimArt
                 Vector2 pos = shot.Spared[g];
                 float shielded = ShieldAt(Vector2.Distance(pos, target));
                 if (shielded <= 0f) continue;
-                var at = new Vector2(pos.x, pos.y + 0.36f);
-                Sprite(at, 0.62f * 2.4f, 0.62f * 2.4f, Fade(Ki, 0.3f * shielded), glow, Overhead + 0.199f);
-                PaperBombGraphics.RingAt(at, 0.62f + 0.03f * Mathf.Sin(s * 9f), Fade(Ki, 0.95f * shielded), Overhead + 0.2f);
+                // Round the body, fitted to a real pawn in game (PawnFit).
+                var at = new Vector2(pos.x, pos.y + PawnFit.Y(0.36f));
+                float shell = 0.62f * PawnFit.Body;
+                Sprite(at, shell * 2.4f, shell * 2.4f, Fade(Ki, 0.3f * shielded), glow, Overhead + 0.199f);
+                PaperBombGraphics.RingAt(at, shell + 0.03f * Mathf.Sin(s * 9f), Fade(Ki, 0.95f * shielded), Overhead + 0.2f);
             }
 
             // --- the lenders' glow ---
@@ -272,7 +274,7 @@ namespace RimArt
                 Vector2 at = shot.Lenders[i];
                 float lending = Lending(t, i, s);
                 if (s >= t.Joins(i) && s < t.Leaves(i) + 0.3f && joinedCount < joined.Length) joined[joinedCount++] = i;
-                Sprite(new Vector2(at.x, at.y + 0.35f), 1.3f, 1.6f, Fade(KiSky, 0.4f * lending * (0.8f + 0.2f * Mathf.Sin(s * 11f))), glow, PawnLayer - 0.01f);
+                Sprite(new Vector2(at.x, at.y + PawnFit.Y(0.35f)), 1.3f * PawnFit.Body, 1.6f * PawnFit.Body, Fade(KiSky, 0.4f * lending * (0.8f + 0.2f * Mathf.Sin(s * 11f))), glow, PawnLayer - 0.01f);
             }
 
             // --- a heavy bomb works on the ground under the caster: wind rings run out, pebbles lift and hang ---
@@ -319,7 +321,7 @@ namespace RimArt
                 for (int j = 0; j < joinedCount; j++)
                 {
                     int i = joined[j];
-                    Vector2 at = shot.Lenders[i], hand = new Vector2(at.x + 0.22f, at.y + 0.92f);
+                    Vector2 at = shot.Lenders[i], hand = PawnFit.At(at, 0.22f, 0.92f);
                     float lending = Lending(t, i, s), bend = i % 2 == 1 ? 0.6f : -0.6f;
                     Vector2 Point(float w) => new Vector2(Mathf.Lerp(hand.x, centre.x, w) + Mathf.Sin(w * Mathf.PI) * bend, Mathf.Lerp(hand.y, centre.y, Smooth(w) * 0.6f + w * 0.4f));
                     Vector2[] pts = Points(17);

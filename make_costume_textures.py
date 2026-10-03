@@ -89,7 +89,35 @@ Echo/Costume/SatoCap_<facing>.png
     dark slate crown, flatter and wider than the head, a seam down the middle, a short stiff brim at
     the front with its shadow on the forehead. It hides the hair as a vanilla hat does.
 
-`python3 make_costume_textures.py sato` makes only Satō's pieces.
+Echo/Costume/GojoUniform_<Body>_<facing>.png
+    256 px, the same 5 body types x 3 facings (west is east mirrored): Gojo's teacher's uniform from
+    the anime's model sheets. A near-black zip-up jacket to the top of the thighs, lit with flat
+    violet highlights on its lit edges and folds as the anime draws it, the zip's flap a little to his
+    left of the middle, a slash pocket on each hip; black trousers and black boots. The arms are not
+    drawn, as on the other costumes: a seam from each shoulder to the wrist marks the sleeve. Facing
+    north it is drawn over the head and draws the high collar from behind.
+
+Echo/Costume/GojoCollar_<facing>.png
+    256 px, south, east, north: the jacket's high, broad collar on the head (layer 64), as the Akatsuki
+    collar but lower, up to the jaw and just over the tip of the chin, with two creases and the flap
+    up its front. North is empty: from behind the jacket draws the collar.
+
+Echo/Costume/GojoBlindfold_<facing>.png
+    256 px, south, east, north (west is east mirrored): the wide black blindfold over his brows and
+    eyes, on the head (layer 63), and his white hair propped up above it in nine broad locks that
+    hook outward like flames, lavender toward the band; from behind, short lavender hair under the
+    band. It hides the Host's own hair.
+
+Echo/Costume/ShirouCasual_<Body>_<facing>.png
+    256 px, the same 5 body types x 3 facings (west is east mirrored): Shirou's everyday clothes from
+    the visual novel's sprite and Studio Deen's character sheet. A long-sleeved white baseball shirt
+    with navy raglan sleeves (the seam runs from the neckline to the armpit, so the shoulders are navy
+    too), a wide neckline with a navy rim, ribbed cuffs at the wrist, the hem loose over the hips;
+    slim indigo jeans and grey trainers with a white sole. The arms are not drawn, as on the other
+    costumes: the navy strip down each side is the sleeve. His auburn hair is the Echo's hair colour,
+    not a costume piece.
+
+`python3 make_costume_textures.py sato` (or `gojo`, `shirou`) makes only that hero's pieces.
 
 The costume is fitted to the vanilla body outlines in BODIES, measured from the game's
 Naked_<Body>_<facing> textures (outer edge of the black outline, every 2 rows, on the 128 px
@@ -2688,6 +2716,735 @@ def sato_outfit():
     cap_back("SatoCap_north.png")
 
 
+# ---- Gojo's teacher uniform ----
+
+# From the anime's character art (the wiki's season 1 and 2 model sheets): a near-black zip-up jacket
+# with a very high, broad collar, hanging to the top of the thighs, its zip under a flap a little to
+# his left of the middle, slash pockets at the hips; slim black trousers and black dress boots. The
+# anime lights it with flat violet highlights on the lit edges and in the folds. The violet is pushed
+# toward blue so it does not read pink in the game's warm light (as Sasuke's purple was).
+GJ_CLOTH, GJ_CLOTH_LIT, GJ_CLOTH_DARK = (38, 38, 56), (58, 56, 86), (17, 17, 27)
+GJ_SHINE = (98, 90, 160)  # the flat violet highlights
+GJ_TROUSERS, GJ_TROUSERS_LIT, GJ_TROUSERS_DARK = (30, 30, 42), (50, 50, 72), (14, 14, 22)
+GJ_BOOT, GJ_BOOT_LIT = (20, 20, 26), (104, 104, 124)
+
+
+class Uniform:
+    """Heights the three facings share, from the model sheets: the jacket ends just above the crotch and
+    its sleeves at the wrist (his hands are in the pockets); the boots come up over the ankle."""
+
+    def __init__(self, body):
+        top, h = body.top, body.height
+        self.cuff = top + 0.6 * h
+        self.hem = top + 0.74 * h
+        self.pocket = self.hem - 0.15 * h  # the top of the pocket slits
+        self.boot = body.bottom - 0.08 * h
+
+
+def edge_rim(mask, dx, dy):
+    """The part of mask that is not covered by itself moved (dx, dy) units: a rim of about that width on
+    the side the move comes from (dx > 0 the viewer's left side, dy > 0 the top)."""
+    return minus(mask, ImageChops.offset(mask, round(dx * U), round(dy * U)))
+
+
+def wedge(a, b, width):
+    """A flat highlight shaped like the anime's: `width` wide at a, narrowing to a point at b."""
+    (ax, ay), (bx, by) = a, b
+    n = math.hypot(bx - ax, by - ay)
+    nx, ny = -(by - ay) / n * width / 2, (bx - ax) / n * width / 2
+    mx, my = ax + (bx - ax) * 0.45, ay + (by - ay) * 0.45
+    return polygon([(ax - nx, ay - ny), (mx - nx * 0.8, my - ny * 0.8), (bx, by), (mx + nx * 0.8, my + ny * 0.8),
+                    (ax + nx, ay + ny)])
+
+
+def gojo_legs(image, body, lay, legs, light=None):
+    """The slim trousers from the hem down, a crease between the legs, and the boots with a shine on
+    each toe."""
+    c = body.centre
+    shade(image, legs, GJ_TROUSERS_DARK, GJ_TROUSERS, GJ_TROUSERS_LIT, light, reach=1.4)
+    crotch = lay.hem + 0.25 * (body.bottom - lay.hem)
+    paint(image, inter(stroke([(c(crotch), crotch), (c(body.bottom), body.bottom)], 0.5), legs), GJ_TROUSERS_DARK)
+    boots = inter(legs, band(lay.boot, 128))
+    paint(image, boots, GJ_BOOT)
+    paint(image, inter(band(lay.boot - 0.2, lay.boot + 0.3), legs), GJ_TROUSERS_DARK)
+    return boots
+
+
+def boot_shine(image, body, lay, boots, legs_apart=True):
+    """A short pale streak on each boot, on its lit side (the viewer's left)."""
+    y = lay.boot + 0.45 * (body.bottom - lay.boot)
+    left, right = body.edges(y)
+    c = body.centre(y)
+    xs = ((left + c) / 2, (c + right) / 2) if legs_apart else ((left + right) / 2,)
+    for x in xs:
+        paint(image, inter(ellipse(x - 0.12 * (right - left) / len(xs), y, 0.9, 0.45), boots), GJ_BOOT_LIT)
+
+
+def uniform_sleeves(image, body, lay, side, within):
+    """South and north: a seam from each shoulder down to the cuff at the wrist, and the cuff's edge."""
+    w, top = body.width, body.top
+    for s in (-1, 1):
+        def x(y, s=s):
+            return side(y)[1 if s > 0 else 0] - s * min(4.2, 0.2 * w)
+        paint(image, inter(stroke([(x(y), y) for y in steps(top + 8, lay.cuff)], 0.5), within), GJ_CLOTH_DARK)
+        outer = side(lay.cuff + 0.6)[1 if s > 0 else 0]
+        paint(image, inter(stroke([(x(lay.cuff), lay.cuff), (outer, lay.cuff + 0.6)], 0.55), within), GJ_CLOTH_DARK)
+
+
+def gojo_front(body, name):
+    """South: the jacket zipped to the collar (the head's collar covers its top), the zip's flap a little
+    to his left of the middle (the viewer's right), a slash pocket on each hip, violet highlights down
+    the lit left edge, over the shoulders and in a few folds; the trousers and boots below the hem."""
+    w, c, top, h = body.width, body.centre, body.top, body.height
+    lay = Uniform(body)
+    side = coat_sides(body, lay.hem, 0.5, 0.5)
+    jacket = cloak_outline(side, top - 0.5, lay.hem)
+    gap = leg_gap(body)
+    legs = minus(inter(body_outline(body), band(lay.hem - 1, 128)), gap)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = inter(ramp(c(top) - w * 0.7, c(top) + w * 0.4, 150, 0), ellipse(c(top) - w * 0.3, top + 20, w * 0.45, 26)
+                  .filter(ImageFilter.GaussianBlur(6 * U)))
+    boots = gojo_legs(image, body, lay, legs, light)
+    boot_shine(image, body, lay, boots)
+    shade(image, jacket, GJ_CLOTH_DARK, GJ_CLOTH, GJ_CLOTH_LIT, light, reach=2.4)
+    uniform_sleeves(image, body, lay, side, jacket)
+
+    # The flat violet highlights: the lit left edge to the cuff, the tops of both shoulders, and folds
+    # from the arms in toward the chest and waist, bigger on the lit side.
+    inside = shrink(jacket, 0.35)
+    shine = union(inter(edge_rim(jacket, 1.3, 0.9), band(top - 1, lay.cuff)),
+                  inter(edge_rim(jacket, -0.8, 1.1), band(top - 1, top + 7)))
+    arm_l, arm_r = side(top + 0.3 * h)[0] + 3.5, side(top + 0.3 * h)[1] - 3.5
+    folds = [wedge((arm_l, top + 0.24 * h), (c(top) - 0.14 * w, top + 0.3 * h), 1.6),
+             wedge((arm_l + 0.5, top + 0.44 * h), (c(top) - 0.2 * w, top + 0.52 * h), 1.4),
+             wedge((c(top) - 0.1 * w, lay.hem - 0.07 * h), (c(top) - 0.34 * w, lay.hem - 0.13 * h), 1.1),
+             wedge((arm_r - 0.5, top + 0.4 * h), (c(top) + 0.18 * w, top + 0.47 * h), 0.9)]
+    paint(image, inter(union(shine, *folds[:3]), inside), GJ_SHINE)
+    paint(image, inter(folds[3], inside), GJ_CLOTH_LIT)
+
+    # The zip's flap: its edge a little to his left of the middle, lit along its fold.
+    flap = [(c(y) + 0.06 * w, y) for y in steps(top - 0.5, lay.hem)]
+    paint(image, inter(stroke(flap, 0.55), jacket), GJ_CLOTH_DARK)
+    paint(image, inter(stroke([(x - 0.6, y) for x, y in flap], 0.3), jacket), GJ_CLOTH_LIT)
+    # The slash pockets, sloping in toward the middle at the top.
+    for s in (-1, 1):
+        x0 = c(lay.pocket) + s * 0.24 * w
+        paint(image, inter(stroke([(x0, lay.pocket), (x0 + s * 0.06 * w, lay.pocket + 0.1 * h)], 0.5), jacket),
+              GJ_CLOTH_DARK)
+    # The hem's seam.
+    paint(image, inter(band(lay.hem - 1.4, lay.hem - 1.0), inside), GJ_CLOTH_DARK)
+
+    finish(image, minus(union(jacket, legs), gap), name)
+
+
+def gojo_back(body, name):
+    """North: the high collar standing up behind the neck (drawn here, on the body, which is over the
+    head facing north), the plain back, violet highlights on the lit left edge and the shoulders, the
+    sleeves to the wrist; the trousers and boots below the hem."""
+    w, c, top, h = body.width, body.centre, body.top, body.height
+    lay = Uniform(body)
+    side = coat_sides(body, lay.hem, 0.5, 0.5)
+    ys = steps(top + 3, lay.hem)
+    back = polygon([(side(y)[0], y) for y in ys] + [(side(y)[1], y) for y in reversed(ys)])
+    # The collar from behind: broad and high, its rim just under the blindfold at the middle, as
+    # Sasuke's back collar but taller. Sized to the neck: the same on every body type.
+    cw = 14.5
+    cys = steps(0, 1, 0.05)
+    rim = [(c(top) - 0.92 * cw * math.cos(math.pi * t), top + 2.5 - 4.1 * math.sin(math.pi * t)) for t in cys]
+    collar = polygon([(c(top) - cw - 0.4, top + 8), (c(top) - 0.92 * cw - 0.3, top + 2.5)] + rim +
+                     [(c(top) + 0.92 * cw + 0.3, top + 2.5), (c(top) + cw + 0.4, top + 8),
+                      (side(top + 10)[1], top + 10), (side(top + 10)[0], top + 10)])
+    shoulders = polygon([(c(top) - cw - 0.4, top + 6), (side(top + 13)[0], top + 13),
+                         (side(top + 13)[1], top + 13), (c(top) + cw + 0.4, top + 6)])
+    jacket = union(back, collar, shoulders)
+    gap = leg_gap(body)
+    legs = minus(inter(body_outline(body), band(lay.hem - 1, 128)), gap)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = ellipse(c(top) - w * 0.15, top + 22, w * 0.42, 22).filter(ImageFilter.GaussianBlur(7 * U))
+    boots = gojo_legs(image, body, lay, legs, light)
+    boot_shine(image, body, lay, boots)
+    shade(image, jacket, GJ_CLOTH_DARK, GJ_CLOTH, GJ_CLOTH_LIT, light, reach=2.6)
+    # The collar: its rim folded over (a lit line), a crease round it, and its foot, where it meets the
+    # shoulders.
+    paint(image, inter(stroke([(x, y + 0.5) for x, y in rim], 0.4), jacket), GJ_CLOTH_LIT)
+    paint(image, inter(stroke([(x, y + 3.4) for x, y in rim[2:-2]], 0.45), jacket), GJ_CLOTH_DARK)
+    foot = [(c(top) - cw * math.cos(math.pi * t), top + 8.2 - 1.6 * math.sin(math.pi * t)) for t in cys]
+    paint(image, inter(stroke(foot, 0.5), jacket), GJ_CLOTH_DARK)
+    uniform_sleeves(image, body, lay, side, jacket)
+
+    inside = shrink(jacket, 0.35)
+    shine = union(inter(edge_rim(jacket, 1.3, 0.9), band(top - 3, lay.cuff)),
+                  inter(edge_rim(jacket, -0.8, 1.1), band(top - 3, top + 12)))
+    folds = [wedge((side(top + 0.3 * h)[0] + 3.5, top + 0.3 * h), (c(top) - 0.1 * w, top + 0.4 * h), 1.4),
+             wedge((c(top) - 0.05 * w, lay.hem - 0.06 * h), (c(top) - 0.3 * w, lay.hem - 0.12 * h), 1.0)]
+    paint(image, inter(union(shine, *folds), inside), GJ_SHINE)
+    paint(image, inter(band(lay.hem - 1.4, lay.hem - 1.0), inside), GJ_CLOTH_DARK)
+
+    finish(image, minus(union(jacket, legs), gap), name)
+
+
+def gojo_side(body, name):
+    """East (facing right): the jacket from the back to the zipped front, the sleeve down the side to
+    the wrist and the pocket the hand is in, violet highlights on the lit front edge and the top of the
+    shoulder; the trousers and boots below the hem. The collar is on the head. West is this mirrored by
+    the game: the flap's edge is too near the middle to show from the side."""
+    w, top, h = body.width, body.top, body.height
+    lay = Uniform(body)
+
+    def front(y):
+        return body.edges(y)[1] + PAD * 0.8 + 0.4 * smooth(body.waist, lay.hem, y)
+
+    def back(y):
+        return body.edges(y)[0] - PAD * 0.8 - 0.6 * smooth(body.waist, lay.hem, y)
+    ys = steps(top + 1, lay.hem)
+    jacket = polygon([(front(y), y) for y in ys] + [(back(y), y) for y in reversed(ys)])
+    legs = inter(body_outline(body), band(lay.hem - 1, 128))
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = ramp(body.edges(top + 20)[0], body.edges(top + 20)[1] + 3, 0, 140)
+    boots = gojo_legs(image, body, lay, legs, inter(light, legs))
+    boot_shine(image, body, lay, boots, legs_apart=False)
+    shade(image, jacket, GJ_CLOTH_DARK, GJ_CLOTH, GJ_CLOTH_LIT, light, reach=2.4)
+
+    # The sleeve down the side to the wrist, as the Akatsuki cloak's, bending forward to the pocket.
+    arm = lambda y: body.centre(y) - 1.0 + 1.2 * smooth(top + 0.3 * h, lay.cuff, y)
+    spread = lambda y: 3.0 + 0.5 * smooth(top + 12, lay.cuff, y)
+    sl = [(arm(y) - spread(y) + 1.2 * smooth(top + 10, top + 16, y), y) for y in steps(top + 10, lay.cuff)]
+    sr = [(arm(y) + spread(y), y) for y in steps(top + 10, lay.cuff)]
+    inside = shrink(jacket, 0.35)
+    sleeve = polygon(sl + list(reversed(sr)))
+    paint(image, inter(inter(edge_rim(sleeve, -1.0, 0.0), band(top + 16, lay.cuff - 1)), inside), GJ_CLOTH_LIT)
+    for line in (sl, sr, [sl[-1], sr[-1]]):
+        paint(image, inter(stroke(line, 0.5), jacket), GJ_CLOTH_DARK)
+    # The pocket's slit, where the wrist goes in.
+    px = arm(lay.cuff) + 1.0
+    paint(image, inter(stroke([(px - 0.8, lay.pocket), (px + 0.9, lay.pocket + 0.1 * h)], 0.5), jacket), GJ_CLOTH_DARK)
+
+    shine = union(inter(edge_rim(jacket, -1.2, 0.0), band(top + 4, lay.hem - 2)),
+                  inter(edge_rim(jacket, 0.0, 1.2), band(top - 1, top + 6)))
+    folds = [wedge((sr[len(sr) // 2][0] + 0.8, top + 0.36 * h), (front(top + 0.3 * h) - 1.2, top + 0.27 * h), 1.3),
+             wedge((front(lay.hem) - 1.5, lay.hem - 0.06 * h), (body.centre(lay.hem) + 1.0, lay.hem - 0.11 * h), 1.0)]
+    paint(image, inter(union(shine, *folds), inside), GJ_SHINE)
+    # The zip's flap along the front edge, and the hem's seam.
+    paint(image, inter(stroke([(front(y) - 1.1, y) for y in steps(top + 6, lay.hem)], 0.45), jacket), GJ_CLOTH_DARK)
+    paint(image, inter(band(lay.hem - 1.4, lay.hem - 1.0), inside), GJ_CLOTH_DARK)
+
+    finish(image, union(jacket, legs), name)
+
+
+# ---- Gojo's collar ----
+
+# On the head, as the Akatsuki collar (see collar_straight): it covers the neck up to the jaw, lower than
+# the Akatsuki one, just catching the tip of the chin at the front, and is broad (a little wider than
+# the jaw at its rim). Its lower edge (COLLAR_BOTTOM) is on the jacket's shoulders.
+GJ_COLLAR_HALF_TOP, GJ_COLLAR_HALF_BOTTOM = 20.5, 14.5
+
+
+def gojo_collar_front(name):
+    """South: the collar round the neck from the jaw down, lit on the viewer's left with a violet edge,
+    two creases round it, the zip's flap up its front (the chin covers its top) and a lit fold along
+    the rim."""
+    cx, bottom = HEAD_CX, COLLAR_BOTTOM
+    rim_side, rim_mid = 81.5, 87.5
+    ht, hb = GJ_COLLAR_HALF_TOP, GJ_COLLAR_HALF_BOTTOM
+
+    def rim(x):
+        k = (x - cx) / ht
+        return rim_side + (rim_mid - rim_side) * max(0.0, 1 - k * k)
+
+    def half(y):
+        return ht + (hb - ht) * (y - rim_side) / (bottom - rim_side)
+    ys = steps(rim_side, bottom)
+    collar = polygon([(x, rim(x)) for x in steps(cx - ht, cx + ht, 0.4)] +
+                     [(cx + half(y), y) for y in ys] + [(cx - half(y), y) for y in reversed(ys)])
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    shade(image, collar, GJ_CLOTH_DARK, GJ_CLOTH, GJ_CLOTH_LIT, ramp(cx - ht, cx + ht * 0.6, 170, 0), reach=2.0)
+    inside = shrink(collar, 0.35)
+    # Creases round the neck: arcs under the rim, on each side of the chin.
+    for drop in (3.6, 7.4):
+        arc = [(x, rim(x) + drop * (1 - 0.25 * ((x - cx) / ht) ** 2)) for x in steps(cx - ht, cx + ht, 0.4)]
+        for s in (-1, 1):
+            part = [(x, y) for x, y in arc if s * (x - cx) > 5.5]
+            paint(image, inter(stroke(part, 0.45), inside), GJ_CLOTH_DARK)
+            if s < 0:
+                paint(image, inter(stroke([(x, y - 0.6) for x, y in part[:len(part) // 2]], 0.4), inside), GJ_SHINE)
+    paint(image, inter(union(inter(edge_rim(collar, 1.1, 0.0), band(0, bottom - 3)),
+                             inter(stroke([(x, rim(x) + 0.5) for x in steps(cx - ht, cx - 6, 0.4)], 0.5), inside)),
+                       inside), GJ_SHINE)
+    paint(image, inter(stroke([(x, rim(x) + 0.5) for x in steps(cx - 6, cx + ht, 0.4)], 0.4), inside), GJ_CLOTH_LIT)
+    # The flap, on the same line as the jacket's.
+    paint(image, inter(stroke([(cx + 1.5, rim(cx)), (cx + 1.5, bottom + 2)], 0.55), collar), GJ_CLOTH_DARK)
+    paint(image, inter(stroke([(cx + 0.9, rim(cx)), (cx + 0.9, bottom + 2)], 0.3), collar), GJ_CLOTH_LIT)
+
+    top_part = polygon([(0, 0), (128, 0), (128, bottom - 2.5), (0, bottom - 2.5)])
+    finish(image, collar, name, outline_within=top_part)
+
+
+def gojo_collar_side(name):
+    """East (facing right): the collar round the nape and up under the jaw, sloping from the chin to the
+    chest, lit toward the front with a violet front edge, two creases, the flap down the front edge."""
+    back_x, front_x, rim_back, rim_front, sag = 45.5, 86.0, 80.5, 85.0, 1.0
+    bottom = COLLAR_BOTTOM
+
+    def rim(x):
+        t = (x - back_x) / (front_x - back_x)
+        return rim_back + (rim_front - rim_back) * t + sag * math.sin(math.pi * t)
+    front_edge = [(front_x, rim_front), (87.6, 86.5), (86.0, 90.0), (80.5, 93.5), (73.5, 95.5), (68.5, bottom + 0.5)]
+    back_edge = [(44.0, bottom + 0.5), (44.3, 88.0), (45.3, 81.0)]
+    collar = polygon([(x, rim(x)) for x in steps(back_x, front_x, 0.4)] + front_edge[1:] + back_edge)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    shade(image, collar, GJ_CLOTH_DARK, GJ_CLOTH, GJ_CLOTH_LIT, ramp(back_x, front_x, 0, 150), reach=2.0)
+    inside = shrink(collar, 0.35)
+    for drop in (3.6, 7.2):
+        paint(image, inter(stroke([(x, rim(x) + drop) for x in steps(back_x + 3, front_x - 4 - drop * 0.6, 0.4)], 0.45),
+                           inside), GJ_CLOTH_DARK)
+    paint(image, inter(stroke([(x, rim(x) + 3.0) for x in steps(64, front_x - 7, 0.4)], 0.4), inside), GJ_SHINE)
+    paint(image, inter(union(edge_rim(collar, -1.1, 0.0), stroke([(x, rim(x) + 0.5) for x in steps(62, front_x, 0.4)], 0.5)),
+                       inter(inside, band(0, bottom - 3))), GJ_SHINE)
+    paint(image, inter(stroke([(x - 1.3, y) for x, y in front_edge], 0.45), collar), GJ_CLOTH_DARK)
+
+    top_part = polygon([(0, 0), (128, 0), (128, bottom - 2.5), (0, bottom - 2.5)])
+    finish(image, collar, name, outline_within=top_part)
+
+
+def empty_piece(name):
+    """A fully clear picture: a Graphic_Multi with no _north would draw the south one on the back of the
+    head (as for Obito's mask)."""
+    save_piece(Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0)), name)
+
+
+# ---- Gojo's blindfold and hair ----
+
+# From the same art: a wide black blindfold over his brows and eyes, from just under the hairline to the
+# top of the nose, which props his snow-white hair up into spikes fanning out above it; the hair is
+# shaded lavender near the band. The piece hides the Host's own hair (hidesHair) and draws his.
+# In head space (the vanilla average head: crown at 40, widest 41-87 at y 54-62, 43-85 at 70; the eyes
+# at y 67-72 on every head type; in profile the face front at x 87-89, the back at 39-40).
+# The white is pushed toward blue: the game's warm light turned the first, neutral white cream.
+GJ_HAIR, GJ_HAIR_LIT, GJ_HAIR_DARK = (218, 226, 250), (240, 246, 255), (160, 164, 214)
+GJ_STRAND = (176, 182, 224)
+GJ_BAND, GJ_BAND_LIT, GJ_BAND_DARK = (32, 32, 38), (78, 78, 92), (11, 11, 15)
+# The vanilla average head's outline face-on (alpha > 50 %), every 4 rows: (y, left x, right x).
+HEAD_SOUTH = [(40, 56, 71), (42, 49, 78), (46, 45, 83), (50, 43, 85), (54, 41, 87), (58, 41, 87), (62, 41, 87),
+              (66, 42, 86), (70, 43, 85), (74, 44, 84), (78, 46, 82), (82, 48, 80), (86, 53, 75)]
+HEAD_EAST = [(40, 52, 76), (42, 47, 81), (46, 44, 84), (50, 42, 85), (54, 40, 87), (58, 40, 88), (62, 39, 89),
+             (66, 39, 88), (70, 40, 88), (74, 42, 87), (78, 45, 86), (82, 50, 85), (86, 58, 80)]
+BF_TOP, BF_BOTTOM, BF_SAG = 59.5, 73.5, 1.6  # face-on, at the middle; the ends sit BF_SAG lower
+BF_BACK_TOP, BF_BACK_BOTTOM = 57.5, 70.5  # from behind: a little higher, over the back of the skull
+# Locks face-on: (angle from straight up in degrees, + to the viewer's right; tip's distance from the
+# fan's centre; half-width at the base in degrees). Broad, few and flame-like, as the anime draws them:
+# the base circle (HAIR_BASE) is the solid mass of hair, wider than the head above the band; the locks
+# stand out of it, tallest in the middle, the outermost pointing sideways just above the band's ends.
+HAIR_FAN, HAIR_BASE = (HEAD_CX, 64.5), 27.5
+HAIR_SPIKES = [(-72, 33, 12), (-54, 38, 12), (-36, 43, 12), (-18, 46, 11), (-1, 47, 11), (17, 45, 11), (35, 43, 12),
+               (53, 38, 12), (71, 32, 12)]
+# In profile (facing right) the fan sits over the ear and leans back: the front locks stand up over the
+# forehead, the back ones sweep back and down to the nape.
+HAIR_FAN_EAST, HAIR_BASE_EAST = (58.5, 64.0), 26.0
+HAIR_SPIKES_EAST = [(-112, 29, 12), (-91, 36, 12), (-70, 41, 12), (-49, 46, 11), (-28, 48, 11), (-7, 47, 11),
+                    (14, 44, 11), (35, 39, 12), (55, 32, 12)]
+HAIR_FLARE = 1.1  # the tips turn this much further out than the locks' middles
+
+
+def fan_at(fan, a, r):
+    return fan[0] + r * math.sin(math.radians(a)), fan[1] - r * math.cos(math.radians(a))
+
+
+def curve(p0, p1, p2, n=10):
+    """A quadratic Bézier from p0 to p2 pulled toward p1."""
+    return [((1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t * t * p2[0],
+             (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t * t * p2[1]) for t in steps(0, 1, 1 / n)]
+
+
+def spike(fan, angle, length, spread, base_r):
+    """One lock: broad at its base on the mass, bowing out on its outer side and in on its inner side,
+    so it hooks outward like a flame to a sharp tip."""
+    tip = fan_at(fan, angle * HAIR_FLARE, length)
+    out = 1 if angle >= 0 else -1
+    mid_r = base_r + 0.55 * (length - base_r)
+    mid_a = angle * (1 + (HAIR_FLARE - 1) * 0.6)
+    left_c = fan_at(fan, mid_a - spread * (0.75 if out < 0 else 0.35), mid_r)
+    right_c = fan_at(fan, mid_a + spread * (0.75 if out > 0 else 0.35), mid_r)
+    return polygon(curve(fan_at(fan, angle - spread, base_r), left_c, tip) +
+                   curve(tip, right_c, fan_at(fan, angle + spread, base_r)) + [fan])
+
+
+def strand(fan, angle, length, side, base_r):
+    """A strand line up a lock, from inside the mass toward its tip, a little to one side of its middle."""
+    points = []
+    for t in steps(0, 1, 0.1):
+        r = base_r - 8 + t * (length - base_r + 2)
+        a = angle * (1 + (HAIR_FLARE - 1) * t) + side * 4.0 * (1 - t)
+        points.append(fan_at(fan, a, r))
+    return points
+
+
+def paint_hair(image, hair, spikes, fan, base_r, light, band_top):
+    """White hair lit from the viewer's left, lavender toward the band, a strand line up most locks."""
+    shade(image, hair, GJ_HAIR_DARK, GJ_HAIR, GJ_HAIR_LIT, light, reach=1.0)
+    rows = Image.new("L", (1, 128 * U))
+    px = rows.load()
+    for y in range(128 * U):
+        px[0, y] = round(210 * smooth(band_top - 13, band_top, y / U))
+    paint(image, inter(hair, rows.resize((128 * U, 128 * U))), GJ_HAIR_DARK)
+    inside = shrink(hair, 0.4)
+    for i, (a, length, _) in enumerate(spikes):
+        paint(image, inter(stroke(strand(fan, a, length, 1 if i % 2 else -1, base_r), 0.35), inside), GJ_STRAND)
+
+
+def head_edges(rows, y, pad):
+    left, right = interp(rows, y)
+    return left - pad, right + pad
+
+
+def band_across(rows, top, bottom, sag, pad=0.4):
+    """The blindfold face-on or from behind: top to bottom at the middle, its ends sag lower, its sides
+    on the head's outline (pad outside it)."""
+    cx = HEAD_CX
+
+    def sag_at(x):
+        return sag * min(1.0, ((x - cx) / 23.0) ** 2)
+    lt, rt = head_edges(rows, top + sag, pad)
+    lb, rb = head_edges(rows, bottom + sag, pad)
+    side_ys = steps(top + sag, bottom + sag)
+    return polygon([(x, top + sag_at(x)) for x in steps(lt, rt, 0.4)] +
+                   [(head_edges(rows, y, pad)[1], y) for y in side_ys] +
+                   [(x, bottom + sag_at(x)) for x in steps(rb, lb, 0.4)] +
+                   [(head_edges(rows, y, pad)[0], y) for y in reversed(side_ys)]), sag_at
+
+
+def paint_band(image, cloth, top, sag_at, light, creases=True):
+    """The black cloth, a lit fold along its upper third, and creases where it wraps round the temples."""
+    cx = HEAD_CX
+    shade(image, cloth, GJ_BAND_DARK, GJ_BAND, GJ_BAND_LIT, light, reach=0.9)
+    inside = shrink(cloth, 0.3)
+    paint(image, inter(stroke([(x, top + 2.6 + sag_at(x)) for x in steps(cx - 17, cx + 9, 0.4)], 0.6), inside), GJ_BAND_LIT)
+    paint(image, inter(stroke([(x, top + 3.3 + sag_at(x)) for x in steps(cx - 15, cx + 12, 0.4)], 0.4), inside), GJ_BAND_DARK)
+    if creases:
+        for s in (-1, 1):
+            for k, (d0, d1) in enumerate(((12.5, 19.5), (15.5, 22.0))):
+                a = (cx + s * d0, top + 4.5 + 3 * k)
+                b = (cx + s * d1, top + 9.5 + 2 * k)
+                paint(image, inter(stroke([a, b], 0.45), inside), GJ_BAND_DARK)
+                if s < 0:
+                    paint(image, inter(stroke([(a[0] + 0.6, a[1] - 0.7), (b[0] + 0.6, b[1] - 0.7)], 0.35), inside),
+                          GJ_BAND_LIT)
+
+
+def blindfold_front(name):
+    """South: the hair fanning up and out above the band in spikes, white lit from the viewer's left and
+    lavender toward the band; the black band over the brows and eyes, from the head's left edge to its
+    right, a lit fold along it and creases at the temples."""
+    cx = HEAD_CX
+    mass = inter(ellipse(*HAIR_FAN, HAIR_BASE + 1, HAIR_BASE + 1), band(0, BF_TOP + 3))
+    hair = union(mass, *(spike(HAIR_FAN, a, n, sp, HAIR_BASE) for a, n, sp in HAIR_SPIKES))
+    cloth, sag_at = band_across(HEAD_SOUTH, BF_TOP, BF_BOTTOM, BF_SAG)
+    # Nothing below the band's top edge: the hair stops at it, beside the head too.
+    hair = minus(hair, polygon([(x, BF_TOP + sag_at(x) + 1.2) for x in steps(0, 128, 0.5)] + [(128, 128), (0, 128)]))
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    paint_hair(image, hair, HAIR_SPIKES, HAIR_FAN, HAIR_BASE, ramp(cx - 30, cx + 8, 200, 0), BF_TOP)
+    paint_band(image, cloth, BF_TOP, sag_at, ramp(cx - 22, cx + 10, 150, 0))
+    finish(image, union(hair, cloth), name, outline_width=0.8)
+
+
+def blindfold_side(name):
+    """East (facing right): the band round the head from the back of the skull to the front, standing a
+    little off the face over the eye, a little higher at the back; the hair above it swept up and back,
+    the front spikes over the forehead, the back ones down to the nape. West is this mirrored by the
+    game: the band has no knot to show which side is which."""
+    back_x, front_x = 32.5, 89.6  # at the back it goes round the hair, which stands 7 units off the head
+    top_front, bottom_front = BF_TOP + 0.4, BF_BOTTOM + 0.4
+    top_back, bottom_back = BF_BACK_TOP, BF_BACK_BOTTOM
+
+    def top_at(x):
+        return top_back + (top_front - top_back) * (x - back_x) / (front_x - back_x)
+
+    def bottom_at(x):
+        return bottom_back + (bottom_front - bottom_back) * (x - back_x) / (front_x - back_x)
+    xs = steps(back_x, front_x, 0.4)
+    # The back end follows the back of the head; the front end stands off the face at the brow and eye.
+    back_ys = steps(top_at(back_x), bottom_at(back_x))
+    front_ys = steps(top_at(front_x), bottom_at(front_x))
+    cloth = polygon([(x, top_at(x)) for x in xs] +
+                    [(max(front_x, head_edges(HEAD_EAST, y, 0.9)[1]), y) for y in front_ys] +
+                    [(x, bottom_at(x)) for x in reversed(xs)] +
+                    [(back_x - 0.6 * math.sin(math.pi * (y - back_ys[0]) / (back_ys[-1] - back_ys[0])), y)
+                     for y in reversed(back_ys)])
+    skull = grow(polygon([(l, y) for y, l, _ in HEAD_EAST] + [(r, y) for y, _, r in reversed(HEAD_EAST)]), 1.4)
+    mass = inter(ellipse(*HAIR_FAN_EAST, HAIR_BASE_EAST + 1, HAIR_BASE_EAST + 1), band(0, top_front + 3))
+    # The short hair under the band at the back ends where the collar's back edge begins.
+    nape = inter(skull, polygon([(30, 60), (56, 60), (53, 81), (45, 82), (37, 76), (30, 70)]))
+    hair = union(mass, nape, *(spike(HAIR_FAN_EAST, a, n, sp, HAIR_BASE_EAST) for a, n, sp in HAIR_SPIKES_EAST))
+    hair = minus(hair, polygon([(56, top_front + 3), (128, top_front + 3), (128, 128), (56, 128)]))
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    paint_hair(image, hair, HAIR_SPIKES_EAST, HAIR_FAN_EAST, HAIR_BASE_EAST, ramp(back_x, front_x, 0, 180), top_front)
+    # In the band's shadow, as from behind.
+    paint(image, inter(inter(hair, band(bottom_back, 128)), shrink(hair, 0.4)), GJ_STRAND + (150,))
+    shade(image, cloth, GJ_BAND_DARK, GJ_BAND, GJ_BAND_LIT, ramp(back_x, front_x, 0, 150), reach=0.9)
+    inside = shrink(cloth, 0.3)
+    paint(image, inter(stroke([(x, top_at(x) + 2.6) for x in steps(56, front_x - 2, 0.4)], 0.6), inside), GJ_BAND_LIT)
+    paint(image, inter(stroke([(x, top_at(x) + 3.3) for x in steps(50, front_x - 3, 0.4)], 0.4), inside), GJ_BAND_DARK)
+    for x0 in (41.0, 49.0):
+        paint(image, inter(stroke([(x0, top_at(x0) + 4), (x0 + 5, bottom_at(x0) - 2)], 0.45), inside), GJ_BAND_DARK)
+    finish(image, union(hair, cloth), name, outline_width=0.8)
+
+
+def blindfold_back(name):
+    """North: the back of the head, the band across it a little higher than in front, the hair fanning
+    up above it (lit from the viewer's left, as the body) and short hair below it down the nape, into
+    the collar."""
+    cx = HEAD_CX
+    rows_back = HEAD_SOUTH  # the back of the vanilla head has the same outline, to a unit
+    skull = grow(polygon([(l, y) for y, l, _ in rows_back] + [(r, y) for y, _, r in reversed(rows_back)]), 1.4)
+    nape = inter(skull, band(BF_BACK_TOP, 84))
+    mass = inter(ellipse(*HAIR_FAN, HAIR_BASE + 1, HAIR_BASE + 1), band(0, BF_BACK_TOP + 3))
+    cloth, sag_at = band_across(rows_back, BF_BACK_TOP, BF_BACK_BOTTOM, BF_SAG)
+    above = union(mass, *(spike(HAIR_FAN, a, n, sp, HAIR_BASE) for a, n, sp in HAIR_SPIKES))
+    above = minus(above, polygon([(x, BF_BACK_TOP + sag_at(x) + 1.2) for x in steps(0, 128, 0.5)] + [(128, 128), (0, 128)]))
+    hair = union(above, nape)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    paint_hair(image, minus(hair, nape), HAIR_SPIKES, HAIR_FAN, HAIR_BASE, ramp(cx - 30, cx + 8, 200, 0), BF_BACK_TOP)
+    # The short hair under the band is in its shadow: lavender, paler toward the collar.
+    shade(image, nape, GJ_STRAND, GJ_HAIR_DARK, GJ_HAIR, ramp(cx - 22, cx + 4, 90, 0), reach=1.0)
+    for x in (cx - 9, cx - 3, cx + 3, cx + 9):
+        paint(image, inter(stroke([(x, BF_BACK_BOTTOM + 2), (x + 0.6 * (x - cx) / 9, 83)], 0.35), shrink(nape, 0.4)),
+              GJ_BAND_LIT)
+    paint_band(image, cloth, BF_BACK_TOP, sag_at, ramp(cx - 22, cx + 10, 150, 0), creases=False)
+    finish(image, union(hair, cloth), name, outline_width=0.8)
+
+
+def gojo_outfit():
+    for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
+        gojo_front(Body(BODIES[(body, "south")]), f"GojoUniform_{body}_south.png")
+        gojo_side(Body(BODIES[(body, "east")]), f"GojoUniform_{body}_east.png")
+        gojo_back(Body(BODIES[(body, "north")]), f"GojoUniform_{body}_north.png")
+    gojo_collar_front("GojoCollar_south.png")
+    gojo_collar_side("GojoCollar_east.png")
+    # From behind, the jacket's own collar is drawn over the head, so the head's collar has no back.
+    empty_piece("GojoCollar_north.png")
+    blindfold_front("GojoBlindfold_south.png")
+    blindfold_side("GojoBlindfold_east.png")
+    blindfold_back("GojoBlindfold_north.png")
+
+
+# ---- Shirou's casual clothes ----
+
+# From the visual novel's standing sprite (Takashi Takeuchi) and Studio Deen's front and back character
+# sheet: a long-sleeved baseball shirt, white with navy raglan sleeves (each sleeve runs up to the
+# neckline, so its seam goes diagonally from the neck to the armpit), a wide neckline with a navy rim,
+# the hem hanging loose over the hips; slim straight indigo jeans; grey trainers with a white sole. The
+# white and the blues are pushed toward blue so they do not read cream and teal in the game's warm light
+# (as Gojo's hair and Vergil's coat were).
+SH_SHIRT, SH_SHIRT_LIT, SH_SHIRT_DARK = (222, 226, 236), (246, 248, 252), (150, 158, 180)
+SH_FOLD = (190, 196, 214)
+SH_SLEEVE, SH_SLEEVE_LIT, SH_SLEEVE_DARK = (56, 64, 112), (90, 100, 152), (30, 34, 68)
+SH_JEANS, SH_JEANS_LIT, SH_JEANS_DARK = (36, 66, 124), (66, 104, 164), (18, 34, 74)
+SH_SHOE, SH_SHOE_LIT = (92, 96, 110), (156, 160, 172)
+SH_SOLE = (228, 230, 238)
+
+
+class Raglan:
+    """Heights the three facings share, from the sprite: the sleeves reach the wrist, which hangs at the
+    hip, and the shirt's hem is just below that, over the top of the jeans."""
+
+    def __init__(self, body):
+        top, h = body.top, body.height
+        self.armpit = top + 0.2 * h  # where the raglan seam meets the underarm seam
+        self.cuff = top + 0.63 * h
+        self.hem = top + 0.67 * h
+        self.shoe = body.bottom - 0.05 * h
+
+
+def sleeve_width(body):
+    return min(7.5, max(4.2, 0.15 * body.width))
+
+
+def soft_folds(image, folds, within):
+    """Folds as the sprite shades them: soft grey, not drawn lines."""
+    mask = inter(union(*folds), within).filter(ImageFilter.GaussianBlur(0.6 * U)).point(lambda v: v * 0.75)
+    paint(image, mask, SH_FOLD)
+
+
+def raglan_sleeves(body, lay, side, neck):
+    """South and north: both navy sleeves as one mask. On side s (-1 the viewer's left) the sleeve runs
+    from the neckline's corner neck(s) straight to the armpit, down the underarm seam to the cuff and out
+    past the costume's side; cut it to the shirt. Wider bodies have wider arms, so the sleeve widens
+    with the body, from 4.2 units on Thin to 7.5 on Male, Fat and Hulk."""
+    aw = sleeve_width(body)
+    masks = []
+    for s in (-1, 1):
+        def outer(y, s=s):
+            return side(y)[1 if s > 0 else 0] + s * 2
+
+        def inner(y, s=s):
+            return outer(y) - s * (aw + 2)
+        nx, ny = neck(s)
+        ys = steps(lay.armpit, lay.cuff)
+        masks.append(polygon([(nx, ny)] + [(inner(y), y) for y in ys] + [(outer(y), y) for y in reversed(ys)] +
+                             [(outer(body.top - 6), body.top - 6), (nx, body.top - 6)]))
+    return union(*masks)
+
+
+def sleeve_cuffs(image, lay, sleeves):
+    """The ribbed cuff at the end of each sleeve: a darker band with its top edge lit."""
+    rib = inter(band(lay.cuff - 1.6, lay.cuff), sleeves)
+    paint(image, rib, SH_SLEEVE_DARK)
+    paint(image, inter(band(lay.cuff - 1.6, lay.cuff - 1.2), sleeves), SH_SLEEVE)
+
+
+def shirou_legs(image, body, lay, legs, light=None, apart=True):
+    """The jeans from under the hem, a crease between the legs, a paler fade down the front of each
+    thigh, and the grey trainers with a white sole."""
+    c, w = body.centre, body.width
+    y, ry = (lay.hem + lay.shoe) / 2, 0.45 * (lay.shoe - lay.hem)
+    if apart:
+        fade = union(*(ellipse(c(y) + s * 0.2 * w, y, 0.05 * w, ry) for s in (-1, 1)))
+    else:
+        fade = ellipse(c(y) + 0.12 * w, y, 0.08 * w, ry)
+    fade = fade.filter(ImageFilter.GaussianBlur(1.2 * U)).point(lambda v: v * 0.4)
+    shade(image, legs, SH_JEANS_DARK, SH_JEANS, SH_JEANS_LIT, union(fade, light) if light is not None else fade,
+          reach=1.4)
+    if apart:
+        crotch = lay.hem + 0.1 * (body.bottom - lay.hem)
+        paint(image, inter(stroke([(c(crotch), crotch), (c(body.bottom), body.bottom)], 0.5), legs), SH_JEANS_DARK)
+    shoes = inter(legs, band(lay.shoe, 128))
+    paint(image, shoes, SH_SHOE)
+    paint(image, inter(band(lay.shoe, lay.shoe + 0.7), shoes), SH_SHOE_LIT)
+    paint(image, inter(band(body.bottom - 1.0, 128), shoes), SH_SOLE)
+    paint(image, inter(band(lay.shoe - 0.3, lay.shoe + 0.2), legs), SH_JEANS_DARK)
+
+
+def shirou_front(body, name):
+    """South: the white shirt hanging loose over the jeans, a wide neckline with a navy rim (mostly under
+    the head on a Thin body), the navy sleeves from the neckline down the sides to the cuffs at the hips,
+    two soft folds toward his left hip; the jeans and trainers below the hem."""
+    w, c, top, h = body.width, body.centre, body.top, body.height
+    lay = Raglan(body)
+    side = coat_sides(body, lay.hem, 0.6, 0.6)
+    nw, nd = 0.3 * w, 0.17 * h  # the neckline's half-width and depth
+    # Squarer than a half ellipse, as in the sprite.
+    neckline = [(c(top) + nw * math.sin(a), top - 1 + (nd + 1) * max(0.0, math.cos(a)) ** 0.6)
+                for a in steps(-math.pi / 2, math.pi / 2, 0.05)]
+    scoop = polygon(neckline + [(c(top) + nw, top - 6), (c(top) - nw, top - 6)])
+    shirt = minus(cloak_outline(side, top - 0.5, lay.hem), scoop)
+    gap = leg_gap(body)
+    legs = minus(inter(body_outline(body), band(lay.hem - 1, 128)), gap)
+    sleeves = inter(raglan_sleeves(body, lay, side, lambda s: (c(top) + s * nw, top - 1)), shirt)
+    white = minus(shirt, sleeves)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = inter(ramp(c(top) - w * 0.7, c(top) + w * 0.4, 150, 0), ellipse(c(top) - w * 0.3, top + 20, w * 0.45, 26)
+                  .filter(ImageFilter.GaussianBlur(6 * U)))
+    shirou_legs(image, body, lay, legs, light)
+    shade(image, shirt, SH_SHIRT_DARK, SH_SHIRT, SH_SHIRT_LIT, light, reach=2.4)
+    soft_folds(image, [wedge((c(top) + 0.3 * w, lay.hem - 0.04 * h), (c(top) - 0.12 * w, top + 0.36 * h), 2.2),
+                       wedge((c(top) + 0.28 * w, lay.hem - 0.13 * h), (c(top) + 0.02 * w, top + 0.3 * h), 1.5)],
+               shrink(white, 0.8))
+    shade(image, sleeves, SH_SLEEVE_DARK, SH_SLEEVE, SH_SLEEVE_LIT, light, reach=1.4)
+    # The raglan seams and the underarm seams, where the navy meets the white.
+    paint(image, inter(minus(grow(sleeves, 0.3), sleeves), white), SH_SHIRT_DARK)
+    sleeve_cuffs(image, lay, sleeves)
+    # The navy rim round the neckline, and the hem's seam.
+    paint(image, inter(minus(grow(scoop, 1.1), scoop), shirt), SH_SLEEVE)
+    paint(image, inter(band(lay.hem - 1.3, lay.hem - 0.9), shrink(white, 0.4)), SH_SHIRT_DARK)
+
+    finish(image, minus(union(shirt, legs), gap), name)
+
+
+def shirou_back(body, name):
+    """North: the plain white back between the two raglan seams, which run from the neckline to the
+    armpits, the navy sleeves over the shoulders and down the sides to the cuffs, a navy rim along the
+    low back neckline; the jeans and trainers below the hem. Drawn over the head facing north, as the
+    other costumes: the neckline sits at the foot of the neck, under the hair."""
+    w, c, top, h = body.width, body.centre, body.top, body.height
+    lay = Raglan(body)
+    side = coat_sides(body, lay.hem, 0.6, 0.6)
+    # The neckline from behind: sized to the neck, the same on every body type, dipping a little in the
+    # middle; the shoulders slope from its ends out to the sides.
+    cw = 9.5
+    rim = [(c(top) + cw * x, top + 1.6 + 1.0 * (1 - x * x)) for x in steps(-1, 1, 0.05)]
+    ys = steps(top + 9, lay.hem)
+    shirt = polygon(rim + [(side(y)[1], y) for y in ys] + [(side(y)[0], y) for y in reversed(ys)])
+    gap = leg_gap(body)
+    legs = minus(inter(body_outline(body), band(lay.hem - 1, 128)), gap)
+    sleeves = inter(raglan_sleeves(body, lay, side, lambda s: (c(top) + s * 0.45 * cw, top + 2.2)), shirt)
+    white = minus(shirt, sleeves)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = ellipse(c(top) - w * 0.15, top + 22, w * 0.42, 22).filter(ImageFilter.GaussianBlur(7 * U))
+    shirou_legs(image, body, lay, legs, light)
+    shade(image, shirt, SH_SHIRT_DARK, SH_SHIRT, SH_SHIRT_LIT, light, reach=2.4)
+    soft_folds(image, [wedge((c(top) + 0.26 * w, lay.hem - 0.05 * h), (c(top) - 0.05 * w, top + 0.4 * h), 1.8)],
+               shrink(white, 0.8))
+    shade(image, sleeves, SH_SLEEVE_DARK, SH_SLEEVE, SH_SLEEVE_LIT, light, reach=1.4)
+    paint(image, inter(minus(grow(sleeves, 0.3), sleeves), white), SH_SHIRT_DARK)
+    sleeve_cuffs(image, lay, sleeves)
+    paint(image, inter(stroke(rim, 2.0), shirt), SH_SLEEVE)
+    paint(image, inter(stroke([(x, y + 0.9) for x, y in rim], 0.35), shirt), SH_SLEEVE_DARK)
+    paint(image, inter(band(lay.hem - 1.3, lay.hem - 0.9), shrink(white, 0.4)), SH_SHIRT_DARK)
+
+    finish(image, minus(union(shirt, legs), gap), name)
+
+
+def shirou_side(body, name):
+    """East (facing right): the shirt from the back to the chest, loose at the hem; the navy sleeve down
+    the side to the cuff at the hip, its raglan seams running up in front of and behind the shoulder to
+    the neckline; the jeans and trainers below the hem. West is this mirrored by the game: the shirt is
+    the same on both sides."""
+    w, top, h = body.width, body.top, body.height
+    lay = Raglan(body)
+
+    def front(y):
+        return body.edges(y)[1] + PAD * 0.8 + 0.3 * smooth(body.waist, lay.hem, y)
+
+    def back(y):
+        return body.edges(y)[0] - PAD * 0.8 - 0.5 * smooth(body.waist, lay.hem, y)
+    ys = steps(top + 1, lay.hem)
+    shirt = polygon([(front(y), y) for y in ys] + [(back(y), y) for y in reversed(ys)])
+    legs = inter(body_outline(body), band(lay.hem - 1, 128))
+
+    # The arm hangs down the side, a little forward at the wrist, as on Gojo's jacket, and is thicker on
+    # wider bodies.
+    thick = min(1.8, max(1.0, w / 30))
+    arm = lambda y: body.centre(y) - 1.0 + 1.2 * smooth(top + 0.3 * h, lay.cuff, y)
+    spread = lambda y: (3.0 + 0.5 * smooth(top + 12, lay.cuff, y)) * thick
+    ays = steps(lay.armpit, lay.cuff)
+    neck = body.centre(top)
+    sleeve = inter(polygon([(neck + 3.2, top - 2), (arm(lay.armpit) + spread(lay.armpit), lay.armpit)] +
+                           [(arm(y) + spread(y), y) for y in ays] + [(arm(y) - spread(y), y) for y in reversed(ays)] +
+                           [(neck - 3.6, top - 2)]), shirt)
+    white = minus(shirt, sleeve)
+
+    image = Image.new("RGBA", (128 * U, 128 * U), (0, 0, 0, 0))
+    light = ramp(body.edges(top + 20)[0], body.edges(top + 20)[1] + 3, 0, 140)
+    shirou_legs(image, body, lay, legs, inter(light, legs), apart=False)
+    shade(image, shirt, SH_SHIRT_DARK, SH_SHIRT, SH_SHIRT_LIT, light, reach=2.4)
+    soft_folds(image, [wedge((front(lay.hem) - 1.2, lay.hem - 0.05 * h),
+                             (arm(lay.cuff) + spread(lay.cuff) + 1.0, top + 0.42 * h), 1.6)], shrink(white, 0.8))
+    shade(image, sleeve, SH_SLEEVE_DARK, SH_SLEEVE, SH_SLEEVE_LIT, light, reach=1.2)
+    paint(image, inter(minus(grow(sleeve, 0.3), sleeve), white), SH_SHIRT_DARK)
+    sleeve_cuffs(image, lay, sleeve)
+    # The navy rim along the top of the neckline, and the hem's seam.
+    paint(image, inter(band(top - 1, top + 2.1), shirt), SH_SLEEVE)
+    paint(image, inter(band(lay.hem - 1.3, lay.hem - 0.9), shrink(white, 0.4)), SH_SHIRT_DARK)
+
+    finish(image, union(shirt, legs), name)
+
+
+def shirou_outfit():
+    for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
+        shirou_front(Body(BODIES[(body, "south")]), f"ShirouCasual_{body}_south.png")
+        shirou_side(Body(BODIES[(body, "east")]), f"ShirouCasual_{body}_east.png")
+        shirou_back(Body(BODIES[(body, "north")]), f"ShirouCasual_{body}_north.png")
+
+
 def main():
     for body in ("Thin", "Male", "Female", "Fat", "Hulk"):
         vergil_front(Body(BODIES[(body, "south")]), f"VergilCoat_{body}_south.png")
@@ -2719,12 +3476,18 @@ def main():
     headband_back("MinatoHeadband_north.png")
     sasuke_outfit()
     sato_outfit()
+    gojo_outfit()
+    shirou_outfit()
 
 
 if __name__ == "__main__":
     import sys
-    # "sato" makes only Satō's costume; with no argument every costume is made.
+    # "sato", "gojo" or "shirou" makes only that hero's costume; with no argument every costume is made.
     if sys.argv[1:] == ["sato"]:
         sato_outfit()
+    elif sys.argv[1:] == ["gojo"]:
+        gojo_outfit()
+    elif sys.argv[1:] == ["shirou"]:
+        shirou_outfit()
     else:
         main()

@@ -40,7 +40,8 @@ namespace RimArt
     [HarmonyPatch(typeof(Ability), nameof(Ability.GetGizmos))]
     public static class GravityCommands
     {
-        public static bool Busy(Pawn pawn) => MapComponent_Gravity.Live(pawn)?.For(pawn) != null;
+        // Held in a well's clip. A well that leaves its caster free (Gojo's Blue) never makes him busy.
+        public static bool Busy(Pawn pawn) => MapComponent_Gravity.Live(pawn)?.Holding(pawn) != null;
         public static bool ValidTarget(Pawn pawn, IntVec3 cell, float range) => pawn?.Map != null && cell.InBounds(pawn.Map)
             && !cell.Fogged(pawn.Map) && cell.DistanceTo(pawn.Position) <= range
             && GravityMovement.Clear(pawn.Map, pawn.Position, cell);
@@ -53,19 +54,21 @@ namespace RimArt
             Pawn pawn = ability.pawn;
             if (pawn.abilities.AllAbilitiesForReading.FirstOrDefault(a => a.def == ability.def) != ability) yield break;
             var props = CompProperties_AbilityGravityWell.For(ability.def);
-            var cast = MapComponent_Gravity.On(pawn)?.For(pawn);
-            int remaining = GameComponent_Gravity.Instance.Remaining(pawn);
+            var cast = MapComponent_Gravity.On(pawn)?.For(pawn, ability.def);
+            int remaining = GameComponent_Gravity.Instance.Remaining(pawn, ability.def);
+            // A well that leaves its caster free runs its time out: no Implode, no Cancel.
+            bool holds = props.holdsCaster, implode = holds && cast?.Field == true;
             var button = new Command_Action
             {
                 groupable = false,
-                defaultLabel = cast?.Field == true ? "Implode" : ability.def.LabelCap.ToString(),
-                defaultDesc = cast?.Field == true
+                defaultLabel = implode ? "Implode" : ability.def.LabelCap.ToString(),
+                defaultDesc = implode
                     ? $"Implode now: {props.Damage(cast.eaten):0.#} blunt damage within {props.BurstRadius(cast.eaten):0.#} cells."
                     : ability.def.description,
-                icon = GravityGraphics.Icon,
+                icon = props.look == GravityLook.Well ? GravityGraphics.Icon : ability.def.uiIcon,
                 action = () =>
                 {
-                    if (cast?.Field == true) { cast.Finish(true); return; }
+                    if (implode) { cast.Finish(true); return; }
                     Find.Targeter.BeginTargeting(new TargetingParameters
                     {
                         canTargetLocations = true, canTargetPawns = false, canTargetBuildings = false,
@@ -73,14 +76,17 @@ namespace RimArt
                     }, target => MapComponent_Gravity.On(pawn)?.Begin(pawn, target.Cell, ability.def));
                 }
             };
-            if (cast != null && !cast.Field) button.Disable(cast.Active ? "Opening the well." : "Recovering from implosion.");
+            if (cast != null && !holds) button.Disable(ability.def.LabelCap + " is open.");
+            else if (cast != null && !cast.Field) button.Disable(cast.Active ? "Opening the well." : "Recovering from implosion.");
             else if (cast == null && remaining > 0) button.Disable($"Cooldown: {remaining / 60f:0.0}s");
-            else if (cast == null && (pawn.InMentalState || pawn.stances.stunner.Stunned || !GravityCastAnimation.Clip.CanAnimate(pawn)))
+            else if (cast == null && holds && (pawn.InMentalState || pawn.stances.stunner.Stunned || !GravityCastAnimation.Clip.CanAnimate(pawn)))
                 button.Disable("Requires a standing humanlike caster and Melee Animation.");
+            else if (cast == null && !holds && (pawn.Downed || pawn.InMentalState || pawn.stances.stunner.Stunned))
+                button.Disable("Requires a caster who can act.");
             else if (cast == null && !MapComponent_Gravity.CanPay(pawn, ability.def, out float cost))
                 button.Disable("AG_EchoCastNoCharge".Translate(cost.ToString("0"), GameComponent_Echoes.Get.charge.ToString("0")));
             yield return button;
-            if (cast?.Active == true)
+            if (cast?.Active == true && holds)
                 yield return new Command_Action { groupable = false, defaultLabel = "Cancel",
                     defaultDesc = "Close the well without an implosion. A well that has opened still starts its cooldown.",
                     action = () => cast.Finish(false) };
@@ -92,7 +98,7 @@ namespace RimArt
         public override IEnumerable<Gizmo> CompGetGizmosExtra()
         {
             if (parent.pawn.abilities.AllAbilitiesForReading.FirstOrDefault(a => a.def == parent.def) != parent) yield break;
-            var cast = MapComponent_Gravity.On(parent.pawn)?.For(parent.pawn);
+            var cast = MapComponent_Gravity.On(parent.pawn)?.For(parent.pawn, parent.def);
             if (cast?.Active == true) yield return new Gizmo_Gravity(cast);
         }
     }
@@ -118,7 +124,7 @@ namespace RimArt
     {
         public static bool Prefix(Pawn ___pawn, Job job, ref bool __result)
         {
-            var cast = MapComponent_Gravity.On(___pawn)?.For(___pawn);
+            var cast = MapComponent_Gravity.On(___pawn)?.Holding(___pawn);
             if (cast == null) return true;
             if (job.def == JobDefOf.Goto) { cast.Finish(false); cast.StopAnimation(); return true; }
             __result = false; return false;

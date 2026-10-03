@@ -5,7 +5,8 @@ namespace RimArt
     // Shape and logic constants. Balance numbers are XML fields on CompProperties_AbilityGravityWell.
     public static class GravityRules
     {
-        // The opening matches the gather clip's first 0.5 s (GravityCast seeks ticks / 60).
+        // Gravity Well's opening: the gather clip's first 0.5 s (GravityCast seeks ticks / 60). A well
+        // reads its own from CompProperties_AbilityGravityWell.openingSeconds, whose default is this.
         public const int OpeningTicks = 30;
         // An item in a well commits its map cell at most every 15 ticks and is drawn at its exact
         // position in between. Each commit re-prints the Things layer of its map section.
@@ -27,11 +28,13 @@ namespace RimArt
         public int ticks;
         public bool activated, imploded;
         // True once the channel has run durationTicks.
-        public bool Tick(int durationTicks)
+        public bool Tick(int durationTicks) => Tick(durationTicks, GravityRules.OpeningTicks);
+        // The same, with the well's own opening.
+        public bool Tick(int durationTicks, int openingTicks)
         {
             if (phase == GravityPhase.Finished) return false;
             ticks++;
-            if (phase == GravityPhase.Opening && ticks >= GravityRules.OpeningTicks)
+            if (phase == GravityPhase.Opening && ticks >= openingTicks)
             { phase = GravityPhase.Channel; ticks = 0; activated = true; }
             return phase == GravityPhase.Channel && ticks >= durationTicks;
         }

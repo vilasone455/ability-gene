@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A think node for Corrosion's mental state, beside Berserk's in the subtree every humanlike, animal and insect
+     tree includes ahead of its lord duties. Without it a corroded colonist would go back to work between firings. -->
+<Patch>
+  <Operation Class="PatchOperationAdd">
+    <xpath>/Defs/ThinkTreeDef[defName="MentalStateCritical"]/thinkRoot/subNodes</xpath>
+    <value>
+      <li Class="ThinkNode_ConditionalMentalState">
+        <state>AG_EgoCorroded</state>
+        <subNodes>
+          <li Class="RimArt.JobGiver_EgoCorroded" />
+        </subNodes>
+      </li>
+    </value>
+  </Operation>
+</Patch>

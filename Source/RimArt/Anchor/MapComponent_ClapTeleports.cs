@@ -93,6 +93,20 @@ namespace RimArt
         public override void MapComponentUpdate()
         {
             if (casts.Count == 0 || Find.CurrentMap != map) return;
+            // Drawn on real pawns: heights on the body are fitted to them (see PawnFit).
+            PawnFit.Begin();
+            try
+            {
+                Draw();
+            }
+            finally
+            {
+                PawnFit.End();
+            }
+        }
+
+        private void Draw()
+        {
             for (int i = casts.Count - 1; i >= 0; i--)
             {
                 Cast cast = casts[i];

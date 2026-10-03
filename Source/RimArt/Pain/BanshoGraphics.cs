@@ -29,6 +29,11 @@ namespace RimArt
         public float height;
         /// <summary>The blocker's ground point now (blocked only).</summary>
         public Vector2 block;
+        /// <summary>
+        /// How much higher than the sketch the blocker's stun stars go, on screen. The game passes
+        /// <see cref="PainPictures.StarsUp"/> for a real pawn, which is taller than the lab's stand-in; 0 in the lab.
+        /// </summary>
+        public float blockStarsUp;
         /// <summary>Draw the lab's stand-ins (Pain, the pulled pawn, its two afterimages, the blocker, the thrumbo). The game passes false.</summary>
         public bool standIns;
     }
@@ -232,7 +237,7 @@ namespace RimArt
             {
                 Vector2 head = new Vector2(g.x + toward.x * 0.4f, g.y + 0.08f + toward.y * 0.4f);
                 GokuGraphics.StunStars(new Vector2(head.x, head.y + 0.22f - 0.84f), s, sa);
-                if (t.blocked) GokuGraphics.StunStars(v.block, s, sa);
+                if (t.blocked) GokuGraphics.StunStars(new Vector2(v.block.x, v.block.y + v.blockStarsUp), s, sa);
             }
 
             // The Rinnegan: a glint at Pain's eyes as the warm-up starts.

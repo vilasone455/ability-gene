@@ -8,33 +8,59 @@ namespace RimArt
 {
     public sealed class GameComponent_Gravity : GameComponent
     {
-        private Dictionary<Pawn, int> cooldowns = new Dictionary<Pawn, int>();
-        private List<Pawn> cooldownKeys;
-        private List<int> cooldownValues;
+        // One cooldown per pawn and well: a pawn with both Gravity Well (the attraction eye) and Gojo's Blue
+        // keeps each on its own clock. (Saves from before this keyed by pawn alone, under "gravityCooldowns";
+        // those few seconds of cooldown are not carried over.)
+        private sealed class Cooldown : IExposable
+        {
+            public Pawn pawn;
+            public AbilityDef def;
+            public int until;
+
+            public void ExposeData()
+            {
+                Scribe_References.Look(ref pawn, "pawn");
+                Scribe_Defs.Look(ref def, "def");
+                Scribe_Values.Look(ref until, "until");
+            }
+        }
+
+        private List<Cooldown> cooldowns = new List<Cooldown>();
         private int nextId;
         public GameComponent_Gravity(Game game) { MapComponent_Gravity.ClearLive(); }
         public static GameComponent_Gravity Instance => Current.Game?.GetComponent<GameComponent_Gravity>();
         public int NextId() => ++nextId;
-        public int Remaining(Pawn pawn) => pawn != null && cooldowns.TryGetValue(pawn, out int until)
-            ? Mathf.Max(0, until - Find.TickManager.TicksGame) : 0;
-        public void Commit(Pawn pawn, int ticks)
+        public int Remaining(Pawn pawn, AbilityDef def)
         {
-            if (pawn != null) cooldowns[pawn] = Find.TickManager.TicksGame + ticks;
+            if (pawn == null) return 0;
+            foreach (Cooldown c in cooldowns)
+                if (c.pawn == pawn && c.def == def) return Mathf.Max(0, c.until - Find.TickManager.TicksGame);
+            return 0;
+        }
+        public void Commit(Pawn pawn, AbilityDef def, int ticks)
+        {
+            if (pawn == null) return;
+            int until = Find.TickManager.TicksGame + ticks;
+            Cooldown held = cooldowns.Find(c => c.pawn == pawn && c.def == def);
+            if (held != null) held.until = until;
+            else cooldowns.Add(new Cooldown { pawn = pawn, def = def, until = until });
         }
         public void ResetForTests() => cooldowns.Clear();
         public override void GameComponentTick()
         {
             if (Find.TickManager.TicksGame % 600 != 0) return;
-            foreach (var pawn in cooldowns.Where(pair => pair.Value <= Find.TickManager.TicksGame).Select(pair => pair.Key).ToArray())
-                cooldowns.Remove(pawn);
+            int now = Find.TickManager.TicksGame;
+            cooldowns.RemoveAll(c => c.until <= now);
         }
         public override void ExposeData()
         {
             Scribe_Values.Look(ref nextId, "gravityNextId");
-            Scribe_Collections.Look(ref cooldowns, "gravityCooldowns", LookMode.Reference, LookMode.Value,
-                ref cooldownKeys, ref cooldownValues);
+            Scribe_Collections.Look(ref cooldowns, "gravityWellCooldowns", LookMode.Deep);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
-                cooldowns ??= new Dictionary<Pawn, int>();
+            {
+                cooldowns ??= new List<Cooldown>();
+                cooldowns.RemoveAll(c => c == null || c.pawn == null || c.def == null);
+            }
         }
     }
 
@@ -68,6 +94,7 @@ namespace RimArt
         private readonly List<GravityCast> castBuffer = new List<GravityCast>();
 
         public IEnumerable<GravityCast> Casts => casts;
+        public IReadOnlyList<GravityMotion> Motions => motions;
         public MapComponent_Gravity(Map map) : base(map) { }
 
         // Any map: for starting a cast.
@@ -83,10 +110,28 @@ namespace RimArt
             return null;
         }
 
+        // This pawn's busy cast of any well.
         public GravityCast For(Pawn pawn)
         {
             for (int i = 0; i < casts.Count; i++)
                 if (casts[i].caster == pawn && casts[i].Busy) return casts[i];
+            return null;
+        }
+
+        // This pawn's busy cast of this well: each well (Gravity Well, Blue) is one at a time on its own.
+        public GravityCast For(Pawn pawn, AbilityDef def)
+        {
+            for (int i = 0; i < casts.Count; i++)
+                if (casts[i].caster == pawn && casts[i].def == def && casts[i].Busy) return casts[i];
+            return null;
+        }
+
+        // The cast that holds this pawn in its clip: attacks and orders are refused while it lasts. A well
+        // that does not hold its caster (holdsCaster false) never does.
+        public GravityCast Holding(Pawn pawn)
+        {
+            for (int i = 0; i < casts.Count; i++)
+                if (casts[i].caster == pawn && casts[i].Busy && casts[i].Props.holdsCaster) return casts[i];
             return null;
         }
 
@@ -121,19 +166,26 @@ namespace RimArt
         public bool Begin(Pawn pawn, IntVec3 cell, AbilityDef def)
         {
             var props = CompProperties_AbilityGravityWell.For(def);
-            if (props == null || For(pawn) != null || GameComponent_Gravity.Instance.Remaining(pawn) > 0
+            if (props == null || For(pawn, def) != null || GameComponent_Gravity.Instance.Remaining(pawn, def) > 0
                 || !GravityAcquisition.HasAbility(pawn, def) || !GravityCommands.ValidTarget(pawn, cell, props.range)) return false;
+            // A well that holds its caster checks him when its clip starts; a free caster is checked here, since
+            // he may have gone down or been stunned between the button and the cell.
+            if (!props.holdsCaster && (pawn.Dead || pawn.Downed || pawn.InMentalState || pawn.stances.stunner.Stunned)) return false;
             if (!CanPay(pawn, def, out float cost))
             {
                 Messages.Message("AG_EchoCastNoCharge".Translate(cost.ToString("0"), GameComponent_Echoes.Get.charge.ToString("0")),
                     pawn, MessageTypeDefOf.RejectInput, false);
                 return false;
             }
-            if (!GravityCastAnimation.Clip.TryStart(pawn, out var animation)) return false;
+            CastClips.Handle animation = null;
+            if (props.holdsCaster && !GravityCastAnimation.Clip.TryStart(pawn, out animation)) return false;
             if (cost > 0f) GameComponent_Echoes.Get.TrySpend(cost);
+            // A free caster turns to the cell and goes on with what he was doing.
+            if (!props.holdsCaster) pawn.rotationTracker.FaceCell(cell);
             Vector3 at = cell.ToVector3Shifted();
             casts.Add(new GravityCast { id = GameComponent_Gravity.Instance.NextId(), caster = pawn, def = def,
-                anchor = pawn.Position, origin = at, centre = at, map = map, animation = animation, paid = cost });
+                anchor = pawn.Position, origin = at, centre = at, map = map, animation = animation, paid = cost,
+                startTick = Find.TickManager.TicksGame });
             SetLive(true);
             Changed();
             return true;
@@ -187,7 +239,7 @@ namespace RimArt
             if (Owner(thing, position) == null) return null;
             if (!motionIndex.TryGetValue(thing, out var motion))
             {
-                motion = new GravityMotion { thing = thing, position = position, cell = thing.Position };
+                motion = new GravityMotion { thing = thing, position = position, start = position, cell = thing.Position };
                 motions.Add(motion); motionIndex.Add(thing, motion);
                 if (!(thing is Pawn)) thing.Map.mapDrawer.MapMeshDirty(thing.Position, MapMeshFlagDefOf.Things);
             }
@@ -338,7 +390,7 @@ namespace RimArt
                     if (!cast.Field) continue;
                     if (!cast.Valid) { cast.Finish(false); continue; }
                     EatCore(cast);
-                    if (cast.clock.ticks > 0 && cast.clock.ticks % 60 == 0)
+                    if (cast.clock.ticks > 0 && cast.clock.ticks % 60 == 0 && cast.Props.coreDamage > 0f)
                         DamagePawns(cast, cast.Props.coreRadius, cast.Props.coreDamage);
                     if (cast.clock.ticks >= cast.DurationTicks && cast.Active) cast.Finish(true);
                 }
@@ -364,7 +416,8 @@ namespace RimArt
         {
             if (Find.CurrentMap != map || (casts.Count == 0 && motions.Count == 0)) { GravityProjectiles.Draw(map); return; }
             foreach (var cast in casts)
-                if ((cast.Field || cast.tailTicks > 0) && !cast.Cell.Fogged(map))
+                if (cast.Props.look == GravityLook.GojoBlue) GojoBlueLook.Draw(this, cast);
+                else if ((cast.Field || cast.tailTicks > 0) && !cast.Cell.Fogged(map))
                     GravityGraphics.Draw(cast.Centre, cast.clock.ticks / 60f, cast.Growth, cast.Radius, cast.Props.coreRadius,
                         cast.Field ? cast.TicksLeft / (float)Mathf.Max(1, cast.DurationTicks) : -1f,
                         cast.Active ? 1f : cast.tailTicks / 30f, cast.clock.imploded, cast.burstRadius, map);
@@ -381,7 +434,8 @@ namespace RimArt
             if (Find.CurrentMap != map || casts.Count == 0) return;
             foreach (var cast in casts)
             {
-                if (!cast.Field || cast.Cell.Fogged(map)) continue;
+                // Gravity Well's timer; Gojo's Blue picture has none.
+                if (!cast.Field || cast.Props.look != GravityLook.Well || cast.Cell.Fogged(map)) continue;
                 Vector3 at = cast.Centre + new Vector3(0f, 0f, -(cast.Props.coreRadius + 0.35f));
                 Vector2 screen = Find.Camera.WorldToScreenPoint(at) / Prefs.UIScale;
                 screen.y = UI.screenHeight - screen.y;

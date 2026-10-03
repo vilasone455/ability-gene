@@ -89,6 +89,75 @@ namespace RimArt
             return Pose(w, scale, TipUnder(g, a, sink * L + (1 - raise) * (1 - sink) * L), a, new UbwV3(Math.Cos(t), 0, Math.Sin(t)));
         }
 
+        /// <summary>
+        /// A blade in flight, point first along dir (a unit direction on the floor), flat side up, tip at the 3D
+        /// point tip; the pommel rides pitch degrees above the tip. This is the texture as the game draws an
+        /// item: seen from above.
+        /// </summary>
+        public static UbwPose Flying(UbwWeapon w, double size, UbwV3 tip, UbwXZ dir, double pitch = 8)
+        {
+            double p = pitch * D2R;
+            var a = new UbwV3(-dir.X * Math.Cos(p), Math.Sin(p), -dir.Z * Math.Cos(p));
+            return Pose(w, w.Image * size, tip, a, new UbwV3(-dir.Z, 0, dir.X));
+        }
+
+        /// <summary>
+        /// A blade stuck in the ground at g, its top leaning lean degrees toward `toward` (a unit direction on the floor),
+        /// flat side turned to the camera, `buried` cells of it underground (lib/trace.js stuck).
+        /// </summary>
+        public static UbwPose Stuck(UbwWeapon w, double size, UbwXZ g, UbwXZ toward, double lean, double buried)
+        {
+            double l = lean * D2R;
+            var a = new UbwV3(toward.X * Math.Sin(l), Math.Cos(l), toward.Z * Math.Sin(l));
+            return Pose(w, w.Image * size, TipUnder(g, a, buried), a, new UbwV3(1, 0, 0));
+        }
+
+        /// <summary>The middle of the blade, in 3D.</summary>
+        public static UbwV3 Middle(UbwPose b) => UbwV3.Plus(b.Tip, b.A, b.L / 2);
+
+        /// <summary>Pose b moved straight up by h cells.</summary>
+        public static UbwPose Raised(UbwPose b, double h) => Pose(b.W, b.Scale, new UbwV3(b.Tip.X, b.Tip.Y + h, b.Tip.Z), b.A, b.B);
+
+        /// <summary>Part way (u 0..1) from pose a to pose b of the same weapon, turning about the middle of the blade (the commands sketch's turn).</summary>
+        public static UbwPose TurnAbout(UbwPose a, UbwPose b, double u)
+        {
+            UbwV3 Mix(UbwV3 p, UbwV3 q) => new UbwV3(p.X + (q.X - p.X) * u, p.Y + (q.Y - p.Y) * u, p.Z + (q.Z - p.Z) * u);
+            UbwV3 axis = UbwV3.Unit(Mix(a.A, b.A)), across = UbwV3.Dot(a.B, b.B) < 0 ? UbwV3.Neg(b.B) : b.B;
+            return Pose(a.W, a.Scale, UbwV3.Plus(Mix(Middle(a), Middle(b)), axis, -a.L / 2), axis, Mix(a.B, across));
+        }
+
+        /// <summary>Weapon w lying flat with its middle at the 3D point m, point along dir, the pommel pitch degrees above the point.</summary>
+        public static UbwPose FlatAt(UbwWeapon w, double size, UbwV3 m, UbwXZ dir, double pitch = 0)
+        {
+            UbwPose f = Flying(w, size, m, dir, pitch);
+            return Pose(w, f.Scale, UbwV3.Plus(m, f.A, -f.L / 2), f.A, f.B);
+        }
+
+        /// <summary>
+        /// A copy in the hand of a stand-in pawn drawn at pos: flat, pointing angle degrees (0 east, 90 north), as
+        /// the lab stands in for the game's carry pose; side 1 holds it in the east hand, -1 in the west one.
+        /// </summary>
+        public static UbwPose HeldCopy(UbwWeapon w, double size, UbwXZ pos, double angle, double side = 1)
+        {
+            double d = angle * D2R, reach = w.Length * w.Image * size * 0.62;
+            var dir = new UbwXZ(Math.Cos(d), Math.Sin(d));
+            return Flying(w, size, new UbwV3(pos.X + 0.24 * side + dir.X * reach, 0.3, pos.Z + 0.02 + dir.Z * reach), dir, 0);
+        }
+
+        /// <summary>Part way (u 0..1) from pose a to pose b of the same weapon: tip, axis and flat side blended.</summary>
+        public static UbwPose Blend(UbwPose a, UbwPose b, double u)
+        {
+            UbwV3 Mix(UbwV3 p, UbwV3 q) => new UbwV3(p.X + (q.X - p.X) * u, p.Y + (q.Y - p.Y) * u, p.Z + (q.Z - p.Z) * u);
+            UbwV3 across = UbwV3.Dot(a.B, b.B) < 0 ? UbwV3.Neg(b.B) : b.B;
+            return Pose(a.W, a.Scale, Mix(a.Tip, b.Tip), UbwV3.Unit(Mix(a.A, b.A)), Mix(a.B, across));
+        }
+
+        /// <summary>
+        /// Along weapon w's axis in uv, from its point (0) to its pommel (w.Length). Linear in (u, v), so
+        /// Clip(poly, q => Along(w, q) - a) keeps exactly the part from the pommel down to a from the point.
+        /// </summary>
+        public static double Along(UbwWeapon w, UbwUV q) => (q.U - w.TipU) * w.AxisU + (q.V - w.TipV) * w.AxisV;
+
         /// <summary>Texture point q of blade b, in 3D.</summary>
         public static UbwV3 At3(UbwPose b, UbwUV q)
         {

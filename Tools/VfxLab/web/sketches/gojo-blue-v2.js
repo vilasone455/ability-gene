@@ -33,18 +33,22 @@
 //               75 % of the hold, each leaving a hole, spiralling up to orbit at
 //               1.1-1.6 cells for 0.6-1.4 s, then packed into the bubble as dark shapes; 10 cracks grow
 //               out to 1.5-3.6 cells; 8 light rays from the ball after 0.8 s; pawns dragged and held as
-//               in v1; small shakes at 1.5 and 2.5 s
-//   3.33-3.45   everything rushes in: debris, fog and bubble shrink to the centre
-//   3.45        a white flash 3 cells, a blue flash 6 cells, 12 rays, a ring to the 2-cell implosion
+//               in v1; small shakes at 1.45 and 2.45 s
+//   3.45-3.57   everything rushes in: debris, fog and bubble shrink to the centre
+//   3.57        a white flash 3 cells, a blue flash 6 cells, 12 rays, a ring to the 2-cell implosion
 //               radius, 16 pieces thrown out 1-3.5 cells (they stay), held pawns flash white and drop
 //               to their feet; shake
-//   3.45-5.25   a grey dust cloud of 20 puffs, 1.3 -> 3.7 cells each, rises up to 2 cells and spreads to
-//               about 3 cells, then thins
-//   stays       crater 1.6 cells across with a torn rim, holes, cracks, debris, drag marks
+//   3.57-5.49   a grey dust cloud of 20 puffs (each starts up to 0.12 s late and lasts 1.8 s), 1.3 -> 3.7
+//               cells each, rises up to 2 cells and spreads to about 3 cells, then thins
+//   to 5.77     crater 1.6 cells across with a torn rim, holes, cracks, debris, drag marks
 //
 // Drawing: level circles, spirals and quads, nothing per facing. Height is drawn north (0.6 per cell)
 // with shadows on the floor; orbiting pieces on the north half of their orbit draw under the bubble and
 // on the south half over it. Light is additive; fog and darkening are Transparent. Stand-ins as in v1.
+//
+// Ported to C# as a picture only (2026-09-30): Source/RimArt/Gojo/GojoBlue*.cs, previews "Gojo: blue: ...",
+// with the chosen cell as this sketch's origin. Not ported: Gojo's body and the pulled pawns, rock and
+// rifle, with their tints, lift and flash; untick "Stand-in pawns and props" to see what the C# draws.
 import { Color, MaterialPool, Mathf, Meshes, MeshPool, ShaderDatabase } from '../js/engine.js';
 import { draw } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, glow, soft, rand } from './lib/six-paths-impact.js';
@@ -187,6 +191,7 @@ export default {
   kit: 'Gojo', label: 'Lapse: Blue v2 (sketch)',
   params: {
     scenario: { label: 'Scenario', value: 'group', options: ['group', 'empty ground'], group: 'Showcase' },
+    actors: { label: 'Stand-in pawns and props', value: true, group: 'Showcase' },
     aim: P('Aim (degrees, 0 east, 90 north)', 0, 0, 355, 5, 'Showcase'),
     dist: P('Blue from Gojo (cells, up to 15)', 8, 3, 15, .5, 'Showcase'),
     hold: P('Hold', 3, 1, 6, .25, 'Timing (s)'),
@@ -286,10 +291,11 @@ export default {
       if (g.kind === 'gojo') {
         const out = smooth(s / Raise) * (1 - smooth((s - t.full - .4) / .3)), north = sa > .35, lit = .45 * smooth(s / Raise) * (1 - smooth((s - t.full) / .5));
         if (north) pointingArm(place, p.aim, out, pawnLayer - .004);
-        caster(g.pos, sun, strength, { tint: Blue, tintAmount: lit });
+        if (p.actors) caster(g.pos, sun, strength, { tint: Blue, tintAmount: lit });
         if (!north) pointingArm(place, p.aim, out, pawnLayer + .016);
         return;
       }
+      if (!p.actors) return;
       if (g.kind === 'chunk') { if (g.gone < 1) rock(g.pos, .45 * (1 - .7 * g.gone), 30 + g.gone * 400, 1, 2, g.up > .02 ? Y + .06 : Floor + .06); return; }
       if (g.kind === 'rifle') { if (g.gone < 1) draw(MeshPool.plane10, g.pos.x, g.up > .02 ? Y + .06 : Floor + .06, g.pos.z, .09 * (1 - .6 * g.gone), .62 * (1 - .6 * g.gone), 40 + g.gone * 500, Steel); return; }
       const flash = burst && g.inCore ? 1 - clamp(age / .25) : 0, colour = g.kind === 'ally' ? Ally : EnemyColour;

@@ -49,7 +49,7 @@ namespace RimArt
                 MouthOpen = 0.18f + 0.82f * open * (1f - Smooth((s - T.Launch - 0.2f) / 0.4f)) * (1f + 0.3f * pulse),
                 Bulges = Bulges, BulgeCount = bulges, Slack = shot.Slack,
             };
-            Vector2 tipG = f.Place(caster, NozzleTip, 0f), tipS = f.Place(caster, NozzleTip, 0f, HandH);
+            Vector2 tipG = f.Place(caster, NozzleTip, 0f), tipS = f.Place(caster, NozzleTip, 0f, PawnFit.H(HandH));
             if (weapon)
             {
                 VacuumParts v = Weapon(f, caster, pose, strength);
@@ -66,7 +66,7 @@ namespace RimArt
             {
                 float u = (s - T.Launch) / T.Flight;
                 var g = new Vector2(tipG.x + (rest.x - tipG.x) * u, tipG.y + (rest.y - tipG.y) * u);
-                float h = HandH * (1f - u) + Mathf.Max(0f, Mathf.Sin(u * Mathf.PI)) * T.Arc;
+                float h = PawnFit.H(HandH) * (1f - u) + Mathf.Max(0f, Mathf.Sin(u * Mathf.PI)) * T.Arc;
                 VacuumGraphics.Thing(shot.Thing, g, h, 0.35f + 0.65f * Smooth(u * 3f), 25f + u * 900f, Y - 0.03f, sun, strength);
             }
             else if (s >= T.Impact && shot.Props)
@@ -92,7 +92,7 @@ namespace RimArt
             float hitAge = s - T.Impact, big = shot.HitPawn ? 1f : 0.45f;
             if (hitAge >= 0f && hitAge < 0.5f)
             {
-                Sprite(new Vector2(o.x, o.y + 0.3f * big), 1.6f * big, 1.1f * big, Fade(Pale, Mathf.Max(0f, 1f - hitAge / 0.12f) * 0.85f * big), glow, Y + 0.02f);
+                Sprite(new Vector2(o.x, o.y + (shot.HitPawn ? PawnFit.Y(0.3f) : 0.3f * big)), 1.6f * big, 1.1f * big, Fade(Pale, Mathf.Max(0f, 1f - hitAge / 0.12f) * 0.85f * big), glow, Y + 0.02f);
                 Circle(o, 0.25f + hitAge * 2.2f * big, (1f - hitAge / 0.5f) * 0.6f, Floor, Pale);
                 for (int i = 0; i < 10; i++)
                 {

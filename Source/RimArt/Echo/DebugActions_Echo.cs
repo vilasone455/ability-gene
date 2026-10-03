@@ -65,7 +65,7 @@ namespace RimArt
                         else s.Level = skill.level;
                         break;
                     case Trial_Record rec:
-                        pawn.records.AddTo(rec.record, rec.count - rec.Current(pawn));
+                        rec.Meet(pawn);
                         break;
                     case Trial_KillsWith kills:
                         ThingDef weapon = kills.weapons.FirstOrDefault()

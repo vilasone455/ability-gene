@@ -34,7 +34,7 @@ namespace RimArt
         /// <summary>The sketch's clock on whole ticks, for the rules.</summary>
         public float Seconds(int now) => Lead + (now - startTick) / 60f;
         /// <summary>The sketch's clock smoothed between ticks, for the picture and the pose.</summary>
-        public float DrawSeconds => Lead + UbwClock.Since(startTick);
+        public float DrawSeconds => Lead + PictureClock.Since(startTick);
         /// <summary>The tick the sketch's clock reads <paramref name="seconds"/>.</summary>
         public int TickAt(float seconds) => startTick + Mathf.RoundToInt((seconds - Lead) * 60f);
 

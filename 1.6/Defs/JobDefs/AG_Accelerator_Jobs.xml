@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Plasma's cast (Source/RimArt/Accelerator/Kit/PlasmaCast.cs): stand and channel for the ability's
+       channelTicks, then cast. abilityCasting makes JobDriver_CastAbility start the cooldown when the job
+       ends however it ends, so a broken channel spends the cooldown as the rules say. -->
+  <JobDef>
+    <defName>AG_VectorPlasmaChannel</defName>
+    <driverClass>RimArt.JobDriver_VectorPlasma</driverClass>
+    <reportString>compressing plasma.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <collideWithPawns>true</collideWithPawns>
+    <abilityCasting>true</abilityCasting>
+  </JobDef>
+
+</Defs>

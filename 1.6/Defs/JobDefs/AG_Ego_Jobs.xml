@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- A corroded pawn stands (MentalState_EgoCorroded.cs): 2 s at a time, asked again by the think tree. -->
+  <JobDef>
+    <defName>AG_EgoCorrodedHold</defName>
+    <driverClass>RimArt.JobDriver_EgoCorrodedHold</driverClass>
+    <reportString>corroded.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <alwaysShowWeapon>true</alwaysShowWeapon>
+  </JobDef>
+
+  <!-- A corroded pawn whose weapon walks (EgoCorrosionAction.WalksToNearest) goes to the nearest pawn
+       (MentalState_EgoCorroded.cs): until touching it, asked again every second. -->
+  <JobDef>
+    <defName>AG_EgoCorrodedWalk</defName>
+    <driverClass>RimArt.JobDriver_EgoCorrodedWalk</driverClass>
+    <reportString>corroded, walking to TargetA.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <alwaysShowWeapon>true</alwaysShowWeapon>
+  </JobDef>
+
+  <!-- Overclock (JobDriver_EgoOverclock.cs): stand and fire the weapon's corroded attack at hostiles. -->
+  <JobDef>
+    <defName>AG_EgoOverclock</defName>
+    <driverClass>RimArt.JobDriver_EgoOverclock</driverClass>
+    <reportString>overclocking.</reportString>
+    <casualInterruptible>false</casualInterruptible>
+    <alwaysShowWeapon>true</alwaysShowWeapon>
+  </JobDef>
+
+</Defs>

@@ -34,6 +34,10 @@ FACINGS = [("East", 1, 0.0), ("North", 0, 90.0), ("South", 2, -90.0), ("West", 3
 
 LIFT = 0.60            # SixPathsHeight.Lift: cells north per cell of height
 HAND_HEIGHT = 0.5      # PowerPoleGraphics.HandHeight
+# In game the pole is drawn on a real pawn, 1.3x the sketches' stand-in and 0.33 lower (Shared/PawnFit.cs),
+# so PowerPoleGraphics.Hand fits HandHeight to 1.3 x 0.5 - 0.33 / 0.6 = 0.10 (+0.06 on screen, a real
+# pawn's chest). The clips carry the pole at that height too, or the real hands and the pole part.
+HAND_FIT = 1.3 * HAND_HEIGHT - 0.33 / LIFT
 REST_BACK = -0.45      # PowerPoleGraphics.RestBack: the carried staff's back end, from the feet
 GRIPS = (0.05, 0.42)   # the two hands, cells from the feet along the pole (the sketches' stand-in hands)
 BODY_SHARE = 0.4       # how much of the pole's slide the body leans with
@@ -125,7 +129,7 @@ def thrust(name, direction, turn):
     ts = times(length)
     step = [(t, BODY_SHARE * thrust_slide(t)) for t in ts]
     body = {"x": [(t, s * fx) for t, s in step], "z": [(t, s * fz) for t, s in step]}
-    lift = {"x": body["x"], "z": [(t, s * fz + HAND_HEIGHT * LIFT) for t, s in step]}
+    lift = {"x": body["x"], "z": [(t, s * fz + HAND_FIT * LIFT) for t, s in step]}
     # A turn about +y is clockwise seen from above, so a pole along `turn` degrees is turned by -turn.
     holding = transform_curves(rot={"y": [(0.0, -turn), (length, -turn)]})
     # The hands slide with the pole; the body has already taken its share of that.
@@ -137,7 +141,7 @@ def sweep(name, direction, turn):
     length = S_WINDUP + S_SWING + S_HOLD + S_RETRACT
     ts = times(length)
     still = [(0.0, 0.0), (length, 0.0)]
-    lift = {"x": still, "z": [(0.0, HAND_HEIGHT * LIFT), (length, HAND_HEIGHT * LIFT)]}
+    lift = {"x": still, "z": [(0.0, HAND_FIT * LIFT), (length, HAND_FIT * LIFT)]}
     holding = transform_curves(rot={"y": [(t, -(turn + sweep_phi(t))) for t in ts]})
     hands = [{"curves": {}, "defaults": {"Transform.m_LocalPosition.x": grip}} for grip in reversed(GRIPS)]
     return rig(name, direction, length, {"x": still, "z": still}, lift, holding, hands)
@@ -152,8 +156,8 @@ def plant(name, direction, turn):
 
     def ends(t):
         k = smooth(t / P_WINDUP)
-        tip = (REST_TIP + (FOOT - REST_TIP) * k, HAND_HEIGHT * (1 - k))
-        top = (REST_BACK + (TOP_BACK - REST_BACK) * k, HAND_HEIGHT + (TOP_HEIGHT - HAND_HEIGHT) * k)
+        tip = (REST_TIP + (FOOT - REST_TIP) * k, HAND_FIT * (1 - k))
+        top = (REST_BACK + (TOP_BACK - REST_BACK) * k, HAND_FIT + (TOP_HEIGHT - HAND_FIT) * k)
         return tip, top
 
     def grip(t, along_pole):

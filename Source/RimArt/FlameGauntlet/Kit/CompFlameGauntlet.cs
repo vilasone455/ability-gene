@@ -167,7 +167,7 @@ namespace RimArt
         {
             foreach (Gizmo gizmo in base.CompGetEquippedGizmosExtra()) yield return gizmo;
             Pawn holder = Holder;
-            if (holder != null && holder.IsColonistPlayerControlled) yield return new Gizmo_FlameHeat(this);
+            if (holder != null && holder.IsColonistPlayerControlled) yield return FlameGauntletMeter.Make(this);
         }
 
         public override string CompInspectStringExtra() => "Heat: " + LabelRemaining + (Overheating ? " (overheating)" : "");
@@ -181,45 +181,29 @@ namespace RimArt
         }
     }
 
-    /// <summary>The meter in the command bar: Heat out of the most, with the overheat line marked.</summary>
+    /// <summary>The Heat meter in the command bar (<see cref="Gizmo_Meter"/>): Heat out of the most, with the overheat line marked.</summary>
     [StaticConstructorOnStartup]
-    public sealed class Gizmo_FlameHeat : Gizmo
+    public static class FlameGauntletMeter
     {
         private static readonly Texture2D Fill = SolidColorMaterials.NewSolidColorTexture(new Color(1f, 0.55f, 0.10f));
         private static readonly Texture2D FillHot = SolidColorMaterials.NewSolidColorTexture(new Color(1f, 0.30f, 0.12f));
         private static readonly Texture2D Line = SolidColorMaterials.NewSolidColorTexture(new Color(0.86f, 0.22f, 0.05f));
-        private readonly CompFlameGauntlet gauntlet;
 
-        public Gizmo_FlameHeat(CompFlameGauntlet gauntlet)
+        public static Gizmo_Meter Make(CompFlameGauntlet gauntlet)
         {
-            this.gauntlet = gauntlet;
-            Order = -100f;
-        }
-
-        public override float GetWidth(float maxWidth) => 140f;
-
-        public override GizmoResult GizmoOnGUI(Vector2 topLeft, float maxWidth, GizmoRenderParms parms)
-        {
-            var rect = new Rect(topLeft.x, topLeft.y, GetWidth(maxWidth), 75f);
-            Widgets.DrawWindowBackground(rect);
-            Rect inner = rect.ContractedBy(6f);
             CompProperties_FlameGauntlet props = gauntlet.Props;
-            float heat = gauntlet.Heat, share = Mathf.Clamp01(heat / props.maxHeat);
-            Text.Font = GameFont.Small;
-            Widgets.Label(new Rect(inner.x, inner.y, inner.width, 24f), "Heat");
-            Text.Anchor = TextAnchor.UpperRight;
-            Widgets.Label(new Rect(inner.x, inner.y, inner.width, 24f), Mathf.FloorToInt(heat + 0.0001f) + " / " + props.maxHeat.ToString("0"));
-            Text.Anchor = TextAnchor.UpperLeft;
-            var bar = new Rect(inner.x, inner.y + 30f, inner.width, 22f);
-            Widgets.FillableBar(bar, share, gauntlet.Overheating ? FillHot : Fill);
-            float at = bar.x + bar.width * Mathf.Clamp01(props.overheatAt / props.maxHeat);
-            GUI.DrawTexture(new Rect(at - 1f, bar.y - 2f, 2f, bar.height + 4f), Line);
-            TooltipHandler.TipRegion(rect, "Heat " + heat.ToString("0.#") + " / " + props.maxHeat.ToString("0") + ". Devour adds "
-                + props.heatPerCell + " per burning cell and " + props.heatPerPawn + " per burning pawn; Release spends "
-                + props.heatPerConeCell + " per cone cell (at least " + props.minReleaseHeat + "). One heat is lost every "
-                + props.secondsPerHeatLost.ToString("0") + " s. At " + props.overheatAt.ToString("0") + " or more the wearer overheats: slower, clumsier, and the gauntlet arm burns every "
-                + props.overheatBurnSeconds.ToString("0") + " s.");
-            return new GizmoResult(GizmoState.Clear);
+            return new Gizmo_Meter("Heat", () => gauntlet.Heat, props.maxHeat, Fill)
+            {
+                hot = () => gauntlet.Overheating,
+                hotFill = FillHot,
+                mark = props.overheatAt,
+                markTex = Line,
+                tip = () => "Heat " + gauntlet.Heat.ToString("0.#") + " / " + props.maxHeat.ToString("0") + ". Devour adds "
+                    + props.heatPerCell + " per burning cell and " + props.heatPerPawn + " per burning pawn; Release spends "
+                    + props.heatPerConeCell + " per cone cell (at least " + props.minReleaseHeat + "). One heat is lost every "
+                    + props.secondsPerHeatLost.ToString("0") + " s. At " + props.overheatAt.ToString("0") + " or more the wearer overheats: slower, clumsier, and the gauntlet arm burns every "
+                    + props.overheatBurnSeconds.ToString("0") + " s.",
+            };
         }
     }
 }

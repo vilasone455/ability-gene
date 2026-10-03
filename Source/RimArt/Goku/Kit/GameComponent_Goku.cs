@@ -81,6 +81,7 @@ namespace RimArt
                 // Reverted: the Echo took the ability and kept its cooldown for the next manifest.
                 else if (caster != null) GameComponent_Echoes.Get?.HostRecord(caster)?.grant.Forget(Def);
                 GameComponent_Echoes.Get?.Refund(paid);
+                RefundMore();
             }
             paid = 0f;
             if (caster != null && caster.Spawned && caster.CurJobDef == GokuDefOf.AG_GokuChannel)
@@ -89,6 +90,9 @@ namespace RimArt
                 Messages.Message(Name + (spent ? ": the ki scattered. Charge and cooldown are spent." : ": cancelled. No charge or cooldown spent."),
                     caster, spent ? MessageTypeDefOf.NegativeEvent : MessageTypeDefOf.NeutralEvent, false);
         }
+
+        /// <summary>On Cancel: anything else the cast took and gives back (the Warp's Instant Transmission charge and cooldown).</summary>
+        protected virtual void RefundMore() { }
 
         /// <summary>One game tick. False once the cast is over and its picture has faded, so it can be dropped.</summary>
         public abstract bool Tick(int now);
@@ -220,10 +224,19 @@ namespace RimArt
         {
             Map map = Find.CurrentMap;
             if (map == null) return;
-            for (int i = 0; i < casts.Count; i++)
-                if (casts[i].home == map) casts[i].Draw();
-            for (int i = 0; i < pictures.Count; i++)
-                if (pictures[i].home == map) pictures[i].Draw();
+            // Drawn on real pawns: heights on the body are fitted to them (see PawnFit).
+            PawnFit.Begin();
+            try
+            {
+                for (int i = 0; i < casts.Count; i++)
+                    if (casts[i].home == map) casts[i].Draw();
+                for (int i = 0; i < pictures.Count; i++)
+                    if (pictures[i].home == map) pictures[i].Draw();
+            }
+            finally
+            {
+                PawnFit.End();
+            }
         }
 
         public override void ExposeData()

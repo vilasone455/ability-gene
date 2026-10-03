@@ -3,6 +3,7 @@ using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -41,7 +42,7 @@ namespace RimArt
             component = MapComponent_ChibakuPlates.Of(t.map);
             component.Stop();
             Tests_ChibakuPlates.Arena(t);
-            return Tests_Pain.Host(t, echoes, from, out record);
+            return Tests_Pain.Host(t, from, out record);
         }
 
         /// <summary>Ticks until the ball's clock reads <paramref name="seconds"/>.</summary>
@@ -61,23 +62,23 @@ namespace RimArt
 
             Ability ability = Tests_Pain.Ready(t, host, Def);
             Ability bansho = host.abilities.GetAbility(PainDefOf.AG_PainBanshoTenin), receiver = host.abilities.GetAbility(PainDefOf.AG_PainBlackReceiver);
-            if (ability == null || bansho == null || receiver == null) { Tests_Pain.Finish(record); yield break; }
+            if (ability == null || bansho == null || receiver == null) { EndHost(record); yield break; }
             ability.QueueCastingJob(new LocalTargetInfo(c), LocalTargetInfo.Invalid);
-            foreach (int step in Tests_Pain.WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.Seconds(t.Now) >= .75f, 90)) yield return step;
+            foreach (int step in WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.Seconds(t.Now) >= .75f, 90)) yield return step;
             yield return t.ShotAs("chibaku-tensei-1-warm-up", view, 12f);
             yield return t.ShotAs("chibaku-tensei-1b-hands-cupped", from, 4f);
-            foreach (int step in Tests_Pain.WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.Fired == true, 90)) yield return step;
+            foreach (int step in WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.Fired == true, 90)) yield return step;
             ChibakuCast cast = Tests_Pain.Cast<ChibakuCast>(host);
-            if (!t.Check(cast != null && cast.Fired, "the core was launched")) { Tests_Pain.Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Fired, "the core was launched")) { EndHost(record); yield break; }
             t.Check(Mathf.Abs(echoes.charge - 70f) < .5f, "took 30 charge (" + echoes.charge.ToString("0.#") + ")");
             t.Check(ability.OnCooldown && ability.CooldownTicksRemaining > 59000, "1 day cooldown (" + ability.CooldownTicksRemaining + " ticks)");
             t.Log($"the core flies {cast.run:0.00} cells in {cast.Arrive - cast.LaunchAt:0.00} s; formed at {cast.Formed:0.00} s, Pain free at {cast.Free:0.00} s on the cast's clock");
-            foreach (int step in Tests_Pain.WaitFor(() => cast.Seconds(t.Now) >= (cast.LaunchAt + cast.Arrive) / 2f, 120)) yield return step;
+            foreach (int step in WaitFor(() => cast.Seconds(t.Now) >= (cast.LaunchAt + cast.Arrive) / 2f, 120)) yield return step;
             yield return t.ShotAs("chibaku-tensei-2-core-flying", view, 12f);
 
-            foreach (int step in Tests_Pain.WaitFor(() => cast.handed, 120)) yield return step;
+            foreach (int step in WaitFor(() => cast.handed, 120)) yield return step;
             ChibakuBall ball = component.Ball;
-            if (!t.Check(component.Live && component.Caster == host && ball != null, "the ball began over the cell when the core arrived")) { Tests_Pain.Finish(record); yield break; }
+            if (!t.Check(component.Live && component.Caster == host && ball != null, "the ball began over the cell when the core arrived")) { EndHost(record); yield break; }
             t.Check(host.CurJobDef == PainDefOf.AG_CastPain, "Pain holds his hand up (the cast job)");
             yield return Until(component, ChibakuBall.Pull + 1.2f);
             yield return t.ShotAs("chibaku-tensei-3-pull", view, 12f);
@@ -111,7 +112,7 @@ namespace RimArt
             yield return t.ShotAs("chibaku-tensei-5-landed", view, 12f);
             yield return Until(component, ball.End + .2f);
             t.Check(!component.Live && component.Inner.Count == 0, "the ball ended with nothing left inside");
-            Tests_Pain.Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Chibaku", "tensei 2 Pain inside the circle and a raider pinned by 3 rods stay on their ground; a raider beside them is taken (screenshot)", 1500)]
@@ -127,22 +128,22 @@ namespace RimArt
             yield return 5;
 
             Ability ability = Tests_Pain.Ready(t, host, Def);
-            if (ability == null) { Tests_Pain.Finish(record); yield break; }
+            if (ability == null) { EndHost(record); yield break; }
             ability.QueueCastingJob(new LocalTargetInfo(c), LocalTargetInfo.Invalid);
-            foreach (int step in Tests_Pain.WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.handed == true, 150)) yield return step;
+            foreach (int step in WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.handed == true, 150)) yield return step;
             ChibakuGround ground = component.Ground;
-            if (!t.Check(component.Live && ground != null, "the ball began")) { Tests_Pain.Finish(record); yield break; }
+            if (!t.Check(component.Live && ground != null, "the ball began")) { EndHost(record); yield break; }
             t.Check(ground.plates.Any(p => p.anchored && p.cells.Contains(from)), "the plate under Pain stays");
             t.Check(ground.plates.Any(p => p.anchored && p.cells.Contains(pinnedAt)), "the plate under the pinned raider stays");
 
             yield return Until(component, ChibakuBall.Formed + .2f);
-            t.Check(host.Spawned && host.Position == from && !Tests_Pain.Stunned(host), "Pain is still on his ground, not held by the pull");
+            t.Check(host.Spawned && host.Position == from && !Stunned(host), "Pain is still on his ground, not held by the pull");
             t.Check(pinned.Spawned && pinned.Position == pinnedAt, "the pinned raider is still where it was pinned");
             t.Check(!free.Spawned && free.ParentHolder == component, "the free raider is in the ball");
             yield return t.ShotAs("chibaku-tensei-6-islands", c, 10f);
             component.Stop();
             t.Check(free.Spawned, "stopping the ball puts the raider down");
-            Tests_Pain.Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Chibaku", "tensei 3 Pain downed while the ball holds: it bursts at once and the raider inside takes the crush only for the time held", 1500)]
@@ -155,11 +156,11 @@ namespace RimArt
             yield return 5;
 
             Ability ability = Tests_Pain.Ready(t, host, Def);
-            if (ability == null) { Tests_Pain.Finish(record); yield break; }
+            if (ability == null) { EndHost(record); yield break; }
             ability.QueueCastingJob(new LocalTargetInfo(c), LocalTargetInfo.Invalid);
-            foreach (int step in Tests_Pain.WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.handed == true, 150)) yield return step;
+            foreach (int step in WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.handed == true, 150)) yield return step;
             ChibakuBall ball = component.Ball;
-            if (!t.Check(component.Live && ball != null, "the ball began")) { Tests_Pain.Finish(record); yield break; }
+            if (!t.Check(component.Live && ball != null, "the ball began")) { EndHost(record); yield break; }
             yield return Until(component, ChibakuBall.Formed + 2f);
             t.Check(!raider.Spawned, "the raider is in the ball");
             float fullBurst = ball.Burst;
@@ -176,7 +177,7 @@ namespace RimArt
             CheckEarlyLanding(t, raider, before, ball);
             yield return Until(component, ball.End + .2f);
             t.Check(!component.Live && component.Inner.Count == 0, "the ball ended with nothing left inside");
-            Tests_Pain.Finish(record);
+            EndHost(record);
         }
 
         private static Command_Action ReleaseButton(Ability ability) =>
@@ -192,12 +193,12 @@ namespace RimArt
             yield return 5;
 
             Ability ability = Tests_Pain.Ready(t, host, Def), bansho = host.abilities.GetAbility(PainDefOf.AG_PainBanshoTenin);
-            if (ability == null || bansho == null) { Tests_Pain.Finish(record); yield break; }
+            if (ability == null || bansho == null) { EndHost(record); yield break; }
             t.Check(ReleaseButton(ability) == null, "no Release button before the cast");
             ability.QueueCastingJob(new LocalTargetInfo(c), LocalTargetInfo.Invalid);
-            foreach (int step in Tests_Pain.WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.handed == true, 150)) yield return step;
+            foreach (int step in WaitFor(() => Tests_Pain.Cast<ChibakuCast>(host)?.handed == true, 150)) yield return step;
             ChibakuBall ball = component.Ball;
-            if (!t.Check(component.Live && ball != null, "the ball began")) { Tests_Pain.Finish(record); yield break; }
+            if (!t.Check(component.Live && ball != null, "the ball began")) { EndHost(record); yield break; }
             yield return Until(component, ChibakuBall.Pull + 1f);
             t.Check(ReleaseButton(ability) == null, "no Release button while the ball is still forming");
 
@@ -205,7 +206,7 @@ namespace RimArt
             t.Check(!raider.Spawned, "the raider is in the ball");
             float fullBurst = ball.Burst;
             Command_Action release = ReleaseButton(ability);
-            if (!t.Check(release != null && !release.Disabled, "the Release button is there once the ball has formed")) { Tests_Pain.Finish(record); yield break; }
+            if (!t.Check(release != null && !release.Disabled, "the Release button is there once the ball has formed")) { EndHost(record); yield break; }
             float pressedAt = component.LiveSeconds;
             release.action();
             t.Check(ball.Broken && Mathf.Abs(ball.Burst - (pressedAt + ChibakuBall.CrackTime)) < .05f,
@@ -221,7 +222,7 @@ namespace RimArt
             yield return t.ShotAs("chibaku-tensei-7-released", c + new IntVec3(0, 0, 1), 12f);
             yield return Until(component, ball.End + .2f);
             t.Check(!component.Live && component.Inner.Count == 0, "the ball ended with nothing left inside");
-            Tests_Pain.Finish(record);
+            EndHost(record);
         }
     }
 }

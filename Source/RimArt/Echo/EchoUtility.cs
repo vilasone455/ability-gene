@@ -147,7 +147,11 @@ namespace RimArt
         public static IEnumerable<string> CostLines(EchoDef def, Pawn pawn)
         {
             foreach (GeneDef gene in def.awakenGenes)
-                yield return "AG_EchoCostGene".Translate(gene.LabelCap);
+            {
+                // A gene that works outside hero form says what it does instead (Nakime's sunlight).
+                string note = gene.GetModExtension<EchoGeneCostNote>()?.note;
+                yield return note.NullOrEmpty() ? "AG_EchoCostGene".Translate(gene.LabelCap) : "AG_EchoCostGeneNote".Translate(gene.LabelCap, note);
+            }
             foreach (EchoTraitCost cost in def.forcedTraits)
             {
                 if (pawn != null && pawn.story?.traits?.HasTrait(cost.trait, cost.degree) == true)

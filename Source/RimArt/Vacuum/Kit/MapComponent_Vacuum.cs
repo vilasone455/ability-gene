@@ -213,9 +213,9 @@ namespace RimArt
                 VacuumThing picture = Picture(t.thing, t.kg, cast.scale);
                 if (t.from != null)
                 {
-                    // The weapon leaves from the pawn's hands, at hand height, as the sketch's rifle does.
+                    // The weapon leaves from the pawn's hands, at hand height fitted to a real pawn (PawnFit), as the sketch's rifle does.
                     picture.Ground = Ground(t.from) + new Vector2(0.25f, 0.02f);
-                    picture.H = VacuumGraphics.HandH;
+                    picture.H = PawnFit.FitH(VacuumGraphics.HandH);
                     shot.Disarmed = i;
                     cast.disarmed = t.from;
                 }
@@ -397,12 +397,8 @@ namespace RimArt
             {
                 Pawn pawn = t.from;
                 if (pawn.Dead || pawn.equipment?.Primary != thing) return false;
-                // A Host's hero weapon is not loot: it vanishes instead of flying into the vacuum.
-                if (EchoWeapon.OwnerOf(thing) is EchoRecord owner)
-                {
-                    EchoWeapon.Vanish(owner, (ThingWithComps)thing);
-                    return false;
-                }
+                // A Host's hero weapon or a traced copy is not loot: it vanishes instead of flying into the vacuum.
+                if (BoundWeapon.Leave(thing)) return false;
                 pawn.equipment.Remove((ThingWithComps)thing);
                 return cast.vacuum.AddInbound(thing);
             }
@@ -505,6 +501,20 @@ namespace RimArt
         public override void MapComponentUpdate()
         {
             if (Find.CurrentMap != map) return;
+            // Drawn on real pawns: heights on the body are fitted to them (see PawnFit).
+            PawnFit.Begin();
+            try
+            {
+                Draw();
+            }
+            finally
+            {
+                PawnFit.End();
+            }
+        }
+
+        private void Draw()
+        {
             int now = Find.TickManager.TicksGame;
             for (int i = 0; i < casts.Count; i++)
             {

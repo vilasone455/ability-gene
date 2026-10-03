@@ -17,6 +17,8 @@
     <!-- The drawing helpers every ported picture shares (Shared/CastClips and ItemAbilityGrant are game code, not linked). -->
     <Compile Include="../../../Source/RimArt/Shared/VfxDraw.cs" Link="Linked/Shared/VfxDraw.cs" />
     <Compile Include="../../../Source/RimArt/Shared/VfxMath.cs" Link="Linked/Shared/VfxMath.cs" />
+    <Compile Include="../../../Source/RimArt/Shared/PawnFit.cs" Link="Linked/Shared/PawnFit.cs" />
+    <Compile Include="../../../Source/RimArt/Shared/PawnBody.cs" Link="Linked/Shared/PawnBody.cs" />
     <!-- Six Paths -->
     <Compile Include="../../../Source/RimArt/Debug/RimArtDebugAttribute.cs" Link="Linked/Debug/RimArtDebugAttribute.cs" />
     <Compile Include="../../../Source/RimArt/SixPaths/*.cs" LinkBase="Linked/SixPaths" />
@@ -56,6 +58,8 @@
     <!-- Goku: drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/Goku/*.cs" LinkBase="Linked/Goku" />
     <Compile Include="../../../Source/RimArt/Vergil/*.cs" LinkBase="Linked/Vergil" />
+    <!-- Last Prism: the pictures, the preview's script and the previews only. The weapon's rules will go in LastPrism/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/LastPrism/*.cs" LinkBase="Linked/LastPrism" />
     <!-- Gojo: Unlimited Void's drawing and previews only. -->
     <Compile Include="../../../Source/RimArt/Gojo/*.cs" LinkBase="Linked/Gojo" />
     <!-- Infinity Castle: the castle's drawing, its generator and the previews. The pocket map (GenStep, map component, defs) is in InfinityCastle/Kit, not linked here. -->
@@ -65,10 +69,14 @@
     <!-- Trace: Unlimited Blade Works' drawing, timing, field layout and previews. The pocket map (GenStep, map component, the atlas built from the weapons' textures, defs) is in Trace/Kit, not linked here. -->
     <Compile Include="../../../Source/RimArt/Trace/*.cs" LinkBase="Linked/Trace" />
     <Compile Include="../../../Source/RimArt/Todo/*.cs" LinkBase="Linked/Todo" />
+    <!-- E.G.O. weapons (Magic Bullet, Solemn Lament, Mimicry, Paradise Lost): the pictures, the previews' scripts and the previews. The rules will go in Ego/Kit, which is not linked here. -->
+    <Compile Include="../../../Source/RimArt/Ego/*.cs" LinkBase="Linked/Ego" />
     <!-- Sasuke's Rinnegan pictures (not Rinnegan/Kit, which is game code). -->
     <Compile Include="../../../Source/RimArt/Rinnegan/*.cs" LinkBase="Linked/Rinnegan" />
     <!-- Satō's Reset and Headshot Reset pictures (not Sato/Kit, which is game code). -->
     <Compile Include="../../../Source/RimArt/Sato/*.cs" LinkBase="Linked/Sato" />
+    <!-- Accelerator's pictures: the shared palette, arm and plasma ball, Plasma, Vector shove, Vector Flick and the manipulation Apply (not Accelerator/Kit, which is game code). -->
+    <Compile Include="../../../Source/RimArt/Accelerator/*.cs" LinkBase="Linked/Accelerator" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleport.cs" Link="Linked/Anchor/ClapTeleport.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/ClapTeleportGraphics.cs" Link="Linked/Anchor/ClapTeleportGraphics.cs" />
     <Compile Include="../../../Source/RimArt/Anchor/DebugActions_ClapTeleport.cs" Link="Linked/Anchor/DebugActions_ClapTeleport.cs" />

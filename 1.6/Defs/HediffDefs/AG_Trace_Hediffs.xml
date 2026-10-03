@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Reinforcement's buff (AG_Trace_Reinforcement). The ability sets how long it lasts (durationSecondsOverride
+       replaces disappearsAfterTicks). HediffComp_TraceReinforced draws the picture: the weapon's glow, footprints
+       and heel streaks while moving, the slash of each melee hit, the circuit running back when it ends.
+       Every number is a placeholder. -->
+  <HediffDef>
+    <defName>AG_TraceReinforced</defName>
+    <label>reinforced</label>
+    <description>Moving 30% faster and dealing 40% more melee damage, from Reinforcement.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>false</isBad>
+    <defaultLabelColor>(0.35, 1, 0.82)</defaultLabelColor>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>1200</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+      <li Class="RimArt.HediffCompProperties_TraceReinforced" />
+    </comps>
+    <stages>
+      <li>
+        <statFactors>
+          <MoveSpeed>1.3</MoveSpeed>
+          <MeleeDamageFactor>1.4</MeleeDamageFactor>
+        </statFactors>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <!-- Unlimited Blade Works' Pin (UbwPin): swords through the pawn's clothes hold it to the ground. Moving capped
+       at 0 makes vanilla count it as downed while awake, so it can be captured; it cannot crawl. The pin adds it
+       with no DamageInfo, so a non-player pawn gets no death-on-downed roll. UbwRules.pinSeconds sets how long it
+       lasts (the 720 ticks here are only the default). -->
+  <HediffDef>
+    <defName>AG_UbwPinned</defName>
+    <label>pinned</label>
+    <description>Swords from Unlimited Blade Works pin this pawn's clothes to the ground. It cannot move or crawl until they are gone.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <defaultLabelColor>(0.35, 1, 0.82)</defaultLabelColor>
+    <preventsCrawling>true</preventsCrawling>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>720</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <capMods>
+          <li>
+            <capacity>Moving</capacity>
+            <setMax>0</setMax>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

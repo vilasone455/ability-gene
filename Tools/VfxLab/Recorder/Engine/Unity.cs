@@ -16,6 +16,11 @@ namespace UnityEngine
         public static Vector2 operator *(Vector2 a, float f) => new Vector2(a.x * f, a.y * f);
         public static Vector2 operator *(float f, Vector2 a) => new Vector2(a.x * f, a.y * f);
         public static Vector2 operator /(Vector2 a, float f) => new Vector2(a.x / f, a.y / f);
+        // Unity's: equal when the difference is under 1e-5 in length.
+        public static bool operator ==(Vector2 a, Vector2 b) { float dx = a.x - b.x, dy = a.y - b.y; return dx * dx + dy * dy < 9.99999944E-11f; }
+        public static bool operator !=(Vector2 a, Vector2 b) => !(a == b);
+        public override bool Equals(object other) => other is Vector2 v && x == v.x && y == v.y;
+        public override int GetHashCode() => x.GetHashCode() ^ (y.GetHashCode() << 2);
         public float sqrMagnitude => x * x + y * y;
         public float magnitude => Mathf.Sqrt(sqrMagnitude);
         public Vector2 normalized { get { float m = magnitude; return m > 1e-5f ? this / m : new Vector2(0f, 0f); } }
@@ -49,6 +54,8 @@ namespace UnityEngine
         public static Vector3 operator *(float f, Vector3 a) => new Vector3(a.x * f, a.y * f, a.z * f);
         public static Vector3 operator /(Vector3 a, float f) => new Vector3(a.x / f, a.y / f, a.z / f);
         public static float Dot(Vector3 a, Vector3 b) => a.x * b.x + a.y * b.y + a.z * b.z;
+        public static Vector3 Cross(Vector3 lhs, Vector3 rhs) =>
+            new Vector3(lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z, lhs.x * rhs.y - lhs.y * rhs.x);
         public float sqrMagnitude => x * x + y * y + z * z;
         public float magnitude => Mathf.Sqrt(sqrMagnitude);
         public Vector3 normalized { get { float m = magnitude; return m > 1e-5f ? this / m : zero; } }
@@ -209,7 +216,29 @@ namespace UnityEngine
             triangleData = triangles.ToArray();
     }
 
-    public class Camera : Object { }
+    public struct Rect
+    {
+        public float x, y, width, height;
+        public Rect(float x, float y, float width, float height) { this.x = x; this.y = y; this.width = width; this.height = height; }
+    }
+
+    public class Transform
+    {
+        public Vector3 position;
+    }
+
+    /// <summary>
+    /// The map camera, looking straight down. Only Unlimited Blade Works' world v4 reads it (its backdrop
+    /// moves with the camera), so it stands where that sketch assumes a camera when the lab gives it none:
+    /// 7 cells north of the world, which the preview puts 2 north of the recording cell (60, 60); a view 36
+    /// cells tall at 16:9.
+    /// </summary>
+    public class Camera : Object
+    {
+        public Transform transform = new Transform { position = new Vector3(60.5f, 15f, 69.5f) };
+        public float orthographicSize = 18f;
+        public float aspect = 16f / 9f;
+    }
 
     public static class Graphics
     {

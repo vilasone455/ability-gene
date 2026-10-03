@@ -63,8 +63,12 @@ namespace RimArt
             return true;
         }
 
-        /// <summary>The drag mark, dust and wall flash with it (<see cref="ShinraDomeGraphics.Pushed"/>).</summary>
+        /// <summary>
+        /// The drag mark, dust and wall flash with it (<see cref="ShinraDomeGraphics.Pushed"/>), placed from the pawn's
+        /// ground points (<see cref="PainKit.Ground(Vector3)"/>, 0.3 below the cell centre) as Pain's other pictures are:
+        /// from the cell centres the landing dust sat about 0.5 above a real pawn's feet and the wall flash at its neck.
+        /// </summary>
         public void Draw(float e, float markAlpha) =>
-            ShinraDomeGraphics.Pushed(new Vector2(start.x, start.z), new Vector2(end.x, end.z), hitAt, fly, heavy, hit, seed, e, markAlpha);
+            ShinraDomeGraphics.Pushed(PainKit.Ground(start), PainKit.Ground(end), hitAt, fly, heavy, hit, seed, e, markAlpha);
     }
 }

@@ -240,9 +240,8 @@ namespace RimArt
             vacuum.SetStomach(10f);
             Thing steel = Feed(vacuum, "Steel", 75);
             IntVec3 at = t.center + new IntVec3(6, 0, 0);
-            Pawn enemy = t.Enemy(at, armed: false);
             // No apparel: with armour penetration 0, any worn armour can deflect the hit to 0 at random.
-            enemy.apparel?.DestroyAll();
+            Pawn enemy = t.Target(at);
             yield return 2;
             var before = new HashSet<Hediff>(enemy.health.hediffSet.hediffs);
             float kg = vacuum.MouthKg;
@@ -362,6 +361,37 @@ namespace RimArt
             t.Check(load != null && Mathf.Abs(load.Severity - kg) < 0.01f, "B has the load hediff at " + kg.ToString("0.##") + " kg");
             t.Check(vacuum.Mouth == chunk, "the chunk is still in the mouth");
             t.Check(b.abilities.GetAbility(VacuumDefOf.AG_Vacuum_Spit) != null && a.abilities.GetAbility(VacuumDefOf.AG_Vacuum_Spit) == null, "the abilities moved from A to B");
+        }
+
+        // ------------------------------------------------------------------ pawn height
+
+        /// <summary>
+        /// Close shots for the pawn height fit: Suck on an armed enemy 4 cells east (the hip coil as the
+        /// canister rises, the wand up, the rifle leaving its hands, daze stars), then Spit from a second
+        /// holder (Suck and Spit share a cooldown) at an enemy 6 cells east (wand up, the hit flash, daze).
+        /// </summary>
+        [RimArtTest("Vacuum", "height 1 wand, coil, disarm, spit flash and daze stars on real pawns (screenshots)", 1500)]
+        private static IEnumerable<int> Height(RimArtTestContext t)
+        {
+            t.Clear();
+            Pawn holder = HeightShots.Stay(CastHoldTest.Caster(t, VacuumDefOf.AG_Vacuum));
+            IntVec3 at = t.center + new IntVec3(4, 0, 0);
+            Pawn armed = HeightShots.Target(t, at, armed: true);
+            if (armed.equipment.Primary == null) t.Equip(armed, DefDatabase<ThingDef>.GetNamed("Gun_BoltActionRifle"));
+            IntVec3 camera = t.center + new IntVec3(2, 0, 0);
+            yield return 10;
+            foreach (int step in HeightShots.Cast(t, holder, VacuumDefOf.AG_Vacuum_Suck, at, camera, "vacuum suck", armed, 3, 20, 30, 60)) yield return step;
+            yield return 150;
+
+            Pawn spitter = t.Colonist(t.center + new IntVec3(0, 0, -5));
+            t.Equip(spitter, VacuumDefOf.AG_Vacuum);
+            HeightShots.Stay(spitter);
+            Feed(CompVacuum.HeldBy(spitter), "Steel", 20);
+            Pawn target = HeightShots.Target(t, t.center + new IntVec3(6, 0, -5));
+            IntVec3 camera2 = t.center + new IntVec3(3, 0, -5);
+            yield return 10;
+            foreach (int step in HeightShots.Cast(t, spitter, VacuumDefOf.AG_Vacuum_Spit, target, camera2, "vacuum spit", target, 25, 68, 90)) yield return step;
+            yield return 120;
         }
     }
 }

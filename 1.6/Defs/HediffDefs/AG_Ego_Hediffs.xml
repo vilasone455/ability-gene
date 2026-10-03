@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- After Corrosion ends (EgoCorrosion.Exhaust). The 5000 ticks below are only the fallback: the weapon's
+       exhaustionHours replaces them when the hediff is added. The consciousness cap is a placeholder; the doc gives
+       no number for it. -->
+  <HediffDef>
+    <defName>AG_EgoExhausted</defName>
+    <label>corrosion exhaustion</label>
+    <description>An E.G.O. weapon's corrosion has just ended. Consciousness is capped at 80% and moving is halved until it wears off. How long it lasts is set by the weapon.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>true</isBad>
+    <defaultLabelColor>(0.62, 0.30, 0.90)</defaultLabelColor>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>5000~5000</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <capMods>
+          <li>
+            <capacity>Consciousness</capacity>
+            <setMax>0.8</setMax>
+          </li>
+          <li>
+            <capacity>Moving</capacity>
+            <postFactor>0.5</postFactor>
+          </li>
+        </capMods>
+      </li>
+    </stages>
+  </HediffDef>
+
+  <!-- Solemn Lament's Butterfly (Hediff_EgoButterfly): one stack per point of severity. The stage is made in code
+       from the numbers below, one per stack count: each stack up to the cap takes consciousnessPerStack, so at 0.075
+       an unhurt pawn goes under the game's 30 % at the cap (10) and stands at 9. One stack fades every fadeSeconds.
+       maxSeverity leaves room past the cap for the corroded coffin's funeral (Solemn Lament's funeralStacks, 20). -->
+  <HediffDef>
+    <defName>AG_EgoButterfly</defName>
+    <label>butterflies</label>
+    <description>Lace butterflies from Solemn Lament rest on this body. Each stack takes 7.5% consciousness, up to 10 stacks, where the pawn goes down. One stack flies off every 10 seconds. A pawn left down inside the corroded coffin's cloud keeps taking stacks and dies at 20.</description>
+    <hediffClass>RimArt.Hediff_EgoButterfly</hediffClass>
+    <isBad>true</isBad>
+    <initialSeverity>1</initialSeverity>
+    <minSeverity>0</minSeverity>
+    <maxSeverity>40</maxSeverity>
+    <defaultLabelColor>(0.86, 0.86, 0.90)</defaultLabelColor>
+    <modExtensions>
+      <li Class="RimArt.EgoButterflyExtension">
+        <cap>10</cap>
+        <consciousnessPerStack>0.075</consciousnessPerStack>
+        <fadeSeconds>10</fadeSeconds>
+      </li>
+    </modExtensions>
+  </HediffDef>
+
+  <!-- Paradise Lost's slow (EgoParadiseLost.Slow): every pawn a shot or a ring strikes moves at 40 % speed. The 60
+       ticks below are only the fallback: the weapon's slowSeconds replaces them, and a pawn struck again keeps the
+       longer time. A MoveSpeed factor, not a Moving capacity cut, so it never downs a pawn that already limps. -->
+  <HediffDef>
+    <defName>AG_EgoParadiseLostSlow</defName>
+    <label>thorn-slowed</label>
+    <description>Struck by Paradise Lost's thorns. Moving at 40% speed for a moment.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>true</isBad>
+    <defaultLabelColor>(0.82, 0.18, 0.18)</defaultLabelColor>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>60~60</disappearsAfterTicks>
+        <showRemainingTime>true</showRemainingTime>
+      </li>
+    </comps>
+    <stages>
+      <li>
+        <statFactors>
+          <MoveSpeed>0.4</MoveSpeed>
+        </statFactors>
+      </li>
+    </stages>
+  </HediffDef>
+
+</Defs>

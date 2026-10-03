@@ -79,7 +79,7 @@ namespace RimArt
                 float age = sinceHit - T.TinyBornAfterHit(k, debuff);
                 if (age < 0f || age > T.TinyLife + 0.15f) continue;
                 var g = new Vector2(ground.x + (k % 2 == 1 ? 0.12f : -0.10f), ground.y + 0.02f * k);
-                float h = 0.75f + age * 0.35f, r = 0.045f + k * 0.008f, layer = Overhead + 0.06f + k * 0.01f;
+                float h = PawnFit.H(0.75f) + age * 0.35f, r = 0.045f + k * 0.008f, layer = Overhead + 0.06f + k * 0.01f;
                 if (age < T.TinyLife) Bubble(g, h, r, clock, sun, shadow, 0.1f, k, fade, layer);
                 else Pop(g, h, r, age - T.TinyLife, 60 + k, layer);
             }

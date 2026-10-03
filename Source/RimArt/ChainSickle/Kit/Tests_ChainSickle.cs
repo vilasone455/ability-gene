@@ -194,5 +194,23 @@ namespace RimArt
             t.Check(jobEndTick >= 0, "the Stake cast job ended (after " + (jobEndTick - cast) + " ticks)");
             t.Check(enemy.health.hediffSet.HasHediff(ChainSickleDefOf.AG_ChainStaked) || !sickle.staked, "the staked hediff is on while pinned");
         }
+
+        /// <summary>
+        /// Close shots for the pawn height fit: Snag on an enemy 6 cells east (the spin, the wrap flash
+        /// and coil on the target, the coil before the reel, the coil that stays after it), then Stake
+        /// (the snagged pose, the tightened coil).
+        /// </summary>
+        [RimArtTest("Chain Sickle", "height 1 spin, coil, weight and flash on real pawns (screenshots)", 1500)]
+        private static IEnumerable<int> Height(RimArtTestContext t)
+        {
+            t.Clear();
+            Pawn holder = HeightShots.Plain(Holder(t));
+            Pawn enemy = HeightShots.Target(t, t.center + new IntVec3(6, 0, 0));
+            IntVec3 camera = t.center + new IntVec3(3, 0, 0);
+            yield return 10;
+            foreach (int step in HeightShots.Cast(t, holder, ChainSickleDefOf.AG_ChainSickle_Snag, enemy, camera, "chain snag", enemy, 20, 55, 68, 250)) yield return step;
+            foreach (int step in HeightShots.Cast(t, holder, ChainSickleDefOf.AG_ChainSickle_Stake, enemy, camera, "chain stake", enemy, 10, 35)) yield return step;
+            yield return 60;
+        }
     }
 }

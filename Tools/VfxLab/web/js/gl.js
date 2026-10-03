@@ -470,7 +470,7 @@ export class Renderer {
       gl.bindTexture(gl.TEXTURE_2D, tex.tex);
       gl.bindVertexArray(mesh.vao);
       const cutout = mat.shader === 'Cutout', normal = mat.shader !== 'MoteGlow' && mat.shader !== 'Invert';
-      const writes = normal && !flat && (mat.floats?._ZWrite ?? 1) !== 0;
+      const writes = normal && !flat && !call.noWrite && (mat.floats?._ZWrite ?? 1) !== 0;
       gl.depthFunc(flat || mat.floats?._ZTest === 8 ? gl.ALWAYS : gl.LEQUAL);
       // the colour, blended, tested against what is nearer
       gl.depthMask(false);

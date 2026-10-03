@@ -126,6 +126,12 @@ namespace RimArt
     public class CompProperties_InstantTransmission : CompProperties_EffectWithDest
     {
         public float hostileStunSeconds = 1.5f;
+        /// <summary>The channel (<see cref="GokuTransmissionLock"/>): base seconds, seconds added per cell of distance, how many times longer an empty cell takes on top (3 = 4x), the lock radius in cells, the longest channel.</summary>
+        public float baseSeconds = 0.5f;
+        public float secondsPerCell = 0.01f;
+        public float emptyFactor = 3f;
+        public float lockRadius = 4f;
+        public float maxSeconds = 12f;
 
         public CompProperties_InstantTransmission()
         {
@@ -134,17 +140,19 @@ namespace RimArt
     }
 
     /// <summary>
-    /// Instant Transmission. The first click is the passenger (a pawn next to the caster) or the caster
-    /// itself for a jump alone; the second is the destination, anywhere on the map (the vanilla
-    /// destination comp, range 0 and no line of sight). On the fire tick the caster is put on the
-    /// destination and the passenger on the cell beside it on the same side as before; a hostile
-    /// passenger arrives stunned.
+    /// Instant Transmission. The first click is the passenger (a pawn next to the caster, never a
+    /// mechanoid) or the caster itself for a jump alone; the second is the destination, anywhere on
+    /// the map (the vanilla destination comp, range 0 and no line of sight). The warmup is the lock's
+    /// channel (<see cref="Verb_GokuTransmission"/>, <see cref="GokuTransmissionLock"/>). On the fire
+    /// tick the caster is put on the destination and the passenger, if it is still next to him, on
+    /// the cell beside it on the same side as before; a hostile passenger arrives stunned.
     /// </summary>
     public class CompAbilityEffect_InstantTransmission : CompAbilityEffect_WithDest
     {
         public new CompProperties_InstantTransmission Props => (CompProperties_InstantTransmission)props;
 
-        private Pawn Passenger => selectedTarget.Pawn == parent.pawn ? null : selectedTarget.Pawn;
+        /// <summary>The passenger picked with the first click, while the destination is picked; null for Goku alone.</summary>
+        public Pawn Passenger => selectedTarget.Pawn == parent.pawn ? null : selectedTarget.Pawn;
 
         public override TargetingParameters targetParams => new TargetingParameters
         {
@@ -161,6 +169,7 @@ namespace RimArt
             Pawn pawn = target.Pawn;
             string why = null;
             if (pawn == null || !pawn.Spawned || pawn.Dead) why = "Pick a pawn next to Goku to take along, or Goku himself to go alone.";
+            else if (pawn != caster && !GokuLifeEnergy.Has(pawn)) why = pawn.LabelShortCap + " has no life energy for Goku to take along.";
             else if (pawn != caster && !pawn.Position.AdjacentTo8WayOrInside(caster.Position)) why = pawn.LabelShortCap + " is not next to Goku.";
             if (why != null)
             {
@@ -171,6 +180,15 @@ namespace RimArt
         }
 
         public override bool CanHitTarget(LocalTargetInfo target) => ValidDestination(target.Cell, Passenger, out _);
+
+        /// <summary>While the destination is picked: the channel time and the pawn Goku locks onto there.</summary>
+        public override string ExtraLabelMouseAttachment(LocalTargetInfo target)
+        {
+            Pawn caster = parent.pawn;
+            // The verb asks too while the first target is picked; only the destination pick gets the label.
+            if (Find.Targeter.targetingSource != this || caster?.Map == null || !target.IsValid || !target.Cell.InBounds(caster.Map)) return null;
+            return GokuTransmissionLock.Label(caster, caster.Position, target.Cell, Passenger);
+        }
 
         public override bool ValidateTarget(LocalTargetInfo target, bool showMessages = true)
         {
@@ -254,8 +272,8 @@ namespace RimArt
                 TransmissionPicture picture = goku.PictureFor<TransmissionPicture>(caster);
                 if (picture == null)
                 {
-                    picture = new TransmissionPicture(caster, Find.TickManager.TicksGame - Mathf.RoundToInt(parent.def.verbProperties.warmupTime * 60f),
-                        parent.def.verbProperties.warmupTime, to, passenger);
+                    float warm = GokuTransmissionLock.Seconds(caster, home, to, passenger, out _, out _);
+                    picture = new TransmissionPicture(caster, Find.TickManager.TicksGame - Mathf.RoundToInt(warm * 60f), warm, to, passenger);
                     picture.home = map;
                     goku.Begin(picture);
                 }
@@ -338,12 +356,20 @@ namespace RimArt
     public class CompProperties_SpiritBomb : CompProperties_AbilityEffect
     {
         public float minChannelSeconds = 3f;
-        /// <summary>Power per second from each lender; the caster always gives 1.</summary>
+        /// <summary>Power per second the caster and each lender give at full ki (life energy x Rest = 1).</summary>
+        public float casterPerSecond = 1f;
         public float lendPerSecond = 1f;
+        /// <summary>Rest each giver loses per second (0.02 = 2 % of the bar), and the Rest below which it gives nothing (0.28 = Tired).</summary>
+        public float restPerSecond = 0.02f;
+        public float stopRest = 0.28f;
+        /// <summary>The most power the ball holds.</summary>
+        public float maxPower = 60f;
         public float radiusBase = 2f;
-        public float radiusPerPower = 0.25f;
-        public float damageBase = 20f;
-        public float damagePerPower = 6f;
+        public float radiusPerPower = 0.15f;
+        /// <summary>Each hostile pawn under the dome takes hits hits of damageBase + damagePerPower x power (5 x 76 = 380 at 60 power).</summary>
+        public int hits = 5;
+        public float damageBase = 4f;
+        public float damagePerPower = 1.2f;
         public DamageDef damageDef;
         public float armorPenetration = 0f;
         public float flySeconds = 1.4f;
@@ -351,8 +377,8 @@ namespace RimArt
         public float domeHoldSeconds = 2f;
         /// <summary>The dome's animation speed (the picture's).</summary>
         public float pace = 0.6f;
-        /// <summary>The ball's size per power (the picture's).</summary>
-        public float sizePerPower = 0.12f;
+        /// <summary>The ball's size per power (the picture's): 0.06 makes a full 60-power ball as big as the sketch's 30-power one.</summary>
+        public float sizePerPower = 0.06f;
 
         public DamageDef DamageDef => damageDef ?? DamageDefOf.Burn;
 

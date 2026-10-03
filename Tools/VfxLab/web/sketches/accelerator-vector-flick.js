@@ -1,5 +1,8 @@
-// Vector Flick — ability proposal for the Accelerator kit, not the game. Nothing in Source/RimArt
-// draws this yet. The kit's plain damage ability: cheap, quick, on a short cooldown.
+// Vector Flick — the kit's plain damage ability: cheap, quick, on a short cooldown. Ported to C#
+// 2026-09-29 (Source/RimArt/Accelerator/VectorFlick*.cs, previews "Accelerator: vector flick: ..."),
+// played in game by MapComponent_Flicks (Accelerator/Kit/FlickCast.cs); the warm-up is drawn from his
+// aiming stance and the leg is the drawn quad, not a clip. Decided at the port: it always hits the
+// target and pawns in between are not hit. Numbers are AG_VectorFlick's XML.
 //
 // What it is for (agreed 2026-09-27; every number is a placeholder for XML).
 //   Target a pawn within 24.9 cells in line of sight. Warm-up 0.3 s: Accelerator scuffs the floor

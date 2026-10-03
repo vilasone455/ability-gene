@@ -28,6 +28,8 @@ namespace RimArt.VfxLab
         /// walks up, and the port draws no stand-in): record them whole instead of as a still.
         /// </summary>
         public Func<string, bool> StartsStill = _ => false;
+        /// <summary>Keep one frame in this many: a cutscene that rebuilds big meshes every frame would make a recording too big to load.</summary>
+        public Func<string, int> KeepEvery = _ => 1;
 
         public static readonly Kit[] All =
         {
@@ -161,8 +163,80 @@ namespace RimArt.VfxLab
             },
             new Kit
             {
+                Name = "Last Prism", Prefix = "Last Prism:", Component = typeof(MapComponent_LastPrismPreview), Clock = "seconds",
+                Phases = LastPrismPhases,
+            },
+            new Kit
+            {
+                // Before the "Gojo:" entry below: Kit.For takes the first prefix that matches.
+                Name = "Gojo", Prefix = "Gojo: red", Component = typeof(MapComponent_GojoRedPreview), Clock = "seconds",
+                Phases = GojoRedPhases,
+            },
+            new Kit
+            {
+                // Before "Gojo:", which would match it first. The sketch's markers (gojo-blue-v2.js): Point, Open, Hold, Rush, Burst.
+                Name = "Gojo", Prefix = "Gojo: blue", Component = typeof(MapComponent_GojoBluePreview), Clock = "seconds",
+                Phases = _ => new[]
+                {
+                    new Phase("Point", 0f), new Phase("Open", GojoBlue.OpenAt), new Phase("Hold", GojoBlue.FullAt),
+                    new Phase("Rush", GojoBlue.ImplodeAt(GojoBlue.Hold)), new Phase("Burst", GojoBlue.BurstAt(GojoBlue.Hold)),
+                },
+            },
+            new Kit
+            {
+                // Before "Gojo:" too. The sketch's markers (gojo-purple.js).
+                Name = "Gojo", Prefix = "Gojo: purple", Component = typeof(MapComponent_HollowPurplePreview), Clock = "seconds",
+                Phases = _ => HollowPurplePhases(),
+            },
+            new Kit
+            {
                 Name = "Gojo", Prefix = "Gojo:", Component = typeof(MapComponent_GojoPreview), Clock = "seconds",
                 Phases = label => label.Contains("inside") ? VoidInsidePhases() : VoidOpenPhases(),
+            },
+            new Kit
+            {
+                // Filed under the sketches' kit heading. The sketch's markers (ego-magic-bullet.js): Aim, Rifle turns (the seventh), the shot, Result.
+                Name = "E.G.O. weapons", Prefix = "E.G.O.: magic bullet", Component = typeof(MapComponent_EgoMagicBulletPreview), Clock = "seconds",
+                Phases = MagicBulletPhases,
+            },
+            new Kit
+            {
+                // The sketch's markers (ego-solemn-lament.js), from the preview's script, per mode.
+                Name = "E.G.O. weapons", Prefix = "E.G.O.: solemn lament", Component = typeof(MapComponent_EgoSolemnLamentPreview), Clock = "seconds",
+                Phases = label => MapComponent_EgoSolemnLamentPreview.Phases(label.Contains("overclock") ? EgoSolemnLamentScene.Overclock
+                        : label.Contains("funeral") ? EgoSolemnLamentScene.Funeral
+                        : label.Contains("coffin") ? EgoSolemnLamentScene.Corroded : EgoSolemnLamentScene.Burst, AimOf(label))
+                    .Select(p => new Phase(p.name, p.seconds)).ToArray(),
+            },
+            new Kit
+            {
+                // E.G.O. Mimicry. The sketch's markers (ego-mimicry.js), from the preview's script.
+                Name = "E.G.O. weapons", Prefix = "E.G.O.: mimicry", Component = typeof(MapComponent_EgoMimicryPreview), Clock = "seconds",
+                Phases = EgoMimicryPhases,
+            },
+            new Kit
+            {
+                // The sketch's markers (ego-paradise-lost-v2.js), from the preview's script: per shot, or the corroded
+                // or overclocked state, its rings and its end; then the result.
+                Name = "E.G.O. weapons", Prefix = "E.G.O.: paradise lost", Component = typeof(MapComponent_EgoParadiseLostPreview), Clock = "seconds",
+                Phases = label =>
+                {
+                    var script = new EgoParadiseLostScript(label.Contains("outdoors") ? EgoParadiseLostScene.RoomHitOutdoors
+                        : label.Contains("room hit") ? EgoParadiseLostScene.RoomHit
+                        : label.Contains("overclock") ? EgoParadiseLostScene.Overclock : EgoParadiseLostScene.Corroded);
+                    var phases = new List<Phase>();
+                    if (script.Room)
+                        for (int i = 0; i < script.ShotList.Count; i++)
+                            phases.Add(new Phase($"Shot {i + 1} ({script.ShotList[i].Count} hit)", script.ShotList[i].At));
+                    else
+                    {
+                        phases.Add(new Phase(script.Scene == EgoParadiseLostScene.Overclock ? "Overclock" : "Corroded", 0f));
+                        for (int i = 0; i < script.RingTimes.Count; i++) phases.Add(new Phase($"Ring {i + 1}", script.RingTimes[i]));
+                        phases.Add(new Phase("Ends", script.ExitAt));
+                    }
+                    phases.Add(new Phase("Result", script.End - EgoParadiseLostScript.Hold));
+                    return phases.ToArray();
+                },
             },
             new Kit
             {
@@ -174,10 +248,24 @@ namespace RimArt.VfxLab
                 Name = "Obito", Prefix = "Kamui dimension:", Component = typeof(MapComponent_KamuiPreview), Clock = "seconds",
                 Phases = _ => new[] { new Phase("Map", 0f) },
             },
+            // Shirou's hand pictures come before the UBW entry, which takes every other "Trace:" label.
+            new Kit
+            {
+                Name = "Trace", Prefix = "Trace: trace on", Component = typeof(MapComponent_TracePreview), Clock = "seconds",
+                Phases = label => TraceOnPhases(label.Contains("swap") ? TraceOnScenario.SwapCopy : label.Contains("real") ? TraceOnScenario.RealWeapon
+                    : label.Contains("downed") ? TraceOnScenario.Downed : TraceOnScenario.EmptyHand),
+            },
+            new Kit
+            {
+                Name = "Trace", Prefix = "Trace: reinforcement", Component = typeof(MapComponent_TracePreview), Clock = "seconds",
+                Phases = _ => ReinforcementPhases(),
+            },
             new Kit
             {
                 Name = "Trace", Prefix = "Trace:", Component = typeof(MapComponent_UbwPreview), Clock = "seconds",
-                Phases = label => label.Contains("cast") ? UbwCastPhases() : UbwWorldPhases(),
+                Phases = label => label.Contains("commands") ? UbwCommandPhases() : label.Contains("cast") ? UbwCastPhases() : label.Contains("reveal") ? UbwRevealPhases() : UbwWorldPhases(),
+                // The reveal shot rebuilds its gears, clouds, fire and rising swords every frame: 12 frames a second.
+                KeepEvery = label => label.Contains("reveal") ? 5 : 1,
             },
             new Kit
             {
@@ -186,6 +274,28 @@ namespace RimArt.VfxLab
                     : label.Contains("take back") ? TakeBackPhases()
                     : label.Contains("stone throw") ? StoneThrowPhases()
                     : BlackFlashPhases(label.Contains("ordinary")),
+            },
+            new Kit
+            {
+                Name = "Accelerator", Prefix = "Accelerator: plasma", Component = typeof(MapComponent_PlasmaPreview), Clock = "seconds",
+                Phases = label => PlasmaPhases(label.Contains("wall"), label.Contains("broken")),
+            },
+            new Kit
+            {
+                Name = "Accelerator", Prefix = "Accelerator: vector shove", Component = typeof(MapComponent_VectorShovePreview), Clock = "seconds",
+                Phases = VectorShovePhases,
+            },
+            new Kit
+            {
+                // The sketch's markers (accelerator-vector-flick.js): Stand, then per kick Warm-up, Kick, Hit.
+                Name = "Accelerator", Prefix = "Accelerator: vector flick", Component = typeof(MapComponent_FlickApplyPreview), Clock = "seconds",
+                Phases = label => MapComponent_FlickApplyPreview.FlickPhases(label.Contains("three")).Select(p => new Phase(p.name, p.seconds)).ToArray(),
+            },
+            new Kit
+            {
+                // The sketch's markers (accelerator-vector-apply.js): Volley, Paused, Apply, Last round stops.
+                Name = "Accelerator", Prefix = "Accelerator: vector apply", Component = typeof(MapComponent_FlickApplyPreview), Clock = "seconds",
+                Phases = label => MapComponent_FlickApplyPreview.ApplyPhases(label.Contains("2 groups") ? 2 : 4).Select(p => new Phase(p.name, p.seconds)).ToArray(),
             },
             new Kit
             {
@@ -393,6 +503,17 @@ namespace RimArt.VfxLab
             new Phase("Ball breaks", UnlimitedVoidOpenTiming.BurstAt),
         };
 
+        // The sketch's markers (gojo-purple.js phases()), the same for every scenario and aim.
+        private static Phase[] HollowPurplePhases()
+        {
+            HollowPurpleTimes t = HollowPurple.Default;
+            return new[]
+            {
+                new Phase("Blue", 0f), new Phase("Red", t.Fire), new Phase("Merge", t.Contact), new Phase("Ignite", t.Ignite),
+                new Phase("Travel", t.Move), new Phase("Fade", t.Stop), new Phase("After", t.Gone),
+            };
+        }
+
         private static Phase[] VoidInsidePhases() => new[]
         {
             new Phase("White (map switch)", 0f),
@@ -428,6 +549,28 @@ namespace RimArt.VfxLab
             new Phase("Castle removed", InfinityCastleInsideTiming.FadeAt),
         };
 
+        // The sketch's markers: Arm line, Wire, Steel, Done; Stow before them with a real weapon, Swap and New copy or
+        // Down after them.
+        private static Phase[] TraceOnPhases(TraceOnScenario scenario)
+        {
+            TraceTimes t = TraceOnTiming.First(scenario);
+            var phases = new List<Phase> { new Phase("Arm line", t.At), new Phase("Wire", t.Wire), new Phase("Steel", t.Fill), new Phase("Done", t.Lit) };
+            if (scenario == TraceOnScenario.RealWeapon) phases.Insert(0, new Phase("Stow", TraceOnTiming.CastAt));
+            if (scenario == TraceOnScenario.SwapCopy)
+            {
+                phases.Add(new Phase("Swap", TraceOnTiming.SwapAt));
+                phases.Add(new Phase("New copy", TraceOnTiming.Second.At));
+            }
+            if (scenario == TraceOnScenario.Downed) phases.Add(new Phase("Down", TraceOnTiming.SwapAt));
+            return phases.ToArray();
+        }
+
+        private static Phase[] ReinforcementPhases() => new[]
+        {
+            new Phase("Cast", TraceReinforcementTiming.CastAt), new Phase("Run", TraceReinforcementTiming.Run),
+            new Phase("Hits", TraceReinforcementTiming.Hit(0)), new Phase("Ends", TraceReinforcementTiming.End),
+        };
+
         private static Phase[] UbwCastPhases()
         {
             UbwCastTiming.Plan t = UbwCastTiming.For(UbwCastTiming.Verse);
@@ -442,6 +585,19 @@ namespace RimArt.VfxLab
                 new Phase("Back", t.Home),
             };
         }
+
+        private static Phase[] UbwRevealPhases() => new[]
+        {
+            new Phase("White", 0f), new Phase("Sky and gears", UbwRevealTiming.White), new Phase("Tilt down, fire", 1.25f), new Phase("Crane up", 2.5f),
+            new Phase("Blend", UbwRevealTiming.BlendFrom), new Phase("Hand-over", UbwRevealTiming.HandOver), new Phase("World", UbwRevealTiming.BarsOff + UbwRevealTiming.BarsFor),
+        };
+
+        /// <summary>The commands' previews share the sketch's order times: the order at 0.4 s, the first sword at 0.5 s.</summary>
+        private static Phase[] UbwCommandPhases() => new[]
+        {
+            new Phase("Order", 0.4f),
+            new Phase("Swords leave", 0.5f),
+        };
 
         private static Phase[] UbwWorldPhases() => new[]
         {
@@ -983,6 +1139,82 @@ namespace RimArt.VfxLab
             new Phase("Stone leaves the cell", StoneThrow.Place), new Phase("Caught", StoneThrow.CatchTime(StoneThrow.Place)),
         };
 
+        // The sketch's phases(): Stand, Channel, Release, Burst; the broken channel ends at the break.
+        private static Phase[] PlasmaPhases(bool wall, bool broken)
+        {
+            if (broken)
+                return new[] { new Phase("Stand", 0f), new Phase("Channel", Plasma.Lead), new Phase("Broken", Plasma.Lead + MapComponent_PlasmaPreview.BreakAt) };
+            return new[]
+            {
+                new Phase("Stand", 0f), new Phase("Channel", Plasma.Lead), new Phase("Release", Plasma.Lead + Plasma.Channel),
+                new Phase("Burst", MapComponent_PlasmaPreview.HitAt(wall)),
+            };
+        }
+
+        // accelerator-vector-shove.js's phases(): Stand, Mace hits (not for the chunk), Touch, Throw, Slam / Lands / Hit.
+        private static Phase[] VectorShovePhases(string label)
+        {
+            VectorShoveScene scene = label.Contains("chunk") ? VectorShoveScene.Chunk : label.Contains("line") ? VectorShoveScene.Line : VectorShoveScene.Wall;
+            float touch = MapComponent_VectorShovePreview.TouchAt(scene, label.Contains("window closed") ? VectorShove.ClosedReact : VectorShove.React);
+            float fly = touch + VectorShove.Touch, arrive = touch + VectorShove.Arrive(MapComponent_VectorShovePreview.Stop(scene));
+            if (scene == VectorShoveScene.Chunk)
+                return new[] { new Phase("Stand", 0f), new Phase("Touch", touch), new Phase("Throw", fly), new Phase("Hit", arrive) };
+            return new[]
+            {
+                new Phase("Stand", 0f), new Phase("Mace hits", VectorShove.Lead), new Phase("Touch", touch), new Phase("Throw", fly),
+                new Phase(scene == VectorShoveScene.Wall ? "Slam" : "Lands", arrive),
+            };
+        }
+
+        // gojo-red-v2.js's phases(): Point, Charge, Fire, Burst, then Slam (a wall) or Lands (in the open); none more for the empty cell.
+        private static Phase[] GojoRedPhases(string label)
+        {
+            GojoRedScene scene = label.Contains("empty") ? GojoRedScene.Empty : label.Contains("open") ? GojoRedScene.Open : GojoRedScene.Wall;
+            float arrive = MapComponent_GojoRedPreview.Arrive;
+            var phases = new List<Phase>
+            {
+                new Phase("Point", 0f), new Phase("Charge", GojoRed.Start), new Phase("Fire", GojoRed.Fire(GojoRed.Charge)), new Phase("Burst", arrive),
+            };
+            if (scene != GojoRedScene.Empty)
+                phases.Add(new Phase(MapComponent_GojoRedPreview.HitsWall(scene) ? "Slam" : "Lands", arrive + MapComponent_GojoRedPreview.Fly(scene)));
+            return phases.ToArray();
+        }
+
+        // ego-magic-bullet.js's phases(): Aim, Rifle turns (the seventh only), "Shot n" or "The seventh" at the shot, Result when the bullet reaches the range.
+        private static Phase[] MagicBulletPhases(string label)
+        {
+            bool seventh = label.Contains("seventh");
+            int shot = seventh ? EgoMagicBulletTiming.Shots : label.Contains("shot 4") ? 4 : label.Contains("shot 6") ? 6 : 1;
+            float fire = EgoMagicBulletTiming.Fire(EgoMagicBulletTiming.Lead, seventh);
+            var phases = new List<Phase> { new Phase("Aim", 0f) };
+            if (seventh) phases.Add(new Phase("Rifle turns", EgoMagicBulletTiming.Lead));
+            phases.Add(new Phase(seventh ? "The seventh" : "Shot " + shot, fire));
+            phases.Add(new Phase("Result", fire + EgoMagicBulletTiming.Flight(EgoMagicBulletTiming.Range)));
+            return phases.ToArray();
+        }
+
+        // last-prism.js's phases(): Hold, Fan (channel), Beams join, one marker per target down, then why the beam stopped,
+        // all read off the preview's script; one marker for each idle scenario.
+        /// <summary>The degrees after the last "aim " in a preview's label (the previews end their labels with it), or 0.</summary>
+        private static float AimOf(string label)
+        {
+            int at = label.LastIndexOf("aim ", StringComparison.Ordinal);
+            return at < 0 ? 0f : float.Parse(label.Substring(at + 4), System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        private static Phase[] LastPrismPhases(string label)
+        {
+            if (label.Contains("charges")) return new[] { new Phase("In the sun (time x20)", 0f) };
+            if (label.Contains("roof")) return new[] { new Phase("Under a roof: no charge", 0f) };
+            float aim = AimOf(label);
+            LastPrismScript r = LastPrismScript.For(label.Contains("runs dry") ? LastPrismScene.RunsDry : LastPrismScene.Fires, aim);
+            var phases = new List<Phase> { new Phase("Hold", 0f), new Phase("Fan (channel)", (float)LastPrismScript.Lead) };
+            if (r.Joins) phases.Add(new Phase("Beams join", (float)r.JoinAt));
+            for (int k = 0; k < r.Downs.Count; k++) phases.Add(new Phase($"Down {k + 1}, beam swings", (float)r.Downs[k]));
+            phases.Add(new Phase(r.Dried ? "Charge runs out" : "No target left", (float)r.ReleaseAt));
+            return phases.ToArray();
+        }
+
         private static Phase[] BlackFlashPhases(bool plain)
         {
             float hit = BlackFlash.Warmup, burst = hit + BlackFlash.SparkTime;
@@ -1076,6 +1308,38 @@ namespace RimArt.VfxLab
             phases.Add(new Phase("Grind", RasenganTiming.HitAt(teleports)));
             phases.Add(new Phase("Release / thrown", RasenganTiming.ReleaseAt(teleports)));
             phases.Add(new Phase(wall ? "Hits the wall" : "Lands", RasenganTiming.LandAt(teleports, wall)));
+            return phases.ToArray();
+        }
+
+        // ego-mimicry.js phases(): each swing; the grown swing's swell, raise, slam and shrink; the corroded and
+        // overclock actions (a lunge named), the shot taken and the end; then the result.
+        private static Phase[] EgoMimicryPhases(string label)
+        {
+            EgoMimicryMode mode = label.Contains("grown") ? EgoMimicryMode.Grown : label.Contains("corroded") ? EgoMimicryMode.Corroded
+                : label.Contains("overclock") ? EgoMimicryMode.Overclock : EgoMimicryMode.Swings;
+            var script = new EgoMimicryScript(mode, 0f);
+            var phases = new List<Phase>();
+            if (mode == EgoMimicryMode.Swings)
+                for (int i = 0; i < script.Actions.Length; i++) phases.Add(new Phase($"Swing {i + 1}", script.Actions[i].T));
+            else if (mode == EgoMimicryMode.Grown)
+            {
+                float g = script.Actions[1].Start;
+                phases.Add(new Phase("Swing", script.Actions[0].T));
+                phases.Add(new Phase("Swell", g));
+                phases.Add(new Phase("Raise", g + EgoMimicryTiming.RaiseAt));
+                phases.Add(new Phase("Slam", g + EgoMimicryTiming.SlamAt));
+                phases.Add(new Phase("Shrink", g + EgoMimicryTiming.RiseAt));
+            }
+            else
+            {
+                phases.Add(new Phase(mode == EgoMimicryMode.Corroded ? "Corroded" : "Overclock", 0f));
+                for (int i = 0; i < script.Actions.Length; i++)
+                    phases.Add(new Phase($"{(script.Actions[i].Lunge ? "Lunge, swing" : "Swing")} {i + 1}", script.Actions[i].T));
+                foreach (EgoMimicryShot sh in script.Shots) phases.Add(new Phase("Shot taken", sh.T));
+                phases.Add(new Phase("Ends", script.ExitAt));
+                phases.Sort((a, b) => a.Seconds.CompareTo(b.Seconds));
+            }
+            phases.Add(new Phase("Result", script.End - EgoMimicryScript.Hold));
             return phases.ToArray();
         }
 

@@ -56,6 +56,8 @@ namespace Verse
         public float AsAngle => rotInt * 90f;
         public bool IsHorizontal => rotInt == 1 || rotInt == 3;
         public bool IsVertical => rotInt == 0 || rotInt == 2;
+        // The game translates these ("North".Translate()); the lab has no translations.
+        public string ToStringHuman() => rotInt == 0 ? "North" : rotInt == 1 ? "East" : rotInt == 2 ? "South" : "West";
         public static bool operator ==(Rot4 a, Rot4 b) => a.AsInt == b.AsInt;
         public static bool operator !=(Rot4 a, Rot4 b) => a.AsInt != b.AsInt;
         public bool Equals(Rot4 other) => other.rotInt == rotInt;
@@ -148,6 +150,7 @@ namespace Verse
     {
         public static Map CurrentMap;
         public static CameraDriver CameraDriver = new CameraDriver();
+        public static UnityEngine.Camera Camera = new UnityEngine.Camera();
     }
 
     public static class UI

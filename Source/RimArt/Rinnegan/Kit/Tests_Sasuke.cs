@@ -5,6 +5,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -19,41 +20,18 @@ namespace RimArt
         private static GameComponent_Echoes Setup(RimArtTestContext t)
         {
             Rinnegan.ResetForTests();
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = false;
-            return echoes;
+            return t.ClearEchoes();
         }
 
         /// <summary>A colonist made Sasuke's Host and manifested, with a full pool and a kunai belt, undrafted and held still.</summary>
-        private static Pawn Host(RimArtTestContext t, GameComponent_Echoes echoes, IntVec3 at, out EchoRecord record)
+        private static Pawn Host(RimArtTestContext t, IntVec3 at, out EchoRecord record)
         {
-            Pawn host = t.Colonist(at);
-            record = EchoUtility.ForceHost(SasukeDefOf.AG_Echo_Sasuke, host);
-            echoes.charge = 100f;
-            EchoUtility.Manifest(record);
+            Pawn host = t.Host(SasukeDefOf.AG_Echo_Sasuke, at, out record);
             host.drafter.Drafted = false;
             RimArtTestContext.Hold(host);
-            Trait wimp = host.story?.traits?.GetTrait(TraitDefOf.Wimp);
-            if (wimp != null) host.story.traits.RemoveTrait(wimp);
+            NoWimp(host);
             host.apparel.Wear((Apparel)ThingMaker.MakeThing(KunaiDefOf.AG_KunaiBelt));
             return host;
-        }
-
-        private static void Finish(EchoRecord record)
-        {
-            if (record != null && record.manifested) EchoUtility.Revert(record, collapse: false);
-            EchoDevice.workingForTests = null;
-        }
-
-        /// <summary>A hostile that stands still: unarmed, stripped of armour, stunned.</summary>
-        private static Pawn Target(RimArtTestContext t, IntVec3 at, int stunTicks = 900)
-        {
-            Pawn pawn = t.Enemy(at, armed: false);
-            pawn.apparel?.DestroyAll();
-            pawn.stances.stunner.StunFor(stunTicks, null, false);
-            return pawn;
         }
 
         private static Ability_Amenoyodomi Toggle(Pawn host) => SasukeKit.Amenoyodomi(host);
@@ -62,11 +40,6 @@ namespace RimArt
         {
             Ability ability = host.abilities?.GetAbility(KunaiDefOf.AG_ThrowKunai);
             return ability != null && ability.Activate(at, at);
-        }
-
-        private static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 1)
-        {
-            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
         }
 
         private static CompApparelReloadable Belt(Pawn host) => KunaiBelt.WornBy(host);
@@ -103,7 +76,7 @@ namespace RimArt
             float manifested = host.GetStatValue(StatDefOf.MoveSpeed);
             t.Check(Mathf.Abs(manifested - speed - 0.4f) < 0.05f, "move speed " + speed.ToString("0.00") + " -> " + manifested.ToString("0.00"));
             t.Check(host.story.traits.HasTrait(TraitDef.Named("NaturalMood"), -1), "Pessimist");
-            Finish(record);
+            EndHost(record);
             yield return 5;
             t.Check(echo.abilities.All(def => host.abilities.GetAbility(def) == null), "revert takes the four abilities back");
         }
@@ -116,7 +89,7 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 c = t.center;
-            Pawn host = Host(t, echoes, c + new IntVec3(-5, 0, 0), out EchoRecord record);
+            Pawn host = Host(t, c + new IntVec3(-5, 0, 0), out EchoRecord record);
             Ability throwKunai = host.abilities.GetAbility(KunaiDefOf.AG_ThrowKunai);
             t.Check(throwKunai != null && !throwKunai.verb.targetParams.canTargetLocations, "off: throw kunai cannot target a cell");
             Toggle(host).SetMode(HoldMode.Hang);
@@ -149,14 +122,14 @@ namespace RimArt
             yield return t.ShotAs("sasuke-hold", c + new IntVec3(-2, 0, 0), 8f);
 
             // A throw at a pawn is a normal throw.
-            Pawn near = Target(t, c + new IntVec3(-3, 0, -5));
+            Pawn near = t.Target(c + new IntVec3(-3, 0, -5), 900);
             t.Check(Throw(host, near), "threw at a pawn");
             yield return 40;
             t.Check(Rinnegan.CountHeldBy(host) == 3, "a throw at a pawn is not held (" + Rinnegan.CountHeldBy(host) + " held)");
 
             // Let go: a raider stands 5 cells on along the middle one's line.
             HeldWeapon middle = held.OrderBy(w => Mathf.Abs(w.at.z - c.z - 0.5f)).FirstOrDefault();
-            Pawn behind = Target(t, middle != null ? (middle.at + middle.heading * 5f).ToIntVec3() : c + new IntVec3(3, 0, 0));
+            Pawn behind = t.Target(middle != null ? (middle.at + middle.heading * 5f).ToIntVec3() : c + new IntVec3(3, 0, 0), 900);
             int injuriesBefore = Injuries(behind);
             var before = new HashSet<Thing>(KunaiItems(t));
             Rinnegan.LetGo(host);
@@ -166,7 +139,7 @@ namespace RimArt
             yield return 60;
             int landed = KunaiItems(t).Count(k => !before.Contains(k));
             t.Check(landed >= 2, "the other two flew on and came down as kunai (" + landed + " new kunai items)");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Sasuke", "hold 2 drift moves 10x faster; toggling off drops them as kunai; a 6th throw lands; a wall and the 60 s limit drop them (screenshot)")]
@@ -175,7 +148,7 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 c = t.center;
-            Pawn host = Host(t, echoes, c + new IntVec3(-6, 0, 0), out EchoRecord record);
+            Pawn host = Host(t, c + new IntVec3(-6, 0, 0), out EchoRecord record);
             var earlier = new HashSet<Thing>(KunaiItems(t));
             Func<int> onTheGround = () => KunaiItems(t).Where(k => !earlier.Contains(k)).Sum(k => k.stackCount);
             Toggle(host).SetMode(HoldMode.Hang);
@@ -218,7 +191,7 @@ namespace RimArt
             t.Check(Rinnegan.CountHeldBy(host) == 0, "off: nothing held");
             t.Check(onTheGround() == onGround + stillHeld,
                 "the " + stillHeld + " held dropped as kunai (" + onTheGround() + " on the ground)");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Sasuke", "hold 3 held kunai drop when Sasuke reverts and when he is downed")]
@@ -227,7 +200,7 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 c = t.center;
-            Pawn host = Host(t, echoes, c + new IntVec3(-4, 0, 0), out EchoRecord record);
+            Pawn host = Host(t, c + new IntVec3(-4, 0, 0), out EchoRecord record);
             Toggle(host).SetMode(HoldMode.Hang);
             Throw(host, c + new IntVec3(-1, 0, 2));
             yield return 60;
@@ -250,7 +223,7 @@ namespace RimArt
             yield return 2;
             t.Check(host.Downed, "Sasuke is downed");
             t.Check(Rinnegan.CountHeldBy(host) == 0, "downed: both dropped");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Sasuke", "supply 1 the belt regains a conjured kunai every 5 s; a thrown one never becomes an item; a revert takes the rest")]
@@ -259,7 +232,7 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 c = t.center;
-            Pawn host = Host(t, echoes, c + new IntVec3(-4, 0, 0), out EchoRecord record);
+            Pawn host = Host(t, c + new IntVec3(-4, 0, 0), out EchoRecord record);
             CompApparelReloadable belt = Belt(host);
             var earlier = new HashSet<Thing>(KunaiItems(t));
             Func<bool> newKunai = () => KunaiItems(t).Any(k => !earlier.Contains(k));
@@ -272,7 +245,7 @@ namespace RimArt
 
             // Thrown with Amenoyodomi off at an empty cell next to a raider (a pawn target): it hits or lands, and
             // either way no kunai item appears; one stuck in a pawn is conjured and gives nothing back when pulled.
-            Pawn raider = Target(t, c + new IntVec3(1, 0, 0));
+            Pawn raider = t.Target(c + new IntVec3(1, 0, 0), 900);
             int injuries = Injuries(raider);
             Func<bool> flying = () => t.map.listerThings.ThingsOfDef(SasukeDefOf.AG_KunaiProjectileConjured).Any();
             Throw(host, raider);
@@ -300,7 +273,7 @@ namespace RimArt
 
             // Revert with conjured kunai on the belt: they go.
             int charges = belt.RemainingCharges, conjured = Rinnegan.ConjuredIn(belt.parent);
-            Finish(record);
+            EndHost(record);
             yield return 61;
             t.Check(belt.RemainingCharges == charges - conjured, "revert: the belt lost its " + conjured + " conjured kunai (" + belt.LabelRemaining + ")");
         }
@@ -312,7 +285,7 @@ namespace RimArt
         {
             Setup(t);
             yield return 5;
-            Pawn raider = Target(t, t.center);
+            Pawn raider = t.Target(t.center, 900);
             t.Check(Stick(raider, false) && Stick(raider, true), "a real kunai and one of Minato's are stuck in the raider");
             NearlyDead(raider);
             if (!t.Check(!raider.Dead, "alive before the conjured kunai")) yield break;
@@ -368,12 +341,12 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 c = t.center;
-            Pawn host = Host(t, echoes, c + new IntVec3(-8, 0, 0), out EchoRecord record);
+            Pawn host = Host(t, c + new IntVec3(-8, 0, 0), out EchoRecord record);
             var fuma = (ThingWithComps)ThingMaker.MakeThing(FumaDefOf.AG_FumaShuriken, GenStuff.DefaultStuffFor(FumaDefOf.AG_FumaShuriken));
             host.equipment.AddEquipment(fuma);
             Toggle(host).SetMode(HoldMode.Hang);
-            Pawn onWay = Target(t, c + new IntVec3(-5, 0, 0));
-            Pawn further = Target(t, c + new IntVec3(2, 0, 0));
+            Pawn onWay = t.Target(c + new IntVec3(-5, 0, 0), 900);
+            Pawn further = t.Target(c + new IntVec3(2, 0, 0), 900);
             int a0 = Injuries(onWay), b0 = Injuries(further);
             t.Check(Projectile_Fuma.Release(host, fuma, c + new IntVec3(-3, 0, 0)), "Fūma thrown 5 cells east");
             foreach (int step in WaitFor(() => Rinnegan.CountHeldBy(host) == 1, 90)) yield return step;
@@ -389,7 +362,7 @@ namespace RimArt
             yield return 60;
             Thing landed = t.map.listerThings.ThingsOfDef(FumaDefOf.AG_FumaShuriken).FirstOrDefault(th => th.Spawned);
             t.Check(landed != null, "the Fūma landed (" + landed?.Position + ")");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Sasuke", "cast 1 through the game's cast jobs, as a click does: kunai at two cells (held), Raikō Kusari after its warmup, Amaterasu on a held kunai, Amenotejikara Sasuke <-> raider (screenshot)")]
@@ -398,7 +371,7 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 c = t.center;
-            Pawn host = Host(t, echoes, c + new IntVec3(-5, 0, 0), out EchoRecord record);
+            Pawn host = Host(t, c + new IntVec3(-5, 0, 0), out EchoRecord record);
             host.drafter.Drafted = true;
             host.drafter.FireAtWill = false;
             Toggle(host).SetMode(HoldMode.Hang);
@@ -421,7 +394,7 @@ namespace RimArt
             }
             t.Check(Rinnegan.CountHeldBy(host) == 2, "the second kunai is held");
 
-            Pawn raider = Target(t, c + new IntVec3(-2, 0, 0), 1200);
+            Pawn raider = t.Target(c + new IntVec3(-2, 0, 0), 1200);
             Ability net = host.abilities.GetAbility(SasukeDefOf.AG_SasukeRaikoKusari);
             net.QueueCastingJob(new LocalTargetInfo(host), LocalTargetInfo.Invalid);
             yield return 25;
@@ -445,13 +418,13 @@ namespace RimArt
             t.Check(labels.Any(l => l.StartsWith("Let go (2)")), "a Let go (2) button");
             t.Check(labels.Contains("Release"), "a Release button");
 
-            Pawn other = Target(t, c + new IntVec3(1, 0, -4), 600);
+            Pawn other = t.Target(c + new IntVec3(1, 0, -4), 600);
             IntVec3 hostCell = host.Position, otherCell = other.Position;
             Ability swap = host.abilities.GetAbility(SasukeDefOf.AG_SasukeAmenotejikara);
             swap.QueueCastingJob(new LocalTargetInfo(host), new LocalTargetInfo(other));
             foreach (int step in WaitFor(() => host.Position == otherCell, 60)) yield return step;
             t.Check(host.Position == otherCell && other.Position == hostCell, "Amenotejikara swapped Sasuke and the raider");
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Amenotejikara ----------------------------------------------------------------------------------------
@@ -462,11 +435,11 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 c = t.center;
-            Pawn host = Host(t, echoes, c + new IntVec3(-4, 0, 0), out EchoRecord record);
+            Pawn host = Host(t, c + new IntVec3(-4, 0, 0), out EchoRecord record);
             Ability swap = host.abilities.GetAbility(SasukeDefOf.AG_SasukeAmenotejikara);
             var comp = swap.CompOfType<CompAbilityEffect_Amenotejikara>();
 
-            Pawn raider = Target(t, c + new IntVec3(3, 0, 1));
+            Pawn raider = t.Target(c + new IntVec3(3, 0, 1), 900);
             IntVec3 hostCell = host.Position, raiderCell = raider.Position;
             t.Check(comp.CanApplyOn(host, raider), "Sasuke and a raider can swap");
             swap.Activate(host, raider);
@@ -483,7 +456,7 @@ namespace RimArt
             yield return 8;
             yield return t.ShotAs("sasuke-swap-pattern", c + new IntVec3(0, 0, 0), 9f);
 
-            Pawn other = Target(t, c + new IntVec3(1, 0, -3));
+            Pawn other = t.Target(c + new IntVec3(1, 0, -3), 900);
             t.Check(!comp.CanApplyOn(raider, other), "two other pawns cannot be swapped");
 
             // A raider and a held kunai.
@@ -517,7 +490,7 @@ namespace RimArt
                 GenSpawn.Spawn(big, c + new IntVec3(3, 0, -4), t.map);
                 t.Check(!comp.CanApplyOn(host, big), "a thrumbo (body size " + big.BodySize + ") is refused");
             }
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Raikō Kusari -----------------------------------------------------------------------------------------
@@ -528,7 +501,7 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 c = t.center;
-            Pawn host = Host(t, echoes, c + new IntVec3(-6, 0, 0), out EchoRecord record);
+            Pawn host = Host(t, c + new IntVec3(-6, 0, 0), out EchoRecord record);
             Toggle(host).SetMode(HoldMode.Hang);
             // Two kunai 4 cells apart north-south through the column x = -1.
             Throw(host, c + new IntVec3(-1, 0, 2));
@@ -542,14 +515,7 @@ namespace RimArt
             var shieldBelt = (Apparel)ThingMaker.MakeThing(ThingDef.Named("Apparel_ShieldBelt"));
             raider.apparel.Wear(shieldBelt);
             CompShield shield = shieldBelt.TryGetComp<CompShield>();
-            PawnKindDef scyther = DefDatabase<PawnKindDef>.GetNamedSilentFail("Mech_Scyther");
-            Pawn mech = null;
-            if (scyther != null)
-            {
-                mech = PawnGenerator.GeneratePawn(scyther, Faction.OfMechanoids);
-                GenSpawn.Spawn(mech, c + new IntVec3(-1, 0, 1), t.map);
-                RimArtTestContext.Hold(mech);
-            }
+            Pawn mech = t.Mech(c + new IntVec3(-1, 0, 1));
             yield return 30;
             float shieldBefore = shield?.Energy ?? 0f;
             int injuries = Injuries(raider);
@@ -577,7 +543,7 @@ namespace RimArt
             t.Check(mech == null || mech.stances.stunner.Stunned, "the mech is still stunned (EMP)");
             yield return 30;
             yield return t.ShotAs("sasuke-net-after", c + new IntVec3(-1, 0, 0), 7f);
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Amaterasu --------------------------------------------------------------------------------------------
@@ -588,9 +554,9 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 c = t.center;
-            Pawn host = Host(t, echoes, c + new IntVec3(-3, 0, 0), out EchoRecord record);
-            Pawn raider = Target(t, c + new IntVec3(2, 0, 0));
-            Pawn neighbour = Target(t, c + new IntVec3(3, 0, 0));
+            Pawn host = Host(t, c + new IntVec3(-3, 0, 0), out EchoRecord record);
+            Pawn raider = t.Target(c + new IntVec3(2, 0, 0), 900);
+            Pawn neighbour = t.Target(c + new IntVec3(3, 0, 0), 900);
             Pawn beside = t.Colonist(c + new IntVec3(-2, 0, 0));
             RimArtTestContext.Hold(beside);
             int injuries = Injuries(raider);
@@ -634,7 +600,7 @@ namespace RimArt
             t.Check(!Amaterasu.Burning(raider) && !Amaterasu.Burning(neighbour) && !Amaterasu.Burning(beside), "Release put every flame out");
             yield return 18;
             yield return t.ShotAs("sasuke-amaterasu-release", c + new IntVec3(1, 0, 0), 6f);
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Sasuke", "amaterasu 2 lit held kunai: one lets go into a raider and lights him, one burns on the ground and lights a raider standing there; a lit Fūma lands burning and cannot be picked up (screenshots)")]
@@ -643,7 +609,7 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 c = t.center;
-            Pawn host = Host(t, echoes, c + new IntVec3(-6, 0, 0), out EchoRecord record);
+            Pawn host = Host(t, c + new IntVec3(-6, 0, 0), out EchoRecord record);
             Toggle(host).SetMode(HoldMode.Hang);
             Throw(host, c + new IntVec3(-3, 0, 0));
             yield return 3;
@@ -651,7 +617,7 @@ namespace RimArt
             foreach (int step in WaitFor(() => Rinnegan.CountHeldBy(host) == 2, 90)) yield return step;
             // The raider stands 4 cells on along the east kunai's real line (it leaves from the hand, a few degrees off).
             HeldWeapon east = Rinnegan.HeldBy(host).OrderBy(w => Mathf.Abs(w.at.z - c.z - 0.5f)).FirstOrDefault();
-            Pawn raider = Target(t, east != null ? (east.at + east.heading * 4f).ToIntVec3() : c + new IntVec3(1, 0, 0));
+            Pawn raider = t.Target(east != null ? (east.at + east.heading * 4f).ToIntVec3() : c + new IntVec3(1, 0, 0), 900);
             HeldWeapon first = Rinnegan.HeldBy(host).FirstOrDefault();
             Ability amaterasu = host.abilities.GetAbility(SasukeDefOf.AG_SasukeAmaterasu);
             IntVec3 heldCell = first?.at.ToIntVec3() ?? IntVec3.Invalid;
@@ -673,7 +639,7 @@ namespace RimArt
             if (fire != null)
             {
                 yield return t.ShotAs("sasuke-amaterasu-floor", fire.cell, 5f);
-                Pawn walker = Target(t, fire.cell);
+                Pawn walker = t.Target(fire.cell, 900);
                 yield return 20;
                 t.Check(Amaterasu.Burning(walker), "a raider standing in it caught");
             }
@@ -694,7 +660,7 @@ namespace RimArt
             t.Check(lying != null && !EquipmentUtility.CanEquip(lying, host, out string why) && why != null, "and cannot be picked up");
             Rinnegan.Release(host);
             t.Check(lying != null && EquipmentUtility.CanEquip(lying, host), "after Release it can");
-            Finish(record);
+            EndHost(record);
         }
     }
 }

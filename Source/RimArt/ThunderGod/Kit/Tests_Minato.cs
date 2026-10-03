@@ -5,6 +5,7 @@ using RimWorld;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using static RimArt.RimArtTestContext;
 
 namespace RimArt
 {
@@ -19,67 +20,31 @@ namespace RimArt
 
         private static GameComponent_Echoes Setup(RimArtTestContext t)
         {
-            startHealth.Clear();
             GameComponent_Minato.Instance.ResetForTests();
-            t.Clear();
-            GameComponent_Echoes echoes = GameComponent_Echoes.Get;
-            echoes.ResetForTests();
-            EchoDevice.workingForTests = false;
-            return echoes;
+            return t.ClearEchoes();
         }
 
         /// <summary>A colonist made Minato's Host and manifested, with a full pool and a kunai belt, drafted and standing still.</summary>
-        private static Pawn Host(RimArtTestContext t, GameComponent_Echoes echoes, IntVec3 at, out EchoRecord record)
+        private static Pawn Host(RimArtTestContext t, IntVec3 at, out EchoRecord record)
         {
-            Pawn host = t.Colonist(at);
-            record = EchoUtility.ForceHost(Minato, host);
-            echoes.charge = 100f;
-            EchoUtility.Manifest(record);
+            Pawn host = t.Host(Minato, at, out record);
             if (KunaiBelt.WornBy(host) == null) host.apparel.Wear((Apparel)ThingMaker.MakeThing(KunaiDefOf.AG_KunaiBelt), dropReplacedApparel: true);
             host.equipment?.DestroyAllEquipment();
             // Drafted with fire at will off: undrafted he flees the raiders between casts, and drafted with it on he
             // punches the one he lands next to.
             host.drafter.Drafted = true;
             host.drafter.FireAtWill = false;
-            Trait wimp = host.story?.traits?.GetTrait(TraitDefOf.Wimp);
-            if (wimp != null) host.story.traits.RemoveTrait(wimp);
-            return Noted(host);
-        }
-
-        private static readonly Dictionary<Pawn, float> startHealth = new Dictionary<Pawn, float>();
-
-        private static Pawn Noted(Pawn pawn)
-        {
-            startHealth[pawn] = pawn.health.summaryHealth.SummaryHealthPercent;
-            return pawn;
+            NoWimp(host);
+            return t.Note(host);
         }
 
         /// <summary>A hostile that stands still: unarmed, no apparel (armour would turn a fist to nothing), stunned.</summary>
         private static Pawn Target(RimArtTestContext t, IntVec3 at, int stunTicks = 900)
         {
-            Pawn pawn = t.Enemy(at, armed: false);
-            pawn.apparel?.DestroyAll();
-            pawn.stances.stunner.StunFor(stunTicks, null, false);
-            return Noted(pawn);
-        }
-
-        private static float Start(Pawn pawn) => startHealth.TryGetValue(pawn, out float h) ? h : 1f;
-        private static bool Hurt(Pawn pawn) => pawn.Dead || pawn.Downed || pawn.health.summaryHealth.SummaryHealthPercent < Start(pawn) - 0.001f;
-        private static bool Untouched(Pawn pawn) => !pawn.Dead && !pawn.Downed && pawn.health.summaryHealth.SummaryHealthPercent >= Start(pawn) - 0.001f;
-        private static bool Stunned(Pawn pawn) => pawn.stances?.stunner?.Stunned == true;
-
-        private static IEnumerable<int> WaitFor(Func<bool> done, int maxTicks, int step = 1)
-        {
-            for (int waited = 0; waited < maxTicks && !done(); waited += step) yield return step;
+            return t.Note(t.Target(at, stunTicks));
         }
 
         private static T Cast<T>(Pawn host) where T : MinatoCast => GameComponent_Minato.Instance?.Latest<T>(host);
-
-        private static void Finish(EchoRecord record)
-        {
-            EchoUtility.Revert(record, collapse: false);
-            EchoDevice.workingForTests = null;
-        }
 
         private static Ability Ready(RimArtTestContext t, Pawn host, AbilityDef def)
         {
@@ -95,7 +60,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             yield return 5;
             foreach (AbilityDef def in new[] { MinatoDefOf.AG_ThunderGodJump, MinatoDefOf.AG_ThunderGodChain, MinatoDefOf.AG_GuidingThunder, MinatoDefOf.AG_Rasengan })
                 t.Check(host.abilities.GetAbility(def) != null, "Minato has " + def.label);
@@ -109,13 +74,13 @@ namespace RimArt
             t.Check(shot.EquipmentDef == KunaiDefOf.AG_Kunai, "a thrown kunai's weapon is the kunai (" + shot.EquipmentDef?.defName + ")");
 
             Trial_KillsWith trial = Minato.trials.OfType<Trial_KillsWith>().FirstOrDefault();
-            if (!t.Check(trial != null, "Minato has a kill-with Trial")) { Finish(record); yield break; }
+            if (!t.Check(trial != null, "Minato has a kill-with Trial")) { EndHost(record); yield break; }
             float before = trial.Current(host);
             Pawn victim = Target(t, t.center + new IntVec3(0, 0, 4));
             victim.Kill(new DamageInfo(DamageDefOf.Stab, 200f, 1f, -1f, host, null, KunaiDefOf.AG_Kunai));
             yield return 2;
             t.Check(trial.Current(host) == before + 1, "a kill with a kunai counts: " + before + " -> " + trial.Current(host));
-            Finish(record);
+            EndHost(record);
             t.Check(!KunaiSeal.ThrowsSealed(host), "after the revert his kunai are plain again");
         }
 
@@ -127,7 +92,7 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 from = t.center + new IntVec3(-6, 0, -1), there = t.center + new IntVec3(6, 0, 1);
-            Pawn host = Host(t, echoes, from, out EchoRecord record);
+            Pawn host = Host(t, from, out EchoRecord record);
             CompApparelReloadable belt = KunaiBelt.WornBy(host);
             belt.UsedOnce();
             belt.UsedOnce();
@@ -135,7 +100,7 @@ namespace RimArt
             KunaiItem plain = GenSpawn.Spawn(ThingMaker.MakeThing(KunaiDefOf.AG_Kunai), t.center + new IntVec3(0, 0, 5), t.map) as KunaiItem;
             yield return 2;
             Ability jump = Ready(t, host, MinatoDefOf.AG_ThunderGodJump);
-            if (jump == null) { Finish(record); yield break; }
+            if (jump == null) { EndHost(record); yield break; }
             t.Check(!jump.verb.ValidateTarget(plain, false), "a plain kunai is not a mark");
             t.Check(jump.verb.ValidateTarget(kunai, false), "his sealed kunai is");
             int charges = belt.RemainingCharges;
@@ -143,7 +108,7 @@ namespace RimArt
             jump.QueueCastingJob(kunai, LocalTargetInfo.Invalid);
             ThunderGodJumpCast cast = null;
             foreach (int w in WaitFor(() => (cast = Cast<ThunderGodJumpCast>(host)) != null && cast.Fired, 10)) yield return w;
-            if (!t.Check(cast != null && cast.Fired, "the jump fired")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Fired, "the jump fired")) { EndHost(record); yield break; }
             int fired = cast.fireTick;
             if (t.Now < fired + 8) yield return fired + 8 - t.Now;
             t.Check(host.Position == from, "before the arrival he has not moved (fire + " + (t.Now - fired) + ")");
@@ -157,7 +122,7 @@ namespace RimArt
             t.Check(spent >= 2f && spent < 3f, "the pool paid 2 (" + spent.ToString("0.##") + ")");
             yield return 4;
             yield return t.ShotAs("jump-ground-arrive", t.center, 9f);
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Minato", "jump 2 into a pawn with his kunai: he lands in the cell behind it and cuts once, the kunai stays in; an ally with his kunai is landed behind, not cut (screenshots)")]
@@ -166,27 +131,27 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 from = t.center + new IntVec3(-5, 0, 0), at = t.center + new IntVec3(4, 0, 0);
-            Pawn host = Host(t, echoes, from, out EchoRecord record);
+            Pawn host = Host(t, from, out EchoRecord record);
             Pawn enemy = Target(t, at);
             DebugActions_Minato.StickSealed(enemy);
-            Noted(enemy);
+            t.Note(enemy);
             yield return 60;
             Ability jump = Ready(t, host, MinatoDefOf.AG_ThunderGodJump);
-            if (jump == null) { Finish(record); yield break; }
+            if (jump == null) { EndHost(record); yield break; }
             t.Check(ThunderGodMarks.Marked(enemy), "the enemy is marked by the kunai");
             jump.QueueCastingJob(enemy, LocalTargetInfo.Invalid);
             ThunderGodJumpCast cast = null;
             foreach (int w in WaitFor(() => (cast = Cast<ThunderGodJumpCast>(host)) != null && cast.Fired, 10)) yield return w;
-            if (!t.Check(cast != null && cast.Fired, "the jump fired")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Fired, "the jump fired")) { EndHost(record); yield break; }
             int fired = cast.fireTick;
             if (t.Now < fired + 16) yield return fired + 16 - t.Now;
             t.Log("fire + " + (t.Now - fired) + ": " + RimArtTestContext.Describe(host));
             IntVec3 behind = at + new IntVec3(1, 0, 0);
             t.Check(host.Position == behind, "he landed straight behind the enemy at " + behind + " (" + host.Position + ")");
-            t.Check(Untouched(enemy), "no cut before the strike tick");
+            t.Check(t.Untouched(enemy), "no cut before the strike tick");
             yield return t.ShotAs("jump-enemy-arrive", at, 7f);
             if (t.Now < fired + 21) yield return fired + 21 - t.Now;
-            t.Check(Hurt(enemy), "the enemy is cut");
+            t.Check(t.Hurt(enemy), "the enemy is cut");
             t.Check(ThunderGodMarks.HasSealedKunai(enemy), "the kunai is still in");
             t.Check(ThunderGodMarks.Seal(enemy) != null, "the cut left sealing touch");
             yield return 20;
@@ -197,9 +162,9 @@ namespace RimArt
             Pawn ally = t.Colonist(t.center + new IntVec3(-2, 0, 5));
             ally.drafter.Drafted = true;
             ally.drafter.FireAtWill = false;
-            Noted(ally);
+            t.Note(ally);
             DebugActions_Minato.StickSealed(ally);
-            Noted(ally);
+            t.Note(ally);
             jump.ResetCooldown();
             // Standing next to the enemy, his wait job punches it again every time its melee cooldown ends (vanilla
             // auto-attack), and an order waits for the cooldown: the enemy goes first.
@@ -209,8 +174,8 @@ namespace RimArt
             t.Log("after the order: " + RimArtTestContext.Describe(host));
             yield return 30;
             t.Check(host.Position.AdjacentTo8Way(ally.Position), "he landed next to the ally (" + host.Position + ")");
-            t.Check(Untouched(ally), "the ally is not cut");
-            Finish(record);
+            t.Check(t.Untouched(ally), "the ally is not cut");
+            EndHost(record);
         }
 
         // ---- sealing touch -----------------------------------------------------------------------------------------
@@ -220,7 +185,7 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             var foes = new List<Pawn>();
             for (int i = 0; i < 4; i++) foes.Add(Target(t, t.center + new IntVec3(-3 + 2 * i, 0, 3)));
             Pawn plainHitter = t.Colonist(t.center + new IntVec3(0, 0, -4));
@@ -252,7 +217,7 @@ namespace RimArt
             t.Check(ThunderGodMarks.Seal(other) == null, "a plain colonist's hit seals nothing");
             yield return 30;
             yield return t.ShotAs("seal-glow", t.center + new IntVec3(0, 0, 3), 7f);
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- the chain ---------------------------------------------------------------------------------------------
@@ -262,44 +227,44 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center + new IntVec3(-6, 0, 0), out EchoRecord record);
+            Pawn host = Host(t, t.center + new IntVec3(-6, 0, 0), out EchoRecord record);
             Pawn a = Target(t, t.center + new IntVec3(-2, 0, 2));
             Pawn b = Target(t, t.center + new IntVec3(2, 0, -2));
             Pawn c = Target(t, t.center + new IntVec3(6, 0, 3));
             Pawn unmarked = Target(t, t.center + new IntVec3(0, 0, 5));
             DebugActions_Minato.StickSealed(a);
-            Noted(a);
+            t.Note(a);
             yield return 2;
             Ability chain = host.abilities.GetAbility(MinatoDefOf.AG_ThunderGodChain);
             bool disabled = chain.GizmoDisabled(out string reason);
             t.Check(disabled, "with one mark the chain is disabled (" + reason + ")");
             SealingTouch.Seal(b);
             DebugActions_Minato.StickSealed(c);
-            Noted(c);
+            t.Note(c);
             yield return 60;
             chain = Ready(t, host, MinatoDefOf.AG_ThunderGodChain);
-            if (chain == null) { Finish(record); yield break; }
+            if (chain == null) { EndHost(record); yield break; }
             float pool = echoes.charge;
             chain.QueueCastingJob(host, LocalTargetInfo.Invalid);
             ThunderGodChainCast cast = null;
             foreach (int w in WaitFor(() => (cast = Cast<ThunderGodChainCast>(host)) != null && cast.Fired, 10)) yield return w;
-            if (!t.Check(cast != null && cast.Fired, "the chain fired")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Fired, "the chain fired")) { EndHost(record); yield break; }
             t.Check(cast.Targets.SequenceEqual(new[] { a, b, c }), "the route is nearest first: " + string.Join(", ", cast.Targets.Select(p => p.Position.ToString())));
             int fired = cast.fireTick;
             if (t.Now < fired + 32) yield return fired + 32 - t.Now;
             yield return t.ShotAs("chain-mid", t.center, 11f);
             if (t.Now < fired + 85) yield return fired + 85 - t.Now;
             for (int k = 0; k < cast.Targets.Count; k++)
-                t.Log("target " + k + ": reached " + cast.Reached(k) + ", hurt " + Hurt(cast.Targets[k]) + ", "
+                t.Log("target " + k + ": reached " + cast.Reached(k) + ", hurt " + t.Hurt(cast.Targets[k]) + ", "
                     + RimArtTestContext.Describe(cast.Targets[k]) + ", injuries " + cast.Targets[k].health.hediffSet.hediffs.Count(h => h is Hediff_Injury));
             t.Log(RimArtTestContext.Describe(unmarked));
-            t.Check(Hurt(a) && Hurt(b) && Hurt(c), "all three are cut");
-            t.Check(Untouched(unmarked), "the unmarked enemy is not");
+            t.Check(t.Hurt(a) && t.Hurt(b) && t.Hurt(c), "all three are cut");
+            t.Check(t.Untouched(unmarked), "the unmarked enemy is not");
             t.Check(host.Position.AdjacentTo8Way(c.Position), "he stays next to the last (" + host.Position + ", last at " + c.Position + ")");
             float spent = pool - echoes.charge;
             t.Check(spent >= 10f && spent < 11f, "the pool paid 10 (" + spent.ToString("0.##") + ")");
             yield return t.ShotAs("chain-end", t.center, 11f);
-            Finish(record);
+            EndHost(record);
         }
 
         // ---- Guiding Thunder ---------------------------------------------------------------------------------------
@@ -309,18 +274,18 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             Pawn anchor = Target(t, t.center + new IntVec3(8, 0, 3), 1500);
             DebugActions_Minato.StickSealed(anchor);
-            Noted(anchor);
+            t.Note(anchor);
             Pawn shooter = Target(t, t.center + new IntVec3(-7, 0, -2), 1500);
             yield return 60;
             Ability guiding = Ready(t, host, MinatoDefOf.AG_GuidingThunder);
-            if (guiding == null) { Finish(record); yield break; }
+            if (guiding == null) { EndHost(record); yield break; }
             guiding.QueueCastingJob(anchor, LocalTargetInfo.Invalid);
             GuidingThunderCast cast = null;
             foreach (int w in WaitFor(() => (cast = Cast<GuidingThunderCast>(host)) != null && cast.Fired, 10)) yield return w;
-            if (!t.Check(cast != null && cast.Standing, "the barrier stands")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Standing, "the barrier stands")) { EndHost(record); yield break; }
             yield return 20;
             t.Check(host.CurJobDef == MinatoDefOf.AG_CastMinato, "the job holds him (" + RimArtTestContext.Describe(host) + ")");
 
@@ -329,8 +294,8 @@ namespace RimArt
             bullet.Launch(shooter, shooter.DrawPos, host, host, ProjectileHitFlags.IntendedTarget);
             foreach (int w in WaitFor(() => bullet.Destroyed, 60)) yield return w;
             t.Check(bullet.Destroyed, "the bullet is gone");
-            t.Check(Untouched(host), "Minato is not hit");
-            t.Check(Hurt(anchor), "the pawn with his kunai is (" + RimArtTestContext.Describe(anchor) + ")");
+            t.Check(t.Untouched(host), "Minato is not hit");
+            t.Check(t.Hurt(anchor), "the pawn with his kunai is (" + RimArtTestContext.Describe(anchor) + ")");
             t.Check(cast.taken == 1, "one shot taken (" + cast.taken + ")");
             yield return 2;
             yield return t.ShotAs("guiding-bullet", t.center, 11f);
@@ -347,7 +312,7 @@ namespace RimArt
             guiding.QueueCastingJob(kunai, LocalTargetInfo.Invalid);
             cast = null;
             foreach (int w in WaitFor(() => (cast = Cast<GuidingThunderCast>(host)) != null && cast.Fired && cast.Standing, 10)) yield return w;
-            if (!t.Check(cast != null && cast.Standing, "the second barrier stands")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Standing, "the second barrier stands")) { EndHost(record); yield break; }
             ThingDef grenadeDef = DefDatabase<ThingDef>.GetNamed("Proj_GrenadeFrag");
             var grenade = (Projectile)GenSpawn.Spawn(ThingMaker.MakeThing(grenadeDef), shooter.Position, t.map);
             grenade.Launch(shooter, shooter.DrawPos, host.Position, host.Position, ProjectileHitFlags.IntendedTarget);
@@ -358,8 +323,8 @@ namespace RimArt
             yield return 10;
             yield return t.ShotAs("guiding-grenade", t.center + new IntVec3(-1, 0, 3), 11f);
             foreach (int w in WaitFor(() => grenade.Destroyed, 240)) yield return w;
-            t.Check(Untouched(host), "Minato is not hurt by the grenade");
-            Finish(record);
+            t.Check(t.Untouched(host), "Minato is not hurt by the grenade");
+            EndHost(record);
         }
 
         // ---- Rasengan ----------------------------------------------------------------------------------------------
@@ -369,12 +334,12 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center, out EchoRecord record);
+            Pawn host = Host(t, t.center, out EchoRecord record);
             IntVec3 at = t.center + new IntVec3(2, 0, 0);
             Pawn enemy = Target(t, at);
             yield return 2;
             Ability rasengan = Ready(t, host, MinatoDefOf.AG_Rasengan);
-            if (rasengan == null) { Finish(record); yield break; }
+            if (rasengan == null) { EndHost(record); yield break; }
             rasengan.QueueCastingJob(enemy, LocalTargetInfo.Invalid);
             // No mark: he walks up to it first.
             foreach (int w in WaitFor(() => host.Position.AdjacentTo8Way(enemy.Position), 60)) yield return w;
@@ -383,13 +348,13 @@ namespace RimArt
             yield return t.ShotAs("rasengan-form", host.Position, 5f);
             RasenganCast cast = null;
             foreach (int w in WaitFor(() => (cast = Cast<RasenganCast>(host)) != null && cast.Fired, 40)) yield return w;
-            if (!t.Check(cast != null && cast.Fired && !cast.teleports, "the touch Rasengan fired, no jump")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Fired && !cast.teleports, "the touch Rasengan fired, no jump")) { EndHost(record); yield break; }
             int fired = cast.fireTick;
             if (t.Now < fired + 15) yield return fired + 15 - t.Now;
             yield return t.ShotAs("rasengan-grind", at, 5f);
             foreach (int w in WaitFor(() => cast.landedThrow, 40)) yield return w;
             t.Log("after the throw: " + RimArtTestContext.Describe(enemy) + " thrown " + cast.thrown.ToString("0.##") + " wall " + cast.wall);
-            t.Check(Hurt(enemy), "the enemy is hit");
+            t.Check(t.Hurt(enemy), "the enemy is hit");
             t.Check(enemy.Dead || enemy.Position == at + new IntVec3(3, 0, 0), "thrown 3 cells east, away from him (" + enemy.Position + ")");
             IntVec3 stood = host.Position;
             t.Check(enemy.Dead || Stunned(enemy), "stunned");
@@ -409,7 +374,7 @@ namespace RimArt
             t.Log("second cast: missed " + cast?.missed + " aborted " + cast?.aborted + ", Minato " + RimArtTestContext.Describe(host));
             t.Log("walled: " + RimArtTestContext.Describe(walled) + " thrown " + cast?.thrown.ToString("0.##") + " wall " + cast?.wall);
             t.Check(cast != null && cast.wall && walled.Position == stood + new IntVec3(-3, 0, 0), "it stopped 1 cell out, at the wall, and took the slam");
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Minato", "rasengan 2 from range at a sealed pawn: he forms it where he stands, lands behind it, and it is thrown back toward where he came from (screenshots)")]
@@ -418,30 +383,30 @@ namespace RimArt
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
             IntVec3 from = t.center + new IntVec3(-6, 0, 0), at = t.center + new IntVec3(3, 0, 0);
-            Pawn host = Host(t, echoes, from, out EchoRecord record);
+            Pawn host = Host(t, from, out EchoRecord record);
             Pawn enemy = Target(t, at);
             SealingTouch.Seal(enemy);
             yield return 2;
             Ability rasengan = Ready(t, host, MinatoDefOf.AG_Rasengan);
-            if (rasengan == null) { Finish(record); yield break; }
+            if (rasengan == null) { EndHost(record); yield break; }
             rasengan.QueueCastingJob(enemy, LocalTargetInfo.Invalid);
             yield return 25;
             t.Check(host.Position == from, "he forms the ball where he stands (" + host.Position + ")");
             yield return t.ShotAs("rasengan-range-form", t.center, 9f);
             RasenganCast cast = null;
             foreach (int w in WaitFor(() => (cast = Cast<RasenganCast>(host)) != null && cast.Fired, 40)) yield return w;
-            if (!t.Check(cast != null && cast.Fired && cast.teleports, "the Rasengan fired from range")) { Finish(record); yield break; }
+            if (!t.Check(cast != null && cast.Fired && cast.teleports, "the Rasengan fired from range")) { EndHost(record); yield break; }
             int fired = cast.fireTick;
             if (t.Now < fired + 12) yield return fired + 12 - t.Now;
             t.Check(host.Position == at + new IntVec3(1, 0, 0), "he landed behind it (" + host.Position + ")");
             yield return t.ShotAs("rasengan-range-grind", at, 7f);
             foreach (int w in WaitFor(() => cast.landedThrow, 40)) yield return w;
             t.Log(RimArtTestContext.Describe(enemy));
-            t.Check(Hurt(enemy), "the enemy is hit");
+            t.Check(t.Hurt(enemy), "the enemy is hit");
             t.Check(enemy.Dead || enemy.Position == at - new IntVec3(3, 0, 0), "thrown 3 cells back west, toward where he came from (" + enemy.Position + ")");
             yield return 6;
             yield return t.ShotAs("rasengan-range-thrown", t.center, 9f);
-            Finish(record);
+            EndHost(record);
         }
 
         [RimArtTest("Minato", "rasengan 3 the walk up to an unmarked pawn can be called off: a move order ends it with no cooldown and no charge; once the warmup starts the job holds")]
@@ -449,11 +414,11 @@ namespace RimArt
         {
             GameComponent_Echoes echoes = Setup(t);
             yield return 5;
-            Pawn host = Host(t, echoes, t.center + new IntVec3(-8, 0, 0), out EchoRecord record);
+            Pawn host = Host(t, t.center + new IntVec3(-8, 0, 0), out EchoRecord record);
             Pawn far = Target(t, t.center + new IntVec3(8, 0, 0));
             yield return 2;
             Ability rasengan = Ready(t, host, MinatoDefOf.AG_Rasengan);
-            if (rasengan == null) { Finish(record); yield break; }
+            if (rasengan == null) { EndHost(record); yield break; }
             float pool = echoes.charge;
             rasengan.QueueCastingJob(far, LocalTargetInfo.Invalid);
             yield return 20;
@@ -476,7 +441,7 @@ namespace RimArt
             t.Log("warmup: " + RimArtTestContext.Describe(host));
             t.Check(host.stances.curStance is Stance_Warmup, "the warmup began");
             t.Check(!host.jobs.IsCurrentJobPlayerInterruptible(), "from the warmup the job holds");
-            Finish(record);
+            EndHost(record);
         }
     }
 }

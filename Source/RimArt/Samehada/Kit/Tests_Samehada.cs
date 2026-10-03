@@ -76,16 +76,6 @@ namespace RimArt
         private static Verb BladeVerb(Pawn holder) =>
             holder.equipment?.PrimaryEq?.AllVerbs?.FirstOrDefault(v => v.IsMeleeAttack);
 
-        /// <summary>One melee attack with the blade that cannot miss.</summary>
-        private static bool Strike(RimArtTestContext t, Pawn holder, Pawn target)
-        {
-            Verb verb = BladeVerb(holder);
-            if (!t.Check(verb != null, "the holder has the blade's melee verb")) return false;
-            bool started = holder.meleeVerbs.TryMeleeAttack(target, verb, true);
-            t.Log(t.Now + " strike " + target.LabelShort + ": " + started + " | " + RimArtTestContext.Describe(holder));
-            return started;
-        }
-
         private static void Trace(RimArtTestContext t, Pawn holder, CompSamehada blade, params Pawn[] others)
         {
             string line = t.Now + " | " + RimArtTestContext.Describe(holder) + " charges " + (blade?.Charges ?? -1)
@@ -141,7 +131,7 @@ namespace RimArt
                 dinfo.SetTool(SamehadaDefOf.AG_Samehada.tools[0]);
                 Patch_Samehada_ChargeDamage.Prefix(ref dinfo);
                 t.Check(UnityEngine.Mathf.Abs(dinfo.Amount - (14f + 2f * charges)) < 0.01f, "hit " + hit + ": a 14 cut becomes " + dinfo.Amount + " at " + charges + " charges");
-                if (!Strike(t, holder, enemy)) yield break;
+                if (!t.Strike(holder, enemy)) yield break;
                 yield return 1;
                 Trace(t, holder, blade, enemy);
                 t.Check(blade.Charges == hit, "after hit " + hit + " the blade has " + hit + " charges (" + blade.Charges + ")");
@@ -171,7 +161,7 @@ namespace RimArt
             for (int i = 0; i < 3; i++)
             {
                 HealAll(enemy);
-                if (!Strike(t, holder, enemy)) yield break;
+                if (!t.Strike(holder, enemy)) yield break;
                 yield return i < 2 ? 190 : 1;
             }
             t.Check(blade.Charges == 3, "3 hits: 3 charges (" + blade.Charges + ")");
@@ -186,7 +176,7 @@ namespace RimArt
             t.Check(blade.Charges == 2, "60.5 s after the last hit: 2 (" + blade.Charges + ")");
             enemy = DownedEnemy(t, t.center + IntVec3.East);
             yield return 5;
-            if (!Strike(t, holder, enemy)) yield break;
+            if (!t.Strike(holder, enemy)) yield break;
             yield return 1;
             t.Check(blade.Charges == 3, "a hit adds one again: 3 (" + blade.Charges + ")");
             enemy.Destroy();
@@ -215,7 +205,7 @@ namespace RimArt
             for (int i = 0; i < 60 && holder.stances.FullBodyBusy; i++) yield return 5;
             t.Log("stance before the strike: " + RimArtTestContext.Describe(holder) + ", pain " + holder.health.hediffSet.PainTotal.ToString("0.00")
                 + " of " + holder.GetStatValue(StatDefOf.PainShockThreshold).ToString("0.00") + ", landed so far " + (Patch_Samehada_Feed.LandedHits - landed));
-            if (!t.Check(Strike(t, holder, mech), "the strike started")) yield break;
+            if (!t.Check(t.Strike(holder, mech), "the strike started")) yield break;
             yield return 1;
             Trace(t, holder, blade, mech);
             t.Check(Patch_Samehada_Feed.LandedHits > landed, "the blade's hits landed on the mechanoid (" + (Patch_Samehada_Feed.LandedHits - landed) + ")");
@@ -251,7 +241,7 @@ namespace RimArt
             // Generated colonists come with old scars: compare against what it had.
             float allyHurt = InjurySeverity(ally);
             yield return 3;
-            if (!Strike(t, holder, front)) yield break;
+            if (!t.Strike(holder, front)) yield break;
             yield return 1;
             Trace(t, holder, blade, front, left, right, behind, ally);
             t.Check(SamehadaFeeding.Stacks(front) == 1 && SamehadaFeeding.Stacks(left) == 1 && SamehadaFeeding.Stacks(right) == 1,
@@ -271,7 +261,7 @@ namespace RimArt
             HealAll(front);
             HealAll(right);
             yield return 3;
-            if (!Strike(t, holder, front)) yield break;
+            if (!t.Strike(holder, front)) yield break;
             yield return 1;
             Trace(t, holder, blade, front, right, allyInArc);
             t.Check(SamehadaFeeding.Stacks(right) == 2, "the hostile beside was hit again (" + SamehadaFeeding.Stacks(right) + ")");
@@ -283,7 +273,7 @@ namespace RimArt
             HealAll(front);
             HealAll(right);
             int stacksRight = SamehadaFeeding.Stacks(right);
-            if (!Strike(t, holder, front)) yield break;
+            if (!t.Strike(holder, front)) yield break;
             yield return 1;
             t.Check(SamehadaFeeding.Stacks(right) == stacksRight, "after it ends the cell beside is not hit (" + SamehadaFeeding.Stacks(right) + ")");
         }
@@ -316,7 +306,7 @@ namespace RimArt
             t.Check(regen >= 5.5f && regen <= 6.5f, "3 s of regeneration healed 6 (" + regen.ToString("0.0") + ")");
             yield return t.ShotAs("fusion-fused");
 
-            if (!Strike(t, holder, enemy)) yield break;
+            if (!t.Strike(holder, enemy)) yield break;
             yield return 1;
             Trace(t, holder, blade, enemy);
             t.Check(blade.Charges == 1 && SamehadaFeeding.Stacks(enemy) == 1, "Feed works while fused: 1 charge, 1 stack");
@@ -406,6 +396,44 @@ namespace RimArt
             t.Check(pawns.All(p => p.health.hediffSet.HasHediff(SamehadaDefOf.AG_SamehadaFused)), "all four are fused");
             t.Check(pawns.All(p => p.Rotation == Facings[pawns.IndexOf(p)]), "each pawn faces its way (north, east, south, west from the left)");
             yield return t.ShotAs("fused-N-E-S-W");
+        }
+
+        /// <summary>
+        /// Close shots for the pawn height fit: a wounded holder facing east hits a standing, stunned enemy
+        /// in armour next to it (the bite and drain on its chest, the holder's healing glow, the Drained
+        /// haze round its feet), then casts Fusion (the merge flash and motes at the grip).
+        /// </summary>
+        [RimArtTest("Samehada", "height 1 bite, drain, healing, drained and fusion flash on real pawns (screenshots)", 2400)]
+        private static IEnumerable<int> Height(RimArtTestContext t)
+        {
+            t.Clear();
+            Pawn holder = HeightShots.Plain(Holder(t, 0, out CompSamehada blade));
+            Wound(holder);
+            Pawn enemy = HeightShots.Target(t, t.center + IntVec3.East);
+            Armour(enemy);
+            enemy.stances.stunner.StunFor(900, null, false);
+            IntVec3 camera = t.center;
+            // The drafted holder hits the enemy beside it by itself; a strike is ordered when it is free.
+            int hit = -1;
+            for (int i = 0; i < 300 && hit < 0; i++)
+            {
+                if (blade.Charges > 0) hit = t.Now;
+                else if (holder.stances.curStance is Stance_Mobile) holder.meleeVerbs.TryMeleeAttack(enemy, BladeVerb(holder), true);
+                if (hit < 0) yield return 1;
+            }
+            if (!t.Check(hit >= 0, "the blade fed on a hit")) yield break;
+            foreach (int at in new[] { 3, 20, 60 })
+            {
+                yield return hit + at - t.Now;
+                yield return HeightShots.Shoot(t, "samehada feed " + at, camera, holder, enemy);
+            }
+            // Fusion cannot start while the holder is in the cooldown of its own melee hits on the enemy beside it.
+            enemy.Destroy();
+            for (int i = 0; i < 240 && !(holder.stances.curStance is Stance_Mobile); i++) yield return 1;
+            blade.SetCharges(5);
+            yield return 2;
+            foreach (int step in HeightShots.Cast(t, holder, SamehadaDefOf.AG_Samehada_Fusion, holder, camera, "samehada fusion", null, 24, 33)) yield return step;
+            yield return 60;
         }
     }
 }

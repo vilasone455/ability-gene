@@ -156,10 +156,19 @@ namespace RimArt
                 ScanRadiusCells, out unused);
         }
 
-        /// <summary>Strain cost of an application that changes this many groups.</summary>
+        /// <summary>
+        /// Strain cost of an application that changes this many groups: the ability def's
+        /// <see cref="CompProperties_VectorManipulation.strainCosts"/>, or <see cref="StrainCosts"/>
+        /// when the def has none.
+        /// </summary>
         public static float StrainCostFor(int groupsChanged)
         {
             if (groupsChanged <= 0) return 0f;
+            var comps = VectorDefOf.AG_VectorReflection?.comps;
+            if (comps != null)
+                for (int i = 0; i < comps.Count; i++)
+                    if (comps[i] is CompProperties_VectorManipulation props && props.strainCosts != null && props.strainCosts.Count > 0)
+                        return props.strainCosts[System.Math.Min(groupsChanged, props.strainCosts.Count) - 1];
             if (groupsChanged > StrainCosts.Length) groupsChanged = StrainCosts.Length;
             return StrainCosts[groupsChanged - 1];
         }

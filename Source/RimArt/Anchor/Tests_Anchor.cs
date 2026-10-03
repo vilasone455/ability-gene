@@ -132,13 +132,6 @@ namespace RimArt
             return sum;
         }
 
-        private static Pawn Target(RimArtTestContext t, IntVec3 at)
-        {
-            Pawn enemy = t.Enemy(at, armed: false);
-            enemy.apparel?.DestroyAll();
-            return enemy;
-        }
-
         /// <summary>Orders Black Flash and waits for the hit, tracing both pawns. The result is in <paramref name="hit"/>.</summary>
         private static IEnumerable<int> Punch(RimArtTestContext t, Pawn carrier, Pawn enemy, PunchResult hit)
         {
@@ -180,7 +173,7 @@ namespace RimArt
         {
             t.Clear();
             Pawn carrier = Carrier(t);
-            Pawn enemy = Target(t, t.center + new IntVec3(1, 0, 0));
+            Pawn enemy = t.Target(t.center + new IntVec3(1, 0, 0));
             var hit = new PunchResult();
             foreach (int step in Punch(t, carrier, enemy, hit)) yield return step;
             t.Check(hit.damage > 0f, "the punch hurt (" + hit.damage.ToString("F1") + ")");
@@ -207,7 +200,7 @@ namespace RimArt
         {
             t.Clear();
             Pawn carrier = Carrier(t);
-            Pawn enemy = Target(t, t.center + new IntVec3(3, 0, 0));
+            Pawn enemy = t.Target(t.center + new IntVec3(3, 0, 0));
             Gene_Anchors gene = AnchorUtility.GeneOf(carrier);
             AbilityDef clap = DefDatabase<AbilityDef>.GetNamed("AG_AnchorClap");
             Ability clapAbility = carrier.abilities.GetAbility(clap);
@@ -281,7 +274,7 @@ namespace RimArt
         {
             t.Clear();
             Pawn todo = Carrier(t);
-            Pawn enemy = Target(t, t.center + new IntVec3(1, 0, 0));
+            Pawn enemy = t.Target(t.center + new IntVec3(1, 0, 0));
             yield return 2;
             EchoDef echo = DebugActions_Todo.Echo;
             t.Check(echo.CastCost(Mark) == 0f && echo.CastCost(DefDatabase<AbilityDef>.GetNamed("AG_AnchorClap")) == 0f
@@ -318,7 +311,7 @@ namespace RimArt
             t.Clear();
             Pawn todo = Carrier(t);
             // Two cells off: an adjacent enemy fights the undrafted Todo, whose melee cooldown then holds the clap back.
-            Pawn enemy = Target(t, t.center + new IntVec3(2, 0, 0));
+            Pawn enemy = t.Target(t.center + new IntVec3(2, 0, 0));
             IntVec3 cell = t.center + new IntVec3(0, 0, 4);
             yield return 2;
 
@@ -385,6 +378,54 @@ namespace RimArt
             yield return t.ShotAs("flash-bolts", enemy.Position, 4f);
             yield return 30;
             yield return t.ShotAs("flash-stun-zone", enemy.Position, 4f);
+            Find.TickManager.CurTimeSpeed = fast;
+            EchoDevice.workingForTests = null;
+        }
+
+        /// <summary>
+        /// Close shots for the pawn height fit: a clap with an enemy two cells east (the two ink frames,
+        /// the arrival), then Black Flash on it inside the window (the fist crackle in the warmup, the
+        /// burst at the contact, the bolts, the stun stars and zone sparks).
+        /// </summary>
+        [RimArtTest("Todo", "height 10 clap and Black Flash on real pawns (screenshots)")]
+        private static IEnumerable<int> Height(RimArtTestContext t)
+        {
+            t.Clear();
+            Pawn todo = HeightShots.Plain(Carrier(t), strip: false);
+            Pawn enemy = HeightShots.Target(t, t.center + new IntVec3(2, 0, 0));
+            IntVec3 camera = t.center + new IntVec3(1, 0, 0);
+            yield return 2;
+            var claps = t.map.GetComponent<MapComponent_ClapTeleports>();
+            Ability clap = todo.abilities.GetAbility(DefDatabase<AbilityDef>.GetNamed("AG_AnchorClap"));
+            clap.QueueCastingJob(enemy, LocalTargetInfo.Invalid);
+            for (int i = 0; i < 60 && !claps.Fired(todo); i++) yield return 1;
+            if (!t.Check(claps.Fired(todo), "the clap landed")) yield break;
+            int swap = t.Now;
+            foreach (int at in new[] { 0, 5, 9, 14 })
+            {
+                yield return swap + at - t.Now;
+                yield return HeightShots.Shoot(t, "todo clap " + at, camera, todo, enemy);
+            }
+
+            // Normal speed, as in pictures 9: the lunge fades too fast at Superfast.
+            TimeSpeed fast = Find.TickManager.CurTimeSpeed;
+            Find.TickManager.CurTimeSpeed = TimeSpeed.Normal;
+            Ability flash = todo.abilities.GetAbility(BlackFlash);
+            flash.QueueCastingJob(enemy, LocalTargetInfo.Invalid);
+            int cast = t.Now, warm = -1;
+            for (int i = 0; i < 300 && flash.lastCastTick < cast; i++)
+            {
+                if (warm < 0 && todo.stances.curStance is Stance_Warmup) warm = t.Now;
+                if (warm >= 0 && t.Now - warm == 7) yield return HeightShots.Shoot(t, "todo flash crackle", camera, todo, enemy);
+                yield return 1;
+            }
+            if (!t.Check(flash.lastCastTick >= cast, "the punch landed")) { Find.TickManager.CurTimeSpeed = fast; yield break; }
+            int hit = t.Now;
+            foreach (int at in new[] { 0, 5, 13, 30, 45 })
+            {
+                yield return hit + at - t.Now;
+                yield return HeightShots.Shoot(t, "todo flash " + at, camera, todo, enemy);
+            }
             Find.TickManager.CurTimeSpeed = fast;
             EchoDevice.workingForTests = null;
         }
