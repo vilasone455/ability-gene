@@ -8,7 +8,7 @@ import { registerLabTexture, pixels } from '../../js/standins.js';
 
 const clamp01 = Mathf.Clamp01;
 export const ArtOf = { head: 48, jaw: 48, blade: 32, body1: 48, body2: 48, tail: 64 };   // Terraria px across a piece's texture
-export const Shift = { head: 0, jaw: 0, blade: 0, body1: 0, body2: 0, tail: -20 };     // px along the line of flight from the piece's centre to its texture's
+export const Shift = { head: 0, jaw: 0, blade: 0, body1: 0, body2: 0, tail: -18 };     // px along the line of flight from the piece's centre to its texture's
 const Tex = 256;
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
 // Terraria's palette (the dragon, the Stardust Cell and Guardian share it).
@@ -71,22 +71,22 @@ const PlateLook = [Deep, Cyan, BlueLight, Ice, Ice];
 // --- the pieces: shapes in Terraria px, x toward the head, y toward the spine; the spine line is y = 3.5 --------------
 // What makes it a dragon and not a fish (the user's note on the first version, 2026-10-03): a long snout with jaws
 // hanging open and fangs, a slanted eye under a brow, long horns swept back, a spiky crest, whiskers and a beard
-// trailing back; a comb of spikes along the back; a slim tail ending in a narrow fork, not a wide fin.
+// trailing back; a comb of spikes along the back; a slim tail ending in swept blades, not a wide fin.
 const Spine = 3.5;
-// A body piece's texture: what sits on the continuous body. Two curved ribs (x = -4 and 4, so the rhythm runs on
-// across pieces 16 px apart) from the spine round the side of the body and back; two belly scales between them; a
-// gold spine on top, swept back, tall on body 1 and short on body 2, over a see-through blue fin that runs back to
-// the next piece's spine.
-const RibCurve = [[1.2, 3.5], [-.4, -1.5], [-2, -6.2], [-3.8, -9.6]];
-const DorsalTall = [[6, 5.5], [2.5, 6.5], [-7, 18]], DorsalShort = [[4.5, 5.5], [1.5, 6.3], [-6, 12]];
-function ribcage(P, p, tall) {
-  const spine = tall ? DorsalTall : DorsalShort;
-  P.over(poly(p, [[7.5, 5], spine[2], [-10, 5]]), BlueLight, .62);
-  P.over(capsule(p, spine[2], [-10, 5.5], .5), Ice, .8);
-  for (const x of [0, -8]) banded(P, q => box(q, [x, -6.2], [2.9, 2.6], 1.2), p, PlateLook, 0);
-  const ribs = [-4, 4].map(x => q => Math.min(...RibCurve.slice(1).map((b, i) => capsule(q, [RibCurve[i][0] + x, RibCurve[i][1]], [b[0] + x, b[1]], 2.2 - .35 * i))));
-  banded(P, union(...ribs, q => poly(q, spine)), p, GoldLook, 1.1);
-  for (const x of [-4, 4]) for (let i = 0; i < 2; i++) P.over(capsule(p, [RibCurve[i][0] + x + .7, RibCurve[i][1]], [RibCurve[i + 1][0] + x + .7, RibCurve[i + 1][1]], .5), Cream);
+// A body piece's texture (the user preferred this body to a continuous one, 2026-10-03): a blue belly with two
+// scales, a gold spine, three ribs a piece (16 px apart, so the rhythm runs on across pieces), and on top a tall
+// spike (body 1) or the rib tips standing up as three small spikes (body 2).
+const Ribs = [-16 / 3, 0, 16 / 3];
+const SpikeShape = [[7.5, 5], [1.5, 6.5], [-8, 20]];
+const Comb = Ribs.map(x => [[x + .4, 8], [x + 2.6, 8], [x - .6, 12.8]]);
+function body(P, p, spike) {
+  const belly = q => box(q, [0, -5.6], [10.5, 5.2], 2);           // 21 px long, so neighbouring bellies overlap into one strip
+  banded(P, belly, p, BlueLook, .9);
+  for (const x of [-4, 4]) banded(P, q => box(q, [x, -6], [2.9, 3.1], 1), p, PlateLook, 0);
+  const ribs = Ribs.map(x => q => capsule(q, [x + 1.4, 9], [x - 1.4, -4.6], 1.25));   // they stop halfway down the belly
+  const gold = union(q => capsule(q, [-10, Spine], [10, Spine], 3), ...ribs, ...(spike ? [q => poly(q, SpikeShape)] : Comb.map(c => q => poly(q, c))));
+  banded(P, gold, p, GoldLook, 1.1);
+  for (const x of Ribs) P.over(capsule(p, [x + 1.3, 8.4], [x - 1.1, -3.8], .4), Cream);
 }
 const ellipse = (p, c, rx, ry) => (Math.hypot((p[0] - c[0]) / rx, (p[1] - c[1]) / ry) - 1) * Math.min(rx, ry);
 // A tapering limb: a polyline of capsules whose radius runs from radii[0] to the last, three steps a segment.
@@ -152,20 +152,23 @@ function blade(P, p) {
   banded(P, q => poly(q, [[-14, 2.2], [-4, 3.4], [14, 0], [-4, -1.6], [-14, -1.4]]), p, BlueLook, .9);
   P.over(capsule(p, [-12, 1.8], [12, .3], .45), Ice);
 }
-// The tail's texture: the continuous body narrows to a point behind the tail piece; past it, three crystal
-// blades swept back (one long one straight on, two out to the sides) and a small pair of fins where they start.
-const TailAxis = .8;                      // the body's middle line where it ends, in the tail's texture
+// The tail's texture: the spine goes on as a gold stub and a thin blue shaft into three crystal blades swept back
+// (one long one straight on, two out to the sides), with a small pair of fins where they start.
+const TailAxis = Spine;
 const BladeMid = [[-12, TailAxis + 1.4], [-12, TailAxis - 1.4], [-46, TailAxis]];
 const BladeSide = [[-9, TailAxis + 1.6], [-15, TailAxis + .6], [-38, TailAxis + 12], [-30, TailAxis + 12.5]];
 const FinSmall = [[-3, TailAxis + 1.6], [-7, TailAxis + 1.2], [-10, TailAxis + 6.5]];
 function tail(P, p) {
   const blades = [BladeMid, BladeSide, mirrorY(BladeSide, TailAxis), FinSmall, mirrorY(FinSmall, TailAxis)];
-  banded(P, union(...blades.map(v => q => poly(q, v))), p, BlueLook, .9);
+  banded(P, union(...blades.map(v => q => poly(q, v)), q => capsule(q, [-2, TailAxis], [-14, TailAxis], 1.5)), p, BlueLook, .9);
+  P.over(capsule(p, [-3, TailAxis], [-13, TailAxis], .55), Ice);
   P.over(capsule(p, [-12, TailAxis], [-44, TailAxis], .5), Ice);
   P.over(capsule(p, BladeSide[0], BladeSide[2], .45), Ice);
   P.over(capsule(p, mirrorY(BladeSide, TailAxis)[0], mirrorY(BladeSide, TailAxis)[2], .45), Ice);
+  const rod = union(q => poly(q, [[12, TailAxis + 2.8], [12, TailAxis - 2.8], [-4, TailAxis - 1.3], [-4, TailAxis + 1.3]]), q => capsule(q, [8, TailAxis], [12, TailAxis], 2.8));
+  banded(P, rod, p, GoldLook, 1.1);
 }
-const Painters = { head: skull, jaw, blade, body1: (P, p) => ribcage(P, p, true), body2: (P, p) => ribcage(P, p, false), tail };
+const Painters = { head: skull, jaw, blade, body1: (P, p) => body(P, p, true), body2: (P, p) => body(P, p, false), tail };
 const border = (u, v, n = Tex) => u < 1 / n || v < 1 / n || u >= 1 - 1 / n || v >= 1 - 1 / n;   // the outermost pixel ring stays clear
 for (const [kind, paint] of Object.entries(Painters)) {
   const art = ArtOf[kind], K = Tex / art;

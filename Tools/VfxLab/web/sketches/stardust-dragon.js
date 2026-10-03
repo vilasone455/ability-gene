@@ -45,22 +45,20 @@
 //   "pieces": the four textures large, plain and mirrored, and the dragon of 4 (Terraria's first summon) and 6
 //   pieces laid out straight at 2x size, to compare with the wiki's pictures.
 //
-// Drawing: the body is one continuous ribbon through every piece (a Catmull-Rom curve, in flat bands: a deep blue
-// edge, the blue body, a cyan sheen and a pale line along the belly), narrowing to two thirds at the tail and
-// to a point behind it, with a continuous gold spine along its back laid over the pieces. Each body piece is a
-// texture on one quad turned to its line of flight: two curved gold ribs round the body, two belly scales, and a
-// gold spine on top, tall and short in turn, over a see-through blue fin that runs back to the next one. The tail
-// is three swept crystal blades. The head, 15 % bigger and on top, is in parts: the skull with two curved horns; the
-// lower jaw on its hinge, opening a little in idle flight, wide (30 degrees) as the head closes on its target and
-// shutting the moment the dragon hits someone, with a dark mouth and a glowing throat between the jaws; three crystal
-// blades of the crest behind it that sway and swing out in turns; a glowing eye; two whiskers that stream back along
-// the line the head has flown. Everything is drawn as Terraria draws the
-// dragon (full bright, alpha halved: once normal at .5 and once additive at .5) and mirrored when it flies west, so
-// the gold spine is always on the north side; a piece that mirrors rolls over in 0.16 s and the ribbon squeezes
-// with it. Each piece has a soft shadow on the ground and a soft cyan glow under it; the body sways gently from
-// side to side (a picture only); a soft trail of light follows the tail for 1.6 cells. The continuous body, the
-// glow, the bigger head, the head's moving parts, the sway, the roll, the trail and the hit flash are not Terraria's: they make it read as
-// one dragon of light at a normal RimWorld zoom (user's notes, 2026-10-03).
+// Drawing: each piece is its texture on one quad turned to its line of flight: the body pieces a blue belly with
+// scales, a gold spine and three ribs, with a tall spike on body 1 and three small ones on body 2 (the user kept this
+// body over a continuous one, 2026-10-03); the tail a gold stub and shaft into three swept crystal blades. The head,
+// 15 % bigger and on top, is in parts: the skull with two curved horns; the lower jaw on its hinge, opening a little
+// in idle flight, wide (30 degrees) as the head closes on its target and shutting the moment the dragon hits someone,
+// with a dark mouth and a glowing throat between the jaws; three crystal blades of the crest behind it that sway and
+// swing out in turns; a glowing eye; two whiskers that stream back along the line the head has flown. Everything is
+// drawn as Terraria draws the dragon (full bright, alpha halved: once normal at .5 and once additive at .5) and
+// mirrored when it flies west, so the gold spine is always on the north side; a piece that mirrors rolls over in
+// 0.16 s. Pieces draw neck to tail, then the tail, then the head (Terraria's order), each with a soft shadow on the
+// ground and a soft cyan glow under it; the body sways gently from side to side (a picture only); a soft trail of
+// light follows the tail for 1.6 cells. The glow, the bigger head, the head's moving parts, the sway, the roll, the
+// trail and the hit flash are not Terraria's: they make it read as a dragon of light at a normal RimWorld zoom
+// (user's notes, 2026-10-03).
 // Ice Torch dust: about 2 a second per piece at a random point of the piece, drifting and slowing, swelling then
 // shrinking over 0.7 s, each with a faint pool of its light on the floor. The movement runs `pace` Terraria ticks per
 // tick (0.5: half Terraria's speed, so the shape of the path is the same and its speed readable; 1 is the game). Sizes
@@ -77,7 +75,7 @@ import { ringAt } from './lib/goku.js';
 import { walls } from './lib/paper-bomb.js';
 import { damageBar, PainShock, walk, downSmoke } from './lib/terraria.js';
 import { simulate, liveDust, dustAt, kindOf } from './lib/stardust-dragon-ai.js';
-import { piece, rollOf, aura, bodyLine, bodyRibbon, spineRibbon, wake, head, whisker, WhiskerRoots, HeadScale, dust, staff, TailTaper, IceColour, CyanColour, LightColour } from './lib/stardust-dragon.js';
+import { piece, rollOf, aura, wake, head, whisker, WhiskerRoots, HeadScale, dust, staff, IceColour, CyanColour, LightColour } from './lib/stardust-dragon.js';
 
 const smooth = Mathf.Smooth, D2R = Mathf.Deg2Rad;
 const White = new Color(1, 1, 1), Warn = new Color(.85, .18, .12), Wielder = new Color(.30, .50, .62);
@@ -154,27 +152,22 @@ function pieces(r, k, o, s) {
   return out;
 }
 
-// The dragon: the sway, shadows and glow, the continuous body, the body pieces (ribs, scales, dorsal spines and fin,
-// neck to tail), the gold spine over them, the tail's blades, the head on top. Pieces narrow toward the tail.
+// The dragon: the sway, shadows and glow, then the pieces in Terraria's order (neck to tail, the tail, the head on
+// top); the whiskers go under the head.
 function dragon(list, cells, sun, strength, s, { wave = 1, key = '', open = JawIdle * D2R, whiskers = [], layer = Y + .1 } = {}) {
   const n = list.length, off = list.map((q, i) => wave * WaveAmp * cells * Math.min(1, i / 2) * Math.sin(i * WaveK - s * WaveRate));
   list.forEach((q, i) => {
     q.c = { x: q.c.x - Math.sin(q.rot) * off[i], z: q.c.z + Math.cos(q.rot) * off[i] };
     if (i > 0 && i < n - 1) q.rot += Math.atan((off[i - 1] - off[i + 1]) / (32 * cells));
-    q.roll = rollOf(q.flip, q.since); q.taper = 1 - (1 - TailTaper) * i / Math.max(1, n - 1);
+    q.roll = rollOf(q.flip, q.since);
   });
   list.forEach(q => {
     const g = { x: q.c.x + sun.x * FlyHeight, z: q.c.z - FlyHeight * Lift + sun.z * FlyHeight };
-    sprite(g, 24 * cells * q.taper, 11 * cells * q.taper, Body.withAlpha(strength * .7 * q.alpha), soft, shadowLayer, -q.rot / D2R);
-    aura(q.c, q.rot, cells * q.taper, q.alpha, layer - .01);
+    sprite(g, 24 * cells, 11 * cells, Body.withAlpha(strength * .7 * q.alpha), soft, shadowLayer, -q.rot / D2R);
+    aura(q.c, q.rot, cells, q.alpha, layer - .01);
   });
-  const pts = bodyLine(list, cells), alpha = list[0].alpha;
-  bodyRibbon(pts, cells, alpha, layer, key);
-  list.slice(1, -1).forEach((q, i) => piece(q.kind, q.c, q.rot, q.roll, cells, q.alpha, layer + .003 + i * .004, q.taper));
-  const top = layer + .003 + n * .004;
-  spineRibbon(pts, cells, alpha, top, key);
-  const t = list[n - 1], h = list[0];
-  piece(t.kind, t.c, t.rot, t.roll, cells, t.alpha, top + .003);
+  list.slice(1).forEach((q, i) => piece(q.kind, q.c, q.rot, q.roll, cells, q.alpha, layer + i * .004));
+  const top = layer + n * .004, h = list[0];
   whiskers.forEach((w, i) => whisker(`stardust whisker${key} ${i}`, w(h), 1.6 * cells * HeadScale, h.alpha, top + .0035 + i * .0001));
   const turn = n > 1 ? Math.atan2(Math.sin(h.rot - list[1].rot), Math.cos(h.rot - list[1].rot)) : 0;
   head(h, cells, h.alpha, top + .004, open, Math.max(-.5, Math.min(.5, -CrestSwing * turn * h.roll.side)), s);

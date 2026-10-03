@@ -1,17 +1,16 @@
 // Stardust Dragon Staff: how the dragon is drawn. Not a sketch itself, so it is not listed in sketches/index.js. The
 // movement and the fight are in stardust-dragon-ai.js, the textures in stardust-dragon-textures.js.
 //
-// The dragon: a continuous glowing body and gold spine through every piece (bodyLine, bodyRibbon, spineRibbon),
-// narrowing toward the tail; on it each body piece's texture (ribs, belly scales, a dorsal spine and fin) and the
-// tail's blades; the head in parts (head()): crest blades that sway, the mouth between the jaws, the lower jaw on its
-// hinge, the upper head and the eye's glow; whiskers (whisker()) and the tail's wake of light (wake()).
+// The dragon: each body piece and the tail as one texture (piece()); the head in parts (head()): crest blades that
+// sway, the mouth between the jaws, the lower jaw on its hinge, the upper head and the eye's glow; whiskers
+// (whisker()) and the tail's wake of light (wake()).
 //
 // Drawing a piece is Terraria's: full bright with the colour's alpha halved, which with premultiplied blending
 // is src + 0.5 x dst. Here that is the same texture drawn twice, Transparent at alpha .5 and then MoteGlow at
 // alpha .5, the glow 0.0002 higher so Unity keeps the order. A piece flying west is drawn on a quad with its
 // u flipped and turned 180 degrees, which mirrors it across its line of flight, so the gold stays north
-// (Terraria mirrors by the sign of x speed). In C# the flipped quad is MeshPool.plane10Flip; the ribbons, the
-// mouth and the whiskers are meshes rebuilt each frame (Shared/VfxDraw strips).
+// (Terraria mirrors by the sign of x speed). In C# the flipped quad is MeshPool.plane10Flip; the mouth and the
+// whiskers are meshes rebuilt each frame (Shared/VfxDraw strips).
 import { Color, Mathf, Mesh, MeshPool, MaterialPool, ShaderDatabase } from '../../js/engine.js';
 import { draw, mesh } from './six-paths-solid.js';
 import { Y, sprite, soft, glow } from './six-paths-impact.js';
@@ -22,7 +21,6 @@ import { ArtOf, Shift, Kinds, Hinge, JawLip, UpperLip, EyeAt, Cream, GoldLight, 
 const clamp01 = Mathf.Clamp01, D2R = Mathf.Deg2Rad;
 export const HeadScale = 1.15;
 const DrawScale = { head: HeadScale, jaw: HeadScale, blade: HeadScale, body1: 1, body2: 1, tail: 1 };       // the head drawn a little bigger, so it reads at a normal zoom
-export const TailTaper = .66;             // the body's width at the tail, as a share of its width at the neck
 export const IceColour = new Color(...Ice), CyanColour = new Color(...Cyan), LightColour = new Color(.75, .85, 1);   // Ice Torch light, (0.75, 0.85, 1.4) clamped
 
 const Mats = Object.fromEntries(Kinds.map(kind => [kind, {
@@ -120,45 +118,7 @@ export function whisker(key, pts, half, alpha, layer) {
   });
 }
 
-// --- the continuous body and the gold spine, through every piece --------------------------------------------------
-// Bands across the body in Terraria px from its middle line, toward the spine side (+) and the belly (-), drawn in
-// order; each is a strip drawn twice like a piece (normal at .5, additive at .5).
-const BodyBands = [[-10.9, 3.6, Deep], [-10, 3, Blue], [-10, -8.4, Deep], [-6.2, -3.2, Cyan], [-5, -4.4, BlueLight]];
-const SpineBands = [[-.3, 7.3, Outline], [.9, 6.1, GoldDark], [2.2, 6.1, Gold], [4.4, 6.1, GoldLight], [5.3, 6, Cream]];
 const flatNormal = MaterialPool.MatFrom('white', ShaderDatabase.Transparent), flatGlow = MaterialPool.MatFrom('white', ShaderDatabase.MoteGlow);
-const Sub = 4;                            // strip points per gap between pieces (a Catmull-Rom curve through the pieces)
-const cr = (a, b, c, d, u) => .5 * (2 * b + (c - a) * u + (2 * a - 5 * b + 4 * c - d) * u * u + (3 * b - a - 3 * c + d) * u * u * u);
-// The body's middle line from the head through every piece to a point behind the tail: { x, z, w (width share),
-// sign (the side the spine is on, -1..1 through a roll) }. list: the pieces head first, each { c, rot, roll, taper }.
-export function bodyLine(list, cells) {   // (the same for every dragon drawn; bands() keys its meshes by `key`)
-  const n = list.length, pts = [];
-  const sign = q => q.roll.side * q.roll.across;
-  for (let i = 0; i < n - 1; i++) {
-    const a = list[Math.max(0, i - 1)].c, b = list[i].c, c = list[i + 1].c, d = list[Math.min(n - 1, i + 2)].c;
-    for (let j = 0; j < Sub; j++) {
-      const u = j / Sub;
-      pts.push({ x: cr(a.x, b.x, c.x, d.x, u), z: cr(a.z, b.z, c.z, d.z, u), w: Mathf.Lerp(list[i].taper, list[i + 1].taper, u), sign: Mathf.Lerp(sign(list[i]), sign(list[i + 1]), u) });
-    }
-  }
-  const t = list[n - 1], dx = Math.cos(t.rot), dz = Math.sin(t.rot);
-  [0, 6, 12, 18, 24].forEach((d, k) => pts.push({ x: t.c.x - dx * d * cells, z: t.c.z - dz * d * cells, w: t.taper * [1, .78, .55, .32, .1][k], sign: sign(t) }));
-  return pts;
-}
-function bands(key, pts, cells, list, alpha, layer) {
-  list.forEach(([lo, hi, colour], b) => {
-    const A = [], B = [];
-    pts.forEach((q, i) => {
-      const p0 = pts[Math.max(0, i - 1)], p1 = pts[Math.min(pts.length - 1, i + 1)], L = Math.hypot(p1.x - p0.x, p1.z - p0.z) || 1;
-      const nx = (p1.z - p0.z) / L, nz = -(p1.x - p0.x) / L, k = q.w * q.sign * cells;   // the left of the line of flight (points run head to tail)
-      A.push({ x: q.x + nx * hi * k, z: q.z + nz * hi * k }); B.push({ x: q.x + nx * lo * k, z: q.z + nz * lo * k });
-    });
-    const c = new Color(...colour);
-    strip(`${key} ${b} normal`, A, B, c.withAlpha(.5 * alpha), flatNormal, layer + b * .0004);
-    strip(`${key} ${b} glow`, A, B, c.withAlpha(.5 * alpha), flatGlow, layer + b * .0004 + .0002);
-  });
-}
-export function bodyRibbon(pts, cells, alpha, layer, key = '') { bands(`stardust body${key}`, pts, cells, BodyBands, alpha, layer); }
-export function spineRibbon(pts, cells, alpha, layer, key = '') { bands(`stardust spine${key}`, pts, cells, SpineBands, alpha, layer); }
 
 // The light the tail leaves: soft glow spots along the tail tip's last positions, smaller and fainter further back
 // (not Terraria's, which leaves only its dust). pts: newest first, in cells; size: the first spot's length, cells.
