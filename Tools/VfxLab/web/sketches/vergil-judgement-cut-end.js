@@ -58,29 +58,26 @@ import { Color, Mathf, Meshes } from '../js/engine.js';
 import { draw, mesh } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, glow, rand } from './lib/six-paths-impact.js';
 import {
-  Blue, Deep, Ice, Void, White, EnemyColour, Ally, pawn, carrier, scabbardMouth, cut, afterimage, hitCut, shatter, chord,
-  ringAt, glint, aura, streak, whiteGlow, wallCell, smooth, clamp,
+  Blue, Ice, Void, White, carrier, scabbardMouth, cut, afterimage, hitCut, chord,
+  ringAt, glint, aura, streak, whiteGlow, smooth, clamp,
 } from './lib/vergil.js';
+import { Hits, HitGap, markedIn, firstHit, wall, pawns, panes, risingLights } from './lib/vergil-cut-end.js';
 
 const disc = Meshes.disc(64, 'judgement cut end disc');
 // Decided values. The panel keeps only what is still being tuned.
 const Lead = .5, Tail = 1.8, Sweep = .07, FirstCut = .1, LastCut = .15, Dark = .55, Front = .15, CutsGone = .25;
 const EdgeWidth = .07, EdgeFacing = .3, Ajar = [.03, .08], FallTo = .7;   // pane edges; how far a pane sits off its place before the click; its size when it is gone
-const Hits = 4, HitGap = .08, WalkIn = 1.1, Motes = 40, StandUp = .7;
-// Raiders as [direction from the caster (degrees), distance when the caster vanishes (cells)].
-const Raiders = [[25, 3.2], [80, 5.6], [-35, 6.4], [140, 4.3], [-110, 7.4], [172, 8.4]];
-const OutsideAt = [58, 2.5], AllyAt = [-72, 2.6], WallAt = [212, 4.6];   // outside: degrees, cells past the radius
+const Motes = 40, StandUp = .7;
 
 function times(p) {
   const cast = Lead, vanish = cast + p.warm, back = vanish + p.gone, click = back + p.sheathe;
   return { cast, vanish, back, click, end: click + Tail };
 }
-const polar = (deg, d) => ({ x: Math.cos(deg * Mathf.Deg2Rad) * d, z: Math.sin(deg * Mathf.Deg2Rad) * d });
 
 // The cuts, relative to the caster: the first ones each pass through a marked raider's chest, the
 // rest cross the ring anywhere. order is when each is drawn.
 function layout(p) {
-  const marked = Raiders.filter(([, d]) => d <= p.radius).map(([deg, d]) => polar(deg, d));
+  const marked = markedIn(p.radius);
   const count = Math.round(p.cuts), cuts = [];
   for (let k = 0; k < count; k++) {
     // Every cut runs across the line from the caster to its point, within 40 degrees, so none crosses the caster's cell.
@@ -94,34 +91,15 @@ function layout(p) {
   return { marked, cuts };
 }
 
-// Pieces between the cuts, as panes of glass. Each has a face mesh and two edge meshes: the edges
-// that face the light (drawn bright) and the ones that face away (drawn dark), each an EdgeWidth
-// strip just inside the outline. Rebuilt only when the radius, the cut count or the sun changes.
+// Pieces between the cuts, as panes of glass (lib/vergil-cut-end.js panes). Rebuilt only when the
+// radius, the cut count or the sun changes.
 let built = { key: '', pieces: [], cuts: [], marked: [] };
 function pieces(p, sun) {
   const sunLength = Math.hypot(sun.x, sun.z) || 1, light = { x: -sun.x / sunLength, z: -sun.z / sunLength };
   const key = `${p.radius}|${Math.round(p.cuts)}|${light.x.toFixed(2)}|${light.z.toFixed(2)}`;
   if (built.key !== key) {
-    const { marked, cuts } = layout(p), list = shatter(p.radius, cuts);
-    list.forEach((piece, i) => {
-      const vertices = [0, 0], tri = [], n = piece.points.length, edges = { lit: [[], []], dim: [[], []] };
-      piece.points.forEach(v => vertices.push(v.x, v.z));
-      for (let j = 0; j < n; j++) {
-        tri.push(0, 1 + j, 1 + (j + 1) % n);
-        const v = piece.points[j], w = piece.points[(j + 1) % n], dx = w.x - v.x, dz = w.z - v.z, len = Math.hypot(dx, dz);
-        if (len < .05) continue;
-        const nx = dz / len, nz = -dx / len, facing = nx * light.x + nz * light.z;   // outward normal of a counter-clockwise outline
-        if (Math.abs(facing) < EdgeFacing) continue;
-        const [verts, tris] = facing > 0 ? edges.lit : edges.dim, at = verts.length / 2;
-        verts.push(v.x, v.z, w.x, w.z, w.x - nx * EdgeWidth, w.z - nz * EdgeWidth, v.x - nx * EdgeWidth, v.z - nz * EdgeWidth);
-        tris.push(at, at + 1, at + 2, at, at + 2, at + 3);
-      }
-      mesh(`judgement cut end piece ${i}`).setFlat(vertices, tri);
-      piece.lit = edges.lit[0].length > 0; piece.dim = edges.dim[0].length > 0;
-      if (piece.lit) mesh(`judgement cut end piece ${i} lit`).setFlat(...edges.lit);
-      if (piece.dim) mesh(`judgement cut end piece ${i} dim`).setFlat(...edges.dim);
-    });
-    built = { key, pieces: list, cuts, marked };
+    const { marked, cuts } = layout(p);
+    built = { key, pieces: panes('judgement cut end', p.radius, cuts, light, EdgeWidth, EdgeFacing), cuts, marked };
   }
   return built;
 }
@@ -157,15 +135,12 @@ export default {
     const sun = scene?.shadowVector ?? { x: -.45, z: -.32 }, strength = scene?.sun?.strength ?? .32;
     const { pieces: shards, cuts, marked } = pieces(p, sun), R = p.radius;
     const world = q => ({ x: o.x + q.x, z: o.z + q.z });
-    const sinceClick = s - t.click, stopped = s >= t.vanish && sinceClick < 0;
+    const sinceClick = s - t.click;
     const dark = smooth((s - t.vanish) / .12) * (1 - smooth(sinceClick / .4));
     const startOf = c => t.vanish + FirstCut + c.order / Math.max(1, cuts.length - 1) * (p.gone - FirstCut - LastCut - Sweep);
 
     // --- the wall ---------------------------------------------------------------------------------------------------
-    if (p.wall) for (let k = -1; k <= 1; k++) {
-      const c = polar(WallAt[0], WallAt[1]), r = WallAt[0] * Mathf.Deg2Rad;
-      wallCell(world({ x: c.x - Math.sin(r) * k, z: c.z + Math.cos(r) * k }), WallAt[0]);
-    }
+    if (p.wall) wall(o);
 
     // --- the floor: the true radius, scars left along the cuts ---------------------------------------------------------
     if (s >= t.cast) {
@@ -176,20 +151,7 @@ export default {
       streak(`judgement cut end scar ${k}`, world(c.a), world(c.b), .05, Void.withAlpha(.5 - .25 * smooth(sinceClick / Tail)), undefined, Floor + .01, 4));
 
     // --- pawns, north first ---------------------------------------------------------------------------------------------
-    const figures = [];
-    marked.forEach((m, i) => {
-      const [deg, d] = Raiders.filter(([, far]) => far <= R)[i], before = Math.max(0, t.vanish - s) * WalkIn;
-      figures.push({ pos: world(polar(deg, d + before)), marked: true, i });
-    });
-    figures.push({ pos: world(polar(OutsideAt[0], Math.max(1.6, R + OutsideAt[1] + (t.vanish - s) * WalkIn))), i: 20 });
-    figures.push({ pos: world(polar(AllyAt[0] + s * 4, AllyAt[1])), ally: true, i: 21 });
-    if (p.wall) figures.push({ pos: world(polar(WallAt[0] + Math.sin(s * .9) * 6, WallAt[1] + 1.1)), i: 22 });
-    figures.sort((m, n) => n.pos.z - m.pos.z).forEach(g => {
-      if (!g.marked) { pawn(g.pos, g.ally ? Ally : EnemyColour, sun, strength, { tint: Deep, tintAmount: .25 * dark }); return; }
-      const first = t.click + .04 + g.i * .025, last = first + (Hits - 1) * HitGap, down = s >= last + .1;
-      const shake = s >= first && !down ? Math.sin(s * 90 + g.i) * .04 : 0;
-      pawn({ x: g.pos.x + shake, z: g.pos.z }, EnemyColour, sun, strength, { lie: down, tint: stopped ? Deep : White, tintAmount: stopped ? .5 * dark : .7 * clamp(1 - (s - last) / .2) * (s >= first ? 1 : 0) });
-    });
+    pawns(s, t, R, o, sun, strength, dark, p.wall);
 
     // --- the caster -------------------------------------------------------------------------------------------------------
     const w = clamp((s - t.cast) / p.warm);
@@ -208,10 +170,7 @@ export default {
     }
 
     // --- warm-up: lights rise out of the floor inside the ring ---------------------------------------------------------------
-    if (s >= t.cast && s < t.vanish) for (let i = 0; i < Motes; i++) {
-      const v = (w * 2.2 + rand(i)) % 1, at = polar(rand(i + 60) * 360, Math.sqrt(rand(i + 120)) * R * smooth(w * 1.25)), base = world(at);
-      streak(`judgement cut end mote ${i}`, { x: base.x, z: base.z + v * .7 }, { x: base.x, z: base.z + v * .7 + .3 }, .05, Ice.withAlpha(.8 * w * Math.sin(v * Math.PI)), whiteGlow, Y + .01, 3);
-    }
+    if (s >= t.cast && s < t.vanish) risingLights('judgement cut end', o, R, w, Motes);
 
     // --- the dark inside the ring, over the pawns and under the cuts -----------------------------------------------------------
     draw(disc, o.x, Y - .05, o.z, R, R, 0, Void.withAlpha(Dark * dark));
@@ -252,7 +211,7 @@ export default {
       if (sinceClick < Front * 2) ringAt(o, R * smooth(sinceClick / Front), Ice.withAlpha(.45 * (1 - sinceClick / (Front * 2))), Y + .06, true, whiteGlow);
       sprite(o, R * 2.4, R * 2.4, Ice.withAlpha(.3 * (1 - clamp(sinceClick / .2))), glow, Y + .055);
       marked.forEach((m, i) => {
-        const first = t.click + .04 + i * .025;
+        const first = firstHit(t.click, i);
         for (let h = 0; h < Hits; h++) hitCut(`judgement cut end hit ${i} ${h}`, world(m), (h * 47 + i * 31 + 20) % 180 - (h % 2 ? 0 : 90), s - first - h * HitGap);
       });
     }

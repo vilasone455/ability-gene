@@ -99,6 +99,24 @@ export const ShaderDatabase = {
  * a negative of everything already drawn under it.
  */
 export const InvertShader = Shader('Invert');
+/**
+ * A shader of the mod's own, shipped in an asset bundle (AssetBundles/, one build per OS); not in
+ * ShaderDatabase. `fragment` is its lab stand-in: a GLSL ES 3.0 fragment shader that writes the final
+ * colour (no blending) and may read what is already drawn, as a ShaderLab GrabPass with a name does:
+ *
+ *   in vec2 v_uv;                 the mesh's texture coordinates
+ *   uniform sampler2D u_tex;      the material's main texture
+ *   uniform sampler2D u_scene;    the picture drawn so far (the grab); taken once for a run of calls on one shader
+ *   uniform vec4 u_color;         the call's colour (_Color)
+ *   uniform vec2 u_screen;        the grab's size in pixels: gl_FragCoord.xy / u_screen is this pixel in it
+ *   uniform vec2 u_cellUv;        one map cell in grab coordinates
+ *   uniform float u_age;          the call's AgeSecs
+ *
+ * plus one `uniform float` per Material.SetFloat name and one float or vec4 per property block
+ * SetFloat / SetVector name (`_Shift`). The game needs the same shader written in ShaderLab and built
+ * with Unity 2022.3.35f1; until a kit has that, its sketch keeps a built-in way to draw the same thing.
+ */
+export const CustomShader = (name, fragment) => ({ name, fragment });
 export const ShaderPropertyIDs = { Color: 'Color', AgeSecs: 'AgeSecs' };
 
 export class Texture2D { constructor(path) { this.path = path; } }
@@ -119,7 +137,7 @@ export class Material {
   SetFloat(name, v) { this.floats[name] = v; }
   /** The renderer reads this shape; recordings produce it from JSON. */
   get data() {
-    return this._data ??= { shader: this.shader.name, tex: this.mainTexture.path, textures: this.textures, floats: this.floats };
+    return this._data ??= { shader: this.shader.name, fragment: this.shader.fragment, tex: this.mainTexture.path, textures: this.textures, floats: this.floats };
   }
 }
 
@@ -134,7 +152,10 @@ export const MaterialPool = {
 
 export class MaterialPropertyBlock {
   SetColor(id, c) { if (id === ShaderPropertyIDs.Color) this.colour = c; }
-  SetFloat(id, v) { if (id === ShaderPropertyIDs.AgeSecs) this.age = v; }
+  /** AgeSecs, or by name a float of a CustomShader. */
+  SetFloat(id, v) { if (id === ShaderPropertyIDs.AgeSecs) this.age = v; else (this.values ??= {})[id] = v; }
+  /** By name, a vec4 of a CustomShader: SetVector('_Shift', { x, y, z, w }). */
+  SetVector(id, v) { (this.values ??= {})[id] = [v.x ?? 0, v.y ?? 0, v.z ?? 0, v.w ?? 0]; }
 }
 
 let nextMesh = 1;
@@ -196,6 +217,7 @@ export const Graphics = {
       x: matrix.pos.x, y: matrix.pos.y, z: matrix.pos.z, rot: matrix.rot, rx: matrix.rotX ?? 0, rz: matrix.rotZ ?? 0,
       sx: matrix.scale.x, sy: matrix.scale.y, sz: matrix.scale.z,
       r: c.r, g: c.g, b: c.b, a: c.a, age: props?.age ?? 0, flat: flatAt, screen: onScreen,
+      values: props?.values ? { ...props.values } : null,
     });
   },
   /**

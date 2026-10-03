@@ -8,6 +8,7 @@
 //   Cutout              alpha tested at 0.5
 //   Invert              1 - what is under it, by alpha (Hidden/Internal-Colored, see engine.js)
 //   MoteLargeDistortionWave   screen warp, approximated (the real shader is a vanilla asset)
+//   a CustomShader      its own GLSL, reading the picture drawn so far (engine.js CustomShader)
 //
 // A view can instead be drawn through a perspective camera (view.three, from a sketch's camera()): calls
 // in the order they were made, with a depth test, each vertex placed by the camera and moved by `blend`
@@ -353,6 +354,7 @@ export class Renderer {
       const ppc = view.camera.ppc * dpr;
       const ndc = [(2 * ppc) / w, (2 * ppc) / h];
       const order = view.calls.map((c, i) => [c.y, i]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+      let grabbedFor = null;
 
       for (const [, i] of order) {
         const call = view.calls[i];
@@ -362,8 +364,9 @@ export class Renderer {
         if (tex.standIn) used.add(mat.tex);
         if (!tex.ready) continue;
         const mesh = this.mesh(call.mesh);
-        const warp = mat.shader === 'MoteLargeDistortionWave';
-        const prog = warp ? this.warp : this.basic;
+        const warp = mat.shader === 'MoteLargeDistortionWave', custom = !!mat.fragment;
+        const prog = custom ? this.custom(mat) : warp ? this.warp : this.basic;
+        if (!custom) grabbedFor = null;
         gl.useProgram(prog.program);
         const u = prog.uniforms;
         gl.uniform2f(u.u_translate, call.x, call.z);
@@ -376,7 +379,30 @@ export class Renderer {
         gl.bindTexture(gl.TEXTURE_2D, tex.tex);
         gl.uniform1i(u.u_tex, 0);
 
-        if (warp) {
+        if (custom) {
+          // As a named GrabPass does: the picture so far is copied once for a run of calls on one shader.
+          if (grabbedFor !== mat.shader) {
+            gl.disable(gl.SCISSOR_TEST);
+            gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.msFbo);
+            gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this.copyFbo);
+            gl.blitFramebuffer(0, 0, W, H, 0, 0, W, H, gl.COLOR_BUFFER_BIT, gl.NEAREST);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this.msFbo);
+            gl.enable(gl.SCISSOR_TEST);
+            gl.viewport(vx, vy, w, h);
+            grabbedFor = mat.shader;
+          }
+          used.add(`${mat.shader} (the mod's own shader; the lab draws its GLSL stand-in)`);
+          gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.copyTex); gl.uniform1i(u.u_scene, 1);
+          gl.uniform2f(u.u_screen, W, H);
+          gl.uniform2f(u.u_cellUv, ppc / W, ppc / H);
+          gl.uniform1f(u.u_age, call.age ?? 0);
+          for (const [name, v] of Object.entries(mat.floats ?? {})) if (u[name]) gl.uniform1f(u[name], v);
+          for (const [name, v] of Object.entries(call.values ?? {})) {
+            if (!u[name]) continue;
+            if (Array.isArray(v)) gl.uniform4f(u[name], v[0], v[1], v[2], v[3]); else gl.uniform1f(u[name], v);
+          }
+          gl.disable(gl.BLEND);
+        } else if (warp) {
           // Resolve what is drawn so far, then draw the warp reading from that copy.
           gl.disable(gl.SCISSOR_TEST);
           gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.msFbo);
@@ -415,6 +441,13 @@ export class Renderer {
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
     gl.blitFramebuffer(0, 0, W, H, 0, 0, W, H, gl.COLOR_BUFFER_BIT, gl.NEAREST);
     return used;
+  }
+
+  /** The program for a CustomShader material, compiled once per shader name. */
+  custom(mat) {
+    this.customs ??= new Map();
+    if (!this.customs.has(mat.shader)) this.customs.set(mat.shader, compile(this.gl, BASIC_VS, mat.fragment));
+    return this.customs.get(mat.shader);
   }
 
   setBlend(shader) {
@@ -456,6 +489,7 @@ export class Renderer {
       if (call.a <= 0 || view.hidden?.has(call.group)) continue;
       const mat = call.mat;
       if (mat.shader === 'MoteLargeDistortionWave') { used.add('MoteLargeDistortionWave (not drawn by a 3D camera)'); continue; }
+      if (mat.fragment) { used.add(`${mat.shader} (not drawn by a 3D camera)`); continue; }
       const tex = this.texture(mat.tex);
       if (tex.standIn) used.add(mat.tex);
       if (!tex.ready) continue;

@@ -201,6 +201,30 @@ Create materials once, at the top of the file.
 | `ShaderDatabase.Cutout` | A pixel is either drawn fully or not at all, at 50 % alpha | Hard-edged sprites |
 | `InvertShader` (from `engine.js`) | Negative of what is under it, by alpha: draw with colour `(a, a, a, a)`. Not in ShaderDatabase: in C# it is `Hidden/Internal-Colored` with `_SrcBlend` OneMinusDstColor and `_DstBlend` OneMinusSrcAlpha | Screen-negative flashes |
 
+### A shader of the mod's own
+
+RimWorld 1.6 loads a mod's compiled shaders from `AssetBundles/` (one bundle per OS, named `..._win`,
+`..._mac`, `..._linux`), built with Unity 2022.3.35f1. The mod has none yet. A sketch can try one:
+
+```js
+import { CustomShader, Material } from '../js/engine.js';
+
+const Glass = CustomShader('RimArt/CutGlass', `#version 300 es ... `);   // a GLSL ES 3.0 fragment shader
+const glass = new Material(Glass);
+glass.SetFloat('_Grey', 0.9);                                              // a float of the material
+props.SetVector('_Shift', { x: 0.2, y: 0, z: 0.05 });                      // a value of one call
+```
+
+- The fragment shader writes the final colour; nothing is blended. It can read the picture drawn so far
+  (`u_scene`), which is how it drains colour or shifts what is behind it. `engine.js` lists the uniforms.
+- The picture is copied once for a run of calls on one shader, as a named `GrabPass` does in Unity. Draw
+  those calls at one altitude, after everything they should see.
+- It is not drawn through a 3D camera.
+- The Layers tab lists it as a stand-in: the game needs the same shader written in ShaderLab.
+- Keep a built-in way to draw the same thing behind a checkbox. The game falls back to it when the
+  bundle is missing, and the sketch shows what the shader adds. `vergil-judgement-cut-end-v2.js` and
+  `CutGlass` in `lib/vergil-cut-end.js` are the worked example.
+
 ### Random numbers
 
 `draw` is called for whatever time is on the timeline, in any order, and export relies on the same
@@ -336,7 +360,7 @@ outside this list needs a different plan, not a workaround in JavaScript.
 
 | Cannot | Why, and what to do instead |
 |---|---|
-| Custom GLSL or shaders | The mod uses RimWorld's built-in shaders only. Use the four in the table above. |
+| Custom GLSL or shaders, as the only way a sketch draws | The mod ships no shader of its own yet. One can be tried (see "A shader of the mod's own"), next to a built-in way to draw the same thing. |
 | True 3D, perspective, lighting | The game camera is flat and straight down. Fake height by moving things north; fake shading with darker and lighter shapes. A cutscene can use a 3D camera (above); it still has no lighting. |
 | Tilt a sprite on x or z | Only the Y angle is used on the map camera. Draw the tilted shape as your own mesh. |
 | Per-corner colours or gradients inside a mesh | One colour per draw call. Use a texture with the gradient in its alpha, or stack several draws. |
