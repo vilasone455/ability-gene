@@ -210,6 +210,7 @@ namespace RimArt
             Vector3 middle = target.ToVector3Shifted();
             to = new Vector3(middle.x, ChibakuBall.DefaultHeight, middle.z);
             run = ChibakuBall.CorePathLength(from, to);
+            SoundLayers.Play(PainDefOf.AG_PainChibakuLaunch, home, caster.Position);
         }
 
         public override bool Holds(int now)

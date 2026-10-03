@@ -1,4 +1,178 @@
 {
+  "sound:AG_PainBanshoCast": {
+    "option": "Synth: sucked in, very low",
+    "layers": [
+      {
+        "folder": "AG/KamuiIn",
+        "clip": null,
+        "pitch": 0.6,
+        "volume": 30,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:13"
+  },
+  "sound:AG_PainBanshoPull": {
+    "option": "Synth: sucked in, low",
+    "layers": [
+      {
+        "folder": "AG/KamuiIn",
+        "clip": null,
+        "pitch": 0.7,
+        "volume": 40,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:08"
+  },
+  "sound:AG_PainBanshoSlam": {
+    "option": "Rock collapse, short",
+    "layers": [
+      {
+        "folder": null,
+        "clip": "Misc/RockCollapse",
+        "pitch": 1.2,
+        "volume": 50,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:08"
+  },
+  "sound:AG_PainChibakuBurst": {
+    "option": "Giant explosion, low",
+    "layers": [
+      {
+        "folder": null,
+        "clip": "Explosion/GiantExplosion",
+        "pitch": 0.8,
+        "volume": 55,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:10"
+  },
+  "sound:AG_PainChibakuCrack": {
+    "option": "Rock collapse, high",
+    "layers": [
+      {
+        "folder": null,
+        "clip": "Misc/RockCollapse",
+        "pitch": 1.4,
+        "volume": 40,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:10"
+  },
+  "sound:AG_PainChibakuFormed": {
+    "option": "Emergence end, large",
+    "layers": [
+      {
+        "folder": "Misc/Emergence/end_large",
+        "clip": null,
+        "pitch": 0.9,
+        "volume": 55,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:10"
+  },
+  "sound:AG_PainChibakuLaunch": {
+    "option": "Drop pod leaving",
+    "layers": [
+      {
+        "folder": null,
+        "clip": "Misc/DropPodLeaving",
+        "pitch": 0.8,
+        "volume": 50,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:10"
+  },
+  "sound:AG_PainChibakuPull": {
+    "option": "Stone buildings breaking",
+    "layers": [
+      {
+        "folder": "Impact/BuildingDestroyed/Stone/Big",
+        "clip": null,
+        "pitch": 0.7,
+        "volume": 45,
+        "delay": 0,
+        "loop": false
+      },
+      {
+        "folder": "Impact/BuildingDestroyed/Stone/Medium",
+        "clip": null,
+        "pitch": 0.8,
+        "volume": 40,
+        "delay": 0.8,
+        "loop": false
+      },
+      {
+        "folder": "Impact/BuildingDestroyed/Stone/Big",
+        "clip": null,
+        "pitch": 0.6,
+        "volume": 45,
+        "delay": 1.7,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:11"
+  },
+  "sound:AG_PainReceiverGrow": {
+    "option": "Weapon handling, small, low",
+    "layers": [
+      {
+        "folder": null,
+        "clip": "UI/WeaponHandling/HandleWeapon_SmallA",
+        "pitch": 0.7,
+        "volume": 35,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:13"
+  },
+  "sound:AG_PainReceiverHit": {
+    "option": "Bullet flesh + metal sharp",
+    "layers": [
+      {
+        "folder": "Impact/Bullet_Flesh",
+        "clip": null,
+        "pitch": 0.9,
+        "volume": 45,
+        "delay": 0,
+        "loop": false
+      },
+      {
+        "folder": "Impact/MeleeHit_Metal_Sharp",
+        "clip": null,
+        "pitch": 0.9,
+        "volume": 35,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:12"
+  },
   "sound:AG_VergilCutEndCuts": {
     "option": "Mech band shockwave",
     "layers": [

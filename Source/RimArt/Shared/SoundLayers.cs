@@ -31,6 +31,17 @@ namespace RimArt
         /// <summary>Set by a game test: every layer started since, with its tick. Null outside tests.</summary>
         public static List<(SubSoundDef layer, int tick)> Started;
 
+        /// <summary>Set by a game test: every sound played through <see cref="Play(SoundDef, Map, IntVec3)"/> since, with its tick. Null outside tests.</summary>
+        public static List<(SoundDef sound, int tick)> Heard;
+
+        /// <summary>A kit's sound heard from a cell, its layers each at its own time; nothing off the map or without a map.</summary>
+        public static void Play(SoundDef sound, Map map, IntVec3 cell)
+        {
+            if (sound == null || map == null || !cell.InBounds(map)) return;
+            Heard?.Add((sound, Find.TickManager.TicksGame));
+            Play(sound, new TargetInfo(cell, map));
+        }
+
         public static void Play(SoundDef sound, TargetInfo target)
         {
             if (sound == null) return;

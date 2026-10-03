@@ -72,6 +72,7 @@ namespace RimArt
         public const float LeadTime = 0.2f, HandReach = 0.5f, Tail = 0.4f;
 
         public override AbilityDef Def => PainDefOf.AG_PainBlackReceiver;
+        public override SoundDef WarmupSound => PainDefOf.AG_PainReceiverGrow;
         protected override float Lead => LeadTime;
         protected override float FireAt => LeadTime + Warmup;
         public float FireSeconds => FireAt;
@@ -190,6 +191,7 @@ namespace RimArt
             Vector3 back = caster.DrawPos - pawn.DrawPos;
             back.y = 0f;
             Vector2 toward = back.sqrMagnitude > 1e-4f ? new Vector2(back.x, back.z).normalized : Vector2.up;
+            SoundLayers.Play(PainDefOf.AG_PainReceiverHit, pawn.Map, pawn.Position);
             pawn.TakeDamage(new DamageInfo(DamageDefOf.Stab, P.damage, P.armorPenetration, Mathf.Atan2(-toward.x, -toward.y) * Mathf.Rad2Deg, caster));
             if (pawn.Dead || !pawn.Spawned) return;
             PainPictures.Shake(pawn.Map, BlackReceiverTiming.ShakeHit);

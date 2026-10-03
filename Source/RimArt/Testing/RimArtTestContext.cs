@@ -6,6 +6,7 @@ using HarmonyLib;
 using RimWorld;
 using Verse;
 using Verse.AI;
+using Verse.Sound;
 
 namespace RimArt
 {
@@ -345,6 +346,49 @@ namespace RimArt
             if (pawn.pather != null && pawn.pather.Moving) sb.Append(" moving");
             if (pawn.jobs != null && pawn.jobs.jobQueue.Count > 0) sb.Append(" queue=").Append(pawn.jobs.jobQueue.Count);
             return sb.ToString();
+        }
+
+        // ---- sounds ----------------------------------------------------------------------------------------
+
+        /// <summary>From now on every kit sound (<see cref="SoundLayers.Play(SoundDef, Map, IntVec3)"/>) and every layer it starts is noted with its tick.</summary>
+        public static void Listen()
+        {
+            SoundLayers.Heard = new List<(SoundDef, int)>();
+            SoundLayers.Started = new List<(SubSoundDef, int)>();
+        }
+
+        /// <summary>The ticks after <paramref name="from"/> at which <paramref name="sound"/> played, in order.</summary>
+        public static List<int> HeardAt(SoundDef sound, int from) =>
+            SoundLayers.Heard.Where(h => h.sound == sound).Select(h => h.tick - from).ToList();
+
+        public static bool HeardOnly(SoundDef sound, int from, int at) => HeardAt(sound, from).SequenceEqual(new[] { at });
+
+        /// <summary>
+        /// Whether <paramref name="sound"/> was heard exactly as often as <paramref name="want"/> lists, each within a tick of
+        /// its time after <paramref name="from"/>: a rule rounds its seconds to ticks, and a map's tick runs before or after
+        /// the game components' in the same game tick.
+        /// </summary>
+        public static bool HeardNear(SoundDef sound, int from, params int[] want)
+        {
+            List<int> heard = HeardAt(sound, from);
+            return heard.Count == want.Length && heard.Zip(want.OrderBy(x => x), (h, w) => Math.Abs(h - w) <= 1).All(ok => ok);
+        }
+
+        /// <summary>Every kit sound since <see cref="Listen"/>, as "defName @ticks after <paramref name="from"/>".</summary>
+        public static string HeardSince(int from) => string.Join(", ", SoundLayers.Heard.Select(h => h.sound.defName + " @" + (h.tick - from)));
+
+        /// <summary>The ticks after <paramref name="from"/> at which <paramref name="sound"/>'s layers started, in order.</summary>
+        public static List<int> LayersAt(SoundDef sound, int from) =>
+            SoundLayers.Started.Where(s => s.layer.parentDef == sound).Select(s => s.tick - from).OrderBy(x => x).ToList();
+
+        /// <summary>Whether a sound played once at <paramref name="played"/> started every layer at its picked delay; logs both.</summary>
+        public bool LayersOnTime(SoundDef sound, int played)
+        {
+            List<int> started = LayersAt(sound, played);
+            SoundLayerDelays delays = sound.GetModExtension<SoundLayerDelays>();
+            List<int> picked = sound.subSounds.Select((_, i) => delays?.TicksOf(i) ?? 0).OrderBy(x => x).ToList();
+            Log(sound.defName + " layers started at " + string.Join(", ", started) + " ticks (picked " + string.Join(", ", picked) + ")");
+            return started.SequenceEqual(picked);
         }
     }
 }

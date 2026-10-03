@@ -106,7 +106,7 @@ namespace RimArt
             along.Clear();
             Map map = caster.Map;
             if (map == null) return;
-            VergilSound.Play(VergilSoundDefOf.AG_VergilDash, map, from);
+            SoundLayers.Play(VergilSoundDefOf.AG_VergilDash, map, from);
             KeepDash();
             CompProperties_YamatoDash props = Props;
             Vector2 a = new Vector2(from.x, from.z), line = Line;
@@ -171,8 +171,8 @@ namespace RimArt
                 cut++;
             }
             IntVec3 at = caster?.PositionHeld ?? dest;
-            VergilSound.Play(VergilSoundDefOf.AG_VergilSheathe, home, at);
-            if (cut > 0) VergilSound.Play(VergilSoundDefOf.AG_VergilDashCuts, home, at);
+            SoundLayers.Play(VergilSoundDefOf.AG_VergilSheathe, home, at);
+            if (cut > 0) SoundLayers.Play(VergilSoundDefOf.AG_VergilDashCuts, home, at);
         }
 
         /// <summary>Downed or killed mid-dash: nothing resolves. He stays where the game left him.</summary>

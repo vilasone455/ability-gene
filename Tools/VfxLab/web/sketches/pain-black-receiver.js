@@ -285,12 +285,12 @@ export default {
   events(p) {
     const t = times(p), ev = [];
     if (t.kind === 'push') ev.push({ t: t.at, type: 'sound', def: 'AG_ShinraRelease' }, { t: t.at, type: 'shake', value: .04 });
-    else if (t.kind === 'stab') t.ins.forEach((x, k) => ev.push({ t: t.starts[k], type: 'sound', def: 'RimArt_ReceiverGrow' }, { t: x, type: 'sound', def: k === 2 ? 'RimArt_ReceiverPin' : 'RimArt_ReceiverHit' }, { t: x, type: 'shake', value: k === 2 ? .025 : .012 }));
-    else if (t.kind === 'down') ev.push({ t: DownAt, type: 'sound', def: 'RimArt_ReceiverBreak' });
+    else if (t.kind === 'stab') t.ins.forEach((x, k) => ev.push({ t: t.starts[k], type: 'sound', def: 'AG_PainReceiverGrow' }, { t: x, type: 'sound', def: k === 2 ? 'AG_PainReceiverPin' : 'AG_PainReceiverHit' }, { t: x, type: 'shake', value: k === 2 ? .025 : .012 }));
+    else if (t.kind === 'down') ev.push({ t: DownAt, type: 'sound', def: 'AG_PainReceiverBreak' });
     else {
-      t.hits.forEach((x, k) => ev.push({ t: t.starts[k], type: 'sound', def: 'RimArt_ReceiverGrow' }, { t: t.releases[k], type: 'sound', def: 'RimArt_ReceiverThrow' },
-        { t: x, type: 'sound', def: 'RimArt_ReceiverHit' }, { t: x, type: 'shake', value: .012 }, { t: t.breaks[k], type: 'sound', def: 'RimArt_ReceiverBreak' }));
-      ev.push({ t: t.landed, type: 'sound', def: 'RimArt_ReceiverPin' }, { t: t.landed, type: 'shake', value: .03 });
+      t.hits.forEach((x, k) => ev.push({ t: t.starts[k], type: 'sound', def: 'AG_PainReceiverGrow' }, { t: t.releases[k], type: 'sound', def: 'AG_PainReceiverThrow' },
+        { t: x, type: 'sound', def: 'AG_PainReceiverHit' }, { t: x, type: 'shake', value: .012 }, { t: t.breaks[k], type: 'sound', def: 'AG_PainReceiverBreak' }));
+      ev.push({ t: t.landed, type: 'sound', def: 'AG_PainReceiverPin' }, { t: t.landed, type: 'shake', value: .03 });
     }
     return ev;
   },

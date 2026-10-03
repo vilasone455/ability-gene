@@ -21,6 +21,7 @@ namespace RimArt
         internal static GameComponent_Echoes Setup(RimArtTestContext t)
         {
             GameComponent_Pain.Instance.ResetForTests();
+            Listen();
             return t.ClearEchoes();
         }
 
@@ -53,6 +54,9 @@ namespace RimArt
         }
 
         private static string At(Pawn pawn) => pawn.Position.ToString();
+
+        /// <summary>Ticks of an ability's warmup: its warm-up sound is heard this long before the fire.</summary>
+        internal static int WarmupTicks(AbilityDef def) => Mathf.RoundToInt(def.verbProperties.warmupTime * 60f);
 
         // ---- the Echo ----------------------------------------------------------------------------------------------
 
@@ -285,6 +289,11 @@ namespace RimArt
             t.Check(t.Hurt(raider), "the slam hurt it");
             t.Check(Stunned(raider), "stunned after the slam");
             t.Check(!cast.blocked && !cast.heavy, "not blocked, not dragged");
+            int slamTick = Mathf.CeilToInt((cast.Down - cast.GripAt) * 60f);
+            t.Log("heard: " + HeardSince(cast.fireTick));
+            t.Check(HeardNear(PainDefOf.AG_PainBanshoCast, cast.fireTick, -WarmupTicks(PainDefOf.AG_PainBanshoTenin)), "the warm-up is heard once, as it begins");
+            t.Check(HeardOnly(PainDefOf.AG_PainBanshoPull, cast.fireTick, 0), "the pull is heard once, on the grip");
+            t.Check(HeardNear(PainDefOf.AG_PainBanshoSlam, cast.fireTick, slamTick), "the slam is heard once, at the slam (fire + " + slamTick + ")");
             yield return 20;
             yield return t.ShotAs("bansho face-down");
             yield return HeightShots.Shoot(t, "pain height bansho face-down", raider.Position, host, raider);
@@ -368,6 +377,8 @@ namespace RimArt
             Ability rod = Ready(t, host, PainDefOf.AG_PainBlackReceiver);
             if (rod == null) { EndHost(record); yield break; }
             t.Check(rod.RemainingCharges == 3, "3 charges");
+            int t0 = t.Now;
+            var fired = new List<int>();
             for (int n = 1; n <= 3; n++)
             {
                 int before = PainRods.Count(raider);
@@ -380,6 +391,7 @@ namespace RimArt
                 }
                 foreach (int step in WaitFor(() => PainRods.Count(raider) > before, 90)) yield return step;
                 t.Check(PainRods.Count(raider) == n, "rod " + n + " in (" + PainRods.Count(raider) + ")");
+                fired.Add(Cast<BlackReceiverCast>(host).fireTick - t0);
                 if (n == 1)
                 {
                     Ability its = raider.abilities?.GetAbility(PainDefOf.AG_PainBanshoTenin);
@@ -390,6 +402,12 @@ namespace RimArt
                 foreach (int step in WaitFor(() => GameComponent_Pain.Instance.Holding(host, t.Now) == null && host.CurJobDef != PainDefOf.AG_CastPain, 60)) yield return step;
             }
             t.Check(PainRods.Pinned(raider) && Stunned(raider), "three rods: pinned and held");
+            List<int> grows = HeardAt(PainDefOf.AG_PainReceiverGrow, t0), hits = HeardAt(PainDefOf.AG_PainReceiverHit, t0);
+            List<int> landed = PainRods.Of(raider).rods.Select(r => r.landTick - t0).OrderBy(x => x).ToList();
+            int warmup = WarmupTicks(PainDefOf.AG_PainBlackReceiver);
+            t.Log("heard: " + HeardSince(t0) + "; fired at " + string.Join(", ", fired) + ", landed at " + string.Join(", ", landed));
+            t.Check(grows.Count == 3 && grows.Zip(fired, (g, f) => Math.Abs(f - g - warmup) <= 1).All(x => x), "each rod is heard growing as its warm-up begins, " + warmup + " ticks before its throw");
+            t.Check(hits.SequenceEqual(landed), "each rod is heard going in, on the tick it lands");
             t.Check(rod.RemainingCharges == 0, "no charges left (" + rod.RemainingCharges + ")");
             t.Check(t.Hurt(raider), "the rods hurt it");
             t.Check(BanshoProblem(host, raider) != null, "Banshō refuses the pinned pawn: " + BanshoProblem(host, raider));
