@@ -1,0 +1,153 @@
+/* Same dark theme and tokens as Tools/VfxLab/web/lab.css, so the two labs read as one tool. */
+:root {
+  color-scheme: dark;
+  --ground: #1b1f22;
+  --panel: #23282c;
+  --raised: #2c3237;
+  --line: #394046;
+  --text: #d6d0c2;
+  --dim: #8c8a82;
+  --accent: #d9a441;
+  --ok: #8fae66;
+  --bad: #d7664e;
+  --dlc: #8f6fd8;
+  --mod: #6fb3b8;
+  --ui: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--ground); color: var(--text); font: 13px/1.45 var(--ui); }
+button, input, select, textarea { font: inherit; color: inherit; }
+kbd { font: 11px var(--mono); color: var(--dim); border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; margin-left: 4px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+h1, h2, h3 { margin: 0; font-weight: 600; }
+
+.app {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr) 380px;
+  grid-template-rows: 44px minmax(0, 1fr);
+  grid-template-areas: "bar bar bar" "browser detail mixer";
+}
+
+/* ---- bar */
+.bar { grid-area: bar; display: flex; align-items: center; gap: var(--s4); padding-inline: var(--s4); border-bottom: 1px solid var(--line); background: var(--panel); }
+.brand { display: flex; align-items: center; gap: var(--s2); font-weight: 600; }
+.brand-cell { width: 14px; height: 14px; border: 1.5px solid var(--accent); box-shadow: inset 0 0 0 3px var(--panel), inset 0 0 0 7px var(--accent); }
+.now { flex: 1; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--mono); font-size: 12px; }
+.master { display: flex; align-items: center; gap: var(--s2); color: var(--dim); }
+.master input { width: 90px; }
+.status { color: var(--dim); white-space: nowrap; }
+
+.btn { border: 1px solid var(--line); background: var(--raised); border-radius: 4px; padding: 3px 10px; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--dim); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--ground); font-weight: 600; }
+.btn.primary kbd { color: var(--ground); border-color: rgba(0,0,0,0.3); }
+.btn.pick:not(:disabled) { border-color: var(--ok); color: var(--ok); }
+.btn.small { padding: 1px 8px; font-size: 12px; }
+.icon { border: 1px solid var(--line); background: var(--raised); border-radius: 4px; width: 26px; height: 22px; padding: 0; cursor: pointer; line-height: 1; }
+.icon:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ---- browser */
+.browser { grid-area: browser; display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); background: var(--panel); }
+.tabs { display: flex; border-bottom: 1px solid var(--line); }
+.tabs button { flex: 1; background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 0; color: var(--dim); cursor: pointer; }
+.tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+.filter { display: grid; gap: 6px; padding: var(--s2) var(--s3); border-bottom: 1px solid var(--line); }
+.filter-row { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+.filter input[type="search"] { width: 100%; padding: 4px 8px; background: var(--ground); border: 1px solid var(--line); border-radius: 4px; }
+.chip { padding: 0 6px; border: 1px solid var(--line); border-radius: 10px; background: none; color: var(--dim); font-size: 11px; cursor: pointer; }
+.chip:hover { color: var(--text); }
+.chip[aria-pressed="true"] { color: var(--ground); background: var(--accent); border-color: var(--accent); }
+.list { overflow-y: auto; flex: 1; padding-bottom: var(--s4); }
+.group { padding: var(--s3) var(--s3) 2px; color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+.row { display: flex; align-items: center; gap: var(--s2); width: 100%; padding: 3px var(--s3); background: none; border: 0; border-left: 2px solid transparent; text-align: left; cursor: pointer; }
+.row:hover { background: var(--raised); }
+.row[aria-current="true"] { background: var(--raised); border-left-color: var(--accent); }
+.row .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .count { color: var(--dim); font-size: 11px; font-family: var(--mono); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line); flex: none; }
+.dot.waiting { background: var(--accent); }
+.dot.done { background: var(--ok); }
+
+.src { font-size: 10px; padding: 0 5px; border-radius: 8px; border: 1px solid var(--line); color: var(--dim); white-space: nowrap; }
+.src.Royalty, .src.Odyssey, .src.Ideology, .src.Anomaly { border-color: var(--dlc); color: var(--dlc); }
+.src.RimArt { border-color: var(--mod); color: var(--mod); }
+
+/* ---- detail */
+.detail { grid-area: detail; overflow-y: auto; padding: var(--s4) var(--s5) var(--s5); }
+.detail h1 { font-size: 18px; margin-bottom: 2px; }
+.sub { color: var(--dim); margin-bottom: var(--s3); }
+.desc { max-width: 70ch; margin: 0 0 var(--s4); white-space: pre-line; }
+.empty { color: var(--dim); padding: var(--s5); max-width: 60ch; }
+.empty p { margin: 0 0 var(--s3); }
+.card { border: 1px solid var(--line); border-radius: 6px; background: var(--panel); margin-bottom: var(--s3); }
+.card-head { display: flex; align-items: baseline; gap: var(--s3); padding: var(--s2) var(--s3); border-bottom: 1px solid var(--line); }
+.card-head h3 { font-size: 14px; }
+.card-head .when { color: var(--dim); flex: 1; }
+.option { display: flex; align-items: center; gap: var(--s2); padding: 5px var(--s3); border-bottom: 1px solid var(--line); }
+.option:last-child { border-bottom: 0; }
+.option .label { flex: 1; min-width: 0; }
+.option .label small { display: block; color: var(--dim); font-family: var(--mono); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.option.picked { background: rgba(143, 174, 102, 0.1); }
+.picked-tag { color: var(--ok); font-size: 11px; }
+.user-note { padding: 4px var(--s3) 8px; color: var(--accent); font-size: 12px; }
+.missing { color: var(--bad); font-size: 11px; }
+
+.cliprow { display: grid; grid-template-columns: 26px 26px 150px minmax(0, 1fr) auto; align-items: center; gap: var(--s2); padding: 3px 0; border-bottom: 1px solid var(--line); }
+.cliprow .cname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cliprow .meta { color: var(--dim); font-family: var(--mono); font-size: 11px; white-space: nowrap; }
+.wave { width: 150px; height: 22px; display: block; }
+.usedby { color: var(--dim); font-size: 12px; margin: 0 0 var(--s3); max-width: 90ch; }
+.usedby code { color: var(--text); }
+.toolbar { display: flex; gap: var(--s2); margin-bottom: var(--s3); flex-wrap: wrap; }
+
+/* ---- mixer */
+.mixer { grid-area: mixer; overflow-y: auto; border-left: 1px solid var(--line); background: var(--panel); padding: var(--s3); display: flex; flex-direction: column; gap: var(--s3); }
+.mixer-head h2 { font-size: 14px; }
+.target { color: var(--dim); font-size: 12px; }
+.target.on { color: var(--ok); }
+.layers { display: grid; gap: var(--s2); }
+.layers:empty::before { content: "Add clips or folders with + to layer them. Each layer becomes one subSound of the SoundDef."; color: var(--dim); font-size: 12px; }
+.layer { border: 1px solid var(--line); border-radius: 6px; padding: 6px var(--s2); background: var(--raised); }
+.layer-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.layer-head .name { flex: 1; min-width: 0; font-family: var(--mono); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slider { display: grid; grid-template-columns: 52px minmax(0, 1fr) 46px; align-items: center; gap: 6px; font-size: 12px; color: var(--dim); }
+.slider input[type="range"] { width: 100%; }
+.slider output { font-family: var(--mono); color: var(--text); text-align: right; }
+.checks { display: flex; gap: var(--s3); font-size: 12px; color: var(--dim); margin-top: 2px; }
+.mixer-actions { display: flex; gap: var(--s2); flex-wrap: wrap; }
+.field { display: grid; gap: 3px; color: var(--dim); font-size: 12px; }
+.field textarea, .field input { background: var(--ground); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; color: var(--text); }
+.field.inline { display: flex; align-items: center; gap: 6px; flex: 1; }
+.field.inline input { flex: 1; font-family: var(--mono); font-size: 12px; }
+.xml-head { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+.xml { margin: 0; padding: var(--s2); background: var(--ground); border: 1px solid var(--line); border-radius: 4px; font: 11px/1.4 var(--mono); white-space: pre; overflow-x: auto; color: var(--dim); }
+
+/* Narrow windows (the desktop app's browser pane, a half-screen Chrome): stack the mixer under
+   the detail instead of squeezing three columns. */
+@media (max-width: 1100px) {
+  .app { height: auto; min-height: 100vh; grid-template-columns: 250px minmax(0, 1fr); grid-template-rows: 44px minmax(0, 1fr) auto; grid-template-areas: "bar bar" "browser detail" "browser mixer"; }
+  .browser { position: sticky; top: 0; height: 100vh; }
+  .mixer { border-left: 0; border-top: 1px solid var(--line); overflow: visible; }
+  .detail { overflow: visible; }
+  .master input { width: 60px; }
+  .status { display: none; }
+  html, body { overflow-x: hidden; }
+  .cliprow { grid-template-columns: 26px 26px 90px minmax(0, 1fr); }
+  .cliprow .meta { grid-column: 4; margin-top: -4px; }
+  .wave { width: 90px; }
+  .toolbar .btn { white-space: normal; }
+}
+
+@media (max-width: 700px) {
+  .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto auto; grid-template-areas: "bar" "browser" "detail" "mixer"; }
+  .bar { flex-wrap: wrap; padding-block: 6px; }
+  .browser { position: static; height: 42vh; border-right: 0; border-bottom: 1px solid var(--line); }
+  .detail { padding-inline: var(--s4); }
+}

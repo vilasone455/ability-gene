@@ -83,7 +83,7 @@ export default {
 | `params` | yes | The sliders. `{}` if there are none. |
 | `duration(p)` | yes | Length in seconds. |
 | `phases(p)` | yes | Named marks on the timeline, `[{ name, t }]`. `[]` if there are none. |
-| `events(p)` | no | Timeline events: `{ t, type: 'shake', value }` shakes the camera; `{ t, type: 'sound', def: 'AG_Something' }` puts a marker on the timeline and plays nothing; `{ t, type: 'camera', over, zoom, pan, x, z }` moves the camera as a short cutscene would: eased over `over` seconds it goes `pan` of the way (0 to 1) from where the viewer left it onto the point `x`, `z` cells from the effect's cell, and multiplies the zoom by `zoom`. A second camera event starts where the first got to, so a push and the return are two events. The Export tab keeps its own fixed framing. |
+| `events(p)` | no | Timeline events: `{ t, type: 'shake', value }` shakes the camera; `{ t, type: 'sound', def: 'AG_Something' }` puts a marker on the timeline and plays that SoundDef, or the sound picked for it on the Sound tab (README, "Sound"); `{ t, type: 'camera', over, zoom, pan, x, z }` moves the camera as a short cutscene would: eased over `over` seconds it goes `pan` of the way (0 to 1) from where the viewer left it onto the point `x`, `z` cells from the effect's cell, and multiplies the zoom by `zoom`. A second camera event starts where the first got to, so a push and the return are two events. The Export tab keeps its own fixed framing. |
 | `draw(seconds, p, ctx)` | yes | Draws the frame at `seconds`. |
 | `compareWith` | no | Label of a recorded effect to show beside this one on the Compare tab. |
 | `scene` | no | `false` leaves out the lab's grass, trees and rocks, for an effect set on a map of its own (a pocket map) that draws its own ground. The Infinity Castle sketches use it. |
@@ -346,7 +346,7 @@ outside this list needs a different plan, not a workaround in JavaScript.
 | Read pawns, buildings, terrain or the tick | The scene is a generated picture with no game data behind it. |
 | Vanilla textures (`Things/...`, `Other/...`) | Vanilla art is inside Unity asset bundles. The lab draws a rough stand-in and lists it on the Layers tab; the real pixels will differ. |
 | Distortion (`MoteLargeDistortionWave`) | Approximated only. Do not tune fine details of a distortion in the lab. |
-| Sound | Sound events show on the timeline and play nothing. |
+| Sound at its in-game loudness | Markers play at one loudness; the game also lowers a sound with camera distance. |
 | Prove that it works in game | Only building the mod and checking it in RimWorld does that. |
 
 Effects may come from the sky or from the ground: draw what the source does (Terraria's Star Wrath

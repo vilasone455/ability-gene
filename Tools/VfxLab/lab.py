@@ -20,6 +20,10 @@ mod's own Animations/*.json, and Melee Animation's clips when that mod is instal
 read where it is installed and served under /_am/; nothing of theirs is copied into this
 repository. Set RIMART_MELEE_ANIMATION to the mod folder if it is not found. The list is rebuilt
 when a file in Animations/ changes, and the open page reloads the clips.
+
+The sound lab's endpoints (/soundlab/, Tools/SoundLab/soundlab.py) are served here too, so the page
+plays its sound markers and picks a sound for them, and the sound lab page itself is at
+/Tools/SoundLab/web/ on the same port. Without them the VFX lab works and is silent.
 """
 import argparse, http.server, json, os, pathlib, re, socketserver, subprocess, sys, threading, time, datetime
 
@@ -30,6 +34,12 @@ RECORDINGS = LAB / "recordings"
 WATCHED = [ROOT / "Source" / "RimArt", RECORDER]
 PORT = 8765
 ANIMATIONS = ROOT / "Animations"
+sys.path.insert(0, str(ROOT / "Tools" / "SoundLab"))
+try:
+    import soundlab
+except Exception as error:  # the lab draws without sound rather than not starting
+    soundlab, SOUND_OFF = None, f"{type(error).__name__}: {error}"
+
 # Melee Animation, Steam workshop item 2944488802. First folder that exists wins.
 MELEE_ANIMATION_DIRS = [
     os.environ.get("RIMART_MELEE_ANIMATION", ""),
@@ -265,6 +275,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return str(theirs.parent / mod / pathlib.Path(inner).relative_to(ROOT))
         return super().translate_path(path)
 
+    def do_GET(self):
+        if soundlab and soundlab.handle_get(self):
+            return
+        return super().do_GET()
+
+    def do_POST(self):
+        if not (soundlab and soundlab.handle_post(self)):
+            self.send_error(404)
+
     def end_headers(self):
         # Recordings change under the page; never let the browser keep an old one.
         self.send_header("Cache-Control", "no-store")
@@ -292,6 +311,10 @@ def main():
     socketserver.ThreadingTCPServer.allow_reuse_address = True
     with socketserver.ThreadingTCPServer(("127.0.0.1", args.port), Handler) as server:
         print(f"[lab] open http://localhost:{args.port}/Tools/VfxLab/web/", flush=True)
+        if soundlab is None:
+            print(f"[lab] no sound: Tools/SoundLab/soundlab.py did not load ({SOUND_OFF})", flush=True)
+        elif not (ROOT / "Tools" / "SoundLab" / "clips" / "index.json").is_file():
+            print("[lab] sound: only the mod's own clips; python3 Tools/SoundLab/extract.py adds the game's", flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:

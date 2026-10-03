@@ -31,6 +31,7 @@
       <button role="tab" id="tab-scene" aria-controls="panel-scene" aria-selected="false">Scene</button>
       <button role="tab" id="tab-export" aria-controls="panel-export" aria-selected="false">Export</button>
       <button role="tab" id="tab-compare" aria-controls="panel-compare" aria-selected="false">Compare</button>
+      <button role="tab" id="tab-sound" aria-controls="panel-sound" aria-selected="false">Sound</button>
     </div>
     <section class="panel" id="panel-params" role="tabpanel" aria-labelledby="tab-params"></section>
     <section class="panel" id="panel-layers" role="tabpanel" aria-labelledby="tab-layers" hidden></section>
@@ -65,6 +66,7 @@
       <button type="button" id="compare-swap">Swap A and B</button>
       <p class="hint">Both sides share one clock and one camera. A side shorter than the other holds its last frame.</p>
     </section>
+    <section class="panel" id="panel-sound" role="tabpanel" aria-labelledby="tab-sound" hidden></section>
   </aside>
 
   <footer class="transport">
@@ -78,6 +80,7 @@
       </button>
       <div class="segmented" id="speeds" role="group" aria-label="Playback speed"></div>
       <label class="check"><input type="checkbox" id="loop" checked> Loop</label>
+      <label class="check" title="Play sound markers (M)"><input type="checkbox" id="sound-on" checked> Sound</label>
       <output class="time" id="time"></output>
     </div>
     <canvas id="timeline" aria-label="Timeline"></canvas>

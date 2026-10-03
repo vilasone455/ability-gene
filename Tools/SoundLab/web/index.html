@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RimArt Sound Lab</title>
+<link rel="stylesheet" href="lab.css">
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <div class="brand"><span class="brand-cell" aria-hidden="true"></span>RimArt Sound Lab</div>
+    <div class="now" id="now"></div>
+    <label class="master">Master <input type="range" id="master" min="0" max="2" step="0.01" value="1"></label>
+    <button class="btn" id="stop-all" type="button">Stop <kbd>Esc</kbd></button>
+    <span class="status" id="status">Loading…</span>
+  </header>
+
+  <nav class="browser" aria-label="Browse">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="abilities" aria-selected="true">Abilities</button>
+      <button role="tab" data-tab="folders" aria-selected="false">Clips</button>
+      <button role="tab" data-tab="defs" aria-selected="false">SoundDefs</button>
+    </div>
+    <div class="filter">
+      <input type="search" id="search" placeholder="Search" autocomplete="off">
+      <div class="filter-row" id="chips"></div>
+    </div>
+    <div class="list" id="list"></div>
+  </nav>
+
+  <main class="detail" id="detail"></main>
+
+  <aside class="mixer" aria-label="Mixer">
+    <div class="mixer-head">
+      <h2>Mixer</h2>
+      <div class="target" id="target">No ability moment selected</div>
+    </div>
+    <div class="layers" id="layers"></div>
+    <div class="mixer-actions">
+      <button class="btn primary" id="play" type="button">Play <kbd>Space</kbd></button>
+      <button class="btn" id="clear" type="button">Clear</button>
+      <button class="btn pick" id="pick" type="button" disabled>Pick for moment</button>
+    </div>
+    <label class="field">Note for Claude
+      <textarea id="note" rows="2" placeholder="What is right or wrong with it, what it should sound like"></textarea>
+    </label>
+    <div class="xml-head">
+      <label class="field inline">defName <input id="defname" value="AG_NewSound"></label>
+      <button class="btn small" id="copy" type="button">Copy XML</button>
+    </div>
+    <pre class="xml" id="xml"></pre>
+  </aside>
+</div>
+<script type="module" src="lab.js"></script>
+</body>
+</html>

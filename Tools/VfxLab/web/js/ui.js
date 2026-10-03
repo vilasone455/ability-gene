@@ -11,6 +11,7 @@ import { csharpConstants, plainList, shareLink, countParams } from './share.js';
 import { renderFrames, composeSheet, composeOverlay, renderBackdrop, download, textUrl, manifest, baseName, frameName, frameTimes, sheetColumns } from './export.js';
 import sketchFiles from '../sketches/index.js';
 import { clipModule, forgetClips, whenClipLoads } from './animation.js';
+import { initSound, soundTick, soundSelectionChanged, renderSoundPanel, soundMarkerColor, toggleSound } from './sounds.js';
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, attrs = {}, ...children) => {
@@ -70,6 +71,7 @@ async function boot() {
   camera.ppc = store.get('ppc', camera.ppc);
   Object.assign(state.export, store.get('export', {}));
   centreCamera();
+  initSound({ el, store, clock, source: () => sourceA(), panel: $('panel-sound') });
 
   for (const file of sketchFiles) {
     const module = (await import(`../sketches/${file}`)).default;
@@ -116,7 +118,9 @@ async function boot() {
     // different size and is read back with toDataURL, so nothing else may draw into it.
     if (!state.exporting) {
       clock.duration = activeDuration();
+      const before = clock.t;
       clock.tick(Math.min(0.1, (now - last) / 1000));
+      soundTick(before);
       drawStage();
       drawTimeline();
       updateTime();
@@ -231,6 +235,7 @@ function selectionChanged(restart) {
   renderExportPanel();
   renderCompareSelects();
   renderViewLabels();
+  soundSelectionChanged();
   const a = sourceA();
   $('now-label').textContent = a ? `${a.label}${state.compare && sourceB() ? `  ·  compared with ${sourceB().label}` : ''}` : '';
   document.title = a ? `${a.label} · RimArt VFX Lab` : 'RimArt VFX Lab';
@@ -379,7 +384,7 @@ function drawTimeline() {
       ctx.restore();
     });
     for (const e of source.events ?? []) {
-      ctx.fillStyle = e.type === 'shake' ? '#8f6fd8' : e.type === 'camera' ? '#b9a45c' : '#6fb3b8';
+      ctx.fillStyle = e.type === 'shake' ? '#8f6fd8' : e.type === 'camera' ? '#b9a45c' : e.type === 'sound' ? soundMarkerColor(e) : '#6fb3b8';
       ctx.fillRect(x(e.t) - 1, top - 3, 2, laneH + 6);
     }
   });
@@ -521,7 +526,7 @@ function renderParams() {
     if (!groups.has(p.group)) groups.set(p.group, []);
     groups.get(p.group).push([key, p]);
   }
-  const save = () => { store.set(`params:${source.file}`, source.values); clock.duration = activeDuration(); };
+  const save = () => { store.set(`params:${source.file}`, source.values); clock.duration = activeDuration(); renderSoundPanel(); };
   const controls = [...groups].map(([group, items]) => el('div', { class: 'group' }, el('h3', {}, group), ...items.map(([key, p]) => {
     const id = `param-${key}`;
     if (p.options) {
@@ -850,6 +855,8 @@ function bindChrome() {
   $('step-back').onclick = () => clock.step(-1);
   $('step-forward').onclick = () => clock.step(1);
   $('loop').onchange = (e) => { clock.loop = e.target.checked; };
+  $('sound-on').checked = store.get('sound', true);
+  $('sound-on').onchange = (e) => toggleSound(e.target.checked);
   const speeds = $('speeds');
   const renderSpeeds = () => speeds.replaceChildren(...Speeds.map((s) => el('button', {
     type: 'button', 'aria-pressed': clock.speed === s ? 'true' : 'false', onclick: () => { clock.speed = s; renderSpeeds(); },
@@ -870,6 +877,7 @@ function bindChrome() {
       state.layersKey = null;
       renderLayers();
       if (tab.id === 'tab-export') renderExportPanel();
+      if (tab.id === 'tab-sound') renderSoundPanel();
     };
   }
 
@@ -928,6 +936,7 @@ function bindChrome() {
     else if (k === 'g') { $('show-grid').checked = !scene.show.grid; $('show-grid').onchange({ target: $('show-grid') }); }
     else if (k === 'c') { $('compare-on').checked = !state.compare; $('compare-on').onchange({ target: $('compare-on') }); }
     else if (k === 'f') centreCamera();
+    else if (k === 'm') toggleSound();
     else if (e.key === '/') { e.preventDefault(); $('filter-text')?.focus(); $('filter-text')?.select(); }
   });
 }

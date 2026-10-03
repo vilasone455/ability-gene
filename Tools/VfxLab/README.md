@@ -122,7 +122,9 @@ Recorded now: Six Paths (7 actions), Gravity Well (2), Shinra Tensei (3).
 - **Tick-driven kits that need pawns:** Arc, Dispersal, Panoply, Mimic, TimeLattice and ToyCar.
   Their drawing reads pawns, the pawn renderer or game ticks, which the recorder does not stand in for.
 - **Melee Animation clips.**
-- **Sound.** Sounds appear as events on the timeline only.
+- **Sound as the game mixes it.** Sound markers play (see Sound below), but at one loudness:
+  the game also lowers a sound with the camera's distance, and a one-shot does not slow down with
+  the lab's 0.5× and slower speeds.
 - **The game.** The in-game check (build, `validate.py`, ApiChecks, deploy, clean log) is still what
   proves an effect works.
 
@@ -148,6 +150,45 @@ Recorded now: Six Paths (7 actions), Gravity Well (2), Shinra Tensei (3).
 | Save the sliders as a named preset | Params tab, Presets: name it, Save |
 | Send a sketch's settings to someone | Params tab, Copy as a list, or Copy link |
 | Write the effect out as PNGs | Export tab |
+| Hear the sound markers | the Sound box under the stage, or M |
+| Choose what a marker sounds like | Sound tab: click its name |
+
+## Sound
+
+A sound marker is an event `{ t, type: 'sound', def: '<SoundDef>' }`: from a sketch's `events()`, a
+recording's `PlayOneShot`, or an animation clip's events. The lab plays each one as the clock
+passes it, using the sound lab's audio (`Tools/SoundLab/web/sound.js`) and its endpoints, which
+`lab.py` serves under `/soundlab/` (`Tools/SoundLab/soundlab.py`). The sound lab page itself is at
+`/Tools/SoundLab/web/` on the same port. The game's clips come from
+`python3 Tools/SoundLab/extract.py`, run once; without it only the mod's own `Sounds/` play.
+
+A marker plays the first of these that exists:
+
+1. the mix open in the Sound tab for that name, while it differs from what is saved;
+2. a pick saved for it, `"sound:<SoundDef>"` in `Tools/SoundLab/picks.json`;
+3. the mod's SoundDef of that name, else the game's;
+4. nothing: the marker is grey on the timeline and tagged "none".
+
+Playback: markers of the effect on the left (A) play, also while comparing. Pausing, seeking and
+picking another effect stop what is playing; a layer marked "loop" stops when the effect loops back
+to its start. A hidden page (another tab, a minimized window, a closed browser pane) is silent:
+some hosts keep drawing a hidden page, and a looping effect would go on playing out of sight. A browser starts no audio before the first click or key on the page, so markers
+before that are skipped.
+
+The Sound tab lists the effect's markers by name, with their times and what plays for each. Click a
+name to open it:
+
+- **Hear it** plays it alone; **Watch from** starts the effect 0.6 s before its first marker.
+- **Options from the sound lab** are the candidate moments in `Tools/SoundLab/candidates.json` of
+  the hero whose name the effect's kit starts with (kit "Satō (Ajin)", hero "Satō"), and any moment
+  with `"defName": "<SoundDef>"`, which is listed first and open. **Use** puts an option in the mix.
+- **Mix**: one layer per subSound, with pitch, volume, delay, loop and mute. The search box adds a
+  folder or clip (`+`) or loads a whole SoundDef (`Use`).
+- **Pick** saves the mix as `sound:<SoundDef>` with the note; Claude writes the SoundDef XML from
+  it. **Copy SoundDef XML** gives that XML now.
+
+The sound lab page and this tab read and write the same `picks.json`, and each picks up the other's
+changes within 3 seconds.
 
 ## Presets
 
@@ -302,5 +343,6 @@ web/js/standins.js     procedural textures for vanilla paths
 web/js/presets.js      named parameter sets, and their JSON files
 web/js/export.js       frame sampling, sprite sheets, downloads
 web/js/ui.js           the page controller
+web/js/sounds.js       sound markers and the Sound tab (audio from Tools/SoundLab/web/sound.js)
 web/sketches/          sketches, listed in index.js
 ```
