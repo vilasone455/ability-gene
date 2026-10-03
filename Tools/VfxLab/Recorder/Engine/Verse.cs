@@ -56,6 +56,15 @@ namespace Verse
         public float AsAngle => rotInt * 90f;
         public bool IsHorizontal => rotInt == 1 || rotInt == 3;
         public bool IsVertical => rotInt == 0 || rotInt == 2;
+        /// <summary>
+        /// The game's: the angle taken mod 360 (GenMath.PositiveMod), then north below 45, east below 135, south below 225,
+        /// west below 315, north again from 315.
+        /// </summary>
+        public static Rot4 FromAngleFlat(float angle)
+        {
+            angle = (angle % 360f + 360f) % 360f;
+            return angle < 45f ? North : angle < 135f ? East : angle < 225f ? South : angle < 315f ? West : North;
+        }
         // The game translates these ("North".Translate()); the lab has no translations.
         public string ToStringHuman() => rotInt == 0 ? "North" : rotInt == 1 ? "East" : rotInt == 2 ? "South" : "West";
         public static bool operator ==(Rot4 a, Rot4 b) => a.AsInt == b.AsInt;
