@@ -4,7 +4,7 @@
 // The four pieces are our own drawings in the design of Terraria's sprites (head, two body pieces, tail; seen
 // on terraria.wiki.gg 2026-10-03), not traces of them: a side view of a fish-skeleton dragon, the gold spine
 // and ribs on top, a glowing blue belly below, a spike on every other body piece, a gold skull with a horn swept
-// back, a blue eye and teeth, a blue crystal frill and beard, a tail of blue arrow fletching. Terraria's exact
+// back, a slanted blue eye and open jaws with fangs, a blue crystal crest, beard and whiskers, a slim forked tail. Terraria's exact
 // palette, in flat bands lit from the spine side, with a brown outline round the gold. Each texture is 256 px
 // square and covers ArtOf[kind] Terraria pixels round a point Shift[kind] px along the piece's line of flight from
 // its centre (the tail's fletching runs far behind it), the head toward +u (east) and the spine toward the top
@@ -87,52 +87,61 @@ const BlueLook = [Deep, Deep, Blue, Cyan, BlueLight];
 const PlateLook = [Deep, Cyan, BlueLight, Ice, Ice];
 
 // --- the pieces: shapes in Terraria px, x toward the head, y toward the spine; the spine line is y = 3.5 --------------
+// What makes it a dragon and not a fish (the user's note on the first version, 2026-10-03): a long snout with jaws
+// hanging open and fangs, a slanted eye under a brow, long horns swept back, a spiky crest, whiskers and a beard
+// trailing back; a comb of spikes along the back; a slim tail ending in a narrow fork, not a wide fin.
 const Spine = 3.5;
 const Ribs = [-16 / 3, 0, 16 / 3];       // three ribs per 16 px of body, so the rhythm runs on across pieces
 const SpikeShape = [[7.5, 5], [1.5, 6.5], [-8, 20]];
+const Comb = Ribs.map(x => [[x + .4, 8], [x + 2.6, 8], [x - .6, 12.8]]);   // body 2: the rib tips stand up as three small spikes
 function body(P, p, spike) {
   const belly = q => box(q, [0, -5], [10.5, 4.4], 2);             // 21 px long, so neighbouring bellies overlap into one strip
   banded(P, belly, p, BlueLook, .9);
   for (const x of [-4, 4]) banded(P, q => box(q, [x, -5.3], [2.7, 2.7], 1), p, PlateLook, 0);
-  const ribs = Ribs.map(x => q => capsule(q, [x + 1.4, 10], [x - .9, -8.6], 1.3));
-  const gold = union(q => capsule(q, [-10, Spine], [10, Spine], 3), ...ribs, ...(spike ? [q => poly(q, SpikeShape)] : []));
+  const ribs = Ribs.map(x => q => capsule(q, [x + 1.4, 9], [x - 1.4, -4.6], 1.25));   // they stop halfway down the belly
+  const gold = union(q => capsule(q, [-10, Spine], [10, Spine], 3), ...ribs, ...(spike ? [q => poly(q, SpikeShape)] : Comb.map(c => q => poly(q, c))));
   banded(P, gold, p, GoldLook, 1.1);
-  for (const x of Ribs) P.over(capsule(p, [x + 1.3, 9.3], [x - .7, -7.6], .4), Cream);
+  for (const x of Ribs) P.over(capsule(p, [x + 1.3, 8.4], [x - 1.1, -3.8], .4), Cream);
 }
-const Mane = [[-1, 9], [-5, 13.5], [-8, 10.5], [-12, 14], [-14, 9.5], [-18, 10.5], [-17, 5], [-12, 3], [-4, 4]];
-const Beard = [[14, -5.5], [6, -10], [2, -8.5], [-3, -12], [-6, -9.5], [-11, -11.5], [-12, -5], [-6, -3]];
-const Skull = [[22, 2.5], [19, 6], [11, 8.5], [2, 9.5], [-6, 8.5], [-11, 5], [-11, .5], [-6, -2.5], [2, -1.5], [21, -.5]];
-const Jaw = [[18, -3.2], [2, -3.5], [-6, -3], [-4, -6.2], [8, -6.5], [16, -5]];
-const Horn = [[15, 7], [10.5, 8.6], [6, 21]];
-const Mouth = [[20, -.8], [2, -1.8], [-4, -2.8], [2, -3.6], [18, -3.4]];
+const ellipse = (p, c, rx, ry) => (Math.hypot((p[0] - c[0]) / rx, (p[1] - c[1]) / ry) - 1) * Math.min(rx, ry);
+const Skull = [[23, 2.2], [21.5, 4.6], [16, 5.6], [11, 6.6], [7, 9.6], [1, 10], [-5, 8.5], [-9, 5], [-8, .5], [-3, -1], [6, -.6], [16, -.2], [22, .6]];
+const NoseHorn = [[21, 4.4], [17.5, 5.4], [19.2, 9.2]];
+const Horns = [[[2.5, 9.6], [-4, 11.6], [-24, 17], [-7.5, 7.5]], [[-5, 5.5], [-9, 1.8], [-23, 5.5]], [[-5.5, -1.2], [-8.5, -3.2], [-17, -7]]];
+const Jaw = [[-5, -1.5], [3, -3.2], [12, -5.4], [19.5, -7.2], [20.5, -8.6], [12, -9], [3, -7.2], [-3, -5]];
+const Mouth = [[22, .4], [6, -.8], [-3, -1.2], [-4, -2], [3, -3.4], [12, -5.6], [19.5, -7.3]];
+const Crest = [[-1, 9], [-5, 19.5], [-7, 12.5], [-10.5, 19], [-12, 13], [-15.5, 17.8], [-16, 10], [-6, 6]];   // its tips stand above the main horn
+const Beard = [[-1, -4.5], [-6, -7.5], [-10, -13], [-11.5, -8.5], [-17, -12], [-14, -6], [-8, -2.5]];
+const Whisker = [[17, 1], [10, -9], [1, -13.5], [-9, -14.5], [-15, -18]];
+const lowerJawTop = x => -1.5 + (x + 5) / 24.5 * -5.7;          // the jaw's inner edge, for the lower fangs
 function head(P, p) {
-  banded(P, q => poly(q, Mane), p, BlueLook, .9);
+  banded(P, q => poly(q, Crest), p, BlueLook, .9);
   banded(P, q => poly(q, Beard), p, BlueLook, .9);
-  P.over(capsule(p, [-11, 7.5], [-15, 11.5], .45), Ice);
-  P.over(capsule(p, [2, -8], [-2, -10.5], .45), Ice);
-  const gold = union(q => poly(q, Skull), q => poly(q, Jaw), q => poly(q, Horn), q => capsule(q, [-13, Spine], [-2, Spine], 2.6));
+  for (let i = 0; i < Whisker.length - 1; i++) P.over(capsule(p, Whisker[i], Whisker[i + 1], .9 - .14 * i), Cyan);
+  for (let i = 0; i < Whisker.length - 1; i++) P.over(capsule(p, Whisker[i], Whisker[i + 1], .35), Ice);
+  P.over(capsule(p, [-6.2, 13], [-5.2, 18], .45), Ice);
+  P.over(capsule(p, [-11.4, 13.5], [-10.7, 17.8], .45), Ice);
+  P.over(capsule(p, [-6, -6.5], [-9.5, -11], .45), Ice);
+  const gold = union(q => poly(q, Skull), q => poly(q, NoseHorn), q => poly(q, Jaw), ...Horns.map(h => q => poly(q, h)), q => capsule(q, [-13, Spine], [-2, Spine], 2.8));
   banded(P, gold, p, GoldLook, 1.1);
-  P.over(poly(p, Jaw) + .3, GoldDark);
+  P.over(poly(p, Jaw) + .35, GoldDark);
   P.over(poly(p, Mouth), Outline);
-  for (const x of [5, 9, 13, 17]) P.over(poly(p, [[x - 1.2, -1.4], [x + 1.2, -1.2], [x, -3.2]]), Cream);
-  for (const x of [7, 11, 15]) P.over(poly(p, [[x - 1, -3.6], [x + 1, -3.6], [x, -2.2]]), Cream);
-  P.over(circle(p, [9, 3.5], 3), Deep);
-  P.over(circle(p, [9, 3.5], 2.1), Cyan);
-  P.over(circle(p, [9.4, 3.9], 1), [1, 1, 1]);
-  P.over(circle(p, [19, 4], .7), Outline);
+  for (const [x, long] of [[20.5, 1.4], [15, 0], [10, 0], [5, 0]]) P.over(poly(p, [[x - 1.2, .1], [x + 1.2, .2], [x - .2, -2.6 - long]]), Cream);
+  for (const [x, long] of [[18, 1.2], [13, 0], [8, 0]]) { const y = lowerJawTop(x); P.over(poly(p, [[x - 1.1, y - .3], [x + 1.1, y - .5], [x + .3, y + 2.4 + long]]), Cream); }
+  P.over(capsule(p, [12.5, 7.4], [3.5, 8.2], .8), GoldDark);    // the brow over the eye
+  P.over(ellipse(p, [8.5, 5.2], 3.1, 1.9), Deep);
+  P.over(ellipse(p, [8.5, 5.2], 2.3, 1.25), Cyan);
+  P.over(ellipse(p, [9.2, 5.3], 1.1, .7), [1, 1, 1]);
+  P.over(circle(p, [20.2, 3.2], .6), Outline);
 }
-// The tail: the spine goes on as a gold rod into a long arrow of blue fletching, three pairs of vanes swept back
-// and a forked end, about 52 px from the rod's front to the fork (Terraria's tail is nearly half a 4-piece dragon).
-const VaneSmall = [[-2, 4.5], [-6, 4.5], [-10, 10]];
-const VaneBig = [[-9, 4.5], [-16, 4.5], [-30, 14], [-23, 14]];
-const VaneBack = [[-22, 4.5], [-27, 4.5], [-38, 11], [-33.5, 12]];
+// The tail, as Terraria's: the spine goes on as a gold stub, a small cross fin, a thin shaft and a narrow fork at the
+// end, about 54 px from the stub's front to the fork's tips.
+const Fin = [[-1, 4.6], [-5, 4.6], [-9, 9.5]];
+const Fork = [[-22, Spine + .8], [-31, Spine + 5], [-42, Spine + 8.5], [-34, Spine + 2.2], [-29, Spine + .3]];
 function tail(P, p) {
-  const vanes = [VaneSmall, VaneBig, VaneBack].flatMap(v => [v, mirrorY(v, Spine)]);
-  const blue = union(...vanes.map(v => q => poly(q, v)), q => capsule(q, [-2, Spine], [-38, Spine], 1.6),
-    q => capsule(q, [-38, Spine], [-44, Spine + 3], 1.1), q => capsule(q, [-38, Spine], [-44, Spine - 3], 1.1));
+  const blue = union(...[Fin, Fork].flatMap(v => [v, mirrorY(v, Spine)]).map(v => q => poly(q, v)), q => capsule(q, [-2, Spine], [-30, Spine], 1.5));
   banded(P, blue, p, BlueLook, .9);
-  for (const v of [VaneBig, VaneBack]) P.over(capsule(p, v[1], v[2], .45), Ice);
-  P.over(capsule(p, [-3, Spine], [-38, Spine], .55), Ice);
+  P.over(capsule(p, Fork[0], Fork[2], .45), Ice);
+  P.over(capsule(p, [-3, Spine], [-29, Spine], .55), Ice);
   const rod = union(q => poly(q, [[12, Spine + 2.8], [12, Spine - 2.8], [-4, Spine - 1.3], [-4, Spine + 1.3]]), q => capsule(q, [8, Spine], [12, Spine], 2.8));
   banded(P, rod, p, GoldLook, 1.1);
 }

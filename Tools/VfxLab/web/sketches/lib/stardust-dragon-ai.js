@@ -10,6 +10,10 @@ export const Tick = 1 / 60;
 // Head, attacking: speed added along the line to the target, px/tick², by distance; braking while it moves
 // away; it stops adding speed within Coast x the target's hit box diagonal, so it flies through and overshoots.
 const AttackAccel = [.6, .9, 1.2], AttackNear = [600, 300], AttackTop = 30, Brake = .8, BrakeDot = .25, Coast = .75;
+// Not Terraria's: while it brakes it is also pulled sideways by this share of its speed-up, toward the side it is
+// already drifting to. Terraria's targets walk and fall, so its passes come back on curves; a pawn standing still
+// would make the head reverse on its own line and fold the body back on itself.
+export const LoopPull = .35;              // .5 and more circles a pawn standing still without passing through it
 // Head, idle: speed added toward the wielder on each axis separately, px/tick², by distance; dead zones
 // across and up and down; slows inside Settle; a pull north (Terraria's up) while it is slow north-south.
 const IdleAccel = [.2, .12, .06], IdleNear = [200, 140], DeadX = 20, DeadZ = 10, Settle = 100, IdleDamp = .96, DampAbove = 2;
@@ -22,6 +26,7 @@ const PawnHalf = 9;                       // px: half a humanoid's width, added 
 const FadeStep = 42 / 255;                // a summoned piece goes from invisible to full in 7 ticks; ending mirrors it
 const DustChance = 1 / 30, FadeDust = 2;  // per piece per tick; dust per tick while a piece fades
 const DustSpeed = 2;                      // px/tick: Dust.NewDust gives each dust up to this much drift on each axis
+const ShootSpeed = 10;                    // px/tick: the staff's "velocity 10", the head's speed when it is summoned
 
 const clamp01 = x => Math.max(0, Math.min(1, x));
 const wrap = a => a - 2 * Math.PI * Math.round(a / (2 * Math.PI));
@@ -31,10 +36,11 @@ export const kindOf = i => i === 0 ? 'head' : i === 3 ? 'tail' : (i === 1 || (i 
 // setup: { px, pace, t0, t1,
 //   wielder: s => {x, z} (cells), wielderDown (s or Infinity),
 //   casts: [{ t, at: {x, z} }]: the first summons at `at`, later ones add a pair while the dragon is out,
-//   people: [{ at: s => {x, z}, ally, tough }], rules: { life, range, damage, perPiece, hitEvery, maxCasts } }
+//   people: [{ at: s => {x, z}, ally, tough }], rules: { life, range, damage, perPiece, hitEvery, maxCasts, firstPairs } }
+// firstPairs: body pairs the first cast brings (Terraria: 1, so 4 pieces); every later cast adds one more pair.
 export function simulate(setup) {
   const { px, pace, t0, t1, rules } = setup, dt = Tick, n = Math.ceil((t1 - t0) / dt);
-  const MaxIds = 4 + 2 * (rules.maxCasts - 1);   // ids per step: the first four, then a pair per recast
+  const pairs0 = rules.firstPairs ?? 1, MaxIds = 2 + 2 * (pairs0 + rules.maxCasts - 1);   // ids per step: head, tail and every body pair
   const toPx = q => ({ x: q.x / px, z: q.z / px });
   const W = n + 1, X = new Float32Array(W * MaxIds), Z = new Float32Array(W * MaxIds), R = new Float32Array(W * MaxIds);
   const A = new Float32Array(W * MaxIds), F = new Int8Array(W * MaxIds), order = new Int8Array(W * MaxIds), count = new Uint8Array(W);
@@ -42,16 +48,16 @@ export function simulate(setup) {
   const people = setup.people.map(c => ({ ...c, total: 0, last: -Infinity, down: Infinity, dmg: new Float32Array(W), hits: [] }));
   const where = (j, s) => people[j].at(Math.min(s, people[j].down));
   const pieces = [];                      // by id: { x, z, rot, flip, alpha, px, pz }
-  let chain = [], out = false, ending = false, lifeEnd = Infinity, casts = 0, endAt = Infinity, goneAt = Infinity;
+  let chain = [], out = false, ending = false, lifeEnd = Infinity, casts = 0, pairs = 0, endAt = Infinity, goneAt = Infinity;
   let vx = 0, vz = 0, target = -1;
   const dust = [], hits = [], downs = [], events = [];
-  const turn = 1 - Math.pow(1 - Follow, pace);
+  const turn = 1 - Math.pow(1 - Follow, pace), loop = setup.loopPull ?? LoopPull;
 
   const addDust = (s, x, z, k, id, faint) => {
     const r = (q) => hash(k, id * 13 + q, 4407);
     dust.push({ t: s, x: x * px, z: z * px, vx: (r(1) * 2 - 1) * DustSpeed, vz: (r(2) * 2 - 1) * DustSpeed, faint, seed: k * 131 + id * 7 + dust.length });
   };
-  const spawn = (id, at) => { pieces[id] = { x: at.x, z: at.z, rot: 0, flip: 1, alpha: 0, fading: 1, px: at.x, pz: at.z }; };
+  const spawn = (id, at, rot) => { pieces[id] = { x: at.x, z: at.z, rot, flip: Math.cos(rot) < 0 ? -1 : 1, alpha: 0, fading: 1, px: at.x, pz: at.z }; };
 
   for (let k = 0; k <= n; k++) {
     const s = t0 + k * dt, w = toPx(setup.wielder(s));
@@ -59,14 +65,24 @@ export function simulate(setup) {
     for (const c of setup.casts) {
       if (c.t < s - dt / 2 || c.t >= s + dt / 2) continue;
       if (!out && !ending && casts === 0) {
-        const at = toPx(c.at);
-        [0, 1, 2, 3].forEach(id => spawn(id, at));
-        chain = [0, 1, 2, 3]; out = true; casts = 1; lifeEnd = s + rules.life; vx = vz = 0;
-        events.push({ t: s, kind: 'summon', pieces: 4 });
+        // The summon: the head leaves the cast cell at the staff's speed, heading on from the wielder, the body laid out
+        // behind it. (Terraria puts every piece on the cursor and the chain unrolls in a tick or two; here it starts
+        // unrolled, as the demo GIF shows it a tenth of a second in.)
+        const at = toPx(c.at), more = Array.from({ length: 2 * (pairs0 - 1) }, (_, i) => 4 + i);
+        let dx = at.x - w.x, dz = at.z - w.z; const L = Math.hypot(dx, dz) || 1; dx /= L; dz /= L;
+        const rot = Math.atan2(dz, dx), size = 1 + Grow * Math.min(GrowCap, 2 * pairs0 + 1);
+        chain = [0, 1, 2, ...more, 3];
+        chain.forEach((id, i) => spawn(id, { x: at.x - dx * Gap * size * i, z: at.z - dz * Gap * size * i }, rot));
+        out = true; casts = 1; pairs = pairs0; lifeEnd = s + rules.life; vx = dx * ShootSpeed; vz = dz * ShootSpeed;
+        events.push({ t: s, kind: 'summon', pieces: chain.length });
       } else if (out && !ending && casts < rules.maxCasts) {
-        const id = 4 + 2 * (casts - 1);
-        spawn(id, w); spawn(id + 1, w);
-        chain.splice(chain.length - 1, 0, id, id + 1); casts++; lifeEnd = s + rules.life;
+        // A recast: the new pair takes the tail's place and the next one back along its line, the tail moves two
+        // places back. (Terraria spawns the pair on the wielder and it joins the chain the next tick.)
+        const id = 2 + 2 * pairs, t = pieces[chain[chain.length - 1]], size = 1 + Grow * Math.min(GrowCap, chain.length + 1);
+        const bx = -Math.cos(t.rot) * Gap * size, bz = -Math.sin(t.rot) * Gap * size;
+        spawn(id, { x: t.x, z: t.z }, t.rot); spawn(id + 1, { x: t.x + bx, z: t.z + bz }, t.rot);
+        t.x += 2 * bx; t.z += 2 * bz; t.px = t.x; t.pz = t.z;
+        chain.splice(chain.length - 1, 0, id, id + 1); casts++; pairs++; lifeEnd = s + rules.life;
         events.push({ t: s, kind: 'grow', pieces: chain.length });
       }
     }
@@ -95,7 +111,11 @@ export function simulate(setup) {
         const a = d < AttackNear[1] ? AttackAccel[2] : d < AttackNear[0] ? AttackAccel[1] : AttackAccel[0];
         if (d > TargetDiag * Coast) {
           vx += gx / d * a * pace; vz += gz / d * a * pace;
-          if (vx * gx + vz * gz < BrakeDot) { const f = Math.pow(Brake, pace); vx *= f; vz *= f; }
+          if (vx * gx + vz * gz < BrakeDot) {
+            const f = Math.pow(Brake, pace), side = Math.sign(vz * gx - vx * gz) || 1;   // which side of the line it drifts to
+            vx *= f; vz *= f;
+            vx += -gz / d * side * a * loop * pace; vz += gx / d * side * a * loop * pace;
+          }
         }
         const v = Math.hypot(vx, vz); if (v > AttackTop) { vx *= AttackTop / v; vz *= AttackTop / v; }
       } else {

@@ -9,37 +9,41 @@
 // Rules (proposed 2026-10-03; lifetime, growth and art agreed with the user, the numbers are placeholders and
 // each becomes an XML field):
 //   Weapon: a staff like the Rainbow Crystal Staff: no shooting verb, a weak melee bash, one ability button.
-//   First cast: target a cell within 12 cells. The dragon appears there: head, body, body, tail, each fading in
-//   over 7 ticks with 2 dust a tick (Terraria's summon). It lasts 60 s. One dragon per wielder.
+//   First cast: target a cell within 12 cells. The dragon appears there: head, four body pieces, tail, each fading
+//   in over 7 ticks with 2 dust a tick (Terraria's summon). It lasts 60 s. One dragon per wielder. (Terraria's
+//   first summon has two body pieces; four, because a 4-piece dragon looked stubby and fish-like next to a long
+//   one: the user's note, 2026-10-03. "Body pairs at the first cast" 1 shows Terraria's.)
 //   Recast while it is out: no target. A body pair fades in at the tail and the 60 s start again (Terraria:
-//   each extra summon inserts a pair in front of the tail). Cooldown 10 s between casts, at most 4 casts: 10
+//   each extra summon inserts a pair in front of the tail). Cooldown 10 s between casts, at most 4 casts: 12
 //   pieces. Each piece makes the dragon 1 % bigger (Terraria's rule).
 //   Target: the nearest standing enemy within 20 cells of the wielder, walls or no walls; kept until it is down
 //   or out of range. It flies through walls and pawns. With no target it patrols round the wielder (Terraria's
 //   idle movement), so it follows them.
 //   Hit: any enemy a piece passes within its hit box of (30 x size Terraria px square, plus half a humanoid) takes
-//   5 x (1 + 0.23 x (pieces - 1)) cut, at most once per 0.5 s per pawn (Terraria: damage + 23 % per piece, one
-//   shared hit timer). 8.5 at 4 pieces, 15.4 at 10. Allies and the wielder take nothing; downed pawns are ignored.
-//   An unarmoured pawn goes into pain shock at 43 (lib/terraria.js PainShock): 6 hits at 4 pieces.
+//   4 x (1 + 0.23 x (pieces - 1)) cut, at most once per 0.5 s per pawn (Terraria: damage + 23 % per piece, one
+//   shared hit timer). 8.6 at 6 pieces, 14.1 at 12. Allies and the wielder take nothing; downed pawns are ignored.
+//   An unarmoured pawn goes into pain shock at 43 (lib/terraria.js PainShock): 5 hits at 6 pieces.
 //   Ends: after 60 s, or when the wielder goes down. Every piece fades out over 7 ticks with 2 dust a tick, the
 //   summon backwards. (Terraria has no end effect; this is the one addition, so the end can be seen.)
 //
 // Order (defaults: scenario "summon + raid", raid from 0, pace .5; times from the simulation):
 //   0.00  the wielder swings the staff overhead (0.6 s, Terraria's useStyle 1), the orb glints; at the same
-//         time the dragon fades in on the cast cell, 5 cells ahead, in a puff of Ice Torch dust. A red ring marks
+//         time the dragon fades in on the cast cell, 5 cells ahead, laid out along the line from the wielder and
+//         already moving at the staff's 10 px a tick, in a puff of Ice Torch dust. A red ring marks
 //         its target: the raider behind the wall, the nearest enemy. It speeds up toward him and flies through
 //         the wall and through him, overshoots, brakes, turns and comes back: one hit a pass.
-//   3.37  he goes down (6 hits of 8.5). The ring moves to the raider who has walked in beside the colonist; the
-//         dragon's passes cross the colonist five times between 4.5 and 6.0 s and he takes nothing.
-//   6.67  that raider goes down; the ring moves to the third raider, further out.
-//  10.40  he goes down. The raider 23 cells out was never in range. No target: the dragon loops back toward the
+//   2.68  he goes down (5 hits of 8.6). The ring moves to the raider who has walked in beside the colonist; the
+//         dragon's passes cross the colonist at 3.3 and 4.6 s and he takes nothing. Each pass ends in a tight loop
+//         (lib/stardust-dragon-ai.js LoopPull) and the body curls round after the head.
+//   5.22  that raider goes down; the ring moves to the third raider, further out.
+//   9.00  he goes down. The raider 23 cells out was never in range. No target: the dragon loops back toward the
 //         wielder in big lazy loops that close in over about 15 s.
-//  14.40  end.
+//  13.00  end.
 // "recast grows": the dragon has been out 20 s and circles the wielder. At 1 s and 11 s the wielder swings the
-//   staff and a body pair fades in at the tail: 6, then 8 pieces. "ends (time up)": a 10-piece dragon circling;
+//   staff and a body pair fades in at the tail: 8, then 10 pieces. "ends (time up)": a 12-piece dragon circling;
 //   its 60 s run out at 2 s and it fades away in dust. "ends (wielder downed)": the wielder goes down at 1.5 s.
-//   "pieces": the four textures large, plain and mirrored, and the dragon of 4 and 6 pieces laid out straight at
-//   2x size, to compare with the wiki's pictures.
+//   "pieces": the four textures large, plain and mirrored, and the dragon of 4 (Terraria's first summon) and 6
+//   pieces laid out straight at 2x size, to compare with the wiki's pictures.
 //
 // Drawing: each piece is its texture on one quad turned to its line of flight, drawn as Terraria draws it (full
 // bright, alpha halved: the texture once normal at .5 and once additive at .5) and mirrored when it flies west,
@@ -81,11 +85,11 @@ const Crowd = [
   { path: [[0, 12, 3.5]] },                            // behind the wall: no line of sight from the wielder; the nearest at first
   { path: [[0, 15, -4]] },                             // further out, in range
   { path: [[0, 23, 1]] },                              // out of range
-  { path: [[0, 8.2, -1.6]], ally: true },              // a colonist a cell from where the first raider stops
+  { path: [[0, 8.5, -1.8]], ally: true },              // a colonist a cell from where the first raider stops
 ];
 const WallCells = [[10, 2], [10, 3], [10, 4]];
 const Scenarios = ['summon + raid', 'recast grows', 'ends (time up)', 'ends (wielder downed)', 'pieces'];
-const SimKeys = ['scenario', 'direction', 'pace', 'px', 'range', 'damage', 'life', 'cooldown', 'casts'];
+const SimKeys = ['scenario', 'direction', 'pace', 'px', 'range', 'damage', 'life', 'cooldown', 'casts', 'first'];
 
 const add = (a, b) => ({ x: a.x + b.x, z: a.z + b.z });
 const bump = x => (x >= 0 && x <= 1) ? Math.sin(x * Math.PI) : 0;
@@ -93,7 +97,7 @@ const bump = x => (x >= 0 && x <= 1) ? Math.sin(x * Math.PI) : 0;
 // The scene's setup for the simulation, in world cells from the wielder.
 function setup(p) {
   const a0 = p.direction * D2R, ca = Math.cos(a0), sa = Math.sin(a0), world = q => ({ x: q.x * ca - q.z * sa, z: q.x * sa + q.z * ca });
-  const rules = { life: p.life, range: p.range, damage: p.damage, perPiece: PerPiece, hitEvery: HitEvery, maxCasts: p.casts };
+  const rules = { life: p.life, range: p.range, damage: p.damage, perPiece: PerPiece, hitEvery: HitEvery, maxCasts: p.casts, firstPairs: p.first };
   const base = { px: p.px, pace: p.pace, wielder: () => ({ x: 0, z: 0 }), wielderDown: Infinity, people: [], rules, cells: [], world };
   const near = world({ x: 1.5, z: 0 });
   if (p.scenario === 'summon + raid')
@@ -174,10 +178,11 @@ export default {
     pace: P('Pace (share of Terraria speed)', .5, .2, 1, .05, 'Motion'),
     px: P('Size (cells per Terraria pixel)', .028, .015, .05, .001, 'Motion'),
     range: P('Range from the wielder (cells)', 20, 8, 30, 1, 'Rule'),
-    damage: P('Cut per hit at 1 piece', 5, 1, 15, .5, 'Rule'),
+    first: P('Body pairs at the first cast (Terraria: 1)', 2, 1, 4, 1, 'Rule'),
+    damage: P('Cut per hit at 1 piece', 4, 1, 15, .5, 'Rule'),
     life: P('Lasts after the last cast (s)', 60, 10, 120, 5, 'Rule'),
     cooldown: P('Cooldown between casts (s)', 10, 2, 30, 1, 'Rule'),
-    casts: P('Most casts (pieces = 2 + 2 x casts)', 4, 1, 8, 1, 'Rule'),
+    casts: P('Most casts', 4, 1, 8, 1, 'Rule'),
   },
   duration(p) { return p.scenario === 'pieces' ? 1 : replay(p).end; },
   phases(p) {
