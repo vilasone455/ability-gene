@@ -156,8 +156,9 @@ Recorded now: Six Paths (7 actions), Gravity Well (2), Shinra Tensei (3).
 ## Sound
 
 A sound marker is an event `{ t, type: 'sound', def: '<SoundDef>' }`: from a sketch's `events()`, a
-recording's `PlayOneShot`, or an animation clip's events. The lab plays each one as the clock
-passes it, using the sound lab's audio (`Tools/SoundLab/web/sound.js`) and its endpoints, which
+recording's `PlayOneShot`, or an animation clip's events. A sustainer the ability's code ends adds
+`lasts: <seconds>`, and the lab cuts that marker's sound then with a 0.2 s fade (Gojo's Blue pull,
+Purple's travel). The lab plays each one as the clock passes it, using the sound lab's audio (`Tools/SoundLab/web/sound.js`) and its endpoints, which
 `lab.py` serves under `/soundlab/` (`Tools/SoundLab/soundlab.py`). The sound lab page itself is at
 `/Tools/SoundLab/web/` on the same port. The game's clips come from
 `python3 Tools/SoundLab/extract.py`, run once; without it only the mod's own `Sounds/` play.

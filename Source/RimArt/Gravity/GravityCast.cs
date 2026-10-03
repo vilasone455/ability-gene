@@ -128,14 +128,14 @@ namespace RimArt
                 ? clock.ticks / 60f : 0.5f + 0.15f * Growth)))
             { Finish(false); return; }
             clock.Tick(DurationTicks, Props.OpeningTicks);
+            if (clock.phase == GravityPhase.Opening && Find.TickManager.TicksGame - startTick == GojoBlueLook.OpenTicks(Props))
+                SoundLayers.Play(Props.openSound, map, Cell);
             if (Field)
             {
-                if (sound == null || sound.Ended)
-                    sound = GravityDefOf.AG_GravityHum.TrySpawnSustainer(
-                        SoundInfo.InMap(new TargetInfo(Cell, map), MaintenanceType.PerTick));
+                if (sound == null || sound.Ended) sound = SoundLayers.Sustain(Props.holdSound ?? GravityDefOf.AG_GravityHum, map, Cell);
                 if (sound != null)
                 {
-                    sound.info.pitchFactor = 0.8f + 0.4f * Growth;
+                    if (Props.holdSound == null) sound.info.pitchFactor = 0.8f + 0.4f * Growth;
                     sound.Maintain();
                 }
             }
@@ -168,7 +168,7 @@ namespace RimArt
                 burstDamage = Props.Damage(eaten);
                 burstRadius = Props.BurstRadius(eaten);
                 burstHit = component.DamagePawns(this, burstRadius, burstDamage);
-                GravityDefOf.AG_GravityImplode.PlayOneShot(new TargetInfo(Cell, map));
+                SoundLayers.Play(Props.implodeSound ?? GravityDefOf.AG_GravityImplode, map, Cell);
             }
             // Recovery is cosmetic; gameplay has already ended and cooldown is committed.
             if (!burst) StopAnimation();

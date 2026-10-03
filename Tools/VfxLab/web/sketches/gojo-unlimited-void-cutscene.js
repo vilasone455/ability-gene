@@ -84,7 +84,7 @@ export default {
   },
   events(p) {
     const t = times(p);
-    return [{ t: t.white, type: 'shake', value: .06 }, { t: t.white, type: 'sound', def: 'AG_Gojo_DomainOpen' }, { t: t.hole, type: 'sound', def: 'AG_Gojo_VoidHole' }];
+    return [{ t: t.white, type: 'shake', value: .06 }, { t: t.white, type: 'sound', def: 'AG_GojoVoidOpen' }, { t: t.hole, type: 'sound', def: 'AG_GojoVoidHole' }];
   },
 
   draw(s, p, ctx) {

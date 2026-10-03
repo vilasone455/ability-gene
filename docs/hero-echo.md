@@ -506,6 +506,15 @@ Gojo, built 2026-09-30 (the port; Echo `AG_Echo_Gojo.xml`, abilities `AG_Gojo_Ab
   ball on the home map is drawn only, not an object. Not ported: the specks into frozen heads, the
   violet mark on overloaded pawns, Gojo's reach and blow drawings, sounds; the dome picture stays 9 cells
   if the radius changes in XML.
+- Sounds (picked by ear 2026-10-03 in the VFX lab against `gojo-blue-v2.js`, `gojo-red-v2.js` and
+  `gojo-purple.js`; `AG_Gojo_Sounds.xml`): Core clips and the mod's synthesized ones, no DLC. Blue: a
+  suck-in as the ball appears (0.15 s after the cast), Gravity Well's hum clip louder over a tornado while
+  it pulls, Gravity Well's implosion at one pitch; they are named on Blue's comp (`openSound`, `holdSound`,
+  `implodeSound`), and Gravity Well keeps its own. Red: a thump cannon shot on the fire, the Rasengan grind
+  and thump on the burst, a big hit on a building when the thing it threw lands against a wall. Hollow
+  Purple: Red's fire, a suck-in as Red meets Blue, a low flamethrower roar heard from the sphere as it
+  travels, a vaporize where it stops. No sound, by choice: Red's charge and its landing in the open,
+  Purple's ignition and its touch on a pawn. Unlimited Void's sounds are not decided yet.
 
 Pain's Echo (agreed 2026-09-27): it grants all four abilities, Shinra Tensei, Gravity Well, Banshō
 Ten'in and Black Receiver (the last two once they are built; `AG_Echo_Pain` lists only Shinra today).

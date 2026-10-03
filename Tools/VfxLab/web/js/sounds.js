@@ -64,6 +64,9 @@ function markerNames(source) {
   return [...byName].map(([name, times]) => ({ name, times }));
 }
 
+/** How long a marker's sound lasts when heard alone, without the picture (its first marker's lasts), or null. */
+const lastsOf = (name) => markers(ui?.source()).find((m) => m.def === name && m.lasts)?.lasts ?? null;
+
 /** context: { el, store, clock, source, panel }. Loads the catalog in the background. */
 export function initSound(context) {
   ui = context;
@@ -80,12 +83,13 @@ export function initSound(context) {
   });
 }
 
-function play(name, keep = true) {
+/** duration: seconds of real time until the marker's sound is cut (its lasts), or null to let it play out. */
+function play(name, keep = true, duration = null) {
   const mix = unsavedMix(name);
-  if (mix) return playLayers(mix, { keep });
+  if (mix) return playLayers(mix, { keep, duration });
   const s = soundFor(name);
-  if (s.kind === 'pick') return playLayers(s.layers, { keep });
-  if (s.kind === 'def') return playDef(s.def, { keep });
+  if (s.kind === 'pick') return playLayers(s.layers, { keep, duration });
+  if (s.kind === 'def') return playDef(s.def, { keep, duration });
   return null;
 }
 
@@ -98,7 +102,10 @@ export function soundTick(before) {
   if (!clock.playing && !ended) { if (was) stopAll(0.08); return; }
   if (!S.on || lib.error || document.hidden) return;
   const events = markers(ui.source());
-  const fire = (from, to, inclusive) => { for (const e of events) if ((inclusive ? e.t >= from : e.t > from) && e.t <= to) play(e.def); };
+  // A marker with lasts (a sustainer the game's code ends) is cut that many effect seconds after it starts.
+  const fire = (from, to, inclusive) => {
+    for (const e of events) if ((inclusive ? e.t >= from : e.t > from) && e.t <= to) play(e.def, true, e.lasts ? e.lasts / clock.speed : null);
+  };
   if (clock.wrapped) { fire(before, clock.duration, before === 0); stopLoops(0.2); fire(0, clock.t, true); }
   else if (clock.t >= before) fire(before, clock.t, before === 0);
   else stopAll(0.08);   // moved back while playing
@@ -258,7 +265,7 @@ export function renderSoundPanel() {
     ...(names.length ? names.map(({ name, times }) => {
       const [kind] = unsavedMix(name) ? ['trying'] : status(name);
       return el('div', { class: 'marker' },
-        el('button', { class: 'mini', type: 'button', title: 'Hear it', onclick: () => play(name, false) }, '▶'),
+        el('button', { class: 'mini', type: 'button', title: 'Hear it', onclick: () => play(name, false, lastsOf(name)) }, '▶'),
         el('button', { class: 'phase', type: 'button', 'aria-current': name === S.name ? 'true' : 'false', onclick: () => open(name) },
           el('span', {}, name), el('span', {}, `${times.slice(0, 3).map(fmt).join(', ')}${times.length > 3 ? ` +${times.length - 3}` : ''} s`)),
         el('span', { class: `tag sound-${kind}` }, kind === 'def' ? 'SoundDef' : kind));
@@ -278,7 +285,7 @@ function editor(source) {
     el('p', { class: 'unsaved', id: 'sound-unsaved', hidden: !dirty() }, 'Your mix is not saved; the timeline plays it.'),
     el('div', { class: 'row' },
       el('button', { type: 'button', onclick: watch }, `▶ Watch from ${fmt(watchFrom(name))} s`),
-      el('button', { type: 'button', onclick: () => play(name, false) }, 'Hear it alone')),
+      el('button', { type: 'button', onclick: () => play(name, false, lastsOf(name)) }, 'Hear it alone')),
     el('p', { class: 'hint' }, 'An option\'s ▶ plays the effect from just before this marker, with the other markers\' sounds too.'));
 
   const options = optionsFor(name, source?.kit);
@@ -290,7 +297,7 @@ function editor(source) {
         el('button', { class: 'mini', type: 'button', title: 'Play it with the picture (puts it in the mix)', onclick: () => tryOption(o) }, '▶'),
         el('span', { class: 'what', title: o.layers.map((l) => l.folder || l.clip).join(' + ') }, o.label,
           ...(missingIn(o.layers).length ? [el('span', { class: 'missing' }, ' missing clips')] : [])),
-        el('button', { class: 'mini', type: 'button', title: 'Hear it alone', onclick: () => playLayers(o.layers.map((l) => newLayer(l, l))) }, '♪'))))))] : [];
+        el('button', { class: 'mini', type: 'button', title: 'Hear it alone', onclick: () => playLayers(o.layers.map((l) => newLayer(l, l)), { duration: lastsOf(name) }) }, '♪'))))))] : [];
 
   const layers = S.mix.map((l, i) => el('div', { class: 'mix-layer' },
     el('div', { class: 'mix-head' },
@@ -302,7 +309,7 @@ function editor(source) {
     slider(l, 'volume', 0, 150, 1, (v) => String(Math.round(v))),
     slider(l, 'delay', 0, 3, 0.01, (v) => `${v.toFixed(2)} s`),
     el('div', { class: 'row' },
-      check(l, 'loop', 'loop (ends when the effect loops)'),
+      check(l, 'loop', 'loop (ends at the marker\'s lasts, else when the effect loops)'),
       check(l, 'mute', 'mute'))));
 
   const results = el('div', { class: 'results' });

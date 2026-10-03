@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
@@ -24,7 +25,8 @@ namespace RimArt
     /// layers due now play at once, the rest on their game tick, so they keep time with a picture drawn on the
     /// game clock (faster at speed 3, waiting while paused). A SoundDef without the extension plays as
     /// <c>PlayOneShot</c> plays it. Each layer goes through <c>SubSoundDef.TryPlay</c>, which is what
-    /// <c>PlayOneShot</c> calls per layer: maxSimultaneous and the game-speed range still apply.
+    /// <c>PlayOneShot</c> calls per layer: maxSimultaneous and the game-speed range still apply. <see cref="Sustain"/>
+    /// starts a kit's sustainer the same way, noted for the game tests, and <see cref="MoveTo"/> moves one.
     /// </summary>
     public static class SoundLayers
     {
@@ -65,6 +67,30 @@ namespace RimArt
         {
             Started?.Add((layer, now));
             layer.TryPlay(SoundInfo.InMap(target));
+        }
+
+        /// <summary>
+        /// A kit's sustainer heard from a cell, noted in <see cref="Heard"/> when it starts; null without a map or off
+        /// it. The caller maintains it every tick (it ends a tick after the last <c>Maintain</c>) and ends it.
+        /// </summary>
+        public static Sustainer Sustain(SoundDef sound, Map map, IntVec3 cell)
+        {
+            if (sound == null || map == null || !cell.InBounds(map)) return null;
+            Heard?.Add((sound, Find.TickManager.TicksGame));
+            return sound.TrySpawnSustainer(SoundInfo.InMap(new TargetInfo(cell, map), MaintenanceType.PerTick));
+        }
+
+        // RimWorld moves a sustainer's audio source each frame only when it was started on a thing; one started on a
+        // cell stays there. Its root object is internal.
+        internal static readonly AccessTools.FieldRef<Sustainer, GameObject> RootOf =
+            AccessTools.FieldRefAccess<Sustainer, GameObject>("worldRootObject");
+
+        /// <summary>Moves a sustainer started on a cell to <paramref name="at"/>, for a sound that travels (Hollow Purple).</summary>
+        public static void MoveTo(Sustainer sustainer, Vector3 at)
+        {
+            if (sustainer == null || sustainer.Ended) return;
+            GameObject root = RootOf(sustainer);
+            if (root != null) root.transform.position = at.Yto0();
         }
     }
 

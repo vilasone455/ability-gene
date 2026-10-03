@@ -5,6 +5,7 @@ using HarmonyLib;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Verse.Sound;
 using T = RimArt.HollowPurple;
 
 namespace RimArt
@@ -90,6 +91,8 @@ namespace RimArt
         private HollowPurpleCut[] cutArray;
         private int shaken;
         private float lastRumble;
+        // The travel sound, following the sphere. Not saved: a load starts it again.
+        private Sustainer travelSound;
         private static readonly List<Thing> buffer = new List<Thing>();
 
         /// <summary>At most this many touched things are drawn breaking up.</summary>
@@ -122,8 +125,27 @@ namespace RimArt
                 float from = Mathf.Max(0f, run), to = Mathf.Min(travel, (now - MoveTick) / 60f * speed);
                 Sweep(map, from, to, Seconds(now));
                 run = to;
+                Sound(map);
             }
             return now <= EndTick;
+        }
+
+        /// <summary>The travel sound, heard from the sphere, until it stops; then the fade, where it stopped.</summary>
+        private void Sound(Map map)
+        {
+            Vector2 at = start + dir * run;
+            // At the map edge the sphere's centre is on the border, a cell past the last one.
+            IntVec3 cell = GojoKit.Cell(at).ClampInsideMap(map);
+            if (Stopped)
+            {
+                travelSound?.End();
+                travelSound = null;
+                SoundLayers.Play(GojoKitDefOf.AG_GojoPurpleFade, map, cell);
+                return;
+            }
+            if (travelSound == null || travelSound.Ended) travelSound = SoundLayers.Sustain(GojoKitDefOf.AG_GojoPurpleTravel, map, cell);
+            SoundLayers.MoveTo(travelSound, new Vector3(at.x, 0f, at.y));
+            travelSound?.Maintain();
         }
 
         private static float ToSegment(Vector2 p, Vector2 a, Vector2 b)

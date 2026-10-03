@@ -63,6 +63,10 @@
         <bodyMass>60</bodyMass>
         <driftSpeed>0</driftSpeed>
         <leash>0</leash>
+        <!-- AG_Gojo_Sounds.xml: the ball appearing, the pull (in place of Gravity Well's hum), the implosion. -->
+        <openSound>AG_GojoBlueOpen</openSound>
+        <holdSound>AG_GojoBluePull</holdSound>
+        <implodeSound>AG_GojoBlueImplode</implodeSound>
       </li>
     </comps>
   </AbilityDef>

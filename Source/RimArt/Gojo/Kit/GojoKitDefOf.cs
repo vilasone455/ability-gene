@@ -18,6 +18,9 @@ namespace RimArt
         public static HediffDef AG_Erased;
         /// <summary>Gojo's hero form (the costume): the drawn arm takes the uniform's colour while he wears it.</summary>
         public static HediffDef AG_EchoManifest_Gojo;
+        // Red's and Hollow Purple's sounds (AG_Gojo_Sounds.xml). Blue's are named on its Gravity Well comp.
+        public static SoundDef AG_GojoRedFire, AG_GojoRedBurst, AG_GojoRedSlam;
+        public static SoundDef AG_GojoPurpleMerge, AG_GojoPurpleTravel, AG_GojoPurpleFade;
 
         static GojoKitDefOf()
         {

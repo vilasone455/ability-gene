@@ -95,7 +95,7 @@ export default {
   },
   events(p) {
     const t = times(p);
-    return [{ t: t.open, type: 'shake', value: Shake }, { t: t.open, type: 'sound', def: 'AG_Gojo_DomainOpen' }, { t: t.close, type: 'sound', def: 'AG_Gojo_DomainClose' }];
+    return [{ t: t.open, type: 'shake', value: Shake }, { t: t.open, type: 'sound', def: 'AG_GojoVoidOpen' }, { t: t.close, type: 'sound', def: 'AG_GojoVoidBreak' }];
   },
 
   draw(s, p, { origin: o, scene }) {
