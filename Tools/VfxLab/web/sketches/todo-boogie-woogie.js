@@ -40,6 +40,10 @@
 // No line joins the two ends: the range is the whole map, and a joining line is Flying Thunder
 // God's picture.
 //
+// Sound markers: AG_AnchorClap on each contact and AG_AnchorPuff on the swap, the SoundDefs the game
+// plays (AG_Anchor_Sounds.xml). In game today only the last contact claps, and the puff plays at
+// both ends.
+//
 // Drawing: the burst, crescents and flecks are level rings at hand or chest height and the ink
 // figures stand upright on screen like the pawn they cover, so nothing needs a per-facing method.
 // Dashes, strokes and crescents are strips; the white is SoftDisc; the stone is
@@ -196,7 +200,8 @@ export default {
   },
   events(p) {
     const t = times(p);
-    return [...t.contacts.map(c => ({ t: c, type: 'sound', def: 'AG_Clap' })), { t: t.swap, type: 'shake', value: .02 }];
+    return [...t.contacts.map(c => ({ t: c, type: 'sound', def: 'AG_AnchorClap' })), { t: t.swap, type: 'sound', def: 'AG_AnchorPuff' },
+      { t: t.swap, type: 'shake', value: .02 }];
   },
 
   draw(s, p, { origin: o, scene }) {

@@ -887,18 +887,55 @@ ability("AG_VectorShove",
           O("Bionic punch hit, low", L("Impact/BionicPunch_Hit", 0.8, 50))))
 
 # Todo --------------------------------------------------------------------------------------------
+# One moment per sound marker in the Todo sketches (todo-boogie-woogie.js, todo-black-flash.js,
+# todo-stone-throw.js); its defName is the SoundDef the cast will play. The sketches' kit is "Anchor",
+# not a hero's name, so the defName is what lists these options under a marker. Every clip here is
+# Core's, Biotech's or the mod's.
+ability("AG_AnchorClap",
+        "Clap and Double Clap. Already in game: AG_AnchorClap and AG_AnchorPuff, set by hand for the old stage-magician picture (a red silk puff at each end). The first option of each is that sound, so picking it keeps it. The swap is instant: two white ink frames at both ends, then teal crescents round whoever arrived. The manga gives only the clap.",
+        M("clap", "Clap", "each palm contact: Clap's at 0.3 s, Double Clap's at 0.25 and 0.5 s",
+          O("In game now: punch on a pawn, pitched up", L("Impact/PunchHitPawn", 1.43, 60)),
+          O("Punch on a pawn, higher", L("Impact/PunchHitPawn", 1.7, 60)),
+          O("Punch + bionic punch, a heavier slap", L("Impact/PunchHitPawn", 1.4, 55), L("Impact/BionicPunch_Hit", 1.6, 30)),
+          O("Wood knock, high (the manga's 'pan')", L("Impact/MeleeHit_Wood", 1.6, 50)),
+          O("Punch + a round hitting wood (a sharp crack)", L("Impact/PunchHitPawn", 1.4, 50), L("Impact/Bullet_Wood", 1.3, 35)),
+          O("Punch + synth ting", L("Impact/PunchHitPawn", 1.4, 55), L("AG/Ting", 1.6, 20)),
+          defName="AG_AnchorClap"),
+        M("swap", "Swap", "on the last contact both ends change places; plays at both ends",
+          O("In game now: beat fire, slowed (a soft puff)", L("Impact/BeatFire", 0.8, 40)),
+          O("In game now, quieter (the clap carries it)", L("Impact/BeatFire", 0.8, 20)),
+          O("Skip entry, very fast", L(SKIP_IN, 2.0, 35)),
+          O("Swish, high (the crescents)", L("Misc/Swish2", 1.8, 40)),
+          O("Synth: shun, high", L("AG/Shun", 1.3, 35)),
+          O("Synth ting, low + swish", L("AG/Ting", 0.8, 30), L("Misc/Swish1", 1.6, 30, 0.1)),
+          defName="AG_AnchorPuff"))
 ability("AG_AnchorBlackFlash",
-        "Plays the vanilla punch now. Black Flash is a punch with a black spark.",
+        "Plays the vanilla punch now, inside the window or not; the ordinary punch keeps it. Black Flash is a punch with a black spark: dark and a spark at the fist, the burst 0.07 s later, black bolts crackling for 0.45 s.",
         M("hit", "Black Flash hit", "the punch lands inside the window",
+          O("In game now: the vanilla punch's clips", L("Impact/PunchHitPawn", 1.0, 37)),
           O("Bionic punch + EMP crackle, low", L("Impact/BionicPunch_Hit", 0.8, 50), L(ZAP, 0.6, 40)),
           O("Thump cannon + zap", L("Impact/ThumpCannon", 1.1, 50), L("Weapon/ChargeRifle", 0.7, 35)),
-          O("Big hit + shockwave + zap", L("Pawn/Animal/Melee_Big/Hit_Pawn", 0.9, 50), L(SHOCKWAVE, 0.8, 35), L(ZAP, 0.8, 30))))
+          O("Big hit + shockwave + zap", L("Pawn/Animal/Melee_Big/Hit_Pawn", 0.9, 50), L(SHOCKWAVE, 0.8, 35), L(ZAP, 0.8, 30)),
+          defName="AG_AnchorBlackFlashHit"))
 ability("AG_AnchorMark",
-        "The stone thrown and landing.",
-        M("throw", "Stone lands", "the stone hits the ground",
+        "The stone throw: it leaves the hand at 0.38 s in a blade of light, touches down at 0.5 s and skids 0.2 s into its cell. Targeting one of Todo's own stones takes it back: it pops off the cell at 0.5 s and is in his hand at 0.62 s. Not an attack, so quiet sounds.",
+        M("throw", "Throw", "the stone leaves the hand",
+          O("Swish", L("Misc/Swish1", 1.2, 35)),
+          O("Swish, high + synth ting (the blade of light)", L("Misc/Swish2", 1.5, 30), L("AG/Ting", 1.2, 20)),
+          O("Punch miss, high (a quick flick)", L("Impact/PunchMiss", 1.3, 35)),
+          O("Synth: shun, soft", L("AG/Shun", 1.2, 25)),
+          defName="AG_AnchorStoneThrow"),
+        M("land", "Lands", "it touches down short of the cell and skids in",
           O("Stone impact (joy)", L("Interact/Joy/StoneImpact", 1.0, 50)),
-          O("Swish + stone punch", L("Misc/Swish1", 1.2, 35), L("Impact/PunchHitBuilding/Stone", 1.0, 40, 0.3)),
-          O("Chunk rock drop, light", L("Interact/Haul/Drop/ChunkRock", 1.4, 40))))
+          O("Stone punch + sweeping (the skid)", L("Impact/PunchHitBuilding/Stone", 1.0, 40), L("Interact/Work/Clean/Cleaning_Sweeping", 1.6, 20, 0.03)),
+          O("Chunk rock drop, light", L("Interact/Haul/Drop/ChunkRock", 1.4, 40)),
+          O("Stone chunk, light", L("Interact/Work/Construct/Stone/Stone_Chunk_Light", 1.2, 40)),
+          defName="AG_AnchorStoneLand"),
+        M("back", "Taken back", "it pops off the cell, then lands in his hand 0.12 s later",
+          O("Swish + punch (into the palm)", L("Misc/Swish1", 1.4, 30), L("Impact/PunchHitPawn", 1.6, 35, 0.12)),
+          O("Stone impact, high + punch", L("Interact/Joy/StoneImpact", 1.3, 30), L("Impact/PunchHitPawn", 1.6, 35, 0.12)),
+          O("Synth: shun, soft + punch", L("AG/Shun", 1.3, 25), L("Impact/PunchHitPawn", 1.6, 30, 0.12)),
+          defName="AG_AnchorStoneBack"))
 
 # Synthesized options (make_sounds.py, Sounds/AG/): added after the game-clip options ---------------
 def add(defName, moment, *options):
@@ -1036,7 +1073,9 @@ add("AG_KamuiStore", "absorb", O("Synth: sucked in, fast", L("AG/KamuiIn", 1.4, 
 add("AG_KamuiStore", "release", O("Synth: out, fast", L("AG/KamuiOut", 1.3, 45)))
 add("AG_AnchorBlackFlash", "hit",
     O("Synth: black flash", L("AG/BlackFlash", 1.0, 55)),
-    O("Synth + bionic punch", L("AG/BlackFlash", 1.0, 50), L("Impact/BionicPunch_Hit", 0.8, 40)))
+    O("Synth + bionic punch", L("AG/BlackFlash", 1.0, 50), L("Impact/BionicPunch_Hit", 0.8, 40)),
+    O("Synth + mech band shock, low (Biotech)", L("AG/BlackFlash", 1.0, 50), L(SHOCKWAVE, 0.7, 35)),
+    O("Synth + Chidori crack, low (the black bolts)", L("AG/BlackFlash", 1.0, 50), L("AG/ChidoriCrack", 0.7, 30, 0.07)))
 
 # How long each looping moment lasts in game (s); the code ends the sustainer then, and the lab
 # cuts the preview at the same time with a short fade.

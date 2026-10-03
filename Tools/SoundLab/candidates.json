@@ -8729,14 +8729,187 @@
    ],
    "hero": "Accelerator"
   },
+  "AG_AnchorClap": {
+   "note": "Clap and Double Clap. Already in game: AG_AnchorClap and AG_AnchorPuff, set by hand for the old stage-magician picture (a red silk puff at each end). The first option of each is that sound, so picking it keeps it. The swap is instant: two white ink frames at both ends, then teal crescents round whoever arrived. The manga gives only the clap.",
+   "moments": [
+    {
+     "id": "clap",
+     "label": "Clap",
+     "when": "each palm contact: Clap's at 0.3 s, Double Clap's at 0.25 and 0.5 s",
+     "options": [
+      {
+       "label": "In game now: punch on a pawn, pitched up",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 1.43,
+         "volume": 60
+        }
+       ]
+      },
+      {
+       "label": "Punch on a pawn, higher",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 1.7,
+         "volume": 60
+        }
+       ]
+      },
+      {
+       "label": "Punch + bionic punch, a heavier slap",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 1.4,
+         "volume": 55
+        },
+        {
+         "folder": "Impact/BionicPunch_Hit",
+         "pitch": 1.6,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Wood knock, high (the manga's 'pan')",
+       "layers": [
+        {
+         "folder": "Impact/MeleeHit_Wood",
+         "pitch": 1.6,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Punch + a round hitting wood (a sharp crack)",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 1.4,
+         "volume": 50
+        },
+        {
+         "folder": "Impact/Bullet_Wood",
+         "pitch": 1.3,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Punch + synth ting",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 1.4,
+         "volume": 55
+        },
+        {
+         "folder": "AG/Ting",
+         "pitch": 1.6,
+         "volume": 20
+        }
+       ]
+      }
+     ],
+     "defName": "AG_AnchorClap"
+    },
+    {
+     "id": "swap",
+     "label": "Swap",
+     "when": "on the last contact both ends change places; plays at both ends",
+     "options": [
+      {
+       "label": "In game now: beat fire, slowed (a soft puff)",
+       "layers": [
+        {
+         "folder": "Impact/BeatFire",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "In game now, quieter (the clap carries it)",
+       "layers": [
+        {
+         "folder": "Impact/BeatFire",
+         "pitch": 0.8,
+         "volume": 20
+        }
+       ]
+      },
+      {
+       "label": "Skip entry, very fast",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 2.0,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Swish, high (the crescents)",
+       "layers": [
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 1.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Synth: shun, high",
+       "layers": [
+        {
+         "folder": "AG/Shun",
+         "pitch": 1.3,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Synth ting, low + swish",
+       "layers": [
+        {
+         "folder": "AG/Ting",
+         "pitch": 0.8,
+         "volume": 30
+        },
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 1.6,
+         "volume": 30,
+         "delay": 0.1
+        }
+       ]
+      }
+     ],
+     "defName": "AG_AnchorPuff"
+    }
+   ],
+   "hero": "Todo"
+  },
   "AG_AnchorBlackFlash": {
-   "note": "Plays the vanilla punch now. Black Flash is a punch with a black spark.",
+   "note": "Plays the vanilla punch now, inside the window or not; the ordinary punch keeps it. Black Flash is a punch with a black spark: dark and a spark at the fist, the burst 0.07 s later, black bolts crackling for 0.45 s.",
    "moments": [
     {
      "id": "hit",
      "label": "Black Flash hit",
      "when": "the punch lands inside the window",
      "options": [
+      {
+       "label": "In game now: the vanilla punch's clips",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 1.0,
+         "volume": 37
+        }
+       ]
+      },
       {
        "label": "Bionic punch + EMP crackle, low",
        "layers": [
@@ -8811,19 +8984,104 @@
          "volume": 40
         }
        ]
+      },
+      {
+       "label": "Synth + mech band shock, low (Biotech)",
+       "layers": [
+        {
+         "folder": "AG/BlackFlash",
+         "pitch": 1.0,
+         "volume": 50
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.7,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Synth + Chidori crack, low (the black bolts)",
+       "layers": [
+        {
+         "folder": "AG/BlackFlash",
+         "pitch": 1.0,
+         "volume": 50
+        },
+        {
+         "folder": "AG/ChidoriCrack",
+         "pitch": 0.7,
+         "volume": 30,
+         "delay": 0.07
+        }
+       ]
       }
-     ]
+     ],
+     "defName": "AG_AnchorBlackFlashHit"
     }
    ],
    "hero": "Todo"
   },
   "AG_AnchorMark": {
-   "note": "The stone thrown and landing.",
+   "note": "The stone throw: it leaves the hand at 0.38 s in a blade of light, touches down at 0.5 s and skids 0.2 s into its cell. Targeting one of Todo's own stones takes it back: it pops off the cell at 0.5 s and is in his hand at 0.62 s. Not an attack, so quiet sounds.",
    "moments": [
     {
      "id": "throw",
-     "label": "Stone lands",
-     "when": "the stone hits the ground",
+     "label": "Throw",
+     "when": "the stone leaves the hand",
+     "options": [
+      {
+       "label": "Swish",
+       "layers": [
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 1.2,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Swish, high + synth ting (the blade of light)",
+       "layers": [
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 1.5,
+         "volume": 30
+        },
+        {
+         "folder": "AG/Ting",
+         "pitch": 1.2,
+         "volume": 20
+        }
+       ]
+      },
+      {
+       "label": "Punch miss, high (a quick flick)",
+       "layers": [
+        {
+         "folder": "Impact/PunchMiss",
+         "pitch": 1.3,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Synth: shun, soft",
+       "layers": [
+        {
+         "folder": "AG/Shun",
+         "pitch": 1.2,
+         "volume": 25
+        }
+       ]
+      }
+     ],
+     "defName": "AG_AnchorStoneThrow"
+    },
+    {
+     "id": "land",
+     "label": "Lands",
+     "when": "it touches down short of the cell and skids in",
      "options": [
       {
        "label": "Stone impact (joy)",
@@ -8836,18 +9094,18 @@
        ]
       },
       {
-       "label": "Swish + stone punch",
+       "label": "Stone punch + sweeping (the skid)",
        "layers": [
-        {
-         "folder": "Misc/Swish1",
-         "pitch": 1.2,
-         "volume": 35
-        },
         {
          "folder": "Impact/PunchHitBuilding/Stone",
          "pitch": 1.0,
-         "volume": 40,
-         "delay": 0.3
+         "volume": 40
+        },
+        {
+         "folder": "Interact/Work/Clean/Cleaning_Sweeping",
+         "pitch": 1.6,
+         "volume": 20,
+         "delay": 0.03
         }
        ]
       },
@@ -8860,8 +9118,75 @@
          "volume": 40
         }
        ]
+      },
+      {
+       "label": "Stone chunk, light",
+       "layers": [
+        {
+         "folder": "Interact/Work/Construct/Stone/Stone_Chunk_Light",
+         "pitch": 1.2,
+         "volume": 40
+        }
+       ]
       }
-     ]
+     ],
+     "defName": "AG_AnchorStoneLand"
+    },
+    {
+     "id": "back",
+     "label": "Taken back",
+     "when": "it pops off the cell, then lands in his hand 0.12 s later",
+     "options": [
+      {
+       "label": "Swish + punch (into the palm)",
+       "layers": [
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 1.4,
+         "volume": 30
+        },
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 1.6,
+         "volume": 35,
+         "delay": 0.12
+        }
+       ]
+      },
+      {
+       "label": "Stone impact, high + punch",
+       "layers": [
+        {
+         "folder": "Interact/Joy/StoneImpact",
+         "pitch": 1.3,
+         "volume": 30
+        },
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 1.6,
+         "volume": 35,
+         "delay": 0.12
+        }
+       ]
+      },
+      {
+       "label": "Synth: shun, soft + punch",
+       "layers": [
+        {
+         "folder": "AG/Shun",
+         "pitch": 1.3,
+         "volume": 25
+        },
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 1.6,
+         "volume": 30,
+         "delay": 0.12
+        }
+       ]
+      }
+     ],
+     "defName": "AG_AnchorStoneBack"
     }
    ],
    "hero": "Todo"

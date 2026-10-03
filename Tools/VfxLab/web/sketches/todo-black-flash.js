@@ -1,7 +1,8 @@
 // Black Flash — the picture for Todo's Black Flash (AG_AnchorBlackFlash). Ported to C# 2026-09-28
 // (Source/RimArt/Todo/BlackFlash*.cs, previews "Todo: black flash: ..."), drawn in game by
 // MapComponent_BlackFlashes: the fist crackle from Todo's warmup stance, the rest from the hit.
-// The sound is still the vanilla punch.
+// In game the sound is still the vanilla punch; the AG_AnchorBlackFlashHit marker is where the
+// Black Flash's own is picked (options in Tools/SoundLab/make_candidates.py).
 //
 // Mechanic (agreed 2026-09-27, built on the branch; the numbers are XML): a walk-up bare-hand
 // punch, warmup 0.2 s, cooldown 6 s, 9 blunt x the melee damage factor. Within 3 s (180 ticks) of
@@ -225,7 +226,7 @@ export default {
   },
   events(p) {
     const t = times(p), flash = p.scenario === Scenarios[0];
-    return [{ t: t.hit + (flash ? p.spark : 0), type: 'shake', value: flash ? .07 : .012 }, { t: t.hit, type: 'sound', def: flash ? 'AG_BlackFlash' : 'Pawn_Melee_Punch_HitPawn' }];
+    return [{ t: t.hit + (flash ? p.spark : 0), type: 'shake', value: flash ? .07 : .012 }, { t: t.hit, type: 'sound', def: flash ? 'AG_AnchorBlackFlashHit' : 'Pawn_Melee_Punch_HitPawn' }];
   },
 
   draw(s, p, { origin, scene }) {

@@ -35,8 +35,10 @@
 //   Take back (RimArt_MarkCatch): from 0.3 the stone flares inside its aura and its floor ring
 //   pulls in; at 0.5 it pops off the cell in a puff of dust and flies back in its spin ring, caught
 //   at 0.62: 6 teal dashes close in on the hand over 0.14 s as the aura goes out, then a small flare.
-// No camera shake and no sound burst: this is not an attack. One other stone lies near Todo the
-// whole time to show the resting look and that stones stay.
+// No camera shake and no sound burst: this is not an attack. Its sound markers are for quiet sounds:
+// the release, the touch-down, and for a take-back the stone leaving its cell (the catch is 0.12 s
+// into that sound). One other stone lies near Todo the whole time to show the resting look and
+// that stones stay.
 //
 // Drawing: the stone is Textures/RimArt/Anchor/ClapStone.png (shipped); the glow, rings and streak
 // are SoftDisc sprites, ring meshes and strips; the aura is a fan mesh rebuilt each frame. The
@@ -152,7 +154,10 @@ export default {
       ? [{ name: 'Reach out', t: 0 }, { name: 'Stone flares', t: .3 }, { name: 'Stone leaves the cell', t: Place }, { name: 'Caught', t: CatchTime }]
       : [{ name: 'Charge', t: Charge }, { name: 'Release blade', t: Release }, { name: 'Touches down, skids', t: Place }, { name: 'Resting', t: Place + SkidTime }];
   },
-  events() { return []; },
+  events(p) {
+    return p.scenario === Scenarios[1] ? [{ t: Place, type: 'sound', def: 'AG_AnchorStoneBack' }]
+      : [{ t: Release, type: 'sound', def: 'AG_AnchorStoneThrow' }, { t: Place, type: 'sound', def: 'AG_AnchorStoneLand' }];
+  },
 
   draw(s, p, { origin: o, scene }) {
     const sun = scene?.shadowVector ?? { x: -.45, z: -.32 }, strength = scene?.sun?.strength ?? .32;
