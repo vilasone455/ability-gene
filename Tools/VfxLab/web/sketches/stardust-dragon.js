@@ -4,18 +4,19 @@
 // longer. The look and the movement follow the game: the sprites and the demo GIF on terraria.wiki.gg and the
 // decompiled 1.4.0.5 source (Projectile.AI_121_StardustDragon, GetAlpha; the Main.cs projectile draw), read
 // 2026-10-03. Movement, chain, dust and the fight are in lib/stardust-dragon-ai.js, the pictures in
-// lib/stardust-dragon.js.
+// lib/stardust-dragon.js and, for Stardust Flame, lib/stardust-flame.js.
 //
 // Rules (proposed 2026-10-03; lifetime, growth and art agreed with the user, the numbers are placeholders and
 // each becomes an XML field):
-//   Weapon: a staff like the Rainbow Crystal Staff: no shooting verb, a weak melee bash, one ability button.
+//   Weapon: a staff like the Rainbow Crystal Staff: no shooting verb, a weak melee bash, two ability buttons: the
+//   summon and Stardust Flame.
 //   First cast: target a cell within 12 cells. The dragon appears there: head, four body pieces, tail, each fading
 //   in over 7 ticks with 2 dust a tick (Terraria's summon). It lasts 60 s. One dragon per wielder. (Terraria's
 //   first summon has two body pieces; four, because a 4-piece dragon looked stubby and fish-like next to a long
 //   one: the user's note, 2026-10-03. "Body pairs at the first cast" 1 shows Terraria's.)
 //   Recast while it is out: no target. A body pair fades in at the tail and the 60 s start again (Terraria:
-//   each extra summon inserts a pair in front of the tail). Cooldown 10 s between casts, at most 4 casts: 12
-//   pieces. Each piece makes the dragon 1 % bigger (Terraria's rule).
+//   each extra summon inserts a pair in front of the tail). Cooldown 10 s between casts, while it has fewer than 12
+//   pieces, so pieces Stardust Flame burned grow back. Each piece makes the dragon 1 % bigger (Terraria's rule).
 //   Target: the nearest standing enemy within 20 cells of the wielder, walls or no walls; kept until it is down
 //   or out of range. It flies through walls and pawns. With no target it patrols round the wielder (Terraria's
 //   idle movement), so it follows them.
@@ -25,6 +26,24 @@
 //   An unarmoured pawn goes into pain shock at 43 (lib/terraria.js PainShock): 5 hits at 6 pieces.
 //   Ends: after 60 s, or when the wielder goes down. Every piece fades out over 7 ticks with 2 dust a tick, the
 //   summon backwards. (Terraria has no end effect; this is the one addition, so the end can be seen.)
+//   Stardust Flame (not Terraria's; agreed with the user 2026-10-03): the second button, a Shared/Command_TapHold,
+//   usable while the dragon is out and has a target. The flame costs the dragon its body: while the flame is out the
+//   last body piece in front of the tail burns away, 1.5 s of flame a piece, with a pulse of light running up the
+//   body to the mouth, and the tail closes up behind it. Fewer pieces also mean less contact damage (23 % a piece) and
+//   a shorter flame. Recasting grows them back.
+//     Tap: 1 piece. Hold: the button fills one mark per 0.3 s, one mark per piece above 4 (head, a pair, tail);
+//     let go to spend that many. A breath stops at 4 pieces, so a tap at 4 does nothing.
+//     The breath: the dragon stops its passes, hangs 0.55 x reach from its target circling it slowly and opens its
+//     jaw 40 degrees. The flame leaves the middle of the open mouth along the line halfway between the jaws, so the
+//     head turns 20 degrees past its target to aim it (user's note, 2026-10-03). The flame comes out once it faces the
+//     target within 20 degrees and the target is within reach; pieces burn only while it is out. A cone 15 degrees each side, 4 cells long at 4
+//     pieces and 0.25 longer a piece (6 at 12), stopped by walls. Every standing enemy in it takes 3 burn every
+//     0.25 s (12 a second); allies take nothing. With no target for 1 s the breath ends and keeps what it has not burned.
+//     Last Breath: hold past the top mark. Every piece burns, 0.5 s each, the tail last; per piece spent the flame
+//     grows 0.25 cells, 1 degree each side and 10 % burn. Then the head alone dives at its target and bursts: 4 burn
+//     per piece the dragon had, to every enemy within 2.5 cells. The summon is over. Only Last Breath sets fires: its
+//     flame lights cells under it (6 % a cell every 0.25 s), the burst half the cells it covers, and either sets a
+//     pawn it burns alight one time in four. RimWorld's fire then spreads and hurts anyone, colonists too.
 //
 // Order (defaults: scenario "summon + raid", raid from 0, pace .5; times from the simulation):
 //   0.00  the wielder swings the staff overhead (0.6 s, Terraria's useStyle 1), the orb glints; at the same
@@ -40,7 +59,21 @@
 //         wielder in big lazy loops that close in over about 15 s.
 //  15.88  end.
 // "recast grows": the dragon has been out 20 s and circles the wielder. At 1 s and 11 s the wielder swings the
-//   staff and a body pair fades in at the tail: 8, then 10 pieces. "ends (time up)": a 12-piece dragon circling;
+//   staff and a body pair fades in at the tail: 8, then 10 pieces.
+// "flame: tap, then hold": a 12-piece dragon circles the wielder; four raiders walk in, one stops behind the wall, one
+//   comes from further out. The Stardust Flame button stands over the wielder's head.
+//   1.40  a tap. The dragon breaks off, hangs in front of the nearest raider and breathes from 2.02 to 3.55: one
+//         piece burns away (3.47) and the tail closes up; he goes down at 3.02 (5 burns, 2 hits).
+//   3.90  the button is held; let go at 5.20 at the 4th of 7 marks: 4 pieces. From 5.65 the flame finishes the
+//         second raider (5.92) and the one coming in (7.22), then turns to the one behind the wall, which shields him
+//         until the circling head brings the flame round (7.60); he goes down at 11.10 with 3 pieces burned. No
+//         target for 1 s: the breath ends at 12.10 and keeps the fourth, 8 pieces.
+//  14.00  a recast grows a pair back: 10 pieces.
+// "last breath": a 12-piece dragon; three raiders and a mech run in from out of range. The button is held from 0.5 s
+//   past the top mark and let go at 3.5: Last Breath. The flame comes out at 4.25 and grows as 11 pieces burn, one
+//   every 0.5 s; the raiders go down at 7.00, 7.77 and 8.78, some of them alight. At 9.87 the head is alone; it dives
+//   at the mech and bursts on it at 10.08 (48 burn), downing it. 26 cells burn on; the summon is over.
+// "ends (time up)": a 12-piece dragon circling;
 //   its 60 s run out at 2 s and it fades away in dust. "ends (wielder downed)": the wielder goes down at 1.5 s.
 //   "pieces": the four textures large, plain and mirrored, and the dragon of 4 (Terraria's first summon) and 6
 //   pieces laid out straight at 2x size, to compare with the wiki's pictures.
@@ -73,9 +106,10 @@ import { pawn, at, height, shadowLayer, Skin } from './lib/pawn.js';
 import { Enemy, Ally } from './lib/chain-sickle.js';
 import { ringAt } from './lib/goku.js';
 import { walls } from './lib/paper-bomb.js';
-import { damageBar, PainShock, walk, downSmoke } from './lib/terraria.js';
-import { simulate, liveDust, dustAt, kindOf } from './lib/stardust-dragon-ai.js';
+import { damageBar, PainShock, MechDown, MechGrey, MechHead, walk, downSmoke } from './lib/terraria.js';
+import { simulate, liveDust, dustAt, kindOf, LeastPieces, Hold, BreathJaw } from './lib/stardust-dragon-ai.js';
 import { piece, rollOf, aura, wake, head, whisker, WhiskerRoots, HeadScale, dust, staff, IceColour, CyanColour, LightColour } from './lib/stardust-dragon.js';
+import { flame, mouthGlow, burning, pulses, burst, fires, onFire, button } from './lib/stardust-flame.js';
 
 const smooth = Mathf.Smooth, D2R = Mathf.Deg2Rad;
 const White = new Color(1, 1, 1), Warn = new Color(.85, .18, .12), Wielder = new Color(.30, .50, .62);
@@ -108,26 +142,56 @@ const Crowd = [
   { path: [[0, 8.5, -1.8]], ally: true },              // a colonist a cell from where the first raider stops
 ];
 const WallCells = [[10, 2], [10, 3], [10, 4]];
-const Scenarios = ['summon + raid', 'recast grows', 'ends (time up)', 'ends (wielder downed)', 'pieces'];
-const SimKeys = ['scenario', 'direction', 'pace', 'px', 'range', 'damage', 'life', 'cooldown', 'casts', 'first'];
+// Stardust Flame's rule numbers that are not params (XML fields in a port): seconds between burns, cells of reach per
+// piece, the cone's half-angle (degrees), the burst's radius (cells).
+const BreathEvery = .25, ReachPer = .25, Half = 15, BurstRadius = 2.5;
+const ButtonFade = .4;                                 // seconds the button stand-in stays lit after it is let go
+// "flame: tap, then hold": raiders walking in (one stops behind the wall, one comes in later), the button's presses
+// [from, to], the recast.
+const FlameCrowd = [{ path: [[0, 15, -1.5], [4, 8, -1.2]] }, { path: [[0, 16, .8], [4, 9, .6]] }, { path: [[0, 17.5, 3.4], [3, 12.2, 3.4]] },
+  { path: [[0, 24, -3.2], [6, 10.5, -2.6]] }];
+const FlameWalls = [[11, 2], [11, 3], [11, 4]];
+const TapPress = [1.3, 1.4], HoldPress = [3.9, 5.2], Regrow = 14, FlameEnd = 17;
+// "last breath": three raiders and a mech run in from out of range (20 cells) while the button is held past the top
+// mark (9 marks of 0.3 s at 12 pieces), so the dragon has not worn them down before Last Breath.
+const LastCrowd = [{ path: [[0, 25.2, -.9], [6, 9.2, -.8]] }, { path: [[0, 25.4, .9], [6, 9.4, .8]] }, { path: [[0, 27, -.3], [6, 11, -.2]] },
+  { path: [[0, 26.2, .1], [6, 10.2, 0]], mech: true }];
+const LastPress = [.5, 3.5], AfterBurst = 4;
+const Scenarios = ['summon + raid', 'recast grows', 'flame: tap, then hold', 'last breath', 'ends (time up)', 'ends (wielder downed)', 'pieces'];
+const SimKeys = ['scenario', 'direction', 'pace', 'px', 'range', 'damage', 'life', 'cooldown', 'most', 'first', 'breathPer', 'breathDamage', 'breathReach', 'lastPer', 'burstPer'];
 
 const add = (a, b) => ({ x: a.x + b.x, z: a.z + b.z });
 const bump = x => (x >= 0 && x <= 1) ? Math.sin(x * Math.PI) : 0;
+// Casts that grow the dragon to its most pieces, the last one `before` seconds before 0.
+const castsToFull = p => 1 + Math.max(0, Math.floor((p.most - 2 - 2 * p.first) / 2));
+const grown = (p, before, at) => { const n = castsToFull(p), first = -before - (n - 1) * p.cooldown; return Array.from({ length: n }, (_, i) => ({ t: first + i * p.cooldown, at })); };
 
 // The scene's setup for the simulation, in world cells from the wielder.
 function setup(p) {
   const a0 = p.direction * D2R, ca = Math.cos(a0), sa = Math.sin(a0), world = q => ({ x: q.x * ca - q.z * sa, z: q.x * sa + q.z * ca });
-  const rules = { life: p.life, range: p.range, damage: p.damage, perPiece: PerPiece, hitEvery: HitEvery, maxCasts: p.casts, firstPairs: p.first };
-  const base = { px: p.px, pace: p.pace, wielder: () => ({ x: 0, z: 0 }), wielderDown: Infinity, people: [], rules, cells: [], world };
-  const near = world({ x: 1.5, z: 0 });
+  const breath = { perPiece: p.breathPer, damage: p.breathDamage, every: BreathEvery, reach: p.breathReach, reachPer: ReachPer, half: Half * D2R, lastPer: p.lastPer, burstPer: p.burstPer, burstRadius: BurstRadius };
+  const rules = { life: p.life, range: p.range, damage: p.damage, perPiece: PerPiece, hitEvery: HitEvery, most: p.most, firstPairs: p.first, breath };
+  const base = { px: p.px, pace: p.pace, wielder: () => ({ x: 0, z: 0 }), wielderDown: Infinity, people: [], rules, cells: [], breaths: [], world };
+  const near = world({ x: 1.5, z: 0 }), cells = list => list.map(([x, z]) => { const q = world({ x, z }); return { x: Math.round(q.x), z: Math.round(q.z) }; });
+  const raiders = (list, arrive) => list.map(c => ({ at: s => world(walk(c.path, s)), ally: !!c.ally, mech: !!c.mech, tough: c.mech ? MechDown : PainShock, arrive }));
   if (p.scenario === 'summon + raid')
-    return { ...base, t0: 0, t1: MaxTime, casts: [{ t: 0, at: world(CastAt) }], cells: WallCells.map(([x, z]) => { const q = world({ x, z }); return { x: Math.round(q.x), z: Math.round(q.z) }; }),
-      people: Crowd.map(c => ({ at: s => world(walk(c.path, s)), ally: !!c.ally, tough: PainShock })), end: r => Math.min(MaxTime, (r.downs.length ? r.downs[r.downs.length - 1].t : 6) + Tail) };
+    return { ...base, t0: 0, t1: MaxTime, casts: [{ t: 0, at: world(CastAt) }], cells: cells(WallCells),
+      people: raiders(Crowd), end: r => Math.min(MaxTime, (r.downs.length ? r.downs[r.downs.length - 1].t : 6) + Tail) };
   if (p.scenario === 'recast grows')
     return { ...base, t0: -PreRoll, t1: 4 + p.cooldown, casts: [{ t: -PreRoll, at: near }, { t: 1, at: near }, { t: 1 + p.cooldown, at: near }], end: () => 4 + p.cooldown };
+  if (p.scenario === 'flame: tap, then hold') {
+    const casts = [...grown(p, PreRoll, near), { t: Regrow, at: near }];
+    return { ...base, t0: casts[0].t, t1: FlameEnd, casts, cells: cells(FlameWalls), people: raiders(FlameCrowd, 0),
+      breaths: [{ from: TapPress[0], t: TapPress[1] }, { from: HoldPress[0], t: HoldPress[1] }], end: () => FlameEnd };
+  }
+  if (p.scenario === 'last breath') {
+    const casts = grown(p, PreRoll, near);
+    return { ...base, t0: casts[0].t, t1: MaxTime, casts, people: raiders(LastCrowd, 0), breaths: [{ from: LastPress[0], t: LastPress[1] }],
+      end: r => Math.min(MaxTime, r.burst ? r.burst.t + AfterBurst : MaxTime) };
+  }
   if (p.scenario === 'ends (time up)') {
-    const first = 2 - p.life - (p.casts - 1) * p.cooldown;         // every cast in turn, the last one 60 s before the end
-    return { ...base, t0: first, t1: 4, casts: Array.from({ length: p.casts }, (_, i) => ({ t: first + i * p.cooldown, at: near })), end: () => 4 };
+    const casts = grown(p, p.life - 2, near);                       // every cast in turn, the last one 60 s before the end
+    return { ...base, t0: casts[0].t, t1: 4, casts, end: () => 4 };
   }
   return { ...base, t0: -PreRoll, t1: 3.5, wielderDown: 1.5, casts: [{ t: -PreRoll, at: near }], end: () => 3.5 };
 }
@@ -142,18 +206,18 @@ function replay(p) {
 }
 
 // Where the dragon's pieces are at step k, head first: id, kind, screen point, angle, mirror, seconds since it
-// mirrored, alpha.
+// mirrored, alpha, how far Stardust Flame has burned it (0..1).
 function pieces(r, k, o, s) {
   const out = [];
   for (let i = 0; i < r.count[k]; i++) {
     const id = r.order[k * r.ids + i], at = k * r.ids + id;
-    out.push({ id, kind: kindOf(id), c: { x: o.x + r.X[at], z: o.z + r.Z[at] + ChestLift }, rot: r.R[at], flip: r.F[at], since: s - r.FT[at], alpha: r.A[at] });
+    out.push({ id, kind: kindOf(id), c: { x: o.x + r.X[at], z: o.z + r.Z[at] + ChestLift }, rot: r.R[at], flip: r.F[at], since: s - r.FT[at], alpha: r.A[at], burn: r.burn[at] });
   }
   return out;
 }
 
 // The dragon: the sway, shadows and glow, then the pieces in Terraria's order (neck to tail, the tail, the head on
-// top); the whiskers go under the head.
+// top); the whiskers go under the head. A piece that burns shrinks to half and fades to 60 % under a white glow.
 function dragon(list, cells, sun, strength, s, { wave = 1, key = '', open = JawIdle * D2R, whiskers = [], layer = Y + .1 } = {}) {
   const n = list.length, off = list.map((q, i) => wave * WaveAmp * cells * Math.min(1, i / 2) * Math.sin(i * WaveK - s * WaveRate));
   list.forEach((q, i) => {
@@ -166,11 +230,16 @@ function dragon(list, cells, sun, strength, s, { wave = 1, key = '', open = JawI
     sprite(g, 24 * cells, 11 * cells, Body.withAlpha(strength * .7 * q.alpha), soft, shadowLayer, -q.rot / D2R);
     aura(q.c, q.rot, cells, q.alpha, layer - .01);
   });
-  list.slice(1).forEach((q, i) => piece(q.kind, q.c, q.rot, q.roll, cells, q.alpha, layer + i * .004));
+  list.slice(1).forEach((q, i) => {
+    const b = q.burn ?? 0;
+    piece(q.kind, q.c, q.rot, q.roll, cells, q.alpha * (1 - .4 * b), layer + i * .004, 1 - .5 * b);
+    burning(q.c, q.rot, cells, b, s, layer + i * .004 + .003);
+  });
   const top = layer + n * .004, h = list[0];
   whiskers.forEach((w, i) => whisker(`stardust whisker${key} ${i}`, w(h), 1.6 * cells * HeadScale, h.alpha, top + .0035 + i * .0001));
   const turn = n > 1 ? Math.atan2(Math.sin(h.rot - list[1].rot), Math.cos(h.rot - list[1].rot)) : 0;
   head(h, cells, h.alpha, top + .004, open, Math.max(-.5, Math.min(.5, -CrestSwing * turn * h.roll.side)), s);
+  burning(h.c, h.rot, cells * 1.5, h.burn ?? 0, s, top + .01);       // Last Breath's head, alone, before it bursts
 }
 
 // How far the jaw is open at time s (radians): a little in idle flight, wide as the head closes on its target, shut
@@ -182,8 +251,11 @@ function jawOpen(r, k, s, o, at) {
   let last = null;
   for (const e of r.hits) { if (e.t > s) break; last = e; }
   if (last) { const b = s - last.t, shut = b < JawShut ? 1 : Math.max(0, 1 - (b - JawShut) / JawReopen); open = Mathf.Lerp(open, D2R, shut); }
-  return open;
+  return Mathf.Lerp(open, BreathJaw * D2R, r.flame[k]);                 // wide while the flame is out
 }
+
+// Whether the tail is in the chain at step k: Last Breath burns it before the head.
+const hasTail = (r, k) => r.count[k] > 1 && r.order[k * r.ids + r.count[k] - 1] === 3;
 
 // The head's path over the last cells of flight, newest first, with the distance flown back to each point.
 function headPath(r, k, o, long) {
@@ -219,7 +291,7 @@ function whiskerLine(path, cells, [root, long, spread], s) {
 function wakeLine(r, k, o, cells) {
   const out = [];
   let run = 0;
-  for (let j = k; j >= 0 && r.count[j]; j--) {
+  for (let j = k; j >= 0 && hasTail(r, j); j--) {
     const at = j * r.ids + 3, x = o.x + r.X[at] - Math.cos(r.R[at]) * TipBehind * cells, z = o.z + r.Z[at] - Math.sin(r.R[at]) * TipBehind * cells + ChestLift;
     if (out.length) { const d = Math.hypot(x - out[out.length - 1].x, z - out[out.length - 1].z); if (d > .6) break; run += d; }   // a recast moves the tail back: the wake starts again
     out.push({ x, z });
@@ -239,6 +311,18 @@ function staffPose(s, casts, facing) {
     glint = Math.max(glint, bump((u - .15) / .35));
   }
   return { deg: facing > 0 ? deg : 180 - deg, glint };
+}
+
+// The Stardust Flame button over the wielder's head at time s: how full, its marks (pieces a hold can spend), a press
+// flash, how lit. Shown in the flame scenarios while the dragon is out; it empties over ButtonFade once let go.
+function buttonState(r, s, k) {
+  for (const b of r.set.breaths) {
+    if (s < b.from || s > b.t + ButtonFade) continue;
+    const held = Math.min(s, b.t) - b.from, marks = Math.max(0, r.count[r.step(Math.min(s, b.t))] - LeastPieces), after = Math.max(0, s - b.t) / ButtonFade;
+    const fill = held < Hold.tap ? 0 : Math.min(1, (held - Hold.tap) / (Hold.step * (marks + 1)));
+    return { fill: fill * (1 - after), marks, press: Math.max(0, 1 - (s - b.from) / .15), alpha: 1 - .5 * after };
+  }
+  return { fill: 0, marks: Math.max(0, r.count[k] - LeastPieces), press: 0, alpha: .5 };
 }
 
 // "pieces": the four textures large, plain and mirrored, and 4 and 6 pieces in a row at 2x size.
@@ -269,25 +353,37 @@ export default {
     damage: P('Cut per hit at 1 piece', 4, 1, 15, .5, 'Rule'),
     life: P('Lasts after the last cast (s)', 60, 10, 120, 5, 'Rule'),
     cooldown: P('Cooldown between casts (s)', 10, 2, 30, 1, 'Rule'),
-    casts: P('Most casts', 4, 1, 8, 1, 'Rule'),
+    most: P('Most pieces (recasts stop here)', 12, 6, 20, 2, 'Rule'),
+    breathPer: P('Seconds of flame per piece', 1.5, .5, 4, .1, 'Stardust Flame'),
+    breathDamage: P('Burn per 0.25 s in the cone', 3, 1, 10, .5, 'Stardust Flame'),
+    breathReach: P('Reach at 4 pieces (cells; +0.25 a piece)', 4, 2, 8, .5, 'Stardust Flame'),
+    lastPer: P('Last Breath: seconds per piece', .5, .2, 1.5, .05, 'Stardust Flame'),
+    burstPer: P('Last Breath: burst burn per piece', 4, 1, 10, .5, 'Stardust Flame'),
   },
   duration(p) { return p.scenario === 'pieces' ? 1 : replay(p).end; },
   phases(p) {
     if (p.scenario === 'pieces') return [];
     const r = replay(p), list = [];
+    const named = { grow: e => `Recast: ${e.pieces} pieces`, 'time up': () => 'Time up: fades', 'wielder down': () => 'Wielder down: fades',
+      breath: e => e.tap ? 'Tap: 1 piece' : `Hold: ${e.pieces} pieces`, 'last breath': e => `Last Breath (${e.pieces} pieces)`,
+      'breath end': e => `Breath ends: ${e.pieces} pieces left`, burst: () => 'Burst', refused: e => `Refused (${e.why})` };
     if (p.scenario === 'summon + raid') {
       list.push({ name: 'Cast: the dragon appears', t: 0 });
       r.downs.forEach((d, k) => list.push({ name: `Down ${k + 1}`, t: d.t }));
       if (r.downs.length) list.push({ name: 'No target: back to the wielder', t: r.downs[r.downs.length - 1].t + .02 });
     } else {
       list.push({ name: `Circling (${r.count[r.step(0)]} pieces)`, t: 0 });
-      r.events.filter(e => e.t > 0).forEach(e => list.push({ name: e.kind === 'grow' ? `Recast: ${e.pieces} pieces` : e.kind === 'time up' ? 'Time up: fades' : 'Wielder down: fades', t: e.t }));
+      r.events.filter(e => e.t > 0 && named[e.kind]).forEach(e => list.push({ name: named[e.kind](e), t: e.t }));
+      if (r.set.breaths.length) r.downs.forEach((d, k) => list.push({ name: `Down ${k + 1}`, t: d.t }));
+      list.sort((a, b) => a.t - b.t);
     }
     return list;
   },
   events(p) {
     if (p.scenario === 'pieces') return [];
-    return replay(p).casts.map(c => ({ t: c.t, type: 'sound', def: 'AG_StardustDragon_Summon' }));
+    const r = replay(p), sounds = { breath: 'AG_StardustDragon_Breath', 'last breath': 'AG_StardustDragon_Breath', burst: 'AG_StardustDragon_Burst' };
+    return [...r.casts.map(c => ({ t: c.t, type: 'sound', def: 'AG_StardustDragon_Summon' })),
+      ...r.events.filter(e => e.t >= 0 && sounds[e.kind]).map(e => ({ t: e.t, type: 'sound', def: sounds[e.kind] }))];
   },
 
   draw(s, p, { origin, scene }) {
@@ -315,21 +411,33 @@ export default {
       if (g.wielder) {
         pawn(g.pos, { shirt: Wielder, sun, shadow: strength, downed });
         if (!downed) { const pose = staffPose(s, r.casts, facing); staff(add(at(g.pos, 'waist'), { x: .2 * facing, z: .05 }), pose.deg, s, pose.glint); }
+        if (!downed && r.set.breaths.length && r.live[k]) { const b = buttonState(r, s, k); button(add(at(g.pos, 'headTop'), { x: 0, z: .5 }), b.fill, b.marks, b.press, b.alpha, Y + .3); }
         return;
       }
-      const lit = g.hit ? .7 * (1 - (s - g.hit.t) / .15) : 0, shirt = g.c.ally ? Ally : Enemy;
-      pawn(g.pos, { shirt: Color.Lerp(shirt, IceColour, lit), skin: Color.Lerp(Skin, IceColour, lit), sun, shadow: strength, downed: g.down });
-      if (!g.down && !g.c.ally) damageBar(at(g.pos, 'headTop'), g.share);
+      const scorched = g.c.burns.some(e => s - e.t >= 0 && s - e.t < .2) ? .35 : 0;
+      const lit = Math.max(scorched, g.hit ? .7 * (1 - (s - g.hit.t) / .15) : 0), body = g.c.mech ? 'hulk' : 'average';
+      const shirt = g.c.mech ? MechGrey : g.c.ally ? Ally : Enemy, skin = g.c.mech ? MechHead : Skin;
+      pawn(g.pos, { body, shirt: Color.Lerp(shirt, IceColour, lit), skin: Color.Lerp(skin, IceColour, lit), sun, shadow: strength, downed: g.down });
+      if (!g.down && !g.c.ally) damageBar(at(g.pos, 'headTop', { body }), g.share);
       if (g.down) downSmoke(g.pos, s - g.c.down);
+      if (s >= g.c.fire) onFire(at(g.pos, g.down ? 'waist' : 'chest'), s, s - g.c.fire, Y + .05);
     });
 
     // --- the dragon ------------------------------------------------------------------------------------------------------
     if (r.count[k]) {
       const list = pieces(r, k, o, s);
-      wake(wakeLine(r, k, o, cells), WakeSize * cells, list[list.length - 1].alpha, Y + .095);
+      if (hasTail(r, k)) wake(wakeLine(r, k, o, cells), WakeSize * cells, list[list.length - 1].alpha, Y + .095);
       const path = headPath(r, k, o, 2.5);
       dragon(list, cells, sun, strength, s, { open: jawOpen(r, k, s, o, list[0].c), whiskers: Whiskers.map(w => whiskerLine(path, cells, w, s)) });
+      pulses(r, s, list, cells, Y + .16);
     }
+
+    // --- Stardust Flame: the breath, its light, Last Breath's burst and the fires it leaves ---------------------------------
+    const oc = { x: o.x, z: o.z + ChestLift }, below = FlyHeight * Lift;
+    flame(r, s, oc, r.set.cells.map(c => add(oc, c)), Y + .17);
+    mouthGlow(r, k, oc, below, Y + .17);
+    burst(r.burst, s, oc, below, Y + .19);
+    fires(r.fires, s, o, Y + .06);
 
     // --- hits: a cyan flash on the pawn's chest, a white slash along the dragon's line, a small star ------------------------
     people.forEach(g => {

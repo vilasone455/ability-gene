@@ -9,6 +9,8 @@ const Smoke = new Color(.32, .32, .34);
 // Burn or cut that puts an unarmoured pawn into pain shock (vanilla: pain shock at 80 %, a burn adds 0.01875 pain per
 // point; the Last Prism's measure).
 export const PainShock = 43;
+// The mech stand-in: a grey hulk that feels no pain, downed by this much burn (the Last Prism's measure).
+export const MechDown = 150, MechGrey = new Color(.52, .54, .58), MechHead = new Color(.36, .38, .42);
 
 // A rainbow colour: h 0..1 runs red, yellow, green, cyan, blue, magenta and back; sat 0..1.
 export function hue(h, sat = .72) {
