@@ -30,6 +30,13 @@ namespace RimArt
         public static int TailTicks(CompProperties_AbilityGravityWell props) =>
             props.look == GravityLook.GojoBlue ? Mathf.CeilToInt(T.Tail * 60f) + 1 : 0;
 
+        /// <summary>
+        /// Ticks from the cast to the ball appearing, when the well's open sound plays: the picture's open (Gojo's arm
+        /// comes up first). 1 for a well without this look.
+        /// </summary>
+        public static int OpenTicks(CompProperties_AbilityGravityWell props) =>
+            props.look == GravityLook.GojoBlue ? Mathf.Max(1, Mathf.RoundToInt((T.OpenAt - T.FullAt + props.openingSeconds) * 60f)) : 1;
+
         /// <summary>The picture's hold (s): the pull's length less the rush-in.</summary>
         public static float Hold(GravityCast cast) => Mathf.Max(0f, cast.DurationTicks / 60f - T.Rush);
 

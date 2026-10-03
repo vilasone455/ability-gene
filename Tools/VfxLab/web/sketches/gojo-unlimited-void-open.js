@@ -76,8 +76,8 @@ export default {
   },
   events(p) {
     const t = times(p);
-    return [{ t: t.open, type: 'shake', value: Shake }, { t: t.open, type: 'sound', def: 'AG_Gojo_DomainOpen' },
-      { t: t.burst, type: 'sound', def: 'AG_Gojo_DomainClose' }, { t: t.burst + .08, type: 'shake', value: .02 }];
+    return [{ t: t.cast, type: 'sound', def: 'AG_GojoVoidSign' }, { t: t.open, type: 'shake', value: Shake }, { t: t.open, type: 'sound', def: 'AG_GojoVoidOpen' },
+      { t: t.burst, type: 'sound', def: 'AG_GojoVoidBreak' }, { t: t.burst + .08, type: 'shake', value: .02 }];
   },
 
   draw(s, p, { origin: o, scene }) {

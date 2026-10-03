@@ -51,6 +51,7 @@ namespace RimArt
                 reds.Add(shot);
             }
             shot.Fire(ability, target, now);
+            SoundLayers.Play(GojoKitDefOf.AG_GojoRedFire, map, caster.Position);
         }
 
         /// <summary>Red's cast job ended: a shot that never fired is dropped (no cost, no cooldown).</summary>
@@ -135,6 +136,7 @@ namespace RimArt
                     travel = Mathf.Min(props.maxTravel, PurpleRun.ToEdge(map, centre, shot.dir)),
                     radius = props.radius, speed = props.speed, centreRow = props.centreRow, damage = props.damage,
                 });
+                SoundLayers.Play(GojoKitDefOf.AG_GojoPurpleMerge, map, blue.Cell);
                 return true;
             }
             return false;

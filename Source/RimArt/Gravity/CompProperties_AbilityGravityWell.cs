@@ -50,6 +50,11 @@ namespace RimArt
         // The centre creeps toward the heaviest thing it pulls, cells per second, never more than
         // leash cells from the cast point.
         public float driftSpeed = 0.5f, leash = 5f;
+        // Sounds. openSound plays at the cell when the look's ball appears (Blue: 0.15 s after the cast, see
+        // GojoBlueLook.OpenTicks); none by default. holdSound is the sustainer while it pulls, implodeSound the
+        // implosion; left empty they are Gravity Well's own, AG_GravityHum (its pitch rises as the well eats) and
+        // AG_GravityImplode. A hold sound set here plays at the pitch it was picked at.
+        public SoundDef openSound, holdSound, implodeSound;
 
         public CompProperties_AbilityGravityWell() { compClass = typeof(CompAbilityEffect_GravityWell); }
 

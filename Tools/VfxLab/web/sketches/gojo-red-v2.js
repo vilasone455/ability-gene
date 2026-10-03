@@ -248,7 +248,10 @@ export default {
   },
   events(p) {
     const t = times(p);
-    return [{ t: t.fire, type: 'shake', value: .03 }, { t: t.arrive, type: 'shake', value: .12 }, ...(hitsWall(p) ? [{ t: t.land, type: 'shake', value: .08 }] : [])];
+    return [{ t: t.fire, type: 'shake', value: .03 }, { t: t.arrive, type: 'shake', value: .12 }, ...(hitsWall(p) ? [{ t: t.land, type: 'shake', value: .08 }] : []),
+      { t: Start, type: 'sound', def: 'AG_GojoRedCharge' }, { t: t.fire, type: 'sound', def: 'AG_GojoRedFire' }, { t: t.arrive, type: 'sound', def: 'AG_GojoRedBurst' },
+      // Thrown into a wall: the slam. In the open: the first touchdown (lift's arc ends at half the throw's time), then the skid.
+      ...(empty(p) ? [] : [hitsWall(p) ? { t: t.land, type: 'sound', def: 'AG_GojoRedSlam' } : { t: t.arrive + t.dur * .5, type: 'sound', def: 'AG_GojoRedLand' }])];
   },
 
   draw(s, p, { origin: o, scene }) {

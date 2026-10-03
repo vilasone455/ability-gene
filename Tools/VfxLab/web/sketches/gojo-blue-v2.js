@@ -208,7 +208,10 @@ export default {
   },
   events(p) {
     const t = times(p);
-    return [{ t: t.open, type: 'shake', value: .03 }, { t: t.full + 1, type: 'shake', value: .02 }, { t: t.full + 2, type: 'shake', value: .025 }, { t: t.burst, type: 'shake', value: .15 }];
+    return [{ t: t.open, type: 'shake', value: .03 }, { t: t.full + 1, type: 'shake', value: .02 }, { t: t.full + 2, type: 'shake', value: .025 }, { t: t.burst, type: 'shake', value: .15 },
+      // The pull is a sustainer in game (Gravity Well's hum), ended when Blue implodes.
+      { t: t.open, type: 'sound', def: 'AG_GojoBlueOpen' }, { t: t.full, type: 'sound', def: 'AG_GojoBluePull', lasts: t.burst - t.full },
+      { t: t.burst, type: 'sound', def: 'AG_GojoBlueImplode' }];
   },
 
   draw(s, p, { origin: o, scene }) {

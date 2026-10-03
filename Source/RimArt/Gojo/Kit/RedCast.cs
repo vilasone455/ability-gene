@@ -406,6 +406,7 @@ namespace RimArt
             if (first != null) hit = Move(map, first, dir, throwCells, damagePerCell, slamDamage, R.FlyTime(throwCells, throwCells), true, now);
             IntVec3 centre = GojoKit.Cell(point);
             if (!centre.InBounds(map)) centre = centre.ClampInsideMap(map);
+            SoundLayers.Play(GojoKitDefOf.AG_GojoRedBurst, map, centre);
             var near = new List<Thing>();
             int cells = GenRadial.NumCellsInRadius(Mathf.Min(burstRadius + 1.5f, GenRadial.MaxRadialPatternRadius));
             for (int i = 0; i < cells; i++)
@@ -480,10 +481,18 @@ namespace RimArt
                 if (!pawn.Dead && !pawn.Spawned && now < move.landTick + 10) return;
                 move.landed = true;
                 if (pawn.Dead || !pawn.Spawned || pawn.Map != map || move.damage < 0.5f) return;
+                Slam(map, move, pawn.Position);
                 pawn.TakeDamage(new DamageInfo(DamageDefOf.Blunt, move.damage, 0f, GojoKit.Angle(move.way), caster));
                 return;
             }
             PutDown(map, move);
+            Slam(map, move, move.land);
+        }
+
+        /// <summary>The thing Red threw lands against a wall (the slam), heard where it lands. Pushes make no slam.</summary>
+        private static void Slam(Map map, RedMove move, IntVec3 at)
+        {
+            if (move.thrown && move.walled) SoundLayers.Play(GojoKitDefOf.AG_GojoRedSlam, map, at);
         }
 
         /// <summary>Puts down at once every item still in flight, for a shot being dropped early: none is left off the map.</summary>

@@ -4,6 +4,7 @@ using System.Linq;
 using RimWorld;
 using UnityEngine;
 using Verse;
+using Verse.Sound;
 using static RimArt.RimArtTestContext;
 
 namespace RimArt
@@ -12,8 +13,9 @@ namespace RimArt
     /// Game tests for Gojo's Blue, Red and Hollow Purple (run with -quicktest -rimarttest=gojo): Blue's pull and
     /// implosion and what it does not do (grow, drift, bend bullets, hold Gojo); Red's throw, push, wall slam and a
     /// wall in its path; Red through Blue making Hollow Purple and what Purple erases, strikes and scars; Red passing
-    /// through Blue as a plain Red while Purple is on cooldown. The abilities are given directly (no Echo), so no
-    /// charge is taken; the Echo's cost for Purple is not tested here.
+    /// through Blue as a plain Red while Purple is on cooldown; and every sound each plays, with its tick (Blue's open,
+    /// pull and implosion; Red's fire, burst and wall slam; Purple's merge, travel and fade). The abilities are given
+    /// directly (no Echo), so no charge is taken; the Echo's cost for Purple is not tested here.
     /// </summary>
     public static class Tests_GojoCombat
     {
@@ -35,7 +37,12 @@ namespace RimArt
             GameComponent_Gravity.Instance.ResetForTests();
             GameComponent_Echoes.Get.ResetForTests();
             Kit(t).ResetForTests();
+            Listen();
         }
+
+        /// <summary>The sustainer of <paramref name="sound"/> that is playing (started, not ended), or null.</summary>
+        private static Sustainer Playing(SoundDef sound) =>
+            Find.SoundRoot.sustainerManager.AllSustainers.FirstOrDefault(s => s.def == sound && !s.Ended);
 
         private static void DropTraits(Pawn pawn)
         {
@@ -123,13 +130,14 @@ namespace RimArt
             Vector3 origin = cast.Centre;
             yield return props.OpeningTicks + 1;
             t.Check(cast.Field, "the pull started after " + props.OpeningTicks + " ticks (" + State(cast, c) + ")");
-            bool fixedRadius = true, stayed = true;
+            bool fixedRadius = true, stayed = true, pulling = false;
             float raiderStart = (raider.DrawPos - origin).Yto0().magnitude, allyStart = (ally.DrawPos - origin).Yto0().magnitude;
             int opened = t.Now;
             while (cast.Active && t.Now - opened < 400)
             {
                 fixedRadius &= Mathf.Approximately(cast.Radius, 4f);
                 stayed &= (cast.Centre - origin).sqrMagnitude < 1e-6f;
+                if (t.Now - opened == 60) pulling = Playing(props.holdSound) != null;
                 if ((t.Now - opened) % 30 == 0)
                     t.Log($"{t.Now - opened} ticks: raider {(raider.DrawPos - origin).Yto0().magnitude:0.00} from the centre, "
                         + $"ally {(ally.DrawPos - origin).Yto0().magnitude:0.00}, steel {(steel.Destroyed ? "crushed" : "at " + (steel.Position - c))}; " + State(cast, c));
@@ -151,6 +159,15 @@ namespace RimArt
             t.Check(t.Untouched(gojo) && gojo.Position == gojoCell, "Gojo was never pulled or hurt");
             int cooldown = GameComponent_Gravity.Instance.Remaining(gojo, Blue);
             t.Check(cooldown > 1150 && cooldown <= 1200, "the cooldown runs 20 s from the close (" + cooldown + " ticks)");
+            int open = GojoBlueLook.OpenTicks(props);
+            t.Log("sounds: " + HeardSince(cast.startTick) + " (ticks after the cast; it closed at " + (cast.endTick - cast.startTick) + ")");
+            t.Check(HeardOnly(props.openSound, cast.startTick, open), "Blue's open is heard once, as the ball appears (cast + " + open + ")");
+            t.Check(HeardNear(props.holdSound, cast.startTick, props.OpeningTicks), "the pull sound starts once, with the pull (cast + " + props.OpeningTicks + ")");
+            t.Check(pulling, "it plays while Blue pulls (1 s in)");
+            t.Check(Playing(props.holdSound) == null, "and stops when Blue implodes");
+            t.Check(HeardOnly(props.implodeSound, cast.endTick, 0), "the implosion is heard once, on the implosion tick");
+            t.Check(HeardAt(GravityDefOf.AG_GravityHum, 0).Count == 0 && HeardAt(GravityDefOf.AG_GravityImplode, 0).Count == 0,
+                "Gravity Well's own hum and implosion are not played");
             yield return t.ShotAs("blue-implosion", c, 8f);
         }
 
@@ -231,6 +248,10 @@ namespace RimArt
             t.Check(t.Untouched(apart) && apart.Position == apartCell, "a pawn 3 cells from the burst was not pushed (" + Where(apart, c) + ")");
             t.Check(!first.stances.stunner.Stunned && !beside.stances.stunner.Stunned, "no stun");
             t.Check(red.CooldownTicksRemaining > 0, "Red's cooldown runs (" + red.CooldownTicksRemaining + " ticks)");
+            t.Log("sounds: " + HeardSince(shot.fireTick) + " (ticks after the fire; the burst " + (shot.burstTick - shot.fireTick) + ")");
+            t.Check(HeardOnly(GojoKitDefOf.AG_GojoRedFire, shot.fireTick, 0), "Red's fire is heard once, on the fire tick");
+            t.Check(HeardOnly(GojoKitDefOf.AG_GojoRedBurst, shot.burstTick, 0), "the burst once, on the burst tick");
+            t.Check(HeardAt(GojoKitDefOf.AG_GojoRedSlam, 0).Count == 0, "no slam: nothing met a wall, and a landing in the open has no sound");
             foreach (int w in WaitFor(() => gojo.CurJobDef != GojoKitDefOf.AG_CastGojoRed, 120)) yield return w;
             t.Log("Gojo free " + (t.Now - cast) + " ticks after the order: " + RimArtTestContext.Describe(gojo));
             t.Check(gojo.CurJobDef != GojoKitDefOf.AG_CastGojoRed, "Gojo is free once his arm is down");
@@ -257,6 +278,12 @@ namespace RimArt
             t.Log("thrown: " + RimArtTestContext.Describe(first) + ", injuries " + Injuries(first).ToString("0.#"));
             t.Check(shot.hit.walled && first.Position == c + new IntVec3(2, 0, 0), "it stopped at the wall's foot (" + Where(first, c) + ")");
             t.Check(Mathf.Abs(shot.hit.damage - 13f) < 0.01f && t.Hurt(first), "13 blunt (" + shot.hit.damage + ", injuries " + Injuries(first).ToString("0.#") + ")");
+            // The flyer lands on its own tick, up to 10 ticks after the throw's own landing tick; the damage and the slam wait for it.
+            List<int> slam = HeardAt(GojoKitDefOf.AG_GojoRedSlam, shot.hit.landTick);
+            t.Log("sounds: " + HeardSince(shot.fireTick) + " (ticks after the fire; the throw lands at " + (shot.hit.landTick - shot.fireTick) + ")");
+            t.Check(HeardOnly(GojoKitDefOf.AG_GojoRedFire, shot.fireTick, 0) && HeardOnly(GojoKitDefOf.AG_GojoRedBurst, shot.burstTick, 0),
+                "the fire and the burst are heard once each, on their ticks");
+            t.Check(slam.Count == 1 && slam[0] >= 0 && slam[0] <= 10, "the slam is heard once, as it lands against the wall (landing + " + string.Join(", ", slam) + ")");
             yield return t.ShotAs("red-slam", c + new IntVec3(1, 0, 0), 8f);
         }
 
@@ -372,12 +399,33 @@ namespace RimArt
             float edge = PurpleRun.ToEdge(map, new Vector2(map.Size.x - 5.5f, c.z + 0.5f), Vector2.right);
             t.Check(Mathf.Abs(edge - 5.5f) < 0.01f, "a run from 5.5 cells short of the map edge is cut to 5.5 (" + edge.ToString("0.00") + ")");
 
+            float soundOff = 0f, soundFrom = -1f, soundTo = -1f;
             foreach (int w in WaitFor(() => run.Stopped, 400, 5))
             {
                 if ((t.Now - run.comboTick) % 30 == 0) t.Log($"{t.Now - run.comboTick} ticks: centre {run.run:0.0} cells, {run.hits.Count} pawns met, {run.touches.Count} things touched");
+                // The travel sound is heard from the sphere's centre as it moves.
+                Sustainer travel = Playing(GojoKitDefOf.AG_GojoPurpleTravel);
+                if (travel != null && run.run > 0f)
+                {
+                    Vector3 heard = SoundLayers.RootOf(travel).transform.position;
+                    soundOff = Mathf.Max(soundOff, (Flat(heard) - (run.start + run.dir * run.run)).magnitude);
+                    if (soundFrom < 0f) soundFrom = run.run;
+                    soundTo = run.run;
+                }
                 yield return w;
             }
+            int stopTick = run.MoveTick + Mathf.CeilToInt(run.travel / run.speed * 60f);
             yield return 2;
+            t.Log("sounds: " + HeardSince(run.comboTick) + $" (ticks after Red met Blue; it moved at {run.MoveTick - run.comboTick} and stopped at {stopTick - run.comboTick})");
+            t.Check(HeardAt(GojoKitDefOf.AG_GojoRedFire, cast).Count == 1, "Red's fire was heard once");
+            t.Check(HeardOnly(GojoKitDefOf.AG_GojoPurpleMerge, run.comboTick, 0), "the merge is heard once, as Red meets Blue");
+            t.Check(HeardNear(GojoKitDefOf.AG_GojoPurpleTravel, run.comboTick, run.MoveTick - run.comboTick), "the travel sound starts once, as Purple moves");
+            t.Check(soundTo - soundFrom > 10f && soundOff < 0.01f,
+                $"it was heard from the sphere all the way ({soundFrom:0.0} to {soundTo:0.0} cells, at most {soundOff:0.000} off its centre)");
+            t.Check(Playing(GojoKitDefOf.AG_GojoPurpleTravel) == null, "and stopped when Purple stopped");
+            t.Check(HeardNear(GojoKitDefOf.AG_GojoPurpleFade, run.comboTick, stopTick - run.comboTick), "the fade is heard once, as it stops");
+            t.Check(HeardAt(GojoKitDefOf.AG_GojoRedBurst, 0).Count == 0 && HeardAt(CompProperties_AbilityGravityWell.For(Blue).implodeSound, 0).Count == 0,
+                "no Red burst and no Blue implosion: both were used up");
             t.Log("hits: " + string.Join("; ", run.hits.Select(h => h.pawn.LabelShort + (h.erased ? " erased" : $" struck {h.dealt:0.#} on {h.part?.Label ?? "none"}"))));
             t.Check(run.Stopped, "Purple ran its 14 cells (" + run.run.ToString("0.0") + ")");
 

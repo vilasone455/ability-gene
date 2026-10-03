@@ -249,7 +249,15 @@ export default {
     const t = times(p);
     const rumble = [];
     for (let r = t.move + .5; r < t.stop; r += .5) rumble.push({ t: r, type: 'shake', value: .035 });
-    return [{ t: t.fire, type: 'shake', value: .03 }, { t: t.contact, type: 'shake', value: .05 }, { t: t.ignite, type: 'shake', value: .16 }, ...rumble];
+    // Red's own charge and fire (the combo is a Red cast), then Purple's. The travel is a sustainer ended when it
+    // fades; one touch sound per pawn it meets (erased on the centre row, 60 damage on a side row).
+    const R = p.radius, touches = field(p) ? [] : Path.filter(([, across, kind]) => kind !== 'tree' && kind !== 'crate' && Math.abs(across) < R)
+      .map(([d, across]) => ({ t: t.move + Math.max(0, d - Math.sqrt(R * R - across * across)) / p.speed, type: 'sound', def: 'AG_GojoPurpleTouch' }))   // draw()'s hitAt
+      .filter(e => e.t <= t.stop);
+    return [{ t: t.fire, type: 'shake', value: .03 }, { t: t.contact, type: 'shake', value: .05 }, { t: t.ignite, type: 'shake', value: .16 }, ...rumble,
+      { t: Start, type: 'sound', def: 'AG_GojoRedCharge' }, { t: t.fire, type: 'sound', def: 'AG_GojoRedFire' },
+      { t: t.contact, type: 'sound', def: 'AG_GojoPurpleMerge' }, { t: t.ignite, type: 'sound', def: 'AG_GojoPurpleIgnite' },
+      { t: t.move, type: 'sound', def: 'AG_GojoPurpleTravel', lasts: t.stop - t.move }, ...touches, { t: t.stop, type: 'sound', def: 'AG_GojoPurpleFade' }];
   },
 
   draw(s, p, { origin: o, scene, view }) {

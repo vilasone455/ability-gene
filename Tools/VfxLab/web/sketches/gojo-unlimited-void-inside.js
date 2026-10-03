@@ -129,10 +129,16 @@ export default {
     return list.sort((a, b) => a.t - b.t);
   },
   events(p) {
-    const list = [{ t: 0, type: 'sound', def: 'AG_Gojo_VoidInside' }];
+    // The rush in, the black hole opening, the void's drone from when the space fades in to the end (a sustainer
+    // the domain's end stops), a touch for each pawn Gojo spares, the collapse.
+    const t = times(p), until = t.whole ? p.hold : t.total;
+    const list = [{ t: 0, type: 'sound', def: 'AG_GojoVoidEnter' }, { t: Math.max(.1, p.linesFor - .25), type: 'sound', def: 'AG_GojoVoidHole' },
+      { t: .1, type: 'sound', def: 'AG_GojoVoidDrone', lasts: until - .1 }];
+    const pl = plan({ scenario: p.scenario, order: p.order, radius: p.radius, speed: p.speed, touch: p.touch, budget: p.hold - ActFrom });
+    for (const at of pl.spared.values()) if (ActFrom + at < until) list.push({ t: ActFrom + at, type: 'sound', def: 'AG_GojoVoidTouch' });
     if (p.push > 1) list.push({ t: .1, type: 'camera', over: p.linesFor - .1, zoom: p.push, pan: 1, x: 0, z: p.holeNorth },   // push in on the point
       { t: p.linesFor + .45, type: 'camera', over: 1, zoom: 1, pan: 0 });                                                     // and back
-    if (times(p).whole) list.push({ t: p.hold, type: 'sound', def: 'AG_Gojo_DomainClose' });
+    if (t.whole) list.push({ t: p.hold, type: 'sound', def: 'AG_GojoVoidCollapse' });
     return list;
   },
 

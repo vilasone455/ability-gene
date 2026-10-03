@@ -143,22 +143,31 @@ export async function playLayers(layers, { duration = null, keep = false } = {})
     names.push(c.clip);
     return playUrl(c.url, { pitch: l.pitch, volume: l.volume, delay: l.delay, loop: l.loop });
   }));
-  if (duration) setTimeout(() => voices.forEach((v) => v && playing.has(v) && stopVoice(v, 0.2)), duration * 1000);
+  if (duration) endAfter(voices, duration);
   return names;
 }
 
-/** Plays a SoundDef the way the game does: per subSound one grain, one clip, volume and pitch inside the ranges. */
-export function playDef(def, { keep = false } = {}) {
+/** Cuts voices after seconds with a 0.2 s fade, as the game ends a sustainer. */
+function endAfter(voices, seconds) {
+  setTimeout(async () => (await Promise.all(voices)).forEach((v) => v && playing.has(v) && stopVoice(v, 0.2)), seconds * 1000);
+}
+
+/**
+ * Plays a SoundDef the way the game does: per subSound one grain, one clip, volume and pitch inside the ranges.
+ * duration: as playLayers'.
+ */
+export function playDef(def, { duration = null, keep = false } = {}) {
   if (!keep) stopAll();
-  const names = [];
+  const names = [], voices = [];
   for (const sub of def.subs) {
     const grains = sub.grains.filter((g) => g.folder || g.clip);
     if (!grains.length) continue;
     const c = pickOne(resolve(pickOne(grains)));
     if (!c) continue;
     names.push(c.clip);
-    playUrl(c.url, { pitch: inRange(sub.pitch), volume: inRange(sub.volume), delay: inRange(sub.delay), loop: def.sustain && sub.loop });
+    voices.push(playUrl(c.url, { pitch: inRange(sub.pitch), volume: inRange(sub.volume), delay: inRange(sub.delay), loop: def.sustain && sub.loop }));
   }
+  if (duration) endAfter(voices, duration);
   return names;
 }
 
@@ -227,7 +236,10 @@ export function defXml(name, layers, duration = null) {
   let xml = duration ? `<!-- A sustainer: the ability's code ends it after ${duration} s. -->\n` : '';
   xml += `<SoundDef>\n  <defName>${xmlEsc(name)}</defName>\n  <context>MapOnly</context>\n`;
   if (sustain) xml += `  <sustain>true</sustain>\n  <sustainFadeoutTime>0.2</sustainFadeoutTime>\n`;
-  xml += `  <maxSimultaneous>4</maxSimultaneous>\n  <subSounds>\n`;
+  xml += `  <maxSimultaneous>4</maxSimultaneous>\n`;
+  // The game refuses a sustainer with the default PrioritizeNewest (validate.py checks it).
+  if (sustain) xml += `  <priorityMode>PrioritizeNearest</priorityMode>\n`;
+  xml += `  <subSounds>\n`;
   for (const l of layers) {
     const needs = sourcesOf(l);
     const may = needs.length && needs.every((s) => !SAFE.has(s)) ? ` MayRequire="${needs.map((s) => 'Ludeon.RimWorld.' + s).join(',')}"` : '';

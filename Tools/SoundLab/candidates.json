@@ -3228,6 +3228,2107 @@
    ],
    "hero": "Nakime"
   },
+  "AG_GojoBlue": {
+   "note": "In game now: Gravity Well's hum (AG_GravityHum, a sustainer, pitch rising as it eats) while it pulls and its implosion (AG_GravityImplode). The first option of the pull and the implosion is that sound, so picking it keeps it.",
+   "moments": [
+    {
+     "id": "open",
+     "label": "Blue opens",
+     "when": "arm up and point (0.15 s); a star glint at the cell, the ball grows to the 1-cell core in 0.3 s, two arcs sweep round Gojo",
+     "options": [
+      {
+       "label": "Psychic warmup, fast + low swish",
+       "layers": [
+        {
+         "clip": "Item/Psychic_Artifact_Warmup_A01",
+         "pitch": 1.5,
+         "volume": 35
+        },
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 0.7,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Animal pulser, quick and high (the hum's clip)",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 1.3,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Skip entry, low",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.7,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Shield reset, low",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Reset",
+         "pitch": 0.7,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Psycast psychic effect (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Psychic_Effect",
+         "pitch": 1.1,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Charge shot, low + soothe pulser",
+       "layers": [
+        {
+         "clip": "Weapon/ChargeShotA",
+         "pitch": 0.7,
+         "volume": 35
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Soothe_Pulser",
+         "pitch": 1.2,
+         "volume": 20
+        }
+       ]
+      },
+      {
+       "label": "Synth: sucked in, fast",
+       "layers": [
+        {
+         "folder": "AG/KamuiIn",
+         "pitch": 1.3,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Synth: shun, low + sucked in",
+       "layers": [
+        {
+         "folder": "AG/Shun",
+         "pitch": 0.7,
+         "volume": 35
+        },
+        {
+         "folder": "AG/KamuiIn",
+         "pitch": 1.2,
+         "volume": 35,
+         "delay": 0.05
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoBlueOpen"
+    },
+    {
+     "id": "pull",
+     "label": "Pull (3 s)",
+     "when": "3 s: a storm of blue fog turns over 4 cells, slabs and planks torn from the floor orbit the ball; small shakes at 1 and 2 s",
+     "options": [
+      {
+       "label": "In game now: Gravity Well hum (animal pulser, very low)",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.35,
+         "volume": 12,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Gravity Well hum, louder + tornado",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.45,
+         "volume": 25,
+         "loop": true
+        },
+        {
+         "folder": "Misc/Tornado",
+         "pitch": 0.9,
+         "volume": 25,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Tornado + wood and stone torn up at 1 s and 2 s",
+       "layers": [
+        {
+         "folder": "Misc/Tornado",
+         "pitch": 0.8,
+         "volume": 35,
+         "loop": true
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Wood/Small",
+         "pitch": 0.8,
+         "volume": 30,
+         "delay": 1.0
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Small",
+         "pitch": 0.8,
+         "volume": 30,
+         "delay": 2.0
+        }
+       ]
+      },
+      {
+       "label": "Antigrav loop, low (Odyssey)",
+       "layers": [
+        {
+         "clip": "Gravship/Gravship_Antigrav_Loop",
+         "pitch": 0.7,
+         "volume": 40,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Wind + animal pulser, low",
+       "layers": [
+        {
+         "folder": "Ambience/Wind",
+         "pitch": 1.3,
+         "volume": 40,
+         "loop": true
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.5,
+         "volume": 20,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Mech control loop, low (Biotech)",
+       "layers": [
+        {
+         "clip": "Pawn/Mechanitor/ControlTaking/Mech_Control_Taking_Loop_01a",
+         "pitch": 0.6,
+         "volume": 35,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Emergence quake + psychic pulse, low",
+       "layers": [
+        {
+         "folder": "Misc/Emergence/Quake",
+         "pitch": 0.7,
+         "volume": 40,
+         "loop": true
+        },
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.6,
+         "volume": 30,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Synth: ki hum, low",
+       "layers": [
+        {
+         "folder": "AG/KiCharge",
+         "pitch": 0.6,
+         "volume": 35,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Synth: sucked in, slow, twice + Gravity Well hum",
+       "layers": [
+        {
+         "folder": "AG/KamuiIn",
+         "pitch": 0.5,
+         "volume": 35
+        },
+        {
+         "folder": "AG/KamuiIn",
+         "pitch": 0.55,
+         "volume": 30,
+         "delay": 1.5
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.4,
+         "volume": 15,
+         "loop": true
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoBluePull",
+     "duration": 3
+    },
+    {
+     "id": "implode",
+     "label": "Implosion",
+     "when": "everything rushes in (0.12 s), a white flash, 10-25 blunt within 2 cells, debris thrown out, a grey dust cloud",
+     "options": [
+      {
+       "label": "In game now: Gravity Well implosion (mortar dry, very low)",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.475,
+         "volume": 28
+        }
+       ]
+      },
+      {
+       "label": "Mortar dry, low + big stone down",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.55,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Big",
+         "pitch": 0.8,
+         "volume": 35,
+         "delay": 0.05
+        }
+       ]
+      },
+      {
+       "label": "Thump cannon impact + psychic pulse, low",
+       "layers": [
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 0.8,
+         "volume": 50
+        },
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.5,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Mech band shockwave, low (Biotech)",
+       "layers": [
+        {
+         "clip": "Explosion/Mechband_Shockwave_Explosion_01a",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Hellsphere vaporize, low",
+       "layers": [
+        {
+         "folder": "Explosion/Vaporize",
+         "pitch": 0.6,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Drop pod impact + rock collapse",
+       "layers": [
+        {
+         "folder": "Misc/DropPodImpact/Default",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "clip": "Misc/RockCollapse",
+         "pitch": 0.8,
+         "volume": 35,
+         "delay": 0.05
+        }
+       ]
+      },
+      {
+       "label": "Synth: whoomp, low + mortar",
+       "layers": [
+        {
+         "folder": "AG/KiBeamFire",
+         "pitch": 0.6,
+         "volume": 45
+        },
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.5,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Synth: Rasengan hit, low (grind + thump)",
+       "layers": [
+        {
+         "folder": "AG/RasenganHit",
+         "pitch": 0.7,
+         "volume": 50
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoBlueImplode"
+    }
+   ],
+   "hero": "Gojo"
+  },
+  "AG_GojoRed": {
+   "note": "Charge 0.5 s at the fingertip (the warm-up's last 0.5 s), the fire, the burst where it meets something (8 cells away it arrives 0.4 s after the fire), and the thrown pawn slamming into a wall or landing in the open.",
+   "moments": [
+    {
+     "id": "charge",
+     "label": "Charge",
+     "when": "0.5 s: a flat red swirl spins at the fingertip, pink ribbon arcs sweep round Gojo, the orb grows white-hot",
+     "options": [
+      {
+       "label": "Fire spew warmup (the glow)",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/FireSpew/Warmup",
+         "pitch": 1.2,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Psychic warmup, fast",
+       "layers": [
+        {
+         "clip": "Item/Psychic_Artifact_Warmup_A01",
+         "pitch": 1.8,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Charge rifle, slowed (a whine)",
+       "layers": [
+        {
+         "folder": "Weapon/ChargeRifle",
+         "pitch": 0.6,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Jump pack prelaunch (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/JumpPack/JumpPack_PreLaunch",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Mech launcher prelaunch (Biotech)",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/LongJumpMechLauncher/PreLaunch",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Fire burst warmup, fast (Biotech)",
+       "layers": [
+        {
+         "clip": "Pawn/Abilities/FireBurst_Warmup",
+         "pitch": 1.6,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Synth: whine rising, fast",
+       "layers": [
+        {
+         "folder": "AG/KiChargeStart",
+         "pitch": 1.6,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Synth: Rasengan wind-up, high",
+       "layers": [
+        {
+         "folder": "AG/RasenganForm",
+         "pitch": 1.4,
+         "volume": 35
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoRedCharge"
+    },
+    {
+     "id": "fire",
+     "label": "Fire",
+     "when": "a pink-white flash at the finger, a red ring; Red flies at 20 cells/s",
+     "options": [
+      {
+       "label": "Charge rifle",
+       "layers": [
+        {
+         "folder": "Weapon/ChargeRifle",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Charge shot + swish",
+       "layers": [
+        {
+         "clip": "Weapon/ChargeShotA",
+         "pitch": 1.1,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 1.3,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Thump cannon fire",
+       "layers": [
+        {
+         "folder": "Weapon/ThumpCannon_Fire",
+         "pitch": 1.1,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Orbital targeter fire",
+       "layers": [
+        {
+         "clip": "Weapon/OrbitalTargeter/OrbitalTargeter_Fire",
+         "pitch": 1.2,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Beam graser resolve (Biotech)",
+       "layers": [
+        {
+         "folder": "Weapon/Beamgraser/Resolve",
+         "pitch": 1.0,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Inferno cannon fire + swish",
+       "layers": [
+        {
+         "folder": "Weapon/InfernoCannon_Fire",
+         "pitch": 1.1,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 1.4,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Hellsphere cannon shot (Biotech)",
+       "layers": [
+        {
+         "clip": "Weapon/HellsphereCannon/Hellsphere_Cannon_Shot",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Synth: whoomp, high",
+       "layers": [
+        {
+         "folder": "AG/KiBeamFire",
+         "pitch": 1.3,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Synth: shun + whoomp",
+       "layers": [
+        {
+         "folder": "AG/Shun",
+         "pitch": 1.2,
+         "volume": 35
+        },
+        {
+         "folder": "AG/KiBeamFire",
+         "pitch": 1.4,
+         "volume": 40
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoRedFire"
+    },
+    {
+     "id": "burst",
+     "label": "Burst",
+     "when": "it meets a pawn, a thing or the cell: red wash, white flash, a shock front down its line; the others within 1.5 cells pushed 2 cells",
+     "options": [
+      {
+       "label": "Thump cannon impact",
+       "layers": [
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 1.0,
+         "volume": 55
+        }
+       ]
+      },
+      {
+       "label": "Bionic punch + mortar dry, high",
+       "layers": [
+        {
+         "folder": "Impact/BionicPunch_Hit",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.9,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Mech band shock (Biotech)",
+       "layers": [
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Zeus hammer (Royalty)",
+       "layers": [
+        {
+         "folder": "Impact/ZeusHammer",
+         "pitch": 0.9,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Rocket explosion, short",
+       "layers": [
+        {
+         "folder": "Weapon/RocketswarmLauncher/Explosion",
+         "pitch": 1.1,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Big hit + punch",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Pawn",
+         "pitch": 0.9,
+         "volume": 50
+        },
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Synth: Rasengan hit (grind + thump)",
+       "layers": [
+        {
+         "folder": "AG/RasenganHit",
+         "pitch": 1.2,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Synth: black flash, high",
+       "layers": [
+        {
+         "folder": "AG/BlackFlash",
+         "pitch": 1.2,
+         "volume": 45
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoRedBurst"
+    },
+    {
+     "id": "slam",
+     "label": "Slams into a wall",
+     "when": "the thrown pawn hits a wall 0.5 cells up: +10 blunt, cracks, a big dust cloud, chunks",
+     "options": [
+      {
+       "label": "Big hit on a building",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Building",
+         "pitch": 0.8,
+         "volume": 55
+        }
+       ]
+      },
+      {
+       "label": "Stone punch + rock chunks",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitBuilding/Stone",
+         "pitch": 0.7,
+         "volume": 50
+        },
+        {
+         "folder": "Interact/Haul/Drop/ChunkRock",
+         "pitch": 0.9,
+         "volume": 35,
+         "delay": 0.06
+        }
+       ]
+      },
+      {
+       "label": "Big hit + small stone building down",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Pawn",
+         "pitch": 0.8,
+         "volume": 50
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Small",
+         "pitch": 0.9,
+         "volume": 40,
+         "delay": 0.02
+        }
+       ]
+      },
+      {
+       "label": "Rock collapse, short",
+       "layers": [
+        {
+         "clip": "Misc/RockCollapse",
+         "pitch": 1.1,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Drop pod impact, high",
+       "layers": [
+        {
+         "folder": "Misc/DropPodImpact/Default",
+         "pitch": 1.2,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Emergence end, small",
+       "layers": [
+        {
+         "folder": "Misc/Emergence/end_small",
+         "pitch": 1.1,
+         "volume": 50
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoRedSlam"
+    },
+    {
+     "id": "land",
+     "label": "Lands in the open",
+     "when": "no wall: the thrown pawn touches down, bounces and skids to 6 cells",
+     "options": [
+      {
+       "label": "Punch hit pawn + ground",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/Bullet_Ground",
+         "pitch": 0.7,
+         "volume": 35,
+         "delay": 0.05
+        }
+       ]
+      },
+      {
+       "label": "Mech launcher land (Biotech)",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/LongJumpMechLauncher/Land",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Melee dodge + ground (the skid)",
+       "layers": [
+        {
+         "folder": "Impact/MeleeDodge",
+         "pitch": 0.7,
+         "volume": 40
+        },
+        {
+         "folder": "Impact/Bullet_Ground",
+         "pitch": 0.8,
+         "volume": 30,
+         "delay": 0.1
+        }
+       ]
+      },
+      {
+       "label": "Jump pack land (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/JumpPack/JumpPack_Land",
+         "pitch": 0.9,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Dropped load + swish",
+       "layers": [
+        {
+         "folder": "Interact/Haul/Drop/Standard",
+         "pitch": 0.7,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 0.6,
+         "volume": 30,
+         "delay": 0.08
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoRedLand"
+    }
+   ],
+   "hero": "Gojo"
+  },
+  "AG_GojoHollowPurple": {
+   "note": "After Red's charge and fire: Red meets Blue and they merge (0.35 s), the ignition, the growth (0.3 s), the travel (a sustainer the code ends when it fades: 2.3 s for the sketch's 14 cells, 5 s for 30), a touch for each pawn it meets, and the fade.",
+   "moments": [
+    {
+     "id": "merge",
+     "label": "Red meets Blue",
+     "when": "0.35 s: the red orb and the blue sphere spiral round each other and in; the world splits red and blue, then darkens",
+     "options": [
+      {
+       "label": "Skip pulse (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Pulse",
+         "pitch": 0.9,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Animal pulser + charge rifle whine",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.9,
+         "volume": 35
+        },
+        {
+         "folder": "Weapon/ChargeRifle",
+         "pitch": 0.7,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Psychic shock lance",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Shock_Lance",
+         "pitch": 0.9,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Psycast psychic effect, low (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Psychic_Effect",
+         "pitch": 0.7,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Two swishes crossing + shield absorb",
+       "layers": [
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 0.8,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 1.0,
+         "volume": 35,
+         "delay": 0.1
+        },
+        {
+         "folder": "Misc/EnergyShield/Absorb",
+         "pitch": 0.7,
+         "volume": 35,
+         "delay": 0.2
+        }
+       ]
+      },
+      {
+       "label": "Mech resurrect warmup, fast (Biotech)",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/MechResurrect/Warmup",
+         "pitch": 1.4,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Synth: sucked in",
+       "layers": [
+        {
+         "folder": "AG/KamuiIn",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Synth: whine rising + sucked in",
+       "layers": [
+        {
+         "folder": "AG/KiChargeStart",
+         "pitch": 1.2,
+         "volume": 35
+        },
+        {
+         "folder": "AG/KamuiIn",
+         "pitch": 1.1,
+         "volume": 35
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoPurpleMerge"
+    },
+    {
+     "id": "ignite",
+     "label": "Ignition",
+     "when": "a white point and flash, a purple wash 18 cells across, 4 ripple rings, rays; the biggest shake; Purple grows to 1.5 cells",
+     "options": [
+      {
+       "label": "Giant explosion, low",
+       "layers": [
+        {
+         "clip": "Explosion/GiantExplosion",
+         "pitch": 0.7,
+         "volume": 55
+        }
+       ]
+      },
+      {
+       "label": "Mech band shockwave + mortar dry, low (Biotech)",
+       "layers": [
+        {
+         "clip": "Explosion/Mechband_Shockwave_Explosion_01a",
+         "pitch": 0.7,
+         "volume": 50
+        },
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.5,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Psychic pulse psycast + thump (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Psychic_Pulse",
+         "pitch": 0.6,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Hellsphere vaporize",
+       "layers": [
+        {
+         "folder": "Explosion/Vaporize",
+         "pitch": 0.8,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Planet-killer impact, low",
+       "layers": [
+        {
+         "clip": "Misc/PlanetkillerImpact",
+         "pitch": 0.8,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Neuroquake, high (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Neuroquake",
+         "pitch": 1.1,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Synth: whoomp, low + shield break",
+       "layers": [
+        {
+         "folder": "AG/KiBeamFire",
+         "pitch": 0.7,
+         "volume": 50
+        },
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 0.6,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Synth: solar flare, low",
+       "layers": [
+        {
+         "folder": "AG/SolarFlare",
+         "pitch": 0.6,
+         "volume": 45
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoPurpleIgnite"
+    },
+    {
+     "id": "travel",
+     "label": "Travel",
+     "when": "6 cells/s erasing a 3-cell lane: lightning crackles off it, a ripple ring and a small shake every 0.5 s",
+     "options": [
+      {
+       "label": "Orbital beam, low",
+       "layers": [
+        {
+         "clip": "Misc/OrbitalBeam/OrbitalBeam",
+         "pitch": 0.8,
+         "volume": 50,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Tornado, low + shock lance crackle",
+       "layers": [
+        {
+         "folder": "Misc/Tornado",
+         "pitch": 0.6,
+         "volume": 45,
+         "loop": true
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Shock_Lance",
+         "pitch": 0.7,
+         "volume": 25,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Flamethrower roar, low",
+       "layers": [
+        {
+         "clip": "Weapon/Flamethrower/Flamthrower_Firing_Loop_A",
+         "pitch": 0.6,
+         "volume": 45,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Charge lance fire, low",
+       "layers": [
+        {
+         "folder": "Weapon/ChargeLance/Fire",
+         "pitch": 0.6,
+         "volume": 45,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Antigrav + engine loop (Odyssey)",
+       "layers": [
+        {
+         "clip": "Gravship/Gravship_Antigrav_Loop",
+         "pitch": 0.8,
+         "volume": 40,
+         "loop": true
+        },
+        {
+         "clip": "Gravship/Gravship_Engine_Loop",
+         "pitch": 0.8,
+         "volume": 30,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Burning power cell + tornado",
+       "layers": [
+        {
+         "folder": "Buildings/BurningPowerCell/Loop",
+         "pitch": 0.7,
+         "volume": 30,
+         "loop": true
+        },
+        {
+         "folder": "Misc/Tornado",
+         "pitch": 0.7,
+         "volume": 35,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Hellsphere cannon warmup, low (Biotech)",
+       "layers": [
+        {
+         "clip": "Weapon/HellsphereCannon/Hellsphere_Cannon_Warmup",
+         "pitch": 0.7,
+         "volume": 45,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Tunnel rumble + shock lance",
+       "layers": [
+        {
+         "clip": "Misc/Tunnel/TunnelLoop",
+         "pitch": 0.6,
+         "volume": 40,
+         "loop": true
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Shock_Lance",
+         "pitch": 0.7,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Synth: beam roar, low",
+       "layers": [
+        {
+         "folder": "AG/KiBeam",
+         "pitch": 0.6,
+         "volume": 45,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Synth: black flame, low (a crackling roar)",
+       "layers": [
+        {
+         "folder": "AG/BlackFlame",
+         "pitch": 0.6,
+         "volume": 40,
+         "loop": true
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoPurpleTravel",
+     "duration": 5
+    },
+    {
+     "id": "touch",
+     "label": "Touches a pawn",
+     "when": "a white flash; on the centre row the pawn dissolves into specks drawn into it, on a side row it takes 60 and falls",
+     "options": [
+      {
+       "label": "Hiss + shield absorb",
+       "layers": [
+        {
+         "folder": "Misc/Hiss",
+         "pitch": 0.7,
+         "volume": 35
+        },
+        {
+         "folder": "Misc/EnergyShield/Absorb",
+         "pitch": 0.8,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Psychic entropy (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psychic_Entropy",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "EMP crackle, low",
+       "layers": [
+        {
+         "folder": "Misc/EMPDisabled",
+         "pitch": 0.6,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Death acidifier",
+       "layers": [
+        {
+         "folder": "Misc/DeathAcidifier",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Glass, low + hiss",
+       "layers": [
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 0.6,
+         "volume": 30
+        },
+        {
+         "folder": "Misc/Hiss",
+         "pitch": 1.0,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Shield broken, low",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 0.6,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Synth: sucked in, fast",
+       "layers": [
+        {
+         "folder": "AG/KamuiIn",
+         "pitch": 1.5,
+         "volume": 40
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoPurpleTouch"
+    },
+    {
+     "id": "fade",
+     "label": "Fades",
+     "when": "it breaks into specks and fades in 0.5 s, a last ring; the dim lifts",
+     "options": [
+      {
+       "label": "Shield broken, very low",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 0.5,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Soothe pulser, low",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Soothe_Pulser",
+         "pitch": 0.7,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Power off",
+       "layers": [
+        {
+         "folder": "Electricity/PowerOff/Small",
+         "pitch": 0.6,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Hellsphere vaporize, quiet",
+       "layers": [
+        {
+         "folder": "Explosion/Vaporize",
+         "pitch": 1.0,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Skip exit (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Exit",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Synth: out of the swirl, slow",
+       "layers": [
+        {
+         "folder": "AG/KamuiOut",
+         "pitch": 0.7,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Synth: ting, low (the silence after)",
+       "layers": [
+        {
+         "folder": "AG/Ting",
+         "pitch": 0.5,
+         "volume": 30
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoPurpleFade"
+    }
+   ],
+   "hero": "Gojo"
+  },
+  "AG_GojoUnlimitedVoid": {
+   "note": "Home map: the hand sign (0.6 s), the barrier closing (0.3 s) and shrinking into a ball (0.5 s), the ball breaking at the end. Pocket map: the rush in, the black hole opening at 1.35 s, the void's drone for the 10 s (a sustainer the end stops), a touch for each pawn Gojo spares, the collapse (0.7 s). The game plays a sound only on the map the camera is on.",
+   "moments": [
+    {
+     "id": "sign",
+     "label": "Hand sign",
+     "when": "0.6 s: a hand rises, fingers cross, the blindfold comes down, the eyes light blue, light gathers at the hand",
+     "options": [
+      {
+       "label": "Psychic warmup",
+       "layers": [
+        {
+         "clip": "Item/Psychic_Artifact_Warmup_A01",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Bestow warmup",
+       "layers": [
+        {
+         "clip": "Misc/Bestow_Warmup",
+         "pitch": 1.2,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Word of warmup (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/WordOf/Warmup",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Soothe pulser warmup",
+       "layers": [
+        {
+         "clip": "Item/Psychic_Soothe_Pulser_Warmup_A",
+         "pitch": 1.1,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Click + shield reset",
+       "layers": [
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 0.8,
+         "volume": 30
+        },
+        {
+         "folder": "Misc/EnergyShield/Reset",
+         "pitch": 1.2,
+         "volume": 25,
+         "delay": 0.1
+        }
+       ]
+      },
+      {
+       "label": "Mech resurrect warmup (Biotech)",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/MechResurrect/Warmup",
+         "pitch": 1.0,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Synth: ting, low",
+       "layers": [
+        {
+         "folder": "AG/Ting",
+         "pitch": 0.6,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Synth: whine rising, low",
+       "layers": [
+        {
+         "folder": "AG/KiChargeStart",
+         "pitch": 0.8,
+         "volume": 30
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoVoidSign"
+    },
+    {
+     "id": "open",
+     "label": "Barrier closes",
+     "when": "a dark sphere spreads over 9 cells in 0.3 s, everyone under it is taken, then it shrinks into a black ball over Gojo in 0.5 s",
+     "options": [
+      {
+       "label": "Psychic pulse psycast + mortar, very low (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Psychic_Pulse",
+         "pitch": 0.6,
+         "volume": 45
+        },
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.4,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Neuroquake, low (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Neuroquake",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Skip entry, low + thump",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.5,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 0.6,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Psychic pulse, low + quake",
+       "layers": [
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.5,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Emergence/Quake",
+         "pitch": 1.0,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Mech band shockwave, very low (Biotech)",
+       "layers": [
+        {
+         "clip": "Explosion/Mechband_Shockwave_Explosion_01a",
+         "pitch": 0.5,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Insanity lance, low",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Insanity_Lance",
+         "pitch": 0.6,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Synth: sucked in, slow",
+       "layers": [
+        {
+         "folder": "AG/KamuiIn",
+         "pitch": 0.6,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Synth: sucked in + whoomp, low",
+       "layers": [
+        {
+         "folder": "AG/KamuiIn",
+         "pitch": 0.7,
+         "volume": 45
+        },
+        {
+         "folder": "AG/KiBeamFire",
+         "pitch": 0.5,
+         "volume": 40,
+         "delay": 0.3
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoVoidOpen"
+    },
+    {
+     "id": "break",
+     "label": "Ball breaks",
+     "when": "home map, at the end: cracks of light, a soft white flash, a ring out to 9 cells; everyone back 0.2 s later",
+     "options": [
+      {
+       "label": "Glass shattering, low",
+       "layers": [
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 0.6,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Shield broken, low",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 0.6,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Skip exit (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Exit",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Soothe pulser + glass",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Soothe_Pulser",
+         "pitch": 0.9,
+         "volume": 30
+        },
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 0.8,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Skip entry + shield broken",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.8,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 0.7,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Synth: out of the swirl",
+       "layers": [
+        {
+         "folder": "AG/KamuiOut",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Synth: ting + glass",
+       "layers": [
+        {
+         "folder": "AG/Ting",
+         "pitch": 0.7,
+         "volume": 35
+        },
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 0.7,
+         "volume": 25
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoVoidBreak"
+    },
+    {
+     "id": "enter",
+     "label": "Rush in",
+     "when": "pocket map: white, then speed lines rush out of the point for 1.6 s and the stars fly in",
+     "options": [
+      {
+       "label": "Drop pod fall, fast",
+       "layers": [
+        {
+         "folder": "Misc/DropPodFall/Default",
+         "pitch": 1.3,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Mortar incoming, low + skip entry",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Incoming_Alt2",
+         "pitch": 0.6,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.9,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Jump pack launch (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/JumpPack/JumpPack_Launch",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Mech launcher launch + psychic pulse (Biotech)",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/LongJumpMechLauncher/Launch",
+         "pitch": 0.7,
+         "volume": 40
+        },
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Psychic_Pulse",
+         "pitch": 0.8,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Shuttle crash whoosh",
+       "layers": [
+        {
+         "folder": "Misc/Shuttle/Crash",
+         "pitch": 1.0,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Hellsphere vaporize, high (the white)",
+       "layers": [
+        {
+         "folder": "Explosion/Vaporize",
+         "pitch": 1.3,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Synth: shun, low + sucked in",
+       "layers": [
+        {
+         "folder": "AG/Shun",
+         "pitch": 0.7,
+         "volume": 40
+        },
+        {
+         "folder": "AG/KamuiIn",
+         "pitch": 0.9,
+         "volume": 35,
+         "delay": 0.1
+        }
+       ]
+      },
+      {
+       "label": "Synth: solar flare (the white)",
+       "layers": [
+        {
+         "folder": "AG/SolarFlare",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoVoidEnter"
+    },
+    {
+     "id": "hole",
+     "label": "Black hole opens",
+     "when": "a white light at the point, then the black hole opens over 0.7 s, its ring of gas turning",
+     "options": [
+      {
+       "label": "Soothe pulser, very low",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Soothe_Pulser",
+         "pitch": 0.5,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Mortar dry, very low (a far boom)",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.35,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Planet-killer impact, very low",
+       "layers": [
+        {
+         "clip": "Misc/PlanetkillerImpact",
+         "pitch": 0.5,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Psychic pulse psycast, very low (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Psychic_Pulse",
+         "pitch": 0.45,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Thump cannon, very low + soothe pulser",
+       "layers": [
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 0.5,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Soothe_Pulser",
+         "pitch": 0.6,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Synth: whoomp, very low",
+       "layers": [
+        {
+         "folder": "AG/KiBeamFire",
+         "pitch": 0.45,
+         "volume": 50
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoVoidHole"
+    },
+    {
+     "id": "drone",
+     "label": "The void (10 s)",
+     "when": "the whole domain: navy space, stars, the black hole turning; everyone frozen",
+     "options": [
+      {
+       "label": "Space ambience",
+       "layers": [
+        {
+         "clip": "Ambience/Amb_Space",
+         "pitch": 1.0,
+         "volume": 50,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Ship reactor, low",
+       "layers": [
+        {
+         "folder": "Exotic/Ship_Reactor",
+         "pitch": 0.7,
+         "volume": 35,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Crashed ship drone",
+       "layers": [
+        {
+         "folder": "Exotic/Crashed_Ship_Part/Drone",
+         "pitch": 0.8,
+         "volume": 40,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Sun blocker hum (Royalty)",
+       "layers": [
+        {
+         "clip": "Buildings/Exotic/SunBlocker_Ambience_01a",
+         "pitch": 1.0,
+         "volume": 40,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Band node, tuned (Biotech)",
+       "layers": [
+        {
+         "clip": "Buildings/Mechanoid/BandNode/Tuned/BandNode_Sustainer_Loop_01a",
+         "pitch": 0.8,
+         "volume": 40,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Meditation (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Meditation",
+         "pitch": 0.8,
+         "volume": 35,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Space + shock lance shimmer (the information)",
+       "layers": [
+        {
+         "clip": "Ambience/Amb_Space",
+         "pitch": 1.0,
+         "volume": 45,
+         "loop": true
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Shock_Lance",
+         "pitch": 0.6,
+         "volume": 15,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Synth: Susanoo hum",
+       "layers": [
+        {
+         "folder": "AG/SusanooHum",
+         "pitch": 0.8,
+         "volume": 35,
+         "loop": true
+        }
+       ]
+      },
+      {
+       "label": "Synth: airy chord, low",
+       "layers": [
+        {
+         "folder": "AG/SpiritGather",
+         "pitch": 0.6,
+         "volume": 35,
+         "loop": true
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoVoidDrone",
+     "duration": 10
+    },
+    {
+     "id": "touch",
+     "label": "Gojo spares a pawn",
+     "when": "0.3 s next to a frozen pawn: a blue ring opens, the specks stop, its colour comes back",
+     "options": [
+      {
+       "label": "Shield reset",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Reset",
+         "pitch": 1.2,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Soothe pulser, high",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Soothe_Pulser",
+         "pitch": 1.4,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Power on, small",
+       "layers": [
+        {
+         "folder": "Electricity/PowerOn/Small",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Bullet shield reactivate",
+       "layers": [
+        {
+         "folder": "Misc/BulletShieldGenerator/Reactivate",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Band node tuned (Biotech)",
+       "layers": [
+        {
+         "clip": "Buildings/Mechanoid/BandNode/Tuned/BandNode_Tune_Complete_01a",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Synth: ting",
+       "layers": [
+        {
+         "folder": "AG/Ting",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoVoidTouch"
+    },
+    {
+     "id": "collapse",
+     "label": "Collapse",
+     "when": "pocket map, at the end: the void collapses in 0.7 s, white, everyone goes home",
+     "options": [
+      {
+       "label": "Skip entry, low",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Drop pod leaving, low",
+       "layers": [
+        {
+         "clip": "Misc/DropPodLeaving",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Psycast psychic effect, low (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Psychic_Effect",
+         "pitch": 0.6,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Shield broken, very low + skip entry",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 0.45,
+         "volume": 35
+        },
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Mech band shock, low (Biotech)",
+       "layers": [
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.6,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Synth: sucked in",
+       "layers": [
+        {
+         "folder": "AG/KamuiIn",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Synth: out of the swirl, low",
+       "layers": [
+        {
+         "folder": "AG/KamuiOut",
+         "pitch": 0.6,
+         "volume": 45
+        }
+       ]
+      }
+     ],
+     "defName": "AG_GojoVoidCollapse"
+    }
+   ],
+   "hero": "Gojo"
+  },
   "AG_ItachiFalseFace": {
    "note": "Genjutsu lands on everyone looking at him. A crow call is the Itachi signature; Odyssey has crows.",
    "moments": [
