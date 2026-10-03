@@ -109,6 +109,7 @@ namespace RimArt
             markedAt.Clear();
             layout = null;
             if (map == null) return;
+            VergilSound.Play(VergilSoundDefOf.AG_VergilCutEndVanish, map, caster.Position);
 
             // Every hostile inside the radius that he can see, nearest first.
             var found = new List<(Pawn pawn, float d)>();
@@ -200,6 +201,9 @@ namespace RimArt
             if (caster == null || !caster.Spawned || caster.Map != home) return;
             CompProperties_JudgementCutEnd props = Props;
             CutEndTimes times = Times;
+            // The space breaks with the click whether or not anyone is left to cut, as the picture does.
+            VergilSound.Play(VergilSoundDefOf.AG_VergilSheathe, home, caster.Position);
+            VergilSound.Play(VergilSoundDefOf.AG_VergilCutEndCuts, home, caster.Position);
 
             standing.Clear();
             for (int i = 0; i < marked.Count; i++)

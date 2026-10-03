@@ -99,7 +99,11 @@ export default {
   },
   events(p) {
     const t = times(p);
-    return [{ t: t.open, type: 'shake', value: .06 }, { t: t.close, type: 'shake', value: .08 }, { t: t.open, type: 'sound', def: 'AG_Vergil_JudgementCut' }];
+    // The draw and the ball of cuts are one sound, the ball breaking as it closes another (it follows the burst
+    // time); the sheathe click is shared with Yamato Dash and Judgement Cut End.
+    return [{ t: t.open, type: 'shake', value: .06 }, { t: t.close, type: 'shake', value: .08 },
+      { t: t.open, type: 'sound', def: 'AG_VergilJudgementCutOpen' }, { t: t.close, type: 'sound', def: 'AG_VergilJudgementCutBreak' },
+      { t: t.close, type: 'sound', def: 'AG_VergilSheathe' }];
   },
 
   draw(s, p, { origin: o, scene }) {

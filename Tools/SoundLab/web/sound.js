@@ -215,10 +215,15 @@ export const missingIn = (layers) => layers.filter((l) => resolve(l).length === 
 const xmlEsc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const fmtRange = (v) => { const s = (+v).toFixed(2).replace(/\.?0+$/, ''); return `${s}~${s}`; };
 
-/** The SoundDef XML for 1.6/Defs/SoundDefs/. duration: a sustainer the ability's code ends after that long. */
+/**
+ * The SoundDef XML for 1.6/Defs/SoundDefs/. duration: a sustainer the ability's code ends after that long.
+ * RimWorld takes startDelayRange only on a sustainer, so a one-shot's delays go in RimArt.SoundLayerDelays
+ * (Source/RimArt/Shared/SoundLayers.cs), and the code plays it with SoundLayers.Play.
+ */
 export function defXml(name, layers, duration = null) {
   layers = layers.filter((l) => !l.mute);
   const sustain = layers.some((l) => l.loop) || !!duration;
+  const delayed = !sustain && layers.some((l) => +l.delay);
   let xml = duration ? `<!-- A sustainer: the ability's code ends it after ${duration} s. -->\n` : '';
   xml += `<SoundDef>\n  <defName>${xmlEsc(name)}</defName>\n  <context>MapOnly</context>\n`;
   if (sustain) xml += `  <sustain>true</sustain>\n  <sustainFadeoutTime>0.2</sustainFadeoutTime>\n`;
@@ -230,11 +235,16 @@ export function defXml(name, layers, duration = null) {
       ? `<li Class="AudioGrain_Folder"><clipFolderPath>${xmlEsc(l.folder)}</clipFolderPath></li>`
       : `<li Class="AudioGrain_Clip"><clipPath>${xmlEsc(l.clip)}</clipPath></li>`;
     xml += `    <li${may}>\n      <grains>${grain}</grains>\n      <volumeRange>${fmtRange(l.volume)}</volumeRange>\n      <pitchRange>${fmtRange(l.pitch)}</pitchRange>\n`;
-    if (+l.delay) xml += `      <startDelayRange>${fmtRange(l.delay)}</startDelayRange>\n`;
+    if (+l.delay && sustain) xml += `      <startDelayRange>${fmtRange(l.delay)}</startDelayRange>\n`;
     if (l.loop) xml += `      <sustainLoop>true</sustainLoop>\n`;
     xml += `    </li>\n`;
   }
-  return xml + `  </subSounds>\n</SoundDef>`;
+  xml += `  </subSounds>\n`;
+  if (delayed) {
+    const one = (v) => (+v).toFixed(2).replace(/\.?0+$/, '') || '0';
+    xml += `  <modExtensions>\n    <li Class="RimArt.SoundLayerDelays">\n      <delays>${layers.map((l) => `<li>${one(l.delay)}</li>`).join('')}</delays>\n    </li>\n  </modExtensions>\n`;
+  }
+  return xml + `</SoundDef>`;
 }
 
 /** Writes one pick (null removes it) to picks.json through the server; lib.picks follows. */

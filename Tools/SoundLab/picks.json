@@ -1,1 +1,271 @@
-{}
+{
+  "sound:AG_VergilCutEndCuts": {
+    "option": "Mech band shockwave",
+    "layers": [
+      {
+        "folder": null,
+        "clip": "Explosion/Mechband_Shockwave_Explosion_01a",
+        "pitch": 1,
+        "volume": 45,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 12:13"
+  },
+  "sound:AG_VergilCutEndVanish": {
+    "option": "Skip + 6 swishes",
+    "layers": [
+      {
+        "folder": "Misc/Psycasts/Skip/Entry",
+        "clip": null,
+        "pitch": 1.2,
+        "volume": 40,
+        "delay": 0,
+        "loop": false
+      },
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+        "clip": null,
+        "pitch": 1.3,
+        "volume": 30,
+        "delay": 0.15,
+        "loop": false
+      },
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+        "clip": null,
+        "pitch": 1.4000000000000001,
+        "volume": 30,
+        "delay": 0.35,
+        "loop": false
+      },
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+        "clip": null,
+        "pitch": 1.5,
+        "volume": 30,
+        "delay": 0.55,
+        "loop": false
+      },
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+        "clip": null,
+        "pitch": 1.3,
+        "volume": 30,
+        "delay": 0.7500000000000001,
+        "loop": false
+      },
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+        "clip": null,
+        "pitch": 1.4000000000000001,
+        "volume": 30,
+        "delay": 0.9500000000000001,
+        "loop": false
+      },
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+        "clip": null,
+        "pitch": 1.5,
+        "volume": 30,
+        "delay": 1.15,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 12:13"
+  },
+  "sound:AG_VergilDash": {
+    "option": "Skip entry fast + swish",
+    "layers": [
+      {
+        "folder": "Misc/Psycasts/Skip/Entry",
+        "clip": null,
+        "pitch": 2,
+        "volume": 30,
+        "delay": 0,
+        "loop": false
+      },
+      {
+        "folder": "Misc/Swish2",
+        "clip": null,
+        "pitch": 1.6,
+        "volume": 45,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 12:16"
+  },
+  "sound:AG_VergilDashCuts": {
+    "option": "Glass",
+    "layers": [
+      {
+        "folder": "Buildings/GestatorGlassShattering",
+        "clip": null,
+        "pitch": 1.3,
+        "volume": 35,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 12:16"
+  },
+  "sound:AG_VergilJudgementCutBreak": {
+    "option": "Glass shattering",
+    "layers": [
+      {
+        "folder": "Buildings/GestatorGlassShattering",
+        "clip": null,
+        "pitch": 1,
+        "volume": 35,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 12:30"
+  },
+  "sound:AG_VergilJudgementCutOpen": {
+    "option": "EMP crackle + 5 Scyther cuts",
+    "layers": [
+      {
+        "folder": "Misc/EMPDisabled",
+        "clip": null,
+        "pitch": 1,
+        "volume": 25,
+        "delay": 0,
+        "loop": false
+      },
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+        "clip": null,
+        "pitch": 1.6,
+        "volume": 26,
+        "delay": 0,
+        "loop": false
+      },
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+        "clip": null,
+        "pitch": 1.7000000000000002,
+        "volume": 26,
+        "delay": 0.1,
+        "loop": false
+      },
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+        "clip": null,
+        "pitch": 1.8,
+        "volume": 26,
+        "delay": 0.2,
+        "loop": false
+      },
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+        "clip": null,
+        "pitch": 1.6,
+        "volume": 26,
+        "delay": 0.3,
+        "loop": false
+      },
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+        "clip": null,
+        "pitch": 1.7000000000000002,
+        "volume": 26,
+        "delay": 0.4,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 12:29"
+  },
+  "sound:AG_VergilSheathe": {
+    "option": "Click",
+    "layers": [
+      {
+        "folder": null,
+        "clip": "Interact/FlickSwitch",
+        "pitch": 0.9,
+        "volume": 45,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 12:13"
+  },
+  "sound:AG_VergilSwordFire": {
+    "option": "Spiner",
+    "layers": [
+      {
+        "folder": "Weapon/Spiner",
+        "clip": null,
+        "pitch": 1.2,
+        "volume": 40,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 12:16"
+  },
+  "sound:AG_VergilSwordHit": {
+    "option": "Scyther hit, high",
+    "layers": [
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+        "clip": null,
+        "pitch": 1.4,
+        "volume": 35,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 12:16"
+  },
+  "sound:AG_VergilSwordsBreak": {
+    "option": "Glass shattering, high",
+    "layers": [
+      {
+        "folder": "Buildings/GestatorGlassShattering",
+        "clip": null,
+        "pitch": 1.4,
+        "volume": 35,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 12:16"
+  },
+  "sound:AG_VergilSwordsSpin": {
+    "option": "Scyther swish + hit",
+    "layers": [
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+        "clip": null,
+        "pitch": 1.5,
+        "volume": 35,
+        "delay": 0,
+        "loop": false
+      },
+      {
+        "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+        "clip": null,
+        "pitch": 1.3,
+        "volume": 25,
+        "delay": 0.05,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 12:30"
+  }
+}

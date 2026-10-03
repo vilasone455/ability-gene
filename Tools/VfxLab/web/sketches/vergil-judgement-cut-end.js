@@ -147,7 +147,8 @@ export default {
   events(p) {
     const t = times(p);
     return [{ t: t.vanish, type: 'shake', value: .03 }, { t: t.click, type: 'shake', value: .14 },
-      { t: t.vanish, type: 'sound', def: 'AG_Vergil_CutEndVanish' }, { t: t.click, type: 'sound', def: 'AG_Vergil_SheathClick' }];
+      { t: t.vanish, type: 'sound', def: 'AG_VergilCutEndVanish' }, { t: t.click, type: 'sound', def: 'AG_VergilSheathe' },
+      { t: t.click, type: 'sound', def: 'AG_VergilCutEndCuts' }];
   },
 
   draw(s, p, { origin: o, scene }) {
