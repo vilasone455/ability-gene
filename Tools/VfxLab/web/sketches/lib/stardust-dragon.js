@@ -1,11 +1,14 @@
 // Stardust Dragon Staff: the dragon's pictures and how a piece is drawn. Not a sketch itself, so it is not
 // listed in sketches/index.js. The movement and the fight are in stardust-dragon-ai.js.
 //
-// The four pieces are our own drawings in the design of Terraria's sprites (head, two body pieces, tail; seen
-// on terraria.wiki.gg 2026-10-03), not traces of them: a side view of a fish-skeleton dragon, the gold spine
-// and ribs on top, a glowing blue belly below, a spike on every other body piece, a gold skull with a horn swept
-// back, a slanted blue eye and open jaws with fangs, a blue crystal crest, beard and whiskers, a slim forked tail. Terraria's exact
-// palette, in flat bands lit from the spine side, with a brown outline round the gold. Each texture is 256 px
+// The pictures are our own drawings in the design of Terraria's sprites (head, two body pieces, tail; seen on
+// terraria.wiki.gg 2026-10-03), not traces of them, in a side view: a gold skull with horns swept back, a slanted
+// blue eye, open jaws with fangs, a blue crystal crest, beard and whiskers; a glowing blue body with a gold spine
+// along its back, two curved gold ribs and two belly scales a piece and a gold spine on top of each piece, tall
+// and short in turn, joined by a see-through blue fin; a tail of three swept crystal blades. The body and the gold
+// spine are one continuous ribbon through every piece (body()), tapering toward the tail, so the dragon reads as one
+// creature and not a row of tiles (the user's note, 2026-10-03); the pieces' textures carry what sits on it.
+// Terraria's exact palette, in flat bands lit from the spine side, with a brown outline round the gold. Each texture is 256 px
 // square and covers ArtOf[kind] Terraria pixels round a point Shift[kind] px along the piece's line of flight from
 // its centre (the tail's fletching runs far behind it), the head toward +u (east) and the spine toward the top
 // (north). They are painted from distance functions with every shape written as [x, y]
@@ -22,12 +25,14 @@ import { registerLabTexture, pixels } from '../../js/standins.js';
 import { draw } from './six-paths-solid.js';
 import { Y, sprite, soft, glow } from './six-paths-impact.js';
 import { rect } from './chain-sickle.js';
+import { strip } from './flying-thunder-god.js';
 
 const clamp01 = Mathf.Clamp01, D2R = Mathf.Deg2Rad;
 export const ArtOf = { head: 48, body1: 48, body2: 48, tail: 64 };   // Terraria px across a piece's texture
-export const Shift = { head: 0, body1: 0, body2: 0, tail: -14 };     // px along the line of flight from the piece's centre to its texture's
+export const Shift = { head: 0, body1: 0, body2: 0, tail: -20 };     // px along the line of flight from the piece's centre to its texture's
 const DrawScale = { head: 1.15, body1: 1, body2: 1, tail: 1 };       // the head drawn a little bigger, so it reads at a normal zoom
 const Tex = 256;
+export const TailTaper = .66;             // the body's width at the tail, as a share of its width at the neck
 const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
 // Terraria's palette (the dragon, the Stardust Cell and Guardian share it).
 const Cream = hex('#fffcc8'), GoldLight = hex('#ffdc7f'), Gold = hex('#ffb400'), GoldDark = hex('#b97d2e'), Outline = hex('#5d3a1e');
@@ -92,17 +97,20 @@ const PlateLook = [Deep, Cyan, BlueLight, Ice, Ice];
 // hanging open and fangs, a slanted eye under a brow, long horns swept back, a spiky crest, whiskers and a beard
 // trailing back; a comb of spikes along the back; a slim tail ending in a narrow fork, not a wide fin.
 const Spine = 3.5;
-const Ribs = [-16 / 3, 0, 16 / 3];       // three ribs per 16 px of body, so the rhythm runs on across pieces
-const SpikeShape = [[7.5, 5], [1.5, 6.5], [-8, 20]];
-const Comb = Ribs.map(x => [[x + .4, 8], [x + 2.6, 8], [x - .6, 12.8]]);   // body 2: the rib tips stand up as three small spikes
-function body(P, p, spike) {
-  const belly = q => box(q, [0, -5.6], [10.5, 5.2], 2);           // 21 px long, so neighbouring bellies overlap into one strip
-  banded(P, belly, p, BlueLook, .9);
-  for (const x of [-4, 4]) banded(P, q => box(q, [x, -6], [2.9, 3.1], 1), p, PlateLook, 0);
-  const ribs = Ribs.map(x => q => capsule(q, [x + 1.4, 9], [x - 1.4, -4.6], 1.25));   // they stop halfway down the belly
-  const gold = union(q => capsule(q, [-10, Spine], [10, Spine], 3), ...ribs, ...(spike ? [q => poly(q, SpikeShape)] : Comb.map(c => q => poly(q, c))));
-  banded(P, gold, p, GoldLook, 1.1);
-  for (const x of Ribs) P.over(capsule(p, [x + 1.3, 8.4], [x - 1.1, -3.8], .4), Cream);
+// A body piece's texture: what sits on the continuous body. Two curved ribs (x = -4 and 4, so the rhythm runs on
+// across pieces 16 px apart) from the spine round the side of the body and back; two belly scales between them; a
+// gold spine on top, swept back, tall on body 1 and short on body 2, over a see-through blue fin that runs back to
+// the next piece's spine.
+const RibCurve = [[1.2, 3.5], [-.4, -1.5], [-2, -6.2], [-3.8, -9.6]];
+const DorsalTall = [[6, 5.5], [2.5, 6.5], [-7, 18]], DorsalShort = [[4.5, 5.5], [1.5, 6.3], [-6, 12]];
+function ribcage(P, p, tall) {
+  const spine = tall ? DorsalTall : DorsalShort;
+  P.over(poly(p, [[7.5, 5], spine[2], [-10, 5]]), BlueLight, .62);
+  P.over(capsule(p, spine[2], [-10, 5.5], .5), Ice, .8);
+  for (const x of [0, -8]) banded(P, q => box(q, [x, -6.2], [2.9, 2.6], 1.2), p, PlateLook, 0);
+  const ribs = [-4, 4].map(x => q => Math.min(...RibCurve.slice(1).map((b, i) => capsule(q, [RibCurve[i][0] + x, RibCurve[i][1]], [b[0] + x, b[1]], 2.2 - .35 * i))));
+  banded(P, union(...ribs, q => poly(q, spine)), p, GoldLook, 1.1);
+  for (const x of [-4, 4]) for (let i = 0; i < 2; i++) P.over(capsule(p, [RibCurve[i][0] + x + .7, RibCurve[i][1]], [RibCurve[i + 1][0] + x + .7, RibCurve[i + 1][1]], .5), Cream);
 }
 const ellipse = (p, c, rx, ry) => (Math.hypot((p[0] - c[0]) / rx, (p[1] - c[1]) / ry) - 1) * Math.min(rx, ry);
 const Skull = [[23, 2.2], [21.5, 4.6], [16, 5.6], [11, 6.6], [7, 9.6], [1, 10], [-5, 8.5], [-9, 5], [-8, .5], [-3, -1], [6, -.6], [16, -.2], [22, .6]];
@@ -134,19 +142,20 @@ function head(P, p) {
   P.over(ellipse(p, [9.2, 5.3], 1.1, .7), [1, 1, 1]);
   P.over(circle(p, [20.2, 3.2], .6), Outline);
 }
-// The tail, as Terraria's: the spine goes on as a gold stub, a small cross fin, a thin shaft and a narrow fork at the
-// end, about 54 px from the stub's front to the fork's tips.
-const Fin = [[-1, 4.6], [-5, 4.6], [-9, 9.5]];
-const Fork = [[-22, Spine + .8], [-31, Spine + 5], [-42, Spine + 8.5], [-34, Spine + 2.2], [-29, Spine + .3]];
+// The tail's texture: the continuous body narrows to a point behind the tail piece; past it, three crystal
+// blades swept back (one long one straight on, two out to the sides) and a small pair of fins where they start.
+const TailAxis = .8;                      // the body's middle line where it ends, in the tail's texture
+const BladeMid = [[-12, TailAxis + 1.4], [-12, TailAxis - 1.4], [-46, TailAxis]];
+const BladeSide = [[-9, TailAxis + 1.6], [-15, TailAxis + .6], [-38, TailAxis + 12], [-30, TailAxis + 12.5]];
+const FinSmall = [[-3, TailAxis + 1.6], [-7, TailAxis + 1.2], [-10, TailAxis + 6.5]];
 function tail(P, p) {
-  const blue = union(...[Fin, Fork].flatMap(v => [v, mirrorY(v, Spine)]).map(v => q => poly(q, v)), q => capsule(q, [-2, Spine], [-30, Spine], 1.5));
-  banded(P, blue, p, BlueLook, .9);
-  P.over(capsule(p, Fork[0], Fork[2], .45), Ice);
-  P.over(capsule(p, [-3, Spine], [-29, Spine], .55), Ice);
-  const rod = union(q => poly(q, [[12, Spine + 2.8], [12, Spine - 2.8], [-4, Spine - 1.3], [-4, Spine + 1.3]]), q => capsule(q, [8, Spine], [12, Spine], 2.8));
-  banded(P, rod, p, GoldLook, 1.1);
+  const blades = [BladeMid, BladeSide, mirrorY(BladeSide, TailAxis), FinSmall, mirrorY(FinSmall, TailAxis)];
+  banded(P, union(...blades.map(v => q => poly(q, v))), p, BlueLook, .9);
+  P.over(capsule(p, [-12, TailAxis], [-44, TailAxis], .5), Ice);
+  P.over(capsule(p, BladeSide[0], BladeSide[2], .45), Ice);
+  P.over(capsule(p, mirrorY(BladeSide, TailAxis)[0], mirrorY(BladeSide, TailAxis)[2], .45), Ice);
 }
-const Painters = { head, body1: (P, p) => body(P, p, true), body2: (P, p) => body(P, p, false), tail };
+const Painters = { head, body1: (P, p) => ribcage(P, p, true), body2: (P, p) => ribcage(P, p, false), tail };
 const border = (u, v, n = Tex) => u < 1 / n || v < 1 / n || u >= 1 - 1 / n || v >= 1 - 1 / n;   // the outermost pixel ring stays clear
 for (const [kind, paint] of Object.entries(Painters)) {
   const art = ArtOf[kind], K = Tex / art;
@@ -183,13 +192,74 @@ const White = new Color(1, 1, 1);
 // flat across its line of flight and opens out again on its new side over Roll seconds, so a turn past north or
 // south rolls down the body instead of snapping piece by piece (Terraria snaps).
 export const Roll = .16;
-export function piece(kind, c, rot, flip, since, cells, alpha, layer) {
+// Which side a piece shows and how wide it is across its line of flight: side flips half way through the roll.
+export function rollOf(flip, since) {
+  const u = clamp01(since / Roll);
+  return { side: u < .5 ? -flip : flip, across: Math.max(.06, Math.abs(Math.cos(Math.PI * u))) };
+}
+export function piece(kind, c, rot, roll, cells, alpha, layer, scale = 1) {
   if (alpha <= 0) return;
-  const u = clamp01(since / Roll), side = u < .5 ? -flip : flip, across = Math.max(.06, Math.abs(Math.cos(Math.PI * u)));
-  const deg = rot / D2R, mesh = side < 0 ? plane10Flip : MeshPool.plane10, angle = side < 0 ? 180 - deg : -deg;
-  const size = ArtOf[kind] * cells * DrawScale[kind], shift = Shift[kind] * cells, x = c.x + Math.cos(rot) * shift, z = c.z + Math.sin(rot) * shift;
-  draw(mesh, x, layer, z, size, size * across, angle, White.withAlpha(.5 * alpha), Mats[kind].normal);
-  draw(mesh, x, layer + .0002, z, size, size * across, angle, White.withAlpha(.5 * alpha), Mats[kind].glow);
+  const deg = rot / D2R, mesh = roll.side < 0 ? plane10Flip : MeshPool.plane10, angle = roll.side < 0 ? 180 - deg : -deg;
+  const size = ArtOf[kind] * cells * DrawScale[kind] * scale, shift = Shift[kind] * cells * scale, x = c.x + Math.cos(rot) * shift, z = c.z + Math.sin(rot) * shift;
+  draw(mesh, x, layer, z, size, size * roll.across, angle, White.withAlpha(.5 * alpha), Mats[kind].normal);
+  draw(mesh, x, layer + .0002, z, size, size * roll.across, angle, White.withAlpha(.5 * alpha), Mats[kind].glow);
+}
+
+// --- the continuous body and the gold spine, through every piece --------------------------------------------------
+// Bands across the body in Terraria px from its middle line, toward the spine side (+) and the belly (-), drawn in
+// order; each is a strip drawn twice like a piece (normal at .5, additive at .5).
+const BodyBands = [[-10.9, 3.6, Deep], [-10, 3, Blue], [-10, -8.4, Deep], [-6.2, -3.2, Cyan], [-5, -4.4, BlueLight]];
+const SpineBands = [[-.3, 7.3, Outline], [.9, 6.1, GoldDark], [2.2, 6.1, Gold], [4.4, 6.1, GoldLight], [5.3, 6, Cream]];
+const flatNormal = MaterialPool.MatFrom('white', ShaderDatabase.Transparent), flatGlow = MaterialPool.MatFrom('white', ShaderDatabase.MoteGlow);
+const Sub = 4;                            // strip points per gap between pieces (a Catmull-Rom curve through the pieces)
+const cr = (a, b, c, d, u) => .5 * (2 * b + (c - a) * u + (2 * a - 5 * b + 4 * c - d) * u * u + (3 * b - a - 3 * c + d) * u * u * u);
+// The body's middle line from the head through every piece to a point behind the tail: { x, z, w (width share),
+// sign (the side the spine is on, -1..1 through a roll) }. list: the pieces head first, each { c, rot, roll, taper }.
+export function bodyLine(list, cells) {   // (the same for every dragon drawn; bands() keys its meshes by `key`)
+  const n = list.length, pts = [];
+  const sign = q => q.roll.side * q.roll.across;
+  for (let i = 0; i < n - 1; i++) {
+    const a = list[Math.max(0, i - 1)].c, b = list[i].c, c = list[i + 1].c, d = list[Math.min(n - 1, i + 2)].c;
+    for (let j = 0; j < Sub; j++) {
+      const u = j / Sub;
+      pts.push({ x: cr(a.x, b.x, c.x, d.x, u), z: cr(a.z, b.z, c.z, d.z, u), w: Mathf.Lerp(list[i].taper, list[i + 1].taper, u), sign: Mathf.Lerp(sign(list[i]), sign(list[i + 1]), u) });
+    }
+  }
+  const t = list[n - 1], dx = Math.cos(t.rot), dz = Math.sin(t.rot);
+  [0, 6, 12, 18, 24].forEach((d, k) => pts.push({ x: t.c.x - dx * d * cells, z: t.c.z - dz * d * cells, w: t.taper * [1, .78, .55, .32, .1][k], sign: sign(t) }));
+  return pts;
+}
+function bands(key, pts, cells, list, alpha, layer) {
+  list.forEach(([lo, hi, colour], b) => {
+    const A = [], B = [];
+    pts.forEach((q, i) => {
+      const p0 = pts[Math.max(0, i - 1)], p1 = pts[Math.min(pts.length - 1, i + 1)], L = Math.hypot(p1.x - p0.x, p1.z - p0.z) || 1;
+      const nx = (p1.z - p0.z) / L, nz = -(p1.x - p0.x) / L, k = q.w * q.sign * cells;   // the left of the line of flight (points run head to tail)
+      A.push({ x: q.x + nx * hi * k, z: q.z + nz * hi * k }); B.push({ x: q.x + nx * lo * k, z: q.z + nz * lo * k });
+    });
+    const c = new Color(...colour);
+    strip(`${key} ${b} normal`, A, B, c.withAlpha(.5 * alpha), flatNormal, layer + b * .0004);
+    strip(`${key} ${b} glow`, A, B, c.withAlpha(.5 * alpha), flatGlow, layer + b * .0004 + .0002);
+  });
+}
+export function bodyRibbon(pts, cells, alpha, layer, key = '') { bands(`stardust body${key}`, pts, cells, BodyBands, alpha, layer); }
+export function spineRibbon(pts, cells, alpha, layer, key = '') { bands(`stardust spine${key}`, pts, cells, SpineBands, alpha, layer); }
+
+// The light the tail leaves: soft glow spots along the tail tip's last positions, smaller and fainter further back
+// (not Terraria's, which leaves only its dust). pts: newest first, in cells; size: the first spot's length, cells.
+const WakeStep = .12;                     // cells between spots
+export function wake(pts, size, alpha, layer) {
+  if (pts.length < 2 || alpha <= 0) return;
+  const run = [0];
+  for (let i = 1; i < pts.length; i++) run.push(run[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z));
+  const total = run[run.length - 1];
+  for (let d = 0, i = 1; d < total; d += WakeStep) {
+    while (i < pts.length - 1 && run[i] < d) i++;
+    const a = pts[i - 1], b = pts[i], u = (d - run[i - 1]) / ((run[i] - run[i - 1]) || 1), f = 1 - d / total;
+    const c = { x: Mathf.Lerp(a.x, b.x, u), z: Mathf.Lerp(a.z, b.z, u) }, deg = -Math.atan2(a.z - b.z, a.x - b.x) / D2R;
+    sprite(c, size * (.4 + .6 * f), size * .55 * (.3 + .7 * f), CyanColour.withAlpha(.16 * f * f * alpha), glow, layer, deg);
+    sprite(c, size * .5 * (.4 + .6 * f), size * .2 * (.3 + .7 * f), IceColour.withAlpha(.14 * f * f * alpha), glow, layer + .0001, deg);
+  }
 }
 // The soft cyan glow under a piece, so the dragon reads as light at a normal zoom (not Terraria's: its blue glows
 // only through the half-additive blend). Drawn below every piece.

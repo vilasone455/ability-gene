@@ -45,17 +45,22 @@
 //   "pieces": the four textures large, plain and mirrored, and the dragon of 4 (Terraria's first summon) and 6
 //   pieces laid out straight at 2x size, to compare with the wiki's pictures.
 //
-// Drawing: each piece is its texture on one quad turned to its line of flight, drawn as Terraria draws it (full
-// bright, alpha halved: the texture once normal at .5 and once additive at .5) and mirrored when it flies west,
-// so the gold spine is always on the north side; a piece that mirrors rolls over in 0.16 s instead of snapping.
-// Pieces draw neck to tail, then the tail, then the head on top (Terraria's order), at a pawn's chest height, each
-// with a soft shadow on the ground and a soft cyan glow under it; the head is drawn 15 % bigger. The body sways
-// gently from side to side (a picture only). The glow, the bigger head, the sway, the roll and the hit flash are
-// not Terraria's: they make it read as a dragon of light at a normal RimWorld zoom (user's notes, 2026-10-03). Ice Torch dust: about 2 a
-// second per piece at a random point of the piece, drifting and slowing, swelling then shrinking over 0.7 s,
-// each with a faint pool of its light on the floor. The movement runs `pace` Terraria ticks per tick (0.5: half
-// Terraria's speed, so the shape of the path is the same and its speed readable; 1 is the game). Sizes are
-// Terraria's pixels at 0.028 cells each, so a lab/pawn.js pawn (1.17 cells) is as tall as a Terraria player (42 px).
+// Drawing: the body is one continuous ribbon through every piece (a Catmull-Rom curve, in flat bands: a deep blue
+// edge, the blue body, a cyan sheen and a pale line along the belly), narrowing to two thirds at the tail and
+// to a point behind it, with a continuous gold spine along its back laid over the pieces. Each body piece is a
+// texture on one quad turned to its line of flight: two curved gold ribs round the body, two belly scales, and a
+// gold spine on top, tall and short in turn, over a see-through blue fin that runs back to the next one. The tail
+// is three swept crystal blades; the head is drawn 15 % bigger, on top. Everything is drawn as Terraria draws the
+// dragon (full bright, alpha halved: once normal at .5 and once additive at .5) and mirrored when it flies west, so
+// the gold spine is always on the north side; a piece that mirrors rolls over in 0.16 s and the ribbon squeezes
+// with it. Each piece has a soft shadow on the ground and a soft cyan glow under it; the body sways gently from
+// side to side (a picture only); a soft trail of light follows the tail for 1.6 cells. The continuous body, the
+// glow, the bigger head, the sway, the roll, the trail and the hit flash are not Terraria's: they make it read as
+// one dragon of light at a normal RimWorld zoom (user's notes, 2026-10-03).
+// Ice Torch dust: about 2 a second per piece at a random point of the piece, drifting and slowing, swelling then
+// shrinking over 0.7 s, each with a faint pool of its light on the floor. The movement runs `pace` Terraria ticks per
+// tick (0.5: half Terraria's speed, so the shape of the path is the same and its speed readable; 1 is the game). Sizes
+// are Terraria's pixels at 0.028 cells each, so a lab/pawn.js pawn (1.17 cells) is as tall as a Terraria player (42 px).
 // Textures: lab/stardust-head, -body1, -body2, -tail and -dust, made in lib/stardust-dragon.js; still to be
 // written out as PNGs by a make_stardust_dragon_textures.py. Pawns are lib/pawn.js stand-ins, the staff is a
 // stand-in for its texture, walls are the Paper Bomb kit's. "Show stand-ins" off hides pawns, walls, the staff,
@@ -68,7 +73,7 @@ import { ringAt } from './lib/goku.js';
 import { walls } from './lib/paper-bomb.js';
 import { damageBar, PainShock, walk, downSmoke } from './lib/terraria.js';
 import { simulate, liveDust, dustAt, kindOf } from './lib/stardust-dragon-ai.js';
-import { piece, aura, dust, staff, IceColour, CyanColour, LightColour } from './lib/stardust-dragon.js';
+import { piece, rollOf, aura, bodyLine, bodyRibbon, spineRibbon, wake, dust, staff, TailTaper, IceColour, CyanColour, LightColour } from './lib/stardust-dragon.js';
 
 const smooth = Mathf.Smooth, D2R = Mathf.Deg2Rad;
 const White = new Color(1, 1, 1), Warn = new Color(.85, .18, .12), Wielder = new Color(.30, .50, .62);
@@ -84,6 +89,7 @@ const PreRoll = 20, Tail = 4, MaxTime = 30;            // seconds the dragon is 
 // piece along the body, radians a second; the head stays on its line and the sway grows over the first two pieces.
 const WaveAmp = 3.5, WaveK = 1, WaveRate = 9;
 const HitFlash = .3;                                   // seconds a hit's flash and slash last
+const WakeLong = 1.6, WakeSize = 22, TipBehind = 40;  // the tail's wake: cells long, Terraria px long at its first spot; the blades' tips, px behind the tail piece
 const Back = 7;                                        // in "summon + raid" the wielder stands this far behind the chosen cell
 // "summon + raid", in cells from the wielder: x toward the raid, z across.
 const CastAt = { x: 5, z: 1 };
@@ -139,20 +145,41 @@ function pieces(r, k, o, s) {
   return out;
 }
 
-// The dragon: the sway, shadows, the glow, then the pieces in Terraria's order (neck to tail, the tail, the head on top).
-function dragon(list, cells, sun, strength, s, wave = 1, layer = Y + .1) {
-  const off = list.map((q, i) => wave * WaveAmp * cells * Math.min(1, i / 2) * Math.sin(i * WaveK - s * WaveRate));
+// The dragon: the sway, shadows and glow, the continuous body, the body pieces (ribs, scales, dorsal spines and fin,
+// neck to tail), the gold spine over them, the tail's blades, the head on top. Pieces narrow toward the tail.
+function dragon(list, cells, sun, strength, s, wave = 1, key = '', layer = Y + .1) {
+  const n = list.length, off = list.map((q, i) => wave * WaveAmp * cells * Math.min(1, i / 2) * Math.sin(i * WaveK - s * WaveRate));
   list.forEach((q, i) => {
     q.c = { x: q.c.x - Math.sin(q.rot) * off[i], z: q.c.z + Math.cos(q.rot) * off[i] };
-    if (i > 0 && i < list.length - 1) q.rot += Math.atan((off[i - 1] - off[i + 1]) / (32 * cells));
+    if (i > 0 && i < n - 1) q.rot += Math.atan((off[i - 1] - off[i + 1]) / (32 * cells));
+    q.roll = rollOf(q.flip, q.since); q.taper = 1 - (1 - TailTaper) * i / Math.max(1, n - 1);
   });
-  const drawOrder = [...list.slice(1, -1), list[list.length - 1], list[0]].filter(Boolean);
   list.forEach(q => {
     const g = { x: q.c.x + sun.x * FlyHeight, z: q.c.z - FlyHeight * Lift + sun.z * FlyHeight };
-    sprite(g, 24 * cells, 11 * cells, Body.withAlpha(strength * .7 * q.alpha), soft, shadowLayer, -q.rot / D2R);
-    aura(q.c, q.rot, cells, q.alpha, layer - .01);
+    sprite(g, 24 * cells * q.taper, 11 * cells * q.taper, Body.withAlpha(strength * .7 * q.alpha), soft, shadowLayer, -q.rot / D2R);
+    aura(q.c, q.rot, cells * q.taper, q.alpha, layer - .01);
   });
-  drawOrder.forEach((q, i) => piece(q.kind, q.c, q.rot, q.flip, q.since, cells, q.alpha, layer + i * .004));
+  const pts = bodyLine(list, cells), alpha = list[0].alpha;
+  bodyRibbon(pts, cells, alpha, layer, key);
+  list.slice(1, -1).forEach((q, i) => piece(q.kind, q.c, q.rot, q.roll, cells, q.alpha, layer + .003 + i * .004, q.taper));
+  const top = layer + .003 + n * .004;
+  spineRibbon(pts, cells, alpha, top, key);
+  const t = list[n - 1], h = list[0];
+  piece(t.kind, t.c, t.rot, t.roll, cells, t.alpha, top + .003);
+  piece(h.kind, h.c, h.rot, h.roll, cells, h.alpha, top + .004);
+}
+
+// The tail's wake: where the tips of its blades were over the last WakeLong cells of flight, newest first.
+function wakeLine(r, k, o, cells) {
+  const out = [];
+  let run = 0;
+  for (let j = k; j >= 0 && r.count[j]; j--) {
+    const at = j * r.ids + 3, x = o.x + r.X[at] - Math.cos(r.R[at]) * TipBehind * cells, z = o.z + r.Z[at] - Math.sin(r.R[at]) * TipBehind * cells + ChestLift;
+    if (out.length) { const d = Math.hypot(x - out[out.length - 1].x, z - out[out.length - 1].z); if (d > .6) break; run += d; }   // a recast moves the tail back: the wake starts again
+    out.push({ x, z });
+    if (run > WakeLong) break;
+  }
+  return out;
 }
 
 // The staff's angle on screen at time s: held up and forward, or in its overhead swing from front-up over the head
@@ -172,13 +199,13 @@ function staffPose(s, casts, facing) {
 function sheet(o) {
   const kinds = ['head', 'body1', 'body2', 'tail'];
   kinds.forEach((kind, i) => {
-    piece(kind, { x: o.x - 4.5 + i * 3, z: o.z + 4 }, 0, 1, 99, 2.6 / 48, 1, Y + .1 + i * .004);
-    piece(kind, { x: o.x - 4.5 + i * 3, z: o.z + 1.2 }, Math.PI, -1, 99, 2.6 / 48, 1, Y + .1 + i * .004);
+    piece(kind, { x: o.x - 4.5 + i * 3, z: o.z + 4 }, 0, rollOf(1, 99), 2.6 / 48, 1, Y + .1 + i * .004);
+    piece(kind, { x: o.x - 4.5 + i * 3, z: o.z + 1.2 }, Math.PI, rollOf(-1, 99), 2.6 / 48, 1, Y + .1 + i * .004);
   });
   [4, 6].forEach((n, row) => {
     const scale = 2 * (1 + .01 * (n - 1)), gap = 16 * .028 * scale, ids = [0, 1, 2, ...Array.from({ length: n - 4 }, (_, i) => 4 + i), 3];
     const list = ids.map((id, i) => ({ id, kind: kindOf(id), c: { x: o.x - 3 + i * gap, z: o.z - 1.8 - row * 2.2 }, rot: Math.PI, flip: -1, since: 99, alpha: 1 }));
-    dragon(list, .028 * scale, { x: 0, z: 0 }, 0, 0, 0);
+    dragon(list, .028 * scale, { x: 0, z: 0 }, 0, 0, 0, ` ${n}`);
   });
 }
 
@@ -251,7 +278,11 @@ export default {
     });
 
     // --- the dragon ------------------------------------------------------------------------------------------------------
-    if (r.count[k]) dragon(pieces(r, k, o, s), cells, sun, strength, s);
+    if (r.count[k]) {
+      const list = pieces(r, k, o, s);
+      wake(wakeLine(r, k, o, cells), WakeSize * cells, list[list.length - 1].alpha, Y + .095);
+      dragon(list, cells, sun, strength, s);
+    }
 
     // --- hits: a cyan flash on the pawn's chest, a white slash along the dragon's line, a small star ------------------------
     people.forEach(g => {
@@ -266,7 +297,7 @@ export default {
     // --- Ice Torch dust and the light it gives the floor --------------------------------------------------------------------
     liveDust(r, s, DustLife).forEach((d, i) => {
       const age = s - d.t, q = dustAt(d, age, r.px), c = { x: o.x + q.x, z: o.z + q.z + ChestLift };
-      const a = dust(c, age, DustLife, DustSize * p.px, d.faint, Y + .16 + (i % 20) * .0003);   // summon dust gives no light (Terraria's noLight)
+      const a = dust(c, age, DustLife, DustSize * p.px, d.faint, Y + .18 + (i % 20) * .0003);   // summon dust gives no light (Terraria's noLight)
       if (p.light && a > 0 && !d.faint) sprite({ x: c.x, z: c.z - FlyHeight * Lift }, 1.4, 1, LightColour.withAlpha(.07 * a), glow, Floor + .012);
     });
   },
