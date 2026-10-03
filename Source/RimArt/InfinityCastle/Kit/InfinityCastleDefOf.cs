@@ -22,6 +22,16 @@ namespace RimArt
         [MayRequireBiotech]
         public static GeneDef AG_CastleOrgan;
 
+        // The castle's sounds (AG_Nakime_Sounds.xml), picked in the VFX lab against the sketches' sound markers of the
+        // same names, played with SoundLayers.Play.
+        public static SoundDef AG_NakimeBiwaStrum;
+        public static SoundDef AG_NakimeCastleDoor;
+        public static SoundDef AG_NakimeCastleBar;
+        public static SoundDef AG_NakimeCastleSlide;
+        public static SoundDef AG_NakimeCastleThud;
+        public static SoundDef AG_NakimeCastleCrush;
+        public static SoundDef AG_NakimeSunBurn;
+
         static InfinityCastleDefOf()
         {
             DefOfHelper.EnsureInitializedInCtor(typeof(InfinityCastleDefOf));

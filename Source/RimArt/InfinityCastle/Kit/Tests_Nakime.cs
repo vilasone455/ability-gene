@@ -23,6 +23,7 @@ namespace RimArt
         private static GameComponent_Echoes Setup(RimArtTestContext t)
         {
             GameComponent_InfinityCastle.Instance.ResetForTests();
+            Listen();
             return t.ClearEchoes();
         }
 
@@ -36,6 +37,12 @@ namespace RimArt
         }
 
         private static IntVec3 Target(RimArtTestContext t) => t.center + new IntVec3(4, 0, 0);
+
+        /// <summary>Seconds on a rule's clock as the tick it lands on (the cast and the castle round up).</summary>
+        private static int Ticks(float seconds) => (int)Math.Ceiling(seconds * 60f - 1e-3f);
+
+        private static SoundDef Strum => InfinityCastleDefOf.AG_NakimeBiwaStrum;
+        private static SoundDef Door => InfinityCastleDefOf.AG_NakimeCastleDoor;
 
         private static InfinityCastleCast CastOf(Pawn pawn) => GameComponent_InfinityCastle.Instance?.For(pawn);
 
@@ -123,6 +130,8 @@ namespace RimArt
             t.Check(spent >= 30f && spent < 31f, "the pool paid 30 (" + spent.ToString("0.##") + " with upkeep)");
             t.Check(Math.Abs(cast.paid - 30f) < 0.01f, "the cast kept 30");
             t.Check(cast.taken.Count(x => x.kind == CastleGuest.Enemy) == 3, "three enemies chosen (" + cast.taken.Count(x => x.kind == CastleGuest.Enemy) + ")");
+            int start = cast.startTick, strumTick = Ticks(cast.strumAt);
+            float firstDoor = cast.taken.Where(x => x.kind == CastleGuest.Enemy).Min(x => x.door), carrierDoor = cast.taken.First(x => x.kind == CastleGuest.Carrier).door;
             yield return 30;
             yield return t.ShotAs("nakime-take", target, 12f);
 
@@ -146,8 +155,18 @@ namespace RimArt
             yield return t.ShotAs("nakime-inside", castle.DaisCell + new IntVec3(10, 0, -4), 26f);
 
             Map castleMap = cast.castle;
+            cast.releaseOrdered = true;
+            foreach (int w in WaitFor(() => cast.releasing, 600)) yield return w;
+            int released = t.Now;
             foreach (int w in ReleaseAndWait(cast)) yield return w;
             LogPawns(t, cast, host, a, b, c);
+            // The first door home opens a moment after the return.
+            foreach (int w in WaitFor(() => t.Now > cast.returnTick + Ticks(InfinityCastleOpenTiming.First) + 1, 60)) yield return w;
+            t.Log("heard: " + HeardSince(start) + " (strum at " + strumTick + ", in at " + (cast.inTick - start) + ", Release at " + (released - start) + ", return at " + (cast.returnTick - start) + ")");
+            t.Check(HeardNear(Strum, start, strumTick, released - start), "the biwa is heard twice: the strum that opens the castle, and Release");
+            int[] doors = { Ticks(firstDoor), Ticks(carrierDoor), cast.inTick - start + Ticks(InfinityCastleInsideTiming.CasterLands),
+                cast.inTick - start + Ticks(InfinityCastleInsideTiming.EnemyLands(0)), cast.returnTick - start + Ticks(InfinityCastleOpenTiming.First) };
+            t.Check(HeardNear(Door, start, doors), "a floor door is heard five times: the take's first and Nakime's, her landing on the dais and the first pawn's, the first one home (want " + string.Join(", ", doors) + ")");
             if (!t.Check(cast.returned, "everyone returned")) yield break;
             t.Check(host.Map == t.map && host.Position.DistanceTo(hostFrom) <= 2f, "Nakime is back where she stood (" + hostFrom + ")");
             t.Check(a.Dead || a.MapHeld == t.map && a.Position.DistanceTo(aFrom) <= 2f, "enemy a is back where it stood (" + aFrom + ")");
@@ -240,11 +259,18 @@ namespace RimArt
             IntVec3 MiddleOf(CastleRoom r) => new IntVec3(r.X + r.W / 2, 0, r.Z + r.H / 2);
             List<CastleRoom> empty = layout.Rooms.Where(r => r.Kind != CastleKind.Biwa && r != Middle(a) && r != Middle(b)).ToList();
             string why;
+            // Each command's tick: its strum then, and its own sound some ticks after.
+            int summonAt = -1, dropAt = -1, sealAt = -1, openAt = -1, shiftAt = -1, crushAt = -1, slideStop = -1;
+            bool slideBlocked = false;
 
             // Summon.
             foreach (int w in StrumReady(castle)) yield return w;
             t.Check(cast.SummonChoices().Contains(colonist), "the colonist is a Summon choice");
             CastleRoom summonRoom = empty[0];
+            // From here on only the commands' sounds: the take's and the arrival's doors are behind us.
+            foreach (int w in WaitFor(() => t.Now > cast.inTick + Ticks(InfinityCastleInsideTiming.EnemyLands(0)) + 1, 120)) yield return w;
+            Listen();
+            summonAt = t.Now;
             t.Check(cast.Summon(colonist, MiddleOf(summonRoom), out why), "Summon played (" + why + ")");
             t.Check(colonist.Map == cast.castle && castle.RoomAt(colonist.Position) == summonRoom, "the colonist is in the chosen room");
             t.Check(!cast.Summon(host, MiddleOf(empty[1]), out why), "Nakime cannot summon herself (" + why + ")");
@@ -252,6 +278,7 @@ namespace RimArt
             // Drop.
             foreach (int w in StrumReady(castle)) yield return w;
             CastleRoom dropRoom = empty[1];
+            dropAt = t.Now;
             t.Check(castle.TryDrop(a, MiddleOf(dropRoom), out why), "Drop played (" + why + ")");
             t.Check(castle.RoomAt(a.Position) == dropRoom, "enemy a is in the chosen room");
 
@@ -262,9 +289,11 @@ namespace RimArt
             if (t.Check(door != null, "found a doorway away from the biwa room"))
             {
                 IntVec3 cell = new IntVec3(door.Cells[0].x, 0, door.Cells[0].z);
+                sealAt = t.Now;
                 t.Check(castle.TrySeal(cell, out why), "Seal played (" + why + ")");
                 t.Check(castle.SealedAt(cell, out _) && !cell.Walkable(cast.castle), "the doorway is shut");
                 foreach (int w in StrumReady(castle)) yield return w;
+                openAt = t.Now;
                 t.Check(castle.TryOpen(cell, out why), "Open played (" + why + ")");
                 t.Check(!castle.SealedAt(cell, out _) && cell.Walkable(cast.castle), "the doorway is open again");
             }
@@ -285,6 +314,9 @@ namespace RimArt
             if (t.Check(mover != null, "found a room that can move"))
             {
                 int id = mover.Id, x0 = mover.X, z0 = mover.Z;
+                castle.Castle.SlideDistance(id, dx, dz, InfinityCastleRules.Of.shiftMaxCells, out slideBlocked);
+                slideStop = Ticks(CastleShift.Slide0 + 0.25f + distance / InfinityCastleRules.Of.shiftCellsPerSecond);
+                shiftAt = t.Now;
                 t.Check(castle.TryShift(MiddleOf(mover), dx, dz, out why), "Shift played (" + why + ")");
                 CastleRoom moved = castle.Castle.Rooms[id];
                 t.Check(moved.X == x0 + dx * distance && moved.Z == z0 + dz * distance, "the room moved " + distance + " cells");
@@ -296,10 +328,27 @@ namespace RimArt
             if (t.Check(big != null, "found a room of 7 x 7 or more"))
             {
                 bool crushed = false;
-                foreach (int w in WaitFor(() => crushed = castle.TryCrush(MiddleOf(big), out why), 900, 10)) yield return w;
+                foreach (int w in WaitFor(() => { crushAt = t.Now; return crushed = castle.TryCrush(MiddleOf(big), out why); }, 900, 10)) yield return w;
                 t.Check(crushed, "Crush played (" + why + ")");
                 t.Check(castle.CrushWait > 0f, "Crush's own cooldown runs");
             }
+
+            yield return 60;
+            int from = summonAt;
+            t.Log("heard: " + HeardSince(from) + " (summon 0, drop " + (dropAt - from) + ", seal " + (sealAt - from) + ", open " + (openAt - from) + ", shift " + (shiftAt - from)
+                + (slideBlocked ? " blocked" : " into the void") + ", crush " + (crushAt - from) + ")");
+            int[] strums = new[] { summonAt, dropAt, sealAt, openAt, shiftAt, crushAt }.Where(x => x >= 0).Select(x => x - from).ToArray();
+            t.Check(HeardNear(Strum, from, strums), "each command is heard as one strum, when it is given (" + strums.Length + ")");
+            t.Check(HeardNear(Door, from, Ticks(new CastleDrop { doorUnder = 0.1f }.Arrive), dropAt - from + Ticks(0.1f)),
+                "a floor door is heard as the summoned colonist comes up and as the dropped enemy goes down");
+            if (sealAt >= 0) t.Check(HeardNear(InfinityCastleDefOf.AG_NakimeCastleBar, from, sealAt - from + Ticks(CastleSealAnim.BarHeard)), "the bar is heard landing on the Seal, not on the Open");
+            if (shiftAt >= 0)
+            {
+                t.Check(HeardNear(InfinityCastleDefOf.AG_NakimeCastleSlide, from, shiftAt - from + Ticks(CastleShift.Slide0)), "the room is heard starting to slide");
+                t.Check(slideBlocked ? HeardNear(InfinityCastleDefOf.AG_NakimeCastleThud, from, shiftAt - from + slideStop) : HeardAt(InfinityCastleDefOf.AG_NakimeCastleThud, from).Count == 0,
+                    slideBlocked ? "the thud is heard where it meets the next room" : "no thud: it slid into open void");
+            }
+            if (crushAt >= 0) t.Check(HeardNear(InfinityCastleDefOf.AG_NakimeCastleCrush, from, crushAt - from + Ticks(CastleCrush.Hit)), "the walls are heard landing");
 
             foreach (int w in ReleaseAndWait(cast)) yield return w;
             LogPawns(t, cast, host, a, b, colonist);
@@ -413,16 +462,22 @@ namespace RimArt
             int Burns() => pawn.health.hediffSet.hediffs.Count(h => h is Hediff_Injury && h.def == DamageDefOf.Burn.hediff);
             bool lit = pawn.Position.InSunlight(t.map);
             t.Log("sky glow " + t.map.skyManager.CurSkyGlow.ToString("0.00") + ", in sunlight: " + lit);
-            int before = Burns();
+            int before = Burns(), outside = t.Now;
             yield return 130;
             if (lit) t.Check(Burns() > before, "outdoors by day she burns (" + before + " -> " + Burns() + ")");
             else t.Check(Burns() == before, "outdoors at night she does not burn");
+            List<int> hisses = HeardAt(InfinityCastleDefOf.AG_NakimeSunBurn, outside);
+            t.Log("hisses at " + string.Join(", ", hisses));
+            if (lit) t.Check(hisses.Count >= 2 && hisses.Zip(hisses.Skip(1), (x, y) => Math.Abs(y - x - 60) <= 2).All(ok => ok), "each burn is heard, a second apart");
+            else t.Check(hisses.Count == 0, "no burn, no hiss");
 
             foreach (IntVec3 c in GenRadial.RadialCellsAround(pawn.Position, 1.5f, true)) t.map.roofGrid.SetRoof(c, RoofDefOf.RoofConstructed);
             yield return 2;
             before = Burns();
+            int roofed = t.Now;
             yield return 130;
             t.Check(Burns() == before, "under a roof she does not burn (" + before + " -> " + Burns() + ")");
+            t.Check(HeardAt(InfinityCastleDefOf.AG_NakimeSunBurn, roofed).All(x => x < 0), "and no hiss is heard under it");
             EchoDevice.workingForTests = null;
         }
     }

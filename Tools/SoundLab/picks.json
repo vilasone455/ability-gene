@@ -1,4 +1,141 @@
 {
+  "sound:AG_NakimeBiwaStrum": {
+    "option": "Synth: biwa strum, lower",
+    "layers": [
+      {
+        "folder": "AG/BiwaStrum",
+        "clip": null,
+        "pitch": 0.85,
+        "volume": 50,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:16"
+  },
+  "sound:AG_NakimeCastleBar": {
+    "option": "Door shut, fast",
+    "layers": [
+      {
+        "folder": "Misc/Door/ManualDoors/Close/Fast",
+        "clip": null,
+        "pitch": 0.8,
+        "volume": 45,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:15"
+  },
+  "sound:AG_NakimeCastleCrush": {
+    "option": "Two big building hits + splinters",
+    "layers": [
+      {
+        "folder": "Pawn/Animal/Melee_Big/Hit_Building",
+        "clip": null,
+        "pitch": 0.7,
+        "volume": 50,
+        "delay": 0,
+        "loop": false
+      },
+      {
+        "folder": "Pawn/Animal/Melee_Big/Hit_Building",
+        "clip": null,
+        "pitch": 0.8,
+        "volume": 40,
+        "delay": 0.03,
+        "loop": false
+      },
+      {
+        "folder": "Impact/BuildingDestroyed/Wood/Small",
+        "clip": null,
+        "pitch": 1,
+        "volume": 35,
+        "delay": 0.04,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:16"
+  },
+  "sound:AG_NakimeCastleDoor": {
+    "option": "Door open, fast + low swish",
+    "layers": [
+      {
+        "folder": "Misc/Door/ManualDoors/Open/Fast",
+        "clip": null,
+        "pitch": 0.8,
+        "volume": 45,
+        "delay": 0,
+        "loop": false
+      },
+      {
+        "folder": "Misc/Swish2",
+        "clip": null,
+        "pitch": 0.6,
+        "volume": 30,
+        "delay": 0.1,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:15"
+  },
+  "sound:AG_NakimeCastleSlide": {
+    "option": "Quake, short + wood rummage",
+    "layers": [
+      {
+        "folder": "Misc/Emergence/Quake",
+        "clip": null,
+        "pitch": 1.2,
+        "volume": 35,
+        "delay": 0,
+        "loop": false
+      },
+      {
+        "folder": "Interact/Work/Construct/Wood/Rummage_Wood",
+        "clip": null,
+        "pitch": 0.6,
+        "volume": 30,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:16"
+  },
+  "sound:AG_NakimeCastleThud": {
+    "option": "Wood punch, low",
+    "layers": [
+      {
+        "folder": "Impact/PunchHitBuilding/Wood",
+        "clip": null,
+        "pitch": 0.6,
+        "volume": 50,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:16"
+  },
+  "sound:AG_NakimeSunBurn": {
+    "option": "Hiss",
+    "layers": [
+      {
+        "folder": "Misc/Hiss",
+        "clip": null,
+        "pitch": 1,
+        "volume": 30,
+        "delay": 0,
+        "loop": false
+      }
+    ],
+    "note": "",
+    "at": "2026-10-03 13:17"
+  },
   "sound:AG_PainBanshoCast": {
     "option": "Synth: sucked in, very low",
     "layers": [

@@ -90,10 +90,10 @@ export default {
   events(p) {
     const t = times(p);
     if (p.part === 'take') return [
-      { t: t.strumAt, type: 'sound', def: 'RimArt_BiwaStrum' }, { t: t.strumAt + .05, type: 'shake', value: .02 },
-      { t: t.doorOf(0), type: 'sound', def: 'RimArt_CastleDoor' }, { t: t.casterDoor, type: 'sound', def: 'RimArt_CastleDoor' },
+      { t: t.strumAt, type: 'sound', def: 'AG_NakimeBiwaStrum' }, { t: t.strumAt + .05, type: 'shake', value: .02 },
+      { t: t.doorOf(0), type: 'sound', def: 'AG_NakimeCastleDoor' }, { t: t.casterDoor, type: 'sound', def: 'AG_NakimeCastleDoor' },
     ];
-    return [{ t: t.first, type: 'sound', def: 'RimArt_CastleDoor' }];
+    return [{ t: t.first, type: 'sound', def: 'AG_NakimeCastleDoor' }];
   },
 
   draw(s, p, { origin: o, scene }) {

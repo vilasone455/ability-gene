@@ -82,8 +82,8 @@ export default {
   ]; },
   events(p) {
     const t = times(p), { blocked } = setup(p.scenario);
-    const out = [{ t: t.strumAt, type: 'sound', def: 'RimArt_BiwaStrum' }, { t: t.slide0, type: 'sound', def: 'RimArt_CastleSlide' }];
-    if (blocked) out.push({ t: t.stop, type: 'shake', value: .03 }, { t: t.stop, type: 'sound', def: 'RimArt_CastleThud' });
+    const out = [{ t: t.strumAt, type: 'sound', def: 'AG_NakimeBiwaStrum' }, { t: t.slide0, type: 'sound', def: 'AG_NakimeCastleSlide' }];
+    if (blocked) out.push({ t: t.stop, type: 'shake', value: .03 }, { t: t.stop, type: 'sound', def: 'AG_NakimeCastleThud' });
     return out;
   },
 

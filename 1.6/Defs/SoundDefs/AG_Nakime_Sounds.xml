@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- Nakime's sounds for Infinity Castle and its commands, picked by ear in the VFX lab against the seven
+       Infinity Castle sketches (Tools/SoundLab/picks.json, "sound:<defName>"). Core's clips and the mod's
+       synthesized biwa (Sounds/AG/BiwaStrum, written by make_sounds.py: the game has no plucked string)
+       at the lab's pitches and volumes. Played through SoundLayers.Play. Volume and pitch are single
+       values, as picked; a folder plays one of its clips at random. A layer that starts later than the
+       others has its delay in SoundLayerDelays, one entry per subSound in order: RimWorld does not take
+       startDelayRange on a one-shot. Not picked yet, so silent: the biwa coming back to her hands. -->
+
+  <!-- One stroke of the biwa: the strum that opens the castle, every command, and Release. -->
+  <SoundDef>
+    <defName>AG_NakimeBiwaStrum</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>2</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>AG/BiwaStrum</clipFolderPath></li></grains>
+        <volumeRange>50~50</volumeRange>
+        <pitchRange>0.85~0.85</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- A floor door snapping open under a pawn (it sinks) or in a room (it rises), and the air of the shaft. -->
+  <SoundDef>
+    <defName>AG_NakimeCastleDoor</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Misc/Door/ManualDoors/Open/Fast</clipFolderPath></li></grains>
+        <volumeRange>45~45</volumeRange>
+        <pitchRange>0.8~0.8</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Misc/Swish2</clipFolderPath></li></grains>
+        <volumeRange>30~30</volumeRange>
+        <pitchRange>0.6~0.6</pitchRange>
+      </li>
+    </subSounds>
+    <modExtensions>
+      <li Class="RimArt.SoundLayerDelays">
+        <delays><li>0</li><li>0.1</li></delays>
+      </li>
+    </modExtensions>
+  </SoundDef>
+
+  <!-- Seal: the lacquer bar landing across the shut doorway. -->
+  <SoundDef>
+    <defName>AG_NakimeCastleBar</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>2</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Misc/Door/ManualDoors/Close/Fast</clipFolderPath></li></grains>
+        <volumeRange>45~45</volumeRange>
+        <pitchRange>0.8~0.8</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Shift: the room starting to slide. -->
+  <SoundDef>
+    <defName>AG_NakimeCastleSlide</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>2</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Misc/Emergence/Quake</clipFolderPath></li></grains>
+        <volumeRange>35~35</volumeRange>
+        <pitchRange>1.2~1.2</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Interact/Work/Construct/Wood/Rummage_Wood</clipFolderPath></li></grains>
+        <volumeRange>30~30</volumeRange>
+        <pitchRange>0.6~0.6</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Shift: the sliding room's wall meeting the room it slid into. -->
+  <SoundDef>
+    <defName>AG_NakimeCastleThud</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>2</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Impact/PunchHitBuilding/Wood</clipFolderPath></li></grains>
+        <volumeRange>50~50</volumeRange>
+        <pitchRange>0.6~0.6</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Crush: the four walls landing, then splinters. -->
+  <SoundDef>
+    <defName>AG_NakimeCastleCrush</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>2</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Animal/Melee_Big/Hit_Building</clipFolderPath></li></grains>
+        <volumeRange>50~50</volumeRange>
+        <pitchRange>0.7~0.7</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Animal/Melee_Big/Hit_Building</clipFolderPath></li></grains>
+        <volumeRange>40~40</volumeRange>
+        <pitchRange>0.8~0.8</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Impact/BuildingDestroyed/Wood/Small</clipFolderPath></li></grains>
+        <volumeRange>35~35</volumeRange>
+        <pitchRange>1~1</pitchRange>
+      </li>
+    </subSounds>
+    <modExtensions>
+      <li Class="RimArt.SoundLayerDelays">
+        <delays><li>0</li><li>0.03</li><li>0.04</li></delays>
+      </li>
+    </modExtensions>
+  </SoundDef>
+
+  <!-- Each sunlight burn, once a second: a hiss. -->
+  <SoundDef>
+    <defName>AG_NakimeSunBurn</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>2</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Misc/Hiss</clipFolderPath></li></grains>
+        <volumeRange>30~30</volumeRange>
+        <pitchRange>1~1</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+</Defs>

@@ -54,6 +54,7 @@ namespace RimArt
             CastleOrganExtension ext = Ext;
             Map map = pawn.Map;
             Vector3 at = pawn.DrawPos;
+            SoundLayers.Play(InfinityCastleDefOf.AG_NakimeSunBurn, map, pawn.Position);
             pawn.TakeDamage(new DamageInfo(DamageDefOf.Burn, ext.burnDamage, ext.armorPenetration));
             if (map != null) FleckMaker.ThrowSmoke(at, map, 0.6f);
             if (pawn.Faction == Faction.OfPlayer && now - lastMessageTick >= Mathf.RoundToInt(ext.messageSeconds * 60f))

@@ -56,7 +56,7 @@ export default {
     { name: 'Impact', t: t.hit }, { name: 'Walls back', t: t.back }, { name: 'Result', t: t.open },
   ]; },
   events(p) { const t = times(p); return [
-    { t: t.strumAt, type: 'sound', def: 'RimArt_BiwaStrum' }, { t: t.hit, type: 'shake', value: .06 }, { t: t.hit, type: 'sound', def: 'RimArt_CastleCrush' },
+    { t: t.strumAt, type: 'sound', def: 'AG_NakimeBiwaStrum' }, { t: t.hit, type: 'shake', value: .06 }, { t: t.hit, type: 'sound', def: 'AG_NakimeCastleCrush' },
   ]; },
 
   draw(s, p, { origin, scene }) {

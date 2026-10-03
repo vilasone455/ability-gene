@@ -105,8 +105,8 @@ export default {
     { name: 'Hold', t: t.landed }, { name: 'Release', t: t.release }, { name: 'Castle removed', t: t.fade },
   ]; },
   events(p) { const t = times(p); return [
-    { t: CasterLands, type: 'sound', def: 'RimArt_CastleDoor' }, { t: FirstEnemy, type: 'sound', def: 'RimArt_CastleDoor' },
-    { t: t.release - .05, type: 'sound', def: 'RimArt_BiwaStrum' },
+    { t: CasterLands, type: 'sound', def: 'AG_NakimeCastleDoor' }, { t: FirstEnemy, type: 'sound', def: 'AG_NakimeCastleDoor' },
+    { t: t.release - .05, type: 'sound', def: 'AG_NakimeBiwaStrum' },
   ]; },
 
   draw(s, p, { origin, scene }) {

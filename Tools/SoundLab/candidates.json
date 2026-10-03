@@ -2672,6 +2672,562 @@
    ],
    "hero": "Pain"
   },
+  "AG_Nakime_InfinityCastle": {
+   "note": "Strum (opening the castle, every command, Release), a floor door opening under a pawn, Seal's bar, Shift's slide and the thud where rooms meet, Crush's four walls, the sunburn tick, and the biwa coming back.",
+   "moments": [
+    {
+     "id": "strum",
+     "label": "Biwa strum",
+     "when": "every command, the opening and Release: one stroke across the strings",
+     "options": [
+      {
+       "label": "Synth: biwa strum",
+       "layers": [
+        {
+         "folder": "AG/BiwaStrum",
+         "pitch": 1.0,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Synth: biwa strum, lower",
+       "layers": [
+        {
+         "folder": "AG/BiwaStrum",
+         "pitch": 0.85,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Synth: two strokes (the anime's 'be-been')",
+       "layers": [
+        {
+         "folder": "AG/BiwaStrum",
+         "pitch": 1.0,
+         "volume": 40
+        },
+        {
+         "folder": "AG/BiwaStrum",
+         "pitch": 1.0,
+         "volume": 45,
+         "delay": 0.12
+        }
+       ]
+      },
+      {
+       "label": "Synth strum + soothe pulser (the castle answering)",
+       "layers": [
+        {
+         "folder": "AG/BiwaStrum",
+         "pitch": 1.0,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Soothe_Pulser",
+         "pitch": 0.8,
+         "volume": 20
+        }
+       ]
+      },
+      {
+       "label": "Synth strum + skip pulse (Royalty)",
+       "layers": [
+        {
+         "folder": "AG/BiwaStrum",
+         "pitch": 1.0,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Psycasts/Skip/Pulse",
+         "pitch": 1.2,
+         "volume": 20
+        }
+       ]
+      },
+      {
+       "label": "No biwa: synth ting, low + wood knock",
+       "layers": [
+        {
+         "folder": "AG/Ting",
+         "pitch": 0.5,
+         "volume": 35
+        },
+        {
+         "folder": "Impact/MeleeHit_Wood",
+         "pitch": 1.2,
+         "volume": 35
+        }
+       ]
+      }
+     ],
+     "defName": "AG_NakimeBiwaStrum"
+    },
+    {
+     "id": "door",
+     "label": "Floor door",
+     "when": "a door snaps open in the floor (0.18 s); a pawn sinks in 0.4 s or rises",
+     "options": [
+      {
+       "label": "Door open, fast + low swish",
+       "layers": [
+        {
+         "folder": "Misc/Door/ManualDoors/Open/Fast",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 0.6,
+         "volume": 30,
+         "delay": 0.1
+        }
+       ]
+      },
+      {
+       "label": "Door open, then shut",
+       "layers": [
+        {
+         "folder": "Misc/Door/ManualDoors/Open/Fast",
+         "pitch": 0.9,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Door/ManualDoors/Close/Fast",
+         "pitch": 0.8,
+         "volume": 35,
+         "delay": 0.5
+        }
+       ]
+      },
+      {
+       "label": "Fence gate",
+       "layers": [
+        {
+         "folder": "Misc/Door/FenceGates",
+         "pitch": 0.9,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Wood knock + skip entry",
+       "layers": [
+        {
+         "folder": "Impact/MeleeHit_Wood",
+         "pitch": 1.0,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/Psycasts/Skip/Entry",
+         "pitch": 0.9,
+         "volume": 30,
+         "delay": 0.05
+        }
+       ]
+      },
+      {
+       "label": "Dropped wood + swish down",
+       "layers": [
+        {
+         "folder": "Interact/Haul/Drop/Wood",
+         "pitch": 1.2,
+         "volume": 35
+        },
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 0.7,
+         "volume": 30,
+         "delay": 0.08
+        }
+       ]
+      }
+     ],
+     "defName": "AG_NakimeCastleDoor"
+    },
+    {
+     "id": "bar",
+     "label": "Seal bar",
+     "when": "Seal: the lacquer bar slides across the shut doorway and lands",
+     "options": [
+      {
+       "label": "Door shut, fast",
+       "layers": [
+        {
+         "folder": "Misc/Door/ManualDoors/Close/Fast",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Dropped wood",
+       "layers": [
+        {
+         "folder": "Interact/Haul/Drop/Wood",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Wood hit + click",
+       "layers": [
+        {
+         "folder": "Impact/MeleeHit_Wood",
+         "pitch": 1.2,
+         "volume": 40
+        },
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 0.7,
+         "volume": 35,
+         "delay": 0.02
+        }
+       ]
+      },
+      {
+       "label": "Wood construction finished",
+       "layers": [
+        {
+         "folder": "Interact/Work/Construct/Wood/Finish_Wood",
+         "pitch": 1.0,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Stone block drop, high (a heavy bolt)",
+       "layers": [
+        {
+         "folder": "Interact/Work/Construct/Stone/StoneBlock_Drop",
+         "pitch": 1.3,
+         "volume": 40
+        }
+       ]
+      }
+     ],
+     "defName": "AG_NakimeCastleBar"
+    },
+    {
+     "id": "slide",
+     "label": "Room slides",
+     "when": "Shift: the room slides, speeding up, 0.85 s to the next room (longer into open void)",
+     "options": [
+      {
+       "label": "Quake, short + wood rummage",
+       "layers": [
+        {
+         "folder": "Misc/Emergence/Quake",
+         "pitch": 1.2,
+         "volume": 35
+        },
+        {
+         "folder": "Interact/Work/Construct/Wood/Rummage_Wood",
+         "pitch": 0.6,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Wall raise (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Wall_Raise",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Low swish + wood rummage",
+       "layers": [
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 0.5,
+         "volume": 40
+        },
+        {
+         "folder": "Interact/Work/Construct/Wood/Rummage_Wood",
+         "pitch": 0.5,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Drop pod leaving, low",
+       "layers": [
+        {
+         "clip": "Misc/DropPodLeaving",
+         "pitch": 0.6,
+         "volume": 35
+        }
+       ]
+      }
+     ],
+     "defName": "AG_NakimeCastleSlide"
+    },
+    {
+     "id": "thud",
+     "label": "Rooms meet",
+     "when": "Shift: the room's wall meets the other room's; dust, a small shake",
+     "options": [
+      {
+       "label": "Wood punch, low",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitBuilding/Wood",
+         "pitch": 0.6,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Big hit on a building, low",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Building",
+         "pitch": 0.7,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Wood punch + quiet thump cannon",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitBuilding/Wood",
+         "pitch": 0.6,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 1.0,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Mortar dry, very low + wood hit",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.5,
+         "volume": 30
+        },
+        {
+         "folder": "Impact/MeleeHit_Wood",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      }
+     ],
+     "defName": "AG_NakimeCastleThud"
+    },
+    {
+     "id": "crush",
+     "label": "Crush",
+     "when": "four walls slam 2 cells in (0.12 s); 15 blunt to everyone under them",
+     "options": [
+      {
+       "label": "Four wood slams",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitBuilding/Wood",
+         "pitch": 0.6,
+         "volume": 40
+        },
+        {
+         "folder": "Impact/PunchHitBuilding/Wood",
+         "pitch": 0.65,
+         "volume": 40,
+         "delay": 0.015
+        },
+        {
+         "folder": "Impact/PunchHitBuilding/Wood",
+         "pitch": 0.7,
+         "volume": 40,
+         "delay": 0.03
+        },
+        {
+         "folder": "Impact/PunchHitBuilding/Wood",
+         "pitch": 0.75,
+         "volume": 40,
+         "delay": 0.045
+        }
+       ]
+      },
+      {
+       "label": "Medium wood building down + thump",
+       "layers": [
+        {
+         "folder": "Impact/BuildingDestroyed/Wood/Medium",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 1.0,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Two big building hits + splinters",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Building",
+         "pitch": 0.7,
+         "volume": 50
+        },
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Building",
+         "pitch": 0.8,
+         "volume": 40,
+         "delay": 0.03
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Wood/Small",
+         "pitch": 1.0,
+         "volume": 35,
+         "delay": 0.04
+        }
+       ]
+      },
+      {
+       "label": "Mortar dry, low + wood + punch",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.6,
+         "volume": 35
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Wood/Medium",
+         "pitch": 0.9,
+         "volume": 40
+        },
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      }
+     ],
+     "defName": "AG_NakimeCastleCrush"
+    },
+    {
+     "id": "sunburn",
+     "label": "Sunburn",
+     "when": "once a second in daylight: an orange flash, embers, ash",
+     "options": [
+      {
+       "label": "Hiss",
+       "layers": [
+        {
+         "folder": "Misc/Hiss",
+         "pitch": 1.0,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Inferno cannon fire, low and quiet",
+       "layers": [
+        {
+         "folder": "Weapon/InfernoCannon_Fire",
+         "pitch": 0.7,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Beaten fire + hiss",
+       "layers": [
+        {
+         "folder": "Impact/BeatFire",
+         "pitch": 0.8,
+         "volume": 35
+        },
+        {
+         "folder": "Misc/Hiss",
+         "pitch": 1.2,
+         "volume": 20
+        }
+       ]
+      },
+      {
+       "label": "Synth: black flame catching, high (orange)",
+       "layers": [
+        {
+         "folder": "AG/BlackFlameIgnite",
+         "pitch": 1.4,
+         "volume": 30
+        }
+       ]
+      }
+     ],
+     "defName": "AG_NakimeSunBurn"
+    },
+    {
+     "id": "note",
+     "label": "Biwa returns",
+     "when": "she is up again: the biwa appears in her hands with one soft note",
+     "options": [
+      {
+       "label": "Synth: one biwa note",
+       "layers": [
+        {
+         "folder": "AG/BiwaNote",
+         "pitch": 1.0,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Synth: one note, lower",
+       "layers": [
+        {
+         "folder": "AG/BiwaNote",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Synth note + shield reset shimmer",
+       "layers": [
+        {
+         "folder": "AG/BiwaNote",
+         "pitch": 1.0,
+         "volume": 40
+        },
+        {
+         "folder": "Misc/EnergyShield/Reset",
+         "pitch": 1.2,
+         "volume": 15
+        }
+       ]
+      },
+      {
+       "label": "Synth: soft strum",
+       "layers": [
+        {
+         "folder": "AG/BiwaStrum",
+         "pitch": 1.2,
+         "volume": 25
+        }
+       ]
+      }
+     ],
+     "defName": "AG_NakimeBiwaNote"
+    }
+   ],
+   "hero": "Nakime"
+  },
   "AG_ItachiFalseFace": {
    "note": "Genjutsu lands on everyone looking at him. A crow call is the Itachi signature; Odyssey has crows.",
    "moments": [

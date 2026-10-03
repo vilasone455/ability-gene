@@ -336,6 +336,68 @@ ability("AG_PainChibakuTensei",
           O("Drop pod impact, low + stone", L("Misc/DropPodImpact/Default", 0.7, 45), L(STONE_BIG, 0.8, 35, 0.05)),
           defName="AG_PainChibakuBurst"))
 
+# Nakime ------------------------------------------------------------------------------------------
+# One moment per sound marker in the Infinity Castle sketches (infinity-castle-*.js). Every command
+# and the castle's opening and Release are one strum of the biwa, so AG_NakimeBiwaStrum is heard most.
+# The game has no plucked string (Royalty's harp is a 14 s song): the biwa is make_sounds.py's BiwaStrum
+# and BiwaNote. The castle is wood and paper: shoji doors, lacquer bars, wooden walls.
+WOOD_HIT = "Impact/PunchHitBuilding/Wood"
+DOOR_OPEN = "Misc/Door/ManualDoors/Open/Fast"
+DOOR_SHUT = "Misc/Door/ManualDoors/Close/Fast"
+ability("AG_Nakime_InfinityCastle",
+        "Strum (opening the castle, every command, Release), a floor door opening under a pawn, Seal's bar, Shift's slide and the thud where rooms meet, Crush's four walls, the sunburn tick, and the biwa coming back.",
+        M("strum", "Biwa strum", "every command, the opening and Release: one stroke across the strings",
+          O("Synth: biwa strum", L("AG/BiwaStrum", 1.0, 50)),
+          O("Synth: biwa strum, lower", L("AG/BiwaStrum", 0.85, 50)),
+          O("Synth: two strokes (the anime's 'be-been')", L("AG/BiwaStrum", 1.0, 40), L("AG/BiwaStrum", 1.0, 45, 0.12)),
+          O("Synth strum + soothe pulser (the castle answering)", L("AG/BiwaStrum", 1.0, 45), L("Misc/Artifacts/Psychic_Soothe_Pulser", 0.8, 20)),
+          O("Synth strum + skip pulse (Royalty)", L("AG/BiwaStrum", 1.0, 45), L("Misc/Psycasts/Skip/Pulse", 1.2, 20)),
+          O("No biwa: synth ting, low + wood knock", L("AG/Ting", 0.5, 35), L("Impact/MeleeHit_Wood", 1.2, 35)),
+          defName="AG_NakimeBiwaStrum"),
+        M("door", "Floor door", "a door snaps open in the floor (0.18 s); a pawn sinks in 0.4 s or rises",
+          O("Door open, fast + low swish", L(DOOR_OPEN, 0.8, 45), L("Misc/Swish2", 0.6, 30, 0.1)),
+          O("Door open, then shut", L(DOOR_OPEN, 0.9, 45), L(DOOR_SHUT, 0.8, 35, 0.5)),
+          O("Fence gate", L("Misc/Door/FenceGates", 0.9, 45)),
+          O("Wood knock + skip entry", L("Impact/MeleeHit_Wood", 1.0, 40), L(SKIP_IN, 0.9, 30, 0.05)),
+          O("Dropped wood + swish down", L("Interact/Haul/Drop/Wood", 1.2, 35), L("Misc/Swish1", 0.7, 30, 0.08)),
+          defName="AG_NakimeCastleDoor"),
+        M("bar", "Seal bar", "Seal: the lacquer bar slides across the shut doorway and lands",
+          O("Door shut, fast", L(DOOR_SHUT, 0.8, 45)),
+          O("Dropped wood", L("Interact/Haul/Drop/Wood", 1.0, 45)),
+          O("Wood hit + click", L("Impact/MeleeHit_Wood", 1.2, 40), L(CLICK, 0.7, 35, 0.02)),
+          O("Wood construction finished", L("Interact/Work/Construct/Wood/Finish_Wood", 1.0, 40)),
+          O("Stone block drop, high (a heavy bolt)", L("Interact/Work/Construct/Stone/StoneBlock_Drop", 1.3, 40)),
+          defName="AG_NakimeCastleBar"),
+        M("slide", "Room slides", "Shift: the room slides, speeding up, 0.85 s to the next room (longer into open void)",
+          O("Quake, short + wood rummage", L("Misc/Emergence/Quake", 1.2, 35), L("Interact/Work/Construct/Wood/Rummage_Wood", 0.6, 30)),
+          O("Wall raise (Royalty)", L("Misc/Psycasts/Wall_Raise", 1.0, 45)),
+          O("Low swish + wood rummage", L("Misc/Swish1", 0.5, 40), L("Interact/Work/Construct/Wood/Rummage_Wood", 0.5, 30)),
+          O("Drop pod leaving, low", L("Misc/DropPodLeaving", 0.6, 35)),
+          defName="AG_NakimeCastleSlide"),
+        M("thud", "Rooms meet", "Shift: the room's wall meets the other room's; dust, a small shake",
+          O("Wood punch, low", L(WOOD_HIT, 0.6, 50)),
+          O("Big hit on a building, low", L("Pawn/Animal/Melee_Big/Hit_Building", 0.7, 50)),
+          O("Wood punch + quiet thump cannon", L(WOOD_HIT, 0.6, 45), L("Impact/ThumpCannon", 1.0, 25)),
+          O("Mortar dry, very low + wood hit", L(BOOM, 0.5, 30), L("Impact/MeleeHit_Wood", 0.7, 45)),
+          defName="AG_NakimeCastleThud"),
+        M("crush", "Crush", "four walls slam 2 cells in (0.12 s); 15 blunt to everyone under them",
+          O("Four wood slams", *[L(WOOD_HIT, 0.6 + 0.05 * i, 40, 0.015 * i) for i in range(4)]),
+          O("Medium wood building down + thump", L("Impact/BuildingDestroyed/Wood/Medium", 0.8, 45), L("Impact/ThumpCannon", 1.0, 40)),
+          O("Two big building hits + splinters", L("Pawn/Animal/Melee_Big/Hit_Building", 0.7, 50), L("Pawn/Animal/Melee_Big/Hit_Building", 0.8, 40, 0.03), L("Impact/BuildingDestroyed/Wood/Small", 1.0, 35, 0.04)),
+          O("Mortar dry, low + wood + punch", L(BOOM, 0.6, 35), L("Impact/BuildingDestroyed/Wood/Medium", 0.9, 40), L("Impact/PunchHitPawn", 0.8, 35)),
+          defName="AG_NakimeCastleCrush"),
+        M("sunburn", "Sunburn", "once a second in daylight: an orange flash, embers, ash",
+          O("Hiss", L("Misc/Hiss", 1.0, 30)),
+          O("Inferno cannon fire, low and quiet", L("Weapon/InfernoCannon_Fire", 0.7, 25)),
+          O("Beaten fire + hiss", L("Impact/BeatFire", 0.8, 35), L("Misc/Hiss", 1.2, 20)),
+          defName="AG_NakimeSunBurn"),
+        M("note", "Biwa returns", "she is up again: the biwa appears in her hands with one soft note",
+          O("Synth: one biwa note", L("AG/BiwaNote", 1.0, 40)),
+          O("Synth: one note, lower", L("AG/BiwaNote", 0.8, 40)),
+          O("Synth note + shield reset shimmer", L("AG/BiwaNote", 1.0, 40), L("Misc/EnergyShield/Reset", 1.2, 15)),
+          O("Synth: soft strum", L("AG/BiwaStrum", 1.2, 25)),
+          defName="AG_NakimeBiwaNote"))
+
 # Itachi ------------------------------------------------------------------------------------------
 ability("AG_ItachiFalseFace",
         "Genjutsu lands on everyone looking at him. A crow call is the Itachi signature; Odyssey has crows.",
@@ -700,6 +762,7 @@ add("AG_PainBlackReceiver", "throw", O("Synth: sword flies, low", L("AG/SwordFly
 add("AG_PainBlackReceiver", "break", O("Synth: out of the swirl, soft", L("AG/KamuiOut", 0.7, 25)))
 add("AG_PainChibakuTensei", "cast", O("Synth: whine rising, low", L("AG/KiChargeStart", 0.7, 35)))
 add("AG_PainChibakuTensei", "launch", O("Synth: shun, low", L("AG/Shun", 0.6, 45)))
+add("AG_Nakime_InfinityCastle", "sunburn", O("Synth: black flame catching, high (orange)", L("AG/BlackFlameIgnite", 1.4, 30)))
 add("AG_DispersalMurder", "depart",
     O("Synth: wings", L("AG/CrowFlaps", 1.0, 50)),
     O("Synth wings + crow calls (Odyssey)", L("AG/CrowFlaps", 1.0, 45), L("Pawn/Animal/Crow/Call", 1.0, 35)))
@@ -756,7 +819,7 @@ for (d, mid), sec in DURATION.items():
 import re as _re
 HERO = {"Anchor": "Todo", "Dispersal": "Itachi", "Itachi": "Itachi", "Larynx": "Inumaki", "ShadowPlexus": "Shikamaru",
         "Vector": "Accelerator", "Trace": "Shirou", "Goku": "Goku", "Minato": "Minato", "Sasuke": "Sasuke",
-        "Pain": "Pain", "Shinra": "Pain", "Obito": "Obito", "Vergil": "Vergil", "Sato": "Satō"}
+        "Pain": "Pain", "Shinra": "Pain", "Obito": "Obito", "Vergil": "Vergil", "Sato": "Satō", "Nakime": "Nakime"}
 for xml in (WT.parent.parent / "1.6/Defs/AbilityDefs").glob("*.xml"):
     kit = xml.stem.replace("AG_", "").replace("_Abilities", "")
     for d in _re.findall(r"<defName>([^<]+)</defName>", xml.read_text()):
