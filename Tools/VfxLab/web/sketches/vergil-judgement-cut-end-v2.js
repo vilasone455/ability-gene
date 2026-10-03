@@ -5,27 +5,44 @@
 // Why: the first picture draws 14 cuts one after another over 1.25 s, each swept end to end with the
 // caster seen at its far end. Devil May Cry 5 (stepped through at 10 % speed, 2026-10-03) and every
 // fan version looked at do not: the cuts are whole on their first frame, all of them land inside
-// about half a second, and nobody is seen along them. The long part is the hold, where the lines have
-// turned into cracks in a pale, frozen picture.
+// about half a second, and nobody is seen along them.
+//
+// Checked against the source again 2026-10-03 (this container cannot open the wiki or a video; the
+// facts below come from the search snippets of the DMC wiki, the Steam and GameFAQs threads and the
+// move's mod pages, and from memory of the Special Edition footage). What the first v2 got wrong:
+//   - He is gone only while the cuts land, about half a second, and is kneeling on his cell by the
+//     time the last one has. The long part is the sheathe, 1 to 1.5 s, and the frozen pale picture
+//     holds while he is seen kneeling in it. The first v2 held the pale picture for 0.9 s with nobody
+//     there and then sheathed for 0.8 s, so it looked like two moves.
+//   - The cuts are hairlines: a white core thinner than a hand with a faint blue edge, and dozens of
+//     them (the wiki: "sliced multiple times in very rapid succession"; the SDT version adds more).
+//     The first v2 drew 0.06-cell cores with a 0.5-cell glow, which read as beams, not cuts.
+//   - A cut stays a line. The "cracks" (a jagged pale bolt along each cut) read as lightning; the
+//     game has none. The picture goes pale and the lines simply stay in it as the edges of the panes.
+//   - Every cut is straight (a chord of the sphere), and the red/blue split in the game is a whole-
+//     picture effect on the pale frame, not a fringe on a line. The curved cuts are kept behind a
+//     slider at 0, and the colour split lives in the cut-glass shader, which pulls red and blue apart
+//     per pane.
+//   - The darkening and the white flash on the click are real ("before the attack the area around
+//     Vergil gets darker"; the click is a full-screen flash) and stay.
 //
 // Order, with the default timings (times after the vanish are shares of "Gone", so they scale with it):
 //   0.00  raiders walk in, as in the first sketch
 //   0.50  warm-up 1.0 s: unchanged (hand to the hilt, aura, the ring grows, lights rise)
 //   1.50  gone: a horizontal flash through the caster and 22 short rays thrown outward for 0.16 s. The
-//         area inside the ring goes almost black in 0.2 s (0.8, the first sketch stops at 0.55).
-//   1.68  2 large curved cuts, each whole at once, with a red, green and blue fringe for 0.15 s
-//   1.80  first volley, 0.16 s: 60 % of the straight cuts. Each is a whole chord on its first frame:
-//         a wide soft band for 0.1 s, then a thin white core that stays. The first ones each pass
-//         through a marked raider's chest.
-//   2.09  second volley, 0.14 s: the rest
-//   2.45  the lines dim to 0.35 and leave cracks: one jagged pale stretch along each cut (none within 1.2 cells of the caster). The dark lifts
-//         to a pale blue-grey. The pieces between the cuts show as panes, each a little off its place.
-//         Small flecks hang in the air.
-//   3.00  back: the caster kneels on their own cell and sheathes for 0.8 s. The cracks thin.
-//   3.80  the click: a wide horizontal glint at the scabbard mouth, a white flash over the whole area,
+//         area inside the ring goes almost black in 0.2 s (0.8).
+//   1.62  first volley, 0.2 s: 60 % of the cuts. Each is a whole chord on its first frame: a soft band
+//         for 0.08 s, then a hairline white core that stays. The first ones each pass through a marked
+//         raider's chest.
+//   1.86  second volley, 0.2 s: the rest
+//   2.05  the pale lifts over 0.2 s: the dark goes to a pale blue-grey, the pieces between the cuts
+//         show as panes, each a little off its place, the lines dim to half. Small flecks hang in the
+//         air.
+//   2.10  back: the caster kneels on their own cell inside the pale picture and sheathes for 1.3 s.
+//   3.40  the click: a wide horizontal glint at the scabbard mouth, a white flash over the whole area,
 //         the pale lifts at once. The panes flash, then fly outward as dark shards (0.6 cells, turning,
 //         shrinking) over 0.7 s. Each marked raider takes its hits and goes down.
-//   4.50  thin scars stay on the floor along the cuts; the caster stands up.
+//   4.10  thin scars stay on the floor along the cuts; the caster stands up.
 //
 // Drawing: two ways, picked by "The mod's own shader".
 //   On: each pane is drawn with RimArt/CutGlass (lib/vergil-cut-end.js), which shows the picture behind
@@ -34,8 +51,8 @@
 //   written in ShaderLab and built into an asset bundle per OS with Unity 2022.3.35f1; not done yet.
 //   Off: built-in shaders only, which is also what the game draws when the bundle is missing. The
 //   hold is a see-through pale wash over a dark disc and the panes are faces and edges only.
-// Everything else is built-in either way: the fringe on the arcs is three additive lines side by side.
-// Lab pawns, the kneel and the wall are stand-ins, as in the first sketch.
+// Everything else is built-in either way. Lab pawns, the kneel and the wall are stand-ins, as in the
+// first sketch.
 import { Color, Graphics, MaterialPropertyBlock, Matrix4x4, Meshes, Quaternion, ShaderPropertyIDs, Vector3 } from '../js/engine.js';
 import { draw, mesh } from './lib/six-paths-solid.js';
 import { P, Y, Floor, sprite, glow, rand } from './lib/six-paths-impact.js';
@@ -50,15 +67,18 @@ const Key = 'judgement cut end v2';
 const Lead = .5, Tail = 1.8, StandUp = .7, Motes = 40;
 // The vanish.
 const Flash = .16, Rays = 22, DarkIn = .2, DarkPeak = .8;
-// The cuts, as shares of "Gone": when the arcs land, each volley's start and length, when the cracks start and how long they take to show.
-const ArcAt = .12, VolleyA = [.2, .107], VolleyB = [.39, .093], FirstShare = .6, CrackAt = .63, CrackIn = .17;
-const Arcs = 2, ArcFringe = .15, Band = .1, BandWidth = .55, Core = .06, LineHold = .35, CutsGone = .25;
-const Violet = new Color(.62, .45, 1), Pale = new Color(.6, .68, .8), HoldDark = .42, Wash = .2;
-// Cracks: one stretch per cut, its step, how far a point sits off the cut, and how near the caster's cell one may start.
-const CrackStep = .3, CrackOff = .09, CrackClear = 1.2, Flecks = 46;
+// The cuts, as shares of "Gone": each volley's start and length, and the share of the cuts in the first.
+const VolleyA = [.2, .33], VolleyB = [.6, .33], FirstShare = .6;
+// Each cut: the soft band on its first frame and its width, the core's width, how much of the line is left in the pale picture, how long the lines take to go on the click.
+const Band = .08, BandWidth = .4, Core = .035, LineHold = .5, CutsGone = .25;
+// The pale picture: it starts this long before the caster is back and takes this long to lift.
+const HoldLead = .05, HoldIn = .2;
+// Curved cuts, when the slider asks for any: the red, green and blue fringe each shows for this long.
+const ArcFringe = .15;
+const Violet = new Color(.62, .45, 1), Pale = new Color(.6, .68, .8), HoldDark = .42, Wash = .2, Flecks = 30;
 // With the mod's own shader: how far a pane shows the picture off its place (cells), the colour split (cells), the dark left under it.
 const GlassShift = [.1, .3], GlassSplit = .05, GlassDark = .22, glassProps = new MaterialPropertyBlock();
-const EdgeWidth = .05, EdgeFacing = .3, Ajar = [.03, .08], FallTo = .7, Front = .15;
+const EdgeWidth = .04, EdgeFacing = .3, Ajar = [.03, .08], FallTo = .7, Front = .15;
 
 function times(p) {
   const cast = Lead, vanish = cast + p.warm, back = vanish + p.gone, click = back + p.sheathe;
@@ -80,16 +100,9 @@ function layout(p) {
   [...cuts].sort((m, n) => m.sort - n.sort).forEach((c, i) => {
     const [from, length] = i < first ? VolleyA : VolleyB, n = i < first ? first : count - first, rank = i < first ? i : i - first;
     c.at = from + length * rank / Math.max(1, n - 1);
-    const mid = .2 + .6 * rand(i * 9 + 5), half = .08 + .1 * rand(i * 9 + 6), len = Math.hypot(c.b.x - c.a.x, c.b.z - c.a.z);
-    const steps = Math.max(3, Math.round(len * half * 2 / CrackStep));
-    c.crack = Array.from({ length: steps + 1 }, (_, n2) => {
-      const u = mid - half + 2 * half * n2 / steps, off = (rand(i * 97 + n2) - .5) * 2 * CrackOff * (n2 === 0 || n2 === steps ? 0 : 1);
-      return { x: c.a.x + (c.b.x - c.a.x) * u - c.d.z * off, z: c.a.z + (c.b.z - c.a.z) * u + c.d.x * off };
-    });
-    if (c.crack.some(q => Math.hypot(q.x, q.z) < CrackClear)) c.crack = null;   // the kneeling caster stays readable
   });
-  // The arcs: part of a circle that stays inside the ring.
-  const arcs = Array.from({ length: Arcs }, (_, k) => {
+  // Curved cuts, if any: part of a circle that stays inside the ring.
+  const arcs = Array.from({ length: Math.round(p.arcs) }, (_, k) => {
     const centre = polar(rand(k + 70) * 360, .22 * p.radius), r = (.6 + .12 * rand(k + 71)) * p.radius, from = rand(k + 72) * 360, span = 110 + 40 * rand(k + 73);
     return Array.from({ length: 25 }, (_, n) => { const q = polar(from + span * n / 24, r); return { x: centre.x + q.x, z: centre.z + q.z }; });
   });
@@ -100,7 +113,7 @@ function layout(p) {
 let built = { key: '' };
 function scene(p, sun) {
   const sunLength = Math.hypot(sun.x, sun.z) || 1, light = { x: -sun.x / sunLength, z: -sun.z / sunLength };
-  const key = `${p.radius}|${Math.round(p.cuts)}|${light.x.toFixed(2)}|${light.z.toFixed(2)}`;
+  const key = `${p.radius}|${Math.round(p.cuts)}|${Math.round(p.arcs)}|${light.x.toFixed(2)}|${light.z.toFixed(2)}`;
   if (built.key !== key) {
     const made = layout(p);
     built = { key, ...made, pieces: panes(Key, p.radius, made.cuts, light, EdgeWidth, EdgeFacing) };
@@ -114,11 +127,12 @@ export default {
     wall: { label: 'One raider stands behind a wall (no line of sight)', value: true, group: 'Showcase' },
     glass: { label: "The mod's own shader: panes drain the colour and shift the picture (needs an asset bundle in game)", value: true, group: 'Showcase' },
     radius: P('Radius (cells)', 10, 5, 14, .5, 'Shape'),
-    cuts: P('Straight cuts', 22, 12, 36, 1, 'Shape'),
+    cuts: P('Straight cuts', 30, 12, 48, 1, 'Shape'),
+    arcs: P('Curved cuts (the game has none)', 0, 0, 3, 1, 'Shape'),
     push: P('Pieces fly outward (cells)', .6, 0, 1.5, .05, 'Shape'),
     warm: P('Warm-up (hand on the hilt)', 1, .3, 2, .05, 'Timing (s)'),
-    gone: P('Gone (the cuts land, then hold)', 1.5, .6, 3, .05, 'Timing (s)'),
-    sheathe: P('Sheathing', .8, .3, 2, .05, 'Timing (s)'),
+    gone: P('Gone (the cuts land)', .6, .3, 2, .05, 'Timing (s)'),
+    sheathe: P('Kneel and sheathe (the pale picture holds)', 1.3, .3, 2.5, .05, 'Timing (s)'),
     fade: P('Pieces fade over', .7, .2, 1.5, .05, 'Timing (s)'),
   },
   compareWith: 'Judgement Cut End (sketch)',
@@ -126,7 +140,7 @@ export default {
   phases(p) {
     const t = times(p);
     return [{ name: 'Raiders close in', t: 0 }, { name: 'Hand on the hilt', t: t.cast }, { name: 'Gone / the cuts', t: t.vanish },
-      { name: 'Cracks / the hold', t: t.vanish + CrackAt * p.gone }, { name: 'Kneel and sheathe', t: t.back }, { name: 'Click: it breaks', t: t.click }];
+      { name: 'Back: kneel and sheathe in the pale picture', t: t.back }, { name: 'Click: it breaks', t: t.click }];
   },
   events(p) {
     const t = times(p);
@@ -141,9 +155,9 @@ export default {
     const sun = lab?.shadowVector ?? { x: -.45, z: -.32 }, strength = lab?.sun?.strength ?? .32;
     const { pieces: shards, cuts, arcs, marked } = scene(p, sun), R = p.radius;
     const world = q => ({ x: o.x + q.x, z: o.z + q.z });
-    const sinceVanish = s - t.vanish, sinceClick = s - t.click, share = sinceVanish / p.gone;
-    // crack: 0 while the cuts are lines, 1 once they are cracks. dark: how much of the area's dark is on.
-    const crack = smooth((share - CrackAt) / CrackIn), held = sinceClick < 0 ? 1 : 0;
+    const sinceVanish = s - t.vanish, sinceClick = s - t.click;
+    // hold: 0 while the cuts are lines in the dark, 1 once the picture is pale and the caster kneels in it. dark: how much of the area's dark is on.
+    const hold = smooth((s - (t.back - HoldLead)) / HoldIn), held = sinceClick < 0 ? 1 : 0;
     const dark = smooth(sinceVanish / DarkIn) * held;
 
     if (p.wall) wall(o);
@@ -174,8 +188,8 @@ export default {
     if (s >= t.cast && s < t.vanish) risingLights(Key, o, R, w, Motes);
 
     // --- the dark inside the ring, over the pawns and under the cuts: almost black for the cuts, pale for the hold ---------
-    draw(disc, o.x, Y - .05, o.z, R, R, 0, Void.withAlpha((DarkPeak + ((p.glass ? GlassDark : HoldDark) - DarkPeak) * crack) * dark));
-    if (!p.glass) draw(disc, o.x, Y - .049, o.z, R, R, 0, Pale.withAlpha(Wash * crack * dark));
+    draw(disc, o.x, Y - .05, o.z, R, R, 0, Void.withAlpha((DarkPeak + ((p.glass ? GlassDark : HoldDark) - DarkPeak) * hold) * dark));
+    if (!p.glass) draw(disc, o.x, Y - .049, o.z, R, R, 0, Pale.withAlpha(Wash * hold * dark));
 
     // --- the vanish: a flash through the caster and rays thrown outward ------------------------------------------------------
     if (sinceVanish >= 0 && sinceVanish < Flash) {
@@ -190,68 +204,64 @@ export default {
     }
 
     // --- the pieces between the cuts: panes of glass, ajar through the hold, dark shards that fly on the click -----------------
-    if (crack > 0 && sinceClick < p.fade) {
+    if (hold > 0 && sinceClick < p.fade) {
       const u = clamp(sinceClick / p.fade), out = smooth(clamp(u * 1.6)), gone = Math.pow(1 - u, 1.5);
       shards.forEach((piece, i) => {
         const far = Math.hypot(piece.centre.x, piece.centre.z) || 1, slide = sinceClick < 0 ? 0 : p.push * (.35 + 1.3 * rand(i + 31)) * out;
-        const ajar = (Ajar[0] + (Ajar[1] - Ajar[0]) * rand(i + 90)) * crack, lean = rand(i + 91) * Math.PI * 2;
+        const ajar = (Ajar[0] + (Ajar[1] - Ajar[0]) * rand(i + 90)) * hold, lean = rand(i + 91) * Math.PI * 2;
         const at = world({ x: piece.centre.x * (1 + slide / far) + Math.cos(lean) * ajar, z: piece.centre.z * (1 + slide / far) + Math.sin(lean) * ajar });
-        const facet = .04 + .12 * rand(i + 3), size = 1 - (1 - FallTo) * out, turn = (rand(i + 7) - .5) * (3 * crack + 26 * out), edge = sinceClick < 0 ? crack : gone;
+        const facet = .04 + .12 * rand(i + 3), size = 1 - (1 - FallTo) * out, turn = (rand(i + 7) - .5) * (3 * hold + 26 * out), edge = sinceClick < 0 ? hold : gone;
         if (p.glass) {
           // The pane shows the picture behind it off its place and without its colour; flying, it takes that picture with it.
           const shift = GlassShift[0] + (GlassShift[1] - GlassShift[0]) * rand(i + 92) + slide * .6;
-          glassProps.SetColor(ShaderPropertyIDs.Color, Pale.withAlpha(sinceClick < 0 ? crack : gone));
+          glassProps.SetColor(ShaderPropertyIDs.Color, Pale.withAlpha(sinceClick < 0 ? hold : gone));
           glassProps.SetVector('_Shift', { x: Math.cos(lean) * shift, y: Math.sin(lean) * shift, z: GlassSplit });
           Graphics.DrawMesh(mesh(`${Key} piece ${i}`), Matrix4x4.TRS(new Vector3(at.x, Y + .018, at.z), Quaternion.Euler(0, turn, 0), new Vector3(size, 1, size)), cutGlass, 0, null, 0, glassProps);
         }
-        if (sinceClick < 0) draw(mesh(`${Key} piece ${i}`), at.x, Y + .02, at.z, size, size, turn, Ice.withAlpha(facet * crack), whiteGlow);
+        if (sinceClick < 0) draw(mesh(`${Key} piece ${i}`), at.x, Y + .02, at.z, size, size, turn, Ice.withAlpha(facet * hold), whiteGlow);
         else {
           draw(mesh(`${Key} piece ${i}`), at.x, Y + .019, at.z, size, size, turn, Void.withAlpha((p.glass ? .3 : .6) * gone * (.5 + rand(i + 3))));
           draw(mesh(`${Key} piece ${i}`), at.x, Y + .02, at.z, size, size, turn, Ice.withAlpha(.5 * clamp(1 - u * 6)), whiteGlow);
         }
-        if (piece.dim) draw(mesh(`${Key} piece ${i} dim`), at.x, Y + .021, at.z, size, size, turn, Void.withAlpha((sinceClick < 0 ? .4 : .75) * edge));
-        if (piece.lit) draw(mesh(`${Key} piece ${i} lit`), at.x, Y + .022, at.z, size, size, turn, Ice.withAlpha((sinceClick < 0 ? .4 : .85) * edge), whiteGlow);
+        // The edges: a shard's edge catches the light once as it turns, then the shard is a dark flake.
+        if (piece.dim) draw(mesh(`${Key} piece ${i} dim`), at.x, Y + .021, at.z, size, size, turn, Void.withAlpha((sinceClick < 0 ? .4 : .6) * edge));
+        if (piece.lit) draw(mesh(`${Key} piece ${i} lit`), at.x, Y + .022, at.z, size, size, turn, Ice.withAlpha((sinceClick < 0 ? .4 : .45) * edge), whiteGlow);
       });
     }
 
-    // --- the cuts: whole on their first frame, a wide band that is gone in 0.1 s, a thin core that stays ------------------------
-    const lineAlpha = sinceClick >= 0 ? 1 - sinceClick / CutsGone : 1 - (1 - LineHold) * crack;
+    // --- the cuts: whole on their first frame, a soft band that is gone in 0.08 s, a hairline core that stays --------------------
+    // In the pale picture the dark slit goes and half the light with it: the line is then the edge between two panes.
+    const lineAlpha = sinceClick >= 0 ? 1 - sinceClick / CutsGone : 1 - (1 - LineHold) * hold;
     if (sinceVanish >= 0 && sinceClick < CutsGone) {
       arcs.forEach((pts, k) => {
-        const age = sinceVanish - (ArcAt + k * .03) * p.gone;
+        const age = sinceVanish - (VolleyA[0] + k * .03) * p.gone;
         if (age < 0) return;
         const seen = pts.map(world), fringe = clamp(1 - age / ArcFringe);
         if (fringe > 0) [[new Color(1, .15, .25), -1], [new Color(.2, 1, .4), 0], [new Color(.25, .4, 1), 1]].forEach(([colour, side], j) => {
           const centre = seen[12], shifted = seen.map(q => { const dx = q.x - centre.x, dz = q.z - centre.z, len = Math.hypot(dx, dz) || 1; return { x: q.x + dx / len * side * .14, z: q.z + dz / len * side * .14 }; });
           line(`${Key} arc ${k} fringe ${j}`, shifted, .1 + .08 * fringe, colour.withAlpha(.9 * fringe), whiteGlow, Y + .029, 'both');
         });
-        line(`${Key} arc ${k} glow`, seen, .3, Violet.withAlpha(.3 * lineAlpha), whiteGlow, Y + .03, 'both');
+        line(`${Key} arc ${k} glow`, seen, .2, Violet.withAlpha(.25 * lineAlpha), whiteGlow, Y + .03, 'both');
         line(`${Key} arc ${k} core`, seen, Core * 1.4, Color.Lerp(Violet, White, .6).withAlpha(lineAlpha), whiteGlow, Y + .031, 'both');
       });
       cuts.forEach((c, k) => {
         const age = sinceVanish - c.at * p.gone;
         if (age < 0) return;
         const a = world(c.a), b = world(c.b), fresh = clamp(1 - age / Band), hot = sinceClick >= 0 ? 1 : 0;
-        if (fresh > 0) streak(`${Key} cut ${k} band`, a, b, BandWidth * (.5 + .5 * fresh), Ice.withAlpha(.4 * fresh), whiteGlow, Y + .03, 10);
-        streak(`${Key} cut ${k} slit`, a, b, Core * 2.4, Void.withAlpha(.6 * lineAlpha * (1 - hot)), undefined, Y + .0305, 10);
-        streak(`${Key} cut ${k} glow`, a, b, Core * (4 + 4 * hot), Blue.withAlpha(.3 * lineAlpha), whiteGlow, Y + .031, 10);
+        if (fresh > 0) streak(`${Key} cut ${k} band`, a, b, BandWidth * (.5 + .5 * fresh), Ice.withAlpha(.35 * fresh), whiteGlow, Y + .03, 10);
+        streak(`${Key} cut ${k} slit`, a, b, Core * 2.4, Void.withAlpha(.6 * lineAlpha * (1 - hot) * (1 - hold)), undefined, Y + .0305, 10);
+        streak(`${Key} cut ${k} glow`, a, b, Core * (4 + 4 * hot), Blue.withAlpha(.25 * lineAlpha * (1 - .6 * hold)), whiteGlow, Y + .031, 10);
         streak(`${Key} cut ${k} core`, a, b, Core * (1 + hot), White.withAlpha(lineAlpha), whiteGlow, Y + .032, 10);
         if (c.victim >= 0 && sinceClick < 0) glint(`${Key} mark ${k}`, world({ x: marked[c.victim].x, z: marked[c.victim].z + .3 }), .16 + .3 * fresh, .9, White, 45 + k * 20);
       });
     }
 
-    // --- the hold: cracks along the cuts, flecks in the air ------------------------------------------------------------------
-    if (crack > 0 && sinceClick < .08) {
-      const thin = 1 - .4 * clamp((s - t.back) / p.sheathe), live = crack * (sinceClick < 0 ? 1 : 1 - sinceClick / .08);
-      cuts.forEach((c, k) => {
-        if (!c.crack) return;
-        const seen = c.crack.map(world);
-        line(`${Key} crack ${k} ice`, seen, .22 * thin, Ice.withAlpha(.4 * live), whiteGlow, Y + .033, 'both');
-        line(`${Key} crack ${k} core`, seen, .06 * thin, White.withAlpha(.85 * live), whiteGlow, Y + .034, 'both');
-      });
+    // --- the hold: flecks hang in the pale air ------------------------------------------------------------------------------------
+    if (hold > 0 && sinceClick < .08) {
+      const live = hold * (sinceClick < 0 ? 1 : 1 - sinceClick / .08);
       for (let i = 0; i < Flecks; i++) {
         const at = polar(rand(i + 300) * 360, Math.sqrt(rand(i + 330)) * R * .95), drift = (s - t.vanish) * (.05 + .1 * rand(i + 360)), size = .05 + .07 * rand(i + 390);
-        sprite(world({ x: at.x + drift * .3, z: at.z + drift }), size, size, (i % 3 ? Void : Ice).withAlpha((i % 3 ? .8 : .7) * live), i % 3 ? undefined : glow, Y + .035, rand(i) * 90);
+        sprite(world({ x: at.x + drift * .3, z: at.z + drift }), size, size, (i % 3 ? Void : Ice).withAlpha((i % 3 ? .6 : .55) * live), i % 3 ? undefined : glow, Y + .035, rand(i) * 90);
       }
     }
 
