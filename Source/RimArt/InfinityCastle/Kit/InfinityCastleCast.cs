@@ -79,6 +79,8 @@ namespace RimArt
         public int inTick = -1, returnTick = -1;
         public bool releaseOrdered, releasing, returned, fizzled;
         public List<CastleTaken> taken = new List<CastleTaken>();
+        /// <summary>The last tick whose home-side door sounds have been played (<see cref="DoorSounds"/>).</summary>
+        private int heardTo = -1;
 
         // The pictures, not saved: a loaded cast skips what it was drawing.
         private CastleOpenPlan takePlan, returnPlan;
@@ -185,7 +187,7 @@ namespace RimArt
             {
                 caster = caster, home = home, castle = castle, target = cell, paid = paid,
                 strumAt = warmup, startTick = now - Mathf.RoundToInt(warmup * 60f),
-                radius = props.radius, castleSeconds = props.castleSeconds,
+                radius = props.radius, castleSeconds = props.castleSeconds, heardTo = now - 1,
             };
             cast.takePlan = TakePlan(caster, cell, pawns, props.radius, warmup);
             for (int i = 0; i < pawns.Count; i++)
@@ -197,6 +199,9 @@ namespace RimArt
             foreach (Pawn p in pawns) p.stances?.stunner.StunFor(hold, caster, false, false);
             caster.stances?.stunner.StunFor(hold, null, false, false);
             if (Find.CurrentMap == home) Find.CameraDriver.shaker.DoShake(OT.StrumShake);
+            // Heard at the target cell, where the answer ring starts and the player is looking: the carrier may stand
+            // 35 cells away, and the game quietens a sound with its distance from the camera.
+            SoundLayers.Play(InfinityCastleDefOf.AG_NakimeBiwaStrum, home, cell);
             return cast;
         }
 
@@ -444,6 +449,7 @@ namespace RimArt
                 foreach (CastleTaken t in taken)
                     if (t.pawn != null && t.pawn.Spawned && t.pawn.Map == home && now >= TickAt(t.door + DoorThrough + OT.Sink))
                         InfinityCastleRide.Hide(t.pawn);
+                DoorSounds(now);
                 if (now >= MoveTick) MoveIn(now);
                 return !fizzled;
             }
@@ -470,8 +476,32 @@ namespace RimArt
                 if (component.Faded) Return(now);
                 return true;
             }
+            DoorSounds(now);
             ShowReturned(now);
             return returnPlan != null && (now - returnTick) / 60f < returnPlan.Duration;
+        }
+
+        /// <summary>
+        /// The Open sketch's door sounds on the home map, each on its tick: while taking, the first door to open under a
+        /// pawn and then the carrier's; after the return, the first door a pawn comes up through. Saved as the last tick
+        /// heard, so a game loaded mid-take does not play a door twice.
+        /// </summary>
+        private void DoorSounds(int now)
+        {
+            bool Due(int tick) => tick > heardTo && tick <= now;
+            SoundDef door = InfinityCastleDefOf.AG_NakimeCastleDoor;
+            if (Taking)
+            {
+                CastleTaken first = taken.Where(t => t.kind == CastleGuest.Enemy && t.pawn != null && t.pawn.Spawned && t.pawn.Map == home).OrderBy(t => t.door).FirstOrDefault();
+                if (first != null && Due(TickAt(first.door))) SoundLayers.Play(door, home, first.pawn.Position);
+                if (Due(TickAt(CarrierDoor))) SoundLayers.Play(door, home, caster.Position);
+            }
+            else if (returnPlan != null && Due(returnTick + Mathf.CeilToInt(OT.First * 60f)))
+            {
+                CastleTaken first = taken.Where(t => t.back >= 0f && t.pawn != null && t.pawn.Spawned).OrderBy(t => t.back).FirstOrDefault();
+                if (first != null) SoundLayers.Play(door, first.pawn.Map, first.pawn.Position);
+            }
+            heardTo = now;
         }
 
         // ---- the home side's picture ------------------------------------------------------------------------------
@@ -505,6 +535,7 @@ namespace RimArt
             Scribe_Values.Look(ref releasing, "releasing");
             Scribe_Values.Look(ref returned, "returned");
             Scribe_Values.Look(ref fizzled, "fizzled");
+            Scribe_Values.Look(ref heardTo, "heardTo", -1);
             Scribe_Collections.Look(ref taken, "taken", LookMode.Deep);
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {

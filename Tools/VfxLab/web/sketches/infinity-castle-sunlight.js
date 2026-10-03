@@ -58,9 +58,9 @@ export default {
   },
   events(p) {
     const t = times(p);
-    if (p.part !== 'sunlight') return [{ t: t.biwa, type: 'sound', def: 'RimArt_BiwaNote' }];
+    if (p.part !== 'sunlight') return [{ t: t.biwa, type: 'sound', def: 'AG_NakimeBiwaNote' }];
     const out = [];
-    for (let k = 1; t.sun + k * Tick <= t.shade; k++) out.push({ t: t.sun + k * Tick, type: 'sound', def: 'RimArt_SunBurn' });
+    for (let k = 1; t.sun + k * Tick <= t.shade; k++) out.push({ t: t.sun + k * Tick, type: 'sound', def: 'AG_NakimeSunBurn' });
     return out;
   },
 

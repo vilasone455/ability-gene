@@ -55,7 +55,7 @@ export default {
     { name: 'Raider walks in', t: 0 }, { name: 'Strum', t: t.strumAt }, { name: p.scenario === 'drop a raider' ? 'Drops' : 'Colonist comes up', t: t.doorUnder },
     ...(p.scenario === 'drop a raider' ? [{ name: 'Comes up in T', t: t.arrive }] : []), { name: 'Result', t: t.end - p.hold },
   ]; },
-  events(p) { const t = times(p); return [{ t: t.strumAt, type: 'sound', def: 'RimArt_BiwaStrum' }, { t: t.doorUnder, type: 'sound', def: 'RimArt_CastleDoor' }]; },
+  events(p) { const t = times(p); return [{ t: t.strumAt, type: 'sound', def: 'AG_NakimeBiwaStrum' }, { t: t.doorUnder, type: 'sound', def: 'AG_NakimeCastleDoor' }]; },
 
   draw(s, p, { origin, scene }) {
     const t = times(p);

@@ -46,7 +46,7 @@ namespace RimArt
         internal List<CastleDoorway> broken = new List<CastleDoorway>(), made = new List<CastleDoorway>();
         internal CastleRoomGraphics.CastleBatch movingRoom;
         internal (Vector2 a, Vector2 b)? seam;
-        internal bool picture, shook;
+        internal bool picture, shook, slideHeard, thudHeard;
 
         // The Shift sketch's order, in seconds from the strum.
         public const float Close0 = 0.05f, Slide0 = 0.25f, CloseFor = 0.15f, OpenAfter = 0.15f, OpenFor = 0.2f, DustFor = 0.7f;
@@ -107,6 +107,8 @@ namespace RimArt
         public int room;
         public float startAt;
         public bool hitDone;
+        /// <summary>The walls' landing has been heard. Not saved: a loaded crush lands without its picture or sound.</summary>
+        internal bool heard;
 
         // The Crush sketch's order, in seconds from the strum.
         public const float Mark = 0.05f, Telegraph = 0.3f, SlamFor = 0.12f, HoldFor = 0.3f, BackFor = 0.8f;
@@ -130,7 +132,11 @@ namespace RimArt
             Scribe_Values.Look(ref room, "room");
             Scribe_Values.Look(ref startAt, "startAt");
             Scribe_Values.Look(ref hitDone, "hitDone");
-            if (Scribe.mode == LoadSaveMode.PostLoadInit) startAt = -1000f;
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                startAt = -1000f;
+                heard = true;
+            }
         }
     }
 
@@ -141,8 +147,11 @@ namespace RimArt
         public CastleDoorway door;
         public bool sealing;
         public float startAt;
+        public bool barHeard;
         /// <summary>Both pictures are over within this: the bar's 0.25 s from 0.2 s, plus the outline's fade.</summary>
         public const float Length = 0.6f;
+        /// <summary>Seconds after the strum the bar is heard landing: the Seal sketch's bar + 0.2, as it ends its slide.</summary>
+        public const float BarHeard = 0.4f;
     }
 
     /// <summary>
@@ -164,6 +173,8 @@ namespace RimArt
         public bool strum;
         /// <summary>Summon: the pawn came from the home map, so only the far room's door is drawn and the pawn stays hidden until it rises.</summary>
         public bool summoned;
+        /// <summary>Its first door has been heard. Not saved: a loaded drop finishes without its picture or sound.</summary>
+        internal bool heard;
 
         public const float Sink = 0.4f, Rise = 0.55f;
         public float SinkStart => doorUnder + DoorThrough;
@@ -183,7 +194,11 @@ namespace RimArt
             Scribe_Values.Look(ref doorUnder, "doorUnder");
             Scribe_Values.Look(ref strum, "strum");
             Scribe_Values.Look(ref summoned, "summoned");
-            if (Scribe.mode == LoadSaveMode.PostLoadInit) startAt = -1000f;
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                startAt = -1000f;
+                heard = true;
+            }
         }
     }
 

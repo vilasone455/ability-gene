@@ -554,6 +554,70 @@ def sword_fly(rng, d=0.4):
     return air + whistle
 
 
+def _biwa_string(n, f, rng, start=0.0, t60=2.2, bright=0.6, buzz=0.5, level=1.0):
+    """One biwa string plucked (Karplus-Strong: a noise burst one period long, averaged on every
+    pass so the highs die first). t60: seconds to fall 60 dB. buzz: the sawari, the flat bridge the
+    string slaps on its way down; the slap is an asymmetric clip, so the buzz is loud while the
+    string swings wide and goes quiet as it settles, as on the instrument."""
+    out = np.zeros(n)
+    i0 = int(start * SR)
+    m = n - i0
+    if m <= 0:
+        return out
+    # The loop filter is 3 taps (1/4, 1/2, 1/4), so the period is N + 1 samples and the highs die
+    # faster than with the usual 2-tap average: a silk string, not a steel one.
+    N = max(2, int(round(SR / f)) - 1)
+    damp = 0.001 ** (1 / (t60 * f))
+    burst = rng.uniform(-1, 1, N)
+    burst -= burst.mean()
+    soft = np.convolve(burst, np.ones(9) / 9, mode="same")
+    blocks = m // N + 2
+    y = np.zeros(blocks * N + 2)
+    y[2: N + 2] = bright * burst + (1 - bright) * soft
+    for k in range(1, blocks):
+        seg = y[(k - 1) * N: k * N + 2]
+        y[k * N + 2: (k + 1) * N + 2] = damp * (0.25 * seg[:-2] + 0.5 * seg[1:-1] + 0.25 * seg[2:])
+    y = y[2: m + 2]
+    th = 0.35 * np.abs(y).max()
+    slapped = np.where(y < -th, -th + (y + th) * 0.15, y)
+    y = lowpass(y, 1800 + 3000 * bright, 1) + buzz * 3 * bandpass(slapped - y, 2200, 1.5)
+    out[i0:] = y * level
+    return out
+
+
+def _bachi(n, rng, start=0.0, level=1.0):
+    """The bachi, a wide wooden plectrum, striking the body as it crosses the strings: a short knock."""
+    t = np.arange(n) / SR - start
+    env = np.where(t < 0, 0, np.exp(-np.clip(t, 0, None) / 0.03))
+    knock = sine(np.interp(t, [0, 0.04], [190, 120]), n) * env
+    click = lowpass(white(n, rng), 3000) * np.where(t < 0, 0, np.exp(-np.clip(t, 0, None) / 0.012))
+    return (knock * 0.8 + click * 0.5) * level
+
+
+@sound("BiwaStrum")
+def biwa_strum(rng, d=2.8):
+    """Nakime's biwa: one hard bachi stroke across four strings in about 30 ms, low string first,
+    with the body knock and the sawari buzz, in a large wooden hall. The game has no plucked string;
+    its Royalty harp is a 14 s song."""
+    n = n_of(d)
+    root = rng.choice([110.0, 116.5, 123.5])
+    sweep = rng.uniform(0.022, 0.04)
+    out = _bachi(n, rng, 0.0, 0.9)
+    for i, ratio in enumerate((1.0, 1.5, 2.0, 2.245)):
+        out += _biwa_string(n, root * ratio * rng.uniform(0.997, 1.003), rng, start=0.004 + sweep * i / 3,
+                            t60=rng.uniform(1.8, 2.6) / (1 + 0.25 * i), bright=0.75, buzz=0.6, level=1.0 - 0.15 * i)
+    return highpass(reverb(drive(out, 1.2), 0.3, 1.8, rng, bright=5000), 50)
+
+
+@sound("BiwaNote")
+def biwa_note(rng, d=2.4):
+    """One biwa string plucked softly, no body knock: the bound biwa coming back to her hands."""
+    n = n_of(d)
+    f = rng.choice([220.0, 246.9, 329.6])
+    out = _biwa_string(n, f, rng, start=0.003, t60=2.0, bright=0.35, buzz=0.3)
+    return highpass(reverb(out, 0.3, 1.6, rng, bright=4500), 50)
+
+
 # ------------------------------------------------------------------------------------------ write
 def make_loop(x, crossfade):
     """Cross-fade the tail over the head so the clip repeats without a seam."""

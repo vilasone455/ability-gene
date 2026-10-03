@@ -69,6 +69,8 @@ namespace RimArt
         private readonly DoorQueue arriving = new DoorQueue(), leaving = new DoorQueue();
         private Pawn carrier;
         private bool carrierUp, carrierGone;
+        /// <summary>The arrival's door sounds heard: the carrier's on the dais, the first pawn's. Not saved: a loaded castle opens in its hold.</summary>
+        private bool carrierDoorHeard, firstDoorHeard;
         private CastleLayout castle;
         private CastleRoomGraphics.CastleBatch batch;
         /// <summary>The rooms' places, x then z per room, once a command has moved one; empty for a castle as generated.</summary>
@@ -161,6 +163,8 @@ namespace RimArt
                     if (pawn != null && pawn.Spawned && pawn.Map == map) leaving.Add(pawn, new Vector2(pawn.DrawPos.x, pawn.DrawPos.z));
             if (carrier != null) this.carrier = carrier;
             carrierGone = false;
+            // Her last strum, from the dais; a carrier downed or gone plays nothing.
+            if (carrier != null && !carrier.Dead && !carrier.Downed) SoundLayers.Play(InfinityCastleDefOf.AG_NakimeBiwaStrum, map, carrier.Position);
         }
 
         /// <summary>Release has begun.</summary>
@@ -188,6 +192,7 @@ namespace RimArt
             }
             this.carrier = carrier;
             carrierUp = false;
+            carrierDoorHeard = firstDoorHeard = false;
             if (carrier != null) InfinityCastleRide.Hide(carrier);
         }
 
@@ -246,6 +251,7 @@ namespace RimArt
             int d = Castle.SlideDistance(room.Id, dx, dz, InfinityCastleRules.Of.shiftMaxCells, out bool blocked);
             if (d == 0) { why = "The room cannot move that way."; return false; }
             ApplyShift(room, dx, dz, d, blocked);
+            HearStrum(cell);
             return true;
         }
 
@@ -404,6 +410,7 @@ namespace RimArt
             crush = new CastleCrush { room = room.Id, startAt = seconds };
             crushed.Clear();
             lastStrumAt = lastCrushAt = seconds;
+            HearStrum(cell);
             return true;
         }
 
@@ -480,6 +487,7 @@ namespace RimArt
             seals.Add(new CastleSealAnim { key = door.Key, door = door, sealing = seal, startAt = seconds });
             lastStrumAt = seconds;
             batch = null;
+            HearStrum(cell);
             return true;
         }
 
@@ -502,8 +510,10 @@ namespace RimArt
             if (shift != null && !shift.stopped) { why = "A room is still sliding."; return false; }
             if (seconds - lastStrumAt < InfinityCastleRules.Of.strumGapSeconds) { why = "The last strum is still sounding."; return false; }
             if (drops.Any(d => d.pawn == pawn)) { why = "That pawn is already falling."; return false; }
+            IntVec3 under = pawn.Position;
             DropPawn(pawn, room, 0.1f, true, 0f);
             lastStrumAt = seconds;
+            HearStrum(under);
             return true;
         }
 
@@ -545,6 +555,7 @@ namespace RimArt
             InfinityCastleRide.Hide(pawn);
             drops.Add(drop);
             lastStrumAt = seconds;
+            HearStrum(to);
             return true;
         }
 
@@ -575,6 +586,75 @@ namespace RimArt
             pawn.stances?.stunner.StunFor(Mathf.CeilToInt((drop.Arrive + CastleDrop.Rise + stunAfter) * 60f), null, false, false);
             InfinityCastleRide.Ride(pawn, new Vector2(from.x - to.x, from.z - to.z));
             drops.Add(drop);
+        }
+
+        // ---- sounds ---------------------------------------------------------------------------------------
+
+        /// <summary>
+        /// A command's strum, heard where the command lands (the room, the doorway, the pawn) rather than at the
+        /// dais: the castle is 100 cells across, the biwa room is at its west edge, and the game quietens a sound with
+        /// its distance from the camera, which is on the room being commanded.
+        /// </summary>
+        private void HearStrum(IntVec3 at) => SoundLayers.Play(InfinityCastleDefOf.AG_NakimeBiwaStrum, map, at);
+
+        private static IntVec3 CentreCell(CastleRoom room) => new IntVec3(room.X + room.W / 2, 0, room.Z + room.H / 2);
+
+        /// <summary>
+        /// The castle's timed sounds (the Infinity Castle sketches' markers), each once, on the first tick of the
+        /// castle's clock at or past it: the arrival's doors (the carrier's on the dais, then the first pawn's), a room
+        /// starting to slide and meeting the room it slid into, Crush's walls landing, a Seal's bar, and a dropped
+        /// pawn's first door. Ticked with the clock, not from <see cref="Advance"/>, which runs once a frame.
+        /// </summary>
+        private void Sounds()
+        {
+            SoundDef door = InfinityCastleDefOf.AG_NakimeCastleDoor;
+            float timeline = Timeline;
+            if (releasedAt < 0f)
+            {
+                if (carrier != null && !carrierDoorHeard && timeline >= T.CasterLands)
+                {
+                    carrierDoorHeard = true;
+                    SoundLayers.Play(door, map, DaisCell);
+                }
+                if (arriving.Count > 0 && !firstDoorHeard && timeline >= T.EnemyLands(0))
+                {
+                    firstDoorHeard = true;
+                    SoundLayers.Play(door, map, new IntVec3(Mathf.FloorToInt(arriving.cells[0].x), 0, Mathf.FloorToInt(arriving.cells[0].y)));
+                }
+            }
+            if (shift != null && shift.picture)
+            {
+                float t = shift.AgeAt(seconds);
+                IntVec3 at = CentreCell(Castle.Rooms[shift.room]);
+                if (!shift.slideHeard && t >= CastleShift.Slide0)
+                {
+                    shift.slideHeard = true;
+                    SoundLayers.Play(InfinityCastleDefOf.AG_NakimeCastleSlide, map, at);
+                }
+                if (shift.blocked && !shift.thudHeard && t >= shift.StopAt)
+                {
+                    shift.thudHeard = true;
+                    SoundLayers.Play(InfinityCastleDefOf.AG_NakimeCastleThud, map, at);
+                }
+            }
+            if (crush != null && !crush.heard && crush.AgeAt(seconds) >= CastleCrush.Hit)
+            {
+                crush.heard = true;
+                SoundLayers.Play(InfinityCastleDefOf.AG_NakimeCastleCrush, map, CentreCell(Castle.Rooms[crush.room]));
+            }
+            foreach (CastleSealAnim seal in seals)
+                if (seal.sealing && !seal.barHeard && seconds - seal.startAt >= CastleSealAnim.BarHeard)
+                {
+                    seal.barHeard = true;
+                    SoundLayers.Play(InfinityCastleDefOf.AG_NakimeCastleBar, map, new IntVec3(seal.door.Cells[0].x, 0, seal.door.Cells[0].z));
+                }
+            // A drop's first door is the one under the pawn; a summoned pawn's is in the far room, as it is drawn.
+            foreach (CastleDrop drop in drops)
+                if (!drop.heard && drop.AgeAt(seconds) >= (drop.summoned ? drop.Arrive : drop.doorUnder))
+                {
+                    drop.heard = true;
+                    SoundLayers.Play(door, map, drop.summoned ? drop.to : drop.from);
+                }
         }
 
         // ---- ticking and drawing --------------------------------------------------------------------------
@@ -650,7 +730,9 @@ namespace RimArt
         /// <summary>The ability's castle keeps game time: one tick of it per game tick.</summary>
         public override void MapComponentTick()
         {
-            if (driven && IsCastle && !closing) seconds += 1f / 60f;
+            if (!driven || !IsCastle || closing) return;
+            seconds += 1f / 60f;
+            Sounds();
         }
 
         public override void MapComponentUpdate()
@@ -660,7 +742,11 @@ namespace RimArt
             // go on while the game is paused. The ability's castle has advanced on its ticks (MapComponentTick),
             // because the cast's stuns count ticks and the doors must hide and show pawns while those hold them.
             // Both run on or off screen.
-            if (!driven) seconds += Time.unscaledDeltaTime;
+            if (!driven)
+            {
+                seconds += Time.unscaledDeltaTime;
+                Sounds();
+            }
             Advance();
             float timeline = Timeline;
             if (driven)

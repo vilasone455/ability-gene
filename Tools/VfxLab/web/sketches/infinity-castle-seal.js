@@ -51,8 +51,8 @@ export default {
     ...(t.open ? [{ name: 'Open', t: t.open }] : []),
   ]; },
   events(p) { const t = times(p); return [
-    { t: t.seal, type: 'sound', def: 'RimArt_BiwaStrum' }, { t: t.bar + .2, type: 'sound', def: 'RimArt_CastleBar' },
-    ...(t.open ? [{ t: t.open, type: 'sound', def: 'RimArt_BiwaStrum' }] : []),
+    { t: t.seal, type: 'sound', def: 'AG_NakimeBiwaStrum' }, { t: t.bar + .2, type: 'sound', def: 'AG_NakimeCastleBar' },
+    ...(t.open ? [{ t: t.open, type: 'sound', def: 'AG_NakimeBiwaStrum' }] : []),
   ]; },
 
   draw(s, p, { origin, scene }) {
