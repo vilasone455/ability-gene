@@ -146,6 +146,7 @@ select { width: 100%; padding: 4px 6px; background: var(--ground); border: 1px s
 .marker .phase[aria-current="true"] { color: var(--accent); }
 .tag.sound-picked { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
 .tag.sound-def { color: var(--sketch); border-color: color-mix(in srgb, var(--sketch) 45%, transparent); }
+.tag.sound-trying { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
 .unsaved { color: var(--accent); font-size: 12px; }
 .mix-layer { display: flex; flex-direction: column; gap: 2px; padding: 6px var(--s2); background: var(--ground); border: 1px solid var(--line); border-radius: 4px; }
 .mix-head { display: flex; align-items: center; gap: 6px; }
@@ -161,6 +162,7 @@ select { width: 100%; padding: 4px 6px; background: var(--ground); border: 1px s
 .result .tag { margin-left: 4px; }
 .result .dim { color: var(--dim); font-family: var(--mono); }
 .result .missing { color: var(--bad); }
+.result[aria-current="true"] .what { color: var(--accent); }
 .panel button.mini + .what { line-height: 1.3; }
 .panel .result button:not(.mini) { padding: 1px 8px; }
 details.moment { display: flex; flex-direction: column; gap: 3px; }

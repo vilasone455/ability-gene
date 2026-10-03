@@ -26,8 +26,29 @@ const S = {
   search: '',
 };
 
+// Every marker's mix while options are tried, by SoundDef name: { mix, base, option, optionBase, note }.
+// Opening another marker keeps the last one's here, so every marker plays what was chosen for it,
+// saved or not, and Pick all saves them together. S holds the open marker's copy.
+const drafts = new Map();
+
+// An option is heard from this long before its marker's first time; the effect then plays on and loops whole.
+const Before = 0.6;
+
 const strip = (layers) => layers.map(({ mute, ...l }) => l);
-const dirty = () => S.name && JSON.stringify(strip(S.mix)) !== S.base;
+const unsaved = (d) => JSON.stringify(strip(d.mix)) !== d.base;
+const dirty = () => S.name && unsaved(S);
+
+/** The mix a marker plays instead of its saved sound: the open one's, or one tried earlier; null when it matches what is saved. */
+function unsavedMix(name) {
+  if (name === S.name) return dirty() ? S.mix : null;
+  const d = drafts.get(name);
+  return d && unsaved(d) ? d.mix : null;
+}
+
+/** The open marker's mix, kept for when it is opened again. */
+function stash() {
+  if (S.name) drafts.set(S.name, { mix: S.mix, base: S.base, option: S.option, optionBase: S.optionBase, note: S.note });
+}
 const fmt = (t) => t.toFixed(2);
 
 /** Sound events of an effect, in time order. */
@@ -60,7 +81,8 @@ export function initSound(context) {
 }
 
 function play(name, keep = true) {
-  if (name === S.name && dirty()) return playLayers(S.mix, { keep });
+  const mix = unsavedMix(name);
+  if (mix) return playLayers(mix, { keep });
   const s = soundFor(name);
   if (s.kind === 'pick') return playLayers(s.layers, { keep });
   if (s.kind === 'def') return playDef(s.def, { keep });
@@ -86,7 +108,7 @@ export function soundTick(before) {
 export function soundSelectionChanged() {
   if (!ui) return;
   stopAll(0.08);
-  if (S.name && !markerNames(ui.source()).some((m) => m.name === S.name)) S.name = null;
+  if (S.name && !markerNames(ui.source()).some((m) => m.name === S.name)) { stash(); S.name = null; }
   preloadMarkers();
   renderSoundPanel();
 }
@@ -94,7 +116,7 @@ export function soundSelectionChanged() {
 /** Timeline colour of a sound marker: teal when something plays for it, grey when it is silent, gold when open. */
 export function soundMarkerColor(e) {
   if (e.def === S.name) return '#d9a441';
-  return soundFor(e.def).kind ? '#6fb3b8' : '#555c62';
+  return unsavedMix(e.def) || soundFor(e.def).kind ? '#6fb3b8' : '#555c62';
 }
 
 export function toggleSound(on = !S.on) {
@@ -107,13 +129,27 @@ export function toggleSound(on = !S.on) {
 
 function preloadMarkers() {
   for (const { name } of markerNames(ui?.source())) {
-    const s = soundFor(name);
-    if (s.kind === 'pick') preload(s.layers);
+    const s = soundFor(name), mix = unsavedMix(name);
+    if (mix) preload(mix);
+    else if (s.kind === 'pick') preload(s.layers);
     else if (s.kind === 'def') preload(s.def.subs.flatMap((sub) => sub.grains.filter((g) => g.folder || g.clip)));
   }
 }
 
+/** Opens a marker in the panel, with the mix last tried for it if there is one. */
 function open(name) {
+  stash();
+  const d = drafts.get(name);
+  if (!d) return reset(name);
+  S.name = name;
+  Object.assign(S, { mix: d.mix, base: d.base, option: d.option, optionBase: d.optionBase, note: d.note });
+  preload(S.mix);
+  renderSoundPanel();
+}
+
+/** Opens a marker with what is saved for it, dropping what was tried. */
+function reset(name) {
+  drafts.delete(name);
   S.name = name;
   const s = soundFor(name);
   S.mix = s.kind === 'pick' ? cloneLayers(s.layers) : s.kind === 'def' ? layersOfDef(s.def) : [];
@@ -133,17 +169,51 @@ function useLayers(layers, option = null) {
   renderSoundPanel();
 }
 
+/** Where the open marker is heard from: shortly before its first time. */
+function watchFrom(name) {
+  const first = markerNames(ui.source()).find((m) => m.name === name)?.times[0] ?? 0;
+  return Math.max(0, first - Before);
+}
+
+/** Plays the effect from shortly before the open marker; it plays on to the end and loops whole, every marker with its own sound. */
+function watch() {
+  stopAll(0.08);
+  ui.clock.seek(watchFrom(S.name));
+  ui.clock.playing = true;
+}
+
+/** An option from the sound lab, in the mix and heard with the picture. */
+function tryOption(o) {
+  useLayers(o.layers, o.label);
+  watch();
+}
+
+const inMix = (o) => S.option === o.label && JSON.stringify(strip(S.mix)) === S.optionBase;
+
+/** Saves one marker's mix as its pick; returns the new base. */
+async function save(name, d) {
+  const layers = strip(d.mix);
+  const option = d.option && JSON.stringify(layers) === d.optionBase ? d.option : null;
+  await savePick(soundKey(name), { option, layers, note: d.note.trim() });
+  return JSON.stringify(layers);
+}
+
 async function pick() {
-  const layers = strip(S.mix);
-  const option = S.option && JSON.stringify(layers) === S.optionBase ? S.option : null;
-  await savePick(soundKey(S.name), { option, layers, note: S.note.trim() });
-  S.base = JSON.stringify(layers);
+  S.base = await save(S.name, S);
+  renderSoundPanel();
+}
+
+/** Saves every marker's tried mix, the open one too. */
+async function pickAll() {
+  stash();
+  for (const [name, d] of drafts) if (d.mix.length && unsaved(d)) d.base = await save(name, d);
+  if (S.name) S.base = drafts.get(S.name).base;
   renderSoundPanel();
 }
 
 async function unpick() {
   await savePick(soundKey(S.name), null);
-  open(S.name);
+  reset(S.name);
 }
 
 // ------------------------------------------------------------------ the Sound tab
@@ -183,43 +253,44 @@ export function renderSoundPanel() {
     el('p', { class: 'hint' }, `The "Sound" box under the stage, or M, turns markers on and off. ${statusLine()}`));
   if (lib.error) { panel.replaceChildren(top); return; }
 
+  const trying = names.filter(({ name }) => unsavedMix(name)?.length).length;
   const list = el('div', { class: 'group' }, el('h3', {}, `Markers${source ? ` in ${source.label}` : ''}`),
     ...(names.length ? names.map(({ name, times }) => {
-      const [kind] = status(name);
+      const [kind] = unsavedMix(name) ? ['trying'] : status(name);
       return el('div', { class: 'marker' },
         el('button', { class: 'mini', type: 'button', title: 'Hear it', onclick: () => play(name, false) }, '▶'),
         el('button', { class: 'phase', type: 'button', 'aria-current': name === S.name ? 'true' : 'false', onclick: () => open(name) },
           el('span', {}, name), el('span', {}, `${times.slice(0, 3).map(fmt).join(', ')}${times.length > 3 ? ` +${times.length - 3}` : ''} s`)),
         el('span', { class: `tag sound-${kind}` }, kind === 'def' ? 'SoundDef' : kind));
     }) : [el('p', { class: 'hint' }, 'No sound markers. A sketch adds one in events(): { t, type: \'sound\', def: \'AG_Name\' }.')]),
-    el('p', { class: 'hint' }, 'Markers of the effect on the left (A) play, also while comparing. Click a name to choose its sound.'));
+    ...(trying ? [el('div', { class: 'row' }, el('button', { type: 'button', class: 'primary', onclick: pickAll }, `Pick all ${trying} tried`))] : []),
+    el('p', { class: 'hint' }, 'Every marker plays what you chose for it, "trying" ones too, so ▶ under the stage plays the whole effect with all of them. Click a name to choose its sound.'));
 
   panel.replaceChildren(top, list, ...(S.name ? editor(source) : []));
 }
 
 function editor(source) {
-  const { el, clock } = ui, name = S.name;
+  const { el } = ui, name = S.name;
   const [, line] = status(name);
-  const first = markerNames(source).find((m) => m.name === name)?.times[0] ?? 0;
-  const watchFrom = Math.max(0, first - 0.6);
   const head = el('div', { class: 'group' },
     el('h3', {}, name),
     el('p', { class: 'hint' }, line),
     el('p', { class: 'unsaved', id: 'sound-unsaved', hidden: !dirty() }, 'Your mix is not saved; the timeline plays it.'),
     el('div', { class: 'row' },
-      el('button', { type: 'button', onclick: () => play(name, false) }, '▶ Hear it'),
-      el('button', { type: 'button', onclick: () => { clock.seek(watchFrom); clock.playing = true; } }, `Watch from ${fmt(watchFrom)} s`)));
+      el('button', { type: 'button', onclick: watch }, `▶ Watch from ${fmt(watchFrom(name))} s`),
+      el('button', { type: 'button', onclick: () => play(name, false) }, 'Hear it alone')),
+    el('p', { class: 'hint' }, 'An option\'s ▶ plays the effect from just before this marker, with the other markers\' sounds too.'));
 
   const options = optionsFor(name, source?.kit);
   const optionGroup = options.length ? [el('div', { class: 'group' },
     el('h3', {}, 'Options from the sound lab'),
     ...options.map(({ label, moment, linked }) => el('details', { class: 'moment', open: linked },
       el('summary', {}, `${label} · ${moment.label}`),
-      ...moment.options.map((o) => el('div', { class: 'result' },
-        el('button', { class: 'mini', type: 'button', title: 'Hear it', onclick: () => playLayers(o.layers.map((l) => newLayer(l, l))) }, '▶'),
+      ...moment.options.map((o) => el('div', { class: 'result', 'aria-current': inMix(o) ? 'true' : 'false' },
+        el('button', { class: 'mini', type: 'button', title: 'Play it with the picture (puts it in the mix)', onclick: () => tryOption(o) }, '▶'),
         el('span', { class: 'what', title: o.layers.map((l) => l.folder || l.clip).join(' + ') }, o.label,
           ...(missingIn(o.layers).length ? [el('span', { class: 'missing' }, ' missing clips')] : [])),
-        el('button', { type: 'button', onclick: () => useLayers(o.layers, o.label) }, 'Use'))))))] : [];
+        el('button', { class: 'mini', type: 'button', title: 'Hear it alone', onclick: () => playLayers(o.layers.map((l) => newLayer(l, l))) }, '♪'))))))] : [];
 
   const layers = S.mix.map((l, i) => el('div', { class: 'mix-layer' },
     el('div', { class: 'mix-head' },
@@ -251,7 +322,7 @@ function editor(source) {
     el('div', { class: 'row' },
       el('button', { type: 'button', class: 'primary', disabled: !S.mix.length, onclick: pick }, 'Pick'),
       ...(lib.picks[soundKey(name)] ? [el('button', { type: 'button', onclick: unpick }, 'Unpick')] : []),
-      el('button', { type: 'button', id: 'sound-undo', hidden: !dirty(), onclick: () => open(name) }, 'Undo changes'),
+      el('button', { type: 'button', id: 'sound-undo', hidden: !dirty(), onclick: () => reset(name) }, 'Undo changes'),
       copyXml()),
     el('p', { class: 'hint' }, `Pick saves the mix to Tools/SoundLab/picks.json as sound:${name}; Claude writes the SoundDef from it.`));
 

@@ -178,10 +178,16 @@ before that are skipped.
 The Sound tab lists the effect's markers by name, with their times and what plays for each. Click a
 name to open it:
 
-- **Hear it** plays it alone; **Watch from** starts the effect 0.6 s before its first marker.
+- **Watch from** plays the effect from 0.6 s before the marker's first time; it plays on to the end and
+  loops whole. **Hear it alone** plays the mix without the picture.
 - **Options from the sound lab** are the candidate moments in `Tools/SoundLab/candidates.json` of
   the hero whose name the effect's kit starts with (kit "Satō (Ajin)", hero "Satō"), and any moment
-  with `"defName": "<SoundDef>"`, which is listed first and open. **Use** puts an option in the mix.
+  with `"defName": "<SoundDef>"`, which is listed first and open. An option's ▶ puts it in the mix
+  and plays the effect as Watch from does; ♪ hears it alone. The option in the mix is highlighted.
+- **Every marker keeps what you tried for it.** Opening another marker does not drop the last one's
+  mix: it stays "trying" and plays on the timeline, so you can choose a sound for every marker and then
+  play the whole effect with all of them. **Pick all N tried** saves them together. Tried mixes live in
+  the page only; a reload drops what was not picked.
 - **Mix**: one layer per subSound, with pitch, volume, delay, loop and mute. The search box adds a
   folder or clip (`+`) or loads a whole SoundDef (`Use`).
 - **Pick** saves the mix as `sound:<SoundDef>` with the note; Claude writes the SoundDef XML from
