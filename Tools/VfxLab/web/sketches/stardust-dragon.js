@@ -50,19 +50,23 @@
 // to a point behind it, with a continuous gold spine along its back laid over the pieces. Each body piece is a
 // texture on one quad turned to its line of flight: two curved gold ribs round the body, two belly scales, and a
 // gold spine on top, tall and short in turn, over a see-through blue fin that runs back to the next one. The tail
-// is three swept crystal blades; the head is drawn 15 % bigger, on top. Everything is drawn as Terraria draws the
+// is three swept crystal blades. The head, 15 % bigger and on top, is in parts: the skull with two curved horns; the
+// lower jaw on its hinge, opening a little in idle flight, wide (30 degrees) as the head closes on its target and
+// shutting the moment the dragon hits someone, with a dark mouth and a glowing throat between the jaws; three crystal
+// blades of the crest behind it that sway and swing out in turns; a glowing eye; two whiskers that stream back along
+// the line the head has flown. Everything is drawn as Terraria draws the
 // dragon (full bright, alpha halved: once normal at .5 and once additive at .5) and mirrored when it flies west, so
 // the gold spine is always on the north side; a piece that mirrors rolls over in 0.16 s and the ribbon squeezes
 // with it. Each piece has a soft shadow on the ground and a soft cyan glow under it; the body sways gently from
 // side to side (a picture only); a soft trail of light follows the tail for 1.6 cells. The continuous body, the
-// glow, the bigger head, the sway, the roll, the trail and the hit flash are not Terraria's: they make it read as
+// glow, the bigger head, the head's moving parts, the sway, the roll, the trail and the hit flash are not Terraria's: they make it read as
 // one dragon of light at a normal RimWorld zoom (user's notes, 2026-10-03).
 // Ice Torch dust: about 2 a second per piece at a random point of the piece, drifting and slowing, swelling then
 // shrinking over 0.7 s, each with a faint pool of its light on the floor. The movement runs `pace` Terraria ticks per
 // tick (0.5: half Terraria's speed, so the shape of the path is the same and its speed readable; 1 is the game). Sizes
 // are Terraria's pixels at 0.028 cells each, so a lab/pawn.js pawn (1.17 cells) is as tall as a Terraria player (42 px).
-// Textures: lab/stardust-head, -body1, -body2, -tail and -dust, made in lib/stardust-dragon.js; still to be
-// written out as PNGs by a make_stardust_dragon_textures.py. Pawns are lib/pawn.js stand-ins, the staff is a
+// Textures: lab/stardust-head, -jaw, -blade, -body1, -body2, -tail and -dust, made in lib/stardust-dragon-textures.js;
+// still to be written out as PNGs by a make_stardust_dragon_textures.py. Pawns are lib/pawn.js stand-ins, the staff is a
 // stand-in for its texture, walls are the Paper Bomb kit's. "Show stand-ins" off hides pawns, walls, the staff,
 // the range and target rings and the damage bars.
 import { Color, Mathf } from '../js/engine.js';
@@ -73,7 +77,7 @@ import { ringAt } from './lib/goku.js';
 import { walls } from './lib/paper-bomb.js';
 import { damageBar, PainShock, walk, downSmoke } from './lib/terraria.js';
 import { simulate, liveDust, dustAt, kindOf } from './lib/stardust-dragon-ai.js';
-import { piece, rollOf, aura, bodyLine, bodyRibbon, spineRibbon, wake, dust, staff, TailTaper, IceColour, CyanColour, LightColour } from './lib/stardust-dragon.js';
+import { piece, rollOf, aura, bodyLine, bodyRibbon, spineRibbon, wake, head, whisker, WhiskerRoots, HeadScale, dust, staff, TailTaper, IceColour, CyanColour, LightColour } from './lib/stardust-dragon.js';
 
 const smooth = Mathf.Smooth, D2R = Mathf.Deg2Rad;
 const White = new Color(1, 1, 1), Warn = new Color(.85, .18, .12), Wielder = new Color(.30, .50, .62);
@@ -89,6 +93,11 @@ const PreRoll = 20, Tail = 4, MaxTime = 30;            // seconds the dragon is 
 // piece along the body, radians a second; the head stays on its line and the sway grows over the first two pieces.
 const WaveAmp = 3.5, WaveK = 1, WaveRate = 9;
 const HitFlash = .3;                                   // seconds a hit's flash and slash last
+// The head's life: the jaw's idle opening, how wide it opens as it closes on its target, how fast it shuts on a hit
+// and opens again (degrees, cells, seconds); the crest's swing per radian of turn; the whiskers [root, length in
+// cells, how far they spread toward the belly in Terraria px].
+const JawIdle = 6, JawWide = 30, JawNear = 2.5, JawShut = .05, JawReopen = .3, CrestSwing = .6;
+const Whiskers = [[0, 1.3, 11], [1, 1, 17]];
 const WakeLong = 1.6, WakeSize = 22, TipBehind = 40;  // the tail's wake: cells long, Terraria px long at its first spot; the blades' tips, px behind the tail piece
 const Back = 7;                                        // in "summon + raid" the wielder stands this far behind the chosen cell
 // "summon + raid", in cells from the wielder: x toward the raid, z across.
@@ -147,7 +156,7 @@ function pieces(r, k, o, s) {
 
 // The dragon: the sway, shadows and glow, the continuous body, the body pieces (ribs, scales, dorsal spines and fin,
 // neck to tail), the gold spine over them, the tail's blades, the head on top. Pieces narrow toward the tail.
-function dragon(list, cells, sun, strength, s, wave = 1, key = '', layer = Y + .1) {
+function dragon(list, cells, sun, strength, s, { wave = 1, key = '', open = JawIdle * D2R, whiskers = [], layer = Y + .1 } = {}) {
   const n = list.length, off = list.map((q, i) => wave * WaveAmp * cells * Math.min(1, i / 2) * Math.sin(i * WaveK - s * WaveRate));
   list.forEach((q, i) => {
     q.c = { x: q.c.x - Math.sin(q.rot) * off[i], z: q.c.z + Math.cos(q.rot) * off[i] };
@@ -166,7 +175,51 @@ function dragon(list, cells, sun, strength, s, wave = 1, key = '', layer = Y + .
   spineRibbon(pts, cells, alpha, top, key);
   const t = list[n - 1], h = list[0];
   piece(t.kind, t.c, t.rot, t.roll, cells, t.alpha, top + .003);
-  piece(h.kind, h.c, h.rot, h.roll, cells, h.alpha, top + .004);
+  whiskers.forEach((w, i) => whisker(`stardust whisker${key} ${i}`, w(h), 1.6 * cells * HeadScale, h.alpha, top + .0035 + i * .0001));
+  const turn = n > 1 ? Math.atan2(Math.sin(h.rot - list[1].rot), Math.cos(h.rot - list[1].rot)) : 0;
+  head(h, cells, h.alpha, top + .004, open, Math.max(-.5, Math.min(.5, -CrestSwing * turn * h.roll.side)), s);
+}
+
+// How far the jaw is open at time s (radians): a little in idle flight, wide as the head closes on its target, shut
+// the moment the dragon hits someone and opening again over JawReopen.
+function jawOpen(r, k, s, o, at) {
+  let open = (JawIdle + 3 * Math.sin(s * 2.2)) * D2R;
+  const j = r.targets[k];
+  if (j >= 0) { const q = add(o, r.where(j, s)), d = Math.hypot(q.x - at.x, q.z - at.z); open = Mathf.Lerp(open, JawWide * D2R, smooth(Mathf.Clamp01((JawNear - d) / 2))); }
+  let last = null;
+  for (const e of r.hits) { if (e.t > s) break; last = e; }
+  if (last) { const b = s - last.t, shut = b < JawShut ? 1 : Math.max(0, 1 - (b - JawShut) / JawReopen); open = Mathf.Lerp(open, D2R, shut); }
+  return open;
+}
+
+// The head's path over the last cells of flight, newest first, with the distance flown back to each point.
+function headPath(r, k, o, long) {
+  const out = [];
+  for (let j = k, run = 0; j >= 0 && r.count[j]; j--) {
+    const at = j * r.ids, q = { x: o.x + r.X[at], z: o.z + r.Z[at] + ChestLift };
+    if (out.length) { const d = Math.hypot(q.x - out[out.length - 1].x, q.z - out[out.length - 1].z); if (d > .6) break; run += d; }
+    out.push({ ...q, run });
+    if (run > long) break;
+  }
+  return out;
+}
+// A whisker: from its root on the snout back along the line the head has flown, spreading toward the belly and
+// rippling, so it streams behind and follows the head through a turn.
+function whiskerLine(path, cells, [root, long, spread], s) {
+  return h => {
+    const k = cells * HeadScale, [rx, ry] = WhiskerRoots[root], ahead = rx * k, sign = h.roll.side * h.roll.across, out = [];
+    const along = e => {                                   // a point e cells back along the path from the head's centre
+      if (e <= 0 || path.length < 2) return { x: h.c.x - Math.cos(h.rot) * e, z: h.c.z - Math.sin(h.rot) * e, rot: h.rot };
+      let i = 1; while (i < path.length - 1 && path[i].run < e) i++;
+      const a = path[i - 1], b = path[i], u = Math.min(1, (e - a.run) / ((b.run - a.run) || 1));
+      return { x: Mathf.Lerp(a.x, b.x, u), z: Mathf.Lerp(a.z, b.z, u), rot: Math.atan2(a.z - b.z, a.x - b.x) };
+    };
+    for (let d = 0; d <= long + 1e-6; d += .07) {
+      const q = along(d - ahead), f = d / long, side = (ry - spread * f + 1.2 * Math.sin(f * 9 - s * 7) * f) * sign * k;
+      out.push({ x: q.x - Math.sin(q.rot) * side, z: q.z + Math.cos(q.rot) * side });
+    }
+    return out;
+  };
 }
 
 // The tail's wake: where the tips of its blades were over the last WakeLong cells of flight, newest first.
@@ -205,7 +258,7 @@ function sheet(o) {
   [4, 6].forEach((n, row) => {
     const scale = 2 * (1 + .01 * (n - 1)), gap = 16 * .028 * scale, ids = [0, 1, 2, ...Array.from({ length: n - 4 }, (_, i) => 4 + i), 3];
     const list = ids.map((id, i) => ({ id, kind: kindOf(id), c: { x: o.x - 3 + i * gap, z: o.z - 1.8 - row * 2.2 }, rot: Math.PI, flip: -1, since: 99, alpha: 1 }));
-    dragon(list, .028 * scale, { x: 0, z: 0 }, 0, 0, 0, ` ${n}`);
+    dragon(list, .028 * scale, { x: 0, z: 0 }, 0, 0, { wave: 0, key: ` ${n}`, open: 14 * D2R });
   });
 }
 
@@ -281,7 +334,8 @@ export default {
     if (r.count[k]) {
       const list = pieces(r, k, o, s);
       wake(wakeLine(r, k, o, cells), WakeSize * cells, list[list.length - 1].alpha, Y + .095);
-      dragon(list, cells, sun, strength, s);
+      const path = headPath(r, k, o, 2.5);
+      dragon(list, cells, sun, strength, s, { open: jawOpen(r, k, s, o, list[0].c), whiskers: Whiskers.map(w => whiskerLine(path, cells, w, s)) });
     }
 
     // --- hits: a cyan flash on the pawn's chest, a white slash along the dragon's line, a small star ------------------------
