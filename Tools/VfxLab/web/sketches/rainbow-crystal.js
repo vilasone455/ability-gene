@@ -72,16 +72,16 @@ import { pawn, at, shadowLayer, Skin } from './lib/pawn.js';
 import { Enemy, Ally, rect } from './lib/chain-sickle.js';
 import { ringAt, whiteGlow } from './lib/goku.js';
 import { walls } from './lib/paper-bomb.js';
-import { hue, rayWall, damageBar } from './lib/terraria.js';
+import { hue, rayWall, damageBar, PainShock, walk, downSmoke } from './lib/terraria.js';
 
 const clamp = Mathf.Clamp01, smooth = Mathf.Smooth, lerp = Mathf.Lerp, D2R = Mathf.Deg2Rad, TAU = Math.PI * 2;
 const White = new Color(1, 1, 1), Warn = new Color(.85, .18, .12), Wielder = new Color(.30, .50, .62);
-const Smoke = new Color(.32, .32, .34), StaffWood = new Color(.42, .30, .52), StaffDark = new Color(.18, .12, .26);
+const StaffWood = new Color(.42, .30, .52), StaffDark = new Color(.18, .12, .26);
 // The crystal's faces, from the sprite: white, pink, slate blue, lavender; a violet outline.
 const Faces = [new Color(.96, .94, 1), new Color(.93, .56, .90), new Color(.45, .57, .82), new Color(.74, .62, .96)];
 const FaceDark = new Color(.24, .18, .40), Outline = new Color(.30, .20, .52), Ridge = new Color(.98, .92, 1);
 // The rule's numbers (XML fields in a port).
-const Life = 45, PainShock = 43, Pop1 = .5, Pop2 = 1;
+const Life = 45, Pop1 = .5, Pop2 = 1;
 // Decided looks and timing of the picture.
 const Cast = .3, Rise = .6, FirstLook = .3;           // staff raised; the crystal grows; first volley no sooner than this after it is up
 const Flight = .18, Stagger = .03;                    // a star flies from the crystal to its spot; the three leave this far apart
@@ -111,15 +111,6 @@ const starMat = MaterialPool.MatFrom('RimArt/RainbowCrystal/Star', ShaderDatabas
 const bump = x => (x >= 0 && x <= 1) ? Math.sin(x * Math.PI) : 0;
 const add = (a, b) => ({ x: a.x + b.x, z: a.z + b.z });
 const pale = c => Color.Lerp(c, White, .45);
-function walk(path, s) {
-  if (s <= path[0][0]) return { x: path[0][1], z: path[0][2] };
-  for (let i = 1; i < path.length; i++) {
-    const [t0, x0, z0] = path[i - 1], [t1, x1, z1] = path[i];
-    if (s < t1) { const u = (s - t0) / (t1 - t0); return { x: lerp(x0, x1, u), z: lerp(z0, z1, u) }; }
-  }
-  const l = path[path.length - 1];
-  return { x: l[1], z: l[2] };
-}
 const volleyHue = (v, b = 1) => hue(.5 + v * HueStep + (b - 1) * .03, .75);
 
 // The whole fight, replayed from 0 at 60 steps a second in cells relative to the crystal's cell:
@@ -349,10 +340,7 @@ export default {
       const shirt = g.c.ally ? Ally : Enemy;
       pawn(g.pos, { shirt: tint ? Color.Lerp(shirt, tint, amount) : shirt, skin: tint ? Color.Lerp(Skin, tint, amount) : Skin, sun, shadow: strength, downed: g.down });
       if (!g.down && !g.c.ally) damageBar(at(g.pos, 'headTop'), g.share);
-      if (g.down) for (let q = 0; q < 5; q++) {
-        const v = (s - g.c.down - q * .25) / 1.2;
-        if (v >= 0 && v <= 1) sprite({ x: g.pos.x + (rand(q + 70) - .5) * .4 + v * .2, z: g.pos.z + .1 + v * .8 }, .35 + v * .5, .3 + v * .4, Smoke.withAlpha(.35 * bump(v)), soft, Y + .004);
-      }
+      if (g.down) downSmoke(g.pos, s - g.c.down);
     });
 
     // --- the crystal: shadow, glow, faces --------------------------------------------------------------------------------
