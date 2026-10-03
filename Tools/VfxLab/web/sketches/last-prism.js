@@ -85,7 +85,7 @@ import { pawn, at, shadowLayer, Skin } from './lib/pawn.js';
 import { Enemy, Ally, rect } from './lib/chain-sickle.js';
 import { strip, streak, glint, ringAt, whiteGlow } from './lib/goku.js';
 import { walls } from './lib/paper-bomb.js';
-import { hue, rayWall, damageBar } from './lib/terraria.js';
+import { hue, rayWall, damageBar, PainShock, downSmoke } from './lib/terraria.js';
 
 const clamp = Mathf.Clamp01, smooth = Mathf.Smooth, lerp = Mathf.Lerp, D2R = Mathf.Deg2Rad, TAU = Math.PI * 2;
 const flat = MaterialPool.MatFrom('white', ShaderDatabase.Transparent);
@@ -94,13 +94,13 @@ const White = new Color(1, 1, 1), Crystal = new Color(.74, .93, 1), CrystalEdge 
 const FacePale = new Color(.95, .95, 1), FaceLavender = new Color(.80, .70, .98), FaceSlate = new Color(.46, .56, .80);
 const FaceBase = new Color(.45, .32, .72), Navy = new Color(.12, .12, .34), FaceDark = new Color(.20, .18, .40);
 const Dull = new Color(.45, .5, .56), Sun = new Color(1, .82, .32), SunDim = new Color(.22, .18, .1), Warn = new Color(.85, .18, .12);
-const RoofTint = new Color(.55, .64, .82), Wielder = new Color(.30, .50, .62), Smoke = new Color(.32, .32, .34);
+const RoofTint = new Color(.55, .64, .82), Wielder = new Color(.30, .50, .62);
 const MechGrey = new Color(.52, .54, .58), MechHead = new Color(.36, .38, .42);
 // The rule's numbers (XML fields in the port).
 const Store = 12, DryStore = 4, StartLevel = 3;       // seconds of beam: full, the "runs dry" start, the charging start
 const Turn = 45;                                      // degrees per second the prism turns after its target
 const FanHit = 3, FanEvery = .5, JoinHit = 8, JoinEvery = .25;
-const PainShock = 43, MechDown = 150;                 // burn that downs an unarmoured pawn; the mech stand-in
+const MechDown = 150;                                 // burn that downs the mech stand-in (an unarmoured pawn: PainShock)
 // Decided looks and timing of the picture.
 const Beams = 6, Lead = .3, Tail = 1.4, Fade = .25, Sputter = .35, JoinFlash = .3, ShowTime = 6;
 const SweepSlow = 1.8, SweepFast = .6;                // seconds per sweep of the fan: at the start, and in the last half
@@ -502,11 +502,7 @@ export default {
           streak(`last prism burn ${g.j} ${q}`, around(chest, ang, r0), around(chest, ang, r0 + .3), .05, hue(rand(q) + s * .3, .5).withAlpha((1 - v) * live), whiteGlow, Y + .052, 3);
         }
       }
-      if (g.down) for (let q = 0; q < 5; q++) {
-        const born = g.c.down + q * .25, v = (s - born) / 1.2;
-        if (v < 0 || v > 1) continue;
-        sprite({ x: g.pos.x + (rand(q + 70) - .5) * .4 + v * .2, z: g.pos.z + .1 + v * .8 }, .35 + v * .5, .3 + v * .4, Smoke.withAlpha(.35 * bump(v)), soft, Y + .004);
-      }
+      if (g.down) downSmoke(g.pos, s - g.c.down);
     });
 
     // --- the meter (the gizmo's stand-in) and the charging flash ------------------------------------------------------------
