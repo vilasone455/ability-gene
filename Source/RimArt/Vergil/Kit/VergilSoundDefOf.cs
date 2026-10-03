@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using RimWorld;
 using Verse;
 
@@ -28,21 +27,6 @@ namespace RimArt
         static VergilSoundDefOf()
         {
             DefOfHelper.EnsureInitializedInCtor(typeof(VergilSoundDefOf));
-        }
-    }
-
-    /// <summary>Plays the casts' sounds, and lets a game test see which played on which tick.</summary>
-    public static class VergilSound
-    {
-        /// <summary>Set by a game test: every sound played since, with its tick. Null outside tests.</summary>
-        public static List<(SoundDef sound, int tick)> Heard;
-
-        /// <summary>Heard from a cell, its layers each at its own time (<see cref="SoundLayers"/>); nothing off the map or without a map.</summary>
-        public static void Play(SoundDef sound, Map map, IntVec3 cell)
-        {
-            if (sound == null || map == null || !cell.InBounds(map)) return;
-            Heard?.Add((sound, Find.TickManager.TicksGame));
-            SoundLayers.Play(sound, new TargetInfo(cell, map));
         }
     }
 }

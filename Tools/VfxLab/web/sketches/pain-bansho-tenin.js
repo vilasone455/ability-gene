@@ -397,12 +397,12 @@ export default {
   },
   events(p) {
     const t = times(p), ev = [
-      { t: t.cast, type: 'sound', def: 'RimArt_BanshoCast' }, { t: t.grip, type: 'sound', def: 'RimArt_BanshoPull' },
+      { t: t.cast, type: 'sound', def: 'AG_PainBanshoCast' }, { t: t.grip, type: 'sound', def: 'AG_PainBanshoPull' },
       { t: t.grip, type: 'shake', value: .012 },
     ];
     if (t.heavy) ev.push({ t: t.arrive, type: 'shake', value: .01 });
-    else if (t.blocked) ev.push({ t: t.arrive, type: 'sound', def: 'RimArt_BanshoHit' }, { t: t.arrive, type: 'shake', value: .03 });
-    else ev.push({ t: t.down, type: 'sound', def: 'RimArt_BanshoSlam' }, { t: t.down, type: 'shake', value: .06 });
+    else if (t.blocked) ev.push({ t: t.arrive, type: 'sound', def: 'AG_PainBanshoHit' }, { t: t.arrive, type: 'shake', value: .03 });
+    else ev.push({ t: t.down, type: 'sound', def: 'AG_PainBanshoSlam' }, { t: t.down, type: 'shake', value: .06 });
     return ev;
   },
 

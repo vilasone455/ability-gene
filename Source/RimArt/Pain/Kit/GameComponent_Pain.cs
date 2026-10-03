@@ -39,6 +39,9 @@ namespace RimArt
             home = caster.Map;
         }
 
+        /// <summary>Heard from Pain as the cast job begins the warmup (the sketch's first sound marker); null for none.</summary>
+        public virtual SoundDef WarmupSound => null;
+
         /// <summary>After the fire, whether the cast job must keep Pain standing.</summary>
         public virtual bool Holds(int now) => false;
         public virtual Rot4 Facing(int now) => Rot4.Invalid;
@@ -305,7 +308,9 @@ namespace RimArt
             if (pictureTick >= 0 || job.ability == null || !job.ability.CanCast) return;
             pictureTick = Find.TickManager.TicksGame;
             PainCast cast = PainCasts.Make(job.ability.def, pawn, job.targetA, pictureTick);
-            if (cast != null) GameComponent_Pain.Instance?.Begin(cast);
+            if (cast == null) return;
+            GameComponent_Pain.Instance?.Begin(cast);
+            SoundLayers.Play(cast.WarmupSound, pawn.Map, pawn.Position);
         }
 
         public override void ExposeData()

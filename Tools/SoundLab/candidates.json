@@ -1423,14 +1423,235 @@
    ],
    "hero": "Sasuke"
   },
-  "AG_PainBanshoTenin": {
-   "note": "The pull (a push-wave run backwards), the flight, and the face-down slam.",
+  "AG_ShinraTensei": {
+   "note": "Already in game: AG_ShinraCharge and AG_ShinraRelease, set by hand before the lab. The first option of each is that sound, so picking it keeps it.",
    "moments": [
+    {
+     "id": "charge",
+     "label": "Charge",
+     "when": "the charged push starts its hold",
+     "options": [
+      {
+       "label": "In game now: animal pulser, very low",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.585,
+         "volume": 18
+        }
+       ]
+      },
+      {
+       "label": "Animal pulser, low, louder",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.6,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Animal pulser + psychic warmup",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.6,
+         "volume": 25
+        },
+        {
+         "clip": "Item/Psychic_Artifact_Warmup_A01",
+         "pitch": 0.9,
+         "volume": 20
+        }
+       ]
+      },
+      {
+       "label": "Psycast casting loop, low (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Casting_Loop",
+         "pitch": 0.7,
+         "volume": 30
+        }
+       ]
+      }
+     ],
+     "defName": "AG_ShinraCharge"
+    },
+    {
+     "id": "release",
+     "label": "Push",
+     "when": "the wave leaves him (tap and charged)",
+     "options": [
+      {
+       "label": "In game now: mortar dry, very low + animal pulser",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.415,
+         "volume": 38
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 1.115,
+         "volume": 26
+        }
+       ]
+      },
+      {
+       "label": "In game now + mech band shock (Biotech)",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.415,
+         "volume": 35
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 1.115,
+         "volume": 22
+        },
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 0.7,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Thump cannon + animal pulser",
+       "layers": [
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 1.1,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Psychic pulse psycast + mortar dry (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Psychic_Pulse",
+         "pitch": 0.7,
+         "volume": 40
+        },
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.45,
+         "volume": 30
+        }
+       ]
+      }
+     ],
+     "defName": "AG_ShinraRelease"
+    }
+   ],
+   "hero": "Pain"
+  },
+  "AG_PainBanshoTenin": {
+   "note": "Warm-up 0.4 s (palm up, the core forms), the pull (0.15 s tug, then 0.34 s of flight back-first), and either the face-down slam or, when a pawn stands in the line, the two of them colliding.",
+   "moments": [
+    {
+     "id": "cast",
+     "label": "Palm up",
+     "when": "warm-up 0.4 s: the black core forms at the fingertips",
+     "options": [
+      {
+       "label": "Animal pulser, low (Shinra's charge clip)",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.8,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Psycast psychic effect, low (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psycast_Psychic_Effect",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Soothe pulser, low",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Soothe_Pulser",
+         "pitch": 0.7,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Swish, low + animal pulser",
+       "layers": [
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 0.6,
+         "volume": 30
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 1.0,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Synth: sucked in, very low",
+       "layers": [
+        {
+         "folder": "AG/KamuiIn",
+         "pitch": 0.6,
+         "volume": 30
+        }
+       ]
+      }
+     ],
+     "defName": "AG_PainBanshoCast"
+    },
     {
      "id": "pull",
      "label": "Pull",
-     "when": "cast: the target starts to slide",
+     "when": "the pull takes hold: tug, lift, 0.34 s of flight to his hand",
      "options": [
+      {
+       "label": "Animal pulser + swish, low",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.9,
+         "volume": 30
+        },
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 0.7,
+         "volume": 45,
+         "delay": 0.15
+        }
+       ]
+      },
+      {
+       "label": "Longjump, low",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/Longjump/Jump",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
       {
        "label": "Psychic pulse, low",
        "layers": [
@@ -1471,12 +1692,67 @@
         }
        ]
       }
-     ]
+     ],
+     "defName": "AG_PainBanshoPull"
+    },
+    {
+     "id": "hit",
+     "label": "Blocked",
+     "when": "a standing pawn in the line: the two collide, 8 blunt each",
+     "options": [
+      {
+       "label": "Punch hit pawn, low",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 0.8,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Big animal hit",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Pawn",
+         "pitch": 0.9,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Big hit + punch",
+       "layers": [
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Pawn",
+         "pitch": 1.0,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/PunchHitPawn",
+         "pitch": 0.9,
+         "volume": 35,
+         "delay": 0.02
+        }
+       ]
+      },
+      {
+       "label": "Bionic punch, low",
+       "layers": [
+        {
+         "folder": "Impact/BionicPunch_Hit",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
+      }
+     ],
+     "defName": "AG_PainBanshoHit"
     },
     {
      "id": "slam",
      "label": "Slam",
-     "when": "arrival: pushed face-down",
+     "when": "caught by the head and pushed face-down: plates tip up, dust",
      "options": [
       {
        "label": "Big animal hit + stone",
@@ -1512,15 +1788,125 @@
          "volume": 50
         }
        ]
+      },
+      {
+       "label": "Mortar dry, very low + big hit (Shinra's push body)",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.5,
+         "volume": 35
+        },
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Pawn",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Stone punch + rock chunks",
+       "layers": [
+        {
+         "folder": "Impact/PunchHitBuilding/Stone",
+         "pitch": 0.7,
+         "volume": 50
+        },
+        {
+         "folder": "Interact/Haul/Drop/ChunkRock",
+         "pitch": 0.9,
+         "volume": 35,
+         "delay": 0.08
+        }
+       ]
+      },
+      {
+       "label": "Emergence end, small",
+       "layers": [
+        {
+         "folder": "Misc/Emergence/end_small",
+         "pitch": 1.0,
+         "volume": 50
+        }
+       ]
+      },
+      {
+       "label": "Zeus hammer, low (Royalty)",
+       "layers": [
+        {
+         "folder": "Impact/ZeusHammer",
+         "pitch": 0.7,
+         "volume": 45
+        }
+       ]
       }
-     ]
+     ],
+     "defName": "AG_PainBanshoSlam"
     }
    ],
    "hero": "Pain"
   },
   "AG_PainBlackReceiver": {
-   "note": "A rod thrown fast, and the stab.",
+   "note": "Each rod: it grows out of the palm (0.3 s; 0.2 s when stabbing), is thrown at 30 cells/s and goes in; the third in one pawn pins it on its back. Each breaks after 8 s, and all at once when Pain goes down. A throw happens three times in 1.4 s, so these are short.",
    "moments": [
+    {
+     "id": "grow",
+     "label": "Rod grows",
+     "when": "a rod grows out of his palm",
+     "options": [
+      {
+       "label": "Mono sword handling, short (Royalty)",
+       "layers": [
+        {
+         "clip": "UI/WeaponHandling/HandleMonoSword",
+         "pitch": 1.4,
+         "volume": 30
+        }
+       ]
+      },
+      {
+       "label": "Animal pulser, high and quiet",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 1.6,
+         "volume": 20
+        }
+       ]
+      },
+      {
+       "label": "Piercing spine, low (Biotech)",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/PiercingSpine",
+         "pitch": 0.7,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Weapon handling, small, low",
+       "layers": [
+        {
+         "clip": "UI/WeaponHandling/HandleWeapon_SmallA",
+         "pitch": 0.7,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Synth: ting, low",
+       "layers": [
+        {
+         "folder": "AG/Ting",
+         "pitch": 0.6,
+         "volume": 25
+        }
+       ]
+      }
+     ],
+     "defName": "AG_PainReceiverGrow"
+    },
     {
      "id": "throw",
      "label": "Throw",
@@ -1560,13 +1946,44 @@
          "volume": 30
         }
        ]
+      },
+      {
+       "label": "Bow, short and low",
+       "layers": [
+        {
+         "clip": "Weapon/BowB",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Spiner",
+       "layers": [
+        {
+         "folder": "Weapon/Spiner",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Synth: sword flies, low",
+       "layers": [
+        {
+         "folder": "AG/SwordFly",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
       }
-     ]
+     ],
+     "defName": "AG_PainReceiverThrow"
     },
     {
      "id": "hit",
      "label": "Rod in",
-     "when": "the rod enters a pawn",
+     "when": "the rod enters a pawn (first and second rod)",
      "options": [
       {
        "label": "Bullet flesh + metal sharp",
@@ -1602,40 +2019,264 @@
          "volume": 35
         }
        ]
+      },
+      {
+       "label": "Metal sharp, low",
+       "layers": [
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Bullet flesh + animal pulser blip",
+       "layers": [
+        {
+         "folder": "Impact/Bullet_Flesh",
+         "pitch": 0.9,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 1.8,
+         "volume": 15
+        }
+       ]
       }
-     ]
+     ],
+     "defName": "AG_PainReceiverHit"
+    },
+    {
+     "id": "pin",
+     "label": "Pinned",
+     "when": "the third rod: the pawn falls on its back, the rods go into the floor",
+     "options": [
+      {
+       "label": "Metal sharp + body on stone",
+       "layers": [
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/PunchHitBuilding/Stone",
+         "pitch": 0.8,
+         "volume": 40,
+         "delay": 0.15
+        }
+       ]
+      },
+      {
+       "label": "Scyther hit + big hit",
+       "layers": [
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+         "pitch": 0.8,
+         "volume": 40
+        },
+        {
+         "folder": "Pawn/Animal/Melee_Big/Hit_Pawn",
+         "pitch": 0.8,
+         "volume": 40,
+         "delay": 0.15
+        }
+       ]
+      },
+      {
+       "label": "Metal sharp + stone + animal pulser, low",
+       "layers": [
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 0.8,
+         "volume": 40
+        },
+        {
+         "folder": "Impact/MeleeHit_Stone",
+         "pitch": 0.7,
+         "volume": 40,
+         "delay": 0.15
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.6,
+         "volume": 20
+        }
+       ]
+      },
+      {
+       "label": "Metal bullet + stone block drop",
+       "layers": [
+        {
+         "folder": "Impact/Bullet_Metal",
+         "pitch": 0.8,
+         "volume": 35
+        },
+        {
+         "folder": "Interact/Work/Construct/Stone/StoneBlock_Drop",
+         "pitch": 0.8,
+         "volume": 45,
+         "delay": 0.15
+        }
+       ]
+      }
+     ],
+     "defName": "AG_PainReceiverPin"
+    },
+    {
+     "id": "break",
+     "label": "Rod breaks",
+     "when": "the rod shrinks from the knob down in 0.35 s, shedding dark flakes",
+     "options": [
+      {
+       "label": "Shield broken, low and quiet",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 0.6,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Glass shattering, low and quiet",
+       "layers": [
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 0.6,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Light stone chunk, high",
+       "layers": [
+        {
+         "folder": "Interact/Work/Construct/Stone/Stone_Chunk_Light",
+         "pitch": 1.4,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Hiss",
+       "layers": [
+        {
+         "folder": "Misc/Hiss",
+         "pitch": 0.8,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Animal pulser falling + hiss",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.5,
+         "volume": 20
+        },
+        {
+         "folder": "Misc/Hiss",
+         "pitch": 1.2,
+         "volume": 15
+        }
+       ]
+      },
+      {
+       "label": "Synth: out of the swirl, soft",
+       "layers": [
+        {
+         "folder": "AG/KamuiOut",
+         "pitch": 0.7,
+         "volume": 25
+        }
+       ]
+      }
+     ],
+     "defName": "AG_PainReceiverBreak"
     }
    ],
    "hero": "Pain"
   },
   "AG_PainChibakuTensei": {
-   "note": "The core formed and thrown up, the 3 s tearing of the ground, and the compression at the end.",
+   "note": "Warm-up 0.8 s (the core forms between his hands, thrown up), the core climbing and coming down over the cell, 3 s of ground torn up and pulled in, the ball formed (holds 12 s), 0.4 s of cracking, the burst.",
    "moments": [
     {
-     "id": "form",
-     "label": "Form + throw",
-     "when": "core between his hands, thrown up",
+     "id": "cast",
+     "label": "Core forms",
+     "when": "warm-up 0.8 s between cupped hands, thrown up in the last 0.18 s",
      "options": [
       {
-       "label": "Psychic warmup, low",
+       "label": "Psychic warmup, fast",
        "layers": [
         {
          "clip": "Item/Psychic_Artifact_Warmup_A01",
-         "pitch": 0.6,
-         "volume": 50
+         "pitch": 1.4,
+         "volume": 40
         }
        ]
       },
       {
-       "label": "Bestow warmup, low",
+       "label": "Psycast psychic effect (Royalty)",
        "layers": [
         {
-         "clip": "Misc/Bestow_Warmup",
-         "pitch": 0.7,
-         "volume": 45
+         "folder": "Misc/Psycasts/Psycast_Psychic_Effect",
+         "pitch": 0.9,
+         "volume": 40
         }
        ]
       },
+      {
+       "label": "Animal pulser, low",
+       "layers": [
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.7,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Fire spew warmup, low (the glow)",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/FireSpew/Warmup",
+         "pitch": 0.8,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Mech resurrect warmup (Biotech)",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/MechResurrect/Warmup",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Synth: whine rising, low",
+       "layers": [
+        {
+         "folder": "AG/KiChargeStart",
+         "pitch": 0.7,
+         "volume": 35
+        }
+       ]
+      }
+     ],
+     "defName": "AG_PainChibakuCast"
+    },
+    {
+     "id": "launch",
+     "label": "Core flies",
+     "when": "the core climbs from his hand to 5 cells over the cell",
+     "options": [
       {
        "label": "Drop pod leaving",
        "layers": [
@@ -1645,13 +2286,59 @@
          "volume": 50
         }
        ]
+      },
+      {
+       "label": "Mech launcher launch, low (Biotech)",
+       "layers": [
+        {
+         "folder": "Pawn/Abilities/LongJumpMechLauncher/Launch",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Swish, low + animal pulser",
+       "layers": [
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 0.6,
+         "volume": 45
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 1.2,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Mortar fire, low",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Fire",
+         "pitch": 0.6,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Synth: shun, low",
+       "layers": [
+        {
+         "folder": "AG/Shun",
+         "pitch": 0.6,
+         "volume": 45
+        }
+       ]
       }
-     ]
+     ],
+     "defName": "AG_PainChibakuLaunch"
     },
     {
-     "id": "tear",
-     "label": "Tear (loop)",
-     "when": "3 s of ground torn up and pulled in",
+     "id": "pull",
+     "label": "Tear (3 s)",
+     "when": "3 s of ground torn up in plates and pulled into the core",
      "options": [
       {
        "label": "Emergence quake + tornado",
@@ -1702,14 +2389,52 @@
          "delay": 1.7
         }
        ]
+      },
+      {
+       "label": "Quake + stone breaking + animal pulser",
+       "layers": [
+        {
+         "folder": "Misc/Emergence/Quake",
+         "pitch": 0.8,
+         "volume": 50
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Medium",
+         "pitch": 0.8,
+         "volume": 35,
+         "delay": 0.6
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Big",
+         "pitch": 0.7,
+         "volume": 35,
+         "delay": 1.6
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 0.6,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Neuroquake, low (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Neuroquake",
+         "pitch": 0.8,
+         "volume": 45
+        }
+       ]
       }
      ],
+     "defName": "AG_PainChibakuPull",
      "duration": 3
     },
     {
-     "id": "close",
-     "label": "Close",
-     "when": "the rock sphere closes",
+     "id": "formed",
+     "label": "Ball formed",
+     "when": "the last plates arrive and the ball closes; a big shake",
      "options": [
       {
        "label": "Emergence end, large",
@@ -1745,8 +2470,204 @@
          "volume": 55
         }
        ]
+      },
+      {
+       "label": "Big stone building down, low + mortar",
+       "layers": [
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Big",
+         "pitch": 0.7,
+         "volume": 45
+        },
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.5,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Thump cannon impact, low",
+       "layers": [
+        {
+         "folder": "Impact/ThumpCannon",
+         "pitch": 0.8,
+         "volume": 50
+        }
+       ]
       }
-     ]
+     ],
+     "defName": "AG_PainChibakuFormed"
+    },
+    {
+     "id": "crack",
+     "label": "Cracking",
+     "when": "0.4 s: cracks widen and fill with light, chips spat out",
+     "options": [
+      {
+       "label": "Light stone chunks, low + glass",
+       "layers": [
+        {
+         "folder": "Interact/Work/Construct/Stone/Stone_Chunk_Light",
+         "pitch": 0.8,
+         "volume": 40
+        },
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 0.6,
+         "volume": 20
+        }
+       ]
+      },
+      {
+       "label": "Stone hammer, fast",
+       "layers": [
+        {
+         "folder": "Interact/Work/Construct/Stone/Hammer_Stone",
+         "pitch": 1.2,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Small stone building down",
+       "layers": [
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Small",
+         "pitch": 0.9,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Rock collapse, high",
+       "layers": [
+        {
+         "clip": "Misc/RockCollapse",
+         "pitch": 1.4,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Shield broken, low + stone",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 0.5,
+         "volume": 25
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Small",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      }
+     ],
+     "defName": "AG_PainChibakuCrack"
+    },
+    {
+     "id": "burst",
+     "label": "Burst",
+     "when": "a flash, the ball bursts into chunks that fall into the crater",
+     "options": [
+      {
+       "label": "Giant explosion, low",
+       "layers": [
+        {
+         "clip": "Explosion/GiantExplosion",
+         "pitch": 0.8,
+         "volume": 55
+        }
+       ]
+      },
+      {
+       "label": "Mortar dry, low + stone",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.6,
+         "volume": 55
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Big",
+         "pitch": 0.8,
+         "volume": 40,
+         "delay": 0.1
+        }
+       ]
+      },
+      {
+       "label": "Rocket explosion + rock collapse",
+       "layers": [
+        {
+         "folder": "Weapon/RocketswarmLauncher/Explosion",
+         "pitch": 0.8,
+         "volume": 50
+        },
+        {
+         "clip": "Misc/RockCollapse",
+         "pitch": 0.8,
+         "volume": 40,
+         "delay": 0.05
+        }
+       ]
+      },
+      {
+       "label": "Mech band shockwave + stone (Biotech)",
+       "layers": [
+        {
+         "clip": "Explosion/Mechband_Shockwave_Explosion_01a",
+         "pitch": 0.8,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Big",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Shinra's push body, lower + stone",
+       "layers": [
+        {
+         "folder": "Weapon/Artillery/Mortar_Explode_Dry",
+         "pitch": 0.38,
+         "volume": 50
+        },
+        {
+         "folder": "Misc/Artifacts/Psychic_Animal_Pulser",
+         "pitch": 1.1,
+         "volume": 30
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Big",
+         "pitch": 0.8,
+         "volume": 40,
+         "delay": 0.05
+        }
+       ]
+      },
+      {
+       "label": "Drop pod impact, low + stone",
+       "layers": [
+        {
+         "folder": "Misc/DropPodImpact/Default",
+         "pitch": 0.7,
+         "volume": 45
+        },
+        {
+         "folder": "Impact/BuildingDestroyed/Stone/Big",
+         "pitch": 0.8,
+         "volume": 35,
+         "delay": 0.05
+        }
+       ]
+      }
+     ],
+     "defName": "AG_PainChibakuBurst"
     }
    ],
    "hero": "Pain"

@@ -20,6 +20,19 @@ namespace RimArt
 
         public static JobDef AG_CastPain;
 
+        // The casts' sounds (AG_Pain_Sounds.xml), picked in the VFX lab against the sketches' sound markers of the same
+        // names, played with SoundLayers.Play.
+        public static SoundDef AG_PainBanshoCast;
+        public static SoundDef AG_PainBanshoPull;
+        public static SoundDef AG_PainBanshoSlam;
+        public static SoundDef AG_PainReceiverGrow;
+        public static SoundDef AG_PainReceiverHit;
+        public static SoundDef AG_PainChibakuLaunch;
+        public static SoundDef AG_PainChibakuPull;
+        public static SoundDef AG_PainChibakuFormed;
+        public static SoundDef AG_PainChibakuCrack;
+        public static SoundDef AG_PainChibakuBurst;
+
         static PainDefOf()
         {
             DefOfHelper.EnsureInitializedInCtor(typeof(PainDefOf));

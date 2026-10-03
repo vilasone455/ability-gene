@@ -106,6 +106,7 @@ namespace RimArt
         public const float LandGap = 1f, TugLean = 0.3f;
 
         public override AbilityDef Def => PainDefOf.AG_PainBanshoTenin;
+        public override SoundDef WarmupSound => PainDefOf.AG_PainBanshoCast;
         protected override float Lead => LeadTime;
         protected override float FireAt => LeadTime + Warmup;
 
@@ -179,6 +180,7 @@ namespace RimArt
             pawn.pather?.StopDead();
             Hold(now);
             Shake(heavy ? BanshoTiming.ShakeDrag : BanshoTiming.ShakeGrip);
+            SoundLayers.Play(PainDefOf.AG_PainBanshoPull, home, pawn.Position);
         }
 
         /// <summary>The sketch's camera shakes (grip, drag, block, slam), only when the pull is on the map on screen.</summary>
@@ -320,6 +322,7 @@ namespace RimArt
             target.TakeDamage(new DamageInfo(DamageDefOf.Blunt, P.slamDamage, 0f, -1f, caster));
             if (!target.Dead) target.stances?.stunner?.StunFor(Mathf.RoundToInt(P.slamStunSeconds * 60f), caster, true, false);
             Shake(BanshoTiming.ShakeSlam);
+            SoundLayers.Play(PainDefOf.AG_PainBanshoSlam, home, target.PositionHeld);
         }
 
         /// <summary>Drawn face-down after the slam: while its stun lasts, until the picture's tail.</summary>

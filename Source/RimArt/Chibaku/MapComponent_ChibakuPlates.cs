@@ -58,6 +58,8 @@ namespace RimArt
         private List<ChibakuHeld> savedPawns;
         private IntVec3 savedCell = IntVec3.Invalid;
         private bool releaseAfterLoad;
+        /// <summary>The live ball's sounds heard so far, one bit each (<see cref="Hear"/>). Not saved: a loaded ball is put down at once.</summary>
+        private int heard;
 
         public MapComponent_ChibakuPlates(Map map) : base(map)
         {
@@ -107,6 +109,7 @@ namespace RimArt
             if (!frozen.HasValue)
             {
                 startTick = Find.TickManager.TicksGame;
+                heard = 0;
                 this.caster = caster;
                 pull = new ChibakuPull(this, ball, cell, caster, props);
             }
@@ -155,7 +158,23 @@ namespace RimArt
             float s = LiveSeconds;
             if (caster != null && s < ball.Crack && !CasterHolds()) ball.BreakAt(s);
             pull.Tick(s);
+            Hear(1, s >= ChibakuBall.Pull, PainDefOf.AG_PainChibakuPull);
+            Hear(2, s >= ChibakuBall.Formed, PainDefOf.AG_PainChibakuFormed);
+            Hear(4, s >= ball.Crack, PainDefOf.AG_PainChibakuCrack);
+            Hear(8, s >= ball.Burst, PainDefOf.AG_PainChibakuBurst);
             if (s > ball.End) Stop();
+        }
+
+        /// <summary>
+        /// The live ball's sound for one moment (the sketch's markers: the pull starting, the ball formed, its seams
+        /// opening, the burst), once, from the ball's cell, on the first tick at or past it: Release and Pain going down
+        /// move the crack and the burst earlier.
+        /// </summary>
+        private void Hear(int bit, bool due, SoundDef sound)
+        {
+            if (!due || (heard & bit) != 0) return;
+            heard |= bit;
+            SoundLayers.Play(sound, map, ground.cell);
         }
 
         public override void MapComponentUpdate()

@@ -79,6 +79,7 @@ namespace RimArt
             foreach (int step in WaitFor(() => cast.handed, 120)) yield return step;
             ChibakuBall ball = component.Ball;
             if (!t.Check(component.Live && component.Caster == host && ball != null, "the ball began over the cell when the core arrived")) { EndHost(record); yield break; }
+            int ballStart = t.Now - Mathf.RoundToInt(component.LiveSeconds * 60f);
             t.Check(host.CurJobDef == PainDefOf.AG_CastPain, "Pain holds his hand up (the cast job)");
             yield return Until(component, ChibakuBall.Pull + 1.2f);
             yield return t.ShotAs("chibaku-tensei-3-pull", view, 12f);
@@ -112,6 +113,13 @@ namespace RimArt
             yield return t.ShotAs("chibaku-tensei-5-landed", view, 12f);
             yield return Until(component, ball.End + .2f);
             t.Check(!component.Live && component.Inner.Count == 0, "the ball ended with nothing left inside");
+            t.Log("heard: " + HeardSince(cast.fireTick) + "; the ball began at fire + " + (ballStart - cast.fireTick));
+            t.Check(HeardOnly(PainDefOf.AG_PainChibakuLaunch, cast.fireTick, 0), "the launch is heard once, on the fire tick");
+            foreach (var (sound, at) in new[] { (PainDefOf.AG_PainChibakuPull, ChibakuBall.Pull), (PainDefOf.AG_PainChibakuFormed, ChibakuBall.Formed),
+                (PainDefOf.AG_PainChibakuCrack, ball.Crack), (PainDefOf.AG_PainChibakuBurst, ball.Burst) })
+                t.Check(HeardNear(sound, ballStart, Mathf.CeilToInt(at * 60f)), sound.defName + " is heard once, " + at.ToString("0.00") + " s into the ball");
+            List<int> pull = HeardAt(PainDefOf.AG_PainChibakuPull, 0);
+            if (pull.Count == 1) t.Check(t.LayersOnTime(PainDefOf.AG_PainChibakuPull, pull[0]), "the pull's three stone breaks start at their picked delays (0, 0.8, 1.7 s)");
             EndHost(record);
         }
 
@@ -208,6 +216,7 @@ namespace RimArt
             Command_Action release = ReleaseButton(ability);
             if (!t.Check(release != null && !release.Disabled, "the Release button is there once the ball has formed")) { EndHost(record); yield break; }
             float pressedAt = component.LiveSeconds;
+            int pressed = t.Now;
             release.action();
             t.Check(ball.Broken && Mathf.Abs(ball.Burst - (pressedAt + ChibakuBall.CrackTime)) < .05f,
                 $"it bursts {ChibakuBall.CrackTime:0.0} s after the press: at {ball.Burst:0.00} s instead of {fullBurst:0.00} s");
@@ -215,6 +224,9 @@ namespace RimArt
             t.Check(PainKit.ChibakuLeft(host) <= ChibakuBall.CrackTime + .05f, "the lock ends with the burst (" + PainKit.ChibakuLeft(host).ToString("0.00") + " s left)");
 
             yield return Until(component, ball.Burst + .1f);
+            t.Log("heard: " + HeardSince(pressed));
+            t.Check(HeardNear(PainDefOf.AG_PainChibakuCrack, pressed, 0), "the crack is heard once, at the press");
+            t.Check(HeardNear(PainDefOf.AG_PainChibakuBurst, pressed, Mathf.CeilToInt(ChibakuBall.CrackTime * 60f)), "the burst is heard once, " + ChibakuBall.CrackTime.ToString("0.0") + " s after the press");
             bool waits = bansho.GizmoDisabled(out string why) && why != null && why.Contains("Chibaku");
             t.Check(!waits, "Banshō Ten'in is free after the burst (" + why + ")");
             yield return Until(component, ball.Burst + ball.FallTime + .1f);

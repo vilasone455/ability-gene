@@ -203,40 +203,138 @@ ability("AG_SasukeAmaterasu",
           O("Flamethrower, very low", L("Weapon/Flamethrower", 0.5, 20, loop=True))))
 
 # Pain --------------------------------------------------------------------------------------------
+# One moment per sound marker in the Pain sketches (Tools/VfxLab/web/sketches/pain-*.js); its defName
+# is the SoundDef the cast will play. The kit's sound so far is Shinra Tensei's: the Gravity Well hum's
+# clip (PAIN_HUM) low for the charge, and the dry mortar far down for the push; options that reuse
+# them keep the four abilities sounding like one hero.
+PAIN_HUM = "Misc/Artifacts/Psychic_Animal_Pulser"
+BIG_HIT = "Pawn/Animal/Melee_Big/Hit_Pawn"
+STONE_HIT = "Impact/PunchHitBuilding/Stone"
+STONE_BIG = "Impact/BuildingDestroyed/Stone/Big"
+METAL_SHARP = "Impact/MeleeHit_Metal_Sharp"
+ability("AG_ShinraTensei",
+        "Already in game: AG_ShinraCharge and AG_ShinraRelease, set by hand before the lab. The first option of each is that sound, so picking it keeps it.",
+        M("charge", "Charge", "the charged push starts its hold",
+          O("In game now: animal pulser, very low", L(PAIN_HUM, 0.585, 18)),
+          O("Animal pulser, low, louder", L(PAIN_HUM, 0.6, 30)),
+          O("Animal pulser + psychic warmup", L(PAIN_HUM, 0.6, 25), L(WARMUP, 0.9, 20)),
+          O("Psycast casting loop, low (Royalty)", L("Misc/Psycasts/Psycast_Casting_Loop", 0.7, 30)),
+          defName="AG_ShinraCharge"),
+        M("release", "Push", "the wave leaves him (tap and charged)",
+          O("In game now: mortar dry, very low + animal pulser", L(BOOM, 0.415, 38), L(PAIN_HUM, 1.115, 26)),
+          O("In game now + mech band shock (Biotech)", L(BOOM, 0.415, 35), L(PAIN_HUM, 1.115, 22), L(SHOCKWAVE, 0.7, 25)),
+          O("Thump cannon + animal pulser", L("Impact/ThumpCannon", 0.8, 45), L(PAIN_HUM, 1.1, 25)),
+          O("Psychic pulse psycast + mortar dry (Royalty)", L("Misc/Psycasts/Psycast_Psychic_Pulse", 0.7, 40), L(BOOM, 0.45, 30)),
+          defName="AG_ShinraRelease"))
 ability("AG_PainBanshoTenin",
-        "The pull (a push-wave run backwards), the flight, and the face-down slam.",
-        M("pull", "Pull", "cast: the target starts to slide",
+        "Warm-up 0.4 s (palm up, the core forms), the pull (0.15 s tug, then 0.34 s of flight back-first), and either the face-down slam or, when a pawn stands in the line, the two of them colliding.",
+        M("cast", "Palm up", "warm-up 0.4 s: the black core forms at the fingertips",
+          O("Animal pulser, low (Shinra's charge clip)", L(PAIN_HUM, 0.8, 30)),
+          O("Psycast psychic effect, low (Royalty)", L("Misc/Psycasts/Psycast_Psychic_Effect", 0.8, 35)),
+          O("Soothe pulser, low", L("Misc/Artifacts/Psychic_Soothe_Pulser", 0.7, 30)),
+          O("Swish, low + animal pulser", L("Misc/Swish2", 0.6, 30), L(PAIN_HUM, 1.0, 25)),
+          defName="AG_PainBanshoCast"),
+        M("pull", "Pull", "the pull takes hold: tug, lift, 0.34 s of flight to his hand",
+          O("Animal pulser + swish, low", L(PAIN_HUM, 0.9, 30), L("Misc/Swish1", 0.7, 45, 0.15)),
+          O("Longjump, low", L("Pawn/Abilities/Longjump/Jump", 0.8, 40)),
           O("Psychic pulse, low", L(PULSE, 0.7, 45)),
-          O("Animal pulser (the Gravity Well hum's clip)", L("Misc/Artifacts/Psychic_Animal_Pulser", 0.7, 45)),
-          O("Psychic pulse psycast (Royalty)", L("Misc/Psycasts/Psycast_Psychic_Pulse", 0.8, 45))),
-        M("slam", "Slam", "arrival: pushed face-down",
-          O("Big animal hit + stone", L("Pawn/Animal/Melee_Big/Hit_Pawn", 0.8, 55), L("Impact/PunchHitBuilding/Stone", 0.8, 40)),
+          O("Animal pulser (the Gravity Well hum's clip)", L(PAIN_HUM, 0.7, 45)),
+          O("Psychic pulse psycast (Royalty)", L("Misc/Psycasts/Psycast_Psychic_Pulse", 0.8, 45)),
+          defName="AG_PainBanshoPull"),
+        M("hit", "Blocked", "a standing pawn in the line: the two collide, 8 blunt each",
+          O("Punch hit pawn, low", L("Impact/PunchHitPawn", 0.8, 50)),
+          O("Big animal hit", L(BIG_HIT, 0.9, 50)),
+          O("Big hit + punch", L(BIG_HIT, 1.0, 45), L("Impact/PunchHitPawn", 0.9, 35, 0.02)),
+          O("Bionic punch, low", L("Impact/BionicPunch_Hit", 0.7, 45)),
+          defName="AG_PainBanshoHit"),
+        M("slam", "Slam", "caught by the head and pushed face-down: plates tip up, dust",
+          O("Big animal hit + stone", L(BIG_HIT, 0.8, 55), L(STONE_HIT, 0.8, 40)),
           O("Thump cannon impact", L("Impact/ThumpCannon", 1.0, 55)),
-          O("Rock collapse, short", L("Misc/RockCollapse", 1.2, 50))))
+          O("Rock collapse, short", L("Misc/RockCollapse", 1.2, 50)),
+          O("Mortar dry, very low + big hit (Shinra's push body)", L(BOOM, 0.5, 35), L(BIG_HIT, 0.8, 45)),
+          O("Stone punch + rock chunks", L(STONE_HIT, 0.7, 50), L("Interact/Haul/Drop/ChunkRock", 0.9, 35, 0.08)),
+          O("Emergence end, small", L("Misc/Emergence/end_small", 1.0, 50)),
+          O("Zeus hammer, low (Royalty)", L("Impact/ZeusHammer", 0.7, 45)),
+          defName="AG_PainBanshoSlam"))
 ability("AG_PainBlackReceiver",
-        "A rod thrown fast, and the stab.",
+        "Each rod: it grows out of the palm (0.3 s; 0.2 s when stabbing), is thrown at 30 cells/s and goes in; the third in one pawn pins it on its back. Each breaks after 8 s, and all at once when Pain goes down. A throw happens three times in 1.4 s, so these are short.",
+        M("grow", "Rod grows", "a rod grows out of his palm",
+          O("Mono sword handling, short (Royalty)", L("UI/WeaponHandling/HandleMonoSword", 1.4, 30)),
+          O("Animal pulser, high and quiet", L(PAIN_HUM, 1.6, 20)),
+          O("Piercing spine, low (Biotech)", L("Pawn/Abilities/PiercingSpine", 0.7, 25)),
+          O("Weapon handling, small, low", L("UI/WeaponHandling/HandleWeapon_SmallA", 0.7, 35)),
+          defName="AG_PainReceiverGrow"),
         M("throw", "Throw", "the rod leaves his hand",
           O("Piercing spine launch", L("Pawn/Abilities/PiercingSpine", 1.0, 45)),
           O("Bow shot", L("Weapon/BowA", 0.9, 50)),
-          O("Swish + spiner", L("Misc/Swish1", 1.4, 40), L("Weapon/Spiner", 0.8, 30))),
-        M("hit", "Rod in", "the rod enters a pawn",
-          O("Bullet flesh + metal sharp", L("Impact/Bullet_Flesh", 0.9, 45), L("Impact/MeleeHit_Metal_Sharp", 0.9, 35)),
+          O("Swish + spiner", L("Misc/Swish1", 1.4, 40), L("Weapon/Spiner", 0.8, 30)),
+          O("Bow, short and low", L("Weapon/BowB", 0.8, 45)),
+          O("Spiner", L("Weapon/Spiner", 1.0, 45)),
+          defName="AG_PainReceiverThrow"),
+        M("hit", "Rod in", "the rod enters a pawn (first and second rod)",
+          O("Bullet flesh + metal sharp", L("Impact/Bullet_Flesh", 0.9, 45), L(METAL_SHARP, 0.9, 35)),
           O("Scyther hit", L(BLADE_HIT, 0.8, 45)),
-          O("Bio bite (wet)", L("Pawn/Abilities/Bloodfeed", 1.2, 35))))
+          O("Bio bite (wet)", L("Pawn/Abilities/Bloodfeed", 1.2, 35)),
+          O("Metal sharp, low", L(METAL_SHARP, 0.8, 45)),
+          O("Bullet flesh + animal pulser blip", L("Impact/Bullet_Flesh", 0.9, 45), L(PAIN_HUM, 1.8, 15)),
+          defName="AG_PainReceiverHit"),
+        M("pin", "Pinned", "the third rod: the pawn falls on its back, the rods go into the floor",
+          O("Metal sharp + body on stone", L(METAL_SHARP, 0.8, 45), L(STONE_HIT, 0.8, 40, 0.15)),
+          O("Scyther hit + big hit", L(BLADE_HIT, 0.8, 40), L(BIG_HIT, 0.8, 40, 0.15)),
+          O("Metal sharp + stone + animal pulser, low", L(METAL_SHARP, 0.8, 40), L("Impact/MeleeHit_Stone", 0.7, 40, 0.15), L(PAIN_HUM, 0.6, 20)),
+          O("Metal bullet + stone block drop", L("Impact/Bullet_Metal", 0.8, 35), L("Interact/Work/Construct/Stone/StoneBlock_Drop", 0.8, 45, 0.15)),
+          defName="AG_PainReceiverPin"),
+        M("break", "Rod breaks", "the rod shrinks from the knob down in 0.35 s, shedding dark flakes",
+          O("Shield broken, low and quiet", L("Misc/EnergyShield/Broken", 0.6, 25)),
+          O("Glass shattering, low and quiet", L("Buildings/GestatorGlassShattering", 0.6, 25)),
+          O("Light stone chunk, high", L("Interact/Work/Construct/Stone/Stone_Chunk_Light", 1.4, 25)),
+          O("Hiss", L("Misc/Hiss", 0.8, 25)),
+          O("Animal pulser falling + hiss", L(PAIN_HUM, 0.5, 20), L("Misc/Hiss", 1.2, 15)),
+          defName="AG_PainReceiverBreak"))
 ability("AG_PainChibakuTensei",
-        "The core formed and thrown up, the 3 s tearing of the ground, and the compression at the end.",
-        M("form", "Form + throw", "core between his hands, thrown up",
-          O("Psychic warmup, low", L(WARMUP, 0.6, 50)),
-          O("Bestow warmup, low", L(BESTOW, 0.7, 45)),
-          O("Drop pod leaving", L("Misc/DropPodLeaving", 0.8, 50))),
-        M("tear", "Tear (loop)", "3 s of ground torn up and pulled in",
+        "Warm-up 0.8 s (the core forms between his hands, thrown up), the core climbing and coming down over the cell, 3 s of ground torn up and pulled in, the ball formed (holds 12 s), 0.4 s of cracking, the burst.",
+        M("cast", "Core forms", "warm-up 0.8 s between cupped hands, thrown up in the last 0.18 s",
+          O("Psychic warmup, fast", L(WARMUP, 1.4, 40)),
+          O("Psycast psychic effect (Royalty)", L("Misc/Psycasts/Psycast_Psychic_Effect", 0.9, 40)),
+          O("Animal pulser, low", L(PAIN_HUM, 0.7, 35)),
+          O("Fire spew warmup, low (the glow)", L("Pawn/Abilities/FireSpew/Warmup", 0.8, 35)),
+          O("Mech resurrect warmup (Biotech)", L("Pawn/Abilities/MechResurrect/Warmup", 1.0, 35)),
+          defName="AG_PainChibakuCast"),
+        M("launch", "Core flies", "the core climbs from his hand to 5 cells over the cell",
+          O("Drop pod leaving", L("Misc/DropPodLeaving", 0.8, 50)),
+          O("Mech launcher launch, low (Biotech)", L("Pawn/Abilities/LongJumpMechLauncher/Launch", 0.8, 40)),
+          O("Swish, low + animal pulser", L("Misc/Swish1", 0.6, 45), L(PAIN_HUM, 1.2, 25)),
+          O("Mortar fire, low", L("Weapon/Artillery/Mortar_Fire", 0.6, 35)),
+          defName="AG_PainChibakuLaunch"),
+        M("pull", "Tear (3 s)", "3 s of ground torn up in plates and pulled into the core",
           O("Emergence quake + tornado", L("Misc/Emergence/Quake", 0.8, 55, loop=True), L("Misc/Tornado", 0.8, 25, loop=True)),
           O("Tunnel rumble", L("Misc/Tunnel", 0.7, 50, loop=True)),
-          O("Stone buildings breaking", L("Impact/BuildingDestroyed/Stone/Big", 0.7, 45), L("Impact/BuildingDestroyed/Stone/Medium", 0.8, 40, 0.8), L("Impact/BuildingDestroyed/Stone/Big", 0.6, 45, 1.7))),
-        M("close", "Close", "the rock sphere closes",
+          O("Stone buildings breaking", L(STONE_BIG, 0.7, 45), L("Impact/BuildingDestroyed/Stone/Medium", 0.8, 40, 0.8), L(STONE_BIG, 0.6, 45, 1.7)),
+          O("Quake + stone breaking + animal pulser", L("Misc/Emergence/Quake", 0.8, 50), L("Impact/BuildingDestroyed/Stone/Medium", 0.8, 35, 0.6), L(STONE_BIG, 0.7, 35, 1.6), L(PAIN_HUM, 0.6, 25)),
+          O("Neuroquake, low (Royalty)", L("Misc/Psycasts/Neuroquake", 0.8, 45)),
+          defName="AG_PainChibakuPull"),
+        M("formed", "Ball formed", "the last plates arrive and the ball closes; a big shake",
           O("Emergence end, large", L("Misc/Emergence/end_large", 0.9, 55)),
           O("Rock collapse + mortar, low", L("Misc/RockCollapse", 0.6, 55), L(BOOM, 0.5, 45)),
-          O("Bridge collapse", L("Misc/BridgeCollapse", 0.7, 55))))
+          O("Bridge collapse", L("Misc/BridgeCollapse", 0.7, 55)),
+          O("Big stone building down, low + mortar", L(STONE_BIG, 0.7, 45), L(BOOM, 0.5, 35)),
+          O("Thump cannon impact, low", L("Impact/ThumpCannon", 0.8, 50)),
+          defName="AG_PainChibakuFormed"),
+        M("crack", "Cracking", "0.4 s: cracks widen and fill with light, chips spat out",
+          O("Light stone chunks, low + glass", L("Interact/Work/Construct/Stone/Stone_Chunk_Light", 0.8, 40), L("Buildings/GestatorGlassShattering", 0.6, 20)),
+          O("Stone hammer, fast", L("Interact/Work/Construct/Stone/Hammer_Stone", 1.2, 40)),
+          O("Small stone building down", L("Impact/BuildingDestroyed/Stone/Small", 0.9, 40)),
+          O("Rock collapse, high", L("Misc/RockCollapse", 1.4, 40)),
+          O("Shield broken, low + stone", L("Misc/EnergyShield/Broken", 0.5, 25), L("Impact/BuildingDestroyed/Stone/Small", 1.0, 35)),
+          defName="AG_PainChibakuCrack"),
+        M("burst", "Burst", "a flash, the ball bursts into chunks that fall into the crater",
+          O("Giant explosion, low", L(BIG_BOOM, 0.8, 55)),
+          O("Mortar dry, low + stone", L(BOOM, 0.6, 55), L(STONE_BIG, 0.8, 40, 0.1)),
+          O("Rocket explosion + rock collapse", L("Weapon/RocketswarmLauncher/Explosion", 0.8, 50), L("Misc/RockCollapse", 0.8, 40, 0.05)),
+          O("Mech band shockwave + stone (Biotech)", L("Explosion/Mechband_Shockwave_Explosion_01a", 0.8, 45), L(STONE_BIG, 0.8, 40)),
+          O("Shinra's push body, lower + stone", L(BOOM, 0.38, 50), L(PAIN_HUM, 1.1, 30), L(STONE_BIG, 0.8, 40, 0.05)),
+          O("Drop pod impact, low + stone", L("Misc/DropPodImpact/Default", 0.7, 45), L(STONE_BIG, 0.8, 35, 0.05)),
+          defName="AG_PainChibakuBurst"))
 
 # Itachi ------------------------------------------------------------------------------------------
 ability("AG_ItachiFalseFace",
@@ -596,6 +694,12 @@ add("AG_SasukeAmaterasu", "burn",
     O("Synth: black flame", L("AG/BlackFlame", 1.0, 35, loop=True)),
     O("Synth: black flame, lower", L("AG/BlackFlame", 0.8, 35, loop=True)))
 add("AG_PainBanshoTenin", "pull", O("Synth: sucked in, low", L("AG/KamuiIn", 0.7, 40)))
+add("AG_PainBanshoTenin", "cast", O("Synth: sucked in, very low", L("AG/KamuiIn", 0.6, 30)))
+add("AG_PainBlackReceiver", "grow", O("Synth: ting, low", L("AG/Ting", 0.6, 25)))
+add("AG_PainBlackReceiver", "throw", O("Synth: sword flies, low", L("AG/SwordFly", 0.8, 40)))
+add("AG_PainBlackReceiver", "break", O("Synth: out of the swirl, soft", L("AG/KamuiOut", 0.7, 25)))
+add("AG_PainChibakuTensei", "cast", O("Synth: whine rising, low", L("AG/KiChargeStart", 0.7, 35)))
+add("AG_PainChibakuTensei", "launch", O("Synth: shun, low", L("AG/Shun", 0.6, 45)))
 add("AG_DispersalMurder", "depart",
     O("Synth: wings", L("AG/CrowFlaps", 1.0, 50)),
     O("Synth wings + crow calls (Odyssey)", L("AG/CrowFlaps", 1.0, 45), L("Pawn/Animal/Crow/Call", 1.0, 35)))
@@ -641,7 +745,7 @@ add("AG_AnchorBlackFlash", "hit",
 DURATION = {
     ("AG_GokuKamehameha", "charge"): 3.5, ("AG_GokuKamehameha", "fire"): 1.2, ("AG_GokuSpiritBomb", "gather"): 6,
     ("AG_Rasengan", "form"): 1.5, ("AG_SasukeRaikoKusari", "loop"): 4, ("AG_SasukeAmaterasu", "burn"): 4,
-    ("AG_PainChibakuTensei", "tear"): 3, ("AG_ItachiSusanoo", "loop"): 5, ("AG_ShadowGrasp", "drag"): 1.5,
+    ("AG_PainChibakuTensei", "pull"): 3, ("AG_ItachiSusanoo", "loop"): 5, ("AG_ShadowGrasp", "drag"): 1.5,
     ("AG_ShadowNeckBind", "choke"): 4, ("AG_Trace_UnlimitedBladeWorks", "verse"): 2, ("AG_VectorSurge", "loop"): 5,
     ("AG_VergilJudgementCutEnd", "vanish"): 1.6,
 }
@@ -652,7 +756,7 @@ for (d, mid), sec in DURATION.items():
 import re as _re
 HERO = {"Anchor": "Todo", "Dispersal": "Itachi", "Itachi": "Itachi", "Larynx": "Inumaki", "ShadowPlexus": "Shikamaru",
         "Vector": "Accelerator", "Trace": "Shirou", "Goku": "Goku", "Minato": "Minato", "Sasuke": "Sasuke",
-        "Pain": "Pain", "Obito": "Obito", "Vergil": "Vergil", "Sato": "Satō"}
+        "Pain": "Pain", "Shinra": "Pain", "Obito": "Obito", "Vergil": "Vergil", "Sato": "Satō"}
 for xml in (WT.parent.parent / "1.6/Defs/AbilityDefs").glob("*.xml"):
     kit = xml.stem.replace("AG_", "").replace("_Abilities", "")
     for d in _re.findall(r"<defName>([^<]+)</defName>", xml.read_text()):

@@ -22,33 +22,9 @@ namespace RimArt
         private static GameComponent_Echoes Setup(RimArtTestContext t)
         {
             GameComponent_Vergil.Instance.ResetForTests();
-            VergilSound.Heard = new List<(SoundDef, int)>();
-            SoundLayers.Started = new List<(SubSoundDef, int)>();
+            Listen();
             return t.ClearEchoes();
         }
-
-        /// <summary>The ticks after <paramref name="played"/> at which <paramref name="sound"/>'s layers started, in order.</summary>
-        private static List<int> LayersAt(SoundDef sound, int played) =>
-            SoundLayers.Started.Where(s => s.layer.parentDef == sound).Select(s => s.tick - played).OrderBy(x => x).ToList();
-
-        /// <summary>Whether a sound played once started every layer at its picked delay; logs both.</summary>
-        private static bool LayersOnTime(RimArtTestContext t, SoundDef sound, int played)
-        {
-            List<int> started = LayersAt(sound, played);
-            SoundLayerDelays delays = sound.GetModExtension<SoundLayerDelays>();
-            List<int> picked = sound.subSounds.Select((_, i) => delays?.TicksOf(i) ?? 0).OrderBy(x => x).ToList();
-            t.Log(sound.defName + " layers started at " + string.Join(", ", started) + " ticks (picked " + string.Join(", ", picked) + ")");
-            return started.SequenceEqual(picked);
-        }
-
-        /// <summary>The ticks after <paramref name="fired"/> at which <paramref name="sound"/> played, in order.</summary>
-        private static List<int> HeardAt(SoundDef sound, int fired) =>
-            VergilSound.Heard.Where(h => h.sound == sound).Select(h => h.tick - fired).ToList();
-
-        private static bool HeardOnly(SoundDef sound, int fired, int at) => HeardAt(sound, fired).SequenceEqual(new[] { at });
-
-        /// <summary>Every Vergil sound since the test began, as "defName @ticks after the fire".</summary>
-        private static string Heard(int fired) => string.Join(", ", VergilSound.Heard.Select(h => h.sound.defName + " @" + (h.tick - fired)));
 
         /// <summary>A colonist made Vergil's Host and manifested, with a full pool, undrafted and standing still.</summary>
         private static Pawn Host(RimArtTestContext t, IntVec3 at, out EchoRecord record)
@@ -150,11 +126,11 @@ namespace RimArt
             float spent = before - echoes.charge;
             t.Check(spent >= 3f && spent < 4f, "the pool paid 3 (" + spent.ToString("0.##") + " with upkeep)");
             int close = Mathf.RoundToInt(VergilKit.Props<CompProperties_JudgementCut>(VergilDefOf.AG_VergilJudgementCut).burstSeconds * 60f);
-            t.Log("heard: " + Heard(cast.fireTick));
+            t.Log("heard: " + HeardSince(cast.fireTick));
             t.Check(HeardOnly(VergilSoundDefOf.AG_VergilJudgementCutOpen, cast.fireTick, 0), "the draw is heard once, on the fire tick");
             t.Check(HeardOnly(VergilSoundDefOf.AG_VergilJudgementCutBreak, cast.fireTick, close) && HeardOnly(VergilSoundDefOf.AG_VergilSheathe, cast.fireTick, close),
                 "the ball's break and the sheathe click once each, together, as it closes (" + close + " ticks after the draw)");
-            t.Check(LayersOnTime(t, VergilSoundDefOf.AG_VergilJudgementCutOpen, cast.fireTick), "the draw's crackle and 5 swishes each start at their picked delay");
+            t.Check(t.LayersOnTime(VergilSoundDefOf.AG_VergilJudgementCutOpen, cast.fireTick), "the draw's crackle and 5 swishes each start at their picked delay");
             EndHost(record);
         }
 
@@ -219,7 +195,7 @@ namespace RimArt
             t.Check(spent >= 2f && spent < 3f, "the pool paid 2 (" + spent.ToString("0.##") + ")");
             CompProperties_YamatoDash dashProps = VergilKit.Props<CompProperties_YamatoDash>(VergilDefOf.AG_VergilYamatoDash);
             int click = cast.TickAt(new DashTimes(VergilDefOf.AG_VergilYamatoDash.verbProperties.warmupTime, dashProps.dashSeconds, dashProps.sheatheSeconds).ClickAt) - fired;
-            t.Log("heard: " + Heard(fired));
+            t.Log("heard: " + HeardSince(fired));
             t.Check(HeardOnly(VergilSoundDefOf.AG_VergilDash, fired, 0), "the dash is heard once, on the fire tick");
             t.Check(HeardOnly(VergilSoundDefOf.AG_VergilSheathe, fired, click) && HeardOnly(VergilSoundDefOf.AG_VergilDashCuts, fired, click),
                 "the sheathe click and the marks' cuts once each, on the click (" + click + " ticks after the fire)");
@@ -292,7 +268,7 @@ namespace RimArt
             t.Check(t.Untouched(far), "the far enemy was never hit");
             List<int> shots = HeardAt(VergilSoundDefOf.AG_VergilSwordFire, cast.fireTick), ins = HeardAt(VergilSoundDefOf.AG_VergilSwordHit, cast.fireTick);
             List<int> spins = HeardAt(VergilSoundDefOf.AG_VergilSwordsSpin, cast.fireTick), breaks = HeardAt(VergilSoundDefOf.AG_VergilSwordsBreak, cast.fireTick);
-            t.Log("heard: " + Heard(cast.fireTick));
+            t.Log("heard: " + HeardSince(cast.fireTick));
             t.Check(shots.Count >= 2 && ins.Count >= 1 && ins.Count <= shots.Count && ins[0] > shots[0],
                 "each blade is heard leaving (" + shots.Count + ") and going in (" + ins.Count + "), in after out");
             t.Check(shots.All(s => s <= spinFrom), "no blade is heard leaving after the spin began (fire + " + spinFrom + ")");
@@ -385,11 +361,11 @@ namespace RimArt
             t.Check(!own.Destroyed && own.HitPoints == ownHp, "his own colony's wall did not");
             CompProperties_JudgementCutEnd endProps = VergilKit.Props<CompProperties_JudgementCutEnd>(VergilDefOf.AG_VergilJudgementCutEnd);
             int click = cast.TickAt(new CutEndTimes(VergilDefOf.AG_VergilJudgementCutEnd.verbProperties.warmupTime, endProps.goneSeconds, endProps.sheatheSeconds).ClickAt) - cast.fireTick;
-            t.Log("heard: " + Heard(cast.fireTick));
+            t.Log("heard: " + HeardSince(cast.fireTick));
             t.Check(HeardOnly(VergilSoundDefOf.AG_VergilCutEndVanish, cast.fireTick, 0), "the vanish is heard once, on the fire tick");
             t.Check(HeardOnly(VergilSoundDefOf.AG_VergilSheathe, cast.fireTick, click) && HeardOnly(VergilSoundDefOf.AG_VergilCutEndCuts, cast.fireTick, click),
                 "the sheathe click and everything cut once each, on the click (" + click + " ticks after the vanish)");
-            t.Check(LayersOnTime(t, VergilSoundDefOf.AG_VergilCutEndVanish, cast.fireTick), "the vanish's skip and 6 swishes each start at their picked delay");
+            t.Check(t.LayersOnTime(VergilSoundDefOf.AG_VergilCutEndVanish, cast.fireTick), "the vanish's skip and 6 swishes each start at their picked delay");
             yield return 10;
             t.Check(host.CurJobDef == VergilDefOf.AG_CastVergil, "still kneeling just after the click (" + RimArtTestContext.Describe(host) + ")");
             yield return 60;

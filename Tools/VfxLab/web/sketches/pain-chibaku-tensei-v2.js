@@ -647,13 +647,13 @@ export default {
   },
   events(p) {
     const t = times(p), ev = [
-      { t: t.cast, type: 'sound', def: 'RimArt_ChibakuCast' }, { t: t.launch, type: 'sound', def: 'RimArt_ChibakuLaunch' },
-      { t: t.arrive, type: 'shake', value: .02 }, { t: t.pull, type: 'sound', def: 'RimArt_ChibakuPull' },
+      { t: t.cast, type: 'sound', def: 'AG_PainChibakuCast' }, { t: t.launch, type: 'sound', def: 'AG_PainChibakuLaunch' },
+      { t: t.arrive, type: 'shake', value: .02 }, { t: t.pull, type: 'sound', def: 'AG_PainChibakuPull' },
     ];
     for (let k = 0; k < 6; k++) ev.push({ t: t.pull + p.pull * (k + .5) / 6, type: 'shake', value: .012 + .004 * k });
-    ev.push({ t: t.formed, type: 'shake', value: .05 }, { t: t.formed, type: 'sound', def: 'RimArt_ChibakuFormed' });
+    ev.push({ t: t.formed, type: 'shake', value: .05 }, { t: t.formed, type: 'sound', def: 'AG_PainChibakuFormed' });
     for (let k = 1; k < p.hold; k++) ev.push({ t: t.formed + k, type: 'shake', value: .01 });
-    ev.push({ t: t.crack, type: 'sound', def: 'RimArt_ChibakuCrack' }, { t: t.burst, type: 'shake', value: .07 }, { t: t.burst, type: 'sound', def: 'RimArt_ChibakuBurst' });
+    ev.push({ t: t.crack, type: 'sound', def: 'AG_PainChibakuCrack' }, { t: t.burst, type: 'shake', value: .07 }, { t: t.burst, type: 'sound', def: 'AG_PainChibakuBurst' });
     return ev;
   },
 

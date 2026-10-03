@@ -57,7 +57,7 @@ namespace RimArt
             if (cast == null) return;
             cast.target = target.Cell;
             cast.MarkFired(Find.TickManager.TicksGame);
-            VergilSound.Play(VergilSoundDefOf.AG_VergilJudgementCutOpen, cast.home, cast.target);
+            SoundLayers.Play(VergilSoundDefOf.AG_VergilJudgementCutOpen, cast.home, cast.target);
         }
     }
 
@@ -92,8 +92,8 @@ namespace RimArt
             if (now == TickAt(T.CloseAt(Warm, props.burstSeconds)))
             {
                 // The ball breaks as it closes, and the guard meets the scabbard.
-                VergilSound.Play(VergilSoundDefOf.AG_VergilJudgementCutBreak, home, target);
-                if (caster != null && caster.Spawned && caster.Map == home) VergilSound.Play(VergilSoundDefOf.AG_VergilSheathe, home, caster.Position);
+                SoundLayers.Play(VergilSoundDefOf.AG_VergilJudgementCutBreak, home, target);
+                if (caster != null && caster.Spawned && caster.Map == home) SoundLayers.Play(VergilSoundDefOf.AG_VergilSheathe, home, caster.Position);
             }
             return Seconds(now) < T.Duration(Warm, props.burstSeconds);
         }

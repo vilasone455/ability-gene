@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- Pain's sounds for Banshō Ten'in, Black Receiver and Chibaku Tensei, picked by ear in the VFX lab
+       against the Pain sketches (Tools/SoundLab/picks.json, "sound:<defName>"). Shinra Tensei keeps its
+       own (AG_Shinra_Sounds.xml). Core's clips and the mod's own synthesized ones (Sounds/AG/, written by
+       make_sounds.py) at the lab's pitches and volumes. The casts play them through SoundLayers.Play.
+       Volume and pitch are single values, as picked; a folder plays one of its clips at random. A layer
+       that starts later than the others has its delay in SoundLayerDelays, one entry per subSound in
+       order: RimWorld does not take startDelayRange on a one-shot. Not picked yet, so silent: Banshō's
+       block, Black Receiver's throw, pin and break, Chibaku Tensei's warm-up. -->
+
+  <!-- Banshō Ten'in's warm-up, from its first tick: the palm comes up and the black core forms. -->
+  <SoundDef>
+    <defName>AG_PainBanshoCast</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>AG/KamuiIn</clipFolderPath></li></grains>
+        <volumeRange>30~30</volumeRange>
+        <pitchRange>0.6~0.6</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- The grip (the fire tick), at the target: the tug, the lift and the 0.34 s flight to the hand. -->
+  <SoundDef>
+    <defName>AG_PainBanshoPull</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>AG/KamuiIn</clipFolderPath></li></grains>
+        <volumeRange>40~40</volumeRange>
+        <pitchRange>0.7~0.7</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Pushed face-down in front of Pain: plates tip up, dust. -->
+  <SoundDef>
+    <defName>AG_PainBanshoSlam</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Clip"><clipPath>Misc/RockCollapse</clipPath></li></grains>
+        <volumeRange>50~50</volumeRange>
+        <pitchRange>1.2~1.2</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Black Receiver's warm-up, from its first tick: a rod grows out of the palm. -->
+  <SoundDef>
+    <defName>AG_PainReceiverGrow</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Clip"><clipPath>UI/WeaponHandling/HandleWeapon_SmallA</clipPath></li></grains>
+        <volumeRange>35~35</volumeRange>
+        <pitchRange>0.7~0.7</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- A rod going into a pawn, thrown or stabbed; the third (the pin) too. -->
+  <SoundDef>
+    <defName>AG_PainReceiverHit</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Impact/Bullet_Flesh</clipFolderPath></li></grains>
+        <volumeRange>45~45</volumeRange>
+        <pitchRange>0.9~0.9</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Impact/MeleeHit_Metal_Sharp</clipFolderPath></li></grains>
+        <volumeRange>35~35</volumeRange>
+        <pitchRange>0.9~0.9</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Chibaku Tensei's launch (the fire tick): the core leaves the raised hand and climbs over the cell. -->
+  <SoundDef>
+    <defName>AG_PainChibakuLaunch</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>2</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Clip"><clipPath>Misc/DropPodLeaving</clipPath></li></grains>
+        <volumeRange>50~50</volumeRange>
+        <pitchRange>0.8~0.8</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- The pull's 3 s, from its start at the ball's cell: stone torn up at 0, 0.8 and 1.7 s. -->
+  <SoundDef>
+    <defName>AG_PainChibakuPull</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>2</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Impact/BuildingDestroyed/Stone/Big</clipFolderPath></li></grains>
+        <volumeRange>45~45</volumeRange>
+        <pitchRange>0.7~0.7</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Impact/BuildingDestroyed/Stone/Medium</clipFolderPath></li></grains>
+        <volumeRange>40~40</volumeRange>
+        <pitchRange>0.8~0.8</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Impact/BuildingDestroyed/Stone/Big</clipFolderPath></li></grains>
+        <volumeRange>45~45</volumeRange>
+        <pitchRange>0.6~0.6</pitchRange>
+      </li>
+    </subSounds>
+    <modExtensions>
+      <li Class="RimArt.SoundLayerDelays">
+        <delays><li>0</li><li>0.8</li><li>1.7</li></delays>
+      </li>
+    </modExtensions>
+  </SoundDef>
+
+  <!-- The ball has formed: the last plates arrive and it closes. -->
+  <SoundDef>
+    <defName>AG_PainChibakuFormed</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>2</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Misc/Emergence/end_large</clipFolderPath></li></grains>
+        <volumeRange>55~55</volumeRange>
+        <pitchRange>0.9~0.9</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Its seams open: 0.4 s of cracking before the burst (the hold's end, Release, or Pain going down). -->
+  <SoundDef>
+    <defName>AG_PainChibakuCrack</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>2</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Clip"><clipPath>Misc/RockCollapse</clipPath></li></grains>
+        <volumeRange>40~40</volumeRange>
+        <pitchRange>1.4~1.4</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- The burst: the ball breaks into chunks that fall into the crater. -->
+  <SoundDef>
+    <defName>AG_PainChibakuBurst</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>2</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Clip"><clipPath>Explosion/GiantExplosion</clipPath></li></grains>
+        <volumeRange>55~55</volumeRange>
+        <pitchRange>0.8~0.8</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+</Defs>
