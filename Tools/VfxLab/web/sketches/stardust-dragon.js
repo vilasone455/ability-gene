@@ -109,7 +109,7 @@ import { walls } from './lib/paper-bomb.js';
 import { damageBar, PainShock, MechDown, MechGrey, MechHead, walk, downSmoke } from './lib/terraria.js';
 import { simulate, liveDust, dustAt, kindOf, LeastPieces, Hold, BreathJaw } from './lib/stardust-dragon-ai.js';
 import { piece, rollOf, aura, wake, head, whisker, WhiskerRoots, HeadScale, dust, staff, IceColour, CyanColour, LightColour } from './lib/stardust-dragon.js';
-import { flame, mouthGlow, burning, pulses, burst, fires, onFire, button } from './lib/stardust-flame.js';
+import { flame, mouthGlow, burning, pulses, burst, fires, onFire, button, starBurn, Starlit } from './lib/stardust-flame.js';
 
 const smooth = Mathf.Smooth, D2R = Mathf.Deg2Rad;
 const White = new Color(1, 1, 1), Warn = new Color(.85, .18, .12), Wielder = new Color(.30, .50, .62);
@@ -414,13 +414,15 @@ export default {
         if (!downed && r.set.breaths.length && r.live[k]) { const b = buttonState(r, s, k); button(add(at(g.pos, 'headTop'), { x: 0, z: .5 }), b.fill, b.marks, b.press, b.alpha, Y + .3); }
         return;
       }
-      const scorched = g.c.burns.some(e => s - e.t >= 0 && s - e.t < .2) ? .35 : 0;
-      const lit = Math.max(scorched, g.hit ? .7 * (1 - (s - g.hit.t) / .15) : 0), body = g.c.mech ? 'hulk' : 'average';
+      // A hit flashes ice; the flame tints toward starlight while it burns (stars fly off: starBurn, below).
+      const flash = g.hit ? .7 * (1 - (s - g.hit.t) / .15) : 0, starlit = g.c.burns.some(e => s - e.t >= 0 && s - e.t < .2) ? .3 : 0;
+      const tint = c => Color.Lerp(Color.Lerp(c, Starlit, starlit), IceColour, flash), body = g.c.mech ? 'hulk' : 'average';
       const shirt = g.c.mech ? MechGrey : g.c.ally ? Ally : Enemy, skin = g.c.mech ? MechHead : Skin;
-      pawn(g.pos, { body, shirt: Color.Lerp(shirt, IceColour, lit), skin: Color.Lerp(skin, IceColour, lit), sun, shadow: strength, downed: g.down });
+      pawn(g.pos, { body, shirt: tint(shirt), skin: tint(skin), sun, shadow: strength, downed: g.down });
       if (!g.down && !g.c.ally) damageBar(at(g.pos, 'headTop', { body }), g.share);
       if (g.down) downSmoke(g.pos, s - g.c.down);
       if (s >= g.c.fire) onFire(at(g.pos, g.down ? 'waist' : 'chest'), s, s - g.c.fire, Y + .05);
+      starBurn(at(g.pos, g.down ? 'waist' : 'chest', { body }), s, g.c.burns, Y + .21);
     });
 
     // --- the dragon ------------------------------------------------------------------------------------------------------

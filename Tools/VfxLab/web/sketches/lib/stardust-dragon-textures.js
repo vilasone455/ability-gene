@@ -1,10 +1,10 @@
 // Stardust Dragon Staff: the dragon's textures, generated in the lab (lab/stardust-head, -jaw, -blade, -body1,
-// -body2, -tail, -dust). Not a sketch itself, so it is not listed in sketches/index.js; stardust-dragon.js draws them.
+// -body2, -tail, -dust, and Stardust Flame's -star and -nebula). Not a sketch itself, so it is not listed in sketches/index.js; stardust-dragon.js draws them.
 // Every shape is written as [x, y] literals in Terraria pixels (x toward the head, y toward the spine) and painted
 // from distance functions, so a make_stardust_dragon_textures.py can copy them unchanged and write the same pixels
 // as PNGs to Textures/RimArt/StardustDragon/.
 import { Mathf } from '../../js/engine.js';
-import { registerLabTexture, pixels } from '../../js/standins.js';
+import { registerLabTexture, pixels, fbm } from '../../js/standins.js';
 
 const clamp01 = Mathf.Clamp01;
 export const ArtOf = { head: 48, jaw: 48, blade: 32, body1: 48, body2: 48, tail: 64 };   // Terraria px across a piece's texture
@@ -184,5 +184,19 @@ registerLabTexture('lab/stardust-dust', () => pixels(64, (u, v) => {
   const du = Math.abs(u + 1 / 128 - .5) * 2, dv = Math.abs(v + 1 / 128 - .5) * 2, r = Math.hypot(du, dv);
   const core = clamp01(1 - r / .5) ** 1.6, arm = (a, b) => Math.exp(-((a / .1) ** 2)) * clamp01(1 - b / .95) ** 1.3;
   return [1, 1, 1, border(u, v, 64) ? 0 : Math.min(1, core + .75 * Math.max(arm(du, dv), arm(dv, du)))];
+}));
+// Stardust Flame's star: a small core in a faint halo and four thin arms, long on the axes and short on the
+// diagonals; white, coloured per draw.
+registerLabTexture('lab/stardust-star', () => pixels(64, (u, v) => {
+  const x = (u + 1 / 128 - .5) * 2, y = (v + 1 / 128 - .5) * 2, r = Math.hypot(x, y), d1 = (x + y) / Math.SQRT2, d2 = (x - y) / Math.SQRT2;
+  const arm = (a, b, w, len) => Math.exp(-((a / w) ** 2)) * clamp01(1 - Math.abs(b) / len) ** 2;
+  const arms = Math.max(arm(x, y, .06, 1), arm(y, x, .06, 1), .6 * arm(d1, d2, .05, .45), .6 * arm(d2, d1, .05, .45));
+  const core = clamp01(1 - r / .22) ** 1.5, halo = .35 * clamp01(1 - r / .5) ** 2;
+  return [1, 1, 1, border(u, v, 64) ? 0 : Math.min(1, core + arms + halo)];
+}));
+// Stardust Flame's cloud: a soft round wisp broken up by noise, white, coloured per draw.
+registerLabTexture('lab/stardust-nebula', () => pixels(128, (u, v) => {
+  const r = Math.hypot(u - .5, v - .5) * 2, n = fbm(u * 4, v * 4, 4417, 4, 4);
+  return [1, 1, 1, border(u, v, 128) ? 0 : clamp01(1 - r) ** 1.5 * clamp01((n - .3) / .45)];
 }));
 export const Kinds = Object.keys(Painters);
