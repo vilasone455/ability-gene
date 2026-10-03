@@ -49,6 +49,9 @@ export function initSound(context) {
   S.on = ui.store.get('sound', true);
   S.volume = ui.store.get('soundVolume', 1);
   master.gain.value = S.volume;
+  // A hidden page is silent. Some hosts (the Claude desktop app's browser pane) keep drawing a
+  // hidden page, so a looping effect would otherwise go on playing its markers out of sight.
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stopAll(0.08); });
   return loadSounds().then(() => {
     preloadMarkers();
     renderSoundPanel();
@@ -71,7 +74,7 @@ export function soundTick(before) {
   S.playing = clock.playing;
   const ended = was && !clock.playing && clock.t >= clock.duration;
   if (!clock.playing && !ended) { if (was) stopAll(0.08); return; }
-  if (!S.on || lib.error) return;
+  if (!S.on || lib.error || document.hidden) return;
   const events = markers(ui.source());
   const fire = (from, to, inclusive) => { for (const e of events) if ((inclusive ? e.t >= from : e.t > from) && e.t <= to) play(e.def); };
   if (clock.wrapped) { fire(before, clock.duration, before === 0); stopLoops(0.2); fire(0, clock.t, true); }

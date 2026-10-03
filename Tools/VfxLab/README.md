@@ -171,7 +171,8 @@ A marker plays the first of these that exists:
 
 Playback: markers of the effect on the left (A) play, also while comparing. Pausing, seeking and
 picking another effect stop what is playing; a layer marked "loop" stops when the effect loops back
-to its start. A browser starts no audio before the first click or key on the page, so markers
+to its start. A hidden page (another tab, a minimized window, a closed browser pane) is silent:
+some hosts keep drawing a hidden page, and a looping effect would go on playing out of sight. A browser starts no audio before the first click or key on the page, so markers
 before that are skipped.
 
 The Sound tab lists the effect's markers by name, with their times and what plays for each. Click a
