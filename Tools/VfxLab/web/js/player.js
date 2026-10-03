@@ -129,11 +129,14 @@ export class Clock {
     this.duration = 0;
   }
 
+  // wrapped: this tick ran past the end and started again. The sound markers need to know, because
+  // a jump back by seeking is not a wrap.
   tick(dt) {
+    this.wrapped = false;
     if (!this.playing || this.duration <= 0) return;
     this.t += dt * this.speed;
     if (this.t > this.duration) {
-      if (this.loop) this.t = 0;
+      if (this.loop) { this.t = 0; this.wrapped = true; }
       else { this.t = this.duration; this.playing = false; }
     }
   }

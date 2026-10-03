@@ -9,6 +9,11 @@ python3 Tools/SoundLab/serve.py     # open http://localhost:8766/
 
 Needs Python 3, `pip install --user UnityPy numpy` and ffmpeg. Chrome, Edge or Firefox.
 
+`python3 Tools/VfxLab/lab.py` serves this page too, at `/Tools/SoundLab/web/` on its port, and
+plays the same sounds on an effect's timeline: its Sound tab picks a sound for each sound marker
+while the effect plays (`Tools/VfxLab/README.md`, "Sound"). `serve.py` is the sound lab alone,
+without the VFX recorder.
+
 ## Where the sounds come from
 
 The mod ships no audio of the game's. A SoundDef names a clip by path (`clipFolderPath` or
@@ -33,7 +38,9 @@ wings, space slices, Kamui swirls, black flame). These ship with the mod, and `d
 ## The page
 
 - **Abilities**: abilities from `candidates.json`, grouped by hero. Each is split into moments
-  (cast, beam, hit, loop), each with about three options. ▶ plays one, Mixer loads it for tuning,
+  (cast, beam, hit, loop), each with about three options. A moment's optional `"defName"` is the
+  SoundDef it becomes: the mixer's defName box starts with it, and the VFX lab's Sound tab lists
+  that moment's options first for a marker of that name (`"defName": "RimArt_BubblePop"`). ▶ plays one, Mixer loads it for tuning,
   Pick saves it. A moment with "lasts N s in game" is cut there with a 0.2 s fade, because the
   ability's code ends that sound (a sustainer) when the effect ends.
 - **Clips**: every clip folder, with each clip's waveform, length, peak and brightness
@@ -54,8 +61,10 @@ options, not about absolute level.
 | File | Written by | Committed |
 |---|---|---|
 | `candidates.json` | `make_candidates.py`, per ability moment | yes |
-| `picks.json` | the page, when you press Pick | yes: SoundDefs are written from it |
+| `picks.json` | Pick on this page (`"<AbilityDef>/<moment>"`) or on the VFX lab's Sound tab (`"sound:<SoundDef>"`) | yes: SoundDefs are written from it |
 | `clips/` | `extract.py` | no |
+| `soundlab.py` | the `/soundlab/` endpoints (catalog, picks), used by `serve.py` and `Tools/VfxLab/lab.py` | yes |
+| `web/sound.js` | audio, the clip catalog and SoundDef XML, used by this page and the VFX lab | yes |
 
-The page reloads `candidates.json` and `picks.json` every 3 seconds, so new candidates show up
-without a reload.
+Both pages reload `candidates.json` and `picks.json` every 3 seconds, so new candidates and the
+other page's picks show up without a reload.
