@@ -73,9 +73,11 @@ export default {
     { name: 'Click: every mark lands', t: t.click },
   ]; },
   events(p) { const t = times(p); return [
-    { t: t.launch, type: 'sound', def: 'AG_Vergil_YamatoDash' },
+    { t: t.launch, type: 'sound', def: 'AG_VergilDash' },
     { t: t.arrive, type: 'shake', value: .02 },
-    { t: t.click, type: 'sound', def: 'AG_Vergil_Sheathe' },
+    // The click is the shared sheathe sound; the cuts are a sound of their own, played only when a mark was set.
+    { t: t.click, type: 'sound', def: 'AG_VergilSheathe' },
+    { t: t.click, type: 'sound', def: 'AG_VergilDashCuts' },
     { t: t.click, type: 'shake', value: .06 },
   ]; },
   draw(s, p, { origin: o, scene }) {

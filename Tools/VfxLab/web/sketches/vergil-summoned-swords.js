@@ -192,8 +192,11 @@ export default {
     return [{ name: 'Stands', t: 0 }, { name: 'The blades rise', t: t.cast }, { name: spins(p) ? 'Spins and cuts' : 'Fires on its own', t: spins(p) ? t.formed : t.fire }, { name: 'Every blade breaks', t: t.stop }];
   },
   events(p) {
-    const t = times(p);
-    return [{ t: t.cast, type: 'sound', def: 'AG_Vergil_SummonedSwords' }, { t: t.stop, type: 'sound', def: 'AG_Vergil_SwordsBreak' }, { t: t.stop, type: 'shake', value: .03 }];
+    const t = times(p), o = { x: 0, z: 0 }, sound = (at, def) => ({ t: at, type: 'sound', def });
+    // One marker per shot and per blade going in; in spin mode one per cut tick that reaches a raider.
+    const shots = play(p, t, o).flatMap(h => [sound(h.fireAt, 'AG_VergilSwordFire'), sound(h.hitAt, 'AG_VergilSwordHit')]);
+    const ticks = [...new Set(Hostiles.flatMap((_, j) => cutsOn(p, t, o, j, t.stop)))].sort((a, b) => a - b).map(at => sound(at, 'AG_VergilSwordsSpin'));
+    return [sound(t.cast, 'AG_VergilSwordsSummon'), ...shots, ...ticks, sound(t.stop, 'AG_VergilSwordsBreak'), { t: t.stop, type: 'shake', value: .03 }];
   },
 
   draw(s, p, { origin: o, scene }) {

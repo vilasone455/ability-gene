@@ -2073,55 +2073,247 @@
    "hero": "Itachi"
   },
   "AG_VergilJudgementCut": {
-   "note": "DMC: a fast draw, a cluster of slices at the spot, a sheath click.",
+   "note": "DMC: the draw and a ball of slices at the spot in the same instant, the ball breaking apart as it closes 0.5 s later, and the sheathe click with the break.",
    "moments": [
     {
-     "id": "draw",
-     "label": "Draw",
-     "when": "0.6 s before the cuts",
+     "id": "cut",
+     "label": "Draw + cuts",
+     "when": "after the 0.6 s warmup: the draw, then 5 hits 0.1 s apart",
      "options": [
       {
-       "label": "Blade swish, high",
+       "label": "Deflect stings on the 5 hits",
        "layers": [
+        {
+         "clip": "Impact/Deflect/Deflect_Metal",
+         "pitch": 1.3,
+         "volume": 30
+        },
+        {
+         "clip": "Impact/Deflect/Deflect_General",
+         "pitch": 1.1,
+         "volume": 30
+        },
+        {
+         "clip": "Impact/Deflect/Deflect_General",
+         "pitch": 1.2000000000000002,
+         "volume": 30,
+         "delay": 0.1
+        },
+        {
+         "clip": "Impact/Deflect/Deflect_General",
+         "pitch": 1.3,
+         "volume": 30,
+         "delay": 0.2
+        },
+        {
+         "clip": "Impact/Deflect/Deflect_General",
+         "pitch": 1.1,
+         "volume": 30,
+         "delay": 0.3
+        },
+        {
+         "clip": "Impact/Deflect/Deflect_General",
+         "pitch": 1.2000000000000002,
+         "volume": 30,
+         "delay": 0.4
+        }
+       ]
+      },
+      {
+       "label": "EMP crackle + 5 Scyther cuts",
+       "layers": [
+        {
+         "folder": "Misc/EMPDisabled",
+         "pitch": 1.0,
+         "volume": 25
+        },
         {
          "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
-         "pitch": 1.4,
-         "volume": 40
-        }
-       ]
-      },
-      {
-       "label": "Mono sword (Royalty)",
-       "layers": [
-        {
-         "folder": "Impact/MonoSword",
-         "pitch": 1.3,
-         "volume": 40
-        }
-       ]
-      },
-      {
-       "label": "Swish + ting",
-       "layers": [
-        {
-         "folder": "Misc/Swish2",
          "pitch": 1.6,
-         "volume": 45
+         "volume": 26
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.7000000000000002,
+         "volume": 26,
+         "delay": 0.1
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.8,
+         "volume": 26,
+         "delay": 0.2
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.6,
+         "volume": 26,
+         "delay": 0.3
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.7000000000000002,
+         "volume": 26,
+         "delay": 0.4
+        }
+       ]
+      },
+      {
+       "label": "Charge rifle zap + 5 metal stings",
+       "layers": [
+        {
+         "folder": "Weapon/ChargeRifle",
+         "pitch": 1.3,
+         "volume": 35
         },
         {
          "folder": "Impact/MeleeHit_Metal_Sharp",
-         "pitch": 1.6,
-         "volume": 25
+         "pitch": 1.8,
+         "volume": 20
+        },
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 1.9000000000000001,
+         "volume": 20,
+         "delay": 0.1
+        },
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 2.0,
+         "volume": 20,
+         "delay": 0.2
+        },
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 1.8,
+         "volume": 20,
+         "delay": 0.3
+        },
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 1.9000000000000001,
+         "volume": 20,
+         "delay": 0.4
         }
        ]
-      }
-     ]
-    },
-    {
-     "id": "cuts",
-     "label": "Cuts",
-     "when": "sphere of 5 hits over half a second",
-     "options": [
+      },
+      {
+       "label": "Mech band shock (Biotech) + Scyther cuts",
+       "layers": [
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 1.2,
+         "volume": 35
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.7,
+         "volume": 28,
+         "delay": 0.1
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.7,
+         "volume": 28,
+         "delay": 0.25
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.7,
+         "volume": 28,
+         "delay": 0.4
+        }
+       ]
+      },
+      {
+       "label": "Beam graser burst (Biotech) + deflects",
+       "layers": [
+        {
+         "folder": "Weapon/Beamgraser/Resolve",
+         "pitch": 1.3,
+         "volume": 35
+        },
+        {
+         "clip": "Impact/Deflect/Deflect_General",
+         "pitch": 1.3,
+         "volume": 25,
+         "delay": 0.1
+        },
+        {
+         "clip": "Impact/Deflect/Deflect_General",
+         "pitch": 1.3,
+         "volume": 25,
+         "delay": 0.25
+        },
+        {
+         "clip": "Impact/Deflect/Deflect_General",
+         "pitch": 1.3,
+         "volume": 25,
+         "delay": 0.4
+        }
+       ]
+      },
+      {
+       "label": "Plasma sword hits (Royalty)",
+       "layers": [
+        {
+         "folder": "Impact/PlasmaSword",
+         "pitch": 1.2,
+         "volume": 30
+        },
+        {
+         "folder": "Impact/PlasmaSword",
+         "pitch": 1.4,
+         "volume": 30,
+         "delay": 0.17
+        },
+        {
+         "folder": "Impact/PlasmaSword",
+         "pitch": 1.3,
+         "volume": 30,
+         "delay": 0.34
+        }
+       ]
+      },
+      {
+       "label": "Psychic entropy + bionic slash misses (Royalty)",
+       "layers": [
+        {
+         "folder": "Misc/Psycasts/Psychic_Entropy",
+         "pitch": 1.2,
+         "volume": 35
+        },
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.5,
+         "volume": 25
+        },
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.6,
+         "volume": 25,
+         "delay": 0.1
+        },
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.7,
+         "volume": 25,
+         "delay": 0.2
+        },
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.5,
+         "volume": 25,
+         "delay": 0.3
+        },
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.6,
+         "volume": 25,
+         "delay": 0.4
+        }
+       ]
+      },
       {
        "label": "Shield break + blade hits",
        "layers": [
@@ -2189,6 +2381,28 @@
        ]
       },
       {
+       "label": "Mono sword draw + bionic hits (Royalty)",
+       "layers": [
+        {
+         "clip": "UI/WeaponHandling/HandleMonoSword",
+         "pitch": 1.4,
+         "volume": 35
+        },
+        {
+         "folder": "Impact/BionicSlash_Hit",
+         "pitch": 1.3,
+         "volume": 40,
+         "delay": 0.1
+        },
+        {
+         "folder": "Impact/BionicSlash_Hit",
+         "pitch": 1.5,
+         "volume": 35,
+         "delay": 0.3
+        }
+       ]
+      },
+      {
        "label": "Synth: space slices",
        "layers": [
         {
@@ -2212,13 +2426,93 @@
          "volume": 30
         }
        ]
+      },
+      {
+       "label": "Swish + synth slices",
+       "layers": [
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 1.6,
+         "volume": 40
+        },
+        {
+         "folder": "AG/SpaceSliceCluster",
+         "pitch": 1.0,
+         "volume": 45,
+         "delay": 0.02
+        }
+       ]
       }
-     ]
+     ],
+     "defName": "AG_VergilJudgementCutOpen"
     },
     {
-     "id": "sheath",
-     "label": "Sheath",
-     "when": "after the cuts",
+     "id": "break",
+     "label": "The ball breaks",
+     "when": "0.5 s after the draw: it breaks into pieces that fall in, with a ring front and dust",
+     "options": [
+      {
+       "label": "Glass shattering",
+       "layers": [
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Glass shattering, low",
+       "layers": [
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 0.8,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Shield broken",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Glass + shield broken",
+       "layers": [
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 1.1,
+         "volume": 30
+        },
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 0.9,
+         "volume": 25
+        }
+       ]
+      },
+      {
+       "label": "Mech band shock (Biotech)",
+       "layers": [
+        {
+         "folder": "Impact/MechBand",
+         "pitch": 1.0,
+         "volume": 35
+        }
+       ]
+      }
+     ],
+     "defName": "AG_VergilJudgementCutBreak"
+    },
+    {
+     "id": "sheathe",
+     "label": "Sheathe click",
+     "when": "as the ball closes; the same sound ends Yamato Dash and Judgement Cut End",
      "options": [
       {
        "label": "Click",
@@ -2249,19 +2543,66 @@
          "volume": 40
         }
        ]
+      },
+      {
+       "label": "Weapon handling, small",
+       "layers": [
+        {
+         "clip": "UI/WeaponHandling/HandleWeapon_SmallA",
+         "pitch": 1.0,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Weapon handling, big low",
+       "layers": [
+        {
+         "clip": "UI/WeaponHandling/HandleWeapon_BigALow",
+         "pitch": 1.1,
+         "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Synth: ting",
+       "layers": [
+        {
+         "folder": "AG/Ting",
+         "pitch": 1.0,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Click + synth ting",
+       "layers": [
+        {
+         "clip": "Interact/FlickSwitch",
+         "pitch": 0.9,
+         "volume": 45
+        },
+        {
+         "folder": "AG/Ting",
+         "pitch": 1.2,
+         "volume": 25,
+         "delay": 0.02
+        }
+       ]
       }
-     ]
+     ],
+     "defName": "AG_VergilSheathe"
     }
    ],
    "hero": "Vergil"
   },
   "AG_VergilYamatoDash": {
-   "note": "Dash (0.15 s), then 0.4 s later the sheath click that lands the cuts.",
+   "note": "Dash (0.15 s), then 0.4 s later the sheathe click (AG_VergilSheathe) and the cuts on every mark.",
    "moments": [
     {
      "id": "dash",
      "label": "Dash",
-     "when": "he crosses the ground",
+     "when": "he crosses the ground in 0.15 s",
      "options": [
       {
        "label": "Longjump + swish",
@@ -2302,96 +2643,109 @@
          "volume": 50
         }
        ]
-      }
-     ]
-    },
-    {
-     "id": "sheath",
-     "label": "Sheath + cuts land",
-     "when": "the blade clicks and the marked are cut",
-     "options": [
+      },
       {
-       "label": "Click + blade hits",
+       "label": "Synth: shun",
        "layers": [
         {
-         "clip": "Interact/FlickSwitch",
-         "pitch": 0.9,
+         "folder": "AG/Shun",
+         "pitch": 1.1,
          "volume": 45
+        }
+       ]
+      },
+      {
+       "label": "Synth shun + swish",
+       "layers": [
+        {
+         "folder": "AG/Shun",
+         "pitch": 1.0,
+         "volume": 40
         },
+        {
+         "folder": "Misc/Swish2",
+         "pitch": 1.6,
+         "volume": 35
+        }
+       ]
+      }
+     ],
+     "defName": "AG_VergilDash"
+    },
+    {
+     "id": "cuts",
+     "label": "Cuts land",
+     "when": "with the click, only when someone was marked",
+     "options": [
+      {
+       "label": "Blade hits",
+       "layers": [
         {
          "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
          "pitch": 1.1,
-         "volume": 40,
-         "delay": 0.05
+         "volume": 40
         },
         {
          "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
          "pitch": 1.3,
          "volume": 35,
-         "delay": 0.12
+         "delay": 0.07
         }
        ]
       },
       {
-       "label": "Pin + glass",
+       "label": "Glass",
        "layers": [
-        {
-         "clip": "Weapon/GrenadePin",
-         "pitch": 0.7,
-         "volume": 45
-        },
         {
          "folder": "Buildings/GestatorGlassShattering",
          "pitch": 1.3,
-         "volume": 30,
-         "delay": 0.05
+         "volume": 35
         }
        ]
       },
       {
-       "label": "Click + mono sword (Royalty)",
+       "label": "Mono sword (Royalty)",
        "layers": [
-        {
-         "clip": "Interact/FlickSwitch",
-         "pitch": 0.9,
-         "volume": 45
-        },
         {
          "folder": "Impact/MonoSword",
          "pitch": 1.2,
-         "volume": 40,
-         "delay": 0.05
+         "volume": 40
         }
        ]
       },
       {
-       "label": "Synth: click + one slice",
+       "label": "Synth: one slice",
        "layers": [
-        {
-         "clip": "Interact/FlickSwitch",
-         "pitch": 0.9,
-         "volume": 45
-        },
         {
          "folder": "AG/SpaceSlice",
          "pitch": 1.1,
-         "volume": 40,
-         "delay": 0.05
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Synth: slices",
+       "layers": [
+        {
+         "folder": "AG/SpaceSliceCluster",
+         "pitch": 1.2,
+         "volume": 40
         }
        ]
       }
-     ]
+     ],
+     "defName": "AG_VergilDashCuts"
     }
    ],
    "hero": "Vergil"
   },
   "AG_VergilSummonedSwords": {
-   "note": "Summon, each blade flying (once a second), each blade going in.",
+   "note": "Summon; in fire mode each blade flying (once a second) and going in; in spin mode a cut every 0.9 s; every blade breaking when the time is up.",
    "moments": [
     {
      "id": "summon",
      "label": "Summon",
-     "when": "eight blades appear",
+     "when": "eight blades rise over 0.5 s",
      "options": [
       {
        "label": "Shield reset, bright",
@@ -2438,12 +2792,13 @@
         }
        ]
       }
-     ]
+     ],
+     "defName": "AG_VergilSwordsSummon"
     },
     {
      "id": "fire",
      "label": "Blade flies",
-     "when": "one blade per second",
+     "when": "fire mode: one blade a second",
      "options": [
       {
        "label": "Bow",
@@ -2485,7 +2840,8 @@
         }
        ]
       }
-     ]
+     ],
+     "defName": "AG_VergilSwordFire"
     },
     {
      "id": "hit",
@@ -2527,13 +2883,127 @@
         }
        ]
       }
-     ]
+     ],
+     "defName": "AG_VergilSwordHit"
+    },
+    {
+     "id": "spin",
+     "label": "Spin cut",
+     "when": "spin mode: one cut tick every 0.9 s on the pawns within 1.6 cells",
+     "options": [
+      {
+       "label": "Swish, fast",
+       "layers": [
+        {
+         "folder": "Misc/Swish1",
+         "pitch": 1.5,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Scyther swish + hit",
+       "layers": [
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/Miss",
+         "pitch": 1.5,
+         "volume": 35
+        },
+        {
+         "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
+         "pitch": 1.3,
+         "volume": 25,
+         "delay": 0.05
+        }
+       ]
+      },
+      {
+       "label": "Bionic slash miss, high (Royalty)",
+       "layers": [
+        {
+         "folder": "Impact/BionicSlash_Miss",
+         "pitch": 1.3,
+         "volume": 40
+        }
+       ]
+      },
+      {
+       "label": "Synth: sword flies, fast",
+       "layers": [
+        {
+         "folder": "AG/SwordFly",
+         "pitch": 1.4,
+         "volume": 35
+        }
+       ]
+      }
+     ],
+     "defName": "AG_VergilSwordsSpin"
+    },
+    {
+     "id": "break",
+     "label": "Every blade breaks",
+     "when": "when the time is up, the blades stuck in pawns too",
+     "options": [
+      {
+       "label": "Glass shattering, high",
+       "layers": [
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 1.4,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Shield broken, high",
+       "layers": [
+        {
+         "folder": "Misc/EnergyShield/Broken",
+         "pitch": 1.3,
+         "volume": 35
+        }
+       ]
+      },
+      {
+       "label": "Glass + metal sharp",
+       "layers": [
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 1.6,
+         "volume": 30
+        },
+        {
+         "folder": "Impact/MeleeHit_Metal_Sharp",
+         "pitch": 1.5,
+         "volume": 25,
+         "delay": 0.04
+        }
+       ]
+      },
+      {
+       "label": "Synth ting, high + glass",
+       "layers": [
+        {
+         "folder": "AG/Ting",
+         "pitch": 1.6,
+         "volume": 30
+        },
+        {
+         "folder": "Buildings/GestatorGlassShattering",
+         "pitch": 1.5,
+         "volume": 30
+        }
+       ]
+      }
+     ],
+     "defName": "AG_VergilSwordsBreak"
     }
    ],
    "hero": "Vergil"
   },
   "AG_VergilJudgementCutEnd": {
-   "note": "Warmup (1 s), vanish with a storm of cuts (1.5 s), return kneeling, final sheath with everything cut at once.",
+   "note": "Warmup (1 s), vanish with a storm of cuts (1.5 s), back kneeling, sheathe over 0.8 s; on the click (AG_VergilSheathe) everything is cut at once.",
    "moments": [
     {
      "id": "vanish",
@@ -2701,102 +3171,78 @@
        ]
       }
      ],
+     "defName": "AG_VergilCutEndVanish",
      "duration": 1.6
     },
     {
-     "id": "end",
-     "label": "Sheath: all cut",
-     "when": "kneeling, the final click",
+     "id": "cuts",
+     "label": "Everything cut",
+     "when": "on the click, with the sheathe sound",
      "options": [
       {
-       "label": "Click, then shield break + mortar",
+       "label": "Shield break + mortar",
        "layers": [
-        {
-         "clip": "Interact/FlickSwitch",
-         "pitch": 0.8,
-         "volume": 50
-        },
         {
          "folder": "Misc/EnergyShield/Broken",
          "pitch": 0.8,
-         "volume": 45,
-         "delay": 0.3
+         "volume": 45
         },
         {
          "folder": "Weapon/Artillery/Mortar_Explode_Dry",
          "pitch": 0.9,
-         "volume": 40,
-         "delay": 0.3
+         "volume": 40
         }
        ]
       },
       {
-       "label": "Pin, then glass + blades",
+       "label": "Glass + blades",
        "layers": [
-        {
-         "clip": "Weapon/GrenadePin",
-         "pitch": 0.6,
-         "volume": 50
-        },
         {
          "folder": "Buildings/GestatorGlassShattering",
          "pitch": 0.9,
-         "volume": 40,
-         "delay": 0.3
+         "volume": 40
         },
         {
          "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
          "pitch": 1.0,
          "volume": 40,
-         "delay": 0.32
+         "delay": 0.02
         },
         {
          "folder": "Pawn/Mechanoid/Scyther/Melee/HitPawn",
          "pitch": 1.2,
          "volume": 40,
-         "delay": 0.38
+         "delay": 0.08
         }
        ]
       },
       {
-       "label": "Click, then mech band shockwave",
+       "label": "Mech band shockwave",
        "layers": [
-        {
-         "clip": "Interact/FlickSwitch",
-         "pitch": 0.8,
-         "volume": 50
-        },
         {
          "clip": "Explosion/Mechband_Shockwave_Explosion_01a",
          "pitch": 1.0,
-         "volume": 45,
-         "delay": 0.3
+         "volume": 45
         }
        ]
       },
       {
-       "label": "Synth: click, then slices + whoomp",
+       "label": "Synth: slices + whoomp",
        "layers": [
-        {
-         "clip": "Interact/FlickSwitch",
-         "pitch": 0.8,
-         "volume": 50
-        },
         {
          "folder": "AG/SpaceSliceCluster",
          "pitch": 0.9,
-         "volume": 50,
-         "delay": 0.3
+         "volume": 50
         },
         {
          "folder": "AG/KiBeamFire",
          "pitch": 1.2,
-         "volume": 35,
-         "delay": 0.3
+         "volume": 35
         }
        ]
       }
-     ]
+     ],
+     "defName": "AG_VergilCutEndCuts"
     }
    ],
    "hero": "Vergil"

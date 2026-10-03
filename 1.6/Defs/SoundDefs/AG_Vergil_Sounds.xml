@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- Vergil's sounds, picked by ear in the VFX lab against the four sketches (Tools/SoundLab/picks.json,
+       "sound:<defName>"). Core's and Biotech's own clips at the lab's pitches and volumes: no new audio
+       files. Biotech is required by the mod, so no layer needs MayRequire. The casts play them through
+       VergilSound.Play. Volume and pitch are single values, as picked; a folder plays one of its clips
+       at random. A layer that starts later than the others has its delay in SoundLayerDelays, one entry
+       per subSound in order: RimWorld does not take startDelayRange on a one-shot, and SoundLayers.Play
+       starts each layer on its tick. -->
+
+  <!-- Judgement Cut's draw, on the fire tick at the target: an EMP crackle for the space
+       opening and 5 Scyther swishes on the 5 hits, 0.1 s apart (burstSeconds 0.5 / hits 5). -->
+  <SoundDef>
+    <defName>AG_VergilJudgementCutOpen</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Misc/EMPDisabled</clipFolderPath></li></grains>
+        <volumeRange>25~25</volumeRange>
+        <pitchRange>1~1</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/Miss</clipFolderPath></li></grains>
+        <volumeRange>26~26</volumeRange>
+        <pitchRange>1.6~1.6</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/Miss</clipFolderPath></li></grains>
+        <volumeRange>26~26</volumeRange>
+        <pitchRange>1.7~1.7</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/Miss</clipFolderPath></li></grains>
+        <volumeRange>26~26</volumeRange>
+        <pitchRange>1.8~1.8</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/Miss</clipFolderPath></li></grains>
+        <volumeRange>26~26</volumeRange>
+        <pitchRange>1.6~1.6</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/Miss</clipFolderPath></li></grains>
+        <volumeRange>26~26</volumeRange>
+        <pitchRange>1.7~1.7</pitchRange>
+      </li>
+    </subSounds>
+    <modExtensions>
+      <li Class="RimArt.SoundLayerDelays">
+        <delays><li>0</li><li>0</li><li>0.1</li><li>0.2</li><li>0.3</li><li>0.4</li></delays>
+      </li>
+    </modExtensions>
+  </SoundDef>
+
+  <!-- Judgement Cut's ball breaking into pieces as it closes, burstSeconds after the draw. -->
+  <SoundDef>
+    <defName>AG_VergilJudgementCutBreak</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Buildings/GestatorGlassShattering</clipFolderPath></li></grains>
+        <volumeRange>35~35</volumeRange>
+        <pitchRange>1~1</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- The blade clicking home: Judgement Cut as the ball closes, Yamato Dash's click, Judgement
+       Cut End's click. One sound for all three. -->
+  <SoundDef>
+    <defName>AG_VergilSheathe</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Clip"><clipPath>Interact/FlickSwitch</clipPath></li></grains>
+        <volumeRange>45~45</volumeRange>
+        <pitchRange>0.9~0.9</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Yamato Dash leaving, on the fire tick: Core's skip entry pitched up, with a swish. -->
+  <SoundDef>
+    <defName>AG_VergilDash</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Misc/Psycasts/Skip/Entry</clipFolderPath></li></grains>
+        <volumeRange>30~30</volumeRange>
+        <pitchRange>2~2</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Misc/Swish2</clipFolderPath></li></grains>
+        <volumeRange>45~45</volumeRange>
+        <pitchRange>1.6~1.6</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Yamato Dash's marks taking their cut on the click; only played when a mark was set. -->
+  <SoundDef>
+    <defName>AG_VergilDashCuts</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Buildings/GestatorGlassShattering</clipFolderPath></li></grains>
+        <volumeRange>35~35</volumeRange>
+        <pitchRange>1.3~1.3</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Summoned Swords: one blade leaving the ring (fire mode, once a second). -->
+  <SoundDef>
+    <defName>AG_VergilSwordFire</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Weapon/Spiner</clipFolderPath></li></grains>
+        <volumeRange>40~40</volumeRange>
+        <pitchRange>1.2~1.2</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Summoned Swords: one blade going into a pawn. -->
+  <SoundDef>
+    <defName>AG_VergilSwordHit</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/HitPawn</clipFolderPath></li></grains>
+        <volumeRange>35~35</volumeRange>
+        <pitchRange>1.4~1.4</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Summoned Swords, spin mode: one cut tick (every 0.9 s) that reaches a hostile. -->
+  <SoundDef>
+    <defName>AG_VergilSwordsSpin</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/Miss</clipFolderPath></li></grains>
+        <volumeRange>35~35</volumeRange>
+        <pitchRange>1.5~1.5</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/HitPawn</clipFolderPath></li></grains>
+        <volumeRange>25~25</volumeRange>
+        <pitchRange>1.3~1.3</pitchRange>
+      </li>
+    </subSounds>
+    <modExtensions>
+      <li Class="RimArt.SoundLayerDelays">
+        <delays><li>0</li><li>0.05</li></delays>
+      </li>
+    </modExtensions>
+  </SoundDef>
+
+  <!-- Summoned Swords: every blade breaking when the time is up or a new cast replaces the ring. -->
+  <SoundDef>
+    <defName>AG_VergilSwordsBreak</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Buildings/GestatorGlassShattering</clipFolderPath></li></grains>
+        <volumeRange>35~35</volumeRange>
+        <pitchRange>1.4~1.4</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+  <!-- Judgement Cut End: he vanishes, on the fire tick, and the cuts are drawn while he is gone:
+       Core's skip entry and 6 Scyther swishes 0.2 s apart over the 1.5 s. -->
+  <SoundDef>
+    <defName>AG_VergilCutEndVanish</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Misc/Psycasts/Skip/Entry</clipFolderPath></li></grains>
+        <volumeRange>40~40</volumeRange>
+        <pitchRange>1.2~1.2</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/Miss</clipFolderPath></li></grains>
+        <volumeRange>30~30</volumeRange>
+        <pitchRange>1.3~1.3</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/Miss</clipFolderPath></li></grains>
+        <volumeRange>30~30</volumeRange>
+        <pitchRange>1.4~1.4</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/Miss</clipFolderPath></li></grains>
+        <volumeRange>30~30</volumeRange>
+        <pitchRange>1.5~1.5</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/Miss</clipFolderPath></li></grains>
+        <volumeRange>30~30</volumeRange>
+        <pitchRange>1.3~1.3</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/Miss</clipFolderPath></li></grains>
+        <volumeRange>30~30</volumeRange>
+        <pitchRange>1.4~1.4</pitchRange>
+      </li>
+      <li>
+        <grains><li Class="AudioGrain_Folder"><clipFolderPath>Pawn/Mechanoid/Scyther/Melee/Miss</clipFolderPath></li></grains>
+        <volumeRange>30~30</volumeRange>
+        <pitchRange>1.5~1.5</pitchRange>
+      </li>
+    </subSounds>
+    <modExtensions>
+      <li Class="RimArt.SoundLayerDelays">
+        <delays><li>0</li><li>0.15</li><li>0.35</li><li>0.55</li><li>0.75</li><li>0.95</li><li>1.15</li></delays>
+      </li>
+    </modExtensions>
+  </SoundDef>
+
+  <!-- Judgement Cut End's click: everything is cut at once. Biotech's mech band shockwave. -->
+  <SoundDef>
+    <defName>AG_VergilCutEndCuts</defName>
+    <context>MapOnly</context>
+    <maxSimultaneous>4</maxSimultaneous>
+    <subSounds>
+      <li>
+        <grains><li Class="AudioGrain_Clip"><clipPath>Explosion/Mechband_Shockwave_Explosion_01a</clipPath></li></grains>
+        <volumeRange>45~45</volumeRange>
+        <pitchRange>1~1</pitchRange>
+      </li>
+    </subSounds>
+  </SoundDef>
+
+</Defs>

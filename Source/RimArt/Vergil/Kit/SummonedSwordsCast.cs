@@ -239,6 +239,7 @@ namespace RimArt
                 slot = slot, fireTick = now, hitTick = now + Mathf.Max(1, Mathf.RoundToInt(flight * 60f)), target = best,
                 from = from, startAngle = at, seed = ++seeds,
             });
+            VergilSound.Play(VergilSoundDefOf.AG_VergilSwordFire, map, caster.Position);
         }
 
         /// <summary>The blade reaches its target: 9 Stab, one pin, Style. A target gone by then leaves the blade to break in the air.</summary>
@@ -253,6 +254,7 @@ namespace RimArt
             }
             Vector2 chest = VergilKit.Ground(target.DrawPos) + new Vector2(0f, T.Chest);
             float deg = Mathf.Atan2(chest.y - f.from.y, chest.x - f.from.x) * Mathf.Rad2Deg;
+            VergilSound.Play(VergilSoundDefOf.AG_VergilSwordHit, home, target.Position);
             VergilKit.Cut(target, caster, props.damageDef ?? DamageDefOf.Stab, props.damage, props.armorPenetration, 90f - deg);
             VergilStyle.Hit(caster, target, props.styleGainPerHit);
             if (target.Dead || !target.Spawned)
@@ -308,6 +310,8 @@ namespace RimArt
                 VergilStyle.Hit(caster, pawn, props.styleGainPerHit);
                 spinHits.Add((pawn, at, (seeds++ * 53) % 180));
             }
+            // A tick that reaches nobody is silent, as in the sketch.
+            if (close.Count > 0) VergilSound.Play(VergilSoundDefOf.AG_VergilSwordsSpin, caster.Map, caster.Position);
             close.Clear();
             // Only the last few cuts are drawn, or they pile into a scribble.
             if (spinHits.Count > 24) spinHits.RemoveRange(0, spinHits.Count - 24);
@@ -318,6 +322,7 @@ namespace RimArt
         {
             broken = true;
             stopCentre = caster != null && caster.Spawned ? VergilKit.Ground(caster.DrawPos) : stopCentre;
+            VergilSound.Play(VergilSoundDefOf.AG_VergilSwordsBreak, home, new IntVec3(Mathf.FloorToInt(stopCentre.x), 0, Mathf.FloorToInt(stopCentre.y)));
             CompProperties_SummonedSwords props = Props;
             for (int i = 0; i < flights.Count; i++)
             {

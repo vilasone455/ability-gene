@@ -271,54 +271,90 @@ ability("AG_DispersalMurder",
           O("Crow calls only (Odyssey)", L("Pawn/Animal/Crow/Call", 1.0, 45))))
 
 # Vergil ------------------------------------------------------------------------------------------
+# One moment per sound marker in the Vergil sketches (Tools/VfxLab/web/sketches/vergil-*.js); its
+# defName is the SoundDef the cast will play. The sheathe click is one sound for all three sheathes.
+SHEATHE = "AG_VergilSheathe"
+CUTS = [0.0, 0.1, 0.2, 0.3, 0.4]   # Judgement Cut's 5 damage ticks, burstSeconds 0.5 / 5 apart
 ability("AG_VergilJudgementCut",
-        "DMC: a fast draw, a cluster of slices at the spot, a sheath click.",
-        M("draw", "Draw", "0.6 s before the cuts",
-          O("Blade swish, high", L(BLADE_SWISH, 1.4, 40)),
-          O("Mono sword (Royalty)", L("Impact/MonoSword", 1.3, 40)),
-          O("Swish + ting", L("Misc/Swish2", 1.6, 45), L("Impact/MeleeHit_Metal_Sharp", 1.6, 25))),
-        M("cuts", "Cuts", "sphere of 5 hits over half a second",
+        "DMC: the draw and a ball of slices at the spot in the same instant, the ball breaking apart as it closes 0.5 s later, and the sheathe click with the break.",
+        M("cut", "Draw + cuts", "after the 0.6 s warmup: the draw, then 5 hits 0.1 s apart",
+          O("Deflect stings on the 5 hits", L("Impact/Deflect/Deflect_Metal", 1.3, 30), *[L("Impact/Deflect/Deflect_General", 1.1 + 0.1 * (i % 3), 30, d) for i, d in enumerate(CUTS)]),
+          O("EMP crackle + 5 Scyther cuts", L(ZAP, 1.0, 25), *[L(BLADE_SWISH, 1.6 + 0.1 * (i % 3), 26, d) for i, d in enumerate(CUTS)]),
+          O("Charge rifle zap + 5 metal stings", L("Weapon/ChargeRifle", 1.3, 35), *[L("Impact/MeleeHit_Metal_Sharp", 1.8 + 0.1 * (i % 3), 20, d) for i, d in enumerate(CUTS)]),
+          O("Mech band shock (Biotech) + Scyther cuts", L("Impact/MechBand", 1.2, 35), *[L(BLADE_SWISH, 1.7, 28, d) for d in (0.1, 0.25, 0.4)]),
+          O("Beam graser burst (Biotech) + deflects", L("Weapon/Beamgraser/Resolve", 1.3, 35), *[L("Impact/Deflect/Deflect_General", 1.3, 25, d) for d in (0.1, 0.25, 0.4)]),
+          O("Plasma sword hits (Royalty)", *[L("Impact/PlasmaSword", p, 30, d) for p, d in ((1.2, 0.0), (1.4, 0.17), (1.3, 0.34))]),
+          O("Psychic entropy + bionic slash misses (Royalty)", L("Misc/Psycasts/Psychic_Entropy", 1.2, 35), *[L("Impact/BionicSlash_Miss", 1.5 + 0.1 * (i % 3), 25, d) for i, d in enumerate(CUTS)]),
           O("Shield break + blade hits", L("Misc/EnergyShield/Broken", 1.0, 40), L(BLADE_HIT, 1.2, 35, 0.1), L(BLADE_HIT, 1.3, 35, 0.25), L(BLADE_HIT, 1.1, 35, 0.4)),
           O("Glass + swishes", L("Buildings/GestatorGlassShattering", 1.2, 35), L(BLADE_SWISH, 1.5, 35, 0.08), L(BLADE_SWISH, 1.7, 30, 0.22)),
-          O("Bionic slash hits (Royalty)", L("Impact/BionicSlash_Hit", 1.2, 45), L("Impact/BionicSlash_Hit", 1.4, 35, 0.2))),
-        M("sheath", "Sheath", "after the cuts",
+          O("Bionic slash hits (Royalty)", L("Impact/BionicSlash_Hit", 1.2, 45), L("Impact/BionicSlash_Hit", 1.4, 35, 0.2)),
+          O("Mono sword draw + bionic hits (Royalty)", L("UI/WeaponHandling/HandleMonoSword", 1.4, 35), L("Impact/BionicSlash_Hit", 1.3, 40, 0.1), L("Impact/BionicSlash_Hit", 1.5, 35, 0.3)),
+          defName="AG_VergilJudgementCutOpen"),
+        M("break", "The ball breaks", "0.5 s after the draw: it breaks into pieces that fall in, with a ring front and dust",
+          O("Glass shattering", L("Buildings/GestatorGlassShattering", 1.0, 35)),
+          O("Glass shattering, low", L("Buildings/GestatorGlassShattering", 0.8, 40)),
+          O("Shield broken", L("Misc/EnergyShield/Broken", 1.0, 35)),
+          O("Glass + shield broken", L("Buildings/GestatorGlassShattering", 1.1, 30), L("Misc/EnergyShield/Broken", 0.9, 25)),
+          O("Mech band shock (Biotech)", L("Impact/MechBand", 1.0, 35)),
+          defName="AG_VergilJudgementCutBreak"),
+        M("sheathe", "Sheathe click", "as the ball closes; the same sound ends Yamato Dash and Judgement Cut End",
           O("Click", L(CLICK, 0.9, 45)),
           O("Grenade pin, low", L("Weapon/GrenadePin", 0.7, 45)),
-          O("Trap arm", L("Misc/Trap", 1.3, 40))))
+          O("Trap arm", L("Misc/Trap", 1.3, 40)),
+          O("Weapon handling, small", L("UI/WeaponHandling/HandleWeapon_SmallA", 1.0, 45)),
+          O("Weapon handling, big low", L("UI/WeaponHandling/HandleWeapon_BigALow", 1.1, 45)),
+          defName=SHEATHE))
 ability("AG_VergilYamatoDash",
-        "Dash (0.15 s), then 0.4 s later the sheath click that lands the cuts.",
-        M("dash", "Dash", "he crosses the ground",
+        "Dash (0.15 s), then 0.4 s later the sheathe click (AG_VergilSheathe) and the cuts on every mark.",
+        M("dash", "Dash", "he crosses the ground in 0.15 s",
           O("Longjump + swish", L("Pawn/Abilities/Longjump/Jump", 1.6, 35), L(BLADE_SWISH, 1.3, 40)),
           O("Skip entry fast + swish", L(SKIP_IN, 2.0, 30), L("Misc/Swish2", 1.6, 45)),
-          O("Bionic slash miss (Royalty)", L("Impact/BionicSlash_Miss", 1.0, 50))),
-        M("sheath", "Sheath + cuts land", "the blade clicks and the marked are cut",
-          O("Click + blade hits", L(CLICK, 0.9, 45), L(BLADE_HIT, 1.1, 40, 0.05), L(BLADE_HIT, 1.3, 35, 0.12)),
-          O("Pin + glass", L("Weapon/GrenadePin", 0.7, 45), L("Buildings/GestatorGlassShattering", 1.3, 30, 0.05)),
-          O("Click + mono sword (Royalty)", L(CLICK, 0.9, 45), L("Impact/MonoSword", 1.2, 40, 0.05))))
+          O("Bionic slash miss (Royalty)", L("Impact/BionicSlash_Miss", 1.0, 50)),
+          defName="AG_VergilDash"),
+        M("cuts", "Cuts land", "with the click, only when someone was marked",
+          O("Blade hits", L(BLADE_HIT, 1.1, 40), L(BLADE_HIT, 1.3, 35, 0.07)),
+          O("Glass", L("Buildings/GestatorGlassShattering", 1.3, 35)),
+          O("Mono sword (Royalty)", L("Impact/MonoSword", 1.2, 40)),
+          defName="AG_VergilDashCuts"))
 ability("AG_VergilSummonedSwords",
-        "Summon, each blade flying (once a second), each blade going in.",
-        M("summon", "Summon", "eight blades appear",
+        "Summon; in fire mode each blade flying (once a second) and going in; in spin mode a cut every 0.9 s; every blade breaking when the time is up.",
+        M("summon", "Summon", "eight blades rise over 0.5 s",
           O("Shield reset, bright", L("Misc/EnergyShield/Reset", 1.4, 40)),
           O("Mortar shield reactivate", L("Misc/MortarShieldGenerator/Reactivate", 1.3, 40)),
-          O("Psychic warmup + glass", L(WARMUP, 1.8, 30), L("Buildings/GestatorGlassShattering", 1.8, 20))),
-        M("fire", "Blade flies", "one blade per second",
+          O("Psychic warmup + glass", L(WARMUP, 1.8, 30), L("Buildings/GestatorGlassShattering", 1.8, 20)),
+          defName="AG_VergilSwordsSummon"),
+        M("fire", "Blade flies", "fire mode: one blade a second",
           O("Bow", L("Weapon/BowB", 1.3, 45)),
           O("Piercing spine", L("Pawn/Abilities/PiercingSpine", 1.4, 40)),
-          O("Spiner", L("Weapon/Spiner", 1.2, 40))),
+          O("Spiner", L("Weapon/Spiner", 1.2, 40)),
+          defName="AG_VergilSwordFire"),
         M("hit", "Blade in", "a blade enters a pawn",
           O("Metal sharp", L("Impact/MeleeHit_Metal_Sharp", 1.2, 40)),
           O("Bullet flesh + shield absorb", L("Impact/Bullet_Flesh", 1.1, 40), L("Misc/EnergyShield/Absorb", 1.8, 20)),
-          O("Scyther hit, high", L(BLADE_HIT, 1.4, 35))))
+          O("Scyther hit, high", L(BLADE_HIT, 1.4, 35)),
+          defName="AG_VergilSwordHit"),
+        M("spin", "Spin cut", "spin mode: one cut tick every 0.9 s on the pawns within 1.6 cells",
+          O("Swish, fast", L("Misc/Swish1", 1.5, 35)),
+          O("Scyther swish + hit", L(BLADE_SWISH, 1.5, 35), L(BLADE_HIT, 1.3, 25, 0.05)),
+          O("Bionic slash miss, high (Royalty)", L("Impact/BionicSlash_Miss", 1.3, 40)),
+          defName="AG_VergilSwordsSpin"),
+        M("break", "Every blade breaks", "when the time is up, the blades stuck in pawns too",
+          O("Glass shattering, high", L("Buildings/GestatorGlassShattering", 1.4, 35)),
+          O("Shield broken, high", L("Misc/EnergyShield/Broken", 1.3, 35)),
+          O("Glass + metal sharp", L("Buildings/GestatorGlassShattering", 1.6, 30), L("Impact/MeleeHit_Metal_Sharp", 1.5, 25, 0.04)),
+          defName="AG_VergilSwordsBreak"))
 ability("AG_VergilJudgementCutEnd",
-        "Warmup (1 s), vanish with a storm of cuts (1.5 s), return kneeling, final sheath with everything cut at once.",
+        "Warmup (1 s), vanish with a storm of cuts (1.5 s), back kneeling, sheathe over 0.8 s; on the click (AG_VergilSheathe) everything is cut at once.",
         M("vanish", "Vanish + cut storm", "1.5 s while he is gone",
           O("Skip + 6 swishes", L(SKIP_IN, 1.2, 40), *[L(BLADE_SWISH, 1.3 + 0.1 * (i % 3), 30, 0.15 + 0.2 * i) for i in range(6)]),
           O("Glass + swishes + shield break", L("Buildings/GestatorGlassShattering", 1.0, 35), *[L(BLADE_SWISH, 1.5, 30, 0.2 + 0.25 * i) for i in range(5)], L("Misc/EnergyShield/Broken", 0.9, 35, 1.3)),
-          O("Bionic slashes (Royalty)", *[L("Impact/BionicSlash_Miss", 1.1 + 0.1 * (i % 2), 35, 0.2 * i) for i in range(7)])),
-        M("end", "Sheath: all cut", "kneeling, the final click",
-          O("Click, then shield break + mortar", L(CLICK, 0.8, 50), L("Misc/EnergyShield/Broken", 0.8, 45, 0.3), L(BOOM, 0.9, 40, 0.3)),
-          O("Pin, then glass + blades", L("Weapon/GrenadePin", 0.6, 50), L("Buildings/GestatorGlassShattering", 0.9, 40, 0.3), L(BLADE_HIT, 1.0, 40, 0.32), L(BLADE_HIT, 1.2, 40, 0.38)),
-          O("Click, then mech band shockwave", L(CLICK, 0.8, 50), L("Explosion/Mechband_Shockwave_Explosion_01a", 1.0, 45, 0.3))))
+          O("Bionic slashes (Royalty)", *[L("Impact/BionicSlash_Miss", 1.1 + 0.1 * (i % 2), 35, 0.2 * i) for i in range(7)]),
+          defName="AG_VergilCutEndVanish"),
+        M("cuts", "Everything cut", "on the click, with the sheathe sound",
+          O("Shield break + mortar", L("Misc/EnergyShield/Broken", 0.8, 45), L(BOOM, 0.9, 40)),
+          O("Glass + blades", L("Buildings/GestatorGlassShattering", 0.9, 40), L(BLADE_HIT, 1.0, 40, 0.02), L(BLADE_HIT, 1.2, 40, 0.08)),
+          O("Mech band shockwave", L("Explosion/Mechband_Shockwave_Explosion_01a", 1.0, 45)),
+          defName="AG_VergilCutEndCuts"))
 
 # Sato --------------------------------------------------------------------------------------------
 ability("AG_SatoSever",
@@ -564,16 +600,27 @@ add("AG_DispersalMurder", "depart",
     O("Synth: wings", L("AG/CrowFlaps", 1.0, 50)),
     O("Synth wings + crow calls (Odyssey)", L("AG/CrowFlaps", 1.0, 45), L("Pawn/Animal/Crow/Call", 1.0, 35)))
 add("AG_ItachiSusanoo", "loop", O("Synth: low hum", L("AG/SusanooHum", 1.0, 35, loop=True)))
-add("AG_VergilJudgementCut", "cuts",
+add("AG_VergilJudgementCut", "cut",
     O("Synth: space slices", L("AG/SpaceSliceCluster", 1.0, 50)),
-    O("Synth slices + shield break", L("AG/SpaceSliceCluster", 1.0, 45), L("Misc/EnergyShield/Broken", 1.0, 30)))
-add("AG_VergilYamatoDash", "sheath", O("Synth: click + one slice", L(CLICK, 0.9, 45), L("AG/SpaceSlice", 1.1, 40, 0.05)))
+    O("Synth slices + shield break", L("AG/SpaceSliceCluster", 1.0, 45), L("Misc/EnergyShield/Broken", 1.0, 30)),
+    O("Swish + synth slices", L("Misc/Swish2", 1.6, 40), L("AG/SpaceSliceCluster", 1.0, 45, 0.02)))
+add("AG_VergilJudgementCut", "sheathe",
+    O("Synth: ting", L("AG/Ting", 1.0, 40)),
+    O("Click + synth ting", L(CLICK, 0.9, 45), L("AG/Ting", 1.2, 25, 0.02)))
+add("AG_VergilYamatoDash", "dash",
+    O("Synth: shun", L("AG/Shun", 1.1, 45)),
+    O("Synth shun + swish", L("AG/Shun", 1.0, 40), L("Misc/Swish2", 1.6, 35)))
+add("AG_VergilYamatoDash", "cuts",
+    O("Synth: one slice", L("AG/SpaceSlice", 1.1, 40)),
+    O("Synth: slices", L("AG/SpaceSliceCluster", 1.2, 40)))
 add("AG_VergilSummonedSwords", "summon", O("Synth: glass arpeggio", L("AG/SwordSummon", 1.0, 45)))
 add("AG_VergilSummonedSwords", "fire", O("Synth: sword flies", L("AG/SwordFly", 1.0, 45)))
+add("AG_VergilSummonedSwords", "spin", O("Synth: sword flies, fast", L("AG/SwordFly", 1.4, 35)))
+add("AG_VergilSummonedSwords", "break", O("Synth ting, high + glass", L("AG/Ting", 1.6, 30), L("Buildings/GestatorGlassShattering", 1.5, 30)))
 add("AG_VergilJudgementCutEnd", "vanish",
     O("Synth: slice storm", L("AG/Shun", 0.8, 35), L("AG/SpaceSliceCluster", 1.0, 45, 0.1), L("AG/SpaceSliceCluster", 1.15, 40, 0.6)))
-add("AG_VergilJudgementCutEnd", "end",
-    O("Synth: click, then slices + whoomp", L(CLICK, 0.8, 50), L("AG/SpaceSliceCluster", 0.9, 50, 0.3), L("AG/KiBeamFire", 1.2, 35, 0.3)))
+add("AG_VergilJudgementCutEnd", "cuts",
+    O("Synth: slices + whoomp", L("AG/SpaceSliceCluster", 0.9, 50), L("AG/KiBeamFire", 1.2, 35)))
 add("AG_ShadowImitation", "run", O("Synth: shadow run", L("AG/ShadowRun", 1.0, 50)))
 add("AG_ShadowSeam", "sew", O("Synth: shadow run + roping", L("AG/ShadowRun", 1.1, 45), L("Pawn/Human/Roping", 1.0, 35, 0.4)))
 add("AG_ShadowGrasp", "drag", O("Synth: shadow hold, faster", L("AG/ShadowHold", 1.3, 40, loop=True)))

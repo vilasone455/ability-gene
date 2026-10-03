@@ -264,6 +264,13 @@ headers): forced Yamato on Manifest (its stats not set yet); +0.5 move speed.
   cuts (12-20) of 10 Cut, dealt nearest first round the marked pawns (one pawn takes up to 200);
   every marked pawn is stunned. During the vanish, projectiles in the radius are destroyed; at the
   click, hostile or unowned buildings in range take 60, outside the cut pool.
+- Sounds (picked by ear 2026-10-03 in the VFX lab against the four sketches; `AG_Vergil_Sounds.xml`,
+  played through `VergilSound.Play`): Core and Biotech clips only, no new audio. Judgement Cut: the
+  draw with a crackle and 5 swishes on the hits, glass as the ball breaks. One sheathe click for all
+  three sheathes. Yamato Dash: a fast skip and swish, glass on the click only when a mark was set.
+  Summoned Swords: a Spiner shot per blade, a Scyther hit per blade in, a swish and hit per spin
+  tick that reaches someone, glass when the blades break. Judgement Cut End: a skip and 6 swishes
+  over the vanish, the mech band shockwave on the click. The summon (the blades rising) has none yet.
 
 Agreed, not built (no EchoDef yet; the abilities do not exist):
 

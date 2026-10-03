@@ -48,7 +48,10 @@ wings, space slices, Kamui swirls, black flame). These ship with the mod, and `d
 - **SoundDefs**: every vanilla SoundDef, played as the game plays it: random clip from the folder,
   random volume and pitch inside the def's ranges.
 - **Mixer**: up to any number of layers; each layer is one `subSound` (pitch, volume, delay,
-  loop). The SoundDef XML under it is what gets written into `1.6/Defs/SoundDefs/`.
+  loop). The SoundDef XML under it is what gets written into `1.6/Defs/SoundDefs/`. RimWorld
+  takes a layer's `startDelayRange` only on a sustainer and logs a config error on a one-shot, so a
+  one-shot's delays are written as `RimArt.SoundLayerDelays` instead, and the code plays that sound
+  with `SoundLayers.Play` (`Source/RimArt/Shared/SoundLayers.cs`), which starts each layer on its tick.
 
 Playback follows `Verse.Sound.SubSoundDef`: volume is `volumeRange / 100`, pitch is Unity's
 `AudioSource.pitch` (speed and pitch together, Web Audio's `playbackRate`), and a folder grain

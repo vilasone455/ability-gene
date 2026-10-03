@@ -106,6 +106,7 @@ namespace RimArt
             along.Clear();
             Map map = caster.Map;
             if (map == null) return;
+            VergilSound.Play(VergilSoundDefOf.AG_VergilDash, map, from);
             KeepDash();
             CompProperties_YamatoDash props = Props;
             Vector2 a = new Vector2(from.x, from.z), line = Line;
@@ -155,18 +156,23 @@ namespace RimArt
             PawnDash.Arrive(caster, home, dest, needEmpty: false);
         }
 
-        /// <summary>The blade clicks home: every mark takes its cut.</summary>
+        /// <summary>The blade clicks home: every mark takes its cut. The cuts are heard only when there were some.</summary>
         private void Click()
         {
             clicked = true;
             CompProperties_YamatoDash props = Props;
+            int cut = 0;
             for (int i = 0; i < marks.Count; i++)
             {
                 Pawn pawn = marks[i];
                 if (pawn == null || pawn.Dead || !pawn.Spawned) continue;
                 VergilKit.Cut(pawn, caster, props.damageDef, props.damage, props.armorPenetration, 90f - Aim);
                 VergilStyle.Hit(caster, pawn, props.styleGainPerMark);
+                cut++;
             }
+            IntVec3 at = caster?.PositionHeld ?? dest;
+            VergilSound.Play(VergilSoundDefOf.AG_VergilSheathe, home, at);
+            if (cut > 0) VergilSound.Play(VergilSoundDefOf.AG_VergilDashCuts, home, at);
         }
 
         /// <summary>Downed or killed mid-dash: nothing resolves. He stays where the game left him.</summary>
